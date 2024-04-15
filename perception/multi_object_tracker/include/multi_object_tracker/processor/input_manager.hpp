@@ -32,7 +32,7 @@ public:
   void init(
     const std::string & input_topic, const std::string & long_name, const std::string & short_name);
 
-  void setObjects(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
+  void onMessage(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
 
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,

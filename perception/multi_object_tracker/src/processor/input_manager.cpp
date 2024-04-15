@@ -54,12 +54,12 @@ bool InputStream::getTimestamps(
   return true;
 }
 
-void InputStream::setObjects(
+void InputStream::onMessage(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)
 {
   // // debug message
   // RCLCPP_INFO(
-  //   node_.get_logger(), "InputStream::setObjects Received %s message from %s at %d.%d",
+  //   node_.get_logger(), "InputStream::onMessage Received %s message from %s at %d.%d",
   //   long_name_.c_str(), input_topic_.c_str(), msg->header.stamp.sec, msg->header.stamp.nanosec);
 
   const autoware_auto_perception_msgs::msg::DetectedObjects object = *msg;
@@ -68,7 +68,7 @@ void InputStream::setObjects(
     objects_que_.pop_front();
   }
 
-  // RCLCPP_INFO(node_.get_logger(), "InputStream::setObjects Que size: %zu", objects_que_.size());
+  // RCLCPP_INFO(node_.get_logger(), "InputStream::onMessage Que size: %zu", objects_que_.size());
 
   // Filter parameters
   constexpr double gain = 0.05;
@@ -154,7 +154,7 @@ void InputManager::init(
       long_names.at(i).c_str(), input_topics.at(i).c_str());
     std::function<void(
       const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)>
-      func = std::bind(&InputStream::setObjects, input_streams_.at(i), std::placeholders::_1);
+      func = std::bind(&InputStream::onMessage, input_streams_.at(i), std::placeholders::_1);
     sub_objects_array_.at(i) =
       node_.create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
         input_topics.at(i), rclcpp::QoS{1}, func);

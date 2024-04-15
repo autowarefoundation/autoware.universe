@@ -94,6 +94,7 @@ private:
 
   // callback functions
   void onTimer();
+  void onMessage(const std::vector<DetectedObjects> & objects_data);
 
   // publish processes
   void runProcess(const DetectedObjects & input_objects_msg);

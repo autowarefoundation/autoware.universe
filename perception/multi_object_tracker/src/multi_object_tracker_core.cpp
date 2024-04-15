@@ -165,6 +165,28 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
+void MultiObjectTracker::onMessage(const std::vector<DetectedObjects> & objects_data)
+{
+  const rclcpp::Time current_time = this->now();
+  debugger_->startMeasurementTime(this->now(), rclcpp::Time(objects_data.front().header.stamp));
+
+  // run process for each DetectedObjects
+  for (const auto & objects : objects_data) {
+    runProcess(objects);
+  }
+
+  // for debug
+  rclcpp::Time oldest_time(objects_data.front().header.stamp);
+  rclcpp::Time latest_time(objects_data.back().header.stamp);
+  RCLCPP_INFO(
+    this->get_logger(), "MultiObjectTracker::onTimer Objects time range: %f - %f",
+    (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());
+
+  debugger_->endMeasurementTime(this->now());
+
+  // Publish
+}
+
 void MultiObjectTracker::onTimer()
 {
   // // Check the input manager
@@ -177,7 +199,6 @@ void MultiObjectTracker::onTimer()
   // // If the elapsed time is over the period, publish objects with prediction
   // constexpr double maximum_latency_ratio = 1.11;  // 11% margin
   // const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
-
   // if (elapsed_time < maximum_publish_latency) return;
 
   // get objects from the input manager and run process
