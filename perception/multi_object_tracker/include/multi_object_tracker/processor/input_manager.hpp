@@ -90,6 +90,8 @@ public:
     const std::vector<std::string> & short_names);
 
   bool isInputsReady() const;
+  void getObjectTimeInterval(
+    const rclcpp::Time & now, rclcpp::Time & object_latest_time, rclcpp::Time & object_oldest_time);
 
   bool getObjects(
     const rclcpp::Time & now,

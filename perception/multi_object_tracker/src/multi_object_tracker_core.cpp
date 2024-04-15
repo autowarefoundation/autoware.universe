@@ -118,7 +118,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // time.
   if (enable_delay_compensation) {
     publisher_period_ = 1.0 / publish_rate;   // [s]
-    constexpr double timer_multiplier = 1.0;  // 20 times frequent for publish timing check
+    constexpr double timer_multiplier = 1.0;  // 5 times frequent for publish timing check
     const auto timer_period = rclcpp::Rate(publish_rate * timer_multiplier).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
@@ -167,6 +167,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
 void MultiObjectTracker::onTimer()
 {
+  // // Check the input manager
   // if (!input_manager_->isInputsReady()) return;
 
   const rclcpp::Time current_time = this->now();
