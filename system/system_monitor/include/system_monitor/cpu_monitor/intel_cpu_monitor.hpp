@@ -51,7 +51,7 @@ protected:
   /**
    * @brief execute read throttling
    */
-  std::string executeReadThrottling(std::map<int, int> & map);
+  std::string executeReadThrottling(std::vector<int> & vector);
 
   /**
    * @brief get names for core temperature files
@@ -68,7 +68,7 @@ protected:
 
   std::mutex throt_mutex_;        //!< @brief Mutex for output from reading thermal throttling
   std::string throt_error_str_;   //!< @brief Error string
-  std::map<int, int> throt_map_;  //!< @brief Map of core id and thermal throttling status
+  std::vector<int> throt_vector_;  //!< @brief Vector of core id and thermal throttling status
   double throt_elapsed_ms_;       //!< @brief Execution time of reading thermal throttling
 };
 

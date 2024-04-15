@@ -53,13 +53,13 @@ CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
 void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   std::string error_str;
-  std::map<int, int> map;
+  std::vector<int> vector;
   double elapsed_ms;
 
   {
     std::lock_guard<std::mutex> lock(throt_mutex_);
     error_str = throt_error_str_;
-    map = throt_map_;
+    vector = throt_vector_;
     elapsed_ms = throt_elapsed_ms_;
   }
 
@@ -70,10 +70,10 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   }
 
   int whole_level = DiagStatus::OK;
-
-  for (auto itr = map.begin(); itr != map.end(); ++itr) {
-    stat.add(fmt::format("CPU {}: Pkg Thermal Status", itr->first), thermal_dict_.at(itr->second));
-    whole_level = std::max(whole_level, itr->second);
+  int index = 0;
+  for (auto itr = vector.begin(); itr != vector.end(); ++itr, ++index) {
+    stat.add(fmt::format("CPU {}: Pkg Thermal Status", index), thermal_dict_.at(*itr));
+    whole_level = std::max(whole_level, *itr);
   }
 
   if (whole_level == DiagStatus::ERROR) {
@@ -89,7 +89,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   stat.addf("execution time", "%f ms", elapsed_ms);
 }
 
-std::string CPUMonitor::executeReadThrottling(std::map<int, int> & map)
+std::string CPUMonitor::executeReadThrottling(std::vector<int> & vector)
 {
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -164,7 +164,7 @@ std::string CPUMonitor::executeReadThrottling(std::map<int, int> & map)
       level = DiagStatus::OK;
     }
 
-    throt_map_[index] = level;
+    vector.push_back(level);
   }
   return "";
 }
@@ -179,15 +179,15 @@ void CPUMonitor::onTimer()
     stop_watch.tic("execution_time");
 
     std::string error_str;
-    std::map<int, int> map;
+    std::vector<int> vector;
 
-    error_str = this->executeReadThrottling(map);
+    error_str = this->executeReadThrottling(vector);
     // Measure elapsed time since start time and report
     const double elapsed_ms = stop_watch.toc("execution_time");
     {
       std::lock_guard<std::mutex> lock(throt_mutex_);
       throt_error_str_ = error_str;
-      throt_map_ = map;
+      throt_vector_ = vector;
       throt_elapsed_ms_ = elapsed_ms;
     }
   }
