@@ -385,7 +385,7 @@ void GoalPlannerModule::onFreespaceParkingTimer()
     isStuck(local_planner_data, occupancy_grid_map, parameters) && is_new_costmap &&
     needPathUpdate(
       local_planner_data->self_odometry->pose.pose, path_update_duration, parameters)) {
-    planFreespacePath(local_planner_data, occupancy_grid_map);
+    planFreespacePath(local_planner_data, goal_searcher, occupancy_grid_map);
   }
 }
 
@@ -676,17 +676,15 @@ Pose GoalPlannerModule::calcRefinedGoal(const Pose & goal_pose) const
 
 bool GoalPlannerModule::planFreespacePath(
   std::shared_ptr<const PlannerData> planner_data,
+  const std::shared_ptr<GoalSearcherBase> goal_searcher,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map)
 {
   GoalCandidates goal_candidates{};
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    goal_candidates = thread_safe_data_.get_goal_candidates();
-    goal_searcher_->update(goal_candidates, occupancy_grid_map, planner_data);
-    thread_safe_data_.set_goal_candidates(goal_candidates);
-    debug_data_.freespace_planner.num_goal_candidates = goal_candidates.size();
-    debug_data_.freespace_planner.is_planning = true;
-  }
+  goal_candidates = thread_safe_data_.get_goal_candidates();
+  goal_searcher->update(goal_candidates, occupancy_grid_map, planner_data);
+  thread_safe_data_.set_goal_candidates(goal_candidates);
+  debug_data_.freespace_planner.num_goal_candidates = goal_candidates.size();
+  debug_data_.freespace_planner.is_planning = true;
 
   for (size_t i = 0; i < goal_candidates.size(); i++) {
     const auto goal_candidate = goal_candidates.at(i);

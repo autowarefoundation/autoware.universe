@@ -593,6 +593,7 @@ private:
   // freespace parking
   bool planFreespacePath(
     std::shared_ptr<const PlannerData> planner_data,
+    const std::shared_ptr<GoalSearcherBase> goal_searcher,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
   bool canReturnToLaneParking();
 
