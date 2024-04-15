@@ -32,6 +32,10 @@ public:
   bool cluster(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) override;
+
+  bool cluster(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & pointcloud,
+    std::vector<sensor_msgs::msg::PointCloud2> & clusters) override;
   void setTolerance(float tolerance) { tolerance_ = tolerance; }
 
 private:

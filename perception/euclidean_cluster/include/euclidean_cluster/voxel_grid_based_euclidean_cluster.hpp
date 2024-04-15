@@ -35,6 +35,9 @@ public:
   bool cluster(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) override;
+  bool cluster(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & pointcloud,
+    std::vector<sensor_msgs::msg::PointCloud2> & clusters) override;
   void setVoxelLeafSize(float voxel_leaf_size) { voxel_leaf_size_ = voxel_leaf_size; }
   void setTolerance(float tolerance) { tolerance_ = tolerance; }
   void setMinPointsNumberPerVoxel(int min_points_number_per_voxel)

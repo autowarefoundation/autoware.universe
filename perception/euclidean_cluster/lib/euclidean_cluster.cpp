@@ -35,6 +35,15 @@ EuclideanCluster::EuclideanCluster(
 }
 
 bool EuclideanCluster::cluster(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & pointcloud_msg,
+  std::vector<sensor_msgs::msg::PointCloud2> & clusters)
+{
+  (void)pointcloud_msg;
+  (void)clusters;
+  return false;
+}
+
+bool EuclideanCluster::cluster(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
   std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters)
 {
