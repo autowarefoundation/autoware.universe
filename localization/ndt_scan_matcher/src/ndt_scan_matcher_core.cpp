@@ -204,7 +204,8 @@ void NDTScanMatcher::callback_initial_pose(
 {
   diagnostics_initial_pose_->clear();
 
-  diagnostics_initial_pose_->addKeyValue("topic_time_stamp", static_cast<rclcpp::Time>(initial_pose_msg_ptr->header.stamp).seconds());
+  diagnostics_initial_pose_->addKeyValue(
+    "topic_time_stamp", static_cast<rclcpp::Time>(initial_pose_msg_ptr->header.stamp).seconds());
   diagnostics_initial_pose_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
 
   if (is_activated_) {
@@ -242,7 +243,8 @@ void NDTScanMatcher::callback_regularization_pose(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr)
 {
   diagnostics_regularization_pose_->clear();
-  diagnostics_regularization_pose_->addKeyValue("topic_time_stamp", static_cast<rclcpp::Time>(pose_conv_msg_ptr->header.stamp).seconds());
+  diagnostics_regularization_pose_->addKeyValue(
+    "topic_time_stamp", static_cast<rclcpp::Time>(pose_conv_msg_ptr->header.stamp).seconds());
 
   regularization_pose_buffer_->push_back(pose_conv_msg_ptr);
 
@@ -255,7 +257,9 @@ void NDTScanMatcher::callback_sensor_points(
   diagnostics_scan_points_->clear();
   initialize_diagnostics_key_value();
 
-  diagnostics_scan_points_->addKeyValue("topic_time_stamp", static_cast<rclcpp::Time>(sensor_points_msg_in_sensor_frame->header.stamp).seconds());
+  diagnostics_scan_points_->addKeyValue(
+    "topic_time_stamp",
+    static_cast<rclcpp::Time>(sensor_points_msg_in_sensor_frame->header.stamp).seconds());
   validate_is_node_activated(is_activated_);
 
   bool is_set_sensor_points = set_input_source(sensor_points_msg_in_sensor_frame);
