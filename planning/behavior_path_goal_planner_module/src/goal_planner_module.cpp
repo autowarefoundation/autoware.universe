@@ -2576,6 +2576,7 @@ void GoalPlannerModule::GoalPlannerData::initializeOccupancyGridMap(
     planner_data.parameters.base_link2rear + margin;
   occupancy_grid_map_param.theta_size = parameters.theta_size;
   occupancy_grid_map_param.obstacle_threshold = parameters.obstacle_threshold;
+  occupancy_grid_map = std::make_shared<OccupancyGridBasedCollisionDetector>();
   occupancy_grid_map->setParam(occupancy_grid_map_param);
 }
 
