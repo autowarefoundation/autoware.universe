@@ -255,3 +255,68 @@ initial_pose_offset_model is rotated around (x,y) = (0,0) in the direction of th
 initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
 
 {{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/covariance_covariance_estimation.json") }}
+
+## Diagnostics
+
+### Abstract
+
+
+### sensor_points_callback
+
+| Name                | Description        | Transition condition to OK | Transition condition to Warning | Transition condition to Error | Whether to reject the estimation result (affects `skipping_publish_num`) |
+| ------------------- | ------------------ | -------------------------- | ------------------------------- | ----------------------------- | ---------------------------------------------------------------------- |
+| `topic_time_stamp` | the time stamp of input topic | allways | none | none | no |
+| `is_activated` |  whether the node is in the "activate" state or not | "actiavate" state | not "activate" state | none | no |
+| `is_set_sensor_points` | whether the sensor points is set or not | set | not set | none | yes |
+| `is_set_map_points` | whether the map points is set or not | set | not set | none | yes |
+| `sensor_points_size` | the size of sensor points | the size is **larger** than 0 | the size is 0 | none | yes |
+| `sensor_points_delay_time_sec` | the delay time of sensor points | the time is **shorter** than `validation.lidar_topic_timeout_sec` | the time is **longer** than `validation.lidar_topic_timeout_sec` | none | no |
+| `sensor_points_max_distance` | the max distance of sensor points | the max distance is **longer** than `sensor_points.required_distance` | the max distance is **shorter** than `sensor_points.required_distance` | none | yes |
+| `is_succeed_interpolate_intial_pose` | whether the interpolate of intial pose is succeed or not | succeed | failed. <br> (1) the size of `initial_pose_buffer_` is **smaller** than 2. <br> (2) the timestamp difference between initial_pose and sensor pointcloud is **longer** than `validation.initial_pose_timeout_sec`. <br> (3)  distance difference between two initial poses used for linear interpolation is **longer** than `validation.initial_pose_distance_tolerance_m` | none | yes |
+| `iteration_num` | the number of times calculate alignment  | the  number of times is **smaller** than `ndt.max_iterations` | the number of times is **larger** than `ndt.max_iterations` | none | yes |
+| `local_optimal_solution_oscillation_count` | the number of times the solution is judged to be oscillating | the number of times is smaller than 10 | the number of times is larger than 10 | none | yes |
+| `transform_probability` | the score of how well the map aligns with the sensor points | the score is smaller than`score_estimation.converged_param_transform_probability` (only in the case of `score_estimation.converged_param_type` is 0=TRANSFORM_PROBABILITY) | the score is **larger** than`score_estimation.converged_param_transform_probability` (only in the case of `score_estimation.converged_param_type` is 0=TRANSFORM_PROBABILITY) | none | yes |
+| `nearest_voxel_transformation_likelihood` | the score of how well the map aligns with the sensor points | the score is **smaller** than `score_estimation.converged_param_nearest_voxel_transformation_likelihood` (only in the case of `score_estimation.converged_param_type` is 1=NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) | | none | yes |
+| `distance_initial_to_result` | the distance between the position before convergence processing and the position after | the distance is shoter than 3 | the distance is longer than 3 | none | no |
+| `execution_time` | the time for convergence processing | the time is **shorter** than `validation.critical_upper_bound_exe_time_ms` | the time is **longer** than `validation.critical_upper_bound_exe_time_ms` | none | no |
+| `skipping_publish_num` | the number of times rejected estimation results consecutively | the number of times is 0 | the number of times is **larger** than 0 and **smaller** than 5 | the number of times is **larger** than 5 | - |
+
+### initial_pose_callback
+
+| Name                | Description        | Transition condition to OK | Transition condition to Warning | Transition condition to Error |
+| ------------------- | ------------------ | -------------------------- | ------------------------------- | ----------------------------- |
+| `topic_time_stamp` | the time stamp of input topic | allways | none | none |
+| `is_activated` | whether the node is in the "activate" state or not | "actiavate" state | not "activate" state | none | 
+
+
+### regularization_pose_callback
+
+| Name                | Description        | Transition condition to OK | Transition condition to Warning | Transition condition to Error |
+| ------------------- | ------------------ | -------------------------- | ------------------------------- | ----------------------------- |
+| `topic_time_stamp` | the time stamp of input topic | allways | none | none |
+
+### ndt_align_service
+
+| Name                | Description        | Transition condition to OK | Transition condition to Warning | Transition condition to Error |
+| ------------------- | ------------------ | -------------------------- | ------------------------------- | ----------------------------- |
+| `service_call_time_stamp` | the time stamp of service calling | allways | none | none |
+| `is_succeed_ndt_align_service` |  whether the process of ndt_align_service is succeed or not | succeed | failed. <br> (1) The map points is not set. <br> (2) The sensor points is not set. | none |
+| `is_set_sensor_points` | whether the sensor points is set or not | set | not set | none |
+| `is_set_map_points` | whether the map points is set or not | set | not set | none |
+| `latest_ndt_align_service_best_score` | the best score of particle | allways | none | none |
+
+
+### map_update_module
+
+| Name                | Description        | Transition condition to OK | Transition condition to Warning | Transition condition to Error |
+| ------------------- | ------------------ | -------------------------- | ------------------------------- | ----------------------------- |
+| `timer_callback_time_stamp` | the time stamp of timer_callback calling | allways | none | none |
+| `is_activated` | whether the node is in the "activate" state or not | "actiavate" state | not "activate" state | none |
+| `is_set_last_update_position` | whether the `last_update_position` is set or not | set | none | not set |
+| `distance_last_update_position_to_current_position` | the distance of `last_update_position`  to current position | (the distance + `dynamic_map_loading.lidar_radius`) is **smaller** than `dynamic_map_loading.map_radius` | none | (the distance + `dynamic_map_loading.lidar_radius`) is **larger** than `dynamic_map_loading.map_radius` |
+| `is_updated_map` | whether map is updated. If the map update couldn't be performed or there was no need to update the map, it becomes `False` | allways | none | none |
+| `is_succeed_call_pcd_loader` | whether call pcd_loader service is succeed or not | succeed | <TODO> | none |
+| `maps_to_add_size` | the number of maps to be added | allways | none | none |
+| `maps_to_remove_size` | the number of maps to be removeed | allways | none | none |
+| `maps_size` | the number of maps | allways | none | none |
+| `latest_update_execution_time` | the time for map updating | allways | none | none |
