@@ -239,9 +239,11 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     // stop for the traffic signal
     const auto rest_time_to_red_signal =
       planner_data_->getRestTimeToRedSignal(traffic_light_reg_elem_.id());
+    const bool is_time_to_red_signal_available =
+      (rest_time_to_red_signal.has_value() && !isDataTimeout(rest_time_to_red_signal->stamp));
     const bool is_stop_required = is_unknown_signal || is_signal_timed_out;
 
-    if (planner_param_.v2i_use_rest_time && rest_time_to_red_signal && !is_stop_required) {
+    if (planner_param_.v2i_use_rest_time && is_time_to_red_signal_available && !is_stop_required) {
       if (!canPassStopLineBeforeRed(*rest_time_to_red_signal, signed_arc_length_to_stop_point)) {
         *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
       }
@@ -517,10 +519,6 @@ bool TrafficLightModule::canPassStopLineBeforeRed(
   const TrafficSignalTimeToRedStamped & time_to_red_signal,
   const double distance_to_stop_line) const
 {
-  if (isDataTimeout(time_to_red_signal.stamp)) {
-    return false;
-  }
-
   const double rest_time_allowed_to_go_ahead =
     time_to_red_signal.time_to_red - planner_param_.v2i_last_time_allowed_to_pass;
 
