@@ -33,6 +33,7 @@ public:
     const std::string & input_topic, const std::string & long_name, const std::string & short_name);
 
   void setObjects(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
+
   void getObjectsOlderThan(
     const rclcpp::Time & time, const double duration,
     std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects);
@@ -43,8 +44,6 @@ private:
   std::string input_topic_;
   std::string long_name_;
   std::string short_name_;
-
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr sub_objects_;
 
   size_t que_size_{20};
   std::deque<autoware_auto_perception_msgs::msg::DetectedObjects> objects_que_;
@@ -75,6 +74,10 @@ public:
 
 private:
   rclcpp::Node & node_;
+  std::vector<rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr>
+    sub_objects_array_{};
+
+  bool is_initialized_{false};
 
   size_t input_size_;
   std::vector<std::shared_ptr<InputStream>> input_streams_;
