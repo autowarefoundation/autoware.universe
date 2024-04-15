@@ -23,9 +23,10 @@ elif ROS_VERSION == 2:
         packages=[package_name],
         data_files=[
             ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
-            ("share/" + package_name, glob("config/*.json")),
+            ("share/" + package_name, glob("config/objects.json")),
             ("share/" + package_name, ["package.xml"]),
-            (os.path.join("share", package_name), glob("launch/*.launch.xml")),
+            (os.path.join("share", package_name), glob("launch/carla_autoware.launch.xml")),
+            (os.path.join("share", package_name), glob("launch/carla_ros.launch.xml")),
         ],
         install_requires=["setuptools"],
         zip_safe=True,

@@ -21,7 +21,7 @@ This ros package enables autonomous driving using Autoware in addition to the ba
 
 - [Autoware.Universe](https://autowarefoundation.github.io/autoware-documentation/galactic/installation/autoware/source-installation/)
 - [CARLA Installation](https://carla.readthedocs.io/en/latest/start_quickstart/)
-- [Carla Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)
+- [Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)
 - [Carla Sensor Kit](https://github.com/mraditya01/carla_sensor_kit_launch)
 - [Autoware Individual params (forked with CARLA Sensor Kit params)](https://github.com/mraditya01/autoware_individual_params)
   1. Download maps (y-axis inverted version) to arbitaly location
