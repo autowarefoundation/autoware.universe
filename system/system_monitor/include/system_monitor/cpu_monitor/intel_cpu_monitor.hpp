@@ -23,6 +23,7 @@
 #include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
 
 #include <string>
+#include <vector>
 
 class CPUMonitor : public CPUMonitorBase
 {
