@@ -75,9 +75,7 @@ struct ObjectParameter
 
   double lateral_hard_margin_for_parked_vehicle{1.0};
 
-  double safety_buffer_longitudinal{0.0};
-
-  bool use_conservative_buffer_longitudinal{true};
+  double longitudinal_margin{0.0};
 };
 
 struct AvoidanceParameters
@@ -100,7 +98,7 @@ struct AvoidanceParameters
   bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
-  bool enable_force_avoidance_for_stopped_vehicle{false};
+  bool enable_avoidance_for_ambiguous_vehicle{false};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
@@ -143,6 +141,9 @@ struct AvoidanceParameters
   // To prevent large acceleration while avoidance.
   double max_acceleration{0.0};
 
+  // To prevent large acceleration while avoidance.
+  double min_velocity_to_limit_max_acceleration{0.0};
+
   // upper distance for envelope polygon expansion.
   double upper_distance_for_polygon_expansion{0.0};
 
@@ -184,16 +185,9 @@ struct AvoidanceParameters
   double object_check_min_road_shoulder_width{0.0};
 
   // force avoidance
-  double threshold_time_force_avoidance_for_stopped_vehicle{0.0};
-  double force_avoidance_distance_threshold{0.0};
-
-  // when complete avoidance motion, there is a distance margin with the object
-  // for longitudinal direction
-  double longitudinal_collision_margin_min_distance{0.0};
-
-  // when complete avoidance motion, there is a time margin with the object
-  // for longitudinal direction
-  double longitudinal_collision_margin_time{0.0};
+  double closest_distance_to_wait_and_see_for_ambiguous_vehicle{0.0};
+  double time_threshold_for_ambiguous_vehicle{0.0};
+  double distance_threshold_for_ambiguous_vehicle{0.0};
 
   // parameters for safety check area
   bool enable_safety_check{false};
@@ -215,8 +209,8 @@ struct AvoidanceParameters
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
 
-  // keep target velocity in yield maneuver
-  double yield_velocity{0.0};
+  bool consider_front_overhang{true};
+  bool consider_rear_overhang{true};
 
   // maximum stop distance
   double stop_max_distance{0.0};
@@ -242,11 +236,11 @@ struct AvoidanceParameters
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double soft_road_shoulder_margin{1.0};
+  double soft_drivable_bound_margin{1.0};
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double hard_road_shoulder_margin{1.0};
+  double hard_drivable_bound_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
   double max_right_shift_length{0.0};
@@ -275,26 +269,20 @@ struct AvoidanceParameters
   // line.
   double lateral_small_shift_threshold{0.0};
 
-  // use for judge if the ego is shifting or not.
-  double lateral_avoid_check_threshold{0.0};
-
   // use for return shift approval.
   double ratio_for_return_shift_approval{0.0};
 
   // For shift line generation process. The continuous shift length is quantized by this value.
-  double quantize_filter_threshold{0.0};
+  double quantize_size{0.0};
 
   // For shift line generation process. Merge small shift lines. (First step)
-  double same_grad_filter_1_threshold{0.0};
+  double th_similar_grad_1{0.0};
 
   // For shift line generation process. Merge small shift lines. (Second step)
-  double same_grad_filter_2_threshold{0.0};
+  double th_similar_grad_2{0.0};
 
   // For shift line generation process. Merge small shift lines. (Third step)
-  double same_grad_filter_3_threshold{0.0};
-
-  // For shift line generation process. Remove sharp(=jerky) shift line.
-  double sharp_shift_filter_threshold{0.0};
+  double th_similar_grad_3{0.0};
 
   // policy
   bool use_shorten_margin_immediately{false};
@@ -373,7 +361,7 @@ struct ObjectData  // avoidance target
   double distance_factor{0.0};
 
   // count up when object disappeared. Removed when it exceeds threshold.
-  rclcpp::Time last_seen;
+  rclcpp::Time last_seen{rclcpp::Clock(RCL_ROS_TIME).now()};
   double lost_time{0.0};
 
   // count up when object moved. Removed when it exceeds threshold.

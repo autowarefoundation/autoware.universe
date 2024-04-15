@@ -399,7 +399,8 @@ bool isMergingToEgoLane(const ObjectData & object)
 }
 
 bool isParkedVehicle(
-  ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler,
+  ObjectData & object, const AvoidancePlanningData & data,
+  const std::shared_ptr<RouteHandler> & route_handler,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   using lanelet::geometry::distance2d;
@@ -496,57 +497,36 @@ bool isParkedVehicle(
       object.shiftable_ratio > parameters->object_check_shiftable_ratio;
   }
 
-  return is_left_side_parked_vehicle || is_right_side_parked_vehicle;
-}
-
-bool isAmbiguousStoppedVehicle(
-  ObjectData & object, const AvoidancePlanningData & data,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters)
-{
-  const auto stop_time_longer_than_threshold =
-    object.stop_time > parameters->threshold_time_force_avoidance_for_stopped_vehicle;
-
-  if (!stop_time_longer_than_threshold) {
+  if (!is_left_side_parked_vehicle && !is_right_side_parked_vehicle) {
     return false;
   }
 
   const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
-  const auto is_moving_distance_longer_than_threshold =
-    tier4_autoware_utils::calcDistance2d(object.init_pose, object_pose) >
-    parameters->force_avoidance_distance_threshold;
-
-  if (is_moving_distance_longer_than_threshold) {
+  object.to_centerline =
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+  if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
     return false;
   }
 
-  if (object.is_within_intersection) {
-    RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is in the intersection area.");
-    return false;
-  }
+  return true;
+}
 
-  const auto rh = planner_data->route_handler;
-
-  if (
-    !!rh->getRoutingGraphPtr()->right(object.overhang_lanelet) &&
-    !!rh->getRoutingGraphPtr()->left(object.overhang_lanelet)) {
-    RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object isn't on the edge lane.");
-    return false;
-  }
-
-  if (!object.is_on_ego_lane) {
-    return true;
-  }
-
+bool isCloseToStopFactor(
+  ObjectData & object, const AvoidancePlanningData & data,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  const auto & rh = planner_data->route_handler;
   const auto & ego_pose = planner_data->self_odometry->pose.pose;
+  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
 
   // force avoidance for stopped vehicle
-  bool not_parked_object = true;
+  bool is_close_to_stop_factor = false;
 
   // check traffic light
   const auto to_traffic_light = getDistanceToNextTrafficLight(object_pose, data.extend_lanelets);
   {
-    not_parked_object =
+    is_close_to_stop_factor =
       to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
   }
 
@@ -558,12 +538,91 @@ bool isAmbiguousStoppedVehicle(
     const auto stop_for_crosswalk =
       to_crosswalk < parameters->object_ignore_section_crosswalk_in_front_distance &&
       to_crosswalk > -1.0 * parameters->object_ignore_section_crosswalk_behind_distance;
-    not_parked_object = not_parked_object || stop_for_crosswalk;
+    is_close_to_stop_factor = is_close_to_stop_factor || stop_for_crosswalk;
   }
 
   object.to_stop_factor_distance = std::min(to_traffic_light, to_crosswalk);
 
-  return !not_parked_object;
+  return is_close_to_stop_factor;
+}
+
+bool isNeverAvoidanceTarget(
+  ObjectData & object, const AvoidancePlanningData & data,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
+  const auto is_moving_distance_longer_than_threshold =
+    tier4_autoware_utils::calcDistance2d(object.init_pose, object_pose) >
+    parameters->distance_threshold_for_ambiguous_vehicle;
+  if (is_moving_distance_longer_than_threshold) {
+    object.reason = AvoidanceDebugFactor::MOVING_OBJECT;
+    return true;
+  }
+
+  if (object.is_within_intersection) {
+    if (object.behavior == ObjectData::Behavior::NONE) {
+      object.reason = "ParallelToEgoLane";
+      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object belongs to ego lane. never avoid it.");
+      return true;
+    }
+
+    if (object.behavior == ObjectData::Behavior::MERGING) {
+      object.reason = "MergingToEgoLane";
+      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object belongs to ego lane. never avoid it.");
+      return true;
+    }
+  }
+
+  if (object.is_on_ego_lane) {
+    const auto right_lane =
+      planner_data->route_handler->getRightLanelet(object.overhang_lanelet, true, false);
+    const auto left_lane =
+      planner_data->route_handler->getLeftLanelet(object.overhang_lanelet, true, false);
+    if (right_lane.has_value() && left_lane.has_value()) {
+      object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
+      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object isn't on the edge lane. never avoid it.");
+      return true;
+    }
+  }
+
+  if (isCloseToStopFactor(object, data, planner_data, parameters)) {
+    if (object.is_on_ego_lane && !object.is_parked) {
+      object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
+      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is close to stop factor. never avoid it.");
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool isObviousAvoidanceTarget(
+  ObjectData & object, [[maybe_unused]] const AvoidancePlanningData & data,
+  [[maybe_unused]] const std::shared_ptr<const PlannerData> & planner_data,
+  [[maybe_unused]] const std::shared_ptr<AvoidanceParameters> & parameters)
+{
+  if (!object.is_within_intersection) {
+    if (object.is_parked && object.behavior == ObjectData::Behavior::NONE) {
+      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is obvious parked vehicle.");
+      return true;
+    }
+
+    if (!object.is_on_ego_lane && object.behavior == ObjectData::Behavior::NONE) {
+      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is adjacent vehicle.");
+      return true;
+    }
+  }
+
+  if (!object.is_parked) {
+    object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
+  }
+
+  if (object.behavior == ObjectData::Behavior::MERGING) {
+    object.reason = "MergingToEgoLane";
+  }
+
+  return false;
 }
 
 bool isSatisfiedWithCommonCondition(
@@ -666,50 +725,56 @@ bool isSatisfiedWithVehicleCondition(
 {
   object.behavior = getObjectBehavior(object, parameters);
   object.is_on_ego_lane = isOnEgoLane(object);
-  object.is_ambiguous = isAmbiguousStoppedVehicle(object, data, planner_data, parameters);
 
-  // from here condition check for vehicle type objects.
-  if (object.is_ambiguous && parameters->enable_force_avoidance_for_stopped_vehicle) {
+  if (isNeverAvoidanceTarget(object, data, planner_data, parameters)) {
+    return false;
+  }
+
+  if (isObviousAvoidanceTarget(object, data, planner_data, parameters)) {
     return true;
   }
 
-  // check vehicle shift ratio
-  if (object.is_on_ego_lane) {
-    if (object.is_parked) {
-      return true;
-    } else {
-      object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
-      return false;
-    }
+  // from here, filtering for ambiguous vehicle.
+
+  if (!parameters->enable_avoidance_for_ambiguous_vehicle) {
+    object.reason = "AmbiguousStoppedVehicle";
+    return false;
   }
 
-  // Object is on center line -> ignore.
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
-  object.to_centerline =
-    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
-  if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
-    object.reason = AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE;
+  const auto stop_time_longer_than_threshold =
+    object.stop_time > parameters->time_threshold_for_ambiguous_vehicle;
+  if (!stop_time_longer_than_threshold) {
+    object.reason = "AmbiguousStoppedVehicle(wait-and-see)";
     return false;
   }
 
   if (object.is_within_intersection) {
-    std::string turn_direction = object.overhang_lanelet.attributeOr("turn_direction", "else");
-    if (turn_direction == "straight") {
+    if (object.behavior == ObjectData::Behavior::DEVIATING) {
+      object.reason = "AmbiguousStoppedVehicle(wait-and-see)";
+      object.is_ambiguous = true;
+      return true;
+    }
+  } else {
+    if (object.behavior == ObjectData::Behavior::MERGING) {
+      object.reason = "AmbiguousStoppedVehicle(wait-and-see)";
+      object.is_ambiguous = true;
+      return true;
+    }
+
+    if (object.behavior == ObjectData::Behavior::DEVIATING) {
+      object.reason = "AmbiguousStoppedVehicle(wait-and-see)";
+      object.is_ambiguous = true;
       return true;
     }
 
     if (object.behavior == ObjectData::Behavior::NONE) {
-      object.reason = "ParallelToEgoLane";
-      return false;
+      object.is_ambiguous = false;
+      return true;
     }
   }
 
-  if (object.behavior == ObjectData::Behavior::MERGING) {
-    object.reason = "MergingToEgoLane";
-    return false;
-  }
-
-  return true;
+  object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
+  return false;
 }
 
 bool isNoNeedAvoidanceBehavior(
@@ -749,9 +814,9 @@ std::optional<double> getAvoidMargin(
                                 object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
   const auto min_avoid_margin = lateral_hard_margin + 0.5 * vehicle_width;
   const auto soft_lateral_distance_limit =
-    object.to_road_shoulder_distance - parameters->soft_road_shoulder_margin - 0.5 * vehicle_width;
+    object.to_road_shoulder_distance - parameters->soft_drivable_bound_margin - 0.5 * vehicle_width;
   const auto hard_lateral_distance_limit =
-    object.to_road_shoulder_distance - parameters->hard_road_shoulder_margin - 0.5 * vehicle_width;
+    object.to_road_shoulder_distance - parameters->hard_drivable_bound_margin - 0.5 * vehicle_width;
 
   // Step1. check avoidable or not.
   if (hard_lateral_distance_limit < min_avoid_margin) {
@@ -809,8 +874,7 @@ double getRoadShoulderDistance(
       }
 
       {
-        const auto p2 =
-          calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? -100.0 : 100.0), 0.0).position;
+        const auto p2 = calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? -1.0 : 1.0), 0.0).position;
         const auto opt_intersect =
           tier4_autoware_utils::intersect(p1.second, p2, bound.at(i - 1), bound.at(i));
 
@@ -1154,43 +1218,6 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
       {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly, !isOnRight(object)});
   }
   return obstacles_for_drivable_area;
-}
-
-lanelet::ConstLanelets getTargetLanelets(
-  const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
-  const double left_offset, const double right_offset)
-{
-  const auto & rh = planner_data->route_handler;
-
-  lanelet::ConstLanelets target_lanelets{};
-  for (const auto & lane : route_lanelets) {
-    auto l_offset = 0.0;
-    auto r_offset = 0.0;
-
-    const auto opt_left_lane = rh->getLeftLanelet(lane);
-    if (opt_left_lane) {
-      target_lanelets.push_back(opt_left_lane.value());
-    } else {
-      l_offset = left_offset;
-    }
-
-    const auto opt_right_lane = rh->getRightLanelet(lane);
-    if (opt_right_lane) {
-      target_lanelets.push_back(opt_right_lane.value());
-    } else {
-      r_offset = right_offset;
-    }
-
-    const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
-    if (!right_opposite_lanes.empty()) {
-      target_lanelets.push_back(right_opposite_lanes.front());
-    }
-
-    const auto expand_lane = lanelet::utils::getExpandedLanelet(lane, l_offset, r_offset);
-    target_lanelets.push_back(expand_lane);
-  }
-
-  return target_lanelets;
 }
 
 lanelet::ConstLanelets getCurrentLanesFromPath(
@@ -1636,7 +1663,8 @@ void filterTargetObjects(
     if (filtering_utils::isVehicleTypeObject(o)) {
       o.is_within_intersection =
         filtering_utils::isWithinIntersection(o, planner_data->route_handler);
-      o.is_parked = filtering_utils::isParkedVehicle(o, planner_data->route_handler, parameters);
+      o.is_parked =
+        filtering_utils::isParkedVehicle(o, data, planner_data->route_handler, parameters);
       o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 
       if (filtering_utils::isNoNeedAvoidanceBehavior(o, parameters)) {
