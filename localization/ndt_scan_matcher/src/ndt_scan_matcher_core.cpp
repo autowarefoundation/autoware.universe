@@ -773,7 +773,8 @@ void NDTScanMatcher::service_ndt_align(
   service_ndt_align_main(req, res);
 
   bool is_succeed_latest_ndt_align_service = res->success;
-  diagnostics_ndt_align_->addKeyValue("is_succeed_latest_ndt_align_service", is_succeed_latest_ndt_align_service);
+  diagnostics_ndt_align_->addKeyValue(
+    "is_succeed_latest_ndt_align_service", is_succeed_latest_ndt_align_service);
   if (is_succeed_latest_ndt_align_service) {
     std::stringstream message;
     message << "ndt_align_service is failed.";
