@@ -35,7 +35,6 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/surface/convex_hull.h>
 #include <tf2/utils.h>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -296,7 +295,6 @@ bool AEB::isDataReady()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
-  std::cerr << " onCheckCollision \n";
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkExpired()) {
@@ -334,7 +332,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   }
 
   // step2. create velocity data check if the vehicle stops or not
-  const double current_v = current_velocity_ptr_->longitudinal_velocity;
+  const double current_v = current_velocity_ptr_->longitudinal_velocity + 2.25;
   if (current_v < 0.1) {
     std::cerr << __func__ << " Current vel \n";
     return false;
