@@ -579,7 +579,7 @@ bool isNeverAvoidanceTarget(
   if (object.behavior == ObjectData::Behavior::MERGING) {
     object.reason = "MergingToEgoLane";
     if (
-      isOnRight(object) &&
+      isOnRight(object) && !object.is_parked &&
       object.overhang_points.front().first > parameters->th_overhang_distance) {
       RCLCPP_DEBUG(
         rclcpp::get_logger(__func__),
@@ -587,7 +587,7 @@ bool isNeverAvoidanceTarget(
       return true;
     }
     if (
-      !isOnRight(object) &&
+      !isOnRight(object) && !object.is_parked &&
       object.overhang_points.front().first < -1.0 * parameters->th_overhang_distance) {
       RCLCPP_DEBUG(
         rclcpp::get_logger(__func__),
@@ -599,7 +599,7 @@ bool isNeverAvoidanceTarget(
   if (object.behavior == ObjectData::Behavior::DEVIATING) {
     object.reason = "DeviatingFromEgoLane";
     if (
-      isOnRight(object) &&
+      isOnRight(object) && !object.is_parked &&
       object.overhang_points.front().first > parameters->th_overhang_distance) {
       RCLCPP_DEBUG(
         rclcpp::get_logger(__func__),
@@ -607,7 +607,7 @@ bool isNeverAvoidanceTarget(
       return true;
     }
     if (
-      !isOnRight(object) &&
+      !isOnRight(object) && !object.is_parked &&
       object.overhang_points.front().first < -1.0 * parameters->th_overhang_distance) {
       RCLCPP_DEBUG(
         rclcpp::get_logger(__func__),
