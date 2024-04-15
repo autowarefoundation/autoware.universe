@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE_STATIC_CENTERLINE_GENERATOR__TYPE_ALIAS_HPP_
-#define AUTOWARE_STATIC_CENTERLINE_GENERATOR__TYPE_ALIAS_HPP_
+#ifndef STATIC_CENTERLINE_GENERATOR__TYPE_ALIAS_HPP_
+#define STATIC_CENTERLINE_GENERATOR__TYPE_ALIAS_HPP_
 
 #include "route_handler/route_handler.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
@@ -41,4 +41,4 @@ using tier4_autoware_utils::LineString2d;
 using visualization_msgs::msg::MarkerArray;
 }  // namespace autoware::static_centerline_generator
 
-#endif  // AUTOWARE_STATIC_CENTERLINE_GENERATOR__TYPE_ALIAS_HPP_
+#endif  // STATIC_CENTERLINE_GENERATOR__TYPE_ALIAS_HPP_

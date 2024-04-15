@@ -17,6 +17,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "static_centerline_generator/type_alias.hpp"
+
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
 #include <vector>

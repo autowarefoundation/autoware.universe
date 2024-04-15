@@ -15,11 +15,11 @@
 #ifndef STATIC_CENTERLINE_GENERATOR__STATIC_CENTERLINE_GENERATOR_NODE_HPP_
 #define STATIC_CENTERLINE_GENERATOR__STATIC_CENTERLINE_GENERATOR_NODE_HPP_
 
-#include "rclcpp/rclcpp.hpp"
-#include "static_centerline_generator/centerline_source/optimization_trajectory_based_centerline.hpp"
 #include "autoware_static_centerline_generator/srv/load_map.hpp"
 #include "autoware_static_centerline_generator/srv/plan_path.hpp"
 #include "autoware_static_centerline_generator/srv/plan_route.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "static_centerline_generator/centerline_source/optimization_trajectory_based_centerline.hpp"
 #include "static_centerline_generator/type_alias.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
@@ -69,7 +69,7 @@ private:
   CenterlineWithRoute generate_centerline_with_route();
   // plan path
   std::vector<TrajectoryPoint> plan_path(const std::vector<lanelet::Id> & route_lane_ids);
-  static std::vector<TrajectoryPoint> optimize_trajectory(const Path & raw_path) ;
+  static std::vector<TrajectoryPoint> optimize_trajectory(const Path & raw_path);
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
 

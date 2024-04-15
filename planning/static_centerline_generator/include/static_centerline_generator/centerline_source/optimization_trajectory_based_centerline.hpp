@@ -18,18 +18,19 @@
 #include "rclcpp/rclcpp.hpp"
 #include "route_handler/route_handler.hpp"
 #include "static_centerline_generator/type_alias.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
+
 #include "autoware_auto_planning_msgs/msg/path.hpp"
+#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
+#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
 #include <vector>
 
 namespace autoware::static_centerline_generator
 {
-using ::autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using ::autoware_auto_planning_msgs::msg::PathWithLaneId;
-using ::route_handler::RouteHandler;
 using ::autoware_auto_planning_msgs::msg::Path;
+using ::autoware_auto_planning_msgs::msg::PathWithLaneId;
+using ::autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using ::route_handler::RouteHandler;
 class OptimizationTrajectoryBasedCenterline
 {
 public:
