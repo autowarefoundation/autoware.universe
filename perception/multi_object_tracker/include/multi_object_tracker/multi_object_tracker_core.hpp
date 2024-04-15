@@ -85,11 +85,6 @@ private:
   std::unique_ptr<DataAssociation> data_association_;
   std::unique_ptr<TrackerProcessor> processor_;
 
-  // inputs
-  rclcpp::Subscription<DetectedObjects>::SharedPtr sub_objects_{};
-  std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array_{};
-  rclcpp::Time last_measurement_time_;
-
   // input manager
   std::unique_ptr<InputManager> input_manager_;
 
@@ -98,8 +93,6 @@ private:
   std::vector<std::pair<rclcpp::Time, DetectedObjects>> objects_data_{};
 
   // callback functions
-  void onData(const DetectedObjects::ConstSharedPtr msg, const size_t array_number);
-  void onMeasurement(const DetectedObjects::ConstSharedPtr input_objects_msg);
   void onTimer();
 
   // publish processes

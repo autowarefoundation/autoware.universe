@@ -87,9 +87,6 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   std::vector<std::string> input_names_long = get_parameter("input_names_long").as_string_array();
   std::vector<std::string> input_names_short = get_parameter("input_names_short").as_string_array();
 
-  // Initialize the last measurement time
-  last_measurement_time_ = this->now();
-
   // ROS interface - Publisher
   tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
 
@@ -120,8 +117,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // If the delay compensation is enabled, the timer is used to publish the output at the correct
   // time.
   if (enable_delay_compensation) {
-    publisher_period_ = 1.0 / publish_rate;    // [s]
-    constexpr double timer_multiplier = 20.0;  // 20 times frequent for publish timing check
+    publisher_period_ = 1.0 / publish_rate;   // [s]
+    constexpr double timer_multiplier = 1.0;  // 20 times frequent for publish timing check
     const auto timer_period = rclcpp::Rate(publish_rate * timer_multiplier).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
@@ -168,62 +165,19 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
-void MultiObjectTracker::onData(
-  const DetectedObjects::ConstSharedPtr msg, const size_t array_number)
-{
-  std::pair<rclcpp::Time, DetectedObjects> pair = std::make_pair(msg->header.stamp, *msg);
-  objects_data_.push_back(pair);
-
-  // debug message
-  RCLCPP_INFO(
-    get_logger(), "Received data from topic %s", input_topic_names_.at(array_number).c_str());
-  if (last_measurement_time_ > msg->header.stamp) {
-    const double delta_time = (last_measurement_time_ - msg->header.stamp).seconds() * 1e3;
-    RCLCPP_INFO(
-      get_logger(), "Received data is older than the last measurement time by %f ms", delta_time);
-    return;
-  }
-  if (last_measurement_time_ < msg->header.stamp) {
-    last_measurement_time_ = msg->header.stamp;
-  }
-
-  // onMeasurement(msg);
-}
-
-void MultiObjectTracker::onMeasurement(const DetectedObjects::ConstSharedPtr input_objects_msg)
-{
-  // Get the time of the measurement
-  const rclcpp::Time measurement_time =
-    rclcpp::Time(input_objects_msg->header.stamp, this->now().get_clock_type());
-
-  debugger_->startMeasurementTime(this->now(), measurement_time);
-  runProcess(*input_objects_msg);
-  debugger_->endMeasurementTime(this->now());
-
-  // Publish objects if the timer is not enabled
-  if (publish_timer_ == nullptr) {
-    // Publish if the delay compensation is disabled
-    publish(measurement_time);
-  } else {
-    // Publish if the next publish time is close
-    const double minimum_publish_interval = publisher_period_ * 0.70;  // 70% of the period
-    if ((this->now() - last_published_time_).seconds() > minimum_publish_interval) {
-      checkAndPublish(this->now());
-    }
-  }
-}
-
 void MultiObjectTracker::onTimer()
 {
+  // if (!input_manager_->isInputsReady()) return;
+
   const rclcpp::Time current_time = this->now();
 
-  // Check the publish period
-  const auto elapsed_time = (current_time - last_published_time_).seconds();
-  // If the elapsed time is over the period, publish objects with prediction
-  constexpr double maximum_latency_ratio = 1.11;  // 11% margin
-  const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
+  // // Check the publish period
+  // const auto elapsed_time = (current_time - last_published_time_).seconds();
+  // // If the elapsed time is over the period, publish objects with prediction
+  // constexpr double maximum_latency_ratio = 1.11;  // 11% margin
+  // const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
 
-  if (elapsed_time < maximum_publish_latency) return;
+  // if (elapsed_time < maximum_publish_latency) return;
 
   // get objects from the input manager and run process
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_data;

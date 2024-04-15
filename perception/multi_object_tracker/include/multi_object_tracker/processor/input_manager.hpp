@@ -43,14 +43,21 @@ public:
     long_name = long_name_;
     short_name = short_name_;
   }
+
+  size_t getObjectsCount() const { return objects_que_.size(); }
+
   void getTimeStatistics(
-    double & latency_mean, double & latency_var, double & interval_mean, double & interval_var)
+    double & latency_mean, double & latency_var, double & interval_mean,
+    double & interval_var) const
   {
     latency_mean = latency_mean_;
     latency_var = latency_var_;
     interval_mean = interval_mean_;
     interval_var = interval_var_;
   }
+
+  bool getTimestamps(
+    rclcpp::Time & latest_measurement_time, rclcpp::Time & latest_message_time) const;
 
 private:
   rclcpp::Node & node_;
@@ -82,6 +89,8 @@ public:
     const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names,
     const std::vector<std::string> & short_names);
 
+  bool isInputsReady() const;
+
   bool getObjects(
     const rclcpp::Time & now,
     std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects);
@@ -92,6 +101,7 @@ private:
     sub_objects_array_{};
 
   bool is_initialized_{false};
+  rclcpp::Time latest_object_time_;
 
   size_t input_size_;
   std::vector<std::shared_ptr<InputStream>> input_streams_;

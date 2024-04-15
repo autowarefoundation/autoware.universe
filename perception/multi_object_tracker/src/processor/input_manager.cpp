@@ -38,15 +38,29 @@ void InputStream::init(
   latency_var_ = 0.0;
   interval_mean_ = 1 / expected_rate_;
   interval_var_ = 0.0;
+
+  latest_measurement_time_ = node_.now();
+  latest_message_time_ = node_.now();
+}
+
+bool InputStream::getTimestamps(
+  rclcpp::Time & latest_measurement_time, rclcpp::Time & latest_message_time) const
+{
+  if (!is_time_initialized_) {
+    return false;
+  }
+  latest_measurement_time = latest_measurement_time_;
+  latest_message_time = latest_message_time_;
+  return true;
 }
 
 void InputStream::setObjects(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)
 {
-  // debug message
-  RCLCPP_INFO(
-    node_.get_logger(), "InputStream::setObjects Received %s message from %s at %d",
-    long_name_.c_str(), input_topic_.c_str(), msg->header.stamp.sec);
+  // // debug message
+  // RCLCPP_INFO(
+  //   node_.get_logger(), "InputStream::setObjects Received %s message from %s at %d.%d",
+  //   long_name_.c_str(), input_topic_.c_str(), msg->header.stamp.sec, msg->header.stamp.nanosec);
 
   const autoware_auto_perception_msgs::msg::DetectedObjects object = *msg;
   objects_que_.push_back(object);
@@ -54,7 +68,7 @@ void InputStream::setObjects(
     objects_que_.pop_front();
   }
 
-  RCLCPP_INFO(node_.get_logger(), "InputStream::setObjects Que size: %zu", objects_que_.size());
+  // RCLCPP_INFO(node_.get_logger(), "InputStream::setObjects Que size: %zu", objects_que_.size());
 
   // Filter parameters
   constexpr double gain = 0.05;
@@ -113,6 +127,7 @@ void InputStream::getObjectsOlderThan(
 
 InputManager::InputManager(rclcpp::Node & node) : node_(node)
 {
+  latest_object_time_ = node_.now();
 }
 
 void InputManager::init(
@@ -150,6 +165,18 @@ void InputManager::init(
   is_initialized_ = true;
 }
 
+bool InputManager::isInputsReady() const
+{
+  if (!is_initialized_) {
+    RCLCPP_INFO(
+      node_.get_logger(), "InputManager::isMajorInputReady Input manager is not initialized");
+    return false;
+  }
+
+  // Check if the major input stream (index of 0) is ready
+  return input_streams_.at(0)->getObjectsCount() > 0;
+}
+
 bool InputManager::getObjects(
   const rclcpp::Time & now,
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
@@ -162,26 +189,38 @@ bool InputManager::getObjects(
   RCLCPP_INFO(node_.get_logger(), "InputManager::getObjects Getting objects from input streams");
   objects.clear();
 
-  // Get the streams statistics
+  // ANALYSIS: Get the streams statistics
   std::string long_name, short_name;
   double latency_mean, latency_var, interval_mean, interval_var;
+  rclcpp::Time latest_measurement_time, latest_message_time;
   for (const auto & input_stream : input_streams_) {
     input_stream->getNames(long_name, short_name);
     input_stream->getTimeStatistics(latency_mean, latency_var, interval_mean, interval_var);
+    if (!input_stream->getTimestamps(latest_measurement_time, latest_message_time)) {
+      continue;
+    }
+    double latency_message = (now - latest_message_time).seconds();
+    double latency_measurement = (now - latest_measurement_time).seconds();
     RCLCPP_INFO(
       node_.get_logger(),
-      "InputManager::getObjects %s: latency mean: %f, var: %f, interval mean: "
-      "%f, var: %f",
-      long_name.c_str(), latency_mean, latency_var, interval_mean, interval_var);
+      "InputManager::getObjects %s: latency mean: %f, std: %f, interval mean: "
+      "%f, std: %f, latest measurement latency: %f, latest message latency: %f",
+      long_name.c_str(), latency_mean, std::sqrt(latency_var), interval_mean,
+      std::sqrt(interval_var), latency_measurement, latency_message);
   }
 
   // Get proper latency
-  constexpr double target_latency = 0.11;   // [s], measurement to tracking latency, as much as the
-                                            // detector latency, the less total latency
-  constexpr double acceptable_band = 0.15;  // [s], acceptable band from the target latency
+  constexpr double target_latency = 0.15;  // [s], measurement to tracking latency, as much as the
+                                           // detector latency, the less total latency
+  constexpr double acceptable_latency =
+    0.35;  // [s], acceptable band from the target latency, larger than the target latency
   const rclcpp::Time object_latest_time = now - rclcpp::Duration::from_seconds(target_latency);
-  const rclcpp::Time object_oldest_time =
-    object_latest_time - rclcpp::Duration::from_seconds(acceptable_band);
+  rclcpp::Time object_oldest_time = now - rclcpp::Duration::from_seconds(acceptable_latency);
+
+  // if the object_oldest_time is older than the latest object time, set it to the latest object
+  // time
+  object_oldest_time =
+    object_oldest_time > latest_object_time_ ? object_oldest_time : latest_object_time_;
 
   // Get objects from all input streams
   for (const auto & input_stream : input_streams_) {
@@ -199,9 +238,23 @@ bool InputManager::getObjects(
       return (rclcpp::Time(a.header.stamp) - rclcpp::Time(b.header.stamp)).seconds() < 0;
     });
 
+  // ANALYSIS: Obtained object time range
+  if (!objects.empty()) {
+    rclcpp::Time oldest_time(objects.front().header.stamp);
+    rclcpp::Time latest_time(objects.back().header.stamp);
+    RCLCPP_INFO(
+      node_.get_logger(), "InputManager::getObjects Object time range: %f - %f",
+      (now - latest_time).seconds(), (now - oldest_time).seconds());
+  }
+
   RCLCPP_INFO(
     node_.get_logger(), "InputManager::getObjects Got %zu objects from input streams",
     objects.size());
+
+  // Update the latest object time
+  if (!objects.empty()) {
+    latest_object_time_ = rclcpp::Time(objects.back().header.stamp);
+  }
 
   return !objects.empty();
 }
