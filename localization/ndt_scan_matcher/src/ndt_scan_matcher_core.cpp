@@ -114,6 +114,9 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
     const double value_as_unlimited = 1000.0;
     regularization_pose_buffer_ =
       std::make_unique<SmartPoseBuffer>(this->get_logger(), value_as_unlimited, value_as_unlimited);
+
+    diagnostics_regularization_pose_ =
+      std::make_unique<DiagnosticsModule>(this, "localization", "regularization_pose_callback");
   }
 
   sensor_aligned_pose_pub_ =
@@ -201,6 +204,7 @@ void NDTScanMatcher::callback_initial_pose(
 {
   diagnostics_initial_pose_->clear();
 
+  diagnostics_initial_pose_->addKeyValue("topic_time_stamp", static_cast<rclcpp::Time>(initial_pose_msg_ptr->header.stamp).seconds());
   diagnostics_initial_pose_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
 
   if (is_activated_) {
@@ -237,7 +241,12 @@ void NDTScanMatcher::callback_initial_pose(
 void NDTScanMatcher::callback_regularization_pose(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr)
 {
+  diagnostics_regularization_pose_->clear();
+  diagnostics_regularization_pose_->addKeyValue("topic_time_stamp", static_cast<rclcpp::Time>(pose_conv_msg_ptr->header.stamp).seconds());
+
   regularization_pose_buffer_->push_back(pose_conv_msg_ptr);
+
+  diagnostics_regularization_pose_->publish();
 }
 
 void NDTScanMatcher::callback_sensor_points(
@@ -246,6 +255,7 @@ void NDTScanMatcher::callback_sensor_points(
   diagnostics_scan_points_->clear();
   initialize_diagnostics_key_value();
 
+  diagnostics_scan_points_->addKeyValue("topic_time_stamp", static_cast<rclcpp::Time>(sensor_points_msg_in_sensor_frame->header.stamp).seconds());
   validate_is_node_activated(is_activated_);
 
   bool is_set_sensor_points = set_input_source(sensor_points_msg_in_sensor_frame);
@@ -750,7 +760,7 @@ void NDTScanMatcher::service_ndt_align(
 {
   diagnostics_ndt_align_->clear();
 
-  diagnostics_ndt_align_->addKeyValue("latest_timestamp", this->now().seconds());
+  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", this->now().seconds());
   diagnostics_ndt_align_->addKeyValue("is_succeed_latest_ndt_aling_service", false);
   diagnostics_ndt_align_->addKeyValue("is_set_sensor_points", false);
   diagnostics_ndt_align_->addKeyValue("is_set_map_points", false);

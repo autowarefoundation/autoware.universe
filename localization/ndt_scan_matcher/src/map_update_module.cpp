@@ -51,6 +51,7 @@ MapUpdateModule::MapUpdateModule(
 
 void MapUpdateModule::initialize_diagnostics_key_value()
 {
+  diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", 0.0);
   diagnostics_map_update_->addKeyValue("is_activated", false);
   diagnostics_map_update_->addKeyValue("is_set_last_updete_position", false);
   diagnostics_map_update_->addKeyValue("distance_last_updete_position_to_current_position", 0.0);
@@ -65,6 +66,7 @@ void MapUpdateModule::initialize_diagnostics_key_value()
 void MapUpdateModule::callback_timer(
   const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position)
 {
+  diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", clock_->now().seconds());
   diagnostics_map_update_->addKeyValue("is_activated", is_activated);
 
   if (is_activated) {

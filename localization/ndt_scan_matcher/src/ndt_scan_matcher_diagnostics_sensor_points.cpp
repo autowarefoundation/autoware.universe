@@ -20,6 +20,7 @@
 
 void NDTScanMatcher::initialize_diagnostics_key_value()
 {
+  diagnostics_scan_points_->addKeyValue("topic_time_stamp", 0.0);
   diagnostics_scan_points_->addKeyValue("is_activated", false);
   diagnostics_scan_points_->addKeyValue("is_set_map_points", false);
   diagnostics_scan_points_->addKeyValue("is_set_sensor_points", false);

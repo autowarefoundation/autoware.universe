@@ -228,6 +228,7 @@ private:
   std::atomic<bool> is_activated_;
   std::unique_ptr<DiagnosticsModule> diagnostics_scan_points_;
   std::unique_ptr<DiagnosticsModule> diagnostics_initial_pose_;
+  std::unique_ptr<DiagnosticsModule> diagnostics_regularization_pose_;
   std::unique_ptr<DiagnosticsModule> diagnostics_ndt_align_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
