@@ -84,8 +84,8 @@ void MapUpdateModule::callback_timer(
       message << "Cannot find the reference position for map update."
               << "Please check if the EKF odometry is provided to NDT.";
       diagnostics_map_update_->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
-      RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
+        diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+      RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
     }
   } else {
     std::stringstream message;
@@ -227,6 +227,11 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   while (status != std::future_status::ready) {
     RCLCPP_INFO(logger_, "waiting response");
     if (!rclcpp::ok()) {
+      std::stringstream message;
+      message << "pcd_loader service is not working.";
+      diagnostics_map_update_->updateLevelAndMessage(
+        diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+      RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
       return false;  // No update
     }
     status = result.wait_for(std::chrono::seconds(1));
