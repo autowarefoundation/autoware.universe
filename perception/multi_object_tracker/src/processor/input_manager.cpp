@@ -54,8 +54,7 @@ void InputStream::setObjects(
     objects_que_.pop_front();
   }
 
-  // RCLCPP_INFO(
-  //   node_.get_logger(), "InputStream::setObjects Que size: %zu", objects_que_.size());
+  RCLCPP_INFO(node_.get_logger(), "InputStream::setObjects Que size: %zu", objects_que_.size());
 
   // Filter parameters
   constexpr double gain = 0.05;
@@ -88,18 +87,43 @@ void InputStream::getObjectsOlderThan(
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
 {
   objects.clear();
+
+  // remove objects older than the specified duration
+  const rclcpp::Time old_limit = time - rclcpp::Duration::from_seconds(duration);
+  for (const auto & object : objects_que_) {
+    const rclcpp::Time object_time = rclcpp::Time(object.header.stamp);
+    if (object_time < old_limit) {
+      objects_que_.pop_front();
+    } else {
+      break;
+    }
+  }
+
   for (const auto & object : objects_que_) {
     // Skip if the object is older than the specified duration
     const rclcpp::Time object_time = rclcpp::Time(object.header.stamp);
-    const double time_diff = (object_time - time).seconds();
-    if (time_diff > duration) {
-      continue;
-    }
+    const double time_diff = (time - object_time).seconds();
     // Add the object if the object is older than the specified time
     if (time_diff >= 0.0) {
       objects.push_back(object);
+      // remove the object from the queue
+      objects_que_.pop_front();
     }
   }
+  RCLCPP_INFO(
+    node_.get_logger(), "InputStream::getObjectsOlderThan %s gives %zu objects", long_name_.c_str(),
+    objects.size());
+
+  // // message to show the older limit, time, old objects in the queue, latest object in the queue
+  // if (objects_que_.empty()) {
+  //   RCLCPP_INFO(
+  //     node_.get_logger(), "InputStream::getObjectsOlderThan %s empty queue", long_name_.c_str());
+  //   return;
+  // }
+  // RCLCPP_INFO(
+  //   node_.get_logger(), "InputStream::getObjectsOlderThan %s older limit %f, time %f, %u, %u",
+  //   long_name_.c_str(), old_limit.seconds(), time.seconds(),
+  //   objects_que_.front().header.stamp.sec, objects_que_.back().header.stamp.sec);
 }
 
 InputManager::InputManager(rclcpp::Node & node) : node_(node)
@@ -132,7 +156,7 @@ void InputManager::init(
       long_names.at(i).c_str(), input_topics.at(i).c_str());
     std::function<void(
       const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)>
-      func = std::bind(&InputStream::setObjects, input_stream, std::placeholders::_1);
+      func = std::bind(&InputStream::setObjects, input_streams_.at(i), std::placeholders::_1);
     sub_objects_array_.at(i) =
       node_.create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
         input_topics.at(i), rclcpp::QoS{1}, func);

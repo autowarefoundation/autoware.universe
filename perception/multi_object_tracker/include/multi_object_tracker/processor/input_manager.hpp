@@ -45,7 +45,7 @@ private:
   std::string long_name_;
   std::string short_name_;
 
-  size_t que_size_{20};
+  size_t que_size_{50};
   std::deque<autoware_auto_perception_msgs::msg::DetectedObjects> objects_que_;
 
   bool is_time_initialized_{false};
