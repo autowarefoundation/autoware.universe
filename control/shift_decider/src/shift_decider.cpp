@@ -77,10 +77,8 @@ void ShiftDecider::updateCurrentShiftCmd()
   using autoware_auto_vehicle_msgs::msg::GearCommand;
 
   const auto stopped = vehicle_stop_checker_->isVehicleStopped(0.0);
-  std::cerr << "stopped: " << stopped << std::endl;
   shift_cmd_.stamp = now();
   static constexpr double vel_threshold = 0.01;  // to prevent chattering
-  std::cerr << "longitudinal.speed: " << control_cmd_->longitudinal.speed << std::endl;
   if (autoware_state_->state == AutowareState::DRIVING) {
     if (stopped) {
       if (control_cmd_->longitudinal.speed > vel_threshold) {
@@ -102,13 +100,6 @@ void ShiftDecider::updateCurrentShiftCmd()
     }
   }
   prev_shift_command = shift_cmd_.command;
-  if (shift_cmd_.command == GearCommand::DRIVE) {
-    std::cerr << "ShiftDecider: DRIVE" << std::endl;
-  } else if (shift_cmd_.command == GearCommand::REVERSE) {
-      std::cerr << "ShiftDecider: REVERSE" << std::endl;
-  } else if (shift_cmd_.command == GearCommand::PARK) {
-      std::cerr << "ShiftDecider: PARK" << std::endl;
-  } 
 }
 
 void ShiftDecider::initTimer(double period_s)
