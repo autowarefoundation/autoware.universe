@@ -24,6 +24,7 @@
 
 #include <boost/process.hpp>
 
+#include <unordered_map>
 #include <climits>
 #include <map>
 #include <string>
