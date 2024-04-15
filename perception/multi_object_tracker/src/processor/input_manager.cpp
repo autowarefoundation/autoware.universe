@@ -100,7 +100,7 @@ void InputStream::getObjectsOlderThan(
   const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
 {
-  objects.clear();
+  // objects.clear();
 
   assert(object_latest_time.nanoseconds() > object_oldest_time.nanoseconds());
 
@@ -186,7 +186,6 @@ bool InputManager::getObjects(
     return false;
   }
 
-  RCLCPP_INFO(node_.get_logger(), "InputManager::getObjects Getting objects from input streams");
   objects.clear();
 
   // ANALYSIS: Get the streams statistics
@@ -224,9 +223,10 @@ bool InputManager::getObjects(
 
   // Get objects from all input streams
   for (const auto & input_stream : input_streams_) {
-    std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_tmp;
-    input_stream->getObjectsOlderThan(object_latest_time, object_oldest_time, objects_tmp);
-    objects.insert(objects.end(), objects_tmp.begin(), objects_tmp.end());
+    // std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_tmp;
+    // input_stream->getObjectsOlderThan(object_latest_time, object_oldest_time, objects_tmp);
+    // objects.insert(objects.end(), objects_tmp.begin(), objects_tmp.end());
+    input_stream->getObjectsOlderThan(object_latest_time, object_oldest_time, objects);
   }
 
   // Sort objects by timestamp
@@ -238,14 +238,14 @@ bool InputManager::getObjects(
       return (rclcpp::Time(a.header.stamp) - rclcpp::Time(b.header.stamp)).seconds() < 0;
     });
 
-  // ANALYSIS: Obtained object time range
-  if (!objects.empty()) {
-    rclcpp::Time oldest_time(objects.front().header.stamp);
-    rclcpp::Time latest_time(objects.back().header.stamp);
-    RCLCPP_INFO(
-      node_.get_logger(), "InputManager::getObjects Object time range: %f - %f",
-      (now - latest_time).seconds(), (now - oldest_time).seconds());
-  }
+  // // ANALYSIS: Obtained object time range
+  // if (!objects.empty()) {
+  //   rclcpp::Time oldest_time(objects.front().header.stamp);
+  //   rclcpp::Time latest_time(objects.back().header.stamp);
+  //   RCLCPP_INFO(
+  //     node_.get_logger(), "InputManager::getObjects Object time range: %f - %f",
+  //     (now - latest_time).seconds(), (now - oldest_time).seconds());
+  // }
 
   RCLCPP_INFO(
     node_.get_logger(), "InputManager::getObjects Got %zu objects from input streams",

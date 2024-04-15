@@ -181,12 +181,23 @@ void MultiObjectTracker::onTimer()
 
   // get objects from the input manager and run process
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_data;
-  if (input_manager_->getObjects(current_time, objects_data)) {
+  const bool is_objects_ready = input_manager_->getObjects(current_time, objects_data);
+  if (is_objects_ready) {
+    debugger_->startMeasurementTime(this->now(), rclcpp::Time(objects_data.front().header.stamp));
+
     for (const auto & objects : objects_data) {
       runProcess(objects);
     }
-  }
 
+    // for debug
+    rclcpp::Time oldest_time(objects_data.front().header.stamp);
+    rclcpp::Time latest_time(objects_data.back().header.stamp);
+    RCLCPP_INFO(
+      this->get_logger(), "MultiObjectTracker::onTimer Objects time range: %f - %f",
+      (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());
+
+    debugger_->endMeasurementTime(this->now());
+  }
   // Publish
   checkAndPublish(current_time);
 }
