@@ -887,7 +887,7 @@ double PidLongitudinalController::getDt()
 enum PidLongitudinalController::Shift PidLongitudinalController::getCurrentShift(
   const ControlData & control_data) const
 {
-  constexpr double epsilon = 0.01;
+  constexpr double epsilon = 1e-5;
 
   const double target_vel =
     control_data.interpolated_traj.points.at(control_data.target_idx).longitudinal_velocity_mps;
