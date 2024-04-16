@@ -229,34 +229,6 @@ double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Poin
   return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
 
-bool is_local_optimal_solution_oscillation(
-  const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
-  const float oscillation_threshold, const float inversion_vector_threshold)
-{
-  bool prev_oscillation = false;
-  int oscillation_cnt = 0;
-
-  for (size_t i = 2; i < result_pose_msg_array.size(); ++i) {
-    const Eigen::Vector3d current_pose = point_to_vector3d(result_pose_msg_array.at(i).position);
-    const Eigen::Vector3d prev_pose = point_to_vector3d(result_pose_msg_array.at(i - 1).position);
-    const Eigen::Vector3d prev_prev_pose =
-      point_to_vector3d(result_pose_msg_array.at(i - 2).position);
-    const auto current_vec = current_pose - prev_pose;
-    const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
-    const bool oscillation = prev_vec.dot(current_vec) < inversion_vector_threshold;
-    if (prev_oscillation && oscillation) {
-      if (static_cast<float>(oscillation_cnt) > oscillation_threshold) {
-        return true;
-      }
-      ++oscillation_cnt;
-    } else {
-      oscillation_cnt = 0;
-    }
-    prev_oscillation = oscillation;
-  }
-  return false;
-}
-
 void output_pose_with_cov_to_log(
   const rclcpp::Logger & logger, const std::string & prefix,
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov)
