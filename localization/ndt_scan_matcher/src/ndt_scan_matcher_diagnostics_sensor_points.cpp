@@ -59,7 +59,7 @@ bool NDTScanMatcher::validate_is_set_map_points(const bool is_set_map_points)
   bool is_ok = is_set_map_points;
   if (!is_ok) {
     std::stringstream message;
-    message << "Map points is not set.";  // TODO "Map points are?"
+    message << "Map points is not set.";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
@@ -74,7 +74,7 @@ bool NDTScanMatcher::validate_is_set_sensor_points(const bool is_set_sensor_poin
   bool is_ok = is_set_sensor_points;
   if (!is_ok) {
     std::stringstream message;
-    message << "Sensor points is not set.";  // TODO "Sensor points are?"
+    message << "Sensor points is not set.";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());

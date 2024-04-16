@@ -20,6 +20,7 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
 #include <string>
+#include <vector>
 
 class DiagnosticsModule
 {
