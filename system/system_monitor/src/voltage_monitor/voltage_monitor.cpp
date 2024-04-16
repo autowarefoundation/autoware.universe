@@ -41,7 +41,9 @@
 namespace bp = boost::process;
 
 VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
-: Node("voltage_monitor", options), updater_(this), hostname_(),
+: Node("voltage_monitor", options),
+  updater_(this),
+  hostname_(),
   voltage_timeout_(declare_parameter<int>("voltage_timeout", 5)),
   voltage_timeout_expired_(false),
   battery_timeout_(declare_parameter<int>("battery_timeout", 5)),
@@ -84,7 +86,8 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
 
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(1), std::bind(timer_callback, this), timer_callback_group_);
+    this, get_clock(), std::chrono::seconds(1), std::bind(timer_callback, this),
+    timer_callback_group_);
 }
 
 void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -130,7 +133,7 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
     std::lock_guard<std::mutex> lock(voltage_timeout_mutex_);
     timeout_expired = voltage_timeout_expired_;
   }
-  
+
   if (tmp_voltage < voltage_error_) {
     stat.summary(DiagStatus::WARN, "Battery Died");
   } else if (tmp_voltage < voltage_warn_) {
@@ -160,7 +163,8 @@ void VoltageMonitor::onVoltageTimer()
     voltage_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(voltage_timeout_), std::bind(&VoltageMonitor::onVoltageTimeout, this));
+    this, get_clock(), std::chrono::seconds(voltage_timeout_),
+    std::bind(&VoltageMonitor::onVoltageTimeout, this));
 
   float tmp_voltage = 0.0;
 
@@ -205,7 +209,7 @@ void VoltageMonitor::onVoltageTimer()
       break;
     }
   }
-  
+
   // Returning from sensors, stop timeout timer
   timeout_timer_->cancel();
 
@@ -277,14 +281,15 @@ void VoltageMonitor::onBatteryTimer()
 
   std::string tmp_ifstream_error_str;
   bool tmp_status = false;
-  
+
   // Start timeout timer for reading battery status
   {
     std::lock_guard<std::mutex> lock(battery_timeout_mutex_);
     battery_timeout_expired_ = false;
   }
   timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(battery_timeout_), std::bind(&VoltageMonitor::onBatteryTimeout, this));
+    this, get_clock(), std::chrono::seconds(battery_timeout_),
+    std::bind(&VoltageMonitor::onBatteryTimeout, this));
 
   // Get status of RTC
   std::ifstream ifs("/proc/driver/rtc");

@@ -86,7 +86,6 @@ protected:
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
-  
 
   std::mutex voltage_mutex_;
   float voltage_;
@@ -106,9 +105,6 @@ protected:
   double battery_elapsed_ms_;
   std::mutex battery_timeout_mutex_;
   bool battery_timeout_expired_;
-
-
-
 };
 
 #endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
