@@ -55,7 +55,7 @@
   </node>
 
   <!-- optimize path -->
-  <node pkg="autoware_static_centerline_generator" exec="main" name="autoware_static_centerline_generator">
+  <node pkg="autoware_static_centerline_generator" exec="autoware_static_centerline_generator_exe" name="autoware_static_centerline_generator">
     <remap from="lanelet2_map_topic" to="$(var lanelet2_map_topic)"/>
     <remap from="input_centerline" to="~/input_centerline"/>
     <remap from="output_whole_centerline" to="~/output_whole_centerline"/>

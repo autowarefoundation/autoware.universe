@@ -65,9 +65,9 @@ geometry_msgs::msg::Pose get_center_pose(
   const RouteHandler & route_handler, const size_t lanelet_id)
 {
   // get middle idx of the lanelet
-  const auto lanelet = route_handler.getLaneletsFromId(lanelet_id);
+  const auto lanelet = route_handler.getLaneletsFromId(static_cast<lanelet::Id>(lanelet_id));
   const auto center_line = lanelet.centerline();
-  const size_t middle_point_idx = std::floor(center_line.size() / 2.0);
+  const size_t middle_point_idx = std::floor(static_cast<double>(center_line.size()) / 2.0);
 
   // get middle position of the lanelet
   geometry_msgs::msg::Point middle_pos;
@@ -110,7 +110,8 @@ PathWithLaneId get_path_with_lane_id(
   constexpr double vehicle_length = 0.0;
   const auto drivable_lanes = behavior_path_planner::utils::generateDrivableLanes(lanelets);
   behavior_path_planner::utils::generateDrivableArea(
-    path_with_lane_id, drivable_lanes, false, false, vehicle_length, planner_data);
+    path_with_lane_id, drivable_lanes, false, false, static_cast<bool>(vehicle_length),
+    planner_data);
 
   return path_with_lane_id;
 }
@@ -178,10 +179,12 @@ MarkerArray create_footprint_marker(
   const double b = marker_color.at(2);
 
   auto marker = tier4_autoware_utils::createDefaultMarker(
-    "map", rclcpp::Clock().now(), "unsafe_footprints", idx,
+    "map", rclcpp::Clock().now(), "unsafe_footprints", static_cast<int32_t>(idx),
     visualization_msgs::msg::Marker::LINE_STRIP,
     tier4_autoware_utils::createMarkerScale(0.1, 0.0, 0.0),
-    tier4_autoware_utils::createMarkerColor(r, g, b, 0.999));
+    tier4_autoware_utils::createMarkerColor(
+      static_cast<float>(r), static_cast<float>(g),
+      static_cast<float>(b), 0.999));
   marker.header.stamp = now;
   marker.lifetime = rclcpp::Duration(0, 0);
 
@@ -210,10 +213,12 @@ MarkerArray create_distance_text_marker(
   const double b = marker_color.at(2);
 
   auto marker = tier4_autoware_utils::createDefaultMarker(
-    "map", rclcpp::Clock().now(), "unsafe_footprints_distance", idx,
+    "map", rclcpp::Clock().now(), "unsafe_footprints_distance", static_cast<int32_t>(idx),
     visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
     tier4_autoware_utils::createMarkerScale(0.5, 0.5, 0.5),
-    tier4_autoware_utils::createMarkerColor(r, g, b, 0.999));
+    tier4_autoware_utils::createMarkerColor(
+      static_cast<float>(r), static_cast<float>(g),
+      static_cast<float>(b), 0.999));
   marker.pose = pose;
   marker.header.stamp = now;
   marker.lifetime = rclcpp::Duration(0, 0);
