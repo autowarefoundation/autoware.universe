@@ -107,17 +107,17 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
 {
   // Subscribers
   sub_point_cloud_ = this->create_subscription<PointCloud2>(
-    "/perception/obstacle_segmentation/pointcloud", rclcpp::SensorDataQoS(),
+    "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&AEB::onPointCloud, this, std::placeholders::_1));
 
   sub_velocity_ = this->create_subscription<VelocityReport>(
-    "/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
+    "~/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
 
   sub_imu_ = this->create_subscription<Imu>(
-    "/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
+    "~/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
 
   sub_predicted_traj_ = this->create_subscription<Trajectory>(
-    "/input/predicted_trajectory", rclcpp::QoS{1},
+    "~/input/predicted_trajectory", rclcpp::QoS{1},
     std::bind(&AEB::onPredictedTrajectory, this, std::placeholders::_1));
 
   sub_autoware_state_ = this->create_subscription<AutowareState>(
