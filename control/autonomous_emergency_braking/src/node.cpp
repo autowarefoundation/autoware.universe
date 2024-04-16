@@ -169,7 +169,10 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   timer_ = rclcpp::create_timer(this, this->get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 }
 
-void AEB::onTimer() { updater_.force_update(); }
+void AEB::onTimer()
+{
+  updater_.force_update();
+}
 
 void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
 {
