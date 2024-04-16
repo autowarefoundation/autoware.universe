@@ -169,11 +169,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   timer_ = rclcpp::create_timer(this, this->get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 }
 
-void AEB::onTimer()
-{
-  std::cerr << "On TIMER!\n";
-  updater_.force_update();
-}
+void AEB::onTimer() { updater_.force_update(); }
 
 void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
 {
@@ -321,20 +317,17 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
   // step1. check data
   if (!isDataReady()) {
-    std::cerr << __func__ << " !isDataReady() \n";
     return false;
   }
 
   // if not driving, disable aeb
   if (autoware_state_->state != AutowareState::DRIVING) {
-    std::cerr << __func__ << " Driving \n";
     return false;
   }
 
   // step2. create velocity data check if the vehicle stops or not
-  const double current_v = current_velocity_ptr_->longitudinal_velocity + 2.25;
+  const double current_v = current_velocity_ptr_->longitudinal_velocity;
   if (current_v < 0.1) {
-    std::cerr << __func__ << " Current vel \n";
     return false;
   }
 
