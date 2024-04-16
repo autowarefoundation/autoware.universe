@@ -116,7 +116,7 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
 }
 
 std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_trajectory(
-  const Path & raw_path) const
+  const Path & raw_path)
 {
   // convert to trajectory points
   const auto raw_traj_points = [&]() {
