@@ -58,7 +58,7 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <exec_depend>autoware_remaining_distance_time_calculator</exec_depend>
-  <exec_depend>behavior_path_planner</exec_depend>
+  <exec_depend>autoware_behavior_path_planner</exec_depend>
   <exec_depend>autoware_behavior_velocity_planner</exec_depend>
   <exec_depend>costmap_generator</exec_depend>
   <exec_depend>external_cmd_selector</exec_depend>
