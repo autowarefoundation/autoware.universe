@@ -138,7 +138,7 @@ private:
 
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
-  // These validators are written in ndt_scan_matcher_diagnostics_sensor_points.hpp
+  // These validators are written in ndt_scan_matcher_diagnostics_sensor_points.cpp
   void initialize_diagnostics_key_value();
   bool validate_is_node_activated(const bool is_activated);
   bool validate_is_set_map_points(const bool is_set_map_points);

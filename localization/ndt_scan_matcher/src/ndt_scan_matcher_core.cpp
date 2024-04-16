@@ -235,7 +235,6 @@ void NDTScanMatcher::callback_initial_pose(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  // diagnostics_initial_pose_->addKeyValue("buffer_size", initial_pose_buffer_->size());
   diagnostics_initial_pose_->publish();
 }
 

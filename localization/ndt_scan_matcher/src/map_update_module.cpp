@@ -206,7 +206,7 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   diagnostics_map_update_->addKeyValue("is_succeed_call_pcd_loader", false);
   diagnostics_map_update_->addKeyValue("maps_to_add_size", 0);
   diagnostics_map_update_->addKeyValue("maps_to_remove_size", 0);
-  // diagnostics_map_update_->addKeyValue("maps_size", 0);
+  diagnostics_map_update_->addKeyValue("maps_size", ndt.getCurrentMapIDs().size());
   // diagnostics_map_update_->addKeyValue("latest_update_execution_time", 0.0);
 
   auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
