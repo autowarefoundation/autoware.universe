@@ -151,7 +151,7 @@ private:
     const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points,
     const double warn_distance);
   bool validate_initial_pose_array_size(const size_t initial_pose_array_size);
-  bool validate_succeed_interpolete_intial_pose(const bool is_succeed);
+  bool validate_succeed_interpolate_initial_pose(const bool is_succeed);
   bool validate_position_difference(
     const geometry_msgs::msg::Point & target_point,
     const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);

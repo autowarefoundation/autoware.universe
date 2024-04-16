@@ -27,7 +27,7 @@ void NDTScanMatcher::initialize_diagnostics_key_value()
   diagnostics_scan_points_->addKeyValue("sensor_points_size", 0);
   diagnostics_scan_points_->addKeyValue("sensor_points_delay_time_sec", 0.0);
   diagnostics_scan_points_->addKeyValue("sensor_points_max_distance", 0.0);
-  diagnostics_scan_points_->addKeyValue("is_succeed_interpolete_intial_pose", false);
+  diagnostics_scan_points_->addKeyValue("is_succeed_interpolate_initial_pose", false);
   diagnostics_scan_points_->addKeyValue("iteration_num", 0);
   diagnostics_scan_points_->addKeyValue("local_optimal_solution_oscillation_count", 0.0);
   diagnostics_scan_points_->addKeyValue("transform_probability", 0.0);
@@ -157,9 +157,9 @@ bool NDTScanMatcher::validate_initial_pose_array_size(const size_t initial_pose_
   return is_ok;
 }
 
-bool NDTScanMatcher::validate_succeed_interpolete_intial_pose(const bool is_succeed)
+bool NDTScanMatcher::validate_succeed_interpolate_initial_pose(const bool is_succeed)
 {
-  diagnostics_scan_points_->addKeyValue("is_succeed_interpolete_intial_pose", is_succeed);
+  diagnostics_scan_points_->addKeyValue("is_succeed_interpolate_initial_pose", is_succeed);
 
   bool is_ok = is_succeed;
   if (!is_ok) {

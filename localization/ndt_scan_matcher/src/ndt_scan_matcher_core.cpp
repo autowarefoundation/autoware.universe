@@ -337,7 +337,7 @@ bool NDTScanMatcher::process_scan_matching(
   std::optional<SmartPoseBuffer::InterpolateResult> interpolation_result_opt =
     initial_pose_buffer_->interpolate(sensor_ros_time);
 
-  if (!validate_succeed_interpolete_intial_pose(interpolation_result_opt != std::nullopt)) {
+  if (!validate_succeed_interpolate_initial_pose(interpolation_result_opt != std::nullopt)) {
     return false;
   }
 
