@@ -148,6 +148,8 @@ public:
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
 
+  void cropPointCloudWithEgoPath(const std::vector<Polygon2d> & ego_polys);
+
   void createClusteredPointCloudObjectData(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
@@ -161,6 +163,8 @@ public:
   void addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
+  PointCloud2::SharedPtr cropped_ros_pointcloud_ptr_{nullptr};
+
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
   Vector3::SharedPtr angular_velocity_ptr_{nullptr};
   Trajectory::ConstSharedPtr predicted_traj_ptr_{nullptr};
