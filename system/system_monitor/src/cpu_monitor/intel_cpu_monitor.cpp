@@ -80,7 +80,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     stat.summary(whole_level, thermal_dict_.at(whole_level));
   } else if (elapsed_ms == 0.0) {
     stat.summary(DiagStatus::WARN, "read throttling error");
-  } else if (elapsed_ms > throttle_timeout_) {
+  } else if (elapsed_ms > throttle_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "read throttling timeout");
   } else {
     stat.summary(whole_level, thermal_dict_.at(whole_level));
