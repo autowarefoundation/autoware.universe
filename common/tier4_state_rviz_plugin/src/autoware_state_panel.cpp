@@ -39,6 +39,8 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   this->setMinimumWidth(550);
   this->setMaximumWidth(550);
+  // max height
+  this->setMaximumHeight(800);
 
   // Layout
   auto * main_v_layout = new QVBoxLayout;
