@@ -73,7 +73,8 @@ HddMonitor::HddMonitor(const rclcpp::NodeOptions & options)
   setInitialStatus();
 
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&HddMonitor::onTimer, this), timer_callback_group_);
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 1s, std::bind(&HddMonitor::onTimer, this), timer_callback_group_);
 }
 
 void HddMonitor::checkSmartTemperature(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -614,7 +615,7 @@ void HddMonitor::onTimer()
     }
 
     readHddUsage(tmp_hdd_connected_flags, tmp_hdd_usages, tmp_sum_error_str, tmp_detail_error_str);
-    
+
     double elapsed_ms = stop_watch.toc("hdd_usage_execution_time");
 
     {
