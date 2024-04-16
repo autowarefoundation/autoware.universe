@@ -14,8 +14,12 @@
 
 #include "autonomous_emergency_braking/node.hpp"
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/filters/crop_hull.h>
@@ -36,8 +40,21 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include "autonomous_emergency_braking/node.hpp"
+
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/within.hpp>
+#include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
+
+#include <pcl/filters/passthrough.h>
+#include <pcl/filters/voxel_grid.h>
+#include <tf2/utils.h>
+
 namespace autoware::motion::control::autonomous_emergency_braking
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
@@ -157,7 +174,10 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   timer_ = rclcpp::create_timer(this, this->get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 }
 
-void AEB::onTimer() { updater_.force_update(); }
+void AEB::onTimer()
+{
+  updater_.force_update();
+}
 
 void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
 {
@@ -515,7 +535,7 @@ void AEB::createObjectData(
     obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
     obj.velocity = 0.0;
     const Point2d obj_point(point.x, point.y);
-    const double lat_dist = tier4_autoware_utils::calcLateralOffset(ego_path, obj.position);
+    const double lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
     if (lat_dist > vehicle_info_.vehicle_width_m / 2.0) {
       continue;
     }
@@ -615,7 +635,7 @@ void AEB::createClusteredPointCloudObjectData(
     obj.position = tier4_autoware_utils::createPoint(centroid(0), centroid(1), centroid(2));
     obj.velocity = 0.0;
     const Point2d obj_point(centroid(0), centroid(1));
-    const double lat_dist = tier4_autoware_utils::calcLateralOffset(ego_path, obj.position);
+    const double lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
     if (lat_dist > half_width) {
       continue;
     }
