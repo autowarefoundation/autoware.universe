@@ -33,6 +33,7 @@
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <lanelet2_core/Forward.h>
 #include <tf2/utils.h>
 
 #include <atomic>
@@ -154,6 +155,24 @@ public:
   bool isFreespacePlanning() const { return status_.planner_type == PlannerType::FREESPACE; }
 
 private:
+  struct StartPlannerData
+  {
+    StartPlannerParameters parameters;
+    PlannerData planner_data;
+    ModuleStatus current_status;
+    PullOutStatus main_thread_pull_out_status;
+    bool is_stopped;
+
+    StartPlannerData clone() const;
+    void update(
+      const StartPlannerParameters & parameters, const PlannerData & planner_data,
+      const ModuleStatus & current_status, const PullOutStatus & pull_out_status,
+      const bool is_stopped);
+  };
+  std::optional<PullOutStatus> freespace_thread_status_{std::nullopt};
+  std::optional<StartPlannerData> start_planner_data_{std::nullopt};
+  std::mutex start_planner_data_mutex_;
+
   // Flag class for managing whether a certain callback is running in multi-threading
   class ScopedFlag
   {
@@ -240,6 +259,10 @@ private:
   PullOutStatus status_;
   mutable StartPlannerDebugData debug_data_;
 
+  // Keeps track of lanelets that should be ignored when calculating the turnSignalInfo for this
+  // module's output. If the ego vehicle is in this lanelet, the calculation is skipped.
+  std::optional<lanelet::Id> ignore_signal_{std::nullopt};
+
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
@@ -264,7 +287,7 @@ private:
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
   // turn signal
-  TurnSignalInfo calcTurnSignalInfo() const;
+  TurnSignalInfo calcTurnSignalInfo();
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
@@ -285,14 +308,12 @@ private:
   bool hasFinishedBackwardDriving() const;
   bool hasCollisionWithDynamicObjects() const;
   bool isStopped();
-  bool isStuck();
   bool hasFinishedCurrentPath();
   void updateSafetyCheckTargetObjectsData(
     const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
-  lanelet::ConstLanelets createDepartureCheckLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.
   bool isGoalBehindOfEgoInSameRouteSegment() const;
@@ -303,7 +324,9 @@ private:
   SafetyCheckParams createSafetyCheckParams() const;
   // freespace planner
   void onFreespacePlannerTimer();
-  bool planFreespacePath();
+  std::optional<PullOutStatus> planFreespacePath(
+    const StartPlannerParameters & parameters,
+    const std::shared_ptr<const PlannerData> & planner_data, const PullOutStatus & pull_out_status);
 
   void setDebugData();
   void logPullOutStatus(rclcpp::Logger::Level log_level = rclcpp::Logger::Level::Info) const;

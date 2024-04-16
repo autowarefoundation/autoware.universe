@@ -85,10 +85,6 @@ lanelet::ConstLanelets getAdjacentLane(
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters, const bool is_right_shift);
 
-lanelet::ConstLanelets getTargetLanelets(
-  const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
-  const double left_offset, const double right_offset);
-
 lanelet::ConstLanelets getCurrentLanesFromPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data);
 
@@ -176,9 +172,6 @@ double calcDistanceToAvoidStartLine(
   const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
-std::pair<TurnSignalInfo, bool> calcTurnSignalInfo(
-  const ShiftedPath & path, const ShiftLine & shift_line, const double current_shift_length,
-  const AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data);
 }  // namespace behavior_path_planner::utils::avoidance
 
 #endif  // BEHAVIOR_PATH_AVOIDANCE_MODULE__UTILS_HPP_

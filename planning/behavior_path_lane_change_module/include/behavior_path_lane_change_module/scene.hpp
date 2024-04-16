@@ -151,8 +151,6 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  TurnSignalInfo calcTurnSignalInfo() const override;
-
   bool isValidPath(const PathWithLaneId & path) const override;
 
   PathSafetyStatus isLaneChangePathSafe(
@@ -174,7 +172,11 @@ protected:
   bool isVehicleStuck(
     const lanelet::ConstLanelets & current_lanes, const double obstacle_check_distance) const;
 
+  double get_max_velocity_for_safety_check() const;
+
   bool isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const;
+
+  bool check_prepare_phase() const;
 
   double calcMaximumLaneChangeLength(
     const lanelet::ConstLanelet & current_terminal_lanelet, const double max_acc) const;

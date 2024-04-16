@@ -48,7 +48,8 @@ MapUpdateModule::MapUpdateModule(
 bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & position)
 {
   if (last_update_position_ == std::nullopt) {
-    return false;
+    need_rebuild_ = true;
+    return true;
   }
 
   const double dx = position.x - last_update_position_.value().x;
@@ -77,9 +78,20 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
     ndt_ptr_.reset(new NdtType);
 
     ndt_ptr_->setParams(param);
+    if (input_source != nullptr) {
+      ndt_ptr_->setInputSource(input_source);
+    }
 
-    update_ndt(position, *ndt_ptr_);
-    ndt_ptr_->setInputSource(input_source);
+    const bool updated = update_ndt(position, *ndt_ptr_);
+    if (!updated) {
+      RCLCPP_ERROR_STREAM_THROTTLE(
+        logger_, *clock_, 1000,
+        "update_ndt failed. If this happens with initial position estimation, make sure that"
+        "(1) the initial position matches the pcd map and (2) the map_loader is working properly.");
+      last_update_position_ = position;
+      ndt_ptr_mutex_->unlock();
+      return;
+    }
     ndt_ptr_mutex_->unlock();
     need_rebuild_ = false;
   } else {
@@ -98,7 +110,9 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
     auto dummy_ptr = ndt_ptr_;
     auto input_source = ndt_ptr_->getInputSource();
     ndt_ptr_ = secondary_ndt_ptr_;
-    ndt_ptr_->setInputSource(input_source);
+    if (input_source != nullptr) {
+      ndt_ptr_->setInputSource(input_source);
+    }
     ndt_ptr_mutex_->unlock();
 
     dummy_ptr.reset();
@@ -173,7 +187,7 @@ bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, Ndt
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
-  RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
+  RCLCPP_DEBUG(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
   return true;  // Updated
 }
 

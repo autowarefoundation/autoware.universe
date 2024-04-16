@@ -64,8 +64,8 @@ Eigen::Matrix2d find_rotation_matrix_aligning_covariance_to_principal_axes(
   throw std::runtime_error("Eigen solver failed. Return output_pose_covariance value.");
 }
 
-NDTScanMatcher::NDTScanMatcher()
-: Node("ndt_scan_matcher"),
+NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
+: Node("ndt_scan_matcher", options),
   tf2_broadcaster_(*this),
   tf2_buffer_(this->get_clock()),
   tf2_listener_(tf2_buffer_),
@@ -346,6 +346,21 @@ void NDTScanMatcher::callback_sensor_points(
   transform_sensor_measurement(
     sensor_frame, param_.frame.base_frame, sensor_points_in_sensor_frame,
     sensor_points_in_baselink_frame);
+
+  // check max distance of sensor points
+  double max_distance = 0.0;
+  for (const auto & point : sensor_points_in_baselink_frame->points) {
+    const double distance = std::hypot(point.x, point.y, point.z);
+    max_distance = std::max(max_distance, distance);
+  }
+  if (max_distance < param_.sensor_points.required_distance) {
+    RCLCPP_WARN_STREAM(
+      this->get_logger(), "Max distance of sensor points = "
+                            << std::fixed << std::setprecision(3) << max_distance << " [m] < "
+                            << param_.sensor_points.required_distance << " [m]");
+    return;
+  }
+
   ndt_ptr_->setInputSource(sensor_points_in_baselink_frame);
   if (!is_activated_) return;
 
@@ -992,7 +1007,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   result_pose_with_cov_msg.pose.pose = best_particle_ptr->result_pose;
 
   output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
-  RCLCPP_INFO_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
+  RCLCPP_DEBUG_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
 
   return result_pose_with_cov_msg;
 }

@@ -112,6 +112,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       current_scenario_ = std::make_shared<Scenario>(*msg);
     },
     createSubscriptionOptions(this));
+  external_limit_max_velocity_subscriber_ =
+    create_subscription<tier4_planning_msgs::msg::VelocityLimit>(
+      "/planning/scenario_planning/max_velocity", 1,
+      std::bind(&BehaviorPathPlannerNode::on_external_velocity_limiter, this, _1),
+      createSubscriptionOptions(this));
 
   // route_handler
   vector_map_subscriber_ = create_subscription<HADMapBin>(
@@ -172,6 +177,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
@@ -238,6 +244,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.min_acc = declare_parameter<double>("normal.min_acc");
   p.max_acc = declare_parameter<double>("normal.max_acc");
 
+  p.max_vel = declare_parameter<double>("max_vel");
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
@@ -308,6 +315,10 @@ bool BehaviorPathPlannerNode::isDataReady()
 
   if (!planner_data_->operation_mode) {
     return missing("operation_mode");
+  }
+
+  if (!planner_data_->occupancy_grid) {
+    return missing("occupancy_grid");
   }
 
   return true;
@@ -413,6 +424,7 @@ void BehaviorPathPlannerNode::run()
 
     if (!path->points.empty()) {
       path_publisher_->publish(*path);
+      published_time_publisher_->publish_if_subscribed(path_publisher_, path->header.stamp);
     } else {
       RCLCPP_ERROR_THROTTLE(
         get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
@@ -813,6 +825,19 @@ void BehaviorPathPlannerNode::onOperationMode(const OperationModeState::ConstSha
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->operation_mode = msg;
+}
+
+void BehaviorPathPlannerNode::on_external_velocity_limiter(
+  const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg)
+{
+  // Note: Using this parameter during path planning might cause unexpected deceleration or jerk.
+  // Therefore, do not use it for anything other than safety checks.
+  if (!msg) {
+    return;
+  }
+
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
+  planner_data_->external_limit_max_velocity = msg;
 }
 void BehaviorPathPlannerNode::onLateralOffset(const LateralOffset::ConstSharedPtr msg)
 {

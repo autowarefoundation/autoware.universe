@@ -21,6 +21,7 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <lanelet2_extension/regulatory_elements/Forward.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp/clock.hpp>
 #include <rclcpp/rclcpp/time.hpp>
 #include <route_handler/route_handler.hpp>
@@ -37,6 +38,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/detail/velocity_limit__struct.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
 #include <limits>
@@ -64,6 +66,7 @@ using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::LateralOffset;
 using PlanResult = PathWithLaneId::SharedPtr;
 using lanelet::TrafficLight;
+using tier4_planning_msgs::msg::VelocityLimit;
 using unique_identifier_msgs::msg::UUID;
 
 struct TrafficSignalStamped
@@ -160,10 +163,67 @@ struct PlannerData
   std::map<int64_t, TrafficSignalStamped> traffic_light_id_map;
   BehaviorPathPlannerParameters parameters{};
   drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
+  VelocityLimit::ConstSharedPtr external_limit_max_velocity{};
 
   mutable std::vector<geometry_msgs::msg::Pose> drivable_area_expansion_prev_path_poses{};
   mutable std::vector<double> drivable_area_expansion_prev_curvatures{};
   mutable TurnSignalDecider turn_signal_decider;
+
+  std::pair<TurnSignalInfo, bool> getBehaviorTurnSignalInfo(
+    const PathWithLaneId & path, const size_t shift_start_idx, const size_t shift_end_idx,
+    const lanelet::ConstLanelets & current_lanelets, const double current_shift_length,
+    const bool is_driving_forward, const bool egos_lane_is_shifted,
+    const bool override_ego_stopped_check = false, const bool is_pull_out = false) const
+  {
+    if (shift_start_idx + 1 > path.points.size()) {
+      RCLCPP_WARN(rclcpp::get_logger(__func__), "index inconsistency.");
+      return std::make_pair(TurnSignalInfo{}, true);
+    }
+
+    if (shift_end_idx + 1 > path.points.size()) {
+      RCLCPP_WARN(rclcpp::get_logger(__func__), "index inconsistency.");
+      return std::make_pair(TurnSignalInfo{}, true);
+    }
+
+    std::vector<double> lengths(path.points.size(), 0.0);
+    ShiftedPath shifted_path{path, lengths};
+    ShiftLine shift_line;
+
+    {
+      const auto start_pose = path.points.at(shift_start_idx).point.pose;
+      const auto start_shift_length =
+        lanelet::utils::getArcCoordinates(current_lanelets, start_pose).distance;
+      const auto end_pose = path.points.at(shift_end_idx).point.pose;
+      const auto end_shift_length =
+        lanelet::utils::getArcCoordinates(current_lanelets, end_pose).distance;
+      shifted_path.shift_length.at(shift_start_idx) = start_shift_length;
+      shifted_path.shift_length.at(shift_end_idx) = end_shift_length;
+
+      shift_line.start = start_pose;
+      shift_line.end = end_pose;
+      shift_line.start_shift_length = start_shift_length;
+      shift_line.end_shift_length = end_shift_length;
+      shift_line.start_idx = shift_start_idx;
+      shift_line.end_idx = shift_end_idx;
+    }
+
+    return turn_signal_decider.getBehaviorTurnSignalInfo(
+      shifted_path, shift_line, current_lanelets, route_handler, parameters, self_odometry,
+      current_shift_length, is_driving_forward, egos_lane_is_shifted, override_ego_stopped_check,
+      is_pull_out);
+  }
+
+  std::pair<TurnSignalInfo, bool> getBehaviorTurnSignalInfo(
+    const ShiftedPath & path, const ShiftLine & shift_line,
+    const lanelet::ConstLanelets & current_lanelets, const double current_shift_length,
+    const bool is_driving_forward, const bool egos_lane_is_shifted,
+    const bool override_ego_stopped_check = false, const bool is_pull_out = false) const
+  {
+    return turn_signal_decider.getBehaviorTurnSignalInfo(
+      path, shift_line, current_lanelets, route_handler, parameters, self_odometry,
+      current_shift_length, is_driving_forward, egos_lane_is_shifted, override_ego_stopped_check,
+      is_pull_out);
+  }
 
   TurnIndicatorsCommand getTurnSignal(
     const PathWithLaneId & path, const TurnSignalInfo & turn_signal_info,

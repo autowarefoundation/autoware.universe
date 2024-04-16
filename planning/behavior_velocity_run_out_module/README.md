@@ -2,7 +2,7 @@
 
 ### Role
 
-`run_out` is the module that decelerates and stops for dynamic obstacles such as pedestrians and bicycles.
+`run_out` is the module that decelerates and stops for dynamic obstacles such as pedestrians, bicycles and motorcycles.
 
 ![brief](./docs/run_out_overview.svg)
 
@@ -108,6 +108,22 @@ You can choose whether to use this feature by parameter of `use_partition_lanele
 
 ![brief](./docs/exclude_obstacles_by_partition.svg)
 
+##### Exclude obstacles by label
+
+This module only acts on target obstacles defined by the `target_obstacle_types` parameter. If an obstacle of a type not specified by said parameter is detected, it will be ignored by this module.
+
+##### Exclude obstacles that are already on the ego vehicle's path
+
+In the cases were an obstacle is already on the ego vehicle's path, it cannot "cut in" into the ego's path anymore (which is the situation this module tries to handle) so it might be useful to exclude obstacles already on the vehicle's footprint path. By setting the parameter `exclude_obstacles_already_in_path` to true, this module will exclude the obstacles that are considered to be already on the ego vehicle's path for more than `keep_obstacle_on_path_time_threshold`. The module considers the ego vehicle's closest path point to each obstacle's current position, and determines the lateral distance between the obstacle and the right and left sides of the ego vehicle. If the obstacle is located within the left and right extremes of the vehicle for that pose, then it is considered to be inside the ego vehicle's footprint path and it is excluded. The virtual width of the vehicle used to detect if an obstacle is within the path or not, can be adjusted by the `ego_footprint_extra_margin` parameter.
+
+##### Exclude obstacles that cross the ego vehicle's "cut line"
+
+This module can exclude obstacles that have predicted paths that will cross the back side of the ego vehicle. It excludes obstacles if their predicted path crosses the ego's "cut line". The "cut line" is a virtual line segment that is perpendicular to the ego vehicle and that passes through the ego's base link.
+
+You can choose whether to use this feature by setting the parameter `use_ego_cut_line` to `true` or `false`. The width of the line can be tuned with the parameter `ego_cut_line_length`.
+
+![brief](./docs/ego_cut_line.svg)
+
 #### Collision detection
 
 ##### Detect collision with dynamic obstacles
@@ -171,17 +187,18 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 
 ### Module Parameters
 
-| Parameter               | Type   | Description                                                                                                              |
-| ----------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `detection_method`      | string | [-] candidate: Object, ObjectWithoutPath, Points                                                                         |
-| `use_partition_lanelet` | bool   | [-] whether to use partition lanelet map data                                                                            |
-| `specify_decel_jerk`    | bool   | [-] whether to specify jerk when ego decelerates                                                                         |
-| `stop_margin`           | double | [m] the vehicle decelerates to be able to stop with this margin                                                          |
-| `passing_margin`        | double | [m] the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin |
-| `deceleration_jerk`     | double | [m/s^3] ego decelerates with this jerk when stopping for obstacles                                                       |
-| `detection_distance`    | double | [m] ahead distance from ego to detect the obstacles                                                                      |
-| `detection_span`        | double | [m] calculate collision with this span to reduce calculation time                                                        |
-| `min_vel_ego_kmph`      | double | [km/h] min velocity to calculate time to collision                                                                       |
+| Parameter               | Type             | Description                                                                                                                                                                                          |
+| ----------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `detection_method`      | string           | [-] candidate: Object, ObjectWithoutPath, Points                                                                                                                                                     |
+| `target_obstacle_types` | vector of string | [-] specifies which obstacle types will be considered by the module, if the obstacles classification type is not written here, it will be ignored. candidate: ["PEDESTRIAN", "BICYCLE","MOTORCYCLE"] |
+| `use_partition_lanelet` | bool             | [-] whether to use partition lanelet map data                                                                                                                                                        |
+| `specify_decel_jerk`    | bool             | [-] whether to specify jerk when ego decelerates                                                                                                                                                     |
+| `stop_margin`           | double           | [m] the vehicle decelerates to be able to stop with this margin                                                                                                                                      |
+| `passing_margin`        | double           | [m] the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin                                                                             |
+| `deceleration_jerk`     | double           | [m/s^3] ego decelerates with this jerk when stopping for obstacles                                                                                                                                   |
+| `detection_distance`    | double           | [m] ahead distance from ego to detect the obstacles                                                                                                                                                  |
+| `detection_span`        | double           | [m] calculate collision with this span to reduce calculation time                                                                                                                                    |
+| `min_vel_ego_kmph`      | double           | [km/h] min velocity to calculate time to collision                                                                                                                                                   |
 
 | Parameter /detection_area | Type   | Description                                  |
 | ------------------------- | ------ | -------------------------------------------- |
