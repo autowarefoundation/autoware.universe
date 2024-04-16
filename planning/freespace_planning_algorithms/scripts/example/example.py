@@ -63,12 +63,12 @@ goal_pose.position.x = 10.0
 goal_pose.position.y = 0.0
 
 yaw = 0
-quaterinon = Quaternion(axis=[0, 0, 1], angle=yaw)
+quaternion = Quaternion(axis=[0, 0, 1], angle=yaw)
 
-goal_pose.orientation.w = quaterinon.w
-goal_pose.orientation.x = quaterinon.x
-goal_pose.orientation.y = quaterinon.y
-goal_pose.orientation.z = quaterinon.z
+goal_pose.orientation.w = quaternion.w
+goal_pose.orientation.x = quaternion.x
+goal_pose.orientation.y = quaternion.y
+goal_pose.orientation.z = quaternion.z
 
 
 # -- Search --
