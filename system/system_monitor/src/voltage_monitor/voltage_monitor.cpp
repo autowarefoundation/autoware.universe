@@ -254,8 +254,7 @@ void VoltageMonitor::onTimer()
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   // read voltage status
-  if (sensors_exists_)
-  {
+  if (sensors_exists_) {
     stop_watch.tic("execution_time");
 
     std::string tmp_sensors_error_str;
@@ -276,7 +275,7 @@ void VoltageMonitor::onTimer()
       voltage_elapsed_ms_ = tmp_elapsed_ms;
     }
   } else {
-  // read battery 
+    // read battery
     stop_watch.tic("execution_time");
 
     std::string tmp_ifstream_error_str;
