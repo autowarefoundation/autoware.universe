@@ -258,9 +258,10 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 
 ## Diagnostics
 
-### Abstract
-
 ### sensor_points_callback
+
+<img src="./media/diagnostic_sensor_points_callback.png" alt="drawing" width="600"/>
+
 
 | Name                                       | Description                                                                            | Transition condition to OK                                                                                                                                                                                          | Transition condition to Warning                                                                                                                                                                                                                                                                                                                                          | Transition condition to Error            | Whether to reject the estimation result (affects `skipping_publish_num`) |
 | ------------------------------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- | ------------------------------------------------------------------------ |
@@ -284,6 +285,9 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 
 ### initial_pose_callback
 
+<img src="./media/diagnostic_initial_pose_callback.png" alt="drawing" width="600"/>
+
+
 | Name               | Description                                        | Transition condition to OK | Transition condition to Warning | Transition condition to Error |
 | ------------------ | -------------------------------------------------- | -------------------------- | ------------------------------- | ----------------------------- |
 | `topic_time_stamp` | the time stamp of input topic                      | none                       | none                            | none                          |
@@ -291,11 +295,15 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 
 ### regularization_pose_callback
 
+<img src="./media/diagnostic_regularization_pose_callback.png" alt="drawing" width="600"/>
+
 | Name               | Description                   | Transition condition to OK | Transition condition to Warning | Transition condition to Error |
 | ------------------ | ----------------------------- | -------------------------- | ------------------------------- | ----------------------------- |
 | `topic_time_stamp` | the time stamp of input topic | none                       | none                            | none                          |
 
 ### ndt_align_service
+
+<img src="./media/diagnostic_ndt_align_service.png" alt="drawing" width="600"/>
 
 | Name                                  | Description                                                | Transition condition to OK | Transition condition to Warning                                                    | Transition condition to Error |
 | ------------------------------------- | ---------------------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------- | ----------------------------- |
@@ -309,6 +317,8 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 This diagnostic is only published when the service is called, so it becomes stale after the initial pose estimation is completed.
 
 ### map_update_module
+
+<img src="./media/diagnostic_map_update_module.png" alt="drawing" width="600"/>
 
 | Name                                                | Description                                                                                                                                                                                                                                             | Transition condition to OK                                                                               | Transition condition to Warning | Transition condition to Error                                                                           |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
