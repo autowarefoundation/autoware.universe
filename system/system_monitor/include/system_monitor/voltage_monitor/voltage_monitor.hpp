@@ -57,11 +57,8 @@ protected:
   /**
    * @brief Timer callback to execute sensors command
    */
-  void onVoltageTimer();
-  /**
-   * @brief Timeout callback to execute sensors command
-   */
-  void onVoltageTimeout();
+  void readVoltageStatus(float & tmp_voltage, std::string & tmp_sensors_error_str, std::string & tmp_format_error_str, std::string & tmp_pipe2_err_str);
+
   /**
    * @brief check CMOS battery
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
@@ -73,11 +70,12 @@ protected:
   /**
    * @brief Timer callback to reading battery status
    */
-  void onBatteryTimer();
+  void readBatteryStatus(bool & tmp_status, std::string & tmp_ifstream_error_str);
+
   /**
-   * @brief Timeout callback to reading battery status
+   * @brief Timer callback
    */
-  void onBatteryTimeout();
+  void onTimer();
 
   float voltage_warn_;
   float voltage_error_;
@@ -94,17 +92,19 @@ protected:
   std::string format_error_str_;
   std::string pipe2_err_str_;
   double voltage_elapsed_ms_;
-  std::mutex voltage_timeout_mutex_;
-  bool voltage_timeout_expired_;
-  rclcpp::TimerBase::SharedPtr timeout_timer_;
 
   std::mutex battery_mutex_;
   bool status_;
   int battery_timeout_;
   std::string ifstream_error_str_;
   double battery_elapsed_ms_;
+<<<<<<< HEAD
   std::mutex battery_timeout_mutex_;
   bool battery_timeout_expired_;
+=======
+
+  bool sensors_exists_;
+>>>>>>> 07ac8c080 (feat: fix timeout values)
 };
 
 #endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_

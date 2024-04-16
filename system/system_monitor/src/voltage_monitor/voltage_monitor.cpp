@@ -45,9 +45,9 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
   updater_(this),
   hostname_(),
   voltage_timeout_(declare_parameter<int>("voltage_timeout", 5)),
-  voltage_timeout_expired_(false),
   battery_timeout_(declare_parameter<int>("battery_timeout", 5)),
-  battery_timeout_expired_(false)
+  voltage_elapsed_ms_(0),
+  battery_elapsed_ms_(0)
 {
   gethostname(hostname_, sizeof(hostname_));
 
@@ -59,18 +59,17 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
   voltage_string_ = declare_parameter<std::string>("cmos_battery_label", "");
   voltage_warn_ = declare_parameter<float>("cmos_battery_warn", 2.95);
   voltage_error_ = declare_parameter<float>("cmos_battery_error", 2.75);
-  bool sensors_exists = false;
+  sensors_exists_ = false;
   if (voltage_string_ == "") {
-    sensors_exists = false;
+    sensors_exists_ = false;
   } else {
     // Check if command exists
     fs::path p = bp::search_path("sensors");
-    sensors_exists = (p.empty()) ? false : true;
+    sensors_exists_ = (p.empty()) ? false : true;
   }
   gethostname(hostname_, sizeof(hostname_));
   auto callback = &VoltageMonitor::checkBatteryStatus;
-  auto timer_callback = &VoltageMonitor::onBatteryTimer;
-  if (sensors_exists) {
+  if (sensors_exists_) {
     try {
       std::regex re(R"((\d+).(\d+))");
       voltage_regex_ = re;
@@ -80,14 +79,12 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
       return;
     }
     callback = &VoltageMonitor::checkVoltage;
-    timer_callback = &VoltageMonitor::onVoltageTimer;
   }
   updater_.add("CMOS Battery Status", this, callback);
 
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(1), std::bind(timer_callback, this),
-    timer_callback_group_);
+    this, get_clock(), std::chrono::seconds(1), std::bind(&VoltageMonitor::onTimer, this), timer_callback_group_);
 }
 
 void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -127,19 +124,15 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
   }
 
   stat.add("CMOS battery voltage", fmt::format("{}", tmp_voltage));
-
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(voltage_timeout_mutex_);
-    timeout_expired = voltage_timeout_expired_;
-  }
-
-  if (tmp_voltage < voltage_error_) {
+  
+  if (tmp_elapsed_ms > voltage_timeout_ * 1000) {
+    stat.summary(DiagStatus::WARN, "sensors timeout expired");
+  } else if (tmp_voltage == 0.0) {
+    stat.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_voltage < voltage_error_) {
     stat.summary(DiagStatus::WARN, "Battery Died");
   } else if (tmp_voltage < voltage_warn_) {
     stat.summary(DiagStatus::WARN, "Low Battery");
-  } else if (timeout_expired) {
-    stat.summary(DiagStatus::WARN, "sensors timeout expired");
   } else {
     stat.summary(DiagStatus::OK, "OK");
   }
@@ -147,27 +140,8 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
   stat.addf("execution time", "%f ms", tmp_elapsed_ms);
 }
 
-void VoltageMonitor::onVoltageTimer()
+void VoltageMonitor::readVoltageStatus(float & tmp_voltage, std::string & tmp_sensors_error_str, std::string & tmp_format_error_str, std::string & tmp_pipe2_err_str)
 {
-  // Start to measure elapsed time
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
-
-  std::string tmp_sensors_error_str;
-  std::string tmp_format_error_str;
-  std::string tmp_pipe2_err_str;
-
-  // Start timeout timer for executing sensors
-  {
-    std::lock_guard<std::mutex> lock(voltage_timeout_mutex_);
-    voltage_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(voltage_timeout_),
-    std::bind(&VoltageMonitor::onVoltageTimeout, this));
-
-  float tmp_voltage = 0.0;
-
   int out_fd[2];
   if (RCUTILS_UNLIKELY(pipe2(out_fd, O_CLOEXEC) != 0)) {
     tmp_pipe2_err_str = std::string(strerror(errno));
@@ -209,28 +183,6 @@ void VoltageMonitor::onVoltageTimer()
       break;
     }
   }
-
-  // Returning from sensors, stop timeout timer
-  timeout_timer_->cancel();
-
-  double tmp_elapsed_ms = stop_watch.toc("execution_time");
-
-  // thread-safe copy
-  {
-    std::lock_guard<std::mutex> lock(voltage_mutex_);
-    voltage_ = tmp_voltage;
-    sensors_error_str_ = tmp_sensors_error_str;
-    format_error_str_ = tmp_format_error_str;
-    pipe2_err_str_ = tmp_pipe2_err_str;
-    voltage_elapsed_ms_ = tmp_elapsed_ms;
-  }
-}
-
-void VoltageMonitor::onVoltageTimeout()
-{
-  RCLCPP_WARN(get_logger(), "sensors timeout occurred.");
-  std::lock_guard<std::mutex> lock(voltage_timeout_mutex_);
-  voltage_timeout_expired_ = true;
 }
 
 void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -253,18 +205,15 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
     return;
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(battery_timeout_mutex_);
-    battery_timeout_expired_ = battery_timeout_expired_;
-  }
-
-  if (tmp_status) {
-    stat.add("CMOS battery status", std::string("OK"));
-    stat.summary(DiagStatus::OK, "OK");
-  } else if (timeout_expired) {
+  if (tmp_elapsed_ms > battery_timeout_ * 1000) {
     stat.add("CMOS battery status", std::string("reading battery status timeout expired"));
     stat.summary(DiagStatus::WARN, "reading battery status timeout expired");
+  } else if (tmp_elapsed_ms == 0.0) {
+    stat.add("CMOS battery status", std::string("reading battery status error"));
+    stat.summary(DiagStatus::WARN, "reading battery status error");
+  } else if (tmp_status) {
+    stat.add("CMOS battery status", std::string("OK"));
+    stat.summary(DiagStatus::OK, "OK");
   } else {
     stat.add("CMOS battery status", std::string("Battery Dead"));
     stat.summary(DiagStatus::WARN, "Battery Dead");
@@ -273,24 +222,8 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
   stat.addf("execution time", "%f ms", tmp_elapsed_ms);
 }
 
-void VoltageMonitor::onBatteryTimer()
+void VoltageMonitor::readBatteryStatus(bool & tmp_status, std::string & tmp_ifstream_error_str)
 {
-  // Start to measure elapsed time
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  stop_watch.tic("execution_time");
-
-  std::string tmp_ifstream_error_str;
-  bool tmp_status = false;
-
-  // Start timeout timer for reading battery status
-  {
-    std::lock_guard<std::mutex> lock(battery_timeout_mutex_);
-    battery_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(battery_timeout_),
-    std::bind(&VoltageMonitor::onBatteryTimeout, this));
-
   // Get status of RTC
   std::ifstream ifs("/proc/driver/rtc");
   if (!ifs) {
@@ -310,27 +243,56 @@ void VoltageMonitor::onBatteryTimer()
       }
     }
   }
+}
 
-  // Returning from reading battery status, stop timeout timer
-  timeout_timer_->cancel();
+void VoltageMonitor::onTimer()
+{
+  // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
-  double tmp_elapsed_ms = stop_watch.toc("execution_time");
-
-  // thread-safe copy
+  // read voltage status
+  if (sensors_exists_)
   {
-    std::lock_guard<std::mutex> lock(battery_mutex_);
-    status_ = tmp_status;
-    ifstream_error_str_ = tmp_ifstream_error_str;
-    battery_elapsed_ms_ = tmp_elapsed_ms;
+    stop_watch.tic("execution_time");
+
+    std::string tmp_sensors_error_str;
+    std::string tmp_format_error_str;
+    std::string tmp_pipe2_err_str;
+    float tmp_voltage = 0.0;
+
+    readVoltageStatus(tmp_voltage, tmp_sensors_error_str, tmp_format_error_str, tmp_pipe2_err_str);
+
+    double tmp_elapsed_ms = stop_watch.toc("execution_time");
+    // thread-safe copy
+    {
+      std::lock_guard<std::mutex> lock(voltage_mutex_);
+      voltage_ = tmp_voltage;
+      sensors_error_str_ = tmp_sensors_error_str;
+      format_error_str_ = tmp_format_error_str;
+      pipe2_err_str_ = tmp_pipe2_err_str;
+      voltage_elapsed_ms_ = tmp_elapsed_ms;
+    }
+  } else {
+  // read battery 
+    stop_watch.tic("execution_time");
+
+    std::string tmp_ifstream_error_str;
+    bool tmp_status = false;
+
+    readBatteryStatus(tmp_status, tmp_ifstream_error_str);
+
+    sleep(7);  // sleep for 7 seconds to avoid reading the same file too frequently (every 1 second
+    double tmp_elapsed_ms = stop_watch.toc("execution_time");
+    // thread-safe copy
+    {
+      std::lock_guard<std::mutex> lock(battery_mutex_);
+      status_ = tmp_status;
+      ifstream_error_str_ = tmp_ifstream_error_str;
+      battery_elapsed_ms_ = tmp_elapsed_ms;
+    }
   }
 }
 
-void VoltageMonitor::onBatteryTimeout()
-{
-  RCLCPP_WARN(get_logger(), "reading battery status timeout occurred.");
-  std::lock_guard<std::mutex> lock(battery_timeout_mutex_);
-  battery_timeout_expired_ = true;
-}
 
 void VoltageMonitor::update()
 {
