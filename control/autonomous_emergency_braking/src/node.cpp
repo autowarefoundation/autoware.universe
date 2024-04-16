@@ -152,15 +152,10 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   // start time
   const double aeb_hz = declare_parameter<double>("aeb_hz");
   const auto period_ns = rclcpp::Rate(aeb_hz).period();
-  std::cerr << "period " << period_ns.count() << "\n";
   timer_ = rclcpp::create_timer(this, this->get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 }
 
-void AEB::onTimer()
-{
-  std::cerr << "On TIMER!\n";
-  updater_.force_update();
-}
+void AEB::onTimer() { updater_.force_update(); }
 
 void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
 {
@@ -308,28 +303,22 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 {
   // step1. check data
   if (!isDataReady()) {
-    std::cerr << __func__ << " !isDataReady() \n";
     return false;
   }
 
   // if not driving, disable aeb
   if (autoware_state_->state != AutowareState::DRIVING) {
-    std::cerr << __func__ << " Driving \n";
     return false;
   }
 
   // step2. create velocity data check if the vehicle stops or not
-  const double current_v = current_velocity_ptr_->longitudinal_velocity + 2.25;
+  const double current_v = current_velocity_ptr_->longitudinal_velocity;
   if (current_v < 0.1) {
-    std::cerr << __func__ << " Current vel \n";
     return false;
   }
 
   // step3. create ego path based on sensor data
   bool has_collision_ego = false;
-  std::cerr << "-----------------OBJECT CREATION------------------\n";
-  std::cerr << "-----------------IMU OBJECT CREATION------------------\n";
-
   if (use_imu_path_) {
     std::vector<Polygon2d> ego_polys;
     const double current_w = angular_velocity_ptr_->z;
@@ -339,21 +328,15 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_a = 0.999;
     const auto current_time = get_clock()->now();
     const auto ego_path = generateEgoPath(current_v, current_w, ego_polys);
-    std::vector<ObjectData> objects;
-    createObjectData(ego_path, ego_polys, current_time, objects);
-    std::cerr << "Object Size Regular MEthod: " << objects.size() << "\n";
+
     std::vector<ObjectData> objects_cluster;
     createClusteredPointCloudObjectData(ego_path, ego_polys, current_time, objects_cluster);
-    std::cerr << "Clustering Method " << objects_cluster.size() << "\n";
-
     has_collision_ego = hasCollision(current_v, ego_path, objects_cluster);
     std::string ns = "ego";
     addMarker(
       current_time, ego_path, ego_polys, objects_cluster, color_r, color_g, color_b, color_a, ns,
       debug_markers);
   }
-
-  std::cerr << "-----------------MPC OBJECT CREATION------------------\n";
 
   // step4. transform predicted trajectory from control module
   bool has_collision_predicted = false;
@@ -368,13 +351,10 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr, predicted_polys);
     if (predicted_path_opt) {
       const auto & predicted_path = predicted_path_opt.value();
-      std::vector<ObjectData> objects;
-      createObjectData(predicted_path, predicted_polys, current_time, objects);
-      std::cerr << "Object Size Regular MEthod: " << objects.size() << "\n";
+
       std::vector<ObjectData> objects_cluster;
       createClusteredPointCloudObjectData(
         predicted_path, predicted_polys, current_time, objects_cluster);
-      std::cerr << "Clustering Method " << objects_cluster.size() << "\n";
       has_collision_predicted = hasCollision(current_v, predicted_path, objects_cluster);
       std::string ns = "predicted";
       addMarker(
@@ -382,11 +362,6 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
         color_a, ns, debug_markers);
     }
   }
-  std::cerr << "-----------------OBJECT CREATION------------------\n";
-
-  std::string col = (has_collision_ego || has_collision_predicted) ? "Has collision! \n"
-                                                                   : "DOES NOT HAVE COLLISION \n";
-  std::cerr << col;
   return has_collision_ego || has_collision_predicted;
 }
 
@@ -523,7 +498,6 @@ void AEB::createObjectData(
 
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
-  std::cerr << "obstacle_points_ptr->points.size() " << obstacle_points_ptr->points.size() << "\n";
   for (const auto & point : obstacle_points_ptr->points) {
     ObjectData obj;
     obj.stamp = stamp;
