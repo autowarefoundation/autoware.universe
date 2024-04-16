@@ -35,7 +35,7 @@ struct PredictedState
   {
   }
 
-  static const size_t Dim = PredictedStateDim;
+  static size_t dim() { return PredictedStateDim; }
 
   float x() const { return x_; }
   float y() const { return y_; }
@@ -52,28 +52,29 @@ private:
 struct PredictedMode
 {
   PredictedMode(const float score, const float * waypoints, const size_t num_future)
-  : score(score), NumFuture(num_future)
+  : score_(score), num_future_(num_future)
   {
-    for (size_t t = 0; t < NumFuture; ++t) {
-      const auto start_ptr = waypoints + t * StateDim;
-      std::vector<float> state(start_ptr, start_ptr + StateDim);
+    for (size_t t = 0; t < num_future_; ++t) {
+      const auto start_ptr = waypoints + t * state_dim();
+      std::vector<float> state(start_ptr, start_ptr + state_dim());
       waypoints_.emplace_back(state.data());
     }
   }
 
-  static const size_t StateDim = PredictedStateDim;
-
-  float score;
-  size_t NumFuture;
+  static size_t state_dim() { return PredictedStateDim; }
+  float score() const { return score_; }
+  size_t num_future() const { return num_future_; }
 
   /**
    * @brief Get the waypoints.
    *
    * @return const std::vector<PredictedState>&
    */
-  const std::vector<PredictedState> & getWaypoints() const { return waypoints_; }
+  const std::vector<PredictedState> & get_waypoints() const { return waypoints_; }
 
 private:
+  float score_;
+  size_t num_future_;
   std::vector<PredictedState> waypoints_;
 };  // struct PredictedMode
 
@@ -85,42 +86,43 @@ struct PredictedTrajectory
   PredictedTrajectory(
     const float * scores, const float * trajectories, const size_t num_mode,
     const size_t num_future)
-  : NumMode(num_mode), NumFuture(num_future)
+  : num_mode_(num_mode), num_future_(num_future)
   {
-    for (size_t m = 0; m < NumMode; ++m) {
+    for (size_t m = 0; m < num_mode_; ++m) {
       const auto score = *(scores + m);
-      const auto start_ptr = trajectories + m * NumFuture * StateDim;
-      std::vector<float> waypoints(start_ptr, start_ptr + NumFuture * StateDim);
-      modes_.emplace_back(score, waypoints.data(), NumFuture);
+      const auto start_ptr = trajectories + m * num_future_ * state_dim();
+      std::vector<float> waypoints(start_ptr, start_ptr + num_future_ * state_dim());
+      modes_.emplace_back(score, waypoints.data(), num_future_);
     }
 
     // sort by score
-    sortByScore();
+    sort_by_score();
   }
 
-  static const size_t StateDim = PredictedStateDim;
-
-  const size_t NumMode;
-  const size_t NumFuture;
+  static size_t state_dim() { return PredictedStateDim; }
+  size_t num_mode() const { return num_mode_; }
+  size_t num_future() const { return num_future_; }
 
   /**
    * @brief Return predicted modes. Modes are sorted in descending order based on their scores.
    *
    * @return const std::vector<PredictedMode>&
    */
-  const std::vector<PredictedMode> & getModes() const { return modes_; }
+  const std::vector<PredictedMode> & get_modes() const { return modes_; }
 
 private:
   /**
    * @brief Sort modes in descending order based on their scores.
    */
-  void sortByScore()
+  void sort_by_score()
   {
     std::sort(modes_.begin(), modes_.end(), [](const auto & mode1, const auto & mode2) {
-      return mode1.score > mode2.score;
+      return mode1.score() > mode2.score();
     });
   }
 
+  size_t num_mode_;
+  size_t num_future_;
   std::vector<PredictedMode> modes_;
 };  // struct PredictedTrajectory
 }  // namespace trt_mtr
