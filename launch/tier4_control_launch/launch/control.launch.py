@@ -327,6 +327,12 @@ def launch_setup(context, *args, **kwargs):
         name="glog_component",
     )
 
+    logger_component = ComposableNode(
+        package="tier4_autoware_utils",
+        plugin="tier4_autoware_utils::LoggerLevelConfigureNode",
+        name="config_logger",
+    )
+
     # set container to run all required components in the same process
     container = ComposableNodeContainer(
         name="control_container",
@@ -334,6 +340,7 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
         composable_node_descriptions=[
+            logger_component,
             controller_component,
             lane_departure_component,
             shift_decider_component,
@@ -381,6 +388,12 @@ def launch_setup(context, *args, **kwargs):
                 package="rclcpp_components",
                 executable=LaunchConfiguration("container_executable"),
                 composable_node_descriptions=[
+                    ComposableNode(
+                        package="tier4_autoware_utils",
+                        plugin="tier4_autoware_utils::LoggerLevelConfigureNode",
+                        name="container_logger_configure",
+                        namespace="control_validator_container",
+                    ),
                     control_validator_component,
                     ComposableNode(
                         package="glog_component",
