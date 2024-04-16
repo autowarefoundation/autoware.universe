@@ -118,17 +118,17 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
 {
   // Subscribers
   sub_point_cloud_ = this->create_subscription<PointCloud2>(
-    "/perception/obstacle_segmentation/pointcloud", rclcpp::SensorDataQoS(),
+    "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&AEB::onPointCloud, this, std::placeholders::_1));
 
   sub_velocity_ = this->create_subscription<VelocityReport>(
-    "/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
+    "~/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
 
   sub_imu_ = this->create_subscription<Imu>(
-    "/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
+    "~/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
 
   sub_predicted_traj_ = this->create_subscription<Trajectory>(
-    "/input/predicted_trajectory", rclcpp::QoS{1},
+    "~/input/predicted_trajectory", rclcpp::QoS{1},
     std::bind(&AEB::onPredictedTrajectory, this, std::placeholders::_1));
 
   sub_autoware_state_ = this->create_subscription<AutowareState>(
@@ -552,7 +552,6 @@ void AEB::cropPointCloudWithEgoPath(const std::vector<Polygon2d> & ego_polys)
 {
   PointCloud::Ptr full_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *full_points_ptr);
-
   // Create a Point cloud with the points of the ego footprint
   PointCloud::Ptr path_polygon_points(new PointCloud);
   std::for_each(ego_polys.begin(), ego_polys.end(), [&](const auto & poly) {
@@ -561,7 +560,6 @@ void AEB::cropPointCloudWithEgoPath(const std::vector<Polygon2d> & ego_polys)
       path_polygon_points->push_back(point);
     });
   });
-
   // Make a surface hull with the ego footprint to filter out points
   pcl::ConvexHull<pcl::PointXYZ> hull;
   hull.setDimension(2);
@@ -569,17 +567,14 @@ void AEB::cropPointCloudWithEgoPath(const std::vector<Polygon2d> & ego_polys)
   std::vector<pcl::Vertices> polygons;
   pcl::PointCloud<pcl::PointXYZ>::Ptr surface_hull(new pcl::PointCloud<pcl::PointXYZ>);
   hull.reconstruct(*surface_hull, polygons);
-
   // Filter out points outside of the path's convex hull
   pcl::PointCloud<pcl::PointXYZ>::Ptr objects(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::CropHull<pcl::PointXYZ> path_polygon_hull_filter;
-
   path_polygon_hull_filter.setDim(2);
   path_polygon_hull_filter.setInputCloud(full_points_ptr);
   path_polygon_hull_filter.setHullIndices(polygons);
   path_polygon_hull_filter.setHullCloud(surface_hull);
   path_polygon_hull_filter.filter(*objects);
-
   // Store the results
   if (!objects->empty()) {
     pcl::toROSMsg(*objects, *cropped_ros_pointcloud_ptr_);
@@ -591,18 +586,15 @@ void AEB::createClusteredPointCloudObjectData(
   std::vector<ObjectData> & objects)
 {
   // check if the predicted path has valid number of points
-  if (ego_path.size() < 2 || ego_polys.empty() || !cropped_ros_pointcloud_ptr_) {
+  if (ego_path.size() < 2 || ego_polys.empty() || cropped_ros_pointcloud_ptr_->data.empty()) {
     return;
   }
-
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*cropped_ros_pointcloud_ptr_, *obstacle_points_ptr);
   if (obstacle_points_ptr->empty()) return;
-
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
   tree->setInputCloud(obstacle_points_ptr);
-
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
   ec.setClusterTolerance(0.1);
   ec.setMinClusterSize(10);
@@ -610,10 +602,8 @@ void AEB::createClusteredPointCloudObjectData(
   ec.setSearchMethod(tree);
   ec.setInputCloud(obstacle_points_ptr);
   ec.extract(cluster_indices);
-
   std::vector<PointCloud::Ptr> clusters;
   std::vector<Eigen::Vector4f> cluster_centroids;
-
   for (const auto & indices : cluster_indices) {
     PointCloud::Ptr cluster(new PointCloud);
     for (const auto & index : indices.indices) {
@@ -627,7 +617,6 @@ void AEB::createClusteredPointCloudObjectData(
     pcl::compute3DCentroid(*cluster, centroid);
     cluster_centroids.push_back(centroid);
   }
-
   const double half_width = vehicle_info_.vehicle_width_m / 2.0;
   for (const auto & centroid : cluster_centroids) {
     ObjectData obj;
