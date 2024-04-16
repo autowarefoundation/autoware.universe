@@ -8,6 +8,7 @@
   <!-- Lidar + Camera detector parameters -->
   <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
   <arg name="use_roi_based_cluster" default="false"/>
+  <arg name="use_intensity_based_validator" default="false"/>
 
   <!-- Camera parameters -->
   <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
@@ -207,9 +208,19 @@
         </include>
       </group>
 
+      <!-- add intensity validator -->
       <group>
-        <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
+        <include file="$(find-pkg-share detected_object_validation)/launch/pointcloud_intensity_based_validator.launch.xml" if="$(var use_intensity_based_validator)">
           <arg name="input/objects" value="clusters"/>
+          <arg name="output/objects" value="validated/clusters"/>
+        </include>
+      </group>
+
+      <group>
+        <let name="input/clustering" value="validated/clusters" if="$(var use_intensity_based_validator)"/>
+        <let name="input/clustering" value="clusters" unless="$(var use_intensity_based_validator)"/>
+        <include file="$(find-pkg-share shape_estimation)/launch/shape_estimation.launch.xml">
+          <arg name="input/objects" value="$(var input/clustering)"/>
           <arg name="output/objects" value="objects_with_feature"/>
         </include>
       </group>
