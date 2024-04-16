@@ -55,6 +55,7 @@ void MapUpdateModule::initialize_diagnostics_key_value()
   diagnostics_map_update_->addKeyValue("is_activated", false);
   diagnostics_map_update_->addKeyValue("is_set_last_updete_position", false);
   diagnostics_map_update_->addKeyValue("distance_last_updete_position_to_current_position", 0.0);
+  diagnostics_map_update_->addKeyValue("is_need_rebuild", false);
   diagnostics_map_update_->addKeyValue("is_updated_map", false);
   diagnostics_map_update_->addKeyValue("is_succeed_call_pcd_loader", false);
   diagnostics_map_update_->addKeyValue("maps_to_add_size", 0);
@@ -130,7 +131,7 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
 
 void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 {
-  diagnostics_map_update_->addKeyValue("is_updated_map", false);
+  diagnostics_map_update_->addKeyValue("is_need_rebuild", need_rebuild_);
 
   // If the current position is super far from the previous loading position,
   // lock and rebuild ndt_ptr_
@@ -148,6 +149,8 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
     }
 
     const bool updated = update_ndt(position, *ndt_ptr_);
+
+    diagnostics_map_update_->addKeyValue("is_updated_map", updated);
     if (!updated) {
       std::stringstream message;
       message
@@ -170,6 +173,7 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
     // If the updating is done the main ndt_ptr_, either the update or the NDT
     // align will be blocked by the other.
     const bool updated = update_ndt(position, *secondary_ndt_ptr_);
+    diagnostics_map_update_->addKeyValue("is_updated_map", updated);
     if (!updated) {
       last_update_position_ = position;
       return;
@@ -195,8 +199,6 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
 
   // Publish the new ndt maps
   publish_partial_pcd_map();
-
-  diagnostics_map_update_->addKeyValue("is_updated_map", true);
 }
 
 bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt)
