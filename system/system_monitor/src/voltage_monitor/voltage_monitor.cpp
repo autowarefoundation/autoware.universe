@@ -45,8 +45,8 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
   updater_(this),
   hostname_(),
   voltage_timeout_(declare_parameter<int>("voltage_timeout", 5)),
-  battery_timeout_(declare_parameter<int>("battery_timeout", 5)),
   voltage_elapsed_ms_(0),
+  battery_timeout_(declare_parameter<int>("battery_timeout", 5)),
   battery_elapsed_ms_(0)
 {
   gethostname(hostname_, sizeof(hostname_));
