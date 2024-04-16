@@ -284,7 +284,6 @@ void VoltageMonitor::onTimer()
 
     readBatteryStatus(tmp_status, tmp_ifstream_error_str);
 
-    sleep(7);  // sleep for 7 seconds to avoid reading the same file too frequently (every 1 second
     double tmp_elapsed_ms = stop_watch.toc("execution_time");
     // thread-safe copy
     {
