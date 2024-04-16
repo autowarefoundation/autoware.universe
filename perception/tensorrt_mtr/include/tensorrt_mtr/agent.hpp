@@ -81,10 +81,10 @@ struct AgentState
    */
   explicit AgentState(const std::vector<float>::const_iterator & itr)
   {
-    std::copy(itr, itr + Dim, data_.begin());
+    std::copy(itr, itr + dim(), data_.begin());
   }
 
-  static const size_t Dim = AgentStateDim;
+  static size_t dim() { return AgentStateDim; }
 
   /**
    * @brief Construct a new instance filling all elements by `0.0f`.
@@ -114,7 +114,7 @@ struct AgentState
   bool is_valid() const { return is_valid_ == 1.0f; }
 
 private:
-  std::array<float, Dim> data_;
+  std::array<float, AgentStateDim> data_;
   float x_{0.0f}, y_{0.0f}, z_{0.0f}, length_{0.0f}, width_{0.0f}, height_{0.0f}, yaw_{0.0f},
     vx_{0.0f}, vy_{0.0f}, ax_{0.0f}, ay_{0.0f}, is_valid_{0.0f};
 };
@@ -135,14 +135,14 @@ struct AgentHistory
   AgentHistory(
     AgentState & state, const std::string & object_id, const size_t label_index,
     const float current_time, const size_t max_time_length)
-  : data_((max_time_length - 1) * StateDim),
+  : data_((max_time_length - 1) * state_dim()),
     object_id_(object_id),
     label_index_(label_index),
     latest_time_(current_time),
     max_time_length_(max_time_length)
   {
     const auto s_ptr = state.data_ptr();
-    for (size_t d = 0; d < StateDim; ++d) {
+    for (size_t d = 0; d < state_dim(); ++d) {
       data_.push_back(*(s_ptr + d));
     }
   }
@@ -155,7 +155,7 @@ struct AgentHistory
    */
   AgentHistory(
     const std::string & object_id, const size_t label_index, const size_t max_time_length)
-  : data_(max_time_length * StateDim),
+  : data_(max_time_length * state_dim()),
     object_id_(object_id),
     label_index_(label_index),
     latest_time_(-std::numeric_limits<float>::max()),
@@ -163,21 +163,7 @@ struct AgentHistory
   {
   }
 
-  static const size_t StateDim = AgentStateDim;
-
-  /**
-   * @brief Returns ID of the object.
-   *
-   * @return const std::string&
-   */
-  const std::string & object_id() const { return object_id_; }
-
-  /**
-   * @brief Return the label index.
-   *
-   * @return size_t
-   */
-  size_t label_index() const { return label_index_; }
+  static size_t state_dim() { return AgentStateDim; }
 
   /**
    * @brief Return the history length.
@@ -185,6 +171,29 @@ struct AgentHistory
    * @return size_t History length.
    */
   size_t length() const { return max_time_length_; }
+
+  /**
+   * @brief Return the data size of history `T * D`.
+   *
+   * @return size_t
+   */
+  size_t size() const { return max_time_length_ * state_dim(); }
+
+  /**
+   * @brief Return the shape of history matrix ordering in `(T, D)`.
+   *
+   * @return std::tuple<size_t, size_t>
+   */
+  std::tuple<size_t, size_t> shape() const { return {max_time_length_, state_dim()}; }
+
+  /**
+   * @brief Return the object id.
+   *
+   * @return const std::string&
+   */
+  const std::string & object_id() const { return object_id_; }
+
+  size_t label_index() const { return label_index_; }
 
   /**
    * @brief Return the last timestamp when non-empty state was pushed.
@@ -202,10 +211,10 @@ struct AgentHistory
   void update(const float current_time, AgentState & state) noexcept
   {
     // remove the state at the oldest timestamp
-    data_.erase(data_.begin(), data_.begin() + StateDim);
+    data_.erase(data_.begin(), data_.begin() + state_dim());
 
     const auto s = state.data_ptr();
-    for (size_t d = 0; d < StateDim; ++d) {
+    for (size_t d = 0; d < state_dim(); ++d) {
       data_.push_back(*(s + d));
     }
     latest_time_ = current_time;
@@ -218,10 +227,10 @@ struct AgentHistory
   void update_empty() noexcept
   {
     // remove the state at the oldest timestamp
-    data_.erase(data_.begin(), data_.begin() + StateDim);
+    data_.erase(data_.begin(), data_.begin() + state_dim());
 
     const auto s = AgentState::empty().data_ptr();
-    for (size_t d = 0; d < StateDim; ++d) {
+    for (size_t d = 0; d < state_dim(); ++d) {
       data_.push_back(*(s + d));
     }
   }
@@ -262,14 +271,14 @@ struct AgentHistory
    */
   AgentState get_latest_state() const
   {
-    const auto & latest_itr = (data_.begin() + StateDim * (max_time_length_ - 1));
+    const auto & latest_itr = (data_.begin() + state_dim() * (max_time_length_ - 1));
     return AgentState(latest_itr);
   }
 
 private:
   std::vector<float> data_;
   const std::string object_id_;
-  const int label_index_;
+  const size_t label_index_;
   float latest_time_;
   const size_t max_time_length_;
 };
@@ -292,61 +301,66 @@ struct AgentData
     std::vector<AgentHistory> & histories, const size_t sdc_index,
     const std::vector<size_t> & target_index, const std::vector<size_t> & label_index,
     const std::vector<float> & timestamps)
-  : TargetNum(target_index.size()),
-    AgentNum(histories.size()),
-    TimeLength(timestamps.size()),
-    sdc_index(sdc_index),
-    target_index(target_index),
-    label_index(label_index),
-    timestamps(timestamps)
+  : num_target_(target_index.size()),
+    num_agent_(histories.size()),
+    time_length_(timestamps.size()),
+    sdc_index_(sdc_index),
+    target_index_(target_index),
+    label_index_(label_index),
+    timestamps_(timestamps)
   {
-    data_.reserve(AgentNum * TimeLength * StateDim);
+    data_.reserve(num_agent_ * time_length_ * state_dim());
     for (auto & history : histories) {
       const auto data_ptr = history.data_ptr();
-      for (size_t t = 0; t < TimeLength; ++t) {
-        for (size_t d = 0; d < StateDim; ++d) {
-          data_.push_back(*(data_ptr + t * StateDim + d));
+      for (size_t t = 0; t < time_length_; ++t) {
+        for (size_t d = 0; d < state_dim(); ++d) {
+          data_.push_back(*(data_ptr + t * state_dim() + d));
         }
       }
     }
 
-    target_data_.reserve(TargetNum * StateDim);
-    target_label_index.reserve(TargetNum);
+    target_data_.reserve(num_target_ * state_dim());
+    target_label_index_.reserve(num_target_);
     for (const auto & idx : target_index) {
-      target_label_index.emplace_back(label_index.at(idx));
+      target_label_index_.emplace_back(label_index.at(idx));
       const auto target_ptr = histories.at(idx).data_ptr();
-      for (size_t d = 0; d < StateDim; ++d) {
-        target_data_.push_back(*(target_ptr + (TimeLength - 1) * StateDim + d));
+      for (size_t d = 0; d < state_dim(); ++d) {
+        target_data_.push_back(*(target_ptr + (time_length_ - 1) * state_dim() + d));
       }
     }
 
-    ego_data_.reserve(TimeLength * StateDim);
+    ego_data_.reserve(time_length_ * state_dim());
     const auto ego_data_ptr = histories.at(sdc_index).data_ptr();
-    for (size_t t = 0; t < TimeLength; ++t) {
-      for (size_t d = 0; d < StateDim; ++d) {
-        ego_data_.push_back(*(ego_data_ptr + t * StateDim + d));
+    for (size_t t = 0; t < time_length_; ++t) {
+      for (size_t d = 0; d < state_dim(); ++d) {
+        ego_data_.push_back(*(ego_data_ptr + t * state_dim() + d));
       }
     }
   }
 
-  const size_t TargetNum;
-  const size_t AgentNum;
-  const size_t TimeLength;
-  const size_t StateDim = AgentStateDim;
-  const size_t ClassNum = 3;  // TODO(ktro2828): Do not use magic number.
+  static size_t state_dim() { return AgentStateDim; }
+  static size_t num_class() { return 3; }  // TODO(ktro2828): Do not use magic number.
+  size_t num_target() const { return num_target_; }
+  size_t num_agent() const { return num_agent_; }
+  size_t time_length() const { return time_length_; }
+  int sdc_index() const { return sdc_index_; }
+  const std::vector<size_t> & target_index() const { return target_index_; }
+  const std::vector<size_t> & label_index() const { return label_index_; }
+  const std::vector<size_t> & target_label_index() const { return target_label_index_; }
+  const std::vector<float> & timestamps() const { return timestamps_; }
 
-  int sdc_index;
-  std::vector<size_t> target_index;
-  std::vector<size_t> label_index;
-  std::vector<size_t> target_label_index;
-  std::vector<float> timestamps;
+  size_t size() const { return num_agent_ * time_length_ * state_dim(); }
+  size_t input_dim() const { return num_agent_ + time_length_ + num_class() + 3; }
 
   /**
-   * @brief Return the data shape.
+   * @brief Return the data shape ordering in (N, T, D).
    *
-   * @return std::tuple<size_t, size_t, size_t> (AgentNum, TimeLength, StateDim).
+   * @return std::tuple<size_t, size_t, size_t>
    */
-  std::tuple<size_t, size_t, size_t> shape() const { return {AgentNum, TimeLength, StateDim}; }
+  std::tuple<size_t, size_t, size_t> shape() const
+  {
+    return {num_agent_, time_length_, state_dim()};
+  }
 
   /**
    * @brief Return the address pointer of data array.
@@ -370,6 +384,14 @@ struct AgentData
   float * ego_data_ptr() noexcept { return ego_data_.data(); }
 
 private:
+  size_t num_target_;
+  size_t num_agent_;
+  size_t time_length_;
+  int sdc_index_;
+  std::vector<size_t> target_index_;
+  std::vector<size_t> label_index_;
+  std::vector<size_t> target_label_index_;
+  std::vector<float> timestamps_;
   std::vector<float> data_;
   std::vector<float> target_data_;
   std::vector<float> ego_data_;

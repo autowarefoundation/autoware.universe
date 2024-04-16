@@ -180,32 +180,6 @@ private:
   // outputs
   cuda::unique_ptr<float[]> d_out_score_{nullptr};
   cuda::unique_ptr<float[]> d_out_trajectory_{nullptr};
-
-  // debug
-  cuda::EventDebugger event_debugger_;
-  std::unique_ptr<float[]> h_debug_in_trajectory_{nullptr};
-  std::unique_ptr<bool[]> h_debug_in_trajectory_mask_{nullptr};
-  std::unique_ptr<float[]> h_debug_in_last_pos_{nullptr};
-  std::unique_ptr<float[]> h_debug_in_polyline_{nullptr};
-  std::unique_ptr<bool[]> h_debug_in_polyline_mask_{nullptr};
-  std::unique_ptr<float[]> h_debug_in_polyline_center_{nullptr};
-  std::unique_ptr<float[]> h_debug_out_score_{nullptr};
-  std::unique_ptr<float[]> h_debug_out_trajectory_{nullptr};
-
-  /**
-   * @brief Display input data after finishing pre-process.
-   *
-   * @param agent_data The input agent data.
-   * @param polyline_data The input polyline data.
-   */
-  void debugPreprocess(const AgentData & agent_data, const PolylineData & polyline_data);
-
-  /**
-   * @brief Display output data after finishing post-process.
-   *
-   * @param agent_data The input agent data.
-   */
-  void debugPostprocess(const AgentData & agent_data);
 };  // class TrtMTR
 }  // namespace trt_mtr
 #endif  // TENSORRT_MTR__TRT_MTR_HPP_
