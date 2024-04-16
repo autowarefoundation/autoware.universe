@@ -49,10 +49,9 @@ std::vector<TrajectoryPoint> generate_centerline_with_bag(rclcpp::Node & node)
       constexpr double epsilon = 1e-1;
       if (
         std::abs(centerline_traj_points.back().pose.position.x - ros_msg->pose.pose.position.x) <
-        epsilon &&
+          epsilon &&
         std::abs(centerline_traj_points.back().pose.position.y - ros_msg->pose.pose.position.y) <
-        epsilon)
-      {
+          epsilon) {
         continue;
       }
     }

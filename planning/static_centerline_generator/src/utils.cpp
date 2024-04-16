@@ -183,8 +183,7 @@ MarkerArray create_footprint_marker(
     visualization_msgs::msg::Marker::LINE_STRIP,
     tier4_autoware_utils::createMarkerScale(0.1, 0.0, 0.0),
     tier4_autoware_utils::createMarkerColor(
-      static_cast<float>(r), static_cast<float>(g),
-      static_cast<float>(b), 0.999));
+      static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.999));
   marker.header.stamp = now;
   marker.lifetime = rclcpp::Duration(0, 0);
 
@@ -217,8 +216,7 @@ MarkerArray create_distance_text_marker(
     visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
     tier4_autoware_utils::createMarkerScale(0.5, 0.5, 0.5),
     tier4_autoware_utils::createMarkerColor(
-      static_cast<float>(r), static_cast<float>(g),
-      static_cast<float>(b), 0.999));
+      static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.999));
   marker.pose = pose;
   marker.header.stamp = now;
   marker.lifetime = rclcpp::Duration(0, 0);

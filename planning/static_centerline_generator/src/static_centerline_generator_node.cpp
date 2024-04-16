@@ -141,8 +141,7 @@ std::vector<lanelet::Id> check_lanelet_connection(
     const auto next_lanelets = route_handler.getNextLanelets(route_lanelets.at(i));
 
     const bool is_connected =
-      std::find_if(
-      next_lanelets.begin(), next_lanelets.end(), [&](const auto & next_lanelet) {
+      std::find_if(next_lanelets.begin(), next_lanelets.end(), [&](const auto & next_lanelet) {
         return next_lanelet.id() == route_lanelets.at(i + 1).id();
       }) != next_lanelets.end();
     if (!is_connected) {
@@ -201,8 +200,8 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
   sub_save_map_ = create_subscription<std_msgs::msg::Bool>(
     "/centerline_updater_helper/save_map", rclcpp::QoS{1}, [this](const std_msgs::msg::Bool & msg) {
       const auto lanelet2_output_file_path =
-      tier4_autoware_utils::getOrDeclareParameter<std::string>(
-        *this, "lanelet2_output_file_path");
+        tier4_autoware_utils::getOrDeclareParameter<std::string>(
+          *this, "lanelet2_output_file_path");
       if (!centerline_with_route_ || msg.data) {
         const auto & c = *centerline_with_route_;
         const auto selected_centerline = std::vector<TrajectoryPoint>(
@@ -243,17 +242,17 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
 
   centerline_source_ = [&]() {
-      const auto centerline_source_param = declare_parameter<std::string>("centerline_source");
-      if (centerline_source_param == "optimization_trajectory_base") {
-        optimization_trajectory_based_centerline_ = OptimizationTrajectoryBasedCenterline(*this);
-        return CenterlineSource::OptimizationTrajectoryBase;
-      }
-      if (centerline_source_param == "bag_ego_trajectory_base") {
-        return CenterlineSource::BagEgoTrajectoryBase;
-      }
-      throw std::logic_error(
-              "The centerline source is not supported in static_centerline_generator.");
-    }();
+    const auto centerline_source_param = declare_parameter<std::string>("centerline_source");
+    if (centerline_source_param == "optimization_trajectory_base") {
+      optimization_trajectory_based_centerline_ = OptimizationTrajectoryBasedCenterline(*this);
+      return CenterlineSource::OptimizationTrajectoryBase;
+    }
+    if (centerline_source_param == "bag_ego_trajectory_base") {
+      return CenterlineSource::BagEgoTrajectoryBase;
+    }
+    throw std::logic_error(
+      "The centerline source is not supported in static_centerline_generator.");
+  }();
 }
 
 void StaticCenterlineGeneratorNode::update_centerline_range(
@@ -299,12 +298,12 @@ CenterlineWithRoute StaticCenterlineGeneratorNode::generate_centerline_with_rout
 
   // generate centerline with route
   auto centerline_with_route = [&]() {
-      if (centerline_source_ == CenterlineSource::OptimizationTrajectoryBase) {
-        const lanelet::Id start_lanelet_id = declare_parameter<int64_t>("start_lanelet_id");
-        const lanelet::Id end_lanelet_id = declare_parameter<int64_t>("end_lanelet_id");
-        const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
-        const auto optimized_centerline =
-          optimization_trajectory_based_centerline_.generate_centerline_with_optimization(
+    if (centerline_source_ == CenterlineSource::OptimizationTrajectoryBase) {
+      const lanelet::Id start_lanelet_id = declare_parameter<int64_t>("start_lanelet_id");
+      const lanelet::Id end_lanelet_id = declare_parameter<int64_t>("end_lanelet_id");
+      const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
+      const auto optimized_centerline =
+        optimization_trajectory_based_centerline_.generate_centerline_with_optimization(
           *this, *route_handler_ptr_, route_lane_ids);
       return CenterlineWithRoute{optimized_centerline, route_lane_ids};
     }
@@ -318,39 +317,27 @@ CenterlineWithRoute StaticCenterlineGeneratorNode::generate_centerline_with_rout
         RCLCPP_ERROR(get_logger(), "Nearest lanelets to the bag's centerline are not found.");
         return CenterlineWithRoute{};
       }
-      if (centerline_source_ == CenterlineSource::BagEgoTrajectoryBase) {
-        const auto bag_centerline = generate_centerline_with_bag(*this);
-        const auto start_lanelets =
-          route_handler_ptr_->getClosestLanelets(bag_centerline.front().pose);
-        const auto end_lanelets =
-          route_handler_ptr_->getClosestLanelets(bag_centerline.back().pose);
-        if (start_lanelets.empty() || end_lanelets.empty()) {
-          RCLCPP_ERROR(get_logger(), "Nearest lanelets to the bag's centerline are not found.");
-          return CenterlineWithRoute{};
-        }
 
-        const lanelet::Id start_lanelet_id = start_lanelets.front().id();
-        const lanelet::Id end_lanelet_id = end_lanelets.front().id();
-        const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
+      const lanelet::Id start_lanelet_id = start_lanelets.front().id();
+      const lanelet::Id end_lanelet_id = end_lanelets.front().id();
+      const auto route_lane_ids = plan_route(start_lanelet_id, end_lanelet_id);
 
-        return CenterlineWithRoute{bag_centerline, route_lane_ids};
-      }
-      throw std::logic_error(
-              "The centerline source is not supported in static_centerline_generator.");
-    }();
+      return CenterlineWithRoute{bag_centerline, route_lane_ids};
+    }
+    throw std::logic_error(
+      "The centerline source is not supported in static_centerline_generator.");
+  }();
 
   // resample
   const double output_trajectory_interval = declare_parameter<double>("output_trajectory_interval");
   centerline_with_route.centerline =
     resample_trajectory_points(centerline_with_route.centerline, output_trajectory_interval);
 
-  pub_whole_centerline_->publish(
-    motion_utils::convertToTrajectory(
-      centerline_with_route.centerline, create_header(this->now())));
+  pub_whole_centerline_->publish(motion_utils::convertToTrajectory(
+    centerline_with_route.centerline, create_header(this->now())));
 
-  pub_centerline_->publish(
-    motion_utils::convertToTrajectory(
-      centerline_with_route.centerline, create_header(this->now())));
+  pub_centerline_->publish(motion_utils::convertToTrajectory(
+    centerline_with_route.centerline, create_header(this->now())));
 
   return centerline_with_route;
 }
@@ -366,32 +353,32 @@ void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_
 
   // load map by the map_loader package
   map_bin_ptr_ = [&]() -> HADMapBin::ConstSharedPtr {
-      // load map
-      const auto map_projector_info = load_info_from_lanelet2_map(lanelet2_input_file_path);
-      const auto map_ptr =
-        Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
-      if (!map_ptr) {
-        return nullptr;
-      }
+    // load map
+    const auto map_projector_info = load_info_from_lanelet2_map(lanelet2_input_file_path);
+    const auto map_ptr =
+      Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
+    if (!map_ptr) {
+      return nullptr;
+    }
 
-      // NOTE: generate map projector for lanelet::write().
-      //       Without this, lat/lon of the generated LL2 map will be wrong.
-      map_projector_ = geography_utils::get_lanelet2_projector(map_projector_info);
+    // NOTE: generate map projector for lanelet::write().
+    //       Without this, lat/lon of the generated LL2 map will be wrong.
+    map_projector_ = geography_utils::get_lanelet2_projector(map_projector_info);
 
-      // NOTE: The original map is stored here since the various ids in the lanelet map will change
-      //       after lanelet::utils::overwriteLaneletCenterline, and saving map will fail.
-      original_map_ptr_ =
-        Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
+    // NOTE: The original map is stored here since the various ids in the lanelet map will change
+    //       after lanelet::utils::overwriteLaneletCenterline, and saving map will fail.
+    original_map_ptr_ =
+      Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, map_projector_info);
 
-      // overwrite more dense centerline
-      lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
+    // overwrite more dense centerline
+    lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
 
-      // create map bin msg
-      const auto map_bin_msg =
-        Lanelet2MapLoaderNode::create_map_bin_msg(map_ptr, lanelet2_input_file_path, now());
+    // create map bin msg
+    const auto map_bin_msg =
+      Lanelet2MapLoaderNode::create_map_bin_msg(map_ptr, lanelet2_input_file_path, now());
 
-      return std::make_shared<HADMapBin>(map_bin_msg);
-    }();
+    return std::make_shared<HADMapBin>(map_bin_msg);
+  }();
 
   // check if map_bin_ptr_ is not null pointer
   if (!map_bin_ptr_) {
@@ -440,29 +427,29 @@ std::vector<lanelet::Id> StaticCenterlineGeneratorNode::plan_route(
 
   // calculate check points (= start and goal pose)
   const auto check_points = [&]() {
-      const auto start_center_pose = utils::get_center_pose(*route_handler_ptr_, start_lanelet_id);
-      const auto end_center_pose = utils::get_center_pose(*route_handler_ptr_, end_lanelet_id);
-      return std::vector<geometry_msgs::msg::Pose>{start_center_pose, end_center_pose};
-    }();
+    const auto start_center_pose = utils::get_center_pose(*route_handler_ptr_, start_lanelet_id);
+    const auto end_center_pose = utils::get_center_pose(*route_handler_ptr_, end_lanelet_id);
+    return std::vector<geometry_msgs::msg::Pose>{start_center_pose, end_center_pose};
+  }();
   RCLCPP_INFO(get_logger(), "Calculated check points.");
 
   // plan route by the mission_planner package
   const auto route = [&]() {
-      // create mission_planner plugin
-      auto plugin_loader = pluginlib::ClassLoader<mission_planner::PlannerPlugin>(
-        "mission_planner", "mission_planner::PlannerPlugin");
-      auto mission_planner =
-        plugin_loader.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
+    // create mission_planner plugin
+    auto plugin_loader = pluginlib::ClassLoader<mission_planner::PlannerPlugin>(
+      "mission_planner", "mission_planner::PlannerPlugin");
+    auto mission_planner =
+      plugin_loader.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
 
-      // initialize mission_planner
-      auto node = rclcpp::Node("mission_planner");
-      mission_planner->initialize(&node, map_bin_ptr_);
+    // initialize mission_planner
+    auto node = rclcpp::Node("mission_planner");
+    mission_planner->initialize(&node, map_bin_ptr_);
 
-      // plan route
-      auto route = mission_planner->plan(check_points);
+    // plan route
+    auto route = mission_planner->plan(check_points);
 
-      return route;
-    }();
+    return route;
+  }();
   RCLCPP_INFO(get_logger(), "Planned route.");
 
   // get lanelets
@@ -528,7 +515,7 @@ void StaticCenterlineGeneratorNode::on_plan_path(
   // plan path
   const auto optimized_traj_points =
     optimization_trajectory_based_centerline_.generate_centerline_with_optimization(
-    *this, *route_handler_ptr_, route_lane_ids);
+      *this, *route_handler_ptr_, route_lane_ids);
 
   // check calculation result
   if (optimized_traj_points.empty()) {
@@ -548,8 +535,7 @@ void StaticCenterlineGeneratorNode::on_plan_path(
 
     // check if target point is inside the lanelet
     while (lanelet::geometry::inside(
-        lanelet, convert_to_lanelet_point(target_traj_point->pose.position)))
-    {
+      lanelet, convert_to_lanelet_point(target_traj_point->pose.position))) {
       // memorize points inside the lanelet
       current_lanelet_points.push_back(target_traj_point->pose.position);
       target_traj_point++;
@@ -587,14 +573,14 @@ void StaticCenterlineGeneratorNode::evaluate(
   const auto marker_color_vec =
     tier4_autoware_utils::getOrDeclareParameter<std::vector<std::string>>(*this, "marker_color");
   const auto get_marker_color = [&](const double dist) -> boost::optional<std::array<double, 3>> {
-      for (size_t i = 0; i < dist_thresh_vec.size(); ++i) {
-        const double dist_thresh = dist_thresh_vec.at(i);
-        if (dist < dist_thresh) {
-          return convert_hex_string_to_decimal(marker_color_vec.at(i));
-        }
+    for (size_t i = 0; i < dist_thresh_vec.size(); ++i) {
+      const double dist_thresh = dist_thresh_vec.at(i);
+      if (dist < dist_thresh) {
+        return convert_hex_string_to_decimal(marker_color_vec.at(i));
       }
-      return boost::none;
-    };
+    }
+    return boost::none;
+  };
 
   // create right/left bound
   LineString2d right_bound;
@@ -674,4 +660,5 @@ void StaticCenterlineGeneratorNode::save_map(
 }
 }  // namespace autoware::static_centerline_generator
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::static_centerline_generator::StaticCenterlineGeneratorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::static_centerline_generator::StaticCenterlineGeneratorNode)
