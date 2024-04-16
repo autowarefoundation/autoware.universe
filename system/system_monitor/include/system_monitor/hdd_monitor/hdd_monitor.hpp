@@ -363,8 +363,8 @@ protected:
 
   int hdd_reader_port_;                         //!< @brief port number to connect to hdd_reader
   std::map<std::string, HddParam> hdd_params_;  //!< @brief list of error and warning levels
-  int hdd_status_timeout_;           //!< @brief Timeout duration for reading HDD status
-  double hdd_status_elapsed_ms_;     //!< @brief Execution time of reading HDD status
+  int hdd_status_timeout_;                      //!< @brief Timeout duration for reading HDD status
+  double hdd_status_elapsed_ms_;                //!< @brief Execution time of reading HDD status
 
   std::mutex hdd_status_mutex_;  //!< @brief Mutex for output from reading HDD status
   std::map<std::string, bool>
@@ -377,10 +377,10 @@ protected:
   HddInfoList hdd_info_list_;               //!< @brief list of HDD information
   rclcpp::Time last_hdd_stat_update_time_;  //!< @brief last HDD statistics update time
 
-  std::mutex hdd_usage_mutex_;          //!< @brief Mutex for output from reading HDD usage
-  double hdd_usage_elapsed_ms_;         //!< @brief Execution time of reading HDD usage
-  int hdd_usage_timeout_;               //!< @brief Timeout duration for reading HDD usage
-  std::vector<HddUsage> hdd_usages_;    //!< @brief vector of HDD usages
+  std::mutex hdd_usage_mutex_;              //!< @brief Mutex for output from reading HDD usage
+  double hdd_usage_elapsed_ms_;             //!< @brief Execution time of reading HDD usage
+  int hdd_usage_timeout_;                   //!< @brief Timeout duration for reading HDD usage
+  std::vector<HddUsage> hdd_usages_;        //!< @brief vector of HDD usages
   std::string hdd_usage_sum_error_str_;     //!< @brief summary error string of HDD usage
   std::string hdd_usage_detail_error_str_;  //!< @brief detail error string of HDD usage
 

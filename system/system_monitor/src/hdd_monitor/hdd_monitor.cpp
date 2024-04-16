@@ -557,7 +557,7 @@ std::string HddMonitor::getDeviceFromMountPoint(const std::string & mount_point)
 void HddMonitor::onTimer()
 {
   std::map<std::string, bool> tmp_hdd_connected_flags;
-  
+
   // execute HDD status check
   // Start to measure elapsed time
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
