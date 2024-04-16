@@ -37,15 +37,15 @@
 GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options) 
 : GPUMonitorBase("gpu_monitor", options),
   temp_timeout_(declare_parameter<int>("temp_timeout", 5)),
-  temp_timeout_expired_(false),
+  temp_elapsed_ms_(0.0),
   usage_timeout_(declare_parameter<int>("usage_timeout", 5)),
-  usage_timeout_expired_(false),
+  usage_elapsed_ms_(0.0),
   memory_usage_timeout_(declare_parameter<int>("memory_usage_timeout", 5)),
-  memory_usage_timeout_expired_(false),
+  memory_usage_elapsed_ms_(0.0),
   throttling_timeout_(declare_parameter<int>("throttling_timeout", 5)),
-  throttling_timeout_expired_(false),
+  throttling_elapsed_ms_(0.0),
   frequency_timeout_(declare_parameter<int>("frequency_timeout", 5)),
-  frequency_timeout_expired_(false)
+  frequency_elapsed_ms_(0.0)
 {
   nvmlReturn_t ret = nvmlInit();
   if (ret != NVML_SUCCESS) {
@@ -142,13 +142,11 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
     }
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(temp_timeout_mutex_);
-    timeout_expired = temp_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (level == DiagStatus::ERROR) {
+    stat.summary(DiagStatus::ERROR, temp_dict_.at(level));
+  } else if (tmp_temp_elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "Reading Temprature ERROR");
+  } else if (tmp_temp_elapsed_ms > temp_timeout_) {
     stat.summary(DiagStatus::WARN, "Reading Temprature Timeout");
   } else {
     stat.summary(level, temp_dict_.at(level));
@@ -214,13 +212,11 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     whole_level = std::max(whole_level, level);
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-    timeout_expired = usage_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (whole_level == DiagStatus::ERROR) {
+    stat.summary(DiagStatus::ERROR, load_dict_.at(whole_level));
+  } else if (tmp_usage_elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "Reading Usage ERROR");
+  } else if (tmp_usage_elapsed_ms > usage_timeout_) {
     stat.summary(DiagStatus::WARN, "Reading Usage Timeout");
   } else {
     stat.summary(whole_level, load_dict_.at(whole_level));
@@ -277,13 +273,11 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
     whole_level = std::max(whole_level, level);
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(memory_usage_timeout_mutex_);
-    timeout_expired = memory_usage_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (whole_level == DiagStatus::ERROR) {
+    stat.summary(DiagStatus::ERROR, load_dict_.at(whole_level));
+  } else if (tmp_memory_usage_elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "Reading Memory Usage ERROR");
+  } else if (tmp_memory_usage_elapsed_ms > memory_usage_timeout_) {
     stat.summary(DiagStatus::WARN, "Reading Memory Usage Timeout");
   } else {
     stat.summary(whole_level, load_dict_.at(whole_level));
@@ -337,13 +331,11 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     whole_level = std::max(whole_level, itr->level);
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(throttling_timeout_mutex_);
-    timeout_expired = throttling_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (whole_level == DiagStatus::ERROR) {
+    stat.summary(DiagStatus::ERROR, throttling_dict_.at(whole_level));
+  } else if (tmp_throttling_elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "Reading Throttling ERROR");
+  } else if (tmp_throttling_elapsed_ms > throttling_timeout_) {
     stat.summary(DiagStatus::WARN, "Reading Throttling Timeout");
   } else {
     stat.summary(whole_level, throttling_dict_.at(whole_level));
@@ -402,13 +394,11 @@ void GPUMonitor::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & st
     whole_level = std::max(whole_level, itr->level);
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(frequency_timeout_mutex_);
-    timeout_expired = frequency_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (whole_level == DiagStatus::ERROR) {
+    stat.summary(DiagStatus::ERROR, frequency_dict_.at(whole_level));
+  } else if (tmp_frequency_elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "Reading Frequency ERROR");
+  } else if (tmp_frequency_elapsed_ms > frequency_timeout_) {
     stat.summary(DiagStatus::WARN, "Reading Frequency Timeout");
   } else {
     stat.summary(whole_level, frequency_dict_.at(whole_level));
@@ -426,36 +416,6 @@ void GPUMonitor::onTimer()
   readFrequency();
 }
 
-void GPUMonitor::onTempTimeout()
-{
-  std::lock_guard<std::mutex> lock(temp_timeout_mutex_);
-  temp_timeout_expired_ = true;
-}
-
-void GPUMonitor::onUsageTimeout()
-{
-  std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-  usage_timeout_expired_ = true;
-}
-
-void GPUMonitor::onMemoryUsageTimeout()
-{
-  std::lock_guard<std::mutex> lock(memory_usage_timeout_mutex_);
-  memory_usage_timeout_expired_ = true;
-}
-
-void GPUMonitor::onThrottlingTimeout()
-{
-  std::lock_guard<std::mutex> lock(throttling_timeout_mutex_);
-  throttling_timeout_expired_ = true;
-}
-
-void GPUMonitor::onFrequencyTimeout()
-{
-  std::lock_guard<std::mutex> lock(frequency_timeout_mutex_);
-  frequency_timeout_expired_ = true;
-}
-
 void GPUMonitor::readTemp()
 {
     // Start to measure elapsed time
@@ -464,14 +424,6 @@ void GPUMonitor::readTemp()
 
   nvmlReturn_t ret{};
   std::vector<gpu_temp_info> tmp_temp_info_vector;
-
-  // Start timeout timer for read temperature
-  {
-    std::lock_guard<std::mutex> lock(temp_timeout_mutex_);
-    temp_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(temp_timeout_), std::bind(&GPUMonitor::onTempTimeout, this));
 
   for (auto itr = gpus_.begin(); itr != gpus_.end(); ++itr) {
     unsigned int temp = 0;
@@ -487,9 +439,6 @@ void GPUMonitor::readTemp()
     }
     tmp_temp_info_vector.push_back(temp_info);
   }
-
-  // Stop timeout timer for read temperature
-  timeout_timer_->cancel();
 
   double elapsed_ms = stop_watch.toc("execution_time");
 
@@ -508,14 +457,6 @@ void GPUMonitor::readUsage()
   stop_watch.tic("execution_time");
 
   std::vector<gpu_usage_info> tmp_usage_info_vector;
-
-  // Start timeout timer for read usage
-  {
-    std::lock_guard<std::mutex> lock(usage_timeout_mutex_);
-    usage_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(usage_timeout_), std::bind(&GPUMonitor::onUsageTimeout, this));
 
   int index = 0;
   nvmlReturn_t ret{};
@@ -536,9 +477,6 @@ void GPUMonitor::readUsage()
       tmp_usage_info_vector.push_back(usage_info);
     }
   }
-
-  // Stop timeout timer for read usage
-  timeout_timer_->cancel();
 
   double elapsed_ms = stop_watch.toc("execution_time");
 
@@ -640,14 +578,6 @@ void GPUMonitor::readMemoryUsage()
 
   std::vector<gpu_memory_usage_info> tmp_memory_usage_info_vector;
 
-  // Start timeout timer for read temperature
-  {
-    std::lock_guard<std::mutex> lock(memory_usage_timeout_mutex_);
-    memory_usage_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(memory_usage_timeout_), std::bind(&GPUMonitor::onMemoryUsageTimeout, this));
-
   nvmlReturn_t ret{};
 
   for (auto itr = gpus_.begin(); itr != gpus_.end(); ++itr) {
@@ -669,9 +599,6 @@ void GPUMonitor::readMemoryUsage()
     
   }
 
-  // Stop timeout timer for read temperature
-  timeout_timer_->cancel();
-
   double elapsed_ms = stop_watch.toc("execution_time");
 
   //thread-sage copy
@@ -689,14 +616,6 @@ void GPUMonitor::readThrottling()
   stop_watch.tic("execution_time");
 
   std::vector<gpu_throttling_info> tmp_throttling_info_vector;
-
-  // Start timeout timer for read temperature
-  {
-    std::lock_guard<std::mutex> lock(throttling_timeout_mutex_);
-    throttling_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(throttling_timeout_), std::bind(&GPUMonitor::onThrottlingTimeout, this));
 
   nvmlReturn_t ret{};
 
@@ -748,9 +667,6 @@ void GPUMonitor::readThrottling()
     tmp_throttling_info_vector.push_back(throttling_info);
   }
 
-  // Stop timeout timer for read temperature
-  timeout_timer_->cancel();
-
   double elapsed_ms = stop_watch.toc("execution_time");
 
   //thread-sage copy
@@ -768,14 +684,6 @@ void GPUMonitor::readFrequency()
   stop_watch.tic("execution_time");
 
   std::vector<gpu_frequency_info> tmp_frequency_info_vector;
-
-  // Start timeout timer for read temperature
-  {
-    std::lock_guard<std::mutex> lock(frequency_timeout_mutex_);
-    frequency_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(frequency_timeout_), std::bind(&GPUMonitor::onFrequencyTimeout, this));
 
   nvmlReturn_t ret{};
 
@@ -799,9 +707,6 @@ void GPUMonitor::readFrequency()
 
     tmp_frequency_info_vector.push_back(frequency_info);
   }
-
-  // Stop timeout timer for read temperature
-  timeout_timer_->cancel();
 
   double elapsed_ms = stop_watch.toc("execution_time");
 

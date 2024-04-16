@@ -197,32 +197,6 @@ protected:
   void onTimer();
 
   /**
-   * @brief timeout timer for temperature
-   */
-  void onTempTimeout();
-
-  /**
-   * @brief timeout timer for usage
-   */
-  void onUsageTimeout();
-
-  /**
-   * @brief timeout timer for memory usage
-   */
-  void onMemoryUsageTimeout();
-
-  /**
-   * @brief timeout timer for throttling
-   */
-  void onThrottlingTimeout();
-
-  /**
-   * @brief timeout timer for frequency
-   */
-  void onFrequencyTimeout();
-
-
-  /**
    * @brief read GPU temperature
    */
   void readTemp();
@@ -280,7 +254,6 @@ protected:
   static const size_t MAX_NAME_LENGTH = 128;
 
   rclcpp::TimerBase::SharedPtr timer_;  //!< @brief timer for monitoring
-  rclcpp::TimerBase::SharedPtr timeout_timer_;  //!< @brief timer for temperature timeout
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief callback group for timer
 
   std::vector<gpu_info> gpus_;      //!< @brief list of gpus
@@ -290,36 +263,26 @@ protected:
   std::vector<gpu_temp_info> temp_info_vector_;  //!< @brief list of temperature information
   int temp_timeout_;                   //!< @brief timeout for temperature
   double temp_elapsed_ms_;              //!< @brief elapsed time for temperature
-  std::mutex temp_timeout_mutex_;         //!< @brief mutex for temperature timeout
-  bool temp_timeout_expired_;             //!< @brief timeout for temperature has expired or not
 
   std::mutex usage_mutex_;  //!< @brief mutex for usage
   std::vector<gpu_usage_info> usage_info_vector_;  //!< @brief list of usage information
   int usage_timeout_;                   //!< @brief timeout for usage
   double usage_elapsed_ms_;              //!< @brief elapsed time for usage
-  std::mutex usage_timeout_mutex_;         //!< @brief mutex for usage timeout
-  bool usage_timeout_expired_;             //!< @brief timeout for usage has expired or not
 
   std::mutex memory_usage_mutex_;  //!< @brief mutex for memory usage
   std::vector<gpu_memory_usage_info> memory_usage_info_vector_;  //!< @brief list of memory usage information
   int memory_usage_timeout_;                   //!< @brief timeout for memory usage
   double memory_usage_elapsed_ms_;              //!< @brief elapsed time for memory usage
-  std::mutex memory_usage_timeout_mutex_;         //!< @brief mutex for memory usage timeout
-  bool memory_usage_timeout_expired_;             //!< @brief timeout for memory usage has expired or not
 
   std::mutex throttling_mutex_;  //!< @brief mutex for throttling
   std::vector<gpu_throttling_info> throttling_info_vector_;  //!< @brief list of throttling information
   int throttling_timeout_;                   //!< @brief timeout for throttling
   double throttling_elapsed_ms_;              //!< @brief elapsed time for throttling
-  std::mutex throttling_timeout_mutex_;         //!< @brief mutex for throttling timeout
-  bool throttling_timeout_expired_;             //!< @brief timeout for throttling has expired or not
 
   std::mutex frequency_mutex_;  //!< @brief mutex for frequency
   std::vector<gpu_frequency_info> frequency_info_vector_;  //!< @brief list of frequency information
   int frequency_timeout_;                   //!< @brief timeout for frequency
   double frequency_elapsed_ms_;              //!< @brief elapsed time for frequency
-  std::mutex frequency_timeout_mutex_;         //!< @brief mutex for frequency timeout
-  bool frequency_timeout_expired_;             //!< @brief timeout for frequency has expired or not
 
   /**
    * @brief GPU frequency status messages
