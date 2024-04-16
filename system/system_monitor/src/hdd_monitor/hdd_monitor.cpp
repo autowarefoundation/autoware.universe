@@ -242,6 +242,8 @@ void HddMonitor::checkSmart(
     stat.summary(DiagStatus::ERROR, error_str);
   } else if (whole_level == DiagStatus::ERROR) {
     stat.summary(whole_level, smart_dicts_[static_cast<uint32_t>(item)].at(whole_level));
+  } else if (tmp_elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read HDD error");
   } else if (tmp_elapsed_ms > hdd_status_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "HDD status reading timeout expired");
   } else {
@@ -314,6 +316,8 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
   if (whole_level == DiagStatus::ERROR) {
     stat.summary(whole_level, usage_dict_.at(whole_level));
+  } else if (tmp_elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read HDD error");
   } else if (tmp_elapsed_ms > hdd_usage_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "HDD usage reading timeout expired");
   } else {
@@ -435,6 +439,8 @@ void HddMonitor::checkStatistics(
     stat.summary(DiagStatus::ERROR, error_str);
   } else if (whole_level == DiagStatus::ERROR) {
     stat.summary(whole_level, stat_dicts_[static_cast<uint32_t>(item)].at(whole_level));
+  } else if (tmp_elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read HDD error");
   } else if (tmp_elapsed_ms > hdd_status_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "HDD status reading timeout expired");
   } else {
