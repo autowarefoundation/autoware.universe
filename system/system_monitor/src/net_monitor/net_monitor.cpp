@@ -54,16 +54,11 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   reassembles_failed_column_index_(0),
   network_list_timeout_(declare_parameter<int>("network_timeout", 5)),
   nethogs_timeout_(declare_parameter<int>("nethogs_timeout", 5)),
-  reassembles_timeout_(declare_parameter<int>("reassembles_timeout", 5)),
-  network_list_timeout_expired_(false),
-  nethogs_timeout_expired_(false),
-  reassembles_timeout_expired_(false)
+  reassembles_timeout_(declare_parameter<int>("reassembles_timeout", 5))
 {
   if (monitor_program_.empty()) {
     monitor_program_ = "*";
   }
-
-
 
   gethostname(hostname_, sizeof(hostname_));
   updater_.setHardwareID(hostname_);
@@ -160,16 +155,18 @@ void NetMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & 
     ++index;
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(network_list_timeout_mutex_);
-    timeout_expired = network_list_timeout_expired_;
-  }
-
-  if (error_message.empty()) {
-    status.summary(whole_level, connection_messages_.at(whole_level));
-  } else if (timeout_expired) {
+  if (whole_level == DiagStatus::ERROR){
+    if (error_message.empty()) {
+      status.summary(DiagStatus::ERROR, connection_messages_.at(whole_level));
+    } else {
+      status.summary(DiagStatus::ERROR, error_message);
+    }
+  } else if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > network_list_timeout_ * 1000) {
     status.summary(DiagStatus::WARN, "reading network status timeout expired");
+  } else if (error_message.empty()) {
+    status.summary(whole_level, connection_messages_.at(whole_level));
   } else {
     status.summary(whole_level, error_message);
   }
@@ -215,13 +212,9 @@ void NetMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & statu
     ++index;
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(network_list_timeout_mutex_);
-    timeout_expired = network_list_timeout_expired_;
-  }
-
-  if (timeout_expired) {
+  if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > network_list_timeout_ * 1000) {
     status.summary(DiagStatus::WARN, "reading network status timeout expired");
   } else {
     status.summary(DiagStatus::OK, "OK");
@@ -270,18 +263,17 @@ void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & s
     ++index;
   }
 
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(network_list_timeout_mutex_);
-    timeout_expired = network_list_timeout_expired_;
-  }
 
-  if (error_message.empty()) {
-    status.summary(whole_level, "OK");
-  } else if (timeout_expired) {
+  if (whole_level == DiagStatus::ERROR) {
+      status.summary(DiagStatus::ERROR, error_message);
+  } else if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > network_list_timeout_ * 1000) {
     status.summary(DiagStatus::WARN, "reading network status timeout expired");
-  } else {
+  } else if (!error_message.empty()) {
     status.summary(whole_level, error_message);
+  } else {
+    status.summary(whole_level, "OK");
   }
 
   status.addf("execution time", "%f ms", tmp_elapsed_time);
@@ -301,7 +293,9 @@ void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & s
   if (tmp_result.error_code != EXIT_SUCCESS) {
     status.summary(DiagStatus::ERROR, "traffic_reader error");
     status.add("error", tmp_result.output);
-  } else if (nethogs_timeout_expired_) {
+  } else if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > nethogs_timeout_ * 1000) {
     status.summary(DiagStatus::WARN, "nethogs timeout expired");
   } else {
     status.summary(DiagStatus::OK, "OK");
@@ -350,7 +344,9 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
 
   if (tmp_reassembles_whole_level == DiagStatus::ERROR) {
     status.summary(DiagStatus::ERROR, tmp_reassembles_error_message);
-  } else if (reassembles_timeout_expired_) {
+  } else if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > reassembles_timeout_ * 1000) {
     status.summary(DiagStatus::WARN, "reading /proc/net/snmp timeout expired");
   } else if (tmp_reassembles_whole_level == DiagStatus::WARN) {
     status.add("total packet reassembles failed", tmp_total_reassembles_failed);
@@ -375,14 +371,6 @@ void NetMonitor::judge_reassembles_failed()
   uint64_t total_reassembles_failed = 0;
   uint64_t unit_reassembles_failed = 0;
 
-  // Start timeout timer for reading /proc/net/snmp
-  {
-    std::lock_guard<std::mutex> lock(reassembles_timeout_mutex_);
-    reassembles_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(reassembles_timeout_), std::bind(&NetMonitor::on_reassembles_timeout, this));
-
   if (get_reassembles_failed(total_reassembles_failed)) {
     reassembles_failed_queue_.push_back(total_reassembles_failed - last_reassembles_failed_);
     while (reassembles_failed_queue_.size() > reassembles_failed_check_duration_) {
@@ -404,9 +392,6 @@ void NetMonitor::judge_reassembles_failed()
     whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
     error_message = "failed to read /proc/net/snmp";
   }
-
-  // Returning from reading /proc/net/snmp, stop timeout timer
-  timeout_timer_->cancel();
 
   double elapsed_ms = stop_watch.toc("execution_time");
 
@@ -477,15 +462,6 @@ void NetMonitor::update_network_list()
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("execution_time");
 
-  // Start timeout timer for update network information
-  {
-    std::lock_guard<std::mutex> lock(network_list_timeout_mutex_);
-    network_list_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(network_list_timeout_), std::bind(&NetMonitor::on_network_list_timeout, this));
-  
-
   std::vector<NetworkInfomation> tmp_network_list;
   std::map<std::string, CrcErrors> tmp_crc_errors;
   {
@@ -542,9 +518,6 @@ void NetMonitor::update_network_list()
   freeifaddrs(interfaces);
   last_update_time_ = this->now();
 
-  // Returning from update network information, stop timeout timer
-  timeout_timer_->cancel();
-
   double elapsed_ms = stop_watch.toc("execution_time");
 
   {
@@ -553,24 +526,6 @@ void NetMonitor::update_network_list()
     crc_errors_ = tmp_crc_errors;
     network_list_elapsed_time_ = elapsed_ms;
   }
-}
-
-void NetMonitor::on_network_list_timeout()
-{
-  std::lock_guard<std::mutex> lock(network_list_timeout_mutex_);
-  network_list_timeout_expired_ = true;
-}
-
-void NetMonitor::on_nethogs_timeout()
-{
-  std::lock_guard<std::mutex> lock(nethogs_timeout_mutex_);
-  nethogs_timeout_expired_ = true;
-}
-
-void NetMonitor::on_reassembles_timeout()
-{
-  std::lock_guard<std::mutex> lock(reassembles_timeout_mutex_);
-  reassembles_timeout_expired_ = true;
 }
 
 void NetMonitor::update_network_information_by_socket(NetworkInfomation & network)
@@ -791,14 +746,6 @@ void NetMonitor::get_nethogs_result()
 
   traffic_reader_service::Result tmp_result;
 
-  // Start timeout timer for executing nethogs
-  {
-    std::lock_guard<std::mutex> lock(nethogs_timeout_mutex_);
-    nethogs_timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(nethogs_timeout_), std::bind(&NetMonitor::on_nethogs_timeout, this));
-
   // Connect to traffic-reader service
   if (!connect_service()) {
     close_connection();
@@ -816,9 +763,6 @@ void NetMonitor::get_nethogs_result()
 
   // Close connection with traffic-reader service
   close_connection();
-
-  // Returning from nethogs, stop timeout timer
-  timeout_timer_->cancel();
 
   double elapsed_ms = stop_watch.toc("execution_time");
   {

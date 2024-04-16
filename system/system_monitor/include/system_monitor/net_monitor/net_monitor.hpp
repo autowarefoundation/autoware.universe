@@ -156,21 +156,6 @@ protected:
   void on_timer();
 
   /**
-   * @brief Timer callback for update network list timeout
-   */
-  void on_network_list_timeout();
-
-  /**
-   * @brief Timer callback for update nethogs timeout
-   */
-  void on_nethogs_timeout();
-
-  /**
-   * @brief Timer callback for update IP packet reassembles failed timeout
-   */
-  void on_reassembles_timeout();
-
-  /**
    * @brief Get network information
    * @param [out] network Network information
    */
@@ -346,18 +331,12 @@ protected:
   unsigned int reassembles_failed_column_index_;  //!< @brief column index of IP Reassembles failed
                                                   //!< in /proc/net/snmp
 
-  std::mutex network_list_timeout_mutex_;  //!< @brief mutex for thread safety
-  bool network_list_timeout_expired_;      //!< @brief network list timeout expired flag
   int network_list_timeout_;               //!< @brief network list timeout
   double network_list_elapsed_time_;       //!< @brief network list elapsed time
 
-  std::mutex nethogs_timeout_mutex_;  //!< @brief mutex for thread safety
-  bool nethogs_timeout_expired_;      //!< @brief nethogs timeout expired flag
   int nethogs_timeout_;               //!< @brief nethogs timeout
   double nethogs_elapsed_time_;       //!< @brief nethogs elapsed time
 
-  std::mutex reassembles_timeout_mutex_;  //!< @brief mutex for thread safety
-  bool reassembles_timeout_expired_;      //!< @brief reassembles failed timeout expired flag
   int reassembles_timeout_;               //!< @brief reassembles failed timeout
   double reassembles_elapsed_time_;       //!< @brief reassembles failed elapsed time
 
