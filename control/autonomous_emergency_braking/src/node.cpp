@@ -326,7 +326,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   }
 
   // step2. create velocity data check if the vehicle stops or not
-  const double current_v = current_velocity_ptr_->longitudinal_velocity + 2.25;
+  const double current_v = current_velocity_ptr_->longitudinal_velocity;
   if (current_v < 0.1) {
     return false;
   }
