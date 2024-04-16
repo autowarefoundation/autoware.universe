@@ -57,6 +57,7 @@ protected:
   /**
    * @brief Timer callback to execute sensors command
    */
+
   void readVoltageStatus(
     float & tmp_voltage, std::string & tmp_sensors_error_str, std::string & tmp_format_error_str,
     std::string & tmp_pipe2_err_str);
@@ -100,13 +101,8 @@ protected:
   int battery_timeout_;
   std::string ifstream_error_str_;
   double battery_elapsed_ms_;
-<<<<<<< HEAD
-  std::mutex battery_timeout_mutex_;
-  bool battery_timeout_expired_;
-=======
 
   bool sensors_exists_;
->>>>>>> 07ac8c080 (feat: fix timeout values)
 };
 
 #endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
