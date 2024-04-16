@@ -204,7 +204,8 @@ protected:
    * @param [in] duration Time from previous measurement
    */
   void update_network_information_by_routing_netlink(
-    NetworkInfomation & network, void * data, const rclcpp::Duration & duration, std::map<std::string, CrcErrors> & crc_errors);
+    NetworkInfomation & network, void * data, const rclcpp::Duration & duration,
+    std::map<std::string, CrcErrors> & crc_errors);
 
   /**
    * @brief Update network information about network traffic
@@ -221,7 +222,9 @@ protected:
    * @param [out] network Network information
    * @param [in] stats Pointer to routing netlink stats
    */
-  void update_crc_error(NetworkInfomation & network, const struct rtnl_link_stats * stats, std::map<std::string, CrcErrors> & tmp_crc_errors);
+  void update_crc_error(
+    NetworkInfomation & network, const struct rtnl_link_stats * stats,
+    std::map<std::string, CrcErrors> & tmp_crc_errors);
 
   /**
    * @brief Shutdown nl80211 object
@@ -289,14 +292,13 @@ protected:
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get Network information
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback group for timer
-  rclcpp::TimerBase::SharedPtr timeout_timer_;              //!< @brief timer to check timeout
-  
+  rclcpp::TimerBase::SharedPtr timeout_timer_;             //!< @brief timer to check timeout
 
-  char hostname_[HOST_NAME_MAX + 1];             //!< @brief host name
-  std::map<std::string, Bytes> bytes_;           //!< @brief list of bytes
-  rclcpp::Time last_update_time_;                //!< @brief last update time
+  char hostname_[HOST_NAME_MAX + 1];    //!< @brief host name
+  std::map<std::string, Bytes> bytes_;  //!< @brief list of bytes
+  rclcpp::Time last_update_time_;       //!< @brief last update time
 
-  std::mutex network_list_mutex_;                             //!< @brief mutex for thread safety
+  std::mutex network_list_mutex_;                //!< @brief mutex for thread safety
   std::vector<std::string> device_params_;       //!< @brief list of devices
   NL80211 nl80211_;                              //!< @brief 802.11 netlink-based interface
   int getifaddrs_error_code_;                    //!< @brief Error code set by getifaddrs()
@@ -312,14 +314,14 @@ protected:
   unsigned int crc_error_check_duration_;        //!< @brief CRC error check duration
   unsigned int crc_error_count_threshold_;       //!< @brief CRC error count threshold
 
-  std::mutex nethogs_mutex_;  //!< @brief mutex for thread safety
+  std::mutex nethogs_mutex_;                       //!< @brief mutex for thread safety
   traffic_reader_service::Result traffic_result_;  //!< @brief result of traffic
 
-  std::mutex reassembles_mutex_;  //!< @brief mutex for thread safety
-  int reassembles_whole_level_;    //!< @brief IP packet reassembles failed level
+  std::mutex reassembles_mutex_;           //!< @brief mutex for thread safety
+  int reassembles_whole_level_;            //!< @brief IP packet reassembles failed level
   std::string reassembles_error_message_;  //!< @brief IP packet reassembles failed error message
-  uint64_t total_reassembles_failed_;       //!< @brief IP packet reassembles failed
-  uint64_t unit_reassembles_failed_;        //!< @brief IP packet reassembles failed
+  uint64_t total_reassembles_failed_;      //!< @brief IP packet reassembles failed
+  uint64_t unit_reassembles_failed_;       //!< @brief IP packet reassembles failed
   std::deque<unsigned int>
     reassembles_failed_queue_;  //!< @brief queue that holds count of IP packet reassembles failed
   uint64_t last_reassembles_failed_;  //!< @brief IP packet reassembles failed at the time of the
@@ -331,15 +333,14 @@ protected:
   unsigned int reassembles_failed_column_index_;  //!< @brief column index of IP Reassembles failed
                                                   //!< in /proc/net/snmp
 
-  int network_list_timeout_;               //!< @brief network list timeout
-  double network_list_elapsed_time_;       //!< @brief network list elapsed time
+  int network_list_timeout_;          //!< @brief network list timeout
+  double network_list_elapsed_time_;  //!< @brief network list elapsed time
 
-  int nethogs_timeout_;               //!< @brief nethogs timeout
-  double nethogs_elapsed_time_;       //!< @brief nethogs elapsed time
+  int nethogs_timeout_;          //!< @brief nethogs timeout
+  double nethogs_elapsed_time_;  //!< @brief nethogs elapsed time
 
-  int reassembles_timeout_;               //!< @brief reassembles failed timeout
-  double reassembles_elapsed_time_;       //!< @brief reassembles failed elapsed time
-
+  int reassembles_timeout_;          //!< @brief reassembles failed timeout
+  double reassembles_elapsed_time_;  //!< @brief reassembles failed elapsed time
 
   /**
    * @brief Network connection status messages

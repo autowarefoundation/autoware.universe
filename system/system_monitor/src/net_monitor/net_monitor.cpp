@@ -80,7 +80,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   // Update list of network information
   update_network_list();
 
-    // Get column index of IP packet reassembles failed from `/proc/net/snmp`
+  // Get column index of IP packet reassembles failed from `/proc/net/snmp`
   get_reassembles_failed_column_index();
 
   // Send request to start nethogs
@@ -88,7 +88,8 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 
   using namespace std::literals::chrono_literals;
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this), timer_callback_group_);
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this), timer_callback_group_);
 }
 
 NetMonitor::~NetMonitor()
@@ -108,7 +109,6 @@ void NetMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & 
     tmp_network_list = network_list_;
     tmp_elapsed_time = network_list_elapsed_time_;
   }
-
 
   if (device_params_.empty()) {
     status.summary(DiagStatus::ERROR, "invalid device parameter");
@@ -155,7 +155,7 @@ void NetMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & 
     ++index;
   }
 
-  if (whole_level == DiagStatus::ERROR){
+  if (whole_level == DiagStatus::ERROR) {
     if (error_message.empty()) {
       status.summary(DiagStatus::ERROR, connection_messages_.at(whole_level));
     } else {
@@ -263,9 +263,8 @@ void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & s
     ++index;
   }
 
-
   if (whole_level == DiagStatus::ERROR) {
-      status.summary(DiagStatus::ERROR, error_message);
+    status.summary(DiagStatus::ERROR, error_message);
   } else if (tmp_elapsed_time == 0.0) {
     status.summary(DiagStatus::WARN, "read voltage error");
   } else if (tmp_elapsed_time > network_list_timeout_ * 1000) {
@@ -406,7 +405,7 @@ void NetMonitor::judge_reassembles_failed()
 }
 
 void NetMonitor::on_timer()
-{ 
+{
   // Update list of network information
   update_network_list();
 
@@ -510,7 +509,8 @@ void NetMonitor::update_network_list()
     update_network_information_by_socket(network);
 
     // Update network information using routing netlink stats
-    update_network_information_by_routing_netlink(network, interface->ifa_data, duration, tmp_crc_errors);
+    update_network_information_by_routing_netlink(
+      network, interface->ifa_data, duration, tmp_crc_errors);
 
     tmp_network_list.emplace_back(network);
   }
@@ -583,7 +583,8 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int socket
 }
 
 void NetMonitor::update_network_information_by_routing_netlink(
-  NetworkInfomation & network, void * data, const rclcpp::Duration & duration, std::map<std::string, CrcErrors> & crc_errors)
+  NetworkInfomation & network, void * data, const rclcpp::Duration & duration,
+  std::map<std::string, CrcErrors> & crc_errors)
 {
   auto * stats = static_cast<struct rtnl_link_stats *>(data);
 
@@ -617,7 +618,9 @@ void NetMonitor::update_traffic(
   bytes_[network.interface_name].tx_bytes = stats->tx_bytes;
 }
 
-void NetMonitor::update_crc_error(NetworkInfomation & network, const struct rtnl_link_stats * stats, std::map<std::string, CrcErrors> & tmp_crc_errors)
+void NetMonitor::update_crc_error(
+  NetworkInfomation & network, const struct rtnl_link_stats * stats,
+  std::map<std::string, CrcErrors> & tmp_crc_errors)
 {
   // Get the count of CRC errors
   CrcErrors & crc_errors = tmp_crc_errors[network.interface_name];
