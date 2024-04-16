@@ -235,7 +235,6 @@ void VoltageMonitor::readBatteryStatus(bool & tmp_status, std::string & tmp_ifst
   }
 
   std::string line;
-  bool status = false;
   while (std::getline(ifs, line)) {
     auto batStatusLine = line.find("batt_status");
     if (batStatusLine != std::string::npos) {
