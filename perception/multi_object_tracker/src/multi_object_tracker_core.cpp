@@ -171,12 +171,12 @@ void MultiObjectTracker::onTrigger()
 {
   const rclcpp::Time current_time = this->now();
   // get objects from the input manager and run process
-  std::vector<DetectedObjects> objects_data;
-  const bool is_objects_ready = input_manager_->getObjects(current_time, objects_data);
+  std::vector<std::pair<size_t, DetectedObjects>> objects_list;
+  const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
 
-  onMessage(objects_data);
-  const rclcpp::Time latest_time(objects_data.back().header.stamp);
+  onMessage(objects_list);
+  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
 
   // Publish objects if the timer is not enabled
   if (publish_timer_ == nullptr) {
@@ -203,32 +203,33 @@ void MultiObjectTracker::onTimer()
   if (elapsed_time < maximum_publish_latency) return;
 
   // get objects from the input manager and run process
-  std::vector<DetectedObjects> objects_data;
-  const bool is_objects_ready = input_manager_->getObjects(current_time, objects_data);
+  std::vector<std::pair<size_t, DetectedObjects>> objects_list;
+  const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (is_objects_ready) {
-    onMessage(objects_data);
+    onMessage(objects_list);
   }
 
   // Publish
   checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::onMessage(const std::vector<DetectedObjects> & objects_data)
+void MultiObjectTracker::onMessage(
+  const std::vector<std::pair<size_t, DetectedObjects>> & objects_list)
 {
   const rclcpp::Time current_time = this->now();
+  const rclcpp::Time oldest_time(objects_list.front().second.header.stamp);
 
   // process start
-  debugger_->startMeasurementTime(this->now(), rclcpp::Time(objects_data.front().header.stamp));
+  debugger_->startMeasurementTime(this->now(), oldest_time);
   // run process for each DetectedObjects
-  for (const auto & objects : objects_data) {
-    runProcess(objects);
+  for (const auto & objects_data : objects_list) {
+    runProcess(objects_data.second);
   }
   // process end
   debugger_->endMeasurementTime(this->now());
 
   // for debug
-  const rclcpp::Time oldest_time(objects_data.front().header.stamp);
-  const rclcpp::Time latest_time(objects_data.back().header.stamp);
+  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
   RCLCPP_INFO(
     this->get_logger(), "MultiObjectTracker::onTimer Objects time range: %f - %f",
     (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());

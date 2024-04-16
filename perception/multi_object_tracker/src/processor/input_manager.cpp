@@ -105,7 +105,7 @@ void InputStream::onMessage(
 
 void InputStream::getObjectsOlderThan(
   const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
-  std::vector<DetectedObjects> & objects)
+  std::vector<std::pair<size_t, DetectedObjects>> & objects_list)
 {
   assert(object_latest_time.nanoseconds() > object_oldest_time.nanoseconds());
 
@@ -120,7 +120,8 @@ void InputStream::getObjectsOlderThan(
 
     // Add the object if the object is older than the specified latest time
     if (object_latest_time >= object_time) {
-      objects.push_back(object);
+      std::pair<size_t, DetectedObjects> object_pair(index_, object);
+      objects_list.push_back(object_pair);
       // remove the object from the queue
       objects_que_.pop_front();
     }
@@ -221,7 +222,8 @@ void InputManager::getObjectTimeInterval(
     object_oldest_time > latest_object_time_ ? object_oldest_time : latest_object_time_;
 }
 
-bool InputManager::getObjects(const rclcpp::Time & now, std::vector<DetectedObjects> & objects)
+bool InputManager::getObjects(
+  const rclcpp::Time & now, std::vector<std::pair<size_t, DetectedObjects>> & objects_list)
 {
   if (!is_initialized_) {
     RCLCPP_INFO(node_.get_logger(), "InputManager::getObjects Input manager is not initialized");
@@ -229,7 +231,7 @@ bool InputManager::getObjects(const rclcpp::Time & now, std::vector<DetectedObje
   }
 
   // Clear the objects
-  objects.clear();
+  objects_list.clear();
 
   // Get the time interval for the objects
   rclcpp::Time object_latest_time, object_oldest_time;
@@ -238,25 +240,27 @@ bool InputManager::getObjects(const rclcpp::Time & now, std::vector<DetectedObje
   // Get objects from all input streams
   // adds-up to the objects vector for efficient processing
   for (const auto & input_stream : input_streams_) {
-    input_stream->getObjectsOlderThan(object_latest_time, object_oldest_time, objects);
+    input_stream->getObjectsOlderThan(object_latest_time, object_oldest_time, objects_list);
   }
 
   // Sort objects by timestamp
   std::sort(
-    objects.begin(), objects.end(), [](const DetectedObjects & a, const DetectedObjects & b) {
-      return (rclcpp::Time(a.header.stamp) - rclcpp::Time(b.header.stamp)).seconds() < 0;
+    objects_list.begin(), objects_list.end(),
+    [](const std::pair<size_t, DetectedObjects> & a, const std::pair<size_t, DetectedObjects> & b) {
+      return (rclcpp::Time(a.second.header.stamp) - rclcpp::Time(b.second.header.stamp)).seconds() <
+             0;
     });
 
   RCLCPP_INFO(
     node_.get_logger(), "InputManager::getObjects Got %zu objects from input streams",
-    objects.size());
+    objects_list.size());
 
   // Update the latest object time
-  if (!objects.empty()) {
-    latest_object_time_ = rclcpp::Time(objects.back().header.stamp);
+  if (!objects_list.empty()) {
+    latest_object_time_ = rclcpp::Time(objects_list.back().second.header.stamp);
   }
 
-  return !objects.empty();
+  return !objects_list.empty();
 }
 
 }  // namespace multi_object_tracker

@@ -23,6 +23,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace multi_object_tracker
@@ -48,7 +49,7 @@ public:
 
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
-    std::vector<DetectedObjects> & objects);
+    std::vector<std::pair<size_t, DetectedObjects>> & objects);
   void getNames(std::string & long_name, std::string & short_name)
   {
     long_name = long_name_;
@@ -105,7 +106,8 @@ public:
 
   void getObjectTimeInterval(
     const rclcpp::Time & now, rclcpp::Time & object_latest_time, rclcpp::Time & object_oldest_time);
-  bool getObjects(const rclcpp::Time & now, std::vector<DetectedObjects> & objects);
+  bool getObjects(
+    const rclcpp::Time & now, std::vector<std::pair<size_t, DetectedObjects>> & objects_list);
 
 private:
   rclcpp::Node & node_;
