@@ -144,9 +144,9 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
   if (level == DiagStatus::ERROR) {
     stat.summary(DiagStatus::ERROR, temp_dict_.at(level));
   } else if (tmp_temp_elapsed_ms == 0.0) {
-    stat.summary(DiagStatus::WARN, "Reading Temprature ERROR");
+    stat.summary(DiagStatus::WARN, "Reading Temperature ERROR");
   } else if (tmp_temp_elapsed_ms > temp_timeout_) {
-    stat.summary(DiagStatus::WARN, "Reading Temprature Timeout");
+    stat.summary(DiagStatus::WARN, "Reading Temperature Timeout");
   } else {
     stat.summary(level, temp_dict_.at(level));
   }
