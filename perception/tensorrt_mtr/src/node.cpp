@@ -520,15 +520,15 @@ PredictedObject MTRNode::generatePredictedObject(
   predicted_object.object_id = object.object_id;
 
   float max_existence_probability = 0.0f;
-  for (const auto & mode : trajectory.getModes()) {
+  for (const auto & mode : trajectory.get_modes()) {
     PredictedPath waypoints;
-    waypoints.confidence = mode.score;
+    waypoints.confidence = mode.score();
     waypoints.time_step = rclcpp::Duration::from_seconds(0.1);  // TODO(ktro282): use a parameter
-    waypoints.path.reserve(mode.NumFuture);
-    if (max_existence_probability < mode.score) {
-      max_existence_probability = mode.score;
+    waypoints.path.reserve(mode.num_future());
+    if (max_existence_probability < mode.score()) {
+      max_existence_probability = mode.score();
     }
-    for (const auto & state : mode.getWaypoints()) {
+    for (const auto & state : mode.get_waypoints()) {
       geometry_msgs::msg::Pose predicted_pose;
       predicted_pose.position.x = static_cast<double>(state.x());
       predicted_pose.position.y = static_cast<double>(state.y());

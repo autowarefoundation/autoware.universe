@@ -47,7 +47,7 @@ public:
   {
   }
 
-  static const size_t StateDim = IntentionPointDim;
+  static size_t state_dim() { return IntentionPointDim; }
 
   /**
    * @brief Construct a new Intention from csv file.
@@ -97,7 +97,7 @@ public:
   std::vector<float> get_points(const std::vector<std::string> & label_names)
   {
     std::vector<float> points;
-    points.reserve(label_names.size() * num_cluster_ * StateDim);
+    points.reserve(label_names.size() * num_cluster_ * state_dim());
     for (const auto & name : label_names) {
       const auto & label_points = data_map_.at(name);
       for (const auto & p : label_points) {
@@ -106,6 +106,13 @@ public:
     }
     return points;
   }
+
+  /**
+   * @brief Return the size of intension point K * D.
+   *
+   * @return size_t
+   */
+  size_t size() const { return num_cluster_ * state_dim(); }
 
   /**
    * @brief Return the number of clusters contained in intention points.
