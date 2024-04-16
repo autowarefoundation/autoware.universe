@@ -65,6 +65,15 @@ ament_auto_add_library(object_position_filter SHARED
   src/utils.cpp
 )
 
+ament_auto_add_library(intensity_based_validator SHARED
+  src/pointcloud_intensity_based_validator.cpp
+)
+
+rclcpp_components_register_node(intensity_based_validator
+  PLUGIN "pointcloud_intensity_based_validator::IntensityBasedValidator"
+  EXECUTABLE intensity_based_validator_node)
+
+
 rclcpp_components_register_node(obstacle_pointcloud_based_validator
   PLUGIN "obstacle_pointcloud_based_validator::ObstaclePointCloudBasedValidator"
   EXECUTABLE obstacle_pointcloud_based_validator_node

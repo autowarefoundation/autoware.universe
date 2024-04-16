@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <arg name="input/objects" default="/perception/object_recognition/detection/clustering/objects_with_feature"/>
+  <arg name="output/objects" default="/perception/object_recognition/detection/clustering/validated_objects_with_feature"/>
+
+  <arg name="intensity_based_validator_param_path" default="$(find-pkg-share detected_object_validation)/config/intensity_based_validator.param.yaml"/>
+
+  <node pkg="detected_object_validation" exec="intensity_based_validator_node" name="intensity_based_validator_node" output="screen">
+    <remap from="input/objects" to="$(var input/objects)"/>
+    <remap from="output/objects" to="$(var output/objects)"/>
+    <param name="input_obstacle_pointcloud" value="false"/>
+    <param from="$(var intensity_based_validator_param_path)"/>
+  </node>
+</launch>
