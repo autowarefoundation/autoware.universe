@@ -24,11 +24,11 @@
 
 #include <nvml.h>
 
+#include <list>
 #include <map>
 #include <set>
 #include <string>
 #include <vector>
-#include <list>
 
 #define reasonToString(X)                                                                  \
   (((X)&nvmlClocksThrottleReasonGpuIdle)                     ? "GpuIdle"                   \
