@@ -87,6 +87,16 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   std::vector<std::string> input_names_long = get_parameter("input_names_long").as_string_array();
   std::vector<std::string> input_names_short = get_parameter("input_names_short").as_string_array();
 
+  input_channels_.resize(input_topic_names.size());
+  assert(input_topic_names.size() == input_names_long.size());
+  assert(input_topic_names.size() == input_names_short.size());
+  for (size_t i = 0; i < input_topic_names.size(); i++) {
+    input_channels_[i].index = i;
+    input_channels_[i].input_topic = input_topic_names[i];
+    input_channels_[i].long_name = input_names_long[i];
+    input_channels_[i].short_name = input_names_short[i];
+  }
+
   // ROS interface - Publisher
   tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
 
@@ -97,18 +107,11 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
   input_topic_size_ = input_topic_names.size();
 
-  // print input information
-  for (size_t i = 0; i < input_topic_size_; i++) {
-    RCLCPP_INFO(
-      get_logger(), "Subscribing to %s %s %s", input_topic_names.at(i).c_str(),
-      input_names_long.at(i).c_str(), input_names_short.at(i).c_str());
-  }
-
   // Initialize input manager
   input_manager_ = std::make_unique<InputManager>(*this);
-  input_manager_->init(input_topic_names, input_names_long, input_names_short);
-  // Set trigger function
-  input_manager_->setTriggerFunction(std::bind(&MultiObjectTracker::onTrigger, this));
+  input_manager_->init(input_channels_);  // Initialize input manager, set subscriptions
+  input_manager_->setTriggerFunction(
+    std::bind(&MultiObjectTracker::onTrigger, this));  // Set trigger function
 
   // Create tf timer
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
@@ -231,8 +234,26 @@ void MultiObjectTracker::onMessage(
   // for debug
   const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
   RCLCPP_INFO(
-    this->get_logger(), "MultiObjectTracker::onTimer Objects time range: %f - %f",
+    this->get_logger(), "MultiObjectTracker::onMessage Objects time range: %f - %f",
     (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());
+
+  // count objects on each channel
+  std::vector<int> object_counts;
+  object_counts.resize(input_topic_size_);
+  // initialize to zero
+  for (size_t i = 0; i < input_topic_size_; i++) {
+    object_counts[i] = 0;
+  }
+  for (const auto & objects_data : objects_list) {
+    object_counts[objects_data.first] += 1;
+  }
+  // print result
+  std::string object_counts_str = "MultiObjectTracker::onMessage Object counts: ";
+  for (size_t i = 0; i < input_topic_size_; i++) {
+    object_counts_str +=
+      input_channels_[i].long_name + " " + std::to_string(object_counts[i]) + "  ";
+  }
+  RCLCPP_INFO(this->get_logger(), object_counts_str.c_str());
 }
 
 void MultiObjectTracker::runProcess(const DetectedObjects & input_objects_msg)

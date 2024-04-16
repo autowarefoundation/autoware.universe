@@ -23,20 +23,19 @@ InputStream::InputStream(rclcpp::Node & node, size_t & index) : node_(node), ind
 {
 }
 
-void InputStream::init(
-  const std::string & input_topic, const std::string & long_name, const std::string & short_name)
+void InputStream::init(const InputChannel & input_channel)
 {
   // Initialize parameters
-  input_topic_ = input_topic;
-  long_name_ = long_name;
-  short_name_ = short_name;
+  input_topic_ = input_channel.input_topic;
+  long_name_ = input_channel.long_name;
+  short_name_ = input_channel.short_name;
 
   // Initialize queue
   objects_que_.clear();
 
   // Initialize latency statistics
-  expected_rate_ = 10.0;
-  latency_mean_ = 0.18;  // [s]
+  expected_rate_ = input_channel.expected_rate;    // [Hz]
+  latency_mean_ = input_channel.expected_latency;  // [s]
   latency_var_ = 0.0;
   interval_mean_ = 1 / expected_rate_;
   interval_var_ = 0.0;
@@ -136,24 +135,20 @@ InputManager::InputManager(rclcpp::Node & node) : node_(node)
   latest_object_time_ = node_.now();
 }
 
-void InputManager::init(
-  const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names,
-  const std::vector<std::string> & short_names)
+void InputManager::init(const std::vector<InputChannel> & input_channels)
 {
   // Check input sizes
-  input_size_ = input_topics.size();
+  input_size_ = input_channels.size();
   if (input_size_ == 0) {
     RCLCPP_ERROR(node_.get_logger(), "InputManager::init No input streams");
     return;
   }
-  assert(input_size_ == long_names.size());
-  assert(input_size_ == short_names.size());
 
   sub_objects_array_.resize(input_size_);
 
   for (size_t i = 0; i < input_size_; i++) {
     InputStream input_stream(node_, i);
-    input_stream.init(input_topics.at(i), long_names.at(i), short_names.at(i));
+    input_stream.init(input_channels[i]);
     input_stream.setTriggerFunction(
       std::bind(&InputManager::onTrigger, this, std::placeholders::_1));
     input_streams_.push_back(std::make_shared<InputStream>(input_stream));
@@ -161,11 +156,11 @@ void InputManager::init(
     // Set subscription
     RCLCPP_INFO(
       node_.get_logger(), "InputManager::init Initializing %s input stream from %s",
-      long_names.at(i).c_str(), input_topics.at(i).c_str());
+      input_channels[i].long_name.c_str(), input_channels[i].input_topic.c_str());
     std::function<void(const DetectedObjects::ConstSharedPtr msg)> func =
       std::bind(&InputStream::onMessage, input_streams_.at(i), std::placeholders::_1);
-    sub_objects_array_.at(i) =
-      node_.create_subscription<DetectedObjects>(input_topics.at(i), rclcpp::QoS{1}, func);
+    sub_objects_array_.at(i) = node_.create_subscription<DetectedObjects>(
+      input_channels[i].input_topic, rclcpp::QoS{1}, func);
   }
 
   is_initialized_ = true;

@@ -88,9 +88,8 @@ private:
   // input manager
   std::unique_ptr<InputManager> input_manager_;
 
-  std::vector<std::string> input_topic_names_{};
+  std::vector<InputChannel> input_channels_{};
   size_t input_topic_size_{};
-  std::vector<std::pair<rclcpp::Time, DetectedObjects>> objects_data_{};
 
   // callback functions
   void onTimer();

@@ -28,16 +28,24 @@
 
 namespace multi_object_tracker
 {
-using autoware_auto_perception_msgs::msg::DetectedObject;
 using autoware_auto_perception_msgs::msg::DetectedObjects;
+
+struct InputChannel
+{
+  size_t index;             // index of the input channel
+  std::string input_topic;  // topic name of the detection, e.g. "/detection/lidar"
+  std::string long_name = "Detected Object";  // full name of the detection
+  std::string short_name = "DET";             // abbreviation of the name
+  double expected_rate = 10.0;                // [Hz]
+  double expected_latency = 0.2;              // [s]
+};
 
 class InputStream
 {
 public:
   explicit InputStream(rclcpp::Node & node, size_t & index);
 
-  void init(
-    const std::string & input_topic, const std::string & long_name, const std::string & short_name);
+  void init(const InputChannel & input_channel);
 
   void setQueueSize(size_t que_size) { que_size_ = que_size; }
   void setTriggerFunction(std::function<void(const size_t &)> func_trigger)
@@ -97,9 +105,7 @@ class InputManager
 public:
   explicit InputManager(rclcpp::Node & node);
 
-  void init(
-    const std::vector<std::string> & input_topics, const std::vector<std::string> & long_names,
-    const std::vector<std::string> & short_names);
+  void init(const std::vector<InputChannel> & input_channels);
   void setTriggerFunction(std::function<void()> func_trigger) { func_trigger_ = func_trigger; }
 
   void onTrigger(const size_t & index) const;
