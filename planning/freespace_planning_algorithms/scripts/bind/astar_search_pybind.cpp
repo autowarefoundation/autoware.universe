@@ -143,7 +143,7 @@ PYBIND11_MODULE(freespace_planning_algorithms_pybind, p)
       .def_readwrite(
         "obstacle_threshold",
         &freespace_planning_algorithms::PlannerCommonParam::obstacle_threshold);
-  auto pyVSehicleShape =
+  auto pyVehicleShape =
     py::class_<freespace_planning_algorithms::VehicleShape>(p, "VehicleShape", py::dynamic_attr())
       .def(py::init<>())
       .def(py::init<double, double, double>())
