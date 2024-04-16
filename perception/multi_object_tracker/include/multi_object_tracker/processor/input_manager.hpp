@@ -20,9 +20,15 @@
 #include "autoware_auto_perception_msgs/msg/detected_objects.hpp"
 
 #include <deque>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
+
+namespace multi_object_tracker
+{
+using autoware_auto_perception_msgs::msg::DetectedObject;
+using autoware_auto_perception_msgs::msg::DetectedObjects;
 
 class InputStream
 {
@@ -42,7 +48,7 @@ public:
 
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
-    std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects);
+    std::vector<DetectedObjects> & objects);
   void getNames(std::string & long_name, std::string & short_name)
   {
     long_name = long_name_;
@@ -70,7 +76,7 @@ private:
   std::string short_name_;
 
   size_t que_size_{30};
-  std::deque<autoware_auto_perception_msgs::msg::DetectedObjects> objects_que_;
+  std::deque<DetectedObjects> objects_que_;
 
   std::function<void(const size_t &)> func_trigger_;
 
@@ -99,14 +105,11 @@ public:
 
   void getObjectTimeInterval(
     const rclcpp::Time & now, rclcpp::Time & object_latest_time, rclcpp::Time & object_oldest_time);
-  bool getObjects(
-    const rclcpp::Time & now,
-    std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects);
+  bool getObjects(const rclcpp::Time & now, std::vector<DetectedObjects> & objects);
 
 private:
   rclcpp::Node & node_;
-  std::vector<rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr>
-    sub_objects_array_{};
+  std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array_{};
 
   bool is_initialized_{false};
   rclcpp::Time latest_object_time_;
@@ -116,5 +119,7 @@ private:
 
   std::function<void()> func_trigger_;
 };
+
+}  // namespace multi_object_tracker
 
 #endif  // MULTI_OBJECT_TRACKER__PROCESSOR__INPUT_MANAGER_HPP_

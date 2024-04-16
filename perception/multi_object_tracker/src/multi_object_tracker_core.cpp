@@ -171,7 +171,7 @@ void MultiObjectTracker::onTrigger()
 {
   const rclcpp::Time current_time = this->now();
   // get objects from the input manager and run process
-  std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_data;
+  std::vector<DetectedObjects> objects_data;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_data);
   if (!is_objects_ready) return;
 
@@ -203,7 +203,7 @@ void MultiObjectTracker::onTimer()
   if (elapsed_time < maximum_publish_latency) return;
 
   // get objects from the input manager and run process
-  std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_data;
+  std::vector<DetectedObjects> objects_data;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_data);
   if (is_objects_ready) {
     onMessage(objects_data);

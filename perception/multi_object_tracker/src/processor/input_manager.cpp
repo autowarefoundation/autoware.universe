@@ -15,7 +15,9 @@
 #include "multi_object_tracker/processor/input_manager.hpp"
 
 #include <cassert>
-#include <functional>
+
+namespace multi_object_tracker
+{
 
 InputStream::InputStream(rclcpp::Node & node, size_t & index) : node_(node), index_(index)
 {
@@ -62,8 +64,8 @@ void InputStream::onMessage(
   //   node_.get_logger(), "InputStream::onMessage Received %s message from %s at %d.%d",
   //   long_name_.c_str(), input_topic_.c_str(), msg->header.stamp.sec, msg->header.stamp.nanosec);
 
-  const autoware_auto_perception_msgs::msg::DetectedObjects object = *msg;
-  objects_que_.push_back(object);
+  const DetectedObjects objects = *msg;
+  objects_que_.push_back(objects);
   if (objects_que_.size() > que_size_) {
     objects_que_.pop_front();
   }
@@ -84,7 +86,7 @@ void InputStream::onMessage(
 
   // Update time
   latest_message_time_ = now;
-  latest_measurement_time_ = object.header.stamp;
+  latest_measurement_time_ = objects.header.stamp;
   if (!is_time_initialized_) is_time_initialized_ = true;
 
   // Calculate latency
@@ -103,7 +105,7 @@ void InputStream::onMessage(
 
 void InputStream::getObjectsOlderThan(
   const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
-  std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
+  std::vector<DetectedObjects> & objects)
 {
   assert(object_latest_time.nanoseconds() > object_oldest_time.nanoseconds());
 
@@ -123,9 +125,9 @@ void InputStream::getObjectsOlderThan(
       objects_que_.pop_front();
     }
   }
-  RCLCPP_INFO(
-    node_.get_logger(), "InputStream::getObjectsOlderThan %s gives %zu objects", long_name_.c_str(),
-    objects.size());
+  // RCLCPP_INFO(
+  //   node_.get_logger(), "InputStream::getObjectsOlderThan %s gives %zu objects",
+  //   long_name_.c_str(), objects.size());
 }
 
 InputManager::InputManager(rclcpp::Node & node) : node_(node)
@@ -159,12 +161,10 @@ void InputManager::init(
     RCLCPP_INFO(
       node_.get_logger(), "InputManager::init Initializing %s input stream from %s",
       long_names.at(i).c_str(), input_topics.at(i).c_str());
-    std::function<void(
-      const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)>
-      func = std::bind(&InputStream::onMessage, input_streams_.at(i), std::placeholders::_1);
+    std::function<void(const DetectedObjects::ConstSharedPtr msg)> func =
+      std::bind(&InputStream::onMessage, input_streams_.at(i), std::placeholders::_1);
     sub_objects_array_.at(i) =
-      node_.create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
-        input_topics.at(i), rclcpp::QoS{1}, func);
+      node_.create_subscription<DetectedObjects>(input_topics.at(i), rclcpp::QoS{1}, func);
   }
 
   is_initialized_ = true;
@@ -221,9 +221,7 @@ void InputManager::getObjectTimeInterval(
     object_oldest_time > latest_object_time_ ? object_oldest_time : latest_object_time_;
 }
 
-bool InputManager::getObjects(
-  const rclcpp::Time & now,
-  std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> & objects)
+bool InputManager::getObjects(const rclcpp::Time & now, std::vector<DetectedObjects> & objects)
 {
   if (!is_initialized_) {
     RCLCPP_INFO(node_.get_logger(), "InputManager::getObjects Input manager is not initialized");
@@ -238,16 +236,14 @@ bool InputManager::getObjects(
   getObjectTimeInterval(now, object_latest_time, object_oldest_time);
 
   // Get objects from all input streams
+  // adds-up to the objects vector for efficient processing
   for (const auto & input_stream : input_streams_) {
     input_stream->getObjectsOlderThan(object_latest_time, object_oldest_time, objects);
   }
 
   // Sort objects by timestamp
   std::sort(
-    objects.begin(), objects.end(),
-    [](
-      const autoware_auto_perception_msgs::msg::DetectedObjects & a,
-      const autoware_auto_perception_msgs::msg::DetectedObjects & b) {
+    objects.begin(), objects.end(), [](const DetectedObjects & a, const DetectedObjects & b) {
       return (rclcpp::Time(a.header.stamp) - rclcpp::Time(b.header.stamp)).seconds() < 0;
     });
 
@@ -262,3 +258,5 @@ bool InputManager::getObjects(
 
   return !objects.empty();
 }
+
+}  // namespace multi_object_tracker
