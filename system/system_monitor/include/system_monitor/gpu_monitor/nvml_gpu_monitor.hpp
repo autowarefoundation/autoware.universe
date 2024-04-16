@@ -28,6 +28,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <list>
 
 #define reasonToString(X)                                                                  \
   (((X)&nvmlClocksThrottleReasonGpuIdle)                     ? "GpuIdle"                   \
