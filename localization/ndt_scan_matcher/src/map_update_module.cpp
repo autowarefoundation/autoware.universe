@@ -53,8 +53,8 @@ void MapUpdateModule::initialize_diagnostics_key_value()
 {
   diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", 0.0);
   diagnostics_map_update_->addKeyValue("is_activated", false);
-  diagnostics_map_update_->addKeyValue("is_set_last_updete_position", false);
-  diagnostics_map_update_->addKeyValue("distance_last_updete_position_to_current_position", 0.0);
+  diagnostics_map_update_->addKeyValue("is_set_last_update_position", false);
+  diagnostics_map_update_->addKeyValue("distance_last_update_position_to_current_position", 0.0);
   diagnostics_map_update_->addKeyValue("is_need_rebuild", false);
   diagnostics_map_update_->addKeyValue("is_updated_map", false);
   diagnostics_map_update_->addKeyValue("is_succeed_call_pcd_loader", false);
@@ -71,11 +71,11 @@ void MapUpdateModule::callback_timer(
   diagnostics_map_update_->addKeyValue("is_activated", is_activated);
 
   if (is_activated) {
-    const bool is_set_last_updete_position = (position != std::nullopt);
+    const bool is_set_last_update_position = (position != std::nullopt);
     diagnostics_map_update_->addKeyValue(
-      "is_set_last_updete_position", is_set_last_updete_position);
+      "is_set_last_update_position", is_set_last_update_position);
 
-    if (is_set_last_updete_position) {
+    if (is_set_last_update_position) {
       if (should_update_map(position.value())) {
         RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
         update_map(position.value());
@@ -112,7 +112,7 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
   const double distance = std::hypot(dx, dy);
 
   diagnostics_map_update_->addKeyValue(
-    "distance_last_updete_position_to_current_position", distance);
+    "distance_last_update_position_to_current_position", distance);
 
   if (distance + param_.lidar_radius > param_.map_radius) {
     std::stringstream message;

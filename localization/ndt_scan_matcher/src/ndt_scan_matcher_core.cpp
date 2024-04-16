@@ -272,9 +272,9 @@ void NDTScanMatcher::callback_sensor_points(
     }
 
     static size_t skipping_publish_num = 0;
-    const size_t error_skkping_publish_num = 5;
+    const size_t error_skipping_publish_num = 5;
     skipping_publish_num = is_published_topic ? 0 : (skipping_publish_num + 1);
-    validate_skipping_publish_num(skipping_publish_num, error_skkping_publish_num);
+    validate_skipping_publish_num(skipping_publish_num, error_skipping_publish_num);
   }
 
   diagnostics_scan_points_->publish();
