@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options) 
+GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options)
 : GPUMonitorBase("gpu_monitor", options),
   temp_timeout_(declare_parameter<int>("temp_timeout", 5)),
   temp_elapsed_ms_(0.0),
@@ -88,12 +88,11 @@ GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options)
     }
     gpus_.push_back(info);
   }
-  
+
   using namespace std::literals::chrono_literals;
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   timer_ = rclcpp::create_timer(
-    this, get_clock(), 1s, std::bind(&GPUMonitor::onTimer, this),
-    timer_callback_group_);
+    this, get_clock(), 1s, std::bind(&GPUMonitor::onTimer, this), timer_callback_group_);
 }
 
 void GPUMonitor::shut_down()
@@ -109,7 +108,7 @@ void GPUMonitor::checkTemp(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::vector<gpu_temp_info> tmp_temp_info_vector;
   double tmp_temp_elapsed_ms = 0.0;
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(temp_mutex_);
     tmp_temp_info_vector = temp_info_vector_;
@@ -160,7 +159,7 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::vector<gpu_usage_info> tmp_usage_info_vector;
   double tmp_usage_elapsed_ms = 0.0;
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(usage_mutex_);
     tmp_usage_info_vector = usage_info_vector_;
@@ -177,7 +176,8 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     return;
   }
 
-  for (auto itr = tmp_usage_info_vector.begin(); itr != tmp_usage_info_vector.end(); ++itr, ++index) {
+  for (auto itr = tmp_usage_info_vector.begin(); itr != tmp_usage_info_vector.end();
+       ++itr, ++index) {
     if (!itr->context.empty()) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current utilization rates");
       stat.add(fmt::format("GPU {}: name", index), itr->name);
@@ -200,7 +200,8 @@ void GPUMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     // Add data to diagnostic
     int add_cnt = 0;
-    for (auto itr_util = itr->util_list.begin(); itr_util != itr->util_list.end(); ++itr_util, ++add_cnt) {
+    for (auto itr_util = itr->util_list.begin(); itr_util != itr->util_list.end();
+         ++itr_util, ++add_cnt) {
       stat.add(fmt::format("GPU {0}: process {1}: pid", index, add_cnt), itr_util->pid);
       stat.add(fmt::format("GPU {0}: process {1}: name", index, add_cnt), itr_util->name);
       stat.addf(
@@ -230,7 +231,7 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
   std::vector<gpu_memory_usage_info> tmp_memory_usage_info_vector;
   double tmp_memory_usage_elapsed_ms = 0.0;
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(memory_usage_mutex_);
     tmp_memory_usage_info_vector = memory_usage_info_vector_;
@@ -242,11 +243,12 @@ void GPUMonitor::checkMemoryUsage(diagnostic_updater::DiagnosticStatusWrapper & 
   int index = 0;
 
   if (tmp_memory_usage_info_vector.empty()) {
-      stat.summary(DiagStatus::ERROR, "gpu not found");
+    stat.summary(DiagStatus::ERROR, "gpu not found");
     return;
   }
 
-  for (auto itr = tmp_memory_usage_info_vector.begin(); itr != tmp_memory_usage_info_vector.end(); ++itr, ++index) {
+  for (auto itr = tmp_memory_usage_info_vector.begin(); itr != tmp_memory_usage_info_vector.end();
+       ++itr, ++index) {
     if (!itr->context.empty()) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current memory usage");
       stat.add(fmt::format("GPU {}: name", index), itr->name);
@@ -291,7 +293,7 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   std::vector<gpu_throttling_info> tmp_throttling_info_vector;
   double tmp_throttling_elapsed_ms = 0.0;
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(throttling_mutex_);
     tmp_throttling_info_vector = throttling_info_vector_;
@@ -307,7 +309,8 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     return;
   }
 
-  for (auto itr = tmp_throttling_info_vector.begin(); itr != tmp_throttling_info_vector.end(); ++itr, ++index) {
+  for (auto itr = tmp_throttling_info_vector.begin(); itr != tmp_throttling_info_vector.end();
+       ++itr, ++index) {
     if (!itr->context.empty()) {
       stat.summary(DiagStatus::ERROR, itr->summary);
       stat.add(fmt::format("GPU {}: name", index), itr->name);
@@ -315,8 +318,6 @@ void GPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
       stat.add(fmt::format("GPU {}: content", index), itr->context);
       return;
     }
-
-
 
     stat.add(fmt::format("GPU {}: status", index), throttling_dict_.at(itr->level));
     stat.add(fmt::format("GPU {}: name", index), itr->name);
@@ -363,7 +364,7 @@ void GPUMonitor::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & st
   std::vector<gpu_frequency_info> tmp_frequency_info_vector;
   double tmp_frequency_elapsed_ms = 0.0;
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(frequency_mutex_);
     tmp_frequency_info_vector = frequency_info_vector_;
@@ -379,7 +380,8 @@ void GPUMonitor::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper & st
     return;
   }
 
-  for (auto itr = tmp_frequency_info_vector.begin(); itr != tmp_frequency_info_vector.end(); ++itr, ++index) {
+  for (auto itr = tmp_frequency_info_vector.begin(); itr != tmp_frequency_info_vector.end();
+       ++itr, ++index) {
     if (!itr->context.empty()) {
       stat.summary(DiagStatus::ERROR, "Failed to retrieve the current clock speeds");
       stat.add(fmt::format("GPU {}: name", index), itr->name);
@@ -418,7 +420,7 @@ void GPUMonitor::onTimer()
 
 void GPUMonitor::readTemp()
 {
-    // Start to measure elapsed time
+  // Start to measure elapsed time
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("execution_time");
 
@@ -442,7 +444,7 @@ void GPUMonitor::readTemp()
 
   double elapsed_ms = stop_watch.toc("execution_time");
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(temp_mutex_);
     temp_info_vector_ = tmp_temp_info_vector;
@@ -452,7 +454,7 @@ void GPUMonitor::readTemp()
 
 void GPUMonitor::readUsage()
 {
-    // Start to measure elapsed time
+  // Start to measure elapsed time
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("execution_time");
 
@@ -480,7 +482,7 @@ void GPUMonitor::readUsage()
 
   double elapsed_ms = stop_watch.toc("execution_time");
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(usage_mutex_);
     usage_info_vector_ = tmp_usage_info_vector;
@@ -596,22 +598,21 @@ void GPUMonitor::readMemoryUsage()
       memory_usage_info.memory_detail = memory;
       tmp_memory_usage_info_vector.push_back(memory_usage_info);
     }
-    
   }
 
   double elapsed_ms = stop_watch.toc("execution_time");
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(memory_usage_mutex_);
     memory_usage_info_vector_ = tmp_memory_usage_info_vector;
     memory_usage_elapsed_ms_ = elapsed_ms;
-  } 
+  }
 }
 
 void GPUMonitor::readThrottling()
 {
-  // Start to measure elapsed time 
+  // Start to measure elapsed time
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("execution_time");
 
@@ -630,7 +631,7 @@ void GPUMonitor::readThrottling()
       throttling_info.context = nvmlErrorString(ret);
       tmp_throttling_info_vector.push_back(throttling_info);
       break;
-    } 
+    }
 
     unsigned long long clocksThrottleReasons = 0LL;  // NOLINT
     ret = nvmlDeviceGetCurrentClocksThrottleReasons(itr->device, &clocksThrottleReasons);
@@ -669,7 +670,7 @@ void GPUMonitor::readThrottling()
 
   double elapsed_ms = stop_watch.toc("execution_time");
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(throttling_mutex_);
     throttling_info_vector_ = tmp_throttling_info_vector;
@@ -697,7 +698,7 @@ void GPUMonitor::readFrequency()
       frequency_info.context = nvmlErrorString(ret);
       tmp_frequency_info_vector.push_back(frequency_info);
       break;
-    } 
+    }
 
     frequency_info.name = itr->name;
 
@@ -710,7 +711,7 @@ void GPUMonitor::readFrequency()
 
   double elapsed_ms = stop_watch.toc("execution_time");
 
-  //thread-sage copy
+  // thread-sage copy
   {
     std::lock_guard<std::mutex> lock(frequency_mutex_);
     frequency_info_vector_ = tmp_frequency_info_vector;

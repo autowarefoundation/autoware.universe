@@ -58,10 +58,10 @@ struct gpu_info
  */
 struct gpu_temp_info
 {
-  std::string name;  //!< @brief name of device
-  unsigned int temp;    //!< @brief temperature of device
+  std::string name;        //!< @brief name of device
+  unsigned int temp;       //!< @brief temperature of device
   std::string pci_bus_id;  //!< @brief PCI bus ID of device
-  std::string context;  //!< @brief error message
+  std::string context;     //!< @brief error message
 };
 
 /**
@@ -69,8 +69,8 @@ struct gpu_temp_info
  */
 struct gpu_util_info
 {
-  unsigned int pid;  //!< @brief process ID
-  std::string name;  //!< @brief process name
+  unsigned int pid;     //!< @brief process ID
+  std::string name;     //!< @brief process name
   unsigned int smUtil;  //!< @brief SM utilization
 };
 
@@ -79,23 +79,23 @@ struct gpu_util_info
  */
 struct gpu_usage_info
 {
-  std::string name;  //!< @brief name of device
-  float usage;    //!< @brief usage of device
-  std::string pci_bus_id;  //!< @brief PCI bus ID of device
-  std::string context;  //!< @brief error message
+  std::string name;                    //!< @brief name of device
+  float usage;                         //!< @brief usage of device
+  std::string pci_bus_id;              //!< @brief PCI bus ID of device
+  std::string context;                 //!< @brief error message
   std::list<gpu_util_info> util_list;  //!< @brief list of process usage
-}; 
+};
 
 /**
  * @brief GPU temperature information
  */
 struct gpu_memory_usage_info
 {
-  std::string name;  //!< @brief name of device
-  unsigned int memory_usage;    //!< @brief temperature of device
-  std::string pci_bus_id;  //!< @brief PCI bus ID of device
-  std::string context;  //!< @brief error message
-  nvmlMemory_t memory_detail; //!< @brief memory detail
+  std::string name;            //!< @brief name of device
+  unsigned int memory_usage;   //!< @brief temperature of device
+  std::string pci_bus_id;      //!< @brief PCI bus ID of device
+  std::string context;         //!< @brief error message
+  nvmlMemory_t memory_detail;  //!< @brief memory detail
 };
 
 /**
@@ -103,13 +103,13 @@ struct gpu_memory_usage_info
  */
 struct gpu_throttling_info
 {
-  std::string name;  //!< @brief name of device
-  std::vector<std::string> reasons;    //!< @brief reason of throttling
-  unsigned int clock;    //!< @brief clock of device
-  std::string pci_bus_id;  //!< @brief PCI bus ID of device
-  std::string context;  //!< @brief error message
-  std::string summary;  //!< @brief summary of throttling
-  int level;  //!< @brief level of throttling
+  std::string name;                  //!< @brief name of device
+  std::vector<std::string> reasons;  //!< @brief reason of throttling
+  unsigned int clock;                //!< @brief clock of device
+  std::string pci_bus_id;            //!< @brief PCI bus ID of device
+  std::string context;               //!< @brief error message
+  std::string summary;               //!< @brief summary of throttling
+  int level;                         //!< @brief level of throttling
   gpu_throttling_info() : clock(0) {}
 };
 
@@ -118,14 +118,13 @@ struct gpu_throttling_info
  */
 struct gpu_frequency_info
 {
-  std::string name;  //!< @brief name of device
-  unsigned int clock;    //!< @brief clock of device
+  std::string name;        //!< @brief name of device
+  unsigned int clock;      //!< @brief clock of device
   std::string pci_bus_id;  //!< @brief PCI bus ID of device
-  std::string context;  //!< @brief error message
-  int level;  //!< @brief level of throttling
+  std::string context;     //!< @brief error message
+  int level;               //!< @brief level of throttling
   gpu_frequency_info() : clock(0) {}
 };
-
 
 class GPUMonitor : public GPUMonitorBase
 {
@@ -169,8 +168,7 @@ protected:
    * @param [in] device GPU device
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    */
-  void addProcessUsage(
-    nvmlDevice_t device, std::list<gpu_util_info> & util_list);
+  void addProcessUsage(nvmlDevice_t device, std::list<gpu_util_info> & util_list);
 
   /**
    * @brief check GPU memory usage
@@ -191,7 +189,7 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
 
   /**
-   *  
+   *
    * @brief check GPU information
    */
   void onTimer();
@@ -220,7 +218,6 @@ protected:
    * @brief read GPU frequency
    */
   void readFrequency();
-
 
   /**
    * @brief get human-readable output for memory size
@@ -253,36 +250,38 @@ protected:
   static const size_t MAX_ARRAY_SIZE = 64;
   static const size_t MAX_NAME_LENGTH = 128;
 
-  rclcpp::TimerBase::SharedPtr timer_;  //!< @brief timer for monitoring
+  rclcpp::TimerBase::SharedPtr timer_;                     //!< @brief timer for monitoring
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief callback group for timer
 
   std::vector<gpu_info> gpus_;      //!< @brief list of gpus
   uint64_t current_timestamp_ = 0;  //!< @brief latest timestamp[usec] of addProcessUsage()
 
-  std::mutex temp_mutex_; //!< @brief mutex for temperature
+  std::mutex temp_mutex_;                        //!< @brief mutex for temperature
   std::vector<gpu_temp_info> temp_info_vector_;  //!< @brief list of temperature information
-  int temp_timeout_;                   //!< @brief timeout for temperature
-  double temp_elapsed_ms_;              //!< @brief elapsed time for temperature
+  int temp_timeout_;                             //!< @brief timeout for temperature
+  double temp_elapsed_ms_;                       //!< @brief elapsed time for temperature
 
-  std::mutex usage_mutex_;  //!< @brief mutex for usage
+  std::mutex usage_mutex_;                         //!< @brief mutex for usage
   std::vector<gpu_usage_info> usage_info_vector_;  //!< @brief list of usage information
-  int usage_timeout_;                   //!< @brief timeout for usage
-  double usage_elapsed_ms_;              //!< @brief elapsed time for usage
+  int usage_timeout_;                              //!< @brief timeout for usage
+  double usage_elapsed_ms_;                        //!< @brief elapsed time for usage
 
   std::mutex memory_usage_mutex_;  //!< @brief mutex for memory usage
-  std::vector<gpu_memory_usage_info> memory_usage_info_vector_;  //!< @brief list of memory usage information
-  int memory_usage_timeout_;                   //!< @brief timeout for memory usage
-  double memory_usage_elapsed_ms_;              //!< @brief elapsed time for memory usage
+  std::vector<gpu_memory_usage_info>
+    memory_usage_info_vector_;      //!< @brief list of memory usage information
+  int memory_usage_timeout_;        //!< @brief timeout for memory usage
+  double memory_usage_elapsed_ms_;  //!< @brief elapsed time for memory usage
 
   std::mutex throttling_mutex_;  //!< @brief mutex for throttling
-  std::vector<gpu_throttling_info> throttling_info_vector_;  //!< @brief list of throttling information
-  int throttling_timeout_;                   //!< @brief timeout for throttling
-  double throttling_elapsed_ms_;              //!< @brief elapsed time for throttling
+  std::vector<gpu_throttling_info>
+    throttling_info_vector_;      //!< @brief list of throttling information
+  int throttling_timeout_;        //!< @brief timeout for throttling
+  double throttling_elapsed_ms_;  //!< @brief elapsed time for throttling
 
-  std::mutex frequency_mutex_;  //!< @brief mutex for frequency
+  std::mutex frequency_mutex_;                             //!< @brief mutex for frequency
   std::vector<gpu_frequency_info> frequency_info_vector_;  //!< @brief list of frequency information
-  int frequency_timeout_;                   //!< @brief timeout for frequency
-  double frequency_elapsed_ms_;              //!< @brief elapsed time for frequency
+  int frequency_timeout_;                                  //!< @brief timeout for frequency
+  double frequency_elapsed_ms_;                            //!< @brief elapsed time for frequency
 
   /**
    * @brief GPU frequency status messages
