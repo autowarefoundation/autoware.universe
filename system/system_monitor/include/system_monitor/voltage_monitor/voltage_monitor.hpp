@@ -57,7 +57,9 @@ protected:
   /**
    * @brief Timer callback to execute sensors command
    */
-  void readVoltageStatus(float & tmp_voltage, std::string & tmp_sensors_error_str, std::string & tmp_format_error_str, std::string & tmp_pipe2_err_str);
+  void readVoltageStatus(
+    float & tmp_voltage, std::string & tmp_sensors_error_str, std::string & tmp_format_error_str,
+    std::string & tmp_pipe2_err_str);
 
   /**
    * @brief check CMOS battery

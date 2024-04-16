@@ -84,7 +84,8 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
 
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(1), std::bind(&VoltageMonitor::onTimer, this), timer_callback_group_);
+    this, get_clock(), std::chrono::seconds(1), std::bind(&VoltageMonitor::onTimer, this),
+    timer_callback_group_);
 }
 
 void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -124,7 +125,7 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
   }
 
   stat.add("CMOS battery voltage", fmt::format("{}", tmp_voltage));
-  
+
   if (tmp_elapsed_ms > voltage_timeout_ * 1000) {
     stat.summary(DiagStatus::WARN, "sensors timeout expired");
   } else if (tmp_voltage == 0.0) {
@@ -140,7 +141,9 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
   stat.addf("execution time", "%f ms", tmp_elapsed_ms);
 }
 
-void VoltageMonitor::readVoltageStatus(float & tmp_voltage, std::string & tmp_sensors_error_str, std::string & tmp_format_error_str, std::string & tmp_pipe2_err_str)
+void VoltageMonitor::readVoltageStatus(
+  float & tmp_voltage, std::string & tmp_sensors_error_str, std::string & tmp_format_error_str,
+  std::string & tmp_pipe2_err_str)
 {
   int out_fd[2];
   if (RCUTILS_UNLIKELY(pipe2(out_fd, O_CLOEXEC) != 0)) {
@@ -251,8 +254,7 @@ void VoltageMonitor::onTimer()
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   // read voltage status
-  if (sensors_exists_)
-  {
+  if (sensors_exists_) {
     stop_watch.tic("execution_time");
 
     std::string tmp_sensors_error_str;
@@ -273,7 +275,7 @@ void VoltageMonitor::onTimer()
       voltage_elapsed_ms_ = tmp_elapsed_ms;
     }
   } else {
-  // read battery 
+    // read battery
     stop_watch.tic("execution_time");
 
     std::string tmp_ifstream_error_str;
@@ -292,7 +294,6 @@ void VoltageMonitor::onTimer()
     }
   }
 }
-
 
 void VoltageMonitor::update()
 {
