@@ -367,8 +367,8 @@ void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_
       return nullptr;
     }
 
-    // NOTE: The original map is stored here since the centerlines will be added to all the
-    //       laneleet when lanelet::utils::overwriteLaneletCenterline is called.
+    // NOTE: The original map is stored here since the centerline will be added to all the
+    //       lanelet when lanelet::utils::overwriteLaneletCenterline is called.
     original_map_ptr_ =
       Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, *map_projector_info_);
 
