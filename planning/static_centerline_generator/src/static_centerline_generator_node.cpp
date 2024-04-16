@@ -246,7 +246,8 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
     if (centerline_source_param == "optimization_trajectory_base") {
       optimization_trajectory_based_centerline_ = OptimizationTrajectoryBasedCenterline(*this);
       return CenterlineSource::OptimizationTrajectoryBase;
-    } else if (centerline_source_param == "bag_ego_trajectory_base") {
+    }
+    if (centerline_source_param == "bag_ego_trajectory_base") {
       return CenterlineSource::BagEgoTrajectoryBase;
     }
     throw std::logic_error(
@@ -305,7 +306,8 @@ CenterlineWithRoute StaticCenterlineGeneratorNode::generate_centerline_with_rout
         optimization_trajectory_based_centerline_.generate_centerline_with_optimization(
           *this, *route_handler_ptr_, route_lane_ids);
       return CenterlineWithRoute{optimized_centerline, route_lane_ids};
-    } else if (centerline_source_ == CenterlineSource::BagEgoTrajectoryBase) {
+    }
+    if (centerline_source_ == CenterlineSource::BagEgoTrajectoryBase) {
       const auto bag_centerline = generate_centerline_with_bag(*this);
       const auto start_lanelets =
         route_handler_ptr_->getRoadLaneletsAtPose(bag_centerline.front().pose);
@@ -444,14 +446,14 @@ std::vector<lanelet::Id> StaticCenterlineGeneratorNode::plan_route(
     mission_planner->initialize(&node, map_bin_ptr_);
 
     // plan route
-    const auto route = mission_planner->plan(check_points);
+    auto route = mission_planner->plan(check_points);
 
     return route;
   }();
   RCLCPP_INFO(get_logger(), "Planned route.");
 
   // get lanelets
-  const auto route_lane_ids = get_lane_ids_from_route(route);
+  auto route_lane_ids = get_lane_ids_from_route(route);
   return route_lane_ids;
 }
 
