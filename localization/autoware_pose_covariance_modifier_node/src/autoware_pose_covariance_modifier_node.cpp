@@ -165,7 +165,7 @@ void AutowarePoseCovarianceModifierNode::update_pose_source_based_on_rmse(
     selected_pose_type.data = "GNSS";
   } else if (
     trusted_pose_average_rmse_xy <= gnss_error_unreliable_min_ &&
-    trusted_pose_rmse_z < gnss_error_unreliable_min_) {
+    trusted_pose_rmse_z < gnss_error_reliable_max_) {
     pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT;
     selected_pose_type.data = "GNSS + NDT";
   } else {
