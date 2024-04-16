@@ -196,6 +196,7 @@ private:
   bool use_recheck_ground_cluster_;  // to enable recheck ground cluster
   bool use_lowest_point_;  // to select lowest point for reference in recheck ground cluster,
                            // otherwise select middle point
+  int output_field_num_{3};
   size_t radial_dividers_num_;
   VehicleInfo vehicle_info_;
 

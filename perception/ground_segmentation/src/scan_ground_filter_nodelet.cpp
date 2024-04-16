@@ -58,6 +58,11 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     use_virtual_ground_point_ = declare_parameter<bool>("use_virtual_ground_point");
     use_recheck_ground_cluster_ = declare_parameter<bool>("use_recheck_ground_cluster");
     use_lowest_point_ = declare_parameter<bool>("use_lowest_point");
+    if (declare_parameter<bool>("output_intensity_field")) {
+      output_field_num_ = 4;
+    } else {
+      output_field_num_ = 3;
+    }
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
     vehicle_info_ = VehicleInfoUtil(*this).getVehicleInfo();
 
@@ -610,7 +615,7 @@ void ScanGroundFilterComponent::faster_filter(
   output.row_step = no_ground_indices.indices.size() * input->point_step;
   output.data.resize(output.row_step);
   output.width = no_ground_indices.indices.size();
-  output.fields.assign(input->fields.begin(), input->fields.begin() + 4);
+  output.fields.assign(input->fields.begin(), input->fields.begin() + output_field_num_);
   output.is_dense = true;
   output.height = input->height;
   output.is_bigendian = input->is_bigendian;
