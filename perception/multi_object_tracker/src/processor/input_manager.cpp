@@ -17,7 +17,7 @@
 #include <cassert>
 #include <functional>
 
-InputStream::InputStream(rclcpp::Node & node) : node_(node)
+InputStream::InputStream(rclcpp::Node & node, size_t & index) : node_(node), index_(index)
 {
 }
 
@@ -94,6 +94,11 @@ void InputStream::onMessage(
   latency_mean_ = (1.0 - gain) * latency_mean_ + gain * latency;
   const double latency_delta = latency - latency_mean_;
   latency_var_ = (1.0 - gain) * latency_var_ + gain * latency_delta * latency_delta;
+
+  // trigger the function if it is set
+  if (func_trigger_) {
+    func_trigger_(index_);
+  }
 }
 
 void InputStream::getObjectsOlderThan(
@@ -144,8 +149,10 @@ void InputManager::init(
   sub_objects_array_.resize(input_size_);
 
   for (size_t i = 0; i < input_size_; i++) {
-    InputStream input_stream(node_);
+    InputStream input_stream(node_, i);
     input_stream.init(input_topics.at(i), long_names.at(i), short_names.at(i));
+    input_stream.setTriggerFunction(
+      std::bind(&InputManager::onTrigger, this, std::placeholders::_1));
     input_streams_.push_back(std::make_shared<InputStream>(input_stream));
 
     // Set subscription
@@ -163,16 +170,15 @@ void InputManager::init(
   is_initialized_ = true;
 }
 
-bool InputManager::isInputsReady() const
+void InputManager::onTrigger(const size_t & index) const
 {
-  if (!is_initialized_) {
-    RCLCPP_INFO(
-      node_.get_logger(), "InputManager::isMajorInputReady Input manager is not initialized");
-    return false;
-  }
+  // input stream index of 0 is the target(main) input stream
+  const size_t target_idx = 0;
 
-  // Check if the major input stream (index of 0) is ready
-  return input_streams_.at(0)->getObjectsCount() > 0;
+  // when the main stream triggers, call the trigger function
+  if (index == target_idx && func_trigger_) {
+    func_trigger_();
+  }
 }
 
 void InputManager::getObjectTimeInterval(

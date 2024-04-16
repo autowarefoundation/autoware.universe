@@ -107,6 +107,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // Initialize input manager
   input_manager_ = std::make_unique<InputManager>(*this);
   input_manager_->init(input_topic_names, input_names_long, input_names_short);
+  // Set trigger function
+  input_manager_->setTriggerFunction(std::bind(&MultiObjectTracker::onTrigger, this));
 
   // Create tf timer
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
@@ -117,8 +119,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // If the delay compensation is enabled, the timer is used to publish the output at the correct
   // time.
   if (enable_delay_compensation) {
-    publisher_period_ = 1.0 / publish_rate;   // [s]
-    constexpr double timer_multiplier = 1.0;  // 5 times frequent for publish timing check
+    publisher_period_ = 1.0 / publish_rate;    // [s]
+    constexpr double timer_multiplier = 20.0;  // 20 times frequent for publish timing check
     const auto timer_period = rclcpp::Rate(publish_rate * timer_multiplier).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
@@ -165,63 +167,71 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
-void MultiObjectTracker::onMessage(const std::vector<DetectedObjects> & objects_data)
+void MultiObjectTracker::onTrigger()
 {
   const rclcpp::Time current_time = this->now();
-  debugger_->startMeasurementTime(this->now(), rclcpp::Time(objects_data.front().header.stamp));
+  // get objects from the input manager and run process
+  std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_data;
+  const bool is_objects_ready = input_manager_->getObjects(current_time, objects_data);
+  if (!is_objects_ready) return;
 
-  // run process for each DetectedObjects
-  for (const auto & objects : objects_data) {
-    runProcess(objects);
+  onMessage(objects_data);
+  const rclcpp::Time latest_time(objects_data.back().header.stamp);
+
+  // Publish objects if the timer is not enabled
+  if (publish_timer_ == nullptr) {
+    // if the delay compensation is disabled, publish the objects in the latest time
+    publish(latest_time);
+  } else {
+    // Publish if the next publish time is close
+    const double minimum_publish_interval = publisher_period_ * 0.70;  // 70% of the period
+    if ((current_time - last_published_time_).seconds() > minimum_publish_interval) {
+      checkAndPublish(current_time);
+    }
   }
-
-  // for debug
-  rclcpp::Time oldest_time(objects_data.front().header.stamp);
-  rclcpp::Time latest_time(objects_data.back().header.stamp);
-  RCLCPP_INFO(
-    this->get_logger(), "MultiObjectTracker::onTimer Objects time range: %f - %f",
-    (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());
-
-  debugger_->endMeasurementTime(this->now());
-
-  // Publish
 }
 
 void MultiObjectTracker::onTimer()
 {
-  // // Check the input manager
-  // if (!input_manager_->isInputsReady()) return;
-
   const rclcpp::Time current_time = this->now();
 
-  // // Check the publish period
-  // const auto elapsed_time = (current_time - last_published_time_).seconds();
-  // // If the elapsed time is over the period, publish objects with prediction
-  // constexpr double maximum_latency_ratio = 1.11;  // 11% margin
-  // const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
-  // if (elapsed_time < maximum_publish_latency) return;
+  // Check the publish period
+  const auto elapsed_time = (current_time - last_published_time_).seconds();
+  // If the elapsed time is over the period, publish objects with prediction
+  constexpr double maximum_latency_ratio = 1.11;  // 11% margin
+  const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
+  if (elapsed_time < maximum_publish_latency) return;
 
   // get objects from the input manager and run process
   std::vector<autoware_auto_perception_msgs::msg::DetectedObjects> objects_data;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_data);
   if (is_objects_ready) {
-    debugger_->startMeasurementTime(this->now(), rclcpp::Time(objects_data.front().header.stamp));
-
-    for (const auto & objects : objects_data) {
-      runProcess(objects);
-    }
-
-    // for debug
-    rclcpp::Time oldest_time(objects_data.front().header.stamp);
-    rclcpp::Time latest_time(objects_data.back().header.stamp);
-    RCLCPP_INFO(
-      this->get_logger(), "MultiObjectTracker::onTimer Objects time range: %f - %f",
-      (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());
-
-    debugger_->endMeasurementTime(this->now());
+    onMessage(objects_data);
   }
+
   // Publish
   checkAndPublish(current_time);
+}
+
+void MultiObjectTracker::onMessage(const std::vector<DetectedObjects> & objects_data)
+{
+  const rclcpp::Time current_time = this->now();
+
+  // process start
+  debugger_->startMeasurementTime(this->now(), rclcpp::Time(objects_data.front().header.stamp));
+  // run process for each DetectedObjects
+  for (const auto & objects : objects_data) {
+    runProcess(objects);
+  }
+  // process end
+  debugger_->endMeasurementTime(this->now());
+
+  // for debug
+  const rclcpp::Time oldest_time(objects_data.front().header.stamp);
+  const rclcpp::Time latest_time(objects_data.back().header.stamp);
+  RCLCPP_INFO(
+    this->get_logger(), "MultiObjectTracker::onTimer Objects time range: %f - %f",
+    (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());
 }
 
 void MultiObjectTracker::runProcess(const DetectedObjects & input_objects_msg)
