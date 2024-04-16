@@ -112,7 +112,9 @@ struct LaneChangeParameters
   double max_longitudinal_acc{1.0};
 
   // collision check
-  bool enable_prepare_segment_collision_check{true};
+  bool enable_collision_check_for_prepare_phase_in_general_lanes{false};
+  bool enable_collision_check_for_prepare_phase_in_intersection{true};
+  bool enable_collision_check_for_prepare_phase_in_turns{true};
   double prepare_segment_ignore_object_velocity_thresh{0.1};
   bool check_objects_on_current_lanes{true};
   bool check_objects_on_other_lanes{true};
