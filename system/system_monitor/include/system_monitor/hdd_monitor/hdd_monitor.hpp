@@ -292,16 +292,6 @@ protected:
   void onTimer();
 
   /**
-   * @brief Timeout callback function for reading HDD status
-   */
-  void onHddStatusTimeout();
-
-  /**
-   * @brief Timeout callback function for reading HDD usage
-   */
-  void onHddUsageTimeout();
-
-  /**
    * @brief set initial status
    */
   void setInitialStatus();
@@ -373,9 +363,6 @@ protected:
 
   int hdd_reader_port_;                         //!< @brief port number to connect to hdd_reader
   std::map<std::string, HddParam> hdd_params_;  //!< @brief list of error and warning levels
-  rclcpp::TimerBase::SharedPtr timeout_timer_;  //!< @brief Timeout for reading HDD infomation
-  std::mutex hdd_status_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading HDD status
-  bool hdd_status_timeout_expired_;  //!< @brief Timeout for reading HDD status has expired or not
   int hdd_status_timeout_;           //!< @brief Timeout duration for reading HDD status
   double hdd_status_elapsed_ms_;     //!< @brief Execution time of reading HDD status
 
@@ -393,9 +380,7 @@ protected:
   std::mutex hdd_usage_mutex_;          //!< @brief Mutex for output from reading HDD usage
   double hdd_usage_elapsed_ms_;         //!< @brief Execution time of reading HDD usage
   int hdd_usage_timeout_;               //!< @brief Timeout duration for reading HDD usage
-  bool hdd_usage_timeout_expired_;      //!< @brief Timeout for reading HDD usage has expired or not
   std::vector<HddUsage> hdd_usages_;    //!< @brief vector of HDD usages
-  std::mutex hdd_usage_timeout_mutex_;  //!< @brief Mutex regarding timeout for reading HDD usage
   std::string hdd_usage_sum_error_str_;     //!< @brief summary error string of HDD usage
   std::string hdd_usage_detail_error_str_;  //!< @brief detail error string of HDD usage
 
