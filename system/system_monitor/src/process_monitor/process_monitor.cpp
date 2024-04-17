@@ -188,7 +188,7 @@ void ProcessMonitor::getTasksSummary(
 
     if (std::regex_match(line.c_str(), match, filter)) {
       if (top_timeout_ == 0.0) {
-        stat.summary(DiagStatus::ERROR, "read process info error");
+        stat.summary(DiagStatus::WARN, "read process info error");
       } else if (elapsed_ms > top_timeout_ * 1000) {
         stat.summary(DiagStatus::WARN, "top command timeout");
       } else {
