@@ -142,16 +142,18 @@ public:
   bool hasCollision(
     const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects);
 
-  Path generateEgoPath(const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons);
-  std::optional<Path> generateEgoPath(
-    const Trajectory & predicted_traj, std::vector<Polygon2d> & polygons);
+  Path generateEgoPath(const double curr_v, const double curr_w);
+  std::optional<Path> generateEgoPath(const Trajectory & predicted_traj);
+
+  std::vector<Polygon2d> generatePathFootprint(const Path & path, const double extra_width_margin);
+
   void createObjectData(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
 
-  void cropPointCloudWithEgoPath(const std::vector<Polygon2d> & ego_polys);
+  void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
 
-  void createClusteredPointCloudObjectData(
+  void createObjectDataUsingPointCloudClusters(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
 
@@ -184,6 +186,8 @@ public:
   bool publish_debug_pointcloud_;
   bool use_predicted_trajectory_;
   bool use_imu_path_;
+  bool crop_pointcloud_with_path_footprint_;
+  double path_footprint_extra_margin_;
   double detection_range_min_height_;
   double detection_range_max_height_margin_;
   double voxel_grid_x_;

@@ -3,6 +3,8 @@
     publish_debug_pointcloud: false
     use_predicted_trajectory: true
     use_imu_path: true
+    crop_pointcloud_with_path_footprint: true
+    path_footprint_extra_margin: 1.0
     detection_range_min_height: 0.0
     detection_range_max_height_margin: 0.0
     voxel_grid_x: 0.05

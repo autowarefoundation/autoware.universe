@@ -148,6 +148,9 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   publish_debug_pointcloud_ = declare_parameter<bool>("publish_debug_pointcloud");
   use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
   use_imu_path_ = declare_parameter<bool>("use_imu_path");
+  crop_pointcloud_with_path_footprint_ =
+    declare_parameter<bool>("crop_pointcloud_with_path_footprint");
+  path_footprint_extra_margin_ = declare_parameter<double>("path_footprint_extra_margin");
   detection_range_min_height_ = declare_parameter<double>("detection_range_min_height");
   detection_range_max_height_margin_ =
     declare_parameter<double>("detection_range_max_height_margin");
@@ -344,23 +347,30 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   // step3. create ego path based on sensor data
   bool has_collision_ego = false;
   if (use_imu_path_) {
-    std::vector<Polygon2d> ego_polys;
     const double current_w = angular_velocity_ptr_->z;
     constexpr double color_r = 0.0 / 256.0;
     constexpr double color_g = 148.0 / 256.0;
     constexpr double color_b = 205.0 / 256.0;
     constexpr double color_a = 0.999;
     const auto current_time = get_clock()->now();
-    const auto ego_path = generateEgoPath(current_v, current_w, ego_polys);
+    const auto ego_path = generateEgoPath(current_v, current_w);
 
-    std::vector<ObjectData> objects_cluster;
-    cropPointCloudWithEgoPath(ego_polys);
-    createClusteredPointCloudObjectData(ego_path, ego_polys, current_time, objects_cluster);
-    has_collision_ego = hasCollision(current_v, ego_path, objects_cluster);
+    // Crop out Pointcloud using an extra wide ego path
+    if (crop_pointcloud_with_path_footprint_) {
+      const auto expanded_ego_polys =
+        generatePathFootprint(ego_path, expand_width_ + path_footprint_extra_margin_);
+      cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
+    }
+
+    std::vector<ObjectData> objects_from_point_clusters;
+    const auto ego_polys = generatePathFootprint(ego_path, expand_width_);
+    createObjectDataUsingPointCloudClusters(
+      ego_path, ego_polys, current_time, objects_from_point_clusters);
+    has_collision_ego = hasCollision(current_v, ego_path, objects_from_point_clusters);
     std::string ns = "ego";
     addMarker(
-      current_time, ego_path, ego_polys, objects_cluster, color_r, color_g, color_b, color_a, ns,
-      debug_markers);
+      current_time, ego_path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
+      color_a, ns, debug_markers);
   }
 
   // step4. transform predicted trajectory from control module
@@ -373,19 +383,28 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr double color_b = 0.0;
     constexpr double color_a = 0.999;
     const auto current_time = predicted_traj_ptr->header.stamp;
-    const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr, predicted_polys);
+    const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr);
     if (predicted_path_opt) {
       const auto & predicted_path = predicted_path_opt.value();
 
-      std::vector<ObjectData> objects_cluster;
-      cropPointCloudWithEgoPath(predicted_polys);
-      createClusteredPointCloudObjectData(
-        predicted_path, predicted_polys, current_time, objects_cluster);
-      has_collision_predicted = hasCollision(current_v, predicted_path, objects_cluster);
+      // Crop out Pointcloud using an extra wide ego path
+      if (crop_pointcloud_with_path_footprint_) {
+        const auto expanded_ego_polys =
+          generatePathFootprint(predicted_path, expand_width_ + path_footprint_extra_margin_);
+        cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
+      }
+
+      std::vector<ObjectData> objects_from_point_clusters;
+      const auto predicted_polys = generatePathFootprint(predicted_path, expand_width_);
+      cropPointCloudWithEgoFootprintPath(predicted_polys);
+      createObjectDataUsingPointCloudClusters(
+        predicted_path, predicted_polys, current_time, objects_from_point_clusters);
+      has_collision_predicted =
+        hasCollision(current_v, predicted_path, objects_from_point_clusters);
       std::string ns = "predicted";
       addMarker(
-        current_time, predicted_path, predicted_polys, objects_cluster, color_r, color_g, color_b,
-        color_a, ns, debug_markers);
+        current_time, predicted_path, predicted_polys, objects_from_point_clusters, color_r,
+        color_g, color_b, color_a, ns, debug_markers);
     }
   }
 
@@ -426,8 +445,7 @@ bool AEB::hasCollision(
   return false;
 }
 
-Path AEB::generateEgoPath(
-  const double curr_v, const double curr_w, std::vector<Polygon2d> & polygons)
+Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 {
   Path path;
   double curr_x = 0.0;
@@ -472,17 +490,10 @@ Path AEB::generateEgoPath(
     }
     path.push_back(current_pose);
   }
-
-  // generate ego polygons
-  polygons.resize(path.size() - 1);
-  for (size_t i = 0; i < path.size() - 1; ++i) {
-    polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
-  }
   return path;
 }
 
-std::optional<Path> AEB::generateEgoPath(
-  const Trajectory & predicted_traj, std::vector<tier4_autoware_utils::Polygon2d> & polygons)
+std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
 {
   if (predicted_traj.points.empty()) {
     return std::nullopt;
@@ -510,12 +521,18 @@ std::optional<Path> AEB::generateEgoPath(
       break;
     }
   }
-  // create polygon
-  polygons.resize(path.size());
-  for (size_t i = 0; i < path.size() - 1; ++i) {
-    polygons.at(i) = createPolygon(path.at(i), path.at(i + 1), vehicle_info_, expand_width_);
-  }
   return path;
+}
+
+std::vector<Polygon2d> AEB::generatePathFootprint(
+  const Path & path, const double extra_width_margin)
+{
+  std::vector<Polygon2d> polygons;
+  for (size_t i = 0; i < path.size() - 1; ++i) {
+    polygons.push_back(
+      createPolygon(path.at(i), path.at(i + 1), vehicle_info_, extra_width_margin));
+  }
+  return polygons;
 }
 
 void AEB::createObjectData(
@@ -548,7 +565,7 @@ void AEB::createObjectData(
   }
 }
 
-void AEB::cropPointCloudWithEgoPath(const std::vector<Polygon2d> & ego_polys)
+void AEB::cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys)
 {
   PointCloud::Ptr full_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *full_points_ptr);
@@ -581,7 +598,7 @@ void AEB::cropPointCloudWithEgoPath(const std::vector<Polygon2d> & ego_polys)
   }
 }
 
-void AEB::createClusteredPointCloudObjectData(
+void AEB::createObjectDataUsingPointCloudClusters(
   const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
   std::vector<ObjectData> & objects)
 {
