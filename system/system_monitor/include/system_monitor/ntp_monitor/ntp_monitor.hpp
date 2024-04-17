@@ -87,7 +87,6 @@ protected:
   std::map<std::string, std::string> tracking_map_;  //!< @brief Output of chronyc tracking
   double elapsed_ms_;                                //!< @brief Execution time of chronyc command
 
-
   /**
    * @brief NTP offset status messages
    */

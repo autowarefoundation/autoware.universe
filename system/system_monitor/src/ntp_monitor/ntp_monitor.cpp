@@ -107,7 +107,7 @@ void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
     stat.add(itr->first, itr->second);
   }
 
-  if (level == DiagStatus::ERROR){
+  if (level == DiagStatus::ERROR) {
     stat.summary(DiagStatus::ERROR, offset_dict_.at(level));
   } else if (elapsed_ms == 0.0) {
     stat.summary(DiagStatus::WARN, "read chronyc error");
