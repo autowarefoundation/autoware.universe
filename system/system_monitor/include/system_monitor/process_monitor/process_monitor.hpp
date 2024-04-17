@@ -63,7 +63,7 @@ protected:
    */
   void getTasksSummary(
     diagnostic_updater::DiagnosticStatusWrapper & stat,
-    const std::string & output);  // NOLINT(runtime/references)
+    const std::string & output, double elapsed_ms);  // NOLINT(runtime/references)
 
   /**
    * @brief remove header
@@ -74,7 +74,7 @@ protected:
    */
   void removeHeader(
     diagnostic_updater::DiagnosticStatusWrapper & stat,
-    std::string & output);  // NOLINT(runtime/references)
+    std::string & output, double elapsed_ms);  // NOLINT(runtime/references)
 
   /**
    * @brief get high load processes
@@ -134,6 +134,7 @@ protected:
   bool is_pipe2_error_;                 //!< @brief flag if an pipe2 error occurs
   double elapsed_ms_;                   //!< @brief Execution time of top command
   std::mutex mutex_;                    //!< @brief mutex for output from top command
+  double top_timeout_;                  //!< @brief timeout for top command
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
 };
 

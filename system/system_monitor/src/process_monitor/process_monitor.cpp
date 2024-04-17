@@ -35,7 +35,8 @@ ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
   updater_(this),
   num_of_procs_(declare_parameter<int>("num_of_procs", 5)),
   is_top_error_(false),
-  is_pipe2_error_(false)
+  is_pipe2_error_(false),
+  top_timeout_(declare_parameter<int>("top_timeout", 5))
 {
   using namespace std::literals::chrono_literals;
 
@@ -101,9 +102,9 @@ void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrappe
   }
 
   // Get task summary
-  getTasksSummary(stat, str);
+  getTasksSummary(stat, str, elapsed_ms);
   // Remove header
-  removeHeader(stat, str);
+  removeHeader(stat, str, elapsed_ms);
 
   // Get high load processes
   getHighLoadProcesses(str);
@@ -115,7 +116,7 @@ void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrappe
 }
 
 void ProcessMonitor::getTasksSummary(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & output)
+  diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & output, double elapsed_ms)
 {
   // boost::process create file descriptor without O_CLOEXEC required for multithreading.
   // So create file descriptor with O_CLOEXEC and pass it to boost::process.
@@ -186,12 +187,18 @@ void ProcessMonitor::getTasksSummary(
       "zombie");
 
     if (std::regex_match(line.c_str(), match, filter)) {
-      stat.add("total", match[1].str());
-      stat.add("running", match[2].str());
-      stat.add("sleeping", match[3].str());
-      stat.add("stopped", match[4].str());
-      stat.add("zombie", match[5].str());
-      stat.summary(DiagStatus::OK, "OK");
+      if (top_timeout_ == 0.0) {
+        stat.summary(DiagStatus::ERROR, "read process info error");
+      } else if (elapsed_ms > top_timeout_ * 1000) {
+        stat.summary(DiagStatus::WARN, "top command timeout");
+      } else {
+        stat.add("total", match[1].str());
+        stat.add("running", match[2].str());
+        stat.add("sleeping", match[3].str());
+        stat.add("stopped", match[4].str());
+        stat.add("zombie", match[5].str());
+        stat.summary(DiagStatus::OK, "OK");
+      }
     } else {
       stat.summary(DiagStatus::ERROR, "invalid format");
     }
@@ -199,7 +206,7 @@ void ProcessMonitor::getTasksSummary(
 }
 
 void ProcessMonitor::removeHeader(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, std::string & output)
+  diagnostic_updater::DiagnosticStatusWrapper & stat, std::string & output, double elapsed_ms)
 {
   // boost::process create file descriptor without O_CLOEXEC required for multithreading.
   // So create file descriptor with O_CLOEXEC and pass it to boost::process.
@@ -553,6 +560,7 @@ void ProcessMonitor::onTimer()
     is_out >> os.rdbuf();
   }
 
+  sleep(7);
   const double elapsed_ms = stop_watch.toc("execution_time");
 
   // thread-safe copy
