@@ -77,10 +77,14 @@ enum class PolygonGenerationMethod {
   OBJECT_PATH_BASE,
 };
 
-enum class ObjectBehaviorType {
-  IGNORE = 0,
-  REGULATED,
-  PRIORITIZED,
+enum class ObjectType {
+  OUT_OF_SCOPE = 0,  // The module do not care about this type of objects.
+  REGULATED,    // The module assumes this type of objects move in paralell against lanes. Drivable
+                // areas are divided proportionately with the ego. In typicaly, cars, bus and trucks
+                // are classified to this type.
+  UNREGULATED,  // The module does not assume the objects move in paralell against lanes and
+                // assignes drivable area with priority to ego. In typicaly, pedestrians should be
+                // classified to this type.
 };
 
 struct DynamicAvoidanceParameters
@@ -181,17 +185,11 @@ public:
       for (const auto & path : predicted_object.kinematics.predicted_paths) {
         predicted_paths.push_back(path);
       }
-      for (size_t i = 0;
-           i < predicted_object.kinematics.initial_pose_with_covariance.covariance.size(); ++i) {
-        pose_covariance_sqrt[i] =
-          std::sqrt(predicted_object.kinematics.initial_pose_with_covariance.covariance[i]);
-      }
     }
 
     std::string uuid{};
     uint8_t label{};
     geometry_msgs::msg::Pose pose{};
-    double pose_covariance_sqrt[36];  // for experimental
     autoware_auto_perception_msgs::msg::Shape shape;
     double vel{0.0};
     double lat_vel{0.0};
@@ -382,12 +380,12 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  ObjectBehaviorType getLabelAsTargetObstacle(const uint8_t label) const;
+  ObjectType getLabelAsTargetObstacle(const uint8_t label) const;
   void registerRegulatedObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
-  void registerPrioritizedObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
+  void registerUnregulatedObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
   void determineWhetherToAvoidAgainstRegulatedObjects(
     const std::vector<DynamicAvoidanceObject> & prev_objects);
-  void determineWhetherToAvoidAgainstPrioritizedObjects(
+  void determineWhetherToAvoidAgainstUnregulatedObjects(
     const std::vector<DynamicAvoidanceObject> & prev_objects);
   LatFeasiblePaths generateLateralFeasiblePaths(
     const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const;
@@ -420,12 +418,12 @@ private:
     const geometry_msgs::msg::Pose & obj_pose, const Polygon2d & obj_points, const double obj_vel,
     const PredictedPath & obj_path, const autoware_auto_perception_msgs::msg::Shape & obj_shape,
     const TimeWhileCollision & time_while_collision) const;
-  std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoid(
+  std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoidRegulatedObject(
     const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
     const Polygon2d & obj_points, const geometry_msgs::msg::Point & obj_pos, const double obj_vel,
     const bool is_collision_left, const double obj_normal_vel,
     const std::optional<DynamicAvoidanceObject> & prev_object) const;
-  std::optional<MinMaxValue> calcMinMaxLateralOffsetAgainstPrioritizedObject(
+  std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoidUnregulatedObject(
     const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
     const std::optional<DynamicAvoidanceObject> & prev_object,
     const DynamicAvoidanceObject & object) const;
@@ -435,7 +433,7 @@ private:
     const DynamicAvoidanceObject & object) const;
   std::optional<tier4_autoware_utils::Polygon2d> calcObjectPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
-  std::optional<tier4_autoware_utils::Polygon2d> calcPrioritizedObstacleAvoidPolygon(
+  std::optional<tier4_autoware_utils::Polygon2d> calcPredictedPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const;
   EgoPathReservePoly calcEgoPathPreservePoly(const PathWithLaneId & ego_path) const;
 
