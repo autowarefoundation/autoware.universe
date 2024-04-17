@@ -929,11 +929,9 @@ IntersectionModule::TimeDistanceArray IntersectionModule::calcIntersectionPassin
     const double dist = tier4_autoware_utils::calcDistance2d(p1, p2);
     dist_sum += dist;
 
-    /*
-      use average velocity between p1 and p2
-      NOTE: ideally we should use
-    */
-    const double average_velocity = p1.point.longitudinal_velocity_mps;
+    // use average velocity between p1 and p2
+    const double average_velocity =
+      (p1.point.longitudinal_velocity_mps + p2.point.longitudinal_velocity_mps) / 2.0;
     const double passing_velocity = [=]() {
       if (use_upstream_velocity) {
         if (upstream_stopline_idx_opt && i > upstream_stopline_idx_opt.value()) {
