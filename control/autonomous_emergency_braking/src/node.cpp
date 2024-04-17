@@ -262,6 +262,7 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
   filter.filter(*no_height_filtered_pointcloud_ptr);
 
   obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
+  cropped_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
 
   pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
@@ -401,8 +402,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     }
   }
 
-  if (obstacle_ros_pointcloud_ptr_) {
-    pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
+  if (cropped_ros_pointcloud_ptr_) {
+    pub_obstacle_pointcloud_->publish(*cropped_ros_pointcloud_ptr_);
   }
 
   return has_collision_ego || has_collision_predicted;
@@ -587,7 +588,7 @@ void AEB::cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_
   path_polygon_hull_filter.filter(*objects);
   // Store the results
   if (!objects->empty()) {
-    pcl::toROSMsg(*objects, *obstacle_ros_pointcloud_ptr_);
+    pcl::toROSMsg(*objects, *cropped_ros_pointcloud_ptr_);
   }
 }
 
@@ -596,11 +597,11 @@ void AEB::createObjectDataUsingPointCloudClusters(
   std::vector<ObjectData> & objects)
 {
   // check if the predicted path has valid number of points
-  if (ego_path.size() < 2 || ego_polys.empty() || obstacle_ros_pointcloud_ptr_->data.empty()) {
+  if (ego_path.size() < 2 || ego_polys.empty() || cropped_ros_pointcloud_ptr_->data.empty()) {
     return;
   }
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
-  pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
+  pcl::fromROSMsg(*cropped_ros_pointcloud_ptr_, *obstacle_points_ptr);
   if (obstacle_points_ptr->empty()) return;
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
