@@ -148,8 +148,6 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   publish_debug_pointcloud_ = declare_parameter<bool>("publish_debug_pointcloud");
   use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
   use_imu_path_ = declare_parameter<bool>("use_imu_path");
-  crop_pointcloud_with_path_footprint_ =
-    declare_parameter<bool>("crop_pointcloud_with_path_footprint");
   path_footprint_extra_margin_ = declare_parameter<double>("path_footprint_extra_margin");
   detection_range_min_height_ = declare_parameter<double>("detection_range_min_height");
   detection_range_max_height_margin_ =
@@ -355,11 +353,9 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto ego_path = generateEgoPath(current_v, current_w);
 
     // Crop out Pointcloud using an extra wide ego path
-    if (crop_pointcloud_with_path_footprint_) {
-      const auto expanded_ego_polys =
-        generatePathFootprint(ego_path, expand_width_ + path_footprint_extra_margin_);
-      cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
-    }
+    const auto expanded_ego_polys =
+      generatePathFootprint(ego_path, expand_width_ + path_footprint_extra_margin_);
+    cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
 
     std::vector<ObjectData> objects_from_point_clusters;
     const auto ego_polys = generatePathFootprint(ego_path, expand_width_);
@@ -387,11 +383,9 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       const auto & predicted_path = predicted_path_opt.value();
 
       // Crop out Pointcloud using an extra wide ego path
-      if (crop_pointcloud_with_path_footprint_) {
-        const auto expanded_ego_polys =
-          generatePathFootprint(predicted_path, expand_width_ + path_footprint_extra_margin_);
-        cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
-      }
+      const auto expanded_ego_polys =
+        generatePathFootprint(predicted_path, expand_width_ + path_footprint_extra_margin_);
+      cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
 
       std::vector<ObjectData> objects_from_point_clusters;
       const auto predicted_polys = generatePathFootprint(predicted_path, expand_width_);
