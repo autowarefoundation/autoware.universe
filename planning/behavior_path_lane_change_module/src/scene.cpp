@@ -889,23 +889,27 @@ LaneChangeTargetObjects NormalLaneChange::getTargetObjects(
   target_objects.other_lane.reserve(target_obj_index.other_lane.size());
 
   // objects in current lane
+  const auto is_check_prepare_phase = check_prepare_phase();
   for (const auto & obj_idx : target_obj_index.current_lane) {
     const auto extended_object = utils::lane_change::transform(
-      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
+      is_check_prepare_phase);
     target_objects.current_lane.push_back(extended_object);
   }
 
   // objects in target lane
   for (const auto & obj_idx : target_obj_index.target_lane) {
     const auto extended_object = utils::lane_change::transform(
-      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
+      is_check_prepare_phase);
     target_objects.target_lane.push_back(extended_object);
   }
 
   // objects in other lane
   for (const auto & obj_idx : target_obj_index.other_lane) {
     const auto extended_object = utils::lane_change::transform(
-      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_);
+      objects.objects.at(obj_idx), common_parameters, *lane_change_parameters_,
+      is_check_prepare_phase);
     target_objects.other_lane.push_back(extended_object);
   }
 
@@ -969,8 +973,8 @@ LaneChangeTargetObjectIndices NormalLaneChange::filterObject(
     const auto obj_velocity_norm = std::hypot(
       object.kinematics.initial_twist_with_covariance.twist.linear.x,
       object.kinematics.initial_twist_with_covariance.twist.linear.y);
-    const auto extended_object =
-      utils::lane_change::transform(object, common_parameters, *lane_change_parameters_);
+    const auto extended_object = utils::lane_change::transform(
+      object, common_parameters, *lane_change_parameters_, check_prepare_phase());
 
     const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object);
 
@@ -1289,9 +1293,8 @@ bool NormalLaneChange::getLaneChangePaths(
         (prepare_duration < 1e-3) ? 0.0
                                   : ((prepare_velocity - current_velocity) / prepare_duration);
 
-      const double prepare_length =
-        current_velocity * prepare_duration +
-        0.5 * longitudinal_acc_on_prepare * std::pow(prepare_duration, 2);
+      const auto prepare_length = utils::lane_change::calcPhaseLength(
+        current_velocity, getCommonParam().max_vel, longitudinal_acc_on_prepare, prepare_duration);
 
       auto prepare_segment = getPrepareSegment(current_lanes, backward_path_length, prepare_length);
 
@@ -1343,9 +1346,9 @@ bool NormalLaneChange::getLaneChangePaths(
           utils::lane_change::calcLaneChangingAcceleration(
             initial_lane_changing_velocity, max_path_velocity, lane_changing_time,
             sampled_longitudinal_acc);
-        const auto lane_changing_length =
-          initial_lane_changing_velocity * lane_changing_time +
-          0.5 * longitudinal_acc_on_lane_changing * lane_changing_time * lane_changing_time;
+        const auto lane_changing_length = utils::lane_change::calcPhaseLength(
+          initial_lane_changing_velocity, getCommonParam().max_vel,
+          longitudinal_acc_on_lane_changing, lane_changing_time);
         const auto terminal_lane_changing_velocity = std::min(
           initial_lane_changing_velocity + longitudinal_acc_on_lane_changing * lane_changing_time,
           getCommonParam().max_vel);
@@ -1964,7 +1967,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     for (const auto & obj_path : obj_predicted_paths) {
       const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
         path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
-        current_debug_data.second);
+        get_max_velocity_for_safety_check(), current_debug_data.second);
 
       if (collided_polygons.empty()) {
         utils::path_safety_checker::updateCollisionCheckDebugMap(
@@ -2059,6 +2062,17 @@ bool NormalLaneChange::isVehicleStuck(
   return false;
 }
 
+double NormalLaneChange::get_max_velocity_for_safety_check() const
+{
+  const auto external_velocity_limit_ptr = planner_data_->external_limit_max_velocity;
+  if (external_velocity_limit_ptr) {
+    return std::min(
+      static_cast<double>(external_velocity_limit_ptr->max_velocity), getCommonParam().max_vel);
+  }
+
+  return getCommonParam().max_vel;
+}
+
 bool NormalLaneChange::isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const
 {
   if (current_lanes.empty()) {
@@ -2111,6 +2125,43 @@ void NormalLaneChange::updateStopTime()
   }
 
   stop_watch_.tic("stop_time");
+}
+
+bool NormalLaneChange::check_prepare_phase() const
+{
+  const auto & route_handler = getRouteHandler();
+  const auto & vehicle_info = getCommonParam().vehicle_info;
+
+  const auto check_in_general_lanes =
+    lane_change_parameters_->enable_collision_check_for_prepare_phase_in_general_lanes;
+
+  lanelet::ConstLanelet current_lane;
+  if (!route_handler->getClosestLaneletWithinRoute(getEgoPose(), &current_lane)) {
+    RCLCPP_DEBUG(
+      logger_, "Unable to get current lane. Default to %s.",
+      (check_in_general_lanes ? "true" : "false"));
+    return check_in_general_lanes;
+  }
+
+  const auto ego_footprint = utils::lane_change::getEgoCurrentFootprint(getEgoPose(), vehicle_info);
+
+  const auto check_in_intersection = std::invoke([&]() {
+    if (!lane_change_parameters_->enable_collision_check_for_prepare_phase_in_intersection) {
+      return false;
+    }
+
+    return utils::lane_change::isWithinIntersection(route_handler, current_lane, ego_footprint);
+  });
+
+  const auto check_in_turns = std::invoke([&]() {
+    if (!lane_change_parameters_->enable_collision_check_for_prepare_phase_in_turns) {
+      return false;
+    }
+
+    return utils::lane_change::isWithinTurnDirectionLanes(current_lane, ego_footprint);
+  });
+
+  return check_in_intersection || check_in_turns || check_in_general_lanes;
 }
 
 }  // namespace behavior_path_planner
