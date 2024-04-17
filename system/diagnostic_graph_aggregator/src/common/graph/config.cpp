@@ -224,7 +224,7 @@ void apply_edits(FileConfig & config)
 
   // Filter references to the removed links.
   for (const auto & unit : config.units) {
-    if (remove_links.count(unit->item) == 0) {
+    if (remove_links.count(unit->item) != 0) {
       unit->item = nullptr;
     }
     std::vector<LinkConfig *> filtered_list;
@@ -265,6 +265,7 @@ void topological_sort(FileConfig & config)
 
   // Count degrees of each unit.
   for (const auto & unit : units) {
+    if (const auto & link = unit->item) ++degrees[link->child];
     for (const auto & link : unit->list) ++degrees[link->child];
   }
 
@@ -277,6 +278,11 @@ void topological_sort(FileConfig & config)
   while (!buffer.empty()) {
     const auto unit = buffer.front();
     buffer.pop_front();
+    if (const auto & link = unit->item) {
+      if (--degrees[link->child] == 0) {
+        buffer.push_back(link->child);
+      }
+    }
     for (const auto & link : unit->list) {
       if (--degrees[link->child] == 0) {
         buffer.push_back(link->child);
