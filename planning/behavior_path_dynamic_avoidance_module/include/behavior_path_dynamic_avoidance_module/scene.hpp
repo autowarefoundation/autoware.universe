@@ -193,7 +193,6 @@ public:
     autoware_auto_perception_msgs::msg::Shape shape;
     double vel{0.0};
     double lat_vel{0.0};
-
     bool is_object_on_ego_path{false};
     std::optional<rclcpp::Time> latest_time_inside_ego_path{std::nullopt};
     std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths{};
@@ -207,7 +206,7 @@ public:
     std::vector<PathPointWithLaneId> ref_path_points_for_obj_poly;
     LatFeasiblePaths ego_lat_feasible_paths;
 
-    // add additional information (not update to latest data)
+    // add additional information (not update to the latest data)
     void update(
       const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
       const bool arg_is_collision_left, const bool arg_should_be_avoided,
@@ -435,7 +434,7 @@ private:
     const DynamicAvoidanceObject & object) const;
   std::optional<tier4_autoware_utils::Polygon2d> calcPredictedPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const;
-  EgoPathReservePoly calcEgoPathPreservePoly(const PathWithLaneId & ego_path) const;
+  EgoPathReservePoly calcEgoPathReservePoly(const PathWithLaneId & ego_path) const;
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)
   {

@@ -19,9 +19,7 @@
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
-#include "tier4_autoware_utils/ros/msg_covariance.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/buffer.hpp>
@@ -29,11 +27,6 @@
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/difference.hpp>
 #include <boost/geometry/algorithms/union.hpp>
-#include <boost/geometry/strategies/agnostic/buffer_distance_symmetric.hpp>
-#include <boost/geometry/strategies/cartesian/buffer_end_flat.hpp>
-#include <boost/geometry/strategies/cartesian/buffer_join_round.hpp>
-#include <boost/geometry/strategies/cartesian/buffer_point_circle.hpp>
-#include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
 
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
@@ -401,7 +394,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
     throw std::runtime_error("input path is empty");
   }
 
-  const auto ego_path_reserve_poly = calcEgoPathPreservePoly(input_path);
+  const auto ego_path_reserve_poly = calcEgoPathReservePoly(input_path);
 
   // create obstacles to avoid (= extract from the drivable area)
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
@@ -413,8 +406,8 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
 
       if (parameters_->polygon_generation_method == PolygonGenerationMethod::EGO_PATH_BASE) {
         return calcEgoPathBasedDynamicObstaclePolygon(object);
-      } else if (
-        parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
+      }
+      if (parameters_->polygon_generation_method == PolygonGenerationMethod::OBJECT_PATH_BASE) {
         return calcObjectPathBasedDynamicObstaclePolygon(object);
       }
       throw std::logic_error("The polygon_generation_method's string is invalid.");
@@ -1676,7 +1669,7 @@ DynamicAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
   return obj_poly;
 }
 
-// TODO (takagi): replace by another function?
+// TODO (takagi): replace by the nother function?
 std::optional<tier4_autoware_utils::Polygon2d>
 DynamicAvoidanceModule::calcObjectPathBasedDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object) const
@@ -1740,20 +1733,20 @@ std::optional<tier4_autoware_utils::Polygon2d>
 DynamicAvoidanceModule::calcPredictedPathBasedDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const
 {
-  std::vector<geometry_msgs::msg::Pose> candidate_poses;
+  std::vector<geometry_msgs::msg::Pose> obj_poses;
   for (const auto & predicted_path : object.predicted_paths) {
     if (predicted_path.confidence < parameters_->threshold_confidence) continue;
 
     double time_count = 0.0;
     for (const auto & pose : predicted_path.path) {
-      candidate_poses.push_back(pose);
+      obj_poses.push_back(pose);
       time_count += predicted_path.time_step.sec + predicted_path.time_step.nanosec * 1e-9;
       if (time_count > parameters_->end_time_to_consider + 1e-3) break;
     }
   }
 
   tier4_autoware_utils::Polygon2d obj_points_as_poly;
-  for (const auto pose : candidate_poses) {
+  for (const auto pose : obj_poses) {
     boost::geometry::append(
       obj_points_as_poly, tier4_autoware_utils::toFootprint(
                             pose, object.shape.dimensions.x * 0.5, object.shape.dimensions.x * 0.5,
@@ -1798,7 +1791,7 @@ DynamicAvoidanceModule::calcPredictedPathBasedDynamicObstaclePolygon(
 // Calculate the driving area required to ensure the safety of the own vehicle.
 // It is assumed that this area will not be clipped.
 // input: ego's reference path, ego's pose, ego's speed, and some global params
-DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathPreservePoly(
+DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathReservePoly(
   const PathWithLaneId & ego_path) const
 {
   // This function require almost 0.5 ms. Should be refactored in the future
@@ -1818,22 +1811,25 @@ DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathPr
     [&ego_path_lines](
       strategy::distance_asymmetric<double> path_expand_strategy,
       strategy::distance_asymmetric<double> steer_expand_strategy,
-      std::vector<geometry_msgs::msg::Point> steer_outer_path) -> tier4_autoware_utils::Polygon2d {
+      std::vector<geometry_msgs::msg::Point> outer_body_path) -> tier4_autoware_utils::Polygon2d {
+    // reserve area based on the reference path
     tier4_autoware_utils::MultiPolygon2d path_poly;
     boost::geometry::buffer(
       ego_path_lines, path_poly, path_expand_strategy, strategy::side_straight(),
       strategy::join_round(), strategy::end_flat(), strategy::point_circle());
 
+    // reserve area steer to the avoidance path
     tier4_autoware_utils::LineString2d steer_lines;
-    for (const auto & point : steer_outer_path) {
+    for (const auto & point : outer_body_path) {
       const auto bg_point = tier4_autoware_utils::fromMsg(point).to_2d();
       if (boost::geometry::within(bg_point, path_poly)) {
         if (steer_lines.size() != 0) {
-          boost::geometry::append(steer_lines, bg_point);
+          ;
+          // boost::geometry::append(steer_lines, bg_point);
         }
         break;
       }
-      boost::geometry::append(steer_lines, bg_point);
+      // boost::geometry::append(steer_lines, bg_point);
     }
     tier4_autoware_utils::MultiPolygon2d steer_poly;
     boost::geometry::buffer(
