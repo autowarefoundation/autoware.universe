@@ -59,11 +59,6 @@ protected:
   void onTimer();
 
   /**
-   * @brief Timeout callback function for executing chronyc
-   */
-  void onTimeout();
-
-  /**
    * @brief function to execute chronyc
    * @param [out] outOffset offset value of NTP time
    * @param [out] out_tracking_map "chronyc tracking" output for diagnostic
@@ -91,9 +86,7 @@ protected:
   float offset_;               //!< @brief Offset value of NTP time
   std::map<std::string, std::string> tracking_map_;  //!< @brief Output of chronyc tracking
   double elapsed_ms_;                                //!< @brief Execution time of chronyc command
-  rclcpp::TimerBase::SharedPtr timeout_timer_;       //!< @brief Timeout for executing chronyc
-  std::mutex timeout_mutex_;  //!< @brief Mutex regarding timeout for executing chronyc
-  bool timeout_expired_;      //!< @brief Timeout for executing chronyc has expired or not
+
 
   /**
    * @brief NTP offset status messages

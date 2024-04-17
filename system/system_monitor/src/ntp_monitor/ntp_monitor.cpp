@@ -39,7 +39,7 @@ NTPMonitor::NTPMonitor(const rclcpp::NodeOptions & options)
   offset_warn_(declare_parameter<float>("offset_warn", 0.1)),
   offset_error_(declare_parameter<float>("offset_error", 5.0)),
   timeout_(declare_parameter<int>("timeout", 5)),
-  timeout_expired_(false)
+  elapsed_ms_(0.0)
 {
   using namespace std::literals::chrono_literals;
 
@@ -107,17 +107,14 @@ void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
     stat.add(itr->first, itr->second);
   }
 
-  // Check timeout has expired regarding executing chronyc
-  bool timeout_expired = false;
-  {
-    std::lock_guard<std::mutex> lock(timeout_mutex_);
-    timeout_expired = timeout_expired_;
-  }
-
-  if (!timeout_expired) {
-    stat.summary(level, offset_dict_.at(level));
+  if (level == DiagStatus::ERROR){
+    stat.summary(DiagStatus::ERROR, offset_dict_.at(level));
+  } else if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read chronyc error");
+  } else if (elapsed_ms > timeout_ * 1000) {
+    stat.summary(DiagStatus::ERROR, "chronyc timeout");
   } else {
-    stat.summary(DiagStatus::WARN, "chronyc timeout expired");
+    stat.summary(level, offset_dict_.at(level));
   }
 
   stat.addf("execution time", "%f ms", elapsed_ms);
@@ -134,18 +131,7 @@ void NTPMonitor::onTimer()
   float offset = 0.0f;
   std::map<std::string, std::string> tracking_map;
 
-  // Start timeout timer for executing chronyc
-  {
-    std::lock_guard<std::mutex> lock(timeout_mutex_);
-    timeout_expired_ = false;
-  }
-  timeout_timer_ = rclcpp::create_timer(
-    this, get_clock(), std::chrono::seconds(timeout_), std::bind(&NTPMonitor::onTimeout, this));
-
   error_str = executeChronyc(offset, tracking_map, pipe2_err_str);
-
-  // Returning from chronyc, stop timeout timer
-  timeout_timer_->cancel();
 
   const double elapsed_ms = stop_watch.toc("execution_time");
 
@@ -158,13 +144,6 @@ void NTPMonitor::onTimer()
     tracking_map_ = tracking_map;
     elapsed_ms_ = elapsed_ms;
   }
-}
-
-void NTPMonitor::onTimeout()
-{
-  RCLCPP_WARN(get_logger(), "Timeout occurred.");
-  std::lock_guard<std::mutex> lock(timeout_mutex_);
-  timeout_expired_ = true;
 }
 
 std::string NTPMonitor::executeChronyc(
