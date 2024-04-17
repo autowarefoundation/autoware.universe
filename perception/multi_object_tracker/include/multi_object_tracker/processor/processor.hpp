@@ -32,7 +32,8 @@
 class TrackerProcessor
 {
 public:
-  explicit TrackerProcessor(const std::map<std::uint8_t, std::string> & tracker_map);
+  explicit TrackerProcessor(
+    const std::map<std::uint8_t, std::string> & tracker_map, const size_t & channel_size);
 
   const std::list<std::shared_ptr<Tracker>> & getListTracker() const { return list_tracker_; }
   // tracker processes
@@ -40,11 +41,11 @@ public:
   void update(
     const autoware_auto_perception_msgs::msg::DetectedObjects & transformed_objects,
     const geometry_msgs::msg::Transform & self_transform,
-    const std::unordered_map<int, int> & direct_assignment);
+    const std::unordered_map<int, int> & direct_assignment, const uint & channel_index);
   void spawn(
     const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
     const geometry_msgs::msg::Transform & self_transform,
-    const std::unordered_map<int, int> & reverse_assignment);
+    const std::unordered_map<int, int> & reverse_assignment, const uint & channel_index);
   void prune(const rclcpp::Time & time);
 
   // output
@@ -59,6 +60,7 @@ public:
 private:
   std::map<std::uint8_t, std::string> tracker_map_;
   std::list<std::shared_ptr<Tracker>> list_tracker_;
+  const size_t channel_size_;
 
   // parameters
   float max_elapsed_time_;            // [s]
@@ -71,7 +73,7 @@ private:
   void removeOverlappedTracker(const rclcpp::Time & time);
   std::shared_ptr<Tracker> createNewTracker(
     const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-    const geometry_msgs::msg::Transform & self_transform) const;
+    const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_

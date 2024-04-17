@@ -95,11 +95,11 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     RCLCPP_ERROR(get_logger(), "Need a 'input_topic_names' parameter to be set before continuing");
     return;
   }
-  input_topic_size_ = input_topic_names.size();
-  input_channels_.resize(input_topic_size_);
-  assert(input_names_long.size() == input_topic_size_);
-  assert(input_names_short.size() == input_topic_size_);
-  for (size_t i = 0; i < input_topic_size_; i++) {
+  input_channel_size_ = input_topic_names.size();
+  input_channels_.resize(input_channel_size_);
+  assert(input_names_long.size() == input_channel_size_);
+  assert(input_names_short.size() == input_channel_size_);
+  for (size_t i = 0; i < input_channel_size_; i++) {
     input_channels_[i].index = i;
     input_channels_[i].input_topic = input_topic_names[i];
     input_channels_[i].long_name = input_names_long[i];
@@ -146,7 +146,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     tracker_map.insert(std::make_pair(
       Label::MOTORCYCLE, this->declare_parameter<std::string>("motorcycle_tracker")));
 
-    processor_ = std::make_unique<TrackerProcessor>(tracker_map);
+    processor_ = std::make_unique<TrackerProcessor>(tracker_map, input_channel_size_);
   }
 
   // Data association initialization
@@ -224,7 +224,7 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
   debugger_->startMeasurementTime(this->now(), oldest_time);
   // run process for each DetectedObjects
   for (const auto & objects_data : objects_list) {
-    runProcess(objects_data.second);
+    runProcess(objects_data.second, objects_data.first);
   }
   // process end
   debugger_->endMeasurementTime(this->now());
@@ -237,9 +237,9 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
 
   // count objects on each channel
   std::vector<int> object_counts;
-  object_counts.resize(input_topic_size_);
+  object_counts.resize(input_channel_size_);
   // initialize to zero
-  for (size_t i = 0; i < input_topic_size_; i++) {
+  for (size_t i = 0; i < input_channel_size_; i++) {
     object_counts[i] = 0;
   }
   for (const auto & objects_data : objects_list) {
@@ -247,14 +247,15 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
   }
   // print result
   std::string object_counts_str = "MultiObjectTracker::onMessage Object counts: ";
-  for (size_t i = 0; i < input_topic_size_; i++) {
+  for (size_t i = 0; i < input_channel_size_; i++) {
     object_counts_str +=
       input_channels_[i].long_name + " " + std::to_string(object_counts[i]) + "  ";
   }
   RCLCPP_INFO(this->get_logger(), object_counts_str.c_str());
 }
 
-void MultiObjectTracker::runProcess(const DetectedObjects & input_objects_msg)
+void MultiObjectTracker::runProcess(
+  const DetectedObjects & input_objects_msg, const uint & channel_index)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
@@ -289,13 +290,13 @@ void MultiObjectTracker::runProcess(const DetectedObjects & input_objects_msg)
   }
 
   /* tracker update */
-  processor_->update(transformed_objects, *self_transform, direct_assignment);
+  processor_->update(transformed_objects, *self_transform, direct_assignment, channel_index);
 
   /* tracker pruning */
   processor_->prune(measurement_time);
 
   /* spawn new tracker */
-  processor_->spawn(transformed_objects, *self_transform, reverse_assignment);
+  processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
 }
 
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)

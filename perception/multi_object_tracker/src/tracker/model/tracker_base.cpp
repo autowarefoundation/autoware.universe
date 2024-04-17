@@ -23,7 +23,8 @@
 
 Tracker::Tracker(
   const rclcpp::Time & time,
-  const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification)
+  const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification,
+  const size_t & channel_size)
 : classification_(classification),
   no_measurement_count_(0),
   total_no_measurement_count_(0),
@@ -34,23 +35,75 @@ Tracker::Tracker(
   std::mt19937 gen(std::random_device{}());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
   std::generate(uuid_.uuid.begin(), uuid_.uuid.end(), bit_eng);
+
+  // Initialize existence probabilities
+  existence_probabilities_.resize(channel_size, 0.0);
+}
+
+void Tracker::initializeExistenceProbabilities(
+  const uint & channel_index, const float & existence_probability)
+{
+  existence_probabilities_[channel_index] = existence_probability;
+  total_existence_probability_ = existence_probability;
 }
 
 bool Tracker::updateWithMeasurement(
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const rclcpp::Time & measurement_time, const geometry_msgs::msg::Transform & self_transform)
+  const rclcpp::Time & measurement_time, const geometry_msgs::msg::Transform & self_transform,
+  const uint & channel_index)
 {
-  no_measurement_count_ = 0;
-  ++total_measurement_count_;
+  // Update existence probability
+  {
+    float existence_probability_from_object = object.existence_probability;
+    no_measurement_count_ = 0;
+    ++total_measurement_count_;
+
+    double const delta_time = (measurement_time - last_update_with_measurement_time_).seconds();
+    double const decay_rate = 5.0 / 10.0;
+    existence_probabilities_[channel_index] = existence_probability_from_object;
+    for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
+      if (i == channel_index) {
+        continue;
+      }
+      existence_probabilities_[i] *= std::exp(-decay_rate * delta_time);
+    }
+
+    // regularization
+    total_existence_probability_ =
+      std::accumulate(existence_probabilities_.begin(), existence_probabilities_.end(), 0.0f);
+    total_existence_probability_ = std::max(total_existence_probability_, 0.0f);
+    total_existence_probability_ = std::min(total_existence_probability_, 1.0f);
+  }
+
   last_update_with_measurement_time_ = measurement_time;
+
+  // Update object
   measure(object, measurement_time, self_transform);
+
   return true;
 }
 
-bool Tracker::updateWithoutMeasurement()
+bool Tracker::updateWithoutMeasurement(const rclcpp::Time & now)
 {
-  ++no_measurement_count_;
-  ++total_no_measurement_count_;
+  // Update existence probability
+  {
+    ++no_measurement_count_;
+    ++total_no_measurement_count_;
+
+    // decay
+    double const delta_time = (now - last_update_with_measurement_time_).seconds();
+    double const decay_rate = 5.0 / 10.0;
+    for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
+      existence_probabilities_[i] *= std::exp(-decay_rate * delta_time);
+    }
+
+    // regularization
+    total_existence_probability_ =
+      std::accumulate(existence_probabilities_.begin(), existence_probabilities_.end(), 0.0f);
+    total_existence_probability_ = std::max(total_existence_probability_, 0.0f);
+    total_existence_probability_ = std::min(total_existence_probability_, 1.0f);
+  }
+
   return true;
 }
 

@@ -89,7 +89,7 @@ private:
   std::unique_ptr<InputManager> input_manager_;
 
   std::vector<InputChannel> input_channels_{};
-  size_t input_topic_size_{};
+  size_t input_channel_size_{};
 
   // callback functions
   void onTimer();
@@ -97,7 +97,7 @@ private:
   void onMessage(const ObjectsList & objects_list);
 
   // publish processes
-  void runProcess(const DetectedObjects & input_objects_msg);
+  void runProcess(const DetectedObjects & input_objects_msg, const uint & channel_index);
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
