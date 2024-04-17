@@ -62,8 +62,8 @@ protected:
    * to pass diagnostic message updated in this function to diagnostic publish calls.
    */
   void getTasksSummary(
-    diagnostic_updater::DiagnosticStatusWrapper & stat,
-    const std::string & output, double elapsed_ms);  // NOLINT(runtime/references)
+    diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & output,
+    double elapsed_ms);  // NOLINT(runtime/references)
 
   /**
    * @brief remove header
@@ -73,8 +73,8 @@ protected:
    * to pass diagnostic message updated in this function to diagnostic publish calls.
    */
   void removeHeader(
-    diagnostic_updater::DiagnosticStatusWrapper & stat,
-    std::string & output, double elapsed_ms);  // NOLINT(runtime/references)
+    diagnostic_updater::DiagnosticStatusWrapper & stat, std::string & output,
+    double elapsed_ms);  // NOLINT(runtime/references)
 
   /**
    * @brief get high load processes
