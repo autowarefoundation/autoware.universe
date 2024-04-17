@@ -162,7 +162,7 @@ bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & 
 
   const bool has_shift_point = !path_shifter_.getShiftLines().empty();
   const bool has_base_offset =
-    std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_avoid_check_threshold;
+    std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_execution_threshold;
 
   // Nothing to do. -> EXIT.
   if (!has_shift_point && !has_base_offset) {
@@ -318,7 +318,6 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   using utils::avoidance::fillAvoidanceNecessity;
   using utils::avoidance::fillObjectStoppableJudge;
   using utils::avoidance::filterTargetObjects;
-  using utils::avoidance::getTargetLanelets;
   using utils::avoidance::separateObjectsByPath;
   using utils::avoidance::updateRoadShoulderDistance;
   using utils::traffic_light::calcDistanceToRedTrafficLight;
@@ -642,7 +641,10 @@ void AvoidanceModule::fillDebugData(
   const auto constant_distance = helper_->getFrontConstantDistance(o_front);
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
-  const auto max_avoid_margin = object_parameter.lateral_hard_margin * o_front.distance_factor +
+  const auto lateral_hard_margin = o_front.is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
+  const auto max_avoid_margin = lateral_hard_margin * o_front.distance_factor +
                                 object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
 
   const auto avoidance_distance = helper_->getSharpAvoidanceDistance(
@@ -686,6 +688,7 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
   }
 
   insertPrepareVelocity(path);
+  insertAvoidanceVelocity(path);
 
   switch (data.state) {
     case AvoidanceState::NOT_AVOID: {
@@ -731,7 +734,7 @@ bool AvoidanceModule::isSafePath(
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
-      if (parameters_->lateral_avoid_check_threshold < length) {
+      if (parameters_->lateral_execution_threshold < length) {
         return true;
       }
     }
@@ -743,7 +746,7 @@ bool AvoidanceModule::isSafePath(
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
-      if (parameters_->lateral_avoid_check_threshold < -1.0 * length) {
+      if (parameters_->lateral_execution_threshold < -1.0 * length) {
         return true;
       }
     }
@@ -1219,7 +1222,7 @@ bool AvoidanceModule::isValidShiftLine(
   // check if the vehicle is in road. (yaw angle is not considered)
   {
     const auto minimum_distance = 0.5 * planner_data_->parameters.vehicle_width +
-                                  parameters_->hard_road_shoulder_margin -
+                                  parameters_->hard_drivable_bound_margin -
                                   parameters_->max_deviation_from_lane;
 
     const size_t start_idx = shift_lines.front().start_idx;
@@ -1431,7 +1434,10 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
 
-  const auto avoid_margin = object_parameter.lateral_hard_margin * object.distance_factor +
+  const auto lateral_hard_margin = object.is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
+  const auto avoid_margin = lateral_hard_margin * object.distance_factor +
                             object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
   const auto avoidance_distance = helper_->getMinAvoidanceDistance(
     helper_->getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
@@ -1675,7 +1681,10 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto object_type = utils::getHighestProbLabel(object.value().object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
-  const auto avoid_margin = object_parameter.lateral_hard_margin * object.value().distance_factor +
+  const auto lateral_hard_margin = object.value().is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
+  const auto avoid_margin = lateral_hard_margin * object.value().distance_factor +
                             object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
   const auto shift_length = helper_->getShiftLength(
     object.value(), utils::avoidance::isOnRight(object.value()), avoid_margin);
@@ -1723,6 +1732,52 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
 
   slow_pose_ = motion_utils::calcLongitudinalOffsetPose(
     shifted_path.path.points, start_idx, distance_to_object);
+}
+
+void AvoidanceModule::insertAvoidanceVelocity(ShiftedPath & shifted_path) const
+{
+  const auto & data = avoid_data_;
+
+  // do nothing if no shift line is approved.
+  if (path_shifter_.getShiftLines().empty()) {
+    return;
+  }
+
+  // do nothing if there is no avoidance target.
+  if (data.target_objects.empty()) {
+    return;
+  }
+
+  const auto [distance_to_accel_end_point, v_max] =
+    helper_->getDistanceToAccelEndPoint(shifted_path.path);
+  if (distance_to_accel_end_point < 1e-3) {
+    return;
+  }
+
+  const auto start_idx = planner_data_->findEgoIndex(shifted_path.path.points);
+  for (size_t i = start_idx; i < shifted_path.path.points.size(); ++i) {
+    const auto distance_from_ego = calcSignedArcLength(shifted_path.path.points, start_idx, i);
+
+    // slow down speed is inserted only in front of the object.
+    const auto accel_distance = distance_to_accel_end_point - distance_from_ego;
+    if (accel_distance < 0.0) {
+      break;
+    }
+
+    const double v_target_square =
+      v_max * v_max - 2.0 * parameters_->max_acceleration * accel_distance;
+    if (v_target_square < 1e-3) {
+      break;
+    }
+
+    // target speed with nominal jerk limits.
+    const double v_target = std::max(getEgoSpeed(), std::sqrt(v_target_square));
+    const double v_original = shifted_path.path.points.at(i).point.longitudinal_velocity_mps;
+    shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_target);
+  }
+
+  slow_pose_ = motion_utils::calcLongitudinalOffsetPose(
+    shifted_path.path.points, start_idx, distance_to_accel_end_point);
 }
 
 std::shared_ptr<AvoidanceDebugMsgArray> AvoidanceModule::get_debug_msg_array() const
