@@ -30,7 +30,6 @@ ament_auto_add_executable(ndt_scan_matcher
   src/diagnostics_module.cpp
   src/map_update_module.cpp
   src/ndt_scan_matcher_core.cpp
-  src/ndt_scan_matcher_diagnostics_sensor_points.cpp
   src/ndt_scan_matcher_node.cpp
   src/particle.cpp
 )
@@ -50,7 +49,6 @@ if(BUILD_TESTING)
     src/diagnostics_module.cpp
     src/map_update_module.cpp
     src/ndt_scan_matcher_core.cpp
-    src/ndt_scan_matcher_diagnostics_sensor_points.cpp
 #    src/ndt_scan_matcher_node.cpp
     src/particle.cpp
   )
@@ -59,7 +57,6 @@ if(BUILD_TESTING)
     src/diagnostics_module.cpp
     src/map_update_module.cpp
     src/ndt_scan_matcher_core.cpp
-    src/ndt_scan_matcher_diagnostics_sensor_points.cpp
 #    src/ndt_scan_matcher_node.cpp
     src/particle.cpp
   )

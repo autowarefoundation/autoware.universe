@@ -138,35 +138,6 @@ private:
 
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
-  // These validators are written in ndt_scan_matcher_diagnostics_sensor_points.cpp
-  void initialize_diagnostics_key_value();
-  bool validate_is_node_activated(const bool is_activated);
-  bool validate_is_set_map_points(const bool is_set_map_points);
-  bool validate_is_set_sensor_points(const bool is_set_sensor_points);
-  bool validate_sensor_points_empty(const size_t sensor_points_size);
-  bool validate_sensor_points_delay_time(
-    const rclcpp::Time & sensor_ros_time, const rclcpp::Time & ros_time_now,
-    const double warn_timeout_sec);
-  bool validate_sensor_points_max_distance(
-    const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points,
-    const double warn_distance);
-  bool validate_initial_pose_array_size(const size_t initial_pose_array_size);
-  bool validate_succeed_interpolate_initial_pose(const bool is_succeed);
-  bool validate_position_difference(
-    const geometry_msgs::msg::Point & target_point,
-    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
-  bool validate_num_iteration(const int iter_num, const int max_iter_num);
-  bool validate_local_optimal_solution_oscillation(
-    const int oscillation_count, const int oscillation_count_threshold);
-  bool validate_score(
-    const double score, const double score_threshold, const std::string & score_name);
-  bool validate_converged_param(
-    const double transform_probability, const double nearest_voxel_transformation_likelihood);
-  bool validate_distance_initial_to_result(
-    const double distance_initial_to_result, const double warn_distance_initial_to_result);
-  bool validate_execution_time(const double execution_time, const double warn_execution_time);
-  bool validate_skipping_publish_num(const size_t skipping_publish_num, const size_t error_num);
-
   rclcpp::TimerBase::SharedPtr map_update_timer_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
