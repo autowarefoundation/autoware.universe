@@ -104,7 +104,7 @@ void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrappe
   // Get task summary
   getTasksSummary(stat, str, elapsed_ms);
   // Remove header
-  removeHeader(stat, str, elapsed_ms);
+  removeHeader(stat, str);
 
   // Get high load processes
   getHighLoadProcesses(str);
