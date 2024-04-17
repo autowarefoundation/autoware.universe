@@ -1,9 +1,7 @@
 # Dynamic avoidance design
-
 This module is under development.
 
 ## Purpose / Role
-
 This module provides avoidance functions for vehicles, pedestrians, and obstacles in the vicinity of the ego's path in combination with the [obstacle_avoidance_planner](https://autowarefoundation.github.io/autoware.universe/main/planning/obstacle_avoidance_planner/).
 Each module performs the following roles.
 Dynamic Avoidance module cuts off the drivable area according to the position and velocity of the target to be avoided.
@@ -12,7 +10,7 @@ Obstacle Avoidance module modifies the path to be followed so that it fits withi
 Avoidance functions are also provided by the [Avoidance module](https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_avoidance_module/), but these modules have different roles.
 The Avoidance module performs avoidance through the outside of own lanes but cannot avoid the moving objects.
 On the other hand, this module can avoid moving objects.
-For this reason, the word "dynamic" is used in the modules's name.
+For this reason, the word "dynamic" is used in the module's name.
 The table below lists the avoidance modules that can handle each situation.
 
 |                          |                         avoid within the own lane                          | avoid through the outside of own lanes |
@@ -21,12 +19,10 @@ The table below lists the avoidance modules that can handle each situation.
 | avoid moving objects     |            Dynamic Avoidance Module + Obstacle Avoidance Module            |     No Module (Under Development)      |
 
 ## Policy of algorithms
-
 Here, we describe the policy of inner algorithms.
-The inner algorithms can be separated into two parts: The first decide whether to avoid the obstacles and the second cuts off the drivable area against the corresponding obstacle.
+The inner algorithms can be separated into two parts: The first decides whether to avoid the obstacles and the second cuts off the drivable area against the corresponding obstacle.
 
 ### Select obstacles to avoid
-
 To decide whether to avoid an object, both the predicted path and the state (pose and twist) of each object are used.
 The type of objects the user wants this module to avoid is also required.
 Using this information, the module decides to _avoid_ objects that _obstruct the ego's passage_ and _can be avoided_.
@@ -37,31 +33,31 @@ For this purpose, the module judges whether the obstacle can be avoided with sat
 For example, the module decides not to avoid an object that is too close or fast in the lateral direction.
 
 ### Cuts off the drivable area against the selected obstacles
-
 For the selected obstacles to be avoided, the module cuts off the drivable area.
 As inputs to decide the shapes of cut-off polygons, poses of the obstacles are mainly used, assuming they move in parallel to the ego's path, instead of its predicted path.
 This design arises from that the predicted path of objects is not accurate enough to use the path modifications (at least currently).
 Furthermore, the output drivable area shape is designed as a rectangular cutout along the ego's path to make the computation scalar rather than planar.
 
 #### Determination of lateral dimension
-
-Lateral dimensions of the polygon is calculated as follows.
+The lateral dimensions of the polygon are calculated as follows.
 The polygon's width to extract from the drivable area is the obstacle width and `drivable_area_generation.lat_offset_from_obstacle`.
 We can limit the lateral shift length by `drivable_area_generation.max_lat_offset_to_avoid`.
 
 ![drivable_area_extraction_width](./image/drivable_area_extraction_width.drawio.svg)
 
 #### Determination of longitudinal dimension
+Then, extracting the same directional and opposite directional obstacles from the drivable area will work as follows, considering TTC (time to collision).
 
-Then, extracting the same directional and opposite directional obstacles from the drivable area will work as follows considering TTC (time to collision).
-
-Regarding the same directional obstacles, obstacles whose TTC is negative will be ignored (e.g. The obstacle is in front of the ego, and the obstacle's velocity is larger than the ego's velocity.).
+Regarding the same directional obstacles, obstacles whose TTC is negative will be ignored (e.g., The obstacle is in front of the ego, and the obstacle's velocity is larger than the ego's velocity.).
 
 Same directional obstacles (Parameter names may differ from implementation)
 ![same_directional_object](./image/same_directional_object.svg)
 
 Opposite directional obstacles (Parameter names may differ from implementation)
 ![opposite_directional_object](./image/opposite_directional_object.svg)
+
+### Cuts off the drivable area against the selected pedestrians
+while the 
 
 ## Example
 
@@ -86,7 +82,6 @@ Opposite directional obstacles (Parameter names may differ from implementation)
 </figure>
 
 ## Future works
-
 Currently, the path shifting length is limited to 0.5 meters or less by `drivable_area_generation.max_lat_offset_to_avoid`.
 This is caused by the lack of functionality to work with other modules and the structure of the planning component.
 Due to this issue, this module can only handle situations where a small avoidance width is sufficient.
