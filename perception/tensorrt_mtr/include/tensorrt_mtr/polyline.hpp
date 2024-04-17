@@ -259,8 +259,15 @@ private:
   const float distance_threshold_;
 };
 
+/**
+ * @brief Generate LanePoints from LineString.
+ *
+ * @param linestring
+ * @param type_id
+ * @return std::vector<LanePoint>
+ */
 std::vector<LanePoint> getLanePointFromLineString(
-  const lanelet::ConstLineString3d & linestring, const size_t type_id)
+  const lanelet::ConstLineString3d & linestring, const int type_id)
 {
   if (linestring.size() == 0) {
     return {};
@@ -285,8 +292,15 @@ std::vector<LanePoint> getLanePointFromLineString(
   return points;
 }
 
+/**
+ * @brief Generate LanePoints from Polygon.
+ *
+ * @param polygon
+ * @param type_id
+ * @return std::vector<LanePoint>
+ */
 std::vector<LanePoint> getLanePointFromPolygon(
-  const lanelet::CompoundPolygon3d & polygon, const size_t type_id)
+  const lanelet::CompoundPolygon3d & polygon, const int type_id)
 {
   if (polygon.size() == 0) {
     return {};
