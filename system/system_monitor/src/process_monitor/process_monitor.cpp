@@ -206,7 +206,7 @@ void ProcessMonitor::getTasksSummary(
 }
 
 void ProcessMonitor::removeHeader(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, std::string & output, double elapsed_ms)
+  diagnostic_updater::DiagnosticStatusWrapper & stat, std::string & output)
 {
   // boost::process create file descriptor without O_CLOEXEC required for multithreading.
   // So create file descriptor with O_CLOEXEC and pass it to boost::process.
