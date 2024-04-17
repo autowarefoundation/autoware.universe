@@ -58,6 +58,12 @@ using autoware_auto_perception_msgs::msg::TrackedObjects;
 using nav_msgs::msg::Odometry;
 
 // TODO(ktro2828): use received ego size topic
+// wheel_base: between front wheel center and rear wheel center [m]
+// wheel_tread: between left wheel center and right wheel center [m]
+// front_overhang: between front wheel center and vehicle front [m]
+// rear_overhang: between rear wheel center and vehicle rear [m]
+// left_overhang: between left wheel center and vehicle left [m]
+// right_overhang: between right wheel center and vehicle right [m]
 constexpr float EGO_LENGTH = 4.0f;
 constexpr float EGO_WIDTH = 2.0f;
 constexpr float EGO_HEIGHT = 1.0f;
@@ -77,14 +83,22 @@ public:
     int label_index = 0;
     std::string label;
     while (getline(file, label)) {
-      std::transform(
-        label.begin(), label.end(), label.begin(), [](auto c) { return std::toupper(c); });
       label_map_.insert({label, label_index});
       ++label_index;
     }
   }
 
-  const size_t & getTypeID(const std::string & type) const { return label_map_.at(type); }
+  /**
+   * @brief Return the ID of the corresponding label type.
+   * If specified type is not contained in map, return -1.
+   *
+   * @param type
+   * @return int
+   */
+  int getTypeID(const std::string & type) const
+  {
+    return label_map_.count(type) == 0 ? -1 : label_map_.at(type);
+  }
 
 private:
   std::map<std::string, size_t> label_map_;
@@ -156,6 +170,14 @@ private:
    * @return std::vector<size_t>
    */
   std::vector<size_t> extractTargetAgent(const std::vector<AgentHistory> & histories);
+
+  /**
+   * @brief Return the timestamps relative from the first element.Return the timestamps relative
+   * from the first element.
+   *
+   * @return std::vector<float>
+   */
+  std::vector<float> getRelativeTimestamps() const;
 
   /**
    * @brief Generate `PredictedObject` from `PredictedTrajectory`.
