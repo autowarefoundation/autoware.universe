@@ -14,4 +14,4 @@
     trusted_pose_timeout_sec: 1.0  #seconds
 
     debug:
-      enable_debug_topics: true
+      enable_debug_topics: false
