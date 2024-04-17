@@ -37,20 +37,25 @@ std::optional<MetricStatMap> MetricsCalculator::calculate(const Metric & metric)
     return {};
   }
   const auto target_stamp_objects = getObjectsByStamp(target_stamp);
-  const auto class_objects_map = separateObjectsByClass(target_stamp_objects);
 
-  // filter stopped objects
+  // extract moving objects
+  const auto moving_objects = filterObjectsByVelocity(
+    target_stamp_objects, parameters_->stopped_velocity_threshold,
+    /*remove_above_threshold=*/false);
+  const auto class_moving_objects_map = separateObjectsByClass(moving_objects);
+
+  // extract stopped objects
   const auto stopped_objects =
     filterObjectsByVelocity(target_stamp_objects, parameters_->stopped_velocity_threshold);
   const auto class_stopped_objects_map = separateObjectsByClass(stopped_objects);
 
   switch (metric) {
     case Metric::lateral_deviation:
-      return calcLateralDeviationMetrics(class_objects_map);
+      return calcLateralDeviationMetrics(class_moving_objects_map);
     case Metric::yaw_deviation:
-      return calcYawDeviationMetrics(class_objects_map);
+      return calcYawDeviationMetrics(class_moving_objects_map);
     case Metric::predicted_path_deviation:
-      return calcPredictedPathDeviationMetrics(class_objects_map);
+      return calcPredictedPathDeviationMetrics(class_moving_objects_map);
     case Metric::yaw_rate:
       return calcYawRateMetrics(class_stopped_objects_map);
     default:
@@ -147,11 +152,17 @@ std::optional<StampObjectMapIterator> MetricsCalculator::getClosestObjectIterato
 std::optional<PredictedObject> MetricsCalculator::getObjectByStamp(
   const std::string uuid, const rclcpp::Time stamp) const
 {
+  constexpr double eps = 0.01;
+  constexpr double close_time_threshold = 0.1;
+
   const auto obj_it_opt = getClosestObjectIterator(uuid, stamp);
   if (obj_it_opt.has_value()) {
     const auto it = obj_it_opt.value();
-    if (it->first == getClosestStamp(stamp)) {
-      return it->second;
+    if (std::abs((it->first - getClosestStamp(stamp)).seconds()) < eps) {
+      const double time_diff = std::abs((it->first - stamp).seconds());
+      if (time_diff < close_time_threshold) {
+        return it->second;
+      }
     }
   }
   return std::nullopt;
@@ -251,31 +262,34 @@ MetricStatMap MetricsCalculator::calcPredictedPathDeviationMetrics(
   MetricStatMap metric_stat_map{};
   for (const auto & [label, objects] : class_objects_map) {
     for (const double time_horizon : time_horizons) {
-      const auto stat = calcPredictedPathDeviationMetrics(objects, time_horizon);
+      const auto metrics = calcPredictedPathDeviationMetrics(objects, time_horizon);
       std::ostringstream stream;
       stream << std::fixed << std::setprecision(2) << time_horizon;
       std::string time_horizon_str = stream.str();
       metric_stat_map
-        ["predicted_path_deviation_" + convertLabelToString(label) + "_" + time_horizon_str] = stat;
+        ["predicted_path_deviation_" + convertLabelToString(label) + "_" + time_horizon_str] =
+          metrics.mean;
+      metric_stat_map
+        ["predicted_path_deviation_variance_" + convertLabelToString(label) + "_" +
+         time_horizon_str] = metrics.variance;
     }
   }
   return metric_stat_map;
 }
 
-Stat<double> MetricsCalculator::calcPredictedPathDeviationMetrics(
+PredictedPathDeviationMetrics MetricsCalculator::calcPredictedPathDeviationMetrics(
   const PredictedObjects & objects, const double time_horizon) const
 {
-  // For each object, select the predicted path that is closest to the history path and store the
-  // distance to the history path
+  // Step 1: For each object and its predicted paths, calculate the deviation between each predicted
+  // path pose and the corresponding historical path pose. Store the deviations in
+  // deviation_map_for_paths.
   std::unordered_map<std::string, std::unordered_map<size_t, std::vector<double>>>
     deviation_map_for_paths;
-  // For debugging. Save the pairs of predicted path pose and history path pose.
-  // Visualize the correspondence in rviz from the node.
+
+  // For debugging: Save the pairs of predicted path pose and history path pose.
   std::unordered_map<std::string, std::vector<std::pair<Pose, Pose>>>
     debug_predicted_path_pairs_map;
 
-  // Find the corresponding pose in the history path for each pose of the predicted path of each
-  // object, and record the distances
   const auto stamp = objects.header.stamp;
   for (const auto & object : objects.objects) {
     const auto uuid = tier4_autoware_utils::toHexString(object.object_id);
@@ -304,30 +318,36 @@ Stat<double> MetricsCalculator::calcPredictedPathDeviationMetrics(
         const double distance =
           tier4_autoware_utils::calcDistance2d(p.position, history_pose.position);
         deviation_map_for_paths[uuid][i].push_back(distance);
-        // debug
+
+        // Save debug information
         debug_predicted_path_pairs_map[path_id].push_back(std::make_pair(p, history_pose));
       }
     }
   }
 
-  // Select the predicted path with the smallest deviation for each object
+  // Step 2: For each object, select the predicted path with the smallest mean deviation.
+  // Store the selected path's deviations in deviation_map_for_objects.
   std::unordered_map<std::string, std::vector<double>> deviation_map_for_objects;
   for (const auto & [uuid, deviation_map] : deviation_map_for_paths) {
-    size_t min_deviation_index = 0;
-    double min_sum_deviation = std::numeric_limits<double>::max();
+    std::optional<std::pair<size_t, double>> min_deviation;
     for (const auto & [i, deviations] : deviation_map) {
       if (deviations.empty()) {
         continue;
       }
       const double sum = std::accumulate(deviations.begin(), deviations.end(), 0.0);
-      if (sum < min_sum_deviation) {
-        min_sum_deviation = sum;
-        min_deviation_index = i;
+      const double mean = sum / deviations.size();
+      if (!min_deviation.has_value() || mean < min_deviation.value().second) {
+        min_deviation = std::make_pair(i, mean);
       }
     }
-    deviation_map_for_objects[uuid] = deviation_map.at(min_deviation_index);
 
-    // debug: save the delayed target object and the corresponding predicted path
+    if (!min_deviation.has_value()) {
+      continue;
+    }
+
+    // Save the delayed target object and the corresponding predicted path for debugging
+    const auto [min_deviation_index, min_mean_deviation] = min_deviation.value();
+    deviation_map_for_objects[uuid] = deviation_map.at(min_deviation_index);
     const auto path_id = uuid + "_" + std::to_string(min_deviation_index);
     const auto target_stamp_object = getObjectByStamp(uuid, stamp);
     if (target_stamp_object.has_value()) {
@@ -338,17 +358,26 @@ Stat<double> MetricsCalculator::calcPredictedPathDeviationMetrics(
     }
   }
 
-  // Store the deviation as a metric
-  Stat<double> stat;
-  for (const auto & [uuid, deviations] : deviation_map_for_objects) {
-    if (deviations.empty()) {
-      continue;
-    }
-    for (const auto & deviation : deviations) {
-      stat.add(deviation);
+  // Step 3: Calculate the mean and variance of the deviations for each object's selected predicted
+  // path. Store the results in the PredictedPathDeviationMetrics structure.
+  PredictedPathDeviationMetrics metrics;
+  for (const auto & [object_id, object_path_deviations] : deviation_map_for_objects) {
+    if (!object_path_deviations.empty()) {
+      const double sum_of_deviations =
+        std::accumulate(object_path_deviations.begin(), object_path_deviations.end(), 0.0);
+      const double mean_deviation = sum_of_deviations / object_path_deviations.size();
+      metrics.mean.add(mean_deviation);
+      double sum_of_squared_deviations = 0.0;
+      for (const auto path_point_deviation : object_path_deviations) {
+        sum_of_squared_deviations += std::pow(path_point_deviation - mean_deviation, 2);
+      }
+      const double variance_deviation = sum_of_squared_deviations / object_path_deviations.size();
+
+      metrics.variance.add(variance_deviation);
     }
   }
-  return stat;
+
+  return metrics;
 }
 
 MetricStatMap MetricsCalculator::calcYawRateMetrics(const ClassObjectsMap & class_objects_map) const
@@ -372,16 +401,21 @@ MetricStatMap MetricsCalculator::calcYawRateMetrics(const ClassObjectsMap & clas
       }
       const auto [previous_stamp, previous_object] = previous_object_with_stamp_opt.value();
 
-      const auto time_diff = (stamp - previous_stamp).seconds();
+      const double time_diff = (stamp - previous_stamp).seconds();
       if (time_diff < 0.01) {
         continue;
       }
-      const auto current_yaw =
+      const double current_yaw =
         tf2::getYaw(object.kinematics.initial_pose_with_covariance.pose.orientation);
-      const auto previous_yaw =
+      const double previous_yaw =
         tf2::getYaw(previous_object.kinematics.initial_pose_with_covariance.pose.orientation);
-      const auto yaw_rate =
-        std::abs(tier4_autoware_utils::normalizeRadian(current_yaw - previous_yaw) / time_diff);
+      const double yaw_diff =
+        std::abs(tier4_autoware_utils::normalizeRadian(current_yaw - previous_yaw));
+      // if yaw_diff is close to PI, reversal of orientation is likely occurring, so ignore it
+      if (std::abs(M_PI - yaw_diff) < 0.1) {
+        continue;
+      }
+      const auto yaw_rate = yaw_diff / time_diff;
       stat.add(yaw_rate);
     }
     metric_stat_map["yaw_rate_" + convertLabelToString(label)] = stat;
@@ -443,7 +477,34 @@ void MetricsCalculator::updateHistoryPath()
 
   for (const auto & [uuid, stamp_and_objects] : object_map_) {
     std::vector<Pose> history_path;
-    for (const auto & [stamp, object] : stamp_and_objects) {
+    for (auto it = stamp_and_objects.begin(); it != stamp_and_objects.end(); ++it) {
+      const auto & [stamp, object] = *it;
+
+      // skip if the object is stopped
+      // calculate velocity from previous object
+      if (it != stamp_and_objects.begin()) {
+        const auto & [prev_stamp, prev_object] = *std::prev(it);
+        const double time_diff = (stamp - prev_stamp).seconds();
+        if (time_diff < 0.01) {
+          continue;
+        }
+        const auto current_pose = object.kinematics.initial_pose_with_covariance.pose;
+        const auto prev_pose = prev_object.kinematics.initial_pose_with_covariance.pose;
+        const auto velocity =
+          tier4_autoware_utils::calcDistance2d(current_pose.position, prev_pose.position) /
+          time_diff;
+        if (velocity < parameters_->stopped_velocity_threshold) {
+          continue;
+        }
+      }
+      if (
+        std::hypot(
+          object.kinematics.initial_twist_with_covariance.twist.linear.x,
+          object.kinematics.initial_twist_with_covariance.twist.linear.y) <
+        parameters_->stopped_velocity_threshold) {
+        continue;
+      }
+
       history_path.push_back(object.kinematics.initial_pose_with_covariance.pose);
     }
 
@@ -507,27 +568,49 @@ std::vector<Pose> MetricsCalculator::averageFilterPath(
       average_pose.position = path.at(i).position;
     }
 
+    // skip if the points are too close
+    if (
+      filtered_path.size() > 0 &&
+      calcDistance2d(filtered_path.back().position, average_pose.position) < 0.5) {
+      continue;
+    }
+
+    // skip if the difference between the current orientation and the azimuth angle is large
+    if (i > 0) {
+      const double azimuth = calcAzimuthAngle(path.at(i - 1).position, path.at(i).position);
+      const double yaw = tf2::getYaw(path.at(i).orientation);
+      if (tier4_autoware_utils::normalizeRadian(yaw - azimuth) > M_PI_2) {
+        continue;
+      }
+    }
+
     // Placeholder for orientation to ensure structure integrity
     average_pose.orientation = path.at(i).orientation;
     filtered_path.push_back(average_pose);
   }
 
+  // delete pose if the difference between the azimuth angle of the previous and next poses is large
+  if (filtered_path.size() > 2) {
+    auto it = filtered_path.begin() + 2;
+    while (it != filtered_path.end()) {
+      const double azimuth_to_prev = calcAzimuthAngle((it - 2)->position, (it - 1)->position);
+      const double azimuth_to_current = calcAzimuthAngle((it - 1)->position, it->position);
+      if (
+        std::abs(tier4_autoware_utils::normalizeRadian(azimuth_to_prev - azimuth_to_current)) >
+        M_PI_2) {
+        it = filtered_path.erase(it);
+        continue;
+      }
+      ++it;
+    }
+  }
+
   // Calculate yaw and convert to quaternion after averaging positions
   for (size_t i = 0; i < filtered_path.size(); ++i) {
     Pose & p = filtered_path[i];
-
-    // if the current pose is too close to the previous one, use the previous orientation
-    if (i > 0) {
-      const Pose & p_prev = filtered_path[i - 1];
-      if (calcDistance2d(p_prev.position, p.position) < 0.1) {
-        p.orientation = p_prev.orientation;
-        continue;
-      }
-    }
-
     if (i < filtered_path.size() - 1) {
-      const double yaw = calcAzimuthAngle(p.position, filtered_path[i + 1].position);
-      filtered_path[i].orientation = createQuaternionFromYaw(yaw);
+      const double azimuth_to_next = calcAzimuthAngle(p.position, filtered_path[i + 1].position);
+      filtered_path[i].orientation = createQuaternionFromYaw(azimuth_to_next);
     } else if (filtered_path.size() > 1) {
       // For the last point, use the orientation of the second-to-last point
       p.orientation = filtered_path[i - 1].orientation;
