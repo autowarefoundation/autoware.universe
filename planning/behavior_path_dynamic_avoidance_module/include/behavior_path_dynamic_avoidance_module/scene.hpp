@@ -123,7 +123,7 @@ struct DynamicAvoidanceParameters
   double max_overtaking_crossing_object_angle{0.0};
   double min_oncoming_crossing_object_vel{0.0};
   double max_oncoming_crossing_object_angle{0.0};
-  double max_pedestrians_crossing_vel{0.0};
+  double max_pedestrian_crossing_vel{0.0};
   double max_stopped_object_vel{0.0};
 
   // drivable area generation
