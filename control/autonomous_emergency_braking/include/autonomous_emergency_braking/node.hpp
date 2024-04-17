@@ -152,9 +152,9 @@ public:
   void cropPointCloudWithEgoFootprintPath(
     const std::vector<Polygon2d> & ego_polys, pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects);
 
-  void cropPointCloudWithEgoPath(const std::vector<Polygon2d> & ego_polys);
+  void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
 
-  void createClusteredPointCloudObjectData(
+  void createObjectDataUsingPointCloudClusters(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
 
