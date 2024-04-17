@@ -242,6 +242,10 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   // For performance, avoid transform computation if unnecessary
   bool need_transform = points.header.frame_id != base_link_frame_;
 
+  // If there is a point that cannot be associated, record it to issue a warning
+  bool twist_time_stamp_is_too_late = false;
+  bool imu_time_stamp_is_too_late = false;
+
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
     while (twist_it != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
       ++twist_it;
@@ -252,9 +256,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     float w{static_cast<float>(twist_it->twist.angular.z)};
 
     if (std::abs(*it_time_stamp - twist_stamp) > 0.1) {
-      RCLCPP_WARN_STREAM_THROTTLE(
-        get_logger(), *get_clock(), 10000 /* ms */,
-        "twist time_stamp is too late. Could not interpolate.");
+      twist_time_stamp_is_too_late = true;
       v = 0.0f;
       w = 0.0f;
     }
@@ -275,9 +277,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       }
 
       if (std::abs(*it_time_stamp - imu_stamp) > 0.1) {
-        RCLCPP_WARN_STREAM_THROTTLE(
-          get_logger(), *get_clock(), 10000 /* ms */,
-          "imu time_stamp is too late. Could not interpolate.");
+        imu_time_stamp_is_too_late = true;
       } else {
         w = static_cast<float>(imu_it->vector.z);
       }
@@ -314,6 +314,19 @@ bool DistortionCorrectorComponent::undistortPointCloud(
 
     prev_time_stamp_sec = *it_time_stamp;
   }
+
+  if (twist_time_stamp_is_too_late) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 10000 /* ms */,
+      "twist time_stamp is too late. Could not interpolate.");
+  }
+
+  if (imu_time_stamp_is_too_late) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 10000 /* ms */,
+      "imu time_stamp is too late. Could not interpolate.");
+  }
+
   return true;
 }
 
