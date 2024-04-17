@@ -560,7 +560,6 @@ void ProcessMonitor::onTimer()
     is_out >> os.rdbuf();
   }
 
-  sleep(7);
   const double elapsed_ms = stop_watch.toc("execution_time");
 
   // thread-safe copy
