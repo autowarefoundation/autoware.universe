@@ -55,9 +55,9 @@
 namespace multi_object_tracker
 {
 
-using autoware_auto_perception_msgs::msg::DetectedObject;
-using autoware_auto_perception_msgs::msg::DetectedObjects;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
+using DetectedObject = autoware_auto_perception_msgs::msg::DetectedObject;
+using DetectedObjects = autoware_auto_perception_msgs::msg::DetectedObjects;
+using TrackedObjects = autoware_auto_perception_msgs::msg::TrackedObjects;
 
 class MultiObjectTracker : public rclcpp::Node
 {
@@ -94,7 +94,7 @@ private:
   // callback functions
   void onTimer();
   void onTrigger();
-  void onMessage(const std::vector<std::pair<size_t, DetectedObjects>> & objects_data);
+  void onMessage(const ObjectsList & objects_list);
 
   // publish processes
   void runProcess(const DetectedObjects & input_objects_msg);

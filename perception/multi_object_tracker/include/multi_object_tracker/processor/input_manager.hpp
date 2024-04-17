@@ -28,7 +28,8 @@
 
 namespace multi_object_tracker
 {
-using autoware_auto_perception_msgs::msg::DetectedObjects;
+using DetectedObjects = autoware_auto_perception_msgs::msg::DetectedObjects;
+using ObjectsList = std::vector<std::pair<uint, DetectedObjects>>;
 
 struct InputChannel
 {
@@ -43,12 +44,12 @@ struct InputChannel
 class InputStream
 {
 public:
-  explicit InputStream(rclcpp::Node & node, size_t & index);
+  explicit InputStream(rclcpp::Node & node, uint & index);
 
   void init(const InputChannel & input_channel);
 
   void setQueueSize(size_t que_size) { que_size_ = que_size; }
-  void setTriggerFunction(std::function<void(const size_t &)> func_trigger)
+  void setTriggerFunction(std::function<void(const uint &)> func_trigger)
   {
     func_trigger_ = func_trigger;
   }
@@ -57,7 +58,7 @@ public:
 
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
-    std::vector<std::pair<size_t, DetectedObjects>> & objects);
+    ObjectsList & objects_list);
   void getNames(std::string & long_name, std::string & short_name)
   {
     long_name = long_name_;
@@ -78,7 +79,7 @@ public:
 
 private:
   rclcpp::Node & node_;
-  size_t index_;
+  uint index_;
 
   std::string input_topic_;
   std::string long_name_;
@@ -87,7 +88,7 @@ private:
   size_t que_size_{30};
   std::deque<DetectedObjects> objects_que_;
 
-  std::function<void(const size_t &)> func_trigger_;
+  std::function<void(const uint &)> func_trigger_;
 
   bool is_time_initialized_{false};
   double expected_rate_;
@@ -108,12 +109,11 @@ public:
   void init(const std::vector<InputChannel> & input_channels);
   void setTriggerFunction(std::function<void()> func_trigger) { func_trigger_ = func_trigger; }
 
-  void onTrigger(const size_t & index) const;
+  void onTrigger(const uint & index) const;
 
   void getObjectTimeInterval(
     const rclcpp::Time & now, rclcpp::Time & object_latest_time, rclcpp::Time & object_oldest_time);
-  bool getObjects(
-    const rclcpp::Time & now, std::vector<std::pair<size_t, DetectedObjects>> & objects_list);
+  bool getObjects(const rclcpp::Time & now, ObjectsList & objects_list);
 
 private:
   rclcpp::Node & node_;

@@ -19,7 +19,7 @@
 namespace multi_object_tracker
 {
 
-InputStream::InputStream(rclcpp::Node & node, size_t & index) : node_(node), index_(index)
+InputStream::InputStream(rclcpp::Node & node, uint & index) : node_(node), index_(index)
 {
 }
 
@@ -104,7 +104,7 @@ void InputStream::onMessage(
 
 void InputStream::getObjectsOlderThan(
   const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
-  std::vector<std::pair<size_t, DetectedObjects>> & objects_list)
+  ObjectsList & objects_list)
 {
   assert(object_latest_time.nanoseconds() > object_oldest_time.nanoseconds());
 
@@ -119,7 +119,7 @@ void InputStream::getObjectsOlderThan(
 
     // Add the object if the object is older than the specified latest time
     if (object_latest_time >= object_time) {
-      std::pair<size_t, DetectedObjects> object_pair(index_, object);
+      std::pair<uint, DetectedObjects> object_pair(index_, object);
       objects_list.push_back(object_pair);
       // remove the object from the queue
       objects_que_.pop_front();
@@ -147,7 +147,8 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
   sub_objects_array_.resize(input_size_);
 
   for (size_t i = 0; i < input_size_; i++) {
-    InputStream input_stream(node_, i);
+    uint index(i);
+    InputStream input_stream(node_, index);
     input_stream.init(input_channels[i]);
     input_stream.setTriggerFunction(
       std::bind(&InputManager::onTrigger, this, std::placeholders::_1));
@@ -166,10 +167,10 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
   is_initialized_ = true;
 }
 
-void InputManager::onTrigger(const size_t & index) const
+void InputManager::onTrigger(const uint & index) const
 {
   // input stream index of 0 is the target(main) input stream
-  const size_t target_idx = 0;
+  const uint target_idx = 0;
 
   // when the main stream triggers, call the trigger function
   if (index == target_idx && func_trigger_) {
@@ -203,11 +204,11 @@ void InputManager::getObjectTimeInterval(
   }
 
   // Get proper latency
-  constexpr double target_latency = 0.15;  // [s], measurement to tracking latency
+  constexpr double target_latency = 0.18;  // [s], measurement to tracking latency
                                            // process latency of a main detection + margin
-
   constexpr double acceptable_latency =
-    0.35;  // [s], acceptable band from the target latency, larger than the target latency
+    0.32;  // [s], acceptable band from the target latency, larger than the target latency
+
   object_latest_time = now - rclcpp::Duration::from_seconds(target_latency);
   object_oldest_time = now - rclcpp::Duration::from_seconds(acceptable_latency);
 
@@ -217,8 +218,7 @@ void InputManager::getObjectTimeInterval(
     object_oldest_time > latest_object_time_ ? object_oldest_time : latest_object_time_;
 }
 
-bool InputManager::getObjects(
-  const rclcpp::Time & now, std::vector<std::pair<size_t, DetectedObjects>> & objects_list)
+bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_list)
 {
   if (!is_initialized_) {
     RCLCPP_INFO(node_.get_logger(), "InputManager::getObjects Input manager is not initialized");
@@ -241,7 +241,7 @@ bool InputManager::getObjects(
   // Sort objects by timestamp
   std::sort(
     objects_list.begin(), objects_list.end(),
-    [](const std::pair<size_t, DetectedObjects> & a, const std::pair<size_t, DetectedObjects> & b) {
+    [](const std::pair<uint, DetectedObjects> & a, const std::pair<uint, DetectedObjects> & b) {
       return (rclcpp::Time(a.second.header.stamp) - rclcpp::Time(b.second.header.stamp)).seconds() <
              0;
     });

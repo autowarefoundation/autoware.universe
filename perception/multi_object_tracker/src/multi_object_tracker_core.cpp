@@ -87,16 +87,6 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   std::vector<std::string> input_names_long = get_parameter("input_names_long").as_string_array();
   std::vector<std::string> input_names_short = get_parameter("input_names_short").as_string_array();
 
-  input_channels_.resize(input_topic_names.size());
-  assert(input_topic_names.size() == input_names_long.size());
-  assert(input_topic_names.size() == input_names_short.size());
-  for (size_t i = 0; i < input_topic_names.size(); i++) {
-    input_channels_[i].index = i;
-    input_channels_[i].input_topic = input_topic_names[i];
-    input_channels_[i].long_name = input_names_long[i];
-    input_channels_[i].short_name = input_names_short[i];
-  }
-
   // ROS interface - Publisher
   tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
 
@@ -106,6 +96,15 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     return;
   }
   input_topic_size_ = input_topic_names.size();
+  input_channels_.resize(input_topic_size_);
+  assert(input_names_long.size() == input_topic_size_);
+  assert(input_names_short.size() == input_topic_size_);
+  for (size_t i = 0; i < input_topic_size_; i++) {
+    input_channels_[i].index = i;
+    input_channels_[i].input_topic = input_topic_names[i];
+    input_channels_[i].long_name = input_names_long[i];
+    input_channels_[i].short_name = input_names_short[i];
+  }
 
   // Initialize input manager
   input_manager_ = std::make_unique<InputManager>(*this);
@@ -174,7 +173,7 @@ void MultiObjectTracker::onTrigger()
 {
   const rclcpp::Time current_time = this->now();
   // get objects from the input manager and run process
-  std::vector<std::pair<size_t, DetectedObjects>> objects_list;
+  std::vector<std::pair<uint, DetectedObjects>> objects_list;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
 
@@ -206,7 +205,7 @@ void MultiObjectTracker::onTimer()
   if (elapsed_time < maximum_publish_latency) return;
 
   // get objects from the input manager and run process
-  std::vector<std::pair<size_t, DetectedObjects>> objects_list;
+  ObjectsList objects_list;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (is_objects_ready) {
     onMessage(objects_list);
@@ -216,8 +215,7 @@ void MultiObjectTracker::onTimer()
   checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::onMessage(
-  const std::vector<std::pair<size_t, DetectedObjects>> & objects_list)
+void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
 {
   const rclcpp::Time current_time = this->now();
   const rclcpp::Time oldest_time(objects_list.front().second.header.stamp);
