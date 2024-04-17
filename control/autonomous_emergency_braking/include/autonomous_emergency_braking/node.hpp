@@ -166,7 +166,6 @@ public:
   void addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
-  PointCloud2::SharedPtr cropped_ros_pointcloud_ptr_{nullptr};
 
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
   Vector3::SharedPtr angular_velocity_ptr_{nullptr};
