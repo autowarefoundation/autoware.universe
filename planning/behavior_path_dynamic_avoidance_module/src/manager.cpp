@@ -99,8 +99,8 @@ void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
       node->declare_parameter<double>(ns + "crossing_object.min_oncoming_object_vel");
     p.max_oncoming_crossing_object_angle =
       node->declare_parameter<double>(ns + "crossing_object.max_oncoming_object_angle");
-    p.max_pedestrians_crossing_vel =
-      node->declare_parameter<double>(ns + "crossing_object.max_pedestrians_crossing_vel");
+    p.max_pedestrian_crossing_vel =
+      node->declare_parameter<double>(ns + "crossing_object.max_pedestrian_crossing_vel");
 
     p.max_stopped_object_vel =
       node->declare_parameter<double>(ns + "stopped_object.max_object_vel");
@@ -223,8 +223,8 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
       parameters, ns + "crossing_object.max_oncoming_object_angle",
       p->max_oncoming_crossing_object_angle);
     updateParam<double>(
-      parameters, ns + "crossing_object.max_pedestrians_crossing_vel",
-      p->max_pedestrians_crossing_vel);
+      parameters, ns + "crossing_object.max_pedestrian_crossing_vel",
+      p->max_pedestrian_crossing_vel);
 
     updateParam<double>(
       parameters, ns + "stopped_object.max_object_vel", p->max_stopped_object_vel);
