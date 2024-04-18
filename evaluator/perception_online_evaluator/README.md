@@ -98,13 +98,13 @@ Counts the number of detections for each object class within the specified detec
 
 ![detection_counts](./images/detection_counts.drawio.svg)
 
-In the provided illustration, the range \( R \) is determined by a combination of lists of radii (e.g., \( r_1, r_2, \ldots \)) and heights (e.g., \( h_1, h_2, \ldots \)).
+In the provided illustration, the range $R$ is determined by a combination of lists of radii (e.g., $r_1, r_2, \ldots$) and heights (e.g., $h_1, h_2, \ldots$).
 For example,
 
-- the number of CAR in range \( R = (r_1, h_1) \) equals 1
-- the number of CAR in range \( R = (r_1, h_2) \) equals 2
-- the number of CAR in range \( R = (r_2, h_1) \) equals 3
-- the number of CAR in range \( R = (r_2, h_2) \) equals 4
+- the number of CAR in range $R = (r_1, h_1)$ equals 1
+- the number of CAR in range $R = (r_1, h_2)$ equals 2
+- the number of CAR in range $R = (r_2, h_1)$ equals 3
+- the number of CAR in range $R = (r_2, h_2)$ equals 4
 
 #### Total Object Count
 
@@ -118,10 +118,10 @@ $$
 
 where:
 
-- \( \bigcup \) represents the union across all frames from \( t = 0 \) to \( T\_{\text{now}} \), which ensures that each uuid is counted only once.
-- \( \text{class}(t, \text{uuid}) = C \) specifies that the object with uuid at time \( t \) belongs to class \( C \).
-- \( \text{position}(t, \text{uuid}) \in R \) indicates that the object with uuid at time \( t \) is within the specified range \( R \).
-- \( \left| \{ \ldots \} \right| \) denotes the cardinality of the set, which counts the number of unique uuids that meet the class and range criteria across all considered times.
+- $\bigcup$ represents the union across all frames from $t = 0$ to $T_{\text{now}}$, which ensures that each uuid is counted only once.
+- $\text{class}(t, \text{uuid}) = C$ specifies that the object with uuid at time $t$ belongs to class $C$.
+- $\text{position}(t, \text{uuid}) \in R$ indicates that the object with uuid at time $t$ is within the specified range $R$.
+- $\left| \{ \ldots \} \right|$ denotes the cardinality of the set, which counts the number of unique uuids that meet the class and range criteria across all considered times.
 
 #### Average Object Count
 
@@ -135,8 +135,8 @@ $$
 
 where:
 
-- \( N \) represents the total number of frames within the time period time to \( T\_{\text{now}} \) (it is precisely `detection_count_purge_seconds`)
-- \(\text{object}\) denotes the number of objects that meet the class and range criteria at time \( t \).
+- $N$ represents the total number of frames within the time period time to $T\_{\text{now}}$ (it is precisely `detection_count_purge_seconds`)
+- $text{object}$ denotes the number of objects that meet the class and range criteria at time $t$.
 
 #### Interval Object Count
 
@@ -150,8 +150,8 @@ $$
 
 where:
 
-- \( W \) represents the total number of frames within the last `objects_count_window_seconds`.
-- \( T_W \) represents the time window `objects_count_window_seconds`
+- $W$ represents the total number of frames within the last `objects_count_window_seconds`.
+- $T_W$ represents the time window `objects_count_window_seconds`
 
 ## Inputs / Outputs
 
