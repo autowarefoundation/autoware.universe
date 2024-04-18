@@ -242,6 +242,12 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   // For performance, avoid transform computation if unnecessary
   bool need_transform = points.header.frame_id != base_link_frame_;
 
+  // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
+  double imu_stamp{0.0};
+  if (use_imu_ && !angular_velocity_queue_.empty()) {
+    imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
+  }
+
   // If there is a point that cannot be associated, record it to issue a warning
   bool twist_time_stamp_is_too_late = false;
   bool imu_time_stamp_is_too_late = false;
@@ -262,15 +268,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     }
 
     if (use_imu_ && !angular_velocity_queue_.empty()) {
-      // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
-      double imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
-
-      for (;
-           (imu_it != std::end(angular_velocity_queue_) - 1 &&
-            *it_time_stamp > rclcpp::Time(imu_it->header.stamp).seconds());
-           ++imu_it) {
-      }
-
       while (imu_it != std::end(angular_velocity_queue_) - 1 && *it_time_stamp > imu_stamp) {
         ++imu_it;
         imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
