@@ -1201,7 +1201,7 @@ double calcPhaseLength(
 
 LanesPolygon createLanesPolygon(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-  const lanelet::ConstLanelets & target_backward_lanes)
+  const std::vector<lanelet::ConstLanelets> & target_backward_lanes)
 {
   LanesPolygon lanes_polygon;
 
@@ -1211,19 +1211,8 @@ LanesPolygon createLanesPolygon(
     utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
 
   for (const auto & target_backward_lane : target_backward_lanes) {
-    // Check to see is target_backward_lane is in current_lanes
-    // Without this check, current lane object might be treated as target lane object
-    const auto is_current_lane = [&](const lanelet::ConstLanelet & current_lane) {
-      return current_lane.id() == target_backward_lane.id();
-    };
-
-    if (std::any_of(current_lanes.begin(), current_lanes.end(), is_current_lane)) {
-      continue;
-    }
-
-    lanelet::ConstLanelets lanelet{target_backward_lane};
     auto lane_polygon =
-      utils::lane_change::createPolygon(lanelet, 0.0, std::numeric_limits<double>::max());
+      utils::lane_change::createPolygon(target_backward_lane, 0.0, std::numeric_limits<double>::max());
 
     if (lane_polygon) {
       lanes_polygon.target_backward.push_back(*lane_polygon);

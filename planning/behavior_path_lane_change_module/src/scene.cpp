@@ -1005,14 +1005,45 @@ void NormalLaneChange::filterObjectsByLanelets(
 
   // get backward lanes
   const auto backward_length = lane_change_parameters_->backward_lane_length;
-  const auto target_backward_lanes = behavior_path_planner::utils::getBackwardLanelets(
-    *route_handler, target_lanes, current_pose, backward_length);
+  const auto target_backward_lanes =
+    [&]() -> std::vector<lanelet::ConstLanelets> {
+      if (target_lanes.empty()) {
+        return {};
+      }
+
+      const auto arc_length = lanelet::utils::getArcCoordinates(target_lanes, current_pose);
+
+      if (arc_length.length >= backward_length) {
+        return {};
+      }
+
+      const auto & front_lane = target_lanes.front();
+      return route_handler->getPrecedingLaneletSequence(
+        front_lane, std::abs(backward_length - arc_length.length), {front_lane});
+    }();
 
   {
     lane_change_debug_.current_lanes = current_lanes;
     lane_change_debug_.target_lanes = target_lanes;
-    lane_change_debug_.target_backward_lanes = target_backward_lanes;
+
+    lanelet::ConstLanelets backward_lanes{};
+    const auto num_of_lanes = std::invoke([&target_backward_lanes]() {
+      size_t sum{0};
+      for (const auto & lanes : target_backward_lanes) {
+        sum += lanes.size();
+      }
+      return sum;
+    });
+
+    backward_lanes.reserve(num_of_lanes);
+
+    for (const auto & lanes : target_backward_lanes) {
+      backward_lanes.insert(backward_lanes.end(), lanes.begin(), lanes.end());
   }
+
+    lane_change_debug_.target_backward_lanes = backward_lanes;
+  }
+
   const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
     target_lanes, direction_, lane_change_parameters_->lane_expansion_left_offset,
     lane_change_parameters_->lane_expansion_right_offset);
