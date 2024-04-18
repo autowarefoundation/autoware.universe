@@ -14,6 +14,7 @@
 
 #include "static_centerline_generator/static_centerline_generator_node.hpp"
 
+#include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
@@ -22,7 +23,6 @@
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "static_centerline_generator/centerline_source/bag_ego_trajectory_based_centerline.hpp"
-#include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "static_centerline_generator/type_alias.hpp"
 #include "static_centerline_generator/utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
