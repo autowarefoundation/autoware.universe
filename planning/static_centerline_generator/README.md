@@ -34,7 +34,7 @@ We can run
 with the following command by designating `<vehicle_model>`
 
 ```sh
-ros2 launch autoware_static_centerline_generator run_planning_server.launch.xml vehicle_model:=<vehicle-model>
+ros2 launch static_centerline_generator run_planning_server.launch.xml vehicle_model:=<vehicle-model>
 ```
 
 FYI, port ID of the http server is 4010 by default.
@@ -50,7 +50,7 @@ The optimized centerline can be generated from the command line interface by des
 - `<vehicle-model>`
 
 ```sh
-ros2 launch autoware_static_centerline_generator static_centerline_generator.launch.xml run_backgrond:=false lanelet2_input_file_path:=<input-osm-path> lanelet2_output_file_path:=<output-osm-path> start_lanelet_id:=<start-lane-id> end_lanelet_id:=<end-lane-id> vehicle_model:=<vehicle-model>
+ros2 launch static_centerline_generator static_centerline_generator.launch.xml run_backgrond:=false lanelet2_input_file_path:=<input-osm-path> lanelet2_output_file_path:=<output-osm-path> start_lanelet_id:=<start-lane-id> end_lanelet_id:=<end-lane-id> vehicle_model:=<vehicle-model>
 ```
 
 The default output map path containing the optimized centerline locates `/tmp/lanelet2_map.osm`.

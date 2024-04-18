@@ -14,7 +14,6 @@
 
 #include "static_centerline_generator/static_centerline_generator_node.hpp"
 
-#include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
@@ -22,9 +21,8 @@
 #include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
-#include "obstacle_avoidance_planner/node.hpp"
-#include "path_smoother/elastic_band_smoother.hpp"
 #include "static_centerline_generator/centerline_source/bag_ego_trajectory_based_centerline.hpp"
+#include "static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "static_centerline_generator/type_alias.hpp"
 #include "static_centerline_generator/utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
@@ -56,10 +54,8 @@
 #include <string>
 #include <vector>
 
-namespace autoware::static_centerline_generator
+namespace static_centerline_generator
 {
-using ::tier4_autoware_utils::Point2d;
-
 namespace
 {
 std::vector<lanelet::Id> get_lane_ids_from_route(const LaneletRoute & route)
@@ -120,7 +116,7 @@ geometry_msgs::msg::Pose get_text_pose(
 
 std::array<double, 3> convert_hex_string_to_decimal(const std::string & hex_str_color)
 {
-  unsigned int hex_int_color = 0.0;
+  unsigned int hex_int_color;
   std::istringstream iss(hex_str_color);
   iss >> std::hex >> hex_int_color;
 
@@ -213,7 +209,7 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
     });
   sub_traj_resample_interval_ = create_subscription<std_msgs::msg::Float32>(
     "/centerline_updater_helper/traj_resample_interval", rclcpp::QoS{1},
-    []([[maybe_unused]] const std_msgs::msg::Float32 & msg) {
+    [this]([[maybe_unused]] const std_msgs::msg::Float32 & msg) {
       // TODO(murooka)
     });
 
@@ -246,8 +242,7 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
     if (centerline_source_param == "optimization_trajectory_base") {
       optimization_trajectory_based_centerline_ = OptimizationTrajectoryBasedCenterline(*this);
       return CenterlineSource::OptimizationTrajectoryBase;
-    }
-    if (centerline_source_param == "bag_ego_trajectory_base") {
+    } else if (centerline_source_param == "bag_ego_trajectory_base") {
       return CenterlineSource::BagEgoTrajectoryBase;
     }
     throw std::logic_error(
@@ -306,8 +301,7 @@ CenterlineWithRoute StaticCenterlineGeneratorNode::generate_centerline_with_rout
         optimization_trajectory_based_centerline_.generate_centerline_with_optimization(
           *this, *route_handler_ptr_, route_lane_ids);
       return CenterlineWithRoute{optimized_centerline, route_lane_ids};
-    }
-    if (centerline_source_ == CenterlineSource::BagEgoTrajectoryBase) {
+    } else if (centerline_source_ == CenterlineSource::BagEgoTrajectoryBase) {
       const auto bag_centerline = generate_centerline_with_bag(*this);
       const auto start_lanelets =
         route_handler_ptr_->getRoadLaneletsAtPose(bag_centerline.front().pose);
@@ -446,14 +440,14 @@ std::vector<lanelet::Id> StaticCenterlineGeneratorNode::plan_route(
     mission_planner->initialize(&node, map_bin_ptr_);
 
     // plan route
-    auto route = mission_planner->plan(check_points);
+    const auto route = mission_planner->plan(check_points);
 
     return route;
   }();
   RCLCPP_INFO(get_logger(), "Planned route.");
 
   // get lanelets
-  auto route_lane_ids = get_lane_ids_from_route(route);
+  const auto route_lane_ids = get_lane_ids_from_route(route);
   return route_lane_ids;
 }
 
@@ -548,7 +542,7 @@ void StaticCenterlineGeneratorNode::on_plan_path(
 
     if (!current_lanelet_points.empty()) {
       // register points with lane_id
-      autoware_static_centerline_generator::msg::PointsWithLaneId points_with_lane_id;
+      static_centerline_generator::msg::PointsWithLaneId points_with_lane_id;
       points_with_lane_id.lane_id = lanelet.id();
       points_with_lane_id.points = current_lanelet_points;
       response->points_with_lane_ids.push_back(points_with_lane_id);
@@ -658,7 +652,4 @@ void StaticCenterlineGeneratorNode::save_map(
     lanelet2_output_file_path, debug_output_file_dir + "lanelet2_map.osm",
     std::filesystem::copy_options::overwrite_existing);
 }
-}  // namespace autoware::static_centerline_generator
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(
-  autoware::static_centerline_generator::StaticCenterlineGeneratorNode)
+}  // namespace static_centerline_generator

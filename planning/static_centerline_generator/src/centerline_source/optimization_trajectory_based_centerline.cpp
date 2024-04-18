@@ -22,7 +22,7 @@
 #include "static_centerline_generator/utils.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 
-namespace autoware::static_centerline_generator
+namespace static_centerline_generator
 {
 namespace
 {
@@ -79,13 +79,13 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
   const auto start_center_pose = utils::get_center_pose(route_handler, route_lane_ids.front());
 
   // get ego nearest search parameters and resample interval in behavior_path_planner
-  const auto ego_nearest_dist_threshold =
+  const double ego_nearest_dist_threshold =
     tier4_autoware_utils::getOrDeclareParameter<double>(node, "ego_nearest_dist_threshold");
-  const auto ego_nearest_yaw_threshold =
+  const double ego_nearest_yaw_threshold =
     tier4_autoware_utils::getOrDeclareParameter<double>(node, "ego_nearest_yaw_threshold");
-  const auto behavior_path_interval =
+  const double behavior_path_interval =
     tier4_autoware_utils::getOrDeclareParameter<double>(node, "output_path_interval");
-  const auto behavior_vel_interval =
+  const double behavior_vel_interval =
     tier4_autoware_utils::getOrDeclareParameter<double>(node, "behavior_output_path_interval");
 
   // extract path with lane id from lanelets
@@ -107,7 +107,7 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
   RCLCPP_INFO(node.get_logger(), "Converted to path and published.");
 
   // smooth trajectory and road collision avoidance
-  auto optimized_traj_points = optimize_trajectory(raw_path);
+  const auto optimized_traj_points = optimize_trajectory(raw_path);
   RCLCPP_INFO(
     node.get_logger(),
     "Smoothed trajectory and made it collision free with the road and published.");
@@ -116,7 +116,7 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
 }
 
 std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_trajectory(
-  const Path & raw_path)
+  const Path & raw_path) const
 {
   // convert to trajectory points
   const auto raw_traj_points = [&]() {
@@ -132,8 +132,7 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
 
   // NOTE: The optimization is executed every valid_optimized_traj_points_num points.
   constexpr int valid_optimized_traj_points_num = 10;
-  const int traj_segment_num =
-    static_cast<int>(raw_traj_points.size()) / valid_optimized_traj_points_num;
+  const int traj_segment_num = raw_traj_points.size() / valid_optimized_traj_points_num;
 
   // NOTE: num_initial_optimization exists to make the both optimizations stable since they may use
   // warm start.
@@ -169,16 +168,16 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
       if (dist < 0.5) {
         const std::vector<TrajectoryPoint> extracted_whole_optimized_traj_points{
           whole_optimized_traj_points.begin(),
-          whole_optimized_traj_points.begin() + static_cast<long>(std::max(j, 1UL)) - 1};
+          whole_optimized_traj_points.begin() + std::max(j, 1UL) - 1};
         whole_optimized_traj_points = extracted_whole_optimized_traj_points;
         break;
       }
     }
-    for (const auto & optimized_traj_point : optimized_traj_points) {
-      whole_optimized_traj_points.push_back(optimized_traj_point);
+    for (size_t j = 0; j < optimized_traj_points.size(); ++j) {
+      whole_optimized_traj_points.push_back(optimized_traj_points.at(j));
     }
   }
 
   return whole_optimized_traj_points;
 }
-}  // namespace autoware::static_centerline_generator
+}  // namespace static_centerline_generator

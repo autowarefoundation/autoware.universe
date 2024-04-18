@@ -15,11 +15,11 @@
 #ifndef STATIC_CENTERLINE_GENERATOR__STATIC_CENTERLINE_GENERATOR_NODE_HPP_
 #define STATIC_CENTERLINE_GENERATOR__STATIC_CENTERLINE_GENERATOR_NODE_HPP_
 
-#include "autoware_static_centerline_generator/srv/load_map.hpp"
-#include "autoware_static_centerline_generator/srv/plan_path.hpp"
-#include "autoware_static_centerline_generator/srv/plan_route.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "static_centerline_generator/centerline_source/optimization_trajectory_based_centerline.hpp"
+#include "static_centerline_generator/srv/load_map.hpp"
+#include "static_centerline_generator/srv/plan_path.hpp"
+#include "static_centerline_generator/srv/plan_route.hpp"
 #include "static_centerline_generator/type_alias.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
@@ -34,12 +34,11 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::static_centerline_generator
+namespace static_centerline_generator
 {
-using autoware_static_centerline_generator::srv::LoadMap;
-using autoware_static_centerline_generator::srv::PlanPath;
-using autoware_static_centerline_generator::srv::PlanRoute;
-using ::route_handler::RouteHandler;
+using static_centerline_generator::srv::LoadMap;
+using static_centerline_generator::srv::PlanPath;
+using static_centerline_generator::srv::PlanRoute;
 
 struct CenterlineWithRoute
 {
@@ -67,9 +66,6 @@ private:
 
   // plan centerline
   CenterlineWithRoute generate_centerline_with_route();
-  // plan path
-  std::vector<TrajectoryPoint> plan_path(const std::vector<lanelet::Id> & route_lane_ids);
-  static std::vector<TrajectoryPoint> optimize_trajectory(const Path & raw_path);
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
 
@@ -117,7 +113,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_;
 
   // vehicle info
-  vehicle_info_util::VehicleInfo vehicle_info_{};
+  vehicle_info_util::VehicleInfo vehicle_info_;
 };
-}  // namespace autoware::static_centerline_generator
+}  // namespace static_centerline_generator
 #endif  // STATIC_CENTERLINE_GENERATOR__STATIC_CENTERLINE_GENERATOR_NODE_HPP_
