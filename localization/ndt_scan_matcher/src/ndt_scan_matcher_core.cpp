@@ -204,38 +204,52 @@ void NDTScanMatcher::callback_initial_pose(
 {
   diagnostics_initial_pose_->clear();
 
+  set_initial_pose(initial_pose_msg_ptr);
+
+  diagnostics_initial_pose_->publish();
+}
+
+
+void NDTScanMatcher::set_initial_pose(
+  const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
+{
   diagnostics_initial_pose_->addKeyValue(
     "topic_time_stamp", static_cast<rclcpp::Time>(initial_pose_msg_ptr->header.stamp).seconds());
+
+  // check is_activated
   diagnostics_initial_pose_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
-
-  if (is_activated_) {
-    if (initial_pose_msg_ptr->header.frame_id == param_.frame.map_frame) {
-      initial_pose_buffer_->push_back(initial_pose_msg_ptr);
-    } else {
-      std::stringstream message;
-      message << "Received initial pose message with frame_id "
-              << initial_pose_msg_ptr->header.frame_id << ", but expected "
-              << param_.frame.map_frame
-              << ". Please check the frame_id in the input topic and ensure it is correct.";
-      diagnostics_initial_pose_->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
-      RCLCPP_ERROR_STREAM_THROTTLE(get_logger(), *this->get_clock(), 1000, message.str());
-    }
-
-    {
-      // latest_ekf_position_ is also used by callback_timer, so it is necessary to acquire the lock
-      std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
-      latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
-    }
-  } else {
+  if (!is_activated_) {
     std::stringstream message;
     message << "Node is not activated.";
     RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *this->get_clock(), 1000, message.str());
     diagnostics_initial_pose_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    return;
   }
 
-  diagnostics_initial_pose_->publish();
+  // check is_expected_frame_id
+  const bool is_expected_frame_id = (initial_pose_msg_ptr->header.frame_id == param_.frame.map_frame);
+  diagnostics_initial_pose_->addKeyValue("is_expected_frame_id", is_expected_frame_id);
+  if (!is_expected_frame_id) {
+    std::stringstream message;
+    message << "Received initial pose message with frame_id "
+            << initial_pose_msg_ptr->header.frame_id << ", but expected "
+            << param_.frame.map_frame
+            << ". Please check the frame_id in the input topic and ensure it is correct.";
+    diagnostics_initial_pose_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+    RCLCPP_ERROR_STREAM_THROTTLE(get_logger(), *this->get_clock(), 1000, message.str());
+    return;
+  }
+
+  initial_pose_buffer_->push_back(initial_pose_msg_ptr);
+
+  {
+    // latest_ekf_position_ is also used by callback_timer, so it is necessary to acquire the lock
+    std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
+    latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
+  }
+
 }
 
 void NDTScanMatcher::callback_regularization_pose(
@@ -271,59 +285,27 @@ void NDTScanMatcher::callback_sensor_points(
   diagnostics_scan_points_->addKeyValue("execution_time", 0.0);
   diagnostics_scan_points_->addKeyValue("skipping_publish_num", 0);
 
-  // check topic_time_stamp
-  diagnostics_scan_points_->addKeyValue(
-    "topic_time_stamp",
-    static_cast<rclcpp::Time>(sensor_points_msg_in_sensor_frame->header.stamp).seconds());
+  // scan matching
+  const bool is_succeed_scan_matching =  process_scan_matching(sensor_points_msg_in_sensor_frame);
 
-  // check is_activated
-  diagnostics_scan_points_->addKeyValue("is_activated", is_activated_);
-  if (!is_activated_) {
+  // check skipping_publish_num
+  static size_t skipping_publish_num = 0;
+  const size_t error_skipping_publish_num = 5;
+  skipping_publish_num = is_succeed_scan_matching ? 0 : (skipping_publish_num + 1);
+  diagnostics_scan_points_->addKeyValue("skipping_publish_num", skipping_publish_num);
+  if (skipping_publish_num > 0 && skipping_publish_num < error_skipping_publish_num) {
     std::stringstream message;
-    message << "Node is not activated.";
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
+    message << "skipping_publish_num > 0 (" << skipping_publish_num << " times).";
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
-
-  const bool is_set_sensor_points = set_input_source(sensor_points_msg_in_sensor_frame);
-
-  // check is_set_sensor_points
-  diagnostics_scan_points_->addKeyValue("is_set_sensor_points", is_set_sensor_points);
-  if (!is_set_sensor_points) {
+  else if (skipping_publish_num >= error_skipping_publish_num) {
     std::stringstream message;
-    message << "Sensor points is not set.";
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
+    message << "skipping_publish_num exceed limit (" << skipping_publish_num << " times).";
+    RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
     diagnostics_scan_points_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-  }
-
-  if (is_activated_) {
-    bool is_published_topic = false;
-
-    if (is_set_sensor_points) {
-      is_published_topic = process_scan_matching(sensor_points_msg_in_sensor_frame);
-    }
-
-    // check skipping_publish_num
-    static size_t skipping_publish_num = 0;
-    const size_t error_skipping_publish_num = 5;
-    skipping_publish_num = is_published_topic ? 0 : (skipping_publish_num + 1);
-    diagnostics_scan_points_->addKeyValue("skipping_publish_num", skipping_publish_num);
-    if (skipping_publish_num > 0 && skipping_publish_num < error_skipping_publish_num) {
-      std::stringstream message;
-      message << "skipping_publish_num > 0 (" << skipping_publish_num << " times).";
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-      diagnostics_scan_points_->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-    }
-    else if (skipping_publish_num >= error_skipping_publish_num) {
-      std::stringstream message;
-      message << "skipping_publish_num exceed limit (" << skipping_publish_num << " times).";
-      RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-      diagnostics_scan_points_->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
-    }
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
   }
 
   diagnostics_scan_points_->publish();
@@ -332,8 +314,6 @@ void NDTScanMatcher::callback_sensor_points(
 bool NDTScanMatcher::set_input_source(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame)
 {
-  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
-
   // check sensor_points_size
   const size_t sensor_points_size = sensor_points_msg_in_sensor_frame->width;
   diagnostics_scan_points_->addKeyValue("sensor_points_size", sensor_points_size);
@@ -399,6 +379,7 @@ bool NDTScanMatcher::set_input_source(
   }
 
   // set sensor points to ndt class
+  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
   ndt_ptr_->setInputSource(sensor_points_in_baselink_frame);
 
   return true;
@@ -407,12 +388,40 @@ bool NDTScanMatcher::set_input_source(
 bool NDTScanMatcher::process_scan_matching(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame)
 {
-  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
-
   const auto exe_start_time = std::chrono::system_clock::now();
 
+  // check topic_time_stamp
   const rclcpp::Time sensor_ros_time = sensor_points_msg_in_sensor_frame->header.stamp;
+  diagnostics_scan_points_->addKeyValue("topic_time_stamp",sensor_ros_time.seconds());
+
+  // set sensor_points to ndt
+  set_input_source(sensor_points_msg_in_sensor_frame);
+
+  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
+
+  // check is_set_sensor_points
   const auto sensor_points_in_baselink_frame = ndt_ptr_->getInputSource();
+  const bool is_set_sensor_points = (sensor_points_in_baselink_frame != nullptr);
+  diagnostics_scan_points_->addKeyValue("is_set_sensor_points", is_set_sensor_points);
+  if (!is_set_sensor_points) {
+    std::stringstream message;
+    message << "Sensor points is not set.";
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
+    diagnostics_scan_points_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    return false;
+  }
+
+  // check is_activated
+  diagnostics_scan_points_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
+  if (!is_activated_) {
+    std::stringstream message;
+    message << "Node is not activated.";
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
+    diagnostics_scan_points_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    return false;
+  }
 
   // calculate initial pose
   std::optional<SmartPoseBuffer::InterpolateResult> interpolation_result_opt =

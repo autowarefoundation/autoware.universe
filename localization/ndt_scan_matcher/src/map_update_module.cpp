@@ -67,37 +67,44 @@ void MapUpdateModule::initialize_diagnostics_key_value()
 void MapUpdateModule::callback_timer(
   const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position)
 {
+  process_callback_timer(is_activated, position);
+
+  diagnostics_map_update_->publish();
+  diagnostics_map_update_->clearLevelAndMessage();
+}
+
+void MapUpdateModule::process_callback_timer(
+  const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position)
+{
   diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", clock_->now().seconds());
+
   diagnostics_map_update_->addKeyValue("is_activated", is_activated);
-
-  if (is_activated) {
-    const bool is_set_last_update_position = (position != std::nullopt);
-    diagnostics_map_update_->addKeyValue(
-      "is_set_last_update_position", is_set_last_update_position);
-
-    if (is_set_last_update_position) {
-      if (should_update_map(position.value())) {
-        RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
-        update_map(position.value());
-      }
-    } else {
-      std::stringstream message;
-      message << "Cannot find the reference position for map update."
-              << "Please check if the EKF odometry is provided to NDT.";
-      diagnostics_map_update_->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-      RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
-    }
-  } else {
+  if (!is_activated) {
     std::stringstream message;
     message << "Node is not activated.";
     RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
     diagnostics_map_update_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    return;
   }
 
-  diagnostics_map_update_->publish();
-  diagnostics_map_update_->clearLevelAndMessage();
+  const bool is_set_last_update_position = (position != std::nullopt);
+  diagnostics_map_update_->addKeyValue(
+    "is_set_last_update_position", is_set_last_update_position);
+  if (!is_set_last_update_position) {
+    std::stringstream message;
+    message << "Cannot find the reference position for map update."
+            << "Please check if the EKF odometry is provided to NDT.";
+    diagnostics_map_update_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
+    return;
+  }
+
+  if (should_update_map(position.value())) {
+    RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
+    update_map(position.value());
+  }
 }
 
 bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & position)
