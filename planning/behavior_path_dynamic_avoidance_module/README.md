@@ -32,7 +32,7 @@ The other, _can be avoided_ denotes whether it can be avoided without risk to th
 For this purpose, the module judges whether the obstacle can be avoided with satisfying the constraints of lateral acceleration and lateral jerk.
 For example, the module decides not to avoid an object that is too close or fast in the lateral direction.
 
-### Cuts off the drivable area against the selected vehicless
+### Cuts off the drivable area against the selected vehicles
 For the selected obstacles to be avoided, the module cuts off the drivable area.
 As inputs to decide the shapes of cut-off polygons, poses of the obstacles are mainly used, assuming they move in parallel to the ego's path, instead of its predicted path.
 This design arises from that the predicted path of objects is not accurate enough to use the path modifications (at least currently).
@@ -62,7 +62,7 @@ Objects of this type are considered to have priority right of way over the ego's
 In other words, the module assigns a drivable area to an obstacle with a specific margin based on the predicted paths with specific confidences for a specific time interval, as shown in the following figure.
 <figure>
     <img src="./image/2024-04-18_15-13-01.png" width="600">
-    <figcaption> Drivable areas are generated from each pedestrian's predicted paths</figcaption>
+    <figcaption> Restriction areas are generated from each pedestrian's predicted paths</figcaption>
 </figure>
 
 Apart from polygons for objects, the module also generates another polygon to ensure the ego's safety, i.e., to avoid abrupt steering or significant changes from the path.
@@ -70,7 +70,7 @@ This is similar to avoidance against the vehicles and takes precedence over keep
 As a result, as shown in the figure below, the polygons around the objects reduced by the secured polygon of the ego are subtracted from the ego's drivable area.
 <figure>
     <img src="./image/2024-04-18_15-32-03.png" width="600">
-    <figcaption> Drivable areas are generated from each pedestrian's predicted paths</figcaption>
+    <figcaption> Ego's minimum requirements are prioritized against object margin</figcaption>
 </figure>
 
 

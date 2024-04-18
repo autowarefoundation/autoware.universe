@@ -79,11 +79,11 @@ enum class PolygonGenerationMethod {
 
 enum class ObjectType {
   OUT_OF_SCOPE = 0,  // The module do not care about this type of objects.
-  REGULATED,    // The module assumes this type of objects move in paralell against lanes. Drivable
-                // areas are divided proportionately with the ego. In typicaly, cars, bus and trucks
+  REGULATED,    // The module assumes this type of objects move in parallel against lanes. Drivable
+                // areas are divided proportionately with the ego. Typically, cars, bus and trucks
                 // are classified to this type.
-  UNREGULATED,  // The module does not assume the objects move in paralell against lanes and
-                // assignes drivable area with priority to ego. In typicaly, pedestrians should be
+  UNREGULATED,  // The module does not assume the objects move in parallel against lanes and
+                // assigns drivable area with priority to ego. Typically, pedestrians should be
                 // classified to this type.
 };
 
