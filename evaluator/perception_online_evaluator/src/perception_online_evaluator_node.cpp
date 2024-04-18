@@ -273,7 +273,6 @@ rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParame
   result.successful = true;
   result.reason = "success";
 
-  std::cerr << "Parameters updated" << std::endl;
   return result;
 }
 
