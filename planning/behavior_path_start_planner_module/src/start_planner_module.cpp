@@ -134,8 +134,9 @@ void StartPlannerModule::onFreespacePlannerTimer()
     return;
   }
 
-  const bool is_stuck = is_stopped && pull_out_status.planner_type == PlannerType::STOP &&
-                        !pull_out_status.found_pull_out_path;
+  const bool is_stuck =
+    is_stopped && pull_out_status.planner_type == PlannerType::STOP &&
+    (!pull_out_status.found_pull_out_path || !pull_out_status.is_safe_static_objects);
   if (is_stuck) {
     const auto free_space_status =
       planFreespacePath(parameters, local_planner_data, pull_out_status);
@@ -149,7 +150,9 @@ void StartPlannerModule::onFreespacePlannerTimer()
 BehaviorModuleOutput StartPlannerModule::run()
 {
   updateData();
-  if (!isActivated() || needToPrepareBlinkerBeforeStartDrivingForward()) {
+  if (
+    !isActivated() || needToPrepareBlinkerBeforeStartDrivingForward() ||
+    !status_.is_safe_static_objects) {
     return planWaitingApproval();
   }
 
@@ -228,6 +231,7 @@ void StartPlannerModule::updateData()
       status_.planner_type = freespace_status.planner_type;
       status_.found_pull_out_path = freespace_status.found_pull_out_path;
       status_.driving_forward = freespace_status.driving_forward;
+      status_.is_safe_static_objects = freespace_status.is_safe_static_objects;
       // and then reset it
       freespace_thread_status_ = std::nullopt;
     }
@@ -253,9 +257,6 @@ void StartPlannerModule::updateData()
 
   status_.is_safe_dynamic_objects =
     (!requiresDynamicObjectsCollisionDetection()) ? true : !hasCollisionWithDynamicObjects();
-
-  if (status_.is_safe_static_objects) return;
-  const std::lock_guard<std::mutex> lock(mutex_);
 
   const auto planner_ptr_itr = std::find_if(
     start_planners_.begin(), start_planners_.end(),
@@ -288,6 +289,8 @@ void StartPlannerModule::updateData()
   const auto & planner_ptr = *planner_ptr_itr;
   status_.is_safe_static_objects =
     !planner_ptr->isPullOutPathCollided(cropped_path.value(), collision_check_distance_from_end);
+  std::cerr << "status_.is_safe_static_objects? "
+            << static_cast<int>(status_.is_safe_static_objects) << "\n";
 }
 
 bool StartPlannerModule::hasFinishedBackwardDriving() const
@@ -1073,7 +1076,7 @@ void StartPlannerModule::updatePullOutStatus()
     return {*refined_start_pose};
   });
 
-  if (!status_.backward_driving_complete) {
+  if (!status_.backward_driving_complete || !status_.is_safe_static_objects) {
     planWithPriority(
       start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
   }
@@ -1222,7 +1225,7 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
 
 bool StartPlannerModule::hasFinishedPullOut() const
 {
-  if (!status_.driving_forward || !status_.found_pull_out_path) {
+  if (!status_.driving_forward || !status_.found_pull_out_path || !status_.is_safe_static_objects) {
     return false;
   }
 
