@@ -769,7 +769,8 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
   }();
 
   /**
-   * remove success module immediately. if lane change module has succeeded, update root lanelet.
+   * remove success module immediately. if lane change module has succeeded, update current route
+   * lanelet.
    */
   {
     const auto move_to_end = [](auto & modules, const auto & cond) {
@@ -881,7 +882,7 @@ void PlannerManager::resetCurrentRouteLanelet(const std::shared_ptr<PlannerData>
     return;
   }
 
-  // when lane change module is running, don't update root lanelet.
+  // when lane change module is running, don't update the current route lanelet.
   const bool is_lane_change_running = std::invoke([&]() {
     const auto lane_change_itr = std::find_if(
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
