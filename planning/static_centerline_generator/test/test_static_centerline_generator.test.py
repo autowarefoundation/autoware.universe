@@ -52,7 +52,7 @@ def generate_test_description():
             ),
             os.path.join(
                 get_package_share_directory("autoware_static_centerline_generator"),
-                "config/autoware_static_centerline_generator.param.yaml",
+                "config/static_centerline_generator.param.yaml",
             ),
             os.path.join(
                 get_package_share_directory("behavior_path_planner"),
