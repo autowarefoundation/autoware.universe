@@ -139,6 +139,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 
     ip.yield_stuck.distance_threshold =
       getOrDeclareParameter<double>(node, ns + ".yield_stuck.distance_threshold");
+    ip.yield_stuck.yield_stuck_vehicle_velocity_threshold = getOrDeclareParameter<double>(
+      node, ns + ".yield_stuck.yield_stuck_vehicle_velocity_threshold");
   }
 
   // collision_detection

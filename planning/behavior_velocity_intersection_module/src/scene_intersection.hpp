@@ -99,6 +99,7 @@ public:
       TargetType target_type;
       TurnDirection turn_direction;
       double distance_threshold;
+      double yield_stuck_vehicle_velocity_threshold;
     } yield_stuck;
 
     struct CollisionDetection

@@ -49,6 +49,7 @@
           right: true
           straight: false
         distance_threshold: 5.0
+        yield_stuck_vehicle_velocity_threshold: 5.0
 
       collision_detection:
         consider_wrong_direction_vehicle: false

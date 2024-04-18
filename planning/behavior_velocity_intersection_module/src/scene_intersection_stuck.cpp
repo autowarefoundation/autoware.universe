@@ -364,8 +364,8 @@ bool IntersectionModule::checkYieldStuckVehicleInIntersection(
   }
 
   const double width = planner_data_->vehicle_info_.vehicle_width_m;
-  const double stuck_vehicle_vel_thr =
-    planner_param_.stuck_vehicle.stuck_vehicle_velocity_threshold;
+  const double yield_stuck_vehicle_vel_thr =
+    planner_param_.yield_stuck.yield_stuck_vehicle_velocity_threshold;
   const double yield_stuck_distance_thr = planner_param_.yield_stuck.distance_threshold;
 
   LineString2d sparse_intersection_path;
@@ -413,7 +413,7 @@ bool IntersectionModule::checkYieldStuckVehicleInIntersection(
       object.kinematics.initial_twist_with_covariance.twist.linear.x,
       object.kinematics.initial_twist_with_covariance.twist.linear.y);
 
-    if (obj_v_norm > stuck_vehicle_vel_thr) {
+    if (obj_v_norm > yield_stuck_vehicle_vel_thr) {
       continue;
     }
     for (const auto & yield_stuck_detect_lanelet : yield_stuck_detect_lanelets) {
