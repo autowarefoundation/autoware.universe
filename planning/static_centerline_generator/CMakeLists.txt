@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(static_centerline_generator)
+project(autoware_static_centerline_generator)
 
 find_package(autoware_cmake REQUIRED)
 
@@ -9,7 +9,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(
-  static_centerline_generator
+  autoware_static_centerline_generator
   "srv/LoadMap.srv"
   "srv/PlanRoute.srv"
   "srv/PlanPath.srv"
@@ -29,10 +29,10 @@ ament_auto_add_executable(main
 
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
     rosidl_target_interfaces(main
-    static_centerline_generator "rosidl_typesupport_cpp")
+    autoware_static_centerline_generator "rosidl_typesupport_cpp")
 else()
     rosidl_get_typesupport_target(
-            cpp_typesupport_target static_centerline_generator "rosidl_typesupport_cpp")
+            cpp_typesupport_target autoware_static_centerline_generator "rosidl_typesupport_cpp")
     target_link_libraries(main "${cpp_typesupport_target}")
 endif()
 

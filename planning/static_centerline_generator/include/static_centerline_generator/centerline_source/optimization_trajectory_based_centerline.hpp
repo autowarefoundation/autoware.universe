@@ -20,7 +20,7 @@
 
 #include <vector>
 
-namespace static_centerline_generator
+namespace autoware::static_centerline_generator
 {
 class OptimizationTrajectoryBasedCenterline
 {
@@ -37,7 +37,7 @@ private:
   rclcpp::Publisher<PathWithLaneId>::SharedPtr pub_raw_path_with_lane_id_{nullptr};
   rclcpp::Publisher<Path>::SharedPtr pub_raw_path_{nullptr};
 };
-}  // namespace static_centerline_generator
+}  // namespace autoware::static_centerline_generator
 // clang-format off
 #endif  // STATIC_CENTERLINE_GENERATOR__CENTERLINE_SOURCE__OPTIMIZATION_TRAJECTORY_BASED_CENTERLINE_HPP_  // NOLINT
 // clang-format on

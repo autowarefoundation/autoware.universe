@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace static_centerline_generator
+namespace autoware::static_centerline_generator
 {
 namespace utils
 {
@@ -53,6 +53,6 @@ MarkerArray create_distance_text_marker(
   const geometry_msgs::msg::Pose & pose, const double dist,
   const std::array<double, 3> & marker_color, const rclcpp::Time & now, const size_t idx);
 }  // namespace utils
-}  // namespace static_centerline_generator
+}  // namespace autoware::static_centerline_generator
 
 #endif  // STATIC_CENTERLINE_GENERATOR__UTILS_HPP_

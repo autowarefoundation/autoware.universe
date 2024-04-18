@@ -21,7 +21,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/Lanelet.h>
-namespace static_centerline_generator
+namespace autoware::static_centerline_generator
 {
 namespace
 {
@@ -228,4 +228,4 @@ MarkerArray create_distance_text_marker(
   return marker_array;
 }
 }  // namespace utils
-}  // namespace static_centerline_generator
+}  // namespace autoware::static_centerline_generator

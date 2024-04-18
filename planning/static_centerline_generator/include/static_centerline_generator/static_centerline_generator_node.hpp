@@ -17,9 +17,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "static_centerline_generator/centerline_source/optimization_trajectory_based_centerline.hpp"
-#include "static_centerline_generator/srv/load_map.hpp"
-#include "static_centerline_generator/srv/plan_path.hpp"
-#include "static_centerline_generator/srv/plan_route.hpp"
+#include "autoware_static_centerline_generator/srv/load_map.hpp"
+#include "autoware_static_centerline_generator/srv/plan_path.hpp"
+#include "autoware_static_centerline_generator/srv/plan_route.hpp"
 #include "static_centerline_generator/type_alias.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
@@ -34,11 +34,11 @@
 #include <utility>
 #include <vector>
 
-namespace static_centerline_generator
+namespace autoware::static_centerline_generator
 {
-using static_centerline_generator::srv::LoadMap;
-using static_centerline_generator::srv::PlanPath;
-using static_centerline_generator::srv::PlanRoute;
+using autoware_static_centerline_generator::srv::LoadMap;
+using autoware_static_centerline_generator::srv::PlanPath;
+using autoware_static_centerline_generator::srv::PlanRoute;
 
 struct CenterlineWithRoute
 {
@@ -115,5 +115,5 @@ private:
   // vehicle info
   vehicle_info_util::VehicleInfo vehicle_info_;
 };
-}  // namespace static_centerline_generator
+}  // namespace autoware::static_centerline_generator
 #endif  // STATIC_CENTERLINE_GENERATOR__STATIC_CENTERLINE_GENERATOR_NODE_HPP_

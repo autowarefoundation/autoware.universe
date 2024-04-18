@@ -98,8 +98,8 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    original_osm_file_name = "/tmp/static_centerline_generator/input/lanelet2_map.osm"
-    modified_osm_file_name = "/tmp/static_centerline_generator/output/lanelet2_map.osm"
+    original_osm_file_name = "/tmp/autoware_static_centerline_generator/input/lanelet2_map.osm"
+    modified_osm_file_name = "/tmp/autoware_static_centerline_generator/output/lanelet2_map.osm"
 
     # load LL2 maps
     original_osm_tree = ET.parse(original_osm_file_name)
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         remove_diff_to_ignore(modified_osm_root)
 
     # write LL2 maps
-    output_dir_path = "/tmp/static_centerline_generator/show_lanelet2_map_diff/"
+    output_dir_path = "/tmp/autoware_static_centerline_generator/show_lanelet2_map_diff/"
     os.makedirs(output_dir_path + "original/", exist_ok=True)
     os.makedirs(output_dir_path + "modified/", exist_ok=True)
 

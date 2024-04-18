@@ -22,7 +22,7 @@
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "static_centerline_generator/centerline_source/bag_ego_trajectory_based_centerline.hpp"
-#include "static_centerline_generator/msg/points_with_lane_id.hpp"
+#include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "static_centerline_generator/type_alias.hpp"
 #include "static_centerline_generator/utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
@@ -54,7 +54,7 @@
 #include <string>
 #include <vector>
 
-namespace static_centerline_generator
+namespace autoware::static_centerline_generator
 {
 namespace
 {
@@ -168,7 +168,7 @@ std::vector<TrajectoryPoint> resample_trajectory_points(
 
 StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
   const rclcpp::NodeOptions & node_options)
-: Node("static_centerline_generator", node_options)
+: Node("autoware_static_centerline_generator", node_options)
 {
   // publishers
   pub_map_bin_ =
@@ -216,19 +216,19 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
   // services
   callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   srv_load_map_ = create_service<LoadMap>(
-    "/planning/static_centerline_generator/load_map",
+    "/planning/autoware_static_centerline_generator/load_map",
     std::bind(
       &StaticCenterlineGeneratorNode::on_load_map, this, std::placeholders::_1,
       std::placeholders::_2),
     rmw_qos_profile_services_default, callback_group_);
   srv_plan_route_ = create_service<PlanRoute>(
-    "/planning/static_centerline_generator/plan_route",
+    "/planning/autoware_static_centerline_generator/plan_route",
     std::bind(
       &StaticCenterlineGeneratorNode::on_plan_route, this, std::placeholders::_1,
       std::placeholders::_2),
     rmw_qos_profile_services_default, callback_group_);
   srv_plan_path_ = create_service<PlanPath>(
-    "/planning/static_centerline_generator/plan_path",
+    "/planning/autoware_static_centerline_generator/plan_path",
     std::bind(
       &StaticCenterlineGeneratorNode::on_plan_path, this, std::placeholders::_1,
       std::placeholders::_2),
@@ -246,7 +246,7 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
       return CenterlineSource::BagEgoTrajectoryBase;
     }
     throw std::logic_error(
-      "The centerline source is not supported in static_centerline_generator.");
+      "The centerline source is not supported in autoware_static_centerline_generator.");
   }();
 }
 
@@ -319,7 +319,7 @@ CenterlineWithRoute StaticCenterlineGeneratorNode::generate_centerline_with_rout
       return CenterlineWithRoute{bag_centerline, route_lane_ids};
     }
     throw std::logic_error(
-      "The centerline source is not supported in static_centerline_generator.");
+      "The centerline source is not supported in autoware_static_centerline_generator.");
   }();
 
   // resample
@@ -339,7 +339,7 @@ CenterlineWithRoute StaticCenterlineGeneratorNode::generate_centerline_with_rout
 void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_file_path)
 {
   // copy the input LL2 map to the temporary file for debugging
-  const std::string debug_input_file_dir{"/tmp/static_centerline_generator/input/"};
+  const std::string debug_input_file_dir{"/tmp/autoware_static_centerline_generator/input/"};
   std::filesystem::create_directories(debug_input_file_dir);
   std::filesystem::copy(
     lanelet2_input_file_path, debug_input_file_dir + "lanelet2_map.osm",
@@ -542,7 +542,7 @@ void StaticCenterlineGeneratorNode::on_plan_path(
 
     if (!current_lanelet_points.empty()) {
       // register points with lane_id
-      static_centerline_generator::msg::PointsWithLaneId points_with_lane_id;
+      autoware_static_centerline_generator::msg::PointsWithLaneId points_with_lane_id;
       points_with_lane_id.lane_id = lanelet.id();
       points_with_lane_id.points = current_lanelet_points;
       response->points_with_lane_ids.push_back(points_with_lane_id);
@@ -646,10 +646,10 @@ void StaticCenterlineGeneratorNode::save_map(
   RCLCPP_INFO(get_logger(), "Saved map.");
 
   // copy the output LL2 map to the temporary file for debugging
-  const std::string debug_output_file_dir{"/tmp/static_centerline_generator/output/"};
+  const std::string debug_output_file_dir{"/tmp/autoware_static_centerline_generator/output/"};
   std::filesystem::create_directories(debug_output_file_dir);
   std::filesystem::copy(
     lanelet2_output_file_path, debug_output_file_dir + "lanelet2_map.osm",
     std::filesystem::copy_options::overwrite_existing);
 }
-}  // namespace static_centerline_generator
+}  // namespace autoware::static_centerline_generator

@@ -23,9 +23,9 @@ from flask import request
 from flask_cors import CORS
 import rclpy
 from rclpy.node import Node
-from static_centerline_generator.srv import LoadMap
-from static_centerline_generator.srv import PlanPath
-from static_centerline_generator.srv import PlanRoute
+from autoware_static_centerline_generator.srv import LoadMap
+from autoware_static_centerline_generator.srv import PlanPath
+from autoware_static_centerline_generator.srv import PlanRoute
 
 rclpy.init()
 node = Node("static_centerline_generator_http_server")
@@ -51,7 +51,7 @@ def get_map():
     map_id = map_uuid
 
     # create client
-    cli = create_client(LoadMap, "/planning/static_centerline_generator/load_map")
+    cli = create_client(LoadMap, "/planning/autoware_static_centerline_generator/load_map")
 
     # request map loading
     req = LoadMap.Request(map=data["map"])
@@ -85,7 +85,7 @@ def post_planned_route():
         print("map_id is not correct.")
 
     # create client
-    cli = create_client(PlanRoute, "/planning/static_centerline_generator/plan_route")
+    cli = create_client(PlanRoute, "/planning/autoware_static_centerline_generator/plan_route")
 
     # request route planning
     req = PlanRoute.Request(
@@ -123,7 +123,7 @@ def post_planned_path():
         print("map_id is not correct.")
 
     # create client
-    cli = create_client(PlanPath, "/planning/static_centerline_generator/plan_path")
+    cli = create_client(PlanPath, "/planning/autoware_static_centerline_generator/plan_path")
 
     # request path planning
     route_lane_ids = [eval(i) for i in request.args.getlist("route[]")]
