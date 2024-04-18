@@ -42,22 +42,18 @@ struct EditConfig
 
 struct LinkConfig
 {
-  using Item = LinkConfig *;
-  using List = std::vector<LinkConfig::Item>;
-  UnitConfig * parent;
-  UnitConfig * child;
+  UnitConfig * parent = nullptr;
+  UnitConfig * child = nullptr;
 };
 
 struct UnitConfig
 {
-  using Item = UnitConfig *;
-  using List = std::vector<LinkConfig::Item>;
   explicit UnitConfig(const TreeData & data) : data(data) {}
   TreeData data;
   std::string type;
   std::string path;
-  LinkConfig::Item item;
-  LinkConfig::List list;
+  LinkConfig * item = nullptr;
+  std::vector<LinkConfig *> list;
   size_t index;
 };
 
