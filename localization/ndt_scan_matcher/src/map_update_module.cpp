@@ -89,8 +89,7 @@ void MapUpdateModule::process_callback_timer(
   }
 
   const bool is_set_last_update_position = (position != std::nullopt);
-  diagnostics_map_update_->addKeyValue(
-    "is_set_last_update_position", is_set_last_update_position);
+  diagnostics_map_update_->addKeyValue("is_set_last_update_position", is_set_last_update_position);
   if (!is_set_last_update_position) {
     std::stringstream message;
     message << "Cannot find the reference position for map update."

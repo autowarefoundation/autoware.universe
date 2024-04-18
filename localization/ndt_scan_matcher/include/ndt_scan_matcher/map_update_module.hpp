@@ -60,7 +60,7 @@ private:
     const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position);
 
   void process_callback_timer(
-   const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position);
+    const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position);
 
   // Update the specified NDT
   bool update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt);

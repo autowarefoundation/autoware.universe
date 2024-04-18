@@ -209,7 +209,6 @@ void NDTScanMatcher::callback_initial_pose(
   diagnostics_initial_pose_->publish();
 }
 
-
 void NDTScanMatcher::set_initial_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
@@ -228,13 +227,13 @@ void NDTScanMatcher::set_initial_pose(
   }
 
   // check is_expected_frame_id
-  const bool is_expected_frame_id = (initial_pose_msg_ptr->header.frame_id == param_.frame.map_frame);
+  const bool is_expected_frame_id =
+    (initial_pose_msg_ptr->header.frame_id == param_.frame.map_frame);
   diagnostics_initial_pose_->addKeyValue("is_expected_frame_id", is_expected_frame_id);
   if (!is_expected_frame_id) {
     std::stringstream message;
     message << "Received initial pose message with frame_id "
-            << initial_pose_msg_ptr->header.frame_id << ", but expected "
-            << param_.frame.map_frame
+            << initial_pose_msg_ptr->header.frame_id << ", but expected " << param_.frame.map_frame
             << ". Please check the frame_id in the input topic and ensure it is correct.";
     diagnostics_initial_pose_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
@@ -249,7 +248,6 @@ void NDTScanMatcher::set_initial_pose(
     std::lock_guard<std::mutex> lock(latest_ekf_position_mtx_);
     latest_ekf_position_ = initial_pose_msg_ptr->pose.pose.position;
   }
-
 }
 
 void NDTScanMatcher::callback_regularization_pose(
@@ -286,7 +284,7 @@ void NDTScanMatcher::callback_sensor_points(
   diagnostics_scan_points_->addKeyValue("skipping_publish_num", 0);
 
   // scan matching
-  const bool is_succeed_scan_matching =  process_scan_matching(sensor_points_msg_in_sensor_frame);
+  const bool is_succeed_scan_matching = process_scan_matching(sensor_points_msg_in_sensor_frame);
 
   // check skipping_publish_num
   static size_t skipping_publish_num = 0;
@@ -299,8 +297,7 @@ void NDTScanMatcher::callback_sensor_points(
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-  }
-  else if (skipping_publish_num >= error_skipping_publish_num) {
+  } else if (skipping_publish_num >= error_skipping_publish_num) {
     std::stringstream message;
     message << "skipping_publish_num exceed limit (" << skipping_publish_num << " times).";
     RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
@@ -327,7 +324,8 @@ bool NDTScanMatcher::set_input_source(
   }
 
   // check sensor_points_delay_time_sec
-  const double sensor_points_delay_time_sec = (this->now() - sensor_points_msg_in_sensor_frame->header.stamp).seconds();
+  const double sensor_points_delay_time_sec =
+    (this->now() - sensor_points_msg_in_sensor_frame->header.stamp).seconds();
   diagnostics_scan_points_->addKeyValue(
     "sensor_points_delay_time_sec", sensor_points_delay_time_sec);
   if (sensor_points_delay_time_sec > param_.validation.lidar_topic_timeout_sec) {
@@ -358,7 +356,6 @@ bool NDTScanMatcher::set_input_source(
   transform_sensor_measurement(
     sensor_frame, param_.frame.base_frame, sensor_points_in_sensor_frame,
     sensor_points_in_baselink_frame);
-
 
   // check sensor_points_max_distance
   double max_distance = 0.0;
@@ -392,7 +389,7 @@ bool NDTScanMatcher::process_scan_matching(
 
   // check topic_time_stamp
   const rclcpp::Time sensor_ros_time = sensor_points_msg_in_sensor_frame->header.stamp;
-  diagnostics_scan_points_->addKeyValue("topic_time_stamp",sensor_ros_time.seconds());
+  diagnostics_scan_points_->addKeyValue("topic_time_stamp", sensor_ros_time.seconds());
 
   // set sensor_points to ndt
   set_input_source(sensor_points_msg_in_sensor_frame);
@@ -429,7 +426,8 @@ bool NDTScanMatcher::process_scan_matching(
 
   // check is_succeed_interpolate_initial_pose
   const bool is_succeed_interpolate_initial_pose = (interpolation_result_opt != std::nullopt);
-  diagnostics_scan_points_->addKeyValue("is_succeed_interpolate_initial_pose", is_succeed_interpolate_initial_pose);
+  diagnostics_scan_points_->addKeyValue(
+    "is_succeed_interpolate_initial_pose", is_succeed_interpolate_initial_pose);
   if (!is_succeed_interpolate_initial_pose) {
     std::stringstream message;
     message << "Couldn't interpolate pose. Please check the initial pose topic";
@@ -453,13 +451,12 @@ bool NDTScanMatcher::process_scan_matching(
   diagnostics_scan_points_->addKeyValue("is_set_map_points", is_set_map_points);
   if (!is_set_map_points) {
     std::stringstream message;
-    message << "Map points is not set.";  
+    message << "Map points is not set.";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return false;
   }
-
 
   // perform ndt scan matching
   const Eigen::Matrix4f initial_pose_matrix =
@@ -490,8 +487,7 @@ bool NDTScanMatcher::process_scan_matching(
   // check local_optimal_solution_oscillation_num
   constexpr int oscillation_num_threshold = 10;
   const int oscillation_num = count_oscillation(transformation_msg_array);
-  diagnostics_scan_points_->addKeyValue(
-    "local_optimal_solution_oscillation_num", oscillation_num);
+  diagnostics_scan_points_->addKeyValue("local_optimal_solution_oscillation_num", oscillation_num);
   const bool is_local_optimal_solution_oscillation = (oscillation_num > oscillation_num_threshold);
   if (is_local_optimal_solution_oscillation) {
     std::stringstream message;
@@ -512,13 +508,14 @@ bool NDTScanMatcher::process_scan_matching(
     score_name = "Transform Probability";
     score = ndt_result.transform_probability;
     score_threshold = param_.score_estimation.converged_param_transform_probability;
-  }
-  else if (param_.score_estimation.converged_param_type == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
+  } else if (
+    param_.score_estimation.converged_param_type ==
+    ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
     score_name = "Nearest Voxel Transformation Likelihood";
     score = ndt_result.nearest_voxel_transformation_likelihood;
-    score_threshold = param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood;
-  }
-  else {
+    score_threshold =
+      param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood;
+  } else {
     std::stringstream message;
     message << "Unknown converged param type. Please check `score_estimation.converged_param_type`";
     RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
@@ -529,17 +526,17 @@ bool NDTScanMatcher::process_scan_matching(
 
   bool is_ok_score = (score > score_threshold);
   if (!is_ok_score) {
-      std::stringstream message;
-      message << "Transform Probability" << " is below the threshold. Score: " << score
-              << ", Threshold: " << score_threshold << ".";
-      RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
-      diagnostics_scan_points_->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    std::stringstream message;
+    message << "Transform Probability"
+            << " is below the threshold. Score: " << score << ", Threshold: " << score_threshold
+            << ".";
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 10, message.str());
+    diagnostics_scan_points_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
   // check is_converged
-  bool is_converged =
-    (is_ok_iteration_num || is_local_optimal_solution_oscillation) && is_ok_score;
+  bool is_converged = (is_ok_iteration_num || is_local_optimal_solution_oscillation) && is_ok_score;
 
   // covariance estimation
   const Eigen::Quaterniond map_to_base_link_quat = Eigen::Quaterniond(
@@ -584,7 +581,6 @@ bool NDTScanMatcher::process_scan_matching(
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
-
 
   // publish
   initial_pose_with_covariance_pub_->publish(interpolation_result.interpolated_pose);
