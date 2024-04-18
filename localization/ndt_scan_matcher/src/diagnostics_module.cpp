@@ -61,11 +61,12 @@ void DiagnosticsModule::clearLevelAndMessage()
 
 void DiagnosticsModule::addKeyValue(const diagnostic_msgs::msg::KeyValue & key_value_msg)
 {
-  const auto it = findIteratorByKey(key_value_msg.key);
-  if (existIterator(it)) {
-    diagnostics_status_msg_.values
-      .at(std::distance(std::cbegin(diagnostics_status_msg_.values), it))
-      .value = key_value_msg.value;  // FIX ME
+  auto it = std::find_if(
+    std::begin(diagnostics_status_msg_.values), std::end(diagnostics_status_msg_.values),
+    [key_value_msg](const auto & arg) { return arg.key == key_value_msg.key; });
+
+  if (it != std::cend(diagnostics_status_msg_.values)) {
+    it->value = key_value_msg.value;
   } else {
     diagnostics_status_msg_.values.push_back(key_value_msg);
   }
