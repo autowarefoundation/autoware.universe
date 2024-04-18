@@ -9,6 +9,3 @@
       voxel_size: [0.32, 0.32, 8.0]
       downsample_factor: 1
       encoder_in_feature_size: 12
-    omp_params:
-      # omp params
-      num_threads: 1

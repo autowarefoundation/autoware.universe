@@ -19,3 +19,6 @@
     densification_params:
       world_frame_id: "map"
       num_past_frames: 1
+    omp_params:
+      # omp params
+      num_threads: 1
