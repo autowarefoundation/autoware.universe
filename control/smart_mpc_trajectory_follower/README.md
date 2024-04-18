@@ -95,17 +95,17 @@ model_trainer.save_models(save_dir)
 After performing the polynomial regression, the NN can be trained on the residuals as follows:
 
 ```python
-model_trainer.get_learned_model(use_polynomial_reg=True)
+model_trainer.get_trained_model(use_polynomial_reg=True)
 ```
 
 > [!NOTE]
 > In the default setting, regression is performed by several preselected polynomials.
-> When `use_selected_polynomial=False` is set as the argument of get_learned_model, the `deg` argument allows setting the maximum degree of the polynomial to be used.
+> When `use_selected_polynomial=False` is set as the argument of get_trained_model, the `deg` argument allows setting the maximum degree of the polynomial to be used.
 
 If only polynomial regression is performed and no NN model is used, run the following command:
 
 ```python
-model_trainer.get_learned_model(use_polynomial_reg=True,force_NN_model_to_zero=True)
+model_trainer.get_trained_model(use_polynomial_reg=True,force_NN_model_to_zero=True)
 ```
 
 Move `model_for_test_drive.pth` and `polynomial_reg_info.npz` saved in `save_dir` to the home directory and set `trained_model_parameter:control_application:use_trained_model` in [trained_model_param.yaml](./smart_mpc_trajectory_follower/param/trained_model_param.yaml) to `true` to reflect the trained model in the control.
@@ -143,8 +143,6 @@ The following results were obtained.
 
 <p><img src="images/lateral_error_nominal_model.png" width=712pix></p>
 <p><img src="images/lateral_error_trained_model.png" width=712pix></p>
-
-The results are not satisfactory enough, but they show a significant improvement in lateral error with such a small amount of data.
 
 #### Test on python simulator
 
@@ -222,8 +220,7 @@ Here we have described wheel base, but the parameters that can be passed to the 
 For example, to give the simulation side 0.01 [rad] of steer bias and 0.001 [rad] of steer dead band, edit the `sim_setting.json` as follows.
 
 ```json
-{"steer_bias": 0.01}
-{"steer_dead_band": 0.001}
+{ "steer_bias": 0.01, "steer_dead_band": 0.001 }
 ```
 
 #### Auto test on python simulator
