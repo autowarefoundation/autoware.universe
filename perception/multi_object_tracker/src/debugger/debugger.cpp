@@ -192,4 +192,5 @@ void TrackerDebugger::publishObjectsMarkers()
   visualization_msgs::msg::MarkerArray marker_message;
   object_debugger_.getMessage(marker_message);
   debug_objects_markers_pub_->publish(marker_message);
+  object_debugger_.reset();
 }

@@ -37,6 +37,7 @@ int uuid_to_int(const unique_identifier_msgs::msg::UUID & uuid)
 
   return hashed_uuid;
 }
+
 }  // namespace
 
 TrackerObjectDebugger::TrackerObjectDebugger(std::string frame_id)
@@ -53,8 +54,10 @@ TrackerObjectDebugger::TrackerObjectDebugger(std::string frame_id)
 
 void TrackerObjectDebugger::reset()
 {
-  markers_.markers.clear();
+  previous_ids_.clear();
+  previous_ids_ = current_ids_;
   current_ids_.clear();
+  markers_.markers.clear();
 }
 
 void TrackerObjectDebugger::collect(
@@ -82,7 +85,7 @@ void TrackerObjectDebugger::collect(
     {{0.4, 1.0, 1.0}},  // Light Blue, Light Yellow, Light Cyan
     {{1.0, 0.4, 1.0}},    {{1.0, 0.7, 0.4}},
     {{0.7, 0.4, 1.0}},  // Light Magenta, Light Orange, Light Purple
-    {{1.0, 0.6, 0.8}},    {{0.71, 0.4, 0.114}},
+    {{1.0, 0.6, 0.8}},    {{0.71, 0.4, 0.12}},
     {{0.55, 0.0, 0.0}},  // Light Pink, Light Brown, Dark Red
     {{0.0, 0.4, 0.0}},    {{0.0, 0.0, 0.55}},
     {{0.55, 0.55, 0.0}},                       // Dark Green, Dark Blue, Dark Yellow
@@ -163,9 +166,42 @@ void TrackerObjectDebugger::collect(
   }
 }
 
-void TrackerObjectDebugger::getMessage(visualization_msgs::msg::MarkerArray & marker_array)
+void TrackerObjectDebugger::draw()
+{
+  // constexpr int PALETTE_SIZE = 32;
+  // constexpr std::array<std::array<double, 3>, PALETTE_SIZE> color_array = {{
+  //   {{1.0, 0.0, 0.0}},    {{0.0, 1.0, 0.0}},
+  //   {{0.0, 0.0, 1.0}},  // Red, Green, Blue
+  //   {{1.0, 1.0, 0.0}},    {{0.0, 1.0, 1.0}},
+  //   {{1.0, 0.0, 1.0}},  // Yellow, Cyan, Magenta
+  //   {{1.0, 0.64, 0.0}},   {{0.75, 1.0, 0.0}},
+  //   {{0.0, 0.5, 0.5}},  // Orange, Lime, Teal
+  //   {{0.5, 0.0, 0.5}},    {{1.0, 0.75, 0.8}},
+  //   {{0.65, 0.17, 0.17}},  // Purple, Pink, Brown
+  //   {{0.5, 0.0, 0.0}},    {{0.5, 0.5, 0.0}},
+  //   {{0.0, 0.0, 0.5}},  // Maroon, Olive, Navy
+  //   {{0.5, 0.5, 0.5}},    {{1.0, 0.4, 0.4}},
+  //   {{0.4, 1.0, 0.4}},  // Grey, Light Red, Light Green
+  //   {{0.4, 0.4, 1.0}},    {{1.0, 1.0, 0.4}},
+  //   {{0.4, 1.0, 1.0}},  // Light Blue, Light Yellow, Light Cyan
+  //   {{1.0, 0.4, 1.0}},    {{1.0, 0.7, 0.4}},
+  //   {{0.7, 0.4, 1.0}},  // Light Magenta, Light Orange, Light Purple
+  //   {{1.0, 0.6, 0.8}},    {{0.71, 0.4, 0.12}},
+  //   {{0.55, 0.0, 0.0}},  // Light Pink, Light Brown, Dark Red
+  //   {{0.0, 0.4, 0.0}},    {{0.0, 0.0, 0.55}},
+  //   {{0.55, 0.55, 0.0}},                       // Dark Green, Dark Blue, Dark Yellow
+  //   {{0.0, 0.55, 0.55}},  {{0.55, 0.0, 0.55}}  // Dark Cyan, Dark Magenta
+  // }};
+
+  // do nothing for now
+  return;
+}
+
+void TrackerObjectDebugger::getMessage(visualization_msgs::msg::MarkerArray & marker_array) const
 {
   if (!is_initialized_) return;
+
+  // draw markers
 
   // fill in marker array
   for (auto & marker : markers_.markers) {
@@ -190,11 +226,6 @@ void TrackerObjectDebugger::getMessage(visualization_msgs::msg::MarkerArray & ma
     delete_marker.ns = "existence_probability";
     marker_array.markers.push_back(delete_marker);
   }
-
-  previous_ids_.clear();
-  previous_ids_ = current_ids_;
-  current_ids_.clear();
-  markers_.markers.clear();
 
   return;
 }
