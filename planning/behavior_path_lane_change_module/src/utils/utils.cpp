@@ -1198,6 +1198,39 @@ double calcPhaseLength(
   const auto length_with_max_velocity = maximum_velocity * duration;
   return std::min(length_with_acceleration, length_with_max_velocity);
 }
+
+LanesPolygon createLanesPolygon(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
+  const lanelet::ConstLanelets & target_backward_lanes)
+{
+  LanesPolygon lanes_polygon;
+
+  lanes_polygon.current =
+    utils::lane_change::createPolygon(current_lanes, 0.0, std::numeric_limits<double>::max());
+  lanes_polygon.target =
+    utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
+
+  for (const auto & target_backward_lane : target_backward_lanes) {
+    // Check to see is target_backward_lane is in current_lanes
+    // Without this check, current lane object might be treated as target lane object
+    const auto is_current_lane = [&](const lanelet::ConstLanelet & current_lane) {
+      return current_lane.id() == target_backward_lane.id();
+    };
+
+    if (std::any_of(current_lanes.begin(), current_lanes.end(), is_current_lane)) {
+      continue;
+    }
+
+    lanelet::ConstLanelets lanelet{target_backward_lane};
+    auto lane_polygon =
+      utils::lane_change::createPolygon(lanelet, 0.0, std::numeric_limits<double>::max());
+
+    if (lane_polygon) {
+      lanes_polygon.target_backward.push_back(*lane_polygon);
+    }
+  }
+  return lanes_polygon;
+}
 }  // namespace behavior_path_planner::utils::lane_change
 
 namespace behavior_path_planner::utils::lane_change::debug
