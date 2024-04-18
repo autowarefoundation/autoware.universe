@@ -14,11 +14,11 @@
 //
 //
 
-#include "multi_object_tracker/debugger.hpp"
+#include "multi_object_tracker/debugger/debugger.hpp"
 
 #include <memory>
 
-TrackerDebugger::TrackerDebugger(rclcpp::Node & node) : diagnostic_updater_(&node), node_(node)
+TrackerDebugger::TrackerDebugger(rclcpp::Node & node) : node_(node), diagnostic_updater_(&node)
 {
   // declare debug parameters to decide whether to publish debug topics
   loadParameters();
@@ -46,14 +46,6 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node) : diagnostic_updater_(&nod
   setupDiagnostics();
 }
 
-void TrackerDebugger::setupDiagnostics()
-{
-  diagnostic_updater_.setHardwareID(node_.get_name());
-  diagnostic_updater_.add(
-    "Perception delay check from original header stamp", this, &TrackerDebugger::checkDelay);
-  diagnostic_updater_.setPeriod(0.1);
-}
-
 void TrackerDebugger::loadParameters()
 {
   try {
@@ -73,6 +65,26 @@ void TrackerDebugger::loadParameters()
     debug_settings_.diagnostics_error_delay = 1.0;
   }
 }
+
+void TrackerDebugger::setupDiagnostics()
+{
+  diagnostic_updater_.setHardwareID(node_.get_name());
+  diagnostic_updater_.add(
+    "Perception delay check from original header stamp", this, &TrackerDebugger::checkDelay);
+  diagnostic_updater_.setPeriod(0.1);
+}
+
+// object publishing functions
+
+void TrackerDebugger::publishTentativeObjects(
+  const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const
+{
+  if (debug_settings_.publish_tentative_objects) {
+    debug_tentative_objects_pub_->publish(tentative_objects);
+  }
+}
+
+// time measurement functions
 
 void TrackerDebugger::checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
@@ -95,14 +107,6 @@ void TrackerDebugger::checkDelay(diagnostic_updater::DiagnosticStatusWrapper & s
   }
 
   stat.add("Detection delay", delay);
-}
-
-void TrackerDebugger::publishTentativeObjects(
-  const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const
-{
-  if (debug_settings_.publish_tentative_objects) {
-    debug_tentative_objects_pub_->publish(tentative_objects);
-  }
 }
 
 void TrackerDebugger::startMeasurementTime(

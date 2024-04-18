@@ -14,8 +14,8 @@
 //
 //
 
-#ifndef MULTI_OBJECT_TRACKER__DEBUGGER_HPP_
-#define MULTI_OBJECT_TRACKER__DEBUGGER_HPP_
+#ifndef MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
+#define MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/publisher.hpp>
@@ -37,16 +37,8 @@ class TrackerDebugger
 {
 public:
   explicit TrackerDebugger(rclcpp::Node & node);
-  void publishTentativeObjects(
-    const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const;
-  void startMeasurementTime(
-    const rclcpp::Time & now, const rclcpp::Time & measurement_header_stamp);
-  void endMeasurementTime(const rclcpp::Time & now);
-  void startPublishTime(const rclcpp::Time & now);
-  void endPublishTime(const rclcpp::Time & now, const rclcpp::Time & object_time);
 
-  void setupDiagnostics();
-  void checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat);
+private:
   struct DEBUG_SETTINGS
   {
     bool publish_processing_time;
@@ -54,22 +46,38 @@ public:
     double diagnostics_warn_delay;
     double diagnostics_error_delay;
   } debug_settings_;
-  double pipeline_latency_ms_ = 0.0;
-  diagnostic_updater::Updater diagnostic_updater_;
-  bool shouldPublishTentativeObjects() const { return debug_settings_.publish_tentative_objects; }
 
-private:
-  void loadParameters();
-  bool is_initialized_ = false;
   rclcpp::Node & node_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
     debug_tentative_objects_pub_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
+
+  diagnostic_updater::Updater diagnostic_updater_;
+
+  bool is_initialized_ = false;
+  double pipeline_latency_ms_ = 0.0;
   rclcpp::Time last_input_stamp_;
   rclcpp::Time stamp_process_start_;
   rclcpp::Time stamp_process_end_;
   rclcpp::Time stamp_publish_start_;
   rclcpp::Time stamp_publish_output_;
+
+public:
+  bool shouldPublishTentativeObjects() const { return debug_settings_.publish_tentative_objects; }
+  void setupDiagnostics();
+
+  void publishTentativeObjects(
+    const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const;
+
+  void startMeasurementTime(
+    const rclcpp::Time & now, const rclcpp::Time & measurement_header_stamp);
+  void endMeasurementTime(const rclcpp::Time & now);
+  void startPublishTime(const rclcpp::Time & now);
+  void endPublishTime(const rclcpp::Time & now, const rclcpp::Time & object_time);
+  void checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+private:
+  void loadParameters();
 };
 
-#endif  // MULTI_OBJECT_TRACKER__DEBUGGER_HPP_
+#endif  // MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
