@@ -346,7 +346,7 @@ def launch_setup(context, *args, **kwargs):
             ],
         )
 
-    else:
+    elif trajectory_follower_mode == "smart_mpc_trajectory_follower":
         container = ComposableNodeContainer(
             name="control_container",
             namespace="",
@@ -359,6 +359,10 @@ def launch_setup(context, *args, **kwargs):
                 operation_mode_transition_manager_component,
                 glog_component,
             ],
+        )
+    else:
+        raise Exception(
+            f"The argument trajectory_follower_mode must be either trajectory_follower_node or smart_mpc_trajectory_follower, but {trajectory_follower_mode} was given."
         )
 
     control_validator_component = ComposableNode(

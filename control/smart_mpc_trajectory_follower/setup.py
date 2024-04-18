@@ -7,6 +7,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 os.system("pip3 install numba==0.58.1 --force-reinstall")
+os.system("pip3 install pybind11")
 os.system("pip3 install GPy")
 os.system("pip3 install torch")
 package_path = {}

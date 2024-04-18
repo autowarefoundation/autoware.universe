@@ -265,11 +265,20 @@ public:
     int x_dim = x.size();
     double theta = x[3];
     double v = x[2];
-    double coef = 0.4 * std::abs(v);
+    double coef = 2.0 * std::abs(v);
     coef = coef * coef * coef * coef * coef * coef * coef;
     if (coef > 1.0) {
       coef = 1.0;
     }
+    /*
+    In previous implementations, the training model was unreliable in the low speed range
+    because data in the low speed range was excluded from the training data
+    in order to exclude data not under control from them.
+    However, now the topic /system/operation_mode/state is used to identify
+    whether the data is under control or not.
+    Therefore, it may be safe to always set coef = 1, and this variable may be eliminated
+    once it is confirmed safe to do so.
+    */
     double cos = std::cos(theta);
     double sin = std::sin(theta);
     Eigen::Matrix2d Rot;
@@ -394,7 +403,7 @@ public:
     int x_dim = x.size();
     double theta = x[3];
     double v = x[2];
-    double coef = 0.4 * std::abs(v);
+    double coef = 2.0 * std::abs(v);
     coef = coef * coef * coef * coef * coef * coef * coef;
     if (coef > 1.0) {
       coef = 1.0;
@@ -439,7 +448,7 @@ public:
       Eigen::VectorXd x = X.col(i);
       double theta = x[3];
       double v = x[2];
-      double coef = 0.4 * std::abs(v);
+      double coef = 2.0 * std::abs(v);
       coef = coef * coef * coef * coef * coef * coef * coef;
       if (coef > 1.0) {
         coef = 1.0;
