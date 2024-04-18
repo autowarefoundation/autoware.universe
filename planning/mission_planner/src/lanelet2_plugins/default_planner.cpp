@@ -158,6 +158,17 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
   param_.consider_no_drivable_lanes = node_->declare_parameter<bool>("consider_no_drivable_lanes");
   param_.check_footprint_inside_lanes =
     node_->declare_parameter<bool>("check_footprint_inside_lanes");
+  
+}
+
+void DefaultPlanner::calculateRemainingDistance(const Pose & current_vehicle_pose)
+{
+  if (is_route_planned) {
+    const auto logger = node_->get_logger();
+    double remaining_distance = route_handler_.getRemainingDistance(current_vehicle_pose, goal_pose_);
+
+    RCLCPP_INFO_STREAM(logger, "Remaining Distance = " << remaining_distance);
+  }
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
@@ -439,6 +450,9 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
 
   const auto refined_goal = refine_goal_height(goal_pose, route_sections);
   RCLCPP_DEBUG(logger, "Goal Pose Z : %lf", refined_goal.position.z);
+
+  is_route_planned = true;
+  goal_pose_ = refined_goal;
 
   // The header is assigned by mission planner.
   route_msg.start_pose = points.front();

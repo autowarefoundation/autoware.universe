@@ -355,7 +355,7 @@ public:
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
-
+  double getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_);
 private:
   // MUST
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;

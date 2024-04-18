@@ -2260,6 +2260,49 @@ bool RouteHandler::hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath &
   return false;
 }
 
+double RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose &  goal_pose_)
+{
+  double length = 0.0;
+  double first_lane_length = 0.0;
+  size_t  counter = 0;
+  lanelet::ConstLanelet goal_lanelet;
+  getGoalLanelet(&goal_lanelet);
+
+  lanelet::ConstLanelet current_lanelet;
+  getClosestLaneletWithinRoute(current_pose, &current_lanelet);
+
+  const lanelet::Optional<lanelet::routing::Route> optional_route =
+      routing_graph_ptr_->getRoute(current_lanelet, goal_lanelet, 0);
+
+  lanelet::routing::LaneletPath shortest_path;
+  shortest_path = optional_route->shortestPath();
+  lanelet::ConstLanelets first_lanelets_;
+  lanelet::ConstLanelets last_lanelets_;
+  for(auto & llt : shortest_path){
+    if(counter == 0){
+    first_lanelets_.push_back(llt);
+    first_lane_length = lanelet::utils::getLaneletLength2d(llt);
+    }
+    else if(counter == (shortest_path.size() - 1)){
+      last_lanelets_.push_back(llt);
+    }
+    else{
+      length += lanelet::utils::getLaneletLength2d(llt);
+
+    }
+    counter++;
+    
+  }
+  //lanelet::LaneletSequence lanelet_seq = shortest_path.getRemainingLane(shortest_path.begin());
+ lanelet::ArcCoordinates arc_coord =  lanelet::utils::getArcCoordinates(first_lanelets_, current_pose);
+ double llng = first_lane_length - arc_coord.length;
+ lanelet::ArcCoordinates arc_coord2 =  lanelet::utils::getArcCoordinates(last_lanelets_, goal_pose_);
+ double llng2 = arc_coord2.length;
+
+
+  return (length + llng + llng2);
+}
+
 bool RouteHandler::findDrivableLanePath(
   const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet,
   lanelet::routing::LaneletPath & drivable_lane_path) const

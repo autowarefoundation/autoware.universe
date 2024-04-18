@@ -124,12 +124,15 @@ private:
 
   rclcpp::TimerBase::SharedPtr data_check_timer_;
   void check_initialization();
+  rclcpp::TimerBase::SharedPtr remaining_distance_timer_;
+  void remaining_distance_timer_callback_();
 
   double reroute_time_threshold_;
   double minimum_reroute_length_;
   bool check_reroute_safety(const LaneletRoute & original_route, const LaneletRoute & target_route);
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+  Pose current_vehicle_pose;
 };
 
 }  // namespace mission_planner

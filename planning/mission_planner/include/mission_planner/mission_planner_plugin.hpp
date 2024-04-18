@@ -30,6 +30,7 @@ namespace mission_planner
 class PlannerPlugin
 {
 public:
+  using Pose = geometry_msgs::msg::Pose;
   using RoutePoints = std::vector<geometry_msgs::msg::Pose>;
   using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
@@ -40,6 +41,7 @@ public:
   virtual void initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg) = 0;
   virtual bool ready() const = 0;
   virtual LaneletRoute plan(const RoutePoints & points) = 0;
+  virtual void calculateRemainingDistance(const Pose & current_vehicle_pose) = 0;
   virtual MarkerArray visualize(const LaneletRoute & route) const = 0;
   virtual void updateRoute(const LaneletRoute & route) = 0;
   virtual void clearRoute() = 0;
