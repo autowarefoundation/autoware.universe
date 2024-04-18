@@ -20,7 +20,7 @@ int main(int argc, char * argv[])
 
   // initialize node
   rclcpp::NodeOptions node_options;
-  auto node = std::make_shared<autoware_static_centerline_generator::StaticCenterlineGeneratorNode>(
+  auto node = std::make_shared<autoware::static_centerline_generator::StaticCenterlineGeneratorNode>(
     node_options);
 
   // get ros parameter
