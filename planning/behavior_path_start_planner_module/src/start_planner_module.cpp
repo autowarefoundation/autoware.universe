@@ -17,6 +17,7 @@
 #include "behavior_path_planner_common/utils/create_vehicle_footprint.hpp"
 #include "behavior_path_planner_common/utils/parking_departure/utils.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_start_planner_module/util.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
@@ -37,6 +38,8 @@
 #include <vector>
 
 using behavior_path_planner::utils::parking_departure::initializeCollisionCheckDebugMap;
+using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
+using motion_utils::calcLateralOffset;
 using motion_utils::calcLongitudinalOffsetPose;
 using tier4_autoware_utils::calcOffsetPose;
 
@@ -1156,14 +1159,19 @@ bool StartPlannerModule::isSafePath() const
   const double hysteresis_factor =
     status_.is_safe_dynamic_objects ? 1.0 : safety_check_params_->hysteresis_factor_expand_rate;
 
-  utils::parking_departure::updateSafetyCheckTargetObjectsData(
-    start_planner_data_, filtered_objects, target_objects_on_lane, ego_predicted_path);
-
+  std::vector<ExtendedPredictedObject> merged_target_object;
+  merged_target_object.reserve(
+    target_objects_on_lane.on_current_lane.size() + target_objects_on_lane.on_shoulder_lane.size());
+  merged_target_object.insert(
+    merged_target_object.end(), target_objects_on_lane.on_current_lane.begin(),
+    target_objects_on_lane.on_current_lane.end());
+  merged_target_object.insert(
+    merged_target_object.end(), target_objects_on_lane.on_shoulder_lane.begin(),
+    target_objects_on_lane.on_shoulder_lane.end());
   return behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
-    pull_out_path, ego_predicted_path, target_objects_on_lane.on_current_lane,
-    start_planner_data_.collision_check, planner_data_->parameters,
-    safety_check_params_->rss_params, objects_filtering_params_->use_all_predicted_path,
-    hysteresis_factor);
+    pull_out_path, ego_predicted_path, merged_target_object, start_planner_data_.collision_check,
+    planner_data_->parameters, safety_check_params_->rss_params,
+    objects_filtering_params_->use_all_predicted_path, hysteresis_factor);
 }
 
 bool StartPlannerModule::isGoalBehindOfEgoInSameRouteSegment() const
