@@ -75,8 +75,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
 }
 
 void publishMandatoryTopics(
-  const std::shared_ptr<PlanningInterfaceTestManager> & test_manager,
-  const std::shared_ptr<BehaviorPathPlannerNode> & test_target_node)
+  std::shared_ptr<PlanningInterfaceTestManager> test_manager,
+  std::shared_ptr<BehaviorPathPlannerNode> test_target_node)
 {
   // publish necessary topics from test_manager
   test_manager->publishInitialPose(test_target_node, "behavior_path_planner/input/odometry");
