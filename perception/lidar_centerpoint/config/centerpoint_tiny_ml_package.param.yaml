@@ -8,3 +8,5 @@
       voxel_size: [0.32, 0.32, 10.0]
       downsample_factor: 2
       encoder_in_feature_size: 9
+      has_variance: false
+      has_twist: false
