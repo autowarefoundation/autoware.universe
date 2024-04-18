@@ -1211,8 +1211,8 @@ LanesPolygon createLanesPolygon(
     utils::lane_change::createPolygon(target_lanes, 0.0, std::numeric_limits<double>::max());
 
   for (const auto & target_backward_lane : target_backward_lanes) {
-    auto lane_polygon =
-      utils::lane_change::createPolygon(target_backward_lane, 0.0, std::numeric_limits<double>::max());
+    auto lane_polygon = utils::lane_change::createPolygon(
+      target_backward_lane, 0.0, std::numeric_limits<double>::max());
 
     if (lane_polygon) {
       lanes_polygon.target_backward.push_back(*lane_polygon);
