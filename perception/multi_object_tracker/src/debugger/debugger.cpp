@@ -16,7 +16,8 @@
 
 #include <memory>
 
-TrackerDebugger::TrackerDebugger(rclcpp::Node & node) : node_(node), diagnostic_updater_(&node)
+TrackerDebugger::TrackerDebugger(rclcpp::Node & node, const std::string & frame_id)
+: node_(node), diagnostic_updater_(&node), object_debugger_(frame_id)
 {
   // declare debug parameters to decide whether to publish debug topics
   loadParameters();
@@ -31,6 +32,9 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node) : node_(node), diagnostic_
       node_.create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>(
         "debug/tentative_objects", rclcpp::QoS{1});
   }
+
+  debug_objects_markers_pub_ = node_.create_publisher<visualization_msgs::msg::MarkerArray>(
+    "multi_object_tracker/debug/objects_markers", rclcpp::QoS{1});
 
   // initialize timestamps
   const rclcpp::Time now = node_.now();
@@ -168,4 +172,24 @@ void TrackerDebugger::endPublishTime(const rclcpp::Time & now, const rclcpp::Tim
       "debug/meas_to_tracked_object_ms", measurement_to_object_ms);
   }
   stamp_publish_output_ = now;
+}
+
+void TrackerDebugger::collectObjectInfo(
+  const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
+  const uint & channel_index,
+  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+  const std::unordered_map<int, int> & direct_assignment,
+  const std::unordered_map<int, int> & reverse_assignment)
+{
+  object_debugger_.collect(
+    message_time, list_tracker, channel_index, detected_objects, direct_assignment,
+    reverse_assignment);
+}
+
+// ObjectDebugger
+void TrackerDebugger::publishObjectsMarkers()
+{
+  visualization_msgs::msg::MarkerArray marker_message;
+  object_debugger_.getMessage(marker_message);
+  debug_objects_markers_pub_->publish(marker_message);
 }

@@ -23,6 +23,7 @@ include_directories(
 set(MULTI_OBJECT_TRACKER_SRC
   src/multi_object_tracker_core.cpp
   src/debugger/debugger.cpp
+  src/debugger/debug_object.cpp
   src/processor/processor.cpp
   src/processor/input_manager.cpp
   src/data_association/data_association.cpp

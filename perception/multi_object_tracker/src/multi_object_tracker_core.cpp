@@ -165,7 +165,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
 
   // Debugger
-  debugger_ = std::make_unique<TrackerDebugger>(*this);
+  debugger_ = std::make_unique<TrackerDebugger>(*this, world_frame_id_);
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
@@ -229,7 +229,7 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
   // process end
   debugger_->endMeasurementTime(this->now());
 
-  // for debug
+  /* DEBUG */
   const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
   RCLCPP_INFO(
     this->get_logger(), "MultiObjectTracker::onMessage Objects time range: %f - %f",
@@ -252,6 +252,7 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
       input_channels_[i].long_name + " " + std::to_string(object_counts[i]) + "  ";
   }
   RCLCPP_INFO(this->get_logger(), object_counts_str.c_str());
+  /* DEBUG END */
 }
 
 void MultiObjectTracker::runProcess(
@@ -297,6 +298,12 @@ void MultiObjectTracker::runProcess(
 
   /* spawn new tracker */
   processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
+
+  // Collect debug information - tracker list, existence probabilities, association result
+  // TODO(technolojin): add option to enable/disable debug information
+  debugger_->collectObjectInfo(
+    measurement_time, processor_->getListTracker(), channel_index, transformed_objects,
+    direct_assignment, reverse_assignment);
 }
 
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
@@ -337,6 +344,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     processor_->getTentativeObjects(time, tentative_objects_msg);
     debugger_->publishTentativeObjects(tentative_objects_msg);
   }
+  debugger_->publishObjectsMarkers();
 }
 
 }  // namespace multi_object_tracker

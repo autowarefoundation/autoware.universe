@@ -11,11 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//
 
 #ifndef MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
 #define MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
+
+#include "multi_object_tracker/debugger/debug_object.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/publisher.hpp>
@@ -27,7 +27,10 @@
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
+#include <list>
 #include <memory>
+#include <string>
+#include <unordered_map>
 
 /**
  * @brief Debugger class for multi object tracker
@@ -36,7 +39,7 @@
 class TrackerDebugger
 {
 public:
-  explicit TrackerDebugger(rclcpp::Node & node);
+  explicit TrackerDebugger(rclcpp::Node & node, const std::string & frame_id);
 
 private:
   struct DEBUG_SETTINGS
@@ -47,13 +50,18 @@ private:
     double diagnostics_error_delay;
   } debug_settings_;
 
+  // ROS node, publishers
   rclcpp::Node & node_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
     debug_tentative_objects_pub_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_objects_markers_pub_;
 
   diagnostic_updater::Updater diagnostic_updater_;
+  // Object debugger
+  TrackerObjectDebugger object_debugger_;
 
+  // Time measurement
   bool is_initialized_ = false;
   double pipeline_latency_ms_ = 0.0;
   rclcpp::Time last_input_stamp_;
@@ -62,13 +70,17 @@ private:
   rclcpp::Time stamp_publish_start_;
   rclcpp::Time stamp_publish_output_;
 
-public:
-  bool shouldPublishTentativeObjects() const { return debug_settings_.publish_tentative_objects; }
+  // Configuration
   void setupDiagnostics();
+  void loadParameters();
 
+public:
+  // Object publishing
+  bool shouldPublishTentativeObjects() const { return debug_settings_.publish_tentative_objects; }
   void publishTentativeObjects(
     const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const;
 
+  // Time measurement
   void startMeasurementTime(
     const rclcpp::Time & now, const rclcpp::Time & measurement_header_stamp);
   void endMeasurementTime(const rclcpp::Time & now);
@@ -76,8 +88,14 @@ public:
   void endPublishTime(const rclcpp::Time & now, const rclcpp::Time & object_time);
   void checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
-private:
-  void loadParameters();
+  // Debug object
+  void collectObjectInfo(
+    const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
+    const uint & channel_index,
+    const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+    const std::unordered_map<int, int> & direct_assignment,
+    const std::unordered_map<int, int> & reverse_assignment);
+  void publishObjectsMarkers();
 };
 
 #endif  // MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
