@@ -58,8 +58,9 @@ bool Tracker::updateWithMeasurement(
     no_measurement_count_ = 0;
     ++total_measurement_count_;
 
-    double const delta_time = (measurement_time - last_update_with_measurement_time_).seconds();
-    double const decay_rate = 5.0 / 10.0;
+    // existence probability on each channel
+    const double delta_time = (measurement_time - last_update_with_measurement_time_).seconds();
+    const double decay_rate = 5.0 / 10.0;
     existence_probabilities_[channel_index] = existence_probability_from_object;
     for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
       if (i == channel_index) {
@@ -68,11 +69,9 @@ bool Tracker::updateWithMeasurement(
       existence_probabilities_[i] *= std::exp(-decay_rate * delta_time);
     }
 
-    // regularization
-    total_existence_probability_ =
-      std::accumulate(existence_probabilities_.begin(), existence_probabilities_.end(), 0.0f);
-    total_existence_probability_ = std::max(total_existence_probability_, 0.0f);
-    total_existence_probability_ = std::min(total_existence_probability_, 1.0f);
+    // total existence probability - object is detected
+    total_existence_probability_ +=
+      (1 - total_existence_probability_) * existence_probability_from_object;
   }
 
   last_update_with_measurement_time_ = measurement_time;
@@ -86,22 +85,16 @@ bool Tracker::updateWithMeasurement(
 bool Tracker::updateWithoutMeasurement(const rclcpp::Time & now)
 {
   // Update existence probability
+  ++no_measurement_count_;
+  ++total_no_measurement_count_;
   {
-    ++no_measurement_count_;
-    ++total_no_measurement_count_;
-
-    // decay
+    // decay existence probability
     double const delta_time = (now - last_update_with_measurement_time_).seconds();
     double const decay_rate = 5.0 / 10.0;
     for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
       existence_probabilities_[i] *= std::exp(-decay_rate * delta_time);
     }
-
-    // regularization
-    total_existence_probability_ =
-      std::accumulate(existence_probabilities_.begin(), existence_probabilities_.end(), 0.0f);
-    total_existence_probability_ = std::max(total_existence_probability_, 0.0f);
-    total_existence_probability_ = std::min(total_existence_probability_, 1.0f);
+    total_existence_probability_ *= std::exp(-decay_rate * delta_time);
   }
 
   return true;

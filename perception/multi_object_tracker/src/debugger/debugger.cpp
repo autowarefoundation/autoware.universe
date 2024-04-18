@@ -11,8 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//
 
 #include "multi_object_tracker/debugger/debugger.hpp"
 
@@ -74,7 +72,7 @@ void TrackerDebugger::setupDiagnostics()
   diagnostic_updater_.setPeriod(0.1);
 }
 
-// object publishing functions
+// Object publishing functions
 
 void TrackerDebugger::publishTentativeObjects(
   const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const
@@ -84,7 +82,7 @@ void TrackerDebugger::publishTentativeObjects(
   }
 }
 
-// time measurement functions
+// Time measurement functions
 
 void TrackerDebugger::checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {

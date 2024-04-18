@@ -57,6 +57,8 @@ public:
     const rclcpp::Time & time,
     autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const;
 
+  void getExistenceProbabilities(std::vector<std::vector<float>> & existence_vectors) const;
+
 private:
   std::map<std::uint8_t, std::string> tracker_map_;
   std::list<std::shared_ptr<Tracker>> list_tracker_;
