@@ -240,13 +240,6 @@ public:
   bool hasCandidateModules() const { return !candidate_module_ptrs_.empty(); }
 
   /**
-   * @brief reset current route lanelet, unless the lane change module is running
-   * @param planner data.
-   * @details this function is called only when receiving a new route or driving manually
-   */
-  void resetCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data);
-
-  /**
    * @brief show planner manager internal condition.
    */
   void print() const;
@@ -260,6 +253,18 @@ public:
    * @brief visit each module and get debug information.
    */
   std::shared_ptr<SceneModuleVisitor> getDebugMsg();
+
+  /**
+   * @brief reset the current route lanelet to be the closest lanelet within the route
+   * @param planner data.
+   */
+  void resetCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data)
+  {
+    lanelet::ConstLanelet ret{};
+    data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
+    RCLCPP_DEBUG(logger_, "update current route lanelet. id:%ld", ret.id());
+    current_route_lanelet_ = ret;
+  }
 
 private:
   /**
@@ -359,19 +364,6 @@ private:
       deleteExpiredModules(m);
     });
     candidate_module_ptrs_.clear();
-  }
-
-  /**
-   * @brief get current route lanelet. the lanelet is used for reference path generation.
-   * @param planner data.
-   * @return route lanelet closest to ego within the route.
-   */
-  lanelet::ConstLanelet updateCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data) const
-  {
-    lanelet::ConstLanelet ret{};
-    data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
-    RCLCPP_DEBUG(logger_, "update start lanelet. id:%ld", ret.id());
-    return ret;
   }
 
   /**

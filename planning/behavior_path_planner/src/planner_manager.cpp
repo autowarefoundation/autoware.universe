@@ -89,9 +89,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
   stop_watch_.tic("total_time");
   debug_info_.clear();
 
-  if (!current_route_lanelet_) {
-    current_route_lanelet_ = updateCurrentRouteLanelet(data);
-  }
+  if (!current_route_lanelet_) resetCurrentRouteLanelet(data);
 
   std::for_each(
     manager_ptrs_.begin(), manager_ptrs_.end(), [&data](const auto & m) { m->setData(data); });
@@ -439,7 +437,7 @@ BehaviorModuleOutput PlannerManager::getReferencePath(const std::shared_ptr<Plan
   if (could_calculate_closest_lanelet)
     current_route_lanelet_ = closest_lane;
   else
-    current_route_lanelet_ = updateCurrentRouteLanelet(data);
+    resetCurrentRouteLanelet(data);
   return utils::getReferencePath(*current_route_lanelet_, data);
 }
 
@@ -801,10 +799,9 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
       std::find_if(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), success_module_cond);
 
     if (std::any_of(itr, approved_module_ptrs_.end(), [](const auto & m) {
-          return m->isCurrentRouteLaneletToBeUpdated();
-        })) {
-      current_route_lanelet_ = updateCurrentRouteLanelet(data);
-    }
+          return m->isCurrentRouteLaneletToBeReset();
+        }))
+      resetCurrentRouteLanelet(data);
 
     std::for_each(itr, approved_module_ptrs_.end(), [&](auto & m) {
       debug_info_.emplace_back(m, Action::DELETE, "From Approved");
@@ -873,28 +870,6 @@ void PlannerManager::updateCandidateModules(
    * sort by priority. sorted_request_modules.front() is the highest priority module.
    */
   sortByPriority(candidate_module_ptrs_);
-}
-
-void PlannerManager::resetCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data)
-{
-  if (!current_route_lanelet_) {
-    current_route_lanelet_ = updateCurrentRouteLanelet(data);
-    return;
-  }
-
-  // when lane change module is running, don't update the current route lanelet.
-  const bool is_lane_change_running = std::invoke([&]() {
-    const auto lane_change_itr = std::find_if(
-      approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
-      [](const auto & m) { return m->isCurrentRouteLaneletToBeUpdated(); });
-    return lane_change_itr != approved_module_ptrs_.end();
-  });
-  if (is_lane_change_running) {
-    return;
-  }
-
-  current_route_lanelet_ = updateCurrentRouteLanelet(data);
-  RCLCPP_INFO_EXPRESSION(logger_, verbose_, "change ego's following lane. reset.");
 }
 
 void PlannerManager::print() const

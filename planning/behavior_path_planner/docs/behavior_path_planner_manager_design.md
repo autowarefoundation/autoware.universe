@@ -542,61 +542,23 @@ The reference path is generated from the centerline of the **lanelet sequence** 
 The **current route lanelet** keeps track of the route lanelet currently followed by the planner.
 It is initialized as the closest lanelet within the route.
 It is then updated as ego travels along the route such that (1) it follows the previous **current route lanelet** and (2) it is the closest lanelet within the route.
-The rules to reinitialize the **current route lanelet** to the closest lanelet within the route (ignoring whether it follows the previous **current route lanelet**)
-depends on the operation mode.
 
-- the state is `OperationModeState::AUTONOMOUS`: reinitialize only when the ego moves to right or left lane by lane change module.
-- the state is **NOT** `OperationModeState::AUTONOMOUS`: reinitialize at the beginning of every planning cycle.
+The **current route lanelet** can be reset to the closest lanelet within the route, ignoring whether it follows the previous **current route lanelet** .
 
 ![current_route_lanelet](../image/manager/current_route_lanelet.svg)
 
 The manager needs to know the ego behavior and then generate a root reference path from the lanes that Ego should follow.
 
-For example, during autonomous driving, even if Ego moves into the next lane in order to avoid a parked vehicle, the target lanes that Ego should follow will **NOT** change because Ego will return to the original lane after the avoidance maneuver. Therefore, the manager does **NOT** reinitialize the **current route lanelet**, even if the avoidance maneuver is finished.
+For example, during autonomous driving, even if Ego moves into the next lane in order to avoid a parked vehicle, the target lanes that Ego should follow will **NOT** change because Ego will return to the original lane after the avoidance maneuver. Therefore, the manager does **NOT** reset the **current route lanelet**, even if the avoidance maneuver is finished.
 
 ![avoidance](../image/manager/avoidance.svg)
 
-On the other hand, if the lane change is successful, the manager reinitializes the **current route lanelet** because the lane that Ego should follow changes.
+On the other hand, if the lane change is successful, the manager resets the **current route lanelet** because the lane that Ego should follow changes.
 
 ![lane_change](../image/manager/lane_change.svg)
 
-In addition, while manual driving, the manager always reinitialize the **current route lanelet** because the pilot may move to an adjacent lane regardless of the decision of the autonomous driving system.
-
-```c++
-  /**
-   * @brief get reference path from current_route_lanelet_ centerline.
-   * @param planner data.
-   * @return reference path.
-   */
-  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data)
-  {
-    const auto & route_handler = data->route_handler;
-    const auto & pose = data->self_odometry->pose.pose;
-    const auto p = data->parameters;
-
-    constexpr double extra_margin = 10.0;
-    const auto backward_length =
-      std::max(p.backward_path_length, p.backward_path_length + extra_margin);
-
-    const auto lanelet_sequence = route_handler->getLaneletSequence(
-      current_route_lanelet_.value(), pose, backward_length, p.forward_path_length);
-
-    lanelet::ConstLanelet closest_lane{};
-    const auto could_calculate_closest_lanelet =
-      lanelet::utils::query::getClosestLaneletWithConstrains(
-        lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
-        p.ego_nearest_yaw_threshold) ||
-      lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane);
-
-    if (could_calculate_closest_lanelet)
-      current_route_lanelet_ = closest_lane;
-    else
-      current_route_lanelet_ = updateCurrentRouteLanelet(data);
-    return utils::getReferencePath(*current_route_lanelet_, data);
-  }
-```
-
-Code is [here](https://github.com/autowarefoundation/autoware.universe/blob/b1734916e3efd9786507a271e0fe829dd37476c8/planning/behavior_path_planner/include/behavior_path_planner/planner_manager.hpp#L202-L227)
+In addition, while manually driving (i.e., either the `OperationModeState` is different from `AUTONOMOUS` or the Autoware control is not engaged), the manager resets the **current route lanelet** at each iteration because the ego vehicle may move to an adjacent lane regardless of the decision of the autonomous driving system.
+The only exception is when a module is already approved, allowing testing the module's behavior while manually driving.
 
 ## Drivable area generation
 

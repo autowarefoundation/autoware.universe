@@ -67,7 +67,7 @@ public:
 
   bool isExecutionReady() const override;
 
-  bool isCurrentRouteLaneletToBeUpdated() const override
+  bool isCurrentRouteLaneletToBeReset() const override
   {
     return getCurrentStatus() == ModuleStatus::SUCCESS;
   }

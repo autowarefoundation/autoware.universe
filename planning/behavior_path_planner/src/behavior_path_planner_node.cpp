@@ -389,9 +389,7 @@ void BehaviorPathPlannerNode::run()
     const auto controlled_by_autoware_autonomously =
       planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
       planner_data_->operation_mode->is_autoware_control_enabled;
-    if (
-      !controlled_by_autoware_autonomously &&
-      !planner_manager_->hasNonAlwaysExecutableApprovedModules())
+    if (!controlled_by_autoware_autonomously && !planner_manager_->hasApprovedModules())
       planner_manager_->resetCurrentRouteLanelet(planner_data_);
   }
 
