@@ -319,6 +319,165 @@ The detection area for the target lane can be expanded beyond its original bound
   </table>
 </div>
 
+##### Object filtering
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title NormalLaneChange::filterObjects Method Execution Flow
+
+start
+
+partition "Filter Objects by Class" {
+:Iterate through each object in objects list;
+while (has not finished iterating through object list) is (TRUE)
+  if (current object type != param.object_types_to_check) then (TRUE)
+  :Remove current object;
+else (false)
+endif
+end while
+}
+
+if (object list is empty?) then (TRUE)
+  :Return empty result;
+  stop
+else (false)
+endif
+
+:Generate path from current lanes;
+
+if (path empty?) then (TRUE)
+  :Return empty result;
+  stop
+else (false)
+endif
+
+partition "Filter Objects Ahead Terminal" {
+:Calculate lateral distance from ego to current lanes center;
+
+:Iterate through each object in objects list;
+while (has not finished iterating through object list) is (TRUE)
+  :Get current object's polygon;
+  :Initialize distance to terminal from object to max;
+  while (has not finished iterating through object polygon's vertices) is (TRUE)
+    :Calculate object's lateral distance to end of lane;
+    :Update minimum distance to terminal from object;
+  end while
+  if (Is object's distance to terminal exceeds minimum lane change length?) then (true)
+      :Remove current object;
+  else (false)
+  endif
+end while
+}
+
+partition "Filter Objects By Lanelets" {
+
+:Iterate through each object in objects list;
+while (has not finished iterating through object list) is (TRUE)
+  :lateral distance diff = difference between object's lateral distance and ego's lateral distance to the current lanes' centerline.;
+  if (Object in target lane polygon, and lateral distance diff is more than half of ego's width) then (yes)
+    :Add to target_lane_objects;
+    else (no)
+      if (Object overlaps with backward target lanes?) then (yes)
+        :Add to target_lane_objects;
+      else (no)
+        if (Object in current lane polygon?) then (yes)
+          :Add to current_lane_objects;
+        else (no)
+          :Add to other_lane_objects;
+        endif
+      endif
+  endif
+end while
+
+:Return target lanes object,  current lanes object and other lanes object;
+}
+
+partition "Filter Target Lanes' objects" {
+
+:Iterate through each object in target lane objects list;
+while (has not finished iterating through object list) is (TRUE)
+:check object's yaw with reference to ego's yaw.;
+if (yaw difference < 90 degree) then (TRUE)
+  :Assume this object's direction is same direction with ego vehicle.;
+  :check object's velocity;
+  if(velocity is within threshold) then (TRUE)
+  :Keep current object;
+  else
+    :check whether object is ahead of ego;
+    if(object is ahead of ego) then (TRUE)
+      :keep current object;
+    else (FALSE)
+      :remove current object;
+    endif
+   endif
+else
+  :Assume this object's direction is different direction with ego vehicle.;
+  :Remove current object;
+endif
+endwhile
+}
+
+partition "Filter Current Lanes' objects" {
+
+:Iterate through each object in current lane objects list;
+while (has not finished iterating through object list) is (TRUE)
+:check object's yaw with reference to ego's yaw.;
+if (yaw difference < 90 degree) then (TRUE)
+  :Assume this object's direction is same direction with ego vehicle.;
+  :check object's velocity;
+  if(velocity is within threshold) then (TRUE)
+  :check whether object is ahead of ego;
+    if(object is ahead of ego) then (TRUE)
+      :keep current object;
+    else
+      :remove current object;
+    endif
+    else
+      :remove current object;
+   endif
+else
+  :Assume this object's direction is different direction with ego vehicle.;
+  :Remove current object;
+endif
+endwhile
+}
+
+
+partition "Filter Other Lanes' objects" {
+
+:Iterate through each object in other lane objects list;
+while (has not finished iterating through object list) is (TRUE)
+:check object's yaw with reference to ego's yaw.;
+if (yaw difference < 90 degree) then (TRUE)
+  :Assume this object's direction is same direction with ego vehicle.;
+  :check object's velocity;
+  if(velocity is within threshold) then (TRUE)
+  :check whether object is ahead of ego;
+    if(object is ahead of ego) then (TRUE)
+      :keep current object;
+    else
+      :remove current object;
+    endif
+    else
+      :remove current object;
+   endif
+else
+  :Assume this object's direction is different direction with ego vehicle.;
+  :Remove current object;
+endif
+endwhile
+}
+
+:Trasform the objects into extended predicted object and return them as lane_change_target_objects;
+stop
+
+@enduml
+
+```
+
 ##### Collision check in prepare phase
 
 The ego vehicle may need to secure ample inter-vehicle distance ahead of the target vehicle before attempting a lane change. The flag `enable_collision_check_at_prepare_phase` can be enabled to gain this behavior. The following image illustrates the differences between the `false` and `true` cases.
