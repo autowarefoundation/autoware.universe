@@ -2338,14 +2338,14 @@ EstimatedTimeOfArrival RouteHandler::getEstimatedTimeOfArrival(const double & re
   }
 
   double remaining_time = remaining_distance / current_velocity_norm;
-    eta.hours = remaining_time / 3600;
-  remaining_time = std::fmod(remaining_time, 3600);
-  eta.minutes = remaining_time / 60;
-  eta.seconds = fmod(remaining_time, 60);
-  // eta.hours = static_cast<uint8_t>(remaining_time / 3600);
+  //   eta.hours = remaining_time / 3600;
   // remaining_time = std::fmod(remaining_time, 3600);
-  // eta.minutes = static_cast<uint8_t>(remaining_time / 60);
-  // eta.seconds = static_cast<uint8_t>(fmod(remaining_time, 60));
+  // eta.minutes = remaining_time / 60;
+  // eta.seconds = fmod(remaining_time, 60);
+  eta.hours = static_cast<uint8_t>(remaining_time / 3600.0);
+  remaining_time = std::fmod(remaining_time, 3600);
+  eta.minutes = static_cast<uint8_t>(remaining_time / 60.0);
+  eta.seconds = static_cast<uint8_t>(fmod(remaining_time, 60.0));
   return eta;
 }
 

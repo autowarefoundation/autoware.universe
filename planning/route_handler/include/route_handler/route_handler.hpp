@@ -51,9 +51,9 @@ enum class Direction { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
 enum class PullOutDirection { NONE, LEFT, RIGHT };
 struct EstimatedTimeOfArrival {
-  double hours;
-  double minutes;
-  double seconds;
+  uint8_t hours;
+  uint8_t minutes;
+  uint8_t seconds;
 };
 
 class RouteHandler

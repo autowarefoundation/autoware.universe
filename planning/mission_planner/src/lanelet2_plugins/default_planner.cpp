@@ -178,6 +178,7 @@ void DefaultPlanner::calculateRemainingDistance(const Pose & current_vehicle_pos
     //const auto eta = route_handler_.getEsatimatedTimeOfArrival(remaining_distance, current_vehicle_velocity);
 
     RCLCPP_INFO_STREAM(logger, "Remaining Distance = " << remaining_distance << " m");
+    RCLCPP_INFO_STREAM(logger, "ETA = " << unsigned(eta.hours) << "H : " << unsigned(eta.minutes) << "M : " << unsigned(eta.seconds) << "S");
   //   double remaining_time = remaining_distance / current_veh_vel_mag;
   //   RCLCPP_INFO_STREAM(logger, "remaining_time = " << remaining_time);
   // double hours = static_cast<uint8_t>(remaining_time / 3600);
@@ -188,9 +189,9 @@ void DefaultPlanner::calculateRemainingDistance(const Pose & current_vehicle_pos
   // RCLCPP_INFO_STREAM(logger, "minutes = " << minutes);
   // double seconds = static_cast<int>(fmod(remaining_time, 60));
   // RCLCPP_INFO_STREAM(logger, "seconds = " << seconds);
-  RCLCPP_INFO_STREAM(logger, "hours = " << eta.hours);
-  RCLCPP_INFO_STREAM(logger, "minutes = " << eta.minutes);
-  RCLCPP_INFO_STREAM(logger, "seconds = " << eta.seconds);
+  // RCLCPP_INFO_STREAM(logger, "hours = " << eta.hours);
+  // RCLCPP_INFO_STREAM(logger, "minutes = " << eta.minutes);
+  // RCLCPP_INFO_STREAM(logger, "seconds = " << eta.seconds);
   }
 }
 
