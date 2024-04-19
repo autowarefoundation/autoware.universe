@@ -190,7 +190,14 @@ void TrackerDebugger::collectObjectInfo(
 void TrackerDebugger::publishObjectsMarkers()
 {
   visualization_msgs::msg::MarkerArray marker_message;
+
+  // process data
+  object_debugger_.process();
+
+  // publish markers
   object_debugger_.getMessage(marker_message);
   debug_objects_markers_pub_->publish(marker_message);
+
+  // reset object data
   object_debugger_.reset();
 }

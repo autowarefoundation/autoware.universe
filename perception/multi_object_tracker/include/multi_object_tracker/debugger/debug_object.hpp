@@ -75,6 +75,7 @@ private:
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map_;
   std::list<int32_t> unused_marker_ids_;
   int32_t marker_id_ = 0;
+  std::vector<std::vector<ObjectData>> object_data_groups_;
 
 public:
   void collect(
@@ -88,7 +89,8 @@ public:
   void draw(
     const std::vector<std::vector<ObjectData>> object_data_groups,
     visualization_msgs::msg::MarkerArray & marker_array) const;
-  void getMessage(visualization_msgs::msg::MarkerArray & marker_array);
+  void process();
+  void getMessage(visualization_msgs::msg::MarkerArray & marker_array) const;
 
 private:
   std::string uuid_to_string(const unique_identifier_msgs::msg::UUID & u) const
