@@ -179,7 +179,11 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
       /**
        * STEP7: if the candidate module is approved, push the module into approved_module_ptrs_
        */
+      std::cerr << "highest_priority_module before " << highest_priority_module->name() << "\n";
       addApprovedModule(highest_priority_module);
+      std::cerr << "highest_priority_module after " << highest_priority_module->name() << "\n";
+
+      std::cerr << "clear CandidateModules() called 0\n";
       clearCandidateModules();
       debug_info_.emplace_back(highest_priority_module, Action::ADD, "To Approval");
 
@@ -557,11 +561,14 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
   {
     const auto remove_expired_modules = [this](auto & m) {
       if (m->getCurrentStatus() == ModuleStatus::FAILURE) {
+        std::cerr << "0 Module " << m->name() << " killed in func " << __func__ << " \n";
         deleteExpiredModules(m);
         return true;
       }
 
       if (m->getCurrentStatus() == ModuleStatus::SUCCESS) {
+        std::cerr << "1 Module " << m->name() << " killed in func " << __func__ << " \n";
+
         deleteExpiredModules(m);
         return true;
       }
@@ -581,6 +588,8 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
    * return null data if valid candidate module doesn't exist.
    */
   if (executable_modules.empty()) {
+    std::cerr << "clear CandidateModules() called 1\n";
+
     clearCandidateModules();
     return std::make_pair(nullptr, BehaviorModuleOutput{});
   }
@@ -711,6 +720,8 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
       [](const auto & m) { return m->isWaitingApproval(); });
 
     if (waiting_approval_modules_itr != approved_module_ptrs_.end()) {
+      std::cerr << "clear CandidateModules() called 2\n";
+
       clearCandidateModules();
       candidate_module_ptrs_.push_back(*waiting_approval_modules_itr);
 
@@ -738,6 +749,8 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
 
     std::for_each(itr, approved_module_ptrs_.end(), [this](auto & m) {
       debug_info_.emplace_back(m, Action::DELETE, "From Approved");
+      std::cerr << "2 Module " << m->name() << " killed in func " << __func__ << " \n";
+
       deleteExpiredModules(m);
     });
 
@@ -745,6 +758,8 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
       manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->updateObserver(); });
 
     if (itr != approved_module_ptrs_.end()) {
+      std::cerr << "clear CandidateModules() called 3\n";
+
       clearCandidateModules();
     }
 
@@ -808,6 +823,8 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
 
     std::for_each(itr, approved_module_ptrs_.end(), [&](auto & m) {
       debug_info_.emplace_back(m, Action::DELETE, "From Approved");
+      std::cerr << "3 Module " << m->name() << " killed in func " << __func__ << " \n";
+
       deleteExpiredModules(m);
     });
 
@@ -838,6 +855,8 @@ void PlannerManager::updateCandidateModules(
   {
     const auto candidate_to_remove = [&](auto & itr) {
       if (!exist(itr, request_modules)) {
+        std::cerr << "4 Module " << itr->name() << " killed in func " << __func__ << " \n";
+
         deleteExpiredModules(itr);
         return true;
       }

@@ -312,6 +312,7 @@ private:
    */
   void deleteExpiredModules(SceneModulePtr & module_ptr) const
   {
+    std::cerr << "Module to be killed! " << module_ptr->name() << "\n";
     module_ptr->onExit();
     module_ptr->publishRTCStatus();
     module_ptr->publishObjectsOfInterestMarker();
@@ -356,6 +357,8 @@ private:
   void clearCandidateModules()
   {
     std::for_each(candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [this](auto & m) {
+      std::cerr << "0xxx Module " << m->name() << " killed in func " << __func__ << " \n";
+
       deleteExpiredModules(m);
     });
     candidate_module_ptrs_.clear();

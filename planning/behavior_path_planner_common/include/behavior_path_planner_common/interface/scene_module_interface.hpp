@@ -386,6 +386,7 @@ private:
       }
 
       if (canTransitFailureState()) {
+        std::cerr << name() << " has transited to failure!\n";
         log_debug_throttled("transiting from RUNNING to FAILURE");
         return ModuleStatus::FAILURE;
       }

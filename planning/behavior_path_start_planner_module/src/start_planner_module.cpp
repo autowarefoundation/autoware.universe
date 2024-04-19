@@ -149,12 +149,22 @@ void StartPlannerModule::onFreespacePlannerTimer()
 
 BehaviorModuleOutput StartPlannerModule::run()
 {
+  std::cerr << " 0 status_.found_pull_out_path " << static_cast<int>(status_.found_pull_out_path)
+            << "\n";
   updateData();
+  std::cerr << " 1 status_.found_pull_out_path " << static_cast<int>(status_.found_pull_out_path)
+            << "\n";
+
   if (
     !isActivated() || needToPrepareBlinkerBeforeStartDrivingForward() ||
     !status_.is_safe_static_objects) {
+    std::cerr << " calling planwaiting status_.found_pull_out_path "
+              << static_cast<int>(status_.found_pull_out_path) << "\n";
+
     return planWaitingApproval();
   }
+  std::cerr << " 2 status_.found_pull_out_path " << static_cast<int>(status_.found_pull_out_path)
+            << "\n";
 
   return plan();
 }
@@ -229,6 +239,8 @@ void StartPlannerModule::updateData()
       status_.pull_out_path = freespace_status.pull_out_path;
       status_.pull_out_start_pose = freespace_status.pull_out_start_pose;
       status_.planner_type = freespace_status.planner_type;
+      std::cerr << "status_.found_pull_out_path freespace "
+                << static_cast<int>(freespace_status.found_pull_out_path) << "\n";
       status_.found_pull_out_path = freespace_status.found_pull_out_path;
       status_.driving_forward = freespace_status.driving_forward;
       status_.is_safe_static_objects = freespace_status.is_safe_static_objects;
@@ -239,6 +251,7 @@ void StartPlannerModule::updateData()
   // finish copying thread sensitive data
 
   if (receivedNewRoute()) {
+    std::cerr << "Received new route\n";
     resetStatus();
     DEBUG_PRINT("StartPlannerModule::updateData() received new route, reset status");
   }
@@ -262,7 +275,10 @@ void StartPlannerModule::updateData()
     start_planners_.begin(), start_planners_.end(),
     [&](const auto & p) { return p->getPlannerType() == status_.planner_type; });
 
-  if (planner_ptr_itr == start_planners_.end()) return;
+  if (planner_ptr_itr == start_planners_.end()) {
+    std::cerr << "No planner itr\n";
+    return;
+  }
 
   // Cropped current path to only check for collisions on the relevant parts of the path
   const auto cropped_path = std::invoke([&]() -> std::optional<PullOutPath> {
@@ -287,6 +303,7 @@ void StartPlannerModule::updateData()
 
   double collision_check_distance_from_end = collision_check_distances[status_.planner_type];
   const auto & planner_ptr = *planner_ptr_itr;
+  planner_ptr->setPlannerData(planner_data_);
   status_.is_safe_static_objects =
     !planner_ptr->isPullOutPathCollided(cropped_path.value(), collision_check_distance_from_end);
   std::cerr << "status_.is_safe_static_objects? "
@@ -314,6 +331,8 @@ bool StartPlannerModule::hasFinishedBackwardDriving() const
 
 bool StartPlannerModule::receivedNewRoute() const
 {
+  std::cerr << __func__ << " 0 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   return !planner_data_->prev_route_id ||
          *planner_data_->prev_route_id != planner_data_->route_handler->getRouteUuid();
 }
@@ -592,11 +611,25 @@ bool StartPlannerModule::canTransitSuccessState()
 
 BehaviorModuleOutput StartPlannerModule::plan()
 {
+  std::cerr << " 3 status_.found_pull_out_path " << static_cast<int>(status_.found_pull_out_path)
+            << "\n";
+
   if (isWaitingApproval()) {
+    std::cerr << " 3.1 status_.found_pull_out_path "
+              << static_cast<int>(status_.found_pull_out_path) << "\n";
+
     clearWaitingApproval();
+    std::cerr << " 3.2 status_.found_pull_out_path "
+              << static_cast<int>(status_.found_pull_out_path) << "\n";
+
     resetPathCandidate();
+    std::cerr << " 3.3 status_.found_pull_out_path "
+              << static_cast<int>(status_.found_pull_out_path) << "\n";
+
     resetPathReference();
   }
+  std::cerr << " 4 status_.found_pull_out_path " << static_cast<int>(status_.found_pull_out_path)
+            << "\n";
 
   BehaviorModuleOutput output;
   if (!status_.found_pull_out_path) {
@@ -867,7 +900,7 @@ void StartPlannerModule::planWithPriority(
       is_path_without_static_collisions);
     return;
   }
-
+  std::cerr << "AM I CALLED< WHY?\n";
   updateStatusIfNoSafePathFound();
 }
 
@@ -1045,6 +1078,9 @@ void StartPlannerModule::updatePullOutStatus()
 {
   // skip updating if enough time has not passed for preventing chattering between back and
   // start_planner
+  std::cerr << __func__ << " 0 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
+
   if (!receivedNewRoute()) {
     if (!last_pull_out_start_update_time_) {
       last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
@@ -1054,18 +1090,25 @@ void StartPlannerModule::updatePullOutStatus()
       return;
     }
   }
-  last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
 
+  std::cerr << __func__ << " 1 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
+  last_pull_out_start_update_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+  std::cerr << __func__ << " 2 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
-
+  std::cerr << __func__ << " 3 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   // refine start pose with pull out lanes.
   // 1) backward driving is not allowed: use refined pose just as start pose.
   // 2) backward driving is allowed: use refined pose to check if backward driving is needed.
   const PathWithLaneId start_pose_candidates_path = calcBackwardPathFromStartPose();
   const auto refined_start_pose = calcLongitudinalOffsetPose(
     start_pose_candidates_path.points, planner_data_->self_odometry->pose.pose.position, 0.0);
+  std::cerr << __func__ << " 4 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   if (!refined_start_pose) {
     std::cerr << "IS THIS GUY GUILTY?\n";
     return;
@@ -1078,24 +1121,32 @@ void StartPlannerModule::updatePullOutStatus()
     }
     return {*refined_start_pose};
   });
-
+  std::cerr << __func__ << " 5 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   if (!status_.backward_driving_complete || !status_.is_safe_static_objects) {
     planWithPriority(
       start_pose_candidates, *refined_start_pose, goal_pose, parameters_->search_priority);
   }
-
+  std::cerr << __func__ << " 6 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   debug_data_.refined_start_pose = *refined_start_pose;
   debug_data_.start_pose_candidates = start_pose_candidates;
   const auto pull_out_lanes = start_planner_utils::getPullOutLanes(
     planner_data_, planner_data_->parameters.backward_path_length + parameters_->max_back_distance);
-
+  std::cerr << __func__ << " 7 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   if (hasFinishedBackwardDriving()) {
     updateStatusAfterBackwardDriving();
     return;
   }
+  std::cerr << __func__ << " 8 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   status_.backward_path = start_planner_utils::getBackwardPath(
     *route_handler, pull_out_lanes, current_pose, status_.pull_out_start_pose,
     parameters_->backward_velocity);
+
+  std::cerr << __func__ << " 9 status_.found_pull_out_path "
+            << static_cast<int>(status_.found_pull_out_path) << "\n";
   return;
 }
 
@@ -1258,9 +1309,15 @@ bool StartPlannerModule::hasFinishedPullOut() const
 
 bool StartPlannerModule::needToPrepareBlinkerBeforeStartDrivingForward() const
 {
+  std::cerr << " 5 status_.found_pull_out_path " << static_cast<int>(status_.found_pull_out_path)
+            << "\n";
+
   if (!status_.first_engaged_and_driving_forward_time) {
     return false;
   }
+  std::cerr << " 6 status_.found_pull_out_path " << static_cast<int>(status_.found_pull_out_path)
+            << "\n";
+
   const auto first_engaged_and_driving_forward_time =
     status_.first_engaged_and_driving_forward_time.value();
   const double elapsed =
