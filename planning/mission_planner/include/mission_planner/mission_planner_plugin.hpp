@@ -41,7 +41,7 @@ public:
   virtual void initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg) = 0;
   virtual bool ready() const = 0;
   virtual LaneletRoute plan(const RoutePoints & points) = 0;
-  virtual void calculateRemainingDistance(const Pose & current_vehicle_pose) = 0;
+  virtual void calculateRemainingDistance(const Pose & current_vehicle_pose, const geometry_msgs::msg::Vector3 & current_vehicle_velocity) = 0;
   virtual MarkerArray visualize(const LaneletRoute & route) const = 0;
   virtual void updateRoute(const LaneletRoute & route) = 0;
   virtual void clearRoute() = 0;

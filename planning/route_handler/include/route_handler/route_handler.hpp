@@ -22,6 +22,7 @@
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -49,6 +50,11 @@ using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 enum class Direction { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
 enum class PullOutDirection { NONE, LEFT, RIGHT };
+struct EstimatedTimeOfArrival {
+  double hours;
+  double minutes;
+  double seconds;
+};
 
 class RouteHandler
 {
@@ -356,6 +362,7 @@ public:
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
   double getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_);
+  EstimatedTimeOfArrival getEstimatedTimeOfArrival(const double & remaining_distance, const geometry_msgs::msg::Vector3 & current_vehicle_velocity);
 private:
   // MUST
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
@@ -378,6 +385,8 @@ private:
   // save original(not modified) route start pose for start planer execution
   Pose original_start_pose_;
   Pose original_goal_pose_;
+
+  EstimatedTimeOfArrival eta;
 
   // non-const methods
   void setLaneletsFromRouteMsg();

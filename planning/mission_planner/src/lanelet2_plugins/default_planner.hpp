@@ -51,7 +51,7 @@ public:
   MarkerArray visualize(const LaneletRoute & route) const override;
   MarkerArray visualize_debug_footprint(tier4_autoware_utils::LinearRing2d goal_footprint_) const;
   vehicle_info_util::VehicleInfo vehicle_info_;
-  void calculateRemainingDistance(const Pose & current_vehicle_pose) override;
+  void calculateRemainingDistance(const Pose & current_vehicle_pose, const geometry_msgs::msg::Vector3 & current_vehicle_velocity) override;
 
 private:
   using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;

@@ -133,6 +133,7 @@ private:
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
   Pose current_vehicle_pose;
+  geometry_msgs::msg::Vector3 current_vehicle_velocity;
 };
 
 }  // namespace mission_planner

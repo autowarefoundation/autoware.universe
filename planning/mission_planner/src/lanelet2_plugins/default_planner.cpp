@@ -161,13 +161,36 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
   
 }
 
-void DefaultPlanner::calculateRemainingDistance(const Pose & current_vehicle_pose)
+void DefaultPlanner::calculateRemainingDistance(const Pose & current_vehicle_pose, const geometry_msgs::msg::Vector3 & current_vehicle_velocity)
 {
   if (is_route_planned) {
     const auto logger = node_->get_logger();
     double remaining_distance = route_handler_.getRemainingDistance(current_vehicle_pose, goal_pose_);
+    
+    double current_veh_vel_mag = std::sqrt(current_vehicle_velocity.x * current_vehicle_velocity.x + current_vehicle_velocity.y + current_vehicle_velocity.y);
+    RCLCPP_INFO_STREAM(logger, "current_vehicle_velocity.x = " << current_vehicle_velocity.x);
+    RCLCPP_INFO_STREAM(logger, "current_vehicle_velocity.y = " << current_vehicle_velocity.y);
+    RCLCPP_INFO_STREAM(logger, "current_veh_vel_mag = " << current_veh_vel_mag);
+    
+    // double eta = remaining_distance / current_veh_vel_mag;
+     route_handler::EstimatedTimeOfArrival eta = route_handler_.getEstimatedTimeOfArrival(remaining_distance, current_vehicle_velocity);
+    //uint8_t  seconds = route_handler_.getEstimatedTimeOfArrival(remaining_distance, current_vehicle_velocity).seconds;
+    //const auto eta = route_handler_.getEsatimatedTimeOfArrival(remaining_distance, current_vehicle_velocity);
 
-    RCLCPP_INFO_STREAM(logger, "Remaining Distance = " << remaining_distance);
+    RCLCPP_INFO_STREAM(logger, "Remaining Distance = " << remaining_distance << " m");
+  //   double remaining_time = remaining_distance / current_veh_vel_mag;
+  //   RCLCPP_INFO_STREAM(logger, "remaining_time = " << remaining_time);
+  // double hours = static_cast<uint8_t>(remaining_time / 3600);
+  // RCLCPP_INFO_STREAM(logger, "hours = " << hours);
+  // remaining_time = std::fmod(remaining_time, 3600);
+  // RCLCPP_INFO_STREAM(logger, "remaining_time = " << remaining_time);
+  // double minutes = static_cast<int>(remaining_time / 60);
+  // RCLCPP_INFO_STREAM(logger, "minutes = " << minutes);
+  // double seconds = static_cast<int>(fmod(remaining_time, 60));
+  // RCLCPP_INFO_STREAM(logger, "seconds = " << seconds);
+  RCLCPP_INFO_STREAM(logger, "hours = " << eta.hours);
+  RCLCPP_INFO_STREAM(logger, "minutes = " << eta.minutes);
+  RCLCPP_INFO_STREAM(logger, "seconds = " << eta.seconds);
   }
 }
 

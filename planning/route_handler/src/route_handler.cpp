@@ -2260,11 +2260,17 @@ bool RouteHandler::hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath &
   return false;
 }
 
-double RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose &  goal_pose_)
-{
+double RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_)
+{/**
+
+double dist_to_goal = lanelet::geometry::toArcCoordinates(
+                                    lanelet::utils::to2D(lanelet.centerline()),
+                                    lanelet::utils::to2D(target_goal_position).basicPoint())
+                                    .length;
+*/
+  static bool is_first_time{true};
   double length = 0.0;
-  double first_lane_length = 0.0;
-  size_t  counter = 0;
+  size_t counter = 0;
   lanelet::ConstLanelet goal_lanelet;
   getGoalLanelet(&goal_lanelet);
 
@@ -2272,35 +2278,75 @@ double RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose 
   getClosestLaneletWithinRoute(current_pose, &current_lanelet);
 
   const lanelet::Optional<lanelet::routing::Route> optional_route =
-      routing_graph_ptr_->getRoute(current_lanelet, goal_lanelet, 0);
+    routing_graph_ptr_->getRoute(current_lanelet, goal_lanelet, 0);
 
   lanelet::routing::LaneletPath shortest_path;
   shortest_path = optional_route->shortestPath();
-  lanelet::ConstLanelets first_lanelets_;
-  lanelet::ConstLanelets last_lanelets_;
-  for(auto & llt : shortest_path){
-    if(counter == 0){
-    first_lanelets_.push_back(llt);
-    first_lane_length = lanelet::utils::getLaneletLength2d(llt);
+  lanelet::ConstLanelets tmp_const_lanelets;
+
+  for (auto & llt : shortest_path) {
+    if (shortest_path.size() == 1 && is_first_time) {
+      tmp_const_lanelets.push_back(llt);
+      lanelet::ArcCoordinates arc_coord =
+        lanelet::utils::getArcCoordinates(tmp_const_lanelets, current_pose);
+      double this_lanelet_length = lanelet::utils::getLaneletLength2d(llt);
+      length += this_lanelet_length - arc_coord.length;
+      break;
     }
-    else if(counter == (shortest_path.size() - 1)){
-      last_lanelets_.push_back(llt);
+
+    if(shortest_path.size() == 1 && !is_first_time) {
+      length += tier4_autoware_utils::calcDistance2d(current_pose.position, goal_pose_.position);
+      break;
+      
     }
-    else{
+
+    if (counter == 0) {
+      is_first_time = false;
+      tmp_const_lanelets.push_back(llt);
+      lanelet::ArcCoordinates arc_coord =
+        lanelet::utils::getArcCoordinates(tmp_const_lanelets, current_pose);
+      double this_lanelet_length = lanelet::utils::getLaneletLength2d(llt);
+      length += this_lanelet_length - arc_coord.length;
+    } else if (counter == (shortest_path.size() - 1)) {
+      tmp_const_lanelets.push_back(llt);
+      lanelet::ArcCoordinates arc_coord =
+        lanelet::utils::getArcCoordinates(tmp_const_lanelets, goal_pose_);
+      length += arc_coord.length;
+    } else {
       length += lanelet::utils::getLaneletLength2d(llt);
-
     }
+
     counter++;
-    
+    tmp_const_lanelets.clear();
   }
-  //lanelet::LaneletSequence lanelet_seq = shortest_path.getRemainingLane(shortest_path.begin());
- lanelet::ArcCoordinates arc_coord =  lanelet::utils::getArcCoordinates(first_lanelets_, current_pose);
- double llng = first_lane_length - arc_coord.length;
- lanelet::ArcCoordinates arc_coord2 =  lanelet::utils::getArcCoordinates(last_lanelets_, goal_pose_);
- double llng2 = arc_coord2.length;
 
+  return length;
+}
 
-  return (length + llng + llng2);
+EstimatedTimeOfArrival RouteHandler::getEstimatedTimeOfArrival(const double & remaining_distance, const geometry_msgs::msg::Vector3 & current_vehicle_velocity)
+{
+
+  double current_velocity_norm = std::sqrt(
+    current_vehicle_velocity.x * current_vehicle_velocity.x +
+    current_vehicle_velocity.y * current_vehicle_velocity.y);
+
+  if(remaining_distance < 0.0001 || current_velocity_norm < 0.0001){
+    eta.hours = 0;
+    eta.minutes = 0;
+    eta.seconds = 0;
+    return eta;
+  }
+
+  double remaining_time = remaining_distance / current_velocity_norm;
+    eta.hours = remaining_time / 3600;
+  remaining_time = std::fmod(remaining_time, 3600);
+  eta.minutes = remaining_time / 60;
+  eta.seconds = fmod(remaining_time, 60);
+  // eta.hours = static_cast<uint8_t>(remaining_time / 3600);
+  // remaining_time = std::fmod(remaining_time, 3600);
+  // eta.minutes = static_cast<uint8_t>(remaining_time / 60);
+  // eta.seconds = static_cast<uint8_t>(fmod(remaining_time, 60));
+  return eta;
 }
 
 bool RouteHandler::findDrivableLanePath(
