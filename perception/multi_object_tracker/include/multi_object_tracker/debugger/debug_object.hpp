@@ -42,12 +42,14 @@ struct ObjectData
   rclcpp::Time time;
 
   // object uuid
-  unique_identifier_msgs::msg::UUID uuid;
+  boost::uuids::uuid uuid;
+  int uuid_int;
 
   // association link, pair of coordinates
   // tracker to detection
   geometry_msgs::msg::Point tracker_point;
   geometry_msgs::msg::Point detection_point;
+  bool is_associated{false};
 
   // existence probabilities
   std::vector<float> existence_vector;
@@ -69,7 +71,7 @@ private:
   std::unordered_set<int> previous_ids_;
   rclcpp::Time message_time_;
 
-  std::unordered_map<int, ObjectData> object_data_;
+  std::vector<ObjectData> object_data_list_;
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map_;
   std::list<int32_t> unused_marker_ids_;
   int32_t marker_id_ = 0;
@@ -83,8 +85,10 @@ public:
     const std::unordered_map<int, int> & reverse_assignment);
 
   void reset();
-  void draw();
-  void getMessage(visualization_msgs::msg::MarkerArray & message) const;
+  void draw(
+    const std::vector<std::vector<ObjectData>> object_data_groups,
+    visualization_msgs::msg::MarkerArray & marker_array) const;
+  void getMessage(visualization_msgs::msg::MarkerArray & marker_array);
 
 private:
   std::string uuid_to_string(const unique_identifier_msgs::msg::UUID & u) const
@@ -104,17 +108,20 @@ private:
     return uuid;
   }
 
-  void update_id_map(const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & msg)
+  void update_id_map(const std::vector<ObjectData> & object_data_list)
   {
     std::vector<boost::uuids::uuid> new_uuids;
     std::vector<boost::uuids::uuid> tracked_uuids;
-    new_uuids.reserve(msg->objects.size());
-    tracked_uuids.reserve(msg->objects.size());
-    for (const auto & object : msg->objects) {
-      const auto uuid = to_boost_uuid(object.object_id);
-      ((id_map_.find(uuid) != id_map_.end()) ? tracked_uuids : new_uuids).push_back(uuid);
+    new_uuids.reserve(object_data_list.size());
+    tracked_uuids.reserve(object_data_list.size());
+
+    // check if the object is already tracked
+    for (const auto & object_data : object_data_list) {
+      ((id_map_.find(object_data.uuid) != id_map_.end()) ? tracked_uuids : new_uuids)
+        .push_back(object_data.uuid);
     }
 
+    // remove untracked objects
     auto itr = id_map_.begin();
     while (itr != id_map_.end()) {
       if (
@@ -126,6 +133,7 @@ private:
       }
     }
 
+    // add new objects
     for (const auto & new_uuid : new_uuids) {
       if (unused_marker_ids_.empty()) {
         id_map_.emplace(new_uuid, marker_id_);
@@ -139,9 +147,10 @@ private:
 
   int32_t uuid_to_marker_id(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
-    auto uuid = to_boost_uuid(uuid_msg);
+    const auto uuid = to_boost_uuid(uuid_msg);
     return id_map_.at(uuid);
   }
+  int32_t uuid_to_marker_id(const boost::uuids::uuid & uuid) { return id_map_.at(uuid); }
 };
 
 #endif  // MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
