@@ -50,7 +50,8 @@ using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 enum class Direction { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
 enum class PullOutDirection { NONE, LEFT, RIGHT };
-struct EstimatedTimeOfArrival {
+struct EstimatedTimeOfArrival
+{
   uint8_t hours;
   uint8_t minutes;
   uint8_t seconds;
@@ -362,7 +363,10 @@ public:
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
   double getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_);
-  EstimatedTimeOfArrival getEstimatedTimeOfArrival(const double & remaining_distance, const geometry_msgs::msg::Vector3 & current_vehicle_velocity);
+  EstimatedTimeOfArrival getEstimatedTimeOfArrival(
+    const double & remaining_distance,
+    const geometry_msgs::msg::Vector3 & current_vehicle_velocity);
+
 private:
   // MUST
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;

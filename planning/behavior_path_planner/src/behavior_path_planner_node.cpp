@@ -62,7 +62,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
-  remaining_distance_eta_publisher_ = create_publisher<RemainingDistanceETA>("~/output/remaining_distance_eta", rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable());
+  remaining_distance_eta_publisher_ = create_publisher<RemainingDistanceETA>(
+    "~/output/remaining_distance_eta",
+    rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable());
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
@@ -537,7 +539,8 @@ void BehaviorPathPlannerNode::publish_reroute_availability() const
   reroute_availability_publisher_->publish(is_reroute_available);
 }
 
-void BehaviorPathPlannerNode::publishRemainingDistanceETA(const double & remaining_distance, const route_handler::EstimatedTimeOfArrival & eta) const
+void BehaviorPathPlannerNode::publishRemainingDistanceETA(
+  const double & remaining_distance, const route_handler::EstimatedTimeOfArrival & eta) const
 {
   RemainingDistanceETA remaining_distance_eta;
   remaining_distance_eta.remaining_distance = remaining_distance;
@@ -546,7 +549,6 @@ void BehaviorPathPlannerNode::publishRemainingDistanceETA(const double & remaini
   remaining_distance_eta.seconds = eta.seconds;
 
   remaining_distance_eta_publisher_->publish(remaining_distance_eta);
-
 }
 
 void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDebugData & debug_data)

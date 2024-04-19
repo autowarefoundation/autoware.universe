@@ -33,9 +33,9 @@
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <autoware_planning_msgs/msg/remaining_distance_eta.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
@@ -65,9 +65,9 @@ using autoware_perception_msgs::msg::TrafficSignalArray;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using autoware_planning_msgs::msg::RemainingDistanceETA;
+using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using geometry_msgs::msg::Pose;
 using rcl_interfaces::msg::SetParametersResult;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
@@ -191,7 +191,7 @@ private:
    */
   void publishRemainingDistanceETA(
     const double & remaining_distance, const route_handler::EstimatedTimeOfArrival & eta) const;
-  
+
   /**
    * @brief publish reroute availability
    */

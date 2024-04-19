@@ -2261,13 +2261,13 @@ bool RouteHandler::hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath &
 }
 
 double RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_)
-{/**
+{ /**
 
-double dist_to_goal = lanelet::geometry::toArcCoordinates(
-                                    lanelet::utils::to2D(lanelet.centerline()),
-                                    lanelet::utils::to2D(target_goal_position).basicPoint())
-                                    .length;
-*/
+ double dist_to_goal = lanelet::geometry::toArcCoordinates(
+                                     lanelet::utils::to2D(lanelet.centerline()),
+                                     lanelet::utils::to2D(target_goal_position).basicPoint())
+                                     .length;
+ */
   static bool is_first_time{true};
   double length = 0.0;
   size_t counter = 0;
@@ -2294,10 +2294,9 @@ double dist_to_goal = lanelet::geometry::toArcCoordinates(
       break;
     }
 
-    if(shortest_path.size() == 1 && !is_first_time) {
+    if (shortest_path.size() == 1 && !is_first_time) {
       length += tier4_autoware_utils::calcDistance2d(current_pose.position, goal_pose_.position);
       break;
-      
     }
 
     if (counter == 0) {
@@ -2323,14 +2322,14 @@ double dist_to_goal = lanelet::geometry::toArcCoordinates(
   return length;
 }
 
-EstimatedTimeOfArrival RouteHandler::getEstimatedTimeOfArrival(const double & remaining_distance, const geometry_msgs::msg::Vector3 & current_vehicle_velocity)
+EstimatedTimeOfArrival RouteHandler::getEstimatedTimeOfArrival(
+  const double & remaining_distance, const geometry_msgs::msg::Vector3 & current_vehicle_velocity)
 {
-
   double current_velocity_norm = std::sqrt(
     current_vehicle_velocity.x * current_vehicle_velocity.x +
     current_vehicle_velocity.y * current_vehicle_velocity.y);
 
-  if(remaining_distance < 0.0001 || current_velocity_norm < 0.0001){
+  if (remaining_distance < 0.0001 || current_velocity_norm < 0.0001) {
     eta.hours = 0;
     eta.minutes = 0;
     eta.seconds = 0;
