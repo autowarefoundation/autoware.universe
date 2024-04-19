@@ -296,7 +296,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
       value = m_ctrl_cmd_prev.steering_tire_angle;
     }
     // Use previous command value as previous raw steer command
-    m_mpc->m_raw_steer_cmd_prev = m_current_steering;
+    m_mpc->m_raw_steer_cmd_prev = m_current_steering.steering_tire_angle;
     return createLateralOutput(m_ctrl_cmd_prev, false);
   }
 
