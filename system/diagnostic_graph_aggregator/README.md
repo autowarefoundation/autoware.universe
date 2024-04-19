@@ -9,7 +9,7 @@ As shown in the diagram below, this node introduces extra diagnostic status for 
 
 ## Diagnostic graph structures
 
-The diagnostic graph is actually a set of fault tree analysis (FTA) for for each operation mode of Autoware.
+The diagnostic graph is actually a set of fault tree analysis (FTA) for each operation mode of Autoware.
 Since the status of the same node may be referenced by multiple nodes, the overall structure is a directed acyclic graph (DAG).
 Each node in the diagnostic graph represents the diagnostic status of a specific functional unit, including the input diagnostics.
 So we define this as "unit", and call the unit corresponding to the input diagnosis "diag unit" and the others "node unit".
