@@ -4,4 +4,5 @@ units:
     item:
       path: input-0
       type: diag
-      diag: "test: input-0"
+      node: test
+      name: input-0
