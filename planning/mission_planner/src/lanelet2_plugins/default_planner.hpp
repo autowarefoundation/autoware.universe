@@ -51,7 +51,6 @@ public:
   MarkerArray visualize(const LaneletRoute & route) const override;
   MarkerArray visualize_debug_footprint(tier4_autoware_utils::LinearRing2d goal_footprint_) const;
   vehicle_info_util::VehicleInfo vehicle_info_;
-  void calculateRemainingDistance(const Pose & current_vehicle_pose, const geometry_msgs::msg::Vector3 & current_vehicle_velocity) override;
 
 private:
   using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
@@ -63,8 +62,6 @@ private:
   lanelet::ConstLanelets road_lanelets_;
   lanelet::ConstLanelets shoulder_lanelets_;
   route_handler::RouteHandler route_handler_;
-  bool is_route_planned{false};
-  Pose goal_pose_;
 
   DefaultPlannerParameters param_;
 
@@ -74,7 +71,6 @@ private:
 
   void initialize_common(rclcpp::Node * node);
   void map_callback(const HADMapBin::ConstSharedPtr msg);
-  void calculateRemainingDistance(Pose & current_vehicle_pose);
 
   /**
    * @brief check if the goal_footprint is within the combined lanelet of route_lanelets plus the

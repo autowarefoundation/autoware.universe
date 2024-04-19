@@ -84,14 +84,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   const auto period = rclcpp::Rate(10).period();
   data_check_timer_ = create_wall_timer(period, [this] { check_initialization(); });
 
-  remaining_distance_timer_ = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&MissionPlanner::remaining_distance_timer_callback_, this));
-
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
-}
-
-void MissionPlanner::remaining_distance_timer_callback_()
-{
-  //planner_->calculateRemainingDistance(current_vehicle_pose, current_vehicle_velocity);
 }
 
 void MissionPlanner::check_initialization()
@@ -120,8 +113,6 @@ void MissionPlanner::check_initialization()
 void MissionPlanner::on_odometry(const Odometry::ConstSharedPtr msg)
 {
   odometry_ = msg;
-  current_vehicle_pose = odometry_->pose.pose;
-  current_vehicle_velocity = odometry_->twist.twist.linear;
 
   // NOTE: Do not check in the other states as goal may change.
   if (state_.state == RouteState::SET) {

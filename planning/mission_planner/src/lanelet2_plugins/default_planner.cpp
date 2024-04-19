@@ -158,41 +158,6 @@ void DefaultPlanner::initialize_common(rclcpp::Node * node)
   param_.consider_no_drivable_lanes = node_->declare_parameter<bool>("consider_no_drivable_lanes");
   param_.check_footprint_inside_lanes =
     node_->declare_parameter<bool>("check_footprint_inside_lanes");
-  
-}
-
-void DefaultPlanner::calculateRemainingDistance(const Pose & current_vehicle_pose, const geometry_msgs::msg::Vector3 & current_vehicle_velocity)
-{
-  if (is_route_planned) {
-    const auto logger = node_->get_logger();
-    double remaining_distance = route_handler_.getRemainingDistance(current_vehicle_pose, goal_pose_);
-    
-    double current_veh_vel_mag = std::sqrt(current_vehicle_velocity.x * current_vehicle_velocity.x + current_vehicle_velocity.y + current_vehicle_velocity.y);
-    RCLCPP_INFO_STREAM(logger, "current_vehicle_velocity.x = " << current_vehicle_velocity.x);
-    RCLCPP_INFO_STREAM(logger, "current_vehicle_velocity.y = " << current_vehicle_velocity.y);
-    RCLCPP_INFO_STREAM(logger, "current_veh_vel_mag = " << current_veh_vel_mag);
-    
-    // double eta = remaining_distance / current_veh_vel_mag;
-     route_handler::EstimatedTimeOfArrival eta = route_handler_.getEstimatedTimeOfArrival(remaining_distance, current_vehicle_velocity);
-    //uint8_t  seconds = route_handler_.getEstimatedTimeOfArrival(remaining_distance, current_vehicle_velocity).seconds;
-    //const auto eta = route_handler_.getEsatimatedTimeOfArrival(remaining_distance, current_vehicle_velocity);
-
-    RCLCPP_INFO_STREAM(logger, "Remaining Distance = " << remaining_distance << " m");
-    RCLCPP_INFO_STREAM(logger, "ETA = " << unsigned(eta.hours) << "H : " << unsigned(eta.minutes) << "M : " << unsigned(eta.seconds) << "S");
-  //   double remaining_time = remaining_distance / current_veh_vel_mag;
-  //   RCLCPP_INFO_STREAM(logger, "remaining_time = " << remaining_time);
-  // double hours = static_cast<uint8_t>(remaining_time / 3600);
-  // RCLCPP_INFO_STREAM(logger, "hours = " << hours);
-  // remaining_time = std::fmod(remaining_time, 3600);
-  // RCLCPP_INFO_STREAM(logger, "remaining_time = " << remaining_time);
-  // double minutes = static_cast<int>(remaining_time / 60);
-  // RCLCPP_INFO_STREAM(logger, "minutes = " << minutes);
-  // double seconds = static_cast<int>(fmod(remaining_time, 60));
-  // RCLCPP_INFO_STREAM(logger, "seconds = " << seconds);
-  // RCLCPP_INFO_STREAM(logger, "hours = " << eta.hours);
-  // RCLCPP_INFO_STREAM(logger, "minutes = " << eta.minutes);
-  // RCLCPP_INFO_STREAM(logger, "seconds = " << eta.seconds);
-  }
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
@@ -474,9 +439,6 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
 
   const auto refined_goal = refine_goal_height(goal_pose, route_sections);
   RCLCPP_DEBUG(logger, "Goal Pose Z : %lf", refined_goal.position.z);
-
-  is_route_planned = true;
-  goal_pose_ = refined_goal;
 
   // The header is assigned by mission planner.
   route_msg.start_pose = points.front();
