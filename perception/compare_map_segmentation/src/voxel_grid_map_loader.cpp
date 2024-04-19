@@ -96,16 +96,6 @@ bool VoxelGridMapLoader::is_close_to_neighbor_voxels(
     return true;
   }
   if (is_in_voxel(
-        pcl::PointXYZ(point.x, point.y, point.z - distance_threshold_z), point, distance_threshold,
-        map, voxel)) {
-    return true;
-  }
-  if (is_in_voxel(
-        pcl::PointXYZ(point.x, point.y, point.z + distance_threshold_z), point, distance_threshold,
-        map, voxel)) {
-    return true;
-  }
-  if (is_in_voxel(
         pcl::PointXYZ(point.x, point.y + distance_threshold, point.z - distance_threshold_z), point,
         distance_threshold, map, voxel)) {
     return true;
@@ -235,16 +225,17 @@ bool VoxelGridMapLoader::is_in_voxel(
   const pcl::PointXYZ & src_point, const pcl::PointXYZ & target_point,
   const double distance_threshold, const PointCloudPtr & map, VoxelGridPointXYZ & voxel) const
 {
+  const double z_distance_threshold = distance_threshold * downsize_ratio_z_axis_;
   int voxel_index =
     voxel.getCentroidIndexAt(voxel.getGridCoordinates(src_point.x, src_point.y, src_point.z));
   if (voxel_index != -1) {  // not empty voxel
     const double dist_x = map->points.at(voxel_index).x - target_point.x;
     const double dist_y = map->points.at(voxel_index).y - target_point.y;
-    const double dist_z = map->points.at(voxel_index).z - target_point.z - 0.1;
+    const double dist_z = map->points.at(voxel_index).z - target_point.z - z_distance_threshold;
     // check if the point is inside the distance threshold voxel
     if (
       std::abs(dist_x) < distance_threshold && std::abs(dist_y) < distance_threshold &&
-      std::abs(dist_z) < distance_threshold * downsize_ratio_z_axis_) {
+      std::abs(dist_z) < z_distance_threshold) {
       return true;
     }
   }
