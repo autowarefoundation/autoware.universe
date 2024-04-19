@@ -19,14 +19,16 @@ to the error values coming from GNSS, it also manages situations where GNSS and 
 - You can see how autoware_pose_covariance_modifier_node works in the diagram below:
 
 <p align="center">
-<img src="./media/new_proposal-proposal.drawio.png" width="620">
+<img src="./media/new_proposal-proposal-extended-proposal.drawio.png" width="620">
 </p>
+
 
 ## Activate this feature
 
 This package is not used by default autoware, you need to activate it to use it.
 
-To activate, you need to change the `use_autoware_pose_covariance_modifier` parameter to true within the [tier4_localization_launch](https://github.com/autowarefoundation/autoware.universe/blob/main/launch/tier4_localization_launch/launch/localization.launch.xml).
+To activate, you need to change the `use_autoware_pose_covariance_modifier` parameter to true within
+the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autoware.universe/blob/0c14cc97d563c77262f74e306916a9cd26992e73/launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3).
 
 ## Node
 
@@ -53,9 +55,11 @@ To activate, you need to change the `use_autoware_pose_covariance_modifier` para
 | `error_thresholds.gnss_error_reliable_max`   | `double` | Threshold value for the range in which GNSS error is most reliable.            |
 | `error_thresholds.gnss_error_unreliable_min` | `double` | Threshold value at which GNSS error is not considered reliable.                |
 | `error_thresholds.yaw_error_deg_threshold`   | `double` | Threshold value to understand whether the yaw error is within reliable limits. |
+| `trusted_pose_timeout_sec`                   | `double` | Maximum waiting time when message is delayed from trusted pose source          |
 | `debug.enable_debug_topics`                  | `bool`   | Enables the debug topics                                                       |
 
 ## Important notes
 
-- In order to use this package, your GNSS sensor must provide you with the error value. If you do not have a GNSS sensor that provides you with the error value, you cannot use this package.
+- In order to use this package, your GNSS sensor must provide you with the error value. If you do not have a GNSS sensor
+  that provides you with the error value, you cannot use this package.
 - You need to use this package with georeferenced map
