@@ -1661,7 +1661,7 @@ DynamicAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
   return obj_poly;
 }
 
-// TODO (takagi): replace by the function calcPredictedPathBasedDynamicObstaclePolygon()?
+// should be replace by the function calcPredictedPathBasedDynamicObstaclePolygon() (takagi)
 std::optional<tier4_autoware_utils::Polygon2d>
 DynamicAvoidanceModule::calcObjectPathBasedDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object) const

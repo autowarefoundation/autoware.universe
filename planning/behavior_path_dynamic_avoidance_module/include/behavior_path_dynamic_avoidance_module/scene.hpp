@@ -69,7 +69,7 @@ struct MinMaxValue
     ret.max_value = max_value + scalar;
     return ret;
   };
-  void swap() { std::swap(min_value, max_value); };
+  void swap() { std::swap(min_value, max_value); }
 };
 
 enum class PolygonGenerationMethod {
