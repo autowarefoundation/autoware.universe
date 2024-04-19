@@ -623,7 +623,7 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
     if (status_.stop_pose) {
       // Delete stop point if conditions are met
-      if (status_.is_safe_dynamic_objects && isStopped()) {
+      if (status_.is_safe_dynamic_objects && status_.is_safe_static_objects && isStopped()) {
         status_.stop_pose = std::nullopt;
       }
       stop_pose_ = status_.stop_pose;
@@ -1066,7 +1066,10 @@ void StartPlannerModule::updatePullOutStatus()
   const PathWithLaneId start_pose_candidates_path = calcBackwardPathFromStartPose();
   const auto refined_start_pose = calcLongitudinalOffsetPose(
     start_pose_candidates_path.points, planner_data_->self_odometry->pose.pose.position, 0.0);
-  if (!refined_start_pose) return;
+  if (!refined_start_pose) {
+    std::cerr << "IS THIS GUY GUILTY?\n";
+    return;
+  }
 
   // search pull out start candidates backward
   const std::vector<Pose> start_pose_candidates = std::invoke([&]() -> std::vector<Pose> {

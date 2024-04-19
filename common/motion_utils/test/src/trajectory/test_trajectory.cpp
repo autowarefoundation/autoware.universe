@@ -97,11 +97,11 @@ TEST(trajectory, validateNonEmpty)
   using motion_utils::validateNonEmpty;
 
   // Empty
-  EXPECT_THROW(validateNonEmpty(Trajectory{}.points), std::invalid_argument);
+  EXPECT_THROW(validateNonEmpty(Trajectory{}.points, " "), std::invalid_argument);
 
   // Non-empty
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
-  EXPECT_NO_THROW(validateNonEmpty(traj.points));
+  EXPECT_NO_THROW(validateNonEmpty(traj.points, " "));
 }
 
 TEST(trajectory, validateNonSharpAngle_DefaultThreshold)

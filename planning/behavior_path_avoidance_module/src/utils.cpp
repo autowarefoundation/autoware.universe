@@ -88,7 +88,7 @@ geometry_msgs::msg::Polygon toMsg(const tier4_autoware_utils::Polygon2d & polygo
 template <class T>
 size_t findFirstNearestIndex(const T & points, const geometry_msgs::msg::Point & point)
 {
-  motion_utils::validateNonEmpty(points);
+  motion_utils::validateNonEmpty(points, "");
 
   double min_dist = std::numeric_limits<double>::max();
   size_t min_idx = 0;
@@ -139,7 +139,7 @@ double calcSignedArcLengthToFirstNearestPoint(
   const geometry_msgs::msg::Point & dst_point)
 {
   try {
-    motion_utils::validateNonEmpty(points);
+    motion_utils::validateNonEmpty(points, "");
   } catch (const std::exception & e) {
     std::cerr << e.what() << std::endl;
     return 0.0;

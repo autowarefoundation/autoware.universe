@@ -19,11 +19,11 @@ namespace motion_utils
 
 //
 template void validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> &);
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> &, const std::string);
 template void validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> &);
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> &, const std::string);
 template void validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &);
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &, const std::string);
 
 //
 template std::optional<bool>

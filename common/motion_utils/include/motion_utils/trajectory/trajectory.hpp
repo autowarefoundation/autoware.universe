@@ -42,22 +42,23 @@ namespace motion_utils
  * @param points points of trajectory, path, ...
  */
 template <class T>
-void validateNonEmpty(const T & points)
+void validateNonEmpty(const T & points, const std::string caller_function)
 {
   if (points.empty()) {
     tier4_autoware_utils::print_backtrace();
-    throw std::invalid_argument("[motion_utils] validateNonEmpty(): Points is empty.");
+    throw std::invalid_argument(
+      "[motion_utils] [" + caller_function + "]: validateNonEmpty(): Points is empty.");
   }
 }
 
 extern template void validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> &);
+  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> &, const std::string);
 extern template void
 validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> &);
+  const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> &, const std::string);
 extern template void
 validateNonEmpty<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &);
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> &, const std::string);
 
 /**
  * @brief validate a point is in a non-sharp angle between two points or not
@@ -214,7 +215,7 @@ std::optional<size_t> searchZeroVelocityIndex(
   const T & points_with_twist, const size_t src_idx, const size_t dst_idx)
 {
   try {
-    validateNonEmpty(points_with_twist);
+    validateNonEmpty(points_with_twist, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return {};
@@ -246,7 +247,7 @@ template <class T>
 std::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist, const size_t src_idx)
 {
   try {
-    validateNonEmpty(points_with_twist);
+    validateNonEmpty(points_with_twist, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return {};
@@ -289,7 +290,7 @@ searchZeroVelocityIndex<std::vector<autoware_auto_planning_msgs::msg::Trajectory
 template <class T>
 size_t findNearestIndex(const T & points, const geometry_msgs::msg::Point & point)
 {
-  validateNonEmpty(points);
+  validateNonEmpty(points, __func__);
 
   double min_dist = std::numeric_limits<double>::max();
   size_t min_idx = 0;
@@ -336,7 +337,7 @@ std::optional<size_t> findNearestIndex(
   const double max_yaw = std::numeric_limits<double>::max())
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return {};
@@ -420,10 +421,10 @@ double calcLongitudinalOffsetToSegment(
   const auto overlap_removed_points = removeOverlapPoints(points, seg_idx);
 
   if (throw_exception) {
-    validateNonEmpty(overlap_removed_points);
+    validateNonEmpty(overlap_removed_points, __func__);
   } else {
     try {
-      validateNonEmpty(overlap_removed_points);
+      validateNonEmpty(overlap_removed_points, __func__);
     } catch (const std::exception & e) {
       log_error(e.what());
       return std::nan("");
@@ -581,10 +582,10 @@ double calcLateralOffset(
   const auto overlap_removed_points = removeOverlapPoints(points, 0);
 
   if (throw_exception) {
-    validateNonEmpty(overlap_removed_points);
+    validateNonEmpty(overlap_removed_points, __func__);
   } else {
     try {
-      validateNonEmpty(overlap_removed_points);
+      validateNonEmpty(overlap_removed_points, __func__);
     } catch (const std::exception & e) {
       log_error(
         std::string(e.what()) +
@@ -653,10 +654,10 @@ double calcLateralOffset(
   const auto overlap_removed_points = removeOverlapPoints(points, 0);
 
   if (throw_exception) {
-    validateNonEmpty(overlap_removed_points);
+    validateNonEmpty(overlap_removed_points, __func__);
   } else {
     try {
-      validateNonEmpty(overlap_removed_points);
+      validateNonEmpty(overlap_removed_points, __func__);
     } catch (const std::exception & e) {
       log_error(
         std::string(e.what()) +
@@ -709,7 +710,7 @@ template <class T>
 double calcSignedArcLength(const T & points, const size_t src_idx, const size_t dst_idx)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return 0.0;
@@ -752,7 +753,7 @@ std::vector<double> calcSignedArcLengthPartialSum(
   const T & points, const size_t src_idx, const size_t dst_idx)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return {};
@@ -804,7 +805,7 @@ double calcSignedArcLength(
   const T & points, const geometry_msgs::msg::Point & src_point, const size_t dst_idx)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return 0.0;
@@ -847,7 +848,7 @@ double calcSignedArcLength(
   const T & points, const size_t src_idx, const geometry_msgs::msg::Point & dst_point)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return 0.0;
@@ -886,7 +887,7 @@ double calcSignedArcLength(
   const geometry_msgs::msg::Point & dst_point)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return 0.0;
@@ -926,7 +927,7 @@ template <class T>
 double calcArcLength(const T & points)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return 0.0;
@@ -1035,7 +1036,7 @@ std::optional<double> calcDistanceToForwardStopPoint(
   const T & points_with_twist, const size_t src_idx = 0)
 {
   try {
-    validateNonEmpty(points_with_twist);
+    validateNonEmpty(points_with_twist, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return {};
@@ -1069,7 +1070,7 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   const T & points, const size_t src_idx, const double offset, const bool throw_exception = false)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return {};
@@ -1151,7 +1152,7 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   const T & points, const geometry_msgs::msg::Point & src_point, const double offset)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error("Failed to calculate longitudinal offset: " + std::string(e.what()));
     return {};
@@ -1199,7 +1200,7 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const bool set_orientation_from_position_direction = true, const bool throw_exception = false)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error("Failed to calculate longitudinal offset: " + std::string(e.what()));
     return {};
@@ -1302,7 +1303,7 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const bool set_orientation_from_position_direction = true)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return {};
@@ -1348,7 +1349,7 @@ std::optional<size_t> insertTargetPoint(
   const double overlap_threshold = 1e-3)
 {
   try {
-    validateNonEmpty(points);
+    validateNonEmpty(points, __func__);
   } catch (const std::exception & e) {
     log_error(e.what());
     return {};
@@ -1450,7 +1451,7 @@ std::optional<size_t> insertTargetPoint(
   const double insert_point_length, const geometry_msgs::msg::Point & p_target, T & points,
   const double overlap_threshold = 1e-3)
 {
-  validateNonEmpty(points);
+  validateNonEmpty(points, __func__);
 
   if (insert_point_length < 0.0) {
     return std::nullopt;
@@ -1505,7 +1506,7 @@ std::optional<size_t> insertTargetPoint(
   const size_t src_segment_idx, const double insert_point_length, T & points,
   const double overlap_threshold = 1e-3)
 {
-  validateNonEmpty(points);
+  validateNonEmpty(points, __func__);
 
   if (src_segment_idx >= points.size() - 1) {
     return std::nullopt;
@@ -1582,7 +1583,7 @@ std::optional<size_t> insertTargetPoint(
   const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3)
 {
-  validateNonEmpty(points);
+  validateNonEmpty(points, __func__);
 
   if (insert_point_length < 0.0) {
     return std::nullopt;
@@ -1633,7 +1634,7 @@ std::optional<size_t> insertStopPoint(
   const size_t src_segment_idx, const double distance_to_stop_point, T & points_with_twist,
   const double overlap_threshold = 1e-3)
 {
-  validateNonEmpty(points_with_twist);
+  validateNonEmpty(points_with_twist, __func__);
 
   if (distance_to_stop_point < 0.0 || src_segment_idx >= points_with_twist.size() - 1) {
     return std::nullopt;
@@ -1680,7 +1681,7 @@ template <class T>
 std::optional<size_t> insertStopPoint(
   const double distance_to_stop_point, T & points_with_twist, const double overlap_threshold = 1e-3)
 {
-  validateNonEmpty(points_with_twist);
+  validateNonEmpty(points_with_twist, __func__);
 
   if (distance_to_stop_point < 0.0) {
     return std::nullopt;
@@ -1736,7 +1737,7 @@ std::optional<size_t> insertStopPoint(
   T & points_with_twist, const double max_dist = std::numeric_limits<double>::max(),
   const double max_yaw = std::numeric_limits<double>::max(), const double overlap_threshold = 1e-3)
 {
-  validateNonEmpty(points_with_twist);
+  validateNonEmpty(points_with_twist, __func__);
 
   if (distance_to_stop_point < 0.0) {
     return std::nullopt;
@@ -1943,7 +1944,7 @@ double calcSignedArcLength(
   const T & points, const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
   const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx)
 {
-  validateNonEmpty(points);
+  validateNonEmpty(points, __func__);
 
   const double signed_length_on_traj = calcSignedArcLength(points, src_seg_idx, dst_seg_idx);
   const double signed_length_src_offset =
@@ -1986,7 +1987,7 @@ double calcSignedArcLength(
   const T & points, const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
   const size_t dst_idx)
 {
-  validateNonEmpty(points);
+  validateNonEmpty(points, __func__);
 
   const double signed_length_on_traj = calcSignedArcLength(points, src_seg_idx, dst_idx);
   const double signed_length_src_offset =
@@ -2024,7 +2025,7 @@ double calcSignedArcLength(
   const T & points, const size_t src_idx, const geometry_msgs::msg::Point & dst_point,
   const size_t dst_seg_idx)
 {
-  validateNonEmpty(points);
+  validateNonEmpty(points, __func__);
 
   const double signed_length_on_traj = calcSignedArcLength(points, src_idx, dst_seg_idx);
   const double signed_length_dst_offset =
@@ -2064,7 +2065,7 @@ size_t findFirstNearestIndexWithSoftConstraints(
   const double dist_threshold = std::numeric_limits<double>::max(),
   const double yaw_threshold = std::numeric_limits<double>::max())
 {
-  validateNonEmpty(points);
+  validateNonEmpty(points, __func__);
 
   {  // with dist and yaw thresholds
     const double squared_dist_threshold = dist_threshold * dist_threshold;
@@ -2229,7 +2230,7 @@ std::optional<double> calcDistanceToForwardStopPoint(
   const double max_yaw = std::numeric_limits<double>::max())
 {
   try {
-    validateNonEmpty(points_with_twist);
+    validateNonEmpty(points_with_twist, __func__);
   } catch (const std::exception & e) {
     log_error("Failed to calculate stop distance" + std::string(e.what()));
     return {};
@@ -2410,10 +2411,10 @@ double calcYawDeviation(
   const auto overlap_removed_points = removeOverlapPoints(points, 0);
 
   if (throw_exception) {
-    validateNonEmpty(overlap_removed_points);
+    validateNonEmpty(overlap_removed_points, __func__);
   } else {
     try {
-      validateNonEmpty(overlap_removed_points);
+      validateNonEmpty(overlap_removed_points, __func__);
     } catch (const std::exception & e) {
       log_error(e.what());
       return 0.0;
