@@ -953,8 +953,7 @@ IntersectionModule::TimeDistanceArray IntersectionModule::calcIntersectionPassin
     dist_sum += dist;
 
     // use average velocity between p1 and p2
-    const double average_velocity =
-      (p1.point.longitudinal_velocity_mps + p2.point.longitudinal_velocity_mps) / 2.0;
+    const double average_velocity = p1.point.longitudinal_velocity_mps;
     const double passing_velocity = [=]() {
       if (use_upstream_velocity) {
         if (upstream_stopline_idx_opt && i > upstream_stopline_idx_opt.value()) {
