@@ -16,6 +16,7 @@
 
 #include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_display_base.hpp"
 
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 
 #include <boost/functional/hash.hpp>
@@ -24,11 +25,9 @@
 
 #include <condition_variable>
 #include <list>
-#include <queue>
-#include <set>
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace autoware
@@ -47,30 +46,9 @@ public:
   using PredictedObjects = autoware_auto_perception_msgs::msg::PredictedObjects;
 
   PredictedObjectsDisplay();
-  ~PredictedObjectsDisplay()
-  {
-    {
-      std::unique_lock<std::mutex> lock(queue_mutex);
-      should_terminate = true;
-    }
-    condition.notify_all();
-    for (std::thread & active_thread : threads) {
-      active_thread.join();
-    }
-    threads.clear();
-  }
 
 private:
   void processMessage(PredictedObjects::ConstSharedPtr msg) override;
-
-  void queueJob(std::function<void()> job)
-  {
-    {
-      std::unique_lock<std::mutex> lock(queue_mutex);
-      jobs.push(std::move(job));
-    }
-    condition.notify_one();
-  }
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
   {
@@ -123,9 +101,16 @@ private:
     PredictedObjects::ConstSharedPtr msg);
   void workerThread();
 
-  void messageProcessorThreadJob();
-
   void update(float wall_dt, float ros_dt) override;
+
+  bool transformObjects(
+    const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg,
+    const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+    autoware_auto_perception_msgs::msg::PredictedObjects & output_msg);
+
+  void processPointCloud(
+    const PredictedObjects::ConstSharedPtr & input_objs_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
   std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map;
   // std::unordered_map<boost::uuids::uuid, int32_t> id_map;
@@ -133,20 +118,11 @@ private:
   int32_t marker_id = 0;
   const int32_t PATH_ID_CONSTANT = 1e3;
 
-  // max_num_threads: number of threads created in the thread pool, hard-coded to be 1;
-  int max_num_threads;
-
-  bool should_terminate{false};
-  std::mutex queue_mutex;
-  std::vector<std::thread> threads;
-  std::queue<std::function<void()>> jobs;
-
   PredictedObjects::ConstSharedPtr msg;
   bool consumed{false};
   std::mutex mutex;
   std::condition_variable condition;
   std::vector<visualization_msgs::msg::Marker::SharedPtr> markers;
-  std::set<rviz_default_plugins::displays::MarkerID> existing_marker_ids;
 };
 
 }  // namespace object_detection

@@ -357,7 +357,7 @@ void calc_covariance_eigen_vectors(
   yaw = std::atan2(e1.y(), e1.x());
 }
 
-visualization_msgs::msg::Marker::SharedPtr get_pose_covariance_marker_ptr(
+visualization_msgs::msg::Marker::SharedPtr get_pose_with_covariance_marker_ptr(
   const geometry_msgs::msg::PoseWithCovariance & pose_with_covariance,
   const double & confidence_interval_coefficient)
 {

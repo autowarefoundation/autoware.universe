@@ -23,46 +23,27 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
-PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
+PredictedObjectsDisplay::PredictedObjectsDisplay()
+: ObjectPolygonDisplayBase("predictions", "/perception/obstacle_segmentation/pointcloud")
 {
-  max_num_threads = 1;  // hard code the number of threads to be created
-
-  for (int ii = 0; ii < max_num_threads; ++ii) {
-    threads.emplace_back(std::thread(&PredictedObjectsDisplay::workerThread, this));
-  }
+  std::thread worker(&PredictedObjectsDisplay::workerThread, this);
+  worker.detach();
 }
 
 void PredictedObjectsDisplay::workerThread()
-{  // A standard working thread that waiting for jobs
-  while (true) {
-    std::function<void()> job;
-    {
-      std::unique_lock<std::mutex> lock(queue_mutex);
-      condition.wait(lock, [this] { return !jobs.empty() || should_terminate; });
-      if (should_terminate) {
-        return;
-      }
-      job = jobs.front();
-      jobs.pop();
-    }
-    job();
-  }
-}
-
-void PredictedObjectsDisplay::messageProcessorThreadJob()
 {
-  // Receiving
-  std::unique_lock<std::mutex> lock(mutex);
-  auto tmp_msg = this->msg;
-  this->msg.reset();
-  lock.unlock();
+  while (true) {
+    std::unique_lock<std::mutex> lock(mutex);
+    condition.wait(lock, [this] { return this->msg; });
+    auto tmp_msg = this->msg;
+    this->msg.reset();
+    lock.unlock();
 
-  auto tmp_markers = createMarkers(tmp_msg);
-
-  lock.lock();
-  markers = tmp_markers;
-
-  consumed = true;
+    auto tmp_markers = createMarkers(tmp_msg);
+    lock.lock();
+    markers = tmp_markers;
+    consumed = true;
+  }
 }
 
 std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay::createMarkers(
@@ -77,12 +58,12 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.initial_pose_with_covariance.pose.position,
       object.kinematics.initial_pose_with_covariance.pose.orientation, object.classification,
-      get_line_width(), true);
+      get_line_width());
     if (shape_marker) {
-      auto marker_ptr = shape_marker.value();
-      marker_ptr->header = msg->header;
-      marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(marker_ptr);
+      auto shape_marker_ptr = shape_marker.value();
+      shape_marker_ptr->header = msg->header;
+      shape_marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(shape_marker_ptr);
     }
 
     // Get marker for label
@@ -111,46 +92,16 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
       markers.push_back(id_marker_ptr);
     }
 
-    // Get marker for pose covariance
+    // Get marker for pose with covariance
     auto pose_with_covariance_marker =
-      get_pose_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance);
+      get_pose_with_covariance_marker_ptr(object.kinematics.initial_pose_with_covariance);
     if (pose_with_covariance_marker) {
-      auto marker_ptr = pose_with_covariance_marker.value();
-      marker_ptr->header = msg->header;
-      marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(marker_ptr);
+      auto pose_with_covariance_marker_ptr = pose_with_covariance_marker.value();
+      pose_with_covariance_marker_ptr->header = msg->header;
+      pose_with_covariance_marker_ptr->id = uuid_to_marker_id(object.object_id);
+      markers.push_back(pose_with_covariance_marker_ptr);
     }
 
-    // Get marker for yaw covariance
-    auto yaw_covariance_marker = get_yaw_covariance_marker_ptr(
-      object.kinematics.initial_pose_with_covariance, object.shape.dimensions.x * 0.65,
-      get_line_width() * 0.5);
-    if (yaw_covariance_marker) {
-      auto marker_ptr = yaw_covariance_marker.value();
-      marker_ptr->header = msg->header;
-      marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(marker_ptr);
-    }
-
-    // Get marker for existence probability
-    geometry_msgs::msg::Point existence_probability_position;
-    existence_probability_position.x =
-      object.kinematics.initial_pose_with_covariance.pose.position.x + 0.5;
-    existence_probability_position.y =
-      object.kinematics.initial_pose_with_covariance.pose.position.y;
-    existence_probability_position.z =
-      object.kinematics.initial_pose_with_covariance.pose.position.z + 0.5;
-    const float existence_probability = object.existence_probability;
-    auto existence_prob_marker = get_existence_probability_marker_ptr(
-      existence_probability_position,
-      object.kinematics.initial_pose_with_covariance.pose.orientation, existence_probability,
-      object.classification);
-    if (existence_prob_marker) {
-      auto existence_prob_marker_ptr = existence_prob_marker.value();
-      existence_prob_marker_ptr->header = msg->header;
-      existence_prob_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(existence_prob_marker_ptr);
-    }
     // Get marker for velocity text
     geometry_msgs::msg::Point vel_vis_position;
     vel_vis_position.x = uuid_vis_position.x - 0.5;
@@ -178,51 +129,18 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
       auto acceleration_text_marker_ptr = acceleration_text_marker.value();
       acceleration_text_marker_ptr->header = msg->header;
       acceleration_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(acceleration_text_marker_ptr);
+      add_marker(acceleration_text_marker_ptr);
     }
 
     // Get marker for twist
     auto twist_marker = get_twist_marker_ptr(
       object.kinematics.initial_pose_with_covariance,
-      object.kinematics.initial_twist_with_covariance, get_line_width());
+      object.kinematics.initial_twist_with_covariance);
     if (twist_marker) {
       auto twist_marker_ptr = twist_marker.value();
       twist_marker_ptr->header = msg->header;
       twist_marker_ptr->id = uuid_to_marker_id(object.object_id);
       markers.push_back(twist_marker_ptr);
-    }
-
-    // Get marker for twist covariance
-    auto twist_covariance_marker = get_twist_covariance_marker_ptr(
-      object.kinematics.initial_pose_with_covariance,
-      object.kinematics.initial_twist_with_covariance);
-    if (twist_covariance_marker) {
-      auto marker_ptr = twist_covariance_marker.value();
-      marker_ptr->header = msg->header;
-      marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(marker_ptr);
-    }
-
-    // Get marker for yaw rate
-    auto yaw_rate_marker = get_yaw_rate_marker_ptr(
-      object.kinematics.initial_pose_with_covariance,
-      object.kinematics.initial_twist_with_covariance, get_line_width() * 0.4);
-    if (yaw_rate_marker) {
-      auto marker_ptr = yaw_rate_marker.value();
-      marker_ptr->header = msg->header;
-      marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(marker_ptr);
-    }
-
-    // Get marker for twist covariance
-    auto yaw_rate_covariance_marker = get_yaw_rate_covariance_marker_ptr(
-      object.kinematics.initial_pose_with_covariance,
-      object.kinematics.initial_twist_with_covariance, get_line_width() * 0.3);
-    if (yaw_rate_covariance_marker) {
-      auto marker_ptr = yaw_rate_covariance_marker.value();
-      marker_ptr->header = msg->header;
-      marker_ptr->id = uuid_to_marker_id(object.object_id);
-      markers.push_back(marker_ptr);
     }
 
     // Add marker for each candidate path
@@ -260,6 +178,15 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     }
   }
 
+  if (pointCloudBuffer.empty()) {
+    return markers;
+  }
+  // poincloud pub
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud =
+    std::make_shared<sensor_msgs::msg::PointCloud2>(
+      getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
+  processPointCloud(msg, closest_pointcloud);
+
   return markers;
 }
 
@@ -268,7 +195,7 @@ void PredictedObjectsDisplay::processMessage(PredictedObjects::ConstSharedPtr ms
   std::unique_lock<std::mutex> lock(mutex);
 
   this->msg = msg;
-  queueJob(std::bind(&PredictedObjectsDisplay::messageProcessorThreadJob, this));
+  condition.notify_one();
 }
 
 void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
@@ -276,20 +203,10 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
   std::unique_lock<std::mutex> lock(mutex);
 
   if (!markers.empty()) {
-    std::set new_marker_ids = std::set<rviz_default_plugins::displays::MarkerID>();
+    clear_markers();
     for (const auto & marker : markers) {
-      rviz_default_plugins::displays::MarkerID marker_id =
-        rviz_default_plugins::displays::MarkerID(marker->ns, marker->id);
       add_marker(marker);
-      new_marker_ids.insert(marker_id);
     }
-    for (auto itr = existing_marker_ids.begin(); itr != existing_marker_ids.end(); itr++) {
-      if (new_marker_ids.find(*itr) == new_marker_ids.end()) {
-        deleteMarker(*itr);
-      }
-    }
-    existing_marker_ids = new_marker_ids;
-
     markers.clear();
   }
 
@@ -297,6 +214,84 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
 
   ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::update(
     wall_dt, ros_dt);
+}
+
+bool PredictedObjectsDisplay::transformObjects(
+  const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg,
+  const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+  autoware_auto_perception_msgs::msg::PredictedObjects & output_msg)
+{
+  output_msg = input_msg;
+  // transform to world coordinate
+  if (input_msg.header.frame_id != target_frame_id) {
+    output_msg.header.frame_id = target_frame_id;
+    tf2::Transform tf_target2objects_world;
+    tf2::Transform tf_target2objects;
+    tf2::Transform tf_objects_world2objects;
+    {
+      const auto ros_target2objects_world =
+        getTransform(tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
+      if (!ros_target2objects_world) {
+        return false;
+      }
+      tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
+    }
+    for (auto & object : output_msg.objects) {
+      tf2::fromMsg(object.kinematics.initial_pose_with_covariance.pose, tf_objects_world2objects);
+      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
+      tf2::toMsg(tf_target2objects, object.kinematics.initial_pose_with_covariance.pose);
+    }
+  }
+  return true;
+}
+
+void PredictedObjectsDisplay::processPointCloud(
+  const PredictedObjects::ConstSharedPtr & input_objs_msg,
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
+{
+  if (!m_publish_objs_pointcloud->getBool()) {
+    return;
+  }
+  // Transform to pointcloud frame
+  autoware_auto_perception_msgs::msg::PredictedObjects transformed_objects;
+  if (!transformObjects(
+        *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects)) {
+    return;
+  }
+  // convert to pcl pointcloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(*input_pointcloud_msg, *temp_cloud);
+  // Create a new point cloud with RGB color information and copy data from input cloud
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::copyPointCloud(*temp_cloud, *colored_cloud);
+  // Create Kd-tree to search neighbor pointcloud to reduce cost.
+  pcl::search::Search<pcl::PointXYZRGB>::Ptr kdtree =
+    pcl::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(false);
+  kdtree->setInputCloud(colored_cloud);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+  for (const auto & object : transformed_objects.objects) {
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels =
+      object.classification;
+    object_info unified_object = {
+      object.shape, object.kinematics.initial_pose_with_covariance.pose, object.classification};
+    const auto search_radius = getMaxRadius(unified_object);
+    // Search neighbor pointcloud to reduce cost.
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr neighbor_pointcloud(
+      new pcl::PointCloud<pcl::PointXYZRGB>);
+    std::vector<int> indices;
+    std::vector<float> distances;
+    kdtree->radiusSearch(
+      toPCL(unified_object.position.position), search_radius.value(), indices, distances);
+    for (const auto & index : indices) {
+      neighbor_pointcloud->push_back(colored_cloud->at(index));
+    }
+    filterPolygon(neighbor_pointcloud, out_cloud, unified_object);
+  }
+  sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr(
+    new sensor_msgs::msg::PointCloud2);
+  pcl::toROSMsg(*out_cloud, *output_pointcloud_msg_ptr);
+  output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
+  add_pointcloud(output_pointcloud_msg_ptr);
 }
 
 }  // namespace object_detection

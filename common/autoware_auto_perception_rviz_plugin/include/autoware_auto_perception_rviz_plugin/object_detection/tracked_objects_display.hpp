@@ -16,6 +16,7 @@
 
 #include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_display_base.hpp"
 
+#include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 
 #include <boost/uuid/uuid.hpp>
@@ -23,6 +24,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -39,23 +41,11 @@ class AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC TrackedObjectsDisplay
   Q_OBJECT
 
 public:
-  using TrackedObject = autoware_auto_perception_msgs::msg::TrackedObject;
   using TrackedObjects = autoware_auto_perception_msgs::msg::TrackedObjects;
 
   TrackedObjectsDisplay();
 
-protected:
-  uint get_object_dynamics_to_visualize()
-  {
-    return m_select_object_dynamics_property->getOptionInt();
-  }
-
-  static bool is_object_to_show(const uint showing_dynamic_status, const TrackedObject & object);
-
 private:
-  // Property to choose object dynamics to visualize
-  rviz_common::properties::EnumProperty * m_select_object_dynamics_property;
-
   void processMessage(TrackedObjects::ConstSharedPtr msg) override;
 
   boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
@@ -104,6 +94,10 @@ private:
     auto uuid = to_boost_uuid(uuid_msg);
     return id_map.at(uuid);
   }
+
+  void processPointCloud(
+    const TrackedObjects::ConstSharedPtr & input_objs_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
   std::map<boost::uuids::uuid, int32_t> id_map;
   std::list<int32_t> unused_marker_ids;
