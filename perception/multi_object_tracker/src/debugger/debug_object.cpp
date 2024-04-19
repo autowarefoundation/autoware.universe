@@ -229,24 +229,41 @@ void TrackerObjectDebugger::draw(
     marker_track_boxes.scale.y = 0.4;
     marker_track_boxes.scale.z = 0.4;
 
-    visualization_msgs::msg::Marker marker_detect_boxes;
-    marker_detect_boxes = marker;
-    marker_detect_boxes.ns = "detect_boxes";
-    marker_detect_boxes.type = visualization_msgs::msg::Marker::CUBE_LIST;
-    marker_detect_boxes.action = visualization_msgs::msg::Marker::ADD;
-    marker_detect_boxes.scale.x = 0.2;
-    marker_detect_boxes.scale.y = 0.2;
-    marker_detect_boxes.scale.z = 0.2;
+    // make detected object markers per channel
+    std::vector<visualization_msgs::msg::Marker> marker_detect_boxes_per_channel;
+    std::vector<visualization_msgs::msg::Marker> marker_detect_lines_per_channel;
 
-    visualization_msgs::msg::Marker marker_lines;
-    marker_lines = marker;
-    marker_lines.ns = "association_lines";
-    marker_lines.type = visualization_msgs::msg::Marker::LINE_LIST;
-    marker_lines.action = visualization_msgs::msg::Marker::ADD;
-    marker_lines.scale.x = 0.15;
-    marker_lines.points.clear();
+    for (size_t idx = 0; idx < channel_names_.size(); idx++) {
+      // get color - by channel index
+      std_msgs::msg::ColorRGBA color;
+      color.a = 1.0;
+      color.r = color_array[idx % PALETTE_SIZE][0];
+      color.g = color_array[idx % PALETTE_SIZE][1];
+      color.b = color_array[idx % PALETTE_SIZE][2];
 
-    bool is_line_drawn = false;
+      visualization_msgs::msg::Marker marker_detect_boxes;
+      marker_detect_boxes = marker;
+      marker_detect_boxes.ns = "detect_boxes_" + channel_names_[idx];
+      marker_detect_boxes.type = visualization_msgs::msg::Marker::CUBE_LIST;
+      marker_detect_boxes.action = visualization_msgs::msg::Marker::ADD;
+      marker_detect_boxes.scale.x = 0.2;
+      marker_detect_boxes.scale.y = 0.2;
+      marker_detect_boxes.scale.z = 0.2;
+      marker_detect_boxes.color = color;
+      marker_detect_boxes_per_channel.push_back(marker_detect_boxes);
+
+      visualization_msgs::msg::Marker marker_lines;
+      marker_lines = marker;
+      marker_lines.ns = "association_lines_" + channel_names_[idx];
+      marker_lines.type = visualization_msgs::msg::Marker::LINE_LIST;
+      marker_lines.action = visualization_msgs::msg::Marker::ADD;
+      marker_lines.scale.x = 0.15;
+      marker_lines.points.clear();
+      marker_lines.color = color;
+      marker_detect_lines_per_channel.push_back(marker_lines);
+    }
+
+    bool is_any_associated = false;
 
     for (const auto & object_data : object_data_group) {
       int channel_id = object_data.channel_id;
@@ -260,39 +277,51 @@ void TrackerObjectDebugger::draw(
 
       // set association marker, if exists
       if (!object_data.is_associated) continue;
-      is_line_drawn = true;
-      // get color - by channel index
-      std_msgs::msg::ColorRGBA color;
-      color.a = 1.0;
-      color.r = color_array[channel_id % PALETTE_SIZE][0];
-      color.g = color_array[channel_id % PALETTE_SIZE][1];
-      color.b = color_array[channel_id % PALETTE_SIZE][2];
+      is_any_associated = true;
+
+      // associated object box
+      visualization_msgs::msg::Marker & marker_detect_boxes =
+        marker_detect_boxes_per_channel.at(channel_id);
+      box_point.x = object_data.detection_point.x;
+      box_point.y = object_data.detection_point.y;
+      box_point.z = object_data.detection_point.z + height_offset + 1;
+      marker_detect_boxes.points.push_back(box_point);
 
       // association line
+      visualization_msgs::msg::Marker & marker_lines =
+        marker_detect_lines_per_channel.at(channel_id);
       geometry_msgs::msg::Point line_point;
-      marker_lines.color = color;
-
       line_point.x = object_data.tracker_point.x;
       line_point.y = object_data.tracker_point.y;
       line_point.z = object_data.tracker_point.z + height_offset;
       marker_lines.points.push_back(line_point);
       line_point.x = object_data.detection_point.x;
       line_point.y = object_data.detection_point.y;
-      line_point.z = object_data.tracker_point.z + height_offset + 1;
+      line_point.z = object_data.detection_point.z + height_offset + 1;
       marker_lines.points.push_back(line_point);
-
-      // associated object box
-      box_point.x = object_data.detection_point.x;
-      box_point.y = object_data.detection_point.y;
-      box_point.z = object_data.detection_point.z + height_offset + 1;
-      marker_detect_boxes.color = color;
-      marker_detect_boxes.points.push_back(box_point);
     }
 
     // add markers
     marker_array.markers.push_back(marker_track_boxes);
-    marker_array.markers.push_back(marker_detect_boxes);
-    if (is_line_drawn) marker_array.markers.push_back(marker_lines);
+    if (is_any_associated) {
+      for (size_t i = 0; i < channel_names_.size(); i++) {
+        if (marker_detect_boxes_per_channel.at(i).points.empty()) continue;
+        marker_array.markers.push_back(marker_detect_boxes_per_channel.at(i));
+      }
+      for (size_t i = 0; i < channel_names_.size(); i++) {
+        if (marker_detect_lines_per_channel.at(i).points.empty()) continue;
+        marker_array.markers.push_back(marker_detect_lines_per_channel.at(i));
+      }
+    } else {
+      for (size_t i = 0; i < channel_names_.size(); i++) {
+        marker_detect_boxes_per_channel.at(i).action = visualization_msgs::msg::Marker::DELETE;
+        marker_array.markers.push_back(marker_detect_boxes_per_channel.at(i));
+      }
+      for (size_t i = 0; i < channel_names_.size(); i++) {
+        marker_detect_lines_per_channel.at(i).action = visualization_msgs::msg::Marker::DELETE;
+        marker_array.markers.push_back(marker_detect_lines_per_channel.at(i));
+      }
+    }
   }
 
   return;
@@ -317,15 +346,17 @@ void TrackerObjectDebugger::getMessage(visualization_msgs::msg::MarkerArray & ma
     delete_marker.ns = "existence_probability";
     delete_marker.id = previous_id;
     delete_marker.action = visualization_msgs::msg::Marker::DELETE;
-
     marker_array.markers.push_back(delete_marker);
 
     delete_marker.ns = "track_boxes";
     marker_array.markers.push_back(delete_marker);
-    delete_marker.ns = "detect_boxes";
-    marker_array.markers.push_back(delete_marker);
-    delete_marker.ns = "association_lines";
-    marker_array.markers.push_back(delete_marker);
+
+    for (size_t idx = 0; idx < channel_names_.size(); idx++) {
+      delete_marker.ns = "detect_boxes_" + channel_names_[idx];
+      marker_array.markers.push_back(delete_marker);
+      delete_marker.ns = "association_lines_" + channel_names_[idx];
+      marker_array.markers.push_back(delete_marker);
+    }
   }
 
   return;
