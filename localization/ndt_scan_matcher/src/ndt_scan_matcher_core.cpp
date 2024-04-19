@@ -973,7 +973,7 @@ void NDTScanMatcher::service_ndt_align_main(
 
   // transform pose_frame to map_frame
   const auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
-  map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position);
+  map_update_module_->update_map(initial_pose_msg_in_map_frame.pose.pose.position, diagnostics_ndt_align_);
 
   // mutex Map
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);

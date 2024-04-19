@@ -63,8 +63,8 @@ private:
     const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position);
 
   // Update the specified NDT
-  bool update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt);
-  void update_map(const geometry_msgs::msg::Point & position);
+  bool update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+  void update_map(const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
   [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position);
   void publish_partial_pcd_map();
 
