@@ -293,7 +293,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   if (isStoppedState()) {
     // Reset input buffer
     for (auto & value : m_mpc->m_input_buffer) {
-      value = m_ctrl_cmd_prev.steering_tire_angle;
+      value = m_current_steering.steering_tire_angle;
     }
     // Use previous current steering angle as previous raw steer command (offset) to set the constraints
     m_mpc->m_raw_steer_cmd_prev = m_current_steering.steering_tire_angle;
