@@ -62,6 +62,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
+  remaining_distance_eta_publisher_ = create_publisher<RemainingDistanceETA>("~/output/remaining_distance_eta", rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable());
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
@@ -383,12 +384,23 @@ void BehaviorPathPlannerNode::run()
       planner_data_->prev_modified_goal.reset();
     }
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
+    goal_pose_ = route_ptr->goal_pose;
   }
   const auto controlled_by_autoware_autonomously =
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
     planner_data_->operation_mode->is_autoware_control_enabled;
   if (!controlled_by_autoware_autonomously && !planner_manager_->hasApprovedModules())
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
+
+  if (planner_data_->route_handler->isHandlerReady()) {
+    remaining_distance_ = planner_data_->route_handler->getRemainingDistance(
+      planner_data_->self_odometry->pose.pose, goal_pose_);
+
+    eta_ = planner_data_->route_handler->getEstimatedTimeOfArrival(
+      remaining_distance_, planner_data_->self_odometry->twist.twist.linear);
+
+    publishRemainingDistanceETA(remaining_distance_, eta_);
+  }
 
   // run behavior planner
   const auto output = planner_manager_->run(planner_data_);
@@ -523,6 +535,18 @@ void BehaviorPathPlannerNode::publish_reroute_availability() const
   }
 
   reroute_availability_publisher_->publish(is_reroute_available);
+}
+
+void BehaviorPathPlannerNode::publishRemainingDistanceETA(const double & remaining_distance, const route_handler::EstimatedTimeOfArrival & eta) const
+{
+  RemainingDistanceETA remaining_distance_eta;
+  remaining_distance_eta.remaining_distance = remaining_distance;
+  remaining_distance_eta.hours = eta.hours;
+  remaining_distance_eta.minutes = eta.minutes;
+  remaining_distance_eta.seconds = eta.seconds;
+
+  remaining_distance_eta_publisher_->publish(remaining_distance_eta);
+
 }
 
 void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDebugData & debug_data)

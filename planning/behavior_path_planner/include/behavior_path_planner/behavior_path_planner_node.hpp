@@ -32,8 +32,10 @@
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
+#include <autoware_planning_msgs/msg/remaining_distance_eta.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
@@ -62,8 +64,10 @@ using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_perception_msgs::msg::TrafficSignalArray;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
+using autoware_planning_msgs::msg::RemainingDistanceETA;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
+using geometry_msgs::msg::Pose;
 using rcl_interfaces::msg::SetParametersResult;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
@@ -98,6 +102,7 @@ private:
   rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
   rclcpp::Subscription<OperationModeState>::SharedPtr operation_mode_subscriber_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
+  rclcpp::Publisher<RemainingDistanceETA>::SharedPtr remaining_distance_eta_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr bound_publisher_;
@@ -122,6 +127,10 @@ private:
   LaneletRoute::ConstSharedPtr route_ptr_{nullptr};
   bool has_received_map_{false};
   bool has_received_route_{false};
+
+  Pose goal_pose_;
+  double remaining_distance_;
+  route_handler::EstimatedTimeOfArrival eta_;
 
   std::mutex mutex_pd_;       // mutex for planner_data_
   std::mutex mutex_manager_;  // mutex for bt_manager_ or planner_manager_
@@ -177,6 +186,12 @@ private:
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_turn_signal_info_publisher_;
 
+  /**
+   * @brief publish remaining distance and ETA
+   */
+  void publishRemainingDistanceETA(
+    const double & remaining_distance, const route_handler::EstimatedTimeOfArrival & eta) const;
+  
   /**
    * @brief publish reroute availability
    */

@@ -91,7 +91,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 
 void MissionPlanner::remaining_distance_timer_callback_()
 {
-  planner_->calculateRemainingDistance(current_vehicle_pose, current_vehicle_velocity);
+  //planner_->calculateRemainingDistance(current_vehicle_pose, current_vehicle_velocity);
 }
 
 void MissionPlanner::check_initialization()
