@@ -608,7 +608,7 @@ void DynamicAvoidanceModule::registerUnregulatedObjects(
     }
 
     // 1.c. Check if object' lateral velocity is small enough to be avoid.
-    if (obj_normal_vel > parameters_->max_pedestrian_crossing_vel) {
+    if (std::abs(obj_normal_vel) > parameters_->max_pedestrian_crossing_vel) {
       RCLCPP_INFO_EXPRESSION(
         getLogger(), parameters_->enable_debug_info,
         "[DynamicAvoidance] Ignore obstacle (%s) since it crosses the ego's path with its normal "
