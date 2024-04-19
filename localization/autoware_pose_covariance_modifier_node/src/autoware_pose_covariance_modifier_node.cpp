@@ -21,15 +21,19 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
   trustedPoseLastReceivedTime_(this->now()),
   pose_source_(AutowarePoseCovarianceModifierNode::PoseSource::NDT)
 {
-  gnss_error_reliable_max_ =
-    this->declare_parameter<double>("error_thresholds.gnss_error_reliable_max", 0.10);
-  gnss_error_unreliable_min_ =
-    this->declare_parameter<double>("error_thresholds.gnss_error_unreliable_min", 0.25);
-  yaw_error_deg_threshold_ =
-    this->declare_parameter<double>("error_thresholds.yaw_error_deg_threshold", 0.3);
-  trusted_pose_timeout_sec_ = this->declare_parameter<double>("trusted_pose_timeout_sec", 1.0);
-  debug_ = this->declare_parameter<bool>("debug.enable_debug_topics", false);
-
+  try {
+    gnss_error_reliable_max_ =
+      this->declare_parameter<double>("error_thresholds.gnss_error_reliable_max", 0.10);
+    gnss_error_unreliable_min_ =
+      this->declare_parameter<double>("error_thresholds.gnss_error_unreliable_min", 0.25);
+    yaw_error_deg_threshold_ =
+      this->declare_parameter<double>("error_thresholds.yaw_error_deg_threshold", 0.3);
+    trusted_pose_timeout_sec_ = this->declare_parameter<double>("trusted_pose_timeout_sec", 1.0);
+    debug_ = this->declare_parameter<bool>("debug.enable_debug_topics", false);
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to declare parameters: %s", e.what());
+    throw;
+  }
   trusted_pose_with_cov_sub_ =
     this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "input_trusted_pose_with_cov_topic", 10,
