@@ -31,6 +31,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 /**
  * @brief Debugger class for multi object tracker
@@ -89,6 +90,10 @@ public:
   void checkDelay(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   // Debug object
+  void setObjectChannels(const std::vector<std::string> & channels)
+  {
+    object_debugger_.setChannelNames(channels);
+  }
   void collectObjectInfo(
     const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
     const uint & channel_index,

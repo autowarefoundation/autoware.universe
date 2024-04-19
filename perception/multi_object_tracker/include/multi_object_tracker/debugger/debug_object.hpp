@@ -77,7 +77,13 @@ private:
   int32_t marker_id_ = 0;
   std::vector<std::vector<ObjectData>> object_data_groups_;
 
+  std::vector<std::string> channel_names_;
+
 public:
+  void setChannelNames(const std::vector<std::string> & channel_names)
+  {
+    channel_names_ = channel_names;
+  }
   void collect(
     const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
     const uint & channel_index,

@@ -19,6 +19,8 @@
 #include <boost/uuid/uuid.hpp>
 
 #include <functional>
+#include <iomanip>
+#include <sstream>
 #include <string>
 
 TrackerObjectDebugger::TrackerObjectDebugger(std::string frame_id)
@@ -194,60 +196,77 @@ void TrackerObjectDebugger::draw(
     text_marker.ns = "existence_probability";
     text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     text_marker.action = visualization_msgs::msg::Marker::ADD;
-    text_marker.pose.position.z += 1.5;
-    text_marker.scale.z = 0.8;
+    text_marker.pose.position.z += 1.8;
+    text_marker.scale.z = 0.7;
     text_marker.pose.position.x = object_data_front.tracker_point.x;
     text_marker.pose.position.y = object_data_front.tracker_point.y;
     text_marker.pose.position.z = object_data_front.tracker_point.z + 1.0;
 
     // show the last existence probability
-    std::string existence_probability_text = "P: ";
-    for (const auto & existence_probability : object_data_front.existence_vector) {
-      // probability to text, two digits of percentage
-      existence_probability_text +=
-        std::to_string(static_cast<int>(existence_probability * 100)) + " ";
+    // print existence probability with channel name
+    // probability to text, two digits of percentage
+    std::string existence_probability_text = "P:";
+    for (size_t i = 0; i < object_data_front.existence_vector.size(); ++i) {
+      std::stringstream stream;
+      stream << std::fixed << std::setprecision(0) << object_data_front.existence_vector[i] * 100;
+      existence_probability_text += " " + channel_names_[i] + ":" + stream.str();
     }
+
     text_marker.text = existence_probability_text;
     marker_array.markers.push_back(text_marker);
 
     // loop for each object_data in the group
     // boxed to tracker positions
     // and link lines to the detected positions
-    const double line_height_offset = 1.0;
+    const double height_offset = 1.0;
 
-    visualization_msgs::msg::Marker marker_boxes;
-    marker_boxes = marker;
-    marker_boxes.ns = "boxes";
-    marker_boxes.type = visualization_msgs::msg::Marker::CUBE_LIST;
-    marker_boxes.action = visualization_msgs::msg::Marker::ADD;
+    visualization_msgs::msg::Marker marker_track_boxes;
+    marker_track_boxes = marker;
+    marker_track_boxes.ns = "track_boxes";
+    marker_track_boxes.type = visualization_msgs::msg::Marker::CUBE_LIST;
+    marker_track_boxes.action = visualization_msgs::msg::Marker::ADD;
+    marker_track_boxes.scale.x = 0.4;
+    marker_track_boxes.scale.y = 0.4;
+    marker_track_boxes.scale.z = 0.4;
+
+    visualization_msgs::msg::Marker marker_detect_boxes;
+    marker_detect_boxes = marker;
+    marker_detect_boxes.ns = "detect_boxes";
+    marker_detect_boxes.type = visualization_msgs::msg::Marker::CUBE_LIST;
+    marker_detect_boxes.action = visualization_msgs::msg::Marker::ADD;
+    marker_detect_boxes.scale.x = 0.2;
+    marker_detect_boxes.scale.y = 0.2;
+    marker_detect_boxes.scale.z = 0.2;
 
     visualization_msgs::msg::Marker marker_lines;
     marker_lines = marker;
     marker_lines.ns = "association_lines";
     marker_lines.type = visualization_msgs::msg::Marker::LINE_LIST;
     marker_lines.action = visualization_msgs::msg::Marker::ADD;
-    marker_lines.scale.x = 0.2;
+    marker_lines.scale.x = 0.15;
     marker_lines.points.clear();
 
+    bool is_line_drawn = false;
+
     for (const auto & object_data : object_data_group) {
+      int channel_id = object_data.channel_id;
+
       // set box
       geometry_msgs::msg::Point box_point;
       box_point.x = object_data.tracker_point.x;
       box_point.y = object_data.tracker_point.y;
-      box_point.z = object_data.tracker_point.z;
-      marker_boxes.points.push_back(box_point);
-      marker_boxes.scale.x = 0.2;
-      marker_boxes.scale.y = 0.2;
-      marker_boxes.scale.z = 0.2;
+      box_point.z = object_data.tracker_point.z + height_offset;
+      marker_track_boxes.points.push_back(box_point);
 
       // set association marker, if exists
       if (!object_data.is_associated) continue;
+      is_line_drawn = true;
       // get color - by channel index
       std_msgs::msg::ColorRGBA color;
       color.a = 1.0;
-      color.r = color_array[object_data.channel_id % PALETTE_SIZE][0];
-      color.g = color_array[object_data.channel_id % PALETTE_SIZE][1];
-      color.b = color_array[object_data.channel_id % PALETTE_SIZE][2];
+      color.r = color_array[channel_id % PALETTE_SIZE][0];
+      color.g = color_array[channel_id % PALETTE_SIZE][1];
+      color.b = color_array[channel_id % PALETTE_SIZE][2];
 
       // association line
       geometry_msgs::msg::Point line_point;
@@ -255,24 +274,25 @@ void TrackerObjectDebugger::draw(
 
       line_point.x = object_data.tracker_point.x;
       line_point.y = object_data.tracker_point.y;
-      line_point.z = object_data.tracker_point.z + line_height_offset;
+      line_point.z = object_data.tracker_point.z + height_offset;
       marker_lines.points.push_back(line_point);
       line_point.x = object_data.detection_point.x;
       line_point.y = object_data.detection_point.y;
-      line_point.z = object_data.tracker_point.z + line_height_offset + 2;
+      line_point.z = object_data.tracker_point.z + height_offset + 1;
       marker_lines.points.push_back(line_point);
 
       // associated object box
       box_point.x = object_data.detection_point.x;
       box_point.y = object_data.detection_point.y;
-      box_point.z = object_data.detection_point.z;
-      marker_boxes.color = color;
-      marker_boxes.points.push_back(box_point);
+      box_point.z = object_data.detection_point.z + height_offset + 1;
+      marker_detect_boxes.color = color;
+      marker_detect_boxes.points.push_back(box_point);
     }
 
     // add markers
-    marker_array.markers.push_back(marker_boxes);
-    marker_array.markers.push_back(marker_lines);
+    marker_array.markers.push_back(marker_track_boxes);
+    marker_array.markers.push_back(marker_detect_boxes);
+    if (is_line_drawn) marker_array.markers.push_back(marker_lines);
   }
 
   return;
@@ -300,7 +320,9 @@ void TrackerObjectDebugger::getMessage(visualization_msgs::msg::MarkerArray & ma
 
     marker_array.markers.push_back(delete_marker);
 
-    delete_marker.ns = "boxes";
+    delete_marker.ns = "track_boxes";
+    marker_array.markers.push_back(delete_marker);
+    delete_marker.ns = "detect_boxes";
     marker_array.markers.push_back(delete_marker);
     delete_marker.ns = "association_lines";
     marker_array.markers.push_back(delete_marker);

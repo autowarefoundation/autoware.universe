@@ -43,7 +43,7 @@ Tracker::Tracker(
 void Tracker::initializeExistenceProbabilities(
   const uint & channel_index, const float & existence_probability)
 {
-  existence_probabilities_[channel_index] = existence_probability;
+  existence_probabilities_[channel_index] = 0.8 + 0.2 * existence_probability;
   total_existence_probability_ = existence_probability;
 }
 
@@ -61,7 +61,13 @@ bool Tracker::updateWithMeasurement(
     // existence probability on each channel
     const double delta_time = (measurement_time - last_update_with_measurement_time_).seconds();
     const double decay_rate = 5.0 / 10.0;
-    existence_probabilities_[channel_index] = existence_probability_from_object;
+
+    const float gain = 0.8;
+    const float probability_detected = 0.8;
+    // existence_probabilities_[channel_index] = existence_probability_from_object;
+    existence_probabilities_[channel_index] =
+      gain * probability_detected + (1 - gain) * existence_probabilities_[channel_index];
+
     for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
       if (i == channel_index) {
         continue;
