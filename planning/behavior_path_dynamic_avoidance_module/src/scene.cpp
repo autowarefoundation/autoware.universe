@@ -400,7 +400,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   std::vector<DrivableAreaInfo::Obstacle> obstacles_for_drivable_area;
   for (const auto & object : target_objects_) {
     const auto obstacle_poly = [&]() {
-      if (getLabelAsTargetObstacle(object.label) == ObjectType::UNREGULATED) {
+      if (getObjectType(object.label) == ObjectType::UNREGULATED) {
         return calcPredictedPathBasedDynamicObstaclePolygon(object, ego_path_reserve_poly);
       }
 
@@ -456,7 +456,7 @@ BehaviorModuleOutput DynamicAvoidanceModule::planWaitingApproval()
   return out;
 }
 
-ObjectType DynamicAvoidanceModule::getLabelAsTargetObstacle(const uint8_t label) const
+ObjectType DynamicAvoidanceModule::getObjectType(const uint8_t label) const
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
 
@@ -493,10 +493,6 @@ void DynamicAvoidanceModule::registerRegulatedObjects(
   const auto input_path = getPreviousModuleOutput().path;
   const auto & predicted_objects = planner_data_->dynamic_object->objects;
 
-  // const auto input_ref_path_points = getPreviousModuleOutput().reference_path.points;
-
-  // updateRefPathBeforeLaneChange(input_ref_path_points);
-
   for (const auto & predicted_object : predicted_objects) {
     const auto obj_uuid = tier4_autoware_utils::toHexString(predicted_object.object_id);
     const auto & obj_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
@@ -510,9 +506,7 @@ void DynamicAvoidanceModule::registerRegulatedObjects(
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
     // 1.a. check label
-    if (
-      getLabelAsTargetObstacle(predicted_object.classification.front().label) !=
-      ObjectType::REGULATED) {
+    if (getObjectType(predicted_object.classification.front().label) != ObjectType::REGULATED) {
       continue;
     }
 
@@ -600,9 +594,7 @@ void DynamicAvoidanceModule::registerUnregulatedObjects(
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
     // 1.a. Check if the obstacle is labeled as pedestrians, bicycle or similar.
-    if (
-      getLabelAsTargetObstacle(predicted_object.classification.front().label) !=
-      ObjectType::UNREGULATED) {
+    if (getObjectType(predicted_object.classification.front().label) != ObjectType::UNREGULATED) {
       continue;
     }
 
@@ -663,7 +655,7 @@ void DynamicAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObjects(
   const auto & input_path = getPreviousModuleOutput().path;
 
   for (const auto & object : target_objects_manager_.getValidObjects()) {
-    if (getLabelAsTargetObstacle(object.label) != ObjectType::REGULATED) {
+    if (getObjectType(object.label) != ObjectType::REGULATED) {
       continue;
     }
 
@@ -823,7 +815,7 @@ void DynamicAvoidanceModule::determineWhetherToAvoidAgainstUnregulatedObjects(
   const auto & input_path = getPreviousModuleOutput().path;
 
   for (const auto & object : target_objects_manager_.getValidObjects()) {
-    if (getLabelAsTargetObstacle(object.label) != ObjectType::UNREGULATED) {
+    if (getObjectType(object.label) != ObjectType::UNREGULATED) {
       continue;
     }
 
@@ -1669,7 +1661,7 @@ DynamicAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
   return obj_poly;
 }
 
-// TODO (takagi): replace by the nother function?
+// TODO (takagi): replace by the function calcPredictedPathBasedDynamicObstaclePolygon()?
 std::optional<tier4_autoware_utils::Polygon2d>
 DynamicAvoidanceModule::calcObjectPathBasedDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object) const

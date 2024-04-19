@@ -62,7 +62,7 @@ struct MinMaxValue
 {
   double min_value{0.0};
   double max_value{0.0};
-  MinMaxValue operator+(const double & scalar) const
+  MinMaxValue operator+(const double scalar) const
   {
     MinMaxValue ret;
     ret.min_value = min_value + scalar;
@@ -379,7 +379,7 @@ private:
 
   bool canTransitFailureState() override { return false; }
 
-  ObjectType getLabelAsTargetObstacle(const uint8_t label) const;
+  ObjectType getObjectType(const uint8_t label) const;
   void registerRegulatedObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
   void registerUnregulatedObjects(const std::vector<DynamicAvoidanceObject> & prev_objects);
   void determineWhetherToAvoidAgainstRegulatedObjects(
