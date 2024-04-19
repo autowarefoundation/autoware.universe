@@ -175,11 +175,6 @@ protected:
     const utils::path_safety_checker::RSSparams & rss_params,
     CollisionCheckDebugMap & debug_data) const;
 
-  LaneChangeTargetObjectIndices filterObject(
-    const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes,
-    const lanelet::ConstLanelets & target_backward_lanes) const;
-
   //! @brief Check if the ego vehicle is in stuck by a stationary obstacle.
   //! @param obstacle_check_distance Distance to check ahead for any objects that might be
   //! obstructing ego path. It makes sense to use values like the maximum lane change distance.
