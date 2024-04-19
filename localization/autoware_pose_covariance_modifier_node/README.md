@@ -22,7 +22,6 @@ to the error values coming from GNSS, it also manages situations where GNSS and 
 <img src="./media/new_proposal-proposal-extended-proposal.drawio.png" width="620">
 </p>
 
-
 ## Activate this feature
 
 This package is not used by default autoware, you need to activate it to use it.
