@@ -73,28 +73,25 @@ std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifi
   /*
    * ndt_min_rmse_meters = in_ndt_rmse
    * ndt_max_rmse_meters = in_ndt_rmse  * 2
-   * ndt_rmse = (ndt_max_rmse_meters - gnss_rmse) * (ndt_min_rmse_meters) / 0.1
+   * NDTrmse = ndt_max_rmse_meters - (ndt_max_rmse_meters - ndt_min_rmse_meters) *
+   * ((instant_gnss_error_in_meters - gnss_error_reliable_max_) / (gnss_error_unreliable_min_ -
+   * gnss_error_reliable_max_))
    */
-
-  ndt_covariance[X_POS_IDX_] = std::pow(
-    ((std::sqrt(in_ndt_covariance[X_POS_IDX_]) * 2) -
-     std::sqrt(trusted_source_pose_with_cov.pose.covariance[X_POS_IDX_])) *
-      (std::sqrt(in_ndt_covariance[X_POS_IDX_])) / 0.1,
-    2);
-  ndt_covariance[Y_POS_IDX_] = std::pow(
-    ((std::sqrt(in_ndt_covariance[Y_POS_IDX_]) * 2) -
-     std::sqrt(trusted_source_pose_with_cov.pose.covariance[Y_POS_IDX_])) *
-      (std::sqrt(in_ndt_covariance[Y_POS_IDX_])) / 0.1,
-    2);
-  ndt_covariance[Z_POS_IDX_] = std::pow(
-    ((std::sqrt(in_ndt_covariance[Z_POS_IDX_]) * 2) -
-     std::sqrt(trusted_source_pose_with_cov.pose.covariance[Z_POS_IDX_])) *
-      (std::sqrt(in_ndt_covariance[Z_POS_IDX_])) / 0.1,
-    2);
-
-  ndt_covariance[X_POS_IDX_] = std::max(ndt_covariance[X_POS_IDX_], in_ndt_covariance[X_POS_IDX_]);
-  ndt_covariance[Y_POS_IDX_] = std::max(ndt_covariance[Y_POS_IDX_], in_ndt_covariance[Y_POS_IDX_]);
-  ndt_covariance[Z_POS_IDX_] = std::max(ndt_covariance[Z_POS_IDX_], in_ndt_covariance[Z_POS_IDX_]);
+  auto modify_covariance = [&](int idx) {
+    // calculate NDT covariance value based on gnss covariance
+    double calculated_covariance = std::pow(
+      ((std::sqrt(in_ndt_covariance[idx]) * 2) -
+       ((std::sqrt(in_ndt_covariance[idx]) * 2) - (std::sqrt(in_ndt_covariance[idx]))) *
+         ((std::sqrt(trusted_source_pose_with_cov.pose.covariance[idx]) -
+           gnss_error_reliable_max_) /
+          (gnss_error_unreliable_min_ - gnss_error_reliable_max_))),
+      2);
+    // Make sure the ndt covariance is not below the input ndt covariance value and return
+    return (std::max(calculated_covariance, in_ndt_covariance[idx]));
+  };
+  ndt_covariance[X_POS_IDX_] = modify_covariance(X_POS_IDX_);
+  ndt_covariance[Y_POS_IDX_] = modify_covariance(Y_POS_IDX_);
+  ndt_covariance[Z_POS_IDX_] = modify_covariance(Z_POS_IDX_);
 
   return ndt_covariance;
 }
@@ -158,16 +155,18 @@ void AutowarePoseCovarianceModifierNode::update_pose_source_based_on_rmse(
 {
   std_msgs::msg::String selected_pose_type;
   if (
-    trusted_pose_average_rmse_xy <= gnss_error_reliable_max_ &&
-    trusted_pose_yaw_rmse_in_degrees < yaw_error_deg_threshold_ &&
-    trusted_pose_rmse_z < gnss_error_reliable_max_) {
-    pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS;
-    selected_pose_type.data = "GNSS";
-  } else if (
-    trusted_pose_average_rmse_xy <= gnss_error_unreliable_min_ &&
-    trusted_pose_rmse_z < gnss_error_reliable_max_) {
-    pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT;
-    selected_pose_type.data = "GNSS + NDT";
+    trusted_pose_yaw_rmse_in_degrees <= yaw_error_deg_threshold_ &&
+    trusted_pose_rmse_z <= gnss_error_reliable_max_) {
+    if (trusted_pose_average_rmse_xy <= gnss_error_reliable_max_) {
+      pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS;
+      selected_pose_type.data = "GNSS";
+    } else if (trusted_pose_average_rmse_xy <= gnss_error_unreliable_min_) {
+      pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT;
+      selected_pose_type.data = "GNSS + NDT";
+    } else {
+      pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::NDT;
+      selected_pose_type.data = "NDT";
+    }
   } else {
     pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::NDT;
     selected_pose_type.data = "NDT";
