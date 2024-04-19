@@ -312,6 +312,11 @@ private:
   BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data);
 
   /**
+   * @brief publish the root reference path and current route lanelet
+   */
+  void publishDebugRootReferencePath(const BehaviorModuleOutput & reference_path);
+
+  /**
    * @brief stop and unregister the module from manager.
    * @param module.
    */

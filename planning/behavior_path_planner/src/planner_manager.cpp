@@ -438,7 +438,28 @@ BehaviorModuleOutput PlannerManager::getReferencePath(const std::shared_ptr<Plan
     current_route_lanelet_ = closest_lane;
   else
     resetCurrentRouteLanelet(data);
-  return utils::getReferencePath(*current_route_lanelet_, data);
+
+  const auto reference_path = utils::getReferencePath(*current_route_lanelet_, data);
+  publishDebugRootReferencePath(reference_path);
+  return reference_path;
+}
+
+void PlannerManager::publishDebugRootReferencePath(const BehaviorModuleOutput & reference_path)
+{
+  using visualization_msgs::msg::Marker;
+  MarkerArray array;
+  Marker m = tier4_autoware_utils::createDefaultMarker(
+    "map", clock_.now(), "root_reference_path", 0UL, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(1.0, 1.0, 1.0),
+    tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0));
+  for (const auto & p : reference_path.path.points) m.points.push_back(p.point.pose.position);
+  array.markers.push_back(m);
+  m.points.clear();
+  m.id = 1UL;
+  for (const auto & p : current_route_lanelet_->polygon3d().basicPolygon())
+    m.points.emplace_back().set__x(p.x()).set__y(p.y()).set__z(p.z());
+  array.markers.push_back(m);
+  debug_publisher_ptr_->publish<MarkerArray>("root_reference_path", array);
 }
 
 SceneModulePtr PlannerManager::selectHighestPriorityModule(
