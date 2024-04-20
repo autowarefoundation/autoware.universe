@@ -109,11 +109,11 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
     const double angle = atan2(*iter_y, *iter_x);
     const int angle_bin_index = (angle - min_angle) / angle_increment;
     const double range = std::hypot(*iter_y, *iter_x);
-    // process only for valid angle bin and range
+    // Ignore obstacle points exceed the range of the raw points
     if (raw_pointcloud_angle_bins.at(angle_bin_index).empty()) {
-      continue;  // ignore obstacle point out of raw points
+      continue;  // No raw point in this angle bin
     } else if (range > raw_pointcloud_angle_bins.at(angle_bin_index).back().range) {
-      continue;  // ignore obstacle point that is further than raw points
+      continue;  // Obstacle point exceeds the range of the raw points
     }
     obstacle_pointcloud_angle_bins.at(angle_bin_index)
       .push_back(BinInfo(range, *iter_wx, *iter_wy));
