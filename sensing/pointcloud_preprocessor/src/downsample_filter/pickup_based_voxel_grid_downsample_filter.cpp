@@ -14,6 +14,8 @@
 
 #include "pointcloud_preprocessor/downsample_filter/pickup_based_voxel_grid_downsample_filter.hpp"
 
+#include "robin_hood.h"
+
 namespace
 {
 /**
@@ -82,7 +84,8 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
   stop_watch_ptr_->toc("processing_time", true);
 
   using VoxelKey = std::array<int, 3>;
-  std::unordered_map<VoxelKey, size_t, VoxelKeyHash, VoxelKeyEqual> voxel_map;
+  // std::unordered_map<VoxelKey, size_t, VoxelKeyHash, VoxelKeyEqual> voxel_map;
+  robin_hood::unordered_map<VoxelKey, size_t, VoxelKeyHash, VoxelKeyEqual> voxel_map;
 
   voxel_map.reserve(input->data.size() / input->point_step);
 

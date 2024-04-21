@@ -66,6 +66,8 @@ These implementations inherit `pointcloud_preprocessor::Filter` class, please re
 
 ## Assumptions / Known limits
 
+This implementation uses the `robin_hood.h` hashing library by martinus, available under the MIT License at [martinus/robin-hood-hashing](https://github.com/martinus/robin-hood-hashing) on GitHub. Special thanks to martinus for this contribution.
+
 ## (Optional) Error detection and handling
 
 ## (Optional) Performance characterization
