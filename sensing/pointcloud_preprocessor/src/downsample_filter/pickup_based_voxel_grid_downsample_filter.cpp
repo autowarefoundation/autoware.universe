@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,6 +53,16 @@ PickupBasedVoxelGridDownsampleFilterComponent::PickupBasedVoxelGridDownsampleFil
   const rclcpp::NodeOptions & options)
 : Filter("PickupBasedVoxelGridDownsampleFilterComponent", options)
 {
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<DebugPublisher>(this, this->get_name());
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
+
   // Initialization of voxel sizes from parameters
   voxel_size_x_ = static_cast<float>(declare_parameter("voxel_size_x", 1.0));
   voxel_size_y_ = static_cast<float>(declare_parameter("voxel_size_y", 1.0));
@@ -69,8 +79,12 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
 {
   std::scoped_lock lock(mutex_);
 
+  stop_watch_ptr_->toc("processing_time", true);
+
   using VoxelKey = std::array<int, 3>;
   std::unordered_map<VoxelKey, size_t, VoxelKeyHash, VoxelKeyEqual> voxel_map;
+
+  voxel_map.reserve(input->data.size() / input->point_step);
 
   constexpr float large_num_offset = 100000.0;
   const float inverse_voxel_size_x = 1.0 / voxel_size_x_;
@@ -97,9 +111,7 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
       static_cast<int>((y + large_num_offset) * inverse_voxel_size_y),
       static_cast<int>((z + large_num_offset) * inverse_voxel_size_z)};
 
-    if (voxel_map.find(key) == voxel_map.end()) {
-      voxel_map[key] = global_offset;
-    }
+    voxel_map.emplace(key, global_offset);
   }
 
   // Populate the output point cloud
@@ -127,6 +139,24 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
   output.is_dense = input->is_dense;
   output.width = static_cast<uint32_t>(output.data.size() / output.height / output.point_step);
   output.row_step = static_cast<uint32_t>(output.data.size() / output.height);
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+
+    auto pipeline_latency_ms =
+      std::chrono::duration<double, std::milli>(
+        std::chrono::nanoseconds((this->get_clock()->now() - input->header.stamp).nanoseconds()))
+        .count();
+
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/pipeline_latency_ms", pipeline_latency_ms);
+  }
 }
 
 rcl_interfaces::msg::SetParametersResult
