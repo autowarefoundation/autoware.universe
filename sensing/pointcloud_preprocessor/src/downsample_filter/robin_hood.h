@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2021 Martin Ankerl <http://martin.ankerl.com>
 //                 ______  _____                 ______                _________
 //  ______________ ___  /_ ___(_)_______         ___  /_ ______ ______ ______  /
 //  __  ___/_  __ \__  __ \__  / __  __ \        __  __ \_  __ \_  __ \_  __  /
@@ -29,6 +30,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+
+// clang-format off
+// (because it messes up the whole file and this is a external file)
 
 #ifndef DOWNSAMPLE_FILTER__ROBIN_HOOD_H_
 #define DOWNSAMPLE_FILTER__ROBIN_HOOD_H_
@@ -147,7 +151,7 @@ static Counts & counts()
 #pragma intrinsic(ROBIN_HOOD(BITSCANFORWARD))
 #define ROBIN_HOOD_COUNT_TRAILING_ZEROES(x)                                   \
   [](size_t mask) noexcept -> int {                                           \
-    unsigned long index;                                                      \
+    unsigned long index;                                                      \  // NOLINT
     return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) ? static_cast<int>(index) \
                                                     : ROBIN_HOOD(BITNESS);    \
   }(x)
@@ -349,7 +353,7 @@ template <typename E, typename... Args>
 #if ROBIN_HOOD(HAS_EXCEPTIONS)
   void doThrow(Args &&... args)
 {
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
+  // NOLINTNEXTLINE (cppcoreguidelines-pro-bounds-array-to-pointer-decay)
   throw E(std::forward<Args>(args)...);
 }
 #else
@@ -410,7 +414,7 @@ public:
   }
 
   BulkPoolAllocator &
-  // NOLINTNEXTLINE(bugprone-unhandled-self-assignment,cert-oop54-cpp)
+  // NOLINTNEXTLINE (bugprone-unhandled-self-assignment,cert-oop54-cpp)
   operator=(const BulkPoolAllocator & ROBIN_HOOD_UNUSED(o) /*unused*/) noexcept
   {
     // does not do anything
@@ -679,12 +683,7 @@ struct pair
                                                 forward<U1>(std::get<I1>(
                                                   std::declval<std::tuple<
                                                     U1...> &>()))...)) && noexcept(T2(std::
-                                                                                        forward<
-                                                                                          U2>(std::get<
-                                                                                              I2>(
-                                                                                          std::declval<
-                                                                                            std::tuple<
-                                                                                              U2...> &>()))...)))
+                                                      forward<U2>(std::get<I2>(std::declval<std::tuple<U2...> &>()))...)))  // NOLINT
   : first(std::forward<U1>(std::get<I1>(a))...), second(std::forward<U2>(std::get<I2>(b))...)
   {
     // make visual studio compiler happy about warning about unused a & b.
@@ -701,8 +700,8 @@ struct pair
     swap(second, o.second);
   }
 
-  T1 first;   // NOLINT(misc-non-private-member-variables-in-classes)
-  T2 second;  // NOLINT(misc-non-private-member-variables-in-classes)
+  T1 first;   // NOLINT (misc-non-private-member-variables-in-classes)
+  T2 second;  // NOLINT (misc-non-private-member-variables-in-classes)
 };
 
 template <typename A, typename B>
@@ -911,14 +910,14 @@ ROBIN_HOOD_HASH_INT(char32_t);
 #if ROBIN_HOOD(HAS_NATIVE_WCHART)
 ROBIN_HOOD_HASH_INT(wchar_t);
 #endif
-ROBIN_HOOD_HASH_INT(short);
-ROBIN_HOOD_HASH_INT(unsigned short);
+ROBIN_HOOD_HASH_INT(short);  // NOLINT
+ROBIN_HOOD_HASH_INT(unsigned short);  // NOLINT
 ROBIN_HOOD_HASH_INT(int);
 ROBIN_HOOD_HASH_INT(unsigned int);
-ROBIN_HOOD_HASH_INT(long);
-ROBIN_HOOD_HASH_INT(long long);
-ROBIN_HOOD_HASH_INT(unsigned long);
-ROBIN_HOOD_HASH_INT(unsigned long long);
+ROBIN_HOOD_HASH_INT(long);  // NOLINT
+ROBIN_HOOD_HASH_INT(long long);  // NOLINT
+ROBIN_HOOD_HASH_INT(unsigned long);  // NOLINT
+ROBIN_HOOD_HASH_INT(unsigned long long);  // NOLINT
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
@@ -1318,7 +1317,7 @@ private:
 
   // generic iterator for both const_iterator and iterator.
   template <bool IsConst>
-  // NOLINTNEXTLINE(hicpp-special-member-functions,cppcoreguidelines-special-member-functions)
+  // NOLINTNEXTLINE (hicpp-special-member-functions,cppcoreguidelines-special-member-functions)
   class Iter
   {
   private:
@@ -1340,7 +1339,7 @@ private:
 
     // Conversion constructor from iterator to const_iterator.
     template <bool OtherIsConst, typename = typename std::enable_if<IsConst && !OtherIsConst>::type>
-    // NOLINTNEXTLINE(hicpp-explicit-conversions)
+    // NOLINTNEXTLINE (hicpp-explicit-conversions)
     Iter(Iter<OtherIsConst> const & other) noexcept : mKeyVals(other.mKeyVals), mInfo(other.mInfo)
     {
     }
@@ -1718,7 +1717,7 @@ public:
 
   // Creates a copy of the given map. Copy constructor of each entry is used.
   // Not sure why clang-tidy thinks this doesn't handle self assignment, it does
-  // NOLINTNEXTLINE(bugprone-unhandled-self-assignment,cert-oop54-cpp)
+  // NOLINTNEXTLINE (bugprone-unhandled-self-assignment,cert-oop54-cpp)
   Table & operator=(Table const & o)
   {
     ROBIN_HOOD_TRACE(this)
@@ -2022,7 +2021,7 @@ public:
 
   // Returns 1 if key is found, 0 otherwise.
   size_t count(const key_type & key) const
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     auto kv = mKeyVals + findIdx(key);
     if (kv != reinterpret_cast_no_cast_align_warning<Node *>(mInfo)) {
@@ -2032,7 +2031,7 @@ public:
   }
 
   template <typename OtherKey, typename Self_ = Self>
-  // NOLINTNEXTLINE(modernize-use-nodiscard)
+  // NOLINTNEXTLINE (modernize-use-nodiscard)
   typename std::enable_if<Self_::is_transparent, size_t>::type count(const OtherKey & key) const
   {
     ROBIN_HOOD_TRACE(this)
@@ -2044,12 +2043,12 @@ public:
   }
 
   bool contains(const key_type & key) const
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     return 1U == count(key);
   }
 
   template <typename OtherKey, typename Self_ = Self>
-  // NOLINTNEXTLINE(modernize-use-nodiscard)
+  // NOLINTNEXTLINE (modernize-use-nodiscard)
   typename std::enable_if<Self_::is_transparent, bool>::type contains(const OtherKey & key) const
   {
     return 1U == count(key);
@@ -2058,7 +2057,7 @@ public:
   // Returns a reference to the value found for key.
   // Throws std::out_of_range if element cannot be found
   template <typename Q = mapped_type>
-  // NOLINTNEXTLINE(modernize-use-nodiscard)
+  // NOLINTNEXTLINE (modernize-use-nodiscard)
   typename std::enable_if<!std::is_void<Q>::value, Q &>::type at(key_type const & key)
   {
     ROBIN_HOOD_TRACE(this)
@@ -2072,7 +2071,7 @@ public:
   // Returns a reference to the value found for key.
   // Throws std::out_of_range if element cannot be found
   template <typename Q = mapped_type>
-  // NOLINTNEXTLINE(modernize-use-nodiscard)
+  // NOLINTNEXTLINE (modernize-use-nodiscard)
   typename std::enable_if<!std::is_void<Q>::value, Q const &>::type at(key_type const & key) const
   {
     ROBIN_HOOD_TRACE(this)
@@ -2084,7 +2083,7 @@ public:
   }
 
   const_iterator find(const key_type & key) const
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     const size_t idx = findIdx(key);
     return const_iterator{mKeyVals + idx, mInfo + idx};
@@ -2100,10 +2099,10 @@ public:
 
   template <typename OtherKey, typename Self_ = Self>
   typename std::enable_if<
-    Self_::is_transparent,  // NOLINT(modernize-use-nodiscard)
-    const_iterator>::type   // NOLINT(modernize-use-nodiscard)
+    Self_::is_transparent,  // NOLINT (modernize-use-nodiscard)
+    const_iterator>::type   // NOLINT (modernize-use-nodiscard)
   find(const OtherKey & key) const
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     const size_t idx = findIdx(key);
     return const_iterator{mKeyVals + idx, mInfo + idx};
@@ -2141,12 +2140,12 @@ public:
     return iterator(mKeyVals, mInfo, fast_forward_tag{});
   }
   const_iterator begin() const
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     return cbegin();
   }
   const_iterator cbegin() const
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     if (empty()) {
       return cend();
@@ -2162,12 +2161,12 @@ public:
     return iterator{reinterpret_cast_no_cast_align_warning<Node *>(mInfo), nullptr};
   }
   const_iterator end() const
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     return cend();
   }
   const_iterator cend() const
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     return const_iterator{reinterpret_cast_no_cast_align_warning<Node *>(mInfo), nullptr};
   }
@@ -2176,7 +2175,7 @@ public:
   {
     ROBIN_HOOD_TRACE(this)
     // its safe to perform const cast here
-    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
+    // NOLINTNEXTLINE (cppcoreguidelines-pro-type-const-cast)
     return erase(iterator{const_cast<Node *>(pos.mKeyVals), const_cast<uint8_t *>(pos.mInfo)});
   }
 
@@ -2259,13 +2258,13 @@ public:
   }
 
   size_type size() const noexcept
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     return mNumElements;
   }
 
   size_type max_size() const noexcept
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     return static_cast<size_type>(-1);
   }
@@ -2277,14 +2276,14 @@ public:
   }
 
   float max_load_factor() const noexcept
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     return MaxLoadFactor100 / 100.0F;
   }
 
   // Average number of elements per bucket. Since we allow only 1 per bucket
   float load_factor() const noexcept
-  {  // NOLINT(modernize-use-nodiscard)
+  {  // NOLINT (modernize-use-nodiscard)
     ROBIN_HOOD_TRACE(this)
     return static_cast<float>(size()) / static_cast<float>(mMask + 1);
   }
