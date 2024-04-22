@@ -33,7 +33,7 @@ EuclideanCluster::EuclideanCluster(
 : EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size), tolerance_(tolerance)
 {
 }
-
+// TODO(badai-nguyen): implement input field copy for euclidean_cluster.cpp
 bool EuclideanCluster::cluster(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & pointcloud_msg,
   tier4_perception_msgs::msg::DetectedObjectsWithFeature & clusters)

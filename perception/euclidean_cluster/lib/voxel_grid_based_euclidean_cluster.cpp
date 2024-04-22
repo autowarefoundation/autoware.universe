@@ -40,7 +40,8 @@ VoxelGridBasedEuclideanCluster::VoxelGridBasedEuclideanCluster(
   min_points_number_per_voxel_(min_points_number_per_voxel)
 {
 }
-
+// TODO(badai-nguyen): remove this function when field copying also implemented for
+// euclidean_cluster.cpp
 bool VoxelGridBasedEuclideanCluster::cluster(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
   std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters)
