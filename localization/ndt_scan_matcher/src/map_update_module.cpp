@@ -56,7 +56,6 @@ void MapUpdateModule::callback_timer(
   if (!is_activated) {
     std::stringstream message;
     message << "Node is not activated.";
-    RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
     diagnostics_ptr->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return;
@@ -71,7 +70,6 @@ void MapUpdateModule::callback_timer(
             << "Please check if the EKF odometry is provided to NDT.";
     diagnostics_ptr->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-    RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
     return;
   }
 
@@ -99,7 +97,6 @@ bool MapUpdateModule::should_update_map(
     message << "Dynamic map loading is not keeping up.";
     diagnostics_ptr->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
-    RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
 
     // If the map does not keep up with the current position,
     // lock ndt_ptr_ entirely until it is fully rebuilt.
@@ -141,7 +138,6 @@ void MapUpdateModule::update_map(
            "properly.";
       diagnostics_ptr->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
-      RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
       last_update_position_ = position;
       ndt_ptr_mutex_->unlock();
       return;
@@ -207,7 +203,6 @@ bool MapUpdateModule::update_ndt(
     message << "Waiting for pcd loader service. Check the pointcloud_map_loader.";
     diagnostics_ptr->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-    RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
     return false;
   }
 
@@ -227,7 +222,6 @@ bool MapUpdateModule::update_ndt(
       message << "pcd_loader service is not working.";
       diagnostics_ptr->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-      RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
       return false;  // No update
     }
     status = result.wait_for(std::chrono::seconds(1));
