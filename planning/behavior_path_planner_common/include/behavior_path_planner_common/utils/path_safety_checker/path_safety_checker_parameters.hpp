@@ -87,6 +87,7 @@ struct ExtendedPredictedObject
     initial_pose(object.kinematics.initial_pose_with_covariance),
     initial_twist(object.kinematics.initial_twist_with_covariance),
     initial_acceleration(object.kinematics.initial_acceleration_with_covariance),
+    shape(object.shape),
     classification(object.classification)
   {
   }
