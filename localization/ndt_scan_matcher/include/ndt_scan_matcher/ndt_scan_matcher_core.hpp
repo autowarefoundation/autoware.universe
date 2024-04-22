@@ -204,6 +204,7 @@ private:
   std::unique_ptr<DiagnosticsModule> diagnostics_regularization_pose_;
   std::unique_ptr<DiagnosticsModule> diagnostics_map_update_;
   std::unique_ptr<DiagnosticsModule> diagnostics_ndt_align_;
+  std::unique_ptr<DiagnosticsModule> diagnostics_trigger_node_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 

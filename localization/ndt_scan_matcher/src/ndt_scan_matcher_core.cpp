@@ -184,15 +184,14 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
 
   diagnostics_scan_points_ =
     std::make_unique<DiagnosticsModule>(this, "localization", "sensor_points_callback");
-
   diagnostics_initial_pose_ =
     std::make_unique<DiagnosticsModule>(this, "localization", "initial_pose_callback");
-
   diagnostics_map_update_ =
     std::make_unique<DiagnosticsModule>(this, "localization", "map_update_module");
-
   diagnostics_ndt_align_ =
     std::make_unique<DiagnosticsModule>(this, "localization", "ndt_align_service");
+  diagnostics_trigger_node_ =
+    std::make_unique<DiagnosticsModule>(this, "localization", "trigger_node_service");
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
@@ -261,6 +260,7 @@ void NDTScanMatcher::callback_regularization_pose(
   geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr)
 {
   diagnostics_regularization_pose_->clear();
+
   diagnostics_regularization_pose_->addKeyValue(
     "topic_time_stamp", static_cast<rclcpp::Time>(pose_conv_msg_ptr->header.stamp).seconds());
 
@@ -904,11 +904,18 @@ void NDTScanMatcher::service_trigger_node(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
+  diagnostics_trigger_node_->clear();
+  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", this->now().seconds());
+
   is_activated_ = req->data;
   if (is_activated_) {
     initial_pose_buffer_->clear();
   }
   res->success = true;
+
+  diagnostics_trigger_node_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
+  diagnostics_trigger_node_->addKeyValue("is_succeed_service", res->success);
+  diagnostics_trigger_node_->publish();
 }
 
 void NDTScanMatcher::service_ndt_align(
