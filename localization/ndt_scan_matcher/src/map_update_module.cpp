@@ -213,7 +213,6 @@ bool MapUpdateModule::update_ndt(
 
   std::future_status status = result.wait_for(std::chrono::seconds(0));
   while (status != std::future_status::ready) {
-
     // check is_succeed_call_pcd_loader
     if (!rclcpp::ok()) {
       diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
