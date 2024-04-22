@@ -34,6 +34,21 @@
 // clang-format off
 // (because it messes up the whole file and this is a external file)
 
+// cspell: ignore _CPPUNWIND
+// cspell: ignore BITSCANFORWARD
+// cspell: ignore clzl
+// cspell: ignore ctzll
+// cspell: ignore WCHART
+// cspell: ignore Inds
+// cspell: ignore inlinings
+// cspell: ignore murmurhash
+// cspell: ignore Wuseless
+// cspell: ignore martinus
+// cspell: ignore keyval
+// cspell: ignore initlist
+// cspell: ignore ilist
+// cspell: ignore nonheap
+
 #ifndef DOWNSAMPLE_FILTER__ROBIN_HOOD_H_
 #define DOWNSAMPLE_FILTER__ROBIN_HOOD_H_
 
@@ -189,7 +204,7 @@ static Counts & counts()
 #define ROBIN_HOOD_UNLIKELY(condition) __builtin_expect(condition, 0)
 #endif
 
-// detect if native wchar_t type is availiable in MSVC
+// detect if native wchar_t type is available in MSVC
 #ifdef _MSC_VER
 #ifdef _NATIVE_WCHAR_T_DEFINED
 #define ROBIN_HOOD_PRIVATE_DEFINITION_HAS_NATIVE_WCHART() 1
@@ -200,7 +215,7 @@ static Counts & counts()
 #define ROBIN_HOOD_PRIVATE_DEFINITION_HAS_NATIVE_WCHART() 1
 #endif
 
-// detect if MSVC supports the pair(std::piecewise_construct_t,...) consructor being constexpr
+// detect if MSVC supports the pair(std::piecewise_construct_t,...) constructor being constexpr
 #ifdef _MSC_VER
 #if _MSC_VER <= 1900
 #define ROBIN_HOOD_PRIVATE_DEFINITION_BROKEN_CONSTEXPR() 1
@@ -553,7 +568,7 @@ private:
   static const size_t ALIGNMENT =
     (ROBIN_HOOD_STD::alignment_of<T>::value > ROBIN_HOOD_STD::alignment_of<T *>::value)
       ? ROBIN_HOOD_STD::alignment_of<T>::value
-      : +ROBIN_HOOD_STD::alignment_of<T *>::value;  // the + is for walkarround
+      : +ROBIN_HOOD_STD::alignment_of<T *>::value;  // the + is for walk around
 #endif
 
   static constexpr size_t ALIGNED_SIZE = ((sizeof(T) - 1) / ALIGNMENT + 1) * ALIGNMENT;
@@ -1138,7 +1153,7 @@ private:
 
     void destroy(M & map) noexcept
     {
-      // don't deallocate, just put it into list of datapool.
+      // don't deallocate, just put it into list of data pool.
       mData->~value_type();
       map.deallocate(mData);
     }
@@ -1704,7 +1719,7 @@ public:
       mHashMultiplier = o.mHashMultiplier;
       mKeyVals =
         static_cast<Node *>(detail::assertNotNull<std::bad_alloc>(std::malloc(numBytesTotal)));
-      // no need for calloc because clonData does memcpy
+      // no need for calloc because cloneData does memcpy
       mInfo = reinterpret_cast<uint8_t *>(mKeyVals + numElementsWithBuffer);
       mNumElements = o.mNumElements;
       mMask = o.mMask;
@@ -2300,7 +2315,7 @@ public:
       return maxElements * MaxLoadFactor100 / 100;
     }
 
-    // we might be a bit inprecise, but since maxElements is quite large that doesn't matter
+    // we might be a bit imprecise, but since maxElements is quite large that doesn't matter
     return (maxElements / 100) * MaxLoadFactor100;
   }
 
@@ -2623,7 +2638,7 @@ private:
 
     if (mNumElements * 2 < calcMaxNumElementsAllowed(mMask + 1)) {
       // we have to resize, even though there would still be plenty of space left!
-      // Try to rehash instead. Delete freed memory so we don't steadyily increase mem in case
+      // Try to rehash instead. Delete freed memory so we don't steadily increase mem in case
       // we have to rehash a few times
       nextHashMultiplier();
       rehashPowerOfTwo(mMask + 1, true);
