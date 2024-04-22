@@ -130,6 +130,7 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   for (auto & cluster : clusters) {
     cluster.point_step = input_pointcloud_msg.point_step;
     cluster.height = input_pointcloud_msg.height;
+    cluster.fields = input_pointcloud_msg.fields;
     cluster.data.resize(max_cluster_size_ * input_pointcloud_msg.point_step);
     clusters_data_size.push_back(0);
   }
@@ -151,15 +152,15 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
       auto & feature_obj = output_objs.at(i);
       const auto & check_roi = feature_obj.feature.roi;
       auto & cluster = clusters.at(i);
-      if (cluster.points.size() >= static_cast<size_t>(max_cluster_size_)) {
+
+      if (clusters_data_size.at(i) >= static_cast<size_t>(max_cluster_size_ * point_step)) {
         continue;
       }
       if (
         check_roi.x_offset <= normalized_projected_point.x() &&
         check_roi.y_offset <= normalized_projected_point.y() &&
         check_roi.x_offset + check_roi.width >= normalized_projected_point.x() &&
-        check_roi.y_offset + check_roi.height >= normalized_projected_point.y() &&
-        clusters_data_size.at(i) < static_cast<size_t>(max_cluster_size_ * point_step)) {
+        check_roi.y_offset + check_roi.height >= normalized_projected_point.y()) {
         std::memcpy(
           &cluster.data[clusters_data_size.at(i)], &input_pointcloud_msg.data[offset], point_step);
         clusters_data_size.at(i) += point_step;
@@ -167,28 +168,10 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     }
   }
 
-  for (size_t i = 0; i < output_objs.size(); ++i) {
-    auto & feature_obj = output_objs.at(i);
-    auto & cluster = clusters.at(i);
-    if (
-      clusters_data_size.at(i) < static_cast<size_t>(min_cluster_size_ * point_step) ||
-      clusters_data_size.at(i) >= static_cast<size_t>(max_cluster_size_ * point_step)) {
-      continue;
-    }
-    cluster.data.resize(clusters_data_size.at(i));
-    cluster.width = clusters_data_size.at(i) / point_step / input_pointcloud_msg.height;
-    cluster.row_step = clusters_data_size.at(i) / input_pointcloud_msg.height;
-    cluster.is_bigendian = input_pointcloud_msg.is_bigendian;
-    cluster.is_dense = input_pointcloud_msg.is_dense;
-    cluster.header = input_pointcloud_msg.header;
-    cluster.fields = input_pointcloud_msg.fields;
-
-    feature_obj.feature.cluster = cluster;
-    feature_obj.object.kinematics.pose_with_covariance.pose.position = getCentroid(cluster);
-    feature_obj.object.existence_probability = 1.0f;
-
-    output_fused_objects_.push_back(feature_obj);
-  }
+  // refine and update output_fused_objects_
+  updateOutputFusedObjects(
+    output_objs, clusters, clusters_data_size, input_pointcloud_msg, input_roi_msg.header,
+    tf_buffer_, min_cluster_size_, max_cluster_size_, cluster_2d_tolerance_, output_fused_objects_);
 }
 
 bool RoiPointCloudFusionNode::out_of_scope(__attribute__((unused))
