@@ -33,8 +33,10 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node, const std::string & frame_
         "debug/tentative_objects", rclcpp::QoS{1});
   }
 
-  debug_objects_markers_pub_ = node_.create_publisher<visualization_msgs::msg::MarkerArray>(
-    "multi_object_tracker/debug/objects_markers", rclcpp::QoS{1});
+  if (debug_settings_.publish_debug_markers) {
+    debug_objects_markers_pub_ = node_.create_publisher<visualization_msgs::msg::MarkerArray>(
+      "multi_object_tracker/debug/objects_markers", rclcpp::QoS{1});
+  }
 
   // initialize timestamps
   const rclcpp::Time now = node_.now();
@@ -55,6 +57,7 @@ void TrackerDebugger::loadParameters()
       node_.declare_parameter<bool>("publish_processing_time");
     debug_settings_.publish_tentative_objects =
       node_.declare_parameter<bool>("publish_tentative_objects");
+    debug_settings_.publish_debug_markers = node_.declare_parameter<bool>("publish_debug_markers");
     debug_settings_.diagnostics_warn_delay =
       node_.declare_parameter<double>("diagnostics_warn_delay");
     debug_settings_.diagnostics_error_delay =
@@ -63,6 +66,7 @@ void TrackerDebugger::loadParameters()
     RCLCPP_WARN(node_.get_logger(), "Failed to declare parameter: %s", e.what());
     debug_settings_.publish_processing_time = false;
     debug_settings_.publish_tentative_objects = false;
+    debug_settings_.publish_debug_markers = false;
     debug_settings_.diagnostics_warn_delay = 0.5;
     debug_settings_.diagnostics_error_delay = 1.0;
   }
@@ -181,6 +185,7 @@ void TrackerDebugger::collectObjectInfo(
   const std::unordered_map<int, int> & direct_assignment,
   const std::unordered_map<int, int> & reverse_assignment)
 {
+  if (!debug_settings_.publish_debug_markers) return;
   object_debugger_.collect(
     message_time, list_tracker, channel_index, detected_objects, direct_assignment,
     reverse_assignment);
@@ -189,8 +194,9 @@ void TrackerDebugger::collectObjectInfo(
 // ObjectDebugger
 void TrackerDebugger::publishObjectsMarkers()
 {
-  visualization_msgs::msg::MarkerArray marker_message;
+  if (!debug_settings_.publish_debug_markers) return;
 
+  visualization_msgs::msg::MarkerArray marker_message;
   // process data
   object_debugger_.process();
 

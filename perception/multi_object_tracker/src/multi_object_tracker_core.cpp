@@ -92,13 +92,21 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
   // ROS interface - Subscribers
   if (input_topic_names.empty()) {
-    RCLCPP_ERROR(get_logger(), "Need a 'input_topic_names' parameter to be set before continuing");
+    RCLCPP_ERROR(this->get_logger(), "No input topics are specified.");
     return;
   }
+  if (
+    input_names_long.size() != input_topic_names.size() ||
+    input_names_short.size() != input_topic_names.size()) {
+    RCLCPP_ERROR(
+      this->get_logger(),
+      "The number of input topic names, long names, and short names must be the same.");
+    return;
+  }
+
   input_channel_size_ = input_topic_names.size();
   input_channels_.resize(input_channel_size_);
-  assert(input_names_long.size() == input_channel_size_);
-  assert(input_names_short.size() == input_channel_size_);
+
   for (size_t i = 0; i < input_channel_size_; i++) {
     input_channels_[i].index = i;
     input_channels_[i].input_topic = input_topic_names[i];
@@ -229,31 +237,6 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
   }
   // process end
   debugger_->endMeasurementTime(this->now());
-
-  /* DEBUG */
-  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
-  RCLCPP_INFO(
-    this->get_logger(), "MultiObjectTracker::onMessage Objects time range: %f - %f",
-    (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());
-
-  // count objects on each channel
-  std::vector<int> object_counts;
-  object_counts.resize(input_channel_size_);
-  // initialize to zero
-  for (size_t i = 0; i < input_channel_size_; i++) {
-    object_counts[i] = 0;
-  }
-  for (const auto & objects_data : objects_list) {
-    object_counts[objects_data.first] += 1;
-  }
-  // print result
-  std::string object_counts_str = "MultiObjectTracker::onMessage Object counts: ";
-  for (size_t i = 0; i < input_channel_size_; i++) {
-    object_counts_str +=
-      input_channels_[i].long_name + " " + std::to_string(object_counts[i]) + "  ";
-  }
-  RCLCPP_INFO(this->get_logger(), object_counts_str.c_str());
-  /* DEBUG END */
 }
 
 void MultiObjectTracker::runProcess(
@@ -289,13 +272,12 @@ void MultiObjectTracker::runProcess(
     Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
       detected_objects, list_tracker);  // row : tracker, col : measurement
     data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
-  }
 
-  // Collect debug information - tracker list, existence probabilities, association result
-  // TODO(technolojin): add option to enable/disable debug information
-  debugger_->collectObjectInfo(
-    measurement_time, processor_->getListTracker(), channel_index, transformed_objects,
-    direct_assignment, reverse_assignment);
+    // Collect debug information - tracker list, existence probabilities, association results
+    debugger_->collectObjectInfo(
+      measurement_time, processor_->getListTracker(), channel_index, transformed_objects,
+      direct_assignment, reverse_assignment);
+  }
 
   /* tracker update */
   processor_->update(transformed_objects, *self_transform, direct_assignment, channel_index);

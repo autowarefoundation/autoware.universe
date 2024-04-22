@@ -47,6 +47,7 @@ private:
   {
     bool publish_processing_time;
     bool publish_tentative_objects;
+    bool publish_debug_markers;
     double diagnostics_warn_delay;
     double diagnostics_error_delay;
   } debug_settings_;

@@ -197,19 +197,20 @@ void TrackerObjectDebugger::draw(
     text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
     text_marker.action = visualization_msgs::msg::Marker::ADD;
     text_marker.pose.position.z += 1.8;
-    text_marker.scale.z = 0.7;
+    text_marker.scale.z = 0.5;
     text_marker.pose.position.x = object_data_front.tracker_point.x;
     text_marker.pose.position.y = object_data_front.tracker_point.y;
-    text_marker.pose.position.z = object_data_front.tracker_point.z + 1.0;
+    text_marker.pose.position.z = object_data_front.tracker_point.z + 2.0;
 
     // show the last existence probability
     // print existence probability with channel name
     // probability to text, two digits of percentage
-    std::string existence_probability_text = "P:";
+    std::string existence_probability_text = "";
+    existence_probability_text += std::to_string(uuid_int);
     for (size_t i = 0; i < object_data_front.existence_vector.size(); ++i) {
       std::stringstream stream;
       stream << std::fixed << std::setprecision(0) << object_data_front.existence_vector[i] * 100;
-      existence_probability_text += " " + channel_names_[i] + ":" + stream.str();
+      existence_probability_text += ":" + channel_names_[i] + stream.str();
     }
 
     text_marker.text = existence_probability_text;
