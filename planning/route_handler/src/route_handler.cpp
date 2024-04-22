@@ -2261,65 +2261,46 @@ bool RouteHandler::hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath &
 }
 
 double RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_)
-{ /**
-
- double dist_to_goal = lanelet::geometry::toArcCoordinates(
-                                     lanelet::utils::to2D(lanelet.centerline()),
-                                     lanelet::utils::to2D(target_goal_position).basicPoint())
-                                     .length;
- */
-  static bool is_first_time{true};
-  double length = 0.0;
-  size_t counter = 0;
-  lanelet::ConstLanelet goal_lanelet;
-  getGoalLanelet(&goal_lanelet);
+{
+  double remaining_distance = 0.0;
+  size_t index = 0;
 
   lanelet::ConstLanelet current_lanelet;
   getClosestLaneletWithinRoute(current_pose, &current_lanelet);
+  
+  lanelet::ConstLanelet goal_lanelet;
+  getGoalLanelet(&goal_lanelet);
 
   const lanelet::Optional<lanelet::routing::Route> optional_route =
     routing_graph_ptr_->getRoute(current_lanelet, goal_lanelet, 0);
 
-  lanelet::routing::LaneletPath shortest_path;
-  shortest_path = optional_route->shortestPath();
-  lanelet::ConstLanelets tmp_const_lanelets;
+  lanelet::routing::LaneletPath remaining_shortest_path;
+  remaining_shortest_path = optional_route->shortestPath();
 
-  for (auto & llt : shortest_path) {
-    if (shortest_path.size() == 1 && is_first_time) {
-      tmp_const_lanelets.push_back(llt);
-      lanelet::ArcCoordinates arc_coord =
-        lanelet::utils::getArcCoordinates(tmp_const_lanelets, current_pose);
-      double this_lanelet_length = lanelet::utils::getLaneletLength2d(llt);
-      length += this_lanelet_length - arc_coord.length;
+  for (auto & llt : remaining_shortest_path) {
+
+    if (remaining_shortest_path.size() == 1) {
+      remaining_distance += tier4_autoware_utils::calcDistance2d(current_pose.position, goal_pose_.position);
       break;
     }
 
-    if (shortest_path.size() == 1 && !is_first_time) {
-      length += tier4_autoware_utils::calcDistance2d(current_pose.position, goal_pose_.position);
-      break;
-    }
-
-    if (counter == 0) {
-      is_first_time = false;
-      tmp_const_lanelets.push_back(llt);
+    if (index == 0) {
       lanelet::ArcCoordinates arc_coord =
-        lanelet::utils::getArcCoordinates(tmp_const_lanelets, current_pose);
+        lanelet::utils::getArcCoordinates({llt}, current_pose);
       double this_lanelet_length = lanelet::utils::getLaneletLength2d(llt);
-      length += this_lanelet_length - arc_coord.length;
-    } else if (counter == (shortest_path.size() - 1)) {
-      tmp_const_lanelets.push_back(llt);
+      remaining_distance += this_lanelet_length - arc_coord.length;
+    } else if (index == (remaining_shortest_path.size() - 1)) {
       lanelet::ArcCoordinates arc_coord =
-        lanelet::utils::getArcCoordinates(tmp_const_lanelets, goal_pose_);
-      length += arc_coord.length;
+        lanelet::utils::getArcCoordinates({llt}, goal_pose_);
+      remaining_distance += arc_coord.length;
     } else {
-      length += lanelet::utils::getLaneletLength2d(llt);
+      remaining_distance += lanelet::utils::getLaneletLength2d(llt);
     }
 
-    counter++;
-    tmp_const_lanelets.clear();
+    index++;
   }
 
-  return length;
+  return remaining_distance;
 }
 
 EstimatedTimeOfArrival RouteHandler::getEstimatedTimeOfArrival(
@@ -2329,7 +2310,7 @@ EstimatedTimeOfArrival RouteHandler::getEstimatedTimeOfArrival(
     current_vehicle_velocity.x * current_vehicle_velocity.x +
     current_vehicle_velocity.y * current_vehicle_velocity.y);
 
-  if (remaining_distance < 0.0001 || current_velocity_norm < 0.0001) {
+  if (remaining_distance < 0.01 || current_velocity_norm < 0.01) {
     eta.hours = 0;
     eta.minutes = 0;
     eta.seconds = 0;
@@ -2337,10 +2318,6 @@ EstimatedTimeOfArrival RouteHandler::getEstimatedTimeOfArrival(
   }
 
   double remaining_time = remaining_distance / current_velocity_norm;
-  //   eta.hours = remaining_time / 3600;
-  // remaining_time = std::fmod(remaining_time, 3600);
-  // eta.minutes = remaining_time / 60;
-  // eta.seconds = fmod(remaining_time, 60);
   eta.hours = static_cast<uint8_t>(remaining_time / 3600.0);
   remaining_time = std::fmod(remaining_time, 3600);
   eta.minutes = static_cast<uint8_t>(remaining_time / 60.0);
