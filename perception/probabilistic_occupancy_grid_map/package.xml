@@ -34,6 +34,7 @@
   <depend>tier4_autoware_utils</depend>
   <depend>visualization_msgs</depend>
 
+  <exec_depend>pointcloud_preprocessor</exec_depend>
   <exec_depend>pointcloud_to_laserscan</exec_depend>
 
   <test_depend>ament_cmake_gtest</test_depend>

@@ -24,7 +24,7 @@
           max_height: 2.0
         enable_single_frame_mode: true
         # use sensor pointcloud to filter obstacle pointcloud
-        filter_obstacle_pointcloud_by_raw_pointcloud: true
+        filter_obstacle_pointcloud_by_raw_pointcloud: false
 
         grid_map_type: "OccupancyGridMapFixedBlindSpot"
         OccupancyGridMapFixedBlindSpot:
