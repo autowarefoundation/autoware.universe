@@ -2,11 +2,8 @@
 
 # ROS2/Autoware.universe bridge for CARLA simulator
 
-### Thanks to <https://github.com/gezp> for ROS2 Humble support for CARLA ROS bridge
-
+Thanks to <https://github.com/gezp> for ROS2 Humble support for CARLA Communication.
 This ros package enables communication between Autoware and CARLA for autonomous driving simulation.
-
-- Make sure to Install the python .whl using pip to use CARLA with ROS2 Humble from [here](https://github.com/gezp/carla_ros/releases/tag/carla-0.9.15-ubuntu-22.04).
 
 # Environment
 
@@ -24,6 +21,7 @@ This ros package enables communication between Autoware and CARLA for autonomous
 - [Carla Sensor Kit](https://github.com/mraditya01/carla_sensor_kit_launch)
 - [Autoware Individual params (forked with CARLA Sensor Kit params)](https://github.com/mraditya01/autoware_individual_params)
 - [Autoware launch with CARLA option](https://github.com/mraditya01/autoware_launch)
+- [Python wheel for CARLA 0.9.15 Ros2 Humble communication](https://github.com/gezp/carla_ros/releases/tag/carla-0.9.15-ubuntu-22.04)
 
   1. Download maps (y-axis inverted version) to arbitaly location
   2. Change names. (point_cloud/Town01.pcd -> Town01/pointcloud_map.pcd, vector_maps/lanelet2/Town01.osm -> Town01/lanelet2_map.osm)

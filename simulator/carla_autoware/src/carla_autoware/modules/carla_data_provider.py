@@ -191,6 +191,13 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
     def get_client():
         """Get the CARLA client."""
         return CarlaDataProvider._client
+    
+    @staticmethod
+    def is_sync_mode():
+        """
+        @return true if syncronuous mode is used
+        """
+        return CarlaDataProvider._sync_flag
 
     @staticmethod
     def set_world(world):
@@ -206,6 +213,21 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
     def get_world():
         """Return world."""
         return CarlaDataProvider._world
+    
+    @staticmethod
+    def get_map(world=None):
+        """Get the current map"""
+        if CarlaDataProvider._map is None:
+            if world is None:
+                if CarlaDataProvider._world is None:
+                    raise ValueError("class member \'world'\' not initialized yet")
+                else:
+                    CarlaDataProvider._map = CarlaDataProvider._world.get_map()
+            else:
+                CarlaDataProvider._map = world.get_map()
+
+        return CarlaDataProvider._map
+
 
     @staticmethod
     def get_all_actors():
