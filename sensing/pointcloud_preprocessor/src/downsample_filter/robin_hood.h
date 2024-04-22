@@ -38,6 +38,7 @@
 // cspell: ignore BITSCANFORWARD
 // cspell: ignore clzl
 // cspell: ignore ctzll
+// cspell: ignore clzll
 // cspell: ignore WCHART
 // cspell: ignore Inds
 // cspell: ignore inlinings
