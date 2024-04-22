@@ -188,6 +188,9 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   diagnostics_initial_pose_ =
     std::make_unique<DiagnosticsModule>(this, "localization", "initial_pose_callback");
 
+  diagnostics_map_update_ =
+    std::make_unique<DiagnosticsModule>(this, "localization", "map_update_module");
+
   diagnostics_ndt_align_ =
     std::make_unique<DiagnosticsModule>(this, "localization", "ndt_align_service");
 
@@ -196,7 +199,11 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
 
 void NDTScanMatcher::callback_timer()
 {
-  map_update_module_->callback_timer(is_activated_, latest_ekf_position_);
+  diagnostics_map_update_->clear();
+
+  map_update_module_->callback_timer(is_activated_, latest_ekf_position_, diagnostics_map_update_);
+
+  diagnostics_map_update_->publish();
 }
 
 void NDTScanMatcher::callback_initial_pose(
@@ -267,21 +274,6 @@ void NDTScanMatcher::callback_sensor_points(
 {
   // clear diagnostics
   diagnostics_scan_points_->clear();
-  diagnostics_scan_points_->addKeyValue("topic_time_stamp", 0.0);
-  diagnostics_scan_points_->addKeyValue("is_activated", false);
-  diagnostics_scan_points_->addKeyValue("is_set_map_points", false);
-  diagnostics_scan_points_->addKeyValue("is_set_sensor_points", false);
-  diagnostics_scan_points_->addKeyValue("sensor_points_size", 0);
-  diagnostics_scan_points_->addKeyValue("sensor_points_delay_time_sec", 0.0);
-  diagnostics_scan_points_->addKeyValue("sensor_points_max_distance", 0.0);
-  diagnostics_scan_points_->addKeyValue("is_succeed_interpolate_initial_pose", false);
-  diagnostics_scan_points_->addKeyValue("iteration_num", 0);
-  diagnostics_scan_points_->addKeyValue("local_optimal_solution_oscillation_num", 0);
-  diagnostics_scan_points_->addKeyValue("transform_probability", 0.0);
-  diagnostics_scan_points_->addKeyValue("nearest_voxel_transformation_likelihood", 0.0);
-  diagnostics_scan_points_->addKeyValue("distance_initial_to_result", 0.0);
-  diagnostics_scan_points_->addKeyValue("execution_time", 0.0);
-  diagnostics_scan_points_->addKeyValue("skipping_publish_num", 0);
 
   // scan matching
   const bool is_succeed_scan_matching = process_scan_matching(sensor_points_msg_in_sensor_frame);
@@ -925,12 +917,6 @@ void NDTScanMatcher::service_ndt_align(
 {
   diagnostics_ndt_align_->clear();
 
-  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", this->now().seconds());
-  diagnostics_ndt_align_->addKeyValue("is_succeed_latest_ndt_align_service", false);
-  diagnostics_ndt_align_->addKeyValue("is_set_sensor_points", false);
-  diagnostics_ndt_align_->addKeyValue("is_set_map_points", false);
-  diagnostics_ndt_align_->addKeyValue("latest_ndt_align_service_best_score", 0.0);
-
   service_ndt_align_main(req, res);
 
   bool is_succeed_latest_ndt_align_service = res->success;
@@ -951,6 +937,8 @@ void NDTScanMatcher::service_ndt_align_main(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
+  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", this->now().seconds());
+
   // get TF from pose_frame to map_frame
   const std::string & target_frame = param_.frame.map_frame;
   const std::string & source_frame = req->pose_with_covariance.header.frame_id;

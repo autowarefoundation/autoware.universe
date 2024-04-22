@@ -43,18 +43,9 @@ DiagnosticsModule::DiagnosticsModule(
 
 void DiagnosticsModule::clear()
 {
-  clearKeyValue();
-  clearLevelAndMessage();
-}
-
-void DiagnosticsModule::clearKeyValue()
-{
   diagnostics_status_msg_.values.clear();
   diagnostics_status_msg_.values.shrink_to_fit();
-}
 
-void DiagnosticsModule::clearLevelAndMessage()
-{
   diagnostics_status_msg_.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   diagnostics_status_msg_.message = "";
 }

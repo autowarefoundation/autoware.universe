@@ -29,8 +29,6 @@ public:
     rclcpp::Node * node, const std::string & prefix_diagnostic_name = "",
     const std::string & suffix_diagnostic_name = "");
   void clear();
-  void clearKeyValue();
-  void clearLevelAndMessage();
   void addKeyValue(const diagnostic_msgs::msg::KeyValue & key_value_msg);
   template <typename T>
   void addKeyValue(const std::string & key, const T & value);
