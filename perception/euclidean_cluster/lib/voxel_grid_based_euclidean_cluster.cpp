@@ -103,8 +103,9 @@ bool VoxelGridBasedEuclideanCluster::cluster(
       map[point_idx] = cluster_idx;
     }
     temporary_cluster.height = pointcloud_msg->height;
+    temporary_cluster.fields = pointcloud_msg->fields;
     temporary_cluster.point_step = point_step;
-    temporary_cluster.data.resize(pointcloud_msg->data.size());
+    temporary_cluster.data.resize(max_cluster_size_ * point_step);
     clusters_data_size.push_back(0);
   }
 
@@ -115,6 +116,9 @@ bool VoxelGridBasedEuclideanCluster::cluster(
       voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(point.x, point.y, point.z));
     if (map.find(index) != map.end()) {
       auto & cluster_data_size = clusters_data_size.at(map[index]);
+      if (cluster_data_size + point_step > std::size_t(max_cluster_size_ * point_step)) {
+        continue;
+      }
       std::memcpy(
         &temporary_clusters.at(map[index]).data[cluster_data_size],
         &pointcloud_msg->data[i * point_step], point_step);
@@ -125,20 +129,23 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   // build output and check cluster size
   {
     for (size_t i = 0; i < temporary_clusters.size(); ++i) {
-      if (!(min_cluster_size_ <= static_cast<int>(clusters_data_size.at(i) / point_step) &&
-            static_cast<int>(clusters_data_size.at(i) / point_step) <= max_cluster_size_)) {
+      auto & i_cluster_data_size = clusters_data_size.at(i);
+      if (!(min_cluster_size_ <= static_cast<int>(i_cluster_data_size / point_step) &&
+            static_cast<int>(i_cluster_data_size / point_step) <= max_cluster_size_)) {
         continue;
       }
-      auto & cluster = temporary_clusters.at(i);
-      cluster.data.resize(clusters_data_size.at(i));
-      cluster.width = clusters_data_size.at(i) / point_step / pointcloud_msg->height;
-      cluster.row_step = clusters_data_size.at(i) / pointcloud_msg->height;
-      cluster.fields = pointcloud_msg->fields;
-      cluster.is_bigendian = pointcloud_msg->is_bigendian;
-      cluster.is_dense = pointcloud_msg->is_dense;
-      cluster.header = pointcloud_msg->header;
+      const auto & cluster = temporary_clusters.at(i);
       tier4_perception_msgs::msg::DetectedObjectWithFeature feature_object;
       feature_object.feature.cluster = cluster;
+      feature_object.feature.cluster.data.resize(i_cluster_data_size);
+      feature_object.feature.cluster.header = pointcloud_msg->header;
+      feature_object.feature.cluster.is_bigendian = pointcloud_msg->is_bigendian;
+      feature_object.feature.cluster.is_dense = pointcloud_msg->is_dense;
+      feature_object.feature.cluster.point_step = point_step;
+      feature_object.feature.cluster.row_step = i_cluster_data_size / pointcloud_msg->height;
+      feature_object.feature.cluster.width =
+        i_cluster_data_size / point_step / pointcloud_msg->height;
+
       feature_object.object.kinematics.pose_with_covariance.pose.position = getCentroid(cluster);
       autoware_auto_perception_msgs::msg::ObjectClassification classification;
       classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
