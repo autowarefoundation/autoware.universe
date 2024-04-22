@@ -355,7 +355,6 @@ def launch_setup(context, *args, **kwargs):
     )
 
     control_evaluator_loader = LoadComposableNodes(
-        condition=IfCondition(LaunchConfiguration("enable_autonomous_emergency_braking")),
         composable_node_descriptions=[control_evaluator_component],
         target_container="/control/control_container",
     )

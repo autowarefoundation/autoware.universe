@@ -62,6 +62,14 @@ void controlEvaluatorNode::onDiagnostics(
 {
   const auto start = now();
 
+  const bool aeb_activated =
+    std::any_of(diag_msg->status.begin(), diag_msg->status.end(), [](const auto & status) {
+      return status.name.find("autonomous_emergency_braking") != std::string::npos;
+    });
+
+  if (!aeb_activated) {
+    return;
+  }
   DiagnosticArray metrics_msg;
   metrics_msg.header.stamp = now();
 
