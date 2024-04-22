@@ -119,8 +119,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1),
       createSubscriptionOptions(this));
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-    "~/input/occupancy_grid", 1,
-    std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1),
+    "~/input/occupancy_grid", 1, std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1),
     createSubscriptionOptions(this));
 
   srv_load_plugin_ = create_service<LoadPlugin>(
@@ -362,8 +361,7 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
   }
 }
 
-void BehaviorVelocityPlannerNode::onExternalVelocityLimit(
-  const VelocityLimit::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.external_velocity_limit = *msg;
