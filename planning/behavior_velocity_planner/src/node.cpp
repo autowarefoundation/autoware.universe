@@ -40,7 +40,7 @@
 
 namespace
 {
-rclcpp::SubscriptionOptions create_subscription_options(rclcpp::Node * node_ptr)
+rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
 {
   rclcpp::CallbackGroup::SharedPtr callback_group =
     node_ptr->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -82,55 +82,55 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
     this->create_subscription<autoware_auto_planning_msgs::msg::PathWithLaneId>(
-      "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::on_trigger, this, _1),
-      create_subscription_options(this));
+      "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1),
+      createSubscriptionOptions(this));
 
   // Subscribers
   sub_predicted_objects_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
       "~/input/dynamic_objects", 1,
-      std::bind(&BehaviorVelocityPlannerNode::on_predicted_objects, this, _1),
-      create_subscription_options(this));
+      std::bind(&BehaviorVelocityPlannerNode::onPredictedObjects, this, _1),
+      createSubscriptionOptions(this));
   sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&BehaviorVelocityPlannerNode::on_no_ground_point_cloud, this, _1),
-    create_subscription_options(this));
+    std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1),
+    createSubscriptionOptions(this));
   sub_vehicle_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/vehicle_odometry", 1, std::bind(&BehaviorVelocityPlannerNode::on_odometry, this, _1),
-    create_subscription_options(this));
+    "~/input/vehicle_odometry", 1, std::bind(&BehaviorVelocityPlannerNode::onOdometry, this, _1),
+    createSubscriptionOptions(this));
   sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/accel", 1, std::bind(&BehaviorVelocityPlannerNode::on_acceleration, this, _1),
-    create_subscription_options(this));
+    createSubscriptionOptions(this));
   sub_lanelet_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS(10).transient_local(),
-    std::bind(&BehaviorVelocityPlannerNode::on_lanelet_map, this, _1),
-    create_subscription_options(this));
+    std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1),
+    createSubscriptionOptions(this));
   sub_traffic_signals_ =
     this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
       "~/input/traffic_signals", 1,
-      std::bind(&BehaviorVelocityPlannerNode::on_traffic_signals, this, _1),
-      create_subscription_options(this));
+      std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
+      createSubscriptionOptions(this));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
-    std::bind(&BehaviorVelocityPlannerNode::on_external_velocity_limit, this, _1));
+    std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
       "~/input/virtual_traffic_light_states", 1,
-      std::bind(&BehaviorVelocityPlannerNode::on_virtual_traffic_light_states, this, _1),
-      create_subscription_options(this));
+      std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1),
+      createSubscriptionOptions(this));
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
     "~/input/occupancy_grid", 1,
-    std::bind(&BehaviorVelocityPlannerNode::on_occupancy_grid, this, _1),
-    create_subscription_options(this));
+    std::bind(&BehaviorVelocityPlannerNode::onOccupancyGrid, this, _1),
+    createSubscriptionOptions(this));
 
   srv_load_plugin_ = create_service<LoadPlugin>(
-    "~/service/load_plugin", std::bind(&BehaviorVelocityPlannerNode::on_load_plugin, this, _1, _2));
+    "~/service/load_plugin", std::bind(&BehaviorVelocityPlannerNode::onLoadPlugin, this, _1, _2));
   srv_unload_plugin_ = create_service<UnloadPlugin>(
     "~/service/unload_plugin",
-    std::bind(&BehaviorVelocityPlannerNode::on_unload_plugin, this, _1, _2));
+    std::bind(&BehaviorVelocityPlannerNode::onUnloadPlugin, this, _1, _2));
 
   // set velocity smoother param
-  on_param();
+  onParam();
 
   // Publishers
   path_pub_ = this->create_publisher<autoware_auto_planning_msgs::msg::Path>("~/output/path", 1);
@@ -158,31 +158,31 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     if (name.empty()) {
       break;
     }
-    planner_manager_.launch_scene_plugin(*this, name);
+    planner_manager_.launchScenePlugin(*this, name);
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
-void BehaviorVelocityPlannerNode::on_load_plugin(
+void BehaviorVelocityPlannerNode::onLoadPlugin(
   const LoadPlugin::Request::SharedPtr request,
   [[maybe_unused]] const LoadPlugin::Response::SharedPtr response)
 {
   std::unique_lock<std::mutex> lk(mutex_);
-  planner_manager_.launch_scene_plugin(*this, request->plugin_name);
+  planner_manager_.launchScenePlugin(*this, request->plugin_name);
 }
 
-void BehaviorVelocityPlannerNode::on_unload_plugin(
+void BehaviorVelocityPlannerNode::onUnloadPlugin(
   const UnloadPlugin::Request::SharedPtr request,
   [[maybe_unused]] const UnloadPlugin::Response::SharedPtr response)
 {
   std::unique_lock<std::mutex> lk(mutex_);
-  planner_manager_.remove_scene_plugin(*this, request->plugin_name);
+  planner_manager_.removeScenePlugin(*this, request->plugin_name);
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool BehaviorVelocityPlannerNode::is_data_ready(
+bool BehaviorVelocityPlannerNode::isDataReady(
   const PlannerData & planner_data, rclcpp::Clock clock) const
 {
   const auto & d = planner_data;
@@ -226,21 +226,21 @@ bool BehaviorVelocityPlannerNode::is_data_ready(
   return true;
 }
 
-void BehaviorVelocityPlannerNode::on_occupancy_grid(
+void BehaviorVelocityPlannerNode::onOccupancyGrid(
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.occupancy_grid = msg;
 }
 
-void BehaviorVelocityPlannerNode::on_predicted_objects(
+void BehaviorVelocityPlannerNode::onPredictedObjects(
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.predicted_objects = msg;
 }
 
-void BehaviorVelocityPlannerNode::on_no_ground_point_cloud(
+void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   geometry_msgs::msg::TransformStamped transform;
@@ -267,7 +267,7 @@ void BehaviorVelocityPlannerNode::on_no_ground_point_cloud(
   }
 }
 
-void BehaviorVelocityPlannerNode::on_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -307,9 +307,9 @@ void BehaviorVelocityPlannerNode::on_acceleration(
   planner_data_.current_acceleration = msg;
 }
 
-void BehaviorVelocityPlannerNode::on_param()
+void BehaviorVelocityPlannerNode::onParam()
 {
-  // Note(VRichardJP): mutex lock is not necessary as on_param is only called once in the
+  // Note(VRichardJP): mutex lock is not necessary as onParam is only called once in the
   // constructed. It would be required if it was a callback. std::lock_guard<std::mutex>
   // lock(mutex_);
   planner_data_.velocity_smoother_ =
@@ -317,7 +317,7 @@ void BehaviorVelocityPlannerNode::on_param()
   planner_data_.velocity_smoother_->setWheelBase(planner_data_.vehicle_info_.wheel_base_m);
 }
 
-void BehaviorVelocityPlannerNode::on_lanelet_map(
+void BehaviorVelocityPlannerNode::onLaneletMap(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -326,7 +326,7 @@ void BehaviorVelocityPlannerNode::on_lanelet_map(
   has_received_map_ = true;
 }
 
-void BehaviorVelocityPlannerNode::on_traffic_signals(
+void BehaviorVelocityPlannerNode::onTrafficSignals(
   const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -362,26 +362,26 @@ void BehaviorVelocityPlannerNode::on_traffic_signals(
   }
 }
 
-void BehaviorVelocityPlannerNode::on_external_velocity_limit(
+void BehaviorVelocityPlannerNode::onExternalVelocityLimit(
   const VelocityLimit::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.external_velocity_limit = *msg;
 }
 
-void BehaviorVelocityPlannerNode::on_virtual_traffic_light_states(
+void BehaviorVelocityPlannerNode::onVirtualTrafficLightStates(
   const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   planner_data_.virtual_traffic_light_states = msg;
 }
 
-void BehaviorVelocityPlannerNode::on_trigger(
+void BehaviorVelocityPlannerNode::onTrigger(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
-  if (!is_data_ready(planner_data_, *get_clock())) {
+  if (!isDataReady(planner_data_, *get_clock())) {
     return;
   }
 

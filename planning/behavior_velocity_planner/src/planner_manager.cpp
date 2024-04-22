@@ -55,7 +55,7 @@ BehaviorVelocityPlannerManager::BehaviorVelocityPlannerManager()
 {
 }
 
-void BehaviorVelocityPlannerManager::launch_scene_plugin(
+void BehaviorVelocityPlannerManager::launchScenePlugin(
   rclcpp::Node & node, const std::string & name)
 {
   if (plugin_loader_.isClassAvailable(name)) {
@@ -78,7 +78,7 @@ void BehaviorVelocityPlannerManager::launch_scene_plugin(
   }
 }
 
-void BehaviorVelocityPlannerManager::remove_scene_plugin(
+void BehaviorVelocityPlannerManager::removeScenePlugin(
   rclcpp::Node & node, const std::string & name)
 {
   auto it = std::remove_if(

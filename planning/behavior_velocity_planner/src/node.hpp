@@ -78,21 +78,21 @@ private:
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr sub_occupancy_grid_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
 
-  void on_trigger(
+  void onTrigger(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
-  void on_predicted_objects(
+  void onPredictedObjects(
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
-  void on_no_ground_point_cloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  void on_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
+  void onNoGroundPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+  void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void on_acceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
-  void on_lanelet_map(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  void on_traffic_signals(
+  void onLaneletMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  void onTrafficSignals(
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
-  void on_virtual_traffic_light_states(
+  void onVirtualTrafficLightStates(
     const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
-  void on_occupancy_grid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
-  void on_external_velocity_limit(const VelocityLimit::ConstSharedPtr msg);
-  void on_param();
+  void onOccupancyGrid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
+  void onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg);
+  void onParam();
 
   // publisher
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Path>::SharedPtr path_pub_;
@@ -115,10 +115,10 @@ private:
 
   rclcpp::Service<LoadPlugin>::SharedPtr srv_load_plugin_;
   rclcpp::Service<UnloadPlugin>::SharedPtr srv_unload_plugin_;
-  void on_unload_plugin(
+  void onUnloadPlugin(
     const UnloadPlugin::Request::SharedPtr request,
     const UnloadPlugin::Response::SharedPtr response);
-  void on_load_plugin(
+  void onLoadPlugin(
     const LoadPlugin::Request::SharedPtr request, const LoadPlugin::Response::SharedPtr response);
 
   // mutex for planner_data_
@@ -126,7 +126,7 @@ private:
 
   // function
   geometry_msgs::msg::PoseStamped get_current_pose();
-  bool is_data_ready(const PlannerData & planner_data, rclcpp::Clock clock) const;
+  bool isDataReady(const PlannerData & planner_data, rclcpp::Clock clock) const;
   autoware_auto_planning_msgs::msg::Path generate_path(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
