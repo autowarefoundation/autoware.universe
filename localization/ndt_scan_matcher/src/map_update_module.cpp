@@ -62,7 +62,7 @@ void MapUpdateModule::callback_timer(
     return;
   }
 
-  //check is_set_last_update_position
+  // check is_set_last_update_position
   const bool is_set_last_update_position = (position != std::nullopt);
   diagnostics_ptr->addKeyValue("is_set_last_update_position", is_set_last_update_position);
   if (!is_set_last_update_position) {
@@ -132,7 +132,7 @@ void MapUpdateModule::update_map(
 
     const bool updated = update_ndt(position, *ndt_ptr_, diagnostics_ptr);
 
-    //check is_updated_map
+    // check is_updated_map
     diagnostics_ptr->addKeyValue("is_updated_map", updated);
     if (!updated) {
       std::stringstream message;
@@ -159,7 +159,7 @@ void MapUpdateModule::update_map(
     // align will be blocked by the other.
     const bool updated = update_ndt(position, *secondary_ndt_ptr_, diagnostics_ptr);
 
-    //check is_updated_map
+    // check is_updated_map
     diagnostics_ptr->addKeyValue("is_updated_map", updated);
     if (!updated) {
       last_update_position_ = position;
