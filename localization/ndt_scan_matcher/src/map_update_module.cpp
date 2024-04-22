@@ -76,7 +76,6 @@ void MapUpdateModule::callback_timer(
   }
 
   if (should_update_map(position.value(), diagnostics_ptr)) {
-    RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
     update_map(position.value(), diagnostics_ptr);
   }
 }
@@ -202,7 +201,14 @@ bool MapUpdateModule::update_ndt(
   request->cached_ids = ndt.getCurrentMapIDs();
 
   while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-    RCLCPP_INFO(logger_, "Waiting for pcd loader service. Check the pointcloud_map_loader.");
+    diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
+
+    std::stringstream message;
+    message << "Waiting for pcd loader service. Check the pointcloud_map_loader.";
+    diagnostics_ptr->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
+    return false;
   }
 
   // send a request to map_loader
@@ -212,11 +218,11 @@ bool MapUpdateModule::update_ndt(
 
   std::future_status status = result.wait_for(std::chrono::seconds(0));
   while (status != std::future_status::ready) {
-    RCLCPP_INFO(logger_, "waiting response");
 
     // check is_succeed_call_pcd_loader
     if (!rclcpp::ok()) {
-      diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
+      diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
+
       std::stringstream message;
       message << "pcd_loader service is not working.";
       diagnostics_ptr->updateLevelAndMessage(
@@ -224,7 +230,6 @@ bool MapUpdateModule::update_ndt(
       RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
       return false;  // No update
     }
-
     status = result.wait_for(std::chrono::seconds(1));
   }
   diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
@@ -235,10 +240,7 @@ bool MapUpdateModule::update_ndt(
   diagnostics_ptr->addKeyValue("maps_to_add_size", maps_to_add.size());
   diagnostics_ptr->addKeyValue("maps_to_remove_size", map_ids_to_remove.size());
 
-  RCLCPP_INFO(
-    logger_, "Update map (Add: %lu, Remove: %lu)", maps_to_add.size(), map_ids_to_remove.size());
   if (maps_to_add.empty() && map_ids_to_remove.empty()) {
-    RCLCPP_INFO(logger_, "Skip map update");
     return false;  // No update
   }
 
@@ -265,8 +267,6 @@ bool MapUpdateModule::update_ndt(
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
   diagnostics_ptr->addKeyValue("latest_update_execution_time", exe_time);
-  RCLCPP_DEBUG(logger_, "Time duration for creating new ndt_ptr: %lf [ms]", exe_time);
-
   diagnostics_ptr->addKeyValue("maps_size_after", ndt.getCurrentMapIDs().size());
   diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
   return true;  // Updated

@@ -875,7 +875,6 @@ void NDTScanMatcher::add_regularization_pose(const rclcpp::Time & sensor_ros_tim
     interpolation_result_opt.value();
   const Eigen::Matrix4f pose = pose_to_matrix4f(interpolation_result.interpolated_pose.pose.pose);
   ndt_ptr_->setRegularizationPose(pose);
-  RCLCPP_DEBUG_STREAM(get_logger(), "Regularization pose is set to NDT");
 }
 
 void NDTScanMatcher::service_trigger_node(
@@ -928,6 +927,7 @@ void NDTScanMatcher::service_ndt_align_main(
   const std::string & target_frame = param_.frame.map_frame;
   const std::string & source_frame = req->pose_with_covariance.header.frame_id;
 
+  diagnostics_ndt_align_->addKeyValue("is_succeed_tf2_transform", false);
   geometry_msgs::msg::TransformStamped transform_s2t;
   try {
     transform_s2t = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
@@ -935,14 +935,17 @@ void NDTScanMatcher::service_ndt_align_main(
     // Note: Up to AWSIMv1.1.0, there is a known bug where the GNSS frame_id is incorrectly set to
     // "gnss_link" instead of "map". The ndt_align is designed to return identity when this issue
     // occurs. However, in the future, converting to a non-existent frame_id should be prohibited.
-    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-    RCLCPP_WARN(
-      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
-    transform_s2t.header.stamp = get_clock()->now();
-    transform_s2t.header.frame_id = target_frame;
-    transform_s2t.child_frame_id = source_frame;
-    transform_s2t.transform = tf2::toMsg(tf2::Transform::getIdentity());
+
+    diagnostics_ndt_align_->addKeyValue("is_succeed_tf2_transform", false);
+
+    std::stringstream message;
+    message << "Please publish TF " << target_frame.c_str() << " to " << source_frame.c_str();
+    diagnostics_ndt_align_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    RCLCPP_WARN(get_logger(), message.str().c_str());
+    return;
   }
+  diagnostics_ndt_align_->addKeyValue("is_succeed_tf2_transform", true);
 
   // transform pose_frame to map_frame
   const auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);
