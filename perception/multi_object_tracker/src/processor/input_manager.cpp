@@ -58,18 +58,11 @@ bool InputStream::getTimestamps(
 void InputStream::onMessage(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)
 {
-  // // debug message
-  // RCLCPP_INFO(
-  //   node_.get_logger(), "InputStream::onMessage Received %s message from %s at %d.%d",
-  //   long_name_.c_str(), input_topic_.c_str(), msg->header.stamp.sec, msg->header.stamp.nanosec);
-
   const DetectedObjects objects = *msg;
   objects_que_.push_back(objects);
   if (objects_que_.size() > que_size_) {
     objects_que_.pop_front();
   }
-
-  // RCLCPP_INFO(node_.get_logger(), "InputStream::onMessage Que size: %zu", objects_que_.size());
 
   // Filter parameters
   constexpr double gain = 0.05;
@@ -125,9 +118,6 @@ void InputStream::getObjectsOlderThan(
       objects_que_.pop_front();
     }
   }
-  // RCLCPP_INFO(
-  //   node_.get_logger(), "InputStream::getObjectsOlderThan %s gives %zu objects",
-  //   long_name_.c_str(), objects.size());
 }
 
 InputManager::InputManager(rclcpp::Node & node) : node_(node)

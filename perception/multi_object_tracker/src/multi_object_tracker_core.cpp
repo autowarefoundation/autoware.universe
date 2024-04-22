@@ -291,6 +291,12 @@ void MultiObjectTracker::runProcess(
     data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
   }
 
+  // Collect debug information - tracker list, existence probabilities, association result
+  // TODO(technolojin): add option to enable/disable debug information
+  debugger_->collectObjectInfo(
+    measurement_time, processor_->getListTracker(), channel_index, transformed_objects,
+    direct_assignment, reverse_assignment);
+
   /* tracker update */
   processor_->update(transformed_objects, *self_transform, direct_assignment, channel_index);
 
@@ -300,11 +306,6 @@ void MultiObjectTracker::runProcess(
   /* spawn new tracker */
   processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
 
-  // Collect debug information - tracker list, existence probabilities, association result
-  // TODO(technolojin): add option to enable/disable debug information
-  debugger_->collectObjectInfo(
-    measurement_time, processor_->getListTracker(), channel_index, transformed_objects,
-    direct_assignment, reverse_assignment);
 }
 
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
