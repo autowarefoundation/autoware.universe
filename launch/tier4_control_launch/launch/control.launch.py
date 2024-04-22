@@ -343,6 +343,23 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
+    # control evaluator
+    control_evaluator_component = ComposableNode(
+        package="control_evaluator",
+        plugin="control_diagnostics::controlEvaluatorNode",
+        name="control_evaluator",
+        remappings=[
+            ("~/input/diagnostics", "/diagnostics"),
+            ("~/output/metrics", "~/metrics"),
+        ],
+    )
+
+    control_evaluator_loader = LoadComposableNodes(
+        condition=IfCondition(LaunchConfiguration("enable_autonomous_emergency_braking")),
+        composable_node_descriptions=[control_evaluator_component],
+        target_container="/control/control_container",
+    )
+
     # control validator checker
     control_validator_component = ComposableNode(
         package="control_validator",
@@ -369,6 +386,7 @@ def launch_setup(context, *args, **kwargs):
             obstacle_collision_checker_loader,
             autonomous_emergency_braking_loader,
             predicted_path_checker_loader,
+            control_evaluator_loader,
         ]
     )
 
@@ -391,6 +409,7 @@ def launch_setup(context, *args, **kwargs):
             ),
         ]
     )
+
     return [group, control_validator_group]
 
 
