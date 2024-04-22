@@ -30,9 +30,9 @@ diagnostic_msgs::msg::DiagnosticStatus checkMeasurementQueueSize(
 diagnostic_msgs::msg::DiagnosticStatus checkMeasurementDelayGate(
   const std::string & measurement_type, const bool is_passed_delay_gate, const double delay_time,
   const double delay_time_threshold);
-diagnostic_msgs::msg::DiagnosticStatus checkMeasurementMahalanobisGate(
-  const std::string & measurement_type, const bool is_passed_mahalanobis_gate,
-  const double mahalanobis_distance, const double mahalanobis_distance_threshold);
+diagnostic_msgs::msg::DiagnosticStatus checkThreshold(
+  const std::string & measurement_type, const std::string & name, const bool is_passed,
+  const double value, const double threshold);
 
 diagnostic_msgs::msg::DiagnosticStatus mergeDiagnosticStatus(
   const std::vector<diagnostic_msgs::msg::DiagnosticStatus> & stat_array);

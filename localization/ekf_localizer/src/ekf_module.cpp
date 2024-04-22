@@ -254,25 +254,36 @@ bool EKFModule::measurementUpdatePose(
     kalman_filter_.getXelement(delay_step * dim_x_ + IDX::Y), ekf_yaw);
   const Eigen::MatrixXd P_curr = kalman_filter_.getLatestP();
   const Eigen::MatrixXd P_y = P_curr.block(0, 0, dim_y, dim_y);
-
-  const double distance = mahalanobis(y_ekf, y, P_y);
-  pose_diag_info.mahalanobis_distance = std::max(distance, pose_diag_info.mahalanobis_distance);
-  if (distance > params_.pose_gate_dist) {
-    pose_diag_info.is_passed_mahalanobis_gate = false;
-    warning_->warnThrottle(mahalanobisWarningMessage(distance, params_.pose_gate_dist), 2000);
-    warning_->warnThrottle("Ignore the measurement data.", 2000);
-    return false;
-  }
+  const Eigen::Vector3d diff = (y - y_ekf);
 
   DEBUG_PRINT_MAT(y.transpose());
   DEBUG_PRINT_MAT(y_ekf.transpose());
-  DEBUG_PRINT_MAT((y - y_ekf).transpose());
+  DEBUG_PRINT_MAT(diff.transpose());
 
   const Eigen::Matrix<double, 3, 6> C = poseMeasurementMatrix();
   const Eigen::Matrix3d R =
     poseMeasurementCovariance(pose.pose.covariance, params_.pose_smoothing_steps);
 
   kalman_filter_.updateWithDelay(y, C, R, delay_step);
+
+  // distance
+  const double distance_xy = std::hypot(diff(0), diff(1));
+  const double distance_yaw = std::abs(diff(2));
+  pose_diag_info.distance_xy = std::max(distance_xy, pose_diag_info.distance_xy);
+  pose_diag_info.distance_yaw = std::max(distance_yaw, pose_diag_info.distance_yaw);
+  if (distance_xy > params_.pose_gate_dist_xy) {
+    pose_diag_info.is_passed_distance_gate_xy = false;
+    warning_->warnThrottle(mahalanobisWarningMessage(distance_xy, params_.pose_gate_dist_xy), 2000);
+    warning_->warnThrottle("Ignore the measurement data.", 2000);
+    return false;
+  }
+  if (distance_yaw > params_.pose_gate_dist_yaw) {
+    pose_diag_info.is_passed_distance_gate_yaw = false;
+    warning_->warnThrottle(
+      mahalanobisWarningMessage(distance_yaw, params_.pose_gate_dist_yaw), 2000);
+    warning_->warnThrottle("Ignore the measurement data.", 2000);
+    return false;
+  }
 
   // debug
   const Eigen::MatrixXd X_result = kalman_filter_.getLatestX();
@@ -341,25 +352,37 @@ bool EKFModule::measurementUpdateTwist(
     kalman_filter_.getXelement(delay_step * dim_x_ + IDX::WZ));
   const Eigen::MatrixXd P_curr = kalman_filter_.getLatestP();
   const Eigen::MatrixXd P_y = P_curr.block(4, 4, dim_y, dim_y);
-
-  const double distance = mahalanobis(y_ekf, y, P_y);
-  twist_diag_info.mahalanobis_distance = std::max(distance, twist_diag_info.mahalanobis_distance);
-  if (distance > params_.twist_gate_dist) {
-    twist_diag_info.is_passed_mahalanobis_gate = false;
-    warning_->warnThrottle(mahalanobisWarningMessage(distance, params_.twist_gate_dist), 2000);
-    warning_->warnThrottle("Ignore the measurement data.", 2000);
-    return false;
-  }
+  const Eigen::VectorXd diff = (y - y_ekf);
 
   DEBUG_PRINT_MAT(y.transpose());
   DEBUG_PRINT_MAT(y_ekf.transpose());
-  DEBUG_PRINT_MAT((y - y_ekf).transpose());
+  DEBUG_PRINT_MAT(diff.transpose());
 
   const Eigen::Matrix<double, 2, 6> C = twistMeasurementMatrix();
   const Eigen::Matrix2d R =
     twistMeasurementCovariance(twist.twist.covariance, params_.twist_smoothing_steps);
 
   kalman_filter_.updateWithDelay(y, C, R, delay_step);
+
+  // distance
+  const double distance_xy = std::abs(diff(0));  // vx
+  const double distance_yaw = std::abs(diff(1));
+  twist_diag_info.distance_xy = std::max(distance_xy, twist_diag_info.distance_xy);
+  twist_diag_info.distance_yaw = std::max(distance_yaw, twist_diag_info.distance_yaw);
+  if (distance_xy > params_.twist_gate_dist_xy) {
+    twist_diag_info.is_passed_distance_gate_xy = false;
+    warning_->warnThrottle(
+      mahalanobisWarningMessage(distance_xy, params_.twist_gate_dist_xy), 2000);
+    warning_->warnThrottle("Ignore the measurement data.", 2000);
+    return false;
+  }
+  if (distance_yaw > params_.twist_gate_dist_yaw) {
+    twist_diag_info.is_passed_distance_gate_yaw = false;
+    warning_->warnThrottle(
+      mahalanobisWarningMessage(distance_yaw, params_.twist_gate_dist_yaw), 2000);
+    warning_->warnThrottle("Ignore the measurement data.", 2000);
+    return false;
+  }
 
   // debug
   const Eigen::MatrixXd X_result = kalman_filter_.getLatestX();

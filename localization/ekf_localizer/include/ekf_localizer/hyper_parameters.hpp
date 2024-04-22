@@ -34,11 +34,13 @@ public:
     pose_frame_id(node->declare_parameter<std::string>("misc.pose_frame_id")),
     pose_additional_delay(
       node->declare_parameter<double>("pose_measurement.pose_additional_delay")),
-    pose_gate_dist(node->declare_parameter<double>("pose_measurement.pose_gate_dist")),
+    pose_gate_dist_xy(node->declare_parameter<double>("pose_measurement.pose_gate_dist_xy")),
+    pose_gate_dist_yaw(node->declare_parameter<double>("pose_measurement.pose_gate_dist_yaw")),
     pose_smoothing_steps(node->declare_parameter<int>("pose_measurement.pose_smoothing_steps")),
     twist_additional_delay(
       node->declare_parameter<double>("twist_measurement.twist_additional_delay")),
-    twist_gate_dist(node->declare_parameter<double>("twist_measurement.twist_gate_dist")),
+    twist_gate_dist_xy(node->declare_parameter<double>("twist_measurement.twist_gate_dist_xy")),
+    twist_gate_dist_yaw(node->declare_parameter<double>("twist_measurement.twist_gate_dist_yaw")),
     twist_smoothing_steps(node->declare_parameter<int>("twist_measurement.twist_smoothing_steps")),
     proc_stddev_vx_c(node->declare_parameter<double>("process_noise.proc_stddev_vx_c")),
     proc_stddev_wz_c(node->declare_parameter<double>("process_noise.proc_stddev_wz_c")),
@@ -71,10 +73,12 @@ public:
   const int extend_state_step;
   const std::string pose_frame_id;
   const double pose_additional_delay;
-  const double pose_gate_dist;
+  const double pose_gate_dist_xy;
+  const double pose_gate_dist_yaw;
   const int pose_smoothing_steps;
   const double twist_additional_delay;
-  const double twist_gate_dist;
+  const double twist_gate_dist_xy;
+  const double twist_gate_dist_yaw;
   const int twist_smoothing_steps;
   const double proc_stddev_vx_c;   //!< @brief  vx process noise
   const double proc_stddev_wz_c;   //!< @brief  wz process noise

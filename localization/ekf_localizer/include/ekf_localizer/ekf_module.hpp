@@ -40,8 +40,10 @@ struct EKFDiagnosticInfo
     is_passed_delay_gate(true),
     delay_time(0),
     delay_time_threshold(0),
-    is_passed_mahalanobis_gate(true),
-    mahalanobis_distance(0)
+    is_passed_distance_gate_xy(true),
+    is_passed_distance_gate_yaw(true),
+    distance_xy(0),
+    distance_yaw(0)
   {
   }
 
@@ -50,8 +52,10 @@ struct EKFDiagnosticInfo
   bool is_passed_delay_gate;
   double delay_time;
   double delay_time_threshold;
-  bool is_passed_mahalanobis_gate;
-  double mahalanobis_distance;
+  bool is_passed_distance_gate_xy;
+  bool is_passed_distance_gate_yaw;
+  double distance_xy;
+  double distance_yaw;
 };
 
 class EKFModule

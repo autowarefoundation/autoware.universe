@@ -20,10 +20,15 @@
           "description": "A value for smoothing steps",
           "default": 5
         },
-        "pose_gate_dist": {
+        "pose_gate_dist_xy": {
           "type": "number",
-          "description": "Limit of Mahalanobis distance used for outliers detection",
-          "default": 10000.0
+          "description": "Limit of euclidean distance [m] used for outliers detection about xy",
+          "default": 1.0
+        },
+        "pose_gate_dist_yaw": {
+          "type": "number",
+          "description": "Limit of distance [rad] used for outliers detection about yaw (Note: it is a simple absolute difference in yaw)",
+          "default": 0.05
         }
       },
       "required": [

@@ -167,8 +167,10 @@ void EKFLocalizer::timerCallback()
   pose_diag_info_.is_passed_delay_gate = true;
   pose_diag_info_.delay_time = 0.0;
   pose_diag_info_.delay_time_threshold = 0.0;
-  pose_diag_info_.is_passed_mahalanobis_gate = true;
-  pose_diag_info_.mahalanobis_distance = 0.0;
+  pose_diag_info_.is_passed_distance_gate_xy = true;
+  pose_diag_info_.is_passed_distance_gate_yaw = true;
+  pose_diag_info_.distance_xy = 0.0;
+  pose_diag_info_.distance_yaw = 0.0;
 
   bool pose_is_updated = false;
 
@@ -202,8 +204,10 @@ void EKFLocalizer::timerCallback()
   twist_diag_info_.is_passed_delay_gate = true;
   twist_diag_info_.delay_time = 0.0;
   twist_diag_info_.delay_time_threshold = 0.0;
-  twist_diag_info_.is_passed_mahalanobis_gate = true;
-  twist_diag_info_.mahalanobis_distance = 0.0;
+  twist_diag_info_.is_passed_distance_gate_xy = true;
+  twist_diag_info_.is_passed_distance_gate_yaw = true;
+  twist_diag_info_.distance_xy = 0.0;
+  twist_diag_info_.distance_yaw = 0.0;
 
   bool twist_is_updated = false;
 
@@ -401,9 +405,12 @@ void EKFLocalizer::publishDiagnostics(const rclcpp::Time & current_time)
     diag_status_array.push_back(checkMeasurementDelayGate(
       "pose", pose_diag_info_.is_passed_delay_gate, pose_diag_info_.delay_time,
       pose_diag_info_.delay_time_threshold));
-    diag_status_array.push_back(checkMeasurementMahalanobisGate(
-      "pose", pose_diag_info_.is_passed_mahalanobis_gate, pose_diag_info_.mahalanobis_distance,
-      params_.pose_gate_dist));
+    diag_status_array.push_back(checkThreshold(
+      "pose", "distance_xy", pose_diag_info_.is_passed_distance_gate_xy,
+      pose_diag_info_.distance_xy, params_.pose_gate_dist_xy));
+    diag_status_array.push_back(checkThreshold(
+      "pose", "distance_yaw", pose_diag_info_.is_passed_distance_gate_yaw,
+      pose_diag_info_.distance_yaw, params_.pose_gate_dist_yaw));
 
     diag_status_array.push_back(checkMeasurementUpdated(
       "twist", twist_diag_info_.no_update_count, params_.twist_no_update_count_threshold_warn,
@@ -412,9 +419,12 @@ void EKFLocalizer::publishDiagnostics(const rclcpp::Time & current_time)
     diag_status_array.push_back(checkMeasurementDelayGate(
       "twist", twist_diag_info_.is_passed_delay_gate, twist_diag_info_.delay_time,
       twist_diag_info_.delay_time_threshold));
-    diag_status_array.push_back(checkMeasurementMahalanobisGate(
-      "twist", twist_diag_info_.is_passed_mahalanobis_gate, twist_diag_info_.mahalanobis_distance,
-      params_.twist_gate_dist));
+    diag_status_array.push_back(checkThreshold(
+      "twist", "distance_xy", twist_diag_info_.is_passed_distance_gate_xy,
+      twist_diag_info_.distance_xy, params_.twist_gate_dist_xy));
+    diag_status_array.push_back(checkThreshold(
+      "twist", "distance_yaw", twist_diag_info_.is_passed_distance_gate_yaw,
+      twist_diag_info_.distance_yaw, params_.twist_gate_dist_yaw));
   }
 
   diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;

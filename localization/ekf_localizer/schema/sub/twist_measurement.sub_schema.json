@@ -15,10 +15,15 @@
           "description": "A value for smoothing steps",
           "default": 2
         },
-        "twist_gate_dist": {
+        "twist_gate_dist_xy": {
           "type": "number",
-          "description": "Limit of Mahalanobis distance used for outliers detection",
-          "default": 10000.0
+          "description": "Limit of distance [m/s] used for outliers detection about xy. (Note: twist consider only vx as linear velocity so it is a simple absolute difference in vx)",
+          "default": 1.0
+        },
+        "twist_gate_dist_yaw": {
+          "type": "number",
+          "description": "Limit of distance [rad/s] used for outliers detection about yaw. (Note: it is a simple absolute difference in yaw)",
+          "default": 0.05
         }
       },
       "required": ["twist_additional_delay", "twist_smoothing_steps", "twist_gate_dist"],
