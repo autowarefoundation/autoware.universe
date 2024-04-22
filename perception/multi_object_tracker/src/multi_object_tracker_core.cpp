@@ -305,7 +305,6 @@ void MultiObjectTracker::runProcess(
 
   /* spawn new tracker */
   processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
-
 }
 
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
