@@ -93,32 +93,32 @@ bool VoxelGridBasedEuclideanCluster::cluster(
 
   // create map to search cluster index from voxel grid index
   std::unordered_map</* voxel grid index */ int, /* cluster index */ int> map;
-  for (size_t cluster_idx = 0; cluster_idx < cluster_indices.size(); ++cluster_idx) {
-    const auto & cluster = cluster_indices.at(cluster_idx);
-    for (const auto & point_idx : cluster.indices) {
-      map[point_idx] = cluster_idx;
-    }
-  }
-
-  // create vector of point cloud cluster. vector index is voxel grid index.
   std::vector<sensor_msgs::msg::PointCloud2> temporary_clusters;  // no check about cluster size
   std::vector<size_t> clusters_data_size;
   temporary_clusters.resize(cluster_indices.size());
-  for (size_t i = 0; i < cluster_indices.size(); ++i) {
-    temporary_clusters.at(i).height = pointcloud_msg->height;
-    temporary_clusters.at(i).point_step = point_step;
-    temporary_clusters.at(i).data.resize(pointcloud_msg->data.size());
+  for (size_t cluster_idx = 0; cluster_idx < cluster_indices.size(); ++cluster_idx) {
+    const auto & cluster = cluster_indices.at(cluster_idx);
+    auto & temporary_cluster = temporary_clusters.at(cluster_idx);
+    for (const auto & point_idx : cluster.indices) {
+      map[point_idx] = cluster_idx;
+    }
+    temporary_cluster.height = pointcloud_msg->height;
+    temporary_cluster.point_step = point_step;
+    temporary_cluster.data.resize(pointcloud_msg->data.size());
     clusters_data_size.push_back(0);
   }
+
+  // create vector of point cloud cluster. vector index is voxel grid index.
   for (size_t i = 0; i < pointcloud->points.size(); ++i) {
     const auto & point = pointcloud->points.at(i);
     const int index =
       voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(point.x, point.y, point.z));
     if (map.find(index) != map.end()) {
+      auto & cluster_data_size = clusters_data_size.at(map[index]);
       std::memcpy(
-        &temporary_clusters.at(map[index]).data[clusters_data_size.at(map[index])],
+        &temporary_clusters.at(map[index]).data[cluster_data_size],
         &pointcloud_msg->data[i * point_step], point_step);
-      clusters_data_size.at(map[index]) += point_step;
+      cluster_data_size += point_step;
     }
   }
 
@@ -129,18 +129,17 @@ bool VoxelGridBasedEuclideanCluster::cluster(
             static_cast<int>(clusters_data_size.at(i) / point_step) <= max_cluster_size_)) {
         continue;
       }
-      temporary_clusters.at(i).data.resize(clusters_data_size.at(i));
-      temporary_clusters.at(i).width =
-        clusters_data_size.at(i) / point_step / pointcloud_msg->height;
-      temporary_clusters.at(i).row_step = clusters_data_size.at(i) / pointcloud_msg->height;
-      temporary_clusters.at(i).fields = pointcloud_msg->fields;
-      temporary_clusters.at(i).is_bigendian = pointcloud_msg->is_bigendian;
-      temporary_clusters.at(i).is_dense = pointcloud_msg->is_dense;
-      temporary_clusters.at(i).header = pointcloud_msg->header;
+      auto & cluster = temporary_clusters.at(i);
+      cluster.data.resize(clusters_data_size.at(i));
+      cluster.width = clusters_data_size.at(i) / point_step / pointcloud_msg->height;
+      cluster.row_step = clusters_data_size.at(i) / pointcloud_msg->height;
+      cluster.fields = pointcloud_msg->fields;
+      cluster.is_bigendian = pointcloud_msg->is_bigendian;
+      cluster.is_dense = pointcloud_msg->is_dense;
+      cluster.header = pointcloud_msg->header;
       tier4_perception_msgs::msg::DetectedObjectWithFeature feature_object;
-      feature_object.feature.cluster = temporary_clusters.at(i);
-      feature_object.object.kinematics.pose_with_covariance.pose.position =
-        getCentroid(temporary_clusters.at(i));
+      feature_object.feature.cluster = cluster;
+      feature_object.object.kinematics.pose_with_covariance.pose.position = getCentroid(cluster);
       autoware_auto_perception_msgs::msg::ObjectClassification classification;
       classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
       classification.probability = 1.0f;
