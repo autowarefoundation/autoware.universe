@@ -904,10 +904,11 @@ void NDTScanMatcher::service_ndt_align(
 
   service_ndt_align_main(req, res);
 
-  bool is_succeed_latest_ndt_align_service = res->success;
+  // check is_succeed_service
+  bool is_succeed_service = res->success;
   diagnostics_ndt_align_->addKeyValue(
-    "is_succeed_latest_ndt_align_service", is_succeed_latest_ndt_align_service);
-  if (!is_succeed_latest_ndt_align_service) {
+    "is_succeed_service", is_succeed_service);
+  if (!is_succeed_service) {
     std::stringstream message;
     message << "ndt_align_service is failed.";
     diagnostics_ndt_align_->updateLevelAndMessage(
@@ -952,6 +953,7 @@ void NDTScanMatcher::service_ndt_align_main(
   // mutex Map
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
+  // check is_set_map_points
   bool is_set_map_points = (ndt_ptr_->getInputTarget() != nullptr);
   diagnostics_ndt_align_->addKeyValue("is_set_map_points", is_set_map_points);
   if (!is_set_map_points) {
@@ -965,6 +967,7 @@ void NDTScanMatcher::service_ndt_align_main(
     return;
   }
 
+  // check is_set_sensor_points
   bool is_set_sensor_points = (ndt_ptr_->getInputSource() != nullptr);
   diagnostics_ndt_align_->addKeyValue("is_set_sensor_points", is_set_sensor_points);
   if (!is_set_sensor_points) {
@@ -1107,7 +1110,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   output_pose_with_cov_to_log(get_logger(), "align_pose_output", result_pose_with_cov_msg);
   RCLCPP_DEBUG_STREAM(get_logger(), "best_score," << best_particle_ptr->score);
   diagnostics_ndt_align_->addKeyValue(
-    "latest_ndt_align_service_best_score", best_particle_ptr->score);
+    "best_particle_score", best_particle_ptr->score);
 
   return result_pose_with_cov_msg;
 }

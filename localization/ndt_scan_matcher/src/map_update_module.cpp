@@ -51,6 +51,7 @@ void MapUpdateModule::callback_timer(
 {
   diagnostics_ptr->addKeyValue("timer_callback_time_stamp", clock_->now().seconds());
 
+  // check is_activated
   diagnostics_ptr->addKeyValue("is_activated", is_activated);
   if (!is_activated) {
     std::stringstream message;
@@ -61,6 +62,7 @@ void MapUpdateModule::callback_timer(
     return;
   }
 
+  //check is_set_last_update_position
   const bool is_set_last_update_position = (position != std::nullopt);
   diagnostics_ptr->addKeyValue("is_set_last_update_position", is_set_last_update_position);
   if (!is_set_last_update_position) {
@@ -91,8 +93,8 @@ bool MapUpdateModule::should_update_map(
   const double dy = position.y - last_update_position_.value().y;
   const double distance = std::hypot(dx, dy);
 
+  // check distance_last_update_position_to_current_position
   diagnostics_ptr->addKeyValue("distance_last_update_position_to_current_position", distance);
-
   if (distance + param_.lidar_radius > param_.map_radius) {
     std::stringstream message;
     message << "Dynamic map loading is not keeping up.";
@@ -130,6 +132,7 @@ void MapUpdateModule::update_map(
 
     const bool updated = update_ndt(position, *ndt_ptr_, diagnostics_ptr);
 
+    //check is_updated_map
     diagnostics_ptr->addKeyValue("is_updated_map", updated);
     if (!updated) {
       std::stringstream message;
@@ -144,8 +147,10 @@ void MapUpdateModule::update_map(
       ndt_ptr_mutex_->unlock();
       return;
     }
+
     ndt_ptr_mutex_->unlock();
     need_rebuild_ = false;
+
   } else {
     // Load map to the secondary_ndt_ptr, which does not require a mutex lock
     // Since the update of the secondary ndt ptr and the NDT align (done on
@@ -153,6 +158,8 @@ void MapUpdateModule::update_map(
     // If the updating is done the main ndt_ptr_, either the update or the NDT
     // align will be blocked by the other.
     const bool updated = update_ndt(position, *secondary_ndt_ptr_, diagnostics_ptr);
+
+    //check is_updated_map
     diagnostics_ptr->addKeyValue("is_updated_map", updated);
     if (!updated) {
       last_update_position_ = position;
@@ -206,7 +213,10 @@ bool MapUpdateModule::update_ndt(
   std::future_status status = result.wait_for(std::chrono::seconds(0));
   while (status != std::future_status::ready) {
     RCLCPP_INFO(logger_, "waiting response");
+
+    // check is_succeed_call_pcd_loader
     if (!rclcpp::ok()) {
+      diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
       std::stringstream message;
       message << "pcd_loader service is not working.";
       diagnostics_ptr->updateLevelAndMessage(
@@ -214,6 +224,7 @@ bool MapUpdateModule::update_ndt(
       RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
       return false;  // No update
     }
+
     status = result.wait_for(std::chrono::seconds(1));
   }
   diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
