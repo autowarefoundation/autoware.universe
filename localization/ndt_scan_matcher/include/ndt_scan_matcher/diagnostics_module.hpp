@@ -39,9 +39,6 @@ public:
 
 private:
   diagnostic_msgs::msg::DiagnosticArray createDiagnosticsArray() const;
-  std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator findIteratorByKey(
-    const std::string & key) const;
-  bool existIterator(const std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator & it) const;
 
   rclcpp::Node::SharedPtr node_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;

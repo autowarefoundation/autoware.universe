@@ -120,18 +120,3 @@ diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::createDiagnosticsArray(
 
   return diagnostics_msg;
 }
-
-std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator DiagnosticsModule::findIteratorByKey(
-  const std::string & key) const
-{
-  const auto it = std::find_if(
-    std::begin(diagnostics_status_msg_.values), std::end(diagnostics_status_msg_.values),
-    [key](const auto & arg) { return arg.key == key; });
-  return it;
-}
-
-bool DiagnosticsModule::existIterator(
-  const std::vector<diagnostic_msgs::msg::KeyValue>::const_iterator & it) const
-{
-  return it != std::cend(diagnostics_status_msg_.values);
-}
