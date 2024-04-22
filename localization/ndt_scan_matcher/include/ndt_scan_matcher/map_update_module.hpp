@@ -56,12 +56,19 @@ private:
   friend class NDTScanMatcher;
 
   void callback_timer(
-    const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+    const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
 
-  [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
-  void update_map(const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+  [[nodiscard]] bool should_update_map(
+    const geometry_msgs::msg::Point & position,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+  void update_map(
+    const geometry_msgs::msg::Point & position,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
   // Update the specified NDT
-  bool update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+  bool update_ndt(
+    const geometry_msgs::msg::Point & position, NdtType & ndt,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
   void publish_partial_pcd_map();
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;

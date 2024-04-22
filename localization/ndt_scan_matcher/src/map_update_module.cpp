@@ -46,7 +46,8 @@ MapUpdateModule::MapUpdateModule(
 }
 
 void MapUpdateModule::callback_timer(
-  const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
+  const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position,
+  std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
 {
   diagnostics_ptr->addKeyValue("timer_callback_time_stamp", clock_->now().seconds());
 
@@ -78,7 +79,8 @@ void MapUpdateModule::callback_timer(
   }
 }
 
-bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
+bool MapUpdateModule::should_update_map(
+  const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
 {
   if (last_update_position_ == std::nullopt) {
     need_rebuild_ = true;
@@ -89,8 +91,7 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
   const double dy = position.y - last_update_position_.value().y;
   const double distance = std::hypot(dx, dy);
 
-  diagnostics_ptr->addKeyValue(
-    "distance_last_update_position_to_current_position", distance);
+  diagnostics_ptr->addKeyValue("distance_last_update_position_to_current_position", distance);
 
   if (distance + param_.lidar_radius > param_.map_radius) {
     std::stringstream message;
@@ -107,7 +108,8 @@ bool MapUpdateModule::should_update_map(const geometry_msgs::msg::Point & positi
   return distance > param_.update_distance;
 }
 
-void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
+void MapUpdateModule::update_map(
+  const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
 {
   diagnostics_ptr->addKeyValue("is_need_rebuild", need_rebuild_);
 
@@ -179,7 +181,9 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position, std
   publish_partial_pcd_map();
 }
 
-bool MapUpdateModule::update_ndt(const geometry_msgs::msg::Point & position, NdtType & ndt, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
+bool MapUpdateModule::update_ndt(
+  const geometry_msgs::msg::Point & position, NdtType & ndt,
+  std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
 {
   diagnostics_ptr->addKeyValue("maps_size_before", ndt.getCurrentMapIDs().size());
 
