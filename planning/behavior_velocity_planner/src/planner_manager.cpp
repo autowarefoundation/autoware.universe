@@ -97,7 +97,7 @@ void BehaviorVelocityPlannerManager::removeScenePlugin(
   }
 }
 
-autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager::plan_path_velocity(
+autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager::planPathVelocity(
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path_msg)
 {
@@ -125,7 +125,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager:
   return output_path_msg;
 }
 
-diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::get_stop_reason_diag() const
+diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::getStopReasonDiag() const
 {
   return stop_reason_diag_;
 }

@@ -99,7 +99,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     "~/input/vehicle_odometry", 1, std::bind(&BehaviorVelocityPlannerNode::onOdometry, this, _1),
     createSubscriptionOptions(this));
   sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
-    "~/input/accel", 1, std::bind(&BehaviorVelocityPlannerNode::on_acceleration, this, _1),
+    "~/input/accel", 1, std::bind(&BehaviorVelocityPlannerNode::onAcceleration, this, _1),
     createSubscriptionOptions(this));
   sub_lanelet_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS(10).transient_local(),
@@ -299,7 +299,7 @@ void BehaviorVelocityPlannerNode::onOdometry(const nav_msgs::msg::Odometry::Cons
   }
 }
 
-void BehaviorVelocityPlannerNode::on_acceleration(
+void BehaviorVelocityPlannerNode::onAcceleration(
   const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -399,20 +399,20 @@ void BehaviorVelocityPlannerNode::onTrigger(
   }
 
   const autoware_auto_planning_msgs::msg::Path output_path_msg =
-    generate_path(input_path_msg, planner_data_);
+    generatePath(input_path_msg, planner_data_);
 
   lk.unlock();
 
   path_pub_->publish(output_path_msg);
   published_time_publisher_->publish_if_subscribed(path_pub_, output_path_msg.header.stamp);
-  stop_reason_diag_pub_->publish(planner_manager_.get_stop_reason_diag());
+  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
 
   if (debug_viz_pub_->get_subscription_count() > 0) {
-    publish_debug_marker(output_path_msg);
+    publishDebugMarker(output_path_msg);
   }
 }
 
-autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generate_path(
+autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
   const PlannerData & planner_data)
 {
@@ -434,7 +434,7 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generate_pat
   }
 
   // Plan path velocity
-  const auto velocity_planned_path = planner_manager_.plan_path_velocity(
+  const auto velocity_planned_path = planner_manager_.planPathVelocity(
     std::make_shared<const PlannerData>(planner_data), *input_path_msg);
 
   // screening
@@ -458,7 +458,7 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generate_pat
   return output_path_msg;
 }
 
-void BehaviorVelocityPlannerNode::publish_debug_marker(
+void BehaviorVelocityPlannerNode::publishDebugMarker(
   const autoware_auto_planning_msgs::msg::Path & path)
 {
   visualization_msgs::msg::MarkerArray output_msg;

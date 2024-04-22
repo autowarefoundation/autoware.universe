@@ -84,7 +84,7 @@ private:
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
   void onNoGroundPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
-  void on_acceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
+  void onAcceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onLaneletMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   void onTrafficSignals(
     const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
@@ -99,7 +99,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
 
-  void publish_debug_marker(const autoware_auto_planning_msgs::msg::Path & path);
+  void publishDebugMarker(const autoware_auto_planning_msgs::msg::Path & path);
 
   //  parameter
   double forward_path_length_;
@@ -127,7 +127,7 @@ private:
   // function
   geometry_msgs::msg::PoseStamped get_current_pose();
   bool isDataReady(const PlannerData & planner_data, rclcpp::Clock clock) const;
-  autoware_auto_planning_msgs::msg::Path generate_path(
+  autoware_auto_planning_msgs::msg::Path generatePath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
 
