@@ -1,157 +1,151 @@
-from autoware_auto_control_msgs.msg import AckermannControlCommand
-from autoware_auto_vehicle_msgs.msg import ControlModeReport
-from autoware_auto_vehicle_msgs.msg import GearReport
-from autoware_auto_vehicle_msgs.msg import SteeringReport
-from autoware_auto_vehicle_msgs.msg import VelocityReport
-from autoware_perception_msgs.msg import TrafficSignalArray
-from carla_msgs.msg import CarlaEgoVehicleControl
-from carla_msgs.msg import CarlaEgoVehicleStatus
-from geometry_msgs.msg import PoseWithCovarianceStamped
-from nav_msgs.msg import Odometry
-import rclpy
-from rclpy.node import Node
+# Copyright 2024 Tier IV, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.sr/bin/env python
+
+import signal
+import time
+
+import carla
+
+from .carla_ros import carla_interface
+from .modules.carla_data_provider import CarlaDataProvider
+from .modules.carla_data_provider import GameTime
+from .modules.carla_wrapper import SensorReceivedNoData
+from .modules.carla_wrapper import SensorWrapper
 
 
-class CarlaVehicleInterface(Node):
+class SensorLoop(object):
+    def __init__(self, role_name):
+        self.start_game_time = None
+        self.start_system_time = None
+        self.sensor = None
+        self.ego_vehicle = None
+        self.running = False
+        self.timestamp_last_run = 0.0
+        self.timeout = 20.0
+        self.role_name = role_name
+
+    def _stop_loop(self):
+        self.running = False
+
+    def _tick_sensor(self, timestamp):
+        if self.timestamp_last_run < timestamp.elapsed_seconds and self.running:
+            self.timestamp_last_run = timestamp.elapsed_seconds
+            GameTime.on_carla_tick(timestamp)
+            CarlaDataProvider.on_carla_tick()
+            try:
+                ego_action = self.sensor()
+            except SensorReceivedNoData as e:
+                raise RuntimeError(e)
+            self.ego_vehicle.apply_control(ego_action)
+        if self.running:
+            CarlaDataProvider.get_world().tick()
+
+
+class InitializeInterface(object):
     def __init__(self):
-        super().__init__("carla_vehicle_interface_node")
-        self.current_vel = 0.0
-        self.target_vel = 0.0
-        self.vel_diff = 0.0
+        self.interface = carla_interface()
+        self.param_ = self.interface.get_param()
+        self.world = None
+        self.sensor_wrapper = None
+        self.ego_vehicle = None
 
-        # Publishes Topics used for AUTOWARE
-        self.pub_vel_state = self.create_publisher(
-            VelocityReport, "/vehicle/status/velocity_status", 1
-        )
-        self.pub_steering_state = self.create_publisher(
-            SteeringReport, "/vehicle/status/steering_status", 1
-        )
-        self.pub_ctrl_mode = self.create_publisher(
-            ControlModeReport, "/vehicle/status/control_mode", 1
-        )
-        self.pub_gear_state = self.create_publisher(GearReport, "/vehicle/status/gear_status", 1)
-        self.pub_control = self.create_publisher(
-            CarlaEgoVehicleControl, "/carla/ego_vehicle/vehicle_control_cmd", 1
-        )
-        self.pub_traffic_signal_info = self.create_publisher(
-            TrafficSignalArray, "/perception/traffic_light_recognition/traffic_signals", 1
-        )
-        self.pub_pose_with_cov = self.create_publisher(
-            PoseWithCovarianceStamped, "/sensing/gnss/pose_with_covariance", 1
-        )
+        # Parameter for Initializing Carla World
+        self.local_host = self.param_["host"]
+        self.port = self.param_["port"]
+        self.timeout = self.param_["timeout"]
+        self.sync_mode = self.param_["sync_mode"]
+        self.fixed_delta_seconds = self.param_["fixed_delta_seconds"]
+        self.map_name = self.param_["map_name"]
+        self.agent_role_name = self.param_["ego_vehicle_role_name"]
+        self.vehicle_type = self.param_["vehicle_type"]
+        self.spawn_point = self.param_["spawn_point"]
 
-        # Subscribe Topics used in Control
-        self.sub_status = self.create_subscription(
-            CarlaEgoVehicleStatus, "/carla/ego_vehicle/vehicle_status", self.ego_status_callback, 1
-        )
-        self.sub_control = self.create_subscription(
-            AckermannControlCommand, "/control/command/control_cmd", self.control_callback, 1
-        )
-        self.sub_odom = self.create_subscription(
-            Odometry, "/carla/ego_vehicle/odometry", self.pose_callback, 1
-        )
-
-    def pose_callback(self, pose_msg):
-        out_pose_with_cov = PoseWithCovarianceStamped()
-        out_pose_with_cov.header.frame_id = "map"
-        out_pose_with_cov.header.stamp = pose_msg.header.stamp
-        out_pose_with_cov.pose.pose = pose_msg.pose.pose
-        out_pose_with_cov.pose.covariance = [
-            0.1,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.1,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.1,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-        ]
-        self.pub_pose_with_cov.publish(out_pose_with_cov)
-
-    def ego_status_callback(self, in_status):
-        """Convert and publish CARLA Ego Vehicle Status to AUTOWARE."""
-        out_vel_state = VelocityReport()
-        out_steering_state = SteeringReport()
-        out_ctrl_mode = ControlModeReport()
-        out_gear_state = GearReport()
-        out_traffic = TrafficSignalArray()
-
-        out_vel_state.header = in_status.header
-        out_vel_state.header.frame_id = "base_link"
-        out_vel_state.longitudinal_velocity = in_status.velocity
-        out_vel_state.lateral_velocity = 0.0
-        out_vel_state.heading_rate = 0.0
-        self.current_vel = in_status.velocity
-
-        out_steering_state.stamp = in_status.header.stamp
-        out_steering_state.steering_tire_angle = -in_status.control.steer
-
-        out_gear_state.stamp = in_status.header.stamp
-        out_gear_state.report = GearReport.DRIVE
-
-        out_ctrl_mode.stamp = in_status.header.stamp
-        out_ctrl_mode.mode = ControlModeReport.AUTONOMOUS
-
-        self.pub_vel_state.publish(out_vel_state)
-        self.pub_steering_state.publish(out_steering_state)
-        self.pub_ctrl_mode.publish(out_ctrl_mode)
-        self.pub_gear_state.publish(out_gear_state)
-        self.pub_traffic_signal_info.publish(out_traffic)
-
-    def control_callback(self, in_cmd):
-        """Convert and publish CARLA Ego Vehicle Control to AUTOWARE."""
-        out_cmd = CarlaEgoVehicleControl()
-        self.target_vel = abs(in_cmd.longitudinal.speed)
-        self.vel_diff = self.target_vel - self.current_vel
-
-        if self.vel_diff > 0:
-            out_cmd.throttle = 0.75
-            out_cmd.brake = 0.0
-        elif self.vel_diff <= 0.0:
-            out_cmd.throttle = 0.0
-            if self.target_vel <= 0.0:
-                out_cmd.brake = 0.75
-            elif self.vel_diff > -1:
-                out_cmd.brake = 0.0
+    def load_world(self):
+        client = carla.Client(self.local_host, self.port)
+        client.set_timeout(self.timeout)
+        client.load_world(self.map_name)
+        self.world = client.get_world()
+        if self.world is not None:
+            settings = self.world.get_settings()
+            settings.fixed_delta_seconds = self.fixed_delta_seconds
+            settings.synchronous_mode = self.sync_mode
+            self.world.apply_settings(settings)
+            CarlaDataProvider.set_world(self.world)
+            CarlaDataProvider.set_client(client)
+            spawn_point = carla.Transform()
+            spawn_point = carla.Transform()
+            point_items = self.spawn_point.split(",")
+            randomize = False
+            if len(point_items) == 6:
+                spawn_point.location.x = float(point_items[0])
+                spawn_point.location.y = float(point_items[1])
+                spawn_point.location.z = float(point_items[2]) + 2
+                spawn_point.rotation.roll = float(point_items[3])
+                spawn_point.rotation.pitch = float(point_items[4])
+                spawn_point.rotation.yaw = float(point_items[5])
             else:
-                out_cmd.brake = 0.01
+                randomize = True
+            CarlaDataProvider.request_new_actor(
+                self.vehicle_type, spawn_point, self.agent_role_name, random_location=randomize
+            )
 
-        out_cmd.steer = -in_cmd.lateral.steering_tire_angle
-        self.pub_control.publish(out_cmd)
+            self.sensor_wrapper = SensorWrapper(self.interface)
+            self.ego_vehicle = CarlaDataProvider.get_actor_by_name(self.agent_role_name)
+            self.sensor_wrapper.setup_sensors(self.ego_vehicle, False)
+
+        else:
+            print("Carla Interface Couldn't find the world, Carla is not Running")
+
+    def run_bridge(self):
+        self.bridge_loop = SensorLoop(self.agent_role_name)
+        self.bridge_loop.sensor = self.sensor_wrapper
+        self.bridge_loop.ego_vehicle = self.ego_vehicle
+        self.bridge_loop.start_system_time = time.time()
+        self.bridge_loop.start_game_time = GameTime.get_time()
+        self.bridge_loop.role_name = self.agent_role_name
+        self.bridge_loop.running = True
+        while self.bridge_loop.running:
+            timestamp = None
+            world = CarlaDataProvider.get_world()
+            if world:
+                snapshot = world.get_snapshot()
+                if snapshot:
+                    timestamp = snapshot.timestamp
+            if timestamp:
+                self.bridge_loop._tick_sensor(timestamp)
+
+    def _stop_loop(self, signum, frame):
+        self.bridge_loop._stop_loop()
+
+    def _cleanup(self):
+        self.sensor_wrapper.cleanup()
+        CarlaDataProvider.cleanup()
+        if self.ego_vehicle:
+            self.ego_vehicle.destroy()
+            self.ego_vehicle = None
+
+        if self.interface:
+            self.interface = None
 
 
-def main(args=None):
-    rclpy.init()
-    node = CarlaVehicleInterface()
-    rclpy.spin(node)
+def main():
+    carla_bridge = InitializeInterface()
+    carla_bridge.load_world()
+    stop_bridge = signal.signal(signal.SIGINT, carla_bridge._stop_loop)
+    carla_bridge.run_bridge()
+    signal.signal(signal.SIGINT, stop_bridge)
+    carla_bridge._cleanup()
 
 
 if __name__ == "__main__":

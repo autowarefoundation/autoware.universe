@@ -4,11 +4,20 @@ project(carla_autoware)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(
+  catkin REQUIRED COMPONENTS rospy std_msgs
+                             carla_msgs)
+
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-ament_export_dependencies(rclpy)
+ament_export_dependencies(rclpy rospy)
+
+find_package(ros_environment REQUIRED)
+set(ROS_VERSION $ENV{ROS_VERSION})
+
 
 # Install launch files.
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
@@ -17,6 +26,7 @@ install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 ament_auto_package(
   launch
   resource
+  config
   src
 )
 ament_package()

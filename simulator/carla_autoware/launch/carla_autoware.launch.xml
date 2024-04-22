@@ -1,6 +1,32 @@
 <launch>
-  <group>
-    <node pkg="carla_autoware" exec="carla_autoware" name="carla_autoware" output="screen"/>
-    <node pkg="tf2_ros" exec="static_transform_publisher" name="ego_vehicle2base_link" args="0 0 0 0 0 0 /ego_vehicle /base_link "/>
-  </group>
+  <arg name="host" default="localhost"/>
+  <arg name="port" default="2000"/>
+  <arg name="timeout" default="20"/>
+  <arg name="ego_vehicle_role_name" default="ego_vehicle"/>
+  <arg name="vehicle_type" default="vehicle.toyota.prius"/>
+  <arg name="spawn_point" default="None"/>
+  <arg name="map_name" default="Town01"/>
+  <arg name="passive" default="False"/>
+  <arg name="sync_mode" default="True"/>
+  <arg name="fixed_delta_seconds" default="0.05" description="Timestep for CARLA, FPS=1/value"/>
+  <arg name="role_name" default="ego_vehicle"/>
+  <arg name="spawn_point" default="None" description="location of ego vehicle spawn (default is random), example = [0.2 , 4.1, 0.4, 0., 0., 0.]"/>
+  <arg name="objects_definition_file" default="$(find-pkg-share carla_autoware)/objects.json"/>
+
+  <!-- CARLA Interface -->
+  <node pkg="carla_autoware" exec="carla_autoware" name="carla_autoware" output="screen">
+    <param name="host" value="$(var host)"/>
+    <param name="port" value="$(var port)"/>
+    <param name="timeout" value="$(var timeout)"/>
+    <param name="sync_mode" value="$(var sync_mode)"/>
+    <param name="fixed_delta_seconds" value="$(var fixed_delta_seconds)"/>
+    <param name="map_name" value="$(var map_name)"/>
+    <param name="ego_vehicle_role_name" value="$(var ego_vehicle_role_name)"/>
+    <param name="spawn_point" value="$(var spawn_point)"/>
+    <param name="vehicle_type" value="$(var vehicle_type)"/>
+    <param name="objects_definition_file" value="$(var objects_definition_file)"/>
+  </node>
+
+  <!-- Ego_vehicle frame to base_link -->
+  <node pkg="tf2_ros" exec="static_transform_publisher" name="ego_vehicle2base_link" args="0 0 0 0 0 0 /ego_vehicle /base_link "/>
 </launch>

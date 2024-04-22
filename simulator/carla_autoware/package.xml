@@ -10,16 +10,11 @@
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>ros_compatibility</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <depend>astuff_sensor_msgs</depend>
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>carla_data_provider</depend>
   <depend>carla_msgs</depend>
-  <depend>datetime</depend>
   <depend>geometry_msgs</depend>
-  <depend>math</depend>
   <depend>nav_msgs</depend>
-  <depend>numpy</depend>
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>sensor_msgs_py</depend>
