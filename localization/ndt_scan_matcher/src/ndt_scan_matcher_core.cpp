@@ -300,9 +300,15 @@ void NDTScanMatcher::callback_sensor_points(
   diagnostics_scan_points_->publish();
 }
 
-bool NDTScanMatcher::set_input_source(
+bool NDTScanMatcher::process_scan_matching(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame)
 {
+  const auto exe_start_time = std::chrono::system_clock::now();
+
+  // check topic_time_stamp
+  const rclcpp::Time sensor_ros_time = sensor_points_msg_in_sensor_frame->header.stamp;
+  diagnostics_scan_points_->addKeyValue("topic_time_stamp", sensor_ros_time.seconds());
+
   // check sensor_points_size
   const size_t sensor_points_size = sensor_points_msg_in_sensor_frame->width;
   diagnostics_scan_points_->addKeyValue("sensor_points_size", sensor_points_size);
@@ -367,39 +373,11 @@ bool NDTScanMatcher::set_input_source(
     return false;
   }
 
+  // lock mutex
+  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
+
   // set sensor points to ndt class
-  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
   ndt_ptr_->setInputSource(sensor_points_in_baselink_frame);
-
-  return true;
-}
-
-bool NDTScanMatcher::process_scan_matching(
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame)
-{
-  const auto exe_start_time = std::chrono::system_clock::now();
-
-  // check topic_time_stamp
-  const rclcpp::Time sensor_ros_time = sensor_points_msg_in_sensor_frame->header.stamp;
-  diagnostics_scan_points_->addKeyValue("topic_time_stamp", sensor_ros_time.seconds());
-
-  // set sensor_points to ndt
-  set_input_source(sensor_points_msg_in_sensor_frame);
-
-  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
-
-  // check is_set_sensor_points
-  const auto sensor_points_in_baselink_frame = ndt_ptr_->getInputSource();
-  const bool is_set_sensor_points = (sensor_points_in_baselink_frame != nullptr);
-  diagnostics_scan_points_->addKeyValue("is_set_sensor_points", is_set_sensor_points);
-  if (!is_set_sensor_points) {
-    std::stringstream message;
-    message << "Sensor points is not set.";
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_scan_points_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-    return false;
-  }
 
   // check is_activated
   diagnostics_scan_points_->addKeyValue("is_activated", static_cast<bool>(is_activated_));

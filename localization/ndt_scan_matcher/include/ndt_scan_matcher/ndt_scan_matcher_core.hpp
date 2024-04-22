@@ -101,11 +101,8 @@ private:
 
   void set_initial_pose(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr);
-  bool set_input_source(
-    sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
   bool process_scan_matching(
     sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
-
   geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
