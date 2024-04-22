@@ -30,8 +30,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef ROBIN_HOOD_H_INCLUDED
-#define ROBIN_HOOD_H_INCLUDED
+#ifndef DOWNSAMPLE_FILTER__ROBIN_HOOD_H_
+#define DOWNSAMPLE_FILTER__ROBIN_HOOD_H_
 
 // see https://semver.org/
 #define ROBIN_HOOD_VERSION_MAJOR 3   // for incompatible API changes
@@ -2730,4 +2730,4 @@ using unordered_set = detail::Table<
 
 }  // namespace robin_hood
 
-#endif
+#endif  // DOWNSAMPLE_FILTER__ROBIN_HOOD_H_
