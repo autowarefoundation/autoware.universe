@@ -2267,7 +2267,7 @@ double RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose 
 
   lanelet::ConstLanelet current_lanelet;
   getClosestLaneletWithinRoute(current_pose, &current_lanelet);
-  
+
   lanelet::ConstLanelet goal_lanelet;
   getGoalLanelet(&goal_lanelet);
 
@@ -2278,20 +2278,18 @@ double RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose 
   remaining_shortest_path = optional_route->shortestPath();
 
   for (auto & llt : remaining_shortest_path) {
-
     if (remaining_shortest_path.size() == 1) {
-      remaining_distance += tier4_autoware_utils::calcDistance2d(current_pose.position, goal_pose_.position);
+      remaining_distance +=
+        tier4_autoware_utils::calcDistance2d(current_pose.position, goal_pose_.position);
       break;
     }
 
     if (index == 0) {
-      lanelet::ArcCoordinates arc_coord =
-        lanelet::utils::getArcCoordinates({llt}, current_pose);
+      lanelet::ArcCoordinates arc_coord = lanelet::utils::getArcCoordinates({llt}, current_pose);
       double this_lanelet_length = lanelet::utils::getLaneletLength2d(llt);
       remaining_distance += this_lanelet_length - arc_coord.length;
     } else if (index == (remaining_shortest_path.size() - 1)) {
-      lanelet::ArcCoordinates arc_coord =
-        lanelet::utils::getArcCoordinates({llt}, goal_pose_);
+      lanelet::ArcCoordinates arc_coord = lanelet::utils::getArcCoordinates({llt}, goal_pose_);
       remaining_distance += arc_coord.length;
     } else {
       remaining_distance += lanelet::utils::getLaneletLength2d(llt);
