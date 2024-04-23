@@ -70,19 +70,30 @@ void InputStream::onMessage(
 
   // Calculate interval, Update interval statistics
   if (is_time_initialized_) {
+    bool is_interval_regular = true;
     const double interval = (now - latest_message_time_).seconds();
-    interval_mean_ = (1.0 - gain) * interval_mean_ + gain * interval;
-    const double interval_delta = interval - interval_mean_;
-    interval_var_ = (1.0 - gain) * interval_var_ + gain * interval_delta * interval_delta;
+    // check if it is outlier
+    if (interval > 1.5 * interval_mean_ || interval < 0.5 * interval_mean_) {
+      // no update for the time statistics
+      is_interval_regular = false;
+    }
+
+    if (is_interval_regular) {
+      interval_mean_ = (1.0 - gain) * interval_mean_ + gain * interval;
+      const double interval_delta = interval - interval_mean_;
+      interval_var_ = (1.0 - gain) * interval_var_ + gain * interval_delta * interval_delta;
+    }
   }
 
   // Update time
   latest_message_time_ = now;
-  latest_measurement_time_ = objects.header.stamp;
+  rclcpp::Time objects_time(objects.header.stamp);
+  latest_measurement_time_ =
+    latest_measurement_time_ < objects_time ? objects_time : latest_measurement_time_;
   if (!is_time_initialized_) is_time_initialized_ = true;
 
   // Calculate latency
-  const double latency = (latest_message_time_ - latest_measurement_time_).seconds();
+  const double latency = (latest_message_time_ - objects_time).seconds();
 
   // Update latency statistics
   latency_mean_ = (1.0 - gain) * latency_mean_ + gain * latency;
@@ -184,6 +195,8 @@ void InputManager::getObjectTimeInterval(
       }
       double latency_message = (now - latest_message_time).seconds();
       double latency_measurement = (now - latest_measurement_time).seconds();
+
+      // print info
       RCLCPP_INFO(
         node_.get_logger(),
         "InputManager::getObjects %s: latency mean: %f, std: %f, interval mean: "
