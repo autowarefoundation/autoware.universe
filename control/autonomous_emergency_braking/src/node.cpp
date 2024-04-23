@@ -40,20 +40,9 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include "autonomous_emergency_braking/node.hpp"
-
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
-
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
-
-#include <pcl/filters/passthrough.h>
-#include <pcl/filters/voxel_grid.h>
-#include <tf2/utils.h>
 
 namespace autoware::motion::control::autonomous_emergency_braking
 {
@@ -266,9 +255,6 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
 
   pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
-  // if (publish_debug_pointcloud_) {
-  //   pub_obstacle_pointcloud_->publish(*obstacle_ros_pointcloud_ptr_);
-  // }
 }
 
 bool AEB::isDataReady()
@@ -342,67 +328,52 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     return false;
   }
 
-  // step3. create ego path based on sensor data
-  bool has_collision_ego = false;
-  if (use_imu_path_) {
-    const double current_w = angular_velocity_ptr_->z;
-    constexpr double color_r = 0.0 / 256.0;
-    constexpr double color_g = 148.0 / 256.0;
-    constexpr double color_b = 205.0 / 256.0;
-    constexpr double color_a = 0.999;
-    const auto current_time = get_clock()->now();
-    const auto ego_path = generateEgoPath(current_v, current_w);
+  using colorTuple = std::tuple<double, double, double, double>;
 
-    // Crop out Pointcloud using an extra wide ego path
-    const auto expanded_ego_polys =
-      generatePathFootprint(ego_path, expand_width_ + path_footprint_extra_margin_);
-    cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
-
-    std::vector<ObjectData> objects_from_point_clusters;
-    const auto ego_polys = generatePathFootprint(ego_path, expand_width_);
-    createObjectDataUsingPointCloudClusters(
-      ego_path, ego_polys, current_time, objects_from_point_clusters);
-    has_collision_ego = hasCollision(current_v, ego_path, objects_from_point_clusters);
-    std::string ns = "ego";
-    addMarker(
-      current_time, ego_path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
-      color_a, ns, debug_markers);
-  }
-
-  // step4. transform predicted trajectory from control module
-  bool has_collision_predicted = false;
-  if (use_predicted_trajectory_) {
-    std::vector<Polygon2d> predicted_polys;
-    const auto predicted_traj_ptr = predicted_traj_ptr_;
-    constexpr double color_r = 0.0;
-    constexpr double color_g = 100.0 / 256.0;
-    constexpr double color_b = 0.0;
-    constexpr double color_a = 0.999;
-    const auto current_time = predicted_traj_ptr->header.stamp;
-    const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr);
-    if (predicted_path_opt) {
-      const auto & predicted_path = predicted_path_opt.value();
-
+  auto check_collision =
+    [&](const auto & path, const colorTuple & debug_colors, const std::string & debug_ns) {
       // Crop out Pointcloud using an extra wide ego path
       const auto expanded_ego_polys =
-        generatePathFootprint(predicted_path, expand_width_ + path_footprint_extra_margin_);
+        generatePathFootprint(path, expand_width_ + path_footprint_extra_margin_);
       cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
 
+      const auto current_time = get_clock()->now();
       std::vector<ObjectData> objects_from_point_clusters;
-      const auto predicted_polys = generatePathFootprint(predicted_path, expand_width_);
-      cropPointCloudWithEgoFootprintPath(predicted_polys);
+      const auto ego_polys = generatePathFootprint(path, expand_width_);
       createObjectDataUsingPointCloudClusters(
-        predicted_path, predicted_polys, current_time, objects_from_point_clusters);
-      has_collision_predicted =
-        hasCollision(current_v, predicted_path, objects_from_point_clusters);
-      std::string ns = "predicted";
+        path, ego_polys, current_time, objects_from_point_clusters);
+      const bool has_collision = hasCollision(current_v, path, objects_from_point_clusters);
+      const auto [color_r, color_g, color_b, color_a] = debug_colors;
       addMarker(
-        current_time, predicted_path, predicted_polys, objects_from_point_clusters, color_r,
-        color_g, color_b, color_a, ns, debug_markers);
-    }
-  }
+        current_time, path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
+        color_a, debug_ns, debug_markers);
+      return has_collision;
+    };
 
-  if (cropped_ros_pointcloud_ptr_) {
+  // step3. create ego path based on sensor data
+  const bool has_collision_ego = std::invoke([&]() {
+    if (!use_imu_path_) return false;
+    const double current_w = angular_velocity_ptr_->z;
+    constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
+    const std::string ns = "ego";
+    const auto ego_path = generateEgoPath(current_v, current_w);
+    return check_collision(ego_path, debug_color, ns);
+  });
+
+  // step4. transform predicted trajectory from control module
+  const bool has_collision_predicted = std::invoke([&]() {
+    if (!use_predicted_trajectory_ || !predicted_traj_ptr_) return false;
+    const auto predicted_traj_ptr = predicted_traj_ptr_;
+    const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr);
+    if (!predicted_path_opt) return false;
+
+    constexpr colorTuple debug_color = {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999};
+    const std::string ns = "predicted";
+    const auto & predicted_path = predicted_path_opt.value();
+    return check_collision(predicted_path, debug_color, ns);
+  });
+
+  if (cropped_ros_pointcloud_ptr_ && publish_debug_pointcloud_) {
     pub_obstacle_pointcloud_->publish(*cropped_ros_pointcloud_ptr_);
   }
 
