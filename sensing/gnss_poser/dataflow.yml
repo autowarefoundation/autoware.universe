@@ -1,0 +1,53 @@
+nodes:
+  - id: gnss
+    operator:
+      python: ../../dora-hardware/dora_to_ros2/gnss/gnss_D300_driver_dora.py
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - DoraSentence
+        - DoraNavSatFix
+        - DoraQuaternionStamped
+        - DoraTwistStamped
+    env:
+      DEVICE_INDEX: 0
+
+  - id: gnss_sub
+    operator:
+      python: ../../dora-hardware/dora_to_ros2/gnss/nmea_subscribeTopic.py
+      inputs:
+              DoraSentence: gnss/DoraSentence
+              DoraNavSatFix: gnss/DoraNavSatFix
+              DoraQuaternionStamped: gnss/DoraQuaternionStamped
+              DoraTwistStamped: gnss/DoraTwistStamped
+      outputs:
+        - DoraNavSatFix
+
+  - id: gnss_poser
+    custom:
+      source: build/gnss_poser_core
+      inputs:
+        DoraNavSatFix: gnss_sub/DoraNavSatFix 
+      outputs:
+        - DoraSentence
+        - DoraNavSatFix
+        - DoraQuaternionStamped
+        - DoraTwistStamped
+
+
+  - id: gnss_rviz2
+    operator:
+      python: src/gps_to_ros2_1.py
+      inputs:
+              # DoraSentence: gnss_sub/DoraSentence
+              DoraNavSatFix: gnss_poser/DoraNavSatFix
+              # DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
+              # DoraTwistStamped: gnss_sub/DoraTwistStamped
+
+
+#   - id: custom_node_1
+#     operator:
+#       python: node_1/node_1.py
+#       inputs:
+# #        tick: dora/timer/secs/1
+#         Imu100D4: op_1/Imu100D4
