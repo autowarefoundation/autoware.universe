@@ -26,7 +26,12 @@
           "default": 0.05
         }
       },
-      "required": ["twist_additional_delay", "twist_smoothing_steps", "twist_gate_dist_xy", "twist_gate_dist_yaw"],
+      "required": [
+        "twist_additional_delay",
+        "twist_smoothing_steps",
+        "twist_gate_dist_xy",
+        "twist_gate_dist_yaw"
+      ],
       "additionalProperties": false
     }
   }
