@@ -21,6 +21,10 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
+#include <boost/geometry/algorithms/convex_hull.hpp>
+#include <boost/geometry/algorithms/within.hpp>
+#include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
+
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/filters/crop_hull.h>
 #include <pcl/filters/extract_indices.h>
@@ -31,6 +35,7 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/surface/convex_hull.h>
 #include <tf2/utils.h>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -39,10 +44,6 @@
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-
-#include <boost/geometry/algorithms/convex_hull.hpp>
-#include <boost/geometry/algorithms/within.hpp>
-#include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
 namespace autoware::motion::control::autonomous_emergency_braking
 {
@@ -312,6 +313,8 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
 bool AEB::checkCollision(MarkerArray & debug_markers)
 {
+  using colorTuple = std::tuple<double, double, double, double>;
+
   // step1. check data
   if (!isDataReady()) {
     return false;
@@ -328,27 +331,25 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     return false;
   }
 
-  using colorTuple = std::tuple<double, double, double, double>;
+  auto check_collision = [&](
+                           const auto & path, const colorTuple & debug_colors,
+                           const std::string & debug_ns, const rclcpp::Time & current_time) {
+    // Crop out Pointcloud using an extra wide ego path
+    const auto expanded_ego_polys =
+      generatePathFootprint(path, expand_width_ + path_footprint_extra_margin_);
+    cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
 
-  auto check_collision =
-    [&](const auto & path, const colorTuple & debug_colors, const std::string & debug_ns) {
-      // Crop out Pointcloud using an extra wide ego path
-      const auto expanded_ego_polys =
-        generatePathFootprint(path, expand_width_ + path_footprint_extra_margin_);
-      cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
-
-      const auto current_time = get_clock()->now();
-      std::vector<ObjectData> objects_from_point_clusters;
-      const auto ego_polys = generatePathFootprint(path, expand_width_);
-      createObjectDataUsingPointCloudClusters(
-        path, ego_polys, current_time, objects_from_point_clusters);
-      const bool has_collision = hasCollision(current_v, path, objects_from_point_clusters);
-      const auto [color_r, color_g, color_b, color_a] = debug_colors;
-      addMarker(
-        current_time, path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
-        color_a, debug_ns, debug_markers);
-      return has_collision;
-    };
+    std::vector<ObjectData> objects_from_point_clusters;
+    const auto ego_polys = generatePathFootprint(path, expand_width_);
+    createObjectDataUsingPointCloudClusters(
+      path, ego_polys, current_time, objects_from_point_clusters);
+    const bool has_collision = hasCollision(current_v, path, objects_from_point_clusters);
+    const auto [color_r, color_g, color_b, color_a] = debug_colors;
+    addMarker(
+      current_time, path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
+      color_a, debug_ns, debug_markers);
+    return has_collision;
+  };
 
   // step3. create ego path based on sensor data
   const bool has_collision_ego = std::invoke([&]() {
@@ -357,7 +358,9 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
     const std::string ns = "ego";
     const auto ego_path = generateEgoPath(current_v, current_w);
-    return check_collision(ego_path, debug_color, ns);
+    const auto current_time = get_clock()->now();
+
+    return check_collision(ego_path, debug_color, ns, current_time);
   });
 
   // step4. transform predicted trajectory from control module
@@ -367,10 +370,12 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr);
     if (!predicted_path_opt) return false;
 
+    const auto current_time = predicted_traj_ptr->header.stamp;
     constexpr colorTuple debug_color = {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999};
     const std::string ns = "predicted";
     const auto & predicted_path = predicted_path_opt.value();
-    return check_collision(predicted_path, debug_color, ns);
+
+    return check_collision(predicted_path, debug_color, ns, current_time);
   });
 
   if (cropped_ros_pointcloud_ptr_ && publish_debug_pointcloud_) {
@@ -557,6 +562,7 @@ void AEB::cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_
   path_polygon_hull_filter.setHullIndices(polygons);
   path_polygon_hull_filter.setHullCloud(surface_hull);
   path_polygon_hull_filter.filter(*objects);
+  objects->header.stamp = full_points_ptr->header.stamp;
   // Store the results
   if (!objects->empty()) {
     pcl::toROSMsg(*objects, *cropped_ros_pointcloud_ptr_);
