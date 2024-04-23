@@ -141,7 +141,13 @@ public:
   virtual BehaviorModuleOutput run()
   {
     updateData();
-    return isWaitingApproval() ? planWaitingApproval() : plan();
+    const auto output = isWaitingApproval() ? planWaitingApproval() : plan();
+    try {
+      motion_utils::validateNonEmpty(output.path.points);
+    } catch (const std::exception & ex) {
+      throw std::invalid_argument("[" + name_ + "]" + ex.what());
+    }
+    return output;
   }
 
   /**
@@ -259,7 +265,7 @@ public:
     return is_waiting_approval_ || current_state_ == ModuleStatus::WAITING_APPROVAL;
   }
 
-  virtual bool isRootLaneletToBeUpdated() const { return false; }
+  virtual bool isCurrentRouteLaneletToBeReset() const { return false; }
 
   bool isLockedNewModuleLaunch() const { return is_locked_new_module_launch_; }
 
