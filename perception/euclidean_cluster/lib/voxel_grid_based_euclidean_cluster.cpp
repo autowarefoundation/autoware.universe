@@ -147,7 +147,8 @@ bool VoxelGridBasedEuclideanCluster::cluster(
       feature_object.feature.cluster.width =
         i_cluster_data_size / point_step / pointcloud_msg->height;
 
-      feature_object.object.kinematics.pose_with_covariance.pose.position = getCentroid(cluster);
+      feature_object.object.kinematics.pose_with_covariance.pose.position =
+        getCentroid(feature_object.feature.cluster);
       autoware_auto_perception_msgs::msg::ObjectClassification classification;
       classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
       classification.probability = 1.0f;
