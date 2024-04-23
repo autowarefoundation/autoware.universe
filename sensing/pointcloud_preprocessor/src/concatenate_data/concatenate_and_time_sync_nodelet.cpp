@@ -423,7 +423,8 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
 
   // after concatenation, channels have no consistent meaning
   size_t channel_offset = offsetof(PointXYZIRC, channel);
-  for (size_t data_idx = 0; data_idx < concat_cloud_ptr->data.size(); data_idx += concat_cloud_ptr->point_step) {
+  for (size_t data_idx = 0; data_idx < concat_cloud_ptr->data.size();
+       data_idx += concat_cloud_ptr->point_step) {
     concat_cloud_ptr->data[data_idx + channel_offset] = 0;
   }
   concat_cloud_ptr->header.stamp = oldest_stamp;

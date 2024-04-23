@@ -60,7 +60,7 @@ struct PointXYZIRC
   float y{0.0F};
   float z{0.0F};
   float intensity{0.0F};
-  union { // for memory alignment
+  union {  // for memory alignment
     uint16_t _data;
     struct
     {
@@ -121,9 +121,9 @@ using PointXYZIRADRTGenerator = std::tuple<
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
   autoware_point_types::PointXYZIRC,
-  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(
-    std::uint8_t, padding, padding)(std::uint8_t, return_type, return_type)(
-    std::uint16_t, channel, channel))
+  (float, x,
+   x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint8_t, padding, padding)(
+    std::uint8_t, return_type, return_type)(std::uint16_t, channel, channel))
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
   autoware_point_types::PointXYZIRADRT,

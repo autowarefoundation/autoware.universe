@@ -239,7 +239,8 @@ void RingOutlierFilterComponent::faster_filter(
       }
     } else if (publish_outlier_pointcloud_) {
       for (int i = walk_first_idx; i < walk_last_idx; i++) {
-        auto outlier_ptr = reinterpret_cast<PointXYZIRC *>(&outlier_points.data[outlier_points_size]);
+        auto outlier_ptr =
+          reinterpret_cast<PointXYZIRC *>(&outlier_points.data[outlier_points_size]);
         auto input_ptr = reinterpret_cast<const PointXYZIRADRT *>(&input->data[indices[i]]);
         if (transform_info.need_transform) {
           Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
