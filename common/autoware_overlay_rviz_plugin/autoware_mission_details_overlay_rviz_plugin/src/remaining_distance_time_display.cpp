@@ -74,114 +74,87 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(QPainter & p
   QPointF remainingTimeReferencePos(
     backgroundRect.width() / 2 - referenceRect.width() / 2, backgroundRect.height() / 1.3);
 
+  // Remaining distance value
   QString remainingDistanceValue = QString::number(remaining_distance_, 'f', 0);
   int fontSize = 15;
   QFont remainingDistancValueFont("Quicksand", fontSize);
   painter.setFont(remainingDistancValueFont);
 
-  // Calculate the bounding box of the remaining distance value
-  QRect remainingDistancValueRect = painter.fontMetrics().boundingRect(remainingDistanceValue);
-
-  // Top the remaining distance in the backgroundRect
   QPointF remainingDistancePos(
     remainingDistReferencePos.x() + 100 , remainingDistReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remainingDistancePos, remainingDistanceValue);
-
+  
+  // Remaining distance text
   QFont remainingDistancTextFont("Quicksand", 12);
   painter.setFont(remainingDistancTextFont);
   QString remainingDistText = "Remaining Distance: ";
-  QRect remainingDistancTextRect = painter.fontMetrics().boundingRect(remainingDistText);
-  // QPointF remainingDistancTextPos(
-  //   (backgroundRect.width() / 2 - remainingDistancTextRect.width() / 2), referencePos.y() + remainingDistancTextRect.height());
     QPointF remainingDistancTextPos(remainingDistReferencePos.x() - 80, remainingDistReferencePos.y());
   painter.drawText(remainingDistancTextPos, remainingDistText);
-
-
+  
+  // Remaining distance unit
   QFont remainingDistancUnitFont("Quicksand", 12);
   painter.setFont(remainingDistancUnitFont);
   QString remainingDistUnitText = " m";
-  QRect remainingDistUnitTextRect = painter.fontMetrics().boundingRect(remainingDistUnitText);
-  // QPointF remainingDistancTextPos(
-  //   (backgroundRect.width() / 2 - remainingDistancTextRect.width() / 2), referencePos.y() + remainingDistancTextRect.height());
     QPointF remainingDistancUnitPos(remainingDistReferencePos.x() + 150, remainingDistReferencePos.y());
   painter.drawText(remainingDistancUnitPos, remainingDistUnitText);
 
-
+  // Remaining time text
   QFont remainingTimeTextFont("Quicksand", 12);
   painter.setFont(remainingDistancTextFont);
   QString remainingTimeText = "Remaining Time: ";
-  QRect remainingTimeTextRect = painter.fontMetrics().boundingRect(remainingTimeText);
-  // QPointF remainingDistancTextPos(
-  //   (backgroundRect.width() / 2 - remainingDistancTextRect.width() / 2), referencePos.y() + remainingDistancTextRect.height());
   QPointF remainingTimeTextPos(remainingTimeReferencePos.x() - 80, remainingTimeReferencePos.y());
   painter.drawText(remainingTimeTextPos, remainingTimeText);
   
-  
+  // Remaining time value - hours
   QString remaininghoursValue = QString::number(hours_, 'f', 0);
   QFont remaininghoursValueFont("Quicksand", fontSize);
   painter.setFont(remaininghoursValueFont);
 
-  // Calculate the bounding box of the remaining distance value
-  QRect remaininghoursValueRect = painter.fontMetrics().boundingRect(remaininghoursValue);
-
-  // Top the remaining distance in the backgroundRect
   QPointF remaininghoursValuePos(
     remainingTimeReferencePos.x() + 50 , remainingTimeReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remaininghoursValuePos, remaininghoursValue);
-
+  
+  // Remaining time hours separator
   QFont hoursSeparatorTextFont("Quicksand", 12);
   painter.setFont(hoursSeparatorTextFont);
   QString hoursSeparatorText = " h : ";
-  QRect hoursSeparatorTextRect = painter.fontMetrics().boundingRect(hoursSeparatorText);
-  // QPointF remainingDistancTextPos(
-  //   (backgroundRect.width() / 2 - remainingDistancTextRect.width() / 2), referencePos.y() + remainingDistancTextRect.height());
+
   QPointF hoursSeparatorTextPos(remainingTimeReferencePos.x() + 70, remainingTimeReferencePos.y());
   painter.drawText(hoursSeparatorTextPos, hoursSeparatorText);
 
+  // Remaining time value - minutes
   QString remainingminutesValue = QString::number(minutes_, 'f', 0);
   QFont remainingminutesValueFont("Quicksand", fontSize);
   painter.setFont(remainingminutesValueFont);
 
-  // Calculate the bounding box of the remaining distance value
-  QRect remainingminutesValueRect = painter.fontMetrics().boundingRect(remainingminutesValue);
-
-  // Top the remaining distance in the backgroundRect
   QPointF remainingminutesValuePos(
     remainingTimeReferencePos.x() + 100 , remainingTimeReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remainingminutesValuePos, remainingminutesValue);
-
-
+  
+  // Remaining time minutes separator
   QFont minutesSeparatorTextFont("Quicksand", 12);
   painter.setFont(minutesSeparatorTextFont);
   QString minutesSeparatorText = " m : ";
-  QRect minutesSeparatorTextRect = painter.fontMetrics().boundingRect(minutesSeparatorText);
-  // QPointF remainingDistancTextPos(
-  //   (backgroundRect.width() / 2 - remainingDistancTextRect.width() / 2), referencePos.y() + remainingDistancTextRect.height());
   QPointF minutesSeparatorTextPos(remainingTimeReferencePos.x() + 120, remainingTimeReferencePos.y());
   painter.drawText(minutesSeparatorTextPos, minutesSeparatorText);
-
+  
+  // Remaining time value - seconds
   QString remainingsecondsValue = QString::number(seconds_, 'f', 0);
   QFont remainingsecondsValueFont("Quicksand", fontSize);
   painter.setFont(remainingsecondsValueFont);
 
-  // Calculate the bounding box of the remaining distance value
-  QRect remainingsecondsValueRect = painter.fontMetrics().boundingRect(remainingsecondsValue);
-
-  // Top the remaining distance in the backgroundRect
   QPointF remainingsecondValuePos(
     remainingTimeReferencePos.x() + 160 , remainingTimeReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remainingsecondValuePos, remainingsecondsValue);
-
+  
+  // Remaining time seconds separator
   QFont secondsSeparatorTextFont("Quicksand", 12);
   painter.setFont(secondsSeparatorTextFont);
   QString secondsSeparatorText = " s";
-  QRect secondsSeparatorTextRect = painter.fontMetrics().boundingRect(secondsSeparatorText);
-  // QPointF remainingDistancTextPos(
-  //   (backgroundRect.width() / 2 - remainingDistancTextRect.width() / 2), referencePos.y() + remainingDistancTextRect.height());
   QPointF secondsSeparatorTextPos(remainingTimeReferencePos.x() + 180, remainingTimeReferencePos.y());
   painter.drawText(secondsSeparatorTextPos, secondsSeparatorText);
   
