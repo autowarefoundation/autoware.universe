@@ -495,14 +495,16 @@ void BehaviorPathPlannerNode::computeTurnSignal(
   publish_steering_factor(planner_data, turn_signal);
 }
 
-void BehaviorPathPlannerNode::computeMissionRemainingDistanceTime(const behavior_path_planner::PlanResult & path)
+void BehaviorPathPlannerNode::computeMissionRemainingDistanceTime(
+  const behavior_path_planner::PlanResult & path)
 {
-  remaining_distance_time_.remaining_distance = 
-  motion_utils::calcSignedArcLength(path->points, planner_data_->self_odometry->pose.pose.position, goal_pose_.position);
+  remaining_distance_time_.remaining_distance = motion_utils::calcSignedArcLength(
+    path->points, planner_data_->self_odometry->pose.pose.position, goal_pose_.position);
 
-  geometry_msgs::msg::Vector3 current_vehicle_velocity = planner_data_->self_odometry->twist.twist.linear;
+  geometry_msgs::msg::Vector3 current_vehicle_velocity =
+    planner_data_->self_odometry->twist.twist.linear;
 
-    double current_vehicle_velocity_norm = std::sqrt(
+  double current_vehicle_velocity_norm = std::sqrt(
     current_vehicle_velocity.x * current_vehicle_velocity.x +
     current_vehicle_velocity.y * current_vehicle_velocity.y);
 
@@ -515,14 +517,15 @@ void BehaviorPathPlannerNode::computeMissionRemainingDistanceTime(const behavior
     return;
   }
 
-  double remaining_time = remaining_distance_time_.remaining_distance / current_vehicle_velocity_norm;
+  double remaining_time =
+    remaining_distance_time_.remaining_distance / current_vehicle_velocity_norm;
   remaining_distance_time_.remaining_time = remaining_time;
 
   remaining_distance_time_.hours = static_cast<uint32_t>(remaining_time / 3600.0);
   remaining_time = std::fmod(remaining_time, 3600);
   remaining_distance_time_.minutes = static_cast<uint32_t>(remaining_time / 60.0);
   remaining_distance_time_.seconds = static_cast<uint32_t>(std::fmod(remaining_time, 60));
-  return ;
+  return;
 }
 
 void BehaviorPathPlannerNode::publish_steering_factor(

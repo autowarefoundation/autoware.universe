@@ -34,7 +34,8 @@
 namespace autoware_mission_details_overlay_rviz_plugin
 {
 
-RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay() : remaining_distance_(0.0), hours_(0), minutes_(0), seconds_(0)
+RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
+: remaining_distance_(0.0), hours_(0), minutes_(0), seconds_(0)
 {
   std::string package_path =
     ament_index_cpp::get_package_share_directory("autoware_mission_details_overlay_rviz_plugin");
@@ -54,7 +55,7 @@ void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
 {
   try {
     remaining_distance_ = msg->remaining_distance;
-    hours_   = msg->remaining_hours;
+    hours_ = msg->remaining_hours;
     minutes_ = msg->remaining_minutes;
     seconds_ = msg->remaining_seconds;
   } catch (const std::exception & e) {
@@ -63,7 +64,8 @@ void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
   }
 }
 
-void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(QPainter & painter, const QRectF & backgroundRect)
+void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
+  QPainter & painter, const QRectF & backgroundRect)
 {
   QFont referenceFont("Quicksand", 80, QFont::Bold);
   painter.setFont(referenceFont);
@@ -80,23 +82,24 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(QPainter & p
   QFont remainingDistancValueFont("Quicksand", fontSize);
   painter.setFont(remainingDistancValueFont);
 
-  QPointF remainingDistancePos(
-    remainingDistReferencePos.x() + 100 , remainingDistReferencePos.y());
+  QPointF remainingDistancePos(remainingDistReferencePos.x() + 100, remainingDistReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remainingDistancePos, remainingDistanceValue);
-  
+
   // Remaining distance text
   QFont remainingDistancTextFont("Quicksand", 12);
   painter.setFont(remainingDistancTextFont);
   QString remainingDistText = "Remaining Distance: ";
-    QPointF remainingDistancTextPos(remainingDistReferencePos.x() - 80, remainingDistReferencePos.y());
+  QPointF remainingDistancTextPos(
+    remainingDistReferencePos.x() - 80, remainingDistReferencePos.y());
   painter.drawText(remainingDistancTextPos, remainingDistText);
-  
+
   // Remaining distance unit
   QFont remainingDistancUnitFont("Quicksand", 12);
   painter.setFont(remainingDistancUnitFont);
   QString remainingDistUnitText = " m";
-    QPointF remainingDistancUnitPos(remainingDistReferencePos.x() + 150, remainingDistReferencePos.y());
+  QPointF remainingDistancUnitPos(
+    remainingDistReferencePos.x() + 150, remainingDistReferencePos.y());
   painter.drawText(remainingDistancUnitPos, remainingDistUnitText);
 
   // Remaining time text
@@ -105,17 +108,16 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(QPainter & p
   QString remainingTimeText = "Remaining Time: ";
   QPointF remainingTimeTextPos(remainingTimeReferencePos.x() - 80, remainingTimeReferencePos.y());
   painter.drawText(remainingTimeTextPos, remainingTimeText);
-  
+
   // Remaining time value - hours
   QString remaininghoursValue = QString::number(hours_, 'f', 0);
   QFont remaininghoursValueFont("Quicksand", fontSize);
   painter.setFont(remaininghoursValueFont);
 
-  QPointF remaininghoursValuePos(
-    remainingTimeReferencePos.x() + 50 , remainingTimeReferencePos.y());
+  QPointF remaininghoursValuePos(remainingTimeReferencePos.x() + 50, remainingTimeReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remaininghoursValuePos, remaininghoursValue);
-  
+
   // Remaining time hours separator
   QFont hoursSeparatorTextFont("Quicksand", 12);
   painter.setFont(hoursSeparatorTextFont);
@@ -130,34 +132,35 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(QPainter & p
   painter.setFont(remainingminutesValueFont);
 
   QPointF remainingminutesValuePos(
-    remainingTimeReferencePos.x() + 100 , remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 100, remainingTimeReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remainingminutesValuePos, remainingminutesValue);
-  
+
   // Remaining time minutes separator
   QFont minutesSeparatorTextFont("Quicksand", 12);
   painter.setFont(minutesSeparatorTextFont);
   QString minutesSeparatorText = " m : ";
-  QPointF minutesSeparatorTextPos(remainingTimeReferencePos.x() + 120, remainingTimeReferencePos.y());
+  QPointF minutesSeparatorTextPos(
+    remainingTimeReferencePos.x() + 120, remainingTimeReferencePos.y());
   painter.drawText(minutesSeparatorTextPos, minutesSeparatorText);
-  
+
   // Remaining time value - seconds
   QString remainingsecondsValue = QString::number(seconds_, 'f', 0);
   QFont remainingsecondsValueFont("Quicksand", fontSize);
   painter.setFont(remainingsecondsValueFont);
 
   QPointF remainingsecondValuePos(
-    remainingTimeReferencePos.x() + 160 , remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 160, remainingTimeReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remainingsecondValuePos, remainingsecondsValue);
-  
+
   // Remaining time seconds separator
   QFont secondsSeparatorTextFont("Quicksand", 12);
   painter.setFont(secondsSeparatorTextFont);
   QString secondsSeparatorText = " s";
-  QPointF secondsSeparatorTextPos(remainingTimeReferencePos.x() + 180, remainingTimeReferencePos.y());
+  QPointF secondsSeparatorTextPos(
+    remainingTimeReferencePos.x() + 180, remainingTimeReferencePos.y());
   painter.drawText(secondsSeparatorTextPos, secondsSeparatorText);
-  
 }
 
 }  // namespace autoware_mission_details_overlay_rviz_plugin

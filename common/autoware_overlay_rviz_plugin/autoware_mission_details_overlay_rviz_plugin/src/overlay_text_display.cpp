@@ -553,4 +553,5 @@ void OverlayTextDisplay::updateLineWidth()
 }  // namespace autoware_mission_details_overlay_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(autoware_mission_details_overlay_rviz_plugin::OverlayTextDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(
+  autoware_mission_details_overlay_rviz_plugin::OverlayTextDisplay, rviz_common::Display)

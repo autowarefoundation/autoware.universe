@@ -13,10 +13,9 @@ This plugin provides a visual and easy-to-understand display of mission details 
 
 ### Input
 
-| Name                                                    | Type                                                    | Description                          |
-| ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
-| `/planning/mission_remaining_distance_time`      | `autoware_planning_msgs::msg::MissionRemainingDistanceTime`               | The topic is for mission remaining distance and time Data          |
-
+| Name                                        | Type                                                        | Description                                               |
+| ------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
+| `/planning/mission_remaining_distance_time` | `autoware_planning_msgs::msg::MissionRemainingDistanceTime` | The topic is for mission remaining distance and time Data |
 
 ## Parameter
 
@@ -24,12 +23,12 @@ This plugin provides a visual and easy-to-understand display of mission details 
 
 #### SignalDisplay
 
-| Name                     | Type   | Default Value        | Description                       |
-| ------------------------ | ------ | -------------------- | --------------------------------- |
-| `property_width_`        | int    | 300                  | Width of the plotter window [px]  |
-| `property_height_`       | int    | 100                  | Height of the plotter window [px] |
-| `property_left_`         | int    | 800                  | Left of the plotter window [px]   |
-| `property_top_`          | int    | 10                  | Top of the plotter window [px]    |
+| Name               | Type | Default Value | Description                       |
+| ------------------ | ---- | ------------- | --------------------------------- |
+| `property_width_`  | int  | 300           | Width of the plotter window [px]  |
+| `property_height_` | int  | 100           | Height of the plotter window [px] |
+| `property_left_`   | int  | 800           | Left of the plotter window [px]   |
+| `property_top_`    | int  | 10            | Top of the plotter window [px]    |
 
 ## Assumptions / Known limits
 

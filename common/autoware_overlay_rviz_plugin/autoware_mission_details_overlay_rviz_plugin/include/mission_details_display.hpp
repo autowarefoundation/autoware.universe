@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIGNAL_DISPLAY_HPP_
-#define SIGNAL_DISPLAY_HPP_
+#ifndef MISSION_DETAILS_DISPLAY_HPP_
+#define MISSION_DETAILS_DISPLAY_HPP_
 #ifndef Q_MOC_RUN
 #include "overlay_utils.hpp"
 #include "remaining_distance_time_display.hpp"
@@ -64,7 +64,8 @@ private:
   rviz_common::properties::IntProperty * property_height_;
   rviz_common::properties::IntProperty * property_left_;
   rviz_common::properties::IntProperty * property_top_;
-  std::unique_ptr<rviz_common::properties::RosTopicProperty> remaining_distance_time_topic_property_;
+  std::unique_ptr<rviz_common::properties::RosTopicProperty>
+    remaining_distance_time_topic_property_;
 
   void drawHorizontalRoundedRectangle(QPainter & painter, const QRectF & backgroundRect);
   void drawVerticalRoundedRectangle(QPainter & painter, const QRectF & backgroundRect);
@@ -72,13 +73,15 @@ private:
 
   std::unique_ptr<RemainingDistanceTimeDisplay> remaining_distance_time_display_;
 
-  rclcpp::Subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>::SharedPtr remaining_distance_time_sub_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>::SharedPtr
+    remaining_distance_time_sub_;
 
   std::mutex property_mutex_;
 
-  void updateRemainingDistanceTimeData(const autoware_planning_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
+  void updateRemainingDistanceTimeData(
+    const autoware_planning_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
   void drawWidget(QImage & hud);
 };
 }  // namespace autoware_mission_details_overlay_rviz_plugin
 
-#endif  // SIGNAL_DISPLAY_HPP_
+#endif  // MISSION_DETAILS_DISPLAY_HPP_

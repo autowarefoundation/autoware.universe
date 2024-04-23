@@ -67,10 +67,12 @@ void MissionDetailsDisplay::onInitialize()
 
   auto rviz_ros_node = context_->getRosNodeAbstraction();
 
-  remaining_distance_time_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
-    "Remaining Distance and Time Topic", "/planning/mission_remaining_distance_time",
-    "autoware_planning_msgs/msg/MissionRemainingDistanceTime", "Topic for Mission Remaining Distance and Time Data", this,
-    SLOT(topic_updated_remaining_distance_time()));
+  remaining_distance_time_topic_property_ =
+    std::make_unique<rviz_common::properties::RosTopicProperty>(
+      "Remaining Distance and Time Topic", "/planning/mission_remaining_distance_time",
+      "autoware_planning_msgs/msg/MissionRemainingDistanceTime",
+      "Topic for Mission Remaining Distance and Time Data", this,
+      SLOT(topic_updated_remaining_distance_time()));
   remaining_distance_time_topic_property_->initialize(rviz_ros_node);
 }
 
@@ -79,12 +81,13 @@ void MissionDetailsDisplay::setupRosSubscriptions()
   // Don't create a node, just use the one from the parent class
   auto rviz_node_ = context_->getRosNodeAbstraction().lock()->get_raw_node();
 
-  remaining_distance_time_sub_ = rviz_node_->create_subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>(
-     "/planning/mission_remaining_distance_time",
-    rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-    [this](const autoware_planning_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
-      updateRemainingDistanceTimeData(msg);
-    });
+  remaining_distance_time_sub_ =
+    rviz_node_->create_subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>(
+      "/planning/mission_remaining_distance_time",
+      rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
+      [this](const autoware_planning_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
+        updateRemainingDistanceTimeData(msg);
+      });
 }
 
 MissionDetailsDisplay::~MissionDetailsDisplay()
@@ -176,7 +179,8 @@ void MissionDetailsDisplay::drawHorizontalRoundedRectangle(
   painter.drawRoundedRect(
     backgroundRect, backgroundRect.height() / 2, backgroundRect.height() / 2);  // Circular ends
 }
-void MissionDetailsDisplay::drawVerticalRoundedRectangle(QPainter & painter, const QRectF & backgroundRect)
+void MissionDetailsDisplay::drawVerticalRoundedRectangle(
+  QPainter & painter, const QRectF & backgroundRect)
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
@@ -222,16 +226,18 @@ void MissionDetailsDisplay::topic_updated_remaining_distance_time()
   // resubscribe to the topic
   remaining_distance_time_sub_.reset();
   auto rviz_ros_node = context_->getRosNodeAbstraction().lock();
-  remaining_distance_time_sub_ = rviz_ros_node->get_raw_node()
-                 ->create_subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>(
-                   remaining_distance_time_topic_property_->getTopicStd(),
-                   rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-                   [this](const autoware_planning_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
-                     updateRemainingDistanceTimeData(msg);
-                   });
+  remaining_distance_time_sub_ =
+    rviz_ros_node->get_raw_node()
+      ->create_subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>(
+        remaining_distance_time_topic_property_->getTopicStd(),
+        rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
+        [this](const autoware_planning_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
+          updateRemainingDistanceTimeData(msg);
+        });
 }
 
 }  // namespace autoware_mission_details_overlay_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(autoware_mission_details_overlay_rviz_plugin::MissionDetailsDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(
+  autoware_mission_details_overlay_rviz_plugin::MissionDetailsDisplay, rviz_common::Display)
