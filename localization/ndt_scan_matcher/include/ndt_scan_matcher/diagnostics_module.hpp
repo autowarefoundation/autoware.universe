@@ -25,9 +25,7 @@
 class DiagnosticsModule
 {
 public:
-  DiagnosticsModule(
-    rclcpp::Node * node, const std::string & prefix_diagnostic_name = "",
-    const std::string & suffix_diagnostic_name = "");
+  DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name);
   void clear();
   void addKeyValue(const diagnostic_msgs::msg::KeyValue & key_value_msg);
   template <typename T>

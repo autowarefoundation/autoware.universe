@@ -21,9 +21,7 @@
 #include <algorithm>
 #include <string>
 
-DiagnosticsModule::DiagnosticsModule(
-  rclcpp::Node * node, const std::string & prefix_diagnostic_name,
-  const std::string & suffix_diagnostic_name)
+DiagnosticsModule::DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name)
 {
   node_.reset(node);
   if (node_ == nullptr) {
@@ -33,11 +31,7 @@ DiagnosticsModule::DiagnosticsModule(
   diagnostics_pub_ =
     node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
-  const auto prefix_name =
-    prefix_diagnostic_name.empty() ? "" : (prefix_diagnostic_name + std::string(": "));
-  const auto suffix_name =
-    suffix_diagnostic_name.empty() ? "" : (std::string(": ") + suffix_diagnostic_name);
-  diagnostics_status_msg_.name = prefix_name + std::string(node_->get_name()) + suffix_name;
+  diagnostics_status_msg_.name = std::string(node_->get_name()) + std::string(": ") + diagnostic_name;
   diagnostics_status_msg_.hardware_id = node_->get_name();
 }
 

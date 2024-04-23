@@ -116,7 +116,7 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
       std::make_unique<SmartPoseBuffer>(this->get_logger(), value_as_unlimited, value_as_unlimited);
 
     diagnostics_regularization_pose_ =
-      std::make_unique<DiagnosticsModule>(this, "localization", "regularization_pose_callback");
+      std::make_unique<DiagnosticsModule>(this, "regularization_pose_callback");
   }
 
   sensor_aligned_pose_pub_ =
@@ -183,15 +183,15 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
     std::make_unique<MapUpdateModule>(this, &ndt_ptr_mtx_, ndt_ptr_, param_.dynamic_map_loading);
 
   diagnostics_scan_points_ =
-    std::make_unique<DiagnosticsModule>(this, "localization", "sensor_points_callback");
+    std::make_unique<DiagnosticsModule>(this, "sensor_points_callback");
   diagnostics_initial_pose_ =
-    std::make_unique<DiagnosticsModule>(this, "localization", "initial_pose_callback");
+    std::make_unique<DiagnosticsModule>(this, "initial_pose_callback");
   diagnostics_map_update_ =
-    std::make_unique<DiagnosticsModule>(this, "localization", "map_update_module");
+    std::make_unique<DiagnosticsModule>(this, "map_update_module");
   diagnostics_ndt_align_ =
-    std::make_unique<DiagnosticsModule>(this, "localization", "ndt_align_service");
+    std::make_unique<DiagnosticsModule>(this, "ndt_align_service");
   diagnostics_trigger_node_ =
-    std::make_unique<DiagnosticsModule>(this, "localization", "trigger_node_service");
+    std::make_unique<DiagnosticsModule>(this, "trigger_node_service");
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
