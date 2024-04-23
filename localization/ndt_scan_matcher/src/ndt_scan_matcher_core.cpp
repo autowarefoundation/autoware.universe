@@ -274,7 +274,8 @@ void NDTScanMatcher::callback_sensor_points(
   diagnostics_scan_points_->clear();
 
   // scan matching
-  const bool is_succeed_scan_matching = callback_sensor_points_main(sensor_points_msg_in_sensor_frame);
+  const bool is_succeed_scan_matching =
+    callback_sensor_points_main(sensor_points_msg_in_sensor_frame);
 
   // check skipping_publish_num
   static size_t skipping_publish_num = 0;
