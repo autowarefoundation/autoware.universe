@@ -77,6 +77,18 @@ $$
 | ----------------------------- | ------------------------- | ------------------ |
 | `~/output/occupancy_grid_map` | `nav_msgs::OccupancyGrid` | occupancy grid map |
 
+### Related topics
+
+If you set `downsample_input_pointcloud` to `true`, the input pointcloud will be downsampled and following topics are also used.
+
+- pointcloud_based_occupancy_grid_map method
+
+```yaml
+# downsampled raw and obstacle pointcloud
+/perception/occupancy_grid_map/obstacle/downsample/pointcloud
+/perception/occupancy_grid_map/raw/downsample/pointcloud
+```
+
 ## Parameters
 
 ### Node Parameters
