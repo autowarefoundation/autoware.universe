@@ -345,9 +345,22 @@ bool NDTScanMatcher::process_scan_matching(
   const std::string & sensor_frame = sensor_points_msg_in_sensor_frame->header.frame_id;
 
   pcl::fromROSMsg(*sensor_points_msg_in_sensor_frame, *sensor_points_in_sensor_frame);
-  transform_sensor_measurement(
-    sensor_frame, param_.frame.base_frame, sensor_points_in_sensor_frame,
-    sensor_points_in_baselink_frame);
+
+  // transform sensor points from sensor-frame to base_link
+  try {
+    transform_sensor_measurement(
+      sensor_frame, param_.frame.base_frame, sensor_points_in_sensor_frame,
+      sensor_points_in_baselink_frame);
+  } catch (const std::exception &ex) {
+    std::stringstream message;
+    message << ex.what() <<  ". Please publish TF " << sensor_frame << " to " << param_.frame.base_frame;
+    diagnostics_scan_points_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
+    diagnostics_scan_points_->addKeyValue("is_scucceed_transform_sensor_points", false);
+    return false;
+  }
+  diagnostics_scan_points_->addKeyValue("is_scucceed_transform_sensor_points", true);
 
   // check sensor_points_max_distance
   double max_distance = 0.0;
@@ -605,12 +618,7 @@ void NDTScanMatcher::transform_sensor_measurement(
   try {
     transform = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-    RCLCPP_WARN(
-      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
-    // Since there is no clear error handling policy, temporarily return as is.
-    sensor_points_output_ptr = sensor_points_input_ptr;
-    return;
+    throw;
   }
 
   const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
@@ -781,7 +789,10 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     rot = find_rotation_matrix_aligning_covariance_to_principal_axes(
       ndt_result.hessian.inverse().block(0, 0, 2, 2));
   } catch (const std::exception & e) {
-    RCLCPP_WARN(get_logger(), "Error in Eigen solver: %s", e.what());
+    std::stringstream message;
+    message << "Error in Eigen solver: " << e.what();
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
+
     return param_.covariance.output_pose_covariance;
   }
 

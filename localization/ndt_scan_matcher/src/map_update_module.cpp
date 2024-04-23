@@ -34,7 +34,10 @@ MapUpdateModule::MapUpdateModule(
   if (ndt_ptr_) {
     *secondary_ndt_ptr_ = *ndt_ptr_;
   } else {
-    RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, "Attempt to update a null NDT pointer.");
+    std::stringstream message;
+    message << "Error at MapUpdateModule::MapUpdateModule."
+            << "`ndt_ptr_` is a null NDT pointer.";
+    throw std::runtime_error(message.str());
   }
 
   // Initially, a direct map update on ndt_ptr_ is needed.

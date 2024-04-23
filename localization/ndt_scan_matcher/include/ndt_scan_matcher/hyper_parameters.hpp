@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <string>
+#include <sstream>
 #include <vector>
 
 enum class ConvergedParamType {
@@ -162,10 +163,11 @@ public:
             initial_pose_offset_model_y[i];
         }
       } else {
-        RCLCPP_WARN(
-          node->get_logger(),
-          "Invalid initial pose offset model parameters. Disable covariance estimation.");
-        covariance.covariance_estimation.enable = false;
+        std::stringstream message;
+        message << "Invalid initial pose offset model parameters."
+                << "Please make sure that the number of elements in "
+                << "initial_pose_offset_model_x and initial_pose_offset_model_y are the same.";
+        throw std::runtime_error(message.str());
       }
     }
 
