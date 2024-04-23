@@ -31,7 +31,8 @@ DiagnosticsModule::DiagnosticsModule(rclcpp::Node * node, const std::string & di
   diagnostics_pub_ =
     node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
-  diagnostics_status_msg_.name = std::string(node_->get_name()) + std::string(": ") + diagnostic_name;
+  diagnostics_status_msg_.name =
+    std::string(node_->get_name()) + std::string(": ") + diagnostic_name;
   diagnostics_status_msg_.hardware_id = node_->get_name();
 }
 
