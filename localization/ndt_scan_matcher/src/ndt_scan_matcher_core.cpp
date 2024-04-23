@@ -281,12 +281,7 @@ void NDTScanMatcher::callback_sensor_points(
   const size_t error_skipping_publish_num = 5;
   skipping_publish_num = is_succeed_scan_matching ? 0 : (skipping_publish_num + 1);
   diagnostics_scan_points_->addKeyValue("skipping_publish_num", skipping_publish_num);
-  if (skipping_publish_num > 0 && skipping_publish_num < error_skipping_publish_num) {
-    std::stringstream message;
-    message << "skipping_publish_num > 0 (" << skipping_publish_num << " times).";
-    diagnostics_scan_points_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-  } else if (skipping_publish_num >= error_skipping_publish_num) {
+  if (skipping_publish_num >= error_skipping_publish_num) {
     std::stringstream message;
     message << "skipping_publish_num exceed limit (" << skipping_publish_num << " times).";
     diagnostics_scan_points_->updateLevelAndMessage(
@@ -922,7 +917,6 @@ void NDTScanMatcher::service_ndt_align_main(
   const std::string & target_frame = param_.frame.map_frame;
   const std::string & source_frame = req->pose_with_covariance.header.frame_id;
 
-  diagnostics_ndt_align_->addKeyValue("is_succeed_tf2_transform", false);
   geometry_msgs::msg::TransformStamped transform_s2t;
   try {
     transform_s2t = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
@@ -931,7 +925,7 @@ void NDTScanMatcher::service_ndt_align_main(
     // "gnss_link" instead of "map". The ndt_align is designed to return identity when this issue
     // occurs. However, in the future, converting to a non-existent frame_id should be prohibited.
 
-    diagnostics_ndt_align_->addKeyValue("is_succeed_tf2_transform", false);
+    diagnostics_ndt_align_->addKeyValue("is_succeed_transform_initial_pose", false);
 
     std::stringstream message;
     message << "Please publish TF " << target_frame.c_str() << " to " << source_frame.c_str();
@@ -940,7 +934,7 @@ void NDTScanMatcher::service_ndt_align_main(
     res->success = false;
     return;
   }
-  diagnostics_ndt_align_->addKeyValue("is_succeed_tf2_transform", true);
+  diagnostics_ndt_align_->addKeyValue("is_succeed_transform_initial_pose", true);
 
   // transform pose_frame to map_frame
   const auto initial_pose_msg_in_map_frame = transform(req->pose_with_covariance, transform_s2t);

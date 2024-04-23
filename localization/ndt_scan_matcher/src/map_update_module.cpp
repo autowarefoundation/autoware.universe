@@ -262,7 +262,7 @@ bool MapUpdateModule::update_ndt(
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
   const auto exe_time = static_cast<double>(duration_micro_sec) / 1000.0;
-  diagnostics_ptr->addKeyValue("latest_update_execution_time", exe_time);
+  diagnostics_ptr->addKeyValue("map_update_execution_time", exe_time);
   diagnostics_ptr->addKeyValue("maps_size_after", ndt.getCurrentMapIDs().size());
   diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
   return true;  // Updated
