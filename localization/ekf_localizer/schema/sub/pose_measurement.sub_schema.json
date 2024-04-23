@@ -35,7 +35,8 @@
         "pose_additional_delay",
         "pose_measure_uncertainty_time",
         "pose_smoothing_steps",
-        "pose_gate_dist"
+        "pose_gate_dist_xy",
+        "pose_gate_dist_yaw"
       ],
       "additionalProperties": false
     }
