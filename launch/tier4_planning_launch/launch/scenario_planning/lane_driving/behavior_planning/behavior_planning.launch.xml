@@ -194,7 +194,7 @@
       <remap from="~/input/accel" to="/localization/acceleration"/>
       <remap from="~/input/scenario" to="/planning/scenario_planning/scenario"/>
       <remap from="~/output/path" to="path_with_lane_id"/>
-      <remap from="~/output/remaining_distance_eta" to="/planning/remaining_distance_eta"/>
+      <remap from="~/output/mission_remaining_distance_time" to="/planning/mission_remaining_distance_time"/>
       <remap from="~/output/turn_indicators_cmd" to="/planning/turn_indicators_cmd"/>
       <remap from="~/output/hazard_lights_cmd" to="/planning/hazard_lights_cmd"/>
       <remap from="~/output/modified_goal" to="/planning/scenario_planning/modified_goal"/>

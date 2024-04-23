@@ -50,12 +50,6 @@ using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 enum class Direction { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
 enum class PullOutDirection { NONE, LEFT, RIGHT };
-struct EstimatedTimeOfArrival
-{
-  uint8_t hours;
-  uint8_t minutes;
-  uint8_t seconds;
-};
 
 class RouteHandler
 {
@@ -362,10 +356,6 @@ public:
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
-  double getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_);
-  EstimatedTimeOfArrival getEstimatedTimeOfArrival(
-    const double & remaining_distance,
-    const geometry_msgs::msg::Vector3 & current_vehicle_velocity);
 
 private:
   // MUST
@@ -389,8 +379,6 @@ private:
   // save original(not modified) route start pose for start planer execution
   Pose original_start_pose_;
   Pose original_goal_pose_;
-
-  EstimatedTimeOfArrival eta;
 
   // non-const methods
   void setLaneletsFromRouteMsg();
