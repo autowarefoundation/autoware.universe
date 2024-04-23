@@ -111,6 +111,7 @@ class Operator:
                     self.driver.current_fix.position_covariance_type = (
                         self.driver.gps_qual[2]
                     )
+                    # print(self.driver.current_fix.status.status)
                     if self.driver.current_fix.status.status > 0:
                         self.driver.valid_fix = True
                     else:
