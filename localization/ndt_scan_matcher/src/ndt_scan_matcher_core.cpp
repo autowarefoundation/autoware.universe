@@ -210,12 +210,12 @@ void NDTScanMatcher::callback_initial_pose(
 {
   diagnostics_initial_pose_->clear();
 
-  set_initial_pose(initial_pose_msg_ptr);
+  callback_initial_pose_main(initial_pose_msg_ptr);
 
   diagnostics_initial_pose_->publish();
 }
 
-void NDTScanMatcher::set_initial_pose(
+void NDTScanMatcher::callback_initial_pose_main(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
   diagnostics_initial_pose_->addKeyValue(
@@ -274,7 +274,7 @@ void NDTScanMatcher::callback_sensor_points(
   diagnostics_scan_points_->clear();
 
   // scan matching
-  const bool is_succeed_scan_matching = process_scan_matching(sensor_points_msg_in_sensor_frame);
+  const bool is_succeed_scan_matching = callback_sensor_points_main(sensor_points_msg_in_sensor_frame);
 
   // check skipping_publish_num
   static size_t skipping_publish_num = 0;
@@ -291,7 +291,7 @@ void NDTScanMatcher::callback_sensor_points(
   diagnostics_scan_points_->publish();
 }
 
-bool NDTScanMatcher::process_scan_matching(
+bool NDTScanMatcher::callback_sensor_points_main(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame)
 {
   const auto exe_start_time = std::chrono::system_clock::now();

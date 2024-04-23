@@ -79,28 +79,32 @@ public:
   explicit NDTScanMatcher(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
+  void callback_timer();
+
+  void callback_initial_pose(
+    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr);
+  void callback_initial_pose_main(
+    const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr);
+
+  void callback_regularization_pose(
+    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
+
+  void callback_sensor_points(
+    sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
+  bool callback_sensor_points_main(
+    sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
+
+  void service_trigger_node(
+    const std_srvs::srv::SetBool::Request::SharedPtr req,
+    std_srvs::srv::SetBool::Response::SharedPtr res);
+
   void service_ndt_align(
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
   void service_ndt_align_main(
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
-  void service_trigger_node(
-    const std_srvs::srv::SetBool::Request::SharedPtr req,
-    std_srvs::srv::SetBool::Response::SharedPtr res);
 
-  void callback_timer();
-  void callback_sensor_points(
-    sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
-  void callback_initial_pose(
-    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr);
-  void callback_regularization_pose(
-    geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
-
-  void set_initial_pose(
-    const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr);
-  bool process_scan_matching(
-    sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_msg_in_sensor_frame);
   geometry_msgs::msg::PoseWithCovarianceStamped align_pose(
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
