@@ -20,8 +20,8 @@
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
 
 #include <algorithm>
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 enum class ConvergedParamType {

@@ -351,9 +351,10 @@ bool NDTScanMatcher::process_scan_matching(
     transform_sensor_measurement(
       sensor_frame, param_.frame.base_frame, sensor_points_in_sensor_frame,
       sensor_points_in_baselink_frame);
-  } catch (const std::exception &ex) {
+  } catch (const std::exception & ex) {
     std::stringstream message;
-    message << ex.what() <<  ". Please publish TF " << sensor_frame << " to " << param_.frame.base_frame;
+    message << ex.what() << ". Please publish TF " << sensor_frame << " to "
+            << param_.frame.base_frame;
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
