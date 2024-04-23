@@ -18,7 +18,7 @@
 
 AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
 : Node("AutowarePoseCovarianceModifierNode"),
-  trustedPoseLastReceivedTime_(this->now()),
+  gnssPoseLastReceivedTime_(this->now()),
   pose_source_(AutowarePoseCovarianceModifierNode::PoseSource::NDT)
 {
   try {
@@ -28,17 +28,17 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
       this->declare_parameter<double>("error_thresholds.gnss_error_unreliable_min", 0.25);
     yaw_error_deg_threshold_ =
       this->declare_parameter<double>("error_thresholds.yaw_error_deg_threshold", 0.3);
-    trusted_pose_timeout_sec_ = this->declare_parameter<double>("trusted_pose_timeout_sec", 1.0);
+    gnss_pose_timeout_sec_ = this->declare_parameter<double>("gnss_pose_timeout_sec", 1.0);
     debug_ = this->declare_parameter<bool>("debug.enable_debug_topics", false);
   } catch (const std::exception & e) {
     RCLCPP_ERROR(this->get_logger(), "Failed to declare parameters: %s", e.what());
     throw;
   }
-  trusted_pose_with_cov_sub_ =
+  gnss_pose_with_cov_sub_ =
     this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "input_trusted_pose_with_cov_topic", 10,
+      "input_gnss_pose_with_cov_topic", 10,
       std::bind(
-        &AutowarePoseCovarianceModifierNode::trusted_pose_with_cov_callback, this,
+        &AutowarePoseCovarianceModifierNode::gnss_pose_with_cov_callback, this,
         std::placeholders::_1));
 
   ndt_pose_with_cov_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -58,11 +58,11 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
       "/autoware_pose_covariance_modifier/output/gnss_position_rmse", 10);
   }
 }
-void AutowarePoseCovarianceModifierNode::check_trusted_pose_timeout()
+void AutowarePoseCovarianceModifierNode::check_gnss_pose_timeout()
 {
-  auto time_diff = this->now() - trustedPoseLastReceivedTime_;
-  if (time_diff.seconds() > trusted_pose_timeout_sec_) {
-    RCLCPP_WARN(this->get_logger(), "Trusted Pose Timeout");
+  auto time_diff = this->now() - gnssPoseLastReceivedTime_;
+  if (time_diff.seconds() > gnss_pose_timeout_sec_) {
+    RCLCPP_WARN(this->get_logger(), "GNSS Pose Timeout");
     pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::NDT;
     std_msgs::msg::String selected_pose_type;
     selected_pose_type.data = "NDT";
@@ -86,7 +86,7 @@ std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifi
     double calculated_covariance = std::pow(
       ((std::sqrt(in_ndt_covariance[idx]) * 2) -
        ((std::sqrt(in_ndt_covariance[idx]) * 2) - (std::sqrt(in_ndt_covariance[idx]))) *
-         ((std::sqrt(trusted_source_pose_with_cov.pose.covariance[idx]) -
+         ((std::sqrt(gnss_source_pose_with_cov.pose.covariance[idx]) -
            gnss_error_reliable_max_) /
           (gnss_error_unreliable_min_ - gnss_error_reliable_max_))),
       2);
@@ -102,7 +102,7 @@ std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifi
 void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  AutowarePoseCovarianceModifierNode::check_trusted_pose_timeout();
+  AutowarePoseCovarianceModifierNode::check_gnss_pose_timeout();
 
   std::array<double, 36> ndt_covariance_in = msg->pose.covariance;
   std::array<double, 36> out_ndt_covariance =
@@ -125,46 +125,46 @@ void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
     }
   }
 }
-void AutowarePoseCovarianceModifierNode::trusted_pose_with_cov_callback(
+void AutowarePoseCovarianceModifierNode::gnss_pose_with_cov_callback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  trustedPoseLastReceivedTime_ = this->now();
-  trusted_source_pose_with_cov = *msg;
+  gnssPoseLastReceivedTime_ = this->now();
+  gnss_source_pose_with_cov = *msg;
 
-  double trusted_pose_average_rmse_xy =
-    (std::sqrt(trusted_source_pose_with_cov.pose.covariance[X_POS_IDX_]) +
-     std::sqrt(trusted_source_pose_with_cov.pose.covariance[Y_POS_IDX_])) /
+  double gnss_pose_average_rmse_xy =
+    (std::sqrt(gnss_source_pose_with_cov.pose.covariance[X_POS_IDX_]) +
+     std::sqrt(gnss_source_pose_with_cov.pose.covariance[Y_POS_IDX_])) /
     2;
 
-  double trusted_pose_rmse_z = std::sqrt(trusted_source_pose_with_cov.pose.covariance[Z_POS_IDX_]);
-  double trusted_pose_yaw_rmse_in_degrees =
-    std::sqrt(trusted_source_pose_with_cov.pose.covariance[YAW_POS_IDX_]) * 180 / M_PI;
+  double gnss_pose_rmse_z = std::sqrt(gnss_source_pose_with_cov.pose.covariance[Z_POS_IDX_]);
+  double gnss_pose_yaw_rmse_in_degrees =
+    std::sqrt(gnss_source_pose_with_cov.pose.covariance[YAW_POS_IDX_]) * 180 / M_PI;
 
   update_pose_source_based_on_rmse(
-    trusted_pose_average_rmse_xy, trusted_pose_rmse_z, trusted_pose_yaw_rmse_in_degrees);
+    gnss_pose_average_rmse_xy, gnss_pose_rmse_z, gnss_pose_yaw_rmse_in_degrees);
 
   if (pose_source_ != AutowarePoseCovarianceModifierNode::PoseSource::NDT) {
-    new_pose_estimator_pub_->publish(trusted_source_pose_with_cov);
+    new_pose_estimator_pub_->publish(gnss_source_pose_with_cov);
     if (debug_) {
       std_msgs::msg::Float32 out_gnss_rmse;
-      out_gnss_rmse.data = static_cast<float>(trusted_pose_average_rmse_xy);
+      out_gnss_rmse.data = static_cast<float>(gnss_pose_average_rmse_xy);
       out_gnss_position_rmse_pub_->publish(out_gnss_rmse);
     }
   }
 }
 
 void AutowarePoseCovarianceModifierNode::update_pose_source_based_on_rmse(
-  double trusted_pose_average_rmse_xy, double trusted_pose_rmse_z,
-  double trusted_pose_yaw_rmse_in_degrees)
+  double gnss_pose_average_rmse_xy, double gnss_pose_rmse_z,
+  double gnss_pose_yaw_rmse_in_degrees)
 {
   std_msgs::msg::String selected_pose_type;
   if (
-    trusted_pose_yaw_rmse_in_degrees <= yaw_error_deg_threshold_ &&
-    trusted_pose_rmse_z <= gnss_error_reliable_max_) {
-    if (trusted_pose_average_rmse_xy <= gnss_error_reliable_max_) {
+    gnss_pose_yaw_rmse_in_degrees <= yaw_error_deg_threshold_ &&
+    gnss_pose_rmse_z <= gnss_error_reliable_max_) {
+    if (gnss_pose_average_rmse_xy <= gnss_error_reliable_max_) {
       pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS;
       selected_pose_type.data = "GNSS";
-    } else if (trusted_pose_average_rmse_xy <= gnss_error_unreliable_min_) {
+    } else if (gnss_pose_average_rmse_xy <= gnss_error_unreliable_min_) {
       pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT;
       selected_pose_type.data = "GNSS + NDT";
     } else {

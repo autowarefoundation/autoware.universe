@@ -33,15 +33,15 @@ the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autowar
 
 ### Subscribed topics
 
-| Name                                | Type                                            | Description            |
-| ----------------------------------- | ----------------------------------------------- | ---------------------- |
-| `input_trusted_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input GNSS pose topic. |
-| `input_ndt_pose_with_cov_topic`     | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input NDT pose topic.  |
+| Name                             | Type                                            | Description            |
+|----------------------------------|-------------------------------------------------|------------------------|
+| `input_gnss_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input GNSS pose topic. |
+| `input_ndt_pose_with_cov_topic`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input NDT pose topic.  |
 
 ### Published topics
 
 | Name                                | Type                                            | Description                                                                                             |
-| ----------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+|-------------------------------------|-------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. It will be sent as input to ekf_localizer package.                                   |
 | `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                      |
 | `output/ndt_position_rmse`          | `std_msgs::msg::Float32`                        | Output pose ndt average rmse in position xy. It is published only when the enable_debug_topics is true. |
@@ -50,11 +50,11 @@ the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autowar
 ### Parameters
 
 | Name                                         | Type     | Description                                                                    |
-| -------------------------------------------- | -------- | ------------------------------------------------------------------------------ |
+|----------------------------------------------|----------|--------------------------------------------------------------------------------|
 | `error_thresholds.gnss_error_reliable_max`   | `double` | Threshold value for the range in which GNSS error is most reliable.            |
 | `error_thresholds.gnss_error_unreliable_min` | `double` | Threshold value at which GNSS error is not considered reliable.                |
 | `error_thresholds.yaw_error_deg_threshold`   | `double` | Threshold value to understand whether the yaw error is within reliable limits. |
-| `trusted_pose_timeout_sec`                   | `double` | Maximum waiting time when message is delayed from trusted pose source          |
+| `gnss_pose_timeout_sec`                      | `double` | Maximum waiting time when message is delayed from gnss pose source             |
 | `debug.enable_debug_topics`                  | `bool`   | Enables the debug topics                                                       |
 
 ## Important notes

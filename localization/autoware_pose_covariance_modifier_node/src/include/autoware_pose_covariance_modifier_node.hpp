@@ -28,7 +28,7 @@ public:
   AutowarePoseCovarianceModifierNode();
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    trusted_pose_with_cov_sub_;
+    gnss_pose_with_cov_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     ndt_pose_with_cov_sub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
@@ -37,19 +37,19 @@ public:
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr out_ndt_position_rmse_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr out_gnss_position_rmse_pub_;
 
-  void trusted_pose_with_cov_callback(
+  void gnss_pose_with_cov_callback(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg);
   void ndt_pose_with_cov_callback(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg);
   std::array<double, 36> ndt_covariance_modifier(std::array<double, 36> & in_ndt_covariance);
-  geometry_msgs::msg::PoseWithCovarianceStamped trusted_source_pose_with_cov;
+  geometry_msgs::msg::PoseWithCovarianceStamped gnss_source_pose_with_cov;
 
-  void check_trusted_pose_timeout();
+  void check_gnss_pose_timeout();
 
 private:
   void update_pose_source_based_on_rmse(
-    double trusted_pose_average_rmse_xy, double trusted_pose_rmse_z,
-    double trusted_pose_yaw_rmse_in_degrees);
+    double gnss_pose_average_rmse_xy, double gnss_pose_rmse_z,
+    double gnss_pose_yaw_rmse_in_degrees);
 
   enum class PoseSource {
     GNSS = 0,
@@ -57,12 +57,12 @@ private:
     NDT = 2,
   };
 
-  rclcpp::Time trustedPoseLastReceivedTime_;
+  rclcpp::Time gnssPoseLastReceivedTime_;
 
   PoseSource pose_source_;
 
   double gnss_error_reliable_max_, gnss_error_unreliable_min_, yaw_error_deg_threshold_;
-  double trusted_pose_timeout_sec_;
+  double gnss_pose_timeout_sec_;
   bool debug_;
 
   // covariance matrix indexes

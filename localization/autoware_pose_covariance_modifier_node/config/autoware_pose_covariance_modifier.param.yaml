@@ -10,8 +10,8 @@
       # Threshold value for yaw error
       yaw_error_deg_threshold: 0.3      #degrees
 
-    # Acceptable delay duration for trusted pose data [sec]
-    trusted_pose_timeout_sec: 1.0  #seconds
+    # Acceptable delay duration for GNSS pose data [sec]
+    gnss_pose_timeout_sec: 1.0  #seconds
 
     debug:
-      enable_debug_topics: false
+      enable_debug_topics: true
