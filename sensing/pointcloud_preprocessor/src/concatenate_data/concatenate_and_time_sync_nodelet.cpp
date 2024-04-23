@@ -420,7 +420,14 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
       not_subscribed_topic_names_.insert(e.first);
     }
   }
+
+  // after concatenation, channels have no consistent meaning
+  size_t channel_offset = offsetof(PointXYZIRC, channel);
+  for (size_t data_idx = 0; data_idx < concat_cloud_ptr->data.size(); data_idx += concat_cloud_ptr->point_step) {
+    concat_cloud_ptr->data[data_idx + channel_offset] = 0;
+  }
   concat_cloud_ptr->header.stamp = oldest_stamp;
+
   return transformed_clouds;
 }
 
@@ -545,14 +552,10 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  sensor_msgs::msg::PointCloud2::SharedPtr xyzi_input_ptr(new sensor_msgs::msg::PointCloud2());
   auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
   if (input->data.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
-  } else {
-    // convert to XYZI pointcloud if pointcloud is not empty
-    convertToXYZICloud(input, xyzi_input_ptr);
   }
 
   const bool is_already_subscribed_this = (cloud_stdmap_[topic_name] != nullptr);
@@ -561,7 +564,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     [](const auto & e) { return e.second != nullptr; });
 
   if (is_already_subscribed_this) {
-    cloud_stdmap_tmp_[topic_name] = xyzi_input_ptr;
+    cloud_stdmap_tmp_[topic_name] = input;
 
     if (!is_already_subscribed_tmp) {
       auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -574,7 +577,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
       timer_->reset();
     }
   } else {
-    cloud_stdmap_[topic_name] = xyzi_input_ptr;
+    cloud_stdmap_[topic_name] = input;
 
     const bool is_subscribed_all = std::all_of(
       std::begin(cloud_stdmap_), std::end(cloud_stdmap_),

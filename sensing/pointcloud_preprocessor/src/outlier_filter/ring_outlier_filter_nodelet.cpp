@@ -69,7 +69,7 @@ void RingOutlierFilterComponent::faster_filter(
   }
   stop_watch_ptr_->toc("processing_time", true);
 
-  output.point_step = sizeof(PointXYZI);
+  output.point_step = sizeof(PointXYZIRC);
   output.data.resize(output.point_step * input->width);
   size_t output_size = 0;
 
@@ -77,7 +77,7 @@ void RingOutlierFilterComponent::faster_filter(
   PointCloud2 outlier_points;
   size_t outlier_points_size = 0;
   if (publish_outlier_pointcloud_) {
-    outlier_points.point_step = sizeof(PointXYZI);
+    outlier_points.point_step = sizeof(PointXYZIRC);
     outlier_points.data.resize(outlier_points.point_step * input->width);
   }
 
@@ -89,6 +89,8 @@ void RingOutlierFilterComponent::faster_filter(
     input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Distance)).offset;
   const auto intensity_offset =
     input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Intensity)).offset;
+  const auto return_type_offset =
+    input->fields.at(static_cast<size_t>(autoware_point_types::PointIndex::ReturnType)).offset;
 
   std::vector<std::vector<size_t>> ring2indices;
   ring2indices.reserve(max_rings_num_);
@@ -143,8 +145,8 @@ void RingOutlierFilterComponent::faster_filter(
             input, std::make_pair(indices[walk_first_idx], indices[walk_last_idx]),
             walk_last_idx - walk_first_idx + 1)) {
         for (int i = walk_first_idx; i <= walk_last_idx; i++) {
-          auto output_ptr = reinterpret_cast<PointXYZI *>(&output.data[output_size]);
-          auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
+          auto output_ptr = reinterpret_cast<PointXYZIRC *>(&output.data[output_size]);
+          auto input_ptr = reinterpret_cast<const PointXYZIRADRT *>(&input->data[indices[i]]);
 
           if (transform_info.need_transform) {
             Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
@@ -153,20 +155,28 @@ void RingOutlierFilterComponent::faster_filter(
             output_ptr->y = p[1];
             output_ptr->z = p[2];
           } else {
-            *output_ptr = *input_ptr;
+            output_ptr->x = input_ptr->x;
+            output_ptr->y = input_ptr->y;
+            output_ptr->z = input_ptr->z;
           }
           const float & intensity =
             *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
           output_ptr->intensity = intensity;
+          const uint8_t & return_type =
+            *reinterpret_cast<const uint8_t *>(&input->data[indices[i] + return_type_offset]);
+          output_ptr->return_type = return_type;
+          const uint16_t & channel =
+            *reinterpret_cast<const uint16_t *>(&input->data[indices[i] + ring_offset]);
+          output_ptr->channel = channel;
 
           output_size += output.point_step;
         }
       } else if (publish_outlier_pointcloud_) {
         for (int i = walk_first_idx; i <= walk_last_idx; i++) {
           auto outlier_ptr =
-            reinterpret_cast<PointXYZI *>(&outlier_points.data[outlier_points_size]);
+            reinterpret_cast<PointXYZIRC *>(&outlier_points.data[outlier_points_size]);
           auto input_ptr =
-            reinterpret_cast<const PointXYZI *>(&input->data[indices[walk_first_idx]]);
+            reinterpret_cast<const PointXYZIRADRT *>(&input->data[indices[walk_first_idx]]);
           if (transform_info.need_transform) {
             Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
             p = transform_info.eigen_transform * p;
@@ -174,11 +184,19 @@ void RingOutlierFilterComponent::faster_filter(
             outlier_ptr->y = p[1];
             outlier_ptr->z = p[2];
           } else {
-            *outlier_ptr = *input_ptr;
+            outlier_ptr->x = input_ptr->x;
+            outlier_ptr->y = input_ptr->y;
+            outlier_ptr->z = input_ptr->z;
           }
           const float & intensity = *reinterpret_cast<const float *>(
             &input->data[indices[walk_first_idx] + intensity_offset]);
           outlier_ptr->intensity = intensity;
+          const uint8_t & return_type = *reinterpret_cast<const uint8_t *>(
+            &input->data[indices[walk_first_idx] + return_type_offset]);
+          outlier_ptr->return_type = return_type;
+          const uint16_t & channel = *reinterpret_cast<const uint16_t *>(
+            &input->data[indices[walk_first_idx] + ring_offset]);
+          outlier_ptr->channel = channel;
 
           outlier_points_size += outlier_points.point_step;
         }
@@ -193,8 +211,8 @@ void RingOutlierFilterComponent::faster_filter(
           input, std::make_pair(indices[walk_first_idx], indices[walk_last_idx]),
           walk_last_idx - walk_first_idx + 1)) {
       for (int i = walk_first_idx; i <= walk_last_idx; i++) {
-        auto output_ptr = reinterpret_cast<PointXYZI *>(&output.data[output_size]);
-        auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
+        auto output_ptr = reinterpret_cast<PointXYZIRC *>(&output.data[output_size]);
+        auto input_ptr = reinterpret_cast<const PointXYZIRADRT *>(&input->data[indices[i]]);
 
         if (transform_info.need_transform) {
           Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
@@ -203,18 +221,26 @@ void RingOutlierFilterComponent::faster_filter(
           output_ptr->y = p[1];
           output_ptr->z = p[2];
         } else {
-          *output_ptr = *input_ptr;
+          output_ptr->x = input_ptr->x;
+          output_ptr->y = input_ptr->y;
+          output_ptr->z = input_ptr->z;
         }
         const float & intensity =
           *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
         output_ptr->intensity = intensity;
+        const uint8_t & return_type =
+          *reinterpret_cast<const uint8_t *>(&input->data[indices[i] + return_type_offset]);
+        output_ptr->return_type = return_type;
+        const uint16_t & channel =
+          *reinterpret_cast<const uint16_t *>(&input->data[indices[i] + ring_offset]);
+        output_ptr->channel = channel;
 
         output_size += output.point_step;
       }
     } else if (publish_outlier_pointcloud_) {
       for (int i = walk_first_idx; i < walk_last_idx; i++) {
-        auto outlier_ptr = reinterpret_cast<PointXYZI *>(&outlier_points.data[outlier_points_size]);
-        auto input_ptr = reinterpret_cast<const PointXYZI *>(&input->data[indices[i]]);
+        auto outlier_ptr = reinterpret_cast<PointXYZIRC *>(&outlier_points.data[outlier_points_size]);
+        auto input_ptr = reinterpret_cast<const PointXYZIRADRT *>(&input->data[indices[i]]);
         if (transform_info.need_transform) {
           Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
           p = transform_info.eigen_transform * p;
@@ -222,20 +248,28 @@ void RingOutlierFilterComponent::faster_filter(
           outlier_ptr->y = p[1];
           outlier_ptr->z = p[2];
         } else {
-          *outlier_ptr = *input_ptr;
+          outlier_ptr->x = input_ptr->x;
+          outlier_ptr->y = input_ptr->y;
+          outlier_ptr->z = input_ptr->z;
         }
         const float & intensity =
           *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
         outlier_ptr->intensity = intensity;
+        const uint8_t & return_type =
+          *reinterpret_cast<const uint8_t *>(&input->data[indices[i] + return_type_offset]);
+        outlier_ptr->return_type = return_type;
+        const uint16_t & channel =
+          *reinterpret_cast<const uint16_t *>(&input->data[indices[i] + ring_offset]);
+        outlier_ptr->channel = channel;
         outlier_points_size += outlier_points.point_step;
       }
     }
   }
 
-  setUpPointCloudFormat(input, output, output_size, /*num_fields=*/4);
+  setUpPointCloudFormat(input, output, output_size, /*num_fields=*/7);
 
   if (publish_outlier_pointcloud_) {
-    setUpPointCloudFormat(input, outlier_points, outlier_points_size, /*num_fields=*/4);
+    setUpPointCloudFormat(input, outlier_points, outlier_points_size, /*num_fields=*/7);
     outlier_pointcloud_publisher_->publish(outlier_points);
   }
 
@@ -316,7 +350,9 @@ void RingOutlierFilterComponent::setUpPointCloudFormat(
   pcd_modifier.setPointCloud2Fields(
     num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
     sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32);
+    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32, "padding", 1,
+    sensor_msgs::msg::PointField::UINT8, "return_type", 1, sensor_msgs::msg::PointField::UINT8,
+    "channel", 1, sensor_msgs::msg::PointField::UINT16);
 }
 
 }  // namespace pointcloud_preprocessor

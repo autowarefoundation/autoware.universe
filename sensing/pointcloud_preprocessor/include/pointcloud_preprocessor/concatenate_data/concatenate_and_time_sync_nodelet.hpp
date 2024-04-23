@@ -88,6 +88,7 @@
 namespace pointcloud_preprocessor
 {
 using autoware_point_types::PointXYZI;
+using autoware_point_types::PointXYZIRC;
 using point_cloud_msg_wrapper::PointCloud2Modifier;
 
 /** \brief @b PointCloudConcatenateDataSynchronizerComponent is a special form of data
