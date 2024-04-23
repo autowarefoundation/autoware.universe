@@ -580,42 +580,37 @@ void AEB::createObjectDataUsingPointCloudClusters(
   PointCloud::Ptr obstacle_points_ptr(new PointCloud);
   pcl::fromROSMsg(*cropped_ros_pointcloud_ptr_, *obstacle_points_ptr);
   if (obstacle_points_ptr->empty()) return;
-  std::vector<pcl::PointIndices> cluster_indices;
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-  tree->setInputCloud(obstacle_points_ptr);
-  pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-  ec.setClusterTolerance(0.1);
-  ec.setMinClusterSize(10);
-  ec.setMaxClusterSize(10000);
-  ec.setSearchMethod(tree);
-  ec.setInputCloud(obstacle_points_ptr);
-  ec.extract(cluster_indices);
-  std::vector<PointCloud::Ptr> clusters;
-  std::vector<Eigen::Vector4f> cluster_centroids;
+
+  // eliminate noisy points by only considering points belonging to clusters of at least a certain
+  // size
+  const std::vector<pcl::PointIndices> cluster_indices = std::invoke([&]() {
+    std::vector<pcl::PointIndices> cluster_idx;
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(obstacle_points_ptr);
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    ec.setClusterTolerance(0.1);
+    ec.setMinClusterSize(10);
+    ec.setMaxClusterSize(10000);
+    ec.setSearchMethod(tree);
+    ec.setInputCloud(obstacle_points_ptr);
+    ec.extract(cluster_idx);
+    return cluster_idx;
+  });
+  PointCloud::Ptr points_belonging_to_clusters(new PointCloud);
   for (const auto & indices : cluster_indices) {
-    PointCloud::Ptr cluster(new PointCloud);
     for (const auto & index : indices.indices) {
-      cluster->push_back((*obstacle_points_ptr)[index]);
+      points_belonging_to_clusters->push_back((*obstacle_points_ptr)[index]);
     }
-    cluster->width = cluster->size();
-    cluster->height = 1;
-    cluster->is_dense = true;
-    clusters.push_back(cluster);
-    Eigen::Vector4f centroid;
-    pcl::compute3DCentroid(*cluster, centroid);
-    cluster_centroids.push_back(centroid);
   }
-  const double half_width = vehicle_info_.vehicle_width_m / 2.0;
-  for (const auto & centroid : cluster_centroids) {
+
+  // select points inside the ego footprint path
+  for (const auto & p : *points_belonging_to_clusters) {
     ObjectData obj;
     obj.stamp = stamp;
-    obj.position = tier4_autoware_utils::createPoint(centroid(0), centroid(1), centroid(2));
+    obj.position = tier4_autoware_utils::createPoint(p.x, p.y, p.z);
     obj.velocity = 0.0;
-    const Point2d obj_point(centroid(0), centroid(1));
-    const double lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
-    if (lat_dist > half_width) {
-      continue;
-    }
+    const Point2d obj_point(p.x, p.y);
+
     for (const auto & ego_poly : ego_polys) {
       if (bg::within(obj_point, ego_poly)) {
         objects.push_back(obj);
