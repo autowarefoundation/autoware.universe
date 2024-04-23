@@ -32,7 +32,7 @@ public:
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     ndt_pose_with_cov_sub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    new_pose_estimator_pub_;
+    output_pose_with_covariance_stamped_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pose_source_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr out_ndt_position_rmse_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr out_gnss_position_rmse_pub_;

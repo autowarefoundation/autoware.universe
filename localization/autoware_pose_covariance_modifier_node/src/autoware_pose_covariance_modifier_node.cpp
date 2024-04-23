@@ -46,7 +46,7 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
     std::bind(
       &AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback, this,
       std::placeholders::_1));
-  new_pose_estimator_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+  output_pose_with_covariance_stamped_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "output_pose_with_covariance_topic", 10);
 
   pose_source_pub_ = this->create_publisher<std_msgs::msg::String>(
@@ -113,7 +113,7 @@ void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
   geometry_msgs::msg::PoseWithCovarianceStamped ndt_pose_with_covariance = *msg;
   ndt_pose_with_covariance.pose.covariance = out_ndt_covariance;
   if (pose_source_ != AutowarePoseCovarianceModifierNode::PoseSource::GNSS) {
-    new_pose_estimator_pub_->publish(ndt_pose_with_covariance);
+    output_pose_with_covariance_stamped_pub_->publish(ndt_pose_with_covariance);
     if (debug_) {
       std_msgs::msg::Float32 out_ndt_rmse;
 
@@ -144,7 +144,7 @@ void AutowarePoseCovarianceModifierNode::gnss_pose_with_cov_callback(
     gnss_pose_average_rmse_xy, gnss_pose_rmse_z, gnss_pose_yaw_rmse_in_degrees);
 
   if (pose_source_ != AutowarePoseCovarianceModifierNode::PoseSource::NDT) {
-    new_pose_estimator_pub_->publish(gnss_source_pose_with_cov);
+    output_pose_with_covariance_stamped_pub_->publish(gnss_source_pose_with_cov);
     if (debug_) {
       std_msgs::msg::Float32 out_gnss_rmse;
       out_gnss_rmse.data = static_cast<float>(gnss_pose_average_rmse_xy);
