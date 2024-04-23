@@ -115,6 +115,7 @@ The Planner Manager's responsibilities include:
 | ~/output/modified_goal        | `autoware_planning_msgs::msg::PoseWithUuidStamped`       | output modified goal commands.                                                                 | `transient_local` |
 | ~/output/stop_reasons         | `tier4_planning_msgs::msg::StopReasonArray`              | describe the reason for ego vehicle stop                                                       | `volatile`        |
 | ~/output/reroute_availability | `tier4_planning_msgs::msg::RerouteAvailability`          | the path the module is about to take. to be executed as soon as external approval is obtained. | `volatile`        |
+| ~/output/mission_remaining_distance_time | `autoware_planning_msgs::msg::MissionRemainingDistanceTime`          | information about mission remaining distance and time. | `volatile`        |
 
 ### Debug
 

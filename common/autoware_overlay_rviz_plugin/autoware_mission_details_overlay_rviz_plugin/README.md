@@ -1,13 +1,13 @@
 # autoware_overlay_rviz_plugin
 
-Plugin for displaying 2D overlays over the RViz2 3D scene.
+Plugin for displaying 2D overlays over the RViz2 3D scene for mission details (such as remaining distance and time).
 
 Based on the [jsk_visualization](https://github.com/jsk-ros-pkg/jsk_visualization)
 package, under the 3-Clause BSD license.
 
 ## Purpose
 
-This plugin provides a visual and easy-to-understand display of vehicle speed, turn signal, steering status and gears.
+This plugin provides a visual and easy-to-understand display of mission details (remaining distance and time)
 
 ## Inputs / Outputs
 
@@ -15,13 +15,8 @@ This plugin provides a visual and easy-to-understand display of vehicle speed, t
 
 | Name                                                    | Type                                                    | Description                          |
 | ------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------ |
-| `/vehicle/status/velocity_status`                       | `autoware_auto_vehicle_msgs::msg::VelocityReport`       | The topic is vehicle velocity        |
-| `/vehicle/status/turn_indicators_status`                | `autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport` | The topic is status of turn signal   |
-| `/vehicle/status/hazard_status`                         | `autoware_auto_vehicle_msgs::msg::HazardReport`         | The topic is status of hazard        |
-| `/vehicle/status/steering_status`                       | `autoware_auto_vehicle_msgs::msg::SteeringReport`       | The topic is status of steering      |
-| `/vehicle/status/gear_status`                           | `autoware_auto_vehicle_msgs::msg::GearReport`           | The topic is status of gear          |
-| `/planning/scenario_planning/current_max_velocity`      | `tier4_planning_msgs::msg::VelocityLimit`               | The topic is velocity limit          |
-| `/perception/traffic_light_recognition/traffic_signals` | `autoware_perception_msgs::msg::TrafficSignalArray`     | The topic is status of traffic light |
+| `/planning/mission_remaining_distance_time`      | `autoware_planning_msgs::msg::MissionRemainingDistanceTime`               | The topic is for mission remaining distance and time Data          |
+
 
 ## Parameter
 
@@ -31,11 +26,10 @@ This plugin provides a visual and easy-to-understand display of vehicle speed, t
 
 | Name                     | Type   | Default Value        | Description                       |
 | ------------------------ | ------ | -------------------- | --------------------------------- |
-| `property_width_`        | int    | 128                  | Width of the plotter window [px]  |
-| `property_height_`       | int    | 128                  | Height of the plotter window [px] |
-| `property_left_`         | int    | 128                  | Left of the plotter window [px]   |
-| `property_top_`          | int    | 128                  | Top of the plotter window [px]    |
-| `property_signal_color_` | QColor | QColor(25, 255, 240) | Turn Signal color                 |
+| `property_width_`        | int    | 300                  | Width of the plotter window [px]  |
+| `property_height_`       | int    | 100                  | Height of the plotter window [px] |
+| `property_left_`         | int    | 800                  | Left of the plotter window [px]   |
+| `property_top_`          | int    | 10                  | Top of the plotter window [px]    |
 
 ## Assumptions / Known limits
 
@@ -47,8 +41,9 @@ TBD.
 
    ![select_add](./assets/images/select_add.png)
 
-2. Under `By display type` tab, select `autoware_overlay_rviz_plugin/SignalDisplay` and press OK.
+2. Under `By display type` tab, select `autoware_mission_details_overlay_rviz_plugin/MissionDetailsDisplay` and press OK.
+   ![select_add](./assets/images/select_plugin.png)
 
-3. Enter the names of the topics if necessary.
+3. Enter the names of the topics if necessary `/planning/mission_remaining_distance_time`.
 
    ![select_topic_name](./assets/images/select_topic_name.png)
