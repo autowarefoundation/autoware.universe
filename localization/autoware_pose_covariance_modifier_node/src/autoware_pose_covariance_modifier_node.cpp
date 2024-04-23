@@ -112,17 +112,18 @@ void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
 
   geometry_msgs::msg::PoseWithCovarianceStamped ndt_pose_with_covariance = *msg;
   ndt_pose_with_covariance.pose.covariance = out_ndt_covariance;
-  if (pose_source_ != AutowarePoseCovarianceModifierNode::PoseSource::GNSS) {
-    output_pose_with_covariance_stamped_pub_->publish(ndt_pose_with_covariance);
-    if (debug_) {
-      std_msgs::msg::Float32 out_ndt_rmse;
 
-      out_ndt_rmse.data = static_cast<float>(
-        (std::sqrt(ndt_pose_with_covariance.pose.covariance[X_POS_IDX_]) +
-         std::sqrt(ndt_pose_with_covariance.pose.covariance[Y_POS_IDX_])) /
-        2);
-      out_ndt_position_rmse_pub_->publish(out_ndt_rmse);
-    }
+  if (pose_source_ == AutowarePoseCovarianceModifierNode::PoseSource::GNSS) {
+    return;
+  }
+  output_pose_with_covariance_stamped_pub_->publish(ndt_pose_with_covariance);
+  if (debug_) {
+    std_msgs::msg::Float32 out_ndt_rmse;
+    out_ndt_rmse.data = static_cast<float>(
+      (std::sqrt(ndt_pose_with_covariance.pose.covariance[X_POS_IDX_]) +
+       std::sqrt(ndt_pose_with_covariance.pose.covariance[Y_POS_IDX_])) /
+      2);
+    out_ndt_position_rmse_pub_->publish(out_ndt_rmse);
   }
 }
 void AutowarePoseCovarianceModifierNode::gnss_pose_with_cov_callback(
@@ -143,13 +144,14 @@ void AutowarePoseCovarianceModifierNode::gnss_pose_with_cov_callback(
   update_pose_source_based_on_rmse(
     gnss_pose_average_rmse_xy, gnss_pose_rmse_z, gnss_pose_yaw_rmse_in_degrees);
 
-  if (pose_source_ != AutowarePoseCovarianceModifierNode::PoseSource::NDT) {
-    output_pose_with_covariance_stamped_pub_->publish(gnss_source_pose_with_cov);
-    if (debug_) {
-      std_msgs::msg::Float32 out_gnss_rmse;
-      out_gnss_rmse.data = static_cast<float>(gnss_pose_average_rmse_xy);
-      out_gnss_position_rmse_pub_->publish(out_gnss_rmse);
-    }
+  if (pose_source_ == AutowarePoseCovarianceModifierNode::PoseSource::NDT) {
+    return;
+  }
+  output_pose_with_covariance_stamped_pub_->publish(gnss_source_pose_with_cov);
+  if (debug_) {
+    std_msgs::msg::Float32 out_gnss_rmse;
+    out_gnss_rmse.data = static_cast<float>(gnss_pose_average_rmse_xy);
+    out_gnss_position_rmse_pub_->publish(out_gnss_rmse);
   }
 }
 
