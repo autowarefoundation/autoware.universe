@@ -357,10 +357,10 @@ bool NDTScanMatcher::process_scan_matching(
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_scan_points_->addKeyValue("is_scucceed_transform_sensor_points", false);
+    diagnostics_scan_points_->addKeyValue("is_succeed_transform_sensor_points", false);
     return false;
   }
-  diagnostics_scan_points_->addKeyValue("is_scucceed_transform_sensor_points", true);
+  diagnostics_scan_points_->addKeyValue("is_succeed_transform_sensor_points", true);
 
   // check sensor_points_max_distance
   double max_distance = 0.0;
