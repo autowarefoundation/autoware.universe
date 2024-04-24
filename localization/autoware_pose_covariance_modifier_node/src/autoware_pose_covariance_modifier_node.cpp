@@ -18,18 +18,18 @@
 
 AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
 : Node("AutowarePoseCovarianceModifierNode"),
-  gnssPoseLastReceivedTime_(this->now()),
+  gnss_pose_last_received_time_(this->now()),
   pose_source_(AutowarePoseCovarianceModifierNode::PoseSource::NDT)
 {
   try {
     gnss_error_reliable_max_ =
-      this->declare_parameter<double>("error_thresholds.gnss_error_reliable_max", 0.10);
+      this->declare_parameter<double>("error_thresholds.gnss_error_reliable_max");
     gnss_error_unreliable_min_ =
-      this->declare_parameter<double>("error_thresholds.gnss_error_unreliable_min", 0.25);
+      this->declare_parameter<double>("error_thresholds.gnss_error_unreliable_min");
     yaw_error_deg_threshold_ =
-      this->declare_parameter<double>("error_thresholds.yaw_error_deg_threshold", 0.3);
-    gnss_pose_timeout_sec_ = this->declare_parameter<double>("gnss_pose_timeout_sec", 1.0);
-    debug_ = this->declare_parameter<bool>("debug.enable_debug_topics", false);
+      this->declare_parameter<double>("error_thresholds.yaw_error_deg_threshold");
+    gnss_pose_timeout_sec_ = this->declare_parameter<double>("gnss_pose_timeout_sec");
+    debug_ = this->declare_parameter<bool>("debug.enable_debug_topics");
   } catch (const std::exception & e) {
     RCLCPP_ERROR(this->get_logger(), "Failed to declare parameters: %s", e.what());
     throw;
@@ -60,7 +60,7 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
 }
 void AutowarePoseCovarianceModifierNode::check_gnss_pose_timeout()
 {
-  auto time_diff = this->now() - gnssPoseLastReceivedTime_;
+  auto time_diff = this->now() - gnss_pose_last_received_time_;
   if (time_diff.seconds() > gnss_pose_timeout_sec_) {
     RCLCPP_WARN(this->get_logger(), "GNSS Pose Timeout");
     pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::NDT;
@@ -129,7 +129,7 @@ void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
 void AutowarePoseCovarianceModifierNode::gnss_pose_with_cov_callback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
-  gnssPoseLastReceivedTime_ = this->now();
+  gnss_pose_last_received_time_ = this->now();
   gnss_source_pose_with_cov = *msg;
 
   double gnss_pose_average_rmse_xy =

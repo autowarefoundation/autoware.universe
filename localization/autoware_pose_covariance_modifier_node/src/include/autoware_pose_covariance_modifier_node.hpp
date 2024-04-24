@@ -57,7 +57,7 @@ private:
     NDT = 2,
   };
 
-  rclcpp::Time gnssPoseLastReceivedTime_;
+  rclcpp::Time gnss_pose_last_received_time_;
 
   PoseSource pose_source_;
 
