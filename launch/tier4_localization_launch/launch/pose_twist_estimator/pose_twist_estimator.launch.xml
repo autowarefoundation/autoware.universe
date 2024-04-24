@@ -35,11 +35,7 @@
       if="$(eval &quot;'$(var use_autoware_pose_covariance_modifier)'=='true'&quot;)"
       value="/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance"
     />
-    <let
-      name="ndt_output_pose_with_cov_topic_name"
-      unless="$(eval &quot;'$(var use_autoware_pose_covariance_modifier)'=='true'&quot;)"
-      value="/localization/pose_estimator/pose_with_covariance"
-    />
+    <let name="ndt_output_pose_with_cov_topic_name" unless="$(eval &quot;'$(var use_autoware_pose_covariance_modifier)'=='true'&quot;)" value="/localization/pose_estimator/pose_with_covariance"/>
     <include file="$(find-pkg-share tier4_localization_launch)/launch/pose_twist_estimator/ndt_scan_matcher.launch.xml">
       <arg name="output_pose_with_covariance_topic" value="$(var ndt_output_pose_with_cov_topic_name)"/>
     </include>
