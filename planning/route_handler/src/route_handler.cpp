@@ -1542,15 +1542,6 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getPullOutStartLane(
   return std::nullopt;
 }
 
-lanelet::ConstLanelets RouteHandler::getClosestLaneletSequence(const Pose & pose) const
-{
-  lanelet::ConstLanelet lanelet;
-  if (!getClosestLaneletWithinRoute(pose, &lanelet)) {
-    return lanelet::ConstLanelets{};
-  }
-  return getLaneletSequence(lanelet);
-}
-
 int RouteHandler::getNumLaneToPreferredLane(
   const lanelet::ConstLanelet & lanelet, const Direction direction) const
 {
@@ -2289,13 +2280,5 @@ std::optional<lanelet::routing::LaneletPath> RouteHandler::findDrivableLanePath(
   const auto route = drivable_routing_graph_ptr->getRoute(start_lanelet, goal_lanelet, 0);
   if (route) return route->shortestPath();
   return {};
-}
-
-lanelet::ConstLanelets RouteHandler::getClosestLanelets(
-  const geometry_msgs::msg::Pose & target_pose) const
-{
-  lanelet::ConstLanelets target_lanelets;
-  lanelet::utils::query::getCurrentLanelets(road_lanelets_, target_pose, &target_lanelets);
-  return target_lanelets;
 }
 }  // namespace route_handler

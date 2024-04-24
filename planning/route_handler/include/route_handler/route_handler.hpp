@@ -356,7 +356,6 @@ public:
   std::optional<lanelet::ConstLanelet> getShoulderLaneletAtPose(const Pose & pose) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
-  lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
 
 private:
   // MUST
@@ -422,7 +421,6 @@ private:
     const double min_length = std::numeric_limits<double>::max()) const;
   lanelet::ConstLanelets getPreviousLaneletSequence(
     const lanelet::ConstLanelets & lanelet_sequence) const;
-  lanelet::ConstLanelets getClosestLaneletSequence(const Pose & pose) const;
   lanelet::ConstLanelets getLaneChangeTargetLanes(const Pose & pose) const;
   lanelet::ConstLanelets getLaneSequenceUpTo(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getLaneSequenceAfter(const lanelet::ConstLanelet & lanelet) const;
