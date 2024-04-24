@@ -341,12 +341,9 @@ public:
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
   bool getLeftLaneChangeTargetExceptPreferredLane(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
-  static bool getPullOverTarget(
-    const lanelet::ConstLanelets & lanelets, const Pose & goal_pose,
-    lanelet::ConstLanelet * target_lanelet);
-  static bool getPullOutStartLane(
-    const lanelet::ConstLanelets & lanelets, const Pose & pose, const double vehicle_width,
-    lanelet::ConstLanelet * target_lanelet);
+  std::optional<lanelet::ConstLanelet> getPullOverTarget(const Pose & goal_pose) const;
+  std::optional<lanelet::ConstLanelet> getPullOutStartLane(
+    const Pose & pose, const double vehicle_width) const;
   double getLaneChangeableDistance(const Pose & current_pose, const Direction & direction) const;
   std::optional<lanelet::ConstLanelet> getLeftShoulderLanelet(
     const lanelet::ConstLanelet & lanelet) const;
