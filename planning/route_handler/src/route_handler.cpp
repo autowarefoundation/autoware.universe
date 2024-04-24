@@ -157,7 +157,6 @@ void RouteHandler::setMap(const HADMapBin & map_msg)
   overall_graphs_ptr_ =
     std::make_shared<const lanelet::routing::RoutingGraphContainer>(overall_graphs);
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
-  road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
 
   is_map_msg_ready_ = true;
   is_handler_ready_ = false;

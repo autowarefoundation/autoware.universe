@@ -363,7 +363,6 @@ private:
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   std::shared_ptr<const lanelet::routing::RoutingGraphContainer> overall_graphs_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
-  lanelet::ConstLanelets road_lanelets_;
   lanelet::ConstLanelets route_lanelets_;
   lanelet::ConstLanelets preferred_lanelets_;
   lanelet::ConstLanelets start_lanelets_;
