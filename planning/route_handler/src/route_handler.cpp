@@ -1492,30 +1492,33 @@ bool RouteHandler::getLeftLaneChangeTargetExceptPreferredLane(
   return false;
 }
 
-bool RouteHandler::getPullOverTarget(
-  const lanelet::ConstLanelets & lanelets, const Pose & goal_pose,
-  lanelet::ConstLanelet * target_lanelet)
+std::optional<lanelet::ConstLanelet> RouteHandler::getPullOverTarget(const Pose & goal_pose) const
 {
-  for (const auto & shoulder_lanelet : lanelets) {
-    if (lanelet::utils::isInLanelet(goal_pose, shoulder_lanelet, 0.1)) {
-      *target_lanelet = shoulder_lanelet;
-      return true;
-    }
+  const lanelet::BasicPoint2d p(goal_pose.position.x, goal_pose.position.y);
+  constexpr auto search_distance = 0.1;
+  const lanelet::BasicPoint2d offset(search_distance, search_distance);
+  const auto lanelets_in_range =
+    lanelet_map_ptr_->laneletLayer.search(lanelet::BoundingBox2d(p - offset, p + offset));
+  for (const auto & lanelet : lanelets_in_range) {
+    const auto is_in_lanelet = lanelet::utils::isInLanelet(goal_pose, lanelet, search_distance);
+    if (is_in_lanelet && isShoulderLanelet(lanelet)) return lanelet;
   }
-  return false;
+  return std::nullopt;
 }
 
-bool RouteHandler::getPullOutStartLane(
-  const lanelet::ConstLanelets & lanelets, const Pose & pose, const double vehicle_width,
-  lanelet::ConstLanelet * target_lanelet)
+std::optional<lanelet::ConstLanelet> RouteHandler::getPullOutStartLane(
+  const Pose & pose, const double vehicle_width) const
 {
-  for (const auto & shoulder_lanelet : lanelets) {
-    if (lanelet::utils::isInLanelet(pose, shoulder_lanelet, vehicle_width / 2.0)) {
-      *target_lanelet = shoulder_lanelet;
-      return true;
-    }
+  const lanelet::BasicPoint2d p(pose.position.x, pose.position.y);
+  const auto search_distance = vehicle_width / 2.0;
+  const lanelet::BasicPoint2d offset(search_distance, search_distance);
+  const auto lanelets_in_range =
+    lanelet_map_ptr_->laneletLayer.search(lanelet::BoundingBox2d(p - offset, p + offset));
+  for (const auto & lanelet : lanelets_in_range) {
+    const auto is_in_lanelet = lanelet::utils::isInLanelet(pose, lanelet, search_distance);
+    if (is_in_lanelet && isShoulderLanelet(lanelet)) return lanelet;
   }
-  return false;
+  return std::nullopt;
 }
 
 lanelet::ConstLanelets RouteHandler::getClosestLaneletSequence(const Pose & pose) const
