@@ -23,7 +23,8 @@ namespace rviz_plugins
 {
 namespace object_detection
 {
-PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("tracks")
+PredictedObjectsDisplay::PredictedObjectsDisplay()
+: ObjectPolygonDisplayBase("predictions", "/perception/obstacle_segmentation/pointcloud")
 {
   max_num_threads = 1;  // hard code the number of threads to be created
 
@@ -260,6 +261,15 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
     }
   }
 
+  if (pointCloudBuffer.empty()) {
+    return markers;
+  }
+  // poincloud pub
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud =
+    std::make_shared<sensor_msgs::msg::PointCloud2>(
+      getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
+  processPointCloud(msg, closest_pointcloud);
+
   return markers;
 }
 
@@ -297,6 +307,92 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
 
   ObjectPolygonDisplayBase<autoware_auto_perception_msgs::msg::PredictedObjects>::update(
     wall_dt, ros_dt);
+}
+
+bool PredictedObjectsDisplay::transformObjects(
+  const autoware_auto_perception_msgs::msg::PredictedObjects & input_msg,
+  const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+  autoware_auto_perception_msgs::msg::PredictedObjects & output_msg)
+{
+  output_msg = input_msg;
+
+  // transform to world coordinate
+  if (input_msg.header.frame_id != target_frame_id) {
+    output_msg.header.frame_id = target_frame_id;
+    tf2::Transform tf_target2objects_world;
+    tf2::Transform tf_target2objects;
+    tf2::Transform tf_objects_world2objects;
+    {
+      const auto ros_target2objects_world =
+        getTransform(tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
+      if (!ros_target2objects_world) {
+        return false;
+      }
+      tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
+    }
+    for (auto & object : output_msg.objects) {
+      tf2::fromMsg(object.kinematics.initial_pose_with_covariance.pose, tf_objects_world2objects);
+      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
+      tf2::toMsg(tf_target2objects, object.kinematics.initial_pose_with_covariance.pose);
+    }
+  }
+  return true;
+}
+
+void PredictedObjectsDisplay::processPointCloud(
+  const PredictedObjects::ConstSharedPtr & input_objs_msg,
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg)
+{
+  if (!m_publish_objs_pointcloud->getBool()) {
+    return;
+  }
+  // Transform to pointcloud frame
+  autoware_auto_perception_msgs::msg::PredictedObjects transformed_objects;
+  if (!transformObjects(
+        *input_objs_msg, input_pointcloud_msg->header.frame_id, *tf_buffer, transformed_objects)) {
+    return;
+  }
+  // convert to pcl pointcloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr temp_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::fromROSMsg(*input_pointcloud_msg, *temp_cloud);
+  // Create a new point cloud with RGB color information and copy data from input cloud
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr colored_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::copyPointCloud(*temp_cloud, *colored_cloud);
+  // Create Kd-tree to search neighbor pointcloud to reduce cost.
+  pcl::search::Search<pcl::PointXYZRGB>::Ptr kdtree =
+    pcl::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(false);
+  kdtree->setInputCloud(colored_cloud);
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+
+  for (const auto & object : transformed_objects.objects) {
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> labels =
+      object.classification;
+    object_info unified_object = {
+      object.shape, object.kinematics.initial_pose_with_covariance.pose, object.classification};
+
+    const auto search_radius = getMaxRadius(unified_object);
+    // Search neighbor pointcloud to reduce cost.
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr neighbor_pointcloud(
+      new pcl::PointCloud<pcl::PointXYZRGB>);
+    std::vector<int> indices;
+    std::vector<float> distances;
+    kdtree->radiusSearch(
+      toPCL(unified_object.position.position), search_radius.value(), indices, distances);
+    for (const auto & index : indices) {
+      neighbor_pointcloud->push_back(colored_cloud->at(index));
+    }
+
+    filterPolygon(neighbor_pointcloud, out_cloud, unified_object);
+  }
+
+  sensor_msgs::msg::PointCloud2::SharedPtr output_pointcloud_msg_ptr(
+    new sensor_msgs::msg::PointCloud2);
+  pcl::toROSMsg(*out_cloud, *output_pointcloud_msg_ptr);
+
+  output_pointcloud_msg_ptr->header = input_pointcloud_msg->header;
+
+  add_pointcloud(output_pointcloud_msg_ptr);
 }
 
 }  // namespace object_detection

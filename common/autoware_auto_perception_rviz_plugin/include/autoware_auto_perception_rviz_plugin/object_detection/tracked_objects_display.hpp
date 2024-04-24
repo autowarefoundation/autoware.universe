@@ -16,6 +16,7 @@
 
 #include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_display_base.hpp"
 
+#include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 
 #include <boost/uuid/uuid.hpp>
@@ -23,6 +24,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -104,6 +106,10 @@ private:
     auto uuid = to_boost_uuid(uuid_msg);
     return id_map.at(uuid);
   }
+
+  void processPointCloud(
+    const TrackedObjects::ConstSharedPtr & input_objs_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 
   std::map<boost::uuids::uuid, int32_t> id_map;
   std::list<int32_t> unused_marker_ids;

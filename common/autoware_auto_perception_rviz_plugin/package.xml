@@ -19,8 +19,18 @@
   <build_depend>qtbase5-dev</build_depend>
 
   <depend>autoware_auto_perception_msgs</depend>
+  <depend>pcl_conversions</depend>
+  <depend>perception_utils</depend>
   <depend>rviz_common</depend>
   <depend>rviz_default_plugins</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_eigen</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_sensor_msgs</depend>
+  <depend>tier4_autoware_utils</depend>
+  <!-- <depend>pcl_common</depend> -->
 
   <exec_depend>libqt5-widgets</exec_depend>
   <exec_depend>rviz2</exec_depend>

@@ -16,7 +16,11 @@
 
 #include "autoware_auto_perception_rviz_plugin/object_detection/object_polygon_display_base.hpp"
 
+#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <memory>
 
 namespace autoware
 {
@@ -37,6 +41,9 @@ public:
 
 private:
   void processMessage(DetectedObjects::ConstSharedPtr msg) override;
+  void processPointCloud(
+    const DetectedObjects::ConstSharedPtr & input_objs_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_pointcloud_msg);
 };
 
 }  // namespace object_detection
