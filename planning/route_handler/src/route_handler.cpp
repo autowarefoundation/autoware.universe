@@ -129,6 +129,12 @@ std::string toString(const geometry_msgs::msg::Pose & pose)
   return ss.str();
 }
 
+bool is_road_shoulder(const lanelet::ConstLanelet & ll)
+{
+  const lanelet::Attribute & attr = ll.attributeOr(lanelet::AttributeName::Subtype, "");
+  return attr.value() == "road_shoulder";
+}
+
 }  // namespace
 
 namespace route_handler
@@ -646,7 +652,7 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   const lanelet::ConstLanelets lanelet_sequence_forward = std::invoke([&]() {
     if (only_route_lanes) {
       return getLaneletSequenceAfter(lanelet, forward_distance, only_route_lanes);
-    } else if (lanelet::utils::contains(shoulder_lanelets_, lanelet)) {
+    } else if (is_road_shoulder(lanelet)) {
       return getShoulderLaneletSequenceAfter(lanelet, forward_distance);
     }
     return lanelet::ConstLanelets{};
@@ -656,7 +662,7 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
     if (arc_coordinate.length < backward_distance) {
       if (only_route_lanes) {
         return getLaneletSequenceUpTo(lanelet, backward_distance, only_route_lanes);
-      } else if (lanelet::utils::contains(shoulder_lanelets_, lanelet)) {
+      } else if (is_road_shoulder(lanelet)) {
         return getShoulderLaneletSequenceUpTo(lanelet, backward_distance);
       }
     }
@@ -712,22 +718,12 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   return lanelet_sequence;
 }
 
-bool RouteHandler::getFollowingShoulderLanelet(
-  const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * following_lanelet) const
+std::optional<lanelet::ConstLanelet> RouteHandler::getFollowingShoulderLanelet(
+  const lanelet::ConstLanelet & lanelet) const
 {
-  for (const auto & shoulder_lanelet : shoulder_lanelets_) {
-    if (lanelet::geometry::follows(lanelet, shoulder_lanelet)) {
-      *following_lanelet = shoulder_lanelet;
-      return true;
-    }
-  }
-  return false;
-}
-
-bool is_road_shoulder(const lanelet::ConstLanelet & ll)
-{
-  const lanelet::Attribute & attr = ll.attributeOr(lanelet::AttributeName::Subtype, "");
-  return attr.value() == "road_shoulder";
+  for (const auto & following_lanelet : routing_graph_ptr_->following(lanelet))
+    if (is_road_shoulder(following_lanelet)) return following_lanelet;
+  return std::nullopt;
 }
 
 std::optional<lanelet::ConstLanelet> RouteHandler::getLeftShoulderLanelet(
@@ -764,19 +760,17 @@ lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceAfter(
   lanelet::ConstLanelet current_lanelet = lanelet;
   std::set<lanelet::Id> searched_ids{};
   while (rclcpp::ok() && length < min_length) {
-    lanelet::ConstLanelet next_lanelet;
-    if (!getFollowingShoulderLanelet(current_lanelet, &next_lanelet)) {
-      break;
-    }
-    lanelet_sequence_forward.push_back(next_lanelet);
-    if (searched_ids.find(next_lanelet.id()) != searched_ids.end()) {
+    const auto next_lanelet = getFollowingShoulderLanelet(current_lanelet);
+    if (!next_lanelet) break;
+    lanelet_sequence_forward.push_back(*next_lanelet);
+    if (searched_ids.find(next_lanelet->id()) != searched_ids.end()) {
       // loop shoulder detected
       break;
     }
-    searched_ids.insert(next_lanelet.id());
-    current_lanelet = next_lanelet;
+    searched_ids.insert(next_lanelet->id());
+    current_lanelet = *next_lanelet;
     length +=
-      static_cast<double>(boost::geometry::length(next_lanelet.centerline().basicLineString()));
+      static_cast<double>(boost::geometry::length(next_lanelet->centerline().basicLineString()));
   }
 
   return lanelet_sequence_forward;
