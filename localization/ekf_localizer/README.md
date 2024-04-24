@@ -138,17 +138,17 @@ This gating process is based on a statistical test using the chi-square distribu
 
 Currently, the accuracy of covariance estimation itself is not very good, so it is recommended to set the significance level to a very small value to reduce rejection due to false positives.
 
-| Significance level | Threshold for 2 dof  | Threshold for 3 dof  |
-| ------------------ | -------------------- | -------------------- |
-| $10 ^ {-2}$        | 9.21                 | 11.3                 |
-| $10 ^ {-3}$        | 13.8                 | 16.3                 |
-| $10 ^ {-4}$        | 18.4                 | 21.1                 |
-| $10 ^ {-5}$        | 23.0                 | 25.9                 |
-| $10 ^ {-6}$        | 27.6                 | 30.7                 |
-| $10 ^ {-7}$        | 32.2                 | 35.4                 |
-| $10 ^ {-8}$        | 36.8                 | 40.1                 |
-| $10 ^ {-9}$        | 41.4                 | 44.8                 |
-| $10 ^ {-10}$       | 46.1                 | 49.5                 |
+| Significance level | Threshold for 2 dof | Threshold for 3 dof |
+| ------------------ | ------------------- | ------------------- |
+| $10 ^ {-2}$        | 9.21                | 11.3                |
+| $10 ^ {-3}$        | 13.8                | 16.3                |
+| $10 ^ {-4}$        | 18.4                | 21.1                |
+| $10 ^ {-5}$        | 23.0                | 25.9                |
+| $10 ^ {-6}$        | 27.6                | 30.7                |
+| $10 ^ {-7}$        | 32.2                | 35.4                |
+| $10 ^ {-8}$        | 36.8                | 40.1                |
+| $10 ^ {-9}$        | 41.4                | 44.8                |
+| $10 ^ {-10}$       | 46.1                | 49.5                |
 
 ## Kalman Filter Model
 
