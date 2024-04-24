@@ -158,7 +158,6 @@ void RouteHandler::setMap(const HADMapBin & map_msg)
     std::make_shared<const lanelet::routing::RoutingGraphContainer>(overall_graphs);
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
-  shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
 
   is_map_msg_ready_ = true;
   is_handler_ready_ = false;
@@ -738,6 +737,18 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getRightShoulderLanelet(
        lanelet_map_ptr_->laneletLayer.findUsages(lanelet.rightBound())) {
     if (other_lanelet.leftBound() == lanelet.rightBound() && isShoulderLanelet(other_lanelet))
       return other_lanelet;
+  }
+  return std::nullopt;
+}
+
+std::optional<lanelet::ConstLanelet> RouteHandler::getShoulderLaneletAtPose(const Pose & pose) const
+{
+  const lanelet::BasicPoint2d p{pose.position.x, pose.position.y};
+  const auto lanelets_at_pose = lanelet_map_ptr_->laneletLayer.search(lanelet::BoundingBox2d(p));
+  for (const auto & lanelet_at_pose : lanelets_at_pose) {
+    // confirm that the pose is inside the lanelet since "search" does an approximation with boxes
+    const auto is_pose_within_lanelet = lanelet::geometry::within(p, lanelet_at_pose.polygon2d());
+    if (is_pose_within_lanelet && isShoulderLanelet(lanelet_at_pose)) return lanelet_at_pose;
   }
   return std::nullopt;
 }
@@ -1916,11 +1927,6 @@ lanelet::routing::RelationType RouteHandler::getRelation(
   }
 
   return lanelet::routing::RelationType::None;
-}
-
-lanelet::ConstLanelets RouteHandler::getShoulderLanelets() const
-{
-  return shoulder_lanelets_;
 }
 
 bool RouteHandler::isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const
