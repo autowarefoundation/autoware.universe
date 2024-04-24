@@ -324,7 +324,6 @@ public:
     const double check_length) const;
   lanelet::routing::RelationType getRelation(
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
-  lanelet::ConstLanelets getShoulderLanelets() const;
   bool isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const;
   bool isRouteLanelet(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getPreferredLanelets() const;
@@ -349,6 +348,8 @@ public:
     const lanelet::ConstLanelet & lanelet) const;
   std::optional<lanelet::ConstLanelet> getRightShoulderLanelet(
     const lanelet::ConstLanelet & lanelet) const;
+  /// @warning if the pose is inside multiple shoulder lanelets, the selection is random
+  std::optional<lanelet::ConstLanelet> getShoulderLaneletAtPose(const Pose & pose) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
@@ -364,7 +365,6 @@ private:
   lanelet::ConstLanelets preferred_lanelets_;
   lanelet::ConstLanelets start_lanelets_;
   lanelet::ConstLanelets goal_lanelets_;
-  lanelet::ConstLanelets shoulder_lanelets_;
   std::shared_ptr<LaneletRoute> route_ptr_{nullptr};
 
   rclcpp::Logger logger_{rclcpp::get_logger("route_handler")};
