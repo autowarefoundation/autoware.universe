@@ -67,7 +67,8 @@ using visualization_msgs::msg::MarkerArray;
 using Path = std::vector<geometry_msgs::msg::Pose>;
 using Vector3 = geometry_msgs::msg::Vector3;
 
-class TimeIT
+// For debugging
+class DebugTimer
 {
 private:
   std::chrono::time_point<std::chrono::steady_clock> t_start;
@@ -75,13 +76,14 @@ private:
   double duration_warning_threshold_;
 
 public:
-  explicit TimeIT(std::string instance, const double duration_warning_threshold = 0.03)  // 40 ms
+  explicit DebugTimer(
+    std::string instance, const double duration_warning_threshold = 0.03)  // 40 ms
   : instance_(instance), duration_warning_threshold_(duration_warning_threshold)
   {
     t_start = std::chrono::steady_clock::now();
   }
 
-  ~TimeIT()
+  ~DebugTimer()
   {
     std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
     std::chrono::duration<double> duration = t_end - t_start;

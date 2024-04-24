@@ -290,7 +290,6 @@ bool AEB::isDataReady()
 
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
-  TimeIT t(__func__);
   MarkerArray debug_markers;
   checkCollision(debug_markers);
 
@@ -315,7 +314,6 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 bool AEB::checkCollision(MarkerArray & debug_markers)
 {
   using colorTuple = std::tuple<double, double, double, double>;
-  TimeIT t(__func__);
 
   // step1. check data
   if (!isDataReady()) {
@@ -336,8 +334,6 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   auto check_collision = [&](
                            const auto & path, const colorTuple & debug_colors,
                            const std::string & debug_ns, const rclcpp::Time & current_time) {
-    TimeIT t("check_collision lambda");
-
     // Crop out Pointcloud using an extra wide ego path
     const auto expanded_ego_polys =
       generatePathFootprint(path, expand_width_ + path_footprint_extra_margin_);
@@ -516,7 +512,6 @@ void AEB::createObjectDataUsingPointCloudClusters(
   const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
   std::vector<ObjectData> & objects)
 {
-  TimeIT t(__func__);
   // check if the predicted path has valid number of points
   if (ego_path.size() < 2 || ego_polys.empty() || cropped_ros_pointcloud_ptr_->data.empty()) {
     return;
