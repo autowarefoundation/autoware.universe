@@ -156,12 +156,7 @@ public:
   void createObjectDataUsingPointCloudClusters(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
-
   void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
-
-  ObjectData getClosestObject(
-    std::vector<ObjectData> & objects, const Path & ego_path,
-    const geometry_msgs::msg::Pose & ego_pose);
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
