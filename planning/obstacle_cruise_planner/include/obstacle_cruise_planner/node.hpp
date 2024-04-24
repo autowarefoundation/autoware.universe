@@ -58,7 +58,9 @@ private:
     const std::vector<TrajectoryPoint> & traj_points,
     const vehicle_info_util::VehicleInfo & vehicle_info,
     const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
-  std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points) const;
+  std::vector<Obstacle> convertToObstacles(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const std_msgs::msg::Header & traj_header) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);

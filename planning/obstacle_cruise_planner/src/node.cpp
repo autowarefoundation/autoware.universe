@@ -23,7 +23,20 @@
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
+#include <pcl_ros/transforms.hpp>
+
 #include <boost/format.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
+
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -52,6 +65,22 @@ std::optional<T> getObstacleFromUuid(
     return std::nullopt;
   }
   return *itr;
+}
+
+geometry_msgs::msg::Pose getVehicleCenterFromBase(
+  const geometry_msgs::msg::Pose & base_pose, const VehicleInfo & vehicle_info)
+{
+  const auto & i = vehicle_info;
+  const auto yaw = tier4_autoware_utils::getRPY(base_pose).z;
+
+  geometry_msgs::msg::Pose center_pose;
+  center_pose.position.x =
+    base_pose.position.x + (i.vehicle_length_m / 2.0 - i.rear_overhang_m) * std::cos(yaw);
+  center_pose.position.y =
+    base_pose.position.y + (i.vehicle_length_m / 2.0 - i.rear_overhang_m) * std::sin(yaw);
+  center_pose.position.z = base_pose.position.z;
+  center_pose.orientation = base_pose.orientation;
+  return center_pose;
 }
 
 std::optional<double> calcDistanceToFrontVehicle(
@@ -509,7 +538,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   //    (1) with a proper label
   //    (2) in front of ego
   //    (3) not too far from trajectory
-  const auto target_obstacles = convertToObstacles(traj_points);
+  const auto target_obstacles = convertToObstacles(traj_points, msg->header);
 
   //  2. Determine ego's behavior against each obstacle from stop, cruise and slow down.
   const auto & [stop_obstacles, cruise_obstacles, slow_down_obstacles] =
@@ -632,67 +661,117 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
 }
 
 std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
-  const std::vector<TrajectoryPoint> & traj_points) const
+  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header) const
 {
   stop_watch_.tic(__func__);
 
-  const auto obj_stamp = rclcpp::Time(objects_sub_.getData().header.stamp);
   const auto & p = behavior_determination_param_;
 
   std::vector<Obstacle> target_obstacles;
-  for (const auto & predicted_object : objects_sub_.getData().objects) {
-    const auto & object_id =
-      tier4_autoware_utils::toHexString(predicted_object.object_id).substr(0, 4);
-    const auto & current_obstacle_pose =
-      obstacle_cruise_utils::getCurrentObjectPose(predicted_object, obj_stamp, now(), true);
+  if (p.use_pointcloud) {
+    const auto & pointcloud = pointcloud_sub_.getData();
 
-    // 1. Check if the obstacle's label is target
-    const uint8_t label = predicted_object.classification.front().label;
-    const bool is_target_obstacle =
-      isStopObstacle(label) || isCruiseObstacle(label) || isSlowDownObstacle(label);
-    if (!is_target_obstacle) {
-      RCLCPP_INFO_EXPRESSION(
-        get_logger(), enable_debug_info_, "Ignore obstacle (%s) since its label is not target.",
-        object_id.c_str());
-      continue;
+    // transform pointcloud
+    std::optional<geometry_msgs::msg::TransformStamped> transform_stamped{};
+    try {
+      transform_stamped = tf_buffer_.lookupTransform(
+        traj_header.frame_id, pointcloud.header.frame_id, pointcloud.header.stamp,
+        rclcpp::Duration::from_seconds(0.5));
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_ERROR_STREAM(
+        get_logger(), "Failed to look up transform from " << traj_header.frame_id << " to "
+                                                          << pointcloud.header.frame_id);
+      transform_stamped = std::nullopt;
     }
 
-    // 2. Check if the obstacle is in front of the ego.
-    const size_t ego_idx =
-      ego_nearest_param_.findIndex(traj_points, ego_odom_sub_.getData().pose.pose);
-    const auto ego_to_obstacle_distance =
-      calcDistanceToFrontVehicle(traj_points, ego_idx, current_obstacle_pose.pose.position);
-    if (!ego_to_obstacle_distance) {
-      RCLCPP_INFO_EXPRESSION(
-        get_logger(), enable_debug_info_, "Ignore obstacle (%s) since it is not front obstacle.",
-        object_id.c_str());
-      continue;
+    if (transform_stamped) {
+      PointCloud2 transformed_points{};
+      const Eigen::Matrix4f affine_matrix =
+        tf2::transformToEigen(transform_stamped.value().transform).matrix().cast<float>();
+      pcl_ros::transformPointCloud(affine_matrix, pointcloud, transformed_points);
+      PointCloud::Ptr transformed_points_ptr(new PointCloud);
+      pcl::fromROSMsg(transformed_points, *transformed_points_ptr);
+
+      PointCloud::Ptr obstacle_points_ptr(new PointCloud);
+      obstacle_points_ptr->header = transformed_points_ptr->header;
+
+      // search obstacle candidate pointcloud to reduce calculation cost
+      std::vector<geometry_msgs::msg::Point> center_points;
+      center_points.reserve(traj_points.size());
+      for (const auto & traj_point : traj_points) {
+        center_points.push_back(getVehicleCenterFromBase(traj_point.pose, vehicle_info_).position);
+      }
+      for (const auto & point : transformed_points_ptr->points) {
+        for (const auto & center_point : center_points) {
+          const double x = center_point.x - point.x;
+          const double y = center_point.y - point.y;
+          if (std::hypot(x, y) < p.pointcloud_search_radius) {
+            obstacle_points_ptr->points.push_back(point);
+            break;
+          }
+        }
+      }
+
+      const auto target_obstacle = Obstacle(pointcloud.header.stamp, *obstacle_points_ptr);
+      target_obstacles.push_back(target_obstacle);
     }
+  } else {
+    const auto obj_stamp = rclcpp::Time(objects_sub_.getData().header.stamp);
 
-    // 3. Check if rough lateral distance is smaller than the threshold
-    const double lat_dist_from_obstacle_to_traj =
-      motion_utils::calcLateralOffset(traj_points, current_obstacle_pose.pose.position);
+    for (const auto & predicted_object : objects_sub_.getData().objects) {
+      const auto & object_id =
+        tier4_autoware_utils::toHexString(predicted_object.object_id).substr(0, 4);
+      const auto & current_obstacle_pose =
+        obstacle_cruise_utils::getCurrentObjectPose(predicted_object, obj_stamp, now(), true);
 
-    const double min_lat_dist_to_traj_poly = [&]() {
-      const double obstacle_max_length = calcObstacleMaxLength(predicted_object.shape);
-      return std::abs(lat_dist_from_obstacle_to_traj) - vehicle_info_.vehicle_width_m -
-             obstacle_max_length;
-    }();
+      // 1. Check if the obstacle's label is target
+      const uint8_t label = predicted_object.classification.front().label;
+      const bool is_target_obstacle =
+        isStopObstacle(label) || isCruiseObstacle(label) || isSlowDownObstacle(label);
+      if (!is_target_obstacle) {
+        RCLCPP_INFO_EXPRESSION(
+          get_logger(), enable_debug_info_, "Ignore obstacle (%s) since its label is not target.",
+          object_id.c_str());
+        continue;
+      }
 
-    const double max_lat_margin = std::max(
-      std::max(p.max_lat_margin_for_stop, p.max_lat_margin_for_cruise),
-      p.max_lat_margin_for_slow_down);
-    if (max_lat_margin < min_lat_dist_to_traj_poly) {
-      RCLCPP_INFO_EXPRESSION(
-        get_logger(), enable_debug_info_,
-        "Ignore obstacle (%s) since it is too far from the trajectory.", object_id.c_str());
-      continue;
+      // 2. Check if the obstacle is in front of the ego.
+      const size_t ego_idx =
+        ego_nearest_param_.findIndex(traj_points, ego_odom_sub_.getData().pose.pose);
+      const auto ego_to_obstacle_distance =
+        calcDistanceToFrontVehicle(traj_points, ego_idx, current_obstacle_pose.pose.position);
+      if (!ego_to_obstacle_distance) {
+        RCLCPP_INFO_EXPRESSION(
+          get_logger(), enable_debug_info_, "Ignore obstacle (%s) since it is not front obstacle.",
+          object_id.c_str());
+        continue;
+      }
+
+      // 3. Check if rough lateral distance is smaller than the threshold
+      const double lat_dist_from_obstacle_to_traj =
+        motion_utils::calcLateralOffset(traj_points, current_obstacle_pose.pose.position);
+
+      const double min_lat_dist_to_traj_poly = [&]() {
+        const double obstacle_max_length = calcObstacleMaxLength(predicted_object.shape);
+        return std::abs(lat_dist_from_obstacle_to_traj) - vehicle_info_.vehicle_width_m -
+               obstacle_max_length;
+      }();
+
+      const double max_lat_margin = std::max(
+        std::max(p.max_lat_margin_for_stop, p.max_lat_margin_for_cruise),
+        p.max_lat_margin_for_slow_down);
+      if (max_lat_margin < min_lat_dist_to_traj_poly) {
+        RCLCPP_INFO_EXPRESSION(
+          get_logger(), enable_debug_info_,
+          "Ignore obstacle (%s) since it is too far from the trajectory.", object_id.c_str());
+        continue;
+      }
+
+      const auto target_obstacle = Obstacle(
+        obj_stamp, predicted_object, current_obstacle_pose.pose, ego_to_obstacle_distance.value(),
+        lat_dist_from_obstacle_to_traj);
+      target_obstacles.push_back(target_obstacle);
     }
-
-    const auto target_obstacle = Obstacle(
-      obj_stamp, predicted_object, current_obstacle_pose.pose, ego_to_obstacle_distance.value(),
-      lat_dist_from_obstacle_to_traj);
-    target_obstacles.push_back(target_obstacle);
   }
 
   const double calculation_time = stop_watch_.toc(__func__);
