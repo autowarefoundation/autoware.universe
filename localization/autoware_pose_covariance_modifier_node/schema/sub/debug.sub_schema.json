@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Autoware Pose Covariance Modifier Configuration for Debug",
+  "definitions": {
+    "debug": {
+      "type": "object",
+      "properties": {
+        "enable_debug_topics": {
+          "type": "boolean",
+          "description": "Parameter to enable debug topics",
+          "default": false
+        }
+      },
+      "required": ["enable_debug_topics"],
+      "additionalProperties": false
+    }
+  }
+}

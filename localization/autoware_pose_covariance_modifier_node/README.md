@@ -61,13 +61,19 @@ the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autowar
 
 ### Parameters
 
-| Name                                         | Type     | Description                                                                    |
-| -------------------------------------------- | -------- | ------------------------------------------------------------------------------ |
-| `error_thresholds.gnss_error_reliable_max`   | `double` | Threshold value for the range in which GNSS error is most reliable.            |
-| `error_thresholds.gnss_error_unreliable_min` | `double` | Threshold value at which GNSS error is not considered reliable.                |
-| `error_thresholds.yaw_error_deg_threshold`   | `double` | Threshold value to understand whether the yaw error is within reliable limits. |
-| `gnss_pose_timeout_sec`                      | `double` | Maximum waiting time when message is delayed from gnss pose source             |
-| `debug.enable_debug_topics`                  | `bool`   | Enables the debug topics                                                       |
+The parameters are set in config/autoware_pose_covariance_modifier.param.yaml .
+
+#### For error thresholds
+
+{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/error_thresholds.sub_schema.json") }}
+
+#### For validation
+
+{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/validation.sub_schema.json") }}
+
+#### For debug
+
+{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/debug.sub_schema.json") }}
 
 ## Important notes
 

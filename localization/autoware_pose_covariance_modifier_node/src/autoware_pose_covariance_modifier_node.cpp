@@ -28,7 +28,7 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
       this->declare_parameter<double>("error_thresholds.gnss_error_unreliable_min");
     yaw_error_deg_threshold_ =
       this->declare_parameter<double>("error_thresholds.yaw_error_deg_threshold");
-    gnss_pose_timeout_sec_ = this->declare_parameter<double>("gnss_pose_timeout_sec");
+    gnss_pose_timeout_sec_ = this->declare_parameter<double>("validation.gnss_pose_timeout_sec");
     debug_ = this->declare_parameter<bool>("debug.enable_debug_topics");
   } catch (const std::exception & e) {
     RCLCPP_ERROR(this->get_logger(), "Failed to declare parameters: %s", e.what());

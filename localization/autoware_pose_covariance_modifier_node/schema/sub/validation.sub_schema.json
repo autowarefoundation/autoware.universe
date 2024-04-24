@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Autoware Pose Covariance Modifier Configuration for Validation",
+  "definitions": {
+    "validation": {
+      "type": "object",
+      "properties": {
+        "gnss_pose_timeout_sec": {
+          "type": "number",
+          "description": "Acceptable delay duration for GNSS pose data [sec]",
+          "default": 1.0
+        }
+      },
+      "required": ["gnss_pose_timeout_sec"],
+      "additionalProperties": false
+    }
+  }
+}
