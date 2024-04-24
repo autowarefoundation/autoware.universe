@@ -326,6 +326,7 @@ public:
     const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
   bool isShoulderLanelet(const lanelet::ConstLanelet & lanelet) const;
   bool isRouteLanelet(const lanelet::ConstLanelet & lanelet) const;
+  bool isRoadLanelet(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getPreferredLanelets() const;
 
   // for path

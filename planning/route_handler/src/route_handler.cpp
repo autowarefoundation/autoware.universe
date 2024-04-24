@@ -1006,11 +1006,9 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
 {
   // right road lanelet of shoulder lanelet
   if (isShoulderLanelet(lanelet)) {
-    for (const auto & road_lanelet : road_lanelets_) {
-      if (lanelet::geometry::rightOf(road_lanelet, lanelet)) {
-        return road_lanelet;
-      }
-    }
+    const auto right_lanelets = lanelet_map_ptr_->laneletLayer.findUsages(lanelet.rightBound());
+    for (const auto & right_lanelet : right_lanelets)
+      if (isRoadLanelet(right_lanelet)) return right_lanelet;
     return std::nullopt;
   }
 
@@ -1085,11 +1083,9 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
 {
   // left road lanelet of shoulder lanelet
   if (isShoulderLanelet(lanelet)) {
-    for (const auto & road_lanelet : road_lanelets_) {
-      if (lanelet::geometry::leftOf(road_lanelet, lanelet)) {
-        return road_lanelet;
-      }
-    }
+    const auto left_lanelets = lanelet_map_ptr_->laneletLayer.findUsages(lanelet.leftBound());
+    for (const auto & left_lanelet : left_lanelets)
+      if (isRoadLanelet(left_lanelet)) return left_lanelet;
     return std::nullopt;
   }
 
@@ -1938,6 +1934,12 @@ bool RouteHandler::isShoulderLanelet(const lanelet::ConstLanelet & lanelet) cons
 bool RouteHandler::isRouteLanelet(const lanelet::ConstLanelet & lanelet) const
 {
   return lanelet::utils::contains(route_lanelets_, lanelet);
+}
+
+bool RouteHandler::isRoadLanelet(const lanelet::ConstLanelet & lanelet) const
+{
+  return lanelet.hasAttribute(lanelet::AttributeName::Subtype) &&
+         lanelet.attribute(lanelet::AttributeName::Subtype) == lanelet::AttributeValueString::Road;
 }
 
 lanelet::ConstLanelets RouteHandler::getPreviousLaneletSequence(
