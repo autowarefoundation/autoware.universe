@@ -414,8 +414,8 @@ private:
   lanelet::ConstLanelets getShoulderLaneletSequenceAfter(
     const lanelet::ConstLanelet & lanelet,
     const double min_length = std::numeric_limits<double>::max()) const;
-  bool getPreviousShoulderLanelet(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
+  std::optional<lanelet::ConstLanelet> getPreviousShoulderLanelet(
+    const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getShoulderLaneletSequenceUpTo(
     const lanelet::ConstLanelet & lanelet,
     const double min_length = std::numeric_limits<double>::max()) const;
