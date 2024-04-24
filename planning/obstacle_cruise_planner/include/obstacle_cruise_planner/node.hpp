@@ -27,6 +27,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <algorithm>
 #include <memory>
 #include <mutex>
@@ -143,8 +146,13 @@ private:
     this, "~/input/odometry"};
   tier4_autoware_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
     this, "~/input/objects"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<PointCloud2> pointcloud_sub_{
+    this, "~/input/pointcloud"};
   tier4_autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
     this, "~/input/acceleration"};
+
+  tf2_ros::Buffer tf_buffer_{get_clock()};
+  tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
