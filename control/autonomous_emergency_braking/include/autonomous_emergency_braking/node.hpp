@@ -40,6 +40,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -152,11 +153,15 @@ public:
   void cropPointCloudWithEgoFootprintPath(
     const std::vector<Polygon2d> & ego_polys, pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects);
 
-  void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
-
   void createObjectDataUsingPointCloudClusters(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
+
+  void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
+
+  ObjectData getClosestObject(
+    std::vector<ObjectData> & objects, const Path & ego_path,
+    const geometry_msgs::msg::Pose & ego_pose);
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
