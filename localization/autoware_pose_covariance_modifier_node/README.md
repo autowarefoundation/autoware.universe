@@ -3,10 +3,10 @@
 This package is used to enable GNSS and NDT to be used together in localization.
 GNSS and NDT are different sources that generate poses for use in EKF. For EKF,
 the covariance values of the pose source are important. The GNSS system can provide
-us with its own error (RMSE) values. Using these error values, covariance values for
+us with its own "standard deviation" values. Using these values, covariance values for
 GNSS can be calculated. However, in default autoware, NDT covariance values are determined
 by default values. While this package manages which pose source will be used by reference
-to the error values coming from GNSS, it also manages situations where GNSS and NDT are used together.
+to the standard deviation values coming from GNSS, it also manages situations where GNSS and NDT are used together.
 
 ## Flowchart
 
@@ -46,18 +46,18 @@ the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autowar
 ### Subscribed topics
 
 | Name                             | Type                                            | Description            |
-| -------------------------------- | ----------------------------------------------- | ---------------------- |
+|----------------------------------|-------------------------------------------------|------------------------|
 | `input_gnss_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input GNSS pose topic. |
 | `input_ndt_pose_with_cov_topic`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input NDT pose topic.  |
 
 ### Published topics
 
-| Name                                | Type                                            | Description                                                                                             |
-| ----------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. It will be sent as input to ekf_localizer package.                                   |
-| `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                      |
-| `output/ndt_position_rmse`          | `std_msgs::msg::Float32`                        | Output pose ndt average rmse in position xy. It is published only when the enable_debug_topics is true. |
-| `output/gnss_position_rmse`         | `std_msgs::msg::Float32`                        | Output pose gnss average rmse in position xy.It is published only when the enable_debug_topics is true. |
+| Name                                | Type                                            | Description                                                                                                           |
+|-------------------------------------|-------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. It will be sent as input to ekf_localizer package.                                                 |
+| `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                                    |
+| `output/ndt_position_stddev`        | `std_msgs::msg::Float32`                        | Output pose ndt average standard deviation in position xy. It is published only when the enable_debug_topics is true. |
+| `output/gnss_position_stddev`       | `std_msgs::msg::Float32`                        | Output pose gnss average standard deviation in position xy.It is published only when the enable_debug_topics is true. |
 
 ### Parameters
 
@@ -77,6 +77,7 @@ The parameters are set in config/autoware_pose_covariance_modifier.param.yaml .
 
 ## Important notes
 
-- In order to use this package, your GNSS sensor must provide you with the error value. If you do not have a GNSS sensor
-  that provides you with the error value, you cannot use this package.
-- You need to use this package with georeferenced map
+- In order to use this package, your GNSS sensor must provide you with the standard deviation or variance value. If you
+  do not have a GNSS sensor
+  that provides you with these values, you cannot use this package.
+- You need to use this package with georeferenced map.

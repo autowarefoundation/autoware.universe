@@ -34,8 +34,8 @@ public:
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     output_pose_with_covariance_stamped_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pose_source_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr out_ndt_position_rmse_pub_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr out_gnss_position_rmse_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr out_ndt_position_stddev_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr out_gnss_position_stddev_pub_;
 
   void gnss_pose_with_cov_callback(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg);
@@ -47,9 +47,9 @@ public:
   void check_gnss_pose_timeout();
 
 private:
-  void update_pose_source_based_on_rmse(
-    double gnss_pose_average_rmse_xy, double gnss_pose_rmse_z,
-    double gnss_pose_yaw_rmse_in_degrees);
+  void update_pose_source_based_on_stddev(
+    double gnss_pose_average_stddev_xy, double gnss_pose_stddev_z,
+    double gnss_pose_yaw_stddev_in_degrees);
 
   enum class PoseSource {
     GNSS = 0,
