@@ -258,9 +258,9 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 
 ## Diagnostics
 
-### sensor_points_callback
+### scan_matching_status
 
-<img src="./media/diagnostic_sensor_points_callback.png" alt="drawing" width="600"/>
+<img src="./media/diagnostic_scan_matching_status.png" alt="drawing" width="600"/>
 
 | Name                                      | Description                                                                            | Transition condition to Warning                                                                                                                                                                                                                                                                                                                                          | Transition condition to Error    | Whether to reject the estimation result (affects `skipping_publish_num`) |
 | ----------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------- | ------------------------------------------------------------------------ |
@@ -282,9 +282,9 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 
 ※The `sensor_points_callback` shares the same callback group as the `trigger_node_service` and `ndt_align_service`. Consequently, if the initial pose estimation takes too long, this diagnostic may become stale.
 
-### initial_pose_callback
+### initial_pose_subscriber_status
 
-<img src="./media/diagnostic_initial_pose_callback.png" alt="drawing" width="600"/>
+<img src="./media/diagnostic_initial_pose_subscriber_status.png" alt="drawing" width="600"/>
 
 | Name                   | Description                                                        | Transition condition to Warning | Transition condition to Error |
 | ---------------------- | ------------------------------------------------------------------ | ------------------------------- | ----------------------------- |
@@ -292,17 +292,17 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 | `is_activated`         | whether the node is in the "activate" state or not                 | not "activate" state            | none                          |
 | `is_expected_frame_id` | whether the input frame_id is the same as `frame.map_frame` or not | not the same                    | none                          |
 
-### regularization_pose_callback
+### regularization_pose_subscriber_status
 
-<img src="./media/diagnostic_regularization_pose_callback.png" alt="drawing" width="600"/>
+<img src="./media/diagnostic_regularization_pose_subscriber_status.png" alt="drawing" width="600"/>
 
 | Name               | Description                   | Transition condition to Warning | Transition condition to Error |
 | ------------------ | ----------------------------- | ------------------------------- | ----------------------------- |
 | `topic_time_stamp` | the time stamp of input topic | none                            | none                          |
 
-### trigger_node_service
+### trigger_node_service_status
 
-<img src="./media/diagnostic_trigger_node_service.png" alt="drawing" width="600"/>
+<img src="./media/diagnostic_trigger_node_service_status.png" alt="drawing" width="600"/>
 
 | Name                      | Description                                        | Transition condition to Warning | Transition condition to Error |
 | ------------------------- | -------------------------------------------------- | ------------------------------- | ----------------------------- |
@@ -313,9 +313,9 @@ initial_pose_offset_model_x & initial_pose_offset_model_y must have the same num
 ※
 This diagnostic is only published when the service is called, so it becomes stale after the initial pose estimation is completed.
 
-### ndt_align_service
+### ndt_align_service_status
 
-<img src="./media/diagnostic_ndt_align_service.png" alt="drawing" width="600"/>
+<img src="./media/diagnostic_ndt_align_service_status.png" alt="drawing" width="600"/>
 
 | Name                                | Description                                                                                                                                                                                                                                             | Transition condition to Warning | Transition condition to Error                               |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ----------------------------------------------------------- |
@@ -337,9 +337,9 @@ This diagnostic is only published when the service is called, so it becomes stal
 ※
 This diagnostic is only published when the service is called, so it becomes stale after the initial pose estimation is completed.
 
-### map_update_module
+### map_update_status
 
-<img src="./media/diagnostic_map_update_module.png" alt="drawing" width="600"/>
+<img src="./media/diagnostic_map_update_status.png" alt="drawing" width="600"/>
 
 | Name                                                | Description                                                                                                                                                                                                                                             | Transition condition to Warning | Transition condition to Error                                                                           |
 | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
