@@ -409,8 +409,8 @@ private:
     const lanelet::ConstLanelet & lanelet,
     const double min_length = std::numeric_limits<double>::max(),
     const bool only_route_lanes = true) const;
-  bool getFollowingShoulderLanelet(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * following_lanelet) const;
+  std::optional<lanelet::ConstLanelet> getFollowingShoulderLanelet(
+    const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getShoulderLaneletSequenceAfter(
     const lanelet::ConstLanelet & lanelet,
     const double min_length = std::numeric_limits<double>::max()) const;
