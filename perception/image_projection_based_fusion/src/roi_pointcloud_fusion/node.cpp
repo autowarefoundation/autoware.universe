@@ -36,7 +36,6 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   fuse_unknown_only_ = declare_parameter<bool>("fuse_unknown_only");
   min_cluster_size_ = declare_parameter<int>("min_cluster_size");
   max_cluster_size_ = declare_parameter<int>("max_cluster_size");
-  max_cluster_size_ = declare_parameter<int>("max_cluster_size");
   cluster_2d_tolerance_ = declare_parameter<double>("cluster_2d_tolerance");
   pub_objects_ptr_ =
     this->create_publisher<DetectedObjectsWithFeature>("output_clusters", rclcpp::QoS{1});
