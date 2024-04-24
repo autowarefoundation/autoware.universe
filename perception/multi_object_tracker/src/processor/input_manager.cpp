@@ -30,6 +30,8 @@ void InputStream::init(const InputChannel & input_channel)
   long_name_ = input_channel.long_name;
   short_name_ = input_channel.short_name;
 
+  priority_ = input_channel.priority;
+
   // Initialize queue
   objects_que_.clear();
 
@@ -170,11 +172,8 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
 
 void InputManager::onTrigger(const uint & index) const
 {
-  // input stream index of 0 is the target(main) input stream
-  const uint target_idx = 0;
-
-  // when the main stream triggers, call the trigger function
-  if (index == target_idx && func_trigger_) {
+  // when the target stream triggers, call the trigger function
+  if (index == target_stream_idx_ && func_trigger_) {
     func_trigger_();
   }
 }
@@ -182,6 +181,20 @@ void InputManager::onTrigger(const uint & index) const
 void InputManager::getObjectTimeInterval(
   const rclcpp::Time & now, rclcpp::Time & object_latest_time, rclcpp::Time & object_oldest_time)
 {
+  object_latest_time = now - rclcpp::Duration::from_seconds(target_latency_);
+  object_oldest_time = now - rclcpp::Duration::from_seconds(target_latency_ + target_latency_band_);
+
+  // if the object_oldest_time is older than the latest object time, set it to the latest object
+  // time
+  object_oldest_time =
+    object_oldest_time > latest_object_time_ ? object_oldest_time : latest_object_time_;
+
+  // OPTIMIZATION: Get the stream with the maximum latency
+  double max_latency_mean = 0.0;
+  uint stream_selected_idx = 0;
+  double selected_idx_latency_std = 0.0;
+  double selected_idx_interval = 0.0;
+
   {
     // ANALYSIS: Get the streams statistics
     std::string long_name, short_name;
@@ -195,6 +208,12 @@ void InputManager::getObjectTimeInterval(
       }
       double latency_message = (now - latest_message_time).seconds();
       double latency_measurement = (now - latest_measurement_time).seconds();
+      if (latency_mean > max_latency_mean && input_stream->getPriority() > 0) {
+        max_latency_mean = latency_mean;
+        selected_idx_latency_std = std::sqrt(latency_var);
+        stream_selected_idx = input_stream->getIndex();
+        selected_idx_interval = interval_mean;
+      }
 
       // print info
       RCLCPP_INFO(
@@ -206,19 +225,15 @@ void InputManager::getObjectTimeInterval(
     }
   }
 
-  // Get proper latency
-  constexpr double target_latency = 0.18;  // [s], measurement to tracking latency
-                                           // process latency of a main detection + margin
-  constexpr double acceptable_latency =
-    0.32;  // [s], acceptable band from the target latency, larger than the target latency
-
-  object_latest_time = now - rclcpp::Duration::from_seconds(target_latency);
-  object_oldest_time = now - rclcpp::Duration::from_seconds(acceptable_latency);
-
-  // if the object_oldest_time is older than the latest object time, set it to the latest object
-  // time
-  object_oldest_time =
-    object_oldest_time > latest_object_time_ ? object_oldest_time : latest_object_time_;
+  // Set the target stream index, which has the maximum latency
+  // trigger will be called next time
+  target_stream_idx_ = stream_selected_idx;
+  target_latency_ = max_latency_mean - selected_idx_latency_std;
+  target_latency_band_ = 2 * selected_idx_latency_std + selected_idx_interval;
+  RCLCPP_INFO(
+    node_.get_logger(), "InputManager::getObjects Target stream: %s, target latency: %f, band: %f",
+    input_streams_.at(target_stream_idx_)->getLongName().c_str(), target_latency_,
+    target_latency_band_);
 }
 
 bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_list)

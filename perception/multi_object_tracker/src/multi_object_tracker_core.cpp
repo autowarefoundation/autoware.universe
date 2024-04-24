@@ -83,9 +83,11 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   declare_parameter("input_topic_names", std::vector<std::string>());
   declare_parameter("input_names_long", std::vector<std::string>());
   declare_parameter("input_names_short", std::vector<std::string>());
+  declare_parameter("input_priority", std::vector<int64_t>());
   std::vector<std::string> input_topic_names = get_parameter("input_topic_names").as_string_array();
   std::vector<std::string> input_names_long = get_parameter("input_names_long").as_string_array();
   std::vector<std::string> input_names_short = get_parameter("input_names_short").as_string_array();
+  std::vector<int64_t> input_priority = get_parameter("input_priority").as_integer_array();
 
   // ROS interface - Publisher
   tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
@@ -97,7 +99,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
   if (
     input_names_long.size() != input_topic_names.size() ||
-    input_names_short.size() != input_topic_names.size()) {
+    input_names_short.size() != input_topic_names.size() ||
+    input_priority.size() != input_topic_names.size()) {
     RCLCPP_ERROR(
       this->get_logger(),
       "The number of input topic names, long names, and short names must be the same.");
@@ -108,10 +111,10 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   input_channels_.resize(input_channel_size_);
 
   for (size_t i = 0; i < input_channel_size_; i++) {
-    input_channels_[i].index = i;
     input_channels_[i].input_topic = input_topic_names[i];
     input_channels_[i].long_name = input_names_long[i];
     input_channels_[i].short_name = input_names_short[i];
+    input_channels_[i].priority = static_cast<int>(input_priority[i]);
   }
 
   // Initialize input manager

@@ -33,12 +33,12 @@ using ObjectsList = std::vector<std::pair<uint, DetectedObjects>>;
 
 struct InputChannel
 {
-  size_t index;             // index of the input channel
   std::string input_topic;  // topic name of the detection, e.g. "/detection/lidar"
   std::string long_name = "Detected Object";  // full name of the detection
   std::string short_name = "DET";             // abbreviation of the name
   double expected_rate = 10.0;                // [Hz]
   double expected_latency = 0.2;              // [s]
+  int priority = 0;                           // priority of the input channel, higher is better
 };
 
 class InputStream
@@ -56,6 +56,8 @@ public:
 
   void onMessage(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
 
+  uint getIndex() const { return index_; }
+  int getPriority() const { return priority_; }
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
     ObjectsList & objects_list);
@@ -64,6 +66,7 @@ public:
     long_name = long_name_;
     short_name = short_name_;
   }
+  std::string getLongName() const { return long_name_; }
   size_t getObjectsCount() const { return objects_que_.size(); }
   void getTimeStatistics(
     double & latency_mean, double & latency_var, double & interval_mean,
@@ -84,6 +87,8 @@ private:
   std::string input_topic_;
   std::string long_name_;
   std::string short_name_;
+
+  int priority_{0};
 
   size_t que_size_{30};
   std::deque<DetectedObjects> objects_que_;
@@ -126,6 +131,9 @@ private:
   std::vector<std::shared_ptr<InputStream>> input_streams_;
 
   std::function<void()> func_trigger_;
+  uint target_stream_idx_{0};
+  double target_latency_{0.2};
+  double target_latency_band_{0.14};
 };
 
 }  // namespace multi_object_tracker
