@@ -348,10 +348,10 @@ public:
     const lanelet::ConstLanelets & lanelets, const Pose & pose, const double vehicle_width,
     lanelet::ConstLanelet * target_lanelet);
   double getLaneChangeableDistance(const Pose & current_pose, const Direction & direction) const;
-  bool getLeftShoulderLanelet(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet) const;
-  bool getRightShoulderLanelet(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const;
+  std::optional<lanelet::ConstLanelet> getLeftShoulderLanelet(
+    const lanelet::ConstLanelet & lanelet) const;
+  std::optional<lanelet::ConstLanelet> getRightShoulderLanelet(
+    const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
