@@ -358,7 +358,12 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     if (objects_from_point_clusters.empty()) {
       return false;
     }
-    return hasCollision(current_v, path, objects_from_point_clusters);
+    const auto closest_object_point = std::min_element(
+      objects_from_point_clusters.begin(), objects_from_point_clusters.end(),
+      [](const auto & o1, const auto & o2) {
+        return o1.distance_to_object < o2.distance_to_object;
+      });
+    return hasCollision(current_v, *closest_object_point);
   };
 
   // step3. create ego path based on sensor data
