@@ -46,8 +46,9 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
     std::bind(
       &AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback, this,
       std::placeholders::_1));
-  output_pose_with_covariance_stamped_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "output_pose_with_covariance_topic", 10);
+  output_pose_with_covariance_stamped_pub_ =
+    this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "output_pose_with_covariance_topic", 10);
 
   pose_source_pub_ = this->create_publisher<std_msgs::msg::String>(
     "autoware_pose_covariance_modifier/selected_pose_type", 10);
@@ -86,8 +87,7 @@ std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifi
     double calculated_covariance = std::pow(
       ((std::sqrt(in_ndt_covariance[idx]) * 2) -
        ((std::sqrt(in_ndt_covariance[idx]) * 2) - (std::sqrt(in_ndt_covariance[idx]))) *
-         ((std::sqrt(gnss_source_pose_with_cov.pose.covariance[idx]) -
-           gnss_error_reliable_max_) /
+         ((std::sqrt(gnss_source_pose_with_cov.pose.covariance[idx]) - gnss_error_reliable_max_) /
           (gnss_error_unreliable_min_ - gnss_error_reliable_max_))),
       2);
     // Make sure the ndt covariance is not below the input ndt covariance value and return
@@ -156,8 +156,7 @@ void AutowarePoseCovarianceModifierNode::gnss_pose_with_cov_callback(
 }
 
 void AutowarePoseCovarianceModifierNode::update_pose_source_based_on_rmse(
-  double gnss_pose_average_rmse_xy, double gnss_pose_rmse_z,
-  double gnss_pose_yaw_rmse_in_degrees)
+  double gnss_pose_average_rmse_xy, double gnss_pose_rmse_z, double gnss_pose_yaw_rmse_in_degrees)
 {
   std_msgs::msg::String selected_pose_type;
   if (
