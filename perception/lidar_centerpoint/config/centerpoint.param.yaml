@@ -5,7 +5,6 @@
     encoder_engine_path: "$(var model_path)/pts_voxel_encoder_$(var model_name).engine"
     head_onnx_path: "$(var model_path)/pts_backbone_neck_head_$(var model_name).onnx"
     head_engine_path: "$(var model_path)/pts_backbone_neck_head_$(var model_name).engine"
-    build_only: false
     trt_precision: fp16
     post_process_params:
       # post-process params

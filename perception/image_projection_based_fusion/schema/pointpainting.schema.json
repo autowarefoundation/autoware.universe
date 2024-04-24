@@ -6,11 +6,6 @@
     "pointpainting": {
       "type": "object",
       "properties": {
-        "build_only": {
-          "type": "boolean",
-          "description": "shutdown the node after TensorRT engine file is built.",
-          "default": false
-        },
         "trt_precision": {
           "type": "string",
           "description": "TensorRT inference precision.",
