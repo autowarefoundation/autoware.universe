@@ -74,10 +74,16 @@ struct Obstacle
     }
   }
 
+  Obstacle(const rclcpp::Time & arg_stamp, const PointCloud & object)
+  : stamp(arg_stamp), pointcloud(object)
+  {
+  }
+
   Polygon2d toPolygon() const { return tier4_autoware_utils::toPolygon2d(pose, shape); }
 
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
+  PointCloud pointcloud;
   bool orientation_reliable;
   Twist twist;
   bool twist_reliable;
