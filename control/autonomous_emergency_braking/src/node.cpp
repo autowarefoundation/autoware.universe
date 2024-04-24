@@ -295,7 +295,6 @@ bool AEB::isDataReady()
 
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
-  TimeIT t(__func__);
   MarkerArray debug_markers;
   checkCollision(debug_markers);
 
@@ -320,7 +319,6 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 bool AEB::checkCollision(MarkerArray & debug_markers)
 {
   using colorTuple = std::tuple<double, double, double, double>;
-  TimeIT t(__func__);
 
   // step1. check data
   if (!isDataReady()) {
