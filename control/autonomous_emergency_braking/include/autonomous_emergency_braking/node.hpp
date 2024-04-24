@@ -166,27 +166,15 @@ public:
   void onCheckCollision(DiagnosticStatusWrapper & stat);
   bool checkCollision(MarkerArray & debug_markers);
   bool hasCollision(const double current_v, const ObjectData & closest_object);
-  bool hasCollision(
-    const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects);
 
   Path generateEgoPath(const double curr_v, const double curr_w);
   std::optional<Path> generateEgoPath(const Trajectory & predicted_traj);
-
   std::vector<Polygon2d> generatePathFootprint(const Path & path, const double extra_width_margin);
-
-  void createObjectData(
-    const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
-    std::vector<ObjectData> & objects);
 
   void createObjectDataUsingPointCloudClusters(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
-
   void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
-
-  ObjectData getClosestObject(
-    std::vector<ObjectData> & objects, const Path & ego_path,
-    const geometry_msgs::msg::Pose & ego_pose);
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,

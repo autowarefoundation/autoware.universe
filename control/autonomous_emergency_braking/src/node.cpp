@@ -422,36 +422,6 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
   return false;
 }
 
-bool AEB::hasCollision(
-  const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects)
-{
-  // calculate RSS
-  const auto current_p = tier4_autoware_utils::createPoint(
-    ego_path[0].position.x, ego_path[0].position.y, ego_path[0].position.z);
-  const double & t = t_response_;
-  for (const auto & obj : objects) {
-    const double & obj_v = obj.velocity;
-    const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
-                            obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
-
-    // check the object is front the ego or not
-    if ((obj.position.x - ego_path[0].position.x) > 0) {
-      const double dist_ego_to_object =
-        motion_utils::calcSignedArcLength(ego_path, current_p, obj.position) -
-        vehicle_info_.max_longitudinal_offset_m;
-      if (dist_ego_to_object < rss_dist) {
-        // collision happens
-        ObjectData collision_data = obj;
-        collision_data.rss = rss_dist;
-        collision_data.distance_to_object = dist_ego_to_object;
-        collision_data_keeper_.update(collision_data);
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 {
   Path path;
@@ -540,36 +510,6 @@ std::vector<Polygon2d> AEB::generatePathFootprint(
       createPolygon(path.at(i), path.at(i + 1), vehicle_info_, extra_width_margin));
   }
   return polygons;
-}
-
-void AEB::createObjectData(
-  const Path & ego_path, const std::vector<tier4_autoware_utils::Polygon2d> & ego_polys,
-  const rclcpp::Time & stamp, std::vector<ObjectData> & objects)
-{
-  // check if the predicted path has valid number of points
-  if (ego_path.size() < 2 || ego_polys.empty()) {
-    return;
-  }
-
-  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
-  pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *obstacle_points_ptr);
-  for (const auto & point : obstacle_points_ptr->points) {
-    ObjectData obj;
-    obj.stamp = stamp;
-    obj.position = tier4_autoware_utils::createPoint(point.x, point.y, point.z);
-    obj.velocity = 0.0;
-    const Point2d obj_point(point.x, point.y);
-    const double lat_dist = motion_utils::calcLateralOffset(ego_path, obj.position);
-    if (lat_dist > vehicle_info_.vehicle_width_m / 2.0) {
-      continue;
-    }
-    for (const auto & ego_poly : ego_polys) {
-      if (bg::within(obj_point, ego_poly)) {
-        objects.push_back(obj);
-        break;
-      }
-    }
-  }
 }
 
 void AEB::createObjectDataUsingPointCloudClusters(
