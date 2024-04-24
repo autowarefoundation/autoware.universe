@@ -12,6 +12,7 @@ overrides:
       printWidth: 200
       xmlSelfClosingSpace: false
       xmlWhitespaceSensitivity: ignore
+      proseWrap: preserve
 
   - files: "*.xacro"
     options:
