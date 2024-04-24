@@ -1,28 +1,48 @@
+# Copyright 2024 TIER IV, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import freespace_planning_algorithms.astar_search as fp
 
-import rclpy
-from rclpy.node import Node
-from nav_msgs.msg import OccupancyGrid
-from geometry_msgs.msg import Pose, PoseStamped
-from rclpy.serialization import serialize_message
-
+from geometry_msgs.msg import Pose
 from autoware_auto_planning_msgs.msg import Trajectory, TrajectoryPoint
 
-import matplotlib.pyplot as plt
-import seaborn as sns
+import argparse
+import sys
+import os
+import pathlib
 import numpy as np
-import pandas as pd
 from pyquaternion import Quaternion
 import time
 import pickle
 from tqdm import tqdm
 
-import sys
-import os
 sys.path.append(os.path.dirname(__file__))
 from param.astar_params import vehicle_shape, planner_param, astar_param
-from common.common_classes import resultBag
+from common.common_classes import Result, SearchInfo
 
+def float_range(start, end, step):
+    list = [start]
+    n = start
+    if step >= 0:
+        while n + step < end:
+            n = n + step
+            list.append(n)
+    else:
+        while n + step > end:
+            n = n + step
+            list.append(n)
+    return list
 
 def createTrajectory(waypoints):
     trajectory = Trajectory()
@@ -33,123 +53,86 @@ def createTrajectory(waypoints):
 
     return trajectory
 
-class AstarPythonNode(Node):
-    def __init__(self, msg):
-        # Node.__init__を引数node_nameにtalkerを渡して継承
-        super().__init__('astar_python')
-        self.count = 0
-        self.msg = msg
-
-        # Node.create_publisher(msg_type, topic)に引数を渡してpublisherを作成
-        self.pub_trajectory = self.create_publisher(Trajectory, 'planning/freespace_param_tuning/trajectory', 1)
-        # self.sub_point = self.create_subscription()
-        
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-
-    def timer_callback(self):
-        self.pub_trajectory.publish(self.msg)
-
-
-def main(args=None):
-    node = None
-    try:
-        rclpy.init()
-        node = AstarPythonNode(trajectories[0][0][0])
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
-
 if __name__ == "__main__":
 
-    with open(os.path.dirname(__file__)+"/result/costmap.txt", "rb") as f:
+    parser = argparse.ArgumentParser(description="place of save result")
+    parser.add_argument("--dir_name", default="default_dir", type=str, help="directory name to save")
+    parser.add_argument("--costmap", default="costmap_default", type=str, help="file name of costmap without extension")
+    parser.add_argument("--x_resolution", default=1.0, type=float, help="interval of goal x")
+    parser.add_argument("--y_resolution", default=1.0, type=float, help="interval of goal y")
+    parser.add_argument("--yaw_discrete", default=10, type=int, help="the descretized number of yaw")
+    args = parser.parse_args()
+
+    # input proccessing 
+    save_dir = os.path.dirname(__file__)+"/result/"+args.dir_name
+
+    with open(os.path.dirname(__file__)+"/costmap/"+args.costmap+".txt", "rb") as f:
         costmap = pickle.load(f)
+    
+    costmap_height_half = costmap.info.resolution*costmap.info.height / 2
+    costmap_width_half = costmap.info.resolution*costmap.info.width / 2
+    
+    # goal grid
+    xs = [i for i in reversed(float_range(-args.x_resolution, -costmap_height_half, -args.x_resolution))] \
+         + [i for i in float_range(0, costmap_height_half, args.x_resolution)]
+    ys = [i for i in reversed(float_range(-args.y_resolution, -costmap_width_half, -args.y_resolution))] \
+         + [i for i in float_range(0, costmap_width_half, args.y_resolution)]
+    yaws = [(2*np.pi)*i/args.yaw_discrete for i in range(args.yaw_discrete)]
 
-    # -- Start and Goal Pose
-    start_pose = Pose()
+    # make files if not.
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+        for x in xs:
+            for y in ys:
+                for i, yaw in enumerate(yaws):
+                    # filepath: x_y_yawindex.txt
+                    filepath = pathlib.Path(save_dir+'/'+str(x)+'_'+str(y)+'_'+str(i)+'.txt')
+                    filepath.touch()
 
-    goal_pose = Pose()
+        with open(save_dir+'/info.txt', "wb") as f:
+            info = SearchInfo(costmap, xs, ys, yaws)
+            pickle.dump(info, f)
 
-    xs = [i for i in range(-35,36)]
-    ys = [i for i in range(-35,36)]
-    yaws = [2*np.pi*i/10 for i in range(10)]
+        print('save files were generated!')
+    
+    time.sleep(5)
 
-    results = np.zeros((len(yaws),len(xs),len(ys)))
-
-    trajectories = [[[Trajectory() for k in range(len(ys))] for j in range(len(xs))] for i in range(len(yaws))]
-
-    ## -- Search
+    # Search
     astar = fp.AstarSearch(planner_param, vehicle_shape, astar_param)
     astar.setMap(costmap)
 
+    start_pose = Pose()
+    goal_pose = Pose()
+
     start_time = time.monotonic()
 
-    for i, yaw in enumerate(tqdm(yaws)):
-    # for i, yaw in enumerate([0]):
-        for j, x in enumerate(xs):
-            for k, y in enumerate(ys):
-    # for i, yaw in enumerate([0]):
-    #     print("yaw = ", yaw)
-    #     for j, x in enumerate([15]):
-    #         for k, y in enumerate([20]):
-                
-                # initialize astar instance every time.
-                # astar = fp.AstarSearch(planner_param, vehicle_shape, astar_param)
-                # astar.setMap(costmap)
-                
-                goal_pose.position.x = float(x)
-                goal_pose.position.y = float(y)
+    for x in tqdm(xs):
+        for y in ys:
+            for i, yaw in enumerate(yaws):
 
-                quaterinon = Quaternion(axis=[0, 0, 1], angle=yaw)
+                # mutual exclusion
+                filename = save_dir+'/'+str(x)+'_'+str(y)+'_'+str(i)+'.txt'
+                if os.access(filename, os.W_OK) and os.path.getsize(filename) < 10:
+                    with open(filename, "wb") as f:
+                        goal_pose.position.x = float(x)
+                        goal_pose.position.y = float(y)
 
-                goal_pose.orientation.w = quaterinon.w
-                goal_pose.orientation.x = quaterinon.x
-                goal_pose.orientation.y = quaterinon.y
-                goal_pose.orientation.z = quaterinon.z
-                
-                result = astar.makePlan(start_pose, goal_pose)
-                results[i][j][k] = result
+                        quaterinon = Quaternion(axis=[0, 0, 1], angle=yaw)
 
-                if result:
-                    waypoints = astar.getWaypoints()
-                    trajectories[i][j][k] = createTrajectory(waypoints)
+                        goal_pose.orientation.w = quaterinon.w
+                        goal_pose.orientation.x = quaterinon.x
+                        goal_pose.orientation.y = quaterinon.y
+                        goal_pose.orientation.z = quaterinon.z
+                        
+                        find = astar.makePlan(start_pose, goal_pose)
+                        trajectory = []
+                        if find:
+                            waypoints = astar.getWaypoints()
+                            trajectory = createTrajectory(waypoints)
 
+                        result = Result(x, y, yaw, find, trajectory)
+                        
+                        pickle.dump(result, f)
 
     end_time = time.monotonic()
     print('search_time : ', end_time-start_time)
-
-    result_bag = resultBag(xs, ys, yaws, results, trajectories)
-    filename = os.path.dirname(__file__)+"/result/searched_trajectories_with_obstacle_yaw0.txt"
-    file1 = open(filename, "wb")
-    pickle.dump(result_bag, file1)
-    file1.close
-
-    # with open(filename, "rb") as f:
-    #     result_bag2 = pickle.load(f)
-
-    # xs = result_bag2.xs
-    # ys = result_bag2.ys
-    # yaws = result_bag2.yaws
-    # results = result_bag2.results
-    # trajectories = result_bag2.trajectories
-    # # main()
-
-    # ## plot result
-    # fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(20,8), tight_layout=True)
-
-    # for i, yaw in enumerate(yaws):
-    #     ax=axes[i//5, i%5]
-    #     sns.heatmap(results[i], ax=ax, vmin=0, vmax=1, linewidths=1, cbar = False,\
-    #                 xticklabels=ys, yticklabels=xs)
-    #     for j in range(len(xs)):
-    #         for k in range(len(ys)):
-    #             ax.plot([point.pose.position.x for point in trajectories[i][j][k].points], \
-    #                     [point.pose.position.y for point in trajectories[i][j][k].points])
-    #     ax.set_title('yaw = '+str(yaw))
-    #     ax.set_ylabel('x')
-    #     ax.set_xlabel('y')
-
-    # plt.show()

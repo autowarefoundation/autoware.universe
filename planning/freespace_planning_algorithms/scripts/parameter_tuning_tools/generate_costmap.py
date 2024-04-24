@@ -1,3 +1,17 @@
+# Copyright 2024 TIER IV, Inc. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 from autoware_auto_planning_msgs.msg import Trajectory, TrajectoryPoint
 
 import math
@@ -9,15 +23,14 @@ from matplotlib.patches import Rectangle
 import seaborn as sns
 import pickle
 
+import argparse
 import sys
 import os
 sys.path.append(os.path.dirname(__file__))
-from common.common_classes import resultBag
 
 from nav_msgs.msg import OccupancyGrid
 
-
-COSTMAP_FILENAME = os.path.dirname(__file__)+"/result/costmap.txt"
+COSTMAP_FILENAME = "dummy"
 
 class DrawRectangleObject:
     def __init__(self, fig, costmap):
@@ -25,6 +38,8 @@ class DrawRectangleObject:
         # Initialize a set to keep track of clicked cells
         self.figure = fig
         self.costmap = costmap
+        self.x_range = -costmap.info.origin.position.x
+        self.y_range = -costmap.info.origin.position.y
         self.obstacles = set()
 
     def connect(self):
@@ -65,10 +80,10 @@ class DrawRectangleObject:
         # Clear previous paths and redraw the grid
         ax1.cla()
         plt.draw()
-        ax1.set_xlim(-35, 35)
-        ax1.set_ylim(-35, 35)
-        ax1.set_xticks(range(-35,36))
-        ax1.set_yticks(range(-35,36))
+        ax1.set_xlim(-self.x_range, self.x_range)
+        ax1.set_ylim(-self.y_range, self.y_range)
+        ax1.set_xticks(range(-int(self.x_range), int(self.x_range)+1))
+        ax1.set_yticks(range(-int(self.y_range), int(self.y_range)+1))
         ax1.annotate('', xy=[2, 0], xytext=[0, 0],
                         arrowprops=dict(shrink=0, width=1, headwidth=8, 
                                         headlength=10, connectionstyle='arc3',
@@ -89,8 +104,8 @@ class DrawRectangleObject:
         resolution = self.costmap.info.resolution
         width = self.costmap.info.width
         for obstacle in self.obstacles:
-            originx_idx = int( (obstacle[0]+35) / resolution)
-            originy_idx = int( (obstacle[1]+35) / resolution)
+            originx_idx = int( (obstacle[0]+self.x_range) / resolution)
+            originy_idx = int( (obstacle[1]+self.y_range) / resolution)
             height_idx = int( obstacle[2] / resolution)
             width_idx = int( obstacle[3] / resolution)
 
@@ -103,49 +118,58 @@ class DrawRectangleObject:
         
         return self.costmap
 
-
-# -- Costmap Definition
-size = 350 #110
-resolution = 0.2
-
-costmap = OccupancyGrid()
-costmap.info.resolution = resolution
-costmap.info.height = size
-costmap.info.width = size
-costmap.info.origin.position.x = -size*resolution/2
-costmap.info.origin.position.y = -size*resolution/2
-costmap.data = [0 for i in range(size**2) ]
-
-
-# Create a figure and axis to plot the grid
-fig = plt.figure(layout='constrained', figsize=(13, 14))
-subfigs = fig.subfigures(2, 1, width_ratios=[1], height_ratios=[13, 1])
-
-ax1 = subfigs[0].subplots()
-ax1.set_xlim(-35, 35)
-ax1.set_ylim(-35, 35)
-ax1.set_xticks(range(-35,36))
-ax1.set_yticks(range(-35,36))
-ax1.annotate('', xy=[2, 0], xytext=[0, 0],
-                arrowprops=dict(shrink=0, width=1, headwidth=8, 
-                                headlength=10, connectionstyle='arc3',
-                                facecolor='gray', edgecolor='gray')
-               )
-ax1.grid(True)
-
-# Connect the click event to the drawing function
-draw_rectangle_object = DrawRectangleObject(subfigs[0], costmap)
-
-ax2 = subfigs[1].subplots()
-btn = wg.Button(ax2, 'Generate Costmap', color='#f5f5f5', hovercolor='#a9a9a9')
-
 def btn_click(event):
     costmap = draw_rectangle_object.generate_costmap()
     with open(COSTMAP_FILENAME, "wb") as file1:
         pickle.dump(costmap, file1)
         print("costmap is saved at: "+COSTMAP_FILENAME)
+        
+if __name__ == "__main__":
 
-btn.on_clicked(btn_click)
-draw_rectangle_object.connect()
+    parser = argparse.ArgumentParser(description="costmap info")
+    parser.add_argument("--save_name", default="costap_generated", type=str, help="file name without extension to save")
+    parser.add_argument("--height", default=350, type=int, help="height of costmap")
+    parser.add_argument("--width", default=350, type=int, help="width of costmap")
+    parser.add_argument("--resolution", default=0.2, type=float, help="resolution of costmap")
+    args = parser.parse_args()
 
-plt.show()
+    COSTMAP_FILENAME = os.path.dirname(__file__)+"/costmap/"+args.save_name+'.txt'
+
+    # -- Costmap Definition
+    x_range = args.height*args.resolution/2
+    y_range = args.width*args.resolution/2
+
+    costmap = OccupancyGrid()
+    costmap.info.resolution = args.resolution
+    costmap.info.height = args.height
+    costmap.info.width = args.width
+    costmap.info.origin.position.x = -x_range
+    costmap.info.origin.position.y = -y_range
+    costmap.data = [0 for i in range(args.height*args.width) ]
+
+
+    # Create a figure and axis to plot the grid
+    fig = plt.figure(layout='constrained', figsize=(13, 14))
+    subfigs = fig.subfigures(2, 1, width_ratios=[1], height_ratios=[13, 1])
+
+    ax1 = subfigs[0].subplots()
+    ax1.set_xlim(-x_range, x_range)
+    ax1.set_ylim(-y_range, y_range)
+    ax1.set_xticks(range(-int(x_range), int(x_range)+1))
+    ax1.set_yticks(range(-int(y_range), int(y_range)+1))
+    ax1.annotate('', xy=[2, 0], xytext=[0, 0],
+                    arrowprops=dict(shrink=0, width=1, headwidth=8, 
+                                    headlength=10, connectionstyle='arc3',
+                                    facecolor='gray', edgecolor='gray')
+                )
+    ax1.grid(True)
+
+    # Connect the click event to the drawing function
+    ax2 = subfigs[1].subplots()
+    btn = wg.Button(ax2, 'Generate Costmap', color='#f5f5f5', hovercolor='#a9a9a9')
+    btn.on_clicked(btn_click)
+
+    draw_rectangle_object = DrawRectangleObject(subfigs[0], costmap)
+    draw_rectangle_object.connect()
+
+    plt.show()
