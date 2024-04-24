@@ -153,8 +153,8 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   a_obj_min_ = declare_parameter<double>("a_obj_min");
 
   cluster_tolerance_ = declare_parameter<double>("cluster_tolerance");
-  minimum_cluster_size_ = declare_parameter<double>("minimum_cluster_size");
-  maximum_cluster_size_ = declare_parameter<double>("maximum_cluster_size");
+  minimum_cluster_size_ = declare_parameter<int>("minimum_cluster_size");
+  maximum_cluster_size_ = declare_parameter<int>("maximum_cluster_size");
 
   imu_prediction_time_horizon_ = declare_parameter<double>("imu_prediction_time_horizon");
   imu_prediction_time_interval_ = declare_parameter<double>("imu_prediction_time_interval");
