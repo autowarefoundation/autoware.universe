@@ -547,7 +547,7 @@ void AEB::createObjectDataUsingPointCloudClusters(
     for (const auto & index : indices.indices) {
       cluster->push_back((*obstacle_points_ptr)[index]);
     }
-    // Make a surface hull of the objects
+    // Make a 2d convex hull for the objects
     pcl::ConvexHull<pcl::PointXYZ> hull;
     hull.setDimension(2);
     hull.setInputCloud(cluster);
