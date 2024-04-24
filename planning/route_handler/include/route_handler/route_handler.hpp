@@ -27,6 +27,7 @@
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_routing/Forward.h>
+#include <lanelet2_routing/RoutingCost.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
 
 #include <limits>
@@ -77,6 +78,7 @@ public:
   lanelet::traffic_rules::TrafficRulesPtr getTrafficRulesPtr() const;
   std::shared_ptr<const lanelet::routing::RoutingGraphContainer> getOverallGraphPtr() const;
   lanelet::LaneletMapPtr getLaneletMapPtr() const;
+  static bool isNoDrivableLane(const lanelet::ConstLanelet & llt);
 
   // for routing
   bool planPathLaneletsBetweenCheckpoints(
@@ -440,17 +442,41 @@ private:
    */
   bool hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath & path) const;
   /**
-   * @brief Searches for a path between start and goal lanelets that does not include any
-   * no_drivable_lane. If there is more than one path fount, the function returns the shortest path
-   * that does not include any no_drivable_lane.
+   * @brief Searches for the shortest path between start and goal lanelets that does not include any
+   * no_drivable_lane.
    * @param start_lanelet start lanelet
    * @param goal_lanelet goal lanelet
-   * @param drivable_lane_path output path that does not include no_drivable_lane.
-   * @return true if a path without any no_drivable_lane found, false if this path is not found.
+   * @return the lanelet path (if found)
    */
-  bool findDrivableLanePath(
-    const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet,
-    lanelet::routing::LaneletPath & drivable_lane_path) const;
+  std::optional<lanelet::routing::LaneletPath> findDrivableLanePath(
+    const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet) const;
 };
+
+/// @brief custom routing cost with infinity cost for no drivable lanes
+class RoutingCostDrivable : public lanelet::routing::RoutingCostDistance
+{
+public:
+  RoutingCostDrivable() : lanelet::routing::RoutingCostDistance(10.0) {}
+  inline double getCostSucceeding(
+    const lanelet::traffic_rules::TrafficRules & trafficRules,
+    const lanelet::ConstLaneletOrArea & from, const lanelet::ConstLaneletOrArea & to) const
+  {
+    if (
+      (from.isLanelet() && RouteHandler::isNoDrivableLane(*from.lanelet())) ||
+      (to.isLanelet() && RouteHandler::isNoDrivableLane(*to.lanelet())))
+      return std::numeric_limits<double>::infinity();
+    return lanelet::routing::RoutingCostDistance::getCostSucceeding(trafficRules, from, to);
+  }
+  inline double getCostLaneChange(
+    const lanelet::traffic_rules::TrafficRules & trafficRules, const lanelet::ConstLanelets & from,
+    const lanelet::ConstLanelets & to) const noexcept
+  {
+    if (
+      std::any_of(from.begin(), from.end(), RouteHandler::isNoDrivableLane) ||
+      std::any_of(to.begin(), to.end(), RouteHandler::isNoDrivableLane))
+      return std::numeric_limits<double>::infinity();
+    return lanelet::routing::RoutingCostDistance::getCostLaneChange(trafficRules, from, to);
+  }
+};  // class RoutingCostDrivable
 }  // namespace route_handler
 #endif  // ROUTE_HANDLER__ROUTE_HANDLER_HPP_

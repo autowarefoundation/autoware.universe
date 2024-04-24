@@ -2207,14 +2207,11 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   if (is_route_found) {
     lanelet::routing::LaneletPath path;
     path = [&]() -> lanelet::routing::LaneletPath {
-      if (!consider_no_drivable_lanes) return shortest_path;
-      lanelet::routing::LaneletPath drivable_lane_path;
-      bool drivable_lane_path_found = false;
-      if (hasNoDrivableLaneInPath(shortest_path)) {
-        drivable_lane_path_found =
-          findDrivableLanePath(start_lanelet, *goal_lanelet, drivable_lane_path);
+      if (consider_no_drivable_lanes && hasNoDrivableLaneInPath(shortest_path)) {
+        const auto drivable_lane_path = findDrivableLanePath(start_lanelet, *goal_lanelet);
+        if (drivable_lane_path) return *drivable_lane_path;
       }
-      return (drivable_lane_path_found) ? drivable_lane_path : shortest_path;
+      return shortest_path;
     }();
 
     path_lanelets->reserve(path.size());
@@ -2266,42 +2263,32 @@ lanelet::ConstLanelets RouteHandler::getMainLanelets(
   return main_lanelets;
 }
 
+bool RouteHandler::isNoDrivableLane(const lanelet::ConstLanelet & llt)
+{
+  const std::string no_drivable_lane_attribute = llt.attributeOr("no_drivable_lane", "no");
+  return no_drivable_lane_attribute == "yes";
+}
+
 bool RouteHandler::hasNoDrivableLaneInPath(const lanelet::routing::LaneletPath & path) const
 {
-  for (const auto & llt : path) {
-    const std::string no_drivable_lane_attribute = llt.attributeOr("no_drivable_lane", "no");
-    if (no_drivable_lane_attribute == "yes") {
-      return true;
-    }
-  }
-
+  for (const auto & llt : path)
+    if (isNoDrivableLane(llt)) return true;
   return false;
 }
 
-bool RouteHandler::findDrivableLanePath(
-  const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet,
-  lanelet::routing::LaneletPath & drivable_lane_path) const
+std::optional<lanelet::routing::LaneletPath> RouteHandler::findDrivableLanePath(
+  const lanelet::ConstLanelet & start_lanelet, const lanelet::ConstLanelet & goal_lanelet) const
 {
   double drivable_lane_path_length2d = std::numeric_limits<double>::max();
   bool drivable_lane_path_found = false;
 
-  for (const auto & llt : road_lanelets_) {
-    lanelet::ConstLanelets via_lanelet;
-    via_lanelet.push_back(llt);
-    const lanelet::Optional<lanelet::routing::Route> optional_route =
-      routing_graph_ptr_->getRouteVia(start_lanelet, via_lanelet, goal_lanelet, 0);
-
-    if ((optional_route) && (!hasNoDrivableLaneInPath(optional_route->shortestPath()))) {
-      if (optional_route->length2d() < drivable_lane_path_length2d) {
-        drivable_lane_path_length2d = optional_route->length2d();
-        drivable_lane_path = optional_route->shortestPath();
-        drivable_lane_path_found = true;
-      }
-    }
-    via_lanelet.clear();
-  }
-
-  return drivable_lane_path_found;
+  // we create a new routing graph with infinite cost on no drivable lanes
+  const auto drivable_routing_graph_ptr = lanelet::routing::RoutingGraph::build(
+    *lanelet_map_ptr_, *traffic_rules_ptr_,
+    lanelet::routing::RoutingCostPtrs{std::make_shared<RoutingCostDrivable>()});
+  const auto route = drivable_routing_graph_ptr->getRoute(start_lanelet, goal_lanelet, 0);
+  if (route) return route->shortestPath();
+  return {};
 }
 
 lanelet::ConstLanelets RouteHandler::getClosestLanelets(
