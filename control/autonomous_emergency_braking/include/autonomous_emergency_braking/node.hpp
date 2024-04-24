@@ -40,6 +40,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -65,6 +66,31 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using Path = std::vector<geometry_msgs::msg::Pose>;
 using Vector3 = geometry_msgs::msg::Vector3;
+
+class TimeIT
+{
+private:
+  std::chrono::time_point<std::chrono::steady_clock> t_start;
+  std::string instance_;
+  double duration_warning_threshold_;
+
+public:
+  explicit TimeIT(std::string instance, const double duration_warning_threshold = 0.03)  // 40 ms
+  : instance_(instance), duration_warning_threshold_(duration_warning_threshold)
+  {
+    t_start = std::chrono::steady_clock::now();
+  }
+
+  ~TimeIT()
+  {
+    std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> duration = t_end - t_start;
+    std::cerr << "Elapsed time for " << instance_ << ": " << duration.count() << " (s)\n";
+    if (duration.count() > duration_warning_threshold_)
+      std::cerr << "WARNING: Duration Warning threshold exceeded Elapsed time for " << instance_
+                << ": " << duration.count() << " (s)\n";
+  }
+};
 
 struct ObjectData
 {
@@ -139,6 +165,7 @@ public:
   // main function
   void onCheckCollision(DiagnosticStatusWrapper & stat);
   bool checkCollision(MarkerArray & debug_markers);
+  bool hasCollision(const double current_v, const ObjectData & closest_object);
   bool hasCollision(
     const double current_v, const Path & ego_path, const std::vector<ObjectData> & objects);
 
@@ -151,11 +178,15 @@ public:
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
 
-  void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
-
   void createObjectDataUsingPointCloudClusters(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects);
+
+  void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
+
+  ObjectData getClosestObject(
+    std::vector<ObjectData> & objects, const Path & ego_path,
+    const geometry_msgs::msg::Pose & ego_pose);
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,

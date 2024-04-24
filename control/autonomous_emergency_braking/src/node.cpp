@@ -290,6 +290,7 @@ bool AEB::isDataReady()
 
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
+  TimeIT t(__func__);
   MarkerArray debug_markers;
   checkCollision(debug_markers);
 
@@ -314,6 +315,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 bool AEB::checkCollision(MarkerArray & debug_markers)
 {
   using colorTuple = std::tuple<double, double, double, double>;
+  TimeIT t(__func__);
 
   // step1. check data
   if (!isDataReady()) {
@@ -334,21 +336,29 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   auto check_collision = [&](
                            const auto & path, const colorTuple & debug_colors,
                            const std::string & debug_ns, const rclcpp::Time & current_time) {
+    TimeIT t("check_collision lambda");
+
     // Crop out Pointcloud using an extra wide ego path
     const auto expanded_ego_polys =
       generatePathFootprint(path, expand_width_ + path_footprint_extra_margin_);
     cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
 
+    // Check which points of the cropped point cloud are on the ego path, and get the closest one
     std::vector<ObjectData> objects_from_point_clusters;
     const auto ego_polys = generatePathFootprint(path, expand_width_);
     createObjectDataUsingPointCloudClusters(
       path, ego_polys, current_time, objects_from_point_clusters);
-    const bool has_collision = hasCollision(current_v, path, objects_from_point_clusters);
+
+    // Add debug markers
     const auto [color_r, color_g, color_b, color_a] = debug_colors;
     addMarker(
       current_time, path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
       color_a, debug_ns, debug_markers);
-    return has_collision;
+
+    if (objects_from_point_clusters.empty()) {
+      return false;
+    }
+    return hasCollision(current_v, path, objects_from_point_clusters);
   };
 
   // step3. create ego path based on sensor data
@@ -363,6 +373,12 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     return check_collision(ego_path, debug_color, ns, current_time);
   });
 
+  if (has_collision_ego) {
+    if (cropped_ros_pointcloud_ptr_ && publish_debug_pointcloud_) {
+      pub_obstacle_pointcloud_->publish(*cropped_ros_pointcloud_ptr_);
+    }
+    return true;
+  }
   // step4. transform predicted trajectory from control module
   const bool has_collision_predicted = std::invoke([&]() {
     if (!use_predicted_trajectory_ || !predicted_traj_ptr_) return false;
@@ -381,8 +397,24 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   if (cropped_ros_pointcloud_ptr_ && publish_debug_pointcloud_) {
     pub_obstacle_pointcloud_->publish(*cropped_ros_pointcloud_ptr_);
   }
+  return has_collision_predicted;
+}
 
-  return has_collision_ego || has_collision_predicted;
+bool AEB::hasCollision(const double current_v, const ObjectData & closest_object)
+{
+  const double & obj_v = closest_object.velocity;
+  const double & t = t_response_;
+  const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
+                          obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
+  if (closest_object.distance_to_object < rss_dist) {
+    // collision happens
+    ObjectData collision_data = closest_object;
+    collision_data.rss = rss_dist;
+    collision_data.distance_to_object = closest_object.distance_to_object;
+    collision_data_keeper_.update(collision_data);
+    return true;
+  }
+  return false;
 }
 
 bool AEB::hasCollision(
@@ -535,6 +567,81 @@ void AEB::createObjectData(
   }
 }
 
+void AEB::createObjectDataUsingPointCloudClusters(
+  const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
+  std::vector<ObjectData> & objects)
+{
+  TimeIT t(__func__);
+  // check if the predicted path has valid number of points
+  if (ego_path.size() < 2 || ego_polys.empty() || cropped_ros_pointcloud_ptr_->data.empty()) {
+    return;
+  }
+  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
+  pcl::fromROSMsg(*cropped_ros_pointcloud_ptr_, *obstacle_points_ptr);
+  if (obstacle_points_ptr->empty()) return;
+
+  // eliminate noisy points by only considering points belonging to clusters of at least a certain
+  // size
+  const std::vector<pcl::PointIndices> cluster_indices = std::invoke([&]() {
+    std::vector<pcl::PointIndices> cluster_idx;
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(obstacle_points_ptr);
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    ec.setClusterTolerance(0.1);
+    ec.setMinClusterSize(10);
+    ec.setMaxClusterSize(10000);
+    ec.setSearchMethod(tree);
+    ec.setInputCloud(obstacle_points_ptr);
+    ec.extract(cluster_idx);
+    return cluster_idx;
+  });
+
+  PointCloud::Ptr points_belonging_to_cluster_hulls(new PointCloud);
+  for (const auto & indices : cluster_indices) {
+    PointCloud::Ptr cluster(new PointCloud);
+    for (const auto & index : indices.indices) {
+      cluster->push_back((*obstacle_points_ptr)[index]);
+    }
+    // Make a surface hull of the objects
+    pcl::ConvexHull<pcl::PointXYZ> hull;
+    hull.setDimension(2);
+    hull.setInputCloud(cluster);
+    std::vector<pcl::Vertices> polygons;
+    PointCloud::Ptr surface_hull(new pcl::PointCloud<pcl::PointXYZ>);
+    hull.reconstruct(*surface_hull, polygons);
+    for (const auto & p : *surface_hull) {
+      points_belonging_to_cluster_hulls->push_back(p);
+    }
+  }
+
+  // select points inside the ego footprint path
+  const auto current_p = tier4_autoware_utils::createPoint(
+    ego_path[0].position.x, ego_path[0].position.y, ego_path[0].position.z);
+
+  for (const auto & p : *points_belonging_to_cluster_hulls) {
+    const auto obj_position = tier4_autoware_utils::createPoint(p.x, p.y, p.z);
+    const double dist_ego_to_object =
+      motion_utils::calcSignedArcLength(ego_path, current_p, obj_position) -
+      vehicle_info_.max_longitudinal_offset_m;
+    // objects behind ego are ignored
+    if (dist_ego_to_object < 0.0) continue;
+
+    ObjectData obj;
+    obj.stamp = stamp;
+    obj.position = obj_position;
+    obj.velocity = 0.0;
+    obj.distance_to_object = dist_ego_to_object;
+
+    const Point2d obj_point(p.x, p.y);
+    for (const auto & ego_poly : ego_polys) {
+      if (bg::within(obj_point, ego_poly)) {
+        objects.push_back(obj);
+        break;
+      }
+    }
+  }
+}
+
 void AEB::cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys)
 {
   PointCloud::Ptr full_points_ptr(new PointCloud);
@@ -566,57 +673,6 @@ void AEB::cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_
   // Store the results
   if (!objects->empty()) {
     pcl::toROSMsg(*objects, *cropped_ros_pointcloud_ptr_);
-  }
-}
-
-void AEB::createObjectDataUsingPointCloudClusters(
-  const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
-  std::vector<ObjectData> & objects)
-{
-  // check if the predicted path has valid number of points
-  if (ego_path.size() < 2 || ego_polys.empty() || cropped_ros_pointcloud_ptr_->data.empty()) {
-    return;
-  }
-  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
-  pcl::fromROSMsg(*cropped_ros_pointcloud_ptr_, *obstacle_points_ptr);
-  if (obstacle_points_ptr->empty()) return;
-
-  // eliminate noisy points by only considering points belonging to clusters of at least a certain
-  // size
-  const std::vector<pcl::PointIndices> cluster_indices = std::invoke([&]() {
-    std::vector<pcl::PointIndices> cluster_idx;
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud(obstacle_points_ptr);
-    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance(0.1);
-    ec.setMinClusterSize(10);
-    ec.setMaxClusterSize(10000);
-    ec.setSearchMethod(tree);
-    ec.setInputCloud(obstacle_points_ptr);
-    ec.extract(cluster_idx);
-    return cluster_idx;
-  });
-  PointCloud::Ptr points_belonging_to_clusters(new PointCloud);
-  for (const auto & indices : cluster_indices) {
-    for (const auto & index : indices.indices) {
-      points_belonging_to_clusters->push_back((*obstacle_points_ptr)[index]);
-    }
-  }
-
-  // select points inside the ego footprint path
-  for (const auto & p : *points_belonging_to_clusters) {
-    ObjectData obj;
-    obj.stamp = stamp;
-    obj.position = tier4_autoware_utils::createPoint(p.x, p.y, p.z);
-    obj.velocity = 0.0;
-    const Point2d obj_point(p.x, p.y);
-
-    for (const auto & ego_poly : ego_polys) {
-      if (bg::within(obj_point, ego_poly)) {
-        objects.push_back(obj);
-        break;
-      }
-    }
   }
 }
 
