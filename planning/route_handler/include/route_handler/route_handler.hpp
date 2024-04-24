@@ -345,6 +345,7 @@ public:
   std::optional<lanelet::ConstLanelet> getPullOutStartLane(
     const Pose & pose, const double vehicle_width) const;
   double getLaneChangeableDistance(const Pose & current_pose, const Direction & direction) const;
+  lanelet::ConstLanelets getRoadLaneletsAtPose(const Pose & pose) const;
   std::optional<lanelet::ConstLanelet> getLeftShoulderLanelet(
     const lanelet::ConstLanelet & lanelet) const;
   std::optional<lanelet::ConstLanelet> getRightShoulderLanelet(

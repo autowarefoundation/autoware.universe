@@ -711,6 +711,20 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   return lanelet_sequence;
 }
 
+lanelet::ConstLanelets RouteHandler::getRoadLaneletsAtPose(const Pose & pose) const
+{
+  lanelet::ConstLanelets road_lanelets_at_pose;
+  const lanelet::BasicPoint2d p{pose.position.x, pose.position.y};
+  const auto lanelets_at_pose = lanelet_map_ptr_->laneletLayer.search(lanelet::BoundingBox2d(p));
+  for (const auto & lanelet_at_pose : lanelets_at_pose) {
+    // confirm that the pose is inside the lanelet since "search" does an approximation with boxes
+    const auto is_pose_within_lanelet = lanelet::geometry::within(p, lanelet_at_pose.polygon2d());
+    if (is_pose_within_lanelet && isRoadLanelet(lanelet_at_pose))
+      road_lanelets_at_pose.push_back(lanelet_at_pose);
+  }
+  return road_lanelets_at_pose;
+}
+
 std::optional<lanelet::ConstLanelet> RouteHandler::getFollowingShoulderLanelet(
   const lanelet::ConstLanelet & lanelet) const
 {
@@ -2114,28 +2128,37 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   lanelet::ConstLanelets * path_lanelets, const bool consider_no_drivable_lanes) const
 {
   // Find lanelets for start point. First, find all lanelets containing the start point to calculate
-  // all possible route later. It fails when the point is not located on any road_lanelet (e.g. the
+  // all possible route later. It fails when the point is not located on any road lanelet (e.g. the
   // start point is located out of any lanelets or road_shoulder lanelet which is not contained in
-  // road_lanelet). In that case, find the closest lanelet instead.
-  lanelet::ConstLanelet start_lanelet;
-  lanelet::ConstLanelets start_lanelets;
-  if (!lanelet::utils::query::getCurrentLanelets(
-        road_lanelets_, start_checkpoint, &start_lanelets)) {
-    if (!lanelet::utils::query::getClosestLanelet(
-          road_lanelets_, start_checkpoint, &start_lanelet)) {
-      RCLCPP_WARN_STREAM(
-        logger_, "Failed to find current lanelet."
-                   << std::endl
-                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
-                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
-      return false;
-    }
-    start_lanelets = {start_lanelet};
+  // road lanelet). In that case, find the closest lanelet instead (within some maximum range).
+  constexpr auto max_search_range = 20.0;
+  auto start_lanelets = getRoadLaneletsAtPose(start_checkpoint);
+  if (start_lanelets.empty()) {
+    const lanelet::BasicPoint2d p(start_checkpoint.position.x, start_checkpoint.position.y);
+    const auto start_lanelet =
+      lanelet_map_ptr_->laneletLayer.nearestUntil(p, [&](const auto & bbox, const auto & ll) {
+        // return when we find a road lanelet or if the range becomes too high
+        return isRoadLanelet(ll) || lanelet::geometry::distance(bbox, p) > max_search_range;
+      });
+    if (start_lanelet && isRoadLanelet(*start_lanelet)) start_lanelets.push_back(*start_lanelet);
+  }
+  if (start_lanelets.empty()) {
+    RCLCPP_WARN_STREAM(
+      logger_, "Failed to find current lanelet."
+                 << std::endl
+                 << " - start checkpoint: " << toString(start_checkpoint) << std::endl
+                 << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
+    return false;
   }
 
   // Find lanelets for goal point.
-  lanelet::ConstLanelet goal_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_checkpoint, &goal_lanelet)) {
+  const lanelet::BasicPoint2d p(goal_checkpoint.position.x, goal_checkpoint.position.y);
+  const auto goal_lanelet =
+    lanelet_map_ptr_->laneletLayer.nearestUntil(p, [&](const auto & bbox, const auto & ll) {
+      // return when we find a road lanelet or if the range becomes too high
+      return isRoadLanelet(ll) || lanelet::geometry::distance(bbox, p) > max_search_range;
+    });
+  if (!goal_lanelet || !isRoadLanelet(*goal_lanelet)) {
     RCLCPP_WARN_STREAM(
       logger_, "Failed to find closest lanelet."
                  << std::endl
@@ -2152,6 +2175,7 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   double smallest_angle_diff = std::numeric_limits<double>::max();
   constexpr double yaw_threshold = M_PI / 2.0;
 
+  lanelet::ConstLanelet start_lanelet;
   for (const auto & st_llt : start_lanelets) {
     // check if the angle difference between start_checkpoint and start lanelet center line
     // orientation is in yaw_threshold range
@@ -2161,7 +2185,7 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
 
     bool is_proper_angle = angle_diff <= std::abs(yaw_threshold);
 
-    optional_route = routing_graph_ptr_->getRoute(st_llt, goal_lanelet, 0);
+    optional_route = routing_graph_ptr_->getRoute(st_llt, *goal_lanelet, 0);
     if (!optional_route || !is_proper_angle) {
       RCLCPP_ERROR_STREAM(
         logger_, "Failed to find a proper route!"
@@ -2169,7 +2193,7 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
                    << " - start checkpoint: " << toString(start_checkpoint) << std::endl
                    << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl
                    << " - start lane id: " << st_llt.id() << std::endl
-                   << " - goal lane id: " << goal_lanelet.id() << std::endl);
+                   << " - goal lane id: " << goal_lanelet->id() << std::endl);
       continue;
     }
     is_route_found = true;
@@ -2188,7 +2212,7 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
       bool drivable_lane_path_found = false;
       if (hasNoDrivableLaneInPath(shortest_path)) {
         drivable_lane_path_found =
-          findDrivableLanePath(start_lanelet, goal_lanelet, drivable_lane_path);
+          findDrivableLanePath(start_lanelet, *goal_lanelet, drivable_lane_path);
       }
       return (drivable_lane_path_found) ? drivable_lane_path : shortest_path;
     }();
