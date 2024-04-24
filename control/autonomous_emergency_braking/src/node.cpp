@@ -151,6 +151,11 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   t_response_ = declare_parameter<double>("t_response");
   a_ego_min_ = declare_parameter<double>("a_ego_min");
   a_obj_min_ = declare_parameter<double>("a_obj_min");
+
+  cluster_tolerance_ = declare_parameter<double>("cluster_tolerance");
+  minimum_cluster_size_ = declare_parameter<double>("minimum_cluster_size");
+  maximum_cluster_size_ = declare_parameter<double>("maximum_cluster_size");
+
   imu_prediction_time_horizon_ = declare_parameter<double>("imu_prediction_time_horizon");
   imu_prediction_time_interval_ = declare_parameter<double>("imu_prediction_time_interval");
   mpc_prediction_time_horizon_ = declare_parameter<double>("mpc_prediction_time_horizon");
@@ -527,9 +532,9 @@ void AEB::createObjectDataUsingPointCloudClusters(
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
     tree->setInputCloud(obstacle_points_ptr);
     pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance(0.1);
-    ec.setMinClusterSize(10);
-    ec.setMaxClusterSize(10000);
+    ec.setClusterTolerance(cluster_tolerance_);
+    ec.setMinClusterSize(minimum_cluster_size_);
+    ec.setMaxClusterSize(maximum_cluster_size_);
     ec.setSearchMethod(tree);
     ec.setInputCloud(obstacle_points_ptr);
     ec.extract(cluster_idx);

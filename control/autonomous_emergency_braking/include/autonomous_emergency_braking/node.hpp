@@ -219,6 +219,9 @@ public:
   double t_response_;
   double a_ego_min_;
   double a_obj_min_;
+  double cluster_tolerance_;
+  int minimum_cluster_size_;
+  int maximum_cluster_size_;
   double imu_prediction_time_horizon_;
   double imu_prediction_time_interval_;
   double mpc_prediction_time_horizon_;
