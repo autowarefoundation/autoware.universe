@@ -73,13 +73,13 @@ private:
 
   std::unique_ptr<RemainingDistanceTimeDisplay> remaining_distance_time_display_;
 
-  rclcpp::Subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>::SharedPtr
+  rclcpp::Subscription<autoware_internal_msgs::msg::MissionRemainingDistanceTime>::SharedPtr
     remaining_distance_time_sub_;
 
   std::mutex property_mutex_;
 
   void updateRemainingDistanceTimeData(
-    const autoware_planning_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
+    const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
   void drawWidget(QImage & hud);
 };
 }  // namespace autoware_mission_details_overlay_rviz_plugin

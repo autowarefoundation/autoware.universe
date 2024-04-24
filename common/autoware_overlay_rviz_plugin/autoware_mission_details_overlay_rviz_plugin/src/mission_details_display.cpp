@@ -70,7 +70,7 @@ void MissionDetailsDisplay::onInitialize()
   remaining_distance_time_topic_property_ =
     std::make_unique<rviz_common::properties::RosTopicProperty>(
       "Remaining Distance and Time Topic", "/planning/mission_remaining_distance_time",
-      "autoware_planning_msgs/msg/MissionRemainingDistanceTime",
+      "autoware_internal_msgs/msg/MissionRemainingDistanceTime",
       "Topic for Mission Remaining Distance and Time Data", this,
       SLOT(topic_updated_remaining_distance_time()));
   remaining_distance_time_topic_property_->initialize(rviz_ros_node);
@@ -82,10 +82,10 @@ void MissionDetailsDisplay::setupRosSubscriptions()
   auto rviz_node_ = context_->getRosNodeAbstraction().lock()->get_raw_node();
 
   remaining_distance_time_sub_ =
-    rviz_node_->create_subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>(
+    rviz_node_->create_subscription<autoware_internal_msgs::msg::MissionRemainingDistanceTime>(
       "/planning/mission_remaining_distance_time",
       rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-      [this](const autoware_planning_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
+      [this](const autoware_internal_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
         updateRemainingDistanceTimeData(msg);
       });
 }
@@ -134,7 +134,7 @@ void MissionDetailsDisplay::onDisable()
 }
 
 void MissionDetailsDisplay::updateRemainingDistanceTimeData(
-  const autoware_planning_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg)
+  const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg)
 {
   std::lock_guard<std::mutex> lock(property_mutex_);
 
@@ -228,10 +228,10 @@ void MissionDetailsDisplay::topic_updated_remaining_distance_time()
   auto rviz_ros_node = context_->getRosNodeAbstraction().lock();
   remaining_distance_time_sub_ =
     rviz_ros_node->get_raw_node()
-      ->create_subscription<autoware_planning_msgs::msg::MissionRemainingDistanceTime>(
+      ->create_subscription<autoware_internal_msgs::msg::MissionRemainingDistanceTime>(
         remaining_distance_time_topic_property_->getTopicStd(),
         rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-        [this](const autoware_planning_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
+        [this](const autoware_internal_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
           updateRemainingDistanceTimeData(msg);
         });
 }

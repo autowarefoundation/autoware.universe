@@ -51,7 +51,7 @@ RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
 }
 
 void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
-  const autoware_planning_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg)
+  const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg)
 {
   try {
     remaining_distance_ = msg->remaining_distance;

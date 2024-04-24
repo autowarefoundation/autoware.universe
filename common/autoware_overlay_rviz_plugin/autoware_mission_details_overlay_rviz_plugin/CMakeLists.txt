@@ -7,7 +7,7 @@ find_package(ament_cmake REQUIRED)
 find_package(autoware_auto_vehicle_msgs REQUIRED)
 find_package(tier4_planning_msgs REQUIRED)
 find_package(autoware_perception_msgs REQUIRED)
-find_package(autoware_planning_msgs REQUIRED)
+find_package(autoware_internal_msgs REQUIRED)
 ament_auto_find_build_dependencies()
 
 find_package(autoware_overlay_msgs REQUIRED)
@@ -85,6 +85,7 @@ ament_target_dependencies(
         autoware_auto_vehicle_msgs
         tier4_planning_msgs
         autoware_perception_msgs
+        autoware_internal_msgs
 )
 
 ament_export_include_directories(include)

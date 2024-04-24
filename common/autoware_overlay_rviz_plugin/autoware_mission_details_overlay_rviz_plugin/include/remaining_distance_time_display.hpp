@@ -23,7 +23,7 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
 
-#include "autoware_planning_msgs/msg/mission_remaining_distance_time.hpp"
+#include <autoware_internal_msgs/msg/mission_remaining_distance_time.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
@@ -38,7 +38,7 @@ public:
   RemainingDistanceTimeDisplay();
   void drawRemainingDistanceTimeDisplay(QPainter & painter, const QRectF & backgroundRect);
   void updateRemainingDistanceTimeData(
-    const autoware_planning_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
+    const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
 
 private:
   double remaining_distance_;  // Internal variable to store remaining distance
