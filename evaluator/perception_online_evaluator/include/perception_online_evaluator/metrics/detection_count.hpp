@@ -26,7 +26,11 @@
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <iomanip>
+#include <memory>
+#include <set>
 #include <sstream>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace perception_diagnostics
