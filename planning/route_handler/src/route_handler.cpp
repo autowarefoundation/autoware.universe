@@ -724,28 +724,26 @@ bool RouteHandler::getFollowingShoulderLanelet(
   return false;
 }
 
-bool RouteHandler::getLeftShoulderLanelet(
-  const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * left_lanelet) const
+std::optional<lanelet::ConstLanelet> RouteHandler::getLeftShoulderLanelet(
+  const lanelet::ConstLanelet & lanelet) const
 {
   for (const auto & shoulder_lanelet : shoulder_lanelets_) {
     if (lanelet::geometry::leftOf(shoulder_lanelet, lanelet)) {
-      *left_lanelet = shoulder_lanelet;
-      return true;
+      return shoulder_lanelet;
     }
   }
-  return false;
+  return std::nullopt;
 }
 
-bool RouteHandler::getRightShoulderLanelet(
-  const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * right_lanelet) const
+std::optional<lanelet::ConstLanelet> RouteHandler::getRightShoulderLanelet(
+  const lanelet::ConstLanelet & lanelet) const
 {
   for (const auto & shoulder_lanelet : shoulder_lanelets_) {
     if (lanelet::geometry::rightOf(shoulder_lanelet, lanelet)) {
-      *right_lanelet = shoulder_lanelet;
-      return true;
+      return shoulder_lanelet;
     }
   }
-  return false;
+  return std::nullopt;
 }
 
 lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceAfter(
@@ -1019,10 +1017,8 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
 
   // right shoulder lanelet
   if (get_shoulder_lane) {
-    lanelet::ConstLanelet right_shoulder_lanelet;
-    if (getRightShoulderLanelet(lanelet, &right_shoulder_lanelet)) {
-      return right_shoulder_lanelet;
-    }
+    const auto right_shoulder_lanelet = getRightShoulderLanelet(lanelet);
+    if (right_shoulder_lanelet) return *right_shoulder_lanelet;
   }
 
   // routable lane
@@ -1100,10 +1096,8 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
 
   // left shoulder lanelet
   if (get_shoulder_lane) {
-    lanelet::ConstLanelet left_shoulder_lanelet;
-    if (getLeftShoulderLanelet(lanelet, &left_shoulder_lanelet)) {
-      return left_shoulder_lanelet;
-    }
+    const auto left_shoulder_lanelet = getLeftShoulderLanelet(lanelet);
+    if (left_shoulder_lanelet) return *left_shoulder_lanelet;
   }
 
   // routable lane
