@@ -15,8 +15,9 @@
 #ifndef DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_
 #define DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 
 #include <optional>
 #include <string>
