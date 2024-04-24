@@ -22,6 +22,18 @@ to the error values coming from GNSS, it also manages situations where GNSS and 
 <img src="./media/new_proposal-proposal-extended-proposal.drawio.png" width="620">
 </p>
 
+### _How does the "Interpolate GNSS and NDT pose" part work ?_
+
+The goal is to reduce the NDT covariance as the GNSS covariance increases, aiming for a smoother and more balanced transition between NDT and and maximize the benefit from GNSS poses.
+
+<p align="center">
+<img src="./media/ndt_error_calculation_formula.drawio.png" width="720">
+</p>
+
+<p align="center">
+<img src="./media/formula.drawio.png" width="520">
+</p>
+
 ## Activate this feature
 
 This package is not used by default autoware, you need to activate it to use it.

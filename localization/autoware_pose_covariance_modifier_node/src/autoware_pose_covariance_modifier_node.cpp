@@ -76,11 +76,9 @@ std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifi
 {
   std::array<double, 36> ndt_covariance = in_ndt_covariance;
   /*
-   * ndt_min_rmse_meters = in_ndt_rmse
-   * ndt_max_rmse_meters = in_ndt_rmse  * 2
-   * NDTrmse = ndt_max_rmse_meters - (ndt_max_rmse_meters - ndt_min_rmse_meters) *
-   * ((instant_gnss_error_in_meters - gnss_error_reliable_max_) / (gnss_error_unreliable_min_ -
-   * gnss_error_reliable_max_))
+   * In the README.md file, "How does the "Interpolate GNSS and NDT pose" part work?" It is
+   * explained in the section
+   * (https://github.com/meliketanrikulu/autoware.universe/tree/feat/add_autoware_pose_covariance_modifier_node/localization/autoware_pose_covariance_modifier_node#how-does-the-interpolate-gnss-and-ndt-pose-part-work-)
    */
   auto modify_covariance = [&](int idx) {
     // calculate NDT covariance value based on gnss covariance
