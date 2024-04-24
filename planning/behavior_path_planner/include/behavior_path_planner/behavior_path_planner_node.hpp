@@ -30,8 +30,8 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_internal_msgs/msg/mission_remaining_distance_time.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -61,9 +61,9 @@ using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_internal_msgs::msg::MissionRemainingDistanceTime;
 using autoware_perception_msgs::msg::TrafficSignalArray;
 using autoware_planning_msgs::msg::LaneletRoute;
-using autoware_internal_msgs::msg::MissionRemainingDistanceTime;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
