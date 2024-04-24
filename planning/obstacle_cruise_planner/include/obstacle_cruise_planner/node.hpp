@@ -184,6 +184,8 @@ private:
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
     double decimate_trajectory_step_length;
+    bool use_pointcloud{false};
+    double pointcloud_search_radius;
     // hysteresis for stop and cruise
     double obstacle_velocity_threshold_from_cruise_to_stop;
     double obstacle_velocity_threshold_from_stop_to_cruise;

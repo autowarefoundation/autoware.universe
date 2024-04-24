@@ -222,6 +222,9 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
 {  // behavior determination
   decimate_trajectory_step_length =
     node.declare_parameter<double>("behavior_determination.decimate_trajectory_step_length");
+  use_pointcloud = node.declare_parameter<bool>("behavior_determination.use_pointcloud");
+  pointcloud_search_radius =
+    node.declare_parameter<double>("behavior_determination.pointcloud_search_radius");
   obstacle_velocity_threshold_from_cruise_to_stop = node.declare_parameter<double>(
     "behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
   obstacle_velocity_threshold_from_stop_to_cruise = node.declare_parameter<double>(
