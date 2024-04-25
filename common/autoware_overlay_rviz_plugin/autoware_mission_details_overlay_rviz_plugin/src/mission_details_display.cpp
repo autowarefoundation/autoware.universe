@@ -83,7 +83,7 @@ void MissionDetailsDisplay::setupRosSubscriptions()
 
   remaining_distance_time_sub_ =
     rviz_node_->create_subscription<autoware_internal_msgs::msg::MissionRemainingDistanceTime>(
-      "/planning/mission_remaining_distance_time",
+      remaining_distance_time_topic_property_->getTopicStd(),
       rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
       [this](const autoware_internal_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
         updateRemainingDistanceTimeData(msg);

@@ -42,9 +42,6 @@ public:
 
 private:
   double remaining_distance_;  // Internal variable to store remaining distance
-  uint32_t hours_;             // Internal variable to store remaining time hours
-  uint32_t minutes_;           // Internal variable to store remaining time minutes
-  uint32_t seconds_;           // Internal variable to store remaining time seconds
   QColor gray = QColor(194, 194, 194);
 };
 
