@@ -99,10 +99,9 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
   }
 
   // Define the area for the outer circle
-  QRectF outerCircleRect = backgroundRect;
-  outerCircleRect.setWidth(backgroundRect.width() - 30);
-  outerCircleRect.setHeight(backgroundRect.width() - 30);
-  outerCircleRect.moveTopLeft(QPointF(backgroundRect.left() + 15, backgroundRect.top() + 10));
+  QRectF outerCircleRect = QRectF(50, 50, 50, 50);
+  outerCircleRect.moveTopRight(
+    QPointF(backgroundRect.right() - 44, backgroundRect.top() + outerCircleRect.height() / 2));
 
   // Now use borderColor for drawing
   painter.setPen(QPen(borderColor, 2, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
@@ -112,8 +111,8 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
 
   // Define the area for the inner circle
   QRectF innerCircleRect = outerCircleRect;
-  innerCircleRect.setWidth(outerCircleRect.width() / 1.25);
-  innerCircleRect.setHeight(outerCircleRect.height() / 1.25);
+  innerCircleRect.setWidth(outerCircleRect.width() / 1.075);
+  innerCircleRect.setHeight(outerCircleRect.height() / 1.075);
   innerCircleRect.moveCenter(outerCircleRect.center());
 
   painter.setRenderHint(QPainter::Antialiasing, true);
@@ -128,8 +127,8 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
   // Define the text to be drawn
   QString text = QString::number(current_limit_int);
 
-  // Set the font and color for the text
-  QFont font = QFont("Quicksand", 24, QFont::Bold);
+  // Set the font and color for the tex0
+  QFont font = QFont("Quicksand", 20, QFont::Bold);
 
   painter.setFont(font);
   // #C2C2C2
