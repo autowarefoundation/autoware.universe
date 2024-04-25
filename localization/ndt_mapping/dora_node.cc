@@ -12,7 +12,7 @@ extern "C"
 #include <pcl/point_cloud.h>
 #include <pcl/impl/point_types.hpp>
 
-int max_save = 1000;
+int max_save = 100;
 
 int mapping(void *dora_context, ndt_mapping::NDTMapper &mapper){
     if (dora_context == NULL)
@@ -64,15 +64,40 @@ int mapping(void *dora_context, ndt_mapping::NDTMapper &mapper){
 
             pointcloud_ptr = pointcloud.makeShared();
             mapper.points_callback(pointcloud_ptr);
+            pointcloud.clear();
+            pointcloud_ptr.reset(new pcl::PointCloud<pcl::PointXYZI>);
+            std::cout << "完成计算一次" << std::endl;
             
-            if(*(std::uint32_t*)data >= max_save){  // if(seq == 1000)
-                if(*(std::uint32_t*)data == max_save)
-                {
-                    std::cout << "1000 scan map" << std::endl;
+            // if(*(std::uint32_t*)data >= max_save){  // if(seq == 1000)
+            //     if(*(std::uint32_t*)data == max_save)
+            //     {
+            //         std::cout << "1000 scan map" << std::endl;
+            //         mapper.saveMap();
+            //     }
+            //     free_dora_event(event);
+            // }
+            std::ifstream stop_single_file;
+            stop_single_file.open("./stop_single.txt", std::ios::in);
+            if (!stop_single_file.is_open())
+            {
+                std::cout << "读取文件失败" << std::endl;
+
+            }
+            char c;
+            while ((c=stop_single_file.get())!=EOF)
+            {
+                if(c=='s'){
                     mapper.saveMap();
                 }
-                free_dora_event(event);
+                std::fstream stop_single_clear("./stop_single.txt",std::ios::out|std::ios::trunc);
+                stop_single_clear.close();
             }
+            stop_single_file.close();
+            
+            free_dora_event(event);
+            
+
+
         }
         else if (ty == DoraEventType_Stop)
         {

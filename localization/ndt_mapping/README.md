@@ -46,9 +46,9 @@ dora start dataflow_pcap.yml --name test
 建好的地图会保存在 **ndt_mapping_config.yml** map_save_path这一路径下
 
 # 保地图时报错： Too many open files
-![alt text](image.png)
+![alt text](image/image.png)
 可能是因为地图中的点太多了，提前停止建图，保存地图就没事了
-![alt text](image1.png)
+![alt text](image/image1.png)
 dora_node.cc中可以设置建图到第几个seq停止，然后把下面的mapper.saveMap()注释掉
 
 # 观察建图结果

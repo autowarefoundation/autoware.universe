@@ -53,7 +53,7 @@ public:
       double roll;
     };
     Euler euler_out;
-    if(fabs(m(2,0)) >= 1){
+    if(fabs(m(2,0)) >= 1.0){
       euler_out.yaw = 0;
       double delta = atan2(m(2,1), m(2,2));  // tf2Scalar delta = tf2Atan2(m_el[2].y(),m_el[2].z());
       if(m(2,0) < 0){
@@ -66,22 +66,22 @@ public:
       }
     }
     else{
-      if(m(2,0) < -1){
-        euler_out.pitch = asin(-1);
-      }
-      else if (m(2, 0) > 1)
-      {
-        euler_out.pitch = asin(1);
-      }
-      else{
-        euler_out.pitch = asin(m(2,0));
-      }
+      // if(m(2,0) < -1){
+      //   euler_out.pitch = asin(-1);
+      // }
+      // else if (m(2, 0) > 1)
+      // {
+      //   euler_out.pitch = asin(1);
+      // }
+      // else{
+        euler_out.pitch = -asin(m(2,0));
+      // }
 
       euler_out.roll = atan2(m(2,1)/cos(euler_out.pitch),
                               m(2,2)/cos(euler_out.pitch));
 
       euler_out.yaw = atan2(m(1,0)/cos(euler_out.pitch),
-                              m(0,1)/cos(euler_out.pitch));
+                              m(0,0)/cos(euler_out.pitch));
       
     }
     yaw = euler_out.yaw;

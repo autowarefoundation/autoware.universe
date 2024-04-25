@@ -1,4 +1,4 @@
-map_save_path: "./saved_map/saved_map7.pcd"
+map_save_path: "./saved_map/saved_map8.pcd"
 ros_visualize: true
 
 lidar_frame: "velodyne"

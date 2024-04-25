@@ -57,6 +57,7 @@ target_link_libraries(${PROJECT_NAME}
   ${YAMLCPP_LIBRARIES}
   # glog::glog
   $ENV{HOME}/dora/target/release/libdora_node_api_c.a
+  # /home/crp/dora_project/dora-rs/dora-0.3.2/target/release/libdora_node_api_c.a
   ${CURRENT_DIR}/ndt_cpu/build/libndt_cpu.a
   rt
 )
