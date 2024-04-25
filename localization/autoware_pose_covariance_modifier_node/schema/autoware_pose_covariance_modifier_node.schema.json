@@ -9,8 +9,8 @@
         "ros__parameters": {
           "type": "object",
           "properties": {
-            "error_thresholds": {
-              "$ref": "sub/error_thresholds.sub_schema.json#/definitions/error_thresholds"
+            "stddev_thresholds": {
+              "$ref": "sub/stddev_thresholds.sub_schema.json#/definitions/stddev_thresholds"
             },
             "validation": {
               "$ref": "sub/validation.sub_schema.json#/definitions/validation"
@@ -19,7 +19,7 @@
               "$ref": "sub/debug.sub_schema.json#/definitions/debug"
             }
           },
-          "required": ["error_thresholds", "validation", "debug"],
+          "required": ["stddev_thresholds", "validation", "debug"],
           "additionalProperties": false
         }
       },

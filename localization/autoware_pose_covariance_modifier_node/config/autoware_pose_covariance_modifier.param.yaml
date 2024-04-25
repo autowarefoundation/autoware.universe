@@ -1,14 +1,14 @@
 /**:
   ros__parameters:
-    error_thresholds:
-      # Threshold value for the range in which GNSS position error is most reliable
-      gnss_error_reliable_max: 0.1      #meters
+    stddev_thresholds:
+      # Threshold value for the range in which GNSS position standard deviation is most reliable
+      gnss_stddev_reliable_max: 0.1      #meters
 
-      # Threshold value at which GNSS position error is not considered reliable
-      gnss_error_unreliable_min: 0.25   #meters
+      # Threshold value at which GNSS position standard deviation is not considered reliable
+      gnss_stddev_unreliable_min: 0.25   #meters
 
-      # Threshold value for yaw error
-      yaw_error_deg_threshold: 0.3      #degrees
+      # Threshold value for yaw standard deviation
+      yaw_stddev_deg_threshold: 0.3      #degrees
 
     validation:
       # Acceptable delay duration for GNSS pose data [sec]

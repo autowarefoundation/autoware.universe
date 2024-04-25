@@ -61,7 +61,7 @@ private:
 
   PoseSource pose_source_;
 
-  double gnss_error_reliable_max_, gnss_error_unreliable_min_, yaw_error_deg_threshold_;
+  double gnss_stddev_reliable_max_, gnss_stddev_unreliable_min_, yaw_stddev_deg_threshold_;
   double gnss_pose_timeout_sec_;
   bool debug_;
 

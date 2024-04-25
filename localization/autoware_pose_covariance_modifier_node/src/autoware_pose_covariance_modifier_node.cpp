@@ -22,12 +22,12 @@ AutowarePoseCovarianceModifierNode::AutowarePoseCovarianceModifierNode()
   pose_source_(AutowarePoseCovarianceModifierNode::PoseSource::NDT)
 {
   try {
-    gnss_error_reliable_max_ =
-      this->declare_parameter<double>("error_thresholds.gnss_error_reliable_max");
-    gnss_error_unreliable_min_ =
-      this->declare_parameter<double>("error_thresholds.gnss_error_unreliable_min");
-    yaw_error_deg_threshold_ =
-      this->declare_parameter<double>("error_thresholds.yaw_error_deg_threshold");
+    gnss_stddev_reliable_max_ =
+      this->declare_parameter<double>("stddev_thresholds.gnss_stddev_reliable_max");
+    gnss_stddev_unreliable_min_ =
+      this->declare_parameter<double>("stddev_thresholds.gnss_stddev_unreliable_min");
+    yaw_stddev_deg_threshold_ =
+      this->declare_parameter<double>("stddev_thresholds.yaw_stddev_deg_threshold");
     gnss_pose_timeout_sec_ = this->declare_parameter<double>("validation.gnss_pose_timeout_sec");
     debug_ = this->declare_parameter<bool>("debug.enable_debug_topics");
   } catch (const std::exception & e) {
@@ -85,8 +85,8 @@ std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifi
     double calculated_covariance = std::pow(
       ((std::sqrt(in_ndt_covariance[idx]) * 2) -
        ((std::sqrt(in_ndt_covariance[idx]) * 2) - (std::sqrt(in_ndt_covariance[idx]))) *
-         ((std::sqrt(gnss_source_pose_with_cov.pose.covariance[idx]) - gnss_error_reliable_max_) /
-          (gnss_error_unreliable_min_ - gnss_error_reliable_max_))),
+         ((std::sqrt(gnss_source_pose_with_cov.pose.covariance[idx]) - gnss_stddev_reliable_max_) /
+          (gnss_stddev_unreliable_min_ - gnss_stddev_reliable_max_))),
       2);
     // Make sure the ndt covariance is not below the input ndt covariance value and return
     return (std::max(calculated_covariance, in_ndt_covariance[idx]));
@@ -158,12 +158,12 @@ void AutowarePoseCovarianceModifierNode::update_pose_source_based_on_stddev(
 {
   std_msgs::msg::String selected_pose_type;
   if (
-    gnss_pose_yaw_stddev_in_degrees <= yaw_error_deg_threshold_ &&
-    gnss_pose_stddev_z <= gnss_error_reliable_max_) {
-    if (gnss_pose_average_stddev_xy <= gnss_error_reliable_max_) {
+    gnss_pose_yaw_stddev_in_degrees <= yaw_stddev_deg_threshold_ &&
+    gnss_pose_stddev_z <= gnss_stddev_reliable_max_) {
+    if (gnss_pose_average_stddev_xy <= gnss_stddev_reliable_max_) {
       pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS;
       selected_pose_type.data = "GNSS";
-    } else if (gnss_pose_average_stddev_xy <= gnss_error_unreliable_min_) {
+    } else if (gnss_pose_average_stddev_xy <= gnss_stddev_unreliable_min_) {
       pose_source_ = AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT;
       selected_pose_type.data = "GNSS + NDT";
     } else {

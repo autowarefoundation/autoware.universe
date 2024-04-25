@@ -27,7 +27,7 @@ to the standard deviation values coming from GNSS, it also manages situations wh
 The goal is to reduce the NDT covariance as the GNSS covariance increases, aiming for a smoother and more balanced transition between NDT and and maximize the benefit from GNSS poses.
 
 <p align="center">
-<img src="./media/ndt_error_calculation_formula.drawio.png" width="720">
+<img src="./media/ndt_stddev_calculation_formula.drawio.png" width="720">
 </p>
 
 <p align="center">
@@ -63,9 +63,9 @@ the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autowar
 
 The parameters are set in config/autoware_pose_covariance_modifier.param.yaml .
 
-#### For error thresholds
+#### For Standard Deviation thresholds
 
-{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/error_thresholds.sub_schema.json") }}
+{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds.sub_schema.json") }}
 
 #### For validation
 
