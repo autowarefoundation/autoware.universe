@@ -48,10 +48,9 @@ PointWithStamp calcNearestCollisionPoint(
 // calculation.
 std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const geometry_msgs::msg::Pose & object_pose, const rclcpp::Time & object_time,
-  const Shape & object_shape, const double max_lat_dist = std::numeric_limits<double>::max())
+  const Polygon2d & object_polygon, const geometry_msgs::msg::Pose & object_pose,
+  const rclcpp::Time & object_time, const double max_lat_dist = std::numeric_limits<double>::max())
 {
-  const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object_pose, object_shape);
   for (size_t i = 0; i < traj_polygons.size(); ++i) {
     const double approximated_dist =
       tier4_autoware_utils::calcDistance2d(traj_points.at(i).pose, object_pose);
@@ -60,7 +59,7 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
     }
 
     std::vector<Polygon2d> collision_polygons;
-    boost::geometry::intersection(traj_polygons.at(i), obj_polygon, collision_polygons);
+    boost::geometry::intersection(traj_polygons.at(i), object_polygon, collision_polygons);
 
     std::vector<PointWithStamp> collision_geom_points;
     bool has_collision = false;
@@ -88,6 +87,24 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
 
   return std::nullopt;
 }
+
+std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
+  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
+  const Obstacle & obstacle, const double max_lat_dist = std::numeric_limits<double>::max())
+{
+  return getCollisionIndex(
+    traj_points, traj_polygons, obstacle.toPolygon(), obstacle.pose, obstacle.stamp);
+}
+
+std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
+  const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
+  const geometry_msgs::msg::Pose & object_pose, const rclcpp::Time & object_time,
+  const Shape & object_shape, const double max_lat_dist = std::numeric_limits<double>::max())
+{
+  return getCollisionIndex(
+    traj_points, traj_polygons, tier4_autoware_utils::toPolygon2d(object_pose, object_shape),
+    object_pose, object_time);
+}
 }  // namespace
 
 namespace polygon_utils
@@ -97,8 +114,7 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const Obstacle & obstacle, const bool is_driving_forward,
   const vehicle_info_util::VehicleInfo & vehicle_info)
 {
-  const auto collision_info =
-    getCollisionIndex(traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape);
+  const auto collision_info = getCollisionIndex(traj_points, traj_polygons, obstacle);
   if (!collision_info) {
     return std::nullopt;
   }
