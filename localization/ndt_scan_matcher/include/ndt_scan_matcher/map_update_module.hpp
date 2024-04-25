@@ -80,7 +80,6 @@ private:
   std::mutex * ndt_ptr_mutex_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
-  std::unique_ptr<DiagnosticsModule> diagnostics_map_update_;
 
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
 
