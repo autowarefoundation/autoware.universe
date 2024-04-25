@@ -46,14 +46,14 @@ the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autowar
 ### Subscribed topics
 
 | Name                             | Type                                            | Description            |
-|----------------------------------|-------------------------------------------------|------------------------|
+| -------------------------------- | ----------------------------------------------- | ---------------------- |
 | `input_gnss_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input GNSS pose topic. |
 | `input_ndt_pose_with_cov_topic`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input NDT pose topic.  |
 
 ### Published topics
 
 | Name                                | Type                                            | Description                                                                                                           |
-|-------------------------------------|-------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| ----------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. It will be sent as input to ekf_localizer package.                                                 |
 | `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                                    |
 | `output/ndt_position_stddev`        | `std_msgs::msg::Float32`                        | Output pose ndt average standard deviation in position xy. It is published only when the enable_debug_topics is true. |

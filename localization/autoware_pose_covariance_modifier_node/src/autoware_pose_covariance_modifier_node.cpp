@@ -154,7 +154,8 @@ void AutowarePoseCovarianceModifierNode::gnss_pose_with_cov_callback(
 }
 
 void AutowarePoseCovarianceModifierNode::update_pose_source_based_on_stddev(
-  double gnss_pose_average_stddev_xy, double gnss_pose_stddev_z, double gnss_pose_yaw_stddev_in_degrees)
+  double gnss_pose_average_stddev_xy, double gnss_pose_stddev_z,
+  double gnss_pose_yaw_stddev_in_degrees)
 {
   std_msgs::msg::String selected_pose_type;
   if (
