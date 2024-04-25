@@ -102,6 +102,10 @@ void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
 {
   AutowarePoseCovarianceModifierNode::check_gnss_pose_timeout();
 
+  if (pose_source_ == AutowarePoseCovarianceModifierNode::PoseSource::GNSS) {
+    return;
+  }
+
   std::array<double, 36> ndt_covariance_in = msg->pose.covariance;
   std::array<double, 36> out_ndt_covariance =
     pose_source_ == AutowarePoseCovarianceModifierNode::PoseSource::GNSS_NDT
@@ -111,9 +115,6 @@ void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
   geometry_msgs::msg::PoseWithCovarianceStamped ndt_pose_with_covariance = *msg;
   ndt_pose_with_covariance.pose.covariance = out_ndt_covariance;
 
-  if (pose_source_ == AutowarePoseCovarianceModifierNode::PoseSource::GNSS) {
-    return;
-  }
   output_pose_with_covariance_stamped_pub_->publish(ndt_pose_with_covariance);
   if (debug_) {
     std_msgs::msg::Float32 out_ndt_stddev;
