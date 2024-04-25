@@ -92,7 +92,7 @@ def get_ogm_creation_config(total_config: dict, list_iter: int) -> dict:
     return ogm_creation_config
 
 
-# generate downsampler
+# generate downsample node
 def get_downsample_filter_node(setting: dict) -> ComposableNode:
     plugin_str = setting["plugin"]
     voxel_size = setting["voxel_size"]
@@ -210,10 +210,10 @@ def launch_setup(context, *args, **kwargs):
         gridmap_generation_composable_nodes.append(node)
 
     if downsample_input_pointcloud:
-        downsapmle_nodes = get_downsample_preprocess_nodes(
+        downsample_nodes = get_downsample_preprocess_nodes(
             downsample_voxel_size, fusion_config["raw_pointcloud_topics"]
         )
-        gridmap_generation_composable_nodes.extend(downsapmle_nodes)
+        gridmap_generation_composable_nodes.extend(downsample_nodes)
 
     # 2. launch occupancy grid map fusion node
     gridmap_fusion_node = [
