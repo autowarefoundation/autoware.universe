@@ -32,6 +32,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <memory>
+#include <string>
 #include <tuple>
 #include <vector>
 
