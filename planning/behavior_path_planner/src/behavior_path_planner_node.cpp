@@ -398,9 +398,10 @@ void BehaviorPathPlannerNode::run()
     // compute mission remaining distance
     planner_data_->route_handler->getRemainingDistance(
       planner_data_->self_odometry->pose.pose, goal_pose_, remaining_distance_time_);
-      
-      // compute mission remaining time
-      planner_data_->route_handler->getRemainingTime(planner_data_->self_odometry->twist.twist.linear, remaining_distance_time_);
+
+    // compute mission remaining time
+    planner_data_->route_handler->getRemainingTime(
+      planner_data_->self_odometry->twist.twist.linear, remaining_distance_time_);
 
     // publish remaining distance and time
     publishMissionRemainingDistanceTime(remaining_distance_time_);
@@ -714,7 +715,8 @@ void BehaviorPathPlannerNode::publishPathReference(
   }
 }
 
-void BehaviorPathPlannerNode::publishMissionRemainingDistanceTime(const route_handler::RemainingDistanceTime & remaining_distance_time_) const
+void BehaviorPathPlannerNode::publishMissionRemainingDistanceTime(
+  const route_handler::RemainingDistanceTime & remaining_distance_time_) const
 {
   MissionRemainingDistanceTime mission_remaining_distance_time;
 

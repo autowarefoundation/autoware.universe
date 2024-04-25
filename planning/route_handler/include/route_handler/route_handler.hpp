@@ -366,10 +366,12 @@ public:
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
-  
-  void getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_, RemainingDistanceTime & remaining_dist_time) const;
-  void getRemainingTime(const Vector3 & current_vehicle_velocity, RemainingDistanceTime & remaining_dist_time) const;
 
+  void getRemainingDistance(
+    const Pose & current_pose, const Pose & goal_pose_,
+    RemainingDistanceTime & remaining_dist_time) const;
+  void getRemainingTime(
+    const Vector3 & current_vehicle_velocity, RemainingDistanceTime & remaining_dist_time) const;
 
 private:
   // MUST

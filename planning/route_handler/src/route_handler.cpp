@@ -2294,7 +2294,9 @@ lanelet::ConstLanelets RouteHandler::getClosestLanelets(
   return target_lanelets;
 }
 
-void RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose & goal_pose_, RemainingDistanceTime & remaining_dist_time) const
+void RouteHandler::getRemainingDistance(
+  const Pose & current_pose, const Pose & goal_pose_,
+  RemainingDistanceTime & remaining_dist_time) const
 {
   double remaining_distance = 0.0;
   size_t index = 0;
@@ -2335,7 +2337,8 @@ void RouteHandler::getRemainingDistance(const Pose & current_pose, const Pose & 
   remaining_dist_time.remaining_distance = remaining_distance;
 }
 
-void RouteHandler::getRemainingTime(const Vector3 & current_vehicle_velocity, RemainingDistanceTime & remaining_dist_time) const
+void RouteHandler::getRemainingTime(
+  const Vector3 & current_vehicle_velocity, RemainingDistanceTime & remaining_dist_time) const
 {
   double current_velocity_norm = std::sqrt(
     current_vehicle_velocity.x * current_vehicle_velocity.x +

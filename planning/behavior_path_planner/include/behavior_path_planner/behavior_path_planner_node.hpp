@@ -78,7 +78,6 @@ using tier4_planning_msgs::msg::StopReasonArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-
 class BehaviorPathPlannerNode : public rclcpp::Node
 {
 public:
@@ -228,7 +227,8 @@ private:
   /**
    * @brief publish mission remaining distance and time
    */
-  void publishMissionRemainingDistanceTime(const route_handler::RemainingDistanceTime & remaining_distance_time_) const;
+  void publishMissionRemainingDistanceTime(
+    const route_handler::RemainingDistanceTime & remaining_distance_time_) const;
 
   /**
    * @brief convert path with lane id to path for publish path candidate
