@@ -125,87 +125,111 @@ int run(void *dora_context)
         if (ty == DoraEventType_Input)
         {
             // copy from rslidar driver
-            #if 1
             Vec_uint8_t result;
-            
-                std::shared_ptr<PointCloudMsg> msg = stuffed_cloud_queue.popWait();//这个popwait函数是一个线程安全的队列pop
-                if (msg.get() == NULL)
+        
+            std::shared_ptr<PointCloudMsg> msg = stuffed_cloud_queue.popWait();//这个popwait函数是一个线程安全的队列pop
+            if (msg.get() == NULL)
+            {
+                continue;
+            }
+
+            // Well, it is time to process the point cloud msg, even it is time-consuming.
+            RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
+
+            #if 0
+                for (auto it = msg->points.begin(); it != msg->points.end(); it++)
                 {
-                    continue;
+                std::cout << std::fixed << std::setprecision(3) 
+                            << "(" << it->x << ", " << it->y << ", " << it->z << ", " << (int)it->intensity << ")" 
+                            << std::endl;
                 }
-
-                // Well, it is time to process the point cloud msg, even it is time-consuming.
-                RS_MSG << "msg: " << msg->seq << " point cloud size: " << msg->points.size() << RS_REND;
-
-                #if 0
-                    for (auto it = msg->points.begin(); it != msg->points.end(); it++)
-                    {
-                    std::cout << std::fixed << std::setprecision(3) 
-                                << "(" << it->x << ", " << it->y << ", " << it->z << ", " << (int)it->intensity << ")" 
-                                << std::endl;
-                    }
-                #endif
-
-                //free_cloud_queue.push(msg);//这里是说，上面那个#if里面的东西已经把这个点云处理完了，东西都取出来了，那这个点云实例（占内存的）我们就可以重复利用了，就空闲了，把它放入待使用区（free区）
-                
-                if (sizeof(PointT) <= 16)
-                {
-                    RS_MSG << "sizeof(PointT) <= 16 " << RS_REND;
-                    size_t cloudSize = (((msg->points.size()) + 1) * 16);  // 4byte for message seq, 4bytes empty, 8byte for timestamp,
-                                                                        // others for points
-                    u_int8_t* bytePointCloud = (u_int8_t*)(new PointT[cloudSize / sizeof(PointT)]);
-                    
-                    u_int32_t* seq = (u_int32_t*)bytePointCloud;
-                    *seq = msg->seq;
-                    double* timestamp = (double*)(bytePointCloud + 8);
-                    *timestamp = msg->timestamp;
-                    // PointT* point = (PointT*)(bytePointCloud + 16);
-                    // std::vector<PointT>::iterator pointPtr = msg->points.begin();
-                    // for (int i = 0; i < msg->points.size(); ++i){
-                    //   *point++ = pointPtr[i];
-                    // }
-                    memcpy(bytePointCloud+16,&(msg->points[0]),cloudSize-16);
-
-                    free_cloud_queue.push(msg);
-                    
-                    result.ptr = bytePointCloud;
-                    result.len = cloudSize;
-                    result.cap = cloudSize;
-                    //return result;
-                }
-                else if (sizeof(PointT) == 24)
-                {                                   // just write them here, I didn't test it
-                    size_t cloudSize =
-                        ((msg->points.size()) * 24);  // 24 bytes for each point, 4*3 bytes for coordinates, 1 byte for intensity, 1
-                                                    // byte because of byte aligned 2 bytes for rings, 8 bytes for timestamp
-
-                    u_int8_t* bytePointCloud = (u_int8_t*)new PointT[cloudSize / sizeof(PointT)];
-                    memcpy(bytePointCloud,&(msg->points[0]),cloudSize);
-                    // PointT* point = (PointT*)(bytePointCloud);
-                    // std::vector<PointT>::iterator pointPtr = msg->points.begin();
-                    // for (int i = 0; i < msg->points.size(); ++i)
-                    // {
-                    //   *(point++) = pointPtr[i];
-                    // }
-
-                    free_cloud_queue.push(msg);
-                    //Vec_uint8_t result;
-                    result.ptr = bytePointCloud;
-                    result.len = cloudSize;
-                    result.cap = cloudSize;
-                    //return result;
-                }
-                else
-                {
-                    std::cerr << "point size error! This may happen when your system is not byte aligned!";
-                    result = { .ptr = NULL };
-                    result.len = 0;
-                    result.cap = 0;
-                    //return result;
-                }
-            
             #endif
- 
+
+            free_cloud_queue.push(msg);//这里是说，上面那个#if里面的东西已经把这个点云处理完了，东西都取出来了，那这个点云实例（占内存的）我们就可以重复利用了，就空闲了，把它放入待使用区（free区）
+            
+            // if (sizeof(PointT) <= 16)
+            // {
+            //     RS_MSG << "sizeof(PointT) <= 16 " << RS_REND;
+            //     size_t cloudSize = (((msg->points.size()) + 1) * 16);  // 4byte for message seq, 4bytes empty, 8byte for timestamp,
+            //                                                         // others for points
+            //     u_int8_t* bytePointCloud = (u_int8_t*)(new PointT[cloudSize / sizeof(PointT)]);
+                
+            //     u_int32_t* seq = (u_int32_t*)bytePointCloud;
+            //     *seq = msg->seq;
+            //     double* timestamp = (double*)(bytePointCloud + 8);
+            //     *timestamp = msg->timestamp;
+            //     // PointT* point = (PointT*)(bytePointCloud + 16);
+            //     // std::vector<PointT>::iterator pointPtr = msg->points.begin();
+            //     // for (int i = 0; i < msg->points.size(); ++i){
+            //     //   *point++ = pointPtr[i];
+            //     // }
+            //     memcpy(bytePointCloud+16,&(msg->points[0]),cloudSize-16);
+
+            //     // free_cloud_queue.push(msg);
+                
+            //     result.ptr = bytePointCloud;
+            //     result.len = cloudSize;
+            //     result.cap = cloudSize;
+            //     // delete bytePointCloud;
+            //     // bytePointCloud = NULL;
+            //     //return result;
+            // }
+            // else if (sizeof(PointT) == 24)
+            // {                                   // just write them here, I didn't test it
+            //     size_t cloudSize =
+            //         ((msg->points.size()) * 24);  // 24 bytes for each point, 4*3 bytes for coordinates, 1 byte for intensity, 1
+            //                                     // byte because of byte aligned 2 bytes for rings, 8 bytes for timestamp
+
+            //     u_int8_t* bytePointCloud = (u_int8_t*)new PointT[cloudSize / sizeof(PointT)];
+            //     memcpy(bytePointCloud,&(msg->points[0]),cloudSize);
+            //     // PointT* point = (PointT*)(bytePointCloud);
+            //     // std::vector<PointT>::iterator pointPtr = msg->points.begin();
+            //     // for (int i = 0; i < msg->points.size(); ++i)
+            //     // {
+            //     //   *(point++) = pointPtr[i];
+            //     // }
+
+            //     // free_cloud_queue.push(msg);
+            //     //Vec_uint8_t result;
+            //     result.ptr = bytePointCloud;
+            //     result.len = cloudSize;
+            //     result.cap = cloudSize;
+            //     // delete bytePointCloud;
+            //     // bytePointCloud = NULL;
+            //     //return result;
+            // }
+            // else
+            // {
+            //     std::cerr << "point size error! This may happen when your system is not byte aligned!";
+            //     result = { .ptr = NULL };
+            //     result.len = 0;
+            //     result.cap = 0;
+            //     //return result;
+            // }
+        
+            RS_MSG << "sizeof(PointT) <= 16 " << RS_REND;
+            size_t cloudSize = (((msg->points.size()) + 1) * 16);  // 4byte for message seq, 4bytes empty, 8byte for timestamp,
+                                                                // others for points
+            u_int8_t* bytePointCloud = (u_int8_t*)(new PointT[cloudSize / sizeof(PointT)]);
+            
+            u_int32_t* seq = (u_int32_t*)bytePointCloud;
+            *seq = msg->seq;
+            double* timestamp = (double*)(bytePointCloud + 8);
+            *timestamp = msg->timestamp;
+            // PointT* point = (PointT*)(bytePointCloud + 16);
+            // std::vector<PointT>::iterator pointPtr = msg->points.begin();
+            // for (int i = 0; i < msg->points.size(); ++i){
+            //   *point++ = pointPtr[i];
+            // }
+            memcpy(bytePointCloud+16,&(msg->points[0]),cloudSize-16);
+
+            // free_cloud_queue.push(msg);
+            
+            result.ptr = bytePointCloud;
+            result.len = cloudSize;
+            result.cap = cloudSize;
+
+
             char* output_data = (char *)result.ptr;
             size_t output_data_len = result.len;
             counter += 1;
@@ -213,10 +237,12 @@ int run(void *dora_context)
             std::string out_id = "pointcloud";
             size_t data_len = 1 ;
             int resultend=dora_send_output(dora_context, &out_id[0], out_id.length(), output_data, output_data_len);
-           
-           std::cout
-                << "dora_send_output: out_id "<<out_id<< "  out_data_len: "<<output_data_len<<std::endl;
-                
+            
+            std::cout<< "dora_send_output: out_id "<<out_id<< "  out_data_len: "<<output_data_len<<std::endl;
+               
+            delete bytePointCloud;
+            bytePointCloud = NULL;
+            
             if (resultend != 0)
             {
                 std::cerr << "failed to send output" << std::endl;
