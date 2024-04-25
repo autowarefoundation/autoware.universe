@@ -22,7 +22,7 @@
 #include <string>
 
 DiagnosticsModule::DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name)
-  : clock_(node->get_clock())
+: clock_(node->get_clock())
 {
   diagnostics_pub_ =
     node->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
