@@ -24,7 +24,6 @@
 #include "autoware_control_msgs/msg/control.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_vehicle_msgs/msg/steering_report.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
