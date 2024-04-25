@@ -2132,7 +2132,9 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     );
     // std::as_const(*ptr) to use the const version of the search function
     auto candidates = std::as_const(*lanelet_map_ptr_).laneletLayer.search(bbox);
-    std::remove_if(candidates.begin(), candidates.end(), [&](const auto & l) {return !RouteHandler::isRoadLanelet(l);});
+    candidates.erase(
+      std::remove_if(candidates.begin(), candidates.end(), [&](const auto & l) {return !isRoadLanelet(l);}),
+      candidates.end());
     if(lanelet::utils::query::getClosestLanelet(
           candidates, start_checkpoint, &start_lanelet))
       start_lanelets = {start_lanelet};
@@ -2154,7 +2156,9 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     lanelet::BasicPoint2d(p.x() + max_search_range, p.y() + max_search_range)
   );
   auto candidates = std::as_const(*lanelet_map_ptr_).laneletLayer.search(bbox);
-  std::remove_if(candidates.begin(), candidates.end(), [&](const auto & l) {return !RouteHandler::isRoadLanelet(l);});
+  candidates.erase(
+    std::remove_if(candidates.begin(), candidates.end(), [&](const auto & l) {return !isRoadLanelet(l);}),
+    candidates.end());
   if(!lanelet::utils::query::getClosestLanelet(candidates, goal_checkpoint, &goal_lanelet)) {
     RCLCPP_WARN_STREAM(
       logger_, "Failed to find closest lanelet."
