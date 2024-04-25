@@ -257,7 +257,6 @@ void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
   filter.filter(*no_height_filtered_pointcloud_ptr);
 
   obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
-  cropped_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
 
   pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
@@ -338,17 +337,18 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
   auto check_collision = [&](
                            const auto & path, const colorTuple & debug_colors,
-                           const std::string & debug_ns, const rclcpp::Time & current_time) {
+                           const std::string & debug_ns, const rclcpp::Time & current_time,
+                           pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) {
     // Crop out Pointcloud using an extra wide ego path
     const auto expanded_ego_polys =
       generatePathFootprint(path, expand_width_ + path_footprint_extra_margin_);
-    cropPointCloudWithEgoFootprintPath(expanded_ego_polys);
+    cropPointCloudWithEgoFootprintPath(expanded_ego_polys, filtered_objects);
 
     // Check which points of the cropped point cloud are on the ego path, and get the closest one
     std::vector<ObjectData> objects_from_point_clusters;
     const auto ego_polys = generatePathFootprint(path, expand_width_);
     createObjectDataUsingPointCloudClusters(
-      path, ego_polys, current_time, objects_from_point_clusters);
+      path, ego_polys, current_time, objects_from_point_clusters, filtered_objects);
 
     // Add debug markers
     const auto [color_r, color_g, color_b, color_a] = debug_colors;
@@ -356,19 +356,21 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       current_time, path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
       color_a, debug_ns, debug_markers);
 
-    if (objects_from_point_clusters.empty()) {
-      return false;
-    }
+    // Get only the closest object
     const auto closest_object_point = std::min_element(
       objects_from_point_clusters.begin(), objects_from_point_clusters.end(),
       [](const auto & o1, const auto & o2) {
         return o1.distance_to_object < o2.distance_to_object;
       });
-    return hasCollision(current_v, *closest_object_point);
+
+    // check for empty vector
+    return (closest_object_point != objects_from_point_clusters.end())
+             ? hasCollision(current_v, *closest_object_point)
+             : false;
   };
 
-  // step3. create ego path based on sensor data
-  const bool has_collision_ego = std::invoke([&]() {
+  // step3. make function to check collision with ego path created with sensor data
+  const auto has_collision_ego = [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
     if (!use_imu_path_) return false;
     const double current_w = angular_velocity_ptr_->z;
     constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
@@ -376,34 +378,38 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto ego_path = generateEgoPath(current_v, current_w);
     const auto current_time = get_clock()->now();
 
-    return check_collision(ego_path, debug_color, ns, current_time);
-  });
+    return check_collision(ego_path, debug_color, ns, current_time, filtered_objects);
+  };
 
-  if (has_collision_ego) {
-    if (cropped_ros_pointcloud_ptr_ && publish_debug_pointcloud_) {
-      pub_obstacle_pointcloud_->publish(*cropped_ros_pointcloud_ptr_);
-    }
-    return true;
-  }
-  // step4. transform predicted trajectory from control module
-  const bool has_collision_predicted = std::invoke([&]() {
+  // step4. make function to check collision with predicted trajectory from control module
+  const auto has_collision_predicted =
+    [&](pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) -> bool {
     if (!use_predicted_trajectory_ || !predicted_traj_ptr_) return false;
     const auto predicted_traj_ptr = predicted_traj_ptr_;
     const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr);
-    if (!predicted_path_opt) return false;
 
+    if (!predicted_path_opt) return false;
     const auto current_time = predicted_traj_ptr->header.stamp;
     constexpr colorTuple debug_color = {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999};
     const std::string ns = "predicted";
     const auto & predicted_path = predicted_path_opt.value();
 
-    return check_collision(predicted_path, debug_color, ns, current_time);
-  });
+    return check_collision(predicted_path, debug_color, ns, current_time, filtered_objects);
+  };
 
-  if (cropped_ros_pointcloud_ptr_ && publish_debug_pointcloud_) {
-    pub_obstacle_pointcloud_->publish(*cropped_ros_pointcloud_ptr_);
+  // Data of filtered point cloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects(new PointCloud);
+  // evaluate if there is a collision for both paths
+  const bool has_collision =
+    has_collision_ego(filtered_objects) || has_collision_predicted(filtered_objects);
+
+  // Debug print
+  if (!filtered_objects->empty() && publish_debug_pointcloud_) {
+    const auto filtered_objects_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
+    pcl::toROSMsg(*filtered_objects, *filtered_objects_ros_pointcloud_ptr_);
+    pub_obstacle_pointcloud_->publish(*filtered_objects_ros_pointcloud_ptr_);
   }
-  return has_collision_predicted;
+  return has_collision;
 }
 
 bool AEB::hasCollision(const double current_v, const ObjectData & closest_object)
@@ -515,15 +521,12 @@ std::vector<Polygon2d> AEB::generatePathFootprint(
 
 void AEB::createObjectDataUsingPointCloudClusters(
   const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
-  std::vector<ObjectData> & objects)
+  std::vector<ObjectData> & objects, const pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr)
 {
   // check if the predicted path has valid number of points
-  if (ego_path.size() < 2 || ego_polys.empty() || cropped_ros_pointcloud_ptr_->data.empty()) {
+  if (ego_path.size() < 2 || ego_polys.empty() || obstacle_points_ptr->empty()) {
     return;
   }
-  PointCloud::Ptr obstacle_points_ptr(new PointCloud);
-  pcl::fromROSMsg(*cropped_ros_pointcloud_ptr_, *obstacle_points_ptr);
-  if (obstacle_points_ptr->empty()) return;
 
   // eliminate noisy points by only considering points belonging to clusters of at least a certain
   // size
@@ -587,7 +590,8 @@ void AEB::createObjectDataUsingPointCloudClusters(
   }
 }
 
-void AEB::cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys)
+void AEB::cropPointCloudWithEgoFootprintPath(
+  const std::vector<Polygon2d> & ego_polys, pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects)
 {
   PointCloud::Ptr full_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *full_points_ptr);
@@ -607,18 +611,13 @@ void AEB::cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_
   pcl::PointCloud<pcl::PointXYZ>::Ptr surface_hull(new pcl::PointCloud<pcl::PointXYZ>);
   hull.reconstruct(*surface_hull, polygons);
   // Filter out points outside of the path's convex hull
-  pcl::PointCloud<pcl::PointXYZ>::Ptr objects(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::CropHull<pcl::PointXYZ> path_polygon_hull_filter;
   path_polygon_hull_filter.setDim(2);
   path_polygon_hull_filter.setInputCloud(full_points_ptr);
   path_polygon_hull_filter.setHullIndices(polygons);
   path_polygon_hull_filter.setHullCloud(surface_hull);
-  path_polygon_hull_filter.filter(*objects);
-  objects->header.stamp = full_points_ptr->header.stamp;
-  // Store the results
-  if (!objects->empty()) {
-    pcl::toROSMsg(*objects, *cropped_ros_pointcloud_ptr_);
-  }
+  path_polygon_hull_filter.filter(*filtered_objects);
+  filtered_objects->header.stamp = full_points_ptr->header.stamp;
 }
 
 void AEB::addMarker(

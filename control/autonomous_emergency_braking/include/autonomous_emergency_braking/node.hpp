@@ -66,34 +66,6 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using Path = std::vector<geometry_msgs::msg::Pose>;
 using Vector3 = geometry_msgs::msg::Vector3;
-
-// For debugging
-class DebugTimer
-{
-private:
-  std::chrono::time_point<std::chrono::steady_clock> t_start;
-  std::string instance_;
-  double duration_warning_threshold_;
-
-public:
-  explicit DebugTimer(
-    std::string instance, const double duration_warning_threshold = 0.03)  // 40 ms
-  : instance_(instance), duration_warning_threshold_(duration_warning_threshold)
-  {
-    t_start = std::chrono::steady_clock::now();
-  }
-
-  ~DebugTimer()
-  {
-    std::chrono::time_point<std::chrono::steady_clock> t_end = std::chrono::steady_clock::now();
-    std::chrono::duration<double> duration = t_end - t_start;
-    std::cerr << "Elapsed time for " << instance_ << ": " << duration.count() << " (s)\n";
-    if (duration.count() > duration_warning_threshold_)
-      std::cerr << "WARNING: Duration Warning threshold exceeded Elapsed time for " << instance_
-                << ": " << duration.count() << " (s)\n";
-  }
-};
-
 struct ObjectData
 {
   rclcpp::Time stamp;
@@ -175,8 +147,11 @@ public:
 
   void createObjectDataUsingPointCloudClusters(
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
-    std::vector<ObjectData> & objects);
-  void cropPointCloudWithEgoFootprintPath(const std::vector<Polygon2d> & ego_polys);
+    std::vector<ObjectData> & objects,
+    const pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr);
+
+  void cropPointCloudWithEgoFootprintPath(
+    const std::vector<Polygon2d> & ego_polys, pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects);
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
@@ -187,8 +162,6 @@ public:
   void addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers);
 
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
-  PointCloud2::SharedPtr cropped_ros_pointcloud_ptr_{nullptr};
-
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
   Vector3::SharedPtr angular_velocity_ptr_{nullptr};
   Trajectory::ConstSharedPtr predicted_traj_ptr_{nullptr};
