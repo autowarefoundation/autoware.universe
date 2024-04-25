@@ -32,7 +32,6 @@
 #include "autoware_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_vehicle_msgs/msg/turn_indicators_command.hpp"
 #include "autoware_vehicle_msgs/msg/turn_indicators_report.hpp"
-#include "autoware_vehicle_msgs/msg/vehicle_control_command.hpp"
 #include "autoware_vehicle_msgs/msg/velocity_report.hpp"
 #include "autoware_vehicle_msgs/srv/control_mode_command.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
@@ -72,7 +71,6 @@ using autoware_vehicle_msgs::msg::HazardLightsReport;
 using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using autoware_vehicle_msgs::msg::TurnIndicatorsReport;
-using autoware_vehicle_msgs::msg::VehicleControlCommand;
 using autoware_vehicle_msgs::msg::VelocityReport;
 using autoware_vehicle_msgs::srv::ControlModeCommand;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
@@ -140,7 +138,6 @@ private:
   rclcpp::Subscription<GearCommand>::SharedPtr sub_manual_gear_cmd_;
   rclcpp::Subscription<TurnIndicatorsCommand>::SharedPtr sub_turn_indicators_cmd_;
   rclcpp::Subscription<HazardLightsCommand>::SharedPtr sub_hazard_lights_cmd_;
-  rclcpp::Subscription<VehicleControlCommand>::SharedPtr sub_vehicle_cmd_;
   rclcpp::Subscription<Control>::SharedPtr sub_ackermann_cmd_;
   rclcpp::Subscription<Control>::SharedPtr sub_manual_ackermann_cmd_;
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
@@ -210,11 +207,6 @@ private:
     DELAY_STEER_MAP_ACC_GEARED = 6
   } vehicle_model_type_;  //!< @brief vehicle model type to decide the model dynamics
   std::shared_ptr<SimModelInterface> vehicle_model_ptr_;  //!< @brief vehicle model pointer
-
-  /**
-   * @brief set current_vehicle_cmd_ptr_ with received message
-   */
-  void on_vehicle_cmd(const VehicleControlCommand::ConstSharedPtr msg);
 
   /**
    * @brief set input steering, velocity, and acceleration of the vehicle model
