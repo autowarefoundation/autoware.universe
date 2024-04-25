@@ -360,8 +360,8 @@ void SignalDisplay::drawHorizontalRoundedRectangle(
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
-  colorFromHSV.setHsv(0, 0, 0);  // Hue, Saturation, Value
-  colorFromHSV.setAlphaF(0.65);  // Transparency
+  colorFromHSV.setHsv(0, 0, 29);  // Hue, Saturation, Value
+  colorFromHSV.setAlphaF(0.60);   // Transparency
 
   painter.setBrush(colorFromHSV);
 
