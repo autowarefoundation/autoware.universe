@@ -27,6 +27,8 @@
 
 #include <boost/geometry.hpp>
 
+#include <pcl/common/centroid.h>
+
 #include <optional>
 #include <string>
 #include <vector>
@@ -80,6 +82,13 @@ struct Obstacle
   Obstacle(const rclcpp::Time & arg_stamp, const PointCloud & object)
   : stamp(arg_stamp), uuid(""), pointcloud(object), pointcloud_repr(true)
   {
+    twist.linear.x = twist.linear.y = twist.angular.z = 0.0;
+
+    Eigen::Vector4d centroid;
+    pcl::compute3DCentroid(pointcloud, centroid);
+    pose.position.x = centroid.x();
+    pose.position.y = centroid.y();
+    pose.position.z = centroid.z();
   }
 
   Polygon2d toPolygon() const
