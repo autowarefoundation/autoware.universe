@@ -34,8 +34,7 @@
 namespace autoware_mission_details_overlay_rviz_plugin
 {
 
-RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
-: remaining_distance_(0.0)
+RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay() : remaining_distance_(0.0)
 {
   std::string package_path =
     ament_index_cpp::get_package_share_directory("autoware_mission_details_overlay_rviz_plugin");
