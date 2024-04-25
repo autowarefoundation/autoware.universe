@@ -78,14 +78,6 @@ using tier4_planning_msgs::msg::StopReasonArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-struct RemainingDistanceTime
-{
-  double remaining_distance;
-  double remaining_time;
-  uint32_t hours;
-  uint32_t minutes;
-  uint32_t seconds;
-};
 
 class BehaviorPathPlannerNode : public rclcpp::Node
 {
@@ -139,7 +131,7 @@ private:
   bool has_received_route_{false};
 
   Pose goal_pose_;
-  RemainingDistanceTime remaining_distance_time_;
+  route_handler::RemainingDistanceTime remaining_distance_time_;
 
   std::mutex mutex_pd_;       // mutex for planner_data_
   std::mutex mutex_manager_;  // mutex for bt_manager_ or planner_manager_
@@ -196,11 +188,6 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_turn_signal_info_publisher_;
 
   /**
-   * @brief compute mission remaining distance and time
-   */
-  void computeMissionRemainingDistanceTime(const behavior_path_planner::PlanResult & path);
-
-  /**
    * @brief publish reroute availability
    */
   void publish_reroute_availability() const;
@@ -241,7 +228,7 @@ private:
   /**
    * @brief publish mission remaining distance and time
    */
-  void publishMissionRemainingDistanceTime() const;
+  void publishMissionRemainingDistanceTime(const route_handler::RemainingDistanceTime & remaining_distance_time_) const;
 
   /**
    * @brief convert path with lane id to path for publish path candidate

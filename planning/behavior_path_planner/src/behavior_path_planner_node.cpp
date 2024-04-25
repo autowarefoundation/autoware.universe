@@ -394,17 +394,23 @@ void BehaviorPathPlannerNode::run()
   if (!controlled_by_autoware_autonomously && !planner_manager_->hasApprovedModules())
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
 
+  if (planner_data_->route_handler->isHandlerReady()) {
+    // compute mission remaining distance
+    planner_data_->route_handler->getRemainingDistance(
+      planner_data_->self_odometry->pose.pose, goal_pose_, remaining_distance_time_);
+      
+      // compute mission remaining time
+      planner_data_->route_handler->getRemainingTime(planner_data_->self_odometry->twist.twist.linear, remaining_distance_time_);
+
+    // publish remaining distance and time
+    publishMissionRemainingDistanceTime(remaining_distance_time_);
+  }
+
   // run behavior planner
   const auto output = planner_manager_->run(planner_data_);
 
   // path handling
   const auto path = getPath(output, planner_data_, planner_manager_);
-
-  // compute remaining distance and time based on generated path
-  computeMissionRemainingDistanceTime(path);
-
-  // publish remaining distance and time
-  publishMissionRemainingDistanceTime();
 
   // update planner data
   planner_data_->prev_output_path = path;
@@ -493,39 +499,6 @@ void BehaviorPathPlannerNode::computeTurnSignal(
 
   publish_turn_signal_debug_data(debug_data);
   publish_steering_factor(planner_data, turn_signal);
-}
-
-void BehaviorPathPlannerNode::computeMissionRemainingDistanceTime(
-  const behavior_path_planner::PlanResult & path)
-{
-  remaining_distance_time_.remaining_distance = motion_utils::calcSignedArcLength(
-    path->points, planner_data_->self_odometry->pose.pose.position, goal_pose_.position);
-
-  geometry_msgs::msg::Vector3 current_vehicle_velocity =
-    planner_data_->self_odometry->twist.twist.linear;
-
-  double current_vehicle_velocity_norm = std::sqrt(
-    current_vehicle_velocity.x * current_vehicle_velocity.x +
-    current_vehicle_velocity.y * current_vehicle_velocity.y);
-
-  if (remaining_distance_time_.remaining_distance < 0.01 || current_vehicle_velocity_norm < 0.01) {
-    remaining_distance_time_.remaining_distance = 0.0;
-    remaining_distance_time_.remaining_time = 0.0;
-    remaining_distance_time_.hours = 0;
-    remaining_distance_time_.minutes = 0;
-    remaining_distance_time_.seconds = 0;
-    return;
-  }
-
-  double remaining_time =
-    remaining_distance_time_.remaining_distance / current_vehicle_velocity_norm;
-  remaining_distance_time_.remaining_time = remaining_time;
-
-  remaining_distance_time_.hours = static_cast<uint32_t>(remaining_time / 3600.0);
-  remaining_time = std::fmod(remaining_time, 3600);
-  remaining_distance_time_.minutes = static_cast<uint32_t>(remaining_time / 60.0);
-  remaining_distance_time_.seconds = static_cast<uint32_t>(std::fmod(remaining_time, 60));
-  return;
 }
 
 void BehaviorPathPlannerNode::publish_steering_factor(
@@ -741,15 +714,15 @@ void BehaviorPathPlannerNode::publishPathReference(
   }
 }
 
-void BehaviorPathPlannerNode::publishMissionRemainingDistanceTime() const
+void BehaviorPathPlannerNode::publishMissionRemainingDistanceTime(const route_handler::RemainingDistanceTime & remaining_distance_time_) const
 {
   MissionRemainingDistanceTime mission_remaining_distance_time;
 
   mission_remaining_distance_time.remaining_distance = remaining_distance_time_.remaining_distance;
   mission_remaining_distance_time.remaining_time = remaining_distance_time_.remaining_time;
-  mission_remaining_distance_time.remaining_hours = remaining_distance_time_.hours;
-  mission_remaining_distance_time.remaining_minutes = remaining_distance_time_.minutes;
-  mission_remaining_distance_time.remaining_seconds = remaining_distance_time_.seconds;
+  mission_remaining_distance_time.remaining_hours = remaining_distance_time_.remaining_hours;
+  mission_remaining_distance_time.remaining_minutes = remaining_distance_time_.remaining_minutes;
+  mission_remaining_distance_time.remaining_seconds = remaining_distance_time_.remaining_seconds;
 
   mission_remaining_distance_time_publisher_->publish(mission_remaining_distance_time);
 }
