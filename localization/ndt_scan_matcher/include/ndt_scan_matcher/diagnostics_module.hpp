@@ -36,7 +36,7 @@ public:
 private:
   diagnostic_msgs::msg::DiagnosticArray createDiagnosticsArray() const;
 
-  rclcpp::Node::SharedPtr node_;
+  rclcpp::Clock::SharedPtr clock_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   diagnostic_msgs::msg::DiagnosticStatus diagnostics_status_msg_;

@@ -22,18 +22,14 @@
 #include <string>
 
 DiagnosticsModule::DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name)
+  : clock_(node->get_clock())
 {
-  node_.reset(node);
-  if (node_ == nullptr) {
-    return;  // TODO(YamatoAndo) throw error
-  }
-
   diagnostics_pub_ =
-    node_->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
+    node->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
 
   diagnostics_status_msg_.name =
-    std::string(node_->get_name()) + std::string(": ") + diagnostic_name;
-  diagnostics_status_msg_.hardware_id = node_->get_name();
+    std::string(node->get_name()) + std::string(": ") + diagnostic_name;
+  diagnostics_status_msg_.hardware_id = node->get_name();
 }
 
 void DiagnosticsModule::clear()
@@ -97,7 +93,7 @@ void DiagnosticsModule::publish()
 diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::createDiagnosticsArray() const
 {
   diagnostic_msgs::msg::DiagnosticArray diagnostics_msg;
-  diagnostics_msg.header.stamp = node_->now();
+  diagnostics_msg.header.stamp = clock_->now();
   diagnostics_msg.status.push_back(diagnostics_status_msg_);
 
   if (diagnostics_msg.status.at(0).level == diagnostic_msgs::msg::DiagnosticStatus::OK) {
