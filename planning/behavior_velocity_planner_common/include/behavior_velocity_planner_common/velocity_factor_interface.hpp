@@ -19,8 +19,8 @@
 #include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
-#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 #include <string>
 #include <vector>

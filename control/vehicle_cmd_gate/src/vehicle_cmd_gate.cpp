@@ -558,10 +558,10 @@ Control VehicleCmdGate::filterControlCommand(const Control & in)
       prev_cmd.longitudinal.acceleration =
         std::max(prev_cmd.longitudinal.acceleration, current_status_cmd.longitudinal.acceleration);
       // consider reverse driving
-      prev_cmd.longitudinal.velocity =
-        std::fabs(prev_cmd.longitudinal.velocity) > std::fabs(current_status_cmd.longitudinal.velocity)
-          ? prev_cmd.longitudinal.velocity
-          : current_status_cmd.longitudinal.velocity;
+      prev_cmd.longitudinal.velocity = std::fabs(prev_cmd.longitudinal.velocity) >
+                                           std::fabs(current_status_cmd.longitudinal.velocity)
+                                         ? prev_cmd.longitudinal.velocity
+                                         : current_status_cmd.longitudinal.velocity;
       filter_.setPrevCmd(prev_cmd);
     }
     filter_.filterAll(dt, current_steer_, out, is_filter_activated);

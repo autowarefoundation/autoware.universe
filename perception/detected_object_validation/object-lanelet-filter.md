@@ -11,15 +11,15 @@ The objects only inside of the vector map will be published.
 
 ### Input
 
-| Name               | Type                                                  | Description            |
-| ------------------ | ----------------------------------------------------- | ---------------------- |
-| `input/vector_map` | `autoware_map_msgs::msg::LaneletMapBin`               | vector map             |
+| Name               | Type                                             | Description            |
+| ------------------ | ------------------------------------------------ | ---------------------- |
+| `input/vector_map` | `autoware_map_msgs::msg::LaneletMapBin`          | vector map             |
 | `input/object`     | `autoware_perception_msgs::msg::DetectedObjects` | input detected objects |
 
 ### Output
 
-| Name            | Type                                                  | Description               |
-| --------------- | ----------------------------------------------------- | ------------------------- |
+| Name            | Type                                             | Description               |
+| --------------- | ------------------------------------------------ | ------------------------- |
 | `output/object` | `autoware_perception_msgs::msg::DetectedObjects` | filtered detected objects |
 
 ## Parameters

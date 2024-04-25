@@ -532,7 +532,9 @@ void CrosswalkTrafficLightEstimatorNode::removeDuplicateIds(TrafficSignalArray &
   signals.erase(
     std::unique(
       signals.begin(), signals.end(),
-      [](const auto & s1, const auto s2) { return s1.traffic_light_group_id == s2.traffic_light_group_id; }),
+      [](const auto & s1, const auto s2) {
+        return s1.traffic_light_group_id == s2.traffic_light_group_id;
+      }),
     signals.end());
 }
 

@@ -96,8 +96,7 @@ private:
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
 
   // Publisher
-  rclcpp::Publisher<autoware_control_msgs::msg::Lateral>::SharedPtr
-    pub_ctrl_cmd_;
+  rclcpp::Publisher<autoware_control_msgs::msg::Lateral>::SharedPtr pub_ctrl_cmd_;
 
   void publishCommand(const double target_curvature);
 

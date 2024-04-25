@@ -26,7 +26,6 @@
 
 namespace marker_utils::avoidance_marker
 {
-using tier4_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::AvoidancePlanningData;
 using behavior_path_planner::AvoidLineArray;
 using behavior_path_planner::DebugData;
@@ -34,6 +33,7 @@ using behavior_path_planner::ObjectDataArray;
 using behavior_path_planner::PathShifter;
 using behavior_path_planner::ShiftLineArray;
 using geometry_msgs::msg::Pose;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using visualization_msgs::msg::MarkerArray;
 
 MarkerArray createEgoStatusMarkerArray(

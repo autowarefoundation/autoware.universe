@@ -91,8 +91,7 @@ protected:
 
 public:
   virtual bool getTrackedObject(
-    const rclcpp::Time & time,
-    autoware_perception_msgs::msg::TrackedObject & object) const = 0;
+    const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const = 0;
   virtual bool predict(const rclcpp::Time & time) = 0;
 };
 

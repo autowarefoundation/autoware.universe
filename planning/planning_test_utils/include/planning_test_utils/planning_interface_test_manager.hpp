@@ -36,14 +36,13 @@
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_control_msgs/msg/control.hpp>
-#include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -57,6 +56,7 @@
 #include <tier4_api_msgs/msg/intersection_status.hpp>
 #include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
@@ -77,7 +77,6 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::TrafficLightGroupArray;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::Path;
-using tier4_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Point;
@@ -92,6 +91,7 @@ using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_api_msgs::msg::IntersectionStatus;
 using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::LateralOffset;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;

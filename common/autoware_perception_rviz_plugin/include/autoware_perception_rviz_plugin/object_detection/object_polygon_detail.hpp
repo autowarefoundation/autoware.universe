@@ -62,8 +62,7 @@ const std::map<
   autoware_perception_msgs::msg::ObjectClassification::_label_type, ObjectPropertyValues>
   // Color map is based on cityscapes color
   kDefaultObjectPropertyValues = {
-    {autoware_perception_msgs::msg::ObjectClassification::UNKNOWN,
-     {"UNKNOWN", {255, 255, 255}}},
+    {autoware_perception_msgs::msg::ObjectClassification::UNKNOWN, {"UNKNOWN", {255, 255, 255}}},
     {autoware_perception_msgs::msg::ObjectClassification::CAR, {"CAR", {30, 144, 255}}},
     {autoware_perception_msgs::msg::ObjectClassification::BUS, {"BUS", {30, 144, 255}}},
     {autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN,
@@ -71,8 +70,7 @@ const std::map<
     {autoware_perception_msgs::msg::ObjectClassification::BICYCLE, {"CYCLIST", {119, 11, 32}}},
     {autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE,
      {"MOTORCYCLE", {119, 11, 32}}},
-    {autoware_perception_msgs::msg::ObjectClassification::TRAILER,
-     {"TRAILER", {30, 144, 255}}},
+    {autoware_perception_msgs::msg::ObjectClassification::TRAILER, {"TRAILER", {30, 144, 255}}},
     {autoware_perception_msgs::msg::ObjectClassification::TRUCK, {"TRUCK", {30, 144, 255}}}};
 
 /// \brief Convert the given polygon into a marker representing the shape in 3d

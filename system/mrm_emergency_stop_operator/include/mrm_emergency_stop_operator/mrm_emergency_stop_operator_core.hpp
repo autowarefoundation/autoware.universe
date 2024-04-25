@@ -78,8 +78,7 @@ private:
   bool is_prev_control_cmd_subscribed_;
 
   // Algorithm
-  Control calcTargetAcceleration(
-    const Control & prev_control_cmd) const;
+  Control calcTargetAcceleration(const Control & prev_control_cmd) const;
 };
 
 }  // namespace mrm_emergency_stop_operator

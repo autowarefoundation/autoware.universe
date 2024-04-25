@@ -41,8 +41,7 @@ std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_obj
                     c.label == autoware_perception_msgs::msg::ObjectClassification::BUS ||
                     c.label == autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
                     c.label == autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
-                    c.label ==
-                      autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
+                    c.label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
                     c.label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE;
            }) != o.classification.end();
   };

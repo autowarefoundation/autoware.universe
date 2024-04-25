@@ -49,8 +49,7 @@ GearDisplay::GearDisplay() : current_gear_(0)
   }
 }
 
-void GearDisplay::updateGearData(
-  const autoware_vehicle_msgs::msg::GearReport::ConstSharedPtr & msg)
+void GearDisplay::updateGearData(const autoware_vehicle_msgs::msg::GearReport::ConstSharedPtr & msg)
 {
   current_gear_ = msg->report;  // Assuming msg->report contains the gear information
 }

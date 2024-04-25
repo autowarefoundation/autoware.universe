@@ -264,8 +264,7 @@ inline Eigen::Vector2d recoverFromTrackingPoint(
 inline void calcAnchorPointOffset(
   const double w, const double l, const int indx,
   const autoware_perception_msgs::msg::DetectedObject & input_object, const double & yaw,
-  autoware_perception_msgs::msg::DetectedObject & offset_object,
-  Eigen::Vector2d & tracking_offset)
+  autoware_perception_msgs::msg::DetectedObject & offset_object, Eigen::Vector2d & tracking_offset)
 {
   // copy value
   offset_object = input_object;

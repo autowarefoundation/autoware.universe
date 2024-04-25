@@ -87,15 +87,13 @@ void SignalDisplay::onInitialize()
   turn_signals_topic_property_->initialize(rviz_ros_node);
 
   speed_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
-    "Speed Topic", "/vehicle/status/velocity_status",
-    "autoware_vehicle_msgs/msg/VelocityReport", "Topic for Speed Data", this,
-    SLOT(topic_updated_speed()));
+    "Speed Topic", "/vehicle/status/velocity_status", "autoware_vehicle_msgs/msg/VelocityReport",
+    "Topic for Speed Data", this, SLOT(topic_updated_speed()));
   speed_topic_property_->initialize(rviz_ros_node);
 
   steering_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
-    "Steering Topic", "/vehicle/status/steering_status",
-    "autoware_vehicle_msgs/msg/SteeringReport", "Topic for Steering Data", this,
-    SLOT(topic_updated_steering()));
+    "Steering Topic", "/vehicle/status/steering_status", "autoware_vehicle_msgs/msg/SteeringReport",
+    "Topic for Steering Data", this, SLOT(topic_updated_steering()));
   steering_topic_property_->initialize(rviz_ros_node);
 
   hazard_lights_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
@@ -112,8 +110,8 @@ void SignalDisplay::onInitialize()
 
   traffic_topic_property_ = std::make_unique<rviz_common::properties::RosTopicProperty>(
     "Traffic Topic", "/perception/traffic_light_recognition/traffic_signals",
-    "autoware_perception_msgs/msgs/msg/TrafficLightGroupArray", "Topic for Traffic Light Data", this,
-    SLOT(topic_updated_traffic()));
+    "autoware_perception_msgs/msgs/msg/TrafficLightGroupArray", "Topic for Traffic Light Data",
+    this, SLOT(topic_updated_traffic()));
   traffic_topic_property_->initialize(rviz_ros_node);
 }
 
@@ -125,9 +123,7 @@ void SignalDisplay::setupRosSubscriptions()
   gear_sub_ = rviz_node_->create_subscription<autoware_vehicle_msgs::msg::GearReport>(
     gear_topic_property_->getTopicStd(),
     rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-    [this](const autoware_vehicle_msgs::msg::GearReport::SharedPtr msg) {
-      updateGearData(msg);
-    });
+    [this](const autoware_vehicle_msgs::msg::GearReport::SharedPtr msg) { updateGearData(msg); });
 
   steering_sub_ = rviz_node_->create_subscription<autoware_vehicle_msgs::msg::SteeringReport>(
     steering_topic_property_->getTopicStd(),
@@ -159,12 +155,13 @@ void SignalDisplay::setupRosSubscriptions()
         updateHazardLightsData(msg);
       });
 
-  traffic_sub_ = rviz_node_->create_subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>(
-    traffic_topic_property_->getTopicStd(),
-    rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-    [this](const autoware_perception_msgs::msg::TrafficLightGroupArray::SharedPtr msg) {
-      updateTrafficLightData(msg);
-    });
+  traffic_sub_ =
+    rviz_node_->create_subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>(
+      traffic_topic_property_->getTopicStd(),
+      rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
+      [this](const autoware_perception_msgs::msg::TrafficLightGroupArray::SharedPtr msg) {
+        updateTrafficLightData(msg);
+      });
 
   speed_limit_sub_ = rviz_node_->create_subscription<tier4_planning_msgs::msg::VelocityLimit>(
     speed_limit_topic_property_->getTopicStd(),
@@ -422,9 +419,7 @@ void SignalDisplay::topic_updated_gear()
     rviz_ros_node->get_raw_node()->create_subscription<autoware_vehicle_msgs::msg::GearReport>(
       gear_topic_property_->getTopicStd(),
       rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-      [this](const autoware_vehicle_msgs::msg::GearReport::SharedPtr msg) {
-        updateGearData(msg);
-      });
+      [this](const autoware_vehicle_msgs::msg::GearReport::SharedPtr msg) { updateGearData(msg); });
 }
 
 void SignalDisplay::topic_updated_steering()
@@ -432,13 +427,13 @@ void SignalDisplay::topic_updated_steering()
   // resubscribe to the topic
   steering_sub_.reset();
   auto rviz_ros_node = context_->getRosNodeAbstraction().lock();
-  steering_sub_ = rviz_ros_node->get_raw_node()
-                    ->create_subscription<autoware_vehicle_msgs::msg::SteeringReport>(
-                      steering_topic_property_->getTopicStd(),
-                      rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-                      [this](const autoware_vehicle_msgs::msg::SteeringReport::SharedPtr msg) {
-                        updateSteeringData(msg);
-                      });
+  steering_sub_ =
+    rviz_ros_node->get_raw_node()->create_subscription<autoware_vehicle_msgs::msg::SteeringReport>(
+      steering_topic_property_->getTopicStd(),
+      rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
+      [this](const autoware_vehicle_msgs::msg::SteeringReport::SharedPtr msg) {
+        updateSteeringData(msg);
+      });
 }
 
 void SignalDisplay::topic_updated_speed()
@@ -446,13 +441,13 @@ void SignalDisplay::topic_updated_speed()
   // resubscribe to the topic
   speed_sub_.reset();
   auto rviz_ros_node = context_->getRosNodeAbstraction().lock();
-  speed_sub_ = rviz_ros_node->get_raw_node()
-                 ->create_subscription<autoware_vehicle_msgs::msg::VelocityReport>(
-                   speed_topic_property_->getTopicStd(),
-                   rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
-                   [this](const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg) {
-                     updateSpeedData(msg);
-                   });
+  speed_sub_ =
+    rviz_ros_node->get_raw_node()->create_subscription<autoware_vehicle_msgs::msg::VelocityReport>(
+      speed_topic_property_->getTopicStd(),
+      rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
+      [this](const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg) {
+        updateSpeedData(msg);
+      });
 }
 
 void SignalDisplay::topic_updated_speed_limit()

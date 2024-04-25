@@ -28,7 +28,6 @@
 #include <Eigen/Core>
 
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -39,6 +38,7 @@
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <tf2/utils.h>
 
@@ -141,8 +141,7 @@ inline geometry_msgs::msg::Point getPoint(const autoware_planning_msgs::msg::Pat
 // }
 
 template <>
-inline geometry_msgs::msg::Point getPoint(
-  const tier4_planning_msgs::msg::PathPointWithLaneId & p)
+inline geometry_msgs::msg::Point getPoint(const tier4_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return p.point.pose.position;
 }

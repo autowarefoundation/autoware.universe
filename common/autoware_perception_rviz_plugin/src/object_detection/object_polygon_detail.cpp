@@ -666,7 +666,7 @@ void calc_2d_bounding_box_bottom_line_list(
   const double width_half = shape.dimensions.y * 0.5;
   const double height_half = shape.dimensions.z * 0.5;
   geometry_msgs::msg::Point point;
-  
+
   // bounding box corner points
   // top surface, clockwise
   const double point_list[4][3] = {

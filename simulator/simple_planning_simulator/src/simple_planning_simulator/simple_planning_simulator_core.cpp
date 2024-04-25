@@ -120,9 +120,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     [this](const Control::ConstSharedPtr msg) { current_ackermann_cmd_ = *msg; });
   sub_manual_ackermann_cmd_ = create_subscription<Control>(
     "input/manual_ackermann_control_command", QoS{1},
-    [this](const Control::ConstSharedPtr msg) {
-      current_manual_ackermann_cmd_ = *msg;
-    });
+    [this](const Control::ConstSharedPtr msg) { current_manual_ackermann_cmd_ = *msg; });
   sub_gear_cmd_ = create_subscription<GearCommand>(
     "input/gear_command", QoS{1},
     [this](const GearCommand::ConstSharedPtr msg) { current_gear_cmd_ = *msg; });
@@ -455,8 +453,7 @@ void SimplePlanningSimulator::on_set_pose(
   response->status = tier4_api_utils::response_success();
 }
 
-void SimplePlanningSimulator::set_input(
-  const Control & cmd, const double acc_by_slope)
+void SimplePlanningSimulator::set_input(const Control & cmd, const double acc_by_slope)
 {
   const auto steer = cmd.lateral.steering_tire_angle;
   const auto vel = cmd.longitudinal.velocity;

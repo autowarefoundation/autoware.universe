@@ -527,8 +527,7 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
   }
 }
 
-void AutowareStatePanel::onShift(
-  const autoware_vehicle_msgs::msg::GearReport::ConstSharedPtr msg)
+void AutowareStatePanel::onShift(const autoware_vehicle_msgs::msg::GearReport::ConstSharedPtr msg)
 {
   switch (msg->report) {
     case autoware_vehicle_msgs::msg::GearReport::PARK:

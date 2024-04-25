@@ -280,8 +280,8 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
 }
 
 Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
-  const tier4_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Pose & ego_pose, const double margin, const double extra_dist) const
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
+  const double margin, const double extra_dist) const
 {
   Polygon2d ego_area;  // open polygon
   double dist_from_start_sum = 0.0;

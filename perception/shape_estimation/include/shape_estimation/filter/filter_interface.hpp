@@ -28,8 +28,7 @@ public:
   virtual ~ShapeEstimationFilterInterface() {}
 
   virtual bool filter(
-    const autoware_perception_msgs::msg::Shape & shape,
-    const geometry_msgs::msg::Pose & pose) = 0;
+    const autoware_perception_msgs::msg::Shape & shape, const geometry_msgs::msg::Pose & pose) = 0;
 };
 
 #endif  // SHAPE_ESTIMATION__FILTER__FILTER_INTERFACE_HPP_

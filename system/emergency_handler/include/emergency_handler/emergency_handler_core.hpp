@@ -59,11 +59,9 @@ private:
   // Subscribers
   rclcpp::Subscription<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr
     sub_hazard_status_stamped_;
-  rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr
-    sub_prev_control_command_;
+  rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr sub_prev_control_command_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr
-    sub_control_mode_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr sub_control_mode_;
   rclcpp::Subscription<tier4_system_msgs::msg::MrmBehaviorStatus>::SharedPtr
     sub_mrm_comfortable_stop_status_;
   rclcpp::Subscription<tier4_system_msgs::msg::MrmBehaviorStatus>::SharedPtr
@@ -78,8 +76,7 @@ private:
 
   void onHazardStatusStamped(
     const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg);
-  void onPrevControlCommand(
-    const autoware_control_msgs::msg::Control::ConstSharedPtr msg);
+  void onPrevControlCommand(const autoware_control_msgs::msg::Control::ConstSharedPtr msg);
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onControlMode(const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
   void onMrmComfortableStopStatus(
@@ -88,13 +85,11 @@ private:
     const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
 
   // Publisher
-  rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr
-    pub_control_command_;
+  rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr pub_control_command_;
 
   // rclcpp::Publisher<tier4_vehicle_msgs::msg::ShiftStamped>::SharedPtr pub_shift_;
   // rclcpp::Publisher<tier4_vehicle_msgs::msg::TurnSignal>::SharedPtr pub_turn_signal_;
-  rclcpp::Publisher<autoware_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
-    pub_hazard_cmd_;
+  rclcpp::Publisher<autoware_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr pub_hazard_cmd_;
   rclcpp::Publisher<autoware_vehicle_msgs::msg::GearCommand>::SharedPtr pub_gear_cmd_;
 
   autoware_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();

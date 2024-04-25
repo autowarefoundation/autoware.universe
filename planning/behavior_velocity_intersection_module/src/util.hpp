@@ -38,16 +38,14 @@ namespace behavior_velocity_planner::util
  * @return if insertion was successful return the inserted point index
  */
 std::optional<size_t> insertPointIndex(
-  const geometry_msgs::msg::Pose & in_pose,
-  tier4_planning_msgs::msg::PathWithLaneId * inout_path,
+  const geometry_msgs::msg::Pose & in_pose, tier4_planning_msgs::msg::PathWithLaneId * inout_path,
   const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold);
 
 /**
  * @brief check if a PathPointWithLaneId contains any of the given lane ids
  */
 bool hasLaneIds(
-  const tier4_planning_msgs::msg::PathPointWithLaneId & p,
-  const std::set<lanelet::Id> & ids);
+  const tier4_planning_msgs::msg::PathPointWithLaneId & p, const std::set<lanelet::Id> & ids);
 
 /**
  * @brief find the first contiguous interval of the path points that contains the specified lane ids

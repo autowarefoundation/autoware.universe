@@ -154,8 +154,7 @@ private:
    * of vehicle.
    */
 
-  TrajectoryPoint calcNextPose(
-    const double ds, TrajectoryPoint & point, Lateral cmd) const;
+  TrajectoryPoint calcNextPose(const double ds, TrajectoryPoint & point, Lateral cmd) const;
 
   boost::optional<Trajectory> generatePredictedTrajectory();
 

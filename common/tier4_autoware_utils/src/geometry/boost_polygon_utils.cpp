@@ -146,14 +146,12 @@ Polygon2d rotatePolygon(const Polygon2d & polygon, const double angle)
 //     for (int i = 0; i < circle_discrete_num; ++i) {
 //       geometry_msgs::msg::Point point;
 //       point.x = std::cos(
-//                   (static_cast<double>(i) / static_cast<double>(circle_discrete_num)) * 2.0 * M_PI +
-//                   M_PI / static_cast<double>(circle_discrete_num)) *
-//                   radius +
+//                   (static_cast<double>(i) / static_cast<double>(circle_discrete_num)) * 2.0 *
+//                   M_PI + M_PI / static_cast<double>(circle_discrete_num)) * radius +
 //                 pose.position.x;
 //       point.y = std::sin(
-//                   (static_cast<double>(i) / static_cast<double>(circle_discrete_num)) * 2.0 * M_PI +
-//                   M_PI / static_cast<double>(circle_discrete_num)) *
-//                   radius +
+//                   (static_cast<double>(i) / static_cast<double>(circle_discrete_num)) * 2.0 *
+//                   M_PI + M_PI / static_cast<double>(circle_discrete_num)) * radius +
 //                 pose.position.y;
 //       appendPointToPolygon(polygon, point);
 //     }

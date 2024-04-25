@@ -22,9 +22,9 @@
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "autoware_control_msgs/msg/control.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_vehicle_msgs/msg/vehicle_odometry.hpp"
-#include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -178,13 +178,11 @@ public:
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_pub =
     fnf->create_publisher<OperationModeState>("controller/input/current_operation_mode");
 
-  rclcpp::Subscription<Control>::SharedPtr cmd_sub =
-    fnf->create_subscription<Control>(
-      "controller/output/control_cmd", *fnf->get_fake_node(),
-      [this](const Control::SharedPtr msg) {
-        cmd_msg = msg;
-        received_control_command = true;
-      });
+  rclcpp::Subscription<Control>::SharedPtr cmd_sub = fnf->create_subscription<Control>(
+    "controller/output/control_cmd", *fnf->get_fake_node(), [this](const Control::SharedPtr msg) {
+      cmd_msg = msg;
+      received_control_command = true;
+    });
 
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> br =
     std::make_shared<tf2_ros::StaticTransformBroadcaster>(fnf->get_fake_node());

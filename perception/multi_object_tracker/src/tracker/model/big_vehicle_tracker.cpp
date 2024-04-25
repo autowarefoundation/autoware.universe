@@ -226,9 +226,8 @@ autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObje
 
     // yaw angle fix
     double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-    bool is_yaw_available =
-      object.kinematics.orientation_availability !=
-      autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
+    bool is_yaw_available = object.kinematics.orientation_availability !=
+                            autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
 
     // fill covariance matrix
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;

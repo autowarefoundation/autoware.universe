@@ -157,8 +157,8 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
     create_subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
       "~/input/initial_objects", rclcpp::QoS{1},
       std::bind(&DetectionByTracker::onObjects, this, std::placeholders::_1));
-  objects_pub_ = create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
-    "~/output", rclcpp::QoS{1});
+  objects_pub_ =
+    create_publisher<autoware_perception_msgs::msg::DetectedObjects>("~/output", rclcpp::QoS{1});
 
   // Set parameters
   tracker_ignore_.UNKNOWN = declare_parameter<bool>("tracker_ignore_label.UNKNOWN");

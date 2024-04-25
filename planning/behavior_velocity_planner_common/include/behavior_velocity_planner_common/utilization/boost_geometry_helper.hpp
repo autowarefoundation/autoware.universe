@@ -18,11 +18,11 @@
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_planning_msgs/msg/path_point.hpp>
-#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/geometries/geometries.hpp>

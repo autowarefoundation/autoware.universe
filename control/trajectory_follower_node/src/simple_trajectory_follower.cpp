@@ -57,8 +57,9 @@ void SimpleTrajectoryFollower::onTimer()
   Control cmd;
   cmd.stamp = cmd.lateral.stamp = cmd.longitudinal.stamp = get_clock()->now();
   cmd.lateral.steering_tire_angle = static_cast<float>(calcSteerCmd());
-  cmd.longitudinal.velocity = use_external_target_vel_ ? static_cast<float>(external_target_vel_)
-                                                    : closest_traj_point_.longitudinal_velocity_mps;
+  cmd.longitudinal.velocity = use_external_target_vel_
+                                ? static_cast<float>(external_target_vel_)
+                                : closest_traj_point_.longitudinal_velocity_mps;
   cmd.longitudinal.acceleration = static_cast<float>(calcAccCmd());
   pub_cmd_->publish(cmd);
 }

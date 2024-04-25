@@ -79,8 +79,8 @@ tracker_state_parameter:
 
 #### input/parameters
 
-| topic name                      | message type                                    | description                                                                           |
-| ------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------- |
+| topic name                      | message type                               | description                                                                           |
+| ------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
 | `~input/main_object`            | `autoware_perception_msgs::TrackedObjects` | Dominant tracking objects. Output will be published with this dominant object stamps. |
 | `~input/sub_object`             | `autoware_perception_msgs::TrackedObjects` | Sub tracking objects.                                                                 |
 | `output/object`                 | `autoware_perception_msgs::TrackedObjects` | Merged tracking objects.                                                              |

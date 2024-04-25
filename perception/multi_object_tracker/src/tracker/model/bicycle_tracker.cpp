@@ -187,8 +187,7 @@ autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
   return updating_object;
 }
 
-bool BicycleTracker::measureWithPose(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
 {
   // get measurement yaw angle to update
   const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
@@ -219,8 +218,7 @@ bool BicycleTracker::measureWithPose(
   return is_updated;
 }
 
-bool BicycleTracker::measureWithShape(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object)
 {
   if (!object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box

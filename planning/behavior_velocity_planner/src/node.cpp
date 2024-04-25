@@ -343,7 +343,8 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
       });
     // if the observation is UNKNOWN and past observation is available, only update the timestamp
     // and keep the body of the info
-    const auto old_data = traffic_light_id_map_last_observed_old.find(signal.traffic_light_group_id);
+    const auto old_data =
+      traffic_light_id_map_last_observed_old.find(signal.traffic_light_group_id);
     if (is_unknown_observation && old_data != traffic_light_id_map_last_observed_old.end()) {
       // copy last observation
       planner_data_.traffic_light_id_map_last_observed_[signal.traffic_light_group_id] =
@@ -352,7 +353,8 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
       planner_data_.traffic_light_id_map_last_observed_[signal.traffic_light_group_id].stamp =
         msg->stamp;
     } else {
-      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_light_group_id] = traffic_signal;
+      planner_data_.traffic_light_id_map_last_observed_[signal.traffic_light_group_id] =
+        traffic_signal;
     }
   }
 }

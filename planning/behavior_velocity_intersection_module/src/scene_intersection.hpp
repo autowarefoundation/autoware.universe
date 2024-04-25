@@ -27,8 +27,8 @@
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/primitives/LineString.h>
@@ -513,8 +513,7 @@ private:
    * @brief set RTC value according to calculated DecisionResult
    */
   void prepareRTCStatus(
-    const intersection::DecisionResult &,
-    const tier4_planning_msgs::msg::PathWithLaneId & path);
+    const intersection::DecisionResult &, const tier4_planning_msgs::msg::PathWithLaneId & path);
 
   /**
    * @brief act based on current RTC approval

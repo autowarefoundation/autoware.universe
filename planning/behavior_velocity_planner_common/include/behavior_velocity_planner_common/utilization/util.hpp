@@ -19,8 +19,8 @@
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -210,9 +210,8 @@ std::set<int64_t> getLaneIdSetOnPath(
   const geometry_msgs::msg::Pose & current_pose);
 
 bool isOverLine(
-  const tier4_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose,
-  const double offset = 0.0);
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Pose & self_pose,
+  const geometry_msgs::msg::Pose & line_pose, const double offset = 0.0);
 
 std::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output);

@@ -67,11 +67,9 @@ protected:
   rviz_common::properties::FloatProperty * property_vel_max_;
 
 private:
-  std::deque<
-    std::tuple<autoware_vehicle_msgs::msg::VelocityReport::ConstSharedPtr, Ogre::Vector3>>
+  std::deque<std::tuple<autoware_vehicle_msgs::msg::VelocityReport::ConstSharedPtr, Ogre::Vector3>>
     histories_;
-  bool validateFloats(
-    const autoware_vehicle_msgs::msg::VelocityReport::ConstSharedPtr & msg_ptr);
+  bool validateFloats(const autoware_vehicle_msgs::msg::VelocityReport::ConstSharedPtr & msg_ptr);
   std::mutex mutex_;
 };
 

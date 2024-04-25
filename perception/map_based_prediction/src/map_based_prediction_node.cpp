@@ -888,7 +888,8 @@ void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
 }
 
-void MapBasedPredictionNode::trafficSignalsCallback(const TrafficLightGroupArray::ConstSharedPtr msg)
+void MapBasedPredictionNode::trafficSignalsCallback(
+  const TrafficLightGroupArray::ConstSharedPtr msg)
 {
   traffic_signal_id_map_.clear();
   for (const auto & signal : msg->traffic_light_groups) {

@@ -81,8 +81,8 @@ std::optional<const lanelet::BasicLineString2d> find_next_stop_line(
 }
 
 void cut_predicted_path_beyond_red_lights(
-  autoware_perception_msgs::msg::PredictedPath & predicted_path,
-  const PlannerData & planner_data, const double object_front_overhang)
+  autoware_perception_msgs::msg::PredictedPath & predicted_path, const PlannerData & planner_data,
+  const double object_front_overhang)
 {
   const auto stop_line = find_next_stop_line(predicted_path, planner_data);
   if (stop_line) {

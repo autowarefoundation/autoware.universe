@@ -102,14 +102,14 @@ private:
     turn_signals_sub_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::HazardLightsReport>::SharedPtr
     hazard_lights_sub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>::SharedPtr traffic_sub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>::SharedPtr
+    traffic_sub_;
   rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr speed_limit_sub_;
 
   std::mutex property_mutex_;
 
   void updateGearData(const autoware_vehicle_msgs::msg::GearReport::ConstSharedPtr & msg);
-  void updateSteeringData(
-    const autoware_vehicle_msgs::msg::SteeringReport::ConstSharedPtr & msg);
+  void updateSteeringData(const autoware_vehicle_msgs::msg::SteeringReport::ConstSharedPtr & msg);
   void updateSpeedData(const autoware_vehicle_msgs::msg::VelocityReport::ConstSharedPtr & msg);
   void updateTurnSignalsData(
     const autoware_vehicle_msgs::msg::TurnIndicatorsReport::ConstSharedPtr & msg);
