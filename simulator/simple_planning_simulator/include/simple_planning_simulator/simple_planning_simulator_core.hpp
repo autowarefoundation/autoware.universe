@@ -21,7 +21,6 @@
 #include "tier4_api_utils/tier4_api_utils.hpp"
 
 #include "autoware_control_msgs/msg/control.hpp"
-#include "autoware_vehicle_msgs/msg/control_mode_command.hpp"
 #include "autoware_vehicle_msgs/msg/control_mode_report.hpp"
 #include "autoware_vehicle_msgs/msg/engage.hpp"
 #include "autoware_vehicle_msgs/msg/gear_command.hpp"
