@@ -582,7 +582,7 @@ bool isNeverAvoidanceTarget(
       isOnRight(object) && !object.is_parked &&
       object.overhang_points.front().first > parameters->th_overhang_distance) {
       RCLCPP_DEBUG(
-        rclcpp::get_logger(__func__),
+        rclcpp::get_logger(logger_namespace),
         "merging vehicle. but overhang distance is larger than threshold.");
       return true;
     }
@@ -590,7 +590,7 @@ bool isNeverAvoidanceTarget(
       !isOnRight(object) && !object.is_parked &&
       object.overhang_points.front().first < -1.0 * parameters->th_overhang_distance) {
       RCLCPP_DEBUG(
-        rclcpp::get_logger(__func__),
+        rclcpp::get_logger(logger_namespace),
         "merging vehicle. but overhang distance is larger than threshold.");
       return true;
     }
@@ -602,7 +602,7 @@ bool isNeverAvoidanceTarget(
       isOnRight(object) && !object.is_parked &&
       object.overhang_points.front().first > parameters->th_overhang_distance) {
       RCLCPP_DEBUG(
-        rclcpp::get_logger(__func__),
+        rclcpp::get_logger(logger_namespace),
         "deviating vehicle. but overhang distance is larger than threshold.");
       return true;
     }
@@ -610,7 +610,7 @@ bool isNeverAvoidanceTarget(
       !isOnRight(object) && !object.is_parked &&
       object.overhang_points.front().first < -1.0 * parameters->th_overhang_distance) {
       RCLCPP_DEBUG(
-        rclcpp::get_logger(__func__),
+        rclcpp::get_logger(logger_namespace),
         "deviating vehicle. but overhang distance is larger than threshold.");
       return true;
     }
