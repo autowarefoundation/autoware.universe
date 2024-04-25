@@ -17,10 +17,10 @@
 
 #include "lidar_transfusion/cuda_utils.hpp"
 #include "lidar_transfusion/network/network_trt.hpp"
-#include "lidar_transfusion/preprocess/voxel_generator.hpp"
+#include "lidar_transfusion/postprocess/postprocess_kernel.hpp"
 #include "lidar_transfusion/preprocess/pointcloud_densification.hpp"
 #include "lidar_transfusion/preprocess/preprocess_kernel.hpp"
-#include "lidar_transfusion/postprocess/postprocess_kernel.hpp"
+#include "lidar_transfusion/preprocess/voxel_generator.hpp"
 #include "lidar_transfusion/utils.hpp"
 #include "lidar_transfusion/visibility_control.hpp"
 
@@ -50,9 +50,9 @@ public:
   {
   }
 
-  std::string onnx_path() const {return onnx_path_;}
-  std::string engine_path() const {return engine_path_;}
-  std::string trt_precision() const {return trt_precision_;}
+  std::string onnx_path() const { return onnx_path_; }
+  std::string engine_path() const { return engine_path_; }
+  std::string trt_precision() const { return trt_precision_; }
 
 private:
   std::string onnx_path_;
@@ -64,8 +64,8 @@ class LIDAR_TRANSFUSION_PUBLIC TransfusionTRT
 {
 public:
   explicit TransfusionTRT(
-    const NetworkParam & network_param,
-    const DensificationParam & densification_param, const TransfusionConfig & config);
+    const NetworkParam & network_param, const DensificationParam & densification_param,
+    const TransfusionConfig & config);
   virtual ~TransfusionTRT();
 
   bool detect(

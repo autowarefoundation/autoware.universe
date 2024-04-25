@@ -14,7 +14,7 @@
 
 #ifndef LIDAR_TRANSFUSION__PREPROCESS__VOXEL_GENERATOR_HPP_
 #define LIDAR_TRANSFUSION__PREPROCESS__VOXEL_GENERATOR_HPP_
-#define AFF_MAT_SIZE 16  // 4x4 matrix
+#define AFF_MAT_SIZE 16         // 4x4 matrix
 #define MAX_CLOUD_STEP_SIZE 35  // PointXYZIRCADT
 
 #include "lidar_transfusion/cuda_utils.hpp"
@@ -42,12 +42,10 @@ class VoxelGenerator
 {
 public:
   explicit VoxelGenerator(
-    const DensificationParam & densification_param,
-    const TransfusionConfig & config,
+    const DensificationParam & densification_param, const TransfusionConfig & config,
     cudaStream_t & stream);
   std::size_t generateSweepPoints(
-    const sensor_msgs::msg::PointCloud2 & msg,
-    cuda::unique_ptr<float[]> & points_d);
+    const sensor_msgs::msg::PointCloud2 & msg, cuda::unique_ptr<float[]> & points_d);
   bool enqueuePointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
   void initCloudInfo(const sensor_msgs::msg::PointCloud2 & msg);

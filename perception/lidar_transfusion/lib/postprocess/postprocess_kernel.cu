@@ -49,10 +49,11 @@ __device__ inline float sigmoid(float x)
 }
 
 __global__ void generateBoxes3D_kernel(
-  const float * __restrict__ cls_output, const float * __restrict__ box_output, const float * __restrict__ dir_cls_output,
-  const float voxel_size_x, const float voxel_size_y, const float min_x_range, const float min_y_range,
-  const int num_proposals, const int num_classes, const int num_point_values,
-  const float * __restrict__ yaw_norm_thresholds, Box3D * __restrict__ det_boxes3d)
+  const float * __restrict__ cls_output, const float * __restrict__ box_output,
+  const float * __restrict__ dir_cls_output, const float voxel_size_x, const float voxel_size_y,
+  const float min_x_range, const float min_y_range, const int num_proposals, const int num_classes,
+  const int num_point_values, const float * __restrict__ yaw_norm_thresholds,
+  Box3D * __restrict__ det_boxes3d)
 {
   int point_idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (point_idx >= num_proposals) {
@@ -62,7 +63,7 @@ __global__ void generateBoxes3D_kernel(
   int class_id = 0;
   float max_score = cls_output[point_idx];
 
-  #pragma unroll
+#pragma unroll
   for (int i = 1; i < num_classes; i++) {
     float score = cls_output[i * num_proposals + point_idx];
     if (score > max_score) {
@@ -79,16 +80,18 @@ __global__ void generateBoxes3D_kernel(
   det_boxes3d[point_idx].label = class_id;
   det_boxes3d[point_idx].score = yaw_norm >= yaw_norm_thresholds[class_id] ? max_score : 0.f;
   det_boxes3d[point_idx].x = box_output[point_idx] * num_point_values * voxel_size_x + min_x_range;
-  det_boxes3d[point_idx].y = box_output[point_idx + num_proposals] * num_point_values * voxel_size_y + min_y_range;
+  det_boxes3d[point_idx].y =
+    box_output[point_idx + num_proposals] * num_point_values * voxel_size_y + min_y_range;
   det_boxes3d[point_idx].z = box_output[point_idx + 2 * num_proposals];
   det_boxes3d[point_idx].width = expf(box_output[point_idx + 3 * num_proposals]);
   det_boxes3d[point_idx].length = expf(box_output[point_idx + 4 * num_proposals]);
   det_boxes3d[point_idx].height = expf(box_output[point_idx + 5 * num_proposals]);
-  det_boxes3d[point_idx].yaw = atan2f(dir_cls_output[point_idx], dir_cls_output[point_idx + num_proposals]);
+  det_boxes3d[point_idx].yaw =
+    atan2f(dir_cls_output[point_idx], dir_cls_output[point_idx + num_proposals]);
 }
 
-PostprocessCuda::PostprocessCuda(const TransfusionConfig & config, cudaStream_t & stream) :
-  config_(config), stream_(stream)
+PostprocessCuda::PostprocessCuda(const TransfusionConfig & config, cudaStream_t & stream)
+: config_(config), stream_(stream)
 {
   boxes3d_d_ = thrust::device_vector<Box3D>(config_.num_proposals_);
   yaw_norm_thresholds_d_ = thrust::device_vector<float>(
@@ -104,10 +107,9 @@ cudaError_t PostprocessCuda::generateDetectedBoxes3D_launch(
   dim3 blocks = {divup(config_.num_proposals_, threads.x)};
 
   generateBoxes3D_kernel<<<blocks, threads, 0, stream>>>(
-    cls_output, box_output, dir_cls_output,
-    config_.voxel_x_size_, config_.voxel_y_size_, config_.min_x_range_, config_.min_y_range_,
-    config_.num_proposals_, config_.num_classes_, config_.num_point_values_,
-    thrust::raw_pointer_cast(yaw_norm_thresholds_d_.data()),
+    cls_output, box_output, dir_cls_output, config_.voxel_x_size_, config_.voxel_y_size_,
+    config_.min_x_range_, config_.min_y_range_, config_.num_proposals_, config_.num_classes_,
+    config_.num_point_values_, thrust::raw_pointer_cast(yaw_norm_thresholds_d_.data()),
     thrust::raw_pointer_cast(boxes3d_d_.data()));
 
   // suppress by score

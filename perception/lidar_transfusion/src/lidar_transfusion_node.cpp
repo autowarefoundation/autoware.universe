@@ -13,13 +13,14 @@
 // limitations under the License.
 
 #include "lidar_transfusion/lidar_transfusion_node.hpp"
+
 #include "lidar_transfusion/utils.hpp"
 
 namespace lidar_transfusion
 {
 
 LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
-:  Node("lidar_transfusion", options), tf_buffer_(this->get_clock())
+: Node("lidar_transfusion", options), tf_buffer_(this->get_clock())
 {
   // network
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
@@ -28,8 +29,7 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
   const auto point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
   const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
   const std::string onnx_path = this->declare_parameter<std::string>("onnx_path", "");
-  const std::string engine_path =
-    this->declare_parameter<std::string>("engine_path", "");
+  const std::string engine_path = this->declare_parameter<std::string>("engine_path", "");
 
   // pre-process
   const std::string densification_world_frame_id =
@@ -139,9 +139,9 @@ void LidarTransfusionNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
     const double processing_time_ms = stop_watch_ptr_->toc("processing/total", true);
     const double pipeline_latency_ms =
       std::chrono::duration<double, std::milli>(
-      std::chrono::nanoseconds(
-        (this->get_clock()->now() - output_msg.header.stamp).nanoseconds()))
-      .count();
+        std::chrono::nanoseconds(
+          (this->get_clock()->now() - output_msg.header.stamp).nanoseconds()))
+        .count();
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
@@ -149,8 +149,7 @@ void LidarTransfusionNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time/total_ms", processing_time_ms);
     for (const auto & [topic, time_ms] : proc_timing) {
-      debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-        topic, time_ms);
+      debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(topic, time_ms);
     }
   }
 }

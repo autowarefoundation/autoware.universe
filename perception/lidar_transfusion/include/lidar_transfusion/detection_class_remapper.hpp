@@ -15,12 +15,12 @@
 #ifndef LIDAR_TRANSFUSION__DETECTION_CLASS_REMAPPER_HPP_
 #define LIDAR_TRANSFUSION__DETECTION_CLASS_REMAPPER_HPP_
 
+#include <Eigen/Core>
+
 #include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
-
-#include <Eigen/Core>
 
 #include <vector>
 

@@ -17,9 +17,9 @@
 
 #include "lidar_transfusion/ros_utils.hpp"
 
-#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
-
 #include <Eigen/Eigen>
+
+#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
 
 #include <string>
 #include <vector>
@@ -28,8 +28,7 @@ namespace lidar_transfusion
 {
 using autoware_auto_perception_msgs::msg::DetectedObject;
 
-enum class NMS_TYPE
-{
+enum class NMS_TYPE {
   IoU_BEV
   // IoU_3D
   // Distance_2D

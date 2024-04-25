@@ -39,8 +39,8 @@ public:
   {
   }
 
-  std::string world_frame_id() const {return world_frame_id_;}
-  unsigned int pointcloud_cache_size() const {return pointcloud_cache_size_;}
+  std::string world_frame_id() const { return world_frame_id_; }
+  unsigned int pointcloud_cache_size() const { return pointcloud_cache_size_; }
 
 private:
   std::string world_frame_id_;
@@ -61,8 +61,8 @@ public:
   bool enqueuePointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
 
-  double getCurrentTimestamp() const {return current_timestamp_;}
-  Eigen::Affine3f getAffineWorldToCurrent() const {return affine_world2current_;}
+  double getCurrentTimestamp() const { return current_timestamp_; }
+  Eigen::Affine3f getAffineWorldToCurrent() const { return affine_world2current_; }
   std::list<PointCloudWithTransform>::iterator getPointCloudCacheIter()
   {
     return pointcloud_cache_.begin();
@@ -71,7 +71,7 @@ public:
   {
     return iter == pointcloud_cache_.end();
   }
-  unsigned int pointcloud_cache_size() const {return param_.pointcloud_cache_size();}
+  unsigned int pointcloud_cache_size() const { return param_.pointcloud_cache_size(); }
 
 private:
   void enqueue(const sensor_msgs::msg::PointCloud2 & msg, const Eigen::Affine3f & affine);

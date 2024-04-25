@@ -23,8 +23,7 @@
 namespace lidar_transfusion
 {
 
-NetworkTRT::NetworkTRT(const TransfusionConfig & config)
-: config_(config)
+NetworkTRT::NetworkTRT(const TransfusionConfig & config) : config_(config)
 {
 }
 
@@ -70,14 +69,11 @@ bool NetworkTRT::setProfile(
 
   auto voxels_name = network.getInput(NetworkIO::voxels)->getName();
   auto voxels_min_dims = nvinfer1::Dims3(
-    config_.min_voxel_size_, config_.min_point_in_voxel_size_,
-    config_.min_network_feature_size_);
+    config_.min_voxel_size_, config_.min_point_in_voxel_size_, config_.min_network_feature_size_);
   auto voxels_opt_dims = nvinfer1::Dims3(
-    config_.opt_voxel_size_, config_.opt_point_in_voxel_size_,
-    config_.opt_network_feature_size_);
+    config_.opt_voxel_size_, config_.opt_point_in_voxel_size_, config_.opt_network_feature_size_);
   auto voxels_max_dims = nvinfer1::Dims3(
-    config_.max_voxel_size_, config_.max_point_in_voxel_size_,
-    config_.max_network_feature_size_);
+    config_.max_voxel_size_, config_.max_point_in_voxel_size_, config_.max_network_feature_size_);
 
   auto num_points_name = network.getInput(NetworkIO::num_points)->getName();
   auto num_points_min_dims = nvinfer1::Dims{1, {static_cast<int32_t>(config_.min_points_size_)}};
@@ -203,9 +199,8 @@ bool NetworkTRT::loadEngine(const std::string & engine_path)
   std::stringstream engine_buffer;
   engine_buffer << engine_file.rdbuf();
   std::string engine_str = engine_buffer.str();
-  engine = tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(
-    runtime_->deserializeCudaEngine(
-      reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
+  engine = tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(
+    reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
   tensorrt_common::LOG_INFO(logger_) << "Loaded engine from " << engine_path << std::endl;
   return validateNetworkIO();
 }
@@ -213,8 +208,9 @@ bool NetworkTRT::loadEngine(const std::string & engine_path)
 bool NetworkTRT::validateNetworkIO()
 {
   if (engine->getNbIOTensors() != NetworkIO::ENUM_SIZE) {
-    tensorrt_common::LOG_ERROR(logger_) << "Invalid network IO. Expected size: " <<
-      NetworkIO::ENUM_SIZE << ". Actual size: " << engine->getNbIOTensors() << "." << std::endl;
+    tensorrt_common::LOG_ERROR(logger_)
+      << "Invalid network IO. Expected size: " << NetworkIO::ENUM_SIZE
+      << ". Actual size: " << engine->getNbIOTensors() << "." << std::endl;
     throw std::runtime_error("Failed to initialize TRT network.");
   }
   for (int i = 0; i < NetworkIO::ENUM_SIZE; ++i) {
@@ -222,9 +218,7 @@ bool NetworkTRT::validateNetworkIO()
   }
   std::string tensors = std::accumulate(
     tensors_names_.begin(), tensors_names_.end(), std::string(),
-    [](const std::string & a, const std::string & b) -> std::string {
-      return a + b + " ";
-    });
+    [](const std::string & a, const std::string & b) -> std::string { return a + b + " "; });
   tensorrt_common::LOG_INFO(logger_) << "Network IO: " << tensors << std::endl;
   return true;
 }

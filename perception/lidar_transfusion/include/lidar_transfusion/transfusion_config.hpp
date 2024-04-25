@@ -80,10 +80,10 @@ public:
   ///// KERNEL PARAMETERS /////
   std::size_t threads_for_voxel_ = 256;  // threads number for a block
   std::size_t points_per_voxel_ = 20;
-  std::size_t warp_size_ = 32;           // one warp(32 threads) for one pillar
-  std::size_t features_size_ = 10;       // features maps number
-  std::size_t pillars_per_block_ = 64;   // one thread deals with one pillar
-                                         // and a block has pillars_per_block threads
+  std::size_t warp_size_ = 32;          // one warp(32 threads) for one pillar
+  std::size_t features_size_ = 10;      // features maps number
+  std::size_t pillars_per_block_ = 64;  // one thread deals with one pillar
+                                        // and a block has pillars_per_block threads
   std::size_t pillar_feature_size_ = 64;
   std::size_t max_voxels_ = 60000;
 

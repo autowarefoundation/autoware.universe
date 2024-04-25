@@ -29,10 +29,10 @@ void DetectionClassRemapper::setParameters(
   num_labels_ = static_cast<int>(std::sqrt(min_area_matrix.size()));
 
   Eigen::Map<const Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic>>
-  allow_remapping_by_area_matrix_tmp(
-    allow_remapping_by_area_matrix.data(), num_labels_, num_labels_);
+    allow_remapping_by_area_matrix_tmp(
+      allow_remapping_by_area_matrix.data(), num_labels_, num_labels_);
   allow_remapping_by_area_matrix_ = allow_remapping_by_area_matrix_tmp.transpose()
-    .cast<bool>();                                    // Eigen is column major by default
+                                      .cast<bool>();  // Eigen is column major by default
 
   Eigen::Map<const Eigen::MatrixXd> min_area_matrix_tmp(
     min_area_matrix.data(), num_labels_, num_labels_);
@@ -43,9 +43,9 @@ void DetectionClassRemapper::setParameters(
   max_area_matrix_ = max_area_matrix_tmp.transpose();  // Eigen is column major by default
 
   min_area_matrix_ = min_area_matrix_.unaryExpr(
-    [](double v) {return std::isfinite(v) ? v : std::numeric_limits<double>::max();});
+    [](double v) { return std::isfinite(v) ? v : std::numeric_limits<double>::max(); });
   max_area_matrix_ = max_area_matrix_.unaryExpr(
-    [](double v) {return std::isfinite(v) ? v : std::numeric_limits<double>::max();});
+    [](double v) { return std::isfinite(v) ? v : std::numeric_limits<double>::max(); });
 }
 
 void DetectionClassRemapper::mapClasses(autoware_auto_perception_msgs::msg::DetectedObjects & msg)
@@ -59,8 +59,7 @@ void DetectionClassRemapper::mapClasses(autoware_auto_perception_msgs::msg::Dete
       for (int i = 0; i < num_labels_; ++i) {
         if (
           allow_remapping_by_area_matrix_(label, i) && bev_area >= min_area_matrix_(label, i) &&
-          bev_area <= max_area_matrix_(label, i))
-        {
+          bev_area <= max_area_matrix_(label, i)) {
           label = i;
           break;
         }

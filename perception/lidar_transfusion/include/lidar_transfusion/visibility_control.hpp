@@ -17,21 +17,21 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__WIN32)
-  #if defined(LIDAR_TRANSFUSION_BUILDING_DLL) || defined(LIDAR_TRANSFUSION_EXPORTS)
-    #define LIDAR_TRANSFUSION_PUBLIC __declspec(dllexport)
-    #define LIDAR_TRANSFUSION_LOCAL
-  #else  // defined(LIDAR_TRANSFUSION_BUILDING_DLL) || defined(LIDAR_TRANSFUSION_EXPORTS)
-    #define LIDAR_TRANSFUSION_PUBLIC __declspec(dllimport)
-    #define LIDAR_TRANSFUSION_LOCAL
-  #endif  // defined(LIDAR_TRANSFUSION_BUILDING_DLL) || defined(LIDAR_TRANSFUSION_EXPORTS)
+#if defined(LIDAR_TRANSFUSION_BUILDING_DLL) || defined(LIDAR_TRANSFUSION_EXPORTS)
+#define LIDAR_TRANSFUSION_PUBLIC __declspec(dllexport)
+#define LIDAR_TRANSFUSION_LOCAL
+#else  // defined(LIDAR_TRANSFUSION_BUILDING_DLL) || defined(LIDAR_TRANSFUSION_EXPORTS)
+#define LIDAR_TRANSFUSION_PUBLIC __declspec(dllimport)
+#define LIDAR_TRANSFUSION_LOCAL
+#endif  // defined(LIDAR_TRANSFUSION_BUILDING_DLL) || defined(LIDAR_TRANSFUSION_EXPORTS)
 #elif defined(__linux__)
-  #define LIDAR_TRANSFUSION_PUBLIC __attribute__((visibility("default")))
-  #define LIDAR_TRANSFUSION_LOCAL __attribute__((visibility("hidden")))
+#define LIDAR_TRANSFUSION_PUBLIC __attribute__((visibility("default")))
+#define LIDAR_TRANSFUSION_LOCAL __attribute__((visibility("hidden")))
 #elif defined(__APPLE__)
-  #define LIDAR_TRANSFUSION_PUBLIC __attribute__((visibility("default")))
-  #define LIDAR_TRANSFUSION_LOCAL __attribute__((visibility("hidden")))
+#define LIDAR_TRANSFUSION_PUBLIC __attribute__((visibility("default")))
+#define LIDAR_TRANSFUSION_LOCAL __attribute__((visibility("hidden")))
 #else
-  #error "Unsupported Build Configuration"
+#error "Unsupported Build Configuration"
 #endif
 
 #endif  // LIDAR_TRANSFUSION__VISIBILITY_CONTROL_HPP_

@@ -64,19 +64,10 @@ const std::unordered_map<uint8_t, uint8_t> datatype2size = {
   {8, 8},  // float64
 };
 
-enum NetworkIO
-{
-  voxels = 0,
-  num_points,
-  coors,
-  cls_score,
-  dir_pred,
-  bbox_pred,
-  ENUM_SIZE
-};
+enum NetworkIO { voxels = 0, num_points, coors, cls_score, dir_pred, bbox_pred, ENUM_SIZE };
 
 // cspell: ignore divup
-template<typename T1, typename T2>
+template <typename T1, typename T2>
 unsigned int divup(const T1 a, const T2 b)
 {
   if (a == 0) {

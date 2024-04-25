@@ -14,8 +14,9 @@
 
 #include "lidar_transfusion/preprocess/pointcloud_densification.hpp"
 
-#include <pcl_conversions/pcl_conversions.h>
 #include <pcl_ros/transforms.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
@@ -23,6 +24,7 @@
 #endif
 
 #include <boost/optional.hpp>
+
 #include <string>
 #include <utility>
 
@@ -56,8 +58,7 @@ Eigen::Affine3f transformToEigen(const geometry_msgs::msg::Transform & t)
 namespace lidar_transfusion
 {
 
-PointCloudDensification::PointCloudDensification(const DensificationParam & param)
-: param_(param)
+PointCloudDensification::PointCloudDensification(const DensificationParam & param) : param_(param)
 {
 }
 

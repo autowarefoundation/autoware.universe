@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "lidar_transfusion/transfusion_trt.hpp"
+
 #include "lidar_transfusion/preprocess/preprocess_kernel.hpp"
 #include "lidar_transfusion/transfusion_config.hpp"
-#include "lidar_transfusion/transfusion_trt.hpp"
 
 #include <tier4_autoware_utils/math/constants.hpp>
 
@@ -27,16 +28,14 @@ namespace lidar_transfusion
 {
 
 TransfusionTRT::TransfusionTRT(
-  const NetworkParam & network_param,
-  const DensificationParam & densification_param,
+  const NetworkParam & network_param, const DensificationParam & densification_param,
   const TransfusionConfig & config)
 : config_(config)
 {
   network_trt_ptr_ = std::make_unique<NetworkTRT>(config_);
 
   network_trt_ptr_->init(
-    network_param.onnx_path(),
-    network_param.engine_path(), network_param.trt_precision());
+    network_param.onnx_path(), network_param.engine_path(), network_param.trt_precision());
   vg_ptr_ = std::make_unique<VoxelGenerator>(densification_param, config_, stream_);
   stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
   stop_watch_ptr_->tic("processing/inner");
@@ -84,10 +83,8 @@ void TransfusionTRT::initPtr()
 }
 
 bool TransfusionTRT::detect(
-  const sensor_msgs::msg::PointCloud2 & msg,
-  const tf2_ros::Buffer & tf_buffer,
-  std::vector<Box3D> & det_boxes3d,
-  std::unordered_map<std::string, double> & proc_timing)
+  const sensor_msgs::msg::PointCloud2 & msg, const tf2_ros::Buffer & tf_buffer,
+  std::vector<Box3D> & det_boxes3d, std::unordered_map<std::string, double> & proc_timing)
 {
   stop_watch_ptr_->toc("processing/inner", true);
   if (!preprocess(msg, tf_buffer)) {
@@ -123,8 +120,7 @@ bool TransfusionTRT::detect(
 }
 
 bool TransfusionTRT::preprocess(
-  const sensor_msgs::msg::PointCloud2 & msg,
-  const tf2_ros::Buffer & tf_buffer)
+  const sensor_msgs::msg::PointCloud2 & msg, const tf2_ros::Buffer & tf_buffer)
 {
   if (!vg_ptr_->enqueuePointCloud(msg, tf_buffer)) {
     return false;
@@ -143,20 +139,18 @@ bool TransfusionTRT::preprocess(
   std::vector<lidar_transfusion::Box3D> pred;
 
   const auto count = vg_ptr_->generateSweepPoints(msg, points_d_);
-  RCLCPP_DEBUG_STREAM(
-    rclcpp::get_logger("lidar_transfusion"), "Generated sweep points: " << count);
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Generated sweep points: " << count);
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   pre_ptr_->generateVoxels(
-    points_d_.get(), count, params_input_d_.get(),
-    voxel_features_d_.get(), voxel_num_d_.get(), voxel_idxs_d_.get());
+    points_d_.get(), count, params_input_d_.get(), voxel_features_d_.get(), voxel_num_d_.get(),
+    voxel_idxs_d_.get());
   unsigned int params_input_cpu;
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
-  CHECK_CUDA_ERROR(
-    cudaMemcpyAsync(
-      &params_input_cpu, params_input_d_.get(), sizeof(unsigned int), cudaMemcpyDeviceToHost,
-      stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    &params_input_cpu, params_input_d_.get(), sizeof(unsigned int), cudaMemcpyDeviceToHost,
+    stream_));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   if (params_input_cpu > config_.max_voxels_) {
@@ -165,28 +159,31 @@ bool TransfusionTRT::preprocess(
   RCLCPP_DEBUG_STREAM(
     rclcpp::get_logger("lidar_transfusion"), "Generated input voxels: " << params_input_cpu);
 
-  network_trt_ptr_->context->setTensorAddress(network_trt_ptr_->getTensorName(NetworkIO::voxels),
-    voxel_features_d_.get());
+  network_trt_ptr_->context->setTensorAddress(
+    network_trt_ptr_->getTensorName(NetworkIO::voxels), voxel_features_d_.get());
   network_trt_ptr_->context->setInputShape(
     network_trt_ptr_->getTensorName(NetworkIO::voxels),
-    nvinfer1::Dims3{static_cast<int32_t>(params_input_cpu),
+    nvinfer1::Dims3{
+      static_cast<int32_t>(params_input_cpu),
       static_cast<int32_t>(config_.max_num_points_per_pillar_),
       static_cast<int32_t>(config_.num_point_feature_size_)});
   network_trt_ptr_->context->setTensorAddress(
     network_trt_ptr_->getTensorName(NetworkIO::num_points), voxel_num_d_.get());
-  network_trt_ptr_->context->setInputShape(network_trt_ptr_->getTensorName(NetworkIO::num_points),
+  network_trt_ptr_->context->setInputShape(
+    network_trt_ptr_->getTensorName(NetworkIO::num_points),
     nvinfer1::Dims{1, {static_cast<int32_t>(params_input_cpu)}});
-  network_trt_ptr_->context->setTensorAddress(network_trt_ptr_->getTensorName(NetworkIO::coors),
-    voxel_idxs_d_.get());
-  network_trt_ptr_->context->setInputShape(network_trt_ptr_->getTensorName(NetworkIO::coors),
-    nvinfer1::Dims2{static_cast<int32_t>(params_input_cpu),
-    static_cast<int32_t>(config_.num_point_values_)});
-  network_trt_ptr_->context->setTensorAddress(network_trt_ptr_->getTensorName(NetworkIO::cls_score),
-    cls_output_d_.get());
-  network_trt_ptr_->context->setTensorAddress(network_trt_ptr_->getTensorName(NetworkIO::bbox_pred),
-    box_output_d_.get());
-  network_trt_ptr_->context->setTensorAddress(network_trt_ptr_->getTensorName(NetworkIO::dir_pred),
-    dir_cls_output_d_.get());
+  network_trt_ptr_->context->setTensorAddress(
+    network_trt_ptr_->getTensorName(NetworkIO::coors), voxel_idxs_d_.get());
+  network_trt_ptr_->context->setInputShape(
+    network_trt_ptr_->getTensorName(NetworkIO::coors),
+    nvinfer1::Dims2{
+      static_cast<int32_t>(params_input_cpu), static_cast<int32_t>(config_.num_point_values_)});
+  network_trt_ptr_->context->setTensorAddress(
+    network_trt_ptr_->getTensorName(NetworkIO::cls_score), cls_output_d_.get());
+  network_trt_ptr_->context->setTensorAddress(
+    network_trt_ptr_->getTensorName(NetworkIO::bbox_pred), box_output_d_.get());
+  network_trt_ptr_->context->setTensorAddress(
+    network_trt_ptr_->getTensorName(NetworkIO::dir_pred), dir_cls_output_d_.get());
   return true;
 }
 
@@ -205,9 +202,8 @@ bool TransfusionTRT::inference()
 
 bool TransfusionTRT::postprocess(std::vector<Box3D> & det_boxes3d)
 {
-  CHECK_CUDA_ERROR(
-    post_ptr_->generateDetectedBoxes3D_launch(
-      cls_output_d_.get(), box_output_d_.get(), dir_cls_output_d_.get(), det_boxes3d, stream_));
+  CHECK_CUDA_ERROR(post_ptr_->generateDetectedBoxes3D_launch(
+    cls_output_d_.get(), box_output_d_.get(), dir_cls_output_d_.get(), det_boxes3d, stream_));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
   return true;
 }
@@ -218,18 +214,15 @@ bool TransfusionTRT::postprocessCPU(std::vector<Box3D> & det_boxes3d)
   std::vector<float> box_output_cpu(box_size_);
   std::vector<float> dir_cls_output_cpu(dir_cls_size_);
 
-  CHECK_CUDA_ERROR(
-    cudaMemcpyAsync(
-      cls_output_cpu.data(), cls_output_d_.get(), cls_size_ * sizeof(float), cudaMemcpyDeviceToHost,
-      stream_));
-  CHECK_CUDA_ERROR(
-    cudaMemcpyAsync(
-      box_output_cpu.data(), box_output_d_.get(), box_size_ * sizeof(float), cudaMemcpyDeviceToHost,
-      stream_));
-  CHECK_CUDA_ERROR(
-    cudaMemcpyAsync(
-      dir_cls_output_cpu.data(), dir_cls_output_d_.get(), dir_cls_size_ * sizeof(float),
-      cudaMemcpyDeviceToHost, stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    cls_output_cpu.data(), cls_output_d_.get(), cls_size_ * sizeof(float), cudaMemcpyDeviceToHost,
+    stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    box_output_cpu.data(), box_output_d_.get(), box_size_ * sizeof(float), cudaMemcpyDeviceToHost,
+    stream_));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    dir_cls_output_cpu.data(), dir_cls_output_d_.get(), dir_cls_size_ * sizeof(float),
+    cudaMemcpyDeviceToHost, stream_));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   for (size_t i = 0; i < config_.num_proposals_; ++i) {
@@ -245,21 +238,17 @@ bool TransfusionTRT::postprocessCPU(std::vector<Box3D> & det_boxes3d)
     if (max_score < config_.score_threshold_) {
       continue;
     }
-    det_boxes3d.emplace_back(
-      lidar_transfusion::Box3D{
-        class_id,
-        max_score,
-        box_output_cpu[i] * config_.num_point_values_ *
-        config_.voxel_x_size_ + config_.min_x_range_,
-        box_output_cpu[i + config_.num_proposals_] *
-        config_.num_point_values_ * config_.voxel_y_size_ +
+    det_boxes3d.emplace_back(lidar_transfusion::Box3D{
+      class_id, max_score,
+      box_output_cpu[i] * config_.num_point_values_ * config_.voxel_x_size_ + config_.min_x_range_,
+      box_output_cpu[i + config_.num_proposals_] * config_.num_point_values_ *
+          config_.voxel_y_size_ +
         config_.min_y_range_,
-        box_output_cpu[i + 2 * config_.num_proposals_],
-        std::exp(box_output_cpu[i + 3 * config_.num_proposals_]),
-        std::exp(box_output_cpu[i + 4 * config_.num_proposals_]),
-        std::exp(box_output_cpu[i + 5 * config_.num_proposals_]),
-        std::atan2(dir_cls_output_cpu[i], dir_cls_output_cpu[i + config_.num_proposals_])
-      });
+      box_output_cpu[i + 2 * config_.num_proposals_],
+      std::exp(box_output_cpu[i + 3 * config_.num_proposals_]),
+      std::exp(box_output_cpu[i + 4 * config_.num_proposals_]),
+      std::exp(box_output_cpu[i + 5 * config_.num_proposals_]),
+      std::atan2(dir_cls_output_cpu[i], dir_cls_output_cpu[i + config_.num_proposals_])});
   }
   return true;
 }

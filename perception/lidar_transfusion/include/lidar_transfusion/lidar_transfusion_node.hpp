@@ -16,20 +16,20 @@
 #define LIDAR_TRANSFUSION__LIDAR_TRANSFUSION_NODE_HPP_
 
 #include "lidar_transfusion/detection_class_remapper.hpp"
-#include "lidar_transfusion/transfusion_trt.hpp"
 #include "lidar_transfusion/postprocess/non_maximum_suppression.hpp"
 #include "lidar_transfusion/preprocess/pointcloud_densification.hpp"
+#include "lidar_transfusion/transfusion_trt.hpp"
 #include "lidar_transfusion/visibility_control.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
-
-#include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <memory>

@@ -20,8 +20,7 @@ namespace lidar_transfusion
 {
 
 VoxelGenerator::VoxelGenerator(
-  const DensificationParam & densification_param,
-  const TransfusionConfig & config,
+  const DensificationParam & densification_param, const TransfusionConfig & config,
   cudaStream_t & stream)
 : config_(config), stream_(stream)
 {
@@ -40,31 +39,29 @@ bool VoxelGenerator::enqueuePointCloud(
 }
 
 std::size_t VoxelGenerator::generateSweepPoints(
-  const sensor_msgs::msg::PointCloud2 & msg,
-  cuda::unique_ptr<float[]> & points_d)
+  const sensor_msgs::msg::PointCloud2 & msg, cuda::unique_ptr<float[]> & points_d)
 {
   if (!is_initialized_) {
     initCloudInfo(msg);
     RCLCPP_DEBUG_STREAM(
-      rclcpp::get_logger("lidar_transfusion"), "PointCloud2 msg information:" <<
-        "\nx offset: " << cloud_info_.x_offset <<
-        "\ny offset: " << cloud_info_.y_offset <<
-        "\nz offset: " << cloud_info_.z_offset <<
-        "\nintensity offset: " << cloud_info_.intensity_offset <<
-        "\nx datatype: " << static_cast<uint32_t>(cloud_info_.x_datatype) <<
-        "\ny datatype: " << static_cast<uint32_t>(cloud_info_.y_datatype) <<
-        "\nz datatype: " << static_cast<uint32_t>(cloud_info_.z_datatype) <<
-        "\nintensity datatype: " << static_cast<uint32_t>(cloud_info_.intensity_datatype) <<
-        "\npoint step: " << cloud_info_.point_step <<
-        "\nis bigendian: " << cloud_info_.is_bigendian);
+      rclcpp::get_logger("lidar_transfusion"),
+      "PointCloud2 msg information:"
+        << "\nx offset: " << cloud_info_.x_offset << "\ny offset: " << cloud_info_.y_offset
+        << "\nz offset: " << cloud_info_.z_offset
+        << "\nintensity offset: " << cloud_info_.intensity_offset
+        << "\nx datatype: " << static_cast<uint32_t>(cloud_info_.x_datatype)
+        << "\ny datatype: " << static_cast<uint32_t>(cloud_info_.y_datatype)
+        << "\nz datatype: " << static_cast<uint32_t>(cloud_info_.z_datatype)
+        << "\nintensity datatype: " << static_cast<uint32_t>(cloud_info_.intensity_datatype)
+        << "\npoint step: " << cloud_info_.point_step
+        << "\nis bigendian: " << cloud_info_.is_bigendian);
   }
 
   Eigen::Vector3f point_current, point_past;
   size_t points_agg{};
 
   for (auto pc_cache_iter = pd_ptr_->getPointCloudCacheIter(); !pd_ptr_->isCacheEnd(pc_cache_iter);
-    pc_cache_iter++)
-  {
+       pc_cache_iter++) {
     if (points_agg >= config_.cloud_capacity_) {
       break;
     }
@@ -77,9 +74,8 @@ std::size_t VoxelGenerator::generateSweepPoints(
 
 #ifdef CPU_PROCESSING
     for (sensor_msgs::PointCloud2ConstIterator<float> x_iter(msg, "x"), y_iter(msg, "y"),
-      z_iter(msg, "z"), intensity_iter(msg, "intensity");
-      x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter, ++intensity_iter)
-    {
+         z_iter(msg, "z"), intensity_iter(msg, "intensity");
+         x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter, ++intensity_iter) {
       if (points_agg >= config_.cloud_capacity_) {
         break;
       }
@@ -94,10 +90,9 @@ std::size_t VoxelGenerator::generateSweepPoints(
       ++points_agg;
     }
   }
-  CHECK_CUDA_ERROR(
-    cudaMemcpyAsync(
-      points_d.get(), points_cpu_.data(),
-      points_agg * config_.num_point_feature_size_ * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    points_d.get(), points_cpu_.data(),
+    points_agg * config_.num_point_feature_size_ * sizeof(float), cudaMemcpyHostToDevice));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
 #else
@@ -106,14 +101,12 @@ std::size_t VoxelGenerator::generateSweepPoints(
     cuda::clear_async(affine_past2current_d_.get(), AFF_MAT_SIZE, stream_);
     CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
-    CHECK_CUDA_ERROR(
-      cudaMemcpyAsync(
-        cloud_data_d_.get(), pc_msg.data.data(), pc_msg.data.size() * sizeof(unsigned char),
-        cudaMemcpyHostToDevice, stream_));
-    CHECK_CUDA_ERROR(
-      cudaMemcpyAsync(
-        affine_past2current_d_.get(), affine_past2current.data(), AFF_MAT_SIZE * sizeof(float),
-        cudaMemcpyHostToDevice, stream_));
+    CHECK_CUDA_ERROR(cudaMemcpyAsync(
+      cloud_data_d_.get(), pc_msg.data.data(), pc_msg.data.size() * sizeof(unsigned char),
+      cudaMemcpyHostToDevice, stream_));
+    CHECK_CUDA_ERROR(cudaMemcpyAsync(
+      affine_past2current_d_.get(), affine_past2current.data(), AFF_MAT_SIZE * sizeof(float),
+      cudaMemcpyHostToDevice, stream_));
     CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
     pre_ptr_->generateVoxelsInput_launch(
@@ -129,18 +122,15 @@ std::size_t VoxelGenerator::generateSweepPoints(
 
 void VoxelGenerator::initCloudInfo(const sensor_msgs::msg::PointCloud2 & msg)
 {
+  std::tie(cloud_info_.x_offset, cloud_info_.x_datatype, cloud_info_.x_size) =
+    getFieldInfo(msg, "x");
+  std::tie(cloud_info_.y_offset, cloud_info_.y_datatype, cloud_info_.y_size) =
+    getFieldInfo(msg, "y");
+  std::tie(cloud_info_.z_offset, cloud_info_.z_datatype, cloud_info_.z_size) =
+    getFieldInfo(msg, "z");
   std::tie(
-    cloud_info_.x_offset, cloud_info_.x_datatype,
-    cloud_info_.x_size) = getFieldInfo(msg, "x");
-  std::tie(
-    cloud_info_.y_offset, cloud_info_.y_datatype,
-    cloud_info_.y_size) = getFieldInfo(msg, "y");
-  std::tie(
-    cloud_info_.z_offset, cloud_info_.z_datatype,
-    cloud_info_.z_size) = getFieldInfo(msg, "z");
-  std::tie(
-    cloud_info_.intensity_offset, cloud_info_.intensity_datatype,
-    cloud_info_.intensity_size) = getFieldInfo(msg, "intensity");
+    cloud_info_.intensity_offset, cloud_info_.intensity_datatype, cloud_info_.intensity_size) =
+    getFieldInfo(msg, "intensity");
   cloud_info_.point_step = msg.point_step;
   cloud_info_.is_bigendian = msg.is_bigendian;
   is_initialized_ = true;
@@ -156,8 +146,8 @@ std::tuple<const uint32_t, const uint8_t, const uint8_t> VoxelGenerator::getFiel
       } else {
         RCLCPP_ERROR_STREAM(
           rclcpp::get_logger("lidar_transfusion"),
-          "Unsupported field for " << field_name <<
-            ". [Actual / Supported] count: " << field.count << " / 1.");
+          "Unsupported field for " << field_name << ". [Actual / Supported] count: " << field.count
+                                   << " / 1.");
       }
     }
   }

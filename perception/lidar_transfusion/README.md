@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `lidar_transfusion` package is used for 3D object detection based on lidar data (x, y, z, intensity). 
+The `lidar_transfusion` package is used for 3D object detection based on lidar data (x, y, z, intensity).
 
 ## Inner-workings / Algorithms
 
@@ -78,7 +78,6 @@ You can force CPU point cloud processing with `-DCPU_PROCESSING` flag while usin
 
 ## Assumptions / Known limits
 
-
 ## Trained Models
 
 You can download the onnx format of trained models by clicking on the links below.
@@ -122,7 +121,6 @@ Example:
 [4] <https://github.com/open-mmlab/OpenPCDet>
 
 [5] <https://www.nuscenes.org/nuscenes>
-
 
 ## (Optional) Future extensions / Unimplemented parts
 
