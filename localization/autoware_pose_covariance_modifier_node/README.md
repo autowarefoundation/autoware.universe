@@ -24,7 +24,14 @@ to the standard deviation values coming from GNSS, it also manages situations wh
 
 ### _How does the "Interpolate GNSS and NDT pose" part work ?_
 
-The goal is to reduce the NDT covariance as the GNSS covariance increases, aiming for a smoother and more balanced transition between NDT and and maximize the benefit from GNSS poses.
+In this section, both NDT and GNSS poses are published from the same topic and given as input
+to [ekf_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ekf_localizer). In
+other words, at
+this stage, both NDT and GNSS are used in localization. Here, while the covariance values of the GNSS poses remain
+exactly the same, the NDT covariance values are determined by reference to the GNSS covariances, provided that they are
+kept within a certain range.
+The goal is to reduce the NDT covariance as the GNSS covariance increases, aiming for a smoother and more balanced
+transition between NDT and and maximize the benefit from GNSS poses. Here is how NDT covariance values are calculated
 
 <p align="center">
 <img src="./media/ndt_stddev_calculation_formula.drawio.png" width="720">
@@ -36,10 +43,18 @@ The goal is to reduce the NDT covariance as the GNSS covariance increases, aimin
 
 ## Activate this feature
 
-This package is not used by default autoware, you need to activate it to use it.
+> **This package is not used by default autoware, you need to activate it to use it. !!!**
 
 To activate, you need to change the `use_autoware_pose_covariance_modifier` parameter to true within
 the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autoware.universe/blob/0c14cc97d563c77262f74e306916a9cd26992e73/launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3).
+
+When you activate this feature, `autoware_pose_covariance_modifier_node` is run and only the message of
+type `geometry_msgs::msg::PoseWithCovarianceStamped` in the output
+of [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher)
+is renamed. In this way, while the ndt_scan_matcher output (the message of the
+type `geometry_msgs::msg::PoseWithCovarianceStamped`)
+enters the `autoware_pose_covariance_modifier_node` and the output of this package is given
+to [ekf_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ekf_localizer).
 
 ## Node
 
@@ -65,7 +80,8 @@ The parameters are set in config/autoware_pose_covariance_modifier.param.yaml .
 
 #### For Standard Deviation thresholds
 
-{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds.sub_schema.json") }}
+{{ json_to_markdown("
+localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds.sub_schema.json") }}
 
 #### For validation
 
@@ -75,9 +91,7 @@ The parameters are set in config/autoware_pose_covariance_modifier.param.yaml .
 
 {{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/debug.sub_schema.json") }}
 
-## Important notes
-
-- In order to use this package, your GNSS sensor must provide you with the standard deviation or variance value. If you
-  do not have a GNSS sensor
-  that provides you with these values, you cannot use this package.
-- You need to use this package with georeferenced map.
+> ## Important notes
+>
+> 1. In order to use this package, your GNSS sensor must provide you with the standard deviation or variance value. If you do not have a GNSS sensor that provides you with these values, you cannot use this package.
+> 2. You need to use this package with georeferenced map.
