@@ -8,8 +8,8 @@ This package converts autoware_vehicle_msgs::msg::VehicleReport message to geome
 
 ### Input
 
-| Name              | Type                                             | Description      |
-| ----------------- | ------------------------------------------------ | ---------------- |
+| Name              | Type                                        | Description      |
+| ----------------- | ------------------------------------------- | ---------------- |
 | `velocity_status` | `autoware_vehicle_msgs::msg::VehicleReport` | vehicle velocity |
 
 ### Output

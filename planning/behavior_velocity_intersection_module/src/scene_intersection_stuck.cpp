@@ -188,8 +188,7 @@ bool IntersectionModule::isTargetStuckVehicleType(
   if (label == autoware_perception_msgs::msg::ObjectClassification::TRAILER && p.trailer) {
     return true;
   }
-  if (
-    label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE && p.motorcycle) {
+  if (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE && p.motorcycle) {
     return true;
   }
   if (label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE && p.bicycle) {
@@ -219,8 +218,7 @@ bool IntersectionModule::isTargetYieldStuckVehicleType(
   if (label == autoware_perception_msgs::msg::ObjectClassification::TRAILER && p.trailer) {
     return true;
   }
-  if (
-    label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE && p.motorcycle) {
+  if (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE && p.motorcycle) {
     return true;
   }
   if (label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE && p.bicycle) {

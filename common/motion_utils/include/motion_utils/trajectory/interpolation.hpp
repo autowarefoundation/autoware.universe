@@ -17,8 +17,8 @@
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
-#include "tier4_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "tier4_planning_msgs/msg/path_with_lane_id.hpp"
 
 #include <boost/optional.hpp>
 

@@ -15,8 +15,8 @@
 #ifndef PATH_UTILS_HPP_
 #define PATH_UTILS_HPP_
 
-#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
+#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 #include <algorithm>
 #include <limits>

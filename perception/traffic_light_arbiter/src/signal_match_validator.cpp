@@ -220,8 +220,8 @@ autoware_perception_msgs::msg::TrafficLightGroupArray SignalMatchValidator::vali
 
   // Create the unique set of the received id,
   // then compare the signal element for each received signal id
-  const auto received_signal_id_set =
-    util::create_signal_id_set(perception_signals.traffic_light_groups, external_signals.traffic_light_groups);
+  const auto received_signal_id_set = util::create_signal_id_set(
+    perception_signals.traffic_light_groups, external_signals.traffic_light_groups);
 
   for (const auto & signal_id : received_signal_id_set) {
     const auto perception_result = util::find_signal_by_id(perception_id_signal_map, signal_id);

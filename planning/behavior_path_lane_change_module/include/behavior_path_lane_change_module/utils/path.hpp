@@ -25,8 +25,8 @@
 
 namespace behavior_path_planner
 {
-using tier4_planning_msgs::msg::PathWithLaneId;
 using behavior_path_planner::TurnSignalInfo;
+using tier4_planning_msgs::msg::PathWithLaneId;
 struct LaneChangePath
 {
   PathWithLaneId path{};

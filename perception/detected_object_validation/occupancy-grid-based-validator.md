@@ -15,15 +15,15 @@ If the percentage is low, it is deleted.
 
 ### Input
 
-| Name                         | Type                                                  | Description                                                 |
-| ---------------------------- | ----------------------------------------------------- | ----------------------------------------------------------- |
+| Name                         | Type                                             | Description                                                 |
+| ---------------------------- | ------------------------------------------------ | ----------------------------------------------------------- |
 | `~/input/detected_objects`   | `autoware_perception_msgs::msg::DetectedObjects` | DetectedObjects                                             |
-| `~/input/occupancy_grid_map` | `nav_msgs::msg::OccupancyGrid`                        | OccupancyGrid with no time series calculation is preferred. |
+| `~/input/occupancy_grid_map` | `nav_msgs::msg::OccupancyGrid`                   | OccupancyGrid with no time series calculation is preferred. |
 
 ### Output
 
-| Name               | Type                                                  | Description               |
-| ------------------ | ----------------------------------------------------- | ------------------------- |
+| Name               | Type                                             | Description               |
+| ------------------ | ------------------------------------------------ | ------------------------- |
 | `~/output/objects` | `autoware_perception_msgs::msg::DetectedObjects` | validated DetectedObjects |
 
 ## Parameters

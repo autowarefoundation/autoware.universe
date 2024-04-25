@@ -19,8 +19,8 @@ Example:
 
 #### Input Types
 
-| Name | Type                                                  | Description            |
-| ---- | ----------------------------------------------------- | ---------------------- |
+| Name | Type                                             | Description            |
+| ---- | ------------------------------------------------ | ---------------------- |
 |      | `autoware_perception_msgs::msg::DetectedObjects` | detection result array |
 
 #### Visualization Result
@@ -31,8 +31,8 @@ Example:
 
 #### Input Types
 
-| Name | Type                                                 | Description           |
-| ---- | ---------------------------------------------------- | --------------------- |
+| Name | Type                                            | Description           |
+| ---- | ----------------------------------------------- | --------------------- |
 |      | `autoware_perception_msgs::msg::TrackedObjects` | tracking result array |
 
 #### Visualization Result

@@ -27,8 +27,8 @@
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
@@ -47,7 +47,6 @@
 namespace behavior_velocity_planner
 {
 
-using tier4_planning_msgs::msg::PathWithLaneId;
 using builtin_interfaces::msg::Time;
 using objects_of_interest_marker_interface::ColorName;
 using objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
@@ -55,6 +54,7 @@ using rtc_interface::RTCInterface;
 using tier4_autoware_utils::DebugPublisher;
 using tier4_autoware_utils::getOrDeclareParameter;
 using tier4_debug_msgs::msg::Float64Stamped;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_rtc_msgs::msg::Module;
@@ -165,10 +165,7 @@ public:
     const std::shared_ptr<const PlannerData> & planner_data,
     const tier4_planning_msgs::msg::PathWithLaneId & path);
 
-  virtual void plan(tier4_planning_msgs::msg::PathWithLaneId * path)
-  {
-    modifyPathVelocity(path);
-  }
+  virtual void plan(tier4_planning_msgs::msg::PathWithLaneId * path) { modifyPathVelocity(path); }
 
 protected:
   virtual void modifyPathVelocity(tier4_planning_msgs::msg::PathWithLaneId * path);

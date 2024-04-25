@@ -995,8 +995,7 @@ PidLongitudinalController::Motion PidLongitudinalController::keepBrakeBeforeStop
 
 std::pair<autoware_planning_msgs::msg::TrajectoryPoint, size_t>
 PidLongitudinalController::calcInterpolatedTrajPointAndSegment(
-  const autoware_planning_msgs::msg::Trajectory & traj,
-  const geometry_msgs::msg::Pose & pose) const
+  const autoware_planning_msgs::msg::Trajectory & traj, const geometry_msgs::msg::Pose & pose) const
 {
   if (traj.points.size() == 1) {
     return std::make_pair(traj.points.at(0), 0);

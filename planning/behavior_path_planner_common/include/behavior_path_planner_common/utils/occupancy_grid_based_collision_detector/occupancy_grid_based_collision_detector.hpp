@@ -17,9 +17,9 @@
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <vector>
 

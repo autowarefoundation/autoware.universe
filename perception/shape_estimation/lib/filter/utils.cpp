@@ -17,8 +17,8 @@
 namespace utils
 {
 bool filterVehicleBoundingBox(
-  const autoware_perception_msgs::msg::Shape & shape, const float min_width,
-  const float max_width, const float max_length)
+  const autoware_perception_msgs::msg::Shape & shape, const float min_width, const float max_width,
+  const float max_length)
 {
   const float x = shape.dimensions.x;
   const float y = shape.dimensions.y;

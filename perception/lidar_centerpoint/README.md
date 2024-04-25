@@ -20,11 +20,11 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ### Output
 
-| Name                       | Type                                                  | Description          |
-| -------------------------- | ----------------------------------------------------- | -------------------- |
+| Name                       | Type                                             | Description          |
+| -------------------------- | ------------------------------------------------ | -------------------- |
 | `~/output/objects`         | `autoware_perception_msgs::msg::DetectedObjects` | detected objects     |
-| `debug/cyclic_time_ms`     | `tier4_debug_msgs::msg::Float64Stamped`               | cyclic time (msg)    |
-| `debug/processing_time_ms` | `tier4_debug_msgs::msg::Float64Stamped`               | processing time (ms) |
+| `debug/cyclic_time_ms`     | `tier4_debug_msgs::msg::Float64Stamped`          | cyclic time (msg)    |
+| `debug/processing_time_ms` | `tier4_debug_msgs::msg::Float64Stamped`          | processing time (ms) |
 
 ## Parameters
 

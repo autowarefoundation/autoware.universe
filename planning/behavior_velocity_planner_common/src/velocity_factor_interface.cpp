@@ -18,9 +18,8 @@
 namespace behavior_velocity_planner
 {
 void VelocityFactorInterface::set(
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
-  const Pose & curr_pose, const Pose & stop_pose, const VelocityFactorStatus status,
-  const std::string detail)
+  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points, const Pose & curr_pose,
+  const Pose & stop_pose, const VelocityFactorStatus status, const std::string detail)
 {
   const auto & curr_point = curr_pose.position;
   const auto & stop_point = stop_pose.position;

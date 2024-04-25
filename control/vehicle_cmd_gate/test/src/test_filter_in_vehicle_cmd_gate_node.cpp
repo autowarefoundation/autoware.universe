@@ -76,8 +76,7 @@ public:
   PubSubNode() : Node{"test_vehicle_cmd_gate_filter_pubsub"}
   {
     sub_cmd_ = create_subscription<Control>(
-      "output/control_cmd", rclcpp::QoS{1},
-      [this](const Control::ConstSharedPtr msg) {
+      "output/control_cmd", rclcpp::QoS{1}, [this](const Control::ConstSharedPtr msg) {
         cmd_history_.push_back(msg);
         cmd_received_times_.push_back(now());
         // check the effectiveness of the filter for last x elements in the queue
@@ -97,8 +96,7 @@ public:
     pub_operation_mode_ = create_publisher<OperationModeState>("input/operation_mode", qos);
     pub_mrm_state_ = create_publisher<MrmState>("input/mrm_state", qos);
 
-    pub_auto_control_cmd_ =
-      create_publisher<Control>("input/auto/control_cmd", qos);
+    pub_auto_control_cmd_ = create_publisher<Control>("input/auto/control_cmd", qos);
     pub_auto_turn_indicator_cmd_ =
       create_publisher<TurnIndicatorsCommand>("input/auto/turn_indicators_cmd", qos);
     pub_auto_hazard_light_cmd_ =

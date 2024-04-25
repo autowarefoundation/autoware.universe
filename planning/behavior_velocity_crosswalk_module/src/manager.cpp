@@ -148,11 +148,9 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     if (s == "TRUCK") return autoware_perception_msgs::msg::ObjectClassification::TRUCK;
     if (s == "BUS") return autoware_perception_msgs::msg::ObjectClassification::BUS;
     if (s == "TRAILER") return autoware_perception_msgs::msg::ObjectClassification::TRAILER;
-    if (s == "MOTORCYCLE")
-      return autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
+    if (s == "MOTORCYCLE") return autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
     if (s == "BICYCLE") return autoware_perception_msgs::msg::ObjectClassification::BICYCLE;
-    if (s == "PEDESTRIAN")
-      return autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+    if (s == "PEDESTRIAN") return autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
     return autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
   };
   const auto custom_labels = getOrDeclareParameter<std::vector<std::string>>(

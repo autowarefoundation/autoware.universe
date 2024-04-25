@@ -51,18 +51,14 @@ class Debugger
 public:
   explicit Debugger(rclcpp::Node * node)
   {
-    initial_objects_pub_ =
-      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
-        "debug/initial_objects", 1);
-    tracked_objects_pub_ =
-      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
-        "debug/tracked_objects", 1);
-    merged_objects_pub_ =
-      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
-        "debug/merged_objects", 1);
-    divided_objects_pub_ =
-      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
-        "debug/divided_objects", 1);
+    initial_objects_pub_ = node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
+      "debug/initial_objects", 1);
+    tracked_objects_pub_ = node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
+      "debug/tracked_objects", 1);
+    merged_objects_pub_ = node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
+      "debug/merged_objects", 1);
+    divided_objects_pub_ = node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
+      "debug/divided_objects", 1);
     processing_time_publisher_ =
       std::make_unique<tier4_autoware_utils::DebugPublisher>(node, "detection_by_tracker");
     stop_watch_ptr_ =
@@ -102,14 +98,10 @@ public:
   }
 
 private:
-  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    initial_objects_pub_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    tracked_objects_pub_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    merged_objects_pub_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    divided_objects_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr initial_objects_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr tracked_objects_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr merged_objects_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr divided_objects_pub_;
   // debug publisher
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;

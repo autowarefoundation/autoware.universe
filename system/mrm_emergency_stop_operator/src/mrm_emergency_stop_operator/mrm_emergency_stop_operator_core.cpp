@@ -38,8 +38,7 @@ MrmEmergencyStopOperator::MrmEmergencyStopOperator(const rclcpp::NodeOptions & n
 
   // Publisher
   pub_status_ = create_publisher<MrmBehaviorStatus>("~/output/mrm/emergency_stop/status", 1);
-  pub_control_cmd_ =
-    create_publisher<Control>("~/output/mrm/emergency_stop/control_cmd", 1);
+  pub_control_cmd_ = create_publisher<Control>("~/output/mrm/emergency_stop/control_cmd", 1);
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
@@ -95,8 +94,7 @@ void MrmEmergencyStopOperator::onTimer()
   publishStatus();
 }
 
-Control MrmEmergencyStopOperator::calcTargetAcceleration(
-  const Control & prev_control_cmd) const
+Control MrmEmergencyStopOperator::calcTargetAcceleration(const Control & prev_control_cmd) const
 {
   auto control_cmd = Control();
 

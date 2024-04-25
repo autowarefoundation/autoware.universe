@@ -74,8 +74,7 @@ double calcLatAcc(const Control & cmd, const double wheelbase)
 
 // calc from command velocity
 double calcLatJerk(
-  const Control & cmd, const Control & prev_cmd,
-  const double wheelbase, const double dt)
+  const Control & cmd, const Control & prev_cmd, const double wheelbase, const double dt)
 {
   const auto prev_v = prev_cmd.longitudinal.velocity;
   const auto prev = prev_v * prev_v * std::tan(prev_cmd.lateral.steering_tire_angle) / wheelbase;
@@ -88,8 +87,8 @@ double calcLatJerk(
 
 // calc from ego velocity
 double calcLatJerk(
-  const Control & cmd, const Control & prev_cmd,
-  const double wheelbase, const double dt, const double ego_v)
+  const Control & cmd, const Control & prev_cmd, const double wheelbase, const double dt,
+  const double ego_v)
 {
   const auto prev = ego_v * ego_v * std::tan(prev_cmd.lateral.steering_tire_angle) / wheelbase;
 
@@ -100,8 +99,8 @@ double calcLatJerk(
 
 void test_1d_limit(
   double ego_v, double V_LIM, double A_LIM, double J_LIM, double LAT_A_LIM, double LAT_J_LIM,
-  double STEER_DIFF, double STEER_LIM, double STEER_RATE_LIM,
-  const Control & prev_cmd, const Control & raw_cmd)
+  double STEER_DIFF, double STEER_LIM, double STEER_RATE_LIM, const Control & prev_cmd,
+  const Control & raw_cmd)
 {
   const double WHEELBASE = 3.0;
   const double DT = 0.1;  // [s]

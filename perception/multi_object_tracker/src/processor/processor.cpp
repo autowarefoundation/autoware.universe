@@ -211,8 +211,7 @@ bool TrackerProcessor::isConfidentTracker(const std::shared_ptr<Tracker> & track
 }
 
 void TrackerProcessor::getTrackedObjects(
-  const rclcpp::Time & time,
-  autoware_perception_msgs::msg::TrackedObjects & tracked_objects) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObjects & tracked_objects) const
 {
   tracked_objects.header.stamp = time;
   for (const auto & tracker : list_tracker_) {

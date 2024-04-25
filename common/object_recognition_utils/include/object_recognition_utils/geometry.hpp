@@ -36,22 +36,19 @@ inline geometry_msgs::msg::Pose getPose(const geometry_msgs::msg::Pose & p)
 }
 
 template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_perception_msgs::msg::DetectedObject & obj)
+inline geometry_msgs::msg::Pose getPose(const autoware_perception_msgs::msg::DetectedObject & obj)
 {
   return obj.kinematics.pose_with_covariance.pose;
 }
 
 template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_perception_msgs::msg::TrackedObject & obj)
+inline geometry_msgs::msg::Pose getPose(const autoware_perception_msgs::msg::TrackedObject & obj)
 {
   return obj.kinematics.pose_with_covariance.pose;
 }
 
 template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_perception_msgs::msg::PredictedObject & obj)
+inline geometry_msgs::msg::Pose getPose(const autoware_perception_msgs::msg::PredictedObject & obj)
 {
   return obj.kinematics.initial_pose_with_covariance.pose;
 }

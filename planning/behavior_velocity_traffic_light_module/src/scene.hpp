@@ -45,7 +45,8 @@ public:
   {
     double base_link2front;
     std::vector<std::tuple<
-      std::shared_ptr<const lanelet::TrafficLight>, autoware_perception_msgs::msg::TrafficLightGroup>>
+      std::shared_ptr<const lanelet::TrafficLight>,
+      autoware_perception_msgs::msg::TrafficLightGroup>>
       tl_state;
     std::vector<geometry_msgs::msg::Pose> stop_poses;
     geometry_msgs::msg::Pose first_stop_pose;
@@ -89,9 +90,8 @@ private:
   bool isStopSignal();
 
   tier4_planning_msgs::msg::PathWithLaneId insertStopPose(
-    const tier4_planning_msgs::msg::PathWithLaneId & input,
-    const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
-    tier4_planning_msgs::msg::StopReason * stop_reason);
+    const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
+    const Eigen::Vector2d & target_point, tier4_planning_msgs::msg::StopReason * stop_reason);
 
   bool isPassthrough(const double & signed_arc_length) const;
 
