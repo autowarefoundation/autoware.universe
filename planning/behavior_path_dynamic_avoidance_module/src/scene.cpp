@@ -1121,8 +1121,8 @@ DynamicAvoidanceModule::DecisionWithReason DynamicAvoidanceModule::willObjectCut
 }
 
 [[maybe_unused]] bool DynamicAvoidanceModule::willObjectBeOutsideEgoChangingPath(
-  const geometry_msgs::msg::Pose & obj_pose,
-  const autoware_perception_msgs::msg::Shape & obj_shape, const double obj_vel) const
+  const geometry_msgs::msg::Pose & obj_pose, const autoware_perception_msgs::msg::Shape & obj_shape,
+  const double obj_vel) const
 {
   if (!ref_path_before_lane_change_ || obj_vel < 0.0) {
     return false;
@@ -1288,8 +1288,7 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
 
 double DynamicAvoidanceModule::calcValidLengthToAvoid(
   const PredictedPath & obj_path, const geometry_msgs::msg::Pose & obj_pose,
-  const autoware_perception_msgs::msg::Shape & obj_shape,
-  const bool is_object_same_direction) const
+  const autoware_perception_msgs::msg::Shape & obj_shape, const bool is_object_same_direction) const
 {
   const auto & input_path_points = getPreviousModuleOutput().path.points;
   const size_t obj_seg_idx =

@@ -44,8 +44,7 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
   initTimer(0.1);
 }
 
-void ShiftDecider::onControlCmd(
-  autoware_control_msgs::msg::Control::SharedPtr msg)
+void ShiftDecider::onControlCmd(autoware_control_msgs::msg::Control::SharedPtr msg)
 {
   control_cmd_ = msg;
 }

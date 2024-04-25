@@ -16,8 +16,8 @@
 #define MOTION_UTILS__RESAMPLE__RESAMPLE_HPP_
 
 #include "autoware_planning_msgs/msg/path.hpp"
-#include "tier4_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "tier4_planning_msgs/msg/path_with_lane_id.hpp"
 
 #include <vector>
 

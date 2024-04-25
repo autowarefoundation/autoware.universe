@@ -45,10 +45,10 @@ namespace
 {
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::Path;
-using tier4_planning_msgs::msg::PathPointWithLaneId;
-using tier4_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using lanelet::utils::to2D;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 bool exists(const std::vector<LaneletPrimitive> & primitives, const int64_t & id)
 {

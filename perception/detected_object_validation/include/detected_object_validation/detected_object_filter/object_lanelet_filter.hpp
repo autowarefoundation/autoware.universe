@@ -22,8 +22,8 @@
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
-#include <autoware_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <tf2_ros/buffer.h>
@@ -67,8 +67,7 @@ private:
   lanelet::ConstLanelets getIntersectedLanelets(
     const LinearRing2d &, const lanelet::ConstLanelets &);
   bool isPolygonOverlapLanelets(const Polygon2d &, const lanelet::ConstLanelets &);
-  geometry_msgs::msg::Polygon setFootprint(
-    const autoware_perception_msgs::msg::DetectedObject &);
+  geometry_msgs::msg::Polygon setFootprint(const autoware_perception_msgs::msg::DetectedObject &);
 
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };

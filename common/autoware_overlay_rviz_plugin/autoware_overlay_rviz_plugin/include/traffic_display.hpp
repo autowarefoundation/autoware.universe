@@ -23,9 +23,9 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/ros_topic_display.hpp>
 
+#include <autoware_perception_msgs/msg/traffic_light_element.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
-#include <autoware_perception_msgs/msg/traffic_light_element.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>

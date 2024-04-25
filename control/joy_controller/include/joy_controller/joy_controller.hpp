@@ -81,8 +81,7 @@ private:
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   // Publisher
-  rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr
-    pub_control_command_;
+  rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr pub_control_command_;
   rclcpp::Publisher<tier4_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     pub_external_control_command_;
   rclcpp::Publisher<tier4_external_api_msgs::msg::GearShiftStamped>::SharedPtr pub_shift_;

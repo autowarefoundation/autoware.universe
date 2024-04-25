@@ -23,9 +23,9 @@
 #include <behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <tier4_api_msgs/msg/intersection_status.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <functional>
 #include <memory>
@@ -60,7 +60,8 @@ private:
   void deleteExpiredModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decision_state_pub_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightGroup>::SharedPtr tl_observation_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrafficLightGroup>::SharedPtr
+    tl_observation_pub_;
 };
 
 class MergeFromPrivateModuleManager : public SceneModuleManagerInterface

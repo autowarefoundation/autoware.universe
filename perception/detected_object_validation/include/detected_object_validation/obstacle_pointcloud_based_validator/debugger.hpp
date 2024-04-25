@@ -36,9 +36,8 @@ public:
   : neighbor_pointcloud_(new pcl::PointCloud<pcl::PointXYZ>),
     pointcloud_within_polygon_(new pcl::PointCloud<pcl::PointXYZ>)
   {
-    removed_objects_pub_ =
-      node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
-        "~/debug/removed_objects", 1);
+    removed_objects_pub_ = node->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
+      "~/debug/removed_objects", 1);
     neighbor_pointcloud_pub_ =
       node->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/neighbor_pointcloud", 1);
     pointcloud_within_polygon_pub_ =
@@ -92,8 +91,7 @@ public:
   }
 
 private:
-  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    removed_objects_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr removed_objects_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr neighbor_pointcloud_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_within_polygon_pub_;
   pcl::PointCloud<pcl::PointXYZ>::Ptr neighbor_pointcloud_;

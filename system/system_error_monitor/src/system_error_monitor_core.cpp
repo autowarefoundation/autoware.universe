@@ -117,8 +117,7 @@ std::vector<diagnostic_msgs::msg::DiagnosticStatus> & getTargetDiagnosticsRef(
 }
 
 diagnostic_msgs::msg::DiagnosticArray convertHazardStatusToDiagnosticArray(
-  rclcpp::Clock::SharedPtr clock,
-  const autoware_system_msgs::msg::HazardStatus & hazard_status)
+  rclcpp::Clock::SharedPtr clock, const autoware_system_msgs::msg::HazardStatus & hazard_status)
 {
   using diagnostic_msgs::msg::DiagnosticStatus;
 
@@ -150,8 +149,7 @@ diagnostic_msgs::msg::DiagnosticArray convertHazardStatusToDiagnosticArray(
 }
 
 std::set<std::string> getErrorModules(
-  const autoware_system_msgs::msg::HazardStatus & hazard_status,
-  const int emergency_hazard_level)
+  const autoware_system_msgs::msg::HazardStatus & hazard_status, const int emergency_hazard_level)
 {
   std::set<std::string> error_modules;
   using autoware_system_msgs::msg::HazardStatus;
@@ -258,8 +256,8 @@ AutowareErrorMonitor::AutowareErrorMonitor()
   // Initialize
   autoware_vehicle_msgs::msg::ControlModeReport vehicle_state_report;
   vehicle_state_report.mode = autoware_vehicle_msgs::msg::ControlModeReport::MANUAL;
-  control_mode_ = std::make_shared<const autoware_vehicle_msgs::msg::ControlModeReport>(
-    vehicle_state_report);
+  control_mode_ =
+    std::make_shared<const autoware_vehicle_msgs::msg::ControlModeReport>(vehicle_state_report);
 
   // Timer
   initialized_time_ = this->now();

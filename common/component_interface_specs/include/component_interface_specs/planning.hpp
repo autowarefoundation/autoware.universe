@@ -17,8 +17,8 @@
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <tier4_planning_msgs/msg/route_state.hpp>
 #include <tier4_planning_msgs/srv/clear_route.hpp>
 #include <tier4_planning_msgs/srv/set_lanelet_route.hpp>

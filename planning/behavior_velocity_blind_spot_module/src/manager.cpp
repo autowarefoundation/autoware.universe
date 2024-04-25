@@ -49,8 +49,7 @@ BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".opposite_adjacent_extend_width");
 }
 
-void BlindSpotModuleManager::launchNewModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+void BlindSpotModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & ll : planning_utils::getLaneletsOnPath(
          path, planner_data_->route_handler_->getLaneletMapPtr(),

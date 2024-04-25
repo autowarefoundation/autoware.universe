@@ -57,8 +57,7 @@ public:
 
 private:
   // ROS interface
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
-    tracked_objects_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr tracked_objects_pub_;
   rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
   tf2_ros::Buffer tf_buffer_;

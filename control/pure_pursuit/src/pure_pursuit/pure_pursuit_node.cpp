@@ -79,8 +79,8 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
     "input/current_odometry", 1, std::bind(&PurePursuitNode::onCurrentOdometry, this, _1));
 
   // Publishers
-  pub_ctrl_cmd_ = this->create_publisher<autoware_control_msgs::msg::Lateral>(
-    "output/control_raw", 1);
+  pub_ctrl_cmd_ =
+    this->create_publisher<autoware_control_msgs::msg::Lateral>("output/control_raw", 1);
 
   // Debug Publishers
   pub_debug_marker_ =

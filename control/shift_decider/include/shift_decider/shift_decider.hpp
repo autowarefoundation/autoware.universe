@@ -38,10 +38,8 @@ private:
   void initTimer(double period_s);
 
   rclcpp::Publisher<autoware_vehicle_msgs::msg::GearCommand>::SharedPtr pub_shift_cmd_;
-  rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr
-    sub_control_cmd_;
-  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr
-    sub_autoware_state_;
+  rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr sub_control_cmd_;
+  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::GearReport>::SharedPtr sub_current_gear_;
 
   rclcpp::TimerBase::SharedPtr timer_;

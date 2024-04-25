@@ -39,8 +39,8 @@
 namespace behavior_path_planner
 {
 
-using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::StopWatch;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_planning_msgs::msg::StopReasonArray;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;

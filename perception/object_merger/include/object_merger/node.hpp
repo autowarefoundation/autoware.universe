@@ -60,14 +60,12 @@ private:
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    merged_object_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr merged_object_pub_;
   message_filters::Subscriber<autoware_perception_msgs::msg::DetectedObjects> object0_sub_{};
   message_filters::Subscriber<autoware_perception_msgs::msg::DetectedObjects> object1_sub_{};
 
   using SyncPolicy = message_filters::sync_policies::ApproximateTime<
-    autoware_perception_msgs::msg::DetectedObjects,
-    autoware_perception_msgs::msg::DetectedObjects>;
+    autoware_perception_msgs::msg::DetectedObjects, autoware_perception_msgs::msg::DetectedObjects>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
   typename std::shared_ptr<Sync> sync_ptr_;
 

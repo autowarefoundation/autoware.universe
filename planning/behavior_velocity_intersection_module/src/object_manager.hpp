@@ -284,8 +284,7 @@ private:
  */
 std::optional<intersection::CollisionInterval> findPassageInterval(
   const autoware_perception_msgs::msg::PredictedPath & predicted_path,
-  const autoware_perception_msgs::msg::Shape & shape,
-  const lanelet::BasicPolygon2d & ego_lane_poly,
+  const autoware_perception_msgs::msg::Shape & shape, const lanelet::BasicPolygon2d & ego_lane_poly,
   const std::optional<lanelet::ConstLanelet> & first_attention_lane_opt,
   const std::optional<lanelet::ConstLanelet> & second_attention_lane_opt);
 

@@ -11,14 +11,14 @@ The objects only inside of the x, y bound will be published.
 
 ### Input
 
-| Name           | Type                                                  | Description            |
-| -------------- | ----------------------------------------------------- | ---------------------- |
+| Name           | Type                                             | Description            |
+| -------------- | ------------------------------------------------ | ---------------------- |
 | `input/object` | `autoware_perception_msgs::msg::DetectedObjects` | input detected objects |
 
 ### Output
 
-| Name            | Type                                                  | Description               |
-| --------------- | ----------------------------------------------------- | ------------------------- |
+| Name            | Type                                             | Description               |
+| --------------- | ------------------------------------------------ | ------------------------- |
 | `output/object` | `autoware_perception_msgs::msg::DetectedObjects` | filtered detected objects |
 
 ## Parameters

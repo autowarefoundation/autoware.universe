@@ -429,8 +429,7 @@ bool MpcLateralController::isStoppedState() const
   }
 }
 
-Lateral MpcLateralController::createCtrlCmdMsg(
-  const Lateral & ctrl_cmd)
+Lateral MpcLateralController::createCtrlCmdMsg(const Lateral & ctrl_cmd)
 {
   auto out = ctrl_cmd;
   out.stamp = clock_->now();

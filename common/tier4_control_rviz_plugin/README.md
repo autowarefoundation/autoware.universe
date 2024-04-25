@@ -6,20 +6,20 @@ This package is to mimic external control for simulation.
 
 ### Input
 
-| Name                              | Type                                              | Description             |
-| --------------------------------- | ------------------------------------------------- | ----------------------- |
-| `/control/current_gate_mode`      | `tier4_control_msgs::msg::GateMode`               | Current GATE mode       |
+| Name                              | Type                                         | Description             |
+| --------------------------------- | -------------------------------------------- | ----------------------- |
+| `/control/current_gate_mode`      | `tier4_control_msgs::msg::GateMode`          | Current GATE mode       |
 | `/vehicle/status/velocity_status` | `autoware_vehicle_msgs::msg::VelocityReport` | Current velocity status |
-| `/api/autoware/get/engage`        | `tier4_external_api_msgs::srv::Engage`            | Getting Engage          |
+| `/api/autoware/get/engage`        | `tier4_external_api_msgs::srv::Engage`       | Getting Engage          |
 | `/vehicle/status/gear_status`     | `autoware_vehicle_msgs::msg::GearReport`     | The state of GEAR       |
 
 ### Output
 
-| Name                             | Type                                                       | Description             |
-| -------------------------------- | ---------------------------------------------------------- | ----------------------- |
-| `/control/gate_mode_cmd`         | `tier4_control_msgs::msg::GateMode`                        | GATE mode               |
-| `/external/selected/control_cmd` | `autoware_control_msgs::msg::Control`                      | Control command         |
-| `/external/selected/gear_cmd`    | `autoware_vehicle_msgs::msg::GearCommand`             | GEAR                    |
+| Name                             | Type                                      | Description     |
+| -------------------------------- | ----------------------------------------- | --------------- |
+| `/control/gate_mode_cmd`         | `tier4_control_msgs::msg::GateMode`       | GATE mode       |
+| `/external/selected/control_cmd` | `autoware_control_msgs::msg::Control`     | Control command |
+| `/external/selected/gear_cmd`    | `autoware_vehicle_msgs::msg::GearCommand` | GEAR            |
 
 ## Usage
 

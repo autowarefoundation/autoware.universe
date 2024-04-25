@@ -91,11 +91,11 @@ Calculates the yaw rate of an object based on the change in yaw angle from the p
 
 ## Inputs / Outputs
 
-| Name              | Type                                                   | Description                                       |
-| ----------------- | ------------------------------------------------------ | ------------------------------------------------- |
+| Name              | Type                                              | Description                                       |
+| ----------------- | ------------------------------------------------- | ------------------------------------------------- |
 | `~/input/objects` | `autoware_perception_msgs::msg::PredictedObjects` | The predicted objects to evaluate.                |
-| `~/metrics`       | `diagnostic_msgs::msg::DiagnosticArray`                | Diagnostic information about perception accuracy. |
-| `~/markers`       | `visualization_msgs::msg::MarkerArray`                 | Visual markers for debugging and visualization.   |
+| `~/metrics`       | `diagnostic_msgs::msg::DiagnosticArray`           | Diagnostic information about perception accuracy. |
+| `~/markers`       | `visualization_msgs::msg::MarkerArray`            | Visual markers for debugging and visualization.   |
 
 ## Parameters
 

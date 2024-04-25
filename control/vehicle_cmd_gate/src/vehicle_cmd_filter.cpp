@@ -96,8 +96,7 @@ void VehicleCmdFilter::limitLongitudinalWithVel(Control & input) const
     std::min(static_cast<double>(input.longitudinal.velocity), param_.vel_lim), -param_.vel_lim);
 }
 
-void VehicleCmdFilter::limitLongitudinalWithAcc(
-  const double dt, Control & input) const
+void VehicleCmdFilter::limitLongitudinalWithAcc(const double dt, Control & input) const
 {
   const auto lon_acc_lim = getLonAccLim();
   input.longitudinal.acceleration = std::max(
@@ -133,8 +132,7 @@ void VehicleCmdFilter::limitLateralWithLatAcc(
 
 // Use ego vehicle speed (not speed command) for the lateral acceleration calculation, otherwise the
 // filtered steering angle oscillates if the input velocity oscillates.
-void VehicleCmdFilter::limitLateralWithLatJerk(
-  const double dt, Control & input) const
+void VehicleCmdFilter::limitLateralWithLatJerk(const double dt, Control & input) const
 {
   double curr_latacc = calcLatAcc(input, current_speed_);
   double prev_latacc = calcLatAcc(prev_cmd_, current_speed_);
@@ -151,8 +149,7 @@ void VehicleCmdFilter::limitLateralWithLatJerk(
   }
 }
 
-void VehicleCmdFilter::limitActualSteerDiff(
-  const double current_steer_angle, Control & input) const
+void VehicleCmdFilter::limitActualSteerDiff(const double current_steer_angle, Control & input) const
 {
   const auto actual_steer_diff_lim = getSteerDiffLim();
 

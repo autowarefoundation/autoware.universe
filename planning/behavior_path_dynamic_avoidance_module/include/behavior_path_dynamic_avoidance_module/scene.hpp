@@ -21,12 +21,12 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
-#include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -58,8 +58,8 @@ std::vector<T> getAllKeys(const std::unordered_map<T, S> & map)
 namespace behavior_path_planner
 {
 using autoware_perception_msgs::msg::PredictedPath;
-using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::Polygon2d;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 struct MinMaxValue
 {

@@ -14,7 +14,6 @@
 
 #include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
 
-
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <pcl/search/pcl_search.h>

@@ -161,8 +161,7 @@ autoware_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingObject(
   return updating_object;
 }
 
-bool UnknownTracker::measureWithPose(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool UnknownTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
 {
   // update motion model
   bool is_updated = false;

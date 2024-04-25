@@ -80,15 +80,11 @@ private:
 private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
-    merged_object_pub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
-    sub_main_objects_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
-    sub_sub_objects_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr merged_object_pub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr sub_main_objects_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr sub_sub_objects_;
   // debug object publisher
-  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
-    debug_object_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr debug_object_pub_;
   bool publish_interpolated_sub_objects_;
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
@@ -103,8 +99,7 @@ private:
   std::string target_frame_;
   std::string base_link_frame_id_;
   // buffer to save the sub objects
-  std::vector<autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr>
-    sub_objects_buffer_;
+  std::vector<autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr> sub_objects_buffer_;
   double sub_object_timeout_sec_;
   double time_sync_threshold_;
 

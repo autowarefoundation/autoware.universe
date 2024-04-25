@@ -42,8 +42,8 @@ std::optional<const lanelet::BasicLineString2d> find_next_stop_line(
 /// @param [inout] predicted_path predicted path to cut
 /// @param [in] planner_data planner data to get the map and traffic light information
 void cut_predicted_path_beyond_red_lights(
-  autoware_perception_msgs::msg::PredictedPath & predicted_path,
-  const PlannerData & planner_data, const double object_front_overhang);
+  autoware_perception_msgs::msg::PredictedPath & predicted_path, const PlannerData & planner_data,
+  const double object_front_overhang);
 
 /// @brief filter predicted objects and their predicted paths
 /// @param [in] planner_data planner data

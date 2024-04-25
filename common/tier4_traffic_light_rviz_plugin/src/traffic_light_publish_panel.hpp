@@ -36,9 +36,9 @@ namespace rviz_plugins
 {
 
 using autoware_map_msgs::msg::LaneletMapBin;
+using autoware_perception_msgs::msg::TrafficLightElement;
 using autoware_perception_msgs::msg::TrafficLightGroup;
 using autoware_perception_msgs::msg::TrafficLightGroupArray;
-using autoware_perception_msgs::msg::TrafficLightElement;
 class TrafficLightPublishPanel : public rviz_common::Panel
 {
   Q_OBJECT

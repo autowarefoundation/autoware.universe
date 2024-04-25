@@ -25,8 +25,8 @@
 #include <rclcpp/time.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>
-#include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/twist.hpp>
@@ -40,8 +40,8 @@
 namespace control_performance_analysis
 {
 using autoware_control_msgs::msg::Control;
-using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_planning_msgs::msg::Trajectory;
+using autoware_vehicle_msgs::msg::SteeringReport;
 using control_performance_analysis::msg::DrivingMonitorStamped;
 using control_performance_analysis::msg::Error;
 using control_performance_analysis::msg::ErrorStamped;

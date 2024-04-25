@@ -101,11 +101,9 @@ private:
 
   // Subscriber
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
-  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr
-    sub_autoware_state_;
+  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
   rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_current_gate_mode_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr
-    sub_control_mode_;
+  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr sub_control_mode_;
   void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onCurrentGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onControlMode(const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
@@ -119,8 +117,7 @@ private:
   autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
 
   // Publisher
-  rclcpp::Publisher<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr
-    pub_hazard_status_;
+  rclcpp::Publisher<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr pub_hazard_status_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diagnostics_err_;
   void publishHazardStatus(const autoware_system_msgs::msg::HazardStatus & hazard_status);
 

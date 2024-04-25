@@ -297,8 +297,7 @@ static std::optional<size_t> getFirstPointIntersectsLineByFootprint(
 }
 
 static std::optional<size_t> getDuplicatedPointIdx(
-  const tier4_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Point & point)
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & point)
 {
   for (size_t i = 0; i < path.points.size(); i++) {
     const auto & p = path.points.at(i).point.pose.position;
@@ -313,8 +312,7 @@ static std::optional<size_t> getDuplicatedPointIdx(
 }
 
 static std::optional<size_t> insertPointIndex(
-  const geometry_msgs::msg::Pose & in_pose,
-  tier4_planning_msgs::msg::PathWithLaneId * inout_path,
+  const geometry_msgs::msg::Pose & in_pose, tier4_planning_msgs::msg::PathWithLaneId * inout_path,
   const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold)
 {
   const auto duplicate_idx_opt = getDuplicatedPointIdx(*inout_path, in_pose.position);
@@ -327,8 +325,7 @@ static std::optional<size_t> insertPointIndex(
   // vector.insert(i) inserts element on the left side of v[i]
   // the velocity need to be zero order hold(from prior point)
   int insert_idx = closest_idx;
-  tier4_planning_msgs::msg::PathPointWithLaneId inserted_point =
-    inout_path->points.at(closest_idx);
+  tier4_planning_msgs::msg::PathPointWithLaneId inserted_point = inout_path->points.at(closest_idx);
   if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
   } else {

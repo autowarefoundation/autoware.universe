@@ -125,8 +125,7 @@ void sendGear(
  * @param [in] pub_sub_node pointer to the node used for communication
  */
 void sendCommand(
-  const Control & cmd, rclcpp::Node::SharedPtr sim_node,
-  std::shared_ptr<PubSubNode> pub_sub_node)
+  const Control & cmd, rclcpp::Node::SharedPtr sim_node, std::shared_ptr<PubSubNode> pub_sub_node)
 {
   for (int i = 0; i < 150; ++i) {
     pub_sub_node->pub_ackermann_command_->publish(cmd);
