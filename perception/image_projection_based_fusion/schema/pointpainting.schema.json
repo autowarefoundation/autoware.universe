@@ -96,7 +96,7 @@
           }
         }
       },
-      "required": ["densification_params", "post_process_params", "omp_params"]
+      "required": []
     }
   },
   "properties": {
