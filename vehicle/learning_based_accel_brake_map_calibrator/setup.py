@@ -1,6 +1,7 @@
 import os
 from glob import glob
-from setuptools import setup
+
+from setuptools import setup, find_packages
 
 package_name = 'learning_based_vehicle_calibration'
 

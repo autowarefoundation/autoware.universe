@@ -1,10 +1,11 @@
 #! /usr/bin/env python3
 import math
 
+from collections import deque
+
 import rclpy
 import rclpy.node
 import pandas as pd
-from collections import deque
 from statistics import mean
 
 from tier4_vehicle_msgs.msg import ActuationStatusStamped
