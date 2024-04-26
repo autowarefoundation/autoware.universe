@@ -121,7 +121,6 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     input_channels_[i].input_topic = input_topic_names[i];
     input_channels_[i].long_name = input_names_long[i];
     input_channels_[i].short_name = input_names_short[i];
-    input_channels_[i].priority = 1;
     input_channels_[i].expected_rate = input_expected_rates[i];
   }
 

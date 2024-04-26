@@ -38,7 +38,6 @@ struct InputChannel
   std::string short_name = "DET";             // abbreviation of the name
   double expected_rate = 10.0;                // [Hz]
   double expected_latency = 0.2;              // [s]
-  int priority = 0;                           // priority of the input channel, higher is better
 };
 
 class InputStream
@@ -56,8 +55,8 @@ public:
 
   void onMessage(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
 
+  bool isTimeInitialized() const { return is_time_initialized_; }
   uint getIndex() const { return index_; }
-  int getPriority() const { return priority_; }
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
     ObjectsList & objects_list);
@@ -88,8 +87,6 @@ private:
   std::string long_name_;
   std::string short_name_;
 
-  int priority_{0};
-
   size_t que_size_{30};
   std::deque<DetectedObjects> objects_que_;
 
@@ -117,7 +114,9 @@ public:
   void onTrigger(const uint & index) const;
 
   void getObjectTimeInterval(
-    const rclcpp::Time & now, rclcpp::Time & object_latest_time, rclcpp::Time & object_oldest_time);
+    const rclcpp::Time & now, rclcpp::Time & object_latest_time,
+    rclcpp::Time & object_oldest_time) const;
+  void optimizeTimings();
   bool getObjects(const rclcpp::Time & now, ObjectsList & objects_list);
 
 private:

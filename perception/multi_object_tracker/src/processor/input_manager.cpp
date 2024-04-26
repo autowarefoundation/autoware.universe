@@ -18,7 +18,9 @@
 
 namespace multi_object_tracker
 {
-
+///////////////////////////
+/////// InputStream ///////
+///////////////////////////
 InputStream::InputStream(rclcpp::Node & node, uint & index) : node_(node), index_(index)
 {
 }
@@ -29,8 +31,6 @@ void InputStream::init(const InputChannel & input_channel)
   input_topic_ = input_channel.input_topic;
   long_name_ = input_channel.long_name;
   short_name_ = input_channel.short_name;
-
-  priority_ = input_channel.priority;
 
   // Initialize queue
   objects_que_.clear();
@@ -133,6 +133,9 @@ void InputStream::getObjectsOlderThan(
   }
 }
 
+////////////////////////////
+/////// InputManager ///////
+////////////////////////////
 InputManager::InputManager(rclcpp::Node & node) : node_(node)
 {
   latest_object_time_ = node_.now();
@@ -179,12 +182,13 @@ void InputManager::onTrigger(const uint & index) const
 }
 
 void InputManager::getObjectTimeInterval(
-  const rclcpp::Time & now, rclcpp::Time & object_latest_time, rclcpp::Time & object_oldest_time)
+  const rclcpp::Time & now, rclcpp::Time & object_latest_time,
+  rclcpp::Time & object_oldest_time) const
 {
   object_latest_time = now - rclcpp::Duration::from_seconds(target_latency_);
   object_oldest_time = now - rclcpp::Duration::from_seconds(target_latency_ + target_latency_band_);
 
-  // get the latest timestamp of the target stream
+  // try to include the latest message of the target stream
   rclcpp::Time latest_message_time, latest_measurement_time;
   if (input_streams_.at(target_stream_idx_)
         ->getTimestamps(latest_measurement_time, latest_message_time)) {
@@ -196,8 +200,10 @@ void InputManager::getObjectTimeInterval(
   // time
   object_oldest_time =
     object_oldest_time > latest_object_time_ ? object_oldest_time : latest_object_time_;
+}
 
-  // OPTIMIZATION: Get the stream with the maximum latency
+void InputManager::optimizeTimings()
+{
   double max_latency_mean = 0.0;
   uint stream_selected_idx = 0;
   double selected_idx_latency_std = 0.0;
@@ -205,25 +211,24 @@ void InputManager::getObjectTimeInterval(
 
   {
     // ANALYSIS: Get the streams statistics
-    std::string long_name, short_name;
     double latency_mean, latency_var, interval_mean, interval_var;
-    rclcpp::Time latest_measurement_time, latest_message_time;
     for (const auto & input_stream : input_streams_) {
-      input_stream->getNames(long_name, short_name);
+      if (!input_stream->isTimeInitialized()) continue;
       input_stream->getTimeStatistics(latency_mean, latency_var, interval_mean, interval_var);
-      if (!input_stream->getTimestamps(latest_measurement_time, latest_message_time)) {
-        continue;
-      }
-      double latency_message = (now - latest_message_time).seconds();
-      double latency_measurement = (now - latest_measurement_time).seconds();
-      if (latency_mean > max_latency_mean && input_stream->getPriority() > 0) {
+      if (latency_mean > max_latency_mean) {
         max_latency_mean = latency_mean;
         selected_idx_latency_std = std::sqrt(latency_var);
         stream_selected_idx = input_stream->getIndex();
         selected_idx_interval = interval_mean;
       }
 
-      // print info
+      /* DEBUG */
+      std::string long_name, short_name;
+      rclcpp::Time latest_measurement_time, latest_message_time;
+      input_stream->getNames(long_name, short_name);
+      input_stream->getTimestamps(latest_measurement_time, latest_message_time);
+      double latency_message = (node_.now() - latest_message_time).seconds();
+      double latency_measurement = (node_.now() - latest_measurement_time).seconds();
       RCLCPP_INFO(
         node_.get_logger(),
         "InputManager::getObjects %s: latency mean: %f, std: %f, interval mean: "
@@ -238,6 +243,8 @@ void InputManager::getObjectTimeInterval(
   target_stream_idx_ = stream_selected_idx;
   target_latency_ = max_latency_mean - selected_idx_latency_std;
   target_latency_band_ = 2 * selected_idx_latency_std + selected_idx_interval;
+
+  /* DEBUG */
   RCLCPP_INFO(
     node_.get_logger(), "InputManager::getObjects Target stream: %s, target latency: %f, band: %f",
     input_streams_.at(target_stream_idx_)->getLongName().c_str(), target_latency_,
@@ -258,8 +265,13 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
   rclcpp::Time object_latest_time, object_oldest_time;
   getObjectTimeInterval(now, object_latest_time, object_oldest_time);
 
+  // Optimize the target stream, latency, and its band
+  // The result will be used for the next time, so the optimization is after getting the time
+  // interval
+  optimizeTimings();
+
   // Get objects from all input streams
-  // adds-up to the objects vector for efficient processing
+  // adds up to the objects vector for efficient processing
   for (const auto & input_stream : input_streams_) {
     input_stream->getObjectsOlderThan(object_latest_time, object_oldest_time, objects_list);
   }
@@ -271,10 +283,6 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
       return (rclcpp::Time(a.second.header.stamp) - rclcpp::Time(b.second.header.stamp)).seconds() <
              0;
     });
-
-  RCLCPP_INFO(
-    node_.get_logger(), "InputManager::getObjects Got %zu objects from input streams",
-    objects_list.size());
 
   // Update the latest object time
   if (!objects_list.empty()) {
