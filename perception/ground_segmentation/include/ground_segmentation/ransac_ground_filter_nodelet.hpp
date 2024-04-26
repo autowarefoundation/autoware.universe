@@ -56,7 +56,7 @@ struct RGB
 
 class RANSACGroundFilterComponent : public pointcloud_preprocessor::Filter
 {
-  using PointType = pcl::PointXYZI;
+  using PointType = pcl::PointXYZ;
 
 protected:
   void filter(
