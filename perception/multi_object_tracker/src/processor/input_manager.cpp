@@ -66,9 +66,21 @@ void InputStream::onMessage(
     objects_que_.pop_front();
   }
 
+  // update the timing statistics
+  rclcpp::Time now = node_.now();
+  rclcpp::Time objects_time(objects.header.stamp);
+  updateTimingStatus(now, objects_time);
+
+  // trigger the function if it is set
+  if (func_trigger_) {
+    func_trigger_(index_);
+  }
+}
+
+void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Time & objects_time)
+{
   // Filter parameters
   constexpr double gain = 0.05;
-  const auto now = node_.now();
 
   // Calculate interval, Update interval statistics
   if (is_time_initialized_) {
@@ -89,23 +101,15 @@ void InputStream::onMessage(
 
   // Update time
   latest_message_time_ = now;
-  rclcpp::Time objects_time(objects.header.stamp);
   latest_measurement_time_ =
     latest_measurement_time_ < objects_time ? objects_time : latest_measurement_time_;
   if (!is_time_initialized_) is_time_initialized_ = true;
 
-  // Calculate latency
-  const double latency = (latest_message_time_ - objects_time).seconds();
-
   // Update latency statistics
+  const double latency = (latest_message_time_ - objects_time).seconds();
   latency_mean_ = (1.0 - gain) * latency_mean_ + gain * latency;
   const double latency_delta = latency - latency_mean_;
   latency_var_ = (1.0 - gain) * latency_var_ + gain * latency_delta * latency_delta;
-
-  // trigger the function if it is set
-  if (func_trigger_) {
-    func_trigger_(index_);
-  }
 }
 
 void InputStream::getObjectsOlderThan(

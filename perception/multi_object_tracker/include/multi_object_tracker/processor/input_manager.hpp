@@ -54,6 +54,7 @@ public:
   }
 
   void onMessage(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
+  void updateTimingStatus(const rclcpp::Time & now, const rclcpp::Time & objects_time);
 
   bool isTimeInitialized() const { return is_time_initialized_; }
   uint getIndex() const { return index_; }
