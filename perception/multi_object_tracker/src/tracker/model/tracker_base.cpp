@@ -62,8 +62,8 @@ bool Tracker::updateWithMeasurement(
     const double delta_time = (measurement_time - last_update_with_measurement_time_).seconds();
     const double decay_rate = 5.0 / 10.0;
 
-    const float gain = 0.8;
-    const float probability_detected = 0.8;
+    const float gain = 0.4;
+    const float probability_detected = 0.99;
     // existence_probabilities_[channel_index] = existence_probability_from_object;
     existence_probabilities_[channel_index] =
       gain * probability_detected + (1 - gain) * existence_probabilities_[channel_index];

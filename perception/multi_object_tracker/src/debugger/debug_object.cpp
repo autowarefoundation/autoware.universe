@@ -68,6 +68,8 @@ void TrackerObjectDebugger::collect(
     autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
     (*(tracker_itr))->getTrackedObject(message_time, tracked_object);
     object_data.uuid = to_boost_uuid(tracked_object.object_id);
+    object_data.uuid_int = uuid_to_int(object_data.uuid);
+    object_data.uuid_str = uuid_to_string(tracked_object.object_id);
 
     // tracker
     bool is_associated = false;
@@ -107,23 +109,18 @@ void TrackerObjectDebugger::process()
 {
   if (!is_initialized_) return;
 
-  // check all object data and update marker index
-  update_id_map(object_data_list_);
-
   // update uuid_int
   for (auto & object_data : object_data_list_) {
-    object_data.uuid_int = uuid_to_marker_id(object_data.uuid);
     current_ids_.insert(object_data.uuid_int);
   }
 
   // sort by uuid, collect the same uuid object_data as a group, and loop for the groups
-  // std::vector<std::vector<ObjectData>> object_data_groups;
   object_data_groups_.clear();
   {
-    // sort by uuid_int
+    // sort by uuid
     std::sort(
       object_data_list_.begin(), object_data_list_.end(),
-      [](const ObjectData & a, const ObjectData & b) { return a.uuid_int < b.uuid_int; });
+      [](const ObjectData & a, const ObjectData & b) { return a.uuid < b.uuid; });
 
     // collect the same uuid object_data as a group
     std::vector<ObjectData> object_data_group;
@@ -173,14 +170,14 @@ void TrackerObjectDebugger::draw(
 
   for (const auto & object_data_group : object_data_groups) {
     if (object_data_group.empty()) continue;
-    const int & uuid_int = object_data_group.front().uuid_int;
     const auto object_data_front = object_data_group.front();
     const auto object_data_back = object_data_group.back();
+
     // set a reference marker
     visualization_msgs::msg::Marker marker;
     marker.header.frame_id = frame_id_;
     marker.header.stamp = object_data_front.time;
-    marker.id = uuid_int;
+    marker.id = object_data_front.uuid_int;
     marker.pose.position.x = 0;
     marker.pose.position.y = 0;
     marker.pose.position.z = 0;
@@ -200,18 +197,20 @@ void TrackerObjectDebugger::draw(
     text_marker.scale.z = 0.5;
     text_marker.pose.position.x = object_data_front.tracker_point.x;
     text_marker.pose.position.y = object_data_front.tracker_point.y;
-    text_marker.pose.position.z = object_data_front.tracker_point.z + 2.0;
+    text_marker.pose.position.z = object_data_front.tracker_point.z + 2.5;
 
     // show the last existence probability
     // print existence probability with channel name
     // probability to text, two digits of percentage
     std::string existence_probability_text = "";
-    existence_probability_text += std::to_string(uuid_int);
     for (size_t i = 0; i < object_data_front.existence_vector.size(); ++i) {
       std::stringstream stream;
       stream << std::fixed << std::setprecision(0) << object_data_front.existence_vector[i] * 100;
-      existence_probability_text += ":" + channel_names_[i] + stream.str();
+      existence_probability_text += channel_names_[i] + stream.str() + ":";
     }
+    existence_probability_text =
+      existence_probability_text.substr(0, existence_probability_text.size() - 1);
+    existence_probability_text += "\n" + object_data_front.uuid_str.substr(0, 6);
 
     text_marker.text = existence_probability_text;
     marker_array.markers.push_back(text_marker);
@@ -219,7 +218,8 @@ void TrackerObjectDebugger::draw(
     // loop for each object_data in the group
     // boxed to tracker positions
     // and link lines to the detected positions
-    const double height_offset = 1.0;
+    const double marker_height_offset = 1.0;
+    const double assign_height_offset = 0.6;
 
     visualization_msgs::msg::Marker marker_track_boxes;
     marker_track_boxes = marker;
@@ -273,7 +273,7 @@ void TrackerObjectDebugger::draw(
       geometry_msgs::msg::Point box_point;
       box_point.x = object_data.tracker_point.x;
       box_point.y = object_data.tracker_point.y;
-      box_point.z = object_data.tracker_point.z + height_offset;
+      box_point.z = object_data.tracker_point.z + marker_height_offset;
       marker_track_boxes.points.push_back(box_point);
 
       // set association marker, if exists
@@ -285,7 +285,7 @@ void TrackerObjectDebugger::draw(
         marker_detect_boxes_per_channel.at(channel_id);
       box_point.x = object_data.detection_point.x;
       box_point.y = object_data.detection_point.y;
-      box_point.z = object_data.detection_point.z + height_offset + 1;
+      box_point.z = object_data.detection_point.z + marker_height_offset + assign_height_offset;
       marker_detect_boxes.points.push_back(box_point);
 
       // association line
@@ -294,11 +294,11 @@ void TrackerObjectDebugger::draw(
       geometry_msgs::msg::Point line_point;
       line_point.x = object_data.tracker_point.x;
       line_point.y = object_data.tracker_point.y;
-      line_point.z = object_data.tracker_point.z + height_offset;
+      line_point.z = object_data.tracker_point.z + marker_height_offset;
       marker_lines.points.push_back(line_point);
       line_point.x = object_data.detection_point.x;
       line_point.y = object_data.detection_point.y;
-      line_point.z = object_data.detection_point.z + height_offset + 1;
+      line_point.z = object_data.detection_point.z + marker_height_offset + assign_height_offset;
       marker_lines.points.push_back(line_point);
     }
 

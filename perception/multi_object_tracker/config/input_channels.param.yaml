@@ -7,28 +7,28 @@
         name_short: "all"
         expected_frequency: 10.0
       # LIDAR - rule-based
-      lidar-clustering:
+      lidar_clustering:
         topic: "/perception/object_recognition/detection/clustering/objects"
         name: "clustering"
         name_short: "Lcl"
         expected_frequency: 10.0
       # LIDAR - DNN
-      lidar-centerpoint:
+      lidar_centerpoint:
         topic: "/perception/object_recognition/detection/centerpoint/objects"
         name: "centerpoint"
         name_short: "Lcp"
         expected_frequency: 10.0
-      lidar-centerpoint_validated:
+      lidar_centerpoint_validated:
         topic: "/perception/object_recognition/detection/centerpoint/validation/objects"
         name: "centerpoint"
         name_short: "Lcp"
         expected_frequency: 10.0
-      lidar-apollo:
+      lidar_apollo:
         topic: "/perception/object_recognition/detection/apollo/objects"
         name: "apollo"
         name_short: "Lap"
         expected_frequency: 10.0
-      lidar-apollo_validated:
+      lidar_apollo_validated:
         topic: "/perception/object_recognition/detection/apollo/validation/objects"
         name: "apollo"
         name_short: "Lap"

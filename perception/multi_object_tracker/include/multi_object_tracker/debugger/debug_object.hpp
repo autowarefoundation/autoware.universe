@@ -44,6 +44,7 @@ struct ObjectData
   // object uuid
   boost::uuids::uuid uuid;
   int uuid_int;
+  std::string uuid_str;
 
   // association link, pair of coordinates
   // tracker to detection
@@ -72,7 +73,6 @@ private:
   rclcpp::Time message_time_;
 
   std::vector<ObjectData> object_data_list_;
-  std::unordered_map<boost::uuids::uuid, int32_t, boost::hash<boost::uuids::uuid>> id_map_;
   std::list<int32_t> unused_marker_ids_;
   int32_t marker_id_ = 0;
   std::vector<std::vector<ObjectData>> object_data_groups_;
@@ -116,49 +116,7 @@ private:
     return uuid;
   }
 
-  void update_id_map(const std::vector<ObjectData> & object_data_list)
-  {
-    std::vector<boost::uuids::uuid> new_uuids;
-    std::vector<boost::uuids::uuid> tracked_uuids;
-    new_uuids.reserve(object_data_list.size());
-    tracked_uuids.reserve(object_data_list.size());
-
-    // check if the object is already tracked
-    for (const auto & object_data : object_data_list) {
-      ((id_map_.find(object_data.uuid) != id_map_.end()) ? tracked_uuids : new_uuids)
-        .push_back(object_data.uuid);
-    }
-
-    // remove untracked objects
-    auto itr = id_map_.begin();
-    while (itr != id_map_.end()) {
-      if (
-        std::find(tracked_uuids.begin(), tracked_uuids.end(), itr->first) == tracked_uuids.end()) {
-        unused_marker_ids_.push_back(itr->second);
-        itr = id_map_.erase(itr);
-      } else {
-        ++itr;
-      }
-    }
-
-    // add new objects
-    for (const auto & new_uuid : new_uuids) {
-      if (unused_marker_ids_.empty()) {
-        id_map_.emplace(new_uuid, marker_id_);
-        marker_id_++;
-      } else {
-        id_map_.emplace(new_uuid, unused_marker_ids_.front());
-        unused_marker_ids_.pop_front();
-      }
-    }
-  }
-
-  int32_t uuid_to_marker_id(const unique_identifier_msgs::msg::UUID & uuid_msg)
-  {
-    const auto uuid = to_boost_uuid(uuid_msg);
-    return id_map_.at(uuid);
-  }
-  int32_t uuid_to_marker_id(const boost::uuids::uuid & uuid) { return id_map_.at(uuid); }
+  int32_t uuid_to_int(const boost::uuids::uuid & uuid) { return boost::uuids::hash_value(uuid); }
 };
 
 #endif  // MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
