@@ -1,9 +1,8 @@
+import os
+
 import launch
 import launch_ros.actions
-import os
 from launch.actions import OpaqueFunction
-from launch import LaunchDescription
-from launch_ros.actions import Node
 import launch.substitutions
 
 

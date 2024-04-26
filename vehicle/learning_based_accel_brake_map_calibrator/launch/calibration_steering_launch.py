@@ -1,6 +1,7 @@
+import os
+
 import launch
 import launch_ros.actions
-import os
 from launch.actions import OpaqueFunction
 
 

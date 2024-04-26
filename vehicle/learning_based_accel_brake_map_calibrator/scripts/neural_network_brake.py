@@ -1,5 +1,4 @@
 #! /usr/bin/python3
-import os
 import pandas as pd
 import numpy as np
 import torch
@@ -10,7 +9,6 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import r2_score
-import math
 import rclpy
 from rclpy.node import Node
 
@@ -113,7 +111,7 @@ class NeuralNetworkBrake(Node):
         # Evaluate the model on the test data
         with torch.no_grad():
             test_outputs = self.model(X_test)
-            test_loss = criterion(test_outputs, y_test.view(-1, 1))
+            # test_loss = criterion(test_outputs, y_test.view(-1, 1))
             # print(f"Mean Squared Error on Test Data: {test_loss.item()}")
 
         # Visualization
@@ -155,15 +153,14 @@ class NeuralNetworkBrake(Node):
 
         # we normalize braking values from 0 to 1
         braking_range /= 100
-        braking_headers = ['Throttling {:.2f}'.format(a) for a in braking_range]
 
         headers = [''] + velocity_headers
 
         # Add braking values to the commands_new matrix as the first column
-        commands_new_with_throttling = np.column_stack((braking_range, commands_new))
+        commands_new_with_braking = np.column_stack((braking_range, commands_new))
 
         csv_filename = 'brake_map.csv'
-        np.savetxt(csv_filename, commands_new_with_throttling,
+        np.savetxt(csv_filename, commands_new_with_braking,
                    delimiter=',', header=','.join(headers), comments='')
 
         # visualize raw data with the NN model for comparison
@@ -174,7 +171,7 @@ class NeuralNetworkBrake(Node):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
 
-        scatter = ax.scatter3D(xdata, ydata, zdata, c=zdata, marker='o')
+        ax.scatter3D(xdata, ydata, zdata, c=zdata, marker='o')
         surf = ax.plot_surface(V, A, commands_new, cmap='viridis')
 
         ax.set_xlabel('Velocity')

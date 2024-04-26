@@ -1,5 +1,6 @@
 #! /usr/bin/env python3
-import os
+import math
+
 import pandas as pd
 import numpy as np
 import torch
@@ -10,7 +11,6 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import r2_score
-import math
 from scipy.signal import medfilt
 import rclpy
 from rclpy.node import Node
@@ -120,7 +120,7 @@ class NeuralNetworkSteering4(Node):
 
         with torch.no_grad():
             test_outputs = self.model(X_test)
-            test_loss = criterion(test_outputs, y_test.view(-1, 1))
+            # test_loss = criterion(test_outputs, y_test.view(-1, 1))
             # print(f"Mean Squared Error on Test Data: {test_loss.item()}")
 
         # Visualization (you can modify the range based on your needs)
@@ -160,7 +160,6 @@ class NeuralNetworkSteering4(Node):
 
         # we normalize throttling values between 0 and 1
         throttling_range /= 100
-        throttling_headers = ['Throttling {:.2f}'.format(a) for a in throttling_range]
 
         headers = [''] + velocity_headers
 
@@ -179,7 +178,7 @@ class NeuralNetworkSteering4(Node):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
 
-        scatter = ax.scatter3D(xdata, ydata, zdata, c=zdata, marker='o')
+        ax.scatter3D(xdata, ydata, zdata, c=zdata, marker='o')
         surf = ax.plot_surface(V, A, commands_new, cmap='viridis')
 
         ax.set_xlabel('Velocity')

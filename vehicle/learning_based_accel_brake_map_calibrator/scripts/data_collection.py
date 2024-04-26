@@ -1,9 +1,9 @@
 #! /usr/bin/env python3
+import math
 
 import rclpy
 import rclpy.node
 import pandas as pd
-import math
 from collections import deque
 from statistics import mean
 

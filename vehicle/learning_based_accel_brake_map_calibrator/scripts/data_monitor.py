@@ -6,7 +6,6 @@ from autoware_auto_vehicle_msgs.msg import VelocityReport
 from autoware_auto_vehicle_msgs.msg import SteeringReport
 from std_msgs.msg import Float32
 from sensor_msgs.msg import Imu
-from can_msgs.msg import Frame
 
 
 class DataMonitor(rclpy.node.Node):
