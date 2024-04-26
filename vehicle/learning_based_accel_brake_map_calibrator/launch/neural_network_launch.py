@@ -47,7 +47,7 @@ def generate_launch_description():
                 'filter_vel_throttle': launch.substitutions.LaunchConfiguration('filter_vel_throttle'),
                 'filter_cmd_throttle': launch.substitutions.LaunchConfiguration('filter_cmd_throttle'),
                 'filter_acc_throttle': launch.substitutions.LaunchConfiguration('filter_acc_throttle'),
-                
+
             }],
         ),
         launch_ros.actions.Node(

@@ -38,7 +38,7 @@ def generate_launch_description():
                 'filter_cmd': launch.substitutions.LaunchConfiguration('filter_cmd'),
                 'filter_acc': launch.substitutions.LaunchConfiguration('filter_acc'),
                 'mean_filter_size': launch.substitutions.LaunchConfiguration('mean_filter_size'),
-                
+
             }],
         ),
         launch_ros.actions.Node(
@@ -51,7 +51,7 @@ def generate_launch_description():
                 'filter_cmd': launch.substitutions.LaunchConfiguration('filter_cmd'),
                 'filter_acc': launch.substitutions.LaunchConfiguration('filter_acc'),
                 'mean_filter_size': launch.substitutions.LaunchConfiguration('mean_filter_size'),
-                
+
             }],
         ),
         launch_ros.actions.Node(
@@ -64,7 +64,7 @@ def generate_launch_description():
                 'filter_cmd': launch.substitutions.LaunchConfiguration('filter_cmd'),
                 'filter_acc': launch.substitutions.LaunchConfiguration('filter_acc'),
                 'mean_filter_size': launch.substitutions.LaunchConfiguration('mean_filter_size'),
-                
+
             }],
         ),
         launch_ros.actions.Node(
@@ -77,7 +77,7 @@ def generate_launch_description():
                 'filter_cmd': launch.substitutions.LaunchConfiguration('filter_cmd'),
                 'filter_acc': launch.substitutions.LaunchConfiguration('filter_acc'),
                 'mean_filter_size': launch.substitutions.LaunchConfiguration('mean_filter_size'),
-                
+
             }],
         ),
         launch_ros.actions.Node(
@@ -90,7 +90,7 @@ def generate_launch_description():
                 'filter_cmd': launch.substitutions.LaunchConfiguration('filter_cmd'),
                 'filter_acc': launch.substitutions.LaunchConfiguration('filter_acc'),
                 'mean_filter_size': launch.substitutions.LaunchConfiguration('mean_filter_size'),
-                
+
             }],
         ),
     ])

@@ -3,9 +3,11 @@ import launch_ros.actions
 import os
 from launch.actions import OpaqueFunction
 
+
 def launch_data_monitor_steer(context):
     # Open a new terminal and run data_monitor.py
     os.system("gnome-terminal -- /bin/bash -c 'ros2 run learning_based_vehicle_calibration data_monitor_steer.py; exec bash'")
+
 
 def generate_launch_description():
     return launch.LaunchDescription([
@@ -16,7 +18,7 @@ def generate_launch_description():
         ),
         launch.actions.DeclareLaunchArgument(
             'max_velocity',
-            default_value='1.95', 
+            default_value='1.95',
             description='Max speed in m/s over which we do not collect data'
         ),
         launch.actions.DeclareLaunchArgument(
@@ -36,7 +38,7 @@ def generate_launch_description():
         ),
         launch.actions.DeclareLaunchArgument(
             'steering_threshold_3',
-            default_value='0.20', 
+            default_value='0.20',
             description='Radians value'
         ),
         launch.actions.DeclareLaunchArgument(
@@ -75,7 +77,7 @@ def generate_launch_description():
             default_value='/sensing/gnss/chc/imu',
             description='Topic for IMU data'
         ),
-        
+
 
         launch.actions.DeclareLaunchArgument(
             'Recovery_Mode',
@@ -97,16 +99,25 @@ def generate_launch_description():
             parameters=[
                 {'max_data': launch.substitutions.LaunchConfiguration('max_data')},
                 {'max_velocity': launch.substitutions.LaunchConfiguration('max_velocity')},
-                {'throttle_threshold': launch.substitutions.LaunchConfiguration('throttle_threshold')},
-                {'steering_threshold_1': launch.substitutions.LaunchConfiguration('steering_threshold_1')},
-                {'steering_threshold_2': launch.substitutions.LaunchConfiguration('steering_threshold_2')},
-                {'steering_threshold_3': launch.substitutions.LaunchConfiguration('steering_threshold_3')},
-                {'steering_threshold_4': launch.substitutions.LaunchConfiguration('steering_threshold_4')},
-                {'steering_threshold_5': launch.substitutions.LaunchConfiguration('steering_threshold_5')},
+                {'throttle_threshold': launch.substitutions.LaunchConfiguration(
+                    'throttle_threshold')},
+                {'steering_threshold_1': launch.substitutions.LaunchConfiguration(
+                    'steering_threshold_1')},
+                {'steering_threshold_2': launch.substitutions.LaunchConfiguration(
+                    'steering_threshold_2')},
+                {'steering_threshold_3': launch.substitutions.LaunchConfiguration(
+                    'steering_threshold_3')},
+                {'steering_threshold_4': launch.substitutions.LaunchConfiguration(
+                    'steering_threshold_4')},
+                {'steering_threshold_5': launch.substitutions.LaunchConfiguration(
+                    'steering_threshold_5')},
                 {'pitch_topic': launch.substitutions.LaunchConfiguration('pitch_topic')},
-                {'actuation_status_topic': launch.substitutions.LaunchConfiguration('actuation_status_topic')},
-                {'steering_status_topic': launch.substitutions.LaunchConfiguration('steering_status_topic')},
-                {'velocity_status_topic': launch.substitutions.LaunchConfiguration('velocity_status_topic')},
+                {'actuation_status_topic': launch.substitutions.LaunchConfiguration(
+                    'actuation_status_topic')},
+                {'steering_status_topic': launch.substitutions.LaunchConfiguration(
+                    'steering_status_topic')},
+                {'velocity_status_topic': launch.substitutions.LaunchConfiguration(
+                    'velocity_status_topic')},
                 {'imu_topic': launch.substitutions.LaunchConfiguration('imu_topic')},
 
                 {'Recovery_Mode': launch.substitutions.LaunchConfiguration('Recovery_Mode')},

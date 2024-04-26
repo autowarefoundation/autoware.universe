@@ -26,7 +26,7 @@ fig = plt.figure()
 ax = plt.axes(projection='3d')
 
 
-cmap = plt.get_cmap('Greens') 
+cmap = plt.get_cmap('Greens')
 normalize = plt.Normalize(zdata.min(), zdata.max())
 sc = plt.cm.ScalarMappable(cmap=cmap, norm=normalize)
 sc.set_array([])

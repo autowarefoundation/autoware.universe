@@ -15,7 +15,6 @@ import rclpy
 from rclpy.node import Node
 
 
-
 class NeuralNetworkThrottle(Node):
     class NeuralNetwork(nn.Module):
         def __init__(self):
@@ -25,17 +24,14 @@ class NeuralNetworkThrottle(Node):
             self.fc2 = nn.Linear(128, 32)
             self.relu2 = nn.ReLU()
             self.fc3 = nn.Linear(32, 1)  # Output layer with 1 neuron
-        
-        
-        
+
         def forward(self, x):
             x = self.fc1(x)
             x = self.relu1(x)
             x = self.fc2(x)
             x = self.relu2(x)
             x = self.fc3(x)
-        
-        
+
             return x
 
     def __init__(self):
@@ -48,17 +44,18 @@ class NeuralNetworkThrottle(Node):
         dataa = pd.read_csv('throttling.csv')
         ush = pd.read_csv('throttling.csv')
 
-
         # Declare params from launch file
         self.declare_parameter('filter_vel_throttle', 10.0)
         self.declare_parameter('filter_cmd_throttle', 10.0)
         self.declare_parameter('filter_acc_throttle', 10.0)
 
         # Load params from launch file
-        self.FILTER_VEL_THROTTLE = self.get_parameter('filter_vel_throttle').get_parameter_value().double_value
-        self.FILTER_CMD_THROTTLE = self.get_parameter('filter_cmd_throttle').get_parameter_value().double_value
-        self.FILTER_ACC_THROTTLE = self.get_parameter('filter_acc_throttle').get_parameter_value().double_value
-
+        self.FILTER_VEL_THROTTLE = self.get_parameter(
+            'filter_vel_throttle').get_parameter_value().double_value
+        self.FILTER_CMD_THROTTLE = self.get_parameter(
+            'filter_cmd_throttle').get_parameter_value().double_value
+        self.FILTER_ACC_THROTTLE = self.get_parameter(
+            'filter_acc_throttle').get_parameter_value().double_value
 
         mean0 = data["Velocity"].mean()
         std0 = data["Velocity"].std()
@@ -84,16 +81,12 @@ class NeuralNetworkThrottle(Node):
         data = data[abs(data["Acceleration_measured"]-mean2) <= std2*self.FILTER_ACC_THROTTLE]
         dataa = dataa[abs(dataa["Acceleration_measured"]-mean2) <= std2*self.FILTER_ACC_THROTTLE]
 
-
         # Split the data into input features (velocity and throttle) and target (acceleration) and test/train
 
         X = data[['Velocity', 'Throttling']].values
         y = data['Acceleration_measured'].values
 
-
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-
 
         # Convert NumPy arrays to PyTorch tensors
         X_train = torch.tensor(X_train, dtype=torch.float32)
@@ -101,36 +94,31 @@ class NeuralNetworkThrottle(Node):
         X_test = torch.tensor(X_test, dtype=torch.float32)
         y_test = torch.tensor(y_test, dtype=torch.float32)
 
-
-
         criterion = nn.MSELoss()
-        optimizer = optim.Adam(self.model.parameters(), lr=0.001) #, weight_decay=0.001)
-
+        optimizer = optim.Adam(self.model.parameters(), lr=0.001)  # , weight_decay=0.001)
 
         # Training loop
         num_epochs = 100
         for epoch in range(num_epochs):
             # Forward pass
             outputs = self.model(X_train)
-            
-            loss = criterion(outputs, y_train.view(-1, 1))  
+
+            loss = criterion(outputs, y_train.view(-1, 1))
 
             # Backpropagation and optimization
-            optimizer.zero_grad()  
-            loss.backward()  
-            optimizer.step() 
-
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
 
         with torch.no_grad():
             test_outputs = self.model(X_test)
             test_loss = criterion(test_outputs, y_test.view(-1, 1))
-            #print(f"Mean Squared Error on Test Data: {test_loss.item()}")
-
+            # print(f"Mean Squared Error on Test Data: {test_loss.item()}")
 
         # Visualization
 
         velocity_range = np.linspace(0, (X[:, 0]*std0+mean0).max(), 20)
-        #throttling_range = np.linspace((X[:, 1]*std1+mean1).min(), (X[:, 1]*std1+mean1).max(), 20)
+        # throttling_range = np.linspace((X[:, 1]*std1+mean1).min(), (X[:, 1]*std1+mean1).max(), 20)
         throttling_range = np.linspace(0, (X[:, 1]*std1+mean1).max(), 20)
         V, A = np.meshgrid(velocity_range, throttling_range)
 
@@ -139,15 +127,11 @@ class NeuralNetworkThrottle(Node):
 
         with torch.no_grad():
             commands = self.model(input_grid).reshape(V.shape)
-            
-            
+
         commands_new = commands*std2+mean2
 
-
-
         # Save the trained model
-        #torch.save(self.model.state_dict(), 'trained_throttle.pth')
-
+        # torch.save(self.model.state_dict(), 'trained_throttle.pth')
 
         # evaluation
         mse = mean_squared_error(y_test, test_outputs.view(-1).numpy())
@@ -160,8 +144,7 @@ class NeuralNetworkThrottle(Node):
         self.get_logger().info(f"Root Mean Squared Error on Test Data: {rmse}")
 
         r2 = r2_score(y_test, test_outputs.view(-1).numpy())
-        self.get_logger().info(f"R-squared (R2) Score on Test Data: {r2}")            
-
+        self.get_logger().info(f"R-squared (R2) Score on Test Data: {r2}")
 
         # Save NN model in csv correct format for testing in the real vehicle
 
@@ -176,16 +159,13 @@ class NeuralNetworkThrottle(Node):
         commands_new_with_throttling = np.column_stack((throttling_range, commands_new))
 
         csv_filename = 'accel_map.csv'
-        np.savetxt(csv_filename, commands_new_with_throttling, delimiter=',', header=','.join(headers), comments='')
-
-
+        np.savetxt(csv_filename, commands_new_with_throttling,
+                   delimiter=',', header=','.join(headers), comments='')
 
         # 3D Visualization (plot)
         xdata = dataa.Velocity*std0+mean0
         ydata = dataa.Throttling*std1+mean1
         zdata = dataa.Acceleration_measured*std2+mean2
-
-
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
@@ -220,11 +200,10 @@ class NeuralNetworkThrottle(Node):
         plt.ylabel('Frequency')
 
         plt.tight_layout()
-    
+
         fig.colorbar(surf)
 
         plt.show()
-
 
 
 def main():
@@ -232,7 +211,6 @@ def main():
     neural_network_throttle = NeuralNetworkThrottle()
     rclpy.spin(neural_network_throttle)
 
-    
 
 if __name__ == '__main__':
     main()

@@ -23,10 +23,10 @@ install(
   scripts_steering/neural_network_steer4.py
   scripts_steering/neural_network_steer5.py
   scripts_steering/data_monitor_steer.py
- 
+
 
   DESTINATION lib/${PROJECT_NAME}
-  
+
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -35,13 +35,13 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/LongitudinalProcesses.msg"
   "msg/SteeringProcesses.msg"
   DEPENDENCIES std_msgs
-  
+
   )
 
-  
+
 
 # ament_export_dependencies(rosidl_default_runtime)
-	
+
 
 # install
 ament_auto_package(

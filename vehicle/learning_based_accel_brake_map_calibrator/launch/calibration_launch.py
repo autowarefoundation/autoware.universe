@@ -11,6 +11,7 @@ def launch_data_monitor(context):
     # Open a new terminal and run data_monitor.py
     os.system("gnome-terminal -- /bin/bash -c 'ros2 run learning_based_vehicle_calibration data_monitor.py; exec bash'")
 
+
 def generate_launch_description():
     return launch.LaunchDescription([
 
@@ -21,12 +22,12 @@ def generate_launch_description():
         ),
         launch.actions.DeclareLaunchArgument(
             name='num_of_queue',
-            default_value='20', 
+            default_value='20',
             description='Window size of mean filter used to smooth data'
         ),
         launch.actions.DeclareLaunchArgument(
             name='speed_threshold',
-            default_value='2.8', 
+            default_value='2.8',
             description='Threshold between low and high speeds in m/s'
         ),
         launch.actions.DeclareLaunchArgument(
@@ -46,7 +47,7 @@ def generate_launch_description():
         ),
         launch.actions.DeclareLaunchArgument(
             name='max_velocity',
-            default_value='11.1', 
+            default_value='11.1',
             description='Max speed in m/s over which we do not collect data'
         ),
         launch.actions.DeclareLaunchArgument(
@@ -118,22 +119,30 @@ def generate_launch_description():
             name='data_collection',
             output='screen',
             parameters=[
-                {'max_data': launch.substitutions.LaunchConfiguration('max_data')}, 
-                {'num_of_queue': launch.substitutions.LaunchConfiguration('num_of_queue')}, 
-                {'speed_threshold': launch.substitutions.LaunchConfiguration('speed_threshold')}, 
-                {'steering_threshold': launch.substitutions.LaunchConfiguration('steering_threshold')},
-                {'throttle_deadzone': launch.substitutions.LaunchConfiguration('throttle_deadzone')},
+                {'max_data': launch.substitutions.LaunchConfiguration('max_data')},
+                {'num_of_queue': launch.substitutions.LaunchConfiguration('num_of_queue')},
+                {'speed_threshold': launch.substitutions.LaunchConfiguration('speed_threshold')},
+                {'steering_threshold': launch.substitutions.LaunchConfiguration(
+                    'steering_threshold')},
+                {'throttle_deadzone': launch.substitutions.LaunchConfiguration(
+                    'throttle_deadzone')},
                 {'brake_deadzone': launch.substitutions.LaunchConfiguration('brake_deadzone')},
                 {'max_velocity': launch.substitutions.LaunchConfiguration('max_velocity')},
-                {'throttle_threshold1': launch.substitutions.LaunchConfiguration('throttle_threshold1')},
-                {'throttle_threshold2': launch.substitutions.LaunchConfiguration('throttle_threshold2')},
+                {'throttle_threshold1': launch.substitutions.LaunchConfiguration(
+                    'throttle_threshold1')},
+                {'throttle_threshold2': launch.substitutions.LaunchConfiguration(
+                    'throttle_threshold2')},
                 {'brake_threshold1': launch.substitutions.LaunchConfiguration('brake_threshold1')},
                 {'brake_threshold2': launch.substitutions.LaunchConfiguration('brake_threshold2')},
-                {'consistency_threshold': launch.substitutions.LaunchConfiguration('consistency_threshold')},
+                {'consistency_threshold': launch.substitutions.LaunchConfiguration(
+                    'consistency_threshold')},
                 {'pitch_topic': launch.substitutions.LaunchConfiguration('pitch_topic')},
-                {'actuation_status_topic': launch.substitutions.LaunchConfiguration('actuation_status_topic')},
-                {'steering_status_topic': launch.substitutions.LaunchConfiguration('steering_status_topic')},
-                {'velocity_status_topic': launch.substitutions.LaunchConfiguration('velocity_status_topic')},
+                {'actuation_status_topic': launch.substitutions.LaunchConfiguration(
+                    'actuation_status_topic')},
+                {'steering_status_topic': launch.substitutions.LaunchConfiguration(
+                    'steering_status_topic')},
+                {'velocity_status_topic': launch.substitutions.LaunchConfiguration(
+                    'velocity_status_topic')},
                 {'imu_topic': launch.substitutions.LaunchConfiguration('imu_topic')},
 
                 {'Recovery_Mode': launch.substitutions.LaunchConfiguration('Recovery_Mode')},
