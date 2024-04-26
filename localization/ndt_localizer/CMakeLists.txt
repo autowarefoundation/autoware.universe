@@ -46,7 +46,7 @@ include_directories(
   #/home/char/dora_/dora-rs/dora
 )
 
-add_executable(${PROJECT_NAME} src/map_loader.cpp src/ndt_localizer.cpp src/points_downsampler.cpp dora_node.cc)
+add_executable(${PROJECT_NAME} src/map_loader.cpp src/ndt_localizer.cpp src/points_downsampler.cpp src/dora_node.cc)
 
 target_link_libraries(${PROJECT_NAME}
   ${PCL_LIBRARIES}

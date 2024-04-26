@@ -30,6 +30,7 @@ public:
     Eigen::Matrix4f base_to_sensor_matrix_;
     Eigen::Matrix4f pre_trans, delta_trans;
     bool init_pose = false;
+    bool is_converged = true;
 
     std::string base_frame_;
     std::string map_frame_;
@@ -42,6 +43,10 @@ public:
     double converged_param_transform_probability_;
     std::thread diagnostic_thread_;
     std::map<std::string, std::string> key_value_stdmap_;
+
+    geometry_msgs::PoseStamped result_pose_stamped_msg;
+
+    // geometry_msgs::TransformStamped transform_stamped;
 
     // function
     void init_params();

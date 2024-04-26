@@ -1,5 +1,6 @@
 #include "map_loader.h"
 
+
 void MapLoader::init_tf_params()
 {
 
@@ -9,14 +10,15 @@ void MapLoader::init_tf_params()
     //  tf_y_ = config["y"].as<float>();
     //  tf_yaw_ = config["yaw"].as<float>();
     //  tf_z_ = config["z"].as<float>();
-    tf_pitch_ = 0.0;
+    //  tf_pitch_= config["pitch"].as<float>();
+    // tf_pitch_ = 0.0;
     tf_roll_ = 0.0;
     tf_x_ = 0.0;
     tf_y_ = 0.0;
     tf_z_ = 0.0;
     tf_yaw_ = 0.0;
-    std::cout << "x" << tf_x_ << "y: " << tf_y_ << "z: " << tf_z_ << "roll: "
-              << tf_roll_ << " pitch: " << tf_pitch_ << "yaw: " << tf_yaw_;
+    // std::cout << "x" << tf_x_ << "y: " << tf_y_ << "z: " << tf_z_ << "roll: "
+    //           << tf_roll_ << " pitch: " << tf_pitch_ << "yaw: " << tf_yaw_;
 }
 
 pcl::PointCloud<pcl::PointXYZ> MapLoader::CreatePcd()
