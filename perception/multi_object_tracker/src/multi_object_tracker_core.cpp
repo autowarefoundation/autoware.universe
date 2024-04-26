@@ -80,31 +80,38 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
 
-  declare_parameter("input_topic_names", std::vector<std::string>());
-  declare_parameter("input_names_long", std::vector<std::string>());
-  declare_parameter("input_names_short", std::vector<std::string>());
-  declare_parameter("input_priority", std::vector<int64_t>());
-  std::vector<std::string> input_topic_names = get_parameter("input_topic_names").as_string_array();
-  std::vector<std::string> input_names_long = get_parameter("input_names_long").as_string_array();
-  std::vector<std::string> input_names_short = get_parameter("input_names_short").as_string_array();
-  std::vector<int64_t> input_priority = get_parameter("input_priority").as_integer_array();
+  declare_parameter("selected_input_channels", std::vector<std::string>());
+  std::vector<std::string> selected_input_channels =
+    get_parameter("selected_input_channels").as_string_array();
 
   // ROS interface - Publisher
   tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
 
-  // ROS interface - Subscribers
-  if (input_topic_names.empty()) {
+  // ROS interface - Input channels
+  // Get input channels
+  std::vector<std::string> input_topic_names;
+  std::vector<std::string> input_names_long;
+  std::vector<std::string> input_names_short;
+  std::vector<double> input_expected_rates;
+
+  if (selected_input_channels.empty()) {
     RCLCPP_ERROR(this->get_logger(), "No input topics are specified.");
     return;
   }
-  if (
-    input_names_long.size() != input_topic_names.size() ||
-    input_names_short.size() != input_topic_names.size() ||
-    input_priority.size() != input_topic_names.size()) {
-    RCLCPP_ERROR(
-      this->get_logger(),
-      "The number of input topic names, long names, and short names must be the same.");
-    return;
+
+  for (const auto & selected_input_channel : selected_input_channels) {
+    const std::string input_topic_name =
+      declare_parameter<std::string>("input_channels." + selected_input_channel + ".topic");
+    const std::string input_name_long =
+      declare_parameter<std::string>("input_channels." + selected_input_channel + ".name");
+    const std::string input_name_short =
+      declare_parameter<std::string>("input_channels." + selected_input_channel + ".name_short");
+    const double input_expected_frequency =
+      declare_parameter<double>("input_channels." + selected_input_channel + ".expected_frequency");
+    input_topic_names.push_back(input_topic_name);
+    input_names_long.push_back(input_name_long);
+    input_names_short.push_back(input_name_short);
+    input_expected_rates.push_back(input_expected_frequency);
   }
 
   input_channel_size_ = input_topic_names.size();
@@ -114,7 +121,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     input_channels_[i].input_topic = input_topic_names[i];
     input_channels_[i].long_name = input_names_long[i];
     input_channels_[i].short_name = input_names_short[i];
-    input_channels_[i].priority = static_cast<int>(input_priority[i]);
+    input_channels_[i].priority = 1;
+    input_channels_[i].expected_rate = input_expected_rates[i];
   }
 
   // Initialize input manager

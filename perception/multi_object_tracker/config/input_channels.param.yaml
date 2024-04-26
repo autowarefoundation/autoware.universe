@@ -1,0 +1,38 @@
+/**:
+  ros__parameters:
+    input_channels:
+      detected_objects:
+        topic: "/perception/object_recognition/detection/objects"
+        name: "detected_objects"
+        name_short: "all"
+        expected_frequency: 10.0
+      centerpoint:
+        topic: "/perception/object_recognition/detection/centerpoint/objects"
+        name: "centerpoint"
+        name_short: "Lcp"
+        expected_frequency: 10.0
+      centerpoint_validated:
+        topic: "/perception/object_recognition/detection/centerpoint/validation/objects"
+        name: "centerpoint"
+        name_short: "Lcp"
+        expected_frequency: 10.0
+      camera_lidar_fusion:
+        topic: "/perception/object_recognition/detection/clustering/camera_lidar_fusion/objects"
+        name: "camera_lidar_fusion"
+        name_short: "CLf"
+        expected_frequency: 10.0
+      camera_lidar_fusion_filtered:
+        topic: "/perception/object_recognition/detection/clustering/camera_lidar_fusion/objects"
+        name: "camera_lidar_fusion"
+        name_short: "CLf"
+        expected_frequency: 10.0
+      detection_by_tracker:
+        topic: "/perception/object_recognition/detection/detection_by_tracker/objects"
+        name: "detection_by_tracker"
+        name_short: "Ld"
+        expected_frequency: 10.0
+      radar_far:
+        topic: "/perception/object_recognition/detection/radar/far_objects"
+        name: "radar_far"
+        name_short: "Rf"
+        expected_frequency: 30.0
