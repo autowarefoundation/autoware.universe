@@ -118,7 +118,7 @@ bool AvoidanceModule::isExecutionRequested() const
 
   return std::any_of(
     avoid_data_.target_objects.begin(), avoid_data_.target_objects.end(),
-    [](const auto & o) { return o.is_avoidable || o.info == ObjectInfo::NEED_DECELERATION; });
+    [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 }
 
 bool AvoidanceModule::isExecutionReady() const
@@ -135,7 +135,7 @@ bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & 
 {
   const bool has_avoidance_target = std::any_of(
     data.target_objects.begin(), data.target_objects.end(),
-    [](const auto & o) { return o.is_avoidable || o.info == ObjectInfo::NEED_DECELERATION; });
+    [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 
   if (has_avoidance_target) {
     return false;
@@ -528,8 +528,7 @@ void AvoidanceModule::fillEgoStatus(
    * is_avoidable is FALSE. So, the module inserts stop point for such a object.
    */
   for (const auto & o : data.target_objects) {
-    const auto enough_space = o.is_avoidable || o.info == ObjectInfo::NEED_DECELERATION;
-    if (o.avoid_required && enough_space) {
+    if (o.avoid_required && !helper_->isAbsolutelyNotAvoidable(o)) {
       data.avoid_required = true;
       data.stop_target_object = o;
       data.to_stop_line = o.to_stop_line;
@@ -1661,9 +1660,7 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
     return;
   }
 
-  const auto enough_space =
-    object.value().is_avoidable || object.value().info == ObjectInfo::NEED_DECELERATION;
-  if (!enough_space) {
+  if (helper_->isAbsolutelyNotAvoidable(object.value())) {
     return;
   }
 
