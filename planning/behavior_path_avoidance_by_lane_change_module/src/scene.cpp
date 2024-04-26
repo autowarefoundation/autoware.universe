@@ -125,7 +125,7 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
   // reference pose
   data.reference_pose = getEgoPose();
 
-  data.reference_path_rough = prev_module_path_;
+  data.reference_path_rough = prev_module_output_.path;
 
   const auto resample_interval = avoidance_parameters_->resample_interval_for_planning;
   data.reference_path = utils::resamplePathWithSpline(data.reference_path_rough, resample_interval);
@@ -273,12 +273,8 @@ double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
     return std::numeric_limits<double>::infinity();
   }
 
-  // get minimum lane change distance
-  const auto shift_intervals =
-    getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back(), direction_);
   return utils::lane_change::calcMinimumLaneChangeLength(
-    *lane_change_parameters_, shift_intervals,
-    lane_change_parameters_->backward_length_buffer_for_end_of_lane);
+    getRouteHandler(), current_lanes.back(), *lane_change_parameters_, direction_);
 }
 
 double AvoidanceByLaneChange::calcLateralOffset() const

@@ -563,23 +563,28 @@ bool isNeverAvoidanceTarget(
   if (object.is_within_intersection) {
     if (object.behavior == ObjectData::Behavior::NONE) {
       object.reason = "ParallelToEgoLane";
-      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object belongs to ego lane. never avoid it.");
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace), "object belongs to ego lane. never avoid it.");
       return true;
     }
 
     if (object.behavior == ObjectData::Behavior::MERGING) {
       object.reason = "MergingToEgoLane";
-      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object belongs to ego lane. never avoid it.");
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace), "object belongs to ego lane. never avoid it.");
       return true;
     }
   }
 
   if (object.is_on_ego_lane) {
-    if (
-      planner_data->route_handler->getRightLanelet(object.overhang_lanelet).has_value() &&
-      planner_data->route_handler->getLeftLanelet(object.overhang_lanelet).has_value()) {
+    const auto right_lane =
+      planner_data->route_handler->getRightLanelet(object.overhang_lanelet, true, false);
+    const auto left_lane =
+      planner_data->route_handler->getLeftLanelet(object.overhang_lanelet, true, false);
+    if (right_lane.has_value() && left_lane.has_value()) {
       object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
-      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object isn't on the edge lane. never avoid it.");
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
       return true;
     }
   }
@@ -587,7 +592,8 @@ bool isNeverAvoidanceTarget(
   if (isCloseToStopFactor(object, data, planner_data, parameters)) {
     if (object.is_on_ego_lane && !object.is_parked) {
       object.reason = AvoidanceDebugFactor::NOT_PARKING_OBJECT;
-      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is close to stop factor. never avoid it.");
+      RCLCPP_DEBUG(
+        rclcpp::get_logger(logger_namespace), "object is close to stop factor. never avoid it.");
       return true;
     }
   }
@@ -602,12 +608,12 @@ bool isObviousAvoidanceTarget(
 {
   if (!object.is_within_intersection) {
     if (object.is_parked && object.behavior == ObjectData::Behavior::NONE) {
-      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is obvious parked vehicle.");
+      RCLCPP_DEBUG(rclcpp::get_logger(logger_namespace), "object is obvious parked vehicle.");
       return true;
     }
 
     if (!object.is_on_ego_lane && object.behavior == ObjectData::Behavior::NONE) {
-      RCLCPP_DEBUG(rclcpp::get_logger(__func__), "object is adjacent vehicle.");
+      RCLCPP_DEBUG(rclcpp::get_logger(logger_namespace), "object is adjacent vehicle.");
       return true;
     }
   }
@@ -812,9 +818,9 @@ std::optional<double> getAvoidMargin(
                                 object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
   const auto min_avoid_margin = lateral_hard_margin + 0.5 * vehicle_width;
   const auto soft_lateral_distance_limit =
-    object.to_road_shoulder_distance - parameters->soft_road_shoulder_margin - 0.5 * vehicle_width;
+    object.to_road_shoulder_distance - parameters->soft_drivable_bound_margin - 0.5 * vehicle_width;
   const auto hard_lateral_distance_limit =
-    object.to_road_shoulder_distance - parameters->hard_road_shoulder_margin - 0.5 * vehicle_width;
+    object.to_road_shoulder_distance - parameters->hard_drivable_bound_margin - 0.5 * vehicle_width;
 
   // Step1. check avoidable or not.
   if (hard_lateral_distance_limit < min_avoid_margin) {
@@ -872,8 +878,7 @@ double getRoadShoulderDistance(
       }
 
       {
-        const auto p2 =
-          calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? -100.0 : 100.0), 0.0).position;
+        const auto p2 = calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? -1.0 : 1.0), 0.0).position;
         const auto opt_intersect =
           tier4_autoware_utils::intersect(p1.second, p2, bound.at(i - 1), bound.at(i));
 
@@ -1217,43 +1222,6 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
       {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly, !isOnRight(object)});
   }
   return obstacles_for_drivable_area;
-}
-
-lanelet::ConstLanelets getTargetLanelets(
-  const std::shared_ptr<const PlannerData> & planner_data, lanelet::ConstLanelets & route_lanelets,
-  const double left_offset, const double right_offset)
-{
-  const auto & rh = planner_data->route_handler;
-
-  lanelet::ConstLanelets target_lanelets{};
-  for (const auto & lane : route_lanelets) {
-    auto l_offset = 0.0;
-    auto r_offset = 0.0;
-
-    const auto opt_left_lane = rh->getLeftLanelet(lane);
-    if (opt_left_lane) {
-      target_lanelets.push_back(opt_left_lane.value());
-    } else {
-      l_offset = left_offset;
-    }
-
-    const auto opt_right_lane = rh->getRightLanelet(lane);
-    if (opt_right_lane) {
-      target_lanelets.push_back(opt_right_lane.value());
-    } else {
-      r_offset = right_offset;
-    }
-
-    const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
-    if (!right_opposite_lanes.empty()) {
-      target_lanelets.push_back(right_opposite_lanes.front());
-    }
-
-    const auto expand_lane = lanelet::utils::getExpandedLanelet(lane, l_offset, r_offset);
-    target_lanelets.push_back(expand_lane);
-  }
-
-  return target_lanelets;
 }
 
 lanelet::ConstLanelets getCurrentLanesFromPath(
@@ -2223,8 +2191,7 @@ DrivableLanes generateExpandedDrivableLanes(
         }
         if (i == max_recursive_search_num - 1) {
           RCLCPP_ERROR(
-            rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
-            "Drivable area expansion reaches max iteration.");
+            rclcpp::get_logger(logger_namespace), "Drivable area expansion reaches max iteration.");
         }
       }
     };
