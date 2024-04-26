@@ -184,6 +184,14 @@ void InputManager::getObjectTimeInterval(
   object_latest_time = now - rclcpp::Duration::from_seconds(target_latency_);
   object_oldest_time = now - rclcpp::Duration::from_seconds(target_latency_ + target_latency_band_);
 
+  // get the latest timestamp of the target stream
+  rclcpp::Time latest_message_time, latest_measurement_time;
+  if (input_streams_.at(target_stream_idx_)
+        ->getTimestamps(latest_measurement_time, latest_message_time)) {
+    object_latest_time =
+      object_latest_time > latest_message_time ? object_latest_time : latest_message_time;
+  }
+
   // if the object_oldest_time is older than the latest object time, set it to the latest object
   // time
   object_oldest_time =

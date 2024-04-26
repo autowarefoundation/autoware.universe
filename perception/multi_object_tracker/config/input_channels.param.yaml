@@ -34,12 +34,12 @@
         name_short: "Lap"
         expected_frequency: 10.0
       # LIDAR-CAMERA - DNN
-      pointpainitng:
+      lidar_pointpainitng:
         topic: "/perception/object_recognition/detection/pointpainting/objects"
         name: "pointpainting"
         name_short: "Lpp"
         expected_frequency: 10.0
-      pointpainting_validated:
+      lidar_pointpainting_validated:
         topic: "/perception/object_recognition/detection/pointpainting/validation/objects"
         name: "pointpainting"
         name_short: "Lpp"
@@ -54,7 +54,7 @@
       detection_by_tracker:
         topic: "/perception/object_recognition/detection/detection_by_tracker/objects"
         name: "detection_by_tracker"
-        name_short: "Ld"
+        name_short: "dbT"
         expected_frequency: 10.0
       # RADAR
       radar:
