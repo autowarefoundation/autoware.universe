@@ -349,8 +349,8 @@ bool NDTScanMatcher::callback_sensor_points_main(
     message << ex.what() << ". Please publish TF " << sensor_frame << " to "
             << param_.frame.base_frame;
     diagnostics_scan_points_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+    RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     diagnostics_scan_points_->addKeyValue("is_succeed_transform_sensor_points", false);
     return false;
   }
@@ -491,11 +491,10 @@ bool NDTScanMatcher::callback_sensor_points_main(
   bool is_ok_score = (score > score_threshold);
   if (!is_ok_score) {
     std::stringstream message;
-    message << "Transform Probability"
-            << " is below the threshold. Score: " << score << ", Threshold: " << score_threshold
-            << ".";
+    message << "Score is below the threshold. Score: " << score << ", Threshold: " << score_threshold;
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    RCLCPP_WARN_STREAM(this->get_logger(), message.str());
   }
 
   // check is_converged
@@ -928,7 +927,8 @@ void NDTScanMatcher::service_ndt_align_main(
     std::stringstream message;
     message << "Please publish TF " << target_frame.c_str() << " to " << source_frame.c_str();
     diagnostics_ndt_align_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+    RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     res->success = false;
     return;
   }
@@ -950,7 +950,7 @@ void NDTScanMatcher::service_ndt_align_main(
     message << "No InputTarget. Please check the map file and the map_loader service";
     diagnostics_ndt_align_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     res->success = false;
     return;
   }
@@ -963,7 +963,7 @@ void NDTScanMatcher::service_ndt_align_main(
     message << "No InputSource. Please check the input lidar topic";
     diagnostics_ndt_align_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-
+    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
     res->success = false;
     return;
   }

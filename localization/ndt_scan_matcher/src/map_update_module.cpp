@@ -141,6 +141,7 @@ void MapUpdateModule::update_map(
            "properly.";
       diagnostics_ptr->updateLevelAndMessage(
         diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+      RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
       last_update_position_ = position;
       ndt_ptr_mutex_->unlock();
       return;
