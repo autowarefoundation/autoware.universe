@@ -474,10 +474,6 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   const auto target_objects_on_lane = utils::path_safety_checker::createTargetObjectsOnLane(
     relevant_lanelets.value(), route_handler, filtered_objects, objects_filtering_params_);
 
-  std::vector<ExtendedPredictedObject> merged_target_object;
-  merged_target_object.reserve(
-    target_objects_on_lane.on_current_lane.size() + target_objects_on_lane.on_shoulder_lane.size());
-
   if (target_objects_on_lane.on_current_lane.empty()) return false;
 
   // Get the closest target obj width in the relevant lanes
