@@ -491,7 +491,8 @@ bool NDTScanMatcher::callback_sensor_points_main(
   bool is_ok_score = (score > score_threshold);
   if (!is_ok_score) {
     std::stringstream message;
-    message << "Score is below the threshold. Score: " << score << ", Threshold: " << score_threshold;
+    message << "Score is below the threshold. Score: " << score
+            << ", Threshold: " << score_threshold;
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     RCLCPP_WARN_STREAM(this->get_logger(), message.str());
