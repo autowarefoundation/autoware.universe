@@ -78,6 +78,7 @@ public:
   }
   bool getTimestamps(
     rclcpp::Time & latest_measurement_time, rclcpp::Time & latest_message_time) const;
+  rclcpp::Time getLatestMeasurementTime() const { return latest_measurement_time_; }
 
 private:
   rclcpp::Node & node_;
