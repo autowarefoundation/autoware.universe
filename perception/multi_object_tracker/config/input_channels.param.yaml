@@ -6,31 +6,62 @@
         name: "detected_objects"
         name_short: "all"
         expected_frequency: 10.0
-      centerpoint:
+      # LIDAR - rule-based
+      lidar-clustering:
+        topic: "/perception/object_recognition/detection/clustering/objects"
+        name: "clustering"
+        name_short: "Lcl"
+        expected_frequency: 10.0
+      # LIDAR - DNN
+      lidar-centerpoint:
         topic: "/perception/object_recognition/detection/centerpoint/objects"
         name: "centerpoint"
         name_short: "Lcp"
         expected_frequency: 10.0
-      centerpoint_validated:
+      lidar-centerpoint_validated:
         topic: "/perception/object_recognition/detection/centerpoint/validation/objects"
         name: "centerpoint"
         name_short: "Lcp"
         expected_frequency: 10.0
+      lidar-apollo:
+        topic: "/perception/object_recognition/detection/apollo/objects"
+        name: "apollo"
+        name_short: "Lap"
+        expected_frequency: 10.0
+      lidar-apollo_validated:
+        topic: "/perception/object_recognition/detection/apollo/validation/objects"
+        name: "apollo"
+        name_short: "Lap"
+        expected_frequency: 10.0
+      # LIDAR-CAMERA - DNN
+      pointpainitng:
+        topic: "/perception/object_recognition/detection/pointpainting/objects"
+        name: "pointpainting"
+        name_short: "Lpp"
+        expected_frequency: 10.0
+      pointpainting_validated:
+        topic: "/perception/object_recognition/detection/pointpainting/validation/objects"
+        name: "pointpainting"
+        name_short: "Lpp"
+        expected_frequency: 10.0
+      # CAMERA-LIDAR
       camera_lidar_fusion:
         topic: "/perception/object_recognition/detection/clustering/camera_lidar_fusion/objects"
         name: "camera_lidar_fusion"
         name_short: "CLf"
         expected_frequency: 10.0
-      camera_lidar_fusion_filtered:
-        topic: "/perception/object_recognition/detection/clustering/camera_lidar_fusion/objects"
-        name: "camera_lidar_fusion"
-        name_short: "CLf"
-        expected_frequency: 10.0
+      # CAMERA-LIDAR+TRACKER
       detection_by_tracker:
         topic: "/perception/object_recognition/detection/detection_by_tracker/objects"
         name: "detection_by_tracker"
         name_short: "Ld"
         expected_frequency: 10.0
+      # RADAR
+      radar:
+        topic: "/sensing/radar/detected_objects"
+        name: "radar"
+        name_short: "R"
+        expected_frequency: 30.0
       radar_far:
         topic: "/perception/object_recognition/detection/radar/far_objects"
         name: "radar_far"
