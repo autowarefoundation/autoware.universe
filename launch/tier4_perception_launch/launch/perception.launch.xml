@@ -126,16 +126,18 @@
   <let name="downsampled_pointcloud" value="/perception/input/downsampled/pointcloud"/>
   <let name="perception_pointcloud" value="$(var input/pointcloud)" unless="$(var downsample_input_pointcloud)"/>
   <let name="perception_pointcloud" value="$(var downsampled_pointcloud)" if="$(var downsample_input_pointcloud)"/>
-  <load_composable_node target="$(var pointcloud_container_name)">
-    <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::PickupBasedVoxelGridDownsampleFilterComponent" name="perception_input_pc_downsampler" namespace="">
-      <remap from="input" to="$(var input/pointcloud)"/>
-      <remap from="output" to="$(var downsampled_pointcloud)"/>
-      <param name="voxel_size_x" value="$(var downsample_voxel_size)"/>
-      <param name="voxel_size_y" value="$(var downsample_voxel_size)"/>
-      <param name="voxel_size_z" value="$(var downsample_voxel_size)"/>
-      <extra_arg name="use_intra_process_comms" value="true"/>
-    </composable_node>
-  </load_composable_node>
+  <group if="$(var downsample_input_pointcloud)">
+    <load_composable_node target="$(var pointcloud_container_name)">
+      <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::PickupBasedVoxelGridDownsampleFilterComponent" name="perception_input_pc_downsample_node" namespace="">
+        <remap from="input" to="$(var input/pointcloud)"/>
+        <remap from="output" to="$(var downsampled_pointcloud)"/>
+        <param name="voxel_size_x" value="$(var downsample_voxel_size)"/>
+        <param name="voxel_size_y" value="$(var downsample_voxel_size)"/>
+        <param name="voxel_size_z" value="$(var downsample_voxel_size)"/>
+        <extra_arg name="use_intra_process_comms" value="true"/>
+      </composable_node>
+    </load_composable_node>
+  </group>
 
   <!-- Perception module -->
   <group>
