@@ -74,6 +74,8 @@ ros2 launch lidar_transfusion lidar_transfusion.launch.xml log_level:=debug
 
 ### The `CPU_PROCESSING` build definition
 
+<!-- cSpell:ignore DCPU_PROCESSING -->
+
 You can force CPU point cloud processing with `-DCPU_PROCESSING` flag while using `colcon build` syntax. Note that CPU processing only supports `FLOAT32` cloud points.
 
 ## Assumptions / Known limits
@@ -112,7 +114,7 @@ Example:
 
 ## References/External links
 
-[1] Xuyang Bai, Zeyu Hu, Xinge Zhu, Qingqiu Huang, Yilun Chen, Hongbo Fu and Chiew-Lan Tai. "TransFusion: Robust LiDAR-Camera Fusion for 3D Object Detection with Transformers." arXiv preprint arXiv:2203.11496 (2022).
+[1] Xuyang Bai, Zeyu Hu, Xinge Zhu, Qingqiu Huang, Yilun Chen, Hongbo Fu and Chiew-Lan Tai. "TransFusion: Robust LiDAR-Camera Fusion for 3D Object Detection with Transformers." arXiv preprint arXiv:2203.11496 (2022). <!-- cspell:disable-line -->
 
 [2] <https://github.com/wep21/CUDA-TransFusion>
 

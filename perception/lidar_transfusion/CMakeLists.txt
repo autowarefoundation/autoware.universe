@@ -4,10 +4,9 @@ project(lidar_transfusion)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-add_definitions("-DBOOST_ALLOW_DEPRECATED_HEADERS")
 add_compile_options(-Wno-deprecated-declarations)
 if(CPU_PROCESSING)
-  add_definitions(-DCPU_PROCESSING)
+  add_definitions(-DCPU_PROCESSING)  # cSpell:ignore DCPU_PROCESSING
 endif()
 
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
