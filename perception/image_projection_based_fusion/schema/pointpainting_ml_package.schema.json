@@ -54,20 +54,9 @@
               "default": 12
             }
           }
-        },
-        "omp_params": {
-          "type": "object",
-          "properties": {
-            "num_threads": {
-              "type": "integer",
-              "description": "The number of threads that is set to the environment variable OMP_NUM_THREADS.",
-              "default": 1,
-              "minimum": 1
-            }
-          }
         }
       },
-      "required": ["model_params", "omp_params"]
+      "required": ["model_params"]
     }
   },
   "properties": {
