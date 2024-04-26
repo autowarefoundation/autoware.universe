@@ -717,8 +717,8 @@ lanelet::ConstLanelets RouteHandler::getRoadLaneletsAtPose(const Pose & pose) co
   const auto lanelets_at_pose = lanelet_map_ptr_->laneletLayer.search(lanelet::BoundingBox2d(p));
   for (const auto & lanelet_at_pose : lanelets_at_pose) {
     // confirm that the pose is inside the lanelet since "search" does an approximation with boxes
-    const auto is_pose_within_lanelet = lanelet::geometry::within(p, lanelet_at_pose.polygon2d());
-    if (is_pose_within_lanelet && isRoadLanelet(lanelet_at_pose))
+    const auto is_pose_inside_lanelet = lanelet::geometry::inside(lanelet_at_pose, p);
+    if (is_pose_inside_lanelet && isRoadLanelet(lanelet_at_pose))
       road_lanelets_at_pose.push_back(lanelet_at_pose);
   }
   return road_lanelets_at_pose;
@@ -768,8 +768,8 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getShoulderLaneletAtPose(cons
   const auto lanelets_at_pose = lanelet_map_ptr_->laneletLayer.search(lanelet::BoundingBox2d(p));
   for (const auto & lanelet_at_pose : lanelets_at_pose) {
     // confirm that the pose is inside the lanelet since "search" does an approximation with boxes
-    const auto is_pose_within_lanelet = lanelet::geometry::within(p, lanelet_at_pose.polygon2d());
-    if (is_pose_within_lanelet && isShoulderLanelet(lanelet_at_pose)) return lanelet_at_pose;
+    const auto is_pose_inside_lanelet = lanelet::geometry::inside(lanelet_at_pose, p);
+    if (is_pose_inside_lanelet && isShoulderLanelet(lanelet_at_pose)) return lanelet_at_pose;
   }
   return std::nullopt;
 }
