@@ -123,7 +123,7 @@
   <!-- Downsample pointcloud for perception usage -->
   <arg name="downsample_input_pointcloud" default="false"/>
   <arg name="downsample_voxel_size" default="0.05"/>
-  <let name="downsampled_pointcloud" value="/perception/input/downsampled/pointcloud"/>
+  <let name="downsampled_pointcloud" value="/perception/common/pointcloud"/>
   <let name="perception_pointcloud" value="$(var input/pointcloud)" unless="$(var downsample_input_pointcloud)"/>
   <let name="perception_pointcloud" value="$(var downsampled_pointcloud)" if="$(var downsample_input_pointcloud)"/>
   <group if="$(var downsample_input_pointcloud)">
