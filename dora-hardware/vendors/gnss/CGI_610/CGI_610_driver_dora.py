@@ -30,6 +30,8 @@ class Operator:
         self.GPS.close()
         time.sleep(0.5)
         self.GPS.open()
+                
+        self.GPS.flushInput()
         # self.data = "$GNHDT,268.5019,T*1A"
         self.driver = DoraNMEADriver()
 
@@ -165,8 +167,6 @@ class Operator:
                             parsed_nmea_sentence,
                             dora_input["metadata"],
                         )
-                
-                self.GPS.flushInput()
                 return DoraStatus.CONTINUE
 
             except ValueError as e:
@@ -174,7 +174,6 @@ class Operator:
                     "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
                     % e
                 )
-                self.GPS.flushInput()
             return DoraStatus.CONTINUE
          
 
