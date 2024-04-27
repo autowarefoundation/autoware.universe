@@ -66,7 +66,8 @@ GNSSStat NavSatFix2LocalCartesianWGS84(
 {
   GNSSStat local_cartesian;
   local_cartesian.coordinate_system = CoordinateSystem::LOCAL_CARTESIAN_WGS84;
-
+  
+      std::cout << "NavSatFix2LocalCartesianWGS84 System" << std::endl;
   try {
     GeographicLib::LocalCartesian localCartesian_origin(
       nav_sat_fix_origin_.latitude, nav_sat_fix_origin_.longitude, nav_sat_fix_origin_.altitude);

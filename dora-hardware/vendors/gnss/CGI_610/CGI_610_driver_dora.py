@@ -8,7 +8,7 @@ from transforms3d._gohlketransforms import quaternion_from_euler
 import math
 import pickle
 import time
-serial_port = "/dev/ttyUSB0"
+serial_port = "/dev/ttyUSB1"
 serial_baud = 115200
 
 
@@ -48,8 +48,9 @@ class Operator:
         send_output: Callable[[str, bytes], None],
     ):
         # 读取一行数据并去除首尾空白字符
-        time.sleep(0.1)
         self.data = self.GPS.readline().strip()
+        # self.data = self.GPS.read_all()
+        
         # 如果数据非空
         if self.data:
             try:
@@ -164,6 +165,8 @@ class Operator:
                             parsed_nmea_sentence,
                             dora_input["metadata"],
                         )
+                
+                self.GPS.flushInput()
                 return DoraStatus.CONTINUE
 
             except ValueError as e:
@@ -171,7 +174,9 @@ class Operator:
                     "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
                     % e
                 )
+                self.GPS.flushInput()
             return DoraStatus.CONTINUE
+         
 
     def drop_operator(self):
         self.GPS.close()
