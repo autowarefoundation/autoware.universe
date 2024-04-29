@@ -24,6 +24,7 @@
 #include <OgreTechnique.h>
 #include <OgreTexture.h>
 #include <OgreTextureManager.h>
+#include <qobject.h>
 
 #include <algorithm>
 #include <cmath>
@@ -115,12 +116,18 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
   innerCircleRect.setHeight(outerCircleRect.height() / 1.075);
   innerCircleRect.moveCenter(outerCircleRect.center());
 
+  QRectF innerCircleRect2 = innerCircleRect;
+
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
-  colorFromHSV.setHsv(0, 0, 0);  // Hue, Saturation, Value
-
+  colorFromHSV.setHsv(0, 0, 29);  // Hue, Saturation, Value
+  colorFromHSV.setAlphaF(0.60);   // Transparency
   painter.setBrush(colorFromHSV);
   painter.drawEllipse(innerCircleRect);
+
+  // Add a second inner circle as a mask to make the speed limit indicator look like a ring
+  // and follow the rest of the background color as close as possible
+  painter.drawEllipse(innerCircleRect2);
 
   int current_limit_int = std::round(current_limit * 3.6);
 
