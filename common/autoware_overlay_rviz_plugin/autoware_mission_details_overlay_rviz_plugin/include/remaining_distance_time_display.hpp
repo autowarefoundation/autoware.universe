@@ -41,7 +41,10 @@ public:
     const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
 
 private:
-  double remaining_distance_;  // Internal variable to store remaining distance
+  double   remaining_distance_;   // Internal variable to store remaining distance
+  uint32_t remaining_hours_;      // Internal variable to store remaining time hours
+  uint32_t remaining_minutes_;    // Internal variable to store remaining time minutes
+  uint32_t remaining_seconds_;    // Internal variable to store remaining time seconds
   QColor gray = QColor(194, 194, 194);
 };
 
