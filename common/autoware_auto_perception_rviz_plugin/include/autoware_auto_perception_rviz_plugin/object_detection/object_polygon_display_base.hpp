@@ -113,8 +113,8 @@ public:
     m_confidence_interval_property->addOption("99%", 3);
 
     m_object_fill_type_property = new rviz_common::properties::EnumProperty(
-      "Object Fill Type", "Skelton", "Change object fill type in visualization", this);
-    m_object_fill_type_property->addOption("Skelton", 0);
+      "Object Fill Type", "skeleton", "Change object fill type in visualization", this);
+    m_object_fill_type_property->addOption("skeleton", 0);
     m_object_fill_type_property->addOption("Fill", 1);
 
     // iterate over default values to create and initialize the properties.
