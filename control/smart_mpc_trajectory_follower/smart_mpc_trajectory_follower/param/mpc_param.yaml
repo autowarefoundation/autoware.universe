@@ -35,12 +35,12 @@ mpc_parameter:
     max_iter_ilqr: 1
     ilqr_tol: 0.01
   mppi:
-    lam: 0.1
-    Sigma: [1e-15, 0.01]
-    max_iter_mppi: 1
+    lam: 1.0
+    Sigma: [1e-15, 1e-1]
+    max_iter_mppi: 2
     sample_num: 100
-    mppi_tol: 0.01
-    mppi_step: 20
+    mppi_tol: 0.5
+    mppi_step: 10
   preprocessing:
     reference_horizon: 50
     cap_pred_error: [0.5, 2.0]

@@ -48,7 +48,6 @@ steer_rate_lim = 0.35
 vel_rate_lim = 7.0
 
 mpc_freq = drive_functions.mpc_freq
-mode = drive_functions.mode
 
 
 use_accel_map = False
@@ -645,8 +644,8 @@ def pure_pursuit(
     target_position,
     target_vel,
     target_yaw,
-    acc_lim=2.0,
-    steer_lim=0.6,
+    acc_lim=7.0,
+    steer_lim=1.0,
     wheel_base=drive_functions.L,
     lookahead_time=3.0,
     min_lookahead=3.0,
@@ -837,6 +836,10 @@ def slalom_drive(
         use_trained_model_diff=use_trained_model_diff,
         load_train_data_dir=load_dir,
     )
+    mode = controller.mode
+    if control_type == "mpc":
+        print("mode:", mode)
+
     plt.rcParams["figure.figsize"] = (8, 8)
     t_eval = np.arange(*t_range, sim_dt)
     if not straight_line_test:
@@ -1468,7 +1471,7 @@ def slalom_drive(
     if save_file:
         log_updater.save(save_dir_)
 
-    if control_type == "mpc":
+    if control_type == "mpc" and perturbed_sim_flag:
         auto_test_performance_result_dict = {
             "total_abs_max_lateral_deviation": total_abs_max_lateral_deviation,
             "straight_line_abs_max_lateral_deviation": straight_line_abs_max_lateral_deviation,

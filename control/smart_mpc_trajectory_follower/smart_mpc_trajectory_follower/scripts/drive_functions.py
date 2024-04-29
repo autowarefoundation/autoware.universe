@@ -565,9 +565,12 @@ def transform_Q_R(
                 1.0,
             )
             Q_[1, 1] = lateral_cost_coef * Q_[1, 1]
-            yaw_cost_coef = max(
-                (yaw_error / threshold_loose_yaw_cost) ** power_loose_yaw_cost,
-                min_loose_yaw_cost,
+            yaw_cost_coef = min(
+                max(
+                    min_loose_yaw_cost,
+                    (yaw_error / threshold_loose_yaw_cost) ** power_loose_yaw_cost,
+                ),
+                1.0,
             )
             Q_[3, 3] = yaw_cost_coef * Q_[3, 3]
 
@@ -683,11 +686,14 @@ def calc_cost(
                 1.0,
             )
             Qi[1, 1] = lateral_cost_coef * Qi[1, 1]
-            yaw_cost_coef = max(
-                (yaw_error / threshold_loose_yaw_cost) ** power_loose_yaw_cost,
-                min_loose_yaw_cost,
+            yaw_cost_coef = min(
+                max(
+                    min_loose_yaw_cost,
+                    (yaw_error / threshold_loose_yaw_cost) ** power_loose_yaw_cost,
+                ),
+                1.0,
             )
-            Q_[3, 3] = yaw_cost_coef * Q_[3, 3]
+            Qi[3, 3] = yaw_cost_coef * Qi[3, 3]
         Qi[:2, :2] = Rot @ Qi[:2, :2] @ Rot.T
         Cost[i] += 0.5 * np.dot(Qi @ (x_current - X_des), x_current - X_des)
 
@@ -793,11 +799,14 @@ def calc_cost_only_for_states(X_des: np.ndarray, Traj: np.ndarray, n: int) -> np
             )
             Qi[1, 1] = lateral_cost_coef * Qi[1, 1]
             yaw_error = np.abs(X_des[3] - x_current[3])
-            yaw_cost_coef = max(
-                (yaw_error / threshold_loose_yaw_cost) ** power_loose_yaw_cost,
-                min_loose_yaw_cost,
+            yaw_cost_coef = min(
+                max(
+                    min_loose_yaw_cost,
+                    (yaw_error / threshold_loose_yaw_cost) ** power_loose_yaw_cost,
+                ),
+                1.0,
             )
-            Q_[3, 3] = yaw_cost_coef * Q_[3, 3]
+            Qi[3, 3] = yaw_cost_coef * Qi[3, 3]
         Qi[:2, :2] = Rot @ Qi[:2, :2] @ Rot.T
         Cost[i] += 0.5 * np.dot(Qi @ (x_current - X_des), x_current - X_des)
 

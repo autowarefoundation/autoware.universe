@@ -41,10 +41,10 @@ def generate_input_perturbation(N, sample_num, step, Sigma_0, Sigma_1):
     for i in range(change_input_index.shape[0] - 1):
         Input_perturbation[
             :, change_input_index[i] : change_input_index[i + 1], 0
-        ] += acc_perturbation[i]
+        ] += acc_perturbation[:, np.array([i])]
         Input_perturbation[
             :, change_input_index[i] : change_input_index[i + 1], 1
-        ] += steer_perturbation[i]
+        ] += steer_perturbation[:, np.array([i])]
 
     return Input_perturbation
 

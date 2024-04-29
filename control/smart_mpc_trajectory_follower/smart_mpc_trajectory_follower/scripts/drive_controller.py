@@ -422,10 +422,10 @@ class drive_controller:
         self.X_current_queue.append(self.X_current.copy())
         if len(self.X_current_queue) > drive_functions.mpc_freq:
             self.X_current_queue.pop(0)
-
+        if self.mode == "mppi":  # Avoid duplicate filtering
+            self.nominal_inputs = drive_functions.sg_filter_for_nominal_inputs(self.nominal_inputs)
         if self.mode == "mppi" or self.mode == "mppi_ilqr":  # Run mppi
             self.start_mppi = time.time()
-            self.nominal_inputs = drive_functions.sg_filter_for_nominal_inputs(self.nominal_inputs)
             self.mppi.receive_model(self.F_N_for_candidates)
             self.nominal_inputs, self.u_opt_dot, nominal_traj = (self.mppi).compute_optimal_control(
                 self.X_current,
