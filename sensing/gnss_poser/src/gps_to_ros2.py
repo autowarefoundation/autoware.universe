@@ -116,6 +116,7 @@ class Operator:
             p_x = json_dict["x"]
             p_y = json_dict["y"]
             p_z = json_dict["z"]
+            p_z = 0
             latitude = json_dict["latitude"]
             longitude = json_dict["longitude"]
             altitude = json_dict["altitude"]

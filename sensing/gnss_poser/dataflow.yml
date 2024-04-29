@@ -26,7 +26,7 @@ nodes:
     operator:
       python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
       inputs:
-        tick: dora/timer/millis/500
+        tick: dora/timer/millis/10
       outputs:
         - DoraSentence
         - DoraNavSatFix

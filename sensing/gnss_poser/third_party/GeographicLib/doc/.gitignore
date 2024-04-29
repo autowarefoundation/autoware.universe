@@ -1,0 +1,9 @@
+html
+Makefile.in
+Makefile
+*.tmp
+*.1.html
+CMakeFiles
+cmake_install.cmake
+done
+doxygen.log

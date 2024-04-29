@@ -55,11 +55,7 @@ namespace gnss_poser
       }
       // get position in coordinate_system
       
-      std::cerr << "[1]" << std::endl;
-      
-      std::cout << "latitude: " << nav_sat_fix_msg_ptr.latitude << std::endl;
-      std::cout << "longitude: " << nav_sat_fix_msg_ptr.longitude << std::endl;
-      std::cout << "altitude: " << nav_sat_fix_msg_ptr.altitude << std::endl;
+ 
       const auto gnss_stat = convert(nav_sat_fix_msg_ptr, coordinate_system_);
       // std::cout << "latitude: " << gnss_stat.latitude << std::endl;
       // std::cout << "longitude: " << gnss_stat.longitude << std::endl;
@@ -68,11 +64,12 @@ namespace gnss_poser
       const auto position = getPosition(gnss_stat);
       count++;
       std::cerr << "<-------------->"<< std::endl;
-      std::cerr << "count:" <<count<< std::endl;
-      std::cerr << "[x]:" <<position.x<< std::endl;
-      std::cerr << "[y]:" <<position.y<< std::endl;
-      std::cerr << "[z]:" <<position.z<< std::endl;
-      // std::cerr << "<-------------->"<< std::endl;
+      std::cerr << "count:" <<count << " [x]:" <<position.x << " [y]:" 
+            <<position.y<< " [z]:" <<position.z<< std::endl;
+      std::cout << "latitude: " << nav_sat_fix_msg_ptr.latitude  
+                << " longitude: " << nav_sat_fix_msg_ptr.longitude 
+                 << " altitude: " << nav_sat_fix_msg_ptr.altitude << std::endl;
+      
 
       // calc median position
       // 缓存定位信息，计算中值位置
@@ -169,13 +166,13 @@ namespace gnss_poser
   {
     GNSSStat gnss_stat;
     
-    std::cerr << "[5]convert" << std::endl;
-    printf("nav_sat_fix_msg.latitude: %f\n", nav_sat_fix_msg.latitude);
-    printf("nav_sat_fix_msg.longitude: %f\n", nav_sat_fix_msg.longitude);
-    printf("nav_sat_fix_msg.altitudes: %f\n", nav_sat_fix_msg.altitude);
-    printf("nav_sat_fix_origin_.latitude: %f\n", nav_sat_fix_origin_.latitude);
-    printf("nav_sat_fix_origin_.longitude: %f\n", nav_sat_fix_origin_.longitude);
-    printf("nav_sat_fix_origin_.altitudes: %f\n", nav_sat_fix_origin_.altitude);
+    // std::cerr << "[5]convert" << std::endl;
+    // printf("nav_sat_fix_msg.latitude: %f\n", nav_sat_fix_msg.latitude);
+    // printf("nav_sat_fix_msg.longitude: %f\n", nav_sat_fix_msg.longitude);
+    // printf("nav_sat_fix_msg.altitudes: %f\n", nav_sat_fix_msg.altitude);
+    // printf("nav_sat_fix_origin_.latitude: %f\n", nav_sat_fix_origin_.latitude);
+    // printf("nav_sat_fix_origin_.longitude: %f\n", nav_sat_fix_origin_.longitude);
+    // printf("nav_sat_fix_origin_.altitudes: %f\n", nav_sat_fix_origin_.altitude);
     if (coordinate_system == CoordinateSystem::UTM) {
       gnss_stat = NavSatFix2UTM(nav_sat_fix_msg);
     } else if (coordinate_system == CoordinateSystem::LOCAL_CARTESIAN_UTM) {
@@ -203,9 +200,10 @@ namespace gnss_poser
 
 int run(void *dora_context)
 {
-    
-    for (int i = 0; ; i++)
+    gnss_poser::GNSSPoser GnssPoser(dora_context,gnss_poser::CoordinateSystem::LOCAL_CARTESIAN_WGS84);
+    while(true)
     {
+        usleep(1000);
         void *event = dora_next_event(dora_context);
         
         if (event == NULL)
@@ -235,7 +233,7 @@ int run(void *dora_context)
                  // 解析 JSON 字符串
                 json j = json::parse(data_str);
                 DoraNavSatFix navSatFix;
-                gnss_poser::GNSSPoser GnssPoser(dora_context,gnss_poser::CoordinateSystem::LOCAL_CARTESIAN_WGS84);
+                
                 // 获取数据
                 navSatFix.header.frame_id = j["frame_id"];
                 navSatFix.header.sec = j["sec"];
@@ -276,12 +274,12 @@ int run(void *dora_context)
                 // std::cout << "position_covariance_type: " << navSatFix.position_covariance_type << std::endl;
                 // std::cout << "status: " << navSatFix.status.status << std::endl;
                 // std::cout << "service: " << navSatFix.status.service << std::endl;
-                free_dora_event(event);
+                //free_dora_event(event);
               } 
               catch (const json::parse_error& e) 
               {
                 std::cerr << "JSON 解析错误：" << e.what() << std::endl; // 处理解析失败的情况
-                free_dora_event(event);
+                //free_dora_event(event);
               }
             }
             // else if(strcmp(id, "DoraNavSatFix") == 0)
@@ -296,17 +294,16 @@ int run(void *dora_context)
             // {
               
             // }
-        }
-        else if (ty == DoraEventType_Stop)
-        {
-            printf("[c node] received stop event\n");
-            free_dora_event(event);
-        }
-        else
-        {
-            printf("[c node] received unexpected event: %d\n", ty);
-            free_dora_event(event);
-        }
+      }
+      else if (ty == DoraEventType_Stop)
+      {
+          printf("[c node] received stop event\n");
+      }
+      else
+      {
+          printf("[c node] received unexpected event: %d\n", ty);
+      }
+      free_dora_event(event);
 
     }
     return 0;

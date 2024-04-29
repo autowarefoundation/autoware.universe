@@ -1,0 +1,23 @@
+# -*- Makefile -*-
+
+# ssh -t karney,geographiclib@shell.sourceforge.net create
+# git: /home/git/p/geographiclib/code.git
+# web: /home/project-web/geographiclib
+# files: /home/frs/project/geographiclib
+
+USER=karney
+STAGE=$(HOME)/web
+WEBSTAGE=$(STAGE)/geographiclib-web
+DATASTAGE=$(STAGE)/geographiclib-files
+SCRIPTSTAGE=$(WEBSTAGE)/htdocs/scripts
+
+distrib-cgi:
+	for f in GeoConvert GeodSolve GeoidEval Planimeter RhumbSolve printlogs Geod; do \
+	  a=cgi-bin/$$f.cgi; b=$(WEBSTAGE)/cgi-bin/$$f; \
+	  install -C $$a $$b; done
+	for f in utils; do \
+	  a=cgi-bin/$$f.sh; b=$(WEBSTAGE)/cgi-bin/$$f.sh; \
+	  install -C -m 644 $$a $$b; done
+	rsync --exclude '*~' --exclude '#*' --exclude '.#*' --delete --delete-excluded -av -e ssh $(WEBSTAGE)/{cgi-bin,geoids} $(USER),geographiclib@web.sourceforge.net:./
+
+.PHONY: distrib-files distrib-cgi

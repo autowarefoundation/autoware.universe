@@ -38,6 +38,10 @@ else()
   message(STATUS "EIGEN3_INCLUDE_DIR:${EIGEN3_INCLUDE_DIR}")
 endif()
 
+# GeographicLib
+set(GeoGraphic_DIR ${CMAKE_SOURCE_DIR}/third_party/GeographicLib)
+include_directories(${GeoGraphic_DIR}/include)
+link_directories(${GeoGraphic_DIR}/build/src)
 
 include_directories(
   ${EIGEN3_INCLUDE_DIRS}
@@ -75,8 +79,9 @@ target_link_libraries(gnss_poser_core
   #$ENV{HOME}/dora/target/debug/libdora_node_api_cxx.a
   $ENV{HOME}/dora/target/release/libdora_node_api_c.a
   # ../geo_pos_conv/build/libgeo_pos_conv.a
-  $ENV{HOME}/autoware.universe/sensing/geo_pos_conv/build/libgeo_pos_conv.a
-  Geographic
+  #$ENV{HOME}/autoware.universe/sensing/geo_pos_conv/build/libgeo_pos_conv.a
+  ${CMAKE_SOURCE_DIR}/../geo_pos_conv/build/libgeo_pos_conv.a
+  libGeographicLib.so
   m
   rt
   dl 
