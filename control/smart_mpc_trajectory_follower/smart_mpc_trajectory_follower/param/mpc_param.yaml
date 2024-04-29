@@ -1,6 +1,6 @@
 mpc_parameter:
   system:
-    mode: ilqr
+    mode: ilqr # option: ilqr, mppi, ilqr_mppi
   mpc_setting:
     ctrl_time_step: 0.03333
     mpc_freq: 3

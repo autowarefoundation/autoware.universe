@@ -32,13 +32,15 @@ pip3 install -U .
 
 ## Provided features
 
+This package provides smart MPC logic for path-following control as well as mechanisms for learning and evaluation. These features are described below.
+
 ### Trajectory following control based on iLQR/MPPI
 
 The control mode can be selected from "ilqr", "mppi", or "mppi_ilqr", and can be set as `mpc_parameter:system:mode` in [mpc_param.yaml](./smart_mpc_trajectory_follower/param/mpc_param.yaml).
 In "mppi_ilqr" mode, the initial value of iLQR is given by the MPPI solution.
 
 > [!NOTE]
-> With the default settings, the "mppi" mode does not work well due to insufficient number of samples. Due to the limitation of using only the CPU, it is difficult to increase the number of samples sufficiently.
+> With the default settings, the performance of "mppi" mode is limited due to an insufficient number of samples. This issue is being addressed with ongoing work to introduce GPU support.
 
 To perform a simulation, run the following command:
 
@@ -141,8 +143,10 @@ lateral_error_visualize(dir_name=rosbag_trained,ylim=[-1.2,1.2])
 
 The following results were obtained.
 
-<p><img src="images/lateral_error_nominal_model.png" width=712pix></p>
-<p><img src="images/lateral_error_trained_model.png" width=712pix></p>
+<div style="display: flex; justify-content: center; align-items: center;">
+    <img src="images/lateral_error_nominal_model.png">
+    <img src="images/lateral_error_trained_model.png">
+</div>
 
 #### Test on python simulator
 
@@ -181,7 +185,9 @@ model_trainer.save_models(save_dir=save_dir)
 This way, files `model_for_test_drive.pth` and `polynomial_reg_info.npz` are saved in `save_dir`.
 The following results were obtained.
 
-<p><img src="images/python_sim_lateral_error_nominal_model.png" width=712pix></p>
+<p style="text-align: center;">
+    <img src="images/python_sim_lateral_error_nominal_model.png" width="712px">
+</p>
 
 The center of the upper row represents the lateral deviation.
 
@@ -195,7 +201,9 @@ python_simulator.slalom_drive(save_dir=save_dir,load_dir=load_dir,use_trained_mo
 
 The following results were obtained.
 
-<p><img src="images/python_sim_lateral_error_trained_model.png" width=712pix></p>
+<p style="text-align: center;">
+    <img src="images/python_sim_lateral_error_trained_model.png" width="712px">
+</p>
 
 It can be seen that the lateral deviation has improved significantly.
 
