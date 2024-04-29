@@ -421,7 +421,7 @@ bool isParkedVehicle(
     const auto most_left_lanelet = [&]() {
       const auto same_direction_lane =
         route_handler->getMostLeftLanelet(object.overhang_lanelet, true, true);
-      const lanelet::Attribute sub_type =
+      const lanelet::Attribute & sub_type =
         same_direction_lane.attribute(lanelet::AttributeName::Subtype);
       if (sub_type == "road_shoulder") {
         return same_direction_lane;
@@ -442,7 +442,7 @@ bool isParkedVehicle(
     double object_shiftable_distance =
       center_to_left_boundary - 0.5 * object.object.shape.dimensions.y;
 
-    const lanelet::Attribute sub_type =
+    const lanelet::Attribute & sub_type =
       most_left_lanelet.attribute(lanelet::AttributeName::Subtype);
     if (sub_type == "road_shoulder") {
       // assuming it's parked vehicle if its CoG is within road shoulder lanelet.
@@ -469,7 +469,7 @@ bool isParkedVehicle(
     const auto most_right_lanelet = [&]() {
       const auto same_direction_lane =
         route_handler->getMostRightLanelet(object.overhang_lanelet, true, true);
-      const lanelet::Attribute sub_type =
+      const lanelet::Attribute & sub_type =
         same_direction_lane.attribute(lanelet::AttributeName::Subtype);
       if (sub_type == "road_shoulder") {
         return same_direction_lane;
@@ -490,7 +490,7 @@ bool isParkedVehicle(
     double object_shiftable_distance =
       center_to_right_boundary - 0.5 * object.object.shape.dimensions.y;
 
-    const lanelet::Attribute sub_type =
+    const lanelet::Attribute & sub_type =
       most_right_lanelet.attribute(lanelet::AttributeName::Subtype);
     if (sub_type == "road_shoulder") {
       // assuming it's parked vehicle if its CoG is within road shoulder lanelet.
