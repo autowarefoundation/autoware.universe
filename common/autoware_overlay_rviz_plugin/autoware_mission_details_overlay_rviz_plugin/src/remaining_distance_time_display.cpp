@@ -34,8 +34,8 @@
 namespace autoware_mission_details_overlay_rviz_plugin
 {
 
-RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay() : 
-remaining_distance_(0.0), remaining_hours_(0), remaining_minutes_(0), remaining_seconds_(0)
+RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
+: remaining_distance_(0.0), remaining_hours_(0), remaining_minutes_(0), remaining_seconds_(0)
 {
   std::string package_path =
     ament_index_cpp::get_package_share_directory("autoware_mission_details_overlay_rviz_plugin");
@@ -55,9 +55,9 @@ void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
 {
   try {
     remaining_distance_ = msg->remaining_distance;
-    remaining_hours_    = msg->remaining_hours;
-    remaining_minutes_  = msg->remaining_minutes;
-    remaining_seconds_  = msg->remaining_seconds;
+    remaining_hours_ = msg->remaining_hours;
+    remaining_minutes_ = msg->remaining_minutes;
+    remaining_seconds_ = msg->remaining_seconds;
   } catch (const std::exception & e) {
     // Log the error
     std::cerr << "Error in processMessage: " << e.what() << std::endl;
