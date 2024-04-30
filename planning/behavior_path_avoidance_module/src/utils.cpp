@@ -419,7 +419,7 @@ bool isParkedVehicle(
   bool is_left_side_parked_vehicle = false;
   if (!isOnRight(object)) {
     const auto most_left_lanelet = [&]() {
-      const auto same_direction_lane =
+      auto same_direction_lane =
         route_handler->getMostLeftLanelet(object.overhang_lanelet, true, true);
       const lanelet::Attribute & sub_type =
         same_direction_lane.attribute(lanelet::AttributeName::Subtype);
@@ -467,7 +467,7 @@ bool isParkedVehicle(
   bool is_right_side_parked_vehicle = false;
   if (isOnRight(object)) {
     const auto most_right_lanelet = [&]() {
-      const auto same_direction_lane =
+      auto same_direction_lane =
         route_handler->getMostRightLanelet(object.overhang_lanelet, true, true);
       const lanelet::Attribute & sub_type =
         same_direction_lane.attribute(lanelet::AttributeName::Subtype);
