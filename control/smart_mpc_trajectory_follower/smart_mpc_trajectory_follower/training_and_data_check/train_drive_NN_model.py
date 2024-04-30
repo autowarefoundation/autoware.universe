@@ -194,13 +194,13 @@ class train_drive_NN_model(add_training_data_from_csv.add_data_from_csv):
         num_train = int(3 * sample_size / 4)
         id_all = np.random.choice(sample_size, sample_size, replace=False)
         id_train = id_all[:num_train]
-        id_test = id_all[num_train:]
+        id_val = id_all[num_train:]
         X_tensor = torch.tensor(X_input.astype(np.float32)).clone()
         Y_tensor = torch.tensor(Y_output.astype(np.float32)).clone()
         X_train = X_tensor[id_train]
         Y_train = Y_tensor[id_train]
-        X_test = X_tensor[id_test]
-        Y_test = Y_tensor[id_test]
+        X_val = X_tensor[id_val]
+        Y_val = Y_tensor[id_val]
 
         print("sample_size: ", X_input.shape[0])
         print("patience:", patience)
@@ -213,8 +213,8 @@ class train_drive_NN_model(add_training_data_from_csv.add_data_from_csv):
         )
         initial_loss = drive_NN.loss_fn_plus_tanh(
             loss_fn,
-            torch.tensor(np.zeros(Y_test.shape), dtype=torch.float32),
-            Y_test,
+            torch.tensor(np.zeros(Y_val.shape), dtype=torch.float32),
+            Y_val,
             self.tanh_gain,
             self.lam,
         )
@@ -240,31 +240,31 @@ class train_drive_NN_model(add_training_data_from_csv.add_data_from_csv):
                 optimizer.step()
 
             model.eval()
-            pred = model(X_test)
+            pred = model(X_val)
             self.total_loss.append(
-                drive_NN.loss_fn_plus_tanh(loss_fn, pred, Y_test, self.tanh_gain, self.lam)
+                drive_NN.loss_fn_plus_tanh(loss_fn, pred, Y_val, self.tanh_gain, self.lam)
                 .detach()
                 .item()
             )
-            self.x_loss.append(loss_fn(pred[:, [0]], Y_test[:, [0]]).detach().item())
-            self.y_loss.append(loss_fn(pred[:, [1]], Y_test[:, [1]]).detach().item())
-            self.v_loss.append(loss_fn(pred[:, [2]], Y_test[:, [2]]).detach().item())
-            self.theta_loss.append(loss_fn(pred[:, [3]], Y_test[:, [3]]).detach().item())
-            self.acc_loss.append(loss_fn(pred[:, [4]], Y_test[:, [4]]).detach().item())
-            self.steer_loss.append(loss_fn(pred[:, [5]], Y_test[:, [5]]).detach().item())
+            self.x_loss.append(loss_fn(pred[:, [0]], Y_val[:, [0]]).detach().item())
+            self.y_loss.append(loss_fn(pred[:, [1]], Y_val[:, [1]]).detach().item())
+            self.v_loss.append(loss_fn(pred[:, [2]], Y_val[:, [2]]).detach().item())
+            self.theta_loss.append(loss_fn(pred[:, [3]], Y_val[:, [3]]).detach().item())
+            self.acc_loss.append(loss_fn(pred[:, [4]], Y_val[:, [4]]).detach().item())
+            self.steer_loss.append(loss_fn(pred[:, [5]], Y_val[:, [5]]).detach().item())
             self.steer_loss_plus_tanh.append(
-                loss_fn(pred[:, [5]], Y_test[:, [5]]).detach().item()
+                loss_fn(pred[:, [5]], Y_val[:, [5]]).detach().item()
                 + self.lam
                 * loss_fn(
-                    torch.tanh(self.tanh_gain * (pred[:, -1] - Y_test[:, -1])),
-                    torch.zeros(Y_test.shape[0]),
+                    torch.tanh(self.tanh_gain * (pred[:, -1] - Y_val[:, -1])),
+                    torch.zeros(Y_val.shape[0]),
                 )
                 .detach()
                 .item()
             )
             if i % 10 == 1:
                 current_loss = drive_NN.loss_fn_plus_tanh(
-                    loss_fn, model(X_test), Y_test, self.tanh_gain, self.lam
+                    loss_fn, model(X_val), Y_val, self.tanh_gain, self.lam
                 )
                 print(current_loss.detach().item(), i)
                 if early_stopping(current_loss):
