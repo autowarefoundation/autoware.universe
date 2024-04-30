@@ -24,6 +24,8 @@
 #include <OgreTechnique.h>
 #include <OgreTexture.h>
 #include <OgreTextureManager.h>
+#include <qchar.h>
+#include <qpoint.h>
 
 #include <algorithm>
 #include <cmath>
@@ -48,6 +50,16 @@ RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
   if (fontId == -1 || fontId2 == -1) {
     std::cout << "Failed to load the Quicksand font.";
   }
+
+  // Load the wheel image
+  std::string dist_image = package_path + "/assets/white_flag.png";
+  std::string time_image = package_path + "/assets/score_white.png";
+  distToGoalFlag.load(dist_image.c_str());
+  timeToGoalFlag.load(time_image.c_str());
+  scaledDistToGoalFlag =
+    distToGoalFlag.scaled(32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  scaledTimeToGoalFlag =
+    timeToGoalFlag.scaled(32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
 void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
@@ -76,90 +88,102 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
   QPointF remainingTimeReferencePos(
     backgroundRect.width() / 2 - referenceRect.width() / 2, backgroundRect.height() / 1.3);
 
-  // Remaining distance value
-  QString remainingDistanceValue = QString::number(remaining_distance_, 'f', 0);
+  // ----------------- Remaining Distance -----------------
+
   int fontSize = 15;
-  QFont remainingDistancValueFont("Quicksand", fontSize);
+  QFont remainingDistancValueFont("Quicksand", fontSize, QFont::Bold);
   painter.setFont(remainingDistancValueFont);
 
-  QPointF remainingDistancePos(remainingDistReferencePos.x() + 100, remainingDistReferencePos.y());
+  // Remaining distance icon
+  QPointF remainingDistanceIconPos(
+    remainingDistReferencePos.x() - 25, remainingDistReferencePos.y());
+  painter.drawImage(
+    remainingDistanceIconPos.x(),
+    remainingDistanceIconPos.y() - scaledDistToGoalFlag.height() / 2.0, scaledDistToGoalFlag);
+
+  // Remaining distance value
+  QString remainingDistanceValue = QString::number(
+    remaining_distance_ > 1000 ? remaining_distance_ / 1000 : remaining_distance_, 'f', 0);
+  QPointF remainingDistancePos;
+  switch (remainingDistanceValue.size()) {
+    case 1:
+      remainingDistancePos =
+        QPointF(remainingDistReferencePos.x() + 95, remainingDistReferencePos.y() + 10);
+      break;
+    case 2:
+      remainingDistancePos =
+        QPointF(remainingDistReferencePos.x() + 90, remainingDistReferencePos.y() + 10);
+      break;
+    case 3:
+      remainingDistancePos =
+        QPointF(remainingDistReferencePos.x() + 80, remainingDistReferencePos.y() + 10);
+      break;
+    case 4:
+      remainingDistancePos =
+        QPointF(remainingDistReferencePos.x() + 70, remainingDistReferencePos.y() + 10);
+      break;
+    default:
+      remainingDistancePos =
+        QPointF(remainingDistReferencePos.x() + 95, remainingDistReferencePos.y() + 10);
+      break;
+  }
   painter.setPen(gray);
   painter.drawText(remainingDistancePos, remainingDistanceValue);
 
-  // Remaining distance text
-  QFont remainingDistancTextFont("Quicksand", 12);
-  painter.setFont(remainingDistancTextFont);
-  QString remainingDistText = "Remaining Distance: ";
-  QPointF remainingDistancTextPos(
-    remainingDistReferencePos.x() - 80, remainingDistReferencePos.y());
-  painter.drawText(remainingDistancTextPos, remainingDistText);
-
   // Remaining distance unit
-  QFont remainingDistancUnitFont("Quicksand", 12);
+  QFont remainingDistancUnitFont("Quicksand", 12, QFont::Bold);
   painter.setFont(remainingDistancUnitFont);
-  QString remainingDistUnitText = " m";
+  QString remainingDistUnitText = remaining_distance_ > 1000 ? "km" : "m";
   QPointF remainingDistancUnitPos(
-    remainingDistReferencePos.x() + 150, remainingDistReferencePos.y());
+    remaining_distance_ > 1000 ? remainingDistReferencePos.x() + 120
+                               : remainingDistReferencePos.x() + 115,
+    remainingDistReferencePos.y() + 10);
   painter.drawText(remainingDistancUnitPos, remainingDistUnitText);
 
+  //  ----------------- Remaining Time -----------------
+
   // Remaining time text
-  QFont remainingTimeTextFont("Quicksand", 12);
-  painter.setFont(remainingDistancTextFont);
-  QString remainingTimeText = "Remaining Time: ";
-  QPointF remainingTimeTextPos(remainingTimeReferencePos.x() - 80, remainingTimeReferencePos.y());
-  painter.drawText(remainingTimeTextPos, remainingTimeText);
+  painter.drawImage(
+    remainingDistanceIconPos.x(),
+    remainingDistanceIconPos.y() + scaledTimeToGoalFlag.height() / 2.0, scaledTimeToGoalFlag);
 
   // Remaining hours value
-  QString remaininghoursValue = QString::number(remaining_hours_, 'f', 0);
-  QFont remaininghoursValueFont("Quicksand", fontSize);
-  painter.setFont(remaininghoursValueFont);
-
-  QPointF remaininghoursValuePos(remainingTimeReferencePos.x() + 50, remainingTimeReferencePos.y());
+  QString remaininghoursValue =
+    QString::number(remaining_hours_ != 0 ? remaining_hours_ : 0, 'f', 0);
+  QPointF remaininghoursValuePos(remainingTimeReferencePos.x() + 30, remainingTimeReferencePos.y());
   painter.setPen(gray);
-  painter.drawText(remaininghoursValuePos, remaininghoursValue);
+  if (remaining_hours_ != 0) painter.drawText(remaininghoursValuePos, remaininghoursValue);
 
   // Remaining hours separator
-  QFont hoursSeparatorTextFont("Quicksand", 12);
-  painter.setFont(hoursSeparatorTextFont);
-  QString hoursSeparatorText = " h : ";
-
-  QPointF hoursSeparatorTextPos(remainingTimeReferencePos.x() + 70, remainingTimeReferencePos.y());
-  painter.drawText(hoursSeparatorTextPos, hoursSeparatorText);
+  QString hoursSeparatorText = "h";
+  QPointF hoursSeparatorTextPos(remainingTimeReferencePos.x() + 50, remainingTimeReferencePos.y());
+  if (remaining_hours_ != 0) painter.drawText(hoursSeparatorTextPos, hoursSeparatorText);
 
   // Remaining minutes value
-  QString remainingminutesValue = QString::number(remaining_minutes_, 'f', 0);
-  QFont remainingminutesValueFont("Quicksand", fontSize);
-  painter.setFont(remainingminutesValueFont);
-
+  QString remainingminutesValue =
+    QString::number(remaining_minutes_ != 0 ? remaining_minutes_ : 0, 'f', 0);
   QPointF remainingminutesValuePos(
-    remainingTimeReferencePos.x() + 100, remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 65, remainingTimeReferencePos.y());
   painter.setPen(gray);
-  painter.drawText(remainingminutesValuePos, remainingminutesValue);
-
+  if (remaining_minutes_ != 0) painter.drawText(remainingminutesValuePos, remainingminutesValue);
   // Remaining minutes separator
-  QFont minutesSeparatorTextFont("Quicksand", 12);
-  painter.setFont(minutesSeparatorTextFont);
-  QString minutesSeparatorText = " m : ";
+  QString minutesSeparatorText = "m";
   QPointF minutesSeparatorTextPos(
-    remainingTimeReferencePos.x() + 120, remainingTimeReferencePos.y());
-  painter.drawText(minutesSeparatorTextPos, minutesSeparatorText);
+    remainingTimeReferencePos.x() + 85, remainingTimeReferencePos.y());
+  if (remaining_minutes_ != 0) painter.drawText(minutesSeparatorTextPos, minutesSeparatorText);
 
   // Remaining seconds value
-  QString remainingsecondsValue = QString::number(remaining_seconds_, 'f', 0);
-  QFont remainingsecondsValueFont("Quicksand", fontSize);
-  painter.setFont(remainingsecondsValueFont);
-
+  QString remainingsecondsValue =
+    QString::number(remaining_seconds_ != 0 ? remaining_seconds_ : 0, 'f', 0);
   QPointF remainingsecondValuePos(
-    remainingTimeReferencePos.x() + 160, remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 102.5, remainingTimeReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remainingsecondValuePos, remainingsecondsValue);
 
   // Remaining seconds separator
-  QFont secondsSeparatorTextFont("Quicksand", 12);
-  painter.setFont(secondsSeparatorTextFont);
-  QString secondsSeparatorText = " s";
+  QString secondsSeparatorText = "s";
   QPointF secondsSeparatorTextPos(
-    remainingTimeReferencePos.x() + 180, remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 120, remainingTimeReferencePos.y());
   painter.drawText(secondsSeparatorTextPos, secondsSeparatorText);
 }
 
