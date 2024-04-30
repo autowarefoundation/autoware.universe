@@ -132,8 +132,8 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
 
   // Remaining distance unit
   QString remainingDistUnitText = remaining_distance_ > 1000 ? "km" : "m";
-  QPointF remainingDistancUnitPos(remainingDistReferencePos.x() + 125,
-    remainingDistReferencePos.y() + 10);
+  QPointF remainingDistancUnitPos(
+    remainingDistReferencePos.x() + 125, remainingDistReferencePos.y() + 10);
   painter.drawText(remainingDistancUnitPos, remainingDistUnitText);
 
   //  ----------------- Remaining Time -----------------
