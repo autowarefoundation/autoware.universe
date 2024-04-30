@@ -822,7 +822,10 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
    * parameter control the estimated path length = vx * th * (rate)  */
   prediction_time_horizon_rate_for_validate_lane_length_ =
     declare_parameter<double>("prediction_time_horizon_rate_for_validate_shoulder_lane_length");
-
+  match_lost_and_appeared_crosswalk_users_ =
+    declare_parameter<bool>("use_crosswalk_user_history.match_lost_and_appeared_users");
+  remember_lost_crosswalk_users_ =
+    declare_parameter<bool>("use_crosswalk_user_history.remember_lost_users");
   use_vehicle_acceleration_ = declare_parameter<bool>("use_vehicle_acceleration");
   speed_limit_multiplier_ = declare_parameter<double>("speed_limit_multiplier");
   acceleration_exponential_half_life_ =
@@ -969,6 +972,14 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   auto invalidated_crosswalk_users = removeOldObjectsHistory(
     objects_detected_time, object_buffer_time_length_, crosswalk_users_history_);
+  // delete matches that point to invalid object
+  for (auto it = known_matches_.begin(); it != known_matches_.end();) {
+    if (invalidated_crosswalk_users.count(it->second)) {
+      it = known_matches_.erase(it);
+    } else {
+      ++it;
+    }
+  }
 
   // result output
   PredictedObjects output;
@@ -977,6 +988,19 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // result debug
   visualization_msgs::msg::MarkerArray debug_markers;
+
+  // get current crosswalk users for later prediction
+  std::unordered_map<std::string, TrackedObject> current_crosswalk_users;
+  for (const auto & object : in_objects->objects) {
+    const auto label_for_prediction =
+      changeLabelForPrediction(object.classification.front().label, object, lanelet_map_ptr_);
+    if (
+      label_for_prediction == ObjectClassification::PEDESTRIAN ||
+      label_for_prediction == ObjectClassification::BICYCLE) {
+      current_crosswalk_users[tier4_autoware_utils::toHexString(object.object_id)] = object;
+    }
+  }
+  std::unordered_set<std::string> predicted_crosswalk_users_ids;
 
   for (const auto & object : in_objects->objects) {
     std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
@@ -998,6 +1022,12 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     switch (label) {
       case ObjectClassification::PEDESTRIAN:
       case ObjectClassification::BICYCLE: {
+        std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
+        if (match_lost_and_appeared_crosswalk_users_) {
+          object_id = tryMatchNewObjectToDisappeared(object_id, current_crosswalk_users);
+        }
+        predicted_crosswalk_users_ids.insert(object_id);
+        updateCrosswalkUserHistory(output.header, transformed_object, object_id);
         const auto predicted_object_crosswalk =
           getPredictedObjectAsCrosswalkUser(transformed_object);
         output.objects.push_back(predicted_object_crosswalk);
@@ -1163,6 +1193,19 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     }
   }
 
+  // process lost crosswalk users to tackle unstable detection
+  if (remember_lost_crosswalk_users_) {
+    for (const auto & [id, crosswalk_user] : crosswalk_users_history_) {
+      // get a predicted path for crosswalk users in history who didn't get path yet using latest
+      // message
+      if (predicted_crosswalk_users_ids.count(id) == 0) {
+        const auto predicted_object =
+          getPredictedObjectAsCrosswalkUser(crosswalk_user.back().tracked_object);
+        output.objects.push_back(predicted_object);
+      }
+    }
+  }
+
   // Publish Results
   pub_objects_->publish(output);
   published_time_publisher_->publish_if_subscribed(pub_objects_, output.header.stamp);
@@ -1186,6 +1229,51 @@ void MapBasedPredictionNode::updateCrosswalkUserHistory(
   } else {
     crosswalk_users_history_.at(object_id).push_back(crosswalk_user_data);
   }
+}
+
+std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
+  const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users)
+{
+  if (known_matches_.count(object_id)) {
+    std::string match_id = known_matches_[object_id];
+    // object in the history is already matched to something (possibly itself)
+    if (crosswalk_users_history_.count(match_id)) {
+      // avoid matching two appeared users to one user in history
+      current_users[match_id] = crosswalk_users_history_[match_id].back().tracked_object;
+      return match_id;
+    } else {
+      RCLCPP_WARN_STREAM(
+        get_logger(), "Crosswalk user was " << object_id << "was matched to " << match_id
+                                            << " but the history has deleted. Rematching");
+    }
+  }
+  std::string match_id = object_id;
+  double best_score = std::numeric_limits<double>::max();
+  auto pos0 = current_users[object_id].kinematics.pose_with_covariance.pose.position;
+  for (const auto & [user_id, user_history] : crosswalk_users_history_) {
+    // user present in current_users and will be matched to itself
+    if (current_users.count(user_id)) {
+      continue;
+    }
+    // TODO(dkoldaev): implement more sophisticated scoring, for now simply dst to last position in
+    // history
+    auto pos = user_history.back().tracked_object.kinematics.pose_with_covariance.pose.position;
+    double score = std::hypot(pos.x - pos0.x, pos.y - pos0.y);
+    if (score < best_score) {
+      best_score = score;
+      match_id = user_id;
+    }
+  }
+
+  if (object_id != match_id) {
+    RCLCPP_INFO_STREAM(
+      get_logger(), "[Map Based Prediction]: Matched " << object_id << " to " << match_id);
+    // avoid matching two appeared users to one user in history
+    current_users[match_id] = crosswalk_users_history_[match_id].back().tracked_object;
+  }
+
+  known_matches_[object_id] = match_id;
+  return match_id;
 }
 
 bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)

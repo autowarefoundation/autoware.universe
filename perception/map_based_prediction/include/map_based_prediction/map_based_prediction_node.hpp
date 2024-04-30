@@ -48,6 +48,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -144,6 +145,7 @@ private:
   std::unordered_map<std::string, std::deque<ObjectData>> objects_history_;
   std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
   std::unordered_map<std::string, std::deque<CrosswalkUserData>> crosswalk_users_history_;
+  std::unordered_map<std::string, std::string> known_matches_;
 
   // Lanelet Map Pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
@@ -207,6 +209,9 @@ private:
   std::vector<double> distance_set_for_no_intention_to_walk_;
   std::vector<double> timeout_set_for_no_intention_to_walk_;
 
+  bool match_lost_and_appeared_crosswalk_users_;
+  bool remember_lost_crosswalk_users_;
+
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // Member Functions
@@ -244,7 +249,8 @@ private:
   void updateCrosswalkUserHistory(
     const std_msgs::msg::Header & header, const TrackedObject & object,
     const std::string & object_id);
-
+  std::string tryMatchNewObjectToDisappeared(
+    const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users);
   std::vector<PredictedRefPath> getPredictedReferencePath(
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
     const double object_detected_time);
