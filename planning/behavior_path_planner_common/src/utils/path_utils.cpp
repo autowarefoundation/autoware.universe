@@ -645,10 +645,10 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
   const Pose goal_pose = modified_goal ? modified_goal->pose : route_handler->getGoalPose();
 
   lanelet::ConstLanelet goal_lane;
-  const auto shoulder_goal_lane = route_handler->getShoulderLaneletAtPose(goal_pose);
-  if (shoulder_goal_lane) goal_lane = *shoulder_goal_lane;
+  const auto shoulder_goal_lanes = route_handler->getShoulderLaneletsAtPose(goal_pose);
+  if (!shoulder_goal_lanes.empty()) goal_lane = shoulder_goal_lanes.front();
   const auto is_failed_getting_lanelet =
-    !shoulder_goal_lane && !route_handler->getGoalLanelet(&goal_lane);
+    shoulder_goal_lanes.empty() && !route_handler->getGoalLanelet(&goal_lane);
   if (is_failed_getting_lanelet) {
     return output;
   }

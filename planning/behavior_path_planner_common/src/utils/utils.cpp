@@ -498,10 +498,10 @@ bool isEgoOutOfRoute(
                              : route_handler->getGoalPose();
 
   lanelet::ConstLanelet goal_lane;
-  const auto shoulder_goal_lane = route_handler->getShoulderLaneletAtPose(goal_pose);
-  if (shoulder_goal_lane) goal_lane = *shoulder_goal_lane;
+  const auto shoulder_goal_lanes = route_handler->getShoulderLaneletsAtPose(goal_pose);
+  if (!shoulder_goal_lanes.empty()) goal_lane = shoulder_goal_lanes.front();
   const auto is_failed_getting_lanelet =
-    !shoulder_goal_lane && !route_handler->getGoalLanelet(&goal_lane);
+    shoulder_goal_lanes.empty() && !route_handler->getGoalLanelet(&goal_lane);
   if (is_failed_getting_lanelet) {
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("behavior_path_planner").get_child("util"), "cannot find goal lanelet");
@@ -524,7 +524,7 @@ bool isEgoOutOfRoute(
 
   // If ego vehicle is out of the closest lanelet, return true
   // Check if ego vehicle is in shoulder lane
-  const bool is_in_shoulder_lane = route_handler->getShoulderLaneletAtPose(self_pose).has_value();
+  const bool is_in_shoulder_lane = !route_handler->getShoulderLaneletsAtPose(self_pose).empty();
   // Check if ego vehicle is in road lane
   const bool is_in_road_lane = std::invoke([&]() {
     lanelet::ConstLanelet closest_road_lane;
@@ -1650,6 +1650,6 @@ bool isAllowedGoalModification(const std::shared_ptr<RouteHandler> & route_handl
 bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_handler)
 {
   const Pose & goal_pose = route_handler->getOriginalGoalPose();
-  return route_handler->getShoulderLaneletAtPose(goal_pose).has_value();
+  return !route_handler->getShoulderLaneletsAtPose(goal_pose).empty();
 }
 }  // namespace behavior_path_planner::utils

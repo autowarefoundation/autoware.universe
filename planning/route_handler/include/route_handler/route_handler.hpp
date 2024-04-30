@@ -352,8 +352,7 @@ public:
     const lanelet::ConstLanelet & lanelet) const;
   std::optional<lanelet::ConstLanelet> getRightShoulderLanelet(
     const lanelet::ConstLanelet & lanelet) const;
-  /// @warning if the pose is inside multiple shoulder lanelets, the selection is random
-  std::optional<lanelet::ConstLanelet> getShoulderLaneletAtPose(const Pose & pose) const;
+  lanelet::ConstLanelets getShoulderLaneletsAtPose(const Pose & pose) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
 

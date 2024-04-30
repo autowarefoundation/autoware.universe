@@ -762,16 +762,18 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getRightShoulderLanelet(
   return std::nullopt;
 }
 
-std::optional<lanelet::ConstLanelet> RouteHandler::getShoulderLaneletAtPose(const Pose & pose) const
+lanelet::ConstLanelets RouteHandler::getShoulderLaneletsAtPose(const Pose & pose) const
 {
+  lanelet::ConstLanelets lanelets_at_pose;
   const lanelet::BasicPoint2d p{pose.position.x, pose.position.y};
-  const auto lanelets_at_pose = lanelet_map_ptr_->laneletLayer.search(lanelet::BoundingBox2d(p));
-  for (const auto & lanelet_at_pose : lanelets_at_pose) {
+  const auto candidates_at_pose = lanelet_map_ptr_->laneletLayer.search(lanelet::BoundingBox2d(p));
+  for (const auto & candidate : candidates_at_pose) {
     // confirm that the pose is inside the lanelet since "search" does an approximation with boxes
-    const auto is_pose_inside_lanelet = lanelet::geometry::inside(lanelet_at_pose, p);
-    if (is_pose_inside_lanelet && isShoulderLanelet(lanelet_at_pose)) return lanelet_at_pose;
+    const auto is_pose_inside_lanelet = lanelet::geometry::inside(candidate, p);
+    if (is_pose_inside_lanelet && isShoulderLanelet(candidate))
+      lanelets_at_pose.push_back(candidate);
   }
-  return std::nullopt;
+  return lanelets_at_pose;
 }
 
 lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceAfter(
