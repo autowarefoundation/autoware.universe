@@ -79,30 +79,57 @@ class CollisionDataKeeper
 public:
   explicit CollisionDataKeeper(rclcpp::Clock::SharedPtr clock) { clock_ = clock; }
 
-  void setTimeout(const double timeout_sec) { timeout_sec_ = timeout_sec; }
-
-  bool checkExpired()
+  void setTimeout(const double timeout_sec, const double previous_obstacle_keep_time)
   {
-    if (data_ && (clock_->now() - data_->stamp).seconds() > timeout_sec_) {
-      data_.reset();
-    }
-    return (data_ == nullptr);
+    timeout_sec_ = timeout_sec;
+    previous_obstacle_keep_time_ = previous_obstacle_keep_time;
   }
 
-  void update(const ObjectData & data) { data_.reset(new ObjectData(data)); }
+  bool checkCollisionExpired()
+  {
+    if (closest_object_ && (clock_->now() - closest_object_->stamp).seconds() > timeout_sec_) {
+      closest_object_ = std::nullopt;
+    }
+    return !closest_object_.has_value();
+  }
+
+  bool checkPreviousObjectDataExpired()
+  {
+    if (!prev_closest_object_.has_value()) return true;
+    const auto now = clock_->now();
+    const auto & prev_obj = prev_closest_object_.value();
+    const auto & prev_closest_object_time = prev_obj.stamp;
+    if ((now - prev_closest_object_time).nanoseconds() * 1e-9 > previous_obstacle_keep_time_) {
+      prev_closest_object_ = std::nullopt;
+    }
+    return !prev_closest_object_.has_value();
+  }
 
   ObjectData get()
   {
-    if (data_) {
-      return *data_;
-    } else {
-      return ObjectData();
-    }
+    return (closest_object_.has_value()) ? closest_object_.value() : ObjectData();
+  }
+
+  ObjectData getPreviousObjectData()
+  {
+    return (prev_closest_object_.has_value()) ? prev_closest_object_.value() : ObjectData();
+  }
+
+  void setCollisionData(const ObjectData & data)
+  {
+    closest_object_ = std::make_optional<ObjectData>(data);
+  }
+
+  void setPreviousObjectData(const ObjectData & data)
+  {
+    prev_closest_object_ = std::make_optional<ObjectData>(data);
   }
 
 private:
-  std::unique_ptr<ObjectData> data_;
+  std::optional<ObjectData> prev_closest_object_{std::nullopt};
+  std::optional<ObjectData> closest_object_{std::nullopt};
   double timeout_sec_{0.0};
+  double previous_obstacle_keep_time_{0.0};
   rclcpp::Clock::SharedPtr clock_;
 };
 
@@ -165,6 +192,9 @@ public:
 
   void addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers);
 
+  std::optional<double> calcObjectSpeedFromHistory(
+    const ObjectData & closest_object, const Path & path, const double current_ego_speed);
+
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
   Vector3::SharedPtr angular_velocity_ptr_{nullptr};
@@ -204,6 +234,7 @@ public:
   double mpc_prediction_time_horizon_;
   double mpc_prediction_time_interval_;
   CollisionDataKeeper collision_data_keeper_;
+  std::mutex data_mutex_;
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 

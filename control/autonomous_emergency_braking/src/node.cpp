@@ -161,8 +161,9 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   mpc_prediction_time_horizon_ = declare_parameter<double>("mpc_prediction_time_horizon");
   mpc_prediction_time_interval_ = declare_parameter<double>("mpc_prediction_time_interval");
 
+  const auto previous_obstacle_keep_time = declare_parameter<double>("previous_obstacle_keep_time");
   const auto collision_keeping_sec = declare_parameter<double>("collision_keeping_sec");
-  collision_data_keeper_.setTimeout(collision_keeping_sec);
+  collision_data_keeper_.setTimeout(collision_keeping_sec, previous_obstacle_keep_time);
 
   // start time
   const double aeb_hz = declare_parameter<double>("aeb_hz");
@@ -177,12 +178,14 @@ void AEB::onTimer()
 
 void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
 {
+  std::lock_guard<std::mutex> lock(data_mutex_);
   current_velocity_ptr_ = input_msg;
 }
 
 void AEB::onImu(const Imu::ConstSharedPtr input_msg)
 {
   // transform imu
+  std::lock_guard<std::mutex> lock(data_mutex_);
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -202,16 +205,19 @@ void AEB::onImu(const Imu::ConstSharedPtr input_msg)
 void AEB::onPredictedTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg)
 {
+  std::lock_guard<std::mutex> lock(data_mutex_);
   predicted_traj_ptr_ = input_msg;
 }
 
 void AEB::onAutowareState(const AutowareState::ConstSharedPtr input_msg)
 {
+  std::lock_guard<std::mutex> lock(data_mutex_);
   autoware_state_ = input_msg;
 }
 
 void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
 {
+  std::lock_guard<std::mutex> lock(data_mutex_);
   PointCloud::Ptr pointcloud_ptr(new PointCloud);
   pcl::fromROSMsg(*input_msg, *pointcloud_ptr);
 
@@ -297,7 +303,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
   MarkerArray debug_markers;
   checkCollision(debug_markers);
 
-  if (!collision_data_keeper_.checkExpired()) {
+  if (!collision_data_keeper_.checkCollisionExpired()) {
     const std::string error_msg = "[AEB]: Emergency Brake";
     const auto diag_level = DiagnosticStatus::ERROR;
     stat.summary(diag_level, error_msg);
@@ -320,6 +326,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   using colorTuple = std::tuple<double, double, double, double>;
 
   // step1. check data
+  std::lock_guard<std::mutex> lock(data_mutex_);
   if (!isDataReady()) {
     return false;
   }
@@ -337,7 +344,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 
   auto check_collision = [&](
                            const auto & path, const colorTuple & debug_colors,
-                           const std::string & debug_ns, const rclcpp::Time & current_time,
+                           const std::string & debug_ns,
                            pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) {
     // Crop out Pointcloud using an extra wide ego path
     const auto expanded_ego_polys =
@@ -347,6 +354,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     // Check which points of the cropped point cloud are on the ego path, and get the closest one
     std::vector<ObjectData> objects_from_point_clusters;
     const auto ego_polys = generatePathFootprint(path, expand_width_);
+    const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
     createObjectDataUsingPointCloudClusters(
       path, ego_polys, current_time, objects_from_point_clusters, filtered_objects);
 
@@ -356,16 +364,28 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       current_time, path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
       color_a, debug_ns, debug_markers);
 
-    // Get only the closest object
-    const auto closest_object_point = std::min_element(
-      objects_from_point_clusters.begin(), objects_from_point_clusters.end(),
-      [](const auto & o1, const auto & o2) {
-        return o1.distance_to_object < o2.distance_to_object;
-      });
+    // Get only the closest object and calculate its speed
+    const auto closest_object_point = std::invoke([&]() -> std::optional<ObjectData> {
+      const auto closest_object_point_itr = std::min_element(
+        objects_from_point_clusters.begin(), objects_from_point_clusters.end(),
+        [](const auto & o1, const auto & o2) {
+          return o1.distance_to_object < o2.distance_to_object;
+        });
 
-    // check for empty vector
-    return (closest_object_point != objects_from_point_clusters.end())
-             ? hasCollision(current_v, *closest_object_point)
+      if (closest_object_point_itr == objects_from_point_clusters.end()) {
+        return std::nullopt;
+      }
+      const auto closest_object_speed =
+        calcObjectSpeedFromHistory(*closest_object_point_itr, path, current_v);
+      if (!closest_object_speed.has_value()) {
+        return std::nullopt;
+      }
+      closest_object_point_itr->velocity = closest_object_speed.value();
+      return std::make_optional<ObjectData>(*closest_object_point_itr);
+    });
+    // check collision using rss distance
+    return (closest_object_point.has_value())
+             ? hasCollision(current_v, closest_object_point.value())
              : false;
   };
 
@@ -376,9 +396,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
     const std::string ns = "ego";
     const auto ego_path = generateEgoPath(current_v, current_w);
-    const auto current_time = get_clock()->now();
 
-    return check_collision(ego_path, debug_color, ns, current_time, filtered_objects);
+    return check_collision(ego_path, debug_color, ns, filtered_objects);
   };
 
   // step4. make function to check collision with predicted trajectory from control module
@@ -389,12 +408,11 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto predicted_path_opt = generateEgoPath(*predicted_traj_ptr);
 
     if (!predicted_path_opt) return false;
-    const auto current_time = predicted_traj_ptr->header.stamp;
     constexpr colorTuple debug_color = {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999};
     const std::string ns = "predicted";
     const auto & predicted_path = predicted_path_opt.value();
 
-    return check_collision(predicted_path, debug_color, ns, current_time, filtered_objects);
+    return check_collision(predicted_path, debug_color, ns, filtered_objects);
   };
 
   // Data of filtered point cloud
@@ -412,6 +430,46 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   return has_collision;
 }
 
+std::optional<double> AEB::calcObjectSpeedFromHistory(
+  const ObjectData & closest_object, const Path & path, const double current_ego_speed)
+{
+  const auto now = this->get_clock()->now();
+
+  if (collision_data_keeper_.checkPreviousObjectDataExpired()) {
+    collision_data_keeper_.setPreviousObjectData(closest_object);
+    return std::nullopt;
+  }
+  const auto prev_object = collision_data_keeper_.getPreviousObjectData();
+  const double p_dt = (closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds()) * 1e-9;
+  if (p_dt < std::numeric_limits<double>::epsilon()) return std::nullopt;
+  const auto & nearest_collision_point = closest_object.position;
+  const auto & prev_collision_point = prev_object.position;
+
+  const auto nearest_idx = motion_utils::findNearestIndex(path, nearest_collision_point);
+  const auto & nearest_path_pose = path.at(nearest_idx);
+  const auto & traj_yaw = tf2::getYaw(nearest_path_pose.orientation);
+
+  const double p_dx = nearest_collision_point.x - prev_collision_point.x;
+  const double p_dy = nearest_collision_point.y - prev_collision_point.y;
+  const double p_dist = std::hypot(p_dx, p_dy);
+  const double p_yaw = std::atan2(p_dy, p_dx);
+  const double p_vel = p_dist / p_dt;
+  const double est_velocity = p_vel * std::cos(p_yaw - traj_yaw) + current_ego_speed;
+  std::cerr << "est_velocity " << est_velocity << "\n";
+  std::cerr << "p_dt " << p_dt << "\n";
+  std::cerr << "p_yaw " << p_yaw << "\n";
+  std::cerr << "traj_yaw " << traj_yaw << "\n";
+  std::cerr << "p_dist " << p_dist << "\n";
+  std::cerr << "closest_object.stamp.nanoseconds() " << closest_object.stamp.nanoseconds() << "\n";
+  std::cerr << "prev_object.stamp.nanoseconds() " << prev_object.stamp.nanoseconds() << "\n";
+  std::cerr << "subtraction seconds "
+            << closest_object.stamp.seconds() - prev_object.stamp.seconds() << "\n";
+  std::cerr << "subtraction "
+            << closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds() << "\n";
+  collision_data_keeper_.setPreviousObjectData(closest_object);
+  return est_velocity;
+}
+
 bool AEB::hasCollision(const double current_v, const ObjectData & closest_object)
 {
   const double & obj_v = closest_object.velocity;
@@ -423,7 +481,17 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
     ObjectData collision_data = closest_object;
     collision_data.rss = rss_dist;
     collision_data.distance_to_object = closest_object.distance_to_object;
-    collision_data_keeper_.update(collision_data);
+    collision_data_keeper_.setCollisionData(collision_data);
+    std::cerr << "Collision AEB!\n";
+    std::cerr << "current_v " << current_v << "\n";
+    std::cerr << "obj_v " << obj_v << "\n";
+    std::cerr << "longitudinal_offset_ " << longitudinal_offset_ << "\n";
+    std::cerr << "t_response_ " << t_response_ << "\n";
+    std::cerr << "a_ego_min_ " << a_ego_min_ << "\n";
+    std::cerr << "a_obj_min_ " << a_obj_min_ << "\n";
+    std::cerr << "rss_dist " << rss_dist << "\n";
+    std::cerr << "closest_object.distance_to_object " << closest_object.distance_to_object << "\n";
+
     return true;
   }
   return false;
