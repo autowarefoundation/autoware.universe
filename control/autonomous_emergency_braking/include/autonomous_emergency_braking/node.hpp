@@ -40,12 +40,13 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
-
 namespace autoware::motion::control::autonomous_emergency_braking
 {
 
@@ -125,11 +126,49 @@ public:
     prev_closest_object_ = std::make_optional<ObjectData>(data);
   }
 
+  void updateVelocityHistory(
+    const double current_object_velocity, const rclcpp::Time & current_object_velocity_time_stamp)
+  {
+    // remove old msg from que
+    const auto now = clock_->now();
+    std::remove_if(
+      obstacle_velocity_history_.begin(), obstacle_velocity_history_.end(),
+      [&](const auto & velocity_time_pair) {
+        const auto & vel_time = velocity_time_pair.second;
+        return ((now - vel_time).nanoseconds() * 1e-9 > previous_obstacle_keep_time_);
+      });
+
+    obstacle_velocity_history_.emplace_back(
+      std::make_pair(current_object_velocity, current_object_velocity_time_stamp));
+  }
+
+  std::optional<double> getMedianObstacleVelocity()
+  {
+    if (obstacle_velocity_history_.empty()) return std::nullopt;
+    std::vector<double> raw_velocities;
+    for (const auto & vel_time_pair : obstacle_velocity_history_) {
+      raw_velocities.emplace_back(vel_time_pair.first);
+    }
+
+    const size_t med1 = (raw_velocities.size() % 2 == 0) ? (raw_velocities.size()) / 2 - 1
+                                                         : (raw_velocities.size()) / 2.0;
+    const size_t med2 = (raw_velocities.size()) / 2.0;
+    std::nth_element(raw_velocities.begin(), raw_velocities.begin() + med1, raw_velocities.end());
+    const double vel1 = raw_velocities.at(med1);
+    std::nth_element(raw_velocities.begin(), raw_velocities.begin() + med2, raw_velocities.end());
+    const double vel2 = raw_velocities.at(med2);
+    return (vel1 + vel2) / 2.0;
+  }
+
 private:
   std::optional<ObjectData> prev_closest_object_{std::nullopt};
   std::optional<ObjectData> closest_object_{std::nullopt};
   double timeout_sec_{0.0};
   double previous_obstacle_keep_time_{0.0};
+  double min_obstacle_vel_threshold{0.0};
+  double max_obstacle_vel_threshold{0.0};
+
+  std::deque<std::pair<double, rclcpp::Time>> obstacle_velocity_history_;
   rclcpp::Clock::SharedPtr clock_;
 };
 

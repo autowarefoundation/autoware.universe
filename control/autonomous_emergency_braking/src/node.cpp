@@ -433,8 +433,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
 std::optional<double> AEB::calcObjectSpeedFromHistory(
   const ObjectData & closest_object, const Path & path, const double current_ego_speed)
 {
-  const auto now = this->get_clock()->now();
-
+  // TODO(Daniel): move this to collision_data_keeper_
   if (collision_data_keeper_.checkPreviousObjectDataExpired()) {
     collision_data_keeper_.setPreviousObjectData(closest_object);
     return std::nullopt;
@@ -467,7 +466,8 @@ std::optional<double> AEB::calcObjectSpeedFromHistory(
   std::cerr << "subtraction "
             << closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds() << "\n";
   collision_data_keeper_.setPreviousObjectData(closest_object);
-  return est_velocity;
+  collision_data_keeper_.updateVelocityHistory(est_velocity, closest_object.stamp);
+  return collision_data_keeper_.getMedianObstacleVelocity();
 }
 
 bool AEB::hasCollision(const double current_v, const ObjectData & closest_object)
@@ -476,6 +476,13 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
   const double & t = t_response_;
   const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
                           obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
+
+  std::cerr << "---------------------hasCollision----------------------\n";
+  std::cerr << "current_v " << current_v << "\n";
+  std::cerr << "obj_v " << obj_v << "\n";
+  std::cerr << "rss_dist " << rss_dist << "\n";
+  std::cerr << "closest_object.distance_to_object " << closest_object.distance_to_object << "\n";
+
   if (closest_object.distance_to_object < rss_dist) {
     // collision happens
     ObjectData collision_data = closest_object;
@@ -483,17 +490,12 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
     collision_data.distance_to_object = closest_object.distance_to_object;
     collision_data_keeper_.setCollisionData(collision_data);
     std::cerr << "Collision AEB!\n";
-    std::cerr << "current_v " << current_v << "\n";
-    std::cerr << "obj_v " << obj_v << "\n";
-    std::cerr << "longitudinal_offset_ " << longitudinal_offset_ << "\n";
-    std::cerr << "t_response_ " << t_response_ << "\n";
-    std::cerr << "a_ego_min_ " << a_ego_min_ << "\n";
-    std::cerr << "a_obj_min_ " << a_obj_min_ << "\n";
-    std::cerr << "rss_dist " << rss_dist << "\n";
-    std::cerr << "closest_object.distance_to_object " << closest_object.distance_to_object << "\n";
+    std::cerr << "---------------------hasCollision----------------------\n";
 
     return true;
   }
+  std::cerr << "---------------------hasCollision----------------------\n";
+
   return false;
 }
 
