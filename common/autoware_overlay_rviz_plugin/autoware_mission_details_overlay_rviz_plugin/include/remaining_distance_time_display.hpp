@@ -46,6 +46,11 @@ private:
   uint32_t remaining_minutes_;  // Internal variable to store remaining time minutes
   uint32_t remaining_seconds_;  // Internal variable to store remaining time seconds
   QColor gray = QColor(194, 194, 194);
+
+  QImage distToGoalFlag;
+  QImage scaledDistToGoalFlag;
+  QImage timeToGoalFlag;
+  QImage scaledTimeToGoalFlag;
 };
 
 }  // namespace autoware_mission_details_overlay_rviz_plugin
