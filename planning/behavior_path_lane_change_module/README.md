@@ -333,9 +333,10 @@ start
 partition "Filter Objects by Class" {
 :Iterate through each object in objects list;
 while (has not finished iterating through object list) is (TRUE)
-  if (current object type != param.object_types_to_check) then (TRUE)
+  if (current object type != param.object_types_to_check?) then (TRUE)
   :Remove current object;
-else (false)
+else (FALSE)
+  :Keep current object;
 endif
 end while
 }
@@ -343,15 +344,29 @@ end while
 if (object list is empty?) then (TRUE)
   :Return empty result;
   stop
-else (false)
+else (FALSE)
 endif
 
-:Generate path from current lanes;
+partition "Filter Oncoming Objects" {
+:Iterate through each object in target lane objects list;
+while (has not finished iterating through object list?) is (TRUE)
+:check object's yaw with reference to ego's yaw.;
+if (yaw difference < 90 degree?) then (TRUE)
+  :Keep current object;
+else (FALSE)
+if (object is stopping?) then (TRUE)
+  :Keep current object;
+else (FALSE)
+  :Remove current object;
+endif
+endif
+endwhile
+}
 
-if (path empty?) then (TRUE)
+if (object list is empty?) then (TRUE)
   :Return empty result;
   stop
-else (false)
+else (FALSE)
 endif
 
 partition "Filter Objects Ahead Terminal" {
@@ -365,27 +380,32 @@ while (has not finished iterating through object list) is (TRUE)
     :Calculate object's lateral distance to end of lane;
     :Update minimum distance to terminal from object;
   end while
-  if (Is object's distance to terminal exceeds minimum lane change length?) then (true)
+  if (Is object's distance to terminal exceeds minimum lane change length?) then (TRUE)
       :Remove current object;
-  else (false)
+  else (FALSE)
   endif
 end while
 }
+if (object list is empty?) then (TRUE)
+  :Return empty result;
+  stop
+else (FALSE)
+endif
 
 partition "Filter Objects By Lanelets" {
 
 :Iterate through each object in objects list;
 while (has not finished iterating through object list) is (TRUE)
   :lateral distance diff = difference between object's lateral distance and ego's lateral distance to the current lanes' centerline.;
-  if (Object in target lane polygon, and lateral distance diff is more than half of ego's width) then (yes)
+  if (Object in target lane polygon, and lateral distance diff is more than half of ego's width?) then (TRUE)
     :Add to target_lane_objects;
-    else (no)
-      if (Object overlaps with backward target lanes?) then (yes)
+    else (FALSE)
+      if (Object overlaps with backward target lanes?) then (TRUE)
         :Add to target_lane_objects;
-      else (no)
-        if (Object in current lane polygon?) then (yes)
+      else (FALSE)
+        if (Object in current lane polygon?) then (TRUE)
           :Add to current_lane_objects;
-        else (no)
+        else (FALSE)
           :Add to other_lane_objects;
         endif
       endif
@@ -395,28 +415,29 @@ end while
 :Return target lanes object,  current lanes object and other lanes object;
 }
 
+:Generate path from current lanes;
+
+if (path empty?) then (TRUE)
+  :Return empty result;
+  stop
+else (FALSE)
+endif
+
 partition "Filter Target Lanes' objects" {
 
 :Iterate through each object in target lane objects list;
 while (has not finished iterating through object list) is (TRUE)
-:check object's yaw with reference to ego's yaw.;
-if (yaw difference < 90 degree) then (TRUE)
-  :Assume this object's direction is same direction with ego vehicle.;
   :check object's velocity;
-  if(velocity is within threshold) then (TRUE)
+  if(velocity is within threshold?) then (TRUE)
   :Keep current object;
-  else
+  else (FALSE)
     :check whether object is ahead of ego;
-    if(object is ahead of ego) then (TRUE)
+    if(object is ahead of ego?) then (TRUE)
       :keep current object;
     else (FALSE)
       :remove current object;
     endif
    endif
-else
-  :Assume this object's direction is different direction with ego vehicle.;
-  :Remove current object;
-endif
 endwhile
 }
 
@@ -424,50 +445,35 @@ partition "Filter Current Lanes' objects" {
 
 :Iterate through each object in current lane objects list;
 while (has not finished iterating through object list) is (TRUE)
-:check object's yaw with reference to ego's yaw.;
-if (yaw difference < 90 degree) then (TRUE)
-  :Assume this object's direction is same direction with ego vehicle.;
   :check object's velocity;
-  if(velocity is within threshold) then (TRUE)
+  if(velocity is within threshold?) then (TRUE)
   :check whether object is ahead of ego;
-    if(object is ahead of ego) then (TRUE)
+    if(object is ahead of ego?) then (TRUE)
       :keep current object;
-    else
+    else (FALSE)
       :remove current object;
     endif
-    else
+    else (FALSE)
       :remove current object;
    endif
-else
-  :Assume this object's direction is different direction with ego vehicle.;
-  :Remove current object;
-endif
 endwhile
 }
-
 
 partition "Filter Other Lanes' objects" {
 
 :Iterate through each object in other lane objects list;
 while (has not finished iterating through object list) is (TRUE)
-:check object's yaw with reference to ego's yaw.;
-if (yaw difference < 90 degree) then (TRUE)
-  :Assume this object's direction is same direction with ego vehicle.;
   :check object's velocity;
-  if(velocity is within threshold) then (TRUE)
+  if(velocity is within threshold?) then (TRUE)
   :check whether object is ahead of ego;
-    if(object is ahead of ego) then (TRUE)
+    if(object is ahead of ego?) then (TRUE)
       :keep current object;
-    else
+    else (FALSE)
       :remove current object;
     endif
-    else
+    else (FALSE)
       :remove current object;
    endif
-else
-  :Assume this object's direction is different direction with ego vehicle.;
-  :Remove current object;
-endif
 endwhile
 }
 

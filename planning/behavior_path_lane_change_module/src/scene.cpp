@@ -880,16 +880,17 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
     return {};
   }
 
-  const auto path =
-    route_handler->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+  filterOncomingObjects(objects);
 
-  if (path.points.empty()) {
+  if (objects.objects.empty()) {
     return {};
   }
 
-  filterOncomingObjects(objects);
-
   filterAheadTerminalObjects(objects, current_lanes);
+
+  if (objects.objects.empty()) {
+    return {};
+  }
 
   std::vector<PredictedObject> target_lane_objects;
   std::vector<PredictedObject> current_lane_objects;
@@ -904,6 +905,13 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
     constexpr double max_vel_th = std::numeric_limits<double>::max();
     return utils::path_safety_checker::filter::velocity_filter(object, min_vel_th, max_vel_th);
   };
+
+  const auto path =
+    route_handler->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+
+  if (path.points.empty()) {
+    return {};
+  }
 
   const auto is_ahead_of_ego = [&path, &current_pose](const auto & object) {
     const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object).outer();
