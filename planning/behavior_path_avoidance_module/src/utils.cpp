@@ -2263,7 +2263,7 @@ double calcDistanceToAvoidStartLine(
 
 double calcDistanceToReturnDeadLine(
   const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
-  const std::shared_ptr<const PlannerData> & planner_data,
+  ObjectDataArray & other_objects, const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   if (lanelets.empty()) {
@@ -2279,6 +2279,15 @@ double calcDistanceToReturnDeadLine(
       distance_to_return_dead_line = std::min(
         distance_to_return_dead_line,
         to_traffic_light.value() - parameters->dead_line_buffer_for_traffic_light);
+    }
+  }
+
+  // dead line stop factor(traffic jam)
+  if (parameters->enable_dead_line_for_traffic_jam && !other_objects.empty()) {
+    if (filtering_utils::isOnEgoLane(other_objects.front())) {
+      distance_to_return_dead_line = std::min(
+        distance_to_return_dead_line,
+        other_objects.front().longitudinal - parameters->dead_line_buffer_for_traffic_jam);
     }
   }
 

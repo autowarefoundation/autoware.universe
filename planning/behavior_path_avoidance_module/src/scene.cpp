@@ -267,12 +267,6 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
     data.reference_path, 0, data.reference_path.points.size(),
     motion_utils::calcSignedArcLength(data.reference_path.points, getEgoPosition(), 0));
 
-  data.to_return_point = utils::avoidance::calcDistanceToReturnDeadLine(
-    data.current_lanelets, data.reference_path_rough, planner_data_, parameters_);
-
-  data.to_start_point = utils::avoidance::calcDistanceToAvoidStartLine(
-    data.current_lanelets, data.reference_path_rough, planner_data_, parameters_);
-
   // target objects for avoidance
   fillAvoidanceTargetObjects(data, debug);
 
@@ -285,6 +279,17 @@ void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugDat
   std::sort(data.target_objects.begin(), data.target_objects.end(), [](auto a, auto b) {
     return a.longitudinal < b.longitudinal;
   });
+
+  std::sort(data.other_objects.begin(), data.other_objects.end(), [](auto a, auto b) {
+    return a.longitudinal < b.longitudinal;
+  });
+
+  data.to_return_point = utils::avoidance::calcDistanceToReturnDeadLine(
+    data.current_lanelets, data.reference_path_rough, data.other_objects, planner_data_,
+    parameters_);
+
+  data.to_start_point = utils::avoidance::calcDistanceToAvoidStartLine(
+    data.current_lanelets, data.reference_path_rough, planner_data_, parameters_);
 
   // set base path
   path_shifter_.setPath(data.reference_path);

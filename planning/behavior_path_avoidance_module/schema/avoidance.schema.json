@@ -1183,9 +1183,26 @@
                   },
                   "required": ["enable", "buffer"],
                   "additionalProperties": false
+                },
+                "traffic_jam": {
+                  "type": "object",
+                  "properties": {
+                    "enable": {
+                      "type": "boolean",
+                      "description": "Insert stop point in order to return original lane before reaching vehicles in traffic jam.",
+                      "default": "true"
+                    },
+                    "buffer": {
+                      "type": "number",
+                      "description": "Buffer distance to return original lane before reaching vehicles in traffic jam.",
+                      "default": 8.0
+                    }
+                  },
+                  "required": ["enable", "buffer"],
+                  "additionalProperties": false
                 }
               },
-              "required": ["goal", "traffic_light"],
+              "required": ["goal", "traffic_light", "traffic_jam"],
               "additionalProperties": false
             }
           },
