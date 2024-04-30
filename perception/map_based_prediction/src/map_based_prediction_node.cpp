@@ -967,6 +967,9 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, objects_history_);
   cleanupOldStoppedOnGreenTimes(in_objects);
 
+  auto invalidated_crosswalk_users = removeOldObjectsHistory(
+    objects_detected_time, object_buffer_time_length_, crosswalk_users_history_);
+
   // result output
   PredictedObjects output;
   output.header = in_objects->header;
@@ -1170,6 +1173,19 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     "debug/cyclic_time_ms", cyclic_time_ms);
   processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", processing_time_ms);
+}
+
+void MapBasedPredictionNode::updateCrosswalkUserHistory(
+  const std_msgs::msg::Header & header, const TrackedObject & object, const std::string & object_id)
+{
+  CrosswalkUserData crosswalk_user_data;
+  crosswalk_user_data.header = header;
+  crosswalk_user_data.tracked_object = object;
+  if (crosswalk_users_history_.count(object_id) == 0) {
+    crosswalk_users_history_.emplace(object_id, std::deque<CrosswalkUserData>{crosswalk_user_data});
+  } else {
+    crosswalk_users_history_.at(object_id).push_back(crosswalk_user_data);
+  }
 }
 
 bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)

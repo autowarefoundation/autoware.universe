@@ -85,6 +85,12 @@ struct ObjectData
     Maneuver::UNINITIALIZED};  // output maneuver considering previous one shot maneuvers
 };
 
+struct CrosswalkUserData
+{
+  std_msgs::msg::Header header;
+  autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
+};
+
 struct LaneletData
 {
   lanelet::Lanelet lanelet;
@@ -137,6 +143,7 @@ private:
   // Object History
   std::unordered_map<std::string, std::deque<ObjectData>> objects_history_;
   std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
+  std::unordered_map<std::string, std::deque<CrosswalkUserData>> crosswalk_users_history_;
 
   // Lanelet Map Pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
@@ -234,6 +241,9 @@ private:
   void updateObjectsHistory(
     const std_msgs::msg::Header & header, const TrackedObject & object,
     const LaneletsData & current_lanelets_data);
+  void updateCrosswalkUserHistory(
+    const std_msgs::msg::Header & header, const TrackedObject & object,
+    const std::string & object_id);
 
   std::vector<PredictedRefPath> getPredictedReferencePath(
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
