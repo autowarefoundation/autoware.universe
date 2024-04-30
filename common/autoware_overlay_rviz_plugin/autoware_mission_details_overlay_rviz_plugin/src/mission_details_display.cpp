@@ -39,7 +39,7 @@ namespace autoware_mission_details_overlay_rviz_plugin
 MissionDetailsDisplay::MissionDetailsDisplay()
 {
   property_width_ = new rviz_common::properties::IntProperty(
-    "Width", 300, "Width of the overlay", this, SLOT(updateOverlaySize()));
+    "Width", 225, "Width of the overlay", this, SLOT(updateOverlaySize()));
   property_height_ = new rviz_common::properties::IntProperty(
     "Height", 100, "Height of the overlay", this, SLOT(updateOverlaySize()));
   property_left_ = new rviz_common::properties::IntProperty(
@@ -155,7 +155,7 @@ void MissionDetailsDisplay::drawWidget(QImage & hud)
   QPainter painter(&hud);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  QRectF backgroundRect(0, 0, 300, 100);
+  QRectF backgroundRect(0, 0, 225, 100);
   drawHorizontalRoundedRectangle(painter, backgroundRect);
 
   if (remaining_distance_time_display_) {
@@ -170,8 +170,8 @@ void MissionDetailsDisplay::drawHorizontalRoundedRectangle(
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
-  colorFromHSV.setHsv(0, 0, 0);  // Hue, Saturation, Value
-  colorFromHSV.setAlphaF(0.65);  // Transparency
+  colorFromHSV.setHsv(0, 0, 29);  // Hue, Saturation, Value
+  colorFromHSV.setAlphaF(0.60);   // Transparency
 
   painter.setBrush(colorFromHSV);
 
@@ -211,7 +211,9 @@ void MissionDetailsDisplay::updateOverlaySize()
 void MissionDetailsDisplay::updateOverlayPosition()
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  overlay_->setPosition(property_left_->getInt(), property_top_->getInt());
+  overlay_->setPosition(
+    property_left_->getInt(), property_top_->getInt(), HorizontalAlignment::RIGHT,
+    VerticalAlignment::TOP);
   queueRender();
 }
 
