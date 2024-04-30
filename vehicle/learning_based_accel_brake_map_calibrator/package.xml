@@ -3,12 +3,10 @@
 <package format="3">
   <name>learning_based_vehicle_calibration</name>
   <version>2.0.0</version>
-  <description>
-    E2E vehicle dynamics calibration using neural network
-  </description>
+  <description>E2E vehicle dynamics calibration using neural network</description>
   <maintainer email="gariboldicristian@gmail.com">Cristian Gariboldi</maintainer>
 
-  <license>BSD</license>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
@@ -18,9 +16,10 @@
   <exec_depend>can_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>ros2launch</exec_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
 
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
+
   <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
