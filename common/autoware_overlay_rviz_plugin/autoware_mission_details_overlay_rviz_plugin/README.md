@@ -25,10 +25,12 @@ This plugin provides a visual and easy-to-understand display of mission details 
 
 | Name               | Type | Default Value | Description                       |
 | ------------------ | ---- | ------------- | --------------------------------- |
-| `property_width_`  | int  | 300           | Width of the plotter window [px]  |
+| `property_width_`  | int  | 225           | Width of the plotter window [px]  |
 | `property_height_` | int  | 100           | Height of the plotter window [px] |
-| `property_left_`   | int  | 800           | Left of the plotter window [px]   |
+| `property_left_`   | int  | 10           | Left of the plotter window [px]   |
 | `property_top_`    | int  | 10            | Top of the plotter window [px]    |
+
+Note that mission details display is aligned with top right corner of the screen.
 
 ## Assumptions / Known limits
 
