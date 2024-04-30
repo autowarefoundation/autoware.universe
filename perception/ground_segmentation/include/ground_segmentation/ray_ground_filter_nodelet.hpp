@@ -186,7 +186,7 @@ private:
    * @param out_removed_indices_cloud_ptr Resulting PointCloud with the indices removed
    */
   void ExtractPointsIndices(
-    const PointCloud2::ConstSharedPtr in_cloud_ptr, const pcl::PointIndices & in_indices,
+    const PointCloud2::ConstSharedPtr in_cloud_ptr, pcl::PointIndices & in_indices,
     PointCloud2::SharedPtr out_only_indices_cloud_ptr,
     PointCloud2::SharedPtr out_removed_indices_cloud_ptr);
 

@@ -270,25 +270,39 @@ void RayGroundFilterComponent::initializePointCloud2(
 }
 
 void RayGroundFilterComponent::ExtractPointsIndices(
-  const PointCloud2::ConstSharedPtr in_cloud_ptr, const pcl::PointIndices & in_indices,
+  const PointCloud2::ConstSharedPtr in_cloud_ptr, pcl::PointIndices & in_indices,
   PointCloud2::SharedPtr ground_cloud_msg_ptr, PointCloud2::SharedPtr no_ground_cloud_msg_ptr)
 {
   initializePointCloud2(in_cloud_ptr, ground_cloud_msg_ptr);
   initializePointCloud2(in_cloud_ptr, no_ground_cloud_msg_ptr);
   size_t ground_count = 0;
   int point_step = in_cloud_ptr->point_step;
-  size_t prev_ground_count = 0;
+  size_t prev_ground_idx = 0;
   size_t no_ground_count = 0;
+  // sort indices
+  sort(in_indices.indices.begin(), in_indices.indices.end());
   for (const auto & idx : in_indices.indices) {
     std::memcpy(
       &ground_cloud_msg_ptr->data[ground_count * point_step], &in_cloud_ptr->data[idx * point_step],
       point_step);
-    std::memcpy(
-      &no_ground_cloud_msg_ptr->data[prev_ground_count * point_step],
-      &in_cloud_ptr->data[idx * point_step], point_step * (idx - prev_ground_count));
-    prev_ground_count = idx - prev_ground_count;
     ground_count++;
-    prev_ground_count = idx;
+    if (idx - prev_ground_idx > 1) {
+      std::memcpy(
+        &no_ground_cloud_msg_ptr->data[no_ground_count * point_step],
+        &in_cloud_ptr->data[(prev_ground_idx + 1) * point_step],
+        point_step * (idx - prev_ground_idx - 1));
+      no_ground_count += idx - prev_ground_idx - 1;
+    }
+    prev_ground_idx = idx;
+  }
+
+  // Check no_ground_points after last idx
+  if (prev_ground_idx < in_cloud_ptr->width - 1) {
+    std::memcpy(
+      &no_ground_cloud_msg_ptr->data[no_ground_count * point_step],
+      &in_cloud_ptr->data[(prev_ground_idx + 1) * point_step],
+      point_step * (in_cloud_ptr->width - prev_ground_idx - 1));
+    no_ground_count += in_cloud_ptr->width - prev_ground_idx - 1;
   }
   ground_cloud_msg_ptr->data.resize(ground_count * point_step);
   no_ground_cloud_msg_ptr->data.resize(no_ground_count * point_step);
@@ -329,10 +343,6 @@ void RayGroundFilterComponent::filter(
   sensor_msgs::msg::PointCloud2::SharedPtr ground_cloud_msg_ptr(new sensor_msgs::msg::PointCloud2);
 
   ExtractPointsIndices(input, ground_indices, ground_cloud_msg_ptr, no_ground_cloud_msg_ptr);
-
-  pcl::toROSMsg(*no_ground_cloud_ptr, *no_ground_cloud_msg_ptr);
-  no_ground_cloud_msg_ptr->header = input->header;
-
   output = *no_ground_cloud_msg_ptr;
 }
 
