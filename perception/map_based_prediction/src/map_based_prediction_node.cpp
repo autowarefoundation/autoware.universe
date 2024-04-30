@@ -585,6 +585,53 @@ bool hasPotentialToReach(
   return false;
 }
 
+template <typename T>
+std::unordered_set<std::string> removeOldObjectsHistory(
+  const double current_time, const double buffer_time, std::unordered_map<std::string, std::deque<T>> & target_objects)
+{
+  std::unordered_set<std::string> invalid_object_id;
+  for (auto iter = target_objects.begin(); iter != target_objects.end(); ++iter) {
+    const std::string object_id = iter->first;
+    std::deque<T> & object_data = iter->second;
+
+    // If object data is empty, we are going to delete the buffer for the obstacle
+    if (object_data.empty()) {
+      invalid_object_id.insert(object_id);
+      continue;
+    }
+
+    const double latest_object_time = rclcpp::Time(object_data.back().header.stamp).seconds();
+
+    // Delete Old Objects
+    if (current_time - latest_object_time > buffer_time) {
+      invalid_object_id.insert(object_id);
+      continue;
+    }
+
+    // Delete old information
+    while (!object_data.empty()) {
+      const double post_object_time = rclcpp::Time(object_data.front().header.stamp).seconds();
+      if (current_time - post_object_time > buffer_time) {
+        // Delete Old Position
+        object_data.pop_front();
+      } else {
+        break;
+      }
+    }
+
+    if (object_data.empty()) {
+      invalid_object_id.insert(object_id);
+      continue;
+    }
+  }
+
+  for (const auto & key : invalid_object_id) {
+    target_objects.erase(key);
+  }
+
+  return invalid_object_id;
+}
+
 /**
  * @brief change label for prediction
  *
@@ -916,7 +963,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // Remove old objects information in object history
   const double objects_detected_time = rclcpp::Time(in_objects->header.stamp).seconds();
-  removeOldObjectsHistory(objects_detected_time, in_objects);
+  removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, objects_history_);
+  cleanupOldStoppedOnGreenTimes(in_objects);
 
   // result output
   PredictedObjects output;
@@ -1343,49 +1391,8 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   return;
 }
 
-void MapBasedPredictionNode::removeOldObjectsHistory(
-  const double current_time, const TrackedObjects::ConstSharedPtr in_objects)
+void MapBasedPredictionNode::cleanupOldStoppedOnGreenTimes(const TrackedObjects::ConstSharedPtr in_objects)
 {
-  std::vector<std::string> invalid_object_id;
-  for (auto iter = objects_history_.begin(); iter != objects_history_.end(); ++iter) {
-    const std::string object_id = iter->first;
-    std::deque<ObjectData> & object_data = iter->second;
-
-    // If object data is empty, we are going to delete the buffer for the obstacle
-    if (object_data.empty()) {
-      invalid_object_id.push_back(object_id);
-      continue;
-    }
-
-    const double latest_object_time = rclcpp::Time(object_data.back().header.stamp).seconds();
-
-    // Delete Old Objects
-    if (current_time - latest_object_time > object_buffer_time_length_) {
-      invalid_object_id.push_back(object_id);
-      continue;
-    }
-
-    // Delete old information
-    while (!object_data.empty()) {
-      const double post_object_time = rclcpp::Time(object_data.front().header.stamp).seconds();
-      if (current_time - post_object_time > object_buffer_time_length_) {
-        // Delete Old Position
-        object_data.pop_front();
-      } else {
-        break;
-      }
-    }
-
-    if (object_data.empty()) {
-      invalid_object_id.push_back(object_id);
-      continue;
-    }
-  }
-
-  for (const auto & key : invalid_object_id) {
-    objects_history_.erase(key);
-  }
-
   for (auto it = stopped_times_against_green_.begin(); it != stopped_times_against_green_.end();) {
     const bool isDisappeared = std::none_of(
       in_objects->objects.begin(), in_objects->objects.end(),

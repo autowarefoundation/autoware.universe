@@ -222,8 +222,7 @@ private:
 
   PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
 
-  void removeOldObjectsHistory(
-    const double current_time, const TrackedObjects::ConstSharedPtr in_objects);
+  void cleanupOldStoppedOnGreenTimes(const TrackedObjects::ConstSharedPtr in_objects);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
