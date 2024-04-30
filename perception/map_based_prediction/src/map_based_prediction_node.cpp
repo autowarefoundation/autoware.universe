@@ -587,7 +587,8 @@ bool hasPotentialToReach(
 
 template <typename T>
 std::unordered_set<std::string> removeOldObjectsHistory(
-  const double current_time, const double buffer_time, std::unordered_map<std::string, std::deque<T>> & target_objects)
+  const double current_time, const double buffer_time,
+  std::unordered_map<std::string, std::deque<T>> & target_objects)
 {
   std::unordered_set<std::string> invalid_object_id;
   for (auto iter = target_objects.begin(); iter != target_objects.end(); ++iter) {
@@ -1391,7 +1392,8 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   return;
 }
 
-void MapBasedPredictionNode::cleanupOldStoppedOnGreenTimes(const TrackedObjects::ConstSharedPtr in_objects)
+void MapBasedPredictionNode::cleanupOldStoppedOnGreenTimes(
+  const TrackedObjects::ConstSharedPtr in_objects)
 {
   for (auto it = stopped_times_against_green_.begin(); it != stopped_times_against_green_.end();) {
     const bool isDisappeared = std::none_of(
