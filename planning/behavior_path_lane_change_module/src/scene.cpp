@@ -887,7 +887,9 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
     return {};
   }
 
-  filterObjectsAheadTerminal(objects, current_lanes);
+  filterOncomingObjects(objects);
+
+  filterAheadTerminalObjects(objects, current_lanes);
 
   std::vector<PredictedObject> target_lane_objects;
   std::vector<PredictedObject> current_lane_objects;
@@ -915,24 +917,19 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
     return max_dist_ego_to_obj >= 0.0;
   };
 
-  const auto is_same_direction = [&](const PredictedObject & object) {
-    const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
-    return !utils::path_safety_checker::isTargetObjectOncoming(current_pose, object_pose);
-  };
-
   utils::path_safety_checker::filterObjects(
     target_lane_objects, [&](const PredictedObject & object) {
-      return is_same_direction(object) && (is_within_vel_th(object) || is_ahead_of_ego(object));
+      return (is_within_vel_th(object) || is_ahead_of_ego(object));
     });
 
   utils::path_safety_checker::filterObjects(
     other_lane_objects, [&](const PredictedObject & object) {
-      return is_within_vel_th(object) && is_same_direction(object) && is_ahead_of_ego(object);
+      return is_within_vel_th(object) && is_ahead_of_ego(object);
     });
 
   utils::path_safety_checker::filterObjects(
     current_lane_objects, [&](const PredictedObject & object) {
-      return is_within_vel_th(object) && is_same_direction(object) && is_ahead_of_ego(object);
+      return is_within_vel_th(object) && is_ahead_of_ego(object);
     });
 
   LaneChangeLanesFilteredObjects lane_change_target_objects;
@@ -961,7 +958,34 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
   return lane_change_target_objects;
 }
 
-void NormalLaneChange::filterObjectsAheadTerminal(
+void NormalLaneChange::filterOncomingObjects(PredictedObjects & objects) const
+{
+  const auto & current_pose = getEgoPose();
+
+  const auto is_same_direction = [&](const PredictedObject & object) {
+    const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
+    return !utils::path_safety_checker::isTargetObjectOncoming(current_pose, object_pose);
+  };
+
+  //  Perception noise could make stationary objects seem opposite the ego vehicle; check the
+  //  velocity to prevent this.
+  const auto is_stopped_object = [](const auto & object) -> bool {
+    constexpr double min_vel_th = -0.5;
+    constexpr double max_vel_th = 0.5;
+    return utils::path_safety_checker::filter::velocity_filter(object, min_vel_th, max_vel_th);
+  };
+
+  utils::path_safety_checker::filterObjects(objects, [&](const PredictedObject & object) {
+    const auto same_direction = is_same_direction(object);
+    if (same_direction) {
+      return true;
+    }
+
+    return is_stopped_object(object);
+  });
+}
+
+void NormalLaneChange::filterAheadTerminalObjects(
   PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes) const
 {
   const auto & current_pose = getEgoPose();
