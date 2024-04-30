@@ -52,8 +52,8 @@ RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
   }
 
   // Load the wheel image
-  std::string dist_image = package_path + "/assets/white_flag.png";
-  std::string time_image = package_path + "/assets/score_white.png";
+  std::string dist_image = package_path + "/assets/score_white.png";
+  std::string time_image = package_path + "/assets/timelapse.png";
   distToGoalFlag.load(dist_image.c_str());
   timeToGoalFlag.load(time_image.c_str());
   scaledDistToGoalFlag =
@@ -91,8 +91,8 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
   // ----------------- Remaining Distance -----------------
 
   int fontSize = 15;
-  QFont remainingDistancValueFont("Quicksand", fontSize, QFont::Bold);
-  painter.setFont(remainingDistancValueFont);
+  QFont remainingDistancTimeFont("Quicksand", fontSize, QFont::Bold);
+  painter.setFont(remainingDistancTimeFont);
 
   // Remaining distance icon
   QPointF remainingDistanceIconPos(
@@ -108,35 +108,31 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
   switch (remainingDistanceValue.size()) {
     case 1:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 95, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 100, remainingDistReferencePos.y() + 10);
       break;
     case 2:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 90, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 95, remainingDistReferencePos.y() + 10);
       break;
     case 3:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 80, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 90, remainingDistReferencePos.y() + 10);
       break;
     case 4:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 70, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 85, remainingDistReferencePos.y() + 10);
       break;
     default:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 95, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 100, remainingDistReferencePos.y() + 10);
       break;
   }
   painter.setPen(gray);
   painter.drawText(remainingDistancePos, remainingDistanceValue);
 
   // Remaining distance unit
-  QFont remainingDistancUnitFont("Quicksand", 12, QFont::Bold);
-  painter.setFont(remainingDistancUnitFont);
   QString remainingDistUnitText = remaining_distance_ > 1000 ? "km" : "m";
-  QPointF remainingDistancUnitPos(
-    remaining_distance_ > 1000 ? remainingDistReferencePos.x() + 120
-                               : remainingDistReferencePos.x() + 115,
+  QPointF remainingDistancUnitPos(remainingDistReferencePos.x() + 125,
     remainingDistReferencePos.y() + 10);
   painter.drawText(remainingDistancUnitPos, remainingDistUnitText);
 
@@ -150,40 +146,40 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
   // Remaining hours value
   QString remaininghoursValue =
     QString::number(remaining_hours_ != 0 ? remaining_hours_ : 0, 'f', 0);
-  QPointF remaininghoursValuePos(remainingTimeReferencePos.x() + 30, remainingTimeReferencePos.y());
+  QPointF remaininghoursValuePos(remainingTimeReferencePos.x() + 17, remainingTimeReferencePos.y());
   painter.setPen(gray);
   if (remaining_hours_ != 0) painter.drawText(remaininghoursValuePos, remaininghoursValue);
 
   // Remaining hours separator
   QString hoursSeparatorText = "h";
-  QPointF hoursSeparatorTextPos(remainingTimeReferencePos.x() + 50, remainingTimeReferencePos.y());
+  QPointF hoursSeparatorTextPos(remainingTimeReferencePos.x() + 35, remainingTimeReferencePos.y());
   if (remaining_hours_ != 0) painter.drawText(hoursSeparatorTextPos, hoursSeparatorText);
 
   // Remaining minutes value
   QString remainingminutesValue =
     QString::number(remaining_minutes_ != 0 ? remaining_minutes_ : 0, 'f', 0);
   QPointF remainingminutesValuePos(
-    remainingTimeReferencePos.x() + 65, remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 55, remainingTimeReferencePos.y());
   painter.setPen(gray);
   if (remaining_minutes_ != 0) painter.drawText(remainingminutesValuePos, remainingminutesValue);
   // Remaining minutes separator
   QString minutesSeparatorText = "m";
   QPointF minutesSeparatorTextPos(
-    remainingTimeReferencePos.x() + 85, remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 80, remainingTimeReferencePos.y());
   if (remaining_minutes_ != 0) painter.drawText(minutesSeparatorTextPos, minutesSeparatorText);
 
   // Remaining seconds value
   QString remainingsecondsValue =
     QString::number(remaining_seconds_ != 0 ? remaining_seconds_ : 0, 'f', 0);
   QPointF remainingsecondValuePos(
-    remainingTimeReferencePos.x() + 102.5, remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 100, remainingTimeReferencePos.y());
   painter.setPen(gray);
   painter.drawText(remainingsecondValuePos, remainingsecondsValue);
 
   // Remaining seconds separator
   QString secondsSeparatorText = "s";
   QPointF secondsSeparatorTextPos(
-    remainingTimeReferencePos.x() + 120, remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 125, remainingTimeReferencePos.y());
   painter.drawText(secondsSeparatorTextPos, secondsSeparatorText);
 }
 
