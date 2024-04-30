@@ -330,16 +330,16 @@ title NormalLaneChange::filterObjects Method Execution Flow
 
 start
 
-partition "Filter Objects by Class" {
+group "Filter Objects by Class" {
 :Iterate through each object in objects list;
 while (has not finished iterating through object list) is (TRUE)
   if (current object type != param.object_types_to_check?) then (TRUE)
-  :Remove current object;
+  #LightPink:Remove current object;
 else (FALSE)
   :Keep current object;
 endif
 end while
-}
+end group
 
 if (object list is empty?) then (TRUE)
   :Return empty result;
@@ -347,7 +347,7 @@ if (object list is empty?) then (TRUE)
 else (FALSE)
 endif
 
-partition "Filter Oncoming Objects" {
+group "Filter Oncoming Objects" #PowderBlue {
 :Iterate through each object in target lane objects list;
 while (has not finished iterating through object list?) is (TRUE)
 :check object's yaw with reference to ego's yaw.;
@@ -357,11 +357,11 @@ else (FALSE)
 if (object is stopping?) then (TRUE)
   :Keep current object;
 else (FALSE)
-  :Remove current object;
+  #LightPink:Remove current object;
 endif
 endif
 endwhile
-}
+end group
 
 if (object list is empty?) then (TRUE)
   :Return empty result;
@@ -369,7 +369,7 @@ if (object list is empty?) then (TRUE)
 else (FALSE)
 endif
 
-partition "Filter Objects Ahead Terminal" {
+group "Filter Objects Ahead Terminal" #Beige {
 :Calculate lateral distance from ego to current lanes center;
 
 :Iterate through each object in objects list;
@@ -381,18 +381,19 @@ while (has not finished iterating through object list) is (TRUE)
     :Update minimum distance to terminal from object;
   end while
   if (Is object's distance to terminal exceeds minimum lane change length?) then (TRUE)
-      :Remove current object;
+      #LightPink:Remove current object;
   else (FALSE)
   endif
 end while
-}
+end group
+
 if (object list is empty?) then (TRUE)
   :Return empty result;
   stop
 else (FALSE)
 endif
 
-partition "Filter Objects By Lanelets" {
+group "Filter Objects By Lanelets" #LightGreen {
 
 :Iterate through each object in objects list;
 while (has not finished iterating through object list) is (TRUE)
@@ -413,7 +414,7 @@ while (has not finished iterating through object list) is (TRUE)
 end while
 
 :Return target lanes object,  current lanes object and other lanes object;
-}
+end group
 
 :Generate path from current lanes;
 
@@ -423,7 +424,7 @@ if (path empty?) then (TRUE)
 else (FALSE)
 endif
 
-partition "Filter Target Lanes' objects" {
+group "Filter Target Lanes' objects" #LightCyan {
 
 :Iterate through each object in target lane objects list;
 while (has not finished iterating through object list) is (TRUE)
@@ -435,13 +436,13 @@ while (has not finished iterating through object list) is (TRUE)
     if(object is ahead of ego?) then (TRUE)
       :keep current object;
     else (FALSE)
-      :remove current object;
+      #LightPink:remove current object;
     endif
    endif
 endwhile
-}
+end group
 
-partition "Filter Current Lanes' objects" {
+group "Filter Current Lanes' objects"  #LightYellow {
 
 :Iterate through each object in current lane objects list;
 while (has not finished iterating through object list) is (TRUE)
@@ -451,15 +452,15 @@ while (has not finished iterating through object list) is (TRUE)
     if(object is ahead of ego?) then (TRUE)
       :keep current object;
     else (FALSE)
-      :remove current object;
+      #LightPink:remove current object;
     endif
     else (FALSE)
-      :remove current object;
+      #LightPink:remove current object;
    endif
 endwhile
-}
+end group
 
-partition "Filter Other Lanes' objects" {
+group "Filter Other Lanes' objects"  #Lavender {
 
 :Iterate through each object in other lane objects list;
 while (has not finished iterating through object list) is (TRUE)
@@ -469,19 +470,18 @@ while (has not finished iterating through object list) is (TRUE)
     if(object is ahead of ego?) then (TRUE)
       :keep current object;
     else (FALSE)
-      :remove current object;
+      #LightPink:remove current object;
     endif
     else (FALSE)
-      :remove current object;
+      #LightPink:remove current object;
    endif
 endwhile
-}
+end group
 
 :Trasform the objects into extended predicted object and return them as lane_change_target_objects;
 stop
 
 @enduml
-
 ```
 
 ##### Collision check in prepare phase
