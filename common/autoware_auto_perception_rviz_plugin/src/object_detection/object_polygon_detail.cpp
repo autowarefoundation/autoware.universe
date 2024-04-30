@@ -495,7 +495,7 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
   const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width,
-  const bool & is_orientation_available, const int fill_type)
+  const bool & is_orientation_available, const ObjectFillType fill_type)
 {
   auto marker_ptr = std::make_shared<Marker>();
   marker_ptr->ns = std::string("shape");
@@ -504,10 +504,10 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
 
   using autoware_auto_perception_msgs::msg::Shape;
   if (shape_msg.type == Shape::BOUNDING_BOX) {
-    if (fill_type == 0) {
+    if (fill_type == ObjectFillType::Skeleton) {
       marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
       calc_bounding_box_line_list(shape_msg, marker_ptr->points);
-    } else if (fill_type == 1) {
+    } else if (fill_type == ObjectFillType::Fill) {
       marker_ptr->type = visualization_msgs::msg::Marker::CUBE;
       marker_ptr->scale = shape_msg.dimensions;
       marker_ptr->color.a = 0.75f;
@@ -518,10 +518,10 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
       calc_bounding_box_orientation_line_list(shape_msg, marker_ptr->points);
     }
   } else if (shape_msg.type == Shape::CYLINDER) {
-    if (fill_type == 0) {
+    if (fill_type == ObjectFillType::Skeleton) {
       marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
       calc_cylinder_line_list(shape_msg, marker_ptr->points);
-    } else if (fill_type == 1) {
+    } else if (fill_type == ObjectFillType::Fill) {
       marker_ptr->type = visualization_msgs::msg::Marker::CYLINDER;
       marker_ptr->scale = shape_msg.dimensions;
       marker_ptr->color.a = 0.75f;

@@ -114,8 +114,9 @@ public:
 
     m_object_fill_type_property = new rviz_common::properties::EnumProperty(
       "Object Fill Type", "skeleton", "Change object fill type in visualization", this);
-    m_object_fill_type_property->addOption("skeleton", 0);
-    m_object_fill_type_property->addOption("Fill", 1);
+    m_object_fill_type_property->addOption(
+      "skeleton", static_cast<int>(detail::ObjectFillType::Skeleton));
+    m_object_fill_type_property->addOption("Fill", static_cast<int>(detail::ObjectFillType::Fill));
 
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
@@ -194,7 +195,8 @@ protected:
     const bool & is_orientation_available) const
   {
     const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
-    const auto fill_type = m_object_fill_type_property->getOptionInt();
+    const auto fill_type =
+      static_cast<detail::ObjectFillType>(m_object_fill_type_property->getOptionInt());
 
     if (m_display_type_property->getOptionInt() == 0) {
       return detail::get_shape_marker_ptr(
