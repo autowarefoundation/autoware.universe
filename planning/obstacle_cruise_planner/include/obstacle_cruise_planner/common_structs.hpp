@@ -70,8 +70,7 @@ struct Obstacle
     uuid(tier4_autoware_utils::toHexString(object.object_id)),
     shape(object.shape),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
-    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
-    pointcloud_repr(false)
+    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj)
   {
     predicted_paths.clear();
     for (const auto & path : object.kinematics.predicted_paths) {
@@ -79,32 +78,22 @@ struct Obstacle
     }
   }
 
-  Obstacle(const rclcpp::Time & arg_stamp, const PointCloud & object)
-  : stamp(arg_stamp), uuid(""), pointcloud(object), pointcloud_repr(true)
+  Obstacle(
+    const rclcpp::Time & arg_stamp, const geometry_msgs::msg::Point & position,
+    const double diameter, const double ego_to_obstacle_distance,
+    const double lat_dist_from_obstacle_to_traj)
+  : stamp(arg_stamp),
+    orientation_reliable(false),
+    twist_reliable(false),
+    ego_to_obstacle_distance(ego_to_obstacle_distance),
+    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj)
   {
-    twist.linear.x = twist.linear.y = twist.angular.z = 0.0;
-
-    Eigen::Vector4d centroid;
-    pcl::compute3DCentroid(pointcloud, centroid);
-    pose.position.x = centroid.x();
-    pose.position.y = centroid.y();
-    pose.position.z = centroid.z();
+    pose.position = position;
+    shape.type = Shape::CYLINDER;
+    shape.dimensions.x = diameter;
   }
 
-  Polygon2d toPolygon() const
-  {
-    if (pointcloud_repr) {
-      MultiPoint2d points;
-      for (const auto & point : pointcloud) {
-        bg::append(points, Point2d(point.x, point.y));
-      }
-      Polygon2d polygon;
-      bg::convex_hull(points, polygon);
-      return polygon;
-    } else {
-      return tier4_autoware_utils::toPolygon2d(pose, shape);
-    }
-  }
+  Polygon2d toPolygon() const { return tier4_autoware_utils::toPolygon2d(pose, shape); }
 
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
@@ -117,8 +106,6 @@ struct Obstacle
   std::vector<PredictedPath> predicted_paths;
   double ego_to_obstacle_distance;
   double lat_dist_from_obstacle_to_traj;
-  PointCloud pointcloud;
-  bool pointcloud_repr;
 };
 
 struct TargetObstacleInterface
