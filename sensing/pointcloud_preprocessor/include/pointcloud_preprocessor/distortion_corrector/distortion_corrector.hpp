@@ -36,6 +36,8 @@
 #include <tf2_ros/transform_listener.h>
 
 // Include tier4 autoware utils
+#include <Eigen/Core>
+#include <sophus/se3.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
@@ -62,7 +64,7 @@ private:
     const std::string & target_frame, const std::string & source_frame,
     tf2::Transform * tf2_transform_ptr);
 
-  bool undistortPointCloud(const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points);
+  bool undistortPointCloud(PointCloud2 & points);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
