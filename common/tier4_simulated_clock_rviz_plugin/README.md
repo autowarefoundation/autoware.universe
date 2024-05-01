@@ -33,12 +33,14 @@ This plugin allows publishing and controlling the simulated ROS time.
 
    ![use_clock_plugin](./images/use_clock_plugin.png)
 
-   - Pause button: pause/resume the clock.
-   - Speed: speed of the clock relative to the system clock.
-   - Rate: publishing rate of the clock.
-   - Step button: advance the clock by the specified time step.
-   - Time step: value used to advance the clock when pressing the step button d).
-   - Time unit: time unit associated with the value from e).
+   <ol type="a">
+     <li>Pause button: pause/resume the clock.</li>
+     <li>Speed: speed of the clock relative to the system clock.</li>
+     <li>Rate: publishing rate of the clock.</li>
+     <li>Step button: advance the clock by the specified time step.</li>
+     <li>Time step: value used to advance the clock when pressing the step button d).</li>
+     <li>Time unit: time unit associated with the value from e).</li>
+   </ol>
 
    > <span style="color: orange; font-weight: bold;">Warning</span>
    > If you set the time step too large, your simulation will go haywire.
