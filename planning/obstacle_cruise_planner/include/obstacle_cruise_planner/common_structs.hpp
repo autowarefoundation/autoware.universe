@@ -25,10 +25,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <boost/geometry.hpp>
-
-#include <pcl/common/centroid.h>
-
 #include <optional>
 #include <string>
 #include <vector>
