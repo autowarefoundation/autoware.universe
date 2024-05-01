@@ -216,7 +216,6 @@ public:
     }
 
     const auto & estimated_velocity = estimated_velocity_opt.value();
-
     this->setPreviousObjectData(closest_object);
     this->updateVelocityHistory(estimated_velocity, closest_object.stamp);
     return this->getMedianObstacleVelocity();
