@@ -16,6 +16,7 @@
 #define AUTONOMOUS_EMERGENCY_BRAKING__NODE_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -41,6 +42,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <deque>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -84,6 +86,14 @@ public:
   {
     timeout_sec_ = timeout_sec;
     previous_obstacle_keep_time_ = previous_obstacle_keep_time;
+  }
+
+  void setObjectSpeedLimits(
+    const double min_closest_point_velocity_threshold,
+    const double max_closest_point_velocity_threshold)
+  {
+    min_closest_point_velocity_threshold_ = min_closest_point_velocity_threshold;
+    max_closest_point_velocity_threshold_ = max_closest_point_velocity_threshold;
   }
 
   bool checkCollisionExpired()
@@ -142,6 +152,8 @@ public:
       std::make_pair(current_object_velocity, current_object_velocity_time_stamp));
   }
 
+  void resetVelocityHistory() { obstacle_velocity_history_.clear(); }
+
   std::optional<double> getMedianObstacleVelocity()
   {
     if (obstacle_velocity_history_.empty()) return std::nullopt;
@@ -160,13 +172,66 @@ public:
     return (vel1 + vel2) / 2.0;
   }
 
+  std::optional<double> calcObjectSpeedFromHistory(
+    const ObjectData & closest_object, const Path & path, const double current_ego_speed)
+  {
+    if (this->checkPreviousObjectDataExpired()) {
+      this->setPreviousObjectData(closest_object);
+      return std::nullopt;
+    }
+
+    const auto & prev_object = this->getPreviousObjectData();
+    const double p_dt =
+      (closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds()) * 1e-9;
+    if (p_dt < std::numeric_limits<double>::epsilon()) return std::nullopt;
+
+    const double est_velocity = std::invoke([&]() {
+      const auto & nearest_collision_point = closest_object.position;
+      const auto & prev_collision_point = prev_object.position;
+
+      const auto nearest_idx = motion_utils::findNearestIndex(path, nearest_collision_point);
+      const auto & nearest_path_pose = path.at(nearest_idx);
+      const auto & traj_yaw = tf2::getYaw(nearest_path_pose.orientation);
+
+      const double p_dx = nearest_collision_point.x - prev_collision_point.x;
+      const double p_dy = nearest_collision_point.y - prev_collision_point.y;
+      const double p_dist = std::hypot(p_dx, p_dy);
+      const double p_yaw = std::atan2(p_dy, p_dx);
+      const double p_vel = p_dist / p_dt;
+
+      std::cerr << "est_velocity " << est_velocity << "\n";
+      std::cerr << "p_dt " << p_dt << "\n";
+      std::cerr << "p_yaw " << p_yaw << "\n";
+      std::cerr << "traj_yaw " << traj_yaw << "\n";
+      std::cerr << "p_dist " << p_dist << "\n";
+      std::cerr << "closest_object.stamp.nanoseconds() " << closest_object.stamp.nanoseconds()
+                << "\n";
+      std::cerr << "prev_object.stamp.nanoseconds() " << prev_object.stamp.nanoseconds() << "\n";
+      std::cerr << "subtraction seconds "
+                << closest_object.stamp.seconds() - prev_object.stamp.seconds() << "\n";
+      std::cerr << "subtraction "
+                << closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds() << "\n";
+      this->setPreviousObjectData(closest_object);
+
+      return p_vel * std::cos(p_yaw - traj_yaw) + current_ego_speed;
+    });
+    if (
+      est_velocity < min_closest_point_velocity_threshold_ ||
+      est_velocity > max_closest_point_velocity_threshold_) {
+      this->resetVelocityHistory();
+      return std::nullopt;
+    }
+    this->updateVelocityHistory(est_velocity, closest_object.stamp);
+    return this->getMedianObstacleVelocity();
+  }
+
 private:
   std::optional<ObjectData> prev_closest_object_{std::nullopt};
   std::optional<ObjectData> closest_object_{std::nullopt};
   double timeout_sec_{0.0};
   double previous_obstacle_keep_time_{0.0};
-  double min_obstacle_vel_threshold{0.0};
-  double max_obstacle_vel_threshold{0.0};
+  double min_closest_point_velocity_threshold_{0.0};
+  double max_closest_point_velocity_threshold_{0.0};
 
   std::deque<std::pair<double, rclcpp::Time>> obstacle_velocity_history_;
   rclcpp::Clock::SharedPtr clock_;

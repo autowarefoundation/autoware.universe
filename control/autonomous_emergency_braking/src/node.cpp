@@ -14,7 +14,6 @@
 
 #include "autonomous_emergency_braking/node.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
@@ -107,33 +106,37 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   collision_data_keeper_(this->get_clock())
 {
   // Subscribers
-  sub_point_cloud_ = this->create_subscription<PointCloud2>(
-    "~/input/pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&AEB::onPointCloud, this, std::placeholders::_1));
+  {
+    sub_point_cloud_ = this->create_subscription<PointCloud2>(
+      "~/input/pointcloud", rclcpp::SensorDataQoS(),
+      std::bind(&AEB::onPointCloud, this, std::placeholders::_1));
 
-  sub_velocity_ = this->create_subscription<VelocityReport>(
-    "~/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
+    sub_velocity_ = this->create_subscription<VelocityReport>(
+      "~/input/velocity", rclcpp::QoS{1}, std::bind(&AEB::onVelocity, this, std::placeholders::_1));
 
-  sub_imu_ = this->create_subscription<Imu>(
-    "~/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
+    sub_imu_ = this->create_subscription<Imu>(
+      "~/input/imu", rclcpp::QoS{1}, std::bind(&AEB::onImu, this, std::placeholders::_1));
 
-  sub_predicted_traj_ = this->create_subscription<Trajectory>(
-    "~/input/predicted_trajectory", rclcpp::QoS{1},
-    std::bind(&AEB::onPredictedTrajectory, this, std::placeholders::_1));
+    sub_predicted_traj_ = this->create_subscription<Trajectory>(
+      "~/input/predicted_trajectory", rclcpp::QoS{1},
+      std::bind(&AEB::onPredictedTrajectory, this, std::placeholders::_1));
 
-  sub_autoware_state_ = this->create_subscription<AutowareState>(
-    "/autoware/state", rclcpp::QoS{1},
-    std::bind(&AEB::onAutowareState, this, std::placeholders::_1));
+    sub_autoware_state_ = this->create_subscription<AutowareState>(
+      "/autoware/state", rclcpp::QoS{1},
+      std::bind(&AEB::onAutowareState, this, std::placeholders::_1));
+  }
 
   // Publisher
-  pub_obstacle_pointcloud_ =
-    this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
-  debug_ego_path_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
-
+  {
+    pub_obstacle_pointcloud_ =
+      this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
+    debug_ego_path_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
+  }
   // Diagnostics
-  updater_.setHardwareID("autonomous_emergency_braking");
-  updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
-
+  {
+    updater_.setHardwareID("autonomous_emergency_braking");
+    updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
+  }
   // parameter
   publish_debug_pointcloud_ = declare_parameter<bool>("publish_debug_pointcloud");
   use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
@@ -161,9 +164,18 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   mpc_prediction_time_horizon_ = declare_parameter<double>("mpc_prediction_time_horizon");
   mpc_prediction_time_interval_ = declare_parameter<double>("mpc_prediction_time_interval");
 
-  const auto previous_obstacle_keep_time = declare_parameter<double>("previous_obstacle_keep_time");
-  const auto collision_keeping_sec = declare_parameter<double>("collision_keeping_sec");
-  collision_data_keeper_.setTimeout(collision_keeping_sec, previous_obstacle_keep_time);
+  {  // Object history data keeper setup
+    const auto previous_obstacle_keep_time =
+      declare_parameter<double>("previous_obstacle_keep_time");
+    const auto collision_keeping_sec = declare_parameter<double>("collision_keeping_sec");
+    const auto min_closest_point_velocity_threshold =
+      declare_parameter<double>("min_closest_point_velocity_threshold");
+    const auto max_closest_point_velocity_threshold =
+      declare_parameter<double>("max_closest_point_velocity_threshold");
+    collision_data_keeper_.setTimeout(collision_keeping_sec, previous_obstacle_keep_time);
+    collision_data_keeper_.setObjectSpeedLimits(
+      min_closest_point_velocity_threshold, max_closest_point_velocity_threshold);
+  }
 
   // start time
   const double aeb_hz = declare_parameter<double>("aeb_hz");
@@ -375,8 +387,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       if (closest_object_point_itr == objects_from_point_clusters.end()) {
         return std::nullopt;
       }
-      const auto closest_object_speed =
-        calcObjectSpeedFromHistory(*closest_object_point_itr, path, current_v);
+      const auto closest_object_speed = collision_data_keeper_.calcObjectSpeedFromHistory(
+        *closest_object_point_itr, path, current_v);
       if (!closest_object_speed.has_value()) {
         return std::nullopt;
       }
@@ -428,46 +440,6 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     pub_obstacle_pointcloud_->publish(*filtered_objects_ros_pointcloud_ptr_);
   }
   return has_collision;
-}
-
-std::optional<double> AEB::calcObjectSpeedFromHistory(
-  const ObjectData & closest_object, const Path & path, const double current_ego_speed)
-{
-  // TODO(Daniel): move this to collision_data_keeper_
-  if (collision_data_keeper_.checkPreviousObjectDataExpired()) {
-    collision_data_keeper_.setPreviousObjectData(closest_object);
-    return std::nullopt;
-  }
-  const auto prev_object = collision_data_keeper_.getPreviousObjectData();
-  const double p_dt = (closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds()) * 1e-9;
-  if (p_dt < std::numeric_limits<double>::epsilon()) return std::nullopt;
-  const auto & nearest_collision_point = closest_object.position;
-  const auto & prev_collision_point = prev_object.position;
-
-  const auto nearest_idx = motion_utils::findNearestIndex(path, nearest_collision_point);
-  const auto & nearest_path_pose = path.at(nearest_idx);
-  const auto & traj_yaw = tf2::getYaw(nearest_path_pose.orientation);
-
-  const double p_dx = nearest_collision_point.x - prev_collision_point.x;
-  const double p_dy = nearest_collision_point.y - prev_collision_point.y;
-  const double p_dist = std::hypot(p_dx, p_dy);
-  const double p_yaw = std::atan2(p_dy, p_dx);
-  const double p_vel = p_dist / p_dt;
-  const double est_velocity = p_vel * std::cos(p_yaw - traj_yaw) + current_ego_speed;
-  std::cerr << "est_velocity " << est_velocity << "\n";
-  std::cerr << "p_dt " << p_dt << "\n";
-  std::cerr << "p_yaw " << p_yaw << "\n";
-  std::cerr << "traj_yaw " << traj_yaw << "\n";
-  std::cerr << "p_dist " << p_dist << "\n";
-  std::cerr << "closest_object.stamp.nanoseconds() " << closest_object.stamp.nanoseconds() << "\n";
-  std::cerr << "prev_object.stamp.nanoseconds() " << prev_object.stamp.nanoseconds() << "\n";
-  std::cerr << "subtraction seconds "
-            << closest_object.stamp.seconds() - prev_object.stamp.seconds() << "\n";
-  std::cerr << "subtraction "
-            << closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds() << "\n";
-  collision_data_keeper_.setPreviousObjectData(closest_object);
-  collision_data_keeper_.updateVelocityHistory(est_velocity, closest_object.stamp);
-  return collision_data_keeper_.getMedianObstacleVelocity();
 }
 
 bool AEB::hasCollision(const double current_v, const ObjectData & closest_object)
