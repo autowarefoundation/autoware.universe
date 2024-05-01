@@ -1,6 +1,6 @@
 mpc_parameter:
   system:
-    mode: ilqr # option: ilqr, mppi, ilqr_mppi
+    mode: mppi_ilqr # option: ilqr, mppi, mppi_ilqr
   mpc_setting:
     ctrl_time_step: 0.03333
     mpc_freq: 3
@@ -36,11 +36,11 @@ mpc_parameter:
     ilqr_tol: 0.01
   mppi:
     lam: 1.0
-    Sigma: [1e-15, 1e-1]
+    Sigma: [1e-15, 1e-2]
     max_iter_mppi: 2
     sample_num: 100
     mppi_tol: 0.5
-    mppi_step: 10
+    mppi_step: 20
   preprocessing:
     reference_horizon: 50
     cap_pred_error: [0.5, 2.0]
