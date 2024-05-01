@@ -69,6 +69,7 @@ This converts rosbag data into CSV format for training models.
 
 > [!NOTE]
 > Note that a large number of terminals are automatically opened at runtime, but they are automatically closed after rosbag data conversion is completed.
+> From the time you begin this process until all terminals are closed, autoware should not be running.
 
 Instead, the same result can be obtained by executing the following command in a python environment:
 
