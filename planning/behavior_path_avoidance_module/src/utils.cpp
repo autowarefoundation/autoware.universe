@@ -27,7 +27,6 @@
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <geometry_msgs/msg/detail/transform_stamped__struct.hpp>
-#include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
 
 #include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>

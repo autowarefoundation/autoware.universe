@@ -21,8 +21,6 @@
 #include <magic_enum.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-
 #include <string>
 #include <vector>
 
