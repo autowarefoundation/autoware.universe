@@ -709,15 +709,20 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
         for (const auto & center_point : center_points) {
           const double x = center_point.x - point.x;
           const double y = center_point.y - point.y;
-          if (std::hypot(x, y) < p.pointcloud_search_radius) {
-            obstacle_points_ptr->points.push_back(point);
+          const double ego_to_obstacle_distance = std::hypot(x, y);
+          if (ego_to_obstacle_distance < p.pointcloud_search_radius) {
+            geometry_msgs::msg::Point obstacle_position;
+            obstacle_position.x = point.x;
+            obstacle_position.y = point.y;
+            const double lat_dist_from_obstacle_to_traj =
+              motion_utils::calcLateralOffset(traj_points, obstacle_position);
+            target_obstacles.emplace_back(
+              pointcloud.header.stamp, obstacle_position, 1e-3, ego_to_obstacle_distance,
+              lat_dist_from_obstacle_to_traj);
             break;
           }
         }
       }
-
-      const auto target_obstacle = Obstacle(pointcloud.header.stamp, *obstacle_points_ptr);
-      target_obstacles.push_back(target_obstacle);
     }
   } else {
     const auto obj_stamp = rclcpp::Time(objects_sub_.getData().header.stamp);
