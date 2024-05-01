@@ -168,13 +168,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
     const auto previous_obstacle_keep_time =
       declare_parameter<double>("previous_obstacle_keep_time");
     const auto collision_keeping_sec = declare_parameter<double>("collision_keeping_sec");
-    const auto min_closest_point_velocity_threshold =
-      declare_parameter<double>("min_closest_point_velocity_threshold");
-    const auto max_closest_point_velocity_threshold =
-      declare_parameter<double>("max_closest_point_velocity_threshold");
     collision_data_keeper_.setTimeout(collision_keeping_sec, previous_obstacle_keep_time);
-    collision_data_keeper_.setObjectSpeedLimits(
-      min_closest_point_velocity_threshold, max_closest_point_velocity_threshold);
   }
 
   // start time
@@ -322,6 +316,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
     const auto & data = collision_data_keeper_.get();
     stat.addf("RSS", "%.2f", data.rss);
     stat.addf("Distance", "%.2f", data.distance_to_object);
+    stat.addf("Object Speed", "%.2f", data.velocity);
     addCollisionMarker(data, debug_markers);
   } else {
     const std::string error_msg = "[AEB]: No Collision";

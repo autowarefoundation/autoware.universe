@@ -88,14 +88,6 @@ public:
     previous_obstacle_keep_time_ = previous_obstacle_keep_time;
   }
 
-  void setObjectSpeedLimits(
-    const double min_closest_point_velocity_threshold,
-    const double max_closest_point_velocity_threshold)
-  {
-    min_closest_point_velocity_threshold_ = min_closest_point_velocity_threshold;
-    max_closest_point_velocity_threshold_ = max_closest_point_velocity_threshold;
-  }
-
   bool checkObjectDataExpired(std::optional<ObjectData> & data, const double timeout)
   {
     if (!data.has_value()) return true;
@@ -104,26 +96,27 @@ public:
     const auto & data_time_stamp = prev_obj.stamp;
     if ((now - data_time_stamp).nanoseconds() * 1e-9 > timeout) {
       data = std::nullopt;
+      return true;
     }
-    return !data.has_value();
+    return false;
   }
 
   bool checkCollisionExpired()
   {
-    return checkObjectDataExpired(closest_object_, collision_keep_time_);
+    return this->checkObjectDataExpired(closest_object_, collision_keep_time_);
   }
 
   bool checkPreviousObjectDataExpired()
   {
-    return checkObjectDataExpired(prev_closest_object_, previous_obstacle_keep_time_);
+    return this->checkObjectDataExpired(prev_closest_object_, previous_obstacle_keep_time_);
   }
 
-  ObjectData get()
+  ObjectData get() const
   {
     return (closest_object_.has_value()) ? closest_object_.value() : ObjectData();
   }
 
-  ObjectData getPreviousObjectData()
+  ObjectData getPreviousObjectData() const
   {
     return (prev_closest_object_.has_value()) ? prev_closest_object_.value() : ObjectData();
   }
@@ -156,7 +149,7 @@ public:
       std::make_pair(current_object_velocity, current_object_velocity_time_stamp));
   }
 
-  std::optional<double> getMedianObstacleVelocity()
+  std::optional<double> getMedianObstacleVelocity() const
   {
     if (obstacle_velocity_history_.empty()) return std::nullopt;
     std::vector<double> raw_velocities;
@@ -202,11 +195,8 @@ public:
       const auto & traj_yaw = tf2::getYaw(nearest_path_pose.orientation);
       const auto estimated_velocity = p_vel * std::cos(p_yaw - traj_yaw) + current_ego_speed;
 
-      const bool velocity_is_valid =
-        (estimated_velocity > min_closest_point_velocity_threshold_ &&
-         estimated_velocity < max_closest_point_velocity_threshold_);
-
-      return (velocity_is_valid) ? std::make_optional<double>(estimated_velocity) : std::nullopt;
+      // Current RSS distance calculation does not account for negative velocities
+      return (estimated_velocity > 0.0) ? estimated_velocity : 0.0;
     });
 
     if (!estimated_velocity_opt.has_value()) {
@@ -226,8 +216,6 @@ private:
   std::optional<ObjectData> closest_object_{std::nullopt};
   double collision_keep_time_{0.0};
   double previous_obstacle_keep_time_{0.0};
-  double min_closest_point_velocity_threshold_{0.0};
-  double max_closest_point_velocity_threshold_{0.0};
 
   std::deque<std::pair<double, rclcpp::Time>> obstacle_velocity_history_;
   rclcpp::Clock::SharedPtr clock_;
