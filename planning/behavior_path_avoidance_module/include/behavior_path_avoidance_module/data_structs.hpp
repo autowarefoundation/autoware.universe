@@ -189,6 +189,9 @@ struct AvoidanceParameters
   double time_threshold_for_ambiguous_vehicle{0.0};
   double distance_threshold_for_ambiguous_vehicle{0.0};
 
+  // for merging/deviating vehicle
+  double th_overhang_distance{0.0};
+
   // parameters for safety check area
   bool enable_safety_check{false};
   bool check_current_lane{false};
@@ -322,7 +325,6 @@ struct AvoidanceParameters
 
   // debug
   bool publish_debug_marker = false;
-  bool print_debug_info = false;
 };
 
 struct ObjectData  // avoidance target
