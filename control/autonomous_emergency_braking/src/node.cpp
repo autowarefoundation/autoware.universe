@@ -370,12 +370,6 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     createObjectDataUsingPointCloudClusters(
       path, ego_polys, current_time, objects_from_point_clusters, filtered_objects);
 
-    // Add debug markers
-    const auto [color_r, color_g, color_b, color_a] = debug_colors;
-    addMarker(
-      current_time, path, ego_polys, objects_from_point_clusters, color_r, color_g, color_b,
-      color_a, debug_ns, debug_markers);
-
     // Get only the closest object and calculate its speed
     const auto closest_object_point = std::invoke([&]() -> std::optional<ObjectData> {
       const auto closest_object_point_itr = std::min_element(
@@ -395,6 +389,14 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       closest_object_point_itr->velocity = closest_object_speed.value();
       return std::make_optional<ObjectData>(*closest_object_point_itr);
     });
+
+    // Add debug markers
+    {
+      const auto [color_r, color_g, color_b, color_a] = debug_colors;
+      addMarker(
+        this->get_clock()->now(), path, ego_polys, objects_from_point_clusters, color_r, color_g,
+        color_b, color_a, debug_ns, debug_markers);
+    }
     // check collision using rss distance
     return (closest_object_point.has_value())
              ? hasCollision(current_v, closest_object_point.value())
@@ -448,26 +450,14 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
   const double & t = t_response_;
   const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
                           obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
-
-  std::cerr << "---------------------hasCollision----------------------\n";
-  std::cerr << "current_v " << current_v << "\n";
-  std::cerr << "obj_v " << obj_v << "\n";
-  std::cerr << "rss_dist " << rss_dist << "\n";
-  std::cerr << "closest_object.distance_to_object " << closest_object.distance_to_object << "\n";
-
   if (closest_object.distance_to_object < rss_dist) {
     // collision happens
     ObjectData collision_data = closest_object;
     collision_data.rss = rss_dist;
     collision_data.distance_to_object = closest_object.distance_to_object;
     collision_data_keeper_.setCollisionData(collision_data);
-    std::cerr << "Collision AEB!\n";
-    std::cerr << "---------------------hasCollision----------------------\n";
-
     return true;
   }
-  std::cerr << "---------------------hasCollision----------------------\n";
-
   return false;
 }
 

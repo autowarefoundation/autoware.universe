@@ -82,9 +82,9 @@ class CollisionDataKeeper
 public:
   explicit CollisionDataKeeper(rclcpp::Clock::SharedPtr clock) { clock_ = clock; }
 
-  void setTimeout(const double timeout_sec, const double previous_obstacle_keep_time)
+  void setTimeout(const double collision_keep_time, const double previous_obstacle_keep_time)
   {
-    timeout_sec_ = timeout_sec;
+    collision_keep_time_ = collision_keep_time;
     previous_obstacle_keep_time_ = previous_obstacle_keep_time;
   }
 
@@ -96,24 +96,26 @@ public:
     max_closest_point_velocity_threshold_ = max_closest_point_velocity_threshold;
   }
 
+  bool checkObjectDataExpired(std::optional<ObjectData> & data, const double timeout)
+  {
+    if (!data.has_value()) return true;
+    const auto now = clock_->now();
+    const auto & prev_obj = data.value();
+    const auto & data_time_stamp = prev_obj.stamp;
+    if ((now - data_time_stamp).nanoseconds() * 1e-9 > timeout) {
+      data = std::nullopt;
+    }
+    return !data.has_value();
+  }
+
   bool checkCollisionExpired()
   {
-    if (closest_object_ && (clock_->now() - closest_object_->stamp).seconds() > timeout_sec_) {
-      closest_object_ = std::nullopt;
-    }
-    return !closest_object_.has_value();
+    return checkObjectDataExpired(closest_object_, collision_keep_time_);
   }
 
   bool checkPreviousObjectDataExpired()
   {
-    if (!prev_closest_object_.has_value()) return true;
-    const auto now = clock_->now();
-    const auto & prev_obj = prev_closest_object_.value();
-    const auto & prev_closest_object_time = prev_obj.stamp;
-    if ((now - prev_closest_object_time).nanoseconds() * 1e-9 > previous_obstacle_keep_time_) {
-      prev_closest_object_ = std::nullopt;
-    }
-    return !prev_closest_object_.has_value();
+    return checkObjectDataExpired(prev_closest_object_, previous_obstacle_keep_time_);
   }
 
   ObjectData get()
@@ -136,10 +138,12 @@ public:
     prev_closest_object_ = std::make_optional<ObjectData>(data);
   }
 
+  void resetVelocityHistory() { obstacle_velocity_history_.clear(); }
+
   void updateVelocityHistory(
     const double current_object_velocity, const rclcpp::Time & current_object_velocity_time_stamp)
   {
-    // remove old msg from que
+    // remove old msg from deque
     const auto now = clock_->now();
     std::remove_if(
       obstacle_velocity_history_.begin(), obstacle_velocity_history_.end(),
@@ -151,8 +155,6 @@ public:
     obstacle_velocity_history_.emplace_back(
       std::make_pair(current_object_velocity, current_object_velocity_time_stamp));
   }
-
-  void resetVelocityHistory() { obstacle_velocity_history_.clear(); }
 
   std::optional<double> getMedianObstacleVelocity()
   {
@@ -177,21 +179,17 @@ public:
   {
     if (this->checkPreviousObjectDataExpired()) {
       this->setPreviousObjectData(closest_object);
+      this->resetVelocityHistory();
       return std::nullopt;
     }
 
-    const auto & prev_object = this->getPreviousObjectData();
-    const double p_dt =
-      (closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds()) * 1e-9;
-    if (p_dt < std::numeric_limits<double>::epsilon()) return std::nullopt;
-
-    const double est_velocity = std::invoke([&]() {
+    const auto estimated_velocity_opt = std::invoke([&]() -> std::optional<double> {
+      const auto & prev_object = this->getPreviousObjectData();
+      const double p_dt =
+        (closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds()) * 1e-9;
+      if (p_dt < std::numeric_limits<double>::epsilon()) return std::nullopt;
       const auto & nearest_collision_point = closest_object.position;
       const auto & prev_collision_point = prev_object.position;
-
-      const auto nearest_idx = motion_utils::findNearestIndex(path, nearest_collision_point);
-      const auto & nearest_path_pose = path.at(nearest_idx);
-      const auto & traj_yaw = tf2::getYaw(nearest_path_pose.orientation);
 
       const double p_dx = nearest_collision_point.x - prev_collision_point.x;
       const double p_dy = nearest_collision_point.y - prev_collision_point.y;
@@ -199,36 +197,35 @@ public:
       const double p_yaw = std::atan2(p_dy, p_dx);
       const double p_vel = p_dist / p_dt;
 
-      std::cerr << "est_velocity " << est_velocity << "\n";
-      std::cerr << "p_dt " << p_dt << "\n";
-      std::cerr << "p_yaw " << p_yaw << "\n";
-      std::cerr << "traj_yaw " << traj_yaw << "\n";
-      std::cerr << "p_dist " << p_dist << "\n";
-      std::cerr << "closest_object.stamp.nanoseconds() " << closest_object.stamp.nanoseconds()
-                << "\n";
-      std::cerr << "prev_object.stamp.nanoseconds() " << prev_object.stamp.nanoseconds() << "\n";
-      std::cerr << "subtraction seconds "
-                << closest_object.stamp.seconds() - prev_object.stamp.seconds() << "\n";
-      std::cerr << "subtraction "
-                << closest_object.stamp.nanoseconds() - prev_object.stamp.nanoseconds() << "\n";
-      this->setPreviousObjectData(closest_object);
+      const auto nearest_idx = motion_utils::findNearestIndex(path, nearest_collision_point);
+      const auto & nearest_path_pose = path.at(nearest_idx);
+      const auto & traj_yaw = tf2::getYaw(nearest_path_pose.orientation);
+      const auto estimated_velocity = p_vel * std::cos(p_yaw - traj_yaw) + current_ego_speed;
 
-      return p_vel * std::cos(p_yaw - traj_yaw) + current_ego_speed;
+      const bool velocity_is_valid =
+        (estimated_velocity > min_closest_point_velocity_threshold_ &&
+         estimated_velocity < max_closest_point_velocity_threshold_);
+
+      return (velocity_is_valid) ? std::make_optional<double>(estimated_velocity) : std::nullopt;
     });
-    if (
-      est_velocity < min_closest_point_velocity_threshold_ ||
-      est_velocity > max_closest_point_velocity_threshold_) {
+
+    if (!estimated_velocity_opt.has_value()) {
+      this->setPreviousObjectData(closest_object);
       this->resetVelocityHistory();
       return std::nullopt;
     }
-    this->updateVelocityHistory(est_velocity, closest_object.stamp);
+
+    const auto & estimated_velocity = estimated_velocity_opt.value();
+
+    this->setPreviousObjectData(closest_object);
+    this->updateVelocityHistory(estimated_velocity, closest_object.stamp);
     return this->getMedianObstacleVelocity();
   }
 
 private:
   std::optional<ObjectData> prev_closest_object_{std::nullopt};
   std::optional<ObjectData> closest_object_{std::nullopt};
-  double timeout_sec_{0.0};
+  double collision_keep_time_{0.0};
   double previous_obstacle_keep_time_{0.0};
   double min_closest_point_velocity_threshold_{0.0};
   double max_closest_point_velocity_threshold_{0.0};
