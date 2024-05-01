@@ -123,10 +123,6 @@ double calcDiffAngleAgainstTrajectory(
 std::pair<double, double> projectObstacleVelocityToTrajectory(
   const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle)
 {
-  if (obstacle.pointcloud_repr) {
-    return std::make_pair(0.0, 0.0);
-  }
-
   const size_t object_idx = motion_utils::findNearestIndex(traj_points, obstacle.pose.position);
   const double traj_yaw = tf2::getYaw(traj_points.at(object_idx).pose.orientation);
 
@@ -1321,7 +1317,12 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     return std::nullopt;
   }
 
-  const auto [tangent_vel, normal_vel] = projectObstacleVelocityToTrajectory(traj_points, obstacle);
+  const auto [tangent_vel, normal_vel] = [&]() -> std::pair<double, double> {
+    if (p.use_pointcloud) {
+      return {0., 0.};
+    }
+    return projectObstacleVelocityToTrajectory(traj_points, obstacle);
+  }();
   return StopObstacle{
     obstacle.uuid, obstacle.stamp, obstacle.pose,          obstacle.shape,
     tangent_vel,   normal_vel,     collision_point->first, collision_point->second};
