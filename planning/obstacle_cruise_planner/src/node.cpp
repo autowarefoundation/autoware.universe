@@ -520,9 +520,10 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
 
 void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
+  const auto & p = behavior_determination_param_;
   if (
-    !ego_odom_sub_.updateLatestData() || !objects_sub_.updateLatestData() ||
-    !acc_sub_.updateLatestData()) {
+    !ego_odom_sub_.updateLatestData() || (!p.use_pointcloud && !objects_sub_.updateLatestData()) ||
+    (p.use_pointcloud && !pointcloud_sub_.updateLatestData()) || !acc_sub_.updateLatestData()) {
     return;
   }
 
