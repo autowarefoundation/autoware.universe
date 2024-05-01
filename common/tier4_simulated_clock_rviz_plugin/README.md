@@ -18,9 +18,7 @@ This plugin allows publishing and controlling the simulated ROS time.
    ros2 launch autoware_launch planning_simulator.launch.xml map_path:=$HOME/autoware_map/sample-map-planning vehicle_model:=sample_vehicle sensor_model:=sample_sensor_kit use_sim_time:=true
    ```
 
-   !!! warning
-
-   If you launch planning simulator without adding the `tier4_simulated_clock_rviz_plugin`, your simulation will not be running. You'll not even be able to place the initial and the goal pose.
+   > **Warning**: If you launch the planning simulator without adding the `tier4_simulated_clock_rviz_plugin`, your simulation will not be running. You'll not even be able to place the initial and the goal pose.
 
 2. Start rviz and select panels/Add new panel.
 
@@ -41,6 +39,4 @@ This plugin allows publishing and controlling the simulated ROS time.
    - Time step: value used to advance the clock when pressing the step button d).
    - Time unit: time unit associated with the value from e).
 
-   !!! warning
-
-   If you set the time step too large, your simulation will go haywire.
+   > **Warning**: If you set the time step too large, your simulation will go haywire.
