@@ -107,18 +107,10 @@ public:
     return points;
   }
 
-  /**
-   * @brief Return the size of intension point K * D.
-   *
-   * @return size_t
-   */
+  // Return the size of intension point `K*D`.
   size_t size() const { return num_cluster_ * state_dim(); }
 
-  /**
-   * @brief Return the number of clusters contained in intention points.
-   *
-   * @return size_t
-   */
+  // Return the number of clusters contained in intention points `K`.
   size_t num_cluster() const { return num_cluster_; }
 
 private:
