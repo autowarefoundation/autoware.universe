@@ -27,6 +27,7 @@
 
 #include <boost/format.hpp>
 
+#include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -254,6 +255,12 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
   use_pointcloud = node.declare_parameter<bool>("behavior_determination.use_pointcloud");
   pointcloud_search_radius =
     node.declare_parameter<double>("behavior_determination.pointcloud_search_radius");
+  pointcloud_voxel_grid_x =
+    node.declare_parameter<double>("behavior_determination.pointcloud_voxel_grid_x");
+  pointcloud_voxel_grid_y =
+    node.declare_parameter<double>("behavior_determination.pointcloud_voxel_grid_y");
+  pointcloud_voxel_grid_z =
+    node.declare_parameter<double>("behavior_determination.pointcloud_voxel_grid_z");
   obstacle_velocity_threshold_from_cruise_to_stop = node.declare_parameter<double>(
     "behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
   obstacle_velocity_threshold_from_stop_to_cruise = node.declare_parameter<double>(
@@ -700,8 +707,15 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       PointCloud::Ptr transformed_points_ptr(new PointCloud);
       pcl::fromROSMsg(transformed_points, *transformed_points_ptr);
 
+      PointCloud::Ptr filtered_points_ptr(new PointCloud);
+      pcl::VoxelGrid<pcl::PointXYZ> filter;
+      filter.setInputCloud(transformed_points_ptr);
+      filter.setLeafSize(
+        p.pointcloud_voxel_grid_x, p.pointcloud_voxel_grid_y, p.pointcloud_voxel_grid_z);
+      filter.filter(*filtered_points_ptr);
+
       PointCloud::Ptr obstacle_points_ptr(new PointCloud);
-      obstacle_points_ptr->header = transformed_points_ptr->header;
+      obstacle_points_ptr->header = filtered_points_ptr->header;
 
       // search obstacle candidate pointcloud to reduce calculation cost
       std::vector<geometry_msgs::msg::Point> center_points;
@@ -709,7 +723,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       for (const auto & traj_point : traj_points) {
         center_points.push_back(getVehicleCenterFromBase(traj_point.pose, vehicle_info_).position);
       }
-      for (const auto & point : transformed_points_ptr->points) {
+      for (const auto & point : filtered_points_ptr->points) {
         for (const auto & center_point : center_points) {
           const double x = center_point.x - point.x;
           const double y = center_point.y - point.y;
