@@ -19,7 +19,7 @@ ament_auto_add_library(${PROJECT_NAME}_lib SHARED
 
 rclcpp_components_register_node(${PROJECT_NAME}_lib
   PLUGIN "motion_velocity_planner::MotionVelocityPlannerNode"
-  EXECUTABLE ${PROJECT_NAME}
+  EXECUTABLE ${PROJECT_NAME}_exe
 )
 
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)

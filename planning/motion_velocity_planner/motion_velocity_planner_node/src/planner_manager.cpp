@@ -50,7 +50,7 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
 }  // namespace
 
 MotionVelocityPlannerManager::MotionVelocityPlannerManager()
-: plugin_loader_("motion_velocity_planner", "motion_velocity_planner::PluginModuleInterface")
+: plugin_loader_("motion_velocity_planner_common", "motion_velocity_planner::PluginModuleInterface")
 {
 }
 

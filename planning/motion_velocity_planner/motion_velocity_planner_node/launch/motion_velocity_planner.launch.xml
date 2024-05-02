@@ -10,14 +10,13 @@
 
   <!-- module config path -->
   <arg name="motion_velocity_config_path"/>
-  <arg name="motion_velocity_smoother_type_param_path"/>
-  <arg name="motion_velocity_planner_common_param_path"/>
+  <arg name="motion_velocity_planner_param_path"/>
   <arg name="motion_velocity_planner_out_of_lane_module_param_path"/>
   <arg name="motion_velocity_planner_dynamic_obstacle_stop_module_param_path"/>
   <!-- <arg name="motion_velocity_planner_template_module_param_path"/> -->
-  <arg name="motion_velocity_planner_param_file" default="$(find-pkg-share motion_velocity_planner)/config/motion_velocity_planner.param.yaml"/>
+  <arg name="motion_velocity_planner_param_file" default="$(find-pkg-share motion_velocity_planner_node)/config/motion_velocity_planner.param.yaml"/>
 
-  <node pkg="motion_velocity_planner" exec="motion_velocity_planner_node" name="motion_velocity_planner" output="screen">
+  <node pkg="motion_velocity_planner_node" exec="motion_velocity_planner_node_exe" name="motion_velocity_planner" output="screen">
     <!-- topic remap -->
     <remap from="~/input/trajectory" to="trajectory"/>
     <remap from="~/input/vector_map" to="/map/vector_map"/>
@@ -36,8 +35,7 @@
     <param from="$(var common_param_path)"/>
     <param from="$(var vehicle_param_file)"/>
     <param from="$(var nearest_search_param_path)"/>
-    <param from="$(var motion_velocity_smoother_type_param_path)"/>
-    <param from="$(var motion_velocity_planner_common_param_path)"/>
+    <param from="$(var motion_velocity_planner_param_path)"/>
     <param from="$(var motion_velocity_planner_out_of_lane_module_param_path)"/>
     <param from="$(var motion_velocity_planner_dynamic_obstacle_stop_module_param_path)"/>
     <!-- <param from="$(var motion_velocity_planner_template_param_path)"/> -->

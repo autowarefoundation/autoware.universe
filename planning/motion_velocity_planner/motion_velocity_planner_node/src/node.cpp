@@ -155,8 +155,6 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
 
   // Parameters
-  forward_path_length_ = declare_parameter<double>("forward_path_length");
-  backward_path_length_ = declare_parameter<double>("backward_path_length");
   planner_data_.stop_line_extend_length = declare_parameter<double>("stop_line_extend_length");
 
   // nearest search
