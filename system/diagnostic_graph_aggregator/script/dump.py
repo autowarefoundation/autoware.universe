@@ -31,7 +31,7 @@ def print_table(lines: list, header: list):
     lines.insert(0, ["-" * w for w in widths])
     lines.insert(2, ["-" * w for w in widths])
     for line in lines:
-        line = map(lambda v, w: f"{v:{w}}", line, widths)
+        line = map(lambda v, w: f"{v: {w}}", line, widths)
         line = " | ".join(line)
         print(f"| {line} |")
 
