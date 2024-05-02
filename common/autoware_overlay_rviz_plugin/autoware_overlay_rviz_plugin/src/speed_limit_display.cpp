@@ -134,7 +134,7 @@ void SpeedLimitDisplay::drawSpeedLimitIndicator(QPainter & painter, const QRectF
   // Define the text to be drawn
   QString text = QString::number(current_limit_int);
 
-  // Set the font and color for the tex0
+  // Set the font and color for the text
   QFont font = QFont("Quicksand", 16, QFont::Bold);
 
   painter.setFont(font);
