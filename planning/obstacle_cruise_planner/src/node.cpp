@@ -462,6 +462,8 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     outside_cruise_obstacle_types_ =
       getTargetObjectType(*this, "common.cruise_obstacle_type.outside.");
     slow_down_obstacle_types_ = getTargetObjectType(*this, "common.slow_down_obstacle_type.");
+    use_pointcloud_for_stop_ = declare_parameter<bool>("common.stop_obstacle_type.pointcloud");
+    use_pointcloud_for_slow_down_ = declare_parameter<bool>("common.slow_down_obstacle_type.pointcloud");
   }
 
   // set parameter callback
@@ -1254,7 +1256,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
   const auto & object_id = obstacle.uuid.substr(0, 4);
 
   // NOTE: consider all target obstacles when driving backward
-  if (!p.use_pointcloud && !isStopObstacle(obstacle.classification.label)) {
+  if ((!p.use_pointcloud && !isStopObstacle(obstacle.classification.label)) || (p.use_pointcloud && !use_pointcloud_for_stop_)) {
     return std::nullopt;
   }
   if (p.max_lat_margin_for_stop < precise_lat_dist) {
@@ -1346,7 +1348,8 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
 
   if (
     !enable_slow_down_planning_ ||
-    (!p.use_pointcloud && !isSlowDownObstacle(obstacle.classification.label))) {
+    (!p.use_pointcloud && !isSlowDownObstacle(obstacle.classification.label)) ||
+    (p.use_pointcloud && !use_pointcloud_for_slow_down_)) {
     return std::nullopt;
   }
 

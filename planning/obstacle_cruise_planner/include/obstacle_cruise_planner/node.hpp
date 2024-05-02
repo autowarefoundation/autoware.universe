@@ -125,6 +125,8 @@ private:
   std::vector<int> inside_cruise_obstacle_types_;
   std::vector<int> outside_cruise_obstacle_types_;
   std::vector<int> slow_down_obstacle_types_;
+  bool use_pointcloud_for_stop_;
+  bool use_pointcloud_for_slow_down_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
