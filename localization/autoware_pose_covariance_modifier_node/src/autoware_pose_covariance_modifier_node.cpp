@@ -94,7 +94,8 @@ std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifi
 
   std::array<int, 3> indices = {X_POS_IDX_, Y_POS_IDX_, Z_POS_IDX_};
   for (int idx : indices) {
-    ndt_covariance[idx] = modify_covariance(ndt_covariance_in[idx], gnss_source_pose_with_cov.pose.covariance[idx]);
+    ndt_covariance[idx] =
+      modify_covariance(ndt_covariance_in[idx], gnss_source_pose_with_cov.pose.covariance[idx]);
   }
 
   return ndt_covariance;
