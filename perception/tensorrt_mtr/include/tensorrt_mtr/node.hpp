@@ -73,7 +73,7 @@ class PolylineTypeMap
 public:
   explicit PolylineTypeMap(rclcpp::Node * node)
   {
-    const auto filepath = node->declare_parameter<std::string>("polyline_label_path");
+    const auto filepath = node->declare_parameter<std::string>("model_params.polyline_label_path");
     std::ifstream file(filepath);
     if (!file.is_open()) {
       RCLCPP_ERROR_STREAM(node->get_logger(), "Could not open polyline label file: " << filepath);
@@ -164,6 +164,7 @@ private:
 
   // MTR parameters
   std::unique_ptr<MTRConfig> config_ptr_;
+  std::unique_ptr<BuildConfig> build_config_ptr_;
   std::unique_ptr<TrtMTR> model_ptr_;
   PolylineTypeMap polyline_type_map_;
   std::shared_ptr<PolylineData> polyline_ptr_;

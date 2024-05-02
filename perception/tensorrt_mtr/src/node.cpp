@@ -123,6 +123,36 @@ int getLabelIndex(const TrackedObject & object)
     return -1;  // other labels
   }
 }
+
+// Return corresponding PrecisionType from string.
+PrecisionType getPrecisionType(const std::string & name)
+{
+  if (name == "FP32") {
+    return PrecisionType::FP32;
+  } else if (name == "FP16") {
+    return PrecisionType::FP16;
+  } else if (name == "INT8") {
+    return PrecisionType::INT8;
+  } else {
+    throw std::invalid_argument("Invalid precision name.");
+  }
+}
+
+// Return corresponding CalibrationType from string.
+CalibrationType getCalibrationType(const std::string & name)
+{
+  if (name == "ENTROPY") {
+    return CalibrationType::ENTROPY;
+  } else if (name == "LEGACY") {
+    return CalibrationType::LEGACY;
+  } else if (name == "PERCENTILE") {
+    return CalibrationType::PERCENTILE;
+  } else if (name == "MINMAX") {
+    return CalibrationType::MINMAX;
+  } else {
+    throw std::invalid_argument("Invalid calibration name.");
+  }
+}
 }  // namespace
 
 MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
@@ -130,25 +160,35 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
 {
   // TODO(ktro2828)
   {
-    // Build MTR and its config
-    const auto model_path = declare_parameter<std::string>("model_path");
-    const auto precision = declare_parameter<std::string>("precision");
-    const auto target_labels = declare_parameter<std::vector<std::string>>("target_labels");
-    const auto num_past = static_cast<size_t>(declare_parameter<int>("num_past"));
-    const auto num_mode = static_cast<size_t>(declare_parameter<int>("num_mode"));
-    const auto num_future = static_cast<size_t>(declare_parameter<int>("num_future"));
-    const auto max_num_polyline = static_cast<size_t>(declare_parameter<int>("max_num_polyline"));
-    const auto max_num_point = static_cast<size_t>(declare_parameter<int>("max_num_point"));
+    // Build MTR
+    // Model config
+    const auto model_path = declare_parameter<std::string>("model_params.model_path");
+    const auto target_labels =
+      declare_parameter<std::vector<std::string>>("model_params.target_labels");
+    const auto num_past = static_cast<size_t>(declare_parameter<int>("model_params.num_past"));
+    const auto num_mode = static_cast<size_t>(declare_parameter<int>("model_params.num_mode"));
+    const auto num_future = static_cast<size_t>(declare_parameter<int>("model_params.num_future"));
+    const auto max_num_polyline =
+      static_cast<size_t>(declare_parameter<int>("model_params.max_num_polyline"));
+    const auto max_num_point =
+      static_cast<size_t>(declare_parameter<int>("model_params.max_num_point"));
     const auto point_break_distance =
-      static_cast<float>(declare_parameter<double>("point_break_distance"));
+      static_cast<float>(declare_parameter<double>("model_params.point_break_distance"));
     const auto intention_point_filepath =
-      declare_parameter<std::string>("intention_point_filepath");
+      declare_parameter<std::string>("model_params.intention_point_filepath");
     const auto num_intention_point_cluster =
-      static_cast<size_t>(declare_parameter<int>("num_intention_point_cluster"));
+      static_cast<size_t>(declare_parameter<int>("model_params.num_intention_point_cluster"));
     config_ptr_ = std::make_unique<MTRConfig>(
       target_labels, num_past, num_mode, num_future, max_num_polyline, max_num_point,
       point_break_distance, intention_point_filepath, num_intention_point_cluster);
-    model_ptr_ = std::make_unique<TrtMTR>(model_path, precision, *config_ptr_.get());
+    // Build config
+    const auto is_dynamic = declare_parameter<bool>("build_params.is_dynamic");
+    const auto precision_str = declare_parameter<std::string>("build_params.precision");
+    const auto calibration_str = declare_parameter<std::string>("build_params.calibration");
+    const auto precision = getPrecisionType(precision_str);
+    const auto calibration = getCalibrationType(calibration_str);
+    build_config_ptr_ = std::make_unique<BuildConfig>(is_dynamic, precision, calibration);
+    model_ptr_ = std::make_unique<TrtMTR>(model_path, *config_ptr_.get(), *build_config_ptr_.get());
   }
 
   sub_objects_ = create_subscription<TrackedObjects>(
