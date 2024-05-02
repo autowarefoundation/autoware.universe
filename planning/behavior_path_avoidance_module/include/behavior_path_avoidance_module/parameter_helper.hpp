@@ -70,8 +70,6 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       param.lateral_hard_margin_for_parked_vehicle =
         getOrDeclareParameter<double>(*node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
       param.longitudinal_margin = getOrDeclareParameter<double>(*node, ns + "longitudinal_margin");
-      param.use_conservative_buffer_longitudinal =
-        getOrDeclareParameter<bool>(*node, ns + "use_conservative_buffer_longitudinal");
       return param;
     };
 
@@ -131,6 +129,11 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "th_shiftable_ratio");
     p.object_check_min_road_shoulder_width =
       getOrDeclareParameter<double>(*node, ns + "min_road_shoulder_width");
+  }
+
+  {
+    const std::string ns = "avoidance.target_filtering.merging_vehicle.";
+    p.th_overhang_distance = getOrDeclareParameter<double>(*node, ns + "th_overhang_distance");
   }
 
   {
@@ -270,6 +273,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.buf_slow_down_speed = getOrDeclareParameter<double>(*node, ns + "buf_slow_down_speed");
     p.nominal_avoidance_speed =
       getOrDeclareParameter<double>(*node, ns + "nominal_avoidance_speed");
+    p.consider_front_overhang = getOrDeclareParameter<bool>(*node, ns + "consider_front_overhang");
+    p.consider_rear_overhang = getOrDeclareParameter<bool>(*node, ns + "consider_rear_overhang");
   }
 
   // avoidance maneuver (return shift dead line)
@@ -379,7 +384,6 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   {
     const std::string ns = "avoidance.debug.";
     p.publish_debug_marker = getOrDeclareParameter<bool>(*node, ns + "marker");
-    p.print_debug_info = getOrDeclareParameter<bool>(*node, ns + "console");
   }
 
   return p;

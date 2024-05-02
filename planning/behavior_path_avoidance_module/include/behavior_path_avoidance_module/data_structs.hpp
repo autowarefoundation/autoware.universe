@@ -76,8 +76,6 @@ struct ObjectParameter
   double lateral_hard_margin_for_parked_vehicle{1.0};
 
   double longitudinal_margin{0.0};
-
-  bool use_conservative_buffer_longitudinal{true};
 };
 
 struct AvoidanceParameters
@@ -191,13 +189,8 @@ struct AvoidanceParameters
   double time_threshold_for_ambiguous_vehicle{0.0};
   double distance_threshold_for_ambiguous_vehicle{0.0};
 
-  // when complete avoidance motion, there is a distance margin with the object
-  // for longitudinal direction
-  double longitudinal_collision_margin_min_distance{0.0};
-
-  // when complete avoidance motion, there is a time margin with the object
-  // for longitudinal direction
-  double longitudinal_collision_margin_time{0.0};
+  // for merging/deviating vehicle
+  double th_overhang_distance{0.0};
 
   // parameters for safety check area
   bool enable_safety_check{false};
@@ -218,6 +211,9 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
+
+  bool consider_front_overhang{true};
+  bool consider_rear_overhang{true};
 
   // maximum stop distance
   double stop_max_distance{0.0};
@@ -329,7 +325,6 @@ struct AvoidanceParameters
 
   // debug
   bool publish_debug_marker = false;
-  bool print_debug_info = false;
 };
 
 struct ObjectData  // avoidance target

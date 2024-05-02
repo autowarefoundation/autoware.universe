@@ -59,9 +59,6 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
       parameters, ns + "lateral_margin.hard_margin_for_parked_vehicle",
       config.lateral_hard_margin_for_parked_vehicle);
     updateParam<double>(parameters, ns + "longitudinal_margin", config.longitudinal_margin);
-    updateParam<bool>(
-      parameters, ns + "use_conservative_buffer_longitudinal",
-      config.use_conservative_buffer_longitudinal);
   };
 
   {
@@ -128,6 +125,11 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
   }
 
   {
+    const std::string ns = "avoidance.target_filtering.merging_vehicle.";
+    updateParam<double>(parameters, ns + "th_overhang_distance", p->th_overhang_distance);
+  }
+
+  {
     const std::string ns = "avoidance.avoidance.lateral.avoidance_for_ambiguous_vehicle.";
     updateParam<bool>(parameters, ns + "enable", p->enable_avoidance_for_ambiguous_vehicle);
     updateParam<double>(
@@ -170,6 +172,8 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
     updateParam<double>(parameters, ns + "min_prepare_distance", p->min_prepare_distance);
     updateParam<double>(parameters, ns + "min_slow_down_speed", p->min_slow_down_speed);
     updateParam<double>(parameters, ns + "buf_slow_down_speed", p->buf_slow_down_speed);
+    updateParam<bool>(parameters, ns + "consider_front_overhang", p->consider_front_overhang);
+    updateParam<bool>(parameters, ns + "consider_rear_overhang", p->consider_rear_overhang);
   }
 
   {
@@ -258,7 +262,6 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
   {
     const std::string ns = "avoidance.debug.";
     updateParam<bool>(parameters, ns + "marker", p->publish_debug_marker);
-    updateParam<bool>(parameters, ns + "console", p->print_debug_info);
   }
 
   std::for_each(observers_.begin(), observers_.end(), [&p](const auto & observer) {
