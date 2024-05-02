@@ -153,8 +153,9 @@ bool TransfusionTRT::preprocess(
 
   if (params_input_cpu < config_.min_voxel_size_) {
     RCLCPP_WARN_STREAM(
-      rclcpp::get_logger("lidar_transfusion"), "Too few voxels (" << params_input_cpu <<
-        ") for actual optimization profile (" << config_.min_voxel_size_ << ")");
+      rclcpp::get_logger("lidar_transfusion"),
+      "Too few voxels (" << params_input_cpu << ") for actual optimization profile ("
+                         << config_.min_voxel_size_ << ")");
     return false;
   }
 
