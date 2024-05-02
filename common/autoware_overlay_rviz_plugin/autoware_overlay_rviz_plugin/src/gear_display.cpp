@@ -87,7 +87,7 @@ void GearDisplay::drawGearIndicator(QPainter & painter, const QRectF & backgroun
   borderPen.setWidth(1);
   painter.setPen(borderPen);
 
-  float gearBoxSize = 37.5;
+  double gearBoxSize = 37.5;
   double gearX = backgroundRect.left() + 54;
   double gearY = backgroundRect.height() / 2 - gearBoxSize / 2.0;
   QRect gearRect(gearX, gearY, gearBoxSize, gearBoxSize);
