@@ -275,34 +275,25 @@ void RayGroundFilterComponent::ExtractPointsIndices(
 {
   initializePointCloud2(in_cloud_ptr, ground_cloud_msg_ptr);
   initializePointCloud2(in_cloud_ptr, no_ground_cloud_msg_ptr);
-  size_t ground_count = 0;
   int point_step = in_cloud_ptr->point_step;
-  size_t prev_ground_idx = 0;
+  size_t ground_count = 0;
   size_t no_ground_count = 0;
-  // sort indices
-  sort(in_indices.indices.begin(), in_indices.indices.end());
+  std::vector<bool> is_ground_idx(in_cloud_ptr->width, false);
   for (const auto & idx : in_indices.indices) {
-    std::memcpy(
-      &ground_cloud_msg_ptr->data[ground_count * point_step], &in_cloud_ptr->data[idx * point_step],
-      point_step);
-    ground_count++;
-    if (idx - prev_ground_idx > 1) {
+    is_ground_idx[idx] = true;
+  }
+  for (size_t i = 0; i < is_ground_idx.size(); ++i) {
+    if (is_ground_idx[i]) {
+      std::memcpy(
+        &ground_cloud_msg_ptr->data[ground_count * point_step], &in_cloud_ptr->data[i * point_step],
+        point_step);
+      ground_count++;
+    } else {
       std::memcpy(
         &no_ground_cloud_msg_ptr->data[no_ground_count * point_step],
-        &in_cloud_ptr->data[(prev_ground_idx + 1) * point_step],
-        point_step * (idx - prev_ground_idx - 1));
-      no_ground_count += idx - prev_ground_idx - 1;
+        &in_cloud_ptr->data[i * point_step], point_step);
+      no_ground_count++;
     }
-    prev_ground_idx = idx;
-  }
-
-  // Check no_ground_points after last idx
-  if (prev_ground_idx < in_cloud_ptr->width - 1) {
-    std::memcpy(
-      &no_ground_cloud_msg_ptr->data[no_ground_count * point_step],
-      &in_cloud_ptr->data[(prev_ground_idx + 1) * point_step],
-      point_step * (in_cloud_ptr->width - prev_ground_idx - 1));
-    no_ground_count += in_cloud_ptr->width - prev_ground_idx - 1;
   }
   ground_cloud_msg_ptr->data.resize(ground_count * point_step);
   no_ground_cloud_msg_ptr->data.resize(no_ground_count * point_step);
