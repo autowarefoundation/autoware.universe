@@ -89,7 +89,7 @@ void GearDisplay::drawGearIndicator(QPainter & painter, const QRectF & backgroun
 
   double gearBoxSize = 37.5;
   double gearX = backgroundRect.left() + 54;
-  double gearY = backgroundRect.height() / 2 - gearBoxSize / 2.0;
+  double gearY = backgroundRect.height() / 2 - gearBoxSize / 2;
   QRect gearRect(gearX, gearY, gearBoxSize, gearBoxSize);
   painter.setBrush(gray);
   painter.drawRoundedRect(gearRect, 10, 10);
