@@ -23,7 +23,7 @@ namespace motion_velocity_planner
 {
 namespace
 {
-std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
+std::string json_dumps_pose(const geometry_msgs::msg::Pose & pose)
 {
   const std::string json_dumps_pose =
     (boost::format(
@@ -34,7 +34,7 @@ std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
   return json_dumps_pose;
 }
 
-diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
+diagnostic_msgs::msg::DiagnosticStatus make_stop_reason_diag(
   const std::string stop_reason, const geometry_msgs::msg::Pose & stop_pose)
 {
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
@@ -43,30 +43,27 @@ diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
   stop_reason_diag.name = "stop_reason";
   stop_reason_diag.message = stop_reason;
   stop_reason_diag_kv.key = "stop_pose";
-  stop_reason_diag_kv.value = jsonDumpsPose(stop_pose);
+  stop_reason_diag_kv.value = json_dumps_pose(stop_pose);
   stop_reason_diag.values.push_back(stop_reason_diag_kv);
   return stop_reason_diag;
 }
 }  // namespace
 
 MotionVelocityPlannerManager::MotionVelocityPlannerManager()
-: plugin_loader_("motion_velocity_planner_common", "motion_velocity_planner::PluginModuleInterface")
+: plugin_loader_("motion_velocity_planner_node", "motion_velocity_planner::PluginModuleInterface")
 {
 }
 
 void MotionVelocityPlannerManager::load_module_plugin(rclcpp::Node & node, const std::string & name)
 {
+  // Check if the plugin is already loaded.
+  if (plugin_loader_.isClassLoaded(name)) {
+    RCLCPP_WARN_STREAM(node.get_logger(), "The plugin '" << name << "' is already loaded.");
+    return;
+  }
   if (plugin_loader_.isClassAvailable(name)) {
     const auto plugin = plugin_loader_.createSharedInstance(name);
     plugin->init(node);
-
-    // Check if the plugin is already registered.
-    for (const auto & loaded_plugin : loaded_plugins_) {
-      if (plugin->get_module_name() == loaded_plugin->get_module_name()) {
-        RCLCPP_WARN_STREAM(node.get_logger(), "The plugin '" << name << "' is already loaded.");
-        return;
-      }
-    }
 
     // register
     loaded_plugins_.push_back(plugin);
@@ -93,6 +90,12 @@ void MotionVelocityPlannerManager::unload_module_plugin(
   }
 }
 
+void MotionVelocityPlannerManager::update_module_parameters(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  for (auto & plugin : loaded_plugins_) plugin->update_parameters(parameters);
+}
+
 std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocities(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const PlannerData & planner_data)
@@ -100,7 +103,7 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
   std::string stop_reason_msg("path_end");
 
   std::vector<VelocityPlanningResult> results;
-  for (const auto & plugin : loaded_plugins_)
+  for (auto & plugin : loaded_plugins_)
     results.push_back(plugin->plan(ego_trajectory_points, planner_data));
 
   // stop_reason_diag_ = makeStopReasonDiag(

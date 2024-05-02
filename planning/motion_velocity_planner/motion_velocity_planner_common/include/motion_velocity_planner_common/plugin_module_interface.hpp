@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2024 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ class PluginModuleInterface
 public:
   virtual ~PluginModuleInterface() = default;
   virtual void init(rclcpp::Node & node) = 0;
+  virtual void update_parameters(const std::vector<rclcpp::Parameter> & parameters) = 0;
   virtual VelocityPlanningResult plan(
     const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
     const PlannerData & planner_data) = 0;
-  virtual std::string get_module_name() = 0;
+  virtual std::string get_module_name() const = 0;
 };
 
 }  // namespace motion_velocity_planner

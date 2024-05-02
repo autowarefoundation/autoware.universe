@@ -19,6 +19,7 @@
 #include <motion_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <motion_velocity_smoother/trajectory_utils.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
+#include <tier4_autoware_utils/ros/update_param.hpp>
 #include <tier4_autoware_utils/ros/wait_for_param.hpp>
 #include <tier4_autoware_utils/transform/transforms.hpp>
 
@@ -171,6 +172,9 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
     planner_manager_.load_module_plugin(*this, name);
   }
 
+  set_param_callback_ = this->add_on_set_parameters_callback(
+    std::bind(&MotionVelocityPlannerNode::on_set_param, this, std::placeholders::_1));
+
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
@@ -192,10 +196,10 @@ void MotionVelocityPlannerNode::on_unload_plugin(
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool MotionVelocityPlannerNode::is_data_ready(
-  const PlannerData planner_data, rclcpp::Clock clock) const
+bool MotionVelocityPlannerNode::is_data_ready(const PlannerData & planner_data) const
 {
   const auto & d = planner_data;
+  auto clock = *get_clock();
 
   // from callbacks
   if (!d.current_odometry) {
@@ -362,13 +366,15 @@ void MotionVelocityPlannerNode::on_trajectory(
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
-  if (!is_data_ready(planner_data_, *get_clock())) {
+  if (!is_data_ready(planner_data_)) {
     return;
   }
 
   if (input_trajectory_msg->points.empty()) {
     return;
   }
+
+  if (has_received_map_) planner_data_.route_handler.setMap(*map_ptr_);
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> input_trajectory(
     input_trajectory_msg->points.begin(), input_trajectory_msg->points.end());
@@ -413,6 +419,31 @@ autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate
   }
 
   return output_trajectory_msg;
+}
+
+rcl_interfaces::msg::SetParametersResult MotionVelocityPlannerNode::on_set_param(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+
+  rcl_interfaces::msg::SetParametersResult result;
+
+  {
+    // const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
+    planner_manager_.update_module_parameters(parameters);
+  }
+
+  result.successful = true;
+  result.reason = "success";
+
+  try {
+    // const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+    result.successful = false;
+    result.reason = e.what();
+  }
+
+  return result;
 }
 }  // namespace motion_velocity_planner
 

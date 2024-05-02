@@ -24,15 +24,15 @@ namespace motion_velocity_planner
 {
 struct SlowdownInterval
 {
-  geometry_msgs::msg::Point from;
-  geometry_msgs::msg::Point to;
-  double velocity;
+  geometry_msgs::msg::Point from{};
+  geometry_msgs::msg::Point to{};
+  double velocity{};
 };
 struct VelocityPlanningResult
 {
-  std::vector<geometry_msgs::msg::Point> stop_points;
-  std::vector<SlowdownInterval> slowdown_intervals;
-  visualization_msgs::msg::MarkerArray debug_marker_array;
+  std::vector<geometry_msgs::msg::Point> stop_points{};
+  std::vector<SlowdownInterval> slowdown_intervals{};
+  visualization_msgs::msg::MarkerArray debug_marker_array{};
   // TODO(Maxime): add velocity factor
 };
 }  // namespace motion_velocity_planner

@@ -87,16 +87,17 @@ private:
   void on_occupancy_grid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
   void on_param();
 
-  // publisher
+  // publishers
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
 
-  //  parameter
+  //  parameters
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;
   double forward_path_length_;
   double backward_path_length_;
 
-  // member
+  // members
   PlannerData planner_data_;
   MotionVelocityPlannerManager planner_manager_;
   bool is_driving_forward_{true};
@@ -110,12 +111,14 @@ private:
     const UnloadPlugin::Response::SharedPtr response);
   void on_load_plugin(
     const LoadPlugin::Request::SharedPtr request, const LoadPlugin::Response::SharedPtr response);
+  rcl_interfaces::msg::SetParametersResult on_set_param(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   // mutex for planner_data_
   std::mutex mutex_;
 
   // function
-  bool is_data_ready(const PlannerData planner_data, rclcpp::Clock clock) const;
+  bool is_data_ready(const PlannerData & planner_data) const;
   autoware_auto_planning_msgs::msg::Trajectory generate_trajectory(
     const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory_msg,
     const PlannerData & planner_data);
