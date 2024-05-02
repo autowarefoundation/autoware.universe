@@ -41,7 +41,7 @@ TransfusionTRT::TransfusionTRT(
   stop_watch_ptr_->tic("processing/inner");
   initPtr();
 
-  cudaStreamCreate(&stream_);
+  CHECK_CUDA_ERROR(cudaStreamCreate(&stream_));
 
 #ifdef CPU_PROCESSING
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Using CPU processing");
@@ -136,8 +136,6 @@ bool TransfusionTRT::preprocess(
   cuda::clear_async(
     points_d_.get(), config_.cloud_capacity_ * config_.num_point_feature_size_, stream_);
 
-  std::vector<lidar_transfusion::Box3D> pred;
-
   const auto count = vg_ptr_->generateSweepPoints(msg, points_d_);
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Generated sweep points: " << count);
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
@@ -152,6 +150,13 @@ bool TransfusionTRT::preprocess(
     &params_input_cpu, params_input_d_.get(), sizeof(unsigned int), cudaMemcpyDeviceToHost,
     stream_));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
+
+  if (params_input_cpu < config_.min_voxel_size_) {
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("lidar_transfusion"), "Too few voxels (" << params_input_cpu <<
+        ") for actual optimization profile (" << config_.min_voxel_size_ << ")");
+    return false;
+  }
 
   if (params_input_cpu > config_.max_voxels_) {
     params_input_cpu = config_.max_voxels_;

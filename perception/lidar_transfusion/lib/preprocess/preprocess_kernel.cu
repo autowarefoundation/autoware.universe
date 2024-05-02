@@ -37,39 +37,29 @@ namespace lidar_transfusion
 PreprocessCuda::PreprocessCuda(const TransfusionConfig & config, cudaStream_t & stream)
 : stream_(stream), config_(config)
 {
-  unsigned int mask_size =
+  mask_size_ =
     config_.grid_z_size_ * config_.grid_y_size_ * config_.grid_x_size_ * sizeof(unsigned int);
-
-  unsigned int voxels_size = config_.grid_z_size_ * config_.grid_y_size_ * config_.grid_x_size_ *
+  voxels_size_ = config_.grid_z_size_ * config_.grid_y_size_ * config_.grid_x_size_ *
                              config_.max_num_points_per_pillar_ * config_.num_point_feature_size_ *
                              sizeof(float);
-
-  CHECK_CUDA_ERROR(cudaMallocManaged((void **)&mask_, mask_size));
-  CHECK_CUDA_ERROR(cudaMallocManaged((void **)&voxels_, voxels_size));
-
-  CHECK_CUDA_ERROR(cudaMemsetAsync(mask_, 0, mask_size, stream_));
-  CHECK_CUDA_ERROR(cudaMemsetAsync(voxels_, 0, voxels_size, stream_));
-
-  return;
+  mask_ = cuda::make_unique<unsigned int[]>(mask_size_);
+  voxels_ = cuda::make_unique<float[]>(voxels_size_);
 }
 
-PreprocessCuda::~PreprocessCuda()
-{
-  CHECK_CUDA_ERROR(cudaFree(mask_));
-  CHECK_CUDA_ERROR(cudaFree(voxels_));
-  return;
-}
-
-int PreprocessCuda::generateVoxels(
+void PreprocessCuda::generateVoxels(
   float * points, unsigned int points_size, unsigned int * pillar_num, float * voxel_features,
   unsigned int * voxel_num, unsigned int * voxel_idxs)
 {
-  CHECK_CUDA_ERROR(generateVoxels_random_launch(points, points_size, mask_, voxels_, stream_));
+  cuda::clear_async(mask_.get(), mask_size_, stream_);
+  cuda::clear_async(voxels_.get(), voxels_size_, stream_);
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
+
+  CHECK_CUDA_ERROR(generateVoxels_random_launch(points, points_size, mask_.get(), voxels_.get()));
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   CHECK_CUDA_ERROR(generateBaseFeatures_launch(
-    mask_, voxels_, pillar_num, voxel_features, voxel_num, voxel_idxs, stream_));
-
-  return 0;
+    mask_.get(), voxels_.get(), pillar_num, voxel_features, voxel_num, voxel_idxs));
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 }
 
 __global__ void generateVoxels_random_kernel(
@@ -108,13 +98,12 @@ __global__ void generateVoxels_random_kernel(
 }
 
 cudaError_t PreprocessCuda::generateVoxels_random_launch(
-  float * points, unsigned int points_size, unsigned int * mask, float * voxels,
-  cudaStream_t stream)
+  float * points, unsigned int points_size, unsigned int * mask, float * voxels)
 {
   int threadNum = config_.threads_for_voxel_;
   dim3 blocks((points_size + threadNum - 1) / threadNum);
   dim3 threads(threadNum);
-  generateVoxels_random_kernel<<<blocks, threads, 0, stream>>>(
+  generateVoxels_random_kernel<<<blocks, threads, 0, stream_>>>(
     points, points_size, config_.min_x_range_, config_.max_x_range_, config_.min_y_range_,
     config_.max_y_range_, config_.min_z_range_, config_.max_z_range_, config_.voxel_x_size_,
     config_.voxel_y_size_, config_.voxel_z_size_, config_.grid_y_size_, config_.grid_x_size_,
@@ -164,12 +153,12 @@ __global__ void generateBaseFeatures_kernel(
 // create 4 channels
 cudaError_t PreprocessCuda::generateBaseFeatures_launch(
   unsigned int * mask, float * voxels, unsigned int * pillar_num, float * voxel_features,
-  unsigned int * voxel_num, unsigned int * voxel_idxs, cudaStream_t stream)
+  unsigned int * voxel_num, unsigned int * voxel_idxs)
 {
   dim3 threads = {32, 32};
   dim3 blocks = {divup(config_.grid_x_size_, threads.x), divup(config_.grid_y_size_, threads.y)};
 
-  generateBaseFeatures_kernel<<<blocks, threads, 0, stream>>>(
+  generateBaseFeatures_kernel<<<blocks, threads, 0, stream_>>>(
     mask, voxels, config_.grid_y_size_, config_.grid_x_size_, config_.points_per_voxel_,
     config_.max_voxels_, pillar_num, voxel_features, voxel_num, voxel_idxs);
   cudaError_t err = cudaGetLastError();
@@ -253,11 +242,11 @@ __global__ void generateVoxelsInput_kernel(
 // extract data from cloud byte array
 cudaError_t PreprocessCuda::generateVoxelsInput_launch(
   uint8_t * cloud_data, CloudInfo & cloud_info, unsigned int points_agg, unsigned int points_size,
-  float time_lag, float * affine_past2current, float * points, cudaStream_t stream)
+  float time_lag, float * affine_past2current, float * points)
 {
   dim3 threads = {1024};
   dim3 blocks = {divup(points_size, threads.x * threads.y)};
-  generateVoxelsInput_kernel<<<blocks, threads, 0, stream>>>(
+  generateVoxelsInput_kernel<<<blocks, threads, 0, stream_>>>(
     cloud_data, cloud_info.x_offset, cloud_info.y_offset, cloud_info.z_offset,
     cloud_info.intensity_offset, cloud_info.x_datatype, cloud_info.y_datatype,
     cloud_info.z_datatype, cloud_info.intensity_datatype, cloud_info.x_size, cloud_info.y_size,

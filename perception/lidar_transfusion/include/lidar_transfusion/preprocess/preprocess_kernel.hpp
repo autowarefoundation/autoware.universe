@@ -43,29 +43,29 @@ class PreprocessCuda
 {
 public:
   PreprocessCuda(const TransfusionConfig & config, cudaStream_t & stream);
-  ~PreprocessCuda();
 
-  int generateVoxels(
+  void generateVoxels(
     float * points, unsigned int points_size, unsigned int * pillar_num, float * voxel_features,
     unsigned int * voxel_num, unsigned int * voxel_idxs);
 
   cudaError_t generateVoxels_random_launch(
-    float * points, unsigned int points_size, unsigned int * mask, float * voxels,
-    cudaStream_t stream = 0);
+    float * points, unsigned int points_size, unsigned int * mask, float * voxels);
 
   cudaError_t generateBaseFeatures_launch(
     unsigned int * mask, float * voxels, unsigned int * pillar_num, float * voxel_features,
-    unsigned int * voxel_num, unsigned int * voxel_idxs, cudaStream_t stream = 0);
+    unsigned int * voxel_num, unsigned int * voxel_idxs);
 
   cudaError_t generateVoxelsInput_launch(
     uint8_t * cloud_data, CloudInfo & cloud_info, unsigned int points_agg, unsigned int points_size,
-    float time_lag, float * affine_past2current, float * points, cudaStream_t stream = 0);
+    float time_lag, float * affine_past2current, float * points);
 
 private:
   TransfusionConfig config_;
   cudaStream_t stream_;
-  unsigned int * mask_;
-  float * voxels_;
+  cuda::unique_ptr<unsigned int[]> mask_{nullptr};
+  cuda::unique_ptr<float[]> voxels_{nullptr};
+  unsigned int mask_size_;
+  unsigned int voxels_size_;
 };
 }  // namespace lidar_transfusion
 

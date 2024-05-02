@@ -111,7 +111,7 @@ std::size_t VoxelGenerator::generateSweepPoints(
 
     pre_ptr_->generateVoxelsInput_launch(
       cloud_data_d_.get(), cloud_info_, points_agg, points_size, time_lag,
-      affine_past2current_d_.get(), points_d.get(), stream_);
+      affine_past2current_d_.get(), points_d.get());
     CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
     points_agg += points_size;
   }
