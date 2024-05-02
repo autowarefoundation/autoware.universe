@@ -92,17 +92,15 @@ public:
    * @brief Construct a new instance.
    *
    * @param model_path The path to engine or onnx file.
-   * @param precision The precision type.
    * @param config The configuration of model.
-   * @param batch_config The configuration of batch.
+   * @param build_config The configuration of build.
    * @param max_workspace_size The max size of workspace.
    * @param build_config The configuration of build.
    */
   TrtMTR(
-    const std::string & model_path, const std::string & precision,
-    const MTRConfig & config = MTRConfig(), const BatchConfig & batch_config = {1, 1, 1},
-    const size_t max_workspace_size = (1ULL << 30),
-    const BuildConfig & build_config = BuildConfig());
+    const std::string & model_path, const MTRConfig & config = MTRConfig(),
+    const BuildConfig & build_config = BuildConfig(),
+    const size_t max_workspace_size = (1ULL << 30));
 
   /**
    * @brief Execute inference.
@@ -160,20 +158,18 @@ private:
 
   // data size
   // load from input data
-  size_t num_target_, num_agent_, time_length_;
-  size_t agent_input_dim_;
-  size_t num_polyline_, num_point_;
-  size_t polyline_input_dim_;
+  int32_t num_target_, num_agent_, num_timestamp_, num_agent_attr_;
+  int32_t num_polyline_, num_point_, num_point_dim_, num_point_attr_;
   // load from config
-  size_t max_num_polyline_, num_mode_, num_future_;
+  int32_t max_num_polyline_, num_mode_, num_future_, num_intention_point_;
 
   // source data
   cuda::unique_ptr<int[]> d_target_index_{nullptr};
   cuda::unique_ptr<int[]> d_label_index_{nullptr};
-  cuda::unique_ptr<float[]> d_timestamps_{nullptr};
+  cuda::unique_ptr<float[]> d_timestamp_{nullptr};
   cuda::unique_ptr<float[]> d_trajectory_{nullptr};
   cuda::unique_ptr<float[]> d_target_state_{nullptr};
-  cuda::unique_ptr<float[]> d_intention_points_{nullptr};
+  cuda::unique_ptr<float[]> d_intention_point_{nullptr};
   cuda::unique_ptr<float[]> d_polyline_{nullptr};
 
   // preprocessed inputs
@@ -191,6 +187,8 @@ private:
   // outputs
   cuda::unique_ptr<float[]> d_out_score_{nullptr};
   cuda::unique_ptr<float[]> d_out_trajectory_{nullptr};
+  std::unique_ptr<float[]> h_out_score_{nullptr};
+  std::unique_ptr<float[]> h_out_trajectory_{nullptr};
 };  // class TrtMTR
 }  // namespace trt_mtr
 #endif  // TENSORRT_MTR__TRT_MTR_HPP_
