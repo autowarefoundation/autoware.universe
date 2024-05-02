@@ -99,12 +99,12 @@ void SpeedDisplay::drawSpeedDisplay(QPainter & painter, const QRectF & backgroun
   painter.setPen(gray);
   painter.drawText(speedPos, speedNumber);
 
-  QFont unitFont("Quicksand", 8, QFont::Bold);
+  QFont unitFont("Quicksand", 8, QFont::DemiBold);
   painter.setFont(unitFont);
   QString speedUnit = "km/h";
   QRect unitRect = painter.fontMetrics().boundingRect(speedUnit);
   QPointF unitPos(
-    (backgroundRect.width() / 2 - unitRect.width() / 2), referencePos.y() + unitRect.height() + 10);
+    (backgroundRect.width() / 2 - unitRect.width() / 2), referencePos.y() + unitRect.height() + 15);
   painter.drawText(unitPos, speedUnit);
 }
 
