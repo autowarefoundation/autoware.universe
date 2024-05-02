@@ -42,19 +42,20 @@ struct MTRConfig
    * @brief Construct a new instance.
    *
    * @param target_labels An array of target label names.
+   * @param num_past The number of past timestamps.
    * @param num_mode The number of modes.
    * @param num_future The number of future time step length predicted by MTR.
    * @param max_num_polyline The max number of polylines which can be contained in a single input.
-   * @param offset_xy The offset value used in input pre-process.
+   * @param max_num_point The max number of points contained in each polyline.
    * @param intention_point_filepath The path to intention points file.
    * @param num_intention_point_cluster The number of clusters for intension points.
    */
   MTRConfig(
     const std::vector<std::string> & target_labels = {"VEHICLE", "PEDESTRIAN", "CYCLIST"},
-    const size_t num_past = 10, const size_t num_mode = 6, const size_t num_future = 80,
+    const size_t num_past = 11, const size_t num_mode = 6, const size_t num_future = 80,
     const size_t max_num_polyline = 768, const size_t max_num_point = 20,
-    const float point_break_distance = 1.0f, const std::array<float, 2> & offset_xy = {30.0f, 0.0f},
-    const std::string & intention_point_filepath = "./data/waymo64.csv",
+    const float point_break_distance = 1.0f,
+    const std::string & intention_point_filepath = "./data/intention_point.csv",
     const size_t num_intention_point_cluster = 64)
   : target_labels(target_labels),
     num_class(target_labels.size()),
@@ -64,7 +65,6 @@ struct MTRConfig
     max_num_polyline(max_num_polyline),
     max_num_point(max_num_point),
     point_break_distance(point_break_distance),
-    offset_xy(offset_xy),
     intention_point_filepath(intention_point_filepath),
     num_intention_point_cluster(num_intention_point_cluster)
   {
@@ -78,7 +78,6 @@ struct MTRConfig
   size_t max_num_polyline;
   size_t max_num_point;
   float point_break_distance;
-  std::array<float, 2> offset_xy;
   std::string intention_point_filepath;
   size_t num_intention_point_cluster;
 };  // struct MTRConfig
@@ -114,7 +113,7 @@ public:
    * @return True if the inference finishes successfully.
    */
   bool doInference(
-    AgentData & agent_data, PolylineData & polyline_data,
+    const AgentData & agent_data, const PolylineData & polyline_data,
     std::vector<PredictedTrajectory> & trajectories);
 
   /**
@@ -131,7 +130,7 @@ private:
    * @param agent_data The input agent data.
    * @param polyline_data The input polyline data.
    */
-  void initCudaPtr(AgentData & agent_data, PolylineData & polyline_data);
+  void initCudaPtr(const AgentData & agent_data, const PolylineData & polyline_data);
 
   /**
    * @brief Execute pre-process.
@@ -140,7 +139,7 @@ private:
    * @param polyline_data The input polyline data.
    * @return True if the pre-process finishes successfully.
    */
-  bool preProcess(AgentData & agent_data, PolylineData & polyline_data);
+  bool preProcess(const AgentData & agent_data, const PolylineData & polyline_data);
 
   /**
    * @brief Execute post-process.
@@ -149,7 +148,7 @@ private:
    * @param trajectories A container to store predicted trajectories.
    * @return True if the post-process finishes successfully.
    */
-  bool postProcess(AgentData & agent_data, std::vector<PredictedTrajectory> & trajectories);
+  bool postProcess(const AgentData & agent_data, std::vector<PredictedTrajectory> & trajectories);
 
   // model parameters
   MTRConfig config_;
@@ -159,6 +158,15 @@ private:
 
   IntentionPoint intention_point_;
 
+  // data size
+  // load from input data
+  size_t num_target_, num_agent_, time_length_;
+  size_t agent_input_dim_;
+  size_t num_polyline_, num_point_;
+  size_t polyline_input_dim_;
+  // load from config
+  size_t max_num_polyline_, num_mode_, num_future_;
+
   // source data
   cuda::unique_ptr<int[]> d_target_index_{nullptr};
   cuda::unique_ptr<int[]> d_label_index_{nullptr};
@@ -167,7 +175,6 @@ private:
   cuda::unique_ptr<float[]> d_target_state_{nullptr};
   cuda::unique_ptr<float[]> d_intention_points_{nullptr};
   cuda::unique_ptr<float[]> d_polyline_{nullptr};
-  cuda::unique_ptr<int[]> d_topk_index_{nullptr};
 
   // preprocessed inputs
   cuda::unique_ptr<float[]> d_in_trajectory_{nullptr};
@@ -176,6 +183,10 @@ private:
   cuda::unique_ptr<float[]> d_in_polyline_{nullptr};
   cuda::unique_ptr<bool[]> d_in_polyline_mask_{nullptr};
   cuda::unique_ptr<float[]> d_in_polyline_center_{nullptr};
+  // only used for topk extraction
+  cuda::unique_ptr<float[]> d_tmp_polyline_{nullptr};
+  cuda::unique_ptr<bool[]> d_tmp_polyline_mask_{nullptr};
+  cuda::unique_ptr<float[]> d_tmp_distance_{nullptr};
 
   // outputs
   cuda::unique_ptr<float[]> d_out_score_{nullptr};

@@ -88,13 +88,8 @@ public:
     }
   }
 
-  /**
-   * @brief Return the ID of the corresponding label type.
-   * If specified type is not contained in map, return -1.
-   *
-   * @param type
-   * @return int
-   */
+  // Return the ID of the corresponding label type. If specified type is not contained in map,
+  // return `-1`.
   int getTypeID(const std::string & type) const
   {
     return label_map_.count(type) == 0 ? -1 : label_map_.at(type);
@@ -109,83 +104,42 @@ class MTRNode : public rclcpp::Node
 public:
   explicit MTRNode(const rclcpp::NodeOptions & node_options);
 
-  // Object ID for ego vehicle
+  // Object ID of the ego vehicle
   const std::string EGO_ID{"EGO"};
 
 private:
-  /**
-   * @brief Main callback being invoked when the tracked objects topic is subscribed.
-   *
-   * @param object_msg
-   */
+  // Main callback being invoked when the tracked objects topic is subscribed.
   void callback(const TrackedObjects::ConstSharedPtr object_msg);
 
-  /**
-   * @brief Callback being invoked when the HD map topic is subscribed.
-   *
-   * @param map_msg
-   */
+  // Callback being invoked when the HD map topic is subscribed.
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
 
-  /**
-   * @brief Callback being invoked when the Ego's odometry topic is subscribed.
-   *
-   * @param ego_msg
-   */
+  // Callback being invoked when the Ego's odometry topic is subscribed.
   void onEgo(const Odometry::ConstSharedPtr ego_msg);
 
-  /**
-   * @brief Converts lanelet2 to polylines.
-   *
-   * @return true
-   */
+  // Convert Lanelet to `PolylineData`.
   bool convertLaneletToPolyline();
 
-  /**
-   * @brief Remove ancient agent histories.
-   *
-   * @param current_time
-   * @param objects_msg
-   */
+  // Remove ancient agent histories.
   void removeAncientAgentHistory(
     const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
 
-  /**
-   * @brief Appends new states to history.
-   *
-   * @param current_time
-   * @param objects_msg
-   */
+  // Appends new states to history.
   void updateAgentHistory(
     const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
 
+  // Extract ego state stored in the buffer which has the nearest timestamp from current timestamp.
   AgentState extractNearestEgo(const float current_time) const;
 
-  /**
-   * @brief Extract target agents and return corresponding indices.
-   *
-   * NOTE: Extract targets in order of proximity, closest first.
-   *
-   * @param histories
-   * @return std::vector<size_t>
-   */
+  // Extract target agents and return corresponding indices.
+  // NOTE: Extract targets in order of proximity, closest first.
   std::vector<size_t> extractTargetAgent(const std::vector<AgentHistory> & histories);
 
-  /**
-   * @brief Return the timestamps relative from the first element.Return the timestamps relative
-   * from the first element.
-   *
-   * @return std::vector<float>
-   */
+  // Return the timestamps relative from the first element.Return the timestamps relative from the
+  // first element.
   std::vector<float> getRelativeTimestamps() const;
 
-  /**
-   * @brief Generate `PredictedObject` from `PredictedTrajectory`.
-   *
-   * @param object
-   * @param trajectory
-   * @return PredictedObject
-   */
+  // Generate `PredictedObject` from `PredictedTrajectory`.
   PredictedObject generatePredictedObject(
     const TrackedObject & object, const PredictedTrajectory & trajectory);
 

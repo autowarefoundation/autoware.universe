@@ -28,12 +28,8 @@ namespace trt_mtr
 {
 namespace
 {
-/**
- * @brief Get the Lanelet subtype name.
- *
- * @param lanelet
- * @return std::string
- */
+// Return the Lanelet subtype name. If input Lanelet has no attribute named `type` return empty
+// string `""`.
 std::string getLaneletSubtype(const lanelet::Lanelet & lanelet)
 {
   if (!lanelet.hasAttribute("subtype")) {
@@ -44,12 +40,8 @@ std::string getLaneletSubtype(const lanelet::Lanelet & lanelet)
   }
 }
 
-/**
- * @brief Get the LineString type name.
- *
- * @param linestring
- * @return std::string
- */
+// Return the LineString type name. If input LineString has no attribute named `type` return empty
+// string `""`.
 std::string getLineStringType(const lanelet::ConstLineString3d & linestring)
 {
   if (!linestring.hasAttribute("type")) {
@@ -60,12 +52,8 @@ std::string getLineStringType(const lanelet::ConstLineString3d & linestring)
   }
 }
 
-/**
- * @brief Get the LineString subtype name.
- *
- * @param linestring
- * @return std::string
- */
+// Return the LineString subtype name. If input LineString has no attribute named `subtype` return
+// empty string `""`.
 std::string getLineStringSubtype(const lanelet::ConstLineString3d & linestring)
 {
   if (!linestring.hasAttribute("subtype")) {
@@ -76,13 +64,7 @@ std::string getLineStringSubtype(const lanelet::ConstLineString3d & linestring)
   }
 }
 
-/**
- * @brief Check whether lanelet has an attribute named `turn_direction`.
- *
- * @param lanelet
- * @return true
- * @return false
- */
+// Check whether lanelet has an attribute named `turn_direction`.
 bool isTurnIntersection(const lanelet::Lanelet & lanelet)
 {
   if (lanelet.hasAttribute("turn_direction")) {
@@ -92,25 +74,14 @@ bool isTurnIntersection(const lanelet::Lanelet & lanelet)
   }
 }
 
-/**
- * @brief Insert source LanePoints into target LanePoints.
- *
- * @param src Source LanePoints.
- * @param dst Target LanePoints.
- */
+// Insert source `LanePoints` into target `LanePoints`.
 void insertLanePoints(const std::vector<LanePoint> & src, std::vector<LanePoint> & dst)
 {
   dst.reserve(dst.size() * 2);
   dst.insert(dst.end(), src.cbegin(), src.cend());
 }
 
-/**
- * @brief Convert TrackedObject to AgentState.
- *
- * @param object
- * @param is_valid
- * @return AgentState
- */
+// Convert `TrackedObject` to `AgentState`.
 AgentState trackedObjectToAgentState(const TrackedObject & object, const bool is_valid)
 {
   const auto & pose = object.kinematics.pose_with_covariance.pose;
@@ -135,13 +106,8 @@ AgentState trackedObjectToAgentState(const TrackedObject & object, const bool is
     valid};
 }
 
-/**
- * @brief Get the label index corresponding to AgentLabel. If the label of tracked object is not
- * defined in AgentLabel returns `-1`.
- *
- * @param object
- * @return int
- */
+// Get the label index corresponding to AgentLabel. If the label of tracked object is not * defined
+// in AgentLabel returns `-1`.
 int getLabelIndex(const TrackedObject & object)
 {
   const auto classification = object_recognition_utils::getHighestProbLabel(object.classification);
@@ -175,16 +141,13 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
     const auto max_num_point = static_cast<size_t>(declare_parameter<int>("max_num_point"));
     const auto point_break_distance =
       static_cast<float>(declare_parameter<double>("point_break_distance"));
-    auto tmp_offset_xy = declare_parameter<std::vector<double>>("offset_xy");
-    std::array<float, 2> offset_xy;
-    std::copy_n(tmp_offset_xy.begin(), 2, offset_xy.begin());
     const auto intention_point_filepath =
       declare_parameter<std::string>("intention_point_filepath");
     const auto num_intention_point_cluster =
       static_cast<size_t>(declare_parameter<int>("num_intention_point_cluster"));
     config_ptr_ = std::make_unique<MTRConfig>(
       target_labels, num_past, num_mode, num_future, max_num_polyline, max_num_point,
-      point_break_distance, offset_xy, intention_point_filepath, num_intention_point_cluster);
+      point_break_distance, intention_point_filepath, num_intention_point_cluster);
     model_ptr_ = std::make_unique<TrtMTR>(model_path, precision, *config_ptr_.get());
   }
 
@@ -501,7 +464,7 @@ std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> 
     return item1.second < item2.second;
   });
 
-  constexpr size_t max_target_size = 15;  // TODO(ktro2828): use parameter
+  constexpr size_t max_target_size = 15;  // TODO(ktro2828): use a parameter
   std::vector<size_t> target_indices;
   target_indices.reserve(max_target_size);
   for (const auto & [idx, _] : distances) {
@@ -564,7 +527,6 @@ PredictedObject MTRNode::generatePredictedObject(
 
   return predicted_object;
 }
-
 }  // namespace trt_mtr
 
 #include <rclcpp_components/register_node_macro.hpp>

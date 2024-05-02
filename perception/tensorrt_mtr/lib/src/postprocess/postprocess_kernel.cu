@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "postprocess/postprocess_kernel.cuh"
-
 __global__ void transformTrajectoryKernel(
-  const int B, const int M, const int T, const int inDim, const float * targetState,
-  const int outDim, float * trajectory)
+  const int B, const int M, const int T, const int AgentDim, const float * targetState,
+  const int PredDim, float * predTrajectory)
 {
   int b = blockIdx.x * blockDim.x + threadIdx.x;
   int m = blockIdx.y * blockDim.y + threadIdx.y;
@@ -26,31 +24,31 @@ __global__ void transformTrajectoryKernel(
     return;
   }
 
-  const int pred_idx = (b * M * T + m * T + t) * outDim;
-  const float pred_x = trajectory[pred_idx];
-  const float pred_y = trajectory[pred_idx + 1];
+  const int predIdx = (b * M * T + m * T + t) * PredDim;
+  const float predX = predTrajectory[predIdx];
+  const float predY = predTrajectory[predIdx + 1];
 
-  const int target_idx = b * inDim;
-  const float target_x = targetState[target_idx];
-  const float target_y = targetState[target_idx + 1];
-  const float target_yaw = targetState[target_idx + 6];
-  const float target_cos = cos(target_yaw);
-  const float target_sin = sin(target_yaw);
+  const int targetIdx = b * AgentDim;
+  const float targetX = targetState[targetIdx];
+  const float targetY = targetState[targetIdx + 1];
+  const float targetYaw = targetState[targetIdx + 6];
+  const float targetCos = cosf(targetYaw);
+  const float targetSin = sinf(targetYaw);
 
-  trajectory[pred_idx] = target_cos * pred_x + target_sin * pred_y + target_x;
-  trajectory[pred_idx + 1] = -target_sin * pred_x + target_cos * pred_y + target_y;
+  predTrajectory[predIdx] = targetCos * predX + targetSin * predY + targetX;
+  predTrajectory[predIdx + 1] = -targetSin * predX + targetCos * predY + targetY;
 }
 
 cudaError_t postprocessLauncher(
-  const int B, const int M, const int T, const int inDim, const float * target_state,
-  const int outDim, float * pred_score, float * pred_trajectory, cudaStream_t stream)
+  const int B, const int M, const int T, const int AgentDim, const float * targetState,
+  const int PredDim, float * predTrajectory, cudaStream_t stream)
 {
   // TODO: update the number of blocks and threads to guard from `cudaErrorIllegalAccess`
   constexpr int threadsPerBlock = 256;
   dim3 blocks(B, M, T);
 
   transformTrajectoryKernel<<<blocks, threadsPerBlock, 0, stream>>>(
-    B, M, T, inDim, target_state, outDim, pred_trajectory);
+    B, M, T, AgentDim, targetState, PredDim, predTrajectory);
 
   return cudaGetLastError();
 }
