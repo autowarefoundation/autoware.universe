@@ -41,7 +41,7 @@ public:
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg);
   void ndt_pose_with_cov_callback(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg);
-  std::array<double, 36> ndt_covariance_modifier(std::array<double, 36> & in_ndt_covariance);
+  std::array<double, 36> ndt_covariance_modifier(std::array<double, 36> & ndt_covariance_in);
   geometry_msgs::msg::PoseWithCovarianceStamped gnss_source_pose_with_cov;
 
   void check_gnss_pose_timeout();

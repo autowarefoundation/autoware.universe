@@ -72,31 +72,34 @@ void AutowarePoseCovarianceModifierNode::check_gnss_pose_timeout()
 }
 
 std::array<double, 36> AutowarePoseCovarianceModifierNode::ndt_covariance_modifier(
-  std::array<double, 36> & in_ndt_covariance)
+  std::array<double, 36> & ndt_covariance_in)
 {
-  std::array<double, 36> ndt_covariance = in_ndt_covariance;
+  std::array<double, 36> ndt_covariance = ndt_covariance_in;
   /*
    * In the README.md file, "How does the "Interpolate GNSS and NDT pose" part work?" It is
    * explained in the section
    * (https://github.com/meliketanrikulu/autoware.universe/tree/feat/add_autoware_pose_covariance_modifier_node/localization/autoware_pose_covariance_modifier_node#how-does-the-interpolate-gnss-and-ndt-pose-part-work-)
    */
-  auto modify_covariance = [&](int idx) {
+  auto modify_covariance = [&](double ndt_covariance, double gnss_covariance) {
     // calculate NDT covariance value based on gnss covariance
+    double sqrt_ndt_cov = std::sqrt(ndt_covariance);
     double calculated_covariance = std::pow(
-      ((std::sqrt(in_ndt_covariance[idx]) * 2) -
-       ((std::sqrt(in_ndt_covariance[idx]) * 2) - (std::sqrt(in_ndt_covariance[idx]))) *
-         ((std::sqrt(gnss_source_pose_with_cov.pose.covariance[idx]) - gnss_stddev_reliable_max_) /
-          (gnss_stddev_unreliable_min_ - gnss_stddev_reliable_max_))),
+      ((sqrt_ndt_cov * 2) - ((sqrt_ndt_cov * 2) - (sqrt_ndt_cov)) *
+                              ((std::sqrt(gnss_covariance) - gnss_stddev_reliable_max_) /
+                               (gnss_stddev_unreliable_min_ - gnss_stddev_reliable_max_))),
       2);
     // Make sure the ndt covariance is not below the input ndt covariance value and return
-    return (std::max(calculated_covariance, in_ndt_covariance[idx]));
+    return (std::max(calculated_covariance, ndt_covariance));
   };
-  ndt_covariance[X_POS_IDX_] = modify_covariance(X_POS_IDX_);
-  ndt_covariance[Y_POS_IDX_] = modify_covariance(Y_POS_IDX_);
-  ndt_covariance[Z_POS_IDX_] = modify_covariance(Z_POS_IDX_);
+
+  std::array<int, 3> indices = {X_POS_IDX_, Y_POS_IDX_, Z_POS_IDX_};
+  for (int idx : indices) {
+    ndt_covariance[idx] = modify_covariance(ndt_covariance_in[idx], gnss_source_pose_with_cov.pose.covariance[idx]);
+  }
 
   return ndt_covariance;
 }
+
 void AutowarePoseCovarianceModifierNode::ndt_pose_with_cov_callback(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg)
 {
