@@ -29,25 +29,54 @@ constexpr size_t PredictedStateDim = 7;
  */
 struct PredictedState
 {
-  // TODO(ktro2828): set other values too
   explicit PredictedState(const float * state)
-  : x_(state[0]), y_(state[1]), vx_(state[5]), vy_(state[6])
+  : x_(state[0]),
+    y_(state[1]),
+    dx_(state[2]),
+    dy_(state[3]),
+    yaw_(state[4]),
+    vx_(state[5]),
+    vy_(state[6])
   {
   }
 
+  PredictedState(
+    const float x, const float y, const float dx, const float dy, const float yaw, const float vx,
+    const float vy)
+  : x_(x), y_(y), dx_(dx), dy_(dy), yaw_(yaw), vx_(vx), vy_(vy)
+  {
+  }
+
+  // Return the predicted state dimensions `D`.
   static size_t dim() { return PredictedStateDim; }
 
+  // Return the predicted x position.
   float x() const { return x_; }
+
+  // Return the predicted y position.
   float y() const { return y_; }
+
+  // Return the predicted dx.
+  float dx() const { return dx_; }
+
+  // Return the predicted dy.
+  float dy() const { return dy_; }
+
+  // Return the predicted yaw.
+  float yaw() const { return yaw_; }
+
+  // Return the predicted x velocity.
   float vx() const { return vx_; }
+
+  // Return the predicted y velocity.
   float vy() const { return vy_; }
 
 private:
-  float x_, y_, vx_, vy_;
+  float x_, y_, dx_, dy_, yaw_, vx_, vy_;
 };  // struct PredictedState
 
 /**
- * @brief A class to represent waypoints for a single mode.
+ * @brief A class to represent waypoints of a single mode.
  */
 struct PredictedMode
 {
@@ -61,15 +90,16 @@ struct PredictedMode
     }
   }
 
-  static size_t state_dim() { return PredictedStateDim; }
-  float score() const { return score_; }
+  // Return the number of predicted future timestamps `T`.
   size_t num_future() const { return num_future_; }
 
-  /**
-   * @brief Get the waypoints.
-   *
-   * @return const std::vector<PredictedState>&
-   */
+  // Return the number of predicted state dimensions `D`.
+  static size_t state_dim() { return PredictedStateDim; }
+
+  // Return the predicted score.
+  float score() const { return score_; }
+
+  // Return the vector of waypoints.
   const std::vector<PredictedState> & get_waypoints() const { return waypoints_; }
 
 private:
@@ -83,6 +113,16 @@ private:
  */
 struct PredictedTrajectory
 {
+  /**
+   * @brief Construct a new instance.
+   *
+   * @note Predicted trajectories are sorted with the smallest scores.
+   *
+   * @param scores Predicted cores for each target, in shape `[B*M]`.
+   * @param trajectories Predicted trajectories for each target. `[B*M*T*D]`.
+   * @param num_mode The number of predicted modes.
+   * @param num_future The number of predicted timestamps.
+   */
   PredictedTrajectory(
     const float * scores, const float * trajectories, const size_t num_mode,
     const size_t num_future)
@@ -94,26 +134,24 @@ struct PredictedTrajectory
       std::vector<float> waypoints(start_ptr, start_ptr + num_future_ * state_dim());
       modes_.emplace_back(score, waypoints.data(), num_future_);
     }
-
     // sort by score
     sort_by_score();
   }
 
-  static size_t state_dim() { return PredictedStateDim; }
+  // Return the number of predicted modes `M`.
   size_t num_mode() const { return num_mode_; }
+
+  // Return the number of predicted future timestamps `T`.
   size_t num_future() const { return num_future_; }
 
-  /**
-   * @brief Return predicted modes. Modes are sorted in descending order based on their scores.
-   *
-   * @return const std::vector<PredictedMode>&
-   */
+  // Return the number of predicted state dimensions `D`.
+  static size_t state_dim() { return PredictedStateDim; }
+
+  // Return predicted modes. Modes are sorted in descending order based on their scores.
   const std::vector<PredictedMode> & get_modes() const { return modes_; }
 
 private:
-  /**
-   * @brief Sort modes in descending order based on their scores.
-   */
+  // Sort modes in descending order based on their scores.
   void sort_by_score()
   {
     std::sort(modes_.begin(), modes_.end(), [](const auto & mode1, const auto & mode2) {

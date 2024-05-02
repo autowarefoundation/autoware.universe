@@ -34,9 +34,7 @@ enum AgentLabel { VEHICLE = 0, PEDESTRIAN = 1, CYCLIST = 2 };
  */
 struct AgentState
 {
-  /**
-   * @brief Construct a new instance filling all elements by `0.0f`.
-   */
+  // Construct a new instance filling all elements by `0.0f`.
   AgentState() : data_({0.0f}) {}
 
   /**
@@ -84,33 +82,49 @@ struct AgentState
     std::copy(itr, itr + dim(), data_.begin());
   }
 
-  static size_t dim() { return AgentStateDim; }
-
-  /**
-   * @brief Construct a new instance filling all elements by `0.0f`.
-   *
-   * @return AgentState
-   */
+  // Construct a new instance filling all elements by `0.0f`.
   static AgentState empty() noexcept { return AgentState(); }
 
-  /**
-   * @brief Return the address pointer of data array.
-   *
-   * @return float*
-   */
-  float * data_ptr() noexcept { return data_.data(); }
+  // Return the agent state dimensions `D`.
+  static size_t dim() { return AgentStateDim; }
 
+  // Return the address pointer of data array.
+  const float * data_ptr() const noexcept { return data_.data(); }
+
+  // Return the x position.
   float x() const { return x_; }
+
+  // Return the y position.
   float y() const { return y_; }
+
+  // Return the z position.
   float z() const { return z_; }
+
+  // Return the length of object size.
   float length() const { return length_; }
+
+  // Return the width of object size.
   float width() const { return width_; }
+
+  // Return the height of object size.
   float height() const { return height_; }
+
+  // Return the yaw angle `[rad]`.
   float yaw() const { return yaw_; }
+
+  // Return the x velocity.
   float vx() const { return vx_; }
+
+  // Return the y velocity.
   float vy() const { return vy_; }
+
+  // Return the x acceleration.
   float ax() const { return ax_; }
+
+  // Return the y acceleration.
   float ay() const { return ay_; }
+
+  // Return `true` if the value is `1.0`.
   bool is_valid() const { return is_valid_ == 1.0f; }
 
 private:
@@ -133,7 +147,7 @@ struct AgentHistory
    * @param max_time_length History length.
    */
   AgentHistory(
-    AgentState & state, const std::string & object_id, const size_t label_index,
+    const AgentState & state, const std::string & object_id, const size_t label_index,
     const float current_time, const size_t max_time_length)
   : data_((max_time_length - 1) * state_dim()),
     object_id_(object_id),
@@ -163,34 +177,19 @@ struct AgentHistory
   {
   }
 
-  static size_t state_dim() { return AgentStateDim; }
-
-  /**
-   * @brief Return the history length.
-   *
-   * @return size_t History length.
-   */
+  // Return the history time length `T`.
   size_t length() const { return max_time_length_; }
 
-  /**
-   * @brief Return the data size of history `T * D`.
-   *
-   * @return size_t
-   */
+  // Return the number of agent state dimensions `D`.
+  static size_t state_dim() { return AgentStateDim; }
+
+  // Return the data size of history `T * D`.
   size_t size() const { return max_time_length_ * state_dim(); }
 
-  /**
-   * @brief Return the shape of history matrix ordering in `(T, D)`.
-   *
-   * @return std::tuple<size_t, size_t>
-   */
+  // Return the shape of history matrix ordering in `(T, D)`.
   std::tuple<size_t, size_t> shape() const { return {max_time_length_, state_dim()}; }
 
-  /**
-   * @brief Return the object id.
-   *
-   * @return const std::string&
-   */
+  // Return the object id.
   const std::string & object_id() const { return object_id_; }
 
   size_t label_index() const { return label_index_; }
@@ -220,10 +219,7 @@ struct AgentHistory
     latest_time_ = current_time;
   }
 
-  /**
-   * @brief Update history with all-zeros state, but latest time is not updated.
-   *
-   */
+  // Update history with all-zeros state, but latest time is not updated.
   void update_empty() noexcept
   {
     // remove the state at the oldest timestamp
@@ -235,12 +231,8 @@ struct AgentHistory
     }
   }
 
-  /**
-   * @brief Return the address pointer of data array.
-   *
-   * @return float* The pointer of data array.
-   */
-  float * data_ptr() noexcept { return data_.data(); }
+  // Return the address pointer of data array.
+  const float * data_ptr() const noexcept { return data_.data(); }
 
   /**
    * @brief Check whether the latest valid state is too old or not.
@@ -264,11 +256,7 @@ struct AgentHistory
    */
   bool is_valid_latest() const { return get_latest_state().is_valid(); }
 
-  /**
-   * @brief Get the latest agent state.
-   *
-   * @return AgentState
-   */
+  // Get the latest agent state at `T`.
   AgentState get_latest_state() const
   {
     const auto & latest_itr = (data_.begin() + state_dim() * (max_time_length_ - 1));
@@ -298,7 +286,7 @@ struct AgentData
    * @param timestamps An array of timestamps.
    */
   AgentData(
-    std::vector<AgentHistory> & histories, const size_t sdc_index,
+    const std::vector<AgentHistory> & histories, const size_t sdc_index,
     const std::vector<size_t> & target_index, const std::vector<size_t> & label_index,
     const std::vector<float> & timestamps)
   : num_target_(target_index.size()),
@@ -338,50 +326,56 @@ struct AgentData
     }
   }
 
-  static size_t state_dim() { return AgentStateDim; }
+  // Return the number of classes `C`.
   static size_t num_class() { return 3; }  // TODO(ktro2828): Do not use magic number.
+
+  // Return the number of target agents `B`.
   size_t num_target() const { return num_target_; }
+
+  // Return the number of agents `N`.
   size_t num_agent() const { return num_agent_; }
+
+  // Return the timestamp length `T`.
   size_t time_length() const { return time_length_; }
+
+  // Return the number of agent state dimensions `D`.
+  static size_t state_dim() { return AgentStateDim; }
+
+  // Return the index of ego.
   int sdc_index() const { return sdc_index_; }
+
+  // Return the vector of indices of target agents, in shape `[B]`.
   const std::vector<size_t> & target_index() const { return target_index_; }
+
+  // Return the vector of label indices of all agents, in shape `[N]`.
   const std::vector<size_t> & label_index() const { return label_index_; }
+
+  // Return the vector of label indices of target agents, in shape `[B]`.
   const std::vector<size_t> & target_label_index() const { return target_label_index_; }
+
+  // Return the vector of timestamps in shape `[T]`.
   const std::vector<float> & timestamps() const { return timestamps_; }
 
+  // Return the number of all elements `N*T*D`.
   size_t size() const { return num_agent_ * time_length_ * state_dim(); }
-  size_t input_dim() const { return num_agent_ + time_length_ + num_class() + 3; }
 
-  /**
-   * @brief Return the data shape ordering in (N, T, D).
-   *
-   * @return std::tuple<size_t, size_t, size_t>
-   */
+  // Return the number of state dimensions of MTR input `T+C+D+3`.
+  size_t input_dim() const { return time_length_ + state_dim() + num_class() + 3; }
+
+  // Return the data shape ordering in (N, T, D).
   std::tuple<size_t, size_t, size_t> shape() const
   {
     return {num_agent_, time_length_, state_dim()};
   }
 
-  /**
-   * @brief Return the address pointer of data array.
-   *
-   * @return float* The pointer of data array.
-   */
-  float * data_ptr() noexcept { return data_.data(); }
+  // Return the address pointer of data array.
+  const float * data_ptr() const noexcept { return data_.data(); }
 
-  /**
-   * @brief Return the address pointer of data array for target agents.
-   *
-   * @return float* The pointer of data array for target agents.
-   */
-  float * target_data_ptr() noexcept { return target_data_.data(); }
+  // Return the address pointer of data array for target agents.
+  const float * target_data_ptr() const noexcept { return target_data_.data(); }
 
-  /**
-   * @brief Return the address pointer of data array for ego vehicle.
-   *
-   * @return float* The pointer of data array for ego vehicle.
-   */
-  float * ego_data_ptr() noexcept { return ego_data_.data(); }
+  // Return the address pointer of data array for ego vehicle.
+  const float * ego_data_ptr() const noexcept { return ego_data_.data(); }
 
 private:
   size_t num_target_;
@@ -397,6 +391,7 @@ private:
   std::vector<float> ego_data_;
 };
 
+// Get label names from label indices.
 std::vector<std::string> getLabelNames(const std::vector<size_t> & label_index)
 {
   std::vector<std::string> label_names;

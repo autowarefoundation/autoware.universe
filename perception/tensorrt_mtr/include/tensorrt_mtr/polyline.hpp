@@ -32,9 +32,7 @@ enum PolylineLabel { LANE = 0, ROAD_LINE = 1, ROAD_EDGE = 2, CROSSWALK = 3 };
 
 struct LanePoint
 {
-  /**
-   * @brief Construct a new instance filling all elements by `0.0f`.
-   */
+  // Construct a new instance filling all elements by `0.0f`.
   LanePoint() : data_({0.0f}) {}
 
   /**
@@ -55,34 +53,22 @@ struct LanePoint
   {
   }
 
+  // Construct a new instance filling all elements by `0.0f`.
+  static LanePoint empty() noexcept { return LanePoint(); }
+
+  // Return the point state dimensions `D`.
   static size_t dim() { return PointStateDim; }
 
-  /**
-   * @brief Return the x position of the point.
-   *
-   * @return float The x position.
-   */
+  // Return the x position of the point.
   float x() const { return x_; }
 
-  /**
-   * @brief Return the y position of the point.
-   *
-   * @return float The y position.
-   */
+  // Return the y position of the point.
   float y() const { return y_; }
 
-  /**
-   * @brief Return the z position of the point.
-   *
-   * @return float The z position.
-   */
+  // Return the z position of the point.
   float z() const { return z_; }
 
-  /**
-   * @brief Return the label of the point.
-   *
-   * @return float The label.
-   */
+  // Return the label of the point.
   float label() const { return label_; }
 
   /**
@@ -96,23 +82,12 @@ struct LanePoint
     return std::hypot(x_ - other.x(), y_ - other.y(), z_ - other.z());
   }
 
-  /**
-   * @brief Construct a new instance filling all elements by `0.0f`.
-   *
-   * @return LanePoint
-   */
-  static LanePoint empty() noexcept { return LanePoint(); }
-
-  /**
-   * @brief Return the address pointer of data array.
-   *
-   * @return float*
-   */
-  float * data_ptr() noexcept { return data_.data(); }
+  // Return the address pointer of data array.
+  const float * data_ptr() const noexcept { return data_.data(); }
 
 private:
   std::array<float, PointStateDim> data_;
-  float x_, y_, z_, label_;
+  float x_{0.0f}, y_{0.0f}, z_{0.0f}, label_{0.0f};
 };
 
 struct PolylineData
@@ -129,7 +104,7 @@ struct PolylineData
    * @param distance_threshold The distance threshold to separate polylines.
    */
   PolylineData(
-    std::vector<LanePoint> points, const size_t min_num_polyline, const size_t max_num_point,
+    const std::vector<LanePoint> & points, const size_t min_num_polyline, const size_t max_num_point,
     const float distance_threshold)
   : num_polyline_(0), num_point_(max_num_point), distance_threshold_(distance_threshold)
   {
@@ -165,28 +140,29 @@ struct PolylineData
     }
   }
 
-  static size_t state_dim() { return PointStateDim; }
+  // Return the number of polylines `K`.
   size_t num_polyline() const { return num_polyline_; }
+
+  // Return the number of points contained in each polyline `P`.
   size_t num_point() const { return num_point_; }
 
+  // Return the number of point dimensions `D`.
+  static size_t state_dim() { return PointStateDim; }
+
+  // Return the number of all elements `K*P*D`.
   size_t size() const { return num_polyline_ * num_point_ * state_dim(); }
 
-  /**
-   * @brief Return the data shape ordering in (L, P, D).
-   *
-   * @return std::tuple<size_t, size_t, size_t>
-   */
+  // Return the number of state dimensions of MTR input `D+2`.
+  size_t input_dim() const { return state_dim() + 2; }
+
+  // Return the data shape ordering in `(K, P, D)`.
   std::tuple<size_t, size_t, size_t> shape() const
   {
     return {num_polyline_, num_point_, state_dim()};
   }
 
-  /**
-   * @brief Return the address pointer of data array.
-   *
-   * @return float* The pointer of data array.
-   */
-  float * data_ptr() noexcept { return data_.data(); }
+  // Return the address pointer of data array.
+  const float * data_ptr() const noexcept { return data_.data(); }
 
 private:
   /**
@@ -212,7 +188,7 @@ private:
    * @param point LanePoint instance.
    * @param point_cnt The current count of points, which will be reset to `1`.
    */
-  void addNewPolyline(LanePoint & point, size_t & point_cnt)
+  void addNewPolyline(const LanePoint & point, size_t & point_cnt)
   {
     const auto s = point.data_ptr();
     for (size_t d = 0; d < state_dim(); ++d) {
@@ -244,7 +220,7 @@ private:
    * @param point
    * @param point_cnt
    */
-  void addPoint(LanePoint & point, std::size_t & point_cnt)
+  void addPoint(const LanePoint & point, std::size_t & point_cnt)
   {
     const auto s = point.data_ptr();
     for (size_t d = 0; d < state_dim(); ++d) {
