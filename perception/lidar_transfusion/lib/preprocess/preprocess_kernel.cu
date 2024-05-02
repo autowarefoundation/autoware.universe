@@ -37,8 +37,7 @@ namespace lidar_transfusion
 PreprocessCuda::PreprocessCuda(const TransfusionConfig & config, cudaStream_t & stream)
 : stream_(stream), config_(config)
 {
-  mask_size_ =
-    config_.grid_z_size_ * config_.grid_y_size_ * config_.grid_x_size_;
+  mask_size_ = config_.grid_z_size_ * config_.grid_y_size_ * config_.grid_x_size_;
   voxels_size_ = config_.grid_z_size_ * config_.grid_y_size_ * config_.grid_x_size_ *
                  config_.max_num_points_per_pillar_ * config_.num_point_feature_size_;
   mask_ = cuda::make_unique<unsigned int[]>(mask_size_);
