@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(motion_velocity_planner)
+project(motion_velocity_planner_node)
 
 find_package(autoware_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -14,13 +14,12 @@ rosidl_generate_interfaces(
 autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME}_lib SHARED
-  src/node.cpp
-  src/planner_manager.cpp
+  DIRECTORY src
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_lib
   PLUGIN "motion_velocity_planner::MotionVelocityPlannerNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTABLE ${PROJECT_NAME}
 )
 
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)

@@ -15,11 +15,11 @@
 #ifndef NODE_HPP_
 #define NODE_HPP_
 
-#include "planner_data.hpp"
 #include "planner_manager.hpp"
 
-#include <motion_velocity_planner/srv/load_plugin.hpp>
-#include <motion_velocity_planner/srv/unload_plugin.hpp>
+#include <motion_velocity_planner_common/planner_data.hpp>
+#include <motion_velocity_planner_node/srv/load_plugin.hpp>
+#include <motion_velocity_planner_node/srv/unload_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
@@ -44,8 +44,8 @@ namespace motion_velocity_planner
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_planning_msgs::msg::Trajectory;
-using motion_velocity_planner::srv::LoadPlugin;
-using motion_velocity_planner::srv::UnloadPlugin;
+using motion_velocity_planner_node::srv::LoadPlugin;
+using motion_velocity_planner_node::srv::UnloadPlugin;
 using TrajectoryPoints = std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>;
 
 class MotionVelocityPlannerNode : public rclcpp::Node

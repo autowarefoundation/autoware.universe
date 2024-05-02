@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VELOCITY_PLANNING_RESULT_HPP_
-#define VELOCITY_PLANNING_RESULT_HPP_
+#ifndef MOTION_VELOCITY_PLANNER_COMMON__VELOCITY_PLANNING_RESULT_HPP_
+#define MOTION_VELOCITY_PLANNER_COMMON__VELOCITY_PLANNING_RESULT_HPP_
 
 #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -37,4 +37,4 @@ struct VelocityPlanningResult
 };
 }  // namespace motion_velocity_planner
 
-#endif  // VELOCITY_PLANNING_RESULT_HPP_
+#endif  // MOTION_VELOCITY_PLANNER_COMMON__VELOCITY_PLANNING_RESULT_HPP_

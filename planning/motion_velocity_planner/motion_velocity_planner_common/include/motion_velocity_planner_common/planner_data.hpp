@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNER_DATA_HPP_
-#define PLANNER_DATA_HPP_
+#ifndef MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
+#define MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
 
 #include <motion_velocity_smoother/smoother/smoother_base.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -113,4 +113,4 @@ struct PlannerData
 };
 }  // namespace motion_velocity_planner
 
-#endif  // PLANNER_DATA_HPP_
+#endif  // MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_

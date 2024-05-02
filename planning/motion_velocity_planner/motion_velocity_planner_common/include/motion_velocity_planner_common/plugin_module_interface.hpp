@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLUGIN_MODULE_INTERFACE_HPP_
-#define PLUGIN_MODULE_INTERFACE_HPP_
+#ifndef MOTION_VELOCITY_PLANNER_COMMON__PLUGIN_MODULE_INTERFACE_HPP_
+#define MOTION_VELOCITY_PLANNER_COMMON__PLUGIN_MODULE_INTERFACE_HPP_
 
 #include "planner_data.hpp"
 #include "velocity_planning_result.hpp"
@@ -42,4 +42,4 @@ public:
 
 }  // namespace motion_velocity_planner
 
-#endif  // PLUGIN_MODULE_INTERFACE_HPP_
+#endif  // MOTION_VELOCITY_PLANNER_COMMON__PLUGIN_MODULE_INTERFACE_HPP_
