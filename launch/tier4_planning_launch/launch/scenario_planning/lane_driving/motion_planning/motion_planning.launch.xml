@@ -10,12 +10,12 @@
   <arg name="motion_velocity_planner_launch_modules" default="["/>
   <let
     name="motion_velocity_planner_launch_modules"
-    value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + 'motion_velocity_planner::OutOfLaneModulePlugin, '&quot;)"
+    value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + 'motion_velocity_planner::OutOfLaneModule, '&quot;)"
     if="$(var launch_out_of_lane_module)"
   />
   <let
     name="motion_velocity_planner_launch_modules"
-    value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + 'motion_velocity_planner::DynamicObstacleStopModulePlugin, '&quot;)"
+    value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + 'motion_velocity_planner::DynamicObstacleStopModule, '&quot;)"
     if="$(var launch_dynamic_obstacle_stop_module)"
   />
   <let name="motion_velocity_planner_launch_modules" value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + '$(var launch_module_list_end)'&quot;)"/>

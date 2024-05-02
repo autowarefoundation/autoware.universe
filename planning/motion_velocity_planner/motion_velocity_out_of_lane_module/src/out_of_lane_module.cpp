@@ -1,0 +1,308 @@
+// Copyright 2023 TIER IV, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "out_of_lane_module.hpp"
+
+#include "calculate_slowdown_points.hpp"
+#include "debug.hpp"
+#include "decisions.hpp"
+#include "filter_predicted_objects.hpp"
+#include "footprint.hpp"
+#include "lanelets_selection.hpp"
+#include "overlapping_range.hpp"
+#include "types.hpp"
+
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <tier4_autoware_utils/ros/parameter.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
+#include <boost/geometry/algorithms/intersects.hpp>
+
+#include <lanelet2_core/geometry/LaneletMap.h>
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace motion_velocity_planner
+{
+
+using visualization_msgs::msg::Marker;
+using visualization_msgs::msg::MarkerArray;
+
+void OutOfLaneModule::init(rclcpp::Node & node)
+{
+  logger_ = node.get_logger();
+  clock_ = node.get_clock();
+  init_parameters(node);
+  // velocity_factor_.init(PlanningBehavior::ROUTE_OBSTACLE);
+}
+void OutOfLaneModule::init_parameters(rclcpp::Node & node)
+{
+  using tier4_autoware_utils::getOrDeclareParameter;
+  const std::string ns(get_module_name());
+  auto & pp = params_;
+
+  pp.mode = getOrDeclareParameter<std::string>(node, ns + ".mode");
+  pp.skip_if_already_overlapping =
+    getOrDeclareParameter<bool>(node, ns + ".skip_if_already_overlapping");
+
+  pp.time_threshold = getOrDeclareParameter<double>(node, ns + ".threshold.time_threshold");
+  pp.intervals_ego_buffer = getOrDeclareParameter<double>(node, ns + ".intervals.ego_time_buffer");
+  pp.intervals_obj_buffer =
+    getOrDeclareParameter<double>(node, ns + ".intervals.objects_time_buffer");
+  pp.ttc_threshold = getOrDeclareParameter<double>(node, ns + ".ttc.threshold");
+
+  pp.objects_min_vel = getOrDeclareParameter<double>(node, ns + ".objects.minimum_velocity");
+  pp.objects_use_predicted_paths =
+    getOrDeclareParameter<bool>(node, ns + ".objects.use_predicted_paths");
+  pp.objects_min_confidence =
+    getOrDeclareParameter<double>(node, ns + ".objects.predicted_path_min_confidence");
+  pp.objects_dist_buffer = getOrDeclareParameter<double>(node, ns + ".objects.distance_buffer");
+  pp.objects_cut_predicted_paths_beyond_red_lights =
+    getOrDeclareParameter<bool>(node, ns + ".objects.cut_predicted_paths_beyond_red_lights");
+
+  pp.overlap_min_dist = getOrDeclareParameter<double>(node, ns + ".overlap.minimum_distance");
+  pp.overlap_extra_length = getOrDeclareParameter<double>(node, ns + ".overlap.extra_length");
+
+  pp.skip_if_over_max_decel =
+    getOrDeclareParameter<bool>(node, ns + ".action.skip_if_over_max_decel");
+  pp.precision = getOrDeclareParameter<double>(node, ns + ".action.precision");
+  pp.min_decision_duration = getOrDeclareParameter<double>(node, ns + ".action.min_duration");
+  pp.dist_buffer = getOrDeclareParameter<double>(node, ns + ".action.distance_buffer");
+  pp.slow_velocity = getOrDeclareParameter<double>(node, ns + ".action.slowdown.velocity");
+  pp.slow_dist_threshold =
+    getOrDeclareParameter<double>(node, ns + ".action.slowdown.distance_threshold");
+  pp.stop_dist_threshold =
+    getOrDeclareParameter<double>(node, ns + ".action.stop.distance_threshold");
+
+  pp.ego_min_velocity = getOrDeclareParameter<double>(node, ns + ".ego.min_assumed_velocity");
+  pp.extra_front_offset = getOrDeclareParameter<double>(node, ns + ".ego.extra_front_offset");
+  pp.extra_rear_offset = getOrDeclareParameter<double>(node, ns + ".ego.extra_rear_offset");
+  pp.extra_left_offset = getOrDeclareParameter<double>(node, ns + ".ego.extra_left_offset");
+  pp.extra_right_offset = getOrDeclareParameter<double>(node, ns + ".ego.extra_right_offset");
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+  pp.front_offset = vehicle_info.max_longitudinal_offset_m;
+  pp.rear_offset = vehicle_info.min_longitudinal_offset_m;
+  pp.left_offset = vehicle_info.max_lateral_offset_m;
+  pp.right_offset = vehicle_info.min_lateral_offset_m;
+}
+
+void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & parameters)
+{
+}
+
+VelocityPlanningResult OutOfLaneModule::plan(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  const PlannerData & planner_data)
+{
+  debug_data_.reset_data();
+  // auto stop_reason = planning_utils::initializeStopReason(StopReason::OUT_OF_LANE);
+  tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
+  stopwatch.tic();
+  out_of_lane::EgoData ego_data;
+  ego_data.pose = planner_data.current_odometry->pose;
+  ego_data.trajectory_points = ego_trajectory_points;
+  ego_data.first_trajectory_idx =
+    motion_utils::findNearestSegmentIndex(ego_trajectory_points, ego_data.pose.position);
+  ego_data.velocity = planner_data.current_velocity->twist.linear.x;
+  ego_data.max_decel = planner_data.velocity_smoother_->getMinDecel();
+  stopwatch.tic("calculate_trajectory_footprints");
+  const auto current_ego_footprint =
+    out_of_lane::calculate_current_ego_footprint(ego_data, params_, true);
+  const auto trajectory_footprints =
+    out_of_lane::calculate_trajectory_footprints(ego_data, params_);
+  const auto calculate_trajectory_footprints_us = stopwatch.toc("calculate_trajectory_footprints");
+  // Calculate lanelets to ignore and consider
+  stopwatch.tic("calculate_lanelets");
+  const auto trajectory_lanelets =
+    out_of_lane::calculate_trajectory_lanelets(ego_data, planner_data.route_handler);
+  const auto ignored_lanelets = out_of_lane::calculate_ignored_lanelets(
+    ego_data, trajectory_lanelets, planner_data.route_handler, params_);
+  const auto other_lanelets = out_of_lane::calculate_other_lanelets(
+    ego_data, trajectory_lanelets, ignored_lanelets, planner_data.route_handler, params_);
+  const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
+
+  debug_data_.footprints = trajectory_footprints;
+  debug_data_.trajectory_lanelets = trajectory_lanelets;
+  debug_data_.ignored_lanelets = ignored_lanelets;
+  debug_data_.other_lanelets = other_lanelets;
+  // debug_data_.trajectory_points = ego_data.trajectory_points;
+  debug_data_.first_trajectory_idx = ego_data.first_trajectory_idx;
+
+  if (params_.skip_if_already_overlapping) {
+    debug_data_.current_footprint = current_ego_footprint;
+    const auto overlapped_lanelet_it =
+      std::find_if(other_lanelets.begin(), other_lanelets.end(), [&](const auto & ll) {
+        return boost::geometry::intersects(ll.polygon2d().basicPolygon(), current_ego_footprint);
+      });
+    if (overlapped_lanelet_it != other_lanelets.end()) {
+      debug_data_.current_overlapped_lanelets.push_back(*overlapped_lanelet_it);
+      RCLCPP_DEBUG(logger_, "Ego is already overlapping a lane, skipping the module\n");
+      // return true;
+    }
+  }
+  // Calculate overlapping ranges
+  stopwatch.tic("calculate_overlapping_ranges");
+  const auto ranges = out_of_lane::calculate_overlapping_ranges(
+    trajectory_footprints, trajectory_lanelets, other_lanelets, params_);
+  const auto calculate_overlapping_ranges_us = stopwatch.toc("calculate_overlapping_ranges");
+  // Calculate stop and slowdown points
+  out_of_lane::DecisionInputs inputs;
+  inputs.ranges = ranges;
+  inputs.ego_data = ego_data;
+  stopwatch.tic("filter_predicted_objects");
+  inputs.objects = out_of_lane::filter_predicted_objects(planner_data, ego_data, params_);
+  const auto filter_predicted_objects_ms = stopwatch.toc("filter_predicted_objects");
+  inputs.route_handler = &planner_data.route_handler;
+  inputs.lanelets = other_lanelets;
+  stopwatch.tic("calculate_decisions");
+  const auto decisions = out_of_lane::calculate_decisions(inputs, params_, logger_);
+  const auto calculate_decisions_us = stopwatch.toc("calculate_decisions");
+  stopwatch.tic("calc_slowdown_points");
+  if (  // reset the previous inserted point if the timer expired
+    prev_inserted_point_ &&
+    (clock_->now() - prev_inserted_point_time_).seconds() > params_.min_decision_duration)
+    prev_inserted_point_.reset();
+  auto point_to_insert =
+    out_of_lane::calculate_slowdown_point(ego_data, decisions, prev_inserted_point_, params_);
+  const auto calc_slowdown_points_us = stopwatch.toc("calc_slowdown_points");
+  stopwatch.tic("insert_slowdown_points");
+  debug_data_.slowdowns.clear();
+  if (  // reset the timer if there is no previous inserted point or if we avoid the same lane
+    point_to_insert &&
+    (!prev_inserted_point_ || prev_inserted_point_->slowdown.lane_to_avoid.id() ==
+                                point_to_insert->slowdown.lane_to_avoid.id()))
+    prev_inserted_point_time_ = clock_->now();
+  // reuse previous stop point if there is no new one or if its velocity is not higher than the new
+  // one and its arc length is lower
+  const auto should_use_prev_inserted_point = [&]() {
+    if (
+      point_to_insert && prev_inserted_point_ &&
+      prev_inserted_point_->slowdown.velocity <= point_to_insert->slowdown.velocity) {
+      const auto arc_length = motion_utils::calcSignedArcLength(
+        ego_trajectory_points, 0LU, point_to_insert->point.pose.position);
+      const auto prev_arc_length = motion_utils::calcSignedArcLength(
+        ego_trajectory_points, 0LU, prev_inserted_point_->point.pose.position);
+      return prev_arc_length < arc_length;
+    }
+    return !point_to_insert && prev_inserted_point_;
+  }();
+  if (should_use_prev_inserted_point) {
+    // if the trajectory changed the prev point is no longer on the trajectory so we project it
+    const auto insert_arc_length = motion_utils::calcSignedArcLength(
+      ego_trajectory_points, 0LU, prev_inserted_point_->point.pose.position);
+    prev_inserted_point_->point.pose =
+      motion_utils::calcInterpolatedPose(ego_trajectory_points, insert_arc_length);
+    point_to_insert = prev_inserted_point_;
+  }
+  if (point_to_insert) {
+    prev_inserted_point_ = point_to_insert;
+    RCLCPP_DEBUG(logger_, "Avoiding lane %lu", point_to_insert->slowdown.lane_to_avoid.id());
+    debug_data_.slowdowns = {*point_to_insert};
+    auto trajectory_idx = motion_utils::findNearestSegmentIndex(
+                            ego_trajectory_points, point_to_insert->point.pose.position) +
+                          1;
+    // planning_utils::insertVelocity(
+    // *trajectory, point_to_insert->point, point_to_insert->slowdown.velocity, trajectory_idx);
+    auto stop_pose_reached = false;
+    if (point_to_insert->slowdown.velocity == 0.0) {
+      const auto dist_to_stop_pose = motion_utils::calcSignedArcLength(
+        ego_trajectory_points, ego_data.pose.position, point_to_insert->point.pose.position);
+      if (ego_data.velocity < 1e-3 && dist_to_stop_pose < 1e-3) stop_pose_reached = true;
+      // tier4_planning_msgs::msg::StopFactor stop_factor;
+      // stop_factor.stop_pose = point_to_insert->point.pose;
+      // stop_factor.dist_to_stop_pose = dist_to_stop_pose;
+      // planning_utils::appendStopReason(stop_factor, stop_reason);
+    }
+    // velocity_factor_.set(
+    //   trajectory->points, planner_data.current_odometry->pose, point_to_insert->point.pose,
+    //   stop_pose_reached ? VelocityFactor::STOPPED : VelocityFactor::APPROACHING, "out_of_lane");
+  } else if (!decisions.empty()) {
+    RCLCPP_WARN(logger_, "Could not insert stop point (would violate max deceleration limits)");
+  }
+  const auto insert_slowdown_points_us = stopwatch.toc("insert_slowdown_points");
+  debug_data_.ranges = inputs.ranges;
+
+  const auto total_time_us = stopwatch.toc();
+  RCLCPP_DEBUG(
+    logger_,
+    "Total time = %2.2fus\n"
+    "\tcalculate_lanelets = %2.0fus\n"
+    "\tcalculate_trajectory_footprints = %2.0fus\n"
+    "\tcalculate_overlapping_ranges = %2.0fus\n"
+    "\tfilter_pred_objects = %2.0fus\n"
+    "\tcalculate_decisions = %2.0fus\n"
+    "\tcalc_slowdown_points = %2.0fus\n"
+    "\tinsert_slowdown_points = %2.0fus\n",
+    total_time_us, calculate_lanelets_us, calculate_trajectory_footprints_us,
+    calculate_overlapping_ranges_us, filter_predicted_objects_ms, calculate_decisions_us,
+    calc_slowdown_points_us, insert_slowdown_points_us);
+  // return true;
+  VelocityPlanningResult result;
+  return result;
+}
+
+// MarkerArray OutOfLaneModule::createDebugMarkerArray()
+// {
+//   constexpr auto z = 0.0;
+//   MarkerArray debug_marker_array;
+
+//   debug::add_footprint_markers(
+//     debug_marker_array, debug_data_.footprints, z, debug_data_.prev_footprints);
+//   debug::add_current_overlap_marker(
+//     debug_marker_array, debug_data_.current_footprint, debug_data_.current_overlapped_lanelets,
+//     z, debug_data_.prev_current_overlapped_lanelets);
+//   debug::add_lanelet_markers(
+//     debug_marker_array, debug_data_.trajectory_lanelets, "trajectory_lanelets",
+//     tier4_autoware_utils::createMarkerColor(0.1, 0.1, 1.0, 0.5),
+//     debug_data_.prev_trajectory_lanelets);
+//   debug::add_lanelet_markers(
+//     debug_marker_array, debug_data_.ignored_lanelets, "ignored_lanelets",
+//     tier4_autoware_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5),
+//     debug_data_.prev_ignored_lanelets);
+//   debug::add_lanelet_markers(
+//     debug_marker_array, debug_data_.other_lanelets, "other_lanelets",
+//     tier4_autoware_utils::createMarkerColor(0.4, 0.4, 0.7, 0.5),
+//     debug_data_.prev_other_lanelets);
+//   debug::add_range_markers(
+//     debug_marker_array, debug_data_.ranges, debug_data_.trajectory,
+//     debug_data_.first_trajectory_idx, z, debug_data_.prev_ranges);
+//   return debug_marker_array;
+// }
+
+// motion_utils::VirtualWalls OutOfLaneModule::createVirtualWalls()
+// {
+//   motion_utils::VirtualWalls virtual_walls;
+//   motion_utils::VirtualWall wall;
+//   wall.text = "out_of_lane";
+//   wall.longitudinal_offset = params_.front_offset;
+//   wall.style = motion_utils::VirtualWallType::slowdown;
+//   for (const auto & slowdown : debug_data_.slowdowns) {
+//     wall.pose = slowdown.point.pose;
+//     virtual_walls.push_back(wall);
+//   }
+//   return virtual_walls;
+// }
+
+}  // namespace motion_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  motion_velocity_planner::OutOfLaneModule, motion_velocity_planner::PluginModuleInterface)
