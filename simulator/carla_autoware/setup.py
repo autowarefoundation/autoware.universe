@@ -28,5 +28,4 @@ setup(
         "console_scripts": ["carla_autoware = carla_autoware.carla_autoware:main"],
     },
     package_dir={"": "src"},
-
 )

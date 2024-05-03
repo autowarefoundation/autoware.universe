@@ -206,9 +206,9 @@ class SensorWrapper(object):
                     z=sensor_spec["spawn_point"]["z"],
                 )
                 sensor_rotation = carla.Rotation(
-                    pitch=sensor_spec["spawn_point"]["pitch"]+0.001,
-                    roll=sensor_spec["spawn_point"]["roll"]-0.015,
-                    yaw=sensor_spec["spawn_point"]["yaw"]+0.0364,
+                    pitch=sensor_spec["spawn_point"]["pitch"] + 0.001,
+                    roll=sensor_spec["spawn_point"]["roll"] - 0.015,
+                    yaw=sensor_spec["spawn_point"]["yaw"] + 0.0364,
                 )
 
             # create sensor

@@ -31,6 +31,10 @@
   <node pkg="tf2_ros" exec="static_transform_publisher" name="ego_vehicle2base_link" args="0 0 0 0 0 0 /ego_vehicle /base_link "/>
   <node pkg="tf2_ros" exec="static_transform_publisher" name="velodyne_top" args="0 0 1 -1.5386 -0.015 0.001 /velodyne_top /velodyne_top_changed "/>
   <node pkg="tf2_ros" exec="static_transform_publisher" name="imu" args="0 0 1 -3.10519265 -0.015 -3.14059265359 /tamagawa/imu_link /tamagawa/imu_link_changed "/>
-  <node pkg="tf2_ros" exec="static_transform_publisher" name="camera" args="-0.05 -0.0175 1.1 0.0364 -0.015 0.001 /traffic_light_left_camera/camera_link /traffic_light_left_camera/camera_link_changed "/>
-
+  <node
+    pkg="tf2_ros"
+    exec="static_transform_publisher"
+    name="camera"
+    args="-0.05 -0.0175 1.1 0.0364 -0.015 0.001 /traffic_light_left_camera/camera_link /traffic_light_left_camera/camera_link_changed "
+  />
 </launch>
