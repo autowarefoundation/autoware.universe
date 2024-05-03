@@ -30,7 +30,7 @@ based on the standard deviation values provided by the GNSS system.
 
 It also tunes the covariance values of the NDT poses, based on the GNSS standard deviation values.
 
-## Flowchart
+## Flowcharts
 
 ### Without this package
 
@@ -45,6 +45,94 @@ Both NDT and GNSS poses are used in localization, depending on the standard devi
 Here is a flowchart depicting the process and the predefined thresholds:
 
 <img src="./media/new_proposal-proposal-extended-proposal.drawio.png" width="620" alt="with this package">
+
+## How to use this package
+
+> **This package is disabled by default in Autoware, you need to manually enable it.**
+
+To enable this package, you need to change the `use_autoware_pose_covariance_modifier` parameter to `true` within
+the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3).
+
+### Without this condition (default):
+
+- The output of the [ndt_scan_matcher](../../localization/ndt_scan_matcher) is directly sent to [ekf_localizer](../../localization/ekf_localizer).
+   - It has a preset covariance value.
+   - **topic name:** `/localization/pose_estimator/pose_with_covariance`
+- The GNSS pose does not enter the ekf_localizer.
+- This node does not launch.
+
+### With this condition:
+
+- The output of the [ndt_scan_matcher](../../localization/ndt_scan_matcher) is renamed
+   - **from:** `/localization/pose_estimator/pose_with_covariance`.
+   - **to:** `/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance`.
+- The `ndt_scan_matcher` output enters the `autoware_pose_covariance_modifier_node`.
+- The output of this package goes to [ekf_localizer](../../localization/ekf_localizer) with:
+   - **topic name:** `/localization/pose_estimator/pose_with_covariance`.
+
+## Node
+
+### Subscribed topics
+
+| Name                             | Type                                            | Description            |
+|----------------------------------|-------------------------------------------------|------------------------|
+| `input_gnss_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input GNSS pose topic. |
+| `input_ndt_pose_with_cov_topic`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input NDT pose topic.  |
+
+### Published topics
+
+| Name                                | Type                                            | Description                                                                                                            |
+|-------------------------------------|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. This topic is used by the ekf_localizer package.                                                    |
+| `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                                     |
+| `output/ndt_position_stddev`        | `std_msgs::msg::Float32`                        | Output pose ndt average standard deviation in position xy. It is published only when the enable_debug_topics is true.  |
+| `output/gnss_position_stddev`       | `std_msgs::msg::Float32`                        | Output pose gnss average standard deviation in position xy. It is published only when the enable_debug_topics is true. |
+
+### Parameters
+
+The parameters are set in [config/autoware_pose_covariance_modifier.param.yaml](config/autoware_pose_covariance_modifier.param.yaml) .
+
+#### Standard Deviation thresholds
+
+{{ json_to_markdown("
+localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds.sub_schema.json") }}
+
+#### Validation
+
+{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/validation.sub_schema.json") }}
+
+#### Debug
+
+{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/debug.sub_schema.json") }}
+
+> ## Important notes
+>
+> 1. In order to use this package, your GNSS sensor must provide you with the standard deviation or variance value.
+>    - If you do not have a GNSS sensor that provides you with these values, you cannot use this package.
+> 2. You need to use this package with georeferenced map.
+
+## FAQ
+
+### How are varying frequency rates handled?
+
+The GNSS and NDT pose topics may have different frequencies. The GNSS pose topic may have a higher frequency than the NDT.
+
+Let's assume the following frequencies:
+
+| Source | Frequency |
+|--------|-----------|
+| GNSS   | 200 Hz    |
+| NDT    | 10 Hz     |
+
+This package doesn't modify the frequency of the output pose topic. It publishes the output poses as they come in.
+
+End result:
+
+| Mode       | Output Freq |
+|------------|-------------|
+| GNSS Only  | 200 Hz      |
+| GNSS + NDT | 210 Hz      |
+| NDT Only   | 10 Hz       |
 
 ## _How does the "Interpolate GNSS and NDT pose" part work ?_
 
@@ -64,58 +152,3 @@ transition between NDT and and maximize the benefit from GNSS poses. Here is how
 <p align="center">
 <img src="./media/formula.drawio.png" width="520">
 </p>
-
-## How to use this package
-
-> **This package is disabled by default in Autoware, you need to manually enable it.**
-
-To enable this package, you need to change the `use_autoware_pose_covariance_modifier` parameter to `true` within
-the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3).
-
-When you activate this feature, `autoware_pose_covariance_modifier_node` is run and only the message of
-type `geometry_msgs::msg::PoseWithCovarianceStamped` in the output
-of [ndt_scan_matcher](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ndt_scan_matcher)
-is renamed. In this way, while the ndt_scan_matcher output (the message of the
-type `geometry_msgs::msg::PoseWithCovarianceStamped`)
-enters the `autoware_pose_covariance_modifier_node` and the output of this package is given
-to [ekf_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ekf_localizer).
-
-## Node
-
-### Subscribed topics
-
-| Name                             | Type                                            | Description            |
-| -------------------------------- | ----------------------------------------------- | ---------------------- |
-| `input_gnss_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input GNSS pose topic. |
-| `input_ndt_pose_with_cov_topic`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input NDT pose topic.  |
-
-### Published topics
-
-| Name                                | Type                                            | Description                                                                                                           |
-| ----------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. It will be sent as input to ekf_localizer package.                                                 |
-| `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                                    |
-| `output/ndt_position_stddev`        | `std_msgs::msg::Float32`                        | Output pose ndt average standard deviation in position xy. It is published only when the enable_debug_topics is true. |
-| `output/gnss_position_stddev`       | `std_msgs::msg::Float32`                        | Output pose gnss average standard deviation in position xy.It is published only when the enable_debug_topics is true. |
-
-### Parameters
-
-The parameters are set in config/autoware_pose_covariance_modifier.param.yaml .
-
-#### For Standard Deviation thresholds
-
-{{ json_to_markdown("
-localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds.sub_schema.json") }}
-
-#### For validation
-
-{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/validation.sub_schema.json") }}
-
-#### For debug
-
-{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/debug.sub_schema.json") }}
-
-> ## Important notes
->
-> 1. In order to use this package, your GNSS sensor must provide you with the standard deviation or variance value. If you do not have a GNSS sensor that provides you with these values, you cannot use this package.
-> 2. You need to use this package with georeferenced map.
