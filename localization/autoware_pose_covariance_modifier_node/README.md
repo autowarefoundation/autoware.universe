@@ -144,13 +144,19 @@ This package publishes the output poses as they come in, depending on the mode.
 
 End result:
 
-| Mode       | Output Freq | Covariance Source |
-| ---------- | ----------- | ----------------- |
-| GNSS Only  | 200 Hz      | GNSS, Unmodified  |
-| GNSS + NDT | 210 Hz      | Interpolated      |
-| NDT Only   | 10 Hz       | NDT, Unmodified   |
+| Mode       | Output Freq |
+| ---------- | ----------- |
+| GNSS Only  | 200 Hz      |
+| GNSS + NDT | 210 Hz      |
+| NDT Only   | 10 Hz       |
 
 ### How and when are the NDT covariance values overwritten?
+
+| Mode       | Output covariance                           |
+| ---------- | ------------------------------------------- |
+| GNSS Only  | GNSS, Unmodified                            |
+| GNSS + NDT | **GNSS:** Unmodified, **NDT:** Interpolated |
+| NDT Only   | NDT, Unmodified                             |
 
 This section is only for the `GNSS + NDT` mode.
 
@@ -163,7 +169,7 @@ In this mode, both NDT and GNSS poses are published from this node.
 - Incoming NDT poses have a fixed covariance value.
 - Covariance provided by GNSS is reliable.
 
-#### Covariance interpolation method
+#### NDT covariance interpolation method
 
 <p align="center">
 <img src="./media/ndt_stddev_calculation_formula.drawio.svg" width="720">
