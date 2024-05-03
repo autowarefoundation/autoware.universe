@@ -54,7 +54,7 @@ It also tunes the covariance values of the NDT poses, based on the GNSS standard
 
 Only NDT pose is used in localization. GNSS pose is only used for initialization.
 
-<img src="./media/new_proposal-original.drawio.png" width="320" alt="without this package">
+<img src="./media/new_proposal-original.drawio.svg" width="320" alt="without this package">
 
 ### With this package
 
@@ -63,7 +63,7 @@ system.
 
 Here is a flowchart depicting the process and the predefined thresholds:
 
-<img src="./media/new_proposal-proposal-extended-proposal.drawio.png" width="620" alt="with this package">
+<img src="./media/new_proposal-proposal-extended-proposal.drawio.svg" width="620" alt="with this package">
 
 ## How to use this package
 
@@ -166,9 +166,9 @@ In this mode, both NDT and GNSS poses are published from this node.
 #### Covariance interpolation method
 
 <p align="center">
-<img src="./media/ndt_stddev_calculation_formula.drawio.png" width="720">
+<img src="./media/ndt_stddev_calculation_formula.drawio.svg" width="720">
 </p>
 
 <p align="center">
-<img src="./media/formula.drawio.png" width="520">
+<img src="./media/formula.drawio.svg" width="520">
 </p>
