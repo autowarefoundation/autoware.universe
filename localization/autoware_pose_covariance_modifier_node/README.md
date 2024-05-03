@@ -1,28 +1,48 @@
-# Overview
+# Autoware Pose Covariance Modifier Node
+
+## Purpose
 
 This package is used to enable GNSS and NDT to be used together in localization.
-GNSS and NDT are different sources that generate poses for use in EKF. For EKF,
-the covariance values of the pose source are important. The GNSS system can provide
-us with its own "standard deviation" values. Using these values, covariance values for
-GNSS can be calculated. However, in default autoware, NDT covariance values are determined
-by default values. While this package manages which pose source will be used by reference
-to the standard deviation values coming from GNSS, it also manages situations where GNSS and NDT are used together.
+
+## Function
+
+This package takes in GNSS (Global Navigation Satellite System) and NDT (Normal Distribution Transform) poses with covariances.
+It outputs a single pose with an associated covariance:
+- Directly the GNSS pose and its covariance.
+- Directly the NDT pose and its covariance.
+- A weighted average of both GNSS and NDT poses and covariances.
+
+## Description
+
+GNSS and NDT nodes provide the pose with covariance data utilized in an Extended Kalman Filter (EKF).
+
+Accurate covariance values are crucial for the effectiveness of the EKF in estimating the state.
+
+The GNSS system generates reliable standard deviation values, which can be transformed into covariance measures.
+
+But we currently don't have a reliable way to determine the covariance values for the NDT poses.
+And the NDT matching system in Autoware outputs poses with preset covariance values.
+
+For this reason, this package is designed to manage the selection of the pose source,
+based on the standard deviation values provided by the GNSS system.
+
+It also tunes the covariance values of the NDT poses, based on the GNSS standard deviation values.
 
 ## Flowchart
 
-- Default Autoware Pose Source is only NDT:
+### Without this package
 
 <p align="center">
 <img src="./media/new_proposal-original.drawio.png" width="320">
 </p>
 
-- You can see how autoware_pose_covariance_modifier_node works in the diagram below:
+### With this package
 
 <p align="center">
 <img src="./media/new_proposal-proposal-extended-proposal.drawio.png" width="620">
 </p>
 
-### _How does the "Interpolate GNSS and NDT pose" part work ?_
+## _How does the "Interpolate GNSS and NDT pose" part work ?_
 
 In this section, both NDT and GNSS poses are published from the same topic and given as input
 to [ekf_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ekf_localizer). In
@@ -41,12 +61,12 @@ transition between NDT and and maximize the benefit from GNSS poses. Here is how
 <img src="./media/formula.drawio.png" width="520">
 </p>
 
-## Activate this feature
+## How to use this package
 
-> **This package is not used by default autoware, you need to activate it to use it. !!!**
+> **This package is disabled by default in Autoware, you need to manually enable it.**
 
-To activate, you need to change the `use_autoware_pose_covariance_modifier` parameter to true within
-the [pose_twist_estimator.launch.xml](https://github.com/meliketanrikulu/autoware.universe/blob/0c14cc97d563c77262f74e306916a9cd26992e73/launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3).
+To enable this package, you need to change the `use_autoware_pose_covariance_modifier` parameter to `true` within
+the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3).
 
 When you activate this feature, `autoware_pose_covariance_modifier_node` is run and only the message of
 type `geometry_msgs::msg::PoseWithCovarianceStamped` in the output
