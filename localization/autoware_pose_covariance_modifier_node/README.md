@@ -72,37 +72,37 @@ Here is a flowchart depicting the process and the predefined thresholds:
 To enable this package, you need to change the `use_autoware_pose_covariance_modifier` parameter to `true` within
 the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/launch/pose_twist_estimator/pose_twist_estimator.launch.xml#L3).
 
-### Without this condition (default):
+### Without this condition (default)
 
 - The output of the [ndt_scan_matcher](../../localization/ndt_scan_matcher) is directly sent
   to [ekf_localizer](../../localization/ekf_localizer).
-    - It has a preset covariance value.
-    - **topic name:** `/localization/pose_estimator/pose_with_covariance`
+  - It has a preset covariance value.
+  - **topic name:** `/localization/pose_estimator/pose_with_covariance`
 - The GNSS pose does not enter the ekf_localizer.
 - This node does not launch.
 
-### With this condition:
+### With this condition
 
 - The output of the [ndt_scan_matcher](../../localization/ndt_scan_matcher) is renamed
-    - **from:** `/localization/pose_estimator/pose_with_covariance`.
-    - **to:** `/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance`.
+  - **from:** `/localization/pose_estimator/pose_with_covariance`.
+  - **to:** `/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance`.
 - The `ndt_scan_matcher` output enters the `autoware_pose_covariance_modifier_node`.
 - The output of this package goes to [ekf_localizer](../../localization/ekf_localizer) with:
-    - **topic name:** `/localization/pose_estimator/pose_with_covariance`.
+  - **topic name:** `/localization/pose_estimator/pose_with_covariance`.
 
 ## Node
 
 ### Subscribed topics
 
 | Name                             | Type                                            | Description            |
-|----------------------------------|-------------------------------------------------|------------------------|
+| -------------------------------- | ----------------------------------------------- | ---------------------- |
 | `input_gnss_pose_with_cov_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input GNSS pose topic. |
 | `input_ndt_pose_with_cov_topic`  | `geometry_msgs::msg::PoseWithCovarianceStamped` | Input NDT pose topic.  |
 
 ### Published topics
 
 | Name                                | Type                                            | Description                                                                                                            |
-|-------------------------------------|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
+| ----------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. This topic is used by the ekf_localizer package.                                                    |
 | `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                                     |
 | `output/ndt_position_stddev`        | `std_msgs::msg::Float32`                        | Output pose ndt average standard deviation in position xy. It is published only when the enable_debug_topics is true.  |
@@ -136,7 +136,7 @@ The GNSS pose topic may have a higher frequency than the NDT.
 Let's assume the following frequencies:
 
 | Source | Frequency | Covariance Source |
-|--------|-----------|-------------------|
+| ------ | --------- | ----------------- |
 | GNSS   | 200 Hz    | GNSS, Unmodified  |
 | NDT    | 10 Hz     | NDT, Unmodified   |
 
@@ -145,7 +145,7 @@ This package doesn't modify the frequency of the output pose topic. It publishes
 End result:
 
 | Mode       | Output Freq | Covariance Source |
-|------------|-------------|-------------------|
+| ---------- | ----------- | ----------------- |
 | GNSS Only  | 200 Hz      | GNSS, Unmodified  |
 | GNSS + NDT | 210 Hz      | Interpolated      |
 | NDT Only   | 10 Hz       | NDT, Unmodified   |
