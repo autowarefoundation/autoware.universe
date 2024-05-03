@@ -2,12 +2,13 @@
 
 ## Purpose
 
-This package is used to enable GNSS and NDT to be used together in localization.
+This package makes it possible to use GNSS and NDT poses together in real time localization.
 
 ## Function
 
 This package takes in GNSS (Global Navigation Satellite System) and NDT (Normal Distribution Transform) poses with covariances.
-It outputs a single pose with an associated covariance:
+
+It outputs a single pose with covariance:
 
 - Directly the GNSS pose and its covariance.
 - Directly the NDT pose and its covariance.
@@ -33,15 +34,17 @@ It also tunes the covariance values of the NDT poses, based on the GNSS standard
 
 ### Without this package
 
-<p align="center">
-<img src="./media/new_proposal-original.drawio.png" width="320">
-</p>
+Only NDT pose is used in localization. GNSS pose is only used for initialization.
+
+<img src="./media/new_proposal-original.drawio.png" width="320" alt="without this package">
 
 ### With this package
 
-<p align="center">
-<img src="./media/new_proposal-proposal-extended-proposal.drawio.png" width="620">
-</p>
+Both NDT and GNSS poses are used in localization, depending on the standard deviation values coming from the GNSS system.
+
+Here is a flowchart depicting the process and the predefined thresholds:
+
+<img src="./media/new_proposal-proposal-extended-proposal.drawio.png" width="620" alt="with this package">
 
 ## _How does the "Interpolate GNSS and NDT pose" part work ?_
 
