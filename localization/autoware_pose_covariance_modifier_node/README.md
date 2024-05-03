@@ -8,6 +8,7 @@ This package is used to enable GNSS and NDT to be used together in localization.
 
 This package takes in GNSS (Global Navigation Satellite System) and NDT (Normal Distribution Transform) poses with covariances.
 It outputs a single pose with an associated covariance:
+
 - Directly the GNSS pose and its covariance.
 - Directly the NDT pose and its covariance.
 - A weighted average of both GNSS and NDT poses and covariances.
