@@ -6,13 +6,31 @@ This package makes it possible to use GNSS and NDT poses together in real time l
 
 ## Function
 
-This package takes in GNSS (Global Navigation Satellite System) and NDT (Normal Distribution Transform) poses with covariances.
+This package takes in GNSS (Global Navigation Satellite System)
+and NDT (Normal Distribution Transform) poses with covariances.
 
 It outputs a single pose with covariance:
 
 - Directly the GNSS pose and its covariance.
 - Directly the NDT pose and its covariance.
-- A weighted average of both GNSS and NDT poses and covariances.
+- Both GNSS and NDT poses with modified covariances.
+
+> - This package doesn't modify the pose information it receives.
+> - It only modifies NDT covariance values under certain conditions.
+
+## Assumptions
+
+- The NDT matcher provides a pose with a fixed covariance.
+- The NDT matcher is unable to provide a dynamic, reliable covariance value.
+
+## Requirements
+
+- The GNSS/INS module must provide standard deviation values (its error / RMSE) for the position and orientation.
+- It probably needs RTK support to provide accurate position and orientation information.
+- You need to have a geo-referenced map.
+- GNSS/INS module and the base_link frame must be calibrated well enough.
+- In an environment where GNSS/INS and NDT systems work well, the `base_link` poses from both systems should be close to
+  each other.
 
 ## Description
 
@@ -40,7 +58,8 @@ Only NDT pose is used in localization. GNSS pose is only used for initialization
 
 ### With this package
 
-Both NDT and GNSS poses are used in localization, depending on the standard deviation values coming from the GNSS system.
+Both NDT and GNSS poses are used in localization, depending on the standard deviation values coming from the GNSS
+system.
 
 Here is a flowchart depicting the process and the predefined thresholds:
 
@@ -55,20 +74,21 @@ the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/lau
 
 ### Without this condition (default):
 
-- The output of the [ndt_scan_matcher](../../localization/ndt_scan_matcher) is directly sent to [ekf_localizer](../../localization/ekf_localizer).
-   - It has a preset covariance value.
-   - **topic name:** `/localization/pose_estimator/pose_with_covariance`
+- The output of the [ndt_scan_matcher](../../localization/ndt_scan_matcher) is directly sent
+  to [ekf_localizer](../../localization/ekf_localizer).
+    - It has a preset covariance value.
+    - **topic name:** `/localization/pose_estimator/pose_with_covariance`
 - The GNSS pose does not enter the ekf_localizer.
 - This node does not launch.
 
 ### With this condition:
 
 - The output of the [ndt_scan_matcher](../../localization/ndt_scan_matcher) is renamed
-   - **from:** `/localization/pose_estimator/pose_with_covariance`.
-   - **to:** `/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance`.
+    - **from:** `/localization/pose_estimator/pose_with_covariance`.
+    - **to:** `/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance`.
 - The `ndt_scan_matcher` output enters the `autoware_pose_covariance_modifier_node`.
 - The output of this package goes to [ekf_localizer](../../localization/ekf_localizer) with:
-   - **topic name:** `/localization/pose_estimator/pose_with_covariance`.
+    - **topic name:** `/localization/pose_estimator/pose_with_covariance`.
 
 ## Node
 
@@ -90,9 +110,10 @@ the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/lau
 
 ### Parameters
 
-The parameters are set in [config/autoware_pose_covariance_modifier.param.yaml](config/autoware_pose_covariance_modifier.param.yaml) .
+The parameters are set
+in [config/autoware_pose_covariance_modifier.param.yaml](config/autoware_pose_covariance_modifier.param.yaml) .
 
-#### Standard Deviation thresholds
+#### Standard deviation thresholds
 
 {{ json_to_markdown("
 localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds.sub_schema.json") }}
@@ -105,45 +126,44 @@ localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds
 
 {{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/debug.sub_schema.json") }}
 
-> ## Important notes
->
-> 1. In order to use this package, your GNSS sensor must provide you with the standard deviation or variance value.
->    - If you do not have a GNSS sensor that provides you with these values, you cannot use this package.
-> 2. You need to use this package with georeferenced map.
-
 ## FAQ
 
 ### How are varying frequency rates handled?
 
-The GNSS and NDT pose topics may have different frequencies. The GNSS pose topic may have a higher frequency than the NDT.
+The GNSS and NDT pose topics may have different frequencies.
+The GNSS pose topic may have a higher frequency than the NDT.
 
 Let's assume the following frequencies:
 
-| Source | Frequency |
-|--------|-----------|
-| GNSS   | 200 Hz    |
-| NDT    | 10 Hz     |
+| Source | Frequency | Covariance Source |
+|--------|-----------|-------------------|
+| GNSS   | 200 Hz    | GNSS, Unmodified  |
+| NDT    | 10 Hz     | NDT, Unmodified   |
 
 This package doesn't modify the frequency of the output pose topic. It publishes the output poses as they come in.
 
 End result:
 
-| Mode       | Output Freq |
-|------------|-------------|
-| GNSS Only  | 200 Hz      |
-| GNSS + NDT | 210 Hz      |
-| NDT Only   | 10 Hz       |
+| Mode       | Output Freq | Covariance Source |
+|------------|-------------|-------------------|
+| GNSS Only  | 200 Hz      | GNSS, Unmodified  |
+| GNSS + NDT | 210 Hz      | Interpolated      |
+| NDT Only   | 10 Hz       | NDT, Unmodified   |
 
-## _How does the "Interpolate GNSS and NDT pose" part work ?_
+### How and when are the NDT covariance values overwritten?
 
-In this section, both NDT and GNSS poses are published from the same topic and given as input
-to [ekf_localizer](https://github.com/autowarefoundation/autoware.universe/tree/main/localization/ekf_localizer). In
-other words, at
-this stage, both NDT and GNSS are used in localization. Here, while the covariance values of the GNSS poses remain
-exactly the same, the NDT covariance values are determined by reference to the GNSS covariances, provided that they are
-kept within a certain range.
-The goal is to reduce the NDT covariance as the GNSS covariance increases, aiming for a smoother and more balanced
-transition between NDT and and maximize the benefit from GNSS poses. Here is how NDT covariance values are calculated
+This section is only for the `GNSS + NDT` mode.
+
+Used for a smooth transition between `GNSS Only` and `NDT Only` modes.
+
+In this mode, both NDT and GNSS poses are published from this node.
+
+#### Assumptions
+
+- Incoming NDT poses have a fixed covariance value.
+- Covariance provided by GNSS is reliable.
+
+#### Covariance interpolation method
 
 <p align="center">
 <img src="./media/ndt_stddev_calculation_formula.drawio.png" width="720">
