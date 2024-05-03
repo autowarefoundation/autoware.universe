@@ -133,14 +133,14 @@ localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds
 The GNSS and NDT pose topics may have different frequencies.
 The GNSS pose topic may have a higher frequency than the NDT.
 
-Let's assume the following frequencies:
+Let's assume that the inputs have the following frequencies:
 
-| Source | Frequency | Covariance Source |
-| ------ | --------- | ----------------- |
-| GNSS   | 200 Hz    | GNSS, Unmodified  |
-| NDT    | 10 Hz     | NDT, Unmodified   |
+| Source | Frequency |
+| ------ | --------- |
+| GNSS   | 200 Hz    |
+| NDT    | 10 Hz     |
 
-This package doesn't modify the frequency of the output pose topic. It publishes the output poses as they come in.
+This package publishes the output poses as they come in, depending on the mode.
 
 End result:
 
