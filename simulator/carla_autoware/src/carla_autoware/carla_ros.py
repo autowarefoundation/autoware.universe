@@ -60,7 +60,17 @@ class carla_interface(object):
         self.id_to_camera_info_map = {}
         self.cv_bridge = CvBridge()
         self.first_ = True
-        self.sensor_frequencies = {"lidar": 11, "camera": 11, "imu": 50, "status": 50, "pose": 2}
+        self.pub_lidar = {}
+
+        self.sensor_frequencies = {
+            "top": 11,
+            "left": 11,
+            "right": 11,
+            "camera": 11,
+            "imu": 50,
+            "status": 50,
+            "pose": 2,
+        }
         self.publish_prev_times = {
             sensor: datetime.datetime.now() for sensor in self.sensor_frequencies
         }
@@ -132,9 +142,12 @@ class carla_interface(object):
                     CameraInfo, "/sensing/camera/traffic_light/camera_info", 1
                 )
             elif sensor["type"] == "sensor.lidar.ray_cast":
-                self.pub_lidar = self.ros2_node.create_publisher(
-                    PointCloud2, "/sensing/lidar/top/outlier_filtered/pointcloud", 10
-                )
+                if sensor["id"] in self.sensor_frequencies:
+                    self.pub_lidar[sensor["id"]] = self.ros2_node.create_publisher(
+                        PointCloud2, f'/sensing/lidar/{sensor["id"]}/pointcloud', 10
+                    )
+                else:
+                    self.logger.info("Please use Top, Right, or Left as the LIDAR ID")
             elif sensor["type"] == "sensor.other.imu":
                 self.pub_imu = self.ros2_node.create_publisher(
                     Imu, "/sensing/imu/tamagawa/imu_raw", 1
@@ -194,13 +207,13 @@ class carla_interface(object):
         header.stamp = Time(sec=seconds, nanosec=nanoseconds)
         return header
 
-    def lidar(self, carla_lidar_measurement):
+    def lidar(self, carla_lidar_measurement, id_):
         """Transform the a received lidar measurement into a ROS point cloud message."""
-        if self.checkFrequency("lidar"):
+        if self.checkFrequency(id_):
             return
-        self.publish_prev_times["lidar"] = datetime.datetime.now()
+        self.publish_prev_times[id_] = datetime.datetime.now()
 
-        header = self.get_msg_header(frame_id="velodyne_top")
+        header = self.get_msg_header(frame_id="velodyne_top_changed")
         fields = [
             PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
             PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
@@ -223,7 +236,7 @@ class carla_interface(object):
 
         lidar_data[:, 1] *= -1
         point_cloud_msg = create_cloud(header, fields, lidar_data)
-        self.pub_lidar.publish(point_cloud_msg)
+        self.pub_lidar[id].publish(point_cloud_msg)
 
     def pose(self):
         """Transform odometry data to Pose and publish Pose with Covariance message."""
@@ -316,7 +329,9 @@ class carla_interface(object):
             buffer=carla_camera_data.raw_data,
         )
         img_msg = self.cv_bridge.cv2_to_imgmsg(image_data_array, encoding="bgra8")
-        img_msg.header = self.get_msg_header(frame_id="traffic_light_left_camera/camera_link")
+        img_msg.header = self.get_msg_header(
+            frame_id="traffic_light_left_camera/camera_link_changed"
+        )
         cam_info = self._camera_info
         cam_info.header = img_msg.header
         self.pub_camera_info.publish(cam_info)
@@ -329,7 +344,7 @@ class carla_interface(object):
         self.publish_prev_times["imu"] = datetime.datetime.now()
 
         imu_msg = Imu()
-        imu_msg.header = self.get_msg_header(frame_id="tamagawa/imu_link")
+        imu_msg.header = self.get_msg_header(frame_id="tamagawa/imu_link_changed")
         imu_msg.angular_velocity.x = -carla_imu_measurement.gyroscope.x
         imu_msg.angular_velocity.y = carla_imu_measurement.gyroscope.y
         imu_msg.angular_velocity.z = -carla_imu_measurement.gyroscope.z
@@ -409,7 +424,7 @@ class carla_interface(object):
             elif sensor_type == "sensor.other.gnss":
                 self.pose()
             elif sensor_type == "sensor.lidar.ray_cast":
-                self.lidar(data[1])
+                self.lidar(data[1], key)
             elif sensor_type == "sensor.other.imu":
                 self.imu(data[1])
             else:

@@ -175,7 +175,11 @@ class SensorWrapper(object):
                     y=sensor_spec["spawn_point"]["y"],
                     z=sensor_spec["spawn_point"]["z"],
                 )
-                sensor_rotation = carla.Rotation()
+                sensor_rotation = carla.Rotation(
+                    pitch=sensor_spec["spawn_point"]["pitch"],
+                    roll=sensor_spec["spawn_point"]["roll"],
+                    yaw=sensor_spec["spawn_point"]["yaw"],
+                )
 
             elif sensor_spec["type"].startswith("sensor.other.imu"):
                 bp.set_attribute("noise_accel_stddev_x", str(0.0))
@@ -202,9 +206,9 @@ class SensorWrapper(object):
                     z=sensor_spec["spawn_point"]["z"],
                 )
                 sensor_rotation = carla.Rotation(
-                    pitch=sensor_spec["spawn_point"]["pitch"],
-                    roll=sensor_spec["spawn_point"]["roll"],
-                    yaw=sensor_spec["spawn_point"]["yaw"],
+                    pitch=sensor_spec["spawn_point"]["pitch"]+0.001,
+                    roll=sensor_spec["spawn_point"]["roll"]-0.015,
+                    yaw=sensor_spec["spawn_point"]["yaw"]+0.0364,
                 )
 
             # create sensor

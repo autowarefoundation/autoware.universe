@@ -193,13 +193,6 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         return CarlaDataProvider._client
 
     @staticmethod
-    def is_sync_mode():
-        """
-        @return true if syncronuous mode is used
-        """
-        return CarlaDataProvider._sync_flag
-
-    @staticmethod
     def set_world(world):
         """Set the world and world settings."""
         CarlaDataProvider._world = world
@@ -213,20 +206,21 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
     def get_world():
         """Return world."""
         return CarlaDataProvider._world
-
+    
     @staticmethod
     def get_map(world=None):
-        """Get the current map"""
+        """Get the current map."""
         if CarlaDataProvider._map is None:
             if world is None:
                 if CarlaDataProvider._world is None:
-                    raise ValueError("class member 'world'' not initialized yet")
+                    raise ValueError("class member \'world'\' not initialized yet")
                 else:
                     CarlaDataProvider._map = CarlaDataProvider._world.get_map()
             else:
                 CarlaDataProvider._map = world.get_map()
 
         return CarlaDataProvider._map
+
 
     @staticmethod
     def get_all_actors():
@@ -757,6 +751,12 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
             CarlaDataProvider._carla_actor_pool.pop(actor_id)
         else:
             print("Trying to remove a non-existing actor id {}".format(actor_id))
+    
+    @staticmethod
+    def is_sync_mode():
+        """Return true if syncronuous mode is used."""
+        return CarlaDataProvider._sync_flag
+
 
     @staticmethod
     def remove_actors_in_surrounding(location, distance):
