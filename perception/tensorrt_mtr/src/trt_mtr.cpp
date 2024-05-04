@@ -113,10 +113,6 @@ void TrtMTR::initCudaPtr(const AgentData & agent_data, const PolylineData & poly
   d_out_trajectory_ =
     cuda::make_unique<float[]>(num_target_ * num_mode_ * num_future_ * PredictedStateDim);
 
-  h_out_score_ = std::make_unique<float[]>(sizeof(float) * num_target_ * num_mode_);
-  h_out_trajectory_ = std::make_unique<float[]>(
-    sizeof(float) * num_target_ * num_mode_ * num_future_ * PredictedStateDim);
-
   if (builder_->isDynamic()) {
     // trajectory: (B, N, T, Da)
     builder_->setBindingDimensions(
@@ -198,20 +194,27 @@ bool TrtMTR::postProcess(
     num_target_, num_mode_, num_future_, agent_data.state_dim(), d_target_state_.get(),
     PredictedStateDim, d_out_trajectory_.get(), stream_));
 
+  h_out_score_.clear();
+  h_out_trajectory_.clear();
+  h_out_score_.reserve(num_target_ * num_mode_);
+  h_out_trajectory_.reserve(num_target_ * num_mode_ * num_future_ * PredictedStateDim);
+
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    h_out_score_.get(), d_out_score_.get(), sizeof(float) * num_target_ * num_mode_,
+    h_out_score_.data(), d_out_score_.get(), sizeof(float) * num_target_ * num_mode_,
     cudaMemcpyDeviceToHost, stream_));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    h_out_trajectory_.get(), d_out_trajectory_.get(),
+    h_out_trajectory_.data(), d_out_trajectory_.get(),
     sizeof(float) * num_target_ * num_mode_ * num_future_ * PredictedStateDim,
     cudaMemcpyDeviceToHost, stream_));
 
   trajectories.reserve(num_target_);
   for (auto b = 0; b < num_target_; ++b) {
-    const auto score_ptr = h_out_score_.get() + b * num_mode_;
-    const auto trajectory_ptr =
-      h_out_trajectory_.get() + b * num_mode_ * num_future_ * PredictedStateDim;
-    trajectories.emplace_back(score_ptr, trajectory_ptr, num_mode_, num_future_);
+    const auto score_itr = h_out_score_.cbegin() + b * num_mode_;
+    std::vector<float> scores(score_itr, score_itr + num_mode_);
+    const auto mode_itr =
+      h_out_trajectory_.cbegin() + b * num_mode_ * num_future_ * PredictedStateDim;
+    std::vector<float> modes(mode_itr, mode_itr + num_mode_ * num_future_ * PredictedStateDim);
+    trajectories.emplace_back(scores, modes, num_mode_, num_future_);
   }
   return true;
 }

@@ -16,6 +16,7 @@
 #define TENSORRT_MTR__TRAJECTORY_HPP_
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <vector>
 
@@ -29,14 +30,14 @@ constexpr size_t PredictedStateDim = 7;
  */
 struct PredictedState
 {
-  explicit PredictedState(const float * state)
-  : x_(state[0]),
-    y_(state[1]),
-    dx_(state[2]),
-    dy_(state[3]),
-    yaw_(state[4]),
-    vx_(state[5]),
-    vy_(state[6])
+  explicit PredictedState(const std::array<float, PredictedStateDim> & state)
+  : x_(state.at(0)),
+    y_(state.at(1)),
+    dx_(state.at(2)),
+    dy_(state.at(3)),
+    yaw_(state.at(4)),
+    vx_(state.at(5)),
+    vy_(state.at(6))
   {
   }
 
@@ -80,13 +81,14 @@ private:
  */
 struct PredictedMode
 {
-  PredictedMode(const float score, const float * waypoints, const size_t num_future)
+  PredictedMode(const float score, const std::vector<float> & waypoints, const size_t num_future)
   : score_(score), num_future_(num_future)
   {
     for (size_t t = 0; t < num_future_; ++t) {
-      const auto start_ptr = waypoints + t * state_dim();
-      std::vector<float> state(start_ptr, start_ptr + state_dim());
-      waypoints_.emplace_back(state.data());
+      const auto start_itr = waypoints.cbegin() + t * state_dim();
+      std::array<float, PredictedStateDim> state;
+      std::copy_n(start_itr, PredictedStateDim, state.begin());
+      waypoints_.emplace_back(state);
     }
   }
 
@@ -124,15 +126,15 @@ struct PredictedTrajectory
    * @param num_future The number of predicted timestamps.
    */
   PredictedTrajectory(
-    const float * scores, const float * trajectories, const size_t num_mode,
+    const std::vector<float> & scores, const std::vector<float> & modes, const size_t num_mode,
     const size_t num_future)
   : num_mode_(num_mode), num_future_(num_future)
   {
     for (size_t m = 0; m < num_mode_; ++m) {
-      const auto score = *(scores + m);
-      const auto start_ptr = trajectories + m * num_future_ * state_dim();
-      std::vector<float> waypoints(start_ptr, start_ptr + num_future_ * state_dim());
-      modes_.emplace_back(score, waypoints.data(), num_future_);
+      const auto score = scores.at(m);
+      const auto wp_itr = modes.cbegin() + m * num_future_ * state_dim();
+      std::vector<float> waypoints(wp_itr, wp_itr + num_future_ * state_dim());
+      modes_.emplace_back(score, waypoints, num_future_);
     }
     // sort by score
     sort_by_score();

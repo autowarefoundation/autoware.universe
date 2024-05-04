@@ -187,8 +187,8 @@ private:
   // outputs
   cuda::unique_ptr<float[]> d_out_score_{nullptr};
   cuda::unique_ptr<float[]> d_out_trajectory_{nullptr};
-  std::unique_ptr<float[]> h_out_score_{nullptr};
-  std::unique_ptr<float[]> h_out_trajectory_{nullptr};
+  std::vector<float> h_out_score_;
+  std::vector<float> h_out_trajectory_;
 };  // class TrtMTR
 }  // namespace trt_mtr
 #endif  // TENSORRT_MTR__TRT_MTR_HPP_
