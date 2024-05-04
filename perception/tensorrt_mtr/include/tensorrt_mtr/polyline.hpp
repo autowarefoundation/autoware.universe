@@ -104,8 +104,8 @@ struct PolylineData
    * @param distance_threshold The distance threshold to separate polylines.
    */
   PolylineData(
-    const std::vector<LanePoint> & points, const size_t min_num_polyline, const size_t max_num_point,
-    const float distance_threshold)
+    const std::vector<LanePoint> & points, const size_t min_num_polyline,
+    const size_t max_num_point, const float distance_threshold)
   : num_polyline_(0), num_point_(max_num_point), distance_threshold_(distance_threshold)
   {
     std::size_t point_cnt = 0;
