@@ -1564,8 +1564,10 @@ std::vector<geometry_msgs::msg::Point> postProcess(
       findNearestSegmentIndexFromLateralDistance(tmp_bound, front_pose, M_PI_2);
     const auto start_point =
       calcLongitudinalOffsetStartPoint(tmp_bound, front_pose, front_start_idx, -front_length);
+
     // Insert a start point
     processed_bound.push_back(start_point);
+
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(start_point).orientation(front_pose.orientation);
     return findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2);
@@ -1585,27 +1587,19 @@ std::vector<geometry_msgs::msg::Point> postProcess(
     return std::make_pair(goal_idx, goal_point);
   }();
 
-  // Forward driving
-  if(start_idx < goal_idx){
-    for (size_t i = start_idx + 1; i <= goal_idx; ++i) {
-      const auto & next_point = tmp_bound.at(i);
-      const double dist = tier4_autoware_utils::calcDistance2d(processed_bound.back(), next_point);
-      if (dist > overlap_threshold) {
-        processed_bound.push_back(next_point);
-      }
+  // Insert middle points
+  size_t step = (start_idx < goal_idx) ? 1 : -1;
+  for (size_t i = start_idx + step; i != goal_idx + step; i += step) {
+    const auto &next_point = tmp_bound.at(i);
+    const double dist = tier4_autoware_utils::calcDistance2d(processed_bound.back(), next_point);
+    if (dist > overlap_threshold) {
+      processed_bound.push_back(next_point);
     }
   }
-  // Backward driving
-  else{
-      for (size_t i = start_idx - 1; i >= goal_idx; --i) {
-      const auto & next_point = tmp_bound.at(i);
-      const double dist = tier4_autoware_utils::calcDistance2d(processed_bound.back(), next_point);
-      if (dist > overlap_threshold) {
-        processed_bound.push_back(next_point);
-      }
-    }
-  }
-  if (tier4_autoware_utils::calcDistance2d(processed_bound.back(), goal_point) > overlap_threshold) {
+
+  // Insert a goal point
+  if (
+    tier4_autoware_utils::calcDistance2d(processed_bound.back(), goal_point) > overlap_threshold) {
     processed_bound.push_back(goal_point);
   }
 
