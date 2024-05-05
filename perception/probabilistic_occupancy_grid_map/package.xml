@@ -45,6 +45,7 @@
   <test_depend>launch_testing</test_depend>
   <test_depend>launch_testing_ament_cmake</test_depend>
   <test_depend>launch_testing_ros</test_depend>
+  <test_depend>pointcloud_preprocessor</test_depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>
