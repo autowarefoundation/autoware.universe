@@ -27,6 +27,7 @@
   <depend>interpolation</depend>
   <depend>motion_utils</depend>
   <depend>osqp_interface</depend>
+  <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>

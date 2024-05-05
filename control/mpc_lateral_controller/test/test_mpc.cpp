@@ -19,6 +19,7 @@
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
+#include "planning_test_utils/planning_interface_test_manager_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
@@ -65,10 +66,26 @@ nav_msgs::msg::Odometry makeOdometry(const geometry_msgs::msg::Pose & pose, cons
   odometry.twist.twist.linear.x = velocity;
   return odometry;
 }
+
+struct VehicleModelParameters
+{
+  double wheelbase;
+  double steer_limit;
+  double steer_tau;
+  double mass_fl;
+  double mass_fr;
+  double mass_rl;
+  double mass_rr;
+  double cf;
+  double cr;
+};
+
 class MPCTest : public ::testing::Test
 {
 protected:
   MPCParam param;
+  VehicleModelParameters vehicle_model_param;
+
   // Test inputs
   Trajectory dummy_straight_trajectory;
   Trajectory dummy_right_turn_trajectory;
@@ -77,20 +94,9 @@ protected:
   double default_velocity = 1.0;
   rclcpp::Logger logger = rclcpp::get_logger("mpc_test_logger");
 
-  // Vehicle model parameters
-  double wheelbase = 2.7;
-  double steer_limit = 1.0;
-  double steer_tau = 0.1;
-  double mass_fl = 600.0;
-  double mass_fr = 600.0;
-  double mass_rl = 600.0;
-  double mass_rr = 600.0;
-  double cf = 155494.663;
-  double cr = 155494.663;
-
   // Filters parameter
-  double steering_lpf_cutoff_hz = 3.0;
-  double error_deriv_lpf_cutoff_hz = 5.0;
+  double steering_lpf_cutoff_hz;
+  double error_deriv_lpf_cutoff_hz;
 
   // Test Parameters
   double admissible_position_error = 5.0;
@@ -105,40 +111,77 @@ protected:
 
   void initParam()
   {
-    param.prediction_horizon = 50;
-    param.prediction_dt = 0.1;
-    param.zero_ff_steer_deg = 0.5;
-    param.input_delay = 0.0;
-    param.acceleration_limit = 2.0;
-    param.velocity_time_constant = 0.3;
-    param.min_prediction_length = 5.0;
-    param.steer_tau = 0.1;
-    param.nominal_weight.lat_error = 1.0;
-    param.nominal_weight.heading_error = 1.0;
-    param.nominal_weight.heading_error_squared_vel = 1.0;
-    param.nominal_weight.terminal_lat_error = 1.0;
-    param.nominal_weight.terminal_heading_error = 0.1;
-    param.low_curvature_weight.lat_error = 0.1;
-    param.low_curvature_weight.heading_error = 0.0;
-    param.low_curvature_weight.heading_error_squared_vel = 0.3;
-    param.nominal_weight.steering_input = 1.0;
-    param.nominal_weight.steering_input_squared_vel = 0.25;
-    param.nominal_weight.lat_jerk = 0.0;
-    param.nominal_weight.steer_rate = 0.0;
-    param.nominal_weight.steer_acc = 0.000001;
-    param.low_curvature_weight.steering_input = 1.0;
-    param.low_curvature_weight.steering_input_squared_vel = 0.25;
-    param.low_curvature_weight.lat_jerk = 0.0;
-    param.low_curvature_weight.steer_rate = 0.0;
-    param.low_curvature_weight.steer_acc = 0.000001;
-    param.low_curvature_thresh_curvature = 0.0;
+    rclcpp::NodeOptions node_options;
 
-    trajectory_param.traj_resample_dist = 0.1;
-    trajectory_param.path_filter_moving_ave_num = 35;
-    trajectory_param.curvature_smoothing_num_traj = 1;
-    trajectory_param.curvature_smoothing_num_ref_steer = 35;
-    trajectory_param.enable_path_smoothing = true;
-    trajectory_param.extend_trajectory_for_end_yaw_control = true;
+    const auto share_dir = ament_index_cpp::get_package_share_directory("mpc_lateral_controller");
+
+    test_utils::updateNodeOptions(
+      node_options, {share_dir + "/param/lateral_controller_defaults.param.yaml",
+                     share_dir + "/test/test_vehicle_info.param.yaml"});
+
+    auto temp_node = std::make_shared<rclcpp::Node>("temp_node", node_options);
+    const auto dp_int = [&](const std::string & s) { return temp_node->declare_parameter<int>(s); };
+    const auto dp_bool = [&](const std::string & s) {
+      return temp_node->declare_parameter<bool>(s);
+    };
+    const auto dp_double = [&](const std::string & s) {
+      return temp_node->declare_parameter<double>(s);
+    };
+
+    vehicle_model_param.wheelbase = dp_double("wheel_base");
+    vehicle_model_param.steer_limit = dp_double("max_steer_angle");
+    vehicle_model_param.steer_tau = dp_double("vehicle_model_steer_tau");
+    vehicle_model_param.mass_fl = dp_double("mass_fl");
+    vehicle_model_param.mass_fr = dp_double("mass_fr");
+    vehicle_model_param.mass_rl = dp_double("mass_rl");
+    vehicle_model_param.mass_rr = dp_double("mass_rr");
+    vehicle_model_param.cf = dp_double("cf");
+    vehicle_model_param.cr = dp_double("cr");
+
+    steering_lpf_cutoff_hz = dp_double("steering_lpf_cutoff_hz");
+    error_deriv_lpf_cutoff_hz = dp_double("error_deriv_lpf_cutoff_hz");
+
+    param.prediction_horizon = dp_int("mpc_prediction_horizon");
+    param.prediction_dt = dp_double("mpc_prediction_dt");
+    param.zero_ff_steer_deg = dp_double("mpc_zero_ff_steer_deg");
+    param.input_delay = dp_double("input_delay");
+    param.acceleration_limit = dp_double("mpc_acceleration_limit");
+    param.velocity_time_constant = dp_double("mpc_velocity_time_constant");
+    param.min_prediction_length = dp_double("mpc_min_prediction_length");
+    param.steer_tau = vehicle_model_param.steer_tau;
+    param.nominal_weight.lat_error = dp_double("mpc_weight_lat_error");
+    param.nominal_weight.heading_error = dp_double("mpc_weight_heading_error");
+    param.nominal_weight.heading_error_squared_vel =
+      dp_double("mpc_weight_heading_error_squared_vel");
+    param.nominal_weight.terminal_lat_error = dp_double("mpc_weight_terminal_lat_error");
+    param.nominal_weight.terminal_heading_error = dp_double("mpc_weight_terminal_heading_error");
+    param.low_curvature_weight.lat_error = dp_double("mpc_low_curvature_weight_lat_error");
+    param.low_curvature_weight.heading_error = dp_double("mpc_low_curvature_weight_heading_error");
+    param.low_curvature_weight.heading_error_squared_vel =
+      dp_double("mpc_low_curvature_weight_heading_error_squared_vel");
+    param.nominal_weight.steering_input = dp_double("mpc_weight_steering_input");
+    param.nominal_weight.steering_input_squared_vel =
+      dp_double("mpc_weight_steering_input_squared_vel");
+    param.nominal_weight.lat_jerk = dp_double("mpc_weight_lat_jerk");
+    param.nominal_weight.steer_rate = dp_double("mpc_weight_steer_rate");
+    param.nominal_weight.steer_acc = dp_double("mpc_weight_steer_acc");
+    param.low_curvature_weight.steering_input =
+      dp_double("mpc_low_curvature_weight_steering_input");
+    param.low_curvature_weight.steering_input_squared_vel =
+      dp_double("mpc_low_curvature_weight_steering_input_squared_vel");
+    param.low_curvature_weight.lat_jerk = dp_double("mpc_low_curvature_weight_lat_jerk");
+    param.low_curvature_weight.steer_rate = dp_double("mpc_low_curvature_weight_steer_rate");
+    param.low_curvature_weight.steer_acc = dp_double("mpc_low_curvature_weight_steer_acc");
+    param.low_curvature_thresh_curvature = dp_double("mpc_low_curvature_thresh_curvature");
+
+    trajectory_param.traj_resample_dist = dp_double("traj_resample_dist");
+    trajectory_param.path_filter_moving_ave_num = dp_int("path_filter_moving_ave_num");
+    trajectory_param.curvature_smoothing_num_traj = dp_int("curvature_smoothing_num_traj");
+    trajectory_param.curvature_smoothing_num_ref_steer =
+      dp_int("curvature_smoothing_num_ref_steer");
+    trajectory_param.enable_path_smoothing = dp_bool("enable_path_smoothing");
+    trajectory_param.extend_trajectory_for_end_yaw_control =
+      dp_bool("extend_trajectory_for_end_yaw_control");
 
     dummy_straight_trajectory.points.push_back(makePoint(0.0, 0.0, 1.0f));
     dummy_straight_trajectory.points.push_back(makePoint(1.0, 0.0, 1.0f));
@@ -194,7 +237,9 @@ TEST_F(MPCTest, InitializeAndCalculate)
   EXPECT_FALSE(mpc->hasQPSolver());
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
+    std::make_shared<KinematicsBicycleModel>(
+      vehicle_model_param.wheelbase, vehicle_model_param.steer_limit,
+      vehicle_model_param.steer_tau);
   mpc->setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc->hasVehicleModel());
 
@@ -223,7 +268,9 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
   EXPECT_FALSE(mpc->hasQPSolver());
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
+    std::make_shared<KinematicsBicycleModel>(
+      vehicle_model_param.wheelbase, vehicle_model_param.steer_limit,
+      vehicle_model_param.steer_tau);
   mpc->setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc->hasVehicleModel());
 
@@ -256,7 +303,9 @@ TEST_F(MPCTest, OsqpCalculate)
   mpc->setReferenceTrajectory(dummy_straight_trajectory, trajectory_param, current_kinematics);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
+    std::make_shared<KinematicsBicycleModel>(
+      vehicle_model_param.wheelbase, vehicle_model_param.steer_limit,
+      vehicle_model_param.steer_tau);
   mpc->setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc->hasVehicleModel());
 
@@ -284,7 +333,9 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
   mpc->setReferenceTrajectory(dummy_right_turn_trajectory, trajectory_param, current_kinematics);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
+    std::make_shared<KinematicsBicycleModel>(
+      vehicle_model_param.wheelbase, vehicle_model_param.steer_limit,
+      vehicle_model_param.steer_tau);
   mpc->setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc->hasVehicleModel());
 
@@ -309,7 +360,8 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   initializeMPC(*mpc);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<KinematicsBicycleModelNoDelay>(wheelbase, steer_limit);
+    std::make_shared<KinematicsBicycleModelNoDelay>(
+      vehicle_model_param.wheelbase, vehicle_model_param.steer_limit);
   mpc->setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc->hasVehicleModel());
 
@@ -342,7 +394,8 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
   mpc->setReferenceTrajectory(dummy_right_turn_trajectory, trajectory_param, current_kinematics);
 
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<KinematicsBicycleModelNoDelay>(wheelbase, steer_limit);
+    std::make_shared<KinematicsBicycleModelNoDelay>(
+      vehicle_model_param.wheelbase, vehicle_model_param.steer_limit);
   mpc->setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc->hasVehicleModel());
 
@@ -369,8 +422,10 @@ TEST_F(MPCTest, DynamicCalculate)
   auto mpc = std::make_unique<MPC>(node);
   initializeMPC(*mpc);
 
-  std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<DynamicsBicycleModel>(wheelbase, mass_fl, mass_fr, mass_rl, mass_rr, cf, cr);
+  std::shared_ptr<VehicleModelInterface> vehicle_model_ptr = std::make_shared<DynamicsBicycleModel>(
+    vehicle_model_param.wheelbase, vehicle_model_param.mass_fl, vehicle_model_param.mass_fr,
+    vehicle_model_param.mass_rl, vehicle_model_param.mass_rr, vehicle_model_param.cf,
+    vehicle_model_param.cr);
   mpc->setVehicleModel(vehicle_model_ptr);
   ASSERT_TRUE(mpc->hasVehicleModel());
 
@@ -393,7 +448,9 @@ TEST_F(MPCTest, MultiSolveWithBuffer)
   auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
   auto mpc = std::make_unique<MPC>(node);
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
+    std::make_shared<KinematicsBicycleModel>(
+      vehicle_model_param.wheelbase, vehicle_model_param.steer_limit,
+      vehicle_model_param.steer_tau);
   mpc->setVehicleModel(vehicle_model_ptr);
   std::shared_ptr<QPSolverInterface> qpsolver_ptr = std::make_shared<QPSolverEigenLeastSquareLLT>();
   mpc->setQPSolver(qpsolver_ptr);
@@ -431,7 +488,8 @@ TEST_F(MPCTest, FailureCases)
   auto node = rclcpp::Node("mpc_test_node", rclcpp::NodeOptions{});
   auto mpc = std::make_unique<MPC>(node);
   std::shared_ptr<VehicleModelInterface> vehicle_model_ptr =
-    std::make_shared<KinematicsBicycleModel>(wheelbase, steer_limit, steer_tau);
+    std::make_shared<KinematicsBicycleModel>(
+      vehicle_model_param.wheelbase, vehicle_model_param.steer_limit, param.steer_tau);
   mpc->setVehicleModel(vehicle_model_ptr);
   std::shared_ptr<QPSolverInterface> qpsolver_ptr = std::make_shared<QPSolverEigenLeastSquareLLT>();
   mpc->setQPSolver(qpsolver_ptr);
