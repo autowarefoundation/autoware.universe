@@ -1550,10 +1550,6 @@ std::vector<geometry_msgs::msg::Point> postProcess(
     }
   }
 
-  if (!is_driving_forward) {
-    std::reverse(tmp_bound.begin(), tmp_bound.end());
-  }
-
   const auto start_idx = [&]() {
     const size_t current_seg_idx = planner_data->findEgoSegmentIndex(path.points);
     const auto cropped_path_points = motion_utils::cropPoints(
@@ -1568,10 +1564,8 @@ std::vector<geometry_msgs::msg::Point> postProcess(
       findNearestSegmentIndexFromLateralDistance(tmp_bound, front_pose, M_PI_2);
     const auto start_point =
       calcLongitudinalOffsetStartPoint(tmp_bound, front_pose, front_start_idx, -front_length);
-
     // Insert a start point
     processed_bound.push_back(start_point);
-
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(start_point).orientation(front_pose.orientation);
     return findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2);
@@ -1586,24 +1580,32 @@ std::vector<geometry_msgs::msg::Point> postProcess(
       calcLongitudinalOffsetGoalPoint(tmp_bound, goal_pose, goal_start_idx, vehicle_length);
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(goal_point).orientation(goal_pose.orientation);
-    const size_t goal_idx = std::max(
-      goal_start_idx, findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2));
-
+    const size_t goal_nearest_idx = findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2);
+    const size_t goal_idx = ((goal_start_idx - start_idx)*(goal_start_idx - start_idx) > (goal_nearest_idx - start_idx)*(goal_nearest_idx - start_idx)) ? goal_start_idx : goal_nearest_idx;
     return std::make_pair(goal_idx, goal_point);
   }();
 
-  // Insert middle points
-  for (size_t i = start_idx + 1; i <= goal_idx; ++i) {
-    const auto & next_point = tmp_bound.at(i);
-    const double dist = tier4_autoware_utils::calcDistance2d(processed_bound.back(), next_point);
-    if (dist > overlap_threshold) {
-      processed_bound.push_back(next_point);
+  // Forward driving
+  if(start_idx < goal_idx){
+    for (size_t i = start_idx + 1; i <= goal_idx; ++i) {
+      const auto & next_point = tmp_bound.at(i);
+      const double dist = tier4_autoware_utils::calcDistance2d(processed_bound.back(), next_point);
+      if (dist > overlap_threshold) {
+        processed_bound.push_back(next_point);
+      }
     }
   }
-
-  // Insert a goal point
-  if (
-    tier4_autoware_utils::calcDistance2d(processed_bound.back(), goal_point) > overlap_threshold) {
+  // Backward driving
+  else{
+      for (size_t i = start_idx - 1; i >= goal_idx; --i) {
+      const auto & next_point = tmp_bound.at(i);
+      const double dist = tier4_autoware_utils::calcDistance2d(processed_bound.back(), next_point);
+      if (dist > overlap_threshold) {
+        processed_bound.push_back(next_point);
+      }
+    }
+  }
+  if (tier4_autoware_utils::calcDistance2d(processed_bound.back(), goal_point) > overlap_threshold) {
     processed_bound.push_back(goal_point);
   }
 
