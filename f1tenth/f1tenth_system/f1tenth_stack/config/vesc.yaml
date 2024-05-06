@@ -1,0 +1,56 @@
+/**:
+  # general parameters shared by all vesc-related nodes
+  ros__parameters:
+    # erpm (electrical rpm) = speed_to_erpm_gain * speed (meters / second) + speed_to_erpm_offset
+    speed_to_erpm_gain: 4614.0
+    speed_to_erpm_offset: 0.0
+
+    # servo value (0 to 1) =  steering_angle_to_servo_gain * steering angle (radians) + steering_angle_to_servo_offset
+    steering_angle_to_servo_gain: -1.2135
+    steering_angle_to_servo_offset: 0.5304
+
+    port: /dev/sensors/vesc
+    duty_cycle_min: 0.0
+    duty_cycle_max: 0.0
+    current_min: 0.0
+    current_max: 100.0
+    brake_min: -20000.0
+    brake_max: 200000.0
+    speed_min: -23250.0
+    speed_max: 23250.0
+    position_min: 0.0
+    position_max: 0.0
+    servo_min: 0.15
+    servo_max: 0.85
+
+# No longer needed, all parameters are shared
+# ackermann_to_vesc_node:
+#   ros__parameters:
+
+vesc_to_odom_node:
+  ros__parameters:
+    odom_frame: odom
+    base_frame: base_link
+    # publish odom to base link tf
+    publish_tf: true
+    use_servo_cmd_to_calc_angular_velocity: true
+    # car wheelbase is about 25cm
+    wheelbase: .25
+
+# No longer needed, all parameters are shared
+# vesc_driver:
+#   ros__parameters:
+
+throttle_interpolator:
+  ros__parameters:
+    rpm_input_topic: commands/motor/unsmoothed_speed
+    rpm_output_topic: commands/motor/speed
+    servo_input_topic: commands/servo/unsmoothed_position
+    servo_output_topic: commands/servo/position
+
+    # servo smoother - limits acceleration and smooths anything above limit
+    max_acceleration: 2.5 # meters/second^2
+    throttle_smoother_rate: 75.0 # messages/sec
+    # servo smoother - limits rotation speed and smooths anything above limit
+    max_servo_speed: 3.2 # radians/second
+    servo_smoother_rate: 75.0 # messages/sec

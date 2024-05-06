@@ -1,0 +1,25 @@
+name: Lint teleop_tools
+on:
+  pull_request:
+
+jobs:
+  ament_lint:
+    name: ament_${{ matrix.linter }}
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+          linter: [copyright, flake8, pep257, xmllint]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: ros-tooling/setup-ros@v0.1
+    - uses: ros-tooling/action-ros-lint@v0.1
+      with:
+        distribution: foxy
+        linter: ${{ matrix.linter }}
+        package-name:
+          joy_teleop
+          key_teleop
+          mouse_teleop
+          teleop_tools
+          teleop_tools_msgs

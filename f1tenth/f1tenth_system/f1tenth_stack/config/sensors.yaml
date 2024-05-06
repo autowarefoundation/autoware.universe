@@ -1,0 +1,19 @@
+urg_node:
+  ros__parameters:
+    angle_max: 3.14
+    angle_min: -3.14
+    ip_address: "192.168.0.10"
+    ip_port: 10940
+    # serial_port: "/dev/sensors/hokuyo"
+    serial_baud: 115200
+    laser_frame_id: "laser"
+    calibrate_time: false
+    default_user_latency: 0.0
+    diagnostics_tolerance: 0.05
+    diagnostics_window_time: 5.0
+    error_limit: 4
+    get_detailed_status: false
+    publish_intensity: false
+    publish_multiecho: false
+    cluster: 1
+    skip: 0
