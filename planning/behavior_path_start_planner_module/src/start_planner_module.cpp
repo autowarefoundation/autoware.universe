@@ -441,7 +441,9 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   geometry_msgs::msg::Pose ego_overhang_point_as_pose;
   const auto [gap_between_ego_and_lane_border, corresponding_lateral_gap_with_other_lane_bound] =
     get_gap_between_ego_and_lane_border(ego_overhang_point_as_pose, ego_is_merging_from_the_left);
-  if (!gap_between_ego_and_lane_border.has_value()) return false;
+  if (!gap_between_ego_and_lane_border.has_value()) {
+    return false;
+  }
   if (gap_between_ego_and_lane_border.value() < corresponding_lateral_gap_with_other_lane_bound) {
     // middle of the lane is crossed, no need to check for collisions anymore
     return true;
