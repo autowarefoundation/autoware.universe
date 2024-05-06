@@ -251,10 +251,10 @@ void TopicPublisher::reset()
 void TopicPublisher::init_rosbag_publishers()
 {
   // read messages without object
-  init_rosbag_publishers_without_object(topic_publisher_params_.path_bag_without_object);
+  init_rosbag_publisher_buffer(topic_publisher_params_.path_bag_without_object, true);
 
   // read messages with object
-  init_rosbag_publishers_with_object(topic_publisher_params_.path_bag_with_object);
+  init_rosbag_publisher_buffer(topic_publisher_params_.path_bag_with_object, false);
 
   // before create publishers and timers, check all the messages are correctly initialized with
   // their conjugate messages.
@@ -264,10 +264,7 @@ void TopicPublisher::init_rosbag_publishers()
     RCLCPP_ERROR(node_->get_logger(), "Messages are not initialized correctly");
     rclcpp::shutdown();
   }
-
-  // set publishers and timers except for the pointcloud message
-  const auto pointcloud_variables_map = set_general_publishers_and_timers();  // except pointcloud
-  set_pointcloud_publishers_and_timers(pointcloud_variables_map);
+  set_publishers_and_timers_to_variable();
 }
 
 template <typename MessageType>
@@ -331,8 +328,7 @@ void TopicPublisher::set_period(const std::map<std::string, std::vector<rclcpp::
   }
 }
 
-std::map<std::string, PublisherVariables<PointCloud2>>
-TopicPublisher::set_general_publishers_and_timers()
+void TopicPublisher::set_publishers_and_timers_to_variable()
 {
   std::map<std::string, PublisherVariables<PointCloud2>>
     pointcloud_variables_map;  // temp map for pointcloud publishers
@@ -349,11 +345,10 @@ TopicPublisher::set_general_publishers_and_timers()
       [&](auto & var) {
         using MessageType = typename decltype(var.empty_area_message)::element_type;
 
-        // Check if the MessageType is PointCloud2
         if constexpr (
           std::is_same_v<MessageType, sensor_msgs::msg::PointCloud2> ||
-          std::is_same_v<MessageType, sensor_msgs::msg::Image>) {
-          // For PointCloud2, use rclcpp::SensorDataQoS
+          std::is_same_v<MessageType, sensor_msgs::msg::Image> ||
+          std::is_same_v<MessageType, sensor_msgs::msg::CameraInfo>) {
           var.publisher = node_->create_publisher<MessageType>(topic_ref, rclcpp::SensorDataQoS());
         } else {
           // For other message types, use the QoS setting depth of 1
@@ -379,10 +374,12 @@ TopicPublisher::set_general_publishers_and_timers()
       variant);
   }
 
-  return pointcloud_variables_map;
+  // To be able to publish pointcloud messages with async, I need to create a timer for each lidar
+  // output. So different operations are needed for pointcloud messages.
+  set_timers_for_pointcloud_msgs(pointcloud_variables_map);
 }
 
-void TopicPublisher::set_pointcloud_publishers_and_timers(
+void TopicPublisher::set_timers_for_pointcloud_msgs(
   const std::map<std::string, PublisherVariables<PointCloud2>> & pointcloud_variables_map)
 {
   // Set the point cloud publisher timers
@@ -470,12 +467,13 @@ bool TopicPublisher::check_publishers_initialized_correctly()
   return true;
 }
 
-void TopicPublisher::init_rosbag_publishers_with_object(const std::string & path_bag_with_object)
+void TopicPublisher::init_rosbag_publisher_buffer(
+  const std::string & bag_path, const bool is_empty_area_message)
 {
   rosbag2_cpp::Reader reader;
 
   try {
-    reader.open(path_bag_with_object);
+    reader.open(bag_path);
   } catch (const std::exception & e) {
     RCLCPP_ERROR_STREAM(node_->get_logger(), "Error opening bag file: " << e.what());
     rclcpp::shutdown();
@@ -483,7 +481,6 @@ void TopicPublisher::init_rosbag_publishers_with_object(const std::string & path
   }
 
   const auto & topics = reader.get_metadata().topics_with_message_count;
-  const bool is_empty_area_message = false;
 
   while (reader.has_next()) {
     auto bag_message = reader.read_next();
@@ -530,82 +527,6 @@ void TopicPublisher::init_rosbag_publishers_with_object(const std::string & path
         current_topic, *bag_message, is_empty_area_message);
     }
   }
-  reader.close();
-}
-
-void TopicPublisher::init_rosbag_publishers_without_object(
-  const std::string & path_bag_without_object)
-{
-  rosbag2_cpp::Reader reader;
-
-  try {
-    reader.open(path_bag_without_object);
-  } catch (const std::exception & e) {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "Error opening bag file: " << e.what());
-    rclcpp::shutdown();
-    return;
-  }
-
-  const auto & topics = reader.get_metadata().topics_with_message_count;
-  const bool is_empty_area_message = true;
-
-  // Collect timestamps for each topic to set the frequency of the publishers
-  std::map<std::string, std::vector<rclcpp::Time>> timestamps_per_topic;
-
-  while (reader.has_next()) {
-    const auto bag_message = reader.read_next();
-
-    const auto current_topic = bag_message->topic_name;
-
-    const auto message_type = get_publisher_message_type_for_topic(topics, current_topic);
-    if (message_type == PublisherMessageType::UNKNOWN) {
-      continue;
-    }
-
-    // Record timestamp
-    timestamps_per_topic[current_topic].emplace_back(bag_message->time_stamp);
-
-    // Deserialize and store the first message as a sample
-    if (message_type == PublisherMessageType::CAMERA_INFO) {
-      set_message<sensor_msgs::msg::CameraInfo>(current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::IMAGE) {
-      set_message<sensor_msgs::msg::Image>(current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::POINTCLOUD2) {
-      set_message<PointCloud2>(current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::POSE_WITH_COVARIANCE_STAMPED) {
-      set_message<geometry_msgs::msg::PoseWithCovarianceStamped>(
-        current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::POSE_STAMPED) {
-      set_message<geometry_msgs::msg::PoseStamped>(
-        current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::ODOMETRY) {
-      set_message<nav_msgs::msg::Odometry>(current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::IMU) {
-      set_message<sensor_msgs::msg::Imu>(current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::CONTROL_MODE_REPORT) {
-      set_message<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
-        current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::GEAR_REPORT) {
-      set_message<autoware_auto_vehicle_msgs::msg::GearReport>(
-        current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::HAZARD_LIGHTS_REPORT) {
-      set_message<autoware_auto_vehicle_msgs::msg::HazardLightsReport>(
-        current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::STEERING_REPORT) {
-      set_message<autoware_auto_vehicle_msgs::msg::SteeringReport>(
-        current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::TURN_INDICATORS_REPORT) {
-      set_message<autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>(
-        current_topic, *bag_message, is_empty_area_message);
-    } else if (message_type == PublisherMessageType::VELOCITY_REPORT) {
-      set_message<autoware_auto_vehicle_msgs::msg::VelocityReport>(
-        current_topic, *bag_message, is_empty_area_message);
-    }
-  }
-
-  // After collecting all timestamps for each topic, set frequencies of the publishers
-  set_period(timestamps_per_topic);
-
   reader.close();
 }
 }  // namespace reaction_analyzer::topic_publisher

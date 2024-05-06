@@ -269,11 +269,14 @@ void ReactionAnalyzerNode::init_test_env(
     last_test_environment_init_request_time_ = current_time;
 
     // Pose initialization of the ego
-    is_vehicle_initialized_ = !is_vehicle_initialized_
-                                ? init_ego(initialization_state_ptr, odometry_ptr, current_time)
-                                : is_vehicle_initialized_;
+    is_initialization_requested = !is_initialization_requested
+                                    ? init_ego(initialization_state_ptr, odometry_ptr, current_time)
+                                    : is_initialization_requested;
 
-    if (!is_vehicle_initialized_) {
+    if (
+      is_initialization_requested &&
+      initialization_state_ptr->state != LocalizationInitializationState::INITIALIZED) {
+      is_initialization_requested = false;
       return;
     }
 
@@ -298,7 +301,7 @@ void ReactionAnalyzerNode::init_test_env(
     }
 
     const bool is_ready =
-      (is_vehicle_initialized_ && is_route_set_ &&
+      (is_initialization_requested && is_route_set_ &&
        (operation_mode_ptr->mode == OperationModeState::AUTONOMOUS ||
         node_running_mode_ == RunningMode::PerceptionPlanning));
     if (is_ready) {
@@ -332,14 +335,12 @@ bool ReactionAnalyzerNode::init_ego(
 {
   // Pose initialization of the ego
   if (initialization_state_ptr) {
-    if (initialization_state_ptr->state != LocalizationInitializationState::INITIALIZED) {
-      if (node_running_mode_ == RunningMode::PlanningControl) {
-        // publish initial pose
-        init_pose_.header.stamp = current_time;
-        init_pose_.header.frame_id = "map";
-        pub_initial_pose_->publish(init_pose_);
-      }
-      return false;
+    if (node_running_mode_ == RunningMode::PlanningControl) {
+      // publish initial pose
+      init_pose_.header.stamp = current_time;
+      init_pose_.header.frame_id = "map";
+      pub_initial_pose_->publish(init_pose_);
+      RCLCPP_WARN_ONCE(get_logger(), "Initialization position is published. Waiting for init...");
     }
     // Wait until odometry_ptr is initialized
     if (!odometry_ptr) {
@@ -407,7 +408,7 @@ void ReactionAnalyzerNode::reset()
     return;
   }
   // reset the variables
-  is_vehicle_initialized_ = false;
+  is_initialization_requested = false;
   is_route_set_ = false;
   test_environment_init_time_ = std::nullopt;
   last_test_environment_init_request_time_ = std::nullopt;

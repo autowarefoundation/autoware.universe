@@ -100,7 +100,7 @@ private:
   std::optional<rclcpp::Time> test_environment_init_time_;
   std::optional<rclcpp::Time> spawn_cmd_time_;
   std::atomic<bool> spawn_object_cmd_{false};
-  bool is_vehicle_initialized_{false};
+  bool is_initialization_requested{false};
   bool is_route_set_{false};
   size_t test_iteration_count_{0};
 

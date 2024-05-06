@@ -223,13 +223,12 @@ private:
     const std::string & topic_name, const rosbag2_storage::SerializedBagMessage & bag_message,
     const bool is_empty_area_message);
   void set_period(const std::map<std::string, std::vector<rclcpp::Time>> & time_map);
-  std::map<std::string, PublisherVariables<PointCloud2>> set_general_publishers_and_timers();
-  void set_pointcloud_publishers_and_timers(
+  void set_publishers_and_timers_to_variable();
+  void set_timers_for_pointcloud_msgs(
     const std::map<std::string, PublisherVariables<PointCloud2>> & pointcloud_variables_map);
   bool check_publishers_initialized_correctly();
   void init_rosbag_publishers();
-  void init_rosbag_publishers_with_object(const std::string & path_bag_with_object);
-  void init_rosbag_publishers_without_object(const std::string & path_bag_without_object);
+  void init_rosbag_publisher_buffer(const std::string & bag_path, const bool is_empty_area_message);
   void pointcloud_messages_sync_publisher(const PointcloudPublisherType type);
   void pointcloud_messages_async_publisher(
     const std::pair<

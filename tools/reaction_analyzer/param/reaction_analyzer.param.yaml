@@ -2,37 +2,37 @@
   ros__parameters:
     timer_period: 0.033 # s
     test_iteration: 10
-    output_file_path: <PATH_TO_RESUlTS_FOLDER>
+    output_file_path: <PATH_TO_OUTPUT_FOLDER>
     spawn_time_after_init: 10.0 # s for perception_planning mode
     spawn_distance_threshold: 15.0 # m # for planning_control mode
     poses:
       initialization_pose:
-        x: 81247.9609375
-        y: 49828.87890625
+        x: 81546.984375
+        y: 50011.96875
         z: 0.0
         roll: 0.0
         pitch: 0.0
-        yaw: 35.5
+        yaw: 11.1130405
       goal_pose:
-        x: 81824.90625
-        y: 50069.34375
+        x: 81643.0703125
+        y: 50029.8828125
         z: 0.0
         roll: 0.0
         pitch: 0.0
-        yaw: 8.9305903
+        yaw: 13.12
       entity_params:
-        x: 81392.97671487389
-        y: 49927.361443601316
-        z: 42.13605499267578
-        roll: 0.2731273
-        pitch: -0.6873504
-        yaw: 33.7664809
-        x_dimension: 4.118675972722859
-        y_dimension: 1.7809072588403219
-        z_dimension: 0.8328610206872963
+        x: 81633.86068376624
+        y: 50028.383586673124
+        z: 42.44818343779461
+        roll: 0.0
+        pitch: 0.0
+        yaw: 11.8235848
+        x_dimension: 3.95
+        y_dimension: 1.77
+        z_dimension: 1.43
     topic_publisher:
-      path_bag_without_object: <PATH_TO_YOUR_BAGS>/lexus_bag_without_car/rosbag2_2024_01_30-13_50_45_0.db3
-      path_bag_with_object: <PATH_TO_YOUR_BAGS>/lexus_bag_with_car/rosbag2_2024_01_30-13_50_17_0.db3
+      path_bag_without_object: <PATH_TO_YOUR_BAGS>/rosbag2_awsim_labs/rosbag2_awsim_labs.db3
+      path_bag_with_object: <PATH_TO_YOUR_BAGS>/rosbag2_awsim_labs_obstacle/rosbag2_awsim_labs_obstacle.db3
       pointcloud_publisher:
         pointcloud_publisher_type: "sync_header_sync_publish" # "async_header_sync_publish", "sync_header_sync_publish" or "async_publish"
         pointcloud_publisher_period: 0.1 # s

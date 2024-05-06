@@ -416,26 +416,22 @@ void write_results(
   for (const auto & pipeline_map : pipeline_map_vector) {
     test_count++;
     // convert pipeline_map to vector of tuples
-    const auto sorted_results_vector = convert_pipeline_map_to_sorted_vector(pipeline_map);
     file << "Test " << test_count << "\n";
+    const auto sorted_results_vector = convert_pipeline_map_to_sorted_vector(pipeline_map);
+    const auto spawn_cmd_time = std::get<0>(*sorted_results_vector.begin());
 
-    rclcpp::Time spawn_cmd_time;  // init it to parse total latency
     for (size_t i = 0; i < sorted_results_vector.size(); ++i) {
       const auto & [pipeline_header_time, pipeline_reactions] = sorted_results_vector[i];
 
-      if (i == 0) {
-        spawn_cmd_time = pipeline_reactions[0].second.header.stamp;
-      }
-
       // total time pipeline lasts
-      file << "Pipeline - " << i + 1 << ",";
+      file << "Pipeline - " << i << ",";
 
       // pipeline nodes
       for (const auto & [node_name, reaction] : pipeline_reactions) {
         file << node_name << ",";
       }
 
-      file << "\nNode Latency - Total Latency [ms],";
+      file << "\nNode - Pipeline - Total Latency [ms],";
 
       for (size_t j = 0; j < pipeline_reactions.size(); ++j) {
         const auto & reaction = pipeline_reactions[j].second;
@@ -443,17 +439,21 @@ void write_results(
         if (j == 0) {
           const auto node_latency =
             calculate_time_diff_ms(reaction.header.stamp, reaction.published_stamp);
+          const auto pipeline_latency =
+            calculate_time_diff_ms(pipeline_header_time, reaction.published_stamp);
           const auto total_latency =
             calculate_time_diff_ms(spawn_cmd_time, reaction.published_stamp);
-          file << node_latency << " - " << total_latency << ",";
+          file << node_latency << " - " << pipeline_latency << " - " << total_latency << ",";
           tmp_latency_map[node_name].emplace_back(node_latency, total_latency);
         } else {
           const auto & prev_reaction = pipeline_reactions[j - 1].second;
           const auto node_latency =
             calculate_time_diff_ms(prev_reaction.published_stamp, reaction.published_stamp);
+          const auto pipeline_latency =
+            calculate_time_diff_ms(pipeline_header_time, reaction.published_stamp);
           const auto total_latency =
             calculate_time_diff_ms(spawn_cmd_time, reaction.published_stamp);
-          file << node_latency << " - " << total_latency << ",";
+          file << node_latency << " - " << pipeline_latency << " - " << total_latency << ",";
           tmp_latency_map[node_name].emplace_back(node_latency, total_latency);
         }
       }

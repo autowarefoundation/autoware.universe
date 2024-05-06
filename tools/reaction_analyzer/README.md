@@ -76,22 +76,27 @@ start to test. After the test is completed, the results will be stored in the `o
 #### Perception Planning Mode
 
 - Download the rosbag files from the Google Drive
-  link [here](https://drive.google.com/file/d/1_P-3oy_M6eJ7fk8h5CP8V6s6da6pPrBu/view?usp=sharing).
+  link [here](https://drive.google.com/file/d/1-Qcv7gYfR-usKOjUH8I997w8I4NMhXlX/view?usp=sharing).
 - Extract the zip file and set the path of the `.db3` files to parameters `path_bag_without_object`
   and `path_bag_with_object`.
-- Because custom sensor setup, you need to check out the following branches before launch the
-  reaction analyzer: For the `autoware_individual_params` repository, check out the
-  branch [here](https://github.com/brkay54/autoware_individual_params/tree/bk/reaction-analyzer-config).
-- For the `awsim_sensor_kit_launch` repository, check out the
-  branch [here](https://github.com/brkay54/awsim_sensor_kit_launch/tree/bk/reaction-analyzer-config).
-- After you check outed the branches, you can start to test with the following command:
+- You can start to test with the following command:
 
 ```bash
-ros2 launch reaction_analyzer reaction_analyzer.launch.xml running_mode:=perception_planning vehicle_model:=sample_vehicle sensor_model:=awsim_sensor_kit map_path:=[MAP_PATH]
+ros2 launch reaction_analyzer reaction_analyzer.launch.xml running_mode:=perception_planning vehicle_model:=sample_vehicle sensor_model:=awsim_labs_sensor_kit map_path:=[MAP_PATH]
 ```
 
 After the command, the `e2e_simulator` and the `reaction_analyzer` will be launched. It will automatically start
 to test. After the test is completed, the results will be stored in the `output_file_path` you defined.
+
+#### Prepared Test Environment
+
+**Scene without object:**
+![sc1-awsim.png](media%2Fsc1-awsim.png)
+![sc1-rviz.png](media%2Fsc1-rviz.png)
+
+**Scene object:**
+![sc2-awsim.png](media%2Fsc2-awsim.png)
+![sc2-rviz.png](media%2Fsc2-rviz.png)
 
 ### Custom Test Environment
 
@@ -101,39 +106,53 @@ The parameters you need to redefine are `initialization_pose`, `entity_params`, 
 for `perception_planning` mode) parameters.**
 
 - To set `initialization_pose`, `entity_params`, `goal_pose`:
-- Upload your `.osm` map file into the [scenario editor](https://scenario.ci.tier4.jp/scenario_editor/) to define the
-  position of the position parameters.
-- Add EGO vehicle from edit/add entity/Ego to map.
-- Set destination to EGO vehicle and add another dummy object in same way. The dummy object represents the object spawn
-  suddenly in the reaction analyzer test.
+- Run the AWSIM environment. Tutorial for AWSIM can be found
+  [here](https://autowarefoundation.github.io/AWSIM/main/GettingStarted/QuickStartDemo/).
+- Run the e2e_simulator with the following command:
 
-**After you set up the positions in the map, we should get the positions of these entities in the map frame. To achieve
-this:**
+```bash
+ros2 launch autoware_launch e2e_simulator.launch.xml vehicle_model:=sample_vehicle sensor_model:=awsim_labs_sensor_kit map_path:=[MAP_PATH]
+```
 
-- Convert the positions to map frame by changing Map/Coordinate to World and Map/Orientation to Euler in Scenario
-  Editor.
+- After EGO is initialized, you can move the ego vehicle to the desired position by using the `SetGoal` button in the
+  RViz.
+- After the EGO stopped in desired position, please localize the dummy obstacle by using the traffic controller. You can
+  control the traffic by pressing `ESC` button.
 
-- After these steps, you can see the positions in map frame and euler angles. You can change
-  the `initialization_pose`, `entity_params`, `goal_pose` parameters with the values you get from the website.
+**After localize EGO and dummy vehicle, we should write the positions of these entities in the map frame in `reaction_analyzer.param.yaml`. To achieve this:**
 
-**For the `topic_publisher` parameters, you need to record the rosbags from the AWSIM. After opened your AWSIM
-environment, you should record two different rosbags. However, the environment should be static and the position of the
-vehicle should be same.**
+- Get initialization pose from `/awsim/ground_truth/vehicle/pose` topic.
+- Get entity params from `/perception/object_recognition/objects` topic.
+- Get goal pose from `/planning/mission_planning/goal` topic.
 
-- Record a rosbag in empty environment (without an obstacle in front of the vehicle).
-- After that, record another rosbag in the same environment except add an object in front of the vehicle.
+**PS: `initialization_pose` is only valid for `planning_control` mode.**
 
-**After you record the rosbags, you can set the `path_bag_without_object` and `path_bag_with_object` parameters with the
-paths of the recorded rosbags.**
+- After the parameters were noted, we should record the rosbags for the test. To record the rosbags, you can use the
+  following command:
+
+```bash
+ros2 bag record --all
+```
+
+- You should record two rosbags: one without the object and one with the object. You can use the traffic controller to
+  spawn the object in front of the EGO vehicle or remove it.
+
+**NOTE: You should record the rosbags in the same environment with the same position of the EGO vehicle. You don't need
+to run Autoware while recording.**
+
+- After you record the rosbags, you can set the `path_bag_without_object` and `path_bag_with_object` parameters with the
+  paths of the recorded rosbags.
 
 ## Results
 
 The results will be stored in the `csv` file format and written to the `output_file_path` you defined. It shows each
-pipeline of the Autoware by using header timestamp of the messages, and it reports `Node Latency`, and `Total Latency`
+pipeline of the Autoware by using header timestamp of the messages, and it reports `Node Latency`, `Pipeline Latency`, and `Total Latency`
 for each of the nodes.
 
 - `Node Latency`: The time difference between previous and current node's reaction timestamps.
-- `Total Latency`: The time difference between the message's published timestamp and the spawn obstacle command sent timestamp.
+- `Pipeline Latency`: The time difference between published time of the message and pipeline header time.
+- `Total Latency`: The time difference between the message's published timestamp and the spawn obstacle command sent
+  timestamp.
 
 ## Parameters
 

@@ -1,7 +1,7 @@
 <launch>
   <arg name="reaction_analyzer_param_path" default="$(find-pkg-share reaction_analyzer)/param/reaction_analyzer.param.yaml"/>
 
-  <!-- reaction analyzer publishes own perception objects -->
+  <!-- reaction analyzer publishes own perception objects for planning_control mode -->
   <arg name="launch_simulator_perception_modules" default="false"/>
 
   <!-- Arguments for occupancy_grid_map -->
@@ -23,7 +23,6 @@
       <arg name="vehicle_model" value="$(var vehicle_model)"/>
       <arg name="sensor_model" value="$(var sensor_model)"/>
       <arg name="use_sim_time" value="false"/>
-      <arg name="enable_image_decompressor" value="false"/>
     </include>
   </group>
   <group if="$(eval &quot;'$(var running_mode)'=='planning_control'&quot;)">
@@ -51,6 +50,7 @@
   <node_container pkg="rclcpp_components" exec="component_container_mt" name="reaction_analyzer_container" namespace="" args="" output="screen">
     <composable_node pkg="reaction_analyzer" plugin="reaction_analyzer::ReactionAnalyzerNode" name="reaction_analyzer" namespace="">
       <param from="$(var reaction_analyzer_param_path)"/>
+      <param name="running_mode" value="$(var running_mode)"/>
       <remap from="output/pointcloud" to="/perception/obstacle_segmentation/pointcloud"/>
       <remap from="output/objects" to="/perception/object_recognition/objects"/>
       <remap from="output/initialpose" to="/initialpose"/>
@@ -61,7 +61,6 @@
       <remap from="input/routing_state" to="/api/routing/state"/>
       <remap from="input/operation_mode_state" to="/api/operation_mode/state"/>
       <remap from="input/ground_truth_pose" to="/awsim/ground_truth/vehicle/pose"/>
-      <param name="running_mode" value="$(var running_mode)"/>
       <extra_arg name="use_intra_process_comms" value="false"/>
     </composable_node>
   </node_container>
