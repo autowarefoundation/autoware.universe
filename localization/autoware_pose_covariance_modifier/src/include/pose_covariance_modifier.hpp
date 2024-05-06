@@ -22,14 +22,12 @@
 
 #include <string>
 
-namespace autoware
-{
-namespace pose_covariance_modifier
+namespace autoware::pose_covariance_modifier
 {
 class PoseCovarianceModifierNode : public rclcpp::Node
 {
 public:
-  PoseCovarianceModifierNode(const rclcpp::NodeOptions & node_options);
+  explicit PoseCovarianceModifierNode(const rclcpp::NodeOptions & node_options);
 
   enum class PoseSource {
     GNSS = 0,
@@ -81,7 +79,6 @@ private:
   void publish_pose_type(const PoseSource & pose_source);
 };
 
-}  // namespace pose_covariance_modifier
-}  // namespace autoware
+}  // namespace autoware::pose_covariance_modifier
 
 #endif  // POSE_COVARIANCE_MODIFIER_HPP_

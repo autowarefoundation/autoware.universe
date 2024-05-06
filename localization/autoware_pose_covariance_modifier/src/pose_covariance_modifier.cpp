@@ -17,9 +17,7 @@
 #include <interpolation/linear_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-namespace autoware
-{
-namespace pose_covariance_modifier
+namespace autoware::pose_covariance_modifier
 {
 
 using PoseSource = PoseCovarianceModifierNode::PoseSource;
@@ -230,8 +228,7 @@ void PoseCovarianceModifierNode::publish_pose_type(const PoseSource & pose_sourc
   pub_str_pose_source_->publish(selected_pose_type);
 }
 
-}  // namespace pose_covariance_modifier
-}  // namespace autoware
+}  // namespace autoware::pose_covariance_modifier
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pose_covariance_modifier::PoseCovarianceModifierNode)
