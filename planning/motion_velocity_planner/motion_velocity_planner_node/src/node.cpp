@@ -152,12 +152,9 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   // Publishers
   trajectory_pub_ =
     this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
-  stop_reason_diag_pub_ =
-    this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
 
   // Parameters
   planner_data_.stop_line_extend_length = declare_parameter<double>("stop_line_extend_length");
-
   // nearest search
   planner_data_.ego_nearest_dist_threshold =
     declare_parameter<double>("ego_nearest_dist_threshold");
@@ -395,9 +392,6 @@ void MotionVelocityPlannerNode::on_trajectory(
   trajectory_pub_->publish(output_trajectory_msg);
   published_time_publisher_->publish_if_subscribed(
     trajectory_pub_, output_trajectory_msg.header.stamp);
-  // stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
-
-  // if (debug_viz_pub_->get_subscription_count() > 0) publishDebugMarker(output_trajectory_msg);
 }
 
 autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_trajectory(
@@ -442,23 +436,18 @@ rcl_interfaces::msg::SetParametersResult MotionVelocityPlannerNode::on_set_param
 {
   using tier4_autoware_utils::updateParam;
 
-  rcl_interfaces::msg::SetParametersResult result;
-
   {
-    // const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
+    std::unique_lock<std::mutex> lk(mutex_);  // for planner_manager_
     planner_manager_.update_module_parameters(parameters);
   }
 
+  updateParam(parameters, "stop_line_extend_length", planner_data_.stop_line_extend_length);
+  updateParam(parameters, "ego_nearest_dist_threshold", planner_data_.ego_nearest_dist_threshold);
+  updateParam(parameters, "ego_nearest_yaw_threshold", planner_data_.ego_nearest_yaw_threshold);
+
+  rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
   result.reason = "success";
-
-  try {
-    // const std::lock_guard<std::mutex> lock(mutex_pd_);  // for planner_data_
-  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
-    result.successful = false;
-    result.reason = e.what();
-  }
-
   return result;
 }
 }  // namespace motion_velocity_planner

@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc. All rights reserved.
+// Copyright 2024 TIER IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,12 +23,10 @@
 #include "overlapping_range.hpp"
 #include "types.hpp"
 
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/trajectory/interpolation.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
+#include <tier4_autoware_utils/ros/update_param.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -109,6 +107,41 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 
 void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & parameters)
 {
+  using tier4_autoware_utils::updateParam;
+  auto & pp = params_;
+  updateParam(parameters, ns_ + ".mode", pp.mode);
+  updateParam(parameters, ns_ + ".skip_if_already_overlapping", pp.skip_if_already_overlapping);
+
+  updateParam(parameters, ns_ + ".threshold.time_threshold", pp.time_threshold);
+  updateParam(parameters, ns_ + ".intervals.ego_time_buffer", pp.intervals_ego_buffer);
+  updateParam(parameters, ns_ + ".intervals.objects_time_buffer", pp.intervals_obj_buffer);
+  updateParam(parameters, ns_ + ".ttc.threshold", pp.ttc_threshold);
+
+  updateParam(parameters, ns_ + ".objects.minimum_velocity", pp.objects_min_vel);
+  updateParam(parameters, ns_ + ".objects.use_predicted_paths", pp.objects_use_predicted_paths);
+  updateParam(
+    parameters, ns_ + ".objects.predicted_path_min_confidence", pp.objects_min_confidence);
+  updateParam(parameters, ns_ + ".objects.distance_buffer", pp.objects_dist_buffer);
+  updateParam(
+    parameters, ns_ + ".objects.cut_predicted_paths_beyond_red_lights",
+    pp.objects_cut_predicted_paths_beyond_red_lights);
+
+  updateParam(parameters, ns_ + ".overlap.minimum_distance", pp.overlap_min_dist);
+  updateParam(parameters, ns_ + ".overlap.extra_length", pp.overlap_extra_length);
+
+  updateParam(parameters, ns_ + ".action.skip_if_over_max_decel", pp.skip_if_over_max_decel);
+  updateParam(parameters, ns_ + ".action.precision", pp.precision);
+  updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
+  updateParam(parameters, ns_ + ".action.distance_buffer", pp.dist_buffer);
+  updateParam(parameters, ns_ + ".action.slowdown.velocity", pp.slow_velocity);
+  updateParam(parameters, ns_ + ".action.slowdown.distance_threshold", pp.slow_dist_threshold);
+  updateParam(parameters, ns_ + ".action.stop.distance_threshold", pp.stop_dist_threshold);
+
+  updateParam(parameters, ns_ + ".ego.min_assumed_velocity", pp.ego_min_velocity);
+  updateParam(parameters, ns_ + ".ego.extra_front_offset", pp.extra_front_offset);
+  updateParam(parameters, ns_ + ".ego.extra_rear_offset", pp.extra_rear_offset);
+  updateParam(parameters, ns_ + ".ego.extra_left_offset", pp.extra_left_offset);
+  updateParam(parameters, ns_ + ".ego.extra_right_offset", pp.extra_right_offset);
 }
 
 VelocityPlanningResult OutOfLaneModule::plan(
@@ -116,9 +149,6 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const std::shared_ptr<const PlannerData> planner_data)
 {
   VelocityPlanningResult result;
-  debug_data_.reset_data();
-  debug_data_.trajectory_points = ego_trajectory_points;
-  // auto stop_reason = planning_utils::initializeStopReason(StopReason::OUT_OF_LANE);
   tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
   out_of_lane::EgoData ego_data;
@@ -144,11 +174,12 @@ VelocityPlanningResult OutOfLaneModule::plan(
     ego_data, trajectory_lanelets, ignored_lanelets, planner_data->route_handler, params_);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
 
+  debug_data_.reset_data();
+  debug_data_.trajectory_points = ego_trajectory_points;
   debug_data_.footprints = trajectory_footprints;
   debug_data_.trajectory_lanelets = trajectory_lanelets;
   debug_data_.ignored_lanelets = ignored_lanelets;
   debug_data_.other_lanelets = other_lanelets;
-  // debug_data_.trajectory_points = ego_data.trajectory_points;
   debug_data_.first_trajectory_idx = ego_data.first_trajectory_idx;
 
   if (params_.skip_if_already_overlapping) {
@@ -224,27 +255,12 @@ VelocityPlanningResult OutOfLaneModule::plan(
     auto trajectory_idx = motion_utils::findNearestSegmentIndex(
                             ego_trajectory_points, point_to_insert->point.pose.position) +
                           1;
-    // planning_utils::insertVelocity(
-    // *trajectory, point_to_insert->point, point_to_insert->slowdown.velocity, trajectory_idx);
     if (point_to_insert->slowdown.velocity == 0.0)
       result.stop_points.push_back(point_to_insert->point.pose.position);
     else
       result.slowdown_intervals.emplace_back(
         point_to_insert->point.pose.position, point_to_insert->point.pose.position,
         point_to_insert->slowdown.velocity);
-    // auto stop_pose_reached = false;
-    // if (point_to_insert->slowdown.velocity == 0.0) {
-    //   const auto dist_to_stop_pose = motion_utils::calcSignedArcLength(
-    //     ego_trajectory_points, ego_data.pose.position, point_to_insert->point.pose.position);
-    //   if (ego_data.velocity < 1e-3 && dist_to_stop_pose < 1e-3) stop_pose_reached = true;
-    // tier4_planning_msgs::msg::StopFactor stop_factor;
-    // stop_factor.stop_pose = point_to_insert->point.pose;
-    // stop_factor.dist_to_stop_pose = dist_to_stop_pose;
-    // planning_utils::appendStopReason(stop_factor, stop_reason);
-    // }
-    // velocity_factor_.set(
-    //   trajectory->points, planner_data.current_odometry->pose, point_to_insert->point.pose,
-    //   stop_pose_reached ? VelocityFactor::STOPPED : VelocityFactor::APPROACHING, "out_of_lane");
   } else if (!decisions.empty()) {
     RCLCPP_WARN(logger_, "Could not insert stop point (would violate max deceleration limits)");
   }

@@ -89,20 +89,17 @@ private:
 
   // publishers
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
-  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
 
   //  parameters
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;
-  double forward_path_length_;
-  double backward_path_length_;
 
   // members
   PlannerData planner_data_;
   MotionVelocityPlannerManager planner_manager_;
   bool is_driving_forward_{true};
   HADMapBin::ConstSharedPtr map_ptr_{nullptr};
-  bool has_received_map_;
+  bool has_received_map_ = false;
 
   rclcpp::Service<LoadPlugin>::SharedPtr srv_load_plugin_;
   rclcpp::Service<UnloadPlugin>::SharedPtr srv_unload_plugin_;

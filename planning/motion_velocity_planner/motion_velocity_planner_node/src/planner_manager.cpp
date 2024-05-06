@@ -33,20 +33,6 @@ std::string json_dumps_pose(const geometry_msgs::msg::Pose & pose)
       .str();
   return json_dumps_pose;
 }
-
-diagnostic_msgs::msg::DiagnosticStatus make_stop_reason_diag(
-  const std::string stop_reason, const geometry_msgs::msg::Pose & stop_pose)
-{
-  diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
-  diagnostic_msgs::msg::KeyValue stop_reason_diag_kv;
-  stop_reason_diag.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  stop_reason_diag.name = "stop_reason";
-  stop_reason_diag.message = stop_reason;
-  stop_reason_diag_kv.key = "stop_pose";
-  stop_reason_diag_kv.value = json_dumps_pose(stop_pose);
-  stop_reason_diag.values.push_back(stop_reason_diag_kv);
-  return stop_reason_diag;
-}
 }  // namespace
 
 MotionVelocityPlannerManager::MotionVelocityPlannerManager()
@@ -100,8 +86,6 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
-  std::string stop_reason_msg("path_end");
-
   std::vector<VelocityPlanningResult> results;
   for (auto & plugin : loaded_plugins_)
     results.push_back(plugin->plan(ego_trajectory_points, planner_data));
