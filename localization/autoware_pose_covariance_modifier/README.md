@@ -54,7 +54,15 @@ It also tunes the covariance values of the NDT poses, based on the GNSS standard
 
 Only NDT pose is used in localization. GNSS pose is only used for initialization.
 
-<img src="./media/new_proposal-original.drawio.svg" width="320" alt="without this package">
+```mermaid
+graph TD
+    ndt_scan_matcher["ndt_scan_matcher"] --> |"/localization/pose_estimator/pose_with_covariance"| ekf_localizer["ekf_localizer"]
+
+classDef cl_node fill:#FFF2CC,stroke-width:3px,stroke:#D6B656;
+
+class ndt_scan_matcher cl_node;
+class ekf_localizer cl_node;
+```
 
 ### With this package
 
@@ -63,7 +71,42 @@ system.
 
 Here is a flowchart depicting the process and the predefined thresholds:
 
-<img src="./media/new_proposal-proposal-extended-proposal.drawio.svg" width="620" alt="with this package">
+```mermaid
+graph TD
+    gnss_poser["gnss_poser"] --> |"/sensing/gnss/\npose_with_covariance"| pose_covariance_modifier_node
+    ndt_scan_matcher["ndt_scan_matcher"] --> |"/localization/pose_estimator/ndt_scan_matcher/\npose_with_covariance"| pose_covariance_modifier_node
+
+    subgraph pose_covariance_modifier_node ["Pose Covariance Modifier Node"]
+        pc1{{"gnss_pose_yaw\nstddev"}}
+        pc1 -->|"<= 0.3 rad"| pc2{{"gnss_pose_z\nstddev"}}
+        pc2 -->|"<= 0.1 m"| pc3{{"gnss_pose_xy\nstddev"}}
+        pc2 -->|"> 0.1 m"| ndt_pose("NDT Pose")
+        pc3 -->|"<= 0.1 m"| gnss_pose("GNSS Pose")
+        pc3 -->|"0.1 m < x <= 0.2 m"| gnss_ndt_pose("`Both GNSS and NDT Pose
+        (_with modified covariance_)`")
+        pc3 -->|"> 0.2 m"| ndt_pose
+        pc1 -->|"> 0.3 rad"| ndt_pose
+    end
+
+    pose_covariance_modifier_node -->|"/localization/pose_estimator/pose_with_covariance"| ekf_localizer["ekf_localizer"]
+
+classDef cl_node fill:#FFF2CC,stroke-width:3px,stroke:#D6B656;
+classDef cl_conditional fill:#FFE6CC,stroke-width:3px,stroke:#D79B00;
+classDef cl_output fill:#D5E8D4,stroke-width:3px,stroke:#82B366;
+
+class gnss_poser cl_node;
+class ndt_scan_matcher cl_node;
+class ekf_localizer cl_node;
+class pose_covariance_modifier_node cl_node;
+
+class pc1 cl_conditional;
+class pc2 cl_conditional;
+class pc3 cl_conditional;
+
+class ndt_pose cl_output;
+class gnss_pose cl_output;
+class gnss_ndt_pose cl_output;
+```
 
 ## How to use this package
 
@@ -169,12 +212,6 @@ In this mode, both NDT and GNSS poses are published from this node.
 - Incoming NDT poses have a fixed covariance value.
 - Covariance provided by GNSS is reliable.
 
-#### NDT covariance interpolation method
+#### NDT + GNSS mode covariance calculation
 
-<p align="center">
-<img src="./media/ndt_stddev_calculation_formula.drawio.svg" width="720">
-</p>
 
-<p align="center">
-<img src="./media/formula.drawio.svg" width="520">
-</p>
