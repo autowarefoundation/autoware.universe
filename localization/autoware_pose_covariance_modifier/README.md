@@ -145,11 +145,11 @@ the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/lau
 ### Published topics
 
 | Name                                | Type                                            | Description                                                                                                            |
-| ----------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| ----------------------------------- |-------------------------------------------------| ---------------------------------------------------------------------------------------------------------------------- |
 | `output_pose_with_covariance_topic` | `geometry_msgs::msg::PoseWithCovarianceStamped` | Output pose topic. This topic is used by the ekf_localizer package.                                                    |
 | `selected_pose_type`                | `std_msgs::msg::String`                         | Declares which pose sources are used in the output of this package                                                     |
-| `output/ndt_position_stddev`        | `std_msgs::msg::Float32`                        | Output pose ndt average standard deviation in position xy. It is published only when the enable_debug_topics is true.  |
-| `output/gnss_position_stddev`       | `std_msgs::msg::Float32`                        | Output pose gnss average standard deviation in position xy. It is published only when the enable_debug_topics is true. |
+| `output/ndt_position_stddev`        | `std_msgs::msg::Float64`                         | Output pose ndt average standard deviation in position xy. It is published only when the enable_debug_topics is true.  |
+| `output/gnss_position_stddev`       | `std_msgs::msg::Float64`                        | Output pose gnss average standard deviation in position xy. It is published only when the enable_debug_topics is true. |
 
 ### Parameters
 
@@ -195,15 +195,15 @@ End result:
 
 ### How and when are the NDT covariance values overwritten?
 
-| Mode       | Output covariance                           |
-| ---------- | ------------------------------------------- |
+| Mode       | Outputs, Covariance                         |
+| ---------- |---------------------------------------------|
 | GNSS Only  | GNSS, Unmodified                            |
 | GNSS + NDT | **GNSS:** Unmodified, **NDT:** Interpolated |
 | NDT Only   | NDT, Unmodified                             |
 
-This section is only for the `GNSS + NDT` mode.
+NDT covariance values overwritten only for the `GNSS + NDT` mode.
 
-Used for a smooth transition between `GNSS Only` and `NDT Only` modes.
+This enables a smooth transition between `GNSS Only` and `NDT Only` modes.
 
 In this mode, both NDT and GNSS poses are published from this node.
 
@@ -212,6 +212,20 @@ In this mode, both NDT and GNSS poses are published from this node.
 - Incoming NDT poses have a fixed covariance value.
 - Covariance provided by GNSS is reliable.
 
-#### NDT + GNSS mode covariance calculation
+#### NDT covariance calculation
 
+##### Goal
 
+- As the `gnss_std_dev` increases within its bounds, `ndt_std_dev` should proportionally decrease within its own bounds.
+
+To achieve this, we first linearly interpolate:
+- Base value: `gnss_std_dev`
+- Base range: [`threshold_gnss_stddev_xy_bound_lower`, `threshold_gnss_stddev_xy_bound_upper`]
+- Target range: [`ndt_std_dev_bound_lower`, `ndt_std_dev_bound_upper`]
+- Target value: `ndt_std_dev_target`
+
+- Final value = `ndt_std_dev_bound_lower` + `ndt_std_dev_bound_upper` - `ndt_std_dev_target` (to get the inverse)
+
+#### Illustration
+
+<img width="300" src="media/range_lerp.svg" alt="range to range lerp animation">
