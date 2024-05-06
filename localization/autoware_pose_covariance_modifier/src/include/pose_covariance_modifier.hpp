@@ -36,6 +36,24 @@ public:
   };
 
 private:
+  // covariance matrix indexes
+  const int X_POS_IDX_ = 0;
+  const int Y_POS_IDX_ = 7;
+  const int Z_POS_IDX_ = 14;
+  const int YAW_POS_IDX_ = 35;
+
+  // parameters
+  double threshold_gnss_stddev_yaw_deg_max_;
+  double threshold_gnss_stddev_z_max_;
+  double threshold_gnss_stddev_xy_bound_lower_;
+  double threshold_gnss_stddev_xy_bound_upper_;
+  double gnss_pose_timeout_sec_;
+  bool debug_mode_;
+
+  rclcpp::Time gnss_pose_received_time_last_;
+  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr gnss_pose_with_cov_last_;
+  PoseSource pose_source_;
+
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     sub_gnss_pose_with_cov_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
@@ -46,35 +64,19 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_double_ndt_position_stddev_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_double_gnss_position_stddev_;
 
-  rclcpp::Time gnss_pose_received_time_last_;
-  geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr gnss_pose_with_cov_last_;
-
-  double threshold_gnss_stddev_yaw_deg_max_;
-  double threshold_gnss_stddev_z_max_;
-  double threshold_gnss_stddev_xy_bound_lower_;
-  double threshold_gnss_stddev_xy_bound_upper_;
-
-  double gnss_pose_timeout_sec_;
-  bool debug_mode_;
-  PoseSource pose_source_;
-
-  // covariance matrix indexes
-  const int X_POS_IDX_ = 0;
-  const int Y_POS_IDX_ = 7;
-  const int Z_POS_IDX_ = 14;
-  const int YAW_POS_IDX_ = 35;
-
   void callback_gnss_pose_with_cov(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg);
+
   void callback_ndt_pose_with_cov(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg_pose_with_cov_in);
-  std::array<double, 36> update_ndt_covariances_from_gnss(
-    const std::array<double, 36> & ndt_covariance_in);
 
   bool gnss_pose_has_timed_out(const rclcpp::Time & gnss_pose_received_time_last);
 
   PoseSource pose_source_from_gnss_stddev(
     double gnss_pose_yaw_stddev_deg, double gnss_pose_stddev_z, double gnss_pose_stddev_xy) const;
+
+  std::array<double, 36> update_ndt_covariances_from_gnss(
+    const std::array<double, 36> & ndt_covariance_in);
 
   void publish_pose_type(const PoseSource & pose_source);
 };

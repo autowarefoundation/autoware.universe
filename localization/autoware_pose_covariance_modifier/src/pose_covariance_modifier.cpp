@@ -17,9 +17,12 @@
 #include <interpolation/linear_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <std_msgs/msg/float64.hpp>
+#include <std_msgs/msg/string.hpp>
+
 namespace autoware::pose_covariance_modifier
 {
-
 using PoseSource = PoseCovarianceModifierNode::PoseSource;
 
 PoseCovarianceModifierNode::PoseCovarianceModifierNode(const rclcpp::NodeOptions & node_options)
@@ -64,66 +67,6 @@ PoseCovarianceModifierNode::PoseCovarianceModifierNode(const rclcpp::NodeOptions
     pub_double_gnss_position_stddev_ = this->create_publisher<std_msgs::msg::Float64>(
       "/autoware_pose_covariance_modifier/output/gnss_position_stddev", 10);
   }
-}
-
-bool PoseCovarianceModifierNode::gnss_pose_has_timed_out(
-  const rclcpp::Time & gnss_pose_received_time_last)
-{
-  auto duration = this->now() - gnss_pose_received_time_last;
-  if (duration.seconds() > gnss_pose_timeout_sec_) {
-    RCLCPP_WARN(this->get_logger(), "GNSS pose has timed out");
-    return true;
-  }
-  return false;
-}
-
-std::array<double, 36> PoseCovarianceModifierNode::update_ndt_covariances_from_gnss(
-  const std::array<double, 36> & ndt_covariance_in)
-{
-  // See the ../README.md#NDT-covariance-calculation for detailed explanation
-
-  auto lerp_range_to_range = [](double x, double x_min, double x_max, double y_min, double y_max) {
-    // Normalize input value to range [0, 1]
-    const double input_normalized = (x - x_min) / (x_max - x_min);
-
-    // Interpolate to the output range
-    return interpolation::lerp(y_min, y_max, input_normalized);
-  };
-
-  auto ndt_variance_from_gnss_variance = [&](double ndt_variance, double gnss_variance) {
-    // calculate NDT covariance value based on gnss covariance
-    const double ndt_std_dev = std::sqrt(ndt_variance);
-    const double gnss_std_dev = std::sqrt(gnss_variance);
-
-    // lower bound is selected as the static ndt_std_dev value
-    const double ndt_std_dev_bound_lower = ndt_std_dev;
-
-    // upper bound is selected as the static ndt_std_dev value multiplied by 2
-    const double ndt_std_dev_bound_upper = ndt_std_dev * 2;
-
-    // interpolate the gnss_std_dev from gnss ranges to ndt ranges
-    const double interpolated_std_dev = lerp_range_to_range(
-      gnss_std_dev, threshold_gnss_stddev_xy_bound_lower_, threshold_gnss_stddev_xy_bound_upper_,
-      ndt_std_dev_bound_lower, ndt_std_dev_bound_upper);
-
-    // As the gnss error increases, the ndt error should decrease
-    const double reversed_std_dev =
-      ndt_std_dev_bound_lower + ndt_std_dev_bound_upper - interpolated_std_dev;
-
-    const double interpolated_variance = std::pow(reversed_std_dev, 2);
-
-    // Make sure the ndt covariance is not below the input ndt covariance value and return
-    return (std::max(interpolated_variance, ndt_variance));
-  };
-
-  std::array<double, 36> ndt_covariance = ndt_covariance_in;
-  std::array<int, 3> indices = {X_POS_IDX_, Y_POS_IDX_, Z_POS_IDX_};
-  for (int idx : indices) {
-    ndt_covariance[idx] = ndt_variance_from_gnss_variance(
-      ndt_covariance_in[idx], gnss_pose_with_cov_last_->pose.covariance[idx]);
-  }
-
-  return ndt_covariance;
 }
 
 void PoseCovarianceModifierNode::callback_gnss_pose_with_cov(
@@ -191,6 +134,17 @@ void PoseCovarianceModifierNode::callback_ndt_pose_with_cov(
   }
 }
 
+bool PoseCovarianceModifierNode::gnss_pose_has_timed_out(
+  const rclcpp::Time & gnss_pose_received_time_last)
+{
+  auto duration = this->now() - gnss_pose_received_time_last;
+  if (duration.seconds() > gnss_pose_timeout_sec_) {
+    RCLCPP_WARN(this->get_logger(), "GNSS pose has timed out");
+    return true;
+  }
+  return false;
+}
+
 PoseSource PoseCovarianceModifierNode::pose_source_from_gnss_stddev(
   const double gnss_pose_yaw_stddev_deg, const double gnss_pose_stddev_z,
   const double gnss_pose_stddev_xy) const
@@ -209,6 +163,55 @@ PoseSource PoseCovarianceModifierNode::pose_source_from_gnss_stddev(
   }
   // If the gnss xy standard deviation is above the upper bound, use NDT pose
   return PoseSource::NDT;
+}
+
+std::array<double, 36> PoseCovarianceModifierNode::update_ndt_covariances_from_gnss(
+  const std::array<double, 36> & ndt_covariance_in)
+{
+  // See the ../README.md#NDT-covariance-calculation for detailed explanation
+
+  auto lerp_range_to_range = [](double x, double x_min, double x_max, double y_min, double y_max) {
+    // Normalize input value to range [0, 1]
+    const double input_normalized = (x - x_min) / (x_max - x_min);
+
+    // Interpolate to the output range
+    return interpolation::lerp(y_min, y_max, input_normalized);
+  };
+
+  auto ndt_variance_from_gnss_variance = [&](double ndt_variance, double gnss_variance) {
+    // calculate NDT covariance value based on gnss covariance
+    const double ndt_std_dev = std::sqrt(ndt_variance);
+    const double gnss_std_dev = std::sqrt(gnss_variance);
+
+    // lower bound is selected as the static ndt_std_dev value
+    const double ndt_std_dev_bound_lower = ndt_std_dev;
+
+    // upper bound is selected as the static ndt_std_dev value multiplied by 2
+    const double ndt_std_dev_bound_upper = ndt_std_dev * 2;
+
+    // interpolate the gnss_std_dev from gnss ranges to ndt ranges
+    const double interpolated_std_dev = lerp_range_to_range(
+      gnss_std_dev, threshold_gnss_stddev_xy_bound_lower_, threshold_gnss_stddev_xy_bound_upper_,
+      ndt_std_dev_bound_lower, ndt_std_dev_bound_upper);
+
+    // As the gnss error increases, the ndt error should decrease
+    const double reversed_std_dev =
+      ndt_std_dev_bound_lower + ndt_std_dev_bound_upper - interpolated_std_dev;
+
+    const double interpolated_variance = std::pow(reversed_std_dev, 2);
+
+    // Make sure the ndt covariance is not below the input ndt covariance value and return
+    return (std::max(interpolated_variance, ndt_variance));
+  };
+
+  std::array<double, 36> ndt_covariance = ndt_covariance_in;
+  std::array<int, 3> indices = {X_POS_IDX_, Y_POS_IDX_, Z_POS_IDX_};
+  for (int idx : indices) {
+    ndt_covariance[idx] = ndt_variance_from_gnss_variance(
+      ndt_covariance_in[idx], gnss_pose_with_cov_last_->pose.covariance[idx]);
+  }
+
+  return ndt_covariance;
 }
 
 void PoseCovarianceModifierNode::publish_pose_type(const PoseSource & pose_source)
