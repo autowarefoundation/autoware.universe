@@ -146,6 +146,14 @@ void add_range_markers(
   debug_marker.action = debug_marker.DELETE;
   for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id)
     debug_marker_array.markers.push_back(debug_marker);
+}
+
+void add_decision_markers(
+  visualization_msgs::msg::MarkerArray & debug_marker_array, const OverlapRanges & ranges,
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & trajectory_points,
+  const size_t first_ego_idx, const double z, const size_t prev_nb)
+{
+  auto debug_marker = get_base_marker();
   debug_marker.action = debug_marker.ADD;
   debug_marker.id = 0;
   debug_marker.ns = "decisions";
@@ -185,8 +193,10 @@ void add_range_markers(
     debug_marker_array.markers.push_back(debug_marker);
     debug_marker.id++;
   }
-  for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id)
+  debug_marker.action = debug_marker.DELETE;
+  for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id) {
     debug_marker_array.markers.push_back(debug_marker);
+  }
 }
 }  // namespace
 visualization_msgs::msg::MarkerArray create_debug_marker_array(const DebugData & debug_data)
@@ -210,6 +220,9 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(const DebugData &
     debug_marker_array, debug_data.other_lanelets, "other_lanelets",
     tier4_autoware_utils::createMarkerColor(0.4, 0.4, 0.7, 0.5), debug_data.prev_other_lanelets);
   debug::add_range_markers(
+    debug_marker_array, debug_data.ranges, debug_data.trajectory_points,
+    debug_data.first_trajectory_idx, z, debug_data.prev_ranges);
+  debug::add_decision_markers(
     debug_marker_array, debug_data.ranges, debug_data.trajectory_points,
     debug_data.first_trajectory_idx, z, debug_data.prev_ranges);
   return debug_marker_array;

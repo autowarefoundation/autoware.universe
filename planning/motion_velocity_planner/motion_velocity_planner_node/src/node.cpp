@@ -373,8 +373,10 @@ void MotionVelocityPlannerNode::on_trajectory(
     return;
   }
 
-  if (has_received_map_)
+  if (has_received_map_) {
     planner_data_.route_handler = std::make_shared<route_handler::RouteHandler>(*map_ptr_);
+    has_received_map_ = false;
+  }
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> input_trajectory(
     input_trajectory_msg->points.begin(), input_trajectory_msg->points.end());
