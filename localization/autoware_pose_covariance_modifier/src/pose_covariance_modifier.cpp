@@ -105,7 +105,8 @@ std::array<double, 36> PoseCovarianceModifierNode::update_ndt_covariances_from_g
       ndt_std_dev_bound_lower, ndt_std_dev_bound_upper);
 
     // As the gnss error increases, the ndt error should decrease
-    const double reversed_std_dev = ndt_std_dev_bound_lower + ndt_std_dev_bound_upper - interpolated_std_dev;
+    const double reversed_std_dev =
+      ndt_std_dev_bound_lower + ndt_std_dev_bound_upper - interpolated_std_dev;
 
     const double interpolated_variance = std::pow(reversed_std_dev, 2);
 
