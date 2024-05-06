@@ -3,7 +3,7 @@
 <package format="3">
   <name>autoware_pose_covariance_modifier</name>
   <version>1.0.0</version>
-  <description> Add a description. </description>
+  <description>Add a description.</description>
 
   <maintainer email="melike@leodrive.ai">Melike Tanrikulu</maintainer>
 

@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE_POSE_COVARIANCE_MODIFIER_NODE_HPP_
-#define AUTOWARE_POSE_COVARIANCE_MODIFIER_NODE_HPP_
+#ifndef POSE_COVARIANCE_MODIFIER_HPP_
+#define POSE_COVARIANCE_MODIFIER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -84,4 +84,4 @@ private:
 }  // namespace pose_covariance_modifier
 }  // namespace autoware
 
-#endif  // AUTOWARE_POSE_COVARIANCE_MODIFIER_NODE_HPP_
+#endif  // POSE_COVARIANCE_MODIFIER_HPP_
