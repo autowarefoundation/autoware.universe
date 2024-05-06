@@ -20,8 +20,6 @@
 #include <std_msgs/msg/float64.hpp>
 #include <std_msgs/msg/string.hpp>
 
-#include <string>
-
 namespace autoware::pose_covariance_modifier
 {
 class PoseCovarianceModifierNode : public rclcpp::Node
