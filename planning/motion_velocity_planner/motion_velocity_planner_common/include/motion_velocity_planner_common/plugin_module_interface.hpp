@@ -33,11 +33,11 @@ class PluginModuleInterface
 {
 public:
   virtual ~PluginModuleInterface() = default;
-  virtual void init(rclcpp::Node & node) = 0;
+  virtual void init(rclcpp::Node & node, const std::string & module_name) = 0;
   virtual void update_parameters(const std::vector<rclcpp::Parameter> & parameters) = 0;
   virtual VelocityPlanningResult plan(
     const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
-    const PlannerData & planner_data) = 0;
+    const std::shared_ptr<const PlannerData> planner_data) = 0;
   virtual std::string get_module_name() const = 0;
 };
 

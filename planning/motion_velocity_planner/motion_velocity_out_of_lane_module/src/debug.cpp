@@ -14,14 +14,20 @@
 
 #include "debug.hpp"
 
+#include "types.hpp"
+
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <visualization_msgs/msg/marker.hpp>
+
+#include <string>
+#include <vector>
 
 namespace motion_velocity_planner::out_of_lane::debug
 {
 namespace
 {
+
 visualization_msgs::msg::Marker get_base_marker()
 {
   visualization_msgs::msg::Marker base_marker;
@@ -36,7 +42,6 @@ visualization_msgs::msg::Marker get_base_marker()
   base_marker.color = tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.5);
   return base_marker;
 }
-}  // namespace
 void add_footprint_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
   const lanelet::BasicPolygons2d & footprints, const double z, const size_t prev_nb)
@@ -113,8 +118,8 @@ void add_lanelet_markers(
 
 void add_range_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array, const OverlapRanges & ranges,
-  const autoware_auto_planning_msgs::msg::Trajectory & trajectory, const size_t first_ego_idx,
-  const double z, const size_t prev_nb)
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & trajectory_points,
+  const size_t first_ego_idx, const double z, const size_t prev_nb)
 {
   auto debug_marker = get_base_marker();
   debug_marker.ns = "ranges";
@@ -122,7 +127,7 @@ void add_range_markers(
   for (const auto & range : ranges) {
     debug_marker.points.clear();
     debug_marker.points.push_back(
-      trajectory.points[first_ego_idx + range.entering_trajectory_idx].pose.position);
+      trajectory_points[first_ego_idx + range.entering_trajectory_idx].pose.position);
     debug_marker.points.push_back(tier4_autoware_utils::createMarkerPosition(
       range.entering_point.x(), range.entering_point.y(), z));
     for (const auto & overlap : range.debug.overlaps) {
@@ -134,7 +139,7 @@ void add_range_markers(
     debug_marker.points.push_back(tier4_autoware_utils::createMarkerPosition(
       range.exiting_point.x(), range.exiting_point.y(), z));
     debug_marker.points.push_back(
-      trajectory.points[first_ego_idx + range.exiting_trajectory_idx].pose.position);
+      trajectory_points[first_ego_idx + range.exiting_trajectory_idx].pose.position);
     debug_marker_array.markers.push_back(debug_marker);
     debug_marker.id++;
   }
@@ -183,5 +188,45 @@ void add_range_markers(
   for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id)
     debug_marker_array.markers.push_back(debug_marker);
 }
+}  // namespace
+visualization_msgs::msg::MarkerArray create_debug_marker_array(const DebugData & debug_data)
+{
+  constexpr auto z = 0.0;
+  visualization_msgs::msg::MarkerArray debug_marker_array;
 
+  debug::add_footprint_markers(
+    debug_marker_array, debug_data.footprints, z, debug_data.prev_footprints);
+  debug::add_current_overlap_marker(
+    debug_marker_array, debug_data.current_footprint, debug_data.current_overlapped_lanelets, z,
+    debug_data.prev_current_overlapped_lanelets);
+  debug::add_lanelet_markers(
+    debug_marker_array, debug_data.trajectory_lanelets, "trajectory_lanelets",
+    tier4_autoware_utils::createMarkerColor(0.1, 0.1, 1.0, 0.5),
+    debug_data.prev_trajectory_lanelets);
+  debug::add_lanelet_markers(
+    debug_marker_array, debug_data.ignored_lanelets, "ignored_lanelets",
+    tier4_autoware_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5), debug_data.prev_ignored_lanelets);
+  debug::add_lanelet_markers(
+    debug_marker_array, debug_data.other_lanelets, "other_lanelets",
+    tier4_autoware_utils::createMarkerColor(0.4, 0.4, 0.7, 0.5), debug_data.prev_other_lanelets);
+  debug::add_range_markers(
+    debug_marker_array, debug_data.ranges, debug_data.trajectory_points,
+    debug_data.first_trajectory_idx, z, debug_data.prev_ranges);
+  return debug_marker_array;
+}
+
+motion_utils::VirtualWalls create_virtual_walls(
+  const DebugData & debug_data, const PlannerParam & params)
+{
+  motion_utils::VirtualWalls virtual_walls;
+  motion_utils::VirtualWall wall;
+  wall.text = "out_of_lane";
+  wall.longitudinal_offset = params.front_offset;
+  wall.style = motion_utils::VirtualWallType::slowdown;
+  for (const auto & slowdown : debug_data.slowdowns) {
+    wall.pose = slowdown.point.pose;
+    virtual_walls.push_back(wall);
+  }
+  return virtual_walls;
+}
 }  // namespace motion_velocity_planner::out_of_lane::debug

@@ -15,15 +15,23 @@
 #ifndef MOTION_VELOCITY_PLANNER_COMMON__VELOCITY_PLANNING_RESULT_HPP_
 #define MOTION_VELOCITY_PLANNER_COMMON__VELOCITY_PLANNING_RESULT_HPP_
 
+#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
+
 #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace motion_velocity_planner
 {
 struct SlowdownInterval
 {
+  SlowdownInterval(geometry_msgs::msg::Point from_, geometry_msgs::msg::Point to_, const double vel)
+  : from{std::move(from_)}, to{std::move(to_)}, velocity{vel}
+  {
+  }
   geometry_msgs::msg::Point from{};
   geometry_msgs::msg::Point to{};
   double velocity{};
@@ -32,8 +40,6 @@ struct VelocityPlanningResult
 {
   std::vector<geometry_msgs::msg::Point> stop_points{};
   std::vector<SlowdownInterval> slowdown_intervals{};
-  visualization_msgs::msg::MarkerArray debug_marker_array{};
-  // TODO(Maxime): add velocity factor
 };
 }  // namespace motion_velocity_planner
 

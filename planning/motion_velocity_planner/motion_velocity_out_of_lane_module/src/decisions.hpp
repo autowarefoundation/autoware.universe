@@ -55,7 +55,7 @@ double time_along_trajectory(const EgoData & ego_data, const size_t target_idx);
 /// the opposite direction, time at enter > time at exit
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
-  const route_handler::RouteHandler * route_handler, const double dist_buffer,
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler, const double dist_buffer,
   const rclcpp::Logger & logger);
 /// @brief use the lanelet map to estimate the times when an object will reach the enter and exit
 /// points of an overlapping range

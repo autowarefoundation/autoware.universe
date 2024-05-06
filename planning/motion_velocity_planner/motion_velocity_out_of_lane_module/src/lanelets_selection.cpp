@@ -26,19 +26,21 @@ namespace motion_velocity_planner::out_of_lane
 {
 
 lanelet::ConstLanelets consecutive_lanelets(
-  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelet & lanelet)
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
+  const lanelet::ConstLanelet & lanelet)
 {
-  lanelet::ConstLanelets consecutives = route_handler.getRoutingGraphPtr()->following(lanelet);
-  const auto previous = route_handler.getRoutingGraphPtr()->previous(lanelet);
+  lanelet::ConstLanelets consecutives = route_handler->getRoutingGraphPtr()->following(lanelet);
+  const auto previous = route_handler->getRoutingGraphPtr()->previous(lanelet);
   consecutives.insert(consecutives.end(), previous.begin(), previous.end());
   return consecutives;
 }
 
 lanelet::ConstLanelets get_missing_lane_change_lanelets(
-  lanelet::ConstLanelets & trajectory_lanelets, const route_handler::RouteHandler & route_handler)
+  lanelet::ConstLanelets & trajectory_lanelets,
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler)
 {
   lanelet::ConstLanelets missing_lane_change_lanelets;
-  const auto & routing_graph = *route_handler.getRoutingGraphPtr();
+  const auto & routing_graph = *route_handler->getRoutingGraphPtr();
   lanelet::ConstLanelets adjacents;
   lanelet::ConstLanelets consecutives;
   for (const auto & ll : trajectory_lanelets) {
@@ -62,9 +64,9 @@ lanelet::ConstLanelets get_missing_lane_change_lanelets(
 }
 
 lanelet::ConstLanelets calculate_trajectory_lanelets(
-  const EgoData & ego_data, const route_handler::RouteHandler & route_handler)
+  const EgoData & ego_data, const std::shared_ptr<const route_handler::RouteHandler> route_handler)
 {
-  const auto lanelet_map_ptr = route_handler.getLaneletMapPtr();
+  const auto lanelet_map_ptr = route_handler->getLaneletMapPtr();
   lanelet::ConstLanelets trajectory_lanelets;
   lanelet::BasicLineString2d trajectory_ls;
   for (const auto & p : ego_data.trajectory_points)
@@ -83,7 +85,8 @@ lanelet::ConstLanelets calculate_trajectory_lanelets(
 
 lanelet::ConstLanelets calculate_ignored_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
-  const route_handler::RouteHandler & route_handler, const PlannerParam & params)
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
+  const PlannerParam & params)
 {
   lanelet::ConstLanelets ignored_lanelets;
   // ignore lanelets directly behind ego
@@ -91,7 +94,7 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
     tier4_autoware_utils::calcOffsetPose(ego_data.pose, params.rear_offset, 0.0, 0.0);
   const lanelet::BasicPoint2d behind_point(behind.position.x, behind.position.y);
   const auto behind_lanelets = lanelet::geometry::findWithin2d(
-    route_handler.getLaneletMapPtr()->laneletLayer, behind_point, 0.0);
+    route_handler->getLaneletMapPtr()->laneletLayer, behind_point, 0.0);
   for (const auto & l : behind_lanelets) {
     const auto is_trajectory_lanelet = contains_lanelet(trajectory_lanelets, l.second.id());
     if (!is_trajectory_lanelet) ignored_lanelets.push_back(l.second);
@@ -102,12 +105,13 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
 lanelet::ConstLanelets calculate_other_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
   const lanelet::ConstLanelets & ignored_lanelets,
-  const route_handler::RouteHandler & route_handler, const PlannerParam & params)
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
+  const PlannerParam & params)
 {
   lanelet::ConstLanelets other_lanelets;
   const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
   const auto lanelets_within_range = lanelet::geometry::findWithin2d(
-    route_handler.getLaneletMapPtr()->laneletLayer, ego_point,
+    route_handler->getLaneletMapPtr()->laneletLayer, ego_point,
     std::max(params.slow_dist_threshold, params.stop_dist_threshold) + params.front_offset +
       params.extra_front_offset);
   for (const auto & ll : lanelets_within_range) {

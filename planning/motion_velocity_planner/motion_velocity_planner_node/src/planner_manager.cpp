@@ -63,7 +63,7 @@ void MotionVelocityPlannerManager::load_module_plugin(rclcpp::Node & node, const
   }
   if (plugin_loader_.isClassAvailable(name)) {
     const auto plugin = plugin_loader_.createSharedInstance(name);
-    plugin->init(node);
+    plugin->init(node, name);
 
     // register
     loaded_plugins_.push_back(plugin);
@@ -98,16 +98,13 @@ void MotionVelocityPlannerManager::update_module_parameters(
 
 std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocities(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
-  const PlannerData & planner_data)
+  const std::shared_ptr<const PlannerData> planner_data)
 {
   std::string stop_reason_msg("path_end");
 
   std::vector<VelocityPlanningResult> results;
   for (auto & plugin : loaded_plugins_)
     results.push_back(plugin->plan(ego_trajectory_points, planner_data));
-
-  // stop_reason_diag_ = makeStopReasonDiag(
-  //   stop_reason_msg, output_trajectory_msg.points[first_stop_trajectory_point_index].point.pose);
   return results;
 }
 }  // namespace motion_velocity_planner

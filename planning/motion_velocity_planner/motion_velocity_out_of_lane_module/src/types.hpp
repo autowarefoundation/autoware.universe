@@ -186,7 +186,7 @@ struct DecisionInputs
   OverlapRanges ranges{};
   EgoData ego_data{};
   autoware_auto_perception_msgs::msg::PredictedObjects objects{};
-  const route_handler::RouteHandler * route_handler{};
+  std::shared_ptr<const route_handler::RouteHandler> route_handler{};
   lanelet::ConstLanelets lanelets{};
 };
 
@@ -202,7 +202,7 @@ struct DebugData
   lanelet::ConstLanelets trajectory_lanelets;
   lanelet::ConstLanelets ignored_lanelets;
   lanelet::ConstLanelets other_lanelets;
-  autoware_auto_planning_msgs::msg::Trajectory trajectory;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> trajectory_points;
   size_t first_trajectory_idx;
 
   size_t prev_footprints = 0;

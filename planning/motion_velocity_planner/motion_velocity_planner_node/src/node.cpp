@@ -196,9 +196,9 @@ void MotionVelocityPlannerNode::on_unload_plugin(
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool MotionVelocityPlannerNode::is_data_ready(const PlannerData & planner_data) const
+bool MotionVelocityPlannerNode::is_data_ready() const
 {
-  const auto & d = planner_data;
+  const auto & d = planner_data_;
   auto clock = *get_clock();
 
   // from callbacks
@@ -254,7 +254,6 @@ void MotionVelocityPlannerNode::on_predicted_objects(
   planner_data_.predicted_objects = msg;
 }
 
-// TODO(Maxime): can be removed ?
 void MotionVelocityPlannerNode::on_no_ground_pointcloud(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
@@ -307,7 +306,7 @@ void MotionVelocityPlannerNode::on_acceleration(
 void MotionVelocityPlannerNode::on_param()
 {
   planner_data_.velocity_smoother_ =
-    std::make_unique<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(*this);
+    std::make_shared<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(*this);
 }
 
 void MotionVelocityPlannerNode::on_lanelet_map(
@@ -366,7 +365,7 @@ void MotionVelocityPlannerNode::on_trajectory(
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
-  if (!is_data_ready(planner_data_)) {
+  if (!is_data_ready()) {
     return;
   }
 
@@ -374,7 +373,8 @@ void MotionVelocityPlannerNode::on_trajectory(
     return;
   }
 
-  if (has_received_map_) planner_data_.route_handler.setMap(*map_ptr_);
+  if (has_received_map_)
+    planner_data_.route_handler = std::make_shared<route_handler::RouteHandler>(*map_ptr_);
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> input_trajectory(
     input_trajectory_msg->points.begin(), input_trajectory_msg->points.end());
@@ -386,7 +386,7 @@ void MotionVelocityPlannerNode::on_trajectory(
     debug_trajectory);
 
   const autoware_auto_planning_msgs::msg::Trajectory output_trajectory_msg =
-    generate_trajectory(*input_trajectory_msg, planner_data_);
+    generate_trajectory(*input_trajectory_msg);
 
   lk.unlock();
 
@@ -399,22 +399,36 @@ void MotionVelocityPlannerNode::on_trajectory(
 }
 
 autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_trajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory_msg,
-  const PlannerData & planner_data)
+  const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory_msg)
 {
-  const auto smoothed_trajectory_points = smooth_trajectory(input_trajectory_msg, planner_data);
-  const auto planning_results =
-    planner_manager_.plan_velocities(smoothed_trajectory_points, planner_data);
+  const auto smoothed_trajectory_points = smooth_trajectory(input_trajectory_msg, planner_data_);
+  const auto planning_results = planner_manager_.plan_velocities(
+    smoothed_trajectory_points, std::make_shared<const PlannerData>(planner_data_));
 
   autoware_auto_planning_msgs::msg::Trajectory output_trajectory_msg = input_trajectory_msg;
   for (const auto & planning_result : planning_results) {
     for (const auto & stop_point : planning_result.stop_points) {
+      const auto seg_idx =
+        motion_utils::findNearestSegmentIndex(output_trajectory_msg.points, stop_point);
       const auto insert_idx =
-        motion_utils::insertTargetPoint(0.0, stop_point, output_trajectory_msg.points);
+        motion_utils::insertTargetPoint(seg_idx, stop_point, output_trajectory_msg.points);
       if (insert_idx) output_trajectory_msg.points[*insert_idx].longitudinal_velocity_mps = 0.0;
     }
     for (const auto & slowdown_interval : planning_result.slowdown_intervals) {
-      // TODO(Maxime): update velocity over the interval
+      const auto from_seg_idx =
+        motion_utils::findNearestSegmentIndex(output_trajectory_msg.points, slowdown_interval.from);
+      const auto from_insert_idx = motion_utils::insertTargetPoint(
+        from_seg_idx, slowdown_interval.from, output_trajectory_msg.points);
+      const auto to_seg_idx =
+        motion_utils::findNearestSegmentIndex(output_trajectory_msg.points, slowdown_interval.to);
+      const auto to_insert_idx = motion_utils::insertTargetPoint(
+        to_seg_idx, slowdown_interval.to, output_trajectory_msg.points);
+      if (from_insert_idx && to_insert_idx) {
+        for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
+          output_trajectory_msg.points[idx].longitudinal_velocity_mps = 0.0;
+      } else {
+        RCLCPP_WARN(get_logger(), "Failed to insert slowdown points");
+      }
     }
   }
 

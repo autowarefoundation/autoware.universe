@@ -17,53 +17,15 @@
 
 #include "types.hpp"
 
+#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
+
 #include <visualization_msgs/msg/marker_array.hpp>
-
-#include <lanelet2_core/Forward.h>
-
-#include <string>
 
 namespace motion_velocity_planner::out_of_lane::debug
 {
-/// @brief add footprint markers to the given marker array
-/// @param [inout] debug_marker_array marker array
-/// @param [in] footprints footprints to turn into markers
-/// @param [in] z z value to use for the markers
-/// @param [in] prev_nb previous number of markers (used to delete the extra ones)
-void add_footprint_markers(
-  visualization_msgs::msg::MarkerArray & debug_marker_array,
-  const lanelet::BasicPolygons2d & footprints, const double z, const size_t prev_nb);
-/// @brief add footprint markers to the given marker array
-/// @param [inout] debug_marker_array marker array
-/// @param [in] current_footprint footprint to turn into a marker
-/// @param [in] current_overlapped_lanelets lanelets to turn into markers
-/// @param [in] z z value to use for the markers
-/// @param [in] prev_nb previous number of markers (used to delete the extra ones)
-void add_current_overlap_marker(
-  visualization_msgs::msg::MarkerArray & debug_marker_array,
-  const lanelet::BasicPolygon2d & current_footprint,
-  const lanelet::ConstLanelets & current_overlapped_lanelets, const double z, const size_t prev_nb);
-/// @brief add footprint markers to the given marker array
-/// @param [inout] debug_marker_array marker array
-/// @param [in] lanelets lanelets to turn into markers
-/// @param [in] ns namespace of the markers
-/// @param [in] color namespace of the markers
-/// @param [in] prev_nb previous number of markers (used to delete the extra ones)
-void add_lanelet_markers(
-  visualization_msgs::msg::MarkerArray & debug_marker_array,
-  const lanelet::ConstLanelets & lanelets, const std::string & ns,
-  const std_msgs::msg::ColorRGBA & color, const size_t prev_nb);
-/// @brief add ranges markers to the given marker array
-/// @param [inout] debug_marker_array marker array
-/// @param [in] ranges ranges to turn into markers
-/// @param [in] trajectory modified ego trajectory that was used to calculate the ranges
-/// @param [in] first_trajectory_idx first idx of ego on the trajectory
-/// @param [in] z z value to use for the markers
-/// @param [in] prev_nb previous number of markers (used to delete the extra ones)
-void add_range_markers(
-  visualization_msgs::msg::MarkerArray & debug_marker_array, const OverlapRanges & ranges,
-  const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
-  const size_t first_trajectory_idx, const double z, const size_t prev_nb);
+visualization_msgs::msg::MarkerArray create_debug_marker_array(const DebugData & debug_data);
+motion_utils::VirtualWalls create_virtual_walls(
+  const DebugData & debug_data, const PlannerParam & params);
 }  // namespace motion_velocity_planner::out_of_lane::debug
 
 #endif  // DEBUG_HPP_

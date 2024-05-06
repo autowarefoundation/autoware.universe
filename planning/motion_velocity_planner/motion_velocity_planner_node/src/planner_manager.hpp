@@ -46,7 +46,7 @@ public:
   void update_module_parameters(const std::vector<rclcpp::Parameter> & parameters);
   std::vector<VelocityPlanningResult> plan_velocities(
     const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
-    const PlannerData & planner_data);
+    const std::shared_ptr<const PlannerData> planner_data);
 
 private:
   pluginlib::ClassLoader<PluginModuleInterface> plugin_loader_;

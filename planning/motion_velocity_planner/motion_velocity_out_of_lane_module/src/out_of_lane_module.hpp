@@ -17,7 +17,6 @@
 
 #include "types.hpp"
 
-#include <behavior_velocity_planner_common/velocity_factor_interface.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <motion_velocity_planner_common/plugin_module_interface.hpp>
 #include <motion_velocity_planner_common/velocity_planning_result.hpp>
@@ -38,23 +37,26 @@ namespace motion_velocity_planner
 class OutOfLaneModule : public PluginModuleInterface
 {
 public:
-  void init(rclcpp::Node & node) override;
+  void init(rclcpp::Node & node, const std::string & module_name) override;
   void update_parameters(const std::vector<rclcpp::Parameter> & parameters) override;
   VelocityPlanningResult plan(
     const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
-    const PlannerData & planner_data) override;
+    const std::shared_ptr<const PlannerData> planner_data) override;
   std::string get_module_name() const override { return module_name_; }
 
 private:
   void init_parameters(rclcpp::Node & node);
-  inline static const std::string module_name_ = "out_of_lane";
   out_of_lane::PlannerParam params_;
 
+  inline static const std::string ns_ = "out_of_lane";
+  std::string module_name_;
   std::optional<out_of_lane::SlowdownToInsert> prev_inserted_point_{};
   rclcpp::Clock::SharedPtr clock_{};
   rclcpp::Logger logger_ = rclcpp::get_logger("");
   rclcpp::Time prev_inserted_point_time_{};
-  behavior_velocity_planner::VelocityFactor velocity_factor_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_publisher;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_publisher;
+  motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator{};
 
 protected:
   // Debug

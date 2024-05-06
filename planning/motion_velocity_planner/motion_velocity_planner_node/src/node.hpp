@@ -118,10 +118,9 @@ private:
   std::mutex mutex_;
 
   // function
-  bool is_data_ready(const PlannerData & planner_data) const;
+  bool is_data_ready() const;
   autoware_auto_planning_msgs::msg::Trajectory generate_trajectory(
-    const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory_msg,
-    const PlannerData & planner_data);
+    const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory_msg);
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 

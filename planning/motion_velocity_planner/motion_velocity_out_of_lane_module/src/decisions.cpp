@@ -50,7 +50,8 @@ double time_along_trajectory(
 }
 
 bool object_is_incoming(
-  const lanelet::BasicPoint2d & object_position, const route_handler::RouteHandler * route_handler,
+  const lanelet::BasicPoint2d & object_position,
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
   const lanelet::ConstLanelet & lane)
 {
   const auto lanelets = route_handler->getPrecedingLaneletSequence(lane, 50.0);
@@ -63,7 +64,7 @@ bool object_is_incoming(
 
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
-  const route_handler::RouteHandler * route_handler, const double dist_buffer,
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler, const double dist_buffer,
   const rclcpp::Logger & logger)
 {
   // skip the dynamic object if it is not in a lane preceding the overlapped lane

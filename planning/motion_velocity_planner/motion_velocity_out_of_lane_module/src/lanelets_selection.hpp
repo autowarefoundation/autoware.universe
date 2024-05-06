@@ -21,6 +21,8 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <memory>
+
 namespace motion_velocity_planner::out_of_lane
 {
 /// @brief checks if a lanelet is already contained in a vector of lanelets
@@ -41,7 +43,7 @@ inline bool contains_lanelet(const lanelet::ConstLanelets & lanelets, const lane
 /// @param [in] route_handler route handler
 /// @return lanelets crossed by the ego vehicle
 lanelet::ConstLanelets calculate_trajectory_lanelets(
-  const EgoData & ego_data, const route_handler::RouteHandler & route_handler);
+  const EgoData & ego_data, const std::shared_ptr<const route_handler::RouteHandler> route_handler);
 /// @brief calculate lanelets that may not be crossed by the trajectory but may be overlapped during
 /// a lane change
 /// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
@@ -49,7 +51,8 @@ lanelet::ConstLanelets calculate_trajectory_lanelets(
 /// @return lanelets that may be overlapped by a lane change (and are not already in
 /// trajectory_lanelets)
 lanelet::ConstLanelets get_missing_lane_change_lanelets(
-  lanelet::ConstLanelets & trajectory_lanelets, const route_handler::RouteHandler & route_handler);
+  lanelet::ConstLanelets & trajectory_lanelets,
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler);
 /// @brief calculate lanelets that should be ignored
 /// @param [in] ego_data data about the ego vehicle
 /// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
@@ -58,7 +61,8 @@ lanelet::ConstLanelets get_missing_lane_change_lanelets(
 /// @return lanelets to ignore
 lanelet::ConstLanelets calculate_ignored_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
-  const route_handler::RouteHandler & route_handler, const PlannerParam & params);
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
+  const PlannerParam & params);
 /// @brief calculate lanelets that should be checked by the module
 /// @param [in] ego_data data about the ego vehicle
 /// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
@@ -69,7 +73,8 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
 lanelet::ConstLanelets calculate_other_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
   const lanelet::ConstLanelets & ignored_lanelets,
-  const route_handler::RouteHandler & route_handler, const PlannerParam & params);
+  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
+  const PlannerParam & params);
 }  // namespace motion_velocity_planner::out_of_lane
 
 #endif  // LANELETS_SELECTION_HPP_

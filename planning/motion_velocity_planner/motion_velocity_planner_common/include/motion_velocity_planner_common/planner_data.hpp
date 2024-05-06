@@ -68,7 +68,7 @@ struct PlannerData
   autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr predicted_objects;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid;
-  route_handler::RouteHandler route_handler{};
+  std::shared_ptr<route_handler::RouteHandler> route_handler;
 
   // nearest search
   double ego_nearest_dist_threshold;
@@ -83,7 +83,7 @@ struct PlannerData
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
 
   // velocity smoother
-  std::unique_ptr<motion_velocity_smoother::SmootherBase> velocity_smoother_;
+  std::shared_ptr<motion_velocity_smoother::SmootherBase> velocity_smoother_{};
   // parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
 
