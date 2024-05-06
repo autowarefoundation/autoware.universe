@@ -81,7 +81,7 @@ std::array<double, 36> PoseCovarianceModifierNode::update_ndt_covariances_from_g
   const std::array<double, 36> & ndt_covariance_in)
 {
   // See the ../README.md#NDT-covariance-calculation for detailed explanation
-  
+
   auto lerp_range_to_range = [](double x, double x_min, double x_max, double y_min, double y_max) {
     // Normalize input value to range [0, 1]
     const double input_normalized = (x - x_min) / (x_max - x_min);
