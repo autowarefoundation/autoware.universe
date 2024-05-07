@@ -6,7 +6,6 @@ autoware_package()
 
 ament_auto_add_library(mission_remaining_distance_time_calculator SHARED
   src/mission_remaining_distance_time_calculator_node.cpp
-  #src/mission_remaining_distance_time_calculator.cpp
 )
 
 rclcpp_components_register_node(mission_remaining_distance_time_calculator
