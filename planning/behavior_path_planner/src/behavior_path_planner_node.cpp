@@ -62,9 +62,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
-  mission_remaining_distance_time_publisher_ = create_publisher<MissionRemainingDistanceTime>(
-    "~/output/mission_remaining_distance_time",
-    rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable());
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
