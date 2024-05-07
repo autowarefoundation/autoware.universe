@@ -3,67 +3,79 @@
     input_channels:
       detected_objects:
         topic: "/perception/object_recognition/detection/objects"
-        name: "detected_objects"
-        name_short: "all"
         expected_frequency: 10.0
+        optional:
+          name: "detected_objects"
+          short_name: "all"
       # LIDAR - rule-based
       lidar_clustering:
         topic: "/perception/object_recognition/detection/clustering/objects"
-        name: "clustering"
-        name_short: "Lcl"
         expected_frequency: 10.0
+        optional:
+          name: "clustering"
+          short_name: "Lcl"
       # LIDAR - DNN
       lidar_centerpoint:
         topic: "/perception/object_recognition/detection/centerpoint/objects"
-        name: "centerpoint"
-        name_short: "Lcp"
         expected_frequency: 10.0
+        optional:
+          name: "centerpoint"
+          short_name: "Lcp"
       lidar_centerpoint_validated:
         topic: "/perception/object_recognition/detection/centerpoint/validation/objects"
-        name: "centerpoint"
-        name_short: "Lcp"
         expected_frequency: 10.0
+        optional:
+          name: "centerpoint"
+          short_name: "Lcp"
       lidar_apollo:
         topic: "/perception/object_recognition/detection/apollo/objects"
-        name: "apollo"
-        name_short: "Lap"
         expected_frequency: 10.0
+        optional:
+          name: "apollo"
+          short_name: "Lap"
       lidar_apollo_validated:
         topic: "/perception/object_recognition/detection/apollo/validation/objects"
-        name: "apollo"
-        name_short: "Lap"
         expected_frequency: 10.0
+        optional:
+          name: "apollo"
+          short_name: "Lap"
       # LIDAR-CAMERA - DNN
       lidar_pointpainitng:
         topic: "/perception/object_recognition/detection/pointpainting/objects"
-        name: "pointpainting"
-        name_short: "Lpp"
         expected_frequency: 10.0
+        optional:
+          name: "pointpainting"
+          short_name: "Lpp"
       lidar_pointpainting_validated:
         topic: "/perception/object_recognition/detection/pointpainting/validation/objects"
-        name: "pointpainting"
-        name_short: "Lpp"
         expected_frequency: 10.0
+        optional:
+          name: "pointpainting"
+          short_name: "Lpp"
       # CAMERA-LIDAR
       camera_lidar_fusion:
         topic: "/perception/object_recognition/detection/clustering/camera_lidar_fusion/objects"
-        name: "camera_lidar_fusion"
-        name_short: "CLf"
         expected_frequency: 10.0
+        optional:
+          name: "camera_lidar_fusion"
+          short_name: "CLf"
       # CAMERA-LIDAR+TRACKER
       detection_by_tracker:
         topic: "/perception/object_recognition/detection/detection_by_tracker/objects"
-        name: "detection_by_tracker"
-        name_short: "dbT"
         expected_frequency: 10.0
+        optional:
+          name: "detection_by_tracker"
+          short_name: "dbT"
       # RADAR
       radar:
         topic: "/sensing/radar/detected_objects"
-        name: "radar"
-        name_short: "R"
         expected_frequency: 30.0
+        optional:
+          name: "radar"
+          short_name: "R"
       radar_far:
         topic: "/perception/object_recognition/detection/radar/far_objects"
-        name: "radar_far"
-        name_short: "Rf"
         expected_frequency: 30.0
+        optional:
+          name: "radar_far"
+          short_name: "Rf"

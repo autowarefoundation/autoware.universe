@@ -100,18 +100,27 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
 
   for (const auto & selected_input_channel : selected_input_channels) {
+    // required parameters, no default value
     const std::string input_topic_name =
       declare_parameter<std::string>("input_channels." + selected_input_channel + ".topic");
-    const std::string input_name_long =
-      declare_parameter<std::string>("input_channels." + selected_input_channel + ".name");
-    const std::string input_name_short =
-      declare_parameter<std::string>("input_channels." + selected_input_channel + ".name_short");
-    const double input_expected_frequency =
-      declare_parameter<double>("input_channels." + selected_input_channel + ".expected_frequency");
     input_topic_names.push_back(input_topic_name);
-    input_names_long.push_back(input_name_long);
-    input_names_short.push_back(input_name_short);
-    input_expected_rates.push_back(input_expected_frequency);
+
+    // required parameter, but can set a default value
+    const double default_expected_rate = 10.0;
+    const double expected_rate = declare_parameter<double>(
+      "input_channels." + selected_input_channel + ".expected_rate", default_expected_rate);
+    input_expected_rates.push_back(expected_rate);
+
+    // optional parameters
+    const std::string default_name = selected_input_channel;
+    const std::string name_long = declare_parameter<std::string>(
+      "input_channels." + selected_input_channel + ".optional.name", default_name);
+    input_names_long.push_back(name_long);
+
+    const std::string default_name_short = selected_input_channel.substr(0, 3);
+    const std::string name_short = declare_parameter<std::string>(
+      "input_channels." + selected_input_channel + ".optional.short_name", default_name_short);
+    input_names_short.push_back(name_short);
   }
 
   input_channel_size_ = input_topic_names.size();
