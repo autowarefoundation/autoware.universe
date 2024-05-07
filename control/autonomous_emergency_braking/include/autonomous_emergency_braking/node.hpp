@@ -44,7 +44,6 @@
 #include <deque>
 #include <limits>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <string>
 #include <utility>
@@ -322,7 +321,6 @@ public:
   double mpc_prediction_time_horizon_;
   double mpc_prediction_time_interval_;
   CollisionDataKeeper collision_data_keeper_;
-  std::mutex data_mutex_;
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 

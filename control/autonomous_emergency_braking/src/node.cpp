@@ -184,14 +184,12 @@ void AEB::onTimer()
 
 void AEB::onVelocity(const VelocityReport::ConstSharedPtr input_msg)
 {
-  std::lock_guard<std::mutex> lock(data_mutex_);
   current_velocity_ptr_ = input_msg;
 }
 
 void AEB::onImu(const Imu::ConstSharedPtr input_msg)
 {
   // transform imu
-  std::lock_guard<std::mutex> lock(data_mutex_);
   geometry_msgs::msg::TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
@@ -211,19 +209,16 @@ void AEB::onImu(const Imu::ConstSharedPtr input_msg)
 void AEB::onPredictedTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr input_msg)
 {
-  std::lock_guard<std::mutex> lock(data_mutex_);
   predicted_traj_ptr_ = input_msg;
 }
 
 void AEB::onAutowareState(const AutowareState::ConstSharedPtr input_msg)
 {
-  std::lock_guard<std::mutex> lock(data_mutex_);
   autoware_state_ = input_msg;
 }
 
 void AEB::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
 {
-  std::lock_guard<std::mutex> lock(data_mutex_);
   PointCloud::Ptr pointcloud_ptr(new PointCloud);
   pcl::fromROSMsg(*input_msg, *pointcloud_ptr);
 
@@ -333,7 +328,6 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   using colorTuple = std::tuple<double, double, double, double>;
 
   // step1. check data
-  std::lock_guard<std::mutex> lock(data_mutex_);
   if (!isDataReady()) {
     return false;
   }
