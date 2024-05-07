@@ -1708,7 +1708,7 @@ PathWithLaneId RouteHandler::getCenterLinePath(
 
   // append a point only when having one point so that yaw calculation would work
   if (reference_path.points.size() == 1) {
-    const lanelet::Id lane_id = static_cast<int>(reference_path.points.front().lane_ids.front());
+    const lanelet::Id lane_id = reference_path.points.front().lane_ids.front();
     const auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id);
     const auto point = reference_path.points.front().point.pose.position;
     const auto lane_yaw = lanelet::utils::getLaneletAngle(lanelet, point);
@@ -2286,4 +2286,11 @@ bool RouteHandler::findDrivableLanePath(
   return drivable_lane_path_found;
 }
 
+lanelet::ConstLanelets RouteHandler::getClosestLanelets(
+  const geometry_msgs::msg::Pose & target_pose) const
+{
+  lanelet::ConstLanelets target_lanelets;
+  lanelet::utils::query::getCurrentLanelets(road_lanelets_, target_pose, &target_lanelets);
+  return target_lanelets;
+}
 }  // namespace route_handler

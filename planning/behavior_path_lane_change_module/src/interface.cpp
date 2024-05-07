@@ -76,18 +76,15 @@ bool LaneChangeInterface::isExecutionReady() const
 
 void LaneChangeInterface::updateData()
 {
-  module_type_->setPreviousModulePaths(
-    getPreviousModuleOutput().reference_path, getPreviousModuleOutput().path);
-  module_type_->setPreviousDrivableAreaInfo(getPreviousModuleOutput().drivable_area_info);
-  module_type_->setPreviousTurnSignalInfo(getPreviousModuleOutput().turn_signal_info);
+  module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
+  module_type_->updateSpecialData();
 
   if (isWaitingApproval()) {
     module_type_->updateLaneChangeStatus();
   }
-  updateDebugMarker();
 
-  module_type_->updateSpecialData();
   module_type_->resetStopPose();
+  updateDebugMarker();
 }
 
 void LaneChangeInterface::postProcess()
@@ -97,16 +94,13 @@ void LaneChangeInterface::postProcess()
     post_process_safety_status_ =
       module_type_->evaluateApprovedPathWithUnsafeHysteresis(safety_status);
   }
+  updateDebugMarker();
 }
 
 BehaviorModuleOutput LaneChangeInterface::plan()
 {
   resetPathCandidate();
   resetPathReference();
-
-  if (!module_type_->isValidPath()) {
-    return {};
-  }
 
   auto output = module_type_->generateOutput();
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
@@ -139,8 +133,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
-  BehaviorModuleOutput out;
-  out = module_type_->getTerminalLaneChangePath();
+  BehaviorModuleOutput out = getPreviousModuleOutput();
   module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, out.path);
   out.turn_signal_info =
     getCurrentTurnSignalInfo(out.path, getPreviousModuleOutput().turn_signal_info);
@@ -200,6 +193,7 @@ bool LaneChangeInterface::canTransitSuccessState()
   auto log_debug_throttled = [&](std::string_view message) -> void {
     RCLCPP_DEBUG(getLogger(), "%s", message.data());
   };
+  updateDebugMarker();
 
   if (module_type_->specialExpiredCheck() && isWaitingApproval()) {
     log_debug_throttled("Run specialExpiredCheck.");
@@ -229,6 +223,7 @@ bool LaneChangeInterface::canTransitFailureState()
     RCLCPP_DEBUG(getLogger(), "%s", message.data());
   };
 
+  updateDebugMarker();
   log_debug_throttled(__func__);
 
   if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
@@ -304,7 +299,7 @@ void LaneChangeInterface::updateDebugMarker() const
     return;
   }
   using marker_utils::lane_change_markers::createDebugMarkerArray;
-  debug_marker_ = createDebugMarkerArray(module_type_->getDebugData());
+  debug_marker_ = createDebugMarkerArray(module_type_->getDebugData(), module_type_->getEgoPose());
 }
 
 MarkerArray LaneChangeInterface::getModuleVirtualWall()
