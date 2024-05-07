@@ -398,8 +398,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   auto get_gap_between_ego_and_lane_border =
     [&](
       geometry_msgs::msg::Pose & ego_overhang_point_as_pose,
-      const bool ego_is_merging_from_the_left)
-    -> std::pair<std::optional<double>, std::optional<double>> {
+      const bool ego_is_merging_from_the_left) -> std::optional<std::pair<double, double>> {
     const auto local_vehicle_footprint = vehicle_info_.createFootprint();
     const auto vehicle_footprint =
       transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
@@ -433,24 +432,26 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
       }
     }
 
-    return (smallest_lateral_gap_between_ego_and_border < std::numeric_limits<double>::max())
-             ? std::make_pair(
-                 std::make_optional<double>(smallest_lateral_gap_between_ego_and_border),
-                 std::make_optional<double>(corresponding_lateral_gap_with_other_lane_bound))
-             : std::make_pair(std::nullopt, std::nullopt);
+    if (smallest_lateral_gap_between_ego_and_border == std::numeric_limits<double>::max()) {
+      return std::nullopt;
+    }
+    return std::make_pair(
+      (smallest_lateral_gap_between_ego_and_border),
+      (corresponding_lateral_gap_with_other_lane_bound));
   };
 
   geometry_msgs::msg::Pose ego_overhang_point_as_pose;
-  const auto [gap_between_ego_and_lane_border, corresponding_lateral_gap_with_other_lane_bound] =
+  const auto gaps_with_lane_borders_pair =
     get_gap_between_ego_and_lane_border(ego_overhang_point_as_pose, ego_is_merging_from_the_left);
-  if (
-    !gap_between_ego_and_lane_border.has_value() ||
-    !corresponding_lateral_gap_with_other_lane_bound.has_value()) {
+
+  if (!gaps_with_lane_borders_pair.has_value()) {
     return false;
   }
-  if (
-    gap_between_ego_and_lane_border.value() <
-    corresponding_lateral_gap_with_other_lane_bound.value()) {
+
+  const auto & gap_between_ego_and_lane_border = gaps_with_lane_borders_pair.value().first;
+  const auto & corresponding_lateral_gap_with_other_lane_bound =
+    gaps_with_lane_borders_pair.value().second;
+  if (gap_between_ego_and_lane_border < corresponding_lateral_gap_with_other_lane_bound) {
     // middle of the lane is crossed, no need to check for collisions anymore
     return true;
   }
