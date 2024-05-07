@@ -10,9 +10,8 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
-  
+
   <depend>autoware_internal_msgs</depend>
-  <depend>route_handler</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
@@ -21,6 +20,7 @@
   <depend>planning_test_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>route_handler</depend>
   <depend>std_msgs</depend>
   <depend>tier4_autoware_utils</depend>
 

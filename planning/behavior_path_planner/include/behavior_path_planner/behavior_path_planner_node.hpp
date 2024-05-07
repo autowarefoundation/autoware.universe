@@ -124,7 +124,6 @@ private:
   bool has_received_map_{false};
   bool has_received_route_{false};
 
-
   std::mutex mutex_pd_;       // mutex for planner_data_
   std::mutex mutex_manager_;  // mutex for bt_manager_ or planner_manager_
   std::mutex mutex_map_;      // mutex for has_received_map_ and map_ptr_

@@ -2,16 +2,10 @@
 
 ### Role
 
-
-
 ### Activation Timing
-
 
 ### Module Parameters
 
-
 ### Inner-workings / Algorithms
 
-
 ### Future Work
-

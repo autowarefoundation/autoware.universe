@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
+#define MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
 
-#ifndef MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__HPP_
-#define MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__HPP_
-
-//#include "mission_remaining_distance_time_calculator/mission_remaining_distance_time_calculator.hpp"
+// #include
+// "mission_remaining_distance_time_calculator/mission_remaining_distance_time_calculator.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-#include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include <geometry_msgs/msg/vector3.hpp>
 #include <route_handler/route_handler.hpp>
+
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_internal_msgs/msg/mission_remaining_distance_time.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/utility/Optional.h>
@@ -39,12 +40,12 @@
 namespace mission_remaining_distance_time_calculator
 {
 
-  using geometry_msgs::msg::Pose;
-  using nav_msgs::msg::Odometry;
-  using geometry_msgs::msg::Vector3;
-  using autoware_planning_msgs::msg::LaneletRoute;
-  using autoware_auto_mapping_msgs::msg::HADMapBin;
-  using autoware_internal_msgs::msg::MissionRemainingDistanceTime;
+using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_internal_msgs::msg::MissionRemainingDistanceTime;
+using autoware_planning_msgs::msg::LaneletRoute;
+using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::Vector3;
+using nav_msgs::msg::Odometry;
 
 struct NodeParam
 {
@@ -62,11 +63,9 @@ private:
   rclcpp::Subscription<HADMapBin>::SharedPtr map_subscriber_;
   rclcpp::Subscription<Odometry>::SharedPtr odometry_subscriber_;
 
-
   // Publisher
-    rclcpp::Publisher<MissionRemainingDistanceTime>::SharedPtr
+  rclcpp::Publisher<MissionRemainingDistanceTime>::SharedPtr
     mission_remaining_distance_time_publisher_;
-
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -78,7 +77,7 @@ private:
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::ConstLanelets road_lanelets_;
   bool is_graph_ready_;
-  
+
   // Callback
   void onTimer();
   void onOdometry(const Odometry::ConstSharedPtr msg);
@@ -110,4 +109,4 @@ private:
   NodeParam node_param_;
 };
 }  // namespace mission_remaining_distance_time_calculator
-#endif  // MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__HPP_
+#endif  // MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_

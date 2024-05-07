@@ -14,13 +14,11 @@
 
 #include "mission_remaining_distance_time_calculator/mission_remaining_distance_time_calculator_node.hpp"
 
-
-
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp/timer.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/timer.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <chrono>
@@ -32,36 +30,37 @@
 namespace mission_remaining_distance_time_calculator
 {
 
-
-
-MissionRemainingDistanceTimeCalculatorNode::MissionRemainingDistanceTimeCalculatorNode(const rclcpp::NodeOptions & options)
+MissionRemainingDistanceTimeCalculatorNode::MissionRemainingDistanceTimeCalculatorNode(
+  const rclcpp::NodeOptions & options)
 : Node("mission_remaining_distance_time_calculator", options)
 {
   using std::placeholders::_1;
-    
-    odometry_subscriber_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, std::bind(&MissionRemainingDistanceTimeCalculatorNode::onOdometry, this, _1));
-  
+
+  odometry_subscriber_ = create_subscription<Odometry>(
+    "~/input/odometry", 1,
+    std::bind(&MissionRemainingDistanceTimeCalculatorNode::onOdometry, this, _1));
+
   const auto qos_transient_local = rclcpp::QoS{1}.transient_local();
 
   map_subscriber_ = create_subscription<HADMapBin>(
-    "~/input/map", qos_transient_local, std::bind(&MissionRemainingDistanceTimeCalculatorNode::onMap, this, _1));
+    "~/input/map", qos_transient_local,
+    std::bind(&MissionRemainingDistanceTimeCalculatorNode::onMap, this, _1));
   route_subscriber_ = create_subscription<LaneletRoute>(
-    "~/input/route", qos_transient_local, std::bind(&MissionRemainingDistanceTimeCalculatorNode::onRoute, this, _1));
+    "~/input/route", qos_transient_local,
+    std::bind(&MissionRemainingDistanceTimeCalculatorNode::onRoute, this, _1));
 
-    mission_remaining_distance_time_publisher_ = create_publisher<MissionRemainingDistanceTime>(
+  mission_remaining_distance_time_publisher_ = create_publisher<MissionRemainingDistanceTime>(
     "~/output/mission_remaining_distance_time",
     rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable());
 
   // Node Parameter
   node_param_.update_rate = declare_parameter<double>("update_rate", 10.0);
 
-  
   // Timer
   const auto period_ns = rclcpp::Rate(node_param_.update_rate).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&MissionRemainingDistanceTimeCalculatorNode::onTimer, this));
-
+    this, get_clock(), period_ns,
+    std::bind(&MissionRemainingDistanceTimeCalculatorNode::onTimer, this));
 }
 
 void MissionRemainingDistanceTimeCalculatorNode::onMap(const HADMapBin::ConstSharedPtr msg)
@@ -89,16 +88,14 @@ void MissionRemainingDistanceTimeCalculatorNode::onRoute(const LaneletRoute::Con
 
 void MissionRemainingDistanceTimeCalculatorNode::onTimer()
 {
-  RCLCPP_INFO_STREAM(this->get_logger(),  "is_graph_ready_" << is_graph_ready_);
-  RCLCPP_INFO_STREAM(this->get_logger(),  "has_received_route_" << has_received_route_);
+  RCLCPP_INFO_STREAM(this->get_logger(), "is_graph_ready_" << is_graph_ready_);
+  RCLCPP_INFO_STREAM(this->get_logger(), "has_received_route_" << has_received_route_);
 
-  if(is_graph_ready_ && has_received_route_)
-  {
+  if (is_graph_ready_ && has_received_route_) {
     double remaining_distance = calcuateMissionRemainingDistance();
     double remaining_time = calcuateMissionRemainingTime(remaining_distance);
     publishMissionRemainingDistanceTime(remaining_distance, remaining_time);
   }
-
 }
 double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingDistance() const
 {
@@ -111,10 +108,8 @@ double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingDista
   lanelet::ConstLanelet goal_lanelet;
   lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose_, &goal_lanelet);
 
-
   const lanelet::Optional<lanelet::routing::Route> optional_route =
     routing_graph_ptr_->getRoute(current_lanelet, goal_lanelet, 0);
-
 
   lanelet::routing::LaneletPath remaining_shortest_path;
   remaining_shortest_path = optional_route->shortestPath();
@@ -127,7 +122,8 @@ double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingDista
     }
 
     if (index == 0) {
-      lanelet::ArcCoordinates arc_coord = lanelet::utils::getArcCoordinates({llt}, current_vehicle_pose_);
+      lanelet::ArcCoordinates arc_coord =
+        lanelet::utils::getArcCoordinates({llt}, current_vehicle_pose_);
       double this_lanelet_length = lanelet::utils::getLaneletLength2d(llt);
       remaining_distance += this_lanelet_length - arc_coord.length;
     } else if (index == (remaining_shortest_path.size() - 1)) {
@@ -141,11 +137,11 @@ double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingDista
   }
 
   return remaining_distance;
-
 }
 
-double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingTime(const double remaining_distance) const
-{ 
+double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingTime(
+  const double remaining_distance) const
+{
   double current_velocity_norm = std::sqrt(
     current_vehicle_velocity_.x * current_vehicle_velocity_.x +
     current_vehicle_velocity_.y * current_vehicle_velocity_.y);
@@ -159,7 +155,8 @@ double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingTime(
   return remaining_time;
 }
 
-void MissionRemainingDistanceTimeCalculatorNode::publishMissionRemainingDistanceTime(const double remaining_distance, const double remaining_time) const
+void MissionRemainingDistanceTimeCalculatorNode::publishMissionRemainingDistanceTime(
+  const double remaining_distance, const double remaining_time) const
 {
   MissionRemainingDistanceTime mission_remaining_distance_time;
 
@@ -171,4 +168,5 @@ void MissionRemainingDistanceTimeCalculatorNode::publishMissionRemainingDistance
 }  // namespace mission_remaining_distance_time_calculator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(mission_remaining_distance_time_calculator::MissionRemainingDistanceTimeCalculatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  mission_remaining_distance_time_calculator::MissionRemainingDistanceTimeCalculatorNode)

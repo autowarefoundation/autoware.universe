@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 <launch>
   <!-- mission remaining distance and time param -->
-  <arg name="mission_remaining_distance_time_calculator_param_path" default="$(find-pkg-share mission_remaining_distance_time_calculator)/config/mission_remaining_distance_time_calculator.param.yaml"/>
+  <arg
+    name="mission_remaining_distance_time_calculator_param_path"
+    default="$(find-pkg-share mission_remaining_distance_time_calculator)/config/mission_remaining_distance_time_calculator.param.yaml"
+  />
 
   <!-- input -->
   <arg name="input_odometry" default="/localization/kinematic_state"/>
@@ -16,10 +19,8 @@
     <remap from="~/input/odometry" to="$(var input_odometry)"/>
     <remap from="~/input/map" to="$(var input_map)"/>
     <remap from="~/input/route" to="$(var input_route)"/>
-    
+
     <!-- output -->
     <remap from="~/output/mission_remaining_distance_time" to="/planning/mission_remaining_distance_time"/>
   </node>
 </launch>
-
-
