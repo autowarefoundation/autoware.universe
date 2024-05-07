@@ -124,8 +124,8 @@ void RadiusSearch2dFilter::filter(
   int y_offset = input.fields[pcl::getFieldIndex(input, "y")].offset;
   xy_cloud->points.resize(input.data.size() / point_step);
   for (size_t i = 0; i < input.data.size() / point_step; ++i) {
-    std::memcpy(&xy_cloud->points[i].x, &input.data[i * x_offset], sizeof(float));
-    std::memcpy(&xy_cloud->points[i].y, &input.data[i * y_offset], sizeof(float));
+    std::memcpy(&xy_cloud->points[i].x, &input.data[i * point_step + x_offset], sizeof(float));
+    std::memcpy(&xy_cloud->points[i].y, &input.data[i * point_step + y_offset], sizeof(float));
   }
 
   std::vector<int> k_indices(xy_cloud->points.size());
