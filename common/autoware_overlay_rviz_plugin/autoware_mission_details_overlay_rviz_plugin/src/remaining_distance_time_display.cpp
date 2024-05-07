@@ -37,7 +37,7 @@ namespace autoware_mission_details_overlay_rviz_plugin
 {
 
 RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
-: remaining_distance_(0.0), remaining_hours_(0), remaining_minutes_(0), remaining_seconds_(0)
+: remaining_distance_(0.0), remaining_time_(0.0)
 {
   std::string package_path =
     ament_index_cpp::get_package_share_directory("autoware_mission_details_overlay_rviz_plugin");
@@ -67,9 +67,7 @@ void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
 {
   try {
     remaining_distance_ = msg->remaining_distance;
-    remaining_hours_ = msg->remaining_hours;
-    remaining_minutes_ = msg->remaining_minutes;
-    remaining_seconds_ = msg->remaining_seconds;
+    remaining_time_ = msg->remaining_time;
   } catch (const std::exception & e) {
     // Log the error
     std::cerr << "Error in processMessage: " << e.what() << std::endl;
@@ -108,79 +106,86 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
   switch (remainingDistanceValue.size()) {
     case 1:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 100, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 55, remainingDistReferencePos.y() + 10);
       break;
     case 2:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 95, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 50, remainingDistReferencePos.y() + 10);
       break;
     case 3:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 90, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 45, remainingDistReferencePos.y() + 10);
       break;
     case 4:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 85, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 40, remainingDistReferencePos.y() + 10);
       break;
     default:
       remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 100, remainingDistReferencePos.y() + 10);
+        QPointF(remainingDistReferencePos.x() + 55, remainingDistReferencePos.y() + 10);
       break;
   }
   painter.setPen(gray);
   painter.drawText(remainingDistancePos, remainingDistanceValue);
 
   // Remaining distance unit
-  QString remainingDistUnitText = remaining_distance_ > 1000 ? "km" : "m";
+  QString remainingDistUnitText = remaining_distance_ > 1000 ? "km" : "meter";
   QPointF remainingDistancUnitPos(
-    remainingDistReferencePos.x() + 125, remainingDistReferencePos.y() + 10);
+    remainingDistReferencePos.x() + 80, remainingDistReferencePos.y() + 10);
   painter.drawText(remainingDistancUnitPos, remainingDistUnitText);
 
   //  ----------------- Remaining Time -----------------
-
-  // Remaining time text
+  // Remaining time icon
   painter.drawImage(
     remainingDistanceIconPos.x(),
     remainingDistanceIconPos.y() + scaledTimeToGoalFlag.height() / 2.0, scaledTimeToGoalFlag);
 
-  // Remaining hours value
-  QString remaininghoursValue =
-    QString::number(remaining_hours_ != 0 ? remaining_hours_ : 0, 'f', 0);
-  QPointF remaininghoursValuePos(remainingTimeReferencePos.x() + 17, remainingTimeReferencePos.y());
-  painter.setPen(gray);
-  if (remaining_hours_ != 0) painter.drawText(remaininghoursValuePos, remaininghoursValue);
+  // Calculate remaining minutes and seconds
+  //uint8_t remainig_hours =  static_cast<uint8_t>(remaining_time_ / 3600.0);
+  double remaining_time_mod = std::fmod(remaining_time_, 3600);
+  uint8_t remaining_minutes = static_cast<uint8_t>(remaining_time_mod / 60.0);
+  uint8_t remaining_seconds = static_cast<uint8_t>(std::fmod(remaining_time_mod, 60));
 
-  // Remaining hours separator
-  QString hoursSeparatorText = "h";
-  QPointF hoursSeparatorTextPos(remainingTimeReferencePos.x() + 35, remainingTimeReferencePos.y());
-  if (remaining_hours_ != 0) painter.drawText(hoursSeparatorTextPos, hoursSeparatorText);
+
+
+  // // Remaining hours value
+  // QString remaininghoursValue =
+  //   QString::number(remaining_hours_ != 0 ? remaining_hours_ : 0, 'f', 0);
+  // QPointF remaininghoursValuePos(remainingTimeReferencePos.x() + 17, remainingTimeReferencePos.y());
+  // painter.setPen(gray);
+  // if (remaining_hours_ != 0) painter.drawText(remaininghoursValuePos, remaininghoursValue);
+
+  // // Remaining hours separator
+  // QString hoursSeparatorText = "h";
+  // QPointF hoursSeparatorTextPos(remainingTimeReferencePos.x() + 35, remainingTimeReferencePos.y());
+  // if (remaining_hours_ != 0) painter.drawText(hoursSeparatorTextPos, hoursSeparatorText);
 
   // Remaining minutes value
   QString remainingminutesValue =
-    QString::number(remaining_minutes_ != 0 ? remaining_minutes_ : 0, 'f', 0);
+    QString::number(remaining_minutes != 0 ? remaining_minutes : 0, 'f', 0);
   QPointF remainingminutesValuePos(
     remainingTimeReferencePos.x() + 55, remainingTimeReferencePos.y());
   painter.setPen(gray);
-  if (remaining_minutes_ != 0) painter.drawText(remainingminutesValuePos, remainingminutesValue);
+  if (remaining_minutes > 0) painter.drawText(remainingminutesValuePos, remainingminutesValue);
   // Remaining minutes separator
   QString minutesSeparatorText = "m";
   QPointF minutesSeparatorTextPos(
     remainingTimeReferencePos.x() + 80, remainingTimeReferencePos.y());
-  if (remaining_minutes_ != 0) painter.drawText(minutesSeparatorTextPos, minutesSeparatorText);
+  if (remaining_minutes > 0) painter.drawText(minutesSeparatorTextPos, minutesSeparatorText);
 
   // Remaining seconds value
   QString remainingsecondsValue =
-    QString::number(remaining_seconds_ != 0 ? remaining_seconds_ : 0, 'f', 0);
+    QString::number(remaining_seconds != 0 ? remaining_seconds : 0, 'f', 0);
   QPointF remainingsecondValuePos(
-    remainingTimeReferencePos.x() + 100, remainingTimeReferencePos.y());
+    remainingTimeReferencePos.x() + 55, remainingTimeReferencePos.y());
   painter.setPen(gray);
-  painter.drawText(remainingsecondValuePos, remainingsecondsValue);
+  if(remaining_minutes <= 0) painter.drawText(remainingsecondValuePos, remainingsecondsValue);
 
   // Remaining seconds separator
   QString secondsSeparatorText = "s";
   QPointF secondsSeparatorTextPos(
-    remainingTimeReferencePos.x() + 125, remainingTimeReferencePos.y());
-  painter.drawText(secondsSeparatorTextPos, secondsSeparatorText);
+    remainingTimeReferencePos.x() + 80, remainingTimeReferencePos.y());
+  if(remaining_minutes <= 0) painter.drawText(secondsSeparatorTextPos, secondsSeparatorText);
 }
 
 }  // namespace autoware_mission_details_overlay_rviz_plugin
