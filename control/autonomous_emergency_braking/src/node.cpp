@@ -383,8 +383,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     {
       const auto [color_r, color_g, color_b, color_a] = debug_colors;
       addMarker(
-        this->get_clock()->now(), path, ego_polys, objects_from_point_clusters, color_r, color_g,
-        color_b, color_a, debug_ns, debug_markers);
+        this->get_clock()->now(), path, ego_polys, objects_from_point_clusters,
+        closest_object_point, color_r, color_g, color_b, color_a, debug_ns, debug_markers);
     }
     // check collision using rss distance
     return (closest_object_point.has_value())
@@ -643,8 +643,9 @@ void AEB::cropPointCloudWithEgoFootprintPath(
 
 void AEB::addMarker(
   const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
-  const std::vector<ObjectData> & objects, const double color_r, const double color_g,
-  const double color_b, const double color_a, const std::string & ns, MarkerArray & debug_markers)
+  const std::vector<ObjectData> & objects, const std::optional<ObjectData> & closest_object,
+  const double color_r, const double color_g, const double color_b, const double color_a,
+  const std::string & ns, MarkerArray & debug_markers)
 {
   auto path_marker = tier4_autoware_utils::createDefaultMarker(
     "base_link", current_time, ns + "_path", 0L, Marker::LINE_STRIP,
@@ -680,6 +681,23 @@ void AEB::addMarker(
     object_data_marker.points.push_back(e.position);
   }
   debug_markers.markers.push_back(object_data_marker);
+
+  // Visualize planner type text
+  if (closest_object.has_value()) {
+    const auto & obj = closest_object.value();
+    const auto color = tier4_autoware_utils::createMarkerColor(0.95, 0.95, 0.95, 0.999);
+    auto closest_object_velocity_marker_array = tier4_autoware_utils::createDefaultMarker(
+      "base_link", obj.stamp, ns + "_closest_object_velocity", 0,
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+      tier4_autoware_utils::createMarkerScale(0.0, 0.0, 0.7), color);
+    closest_object_velocity_marker_array.pose.position = obj.position;
+    const auto ego_velocity = current_velocity_ptr_->longitudinal_velocity;
+    closest_object_velocity_marker_array.text =
+      "Object velocity: " + std::to_string(obj.velocity) + "\n";
+    closest_object_velocity_marker_array.text +=
+      "Object relative velocity to ego: " + std::to_string(obj.velocity - ego_velocity);
+    debug_markers.markers.push_back(closest_object_velocity_marker_array);
+  }
 }
 
 void AEB::addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers)

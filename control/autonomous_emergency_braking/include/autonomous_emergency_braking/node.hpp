@@ -273,9 +273,9 @@ public:
 
   void addMarker(
     const rclcpp::Time & current_time, const Path & path, const std::vector<Polygon2d> & polygons,
-    const std::vector<ObjectData> & objects, const double color_r, const double color_g,
-    const double color_b, const double color_a, const std::string & ns,
-    MarkerArray & debug_markers);
+    const std::vector<ObjectData> & objects, const std::optional<ObjectData> & closest_object,
+    const double color_r, const double color_g, const double color_b, const double color_a,
+    const std::string & ns, MarkerArray & debug_markers);
 
   void addCollisionMarker(const ObjectData & data, MarkerArray & debug_markers);
 
