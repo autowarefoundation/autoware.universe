@@ -403,7 +403,8 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
     const auto vehicle_footprint =
       transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
     double smallest_lateral_gap_between_ego_and_border = std::numeric_limits<double>::max();
-    double corresponding_lateral_gap_with_other_lane_bound;
+    double corresponding_lateral_gap_with_other_lane_bound = std::numeric_limits<double>::max();
+
     for (const auto & point : vehicle_footprint) {
       geometry_msgs::msg::Pose point_pose;
       point_pose.position.x = point.x();
@@ -448,8 +449,8 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
     return false;
   }
 
-  const auto gap_between_ego_and_lane_border = gaps_with_lane_borders_pair.value().first;
-  const auto corresponding_lateral_gap_with_other_lane_bound =
+  const auto & gap_between_ego_and_lane_border = gaps_with_lane_borders_pair.value().first;
+  const auto & corresponding_lateral_gap_with_other_lane_bound =
     gaps_with_lane_borders_pair.value().second;
 
   // middle of the lane is crossed, no need to check for collisions anymore
