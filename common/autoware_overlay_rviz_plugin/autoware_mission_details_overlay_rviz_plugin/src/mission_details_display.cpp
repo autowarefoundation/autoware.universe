@@ -96,9 +96,7 @@ MissionDetailsDisplay::~MissionDetailsDisplay()
   overlay_.reset();
 
   remaining_distance_time_sub_.reset();
-
   remaining_distance_time_display_.reset();
-
   remaining_distance_time_topic_property_.reset();
 }
 

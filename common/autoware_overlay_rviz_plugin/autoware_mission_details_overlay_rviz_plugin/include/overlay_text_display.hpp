@@ -64,7 +64,6 @@
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
-#include <std_msgs/msg/color_rgba.h>
 
 #include <string>
 #endif
