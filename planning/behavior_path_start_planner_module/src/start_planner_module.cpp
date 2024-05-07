@@ -432,11 +432,12 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
           calc_absolute_lateral_offset(other_side_lane_bound, point_pose);
       }
     }
-    if (smallest_lateral_gap_between_ego_and_border == std::numeric_limits<double>::max()) {
-      return std::make_pair(std::nullopt, std::nullopt);
-    }
-    return std::make_pair(
-      smallest_lateral_gap_between_ego_and_border, corresponding_lateral_gap_with_other_lane_bound);
+
+    return (smallest_lateral_gap_between_ego_and_border < std::numeric_limits<double>::max())
+             ? std::make_pair(
+                 std::make_optional<double>(smallest_lateral_gap_between_ego_and_border),
+                 std::make_optional<double>(corresponding_lateral_gap_with_other_lane_bound))
+             : std::make_pair(std::nullopt, std::nullopt);
   };
 
   geometry_msgs::msg::Pose ego_overhang_point_as_pose;
