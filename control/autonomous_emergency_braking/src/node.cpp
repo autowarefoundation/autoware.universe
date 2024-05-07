@@ -693,9 +693,9 @@ void AEB::addMarker(
     closest_object_velocity_marker_array.pose.position = obj.position;
     const auto ego_velocity = current_velocity_ptr_->longitudinal_velocity;
     closest_object_velocity_marker_array.text =
-      "Object velocity: " + std::to_string(obj.velocity) + "\n";
+      "Object velocity: " + std::to_string(obj.velocity) + " [m/s]\n";
     closest_object_velocity_marker_array.text +=
-      "Object relative velocity to ego: " + std::to_string(obj.velocity - ego_velocity);
+      "Object relative velocity to ego: " + std::to_string(obj.velocity - ego_velocity) + " [m/s]";
     debug_markers.markers.push_back(closest_object_velocity_marker_array);
   }
 }
