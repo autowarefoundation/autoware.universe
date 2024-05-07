@@ -451,8 +451,9 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   const auto & gap_between_ego_and_lane_border = gaps_with_lane_borders_pair.value().first;
   const auto & corresponding_lateral_gap_with_other_lane_bound =
     gaps_with_lane_borders_pair.value().second;
+
+  // middle of the lane is crossed, no need to check for collisions anymore
   if (gap_between_ego_and_lane_border < corresponding_lateral_gap_with_other_lane_bound) {
-    // middle of the lane is crossed, no need to check for collisions anymore
     return true;
   }
   // Get the lanelets that will be queried for target objects
