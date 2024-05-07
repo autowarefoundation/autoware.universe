@@ -23,7 +23,6 @@
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>motion_utils</depend>
   <depend>pybind11_vendor</depend>
-  <depend>python3-numba</depend>
   <depend>python3-scipy</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

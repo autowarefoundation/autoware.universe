@@ -3,6 +3,7 @@
     <img width="500px" src="./images/proxima_logo.png">
   </a>
 </p>
+<!-- cspell: ignore numba ipynb -->
 
 # Smart MPC Trajectory Follower
 
