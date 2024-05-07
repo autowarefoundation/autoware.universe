@@ -314,7 +314,7 @@ bool DefaultPlanner::is_goal_valid(
   const auto logger = node_->get_logger();
 
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
-
+  bool is_goal_valid = false;
   // check if goal is in shoulder lanelet
   lanelet::Lanelet closest_shoulder_lanelet;
   if (lanelet::utils::query::getClosestLanelet(
@@ -331,9 +331,12 @@ bool DefaultPlanner::is_goal_valid(
     }
   }
 
-  lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal, &closest_lanelet)) {
-    return false;
+  lanelet::ConstLanelet goal_lanelet;
+  lanelet::ConstLanelets goal_lanelets;
+  if (!lanelet::utils::query::getCurrentLanelets(road_lanelets_, goal, &goal_lanelets)) {
+    if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal, &goal_lanelet)) {
+    }
+    goal_lanelets = {goal_lanelet};
   }
 
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
@@ -348,25 +351,25 @@ bool DefaultPlanner::is_goal_valid(
     combine_lanelets_with_shoulder(path_lanelets, shoulder_lanelets_);
 
   // check if goal footprint exceeds lane when the goal isn't in parking_lot
-  if (
-    param_.check_footprint_inside_lanes &&
-    !check_goal_footprint_inside_lanes(
-      closest_lanelet, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
-    !is_in_parking_lot(
-      lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_),
-      lanelet::utils::conversion::toLaneletPoint(goal.position))) {
-    RCLCPP_WARN(logger, "Goal's footprint exceeds lane!");
-    return false;
-  }
+  for (const auto & gl_llt : goal_lanelets) {
+    if (
+      param_.check_footprint_inside_lanes &&
+      !check_goal_footprint_inside_lanes(
+        gl_llt, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
+      !is_in_parking_lot(
+        lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_),
+        lanelet::utils::conversion::toLaneletPoint(goal.position))) {
+      RCLCPP_WARN(logger, "Goal's footprint exceeds lane!");
+      is_goal_valid = false;
+    } else if (is_in_lane(gl_llt, goal_lanelet_pt)) {
+      const auto lane_yaw = lanelet::utils::getLaneletAngle(gl_llt, goal.position);
+      const auto goal_yaw = tf2::getYaw(goal.orientation);
+      const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
 
-  if (is_in_lane(closest_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal.position);
-    const auto goal_yaw = tf2::getYaw(goal.orientation);
-    const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
-
-    const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
-    if (std::abs(angle_diff) < th_angle) {
-      return true;
+      const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
+      if (std::abs(angle_diff) < th_angle) {
+        return true;
+      }
     }
   }
 
@@ -382,7 +385,7 @@ bool DefaultPlanner::is_goal_valid(
     return true;
   }
 
-  return false;
+  return is_goal_valid;
 }
 
 PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
