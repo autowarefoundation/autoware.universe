@@ -398,7 +398,8 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   auto get_gap_between_ego_and_lane_border =
     [&](
       geometry_msgs::msg::Pose & ego_overhang_point_as_pose,
-      const bool ego_is_merging_from_the_left) -> std::pair<std::optional<double>, double> {
+      const bool ego_is_merging_from_the_left)
+    -> std::pair<std::optional<double>, std::optional<double>> {
     const auto local_vehicle_footprint = vehicle_info_.createFootprint();
     const auto vehicle_footprint =
       transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
@@ -432,7 +433,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
       }
     }
     if (smallest_lateral_gap_between_ego_and_border == std::numeric_limits<double>::max()) {
-      return std::make_pair(std::nullopt, 0.0);
+      return std::make_pair(std::nullopt, std::nullopt);
     }
     return std::make_pair(
       smallest_lateral_gap_between_ego_and_border, corresponding_lateral_gap_with_other_lane_bound);
@@ -441,10 +442,14 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   geometry_msgs::msg::Pose ego_overhang_point_as_pose;
   const auto [gap_between_ego_and_lane_border, corresponding_lateral_gap_with_other_lane_bound] =
     get_gap_between_ego_and_lane_border(ego_overhang_point_as_pose, ego_is_merging_from_the_left);
-  if (!gap_between_ego_and_lane_border.has_value()) {
+  if (
+    !gap_between_ego_and_lane_border.has_value() ||
+    !corresponding_lateral_gap_with_other_lane_bound.has_value()) {
     return false;
   }
-  if (gap_between_ego_and_lane_border.value() < corresponding_lateral_gap_with_other_lane_bound) {
+  if (
+    gap_between_ego_and_lane_border.value() <
+    corresponding_lateral_gap_with_other_lane_bound.value()) {
     // middle of the lane is crossed, no need to check for collisions anymore
     return true;
   }
