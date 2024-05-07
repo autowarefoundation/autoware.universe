@@ -932,7 +932,8 @@ double getRoadShoulderDistance(
       }
 
       const auto envelope_polygon_width =
-        boost::geometry::area(object.envelope_poly) / object.length;
+        boost::geometry::area(object.envelope_poly) /
+        std::max(object.length, 1e-3);  // prevent division by zero
 
       {
         const auto p2 =
