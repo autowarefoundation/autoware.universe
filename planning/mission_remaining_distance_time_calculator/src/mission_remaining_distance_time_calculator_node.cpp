@@ -56,19 +56,11 @@ MissionRemainingDistanceTimeCalculatorNode::MissionRemainingDistanceTimeCalculat
   // Node Parameter
   node_param_.update_rate = declare_parameter<double>("update_rate", 10.0);
 
-  // Core
-  //mission_remaining_distance_time_calculator_ = std::make_unique<MissionRemainingDistanceTimeCalculator>();
-
-
-
+  
   // Timer
   const auto period_ns = rclcpp::Rate(node_param_.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&MissionRemainingDistanceTimeCalculatorNode::onTimer, this));
-  // timer_ = this->create_wall_timer(500ms, std::bind(&MissionRemainingDistanceTimeCalculatorNode::onTimer, this));
-  
-  
-  RCLCPP_INFO_STREAM(this->get_logger(),  "Finished");
 
 }
 
@@ -114,11 +106,9 @@ double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingDista
   size_t index = 0;
 
   lanelet::ConstLanelet current_lanelet;
-  ///route_handler_.getClosestLaneletWithinRoute(current_vehicle_pose_, &current_lanelet);
   lanelet::utils::query::getClosestLanelet(road_lanelets_, current_vehicle_pose_, &current_lanelet);
 
   lanelet::ConstLanelet goal_lanelet;
-  //route_handler_.getGoalLanelet(&goal_lanelet);
   lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose_, &goal_lanelet);
 
 
