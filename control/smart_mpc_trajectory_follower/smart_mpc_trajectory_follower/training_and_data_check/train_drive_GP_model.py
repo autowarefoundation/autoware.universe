@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# cspell: ignore lengthscale savez
+
 import GPy
 import numpy as np
 from smart_mpc_trajectory_follower.training_and_data_check import add_training_data_from_csv

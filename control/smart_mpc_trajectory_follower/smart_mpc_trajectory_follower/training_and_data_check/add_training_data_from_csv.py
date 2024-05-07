@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# cspell: ignore ndimage usecols ndim interp savez
+
 
 """Class for preprocessing CSV data to obtain training data for training."""
 

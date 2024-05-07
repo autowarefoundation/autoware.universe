@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# cspell: ignore optim savez suptitle
+
 """Class for training neural nets from driving data."""
 import matplotlib.pyplot as plt
 import numpy as np
