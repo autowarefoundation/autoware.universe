@@ -45,6 +45,8 @@ private:
   double threshold_gnss_stddev_z_max_;
   double threshold_gnss_stddev_xy_bound_lower_;
   double threshold_gnss_stddev_xy_bound_upper_;
+  double ndt_std_dev_bound_lower_;
+  double ndt_std_dev_bound_upper_;
   double gnss_pose_timeout_sec_;
   bool debug_mode_;
 

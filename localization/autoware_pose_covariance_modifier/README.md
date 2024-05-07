@@ -129,7 +129,7 @@ the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/lau
 - The output of the [ndt_scan_matcher](../../localization/ndt_scan_matcher) is renamed
   - **from:** `/localization/pose_estimator/pose_with_covariance`.
   - **to:** `/localization/pose_estimator/ndt_scan_matcher/pose_with_covariance`.
-- The `ndt_scan_matcher` output enters the `autoware_pose_covariance_modifier_node`.
+- The `ndt_scan_matcher` output enters the `autoware_pose_covariance_modifier`.
 - The output of this package goes to [ekf_localizer](../../localization/ekf_localizer) with:
   - **topic name:** `/localization/pose_estimator/pose_with_covariance`.
 
@@ -156,18 +156,8 @@ the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/lau
 The parameters are set
 in [config/autoware_pose_covariance_modifier.param.yaml](config/autoware_pose_covariance_modifier.param.yaml) .
 
-#### Standard deviation thresholds
-
 {{ json_to_markdown("
-localization/autoware_pose_covariance_modifier_node/schema/sub/stddev_thresholds.sub_schema.json") }}
-
-#### Validation
-
-{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/validation.sub_schema.json") }}
-
-#### Debug
-
-{{ json_to_markdown("localization/autoware_pose_covariance_modifier_node/schema/sub/debug.sub_schema.json") }}
+localization/autoware_pose_covariance_modifier/schema/pose_covariance_modifier.schema.json") }}
 
 ## FAQ
 

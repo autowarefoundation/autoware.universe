@@ -25,6 +25,16 @@
         "default": 0.25,
         "description": "If GNSS position XY standard deviation values are higher than this, trust only NDT"
       },
+      "ndt_std_dev_bound_lower": {
+        "type": "number",
+        "default": 0.15,
+        "description": "Lower bound value for standard deviation of NDT positions (x, y, z) when used with GNSS"
+      },
+      "ndt_std_dev_bound_upper": {
+        "type": "number",
+        "default": 0.3,
+        "description": "Upper bound value for standard deviation of NDT positions (x, y, z) when used with GNSS"
+      },
       "gnss_pose_timeout_sec": {
         "type": "number",
         "default": 1.0,

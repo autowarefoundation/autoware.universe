@@ -38,6 +38,8 @@ PoseCovarianceModifierNode::PoseCovarianceModifierNode(const rclcpp::NodeOptions
     this->declare_parameter<double>("threshold_gnss_stddev_xy_bound_lower");
   threshold_gnss_stddev_xy_bound_upper_ =
     this->declare_parameter<double>("threshold_gnss_stddev_xy_bound_upper");
+  ndt_std_dev_bound_lower_ = this->declare_parameter<double>("ndt_std_dev_bound_lower");
+  ndt_std_dev_bound_upper_ = this->declare_parameter<double>("ndt_std_dev_bound_upper");
   gnss_pose_timeout_sec_ = this->declare_parameter<double>("gnss_pose_timeout_sec");
   debug_mode_ = this->declare_parameter<bool>("enable_debug_topics");
 
@@ -117,7 +119,6 @@ void PoseCovarianceModifierNode::callback_ndt_pose_with_cov(
     publish_pose_type(PoseSource::NDT);
     return;
   }
-
   auto ndt_pose_with_cov_updated = *msg_pose_with_cov_in;
   ndt_pose_with_cov_updated.pose.covariance =
     update_ndt_covariances_from_gnss(msg_pose_with_cov_in->pose.covariance);
@@ -179,29 +180,31 @@ std::array<double, 36> PoseCovarianceModifierNode::update_ndt_covariances_from_g
   };
 
   auto ndt_variance_from_gnss_variance = [&](double ndt_variance, double gnss_variance) {
+    // Check NDT stddev bound values.
+    double ndt_stddev = std::sqrt(ndt_variance);
+    if (ndt_stddev > ndt_std_dev_bound_upper_ || ndt_stddev < ndt_std_dev_bound_lower_) {
+      RCLCPP_ERROR(
+        get_logger(),
+        "Input variance of NDT exceeds bound values. Variance values of NDT were not modified. "
+        "Check your bound values for NDT stddev.");
+      return ndt_variance;
+    }
     // calculate NDT covariance value based on gnss covariance
-    const double ndt_std_dev = std::sqrt(ndt_variance);
     const double gnss_std_dev = std::sqrt(gnss_variance);
-
-    // lower bound is selected as the static ndt_std_dev value
-    const double ndt_std_dev_bound_lower = ndt_std_dev;
-
-    // upper bound is selected as the static ndt_std_dev value multiplied by 2
-    const double ndt_std_dev_bound_upper = ndt_std_dev * 2;
 
     // interpolate the gnss_std_dev from gnss ranges to ndt ranges
     const double interpolated_std_dev = lerp_range_to_range(
       gnss_std_dev, threshold_gnss_stddev_xy_bound_lower_, threshold_gnss_stddev_xy_bound_upper_,
-      ndt_std_dev_bound_lower, ndt_std_dev_bound_upper);
+      ndt_std_dev_bound_lower_, ndt_std_dev_bound_upper_);
 
     // As the gnss error increases, the ndt error should decrease
     const double reversed_std_dev =
-      ndt_std_dev_bound_lower + ndt_std_dev_bound_upper - interpolated_std_dev;
+      ndt_std_dev_bound_lower_ + ndt_std_dev_bound_upper_ - interpolated_std_dev;
 
     const double interpolated_variance = std::pow(reversed_std_dev, 2);
 
-    // Make sure the ndt covariance is not below the input ndt covariance value and return
-    return (std::max(interpolated_variance, ndt_variance));
+    // Make sure the ndt covariance is not below the lower bounds of ndt covariance value and return
+    return (std::max(interpolated_variance, std::pow(ndt_std_dev_bound_lower_, 2)));
   };
 
   std::array<double, 36> ndt_covariance = ndt_covariance_in;

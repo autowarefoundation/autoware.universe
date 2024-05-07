@@ -42,7 +42,7 @@
 
     <!-- Autoware Pose Covariance Modifier Node Launch -->
     <group if="$(var use_autoware_pose_covariance_modifier)">
-      <include file="$(find-pkg-share autoware_pose_covariance_modifier_node)/launch/autoware_pose_covariance_modifier_node.launch.xml"/>
+      <include file="$(find-pkg-share autoware_pose_covariance_modifier)/launch/pose_covariance_modifier.launch.xml"/>
     </group>
   </group>
 

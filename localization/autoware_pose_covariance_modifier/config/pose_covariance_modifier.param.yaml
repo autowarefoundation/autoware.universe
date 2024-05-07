@@ -12,6 +12,12 @@
     # If GNSS position XY standard deviation values are higher than this, trust only NDT
     threshold_gnss_stddev_xy_bound_upper: 0.25
 
+    # Lower bound value for standard deviation of NDT positions (x, y, z) when used with GNSS
+    ndt_std_dev_bound_lower: 0.14
+
+    # Upper bound value for standard deviation of NDT positions (x, y, z) when used with GNSS
+    ndt_std_dev_bound_upper: 0.30
+
     # If GNSS data is not received for this duration, trust only NDT
     gnss_pose_timeout_sec: 1.0
 
