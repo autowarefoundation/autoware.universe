@@ -93,15 +93,15 @@ void PoseCovarianceModifierNode::callback_gnss_pose_with_cov(
 
   pose_source_ =
     pose_source_from_gnss_stddev(gnss_pose_yaw_stddev_deg, gnss_pose_stddev_z, gnss_pose_stddev_xy);
+  publish_pose_type(pose_source_);
 
-  if (pose_source_ != PoseSource::GNSS) {
-    // if the pose source is not GNSS, NDT pose will be used in the NDT pose callback
+  if (pose_source_ == PoseSource::NDT) {
+    // if the pose source is only NDT, NDT pose will be used in the NDT pose callback
     return;
   }
 
-  // pose source is GNSS
+  // If pose source is GNSS or GNSS_NDT publish GNSS poses
   pub_pose_with_covariance_stamped_->publish(*msg_pose_with_cov_in);
-  publish_pose_type(PoseSource::GNSS);
 
   if (debug_mode_) {
     std_msgs::msg::Float64 msg_double;
@@ -113,10 +113,13 @@ void PoseCovarianceModifierNode::callback_gnss_pose_with_cov(
 void PoseCovarianceModifierNode::callback_ndt_pose_with_cov(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & msg_pose_with_cov_in)
 {
+  if (pose_source_ == PoseSource::GNSS) {
+    // if the pose source is only gnss, GNSS pose will be used in the GNSS pose callback
+    return;
+  }
   // pose_source_ was determined in the GNSS callback
   if (gnss_pose_has_timed_out(gnss_pose_received_time_last_) || pose_source_ == PoseSource::NDT) {
     pub_pose_with_covariance_stamped_->publish(*msg_pose_with_cov_in);
-    publish_pose_type(PoseSource::NDT);
     return;
   }
   auto ndt_pose_with_cov_updated = *msg_pose_with_cov_in;
@@ -124,7 +127,6 @@ void PoseCovarianceModifierNode::callback_ndt_pose_with_cov(
     update_ndt_covariances_from_gnss(msg_pose_with_cov_in->pose.covariance);
 
   pub_pose_with_covariance_stamped_->publish(ndt_pose_with_cov_updated);
-  publish_pose_type(PoseSource::GNSS_NDT);
 
   if (debug_mode_) {
     std_msgs::msg::Float64 msg_double;
