@@ -88,8 +88,7 @@ void MissionRemainingDistanceTimeCalculatorNode::onRoute(const LaneletRoute::Con
 
 void MissionRemainingDistanceTimeCalculatorNode::onTimer()
 {
-  if (is_graph_ready_ && has_received_route_) 
-  {
+  if (is_graph_ready_ && has_received_route_) {
     double remaining_distance = calcuateMissionRemainingDistance();
     double remaining_time = calcuateMissionRemainingTime(remaining_distance);
     publishMissionRemainingDistanceTime(remaining_distance, remaining_time);
