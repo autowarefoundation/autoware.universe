@@ -129,8 +129,6 @@ private:
   bool has_received_map_{false};
   bool has_received_route_{false};
 
-  Pose goal_pose_;
-  route_handler::RemainingDistanceTime remaining_distance_time_;
 
   std::mutex mutex_pd_;       // mutex for planner_data_
   std::mutex mutex_manager_;  // mutex for bt_manager_ or planner_manager_
@@ -223,12 +221,6 @@ private:
   void publishPathReference(
     const std::vector<std::shared_ptr<SceneModuleManagerInterface>> & managers,
     const std::shared_ptr<PlannerData> & planner_data);
-
-  /**
-   * @brief publish mission remaining distance and time
-   */
-  void publishMissionRemainingDistanceTime(
-    const route_handler::RemainingDistanceTime & remaining_distance_time_) const;
 
   /**
    * @brief convert path with lane id to path for publish path candidate

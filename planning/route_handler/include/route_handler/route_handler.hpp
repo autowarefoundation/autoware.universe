@@ -22,7 +22,6 @@
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/vector3.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -43,7 +42,6 @@ using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
-using geometry_msgs::msg::Vector3;
 using std_msgs::msg::Header;
 using unique_identifier_msgs::msg::UUID;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
@@ -51,15 +49,6 @@ using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 enum class Direction { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
 enum class PullOutDirection { NONE, LEFT, RIGHT };
-
-struct RemainingDistanceTime
-{
-  double remaining_distance;
-  double remaining_time;
-  uint32_t remaining_hours;
-  uint32_t remaining_minutes;
-  uint32_t remaining_seconds;
-};
 
 class RouteHandler
 {
@@ -366,13 +355,7 @@ public:
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
   bool isPreferredLane(const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getClosestLanelets(const geometry_msgs::msg::Pose & target_pose) const;
-
-  void getRemainingDistance(
-    const Pose & current_pose, const Pose & goal_pose_,
-    RemainingDistanceTime & remaining_dist_time) const;
-  void getRemainingTime(
-    const Vector3 & current_vehicle_velocity, RemainingDistanceTime & remaining_dist_time) const;
-
+  
 private:
   // MUST
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;

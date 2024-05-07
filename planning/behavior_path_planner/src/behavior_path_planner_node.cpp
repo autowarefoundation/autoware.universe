@@ -386,26 +386,12 @@ void BehaviorPathPlannerNode::run()
       planner_data_->prev_modified_goal.reset();
     }
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
-    goal_pose_ = route_ptr->goal_pose;
   }
   const auto controlled_by_autoware_autonomously =
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
     planner_data_->operation_mode->is_autoware_control_enabled;
   if (!controlled_by_autoware_autonomously && !planner_manager_->hasApprovedModules())
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
-
-  // if (planner_data_->route_handler->isHandlerReady()) {
-  //   // compute mission remaining distance
-  //   planner_data_->route_handler->getRemainingDistance(
-  //     planner_data_->self_odometry->pose.pose, goal_pose_, remaining_distance_time_);
-
-  //   // compute mission remaining time
-  //   planner_data_->route_handler->getRemainingTime(
-  //     planner_data_->self_odometry->twist.twist.linear, remaining_distance_time_);
-
-  //   // publish remaining distance and time
-  //   publishMissionRemainingDistanceTime(remaining_distance_time_);
-  // }
 
   // run behavior planner
   const auto output = planner_manager_->run(planner_data_);
@@ -713,20 +699,6 @@ void BehaviorPathPlannerNode::publishPathReference(
         ->publish(convertToPath(observer.lock()->getPathReference(), true, planner_data));
     }
   }
-}
-
-void BehaviorPathPlannerNode::publishMissionRemainingDistanceTime(
-  const route_handler::RemainingDistanceTime & remaining_distance_time_) const
-{
-  MissionRemainingDistanceTime mission_remaining_distance_time;
-
-  mission_remaining_distance_time.remaining_distance = remaining_distance_time_.remaining_distance;
-  mission_remaining_distance_time.remaining_time = remaining_distance_time_.remaining_time;
-  mission_remaining_distance_time.remaining_hours = remaining_distance_time_.remaining_hours;
-  mission_remaining_distance_time.remaining_minutes = remaining_distance_time_.remaining_minutes;
-  mission_remaining_distance_time.remaining_seconds = remaining_distance_time_.remaining_seconds;
-
-  mission_remaining_distance_time_publisher_->publish(mission_remaining_distance_time);
 }
 
 Path BehaviorPathPlannerNode::convertToPath(
