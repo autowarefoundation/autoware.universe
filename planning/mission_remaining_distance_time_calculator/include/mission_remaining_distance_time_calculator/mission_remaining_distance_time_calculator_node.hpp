@@ -86,10 +86,20 @@ private:
   void onMap(const HADMapBin::ConstSharedPtr msg);
 
   // Calculate and publish methods
+  /**
+   * @brief calculate mission remaining distance
+   */
   double calcuateMissionRemainingDistance() const;
+  /**
+   * @brief calculate mission remaining time
+   */
   double calcuateMissionRemainingTime(const double remaining_distance) const;
-  void publishMissionRemainingDistanceTime(const double remaining_distance, const double remaining_time) const;
-  
+  /**
+   * @brief publish mission remaining distance and time
+   */
+  void publishMissionRemainingDistanceTime(
+    const double remaining_distance, const double remaining_time) const;
+
   // Data Buffer
   Pose current_vehicle_pose_;
   Vector3 current_vehicle_velocity_;
