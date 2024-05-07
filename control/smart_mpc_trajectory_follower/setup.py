@@ -1,3 +1,4 @@
+# cspell: ignore numba
 import glob
 import json
 import os

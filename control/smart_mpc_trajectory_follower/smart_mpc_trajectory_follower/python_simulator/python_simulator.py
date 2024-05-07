@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# cspell: ignore numba njit simplejson fastmath interp suptitle fftfreq basefmt markerfmt
+
 import csv
 import datetime
 import os
