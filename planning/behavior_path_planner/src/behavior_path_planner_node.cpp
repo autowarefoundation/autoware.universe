@@ -394,18 +394,18 @@ void BehaviorPathPlannerNode::run()
   if (!controlled_by_autoware_autonomously && !planner_manager_->hasApprovedModules())
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
 
-  if (planner_data_->route_handler->isHandlerReady()) {
-    // compute mission remaining distance
-    planner_data_->route_handler->getRemainingDistance(
-      planner_data_->self_odometry->pose.pose, goal_pose_, remaining_distance_time_);
+  // if (planner_data_->route_handler->isHandlerReady()) {
+  //   // compute mission remaining distance
+  //   planner_data_->route_handler->getRemainingDistance(
+  //     planner_data_->self_odometry->pose.pose, goal_pose_, remaining_distance_time_);
 
-    // compute mission remaining time
-    planner_data_->route_handler->getRemainingTime(
-      planner_data_->self_odometry->twist.twist.linear, remaining_distance_time_);
+  //   // compute mission remaining time
+  //   planner_data_->route_handler->getRemainingTime(
+  //     planner_data_->self_odometry->twist.twist.linear, remaining_distance_time_);
 
-    // publish remaining distance and time
-    publishMissionRemainingDistanceTime(remaining_distance_time_);
-  }
+  //   // publish remaining distance and time
+  //   publishMissionRemainingDistanceTime(remaining_distance_time_);
+  // }
 
   // run behavior planner
   const auto output = planner_manager_->run(planner_data_);
