@@ -41,9 +41,9 @@ public:
     const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
 
 private:
-  double remaining_distance_;   // Internal variable to store remaining distance
-  double remaining_time_;    // Internal variable to store remaining time
-  
+  double remaining_distance_;  // Internal variable to store remaining distance
+  double remaining_time_;      // Internal variable to store remaining time
+
   QColor gray = QColor(194, 194, 194);
 
   QImage distToGoalFlag;
