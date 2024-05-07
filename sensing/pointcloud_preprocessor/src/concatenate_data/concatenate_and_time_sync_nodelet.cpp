@@ -512,7 +512,7 @@ void PointCloudConcatenateDataSynchronizerComponent::convertToXYZICloud(
   sensor_msgs::PointCloud2Iterator<float> it_z(*input_ptr, "z");
 
   if (has_intensity) {
-    sensor_msgs::PointCloud2Iterator<float> it_i(*input_ptr, "intensity");
+    sensor_msgs::PointCloud2Iterator<uint8_t> it_i(*input_ptr, "intensity");
     for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_i) {
       PointXYZI point;
       point.x = *it_x;
@@ -527,7 +527,7 @@ void PointCloudConcatenateDataSynchronizerComponent::convertToXYZICloud(
       point.x = *it_x;
       point.y = *it_y;
       point.z = *it_z;
-      point.intensity = 0.0f;
+      point.intensity = 0U;
       output_modifier.push_back(std::move(point));
     }
   }

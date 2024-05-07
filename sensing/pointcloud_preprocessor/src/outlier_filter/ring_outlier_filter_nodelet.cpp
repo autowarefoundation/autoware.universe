@@ -161,7 +161,7 @@ void RingOutlierFilterComponent::faster_filter(
           }
           const float & intensity =
             *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
-          output_ptr->intensity = intensity;
+          output_ptr->intensity = static_cast<uint8_t>(intensity);
           const uint8_t & return_type =
             *reinterpret_cast<const uint8_t *>(&input->data[indices[i] + return_type_offset]);
           output_ptr->return_type = return_type;
@@ -190,7 +190,7 @@ void RingOutlierFilterComponent::faster_filter(
           }
           const float & intensity = *reinterpret_cast<const float *>(
             &input->data[indices[walk_first_idx] + intensity_offset]);
-          outlier_ptr->intensity = intensity;
+          outlier_ptr->intensity = static_cast<uint8_t>(intensity);
           const uint8_t & return_type = *reinterpret_cast<const uint8_t *>(
             &input->data[indices[walk_first_idx] + return_type_offset]);
           outlier_ptr->return_type = return_type;
@@ -227,7 +227,7 @@ void RingOutlierFilterComponent::faster_filter(
         }
         const float & intensity =
           *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
-        output_ptr->intensity = intensity;
+        output_ptr->intensity = static_cast<uint8_t>(intensity);
         const uint8_t & return_type =
           *reinterpret_cast<const uint8_t *>(&input->data[indices[i] + return_type_offset]);
         output_ptr->return_type = return_type;
@@ -255,7 +255,7 @@ void RingOutlierFilterComponent::faster_filter(
         }
         const float & intensity =
           *reinterpret_cast<const float *>(&input->data[indices[i] + intensity_offset]);
-        outlier_ptr->intensity = intensity;
+        outlier_ptr->intensity = static_cast<uint8_t>(intensity);
         const uint8_t & return_type =
           *reinterpret_cast<const uint8_t *>(&input->data[indices[i] + return_type_offset]);
         outlier_ptr->return_type = return_type;
@@ -267,10 +267,10 @@ void RingOutlierFilterComponent::faster_filter(
     }
   }
 
-  setUpPointCloudFormat(input, output, output_size, /*num_fields=*/7);
+  setUpPointCloudFormat(input, output, output_size, /*num_fields=*/6);
 
   if (publish_outlier_pointcloud_) {
-    setUpPointCloudFormat(input, outlier_points, outlier_points_size, /*num_fields=*/7);
+    setUpPointCloudFormat(input, outlier_points, outlier_points_size, /*num_fields=*/6);
     outlier_pointcloud_publisher_->publish(outlier_points);
   }
 
@@ -351,9 +351,8 @@ void RingOutlierFilterComponent::setUpPointCloudFormat(
   pcd_modifier.setPointCloud2Fields(
     num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
     sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32, "padding", 1,
-    sensor_msgs::msg::PointField::UINT8, "return_type", 1, sensor_msgs::msg::PointField::UINT8,
-    "channel", 1, sensor_msgs::msg::PointField::UINT16);
+    "intensity", 1, sensor_msgs::msg::PointField::UINT8, "return_type", 1,
+    sensor_msgs::msg::PointField::UINT8, "channel", 1, sensor_msgs::msg::PointField::UINT16);
 }
 
 }  // namespace pointcloud_preprocessor

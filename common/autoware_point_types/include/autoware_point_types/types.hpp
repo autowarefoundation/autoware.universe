@@ -59,20 +59,13 @@ struct PointXYZIRC
   float x{0.0F};
   float y{0.0F};
   float z{0.0F};
-  float intensity{0.0F};
-  union {  // for memory alignment
-    uint16_t _data;
-    struct
-    {
-      uint8_t padding{0U};
-      uint8_t return_type{0U};
-    };
-  };
+  uint8_t intensity{0.0F};
+  uint8_t return_type{0U};
   uint16_t channel{0U};
   friend bool operator==(const PointXYZIRC & p1, const PointXYZIRC & p2) noexcept
   {
     return float_eq<float>(p1.x, p2.x) && float_eq<float>(p1.y, p2.y) &&
-           float_eq<float>(p1.z, p2.z) && float_eq<float>(p1.intensity, p2.intensity) &&
+           float_eq<float>(p1.z, p2.z) && p1.intensity == p2.intensity &&
            p1.return_type == p2.return_type && p1.channel == p2.channel;
   }
 };
@@ -121,8 +114,7 @@ using PointXYZIRADRTGenerator = std::tuple<
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
   autoware_point_types::PointXYZIRC,
-  (float, x,
-   x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint8_t, padding, padding)(
+  (float, x, x)(float, y, y)(float, z, z)(std::uint8_t, intensity, intensity)(
     std::uint8_t, return_type, return_type)(std::uint16_t, channel, channel))
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
