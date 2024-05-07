@@ -36,7 +36,7 @@ struct InputChannel
   std::string input_topic;  // topic name of the detection, e.g. "/detection/lidar"
   std::string long_name = "Detected Object";  // full name of the detection
   std::string short_name = "DET";             // abbreviation of the name
-  double expected_rate = 10.0;                // [Hz]
+  double expected_interval = 0.1;             // [s]
   double expected_latency = 0.2;              // [s]
 };
 
@@ -77,6 +77,11 @@ public:
     interval_mean = interval_mean_;
     interval_var = interval_var_;
   }
+  void getLatencyStatistics(double & latency_mean, double & latency_var) const
+  {
+    latency_mean = latency_mean_;
+    latency_var = latency_var_;
+  }
   bool getTimestamps(
     rclcpp::Time & latest_measurement_time, rclcpp::Time & latest_message_time) const;
   rclcpp::Time getLatestMeasurementTime() const { return latest_measurement_time_; }
@@ -95,7 +100,7 @@ private:
   std::function<void(const uint &)> func_trigger_;
 
   bool is_time_initialized_{false};
-  double expected_rate_;
+  double expected_interval_;
   double latency_mean_;
   double latency_var_;
   double interval_mean_;
@@ -133,8 +138,12 @@ private:
 
   std::function<void()> func_trigger_;
   uint target_stream_idx_{0};
-  double target_latency_{0.2};
-  double target_latency_band_{0.14};
+  double target_stream_latency_{0.2};        // [s]
+  double target_stream_latency_std_{0.04};   // [s]
+  double target_stream_interval_{0.1};       // [s]
+  double target_stream_interval_std_{0.02};  // [s]
+  double target_latency_{0.2};               // [s]
+  double target_latency_band_{1.0};          // [s]
 };
 
 }  // namespace multi_object_tracker
