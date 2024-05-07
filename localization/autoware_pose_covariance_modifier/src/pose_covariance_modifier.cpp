@@ -117,21 +117,24 @@ void PoseCovarianceModifierNode::callback_ndt_pose_with_cov(
     // if the pose source is only gnss, GNSS pose will be used in the GNSS pose callback
     return;
   }
+  geometry_msgs::msg::PoseWithCovarianceStamped msg_pose_with_cov_out;
+
   // pose_source_ was determined in the GNSS callback
   if (gnss_pose_has_timed_out(gnss_pose_received_time_last_) || pose_source_ == PoseSource::NDT) {
-    pub_pose_with_covariance_stamped_->publish(*msg_pose_with_cov_in);
-    return;
+    msg_pose_with_cov_out = *msg_pose_with_cov_in;
+  } else if (pose_source_ == PoseSource::GNSS_NDT) {
+    auto ndt_pose_with_cov_updated = *msg_pose_with_cov_in;
+    ndt_pose_with_cov_updated.pose.covariance =
+      update_ndt_covariances_from_gnss(msg_pose_with_cov_in->pose.covariance);
+    msg_pose_with_cov_out = ndt_pose_with_cov_updated;
   }
-  auto ndt_pose_with_cov_updated = *msg_pose_with_cov_in;
-  ndt_pose_with_cov_updated.pose.covariance =
-    update_ndt_covariances_from_gnss(msg_pose_with_cov_in->pose.covariance);
 
-  pub_pose_with_covariance_stamped_->publish(ndt_pose_with_cov_updated);
+  pub_pose_with_covariance_stamped_->publish(msg_pose_with_cov_out);
 
   if (debug_mode_) {
     std_msgs::msg::Float64 msg_double;
-    msg_double.data = (std::sqrt(ndt_pose_with_cov_updated.pose.covariance[X_POS_IDX_]) +
-                       std::sqrt(ndt_pose_with_cov_updated.pose.covariance[Y_POS_IDX_])) /
+    msg_double.data = (std::sqrt(msg_pose_with_cov_out.pose.covariance[X_POS_IDX_]) +
+                       std::sqrt(msg_pose_with_cov_out.pose.covariance[Y_POS_IDX_])) /
                       2.0;
     pub_double_ndt_position_stddev_->publish(msg_double);
   }
