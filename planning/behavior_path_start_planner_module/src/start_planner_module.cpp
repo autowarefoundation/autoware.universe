@@ -504,7 +504,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   if (!closest_object_width) return false;
   // Decide if the closest object does not fit in the gap left by the ego vehicle.
   return closest_object_width.value() + parameters_->extra_width_margin_for_rear_obstacle >
-         gap_between_ego_and_lane_border.value();
+         gap_between_ego_and_lane_border;
 }
 
 bool StartPlannerModule::isCloseToOriginalStartPose() const
