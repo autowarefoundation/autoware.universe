@@ -395,7 +395,6 @@ void BehaviorPathPlannerNode::run()
 
   // path handling
   const auto path = getPath(output, planner_data_, planner_manager_);
-
   // update planner data
   planner_data_->prev_output_path = path;
 
