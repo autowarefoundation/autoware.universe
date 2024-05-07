@@ -32,4 +32,4 @@ This package aims to provide mission remaining distance and remaining time calcu
 
 - Find a more efficient way for remaining distance calculation instead of regularly searching the graph for finding the remaining shortest path
 - Engage more sophisticated motion models for more accurate remainig time calculations
-- Handle cases when the vehicle stops and Autoware got disengaged
+- Handle cases when the vehicle stops during the mission or Autoware get disengaged then engaged for the same mission
