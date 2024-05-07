@@ -58,43 +58,39 @@ public:
 
 private:
   // Subscriber
-    rclcpp::Subscription<LaneletRoute>::SharedPtr route_subscriber_;
+  rclcpp::Subscription<LaneletRoute>::SharedPtr route_subscriber_;
   rclcpp::Subscription<HADMapBin>::SharedPtr map_subscriber_;
   rclcpp::Subscription<Odometry>::SharedPtr odometry_subscriber_;
-  // rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_initial_pose_;
-  // tier4_autoware_utils::SelfPoseListener self_pose_listener_;
-  // rclcpp::Subscription<autoware_auto_planning_msgs::msg::Route>::SharedPtr sub_route_;
 
-  // // Data Buffer
-  // geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
-  // autoware_auto_planning_msgs::msg::Route::SharedPtr route_;
 
-  // // Callback
-  // void onRoute(const autoware_auto_planning_msgs::msg::Route::ConstSharedPtr & msg);
-
-  // // Publisher
+  // Publisher
     rclcpp::Publisher<MissionRemainingDistanceTime>::SharedPtr
     mission_remaining_distance_time_publisher_;
-  // tier4_autoware_utils::DebugPublisher debug_publisher_;
+
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
 
+  // Route Handler
   route_handler::RouteHandler route_handler_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::ConstLanelets road_lanelets_;
   bool is_graph_ready_;
-
+  
+  // Callback
   void onTimer();
   void onOdometry(const Odometry::ConstSharedPtr msg);
   void onRoute(const LaneletRoute::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr msg);
+
+  // Calculate and publish methods
   double calcuateMissionRemainingDistance() const;
   double calcuateMissionRemainingTime(const double remaining_distance) const;
   void publishMissionRemainingDistanceTime(const double remaining_distance, const double remaining_time) const;
-
+  
+  // Data Buffer
   Pose current_vehicle_pose_;
   Vector3 current_vehicle_velocity_;
   Pose goal_pose_;
@@ -102,12 +98,6 @@ private:
 
   // Parameter
   NodeParam node_param_;
-
-
-  // Core
-  // Input input_;
-  // Output output_;
-  // std::unique_ptr<GoalDistanceCalculator> goal_distance_calculator_;
 };
 }  // namespace mission_remaining_distance_time_calculator
 #endif  // MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__HPP_
