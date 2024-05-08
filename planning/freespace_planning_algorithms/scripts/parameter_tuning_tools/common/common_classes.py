@@ -5,6 +5,7 @@ class SearchInfo:
         self.ys = ys
         self.yaws = yaws
 
+
 class Result:
     def __init__(self, x, y, yaw, find, trajectory):
         self.xs = x

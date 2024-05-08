@@ -143,7 +143,7 @@ bool AstarSearch::makePlan(
   goal_pose_ = global2local(costmap_, goal_pose);
 
   clearNodes();
-  
+
   if (!setStartNode()) {
     return false;
   }
