@@ -76,7 +76,7 @@ struct Obstacle
 
   Obstacle(
     const rclcpp::Time & arg_stamp, const geometry_msgs::msg::Point & position,
-    const double diameter, const double ego_to_obstacle_distance,
+    const geometry_msgs::msg::Polygon & footprint, const double ego_to_obstacle_distance,
     const double lat_dist_from_obstacle_to_traj)
   : stamp(arg_stamp),
     orientation_reliable(false),
@@ -85,8 +85,13 @@ struct Obstacle
     lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj)
   {
     pose.position = position;
-    shape.type = Shape::CYLINDER;
-    shape.dimensions.x = diameter;
+    pose.orientation.x = 0;
+    pose.orientation.y = 0;
+    pose.orientation.z = 0;
+    pose.orientation.w = 1;
+
+    shape.type = Shape::POLYGON;
+    shape.footprint = footprint;
   }
 
   Polygon2d toPolygon() const { return tier4_autoware_utils::toPolygon2d(pose, shape); }
