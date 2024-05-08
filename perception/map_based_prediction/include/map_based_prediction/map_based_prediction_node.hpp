@@ -142,7 +142,7 @@ private:
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
 
   // Object History
-  std::unordered_map<std::string, std::deque<ObjectData>> objects_history_;
+  std::unordered_map<std::string, std::deque<ObjectData>> road_users_history;
   std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
   std::unordered_map<std::string, std::deque<CrosswalkUserData>> crosswalk_users_history_;
   std::unordered_map<std::string, std::string> known_matches_;
@@ -234,7 +234,7 @@ private:
 
   PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
 
-  void cleanupOldStoppedOnGreenTimes(const TrackedObjects::ConstSharedPtr in_objects);
+  void removeStaleTrafficLightInfo(const TrackedObjects::ConstSharedPtr in_objects);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
@@ -243,7 +243,7 @@ private:
     const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   void updateObjectData(TrackedObject & object);
 
-  void updateObjectsHistory(
+  void updateRoadUsersHistory(
     const std_msgs::msg::Header & header, const TrackedObject & object,
     const LaneletsData & current_lanelets_data);
   void updateCrosswalkUserHistory(
