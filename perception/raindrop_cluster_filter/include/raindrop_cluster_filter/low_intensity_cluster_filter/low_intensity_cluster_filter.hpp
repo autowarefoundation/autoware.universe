@@ -28,6 +28,7 @@
 // #include <tf2_eigen/tf2_eigen.hpp>
 #include <Eigen/Eigen>
 
+#include <memory>
 #include <string>
 
 namespace low_intensity_cluster_filter
