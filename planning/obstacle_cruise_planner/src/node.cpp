@@ -27,7 +27,10 @@
 
 #include <boost/format.hpp>
 
+#include <pcl/common/centroid.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/segmentation/extract_clusters.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -227,6 +230,18 @@ geometry_msgs::msg::Point toGeomPoint(const tier4_autoware_utils::Point2d & poin
   geom_point.x = point.x();
   geom_point.y = point.y();
   return geom_point;
+}
+
+geometry_msgs::msg::Polygon toGeomPoly(const Polygon2d & polygon)
+{
+  geometry_msgs::msg::Polygon geom_poly;
+  geometry_msgs::msg::Point32 point;
+  for (const auto & p : polygon.outer()) {
+    point.x = p.x();
+    point.y = p.y();
+    geom_poly.points.push_back(point);
+  }
+  return geom_poly;
 }
 
 bool isLowerConsideringHysteresis(
@@ -699,7 +714,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       transform_stamped = std::nullopt;
     }
 
-    if (transform_stamped) {
+    if (transform_stamped && !pointcloud.data.empty()) {
       PointCloud2 transformed_points{};
       const Eigen::Matrix4f affine_matrix =
         tf2::transformToEigen(transform_stamped.value().transform).matrix().cast<float>();
@@ -714,30 +729,48 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
         p.pointcloud_voxel_grid_x, p.pointcloud_voxel_grid_y, p.pointcloud_voxel_grid_z);
       filter.filter(*filtered_points_ptr);
 
-      PointCloud::Ptr obstacle_points_ptr(new PointCloud);
-      obstacle_points_ptr->header = filtered_points_ptr->header;
+      pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+      tree->setInputCloud(filtered_points_ptr);
+      std::vector<pcl::PointIndices> clusters;
+      pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+      ec.setClusterTolerance(1);
+      ec.setMinClusterSize(1);
+      ec.setMaxClusterSize(100000);
+      ec.setSearchMethod(tree);
+      ec.setInputCloud(filtered_points_ptr);
+      ec.extract(clusters);
 
-      // search obstacle candidate pointcloud to reduce calculation cost
-      std::vector<geometry_msgs::msg::Point> center_points;
-      center_points.reserve(traj_points.size());
+      std::vector<geometry_msgs::msg::Point> center_points(traj_points.size());
       for (const auto & traj_point : traj_points) {
         center_points.push_back(getVehicleCenterFromBase(traj_point.pose, vehicle_info_).position);
       }
-      for (const auto & point : filtered_points_ptr->points) {
-        for (const auto & center_point : center_points) {
-          const double x = center_point.x - point.x;
-          const double y = center_point.y - point.y;
-          const double ego_to_obstacle_distance = std::hypot(x, y);
-          if (ego_to_obstacle_distance < p.pointcloud_search_radius) {
-            geometry_msgs::msg::Point obstacle_position;
-            obstacle_position.x = point.x;
-            obstacle_position.y = point.y;
-            const double lat_dist_from_obstacle_to_traj =
-              motion_utils::calcLateralOffset(traj_points, obstacle_position);
-            target_obstacles.emplace_back(
-              pointcloud.header.stamp, obstacle_position, 1e-3, ego_to_obstacle_distance,
-              lat_dist_from_obstacle_to_traj);
-            break;
+
+      // search obstacle candidate pointcloud to reduce calculation cost
+      for (const auto & cluster_indices : clusters) {
+        Eigen::Vector4d centroid;
+        if (pcl::compute3DCentroid(*filtered_points_ptr, cluster_indices, centroid) != 0) {
+          for (const auto & center_point : center_points) {
+            const double ego_to_obstacle_distance =
+              std::hypot(center_point.x - centroid.x(), center_point.y - centroid.y());
+            if (ego_to_obstacle_distance < p.pointcloud_search_radius) {
+              geometry_msgs::msg::Point obstacle_position;
+              obstacle_position.x = centroid.x();
+              obstacle_position.y = centroid.y();
+              MultiPoint2d obstacle_rel_points;
+              for (const auto & index : cluster_indices.indices) {
+                const auto & point = filtered_points_ptr->points.at(index);
+                bg::append(
+                  obstacle_rel_points, Point2d(point.x - centroid.x(), point.y - centroid.y()));
+              }
+              Polygon2d obstacle_footprint;
+              bg::convex_hull(obstacle_rel_points, obstacle_footprint);
+              const double lat_dist_from_obstacle_to_traj =
+                motion_utils::calcLateralOffset(traj_points, obstacle_position);
+              target_obstacles.emplace_back(
+                pointcloud.header.stamp, obstacle_position, toGeomPoly(obstacle_footprint),
+                ego_to_obstacle_distance, lat_dist_from_obstacle_to_traj);
+              break;
+            }
           }
         }
       }
