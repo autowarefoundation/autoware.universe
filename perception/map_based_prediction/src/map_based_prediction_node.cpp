@@ -1235,7 +1235,11 @@ void MapBasedPredictionNode::updateCrosswalkUserHistory(
 std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
   const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users)
 {
-  if (known_matches_.count(object_id)) {
+  const auto known_match_opt = [&]() -> std::optional<std::string> {
+    if (!known_matches_.count(object_id)) {
+      return std::nullopt;
+    }
+
     std::string match_id = known_matches_[object_id];
     // object in the history is already matched to something (possibly itself)
     if (crosswalk_users_history_.count(match_id)) {
@@ -1248,7 +1252,13 @@ std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
                         << object_id << "was matched to " << match_id
                         << " but history for the crosswalk user was deleted. Rematching");
     }
+    return std::nullopt;
+  }();
+  //  early return if the match is already known
+  if (known_match_opt.has_value()) {
+    return known_match_opt.value();
   }
+
   std::string match_id = object_id;
   double best_score = std::numeric_limits<double>::max();
   const auto object_pos = current_users[object_id].kinematics.pose_with_covariance.pose.position;
