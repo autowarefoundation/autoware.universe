@@ -210,4 +210,4 @@ To achieve this, we first linearly interpolate:
 
 - Final value = `ndt_std_dev_bound_lower` + `ndt_std_dev_bound_upper` - `ndt_std_dev_target` (to get the inverse)
 
-<img width="300" src="media/range_lerp.svg" alt="range to range lerp animation">
+<img width="300" src="doc/range_lerp.svg" alt="range to range lerp animation">
