@@ -499,7 +499,9 @@ private:
   void updateStatus(const BehaviorModuleOutput & output);
 
   // validation
-  bool hasEnoughDistance(const PullOverPath & pull_over_path) const;
+  bool hasEnoughDistance(
+    const PullOverPath & pull_over_path,
+    const std::vector<double> & reference_path_directions) const;
   bool isCrossingPossible(
     const lanelet::ConstLanelet & start_lane, const lanelet::ConstLanelet & end_lane) const;
   bool isCrossingPossible(
@@ -517,7 +519,8 @@ private:
   BehaviorModuleOutput planPullOverAsCandidate();
   std::optional<std::pair<PullOverPath, GoalCandidate>> selectPullOverPath(
     const std::vector<PullOverPath> & pull_over_path_candidates,
-    const GoalCandidates & goal_candidates, const double collision_check_margin) const;
+    const GoalCandidates & goal_candidates, const std::vector<double> & reference_path_directions,
+    const double collision_check_margin) const;
   std::vector<PullOverPath> sortPullOverPathCandidatesByGoalPriority(
     const std::vector<PullOverPath> & pull_over_path_candidates,
     const GoalCandidates & goal_candidates) const;

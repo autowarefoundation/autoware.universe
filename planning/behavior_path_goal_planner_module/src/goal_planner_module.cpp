@@ -846,7 +846,8 @@ std::vector<PullOverPath> GoalPlannerModule::sortPullOverPathCandidatesByGoalPri
 
 std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectPullOverPath(
   const std::vector<PullOverPath> & pull_over_path_candidates,
-  const GoalCandidates & goal_candidates, const double collision_check_margin) const
+  const GoalCandidates & goal_candidates, const std::vector<double> & reference_path_directions,
+  const double collision_check_margin) const
 {
   for (const auto & pull_over_path : pull_over_path_candidates) {
     // check if goal is safe
@@ -859,7 +860,7 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
       continue;
     }
 
-    if (!hasEnoughDistance(pull_over_path)) {
+    if (!hasEnoughDistance(pull_over_path, reference_path_directions)) {
       continue;
     }
 
@@ -1186,8 +1187,13 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
       thread_safe_data_.get_pull_over_path_candidates(), goal_candidates);
 
     // select pull over path which is safe against static objects and get it's goal
+    std::vector<double> reference_path_directions;
+    for (const auto & point : getPreviousModuleOutput().path.points) {
+      reference_path_directions.push_back(
+        tf2::getYaw(tier4_autoware_utils::getPose(point).orientation));
+    }
     const auto path_and_goal_opt = selectPullOverPath(
-      pull_over_path_candidates, goal_candidates,
+      pull_over_path_candidates, goal_candidates, reference_path_directions,
       parameters_->object_recognition_collision_check_hard_margins.back());
 
     // update thread_safe_data_
@@ -1711,7 +1717,8 @@ bool GoalPlannerModule::checkObjectsCollision(
   return utils::path_safety_checker::checkPolygonsIntersects(ego_polygons_expanded, obj_polygons);
 }
 
-bool GoalPlannerModule::hasEnoughDistance(const PullOverPath & pull_over_path) const
+bool GoalPlannerModule::hasEnoughDistance(
+  const PullOverPath & pull_over_path, const std::vector<double> & reference_path_directions) const
 {
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
@@ -1721,6 +1728,23 @@ bool GoalPlannerModule::hasEnoughDistance(const PullOverPath & pull_over_path) c
   // so need enough distance to restart.
   // distance to restart should be less than decide_path_distance.
   // otherwise, the goal would change immediately after departure.
+
+  // reject outdated shift path on curved roads whose start pose direction is far from ego yaw
+  const double pull_over_path_start_direction = tf2::getYaw(pull_over_path.start_pose.orientation);
+  const bool isFollowableDirection = [&]() {
+    for (const auto reference_path_direction : reference_path_directions) {
+      if (
+        std::fabs(tier4_autoware_utils::normalizeRadian(
+          pull_over_path_start_direction - reference_path_direction)) < M_PI / 2) {
+        return true;
+      }
+    }
+    return false;
+  }();
+  if (!isFollowableDirection) {
+    return false;
+  }
+
   const bool is_separated_path = pull_over_path.partial_paths.size() > 1;
   const double distance_to_start = calcSignedArcLength(
     pull_over_path.getFullPath().points, current_pose.position, pull_over_path.start_pose.position);
