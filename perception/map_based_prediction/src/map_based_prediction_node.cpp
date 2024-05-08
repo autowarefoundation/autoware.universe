@@ -612,12 +612,10 @@ std::unordered_set<std::string> removeOldObjectsHistory(
     // Delete old information
     while (!object_data.empty()) {
       const double post_object_time = rclcpp::Time(object_data.front().header.stamp).seconds();
-      if (current_time - post_object_time > buffer_time) {
-        // Delete Old Position
-        object_data.pop_front();
-      } else {
+      if (current_time - post_object_time <= buffer_time) {
         break;
       }
+      object_data.pop_front();
     }
 
     if (object_data.empty()) {
