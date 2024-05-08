@@ -27,10 +27,11 @@ find_package(PCL REQUIRED COMPONENTS common io registration)
 include_directories(${PCL_INCLUDE_DIRS})
 
 ament_auto_add_executable(ndt_scan_matcher
-  src/particle.cpp
-  src/ndt_scan_matcher_node.cpp
-  src/ndt_scan_matcher_core.cpp
+  src/diagnostics_module.cpp
   src/map_update_module.cpp
+  src/ndt_scan_matcher_core.cpp
+  src/ndt_scan_matcher_node.cpp
+  src/particle.cpp
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
@@ -41,10 +42,28 @@ if(BUILD_TESTING)
     test/test_ndt_scan_matcher_launch.py
     TIMEOUT "30"
   )
+
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_auto_add_gtest(standard_sequence_for_initial_pose_estimation
+    test/test_cases/standard_sequence_for_initial_pose_estimation.cpp
+    src/diagnostics_module.cpp
+    src/map_update_module.cpp
+    src/ndt_scan_matcher_core.cpp
+#    src/ndt_scan_matcher_node.cpp
+    src/particle.cpp
+  )
+  ament_auto_add_gtest(once_initialize_at_out_of_map_then_initialize_correctly
+    test/test_cases/once_initialize_at_out_of_map_then_initialize_correctly.cpp
+    src/diagnostics_module.cpp
+    src/map_update_module.cpp
+    src/ndt_scan_matcher_core.cpp
+#    src/ndt_scan_matcher_node.cpp
+    src/particle.cpp
+  )
 endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE
-    launch
-    config
+  launch
+  config
 )

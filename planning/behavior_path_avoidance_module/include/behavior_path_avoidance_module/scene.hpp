@@ -234,11 +234,10 @@ private:
   void insertPrepareVelocity(ShiftedPath & shifted_path) const;
 
   /**
-   * @brief insert decel point in output path in order to yield. the ego decelerates within
-   * accel/jerk constraints.
+   * @brief insert max velocity in output path to limit acceleration.
    * @param target path.
    */
-  void insertYieldVelocity(ShiftedPath & shifted_path) const;
+  void insertAvoidanceVelocity(ShiftedPath & shifted_path) const;
 
   /**
    * @brief calculate stop distance based on object's overhang.
@@ -424,9 +423,6 @@ private:
 
   // TODO(Satoshi OTA) create detected object manager.
   ObjectDataArray registered_objects_;
-
-  // TODO(Satoshi OTA) remove mutable.
-  mutable ObjectDataArray detected_objects_;
 
   // TODO(Satoshi OTA) remove this variable.
   mutable ObjectDataArray ego_stopped_objects_;

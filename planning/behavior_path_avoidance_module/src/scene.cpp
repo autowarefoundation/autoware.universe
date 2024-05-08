@@ -31,7 +31,6 @@
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include "tier4_planning_msgs/msg/detail/avoidance_debug_msg_array__struct.hpp"
-#include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -39,12 +38,6 @@
 #include <set>
 #include <string>
 #include <vector>
-
-// set as macro so that calling function name will be printed.
-// debug print is heavy. turn on only when debugging.
-#define DEBUG_PRINT(...) \
-  RCLCPP_DEBUG_EXPRESSION(getLogger(), parameters_->print_debug_info, __VA_ARGS__)
-#define printShiftLines(p, msg) DEBUG_PRINT("[%s] %s", msg, toStrInfo(p).c_str())
 
 namespace behavior_path_planner
 {
@@ -58,7 +51,6 @@ using tier4_autoware_utils::calcLateralDeviation;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getPose;
 using tier4_autoware_utils::toHexString;
-using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 
 namespace
 {
@@ -109,7 +101,7 @@ AvoidanceModule::AvoidanceModule(
 
 bool AvoidanceModule::isExecutionRequested() const
 {
-  DEBUG_PRINT("AVOIDANCE isExecutionRequested");
+  RCLCPP_DEBUG(getLogger(), "AVOIDANCE isExecutionRequested");
 
   // Check ego is in preferred lane
   updateInfoMarker(avoid_data_);
@@ -125,23 +117,25 @@ bool AvoidanceModule::isExecutionRequested() const
   }
 
   return std::any_of(
-    avoid_data_.target_objects.begin(), avoid_data_.target_objects.end(), [](const auto & o) {
-      return o.is_avoidable || o.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
-    });
+    avoid_data_.target_objects.begin(), avoid_data_.target_objects.end(),
+    [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 }
 
 bool AvoidanceModule::isExecutionReady() const
 {
-  DEBUG_PRINT("AVOIDANCE isExecutionReady");
+  RCLCPP_DEBUG_STREAM(getLogger(), "---Avoidance GO/NO-GO status---");
+  RCLCPP_DEBUG_STREAM(getLogger(), std::boolalpha << "SAFE:" << avoid_data_.safe);
+  RCLCPP_DEBUG_STREAM(getLogger(), std::boolalpha << "COMFORTABLE:" << avoid_data_.comfortable);
+  RCLCPP_DEBUG_STREAM(getLogger(), std::boolalpha << "VALID:" << avoid_data_.valid);
+  RCLCPP_DEBUG_STREAM(getLogger(), std::boolalpha << "READY:" << avoid_data_.ready);
   return avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid && avoid_data_.ready;
 }
 
 bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const
 {
-  const bool has_avoidance_target =
-    std::any_of(data.target_objects.begin(), data.target_objects.end(), [](const auto & o) {
-      return o.is_avoidable || o.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
-    });
+  const bool has_avoidance_target = std::any_of(
+    data.target_objects.begin(), data.target_objects.end(),
+    [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 
   if (has_avoidance_target) {
     return false;
@@ -162,7 +156,7 @@ bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & 
 
   const bool has_shift_point = !path_shifter_.getShiftLines().empty();
   const bool has_base_offset =
-    std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_avoid_check_threshold;
+    std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_execution_threshold;
 
   // Nothing to do. -> EXIT.
   if (!has_shift_point && !has_base_offset) {
@@ -318,20 +312,28 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   using utils::avoidance::fillAvoidanceNecessity;
   using utils::avoidance::fillObjectStoppableJudge;
   using utils::avoidance::filterTargetObjects;
-  using utils::avoidance::getTargetLanelets;
   using utils::avoidance::separateObjectsByPath;
   using utils::avoidance::updateRoadShoulderDistance;
+  using utils::traffic_light::calcDistanceToRedTrafficLight;
 
   // Separate dynamic objects based on whether they are inside or outside of the expanded lanelets.
   constexpr double MARGIN = 10.0;
-  const auto forward_detection_range = helper_->getForwardDetectionRange();
+  const auto forward_detection_range = [&]() {
+    const auto to_traffic_light = calcDistanceToRedTrafficLight(
+      data.current_lanelets, helper_->getPreviousReferencePath(), planner_data_);
+    if (!to_traffic_light.has_value()) {
+      return helper_->getForwardDetectionRange();
+    }
+    return std::min(helper_->getForwardDetectionRange(), to_traffic_light.value());
+  }();
+
   const auto [object_within_target_lane, object_outside_target_lane] = separateObjectsByPath(
     helper_->getPreviousReferencePath(), helper_->getPreviousSplineShiftPath().path, planner_data_,
     data, parameters_, forward_detection_range + MARGIN, debug);
 
   for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object = createObjectData(data, object);
-    other_object.reason = "OutOfTargetArea";
+    other_object.info = ObjectInfo::OUT_OF_TARGET_AREA;
     data.other_objects.push_back(other_object);
   }
 
@@ -361,8 +363,6 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
       debug_info.object_id = toHexString(o.object.object_id);
       debug_info.longitudinal_distance = o.longitudinal;
       debug_info.lateral_distance_from_centerline = o.to_centerline;
-      debug_info.allow_avoidance = o.reason == "";
-      debug_info.failed_reason = o.reason;
       debug_info_array.push_back(debug_info);
     };
 
@@ -403,9 +403,6 @@ ObjectData AvoidanceModule::createObjectData(
 
   // Calc moving time.
   utils::avoidance::fillObjectMovingTime(object_data, stopped_objects_, parameters_);
-
-  // Fill init pose.
-  utils::avoidance::fillInitialPose(object_data, detected_objects_);
 
   // Calc lateral deviation from path to target object.
   object_data.direction = calcLateralDeviation(object_closest_pose, object_pose.position) > 0.0
@@ -513,7 +510,8 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    */
   data.comfortable = helper_->isComfortable(data.new_shift_line);
   data.safe = isSafePath(data.candidate_path, debug);
-  data.ready = helper_->isReady(data.new_shift_line, path_shifter_.getLastShiftLength());
+  data.ready = helper_->isReady(data.new_shift_line, path_shifter_.getLastShiftLength()) &&
+               helper_->isReady(data.target_objects);
 }
 
 void AvoidanceModule::fillEgoStatus(
@@ -526,12 +524,11 @@ void AvoidanceModule::fillEgoStatus(
    * if the both of following two conditions are satisfied, the module surely avoid the object.
    * Condition1: there is risk to collide with object without avoidance.
    * Condition2: there is enough space to avoid.
-   * In TOO_LARGE_JERK condition, it is possible to avoid object by deceleration even if the flag
+   * In NEED_DECELERATION condition, it is possible to avoid object by deceleration even if the flag
    * is_avoidable is FALSE. So, the module inserts stop point for such a object.
    */
   for (const auto & o : data.target_objects) {
-    const auto enough_space = o.is_avoidable || o.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
-    if (o.avoid_required && enough_space) {
+    if (o.avoid_required && !helper_->isAbsolutelyNotAvoidable(o)) {
       data.avoid_required = true;
       data.stop_target_object = o;
       data.to_stop_line = o.to_stop_line;
@@ -629,21 +626,19 @@ void AvoidanceModule::fillDebugData(
   const auto o_front = data.stop_target_object.value();
   const auto object_type = utils::getHighestProbLabel(o_front.object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
-  const auto & additional_buffer_longitudinal =
-    object_parameter.use_conservative_buffer_longitudinal
-      ? planner_data_->parameters.base_link2front
-      : 0.0;
+  const auto constant_distance = helper_->getFrontConstantDistance(o_front);
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
 
-  const auto max_avoid_margin = object_parameter.lateral_hard_margin * o_front.distance_factor +
+  const auto lateral_hard_margin = o_front.is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
+  const auto max_avoid_margin = lateral_hard_margin * o_front.distance_factor +
                                 object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
 
-  const auto variable = helper_->getSharpAvoidanceDistance(
+  const auto avoidance_distance = helper_->getSharpAvoidanceDistance(
     helper_->getShiftLength(o_front, utils::avoidance::isOnRight(o_front), max_avoid_margin));
-  const auto constant = helper_->getNominalPrepareDistance() +
-                        object_parameter.safety_buffer_longitudinal +
-                        additional_buffer_longitudinal;
-  const auto total_avoid_distance = variable + constant;
+  const auto prepare_distance = helper_->getNominalPrepareDistance();
+  const auto total_avoid_distance = prepare_distance + avoidance_distance + constant_distance;
 
   dead_pose_ = calcLongitudinalOffsetPose(
     data.reference_path.points, getEgoPosition(), o_front.longitudinal - total_avoid_distance);
@@ -681,13 +676,13 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
   }
 
   insertPrepareVelocity(path);
+  insertAvoidanceVelocity(path);
 
   switch (data.state) {
     case AvoidanceState::NOT_AVOID: {
       break;
     }
     case AvoidanceState::YIELD: {
-      insertYieldVelocity(path);
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
       break;
     }
@@ -727,7 +722,7 @@ bool AvoidanceModule::isSafePath(
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
-      if (parameters_->lateral_avoid_check_threshold < length) {
+      if (parameters_->lateral_execution_threshold < length) {
         return true;
       }
     }
@@ -739,7 +734,7 @@ bool AvoidanceModule::isSafePath(
     for (size_t i = ego_idx; i < shifted_path.shift_length.size(); i++) {
       const auto length = shifted_path.shift_length.at(i);
 
-      if (parameters_->lateral_avoid_check_threshold < -1.0 * length) {
+      if (parameters_->lateral_execution_threshold < -1.0 * length) {
         return true;
       }
     }
@@ -938,9 +933,13 @@ BehaviorModuleOutput AvoidanceModule::plan()
     output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   } else {
     const auto original_signal = getPreviousModuleOutput().turn_signal_info;
-    const auto [new_signal, is_ignore] = utils::avoidance::calcTurnSignalInfo(
-      linear_shift_path, path_shifter_.getShiftLines().front(), helper_->getEgoShift(), avoid_data_,
-      planner_data_);
+
+    constexpr bool is_driving_forward = true;
+    constexpr bool egos_lane_is_shifted = true;
+    const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
+      linear_shift_path, path_shifter_.getShiftLines().front(), avoid_data_.current_lanelets,
+      helper_->getEgoShift(), is_driving_forward, egos_lane_is_shifted);
+
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
     output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
       spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
@@ -1128,7 +1127,7 @@ void AvoidanceModule::addNewShiftLines(
   const auto new_shift_length = front_new_shift_line.end_shift_length;
   const auto new_shift_end_idx = front_new_shift_line.end_idx;
 
-  DEBUG_PRINT("min_start_idx = %lu", min_start_idx);
+  RCLCPP_DEBUG(getLogger(), "min_start_idx = %lu", min_start_idx);
 
   // Remove shift points that starts later than the new_shift_line from path_shifter.
   //
@@ -1141,8 +1140,9 @@ void AvoidanceModule::addNewShiftLines(
   // farther avoidance.
   for (const auto & sl : current_shift_lines) {
     if (sl.start_idx >= min_start_idx) {
-      DEBUG_PRINT(
-        "sl.start_idx = %lu, this sl starts after new proposal. remove this one.", sl.start_idx);
+      RCLCPP_DEBUG(
+        getLogger(), "sl.start_idx = %lu, this sl starts after new proposal. remove this one.",
+        sl.start_idx);
       continue;
     }
 
@@ -1160,7 +1160,7 @@ void AvoidanceModule::addNewShiftLines(
       }
     }
 
-    DEBUG_PRINT("sl.start_idx = %lu, no conflict. keep this one.", sl.start_idx);
+    RCLCPP_DEBUG(getLogger(), "sl.start_idx = %lu, no conflict. keep this one.", sl.start_idx);
     future.push_back(sl);
   }
 
@@ -1211,7 +1211,7 @@ bool AvoidanceModule::isValidShiftLine(
   // check if the vehicle is in road. (yaw angle is not considered)
   {
     const auto minimum_distance = 0.5 * planner_data_->parameters.vehicle_width +
-                                  parameters_->hard_road_shoulder_margin -
+                                  parameters_->hard_drivable_bound_margin -
                                   parameters_->max_deviation_from_lane;
 
     const size_t start_idx = shift_lines.front().start_idx;
@@ -1423,18 +1423,19 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   const auto object_type = utils::getHighestProbLabel(object.object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
 
-  const auto avoid_margin = object_parameter.lateral_hard_margin * object.distance_factor +
+  const auto lateral_hard_margin = object.is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
+  const auto avoid_margin = lateral_hard_margin * object.distance_factor +
                             object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
-  const auto variable = helper_->getMinAvoidanceDistance(
+  const auto avoidance_distance = helper_->getMinAvoidanceDistance(
     helper_->getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
-  const auto & additional_buffer_longitudinal =
-    object_parameter.use_conservative_buffer_longitudinal
-      ? planner_data_->parameters.base_link2front
-      : 0.0;
-  const auto constant = p->min_prepare_distance + object_parameter.safety_buffer_longitudinal +
-                        additional_buffer_longitudinal + p->stop_buffer;
+  const auto constant_distance = helper_->getFrontConstantDistance(object);
 
-  return object.longitudinal - std::min(variable + constant, p->stop_max_distance);
+  return object.longitudinal -
+         std::min(
+           avoidance_distance + constant_distance + p->min_prepare_distance + p->stop_buffer,
+           p->stop_max_distance);
 }
 
 void AvoidanceModule::insertReturnDeadLine(
@@ -1517,6 +1518,11 @@ void AvoidanceModule::insertWaitPoint(
   const bool use_constraints_for_decel, ShiftedPath & shifted_path) const
 {
   const auto & data = avoid_data_;
+
+  // If avoidance path is NOT valid, don't insert any stop points.
+  if (!data.valid) {
+    return;
+  }
 
   if (!data.stop_target_object) {
     return;
@@ -1604,27 +1610,19 @@ void AvoidanceModule::insertStopPoint(
     getEgoPosition(), stop_distance - MARGIN, 0.0, shifted_path.path, stop_pose_);
 }
 
-void AvoidanceModule::insertYieldVelocity(ShiftedPath & shifted_path) const
-{
-  const auto & p = parameters_;
-  const auto & data = avoid_data_;
-
-  if (data.target_objects.empty()) {
-    return;
-  }
-
-  if (helper_->isShifted()) {
-    return;
-  }
-
-  const auto decel_distance = helper_->getFeasibleDecelDistance(p->yield_velocity, false);
-  utils::avoidance::insertDecelPoint(
-    getEgoPosition(), decel_distance, p->yield_velocity, shifted_path.path, slow_pose_);
-}
-
 void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
 {
   const auto & data = avoid_data_;
+
+  // If avoidance path is NOT safe, don't insert any slow down sections.
+  if (!data.safe && !data.stop_target_object) {
+    return;
+  }
+
+  // If avoidance path is NOT safe, don't insert any slow down sections.
+  if (!data.valid) {
+    return;
+  }
 
   // do nothing if there is no avoidance target.
   if (data.target_objects.empty()) {
@@ -1641,26 +1639,46 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
     return;
   }
 
-  const auto object = data.target_objects.front();
+  const auto itr = std::find_if(
+    data.target_objects.begin(), data.target_objects.end(),
+    [](const auto & o) { return o.avoid_required; });
 
-  const auto enough_space =
-    object.is_avoidable || object.reason == AvoidanceDebugFactor::TOO_LARGE_JERK;
-  if (!enough_space) {
+  const auto object = [&]() -> std::optional<ObjectData> {
+    if (!data.yield_required) {
+      return data.target_objects.front();
+    }
+
+    if (itr == data.target_objects.end()) {
+      return std::nullopt;
+    }
+
+    return *itr;
+  }();
+
+  // do nothing if it can't avoid at the moment and avoidance is NOT definitely necessary.
+  if (!object.has_value()) {
+    return;
+  }
+
+  if (helper_->isAbsolutelyNotAvoidable(object.value())) {
     return;
   }
 
   // calculate shift length for front object.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto object_type = utils::getHighestProbLabel(object.object.classification);
+  const auto object_type = utils::getHighestProbLabel(object.value().object.classification);
   const auto object_parameter = parameters_->object_parameters.at(object_type);
-  const auto avoid_margin = object_parameter.lateral_hard_margin * object.distance_factor +
+  const auto lateral_hard_margin = object.value().is_parked
+                                     ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                     : object_parameter.lateral_hard_margin;
+  const auto avoid_margin = lateral_hard_margin * object.value().distance_factor +
                             object_parameter.lateral_soft_margin + 0.5 * vehicle_width;
-  const auto shift_length =
-    helper_->getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin);
+  const auto shift_length = helper_->getShiftLength(
+    object.value(), utils::avoidance::isOnRight(object.value()), avoid_margin);
 
   // check slow down feasibility
   const auto min_avoid_distance = helper_->getMinAvoidanceDistance(shift_length);
-  const auto distance_to_object = object.longitudinal;
+  const auto distance_to_object = object.value().longitudinal;
   const auto remaining_distance = distance_to_object - min_avoid_distance;
   const auto decel_distance = helper_->getFeasibleDecelDistance(parameters_->velocity_map.front());
   if (remaining_distance < decel_distance) {
@@ -1668,7 +1686,7 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
   }
 
   // decide slow down lower limit.
-  const auto lower_speed = object.avoid_required ? 0.0 : parameters_->min_slow_down_speed;
+  const auto lower_speed = object.value().avoid_required ? 0.0 : parameters_->min_slow_down_speed;
 
   // insert slow down speed.
   const double current_target_velocity = PathShifter::calcFeasibleVelocityFromJerk(
@@ -1701,6 +1719,52 @@ void AvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_path) const
 
   slow_pose_ = motion_utils::calcLongitudinalOffsetPose(
     shifted_path.path.points, start_idx, distance_to_object);
+}
+
+void AvoidanceModule::insertAvoidanceVelocity(ShiftedPath & shifted_path) const
+{
+  const auto & data = avoid_data_;
+
+  // do nothing if no shift line is approved.
+  if (path_shifter_.getShiftLines().empty()) {
+    return;
+  }
+
+  // do nothing if there is no avoidance target.
+  if (data.target_objects.empty()) {
+    return;
+  }
+
+  const auto [distance_to_accel_end_point, v_max] =
+    helper_->getDistanceToAccelEndPoint(shifted_path.path);
+  if (distance_to_accel_end_point < 1e-3) {
+    return;
+  }
+
+  const auto start_idx = planner_data_->findEgoIndex(shifted_path.path.points);
+  for (size_t i = start_idx; i < shifted_path.path.points.size(); ++i) {
+    const auto distance_from_ego = calcSignedArcLength(shifted_path.path.points, start_idx, i);
+
+    // slow down speed is inserted only in front of the object.
+    const auto accel_distance = distance_to_accel_end_point - distance_from_ego;
+    if (accel_distance < 0.0) {
+      break;
+    }
+
+    const double v_target_square =
+      v_max * v_max - 2.0 * parameters_->max_acceleration * accel_distance;
+    if (v_target_square < 1e-3) {
+      break;
+    }
+
+    // target speed with nominal jerk limits.
+    const double v_target = std::max(getEgoSpeed(), std::sqrt(v_target_square));
+    const double v_original = shifted_path.path.points.at(i).point.longitudinal_velocity_mps;
+    shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_target);
+  }
+
+  slow_pose_ = motion_utils::calcLongitudinalOffsetPose(
+    shifted_path.path.points, start_idx, distance_to_accel_end_point);
 }
 
 std::shared_ptr<AvoidanceDebugMsgArray> AvoidanceModule::get_debug_msg_array() const

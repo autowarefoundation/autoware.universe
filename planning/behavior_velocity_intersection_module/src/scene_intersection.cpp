@@ -148,16 +148,17 @@ static std::string formatOcclusionType(const IntersectionModule::OcclusionType &
 intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
-  const auto traffic_prioritized_level = getTrafficPrioritizedLevel();
-  const bool is_prioritized =
-    traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED;
-
-  const auto prepare_data = prepareIntersectionData(is_prioritized, path);
+  const auto prepare_data = prepareIntersectionData(path);
   if (!prepare_data) {
     return prepare_data.err();
   }
   const auto [interpolated_path_info, intersection_stoplines, path_lanelets] = prepare_data.ok();
   const auto & intersection_lanelets = intersection_lanelets_.value();
+
+  // NOTE: this level is based on the updateTrafficSignalObservation() which is latest
+  const auto traffic_prioritized_level = getTrafficPrioritizedLevel();
+  const bool is_prioritized =
+    traffic_prioritized_level == TrafficPrioritizedLevel::FULLY_PRIORITIZED;
 
   // ==========================================================================================
   // stuck detection
@@ -238,9 +239,20 @@ intersection::DecisionResult IntersectionModule::modifyPathVelocityDetail(
   // passed each pass judge line for the first time, save current collision status for late
   // diagnosis
   // ==========================================================================================
+  tier4_debug_msgs::msg::Float64MultiArrayStamped object_ttc_time_array;
   updateObjectInfoManagerCollision(
     path_lanelets, time_distance_array, traffic_prioritized_level, safely_passed_1st_judge_line,
-    safely_passed_2nd_judge_line);
+    safely_passed_2nd_judge_line, &object_ttc_time_array);
+  {
+    const auto & debug = planner_param_.debug.ttc;
+    if (
+      std::find(debug.begin(), debug.end(), lane_id_) != debug.end() ||
+      std::find(debug.begin(), debug.end(), -1) != debug.end()) {
+      ego_ttc_pub_->publish(ego_ttc_time_array);
+      object_ttc_pub_->publish(object_ttc_time_array);
+    }
+  }
+
   for (const auto & object_info : object_info_manager_.attentionObjects()) {
     if (!object_info->unsafe_info()) {
       continue;

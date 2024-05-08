@@ -20,6 +20,7 @@
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
 
 #include <algorithm>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -36,6 +37,11 @@ struct HyperParameters
     std::string ndt_base_frame;
     std::string map_frame;
   } frame;
+
+  struct SensorPoints
+  {
+    double required_distance;
+  } sensor_points;
 
   pclomp::NdtParams ndt;
   bool ndt_regularization_enable;
@@ -90,6 +96,9 @@ public:
     frame.base_frame = node->declare_parameter<std::string>("frame.base_frame");
     frame.ndt_base_frame = node->declare_parameter<std::string>("frame.ndt_base_frame");
     frame.map_frame = node->declare_parameter<std::string>("frame.map_frame");
+
+    sensor_points.required_distance =
+      node->declare_parameter<double>("sensor_points.required_distance");
 
     ndt.trans_epsilon = node->declare_parameter<double>("ndt.trans_epsilon");
     ndt.step_size = node->declare_parameter<double>("ndt.step_size");
@@ -154,10 +163,11 @@ public:
             initial_pose_offset_model_y[i];
         }
       } else {
-        RCLCPP_WARN(
-          node->get_logger(),
-          "Invalid initial pose offset model parameters. Disable covariance estimation.");
-        covariance.covariance_estimation.enable = false;
+        std::stringstream message;
+        message << "Invalid initial pose offset model parameters."
+                << "Please make sure that the number of elements in "
+                << "initial_pose_offset_model_x and initial_pose_offset_model_y are the same.";
+        throw std::runtime_error(message.str());
       }
     }
 

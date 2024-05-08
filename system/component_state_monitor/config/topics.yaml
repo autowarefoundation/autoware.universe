@@ -59,9 +59,9 @@
     topic_type: geometry_msgs/msg/PoseWithCovarianceStamped
     best_effort: false
     transient_local: false
-    warn_rate: 5.0
+    warn_rate: 2.0
     error_rate: 1.0
-    timeout: 1.0
+    timeout: 1.3
 
 - module: perception
   mode: [online, logging_simulation]

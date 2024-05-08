@@ -24,6 +24,8 @@
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <optional>
@@ -37,12 +39,12 @@ class ObstacleAvoidancePlanner : public rclcpp::Node
 public:
   explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
 
-  // NOTE: This is for the static_centerline_optimizer package which utilizes the following
+  // NOTE: This is for the static_centerline_generator package which utilizes the following
   // instance.
   std::shared_ptr<MPTOptimizer> getMPTOptimizer() const { return mpt_optimizer_ptr_; }
 
   // private:
-protected:  // for the static_centerline_optimizer package
+protected:  // for the static_centerline_generator package
   // TODO(murooka) move this node to common
   class DrivingDirectionChecker
   {
@@ -136,6 +138,8 @@ private:
   double vehicle_stop_margin_outside_drivable_area_;
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace obstacle_avoidance_planner
 

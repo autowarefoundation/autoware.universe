@@ -235,6 +235,10 @@ public:
     std::vector<geometry_msgs::msg::Polygon> occlusion_polygons;
     std::optional<std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
       nearest_occlusion_projection{std::nullopt};
+    std::optional<
+      std::tuple<geometry_msgs::msg::Point, geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
+      nearest_occlusion_triangle{std::nullopt};
+    bool static_occlusion{false};
     std::optional<double> static_occlusion_with_traffic_light_timeout{std::nullopt};
 
     std::optional<std::tuple<geometry_msgs::msg::Pose, lanelet::ConstPoint3d, lanelet::Id, uint8_t>>
@@ -438,6 +442,9 @@ private:
   //! unavailable)
   std::optional<std::pair<lanelet::Id, lanelet::ConstPoint3d>> tl_id_and_point_;
   std::optional<TrafficSignalStamped> last_tl_valid_observation_{std::nullopt};
+
+  //! save previous priority level to detect change from NotPrioritized to Prioritized
+  TrafficPrioritizedLevel previous_prioritized_level_{TrafficPrioritizedLevel::NOT_PRIORITIZED};
   /** @} */
 
 private:
@@ -544,7 +551,7 @@ private:
    * To simplify modifyPathVelocityDetail(), this function is used at first
    */
   intersection::Result<BasicData, intersection::InternalError> prepareIntersectionData(
-    const bool is_prioritized, PathWithLaneId * path);
+    PathWithLaneId * path);
 
   /**
    * @brief find the associated stopline road marking of assigned lanelet
@@ -747,7 +754,8 @@ private:
   void updateObjectInfoManagerCollision(
     const intersection::PathLanelets & path_lanelets, const TimeDistanceArray & time_distance_array,
     const TrafficPrioritizedLevel & traffic_prioritized_level,
-    const bool passed_1st_judge_line_first_time, const bool passed_2nd_judge_line_first_time);
+    const bool passed_1st_judge_line_first_time, const bool passed_2nd_judge_line_first_time,
+    tier4_debug_msgs::msg::Float64MultiArrayStamped * object_ttc_time_array);
 
   void cutPredictPathWithinDuration(
     const builtin_interfaces::msg::Time & object_stamp, const double time_thr,

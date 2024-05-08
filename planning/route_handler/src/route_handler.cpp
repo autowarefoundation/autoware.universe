@@ -758,12 +758,18 @@ lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceAfter(
 
   double length = 0;
   lanelet::ConstLanelet current_lanelet = lanelet;
+  std::set<lanelet::Id> searched_ids{};
   while (rclcpp::ok() && length < min_length) {
     lanelet::ConstLanelet next_lanelet;
     if (!getFollowingShoulderLanelet(current_lanelet, &next_lanelet)) {
       break;
     }
     lanelet_sequence_forward.push_back(next_lanelet);
+    if (searched_ids.find(next_lanelet.id()) != searched_ids.end()) {
+      // loop shoulder detected
+      break;
+    }
+    searched_ids.insert(next_lanelet.id());
     current_lanelet = next_lanelet;
     length +=
       static_cast<double>(boost::geometry::length(next_lanelet.centerline().basicLineString()));
@@ -794,6 +800,7 @@ lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceUpTo(
 
   double length = 0;
   lanelet::ConstLanelet current_lanelet = lanelet;
+  std::set<lanelet::Id> searched_ids{};
   while (rclcpp::ok() && length < min_length) {
     lanelet::ConstLanelet prev_lanelet;
     if (!getPreviousShoulderLanelet(current_lanelet, &prev_lanelet)) {
@@ -801,6 +808,11 @@ lanelet::ConstLanelets RouteHandler::getShoulderLaneletSequenceUpTo(
     }
 
     lanelet_sequence_backward.insert(lanelet_sequence_backward.begin(), prev_lanelet);
+    if (searched_ids.find(prev_lanelet.id()) != searched_ids.end()) {
+      // loop shoulder detected
+      break;
+    }
+    searched_ids.insert(prev_lanelet.id());
     current_lanelet = prev_lanelet;
     length +=
       static_cast<double>(boost::geometry::length(prev_lanelet.centerline().basicLineString()));
@@ -1696,7 +1708,7 @@ PathWithLaneId RouteHandler::getCenterLinePath(
 
   // append a point only when having one point so that yaw calculation would work
   if (reference_path.points.size() == 1) {
-    const lanelet::Id lane_id = static_cast<int>(reference_path.points.front().lane_ids.front());
+    const lanelet::Id lane_id = reference_path.points.front().lane_ids.front();
     const auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id);
     const auto point = reference_path.points.front().point.pose.position;
     const auto lane_yaw = lanelet::utils::getLaneletAngle(lanelet, point);
@@ -2274,4 +2286,11 @@ bool RouteHandler::findDrivableLanePath(
   return drivable_lane_path_found;
 }
 
+lanelet::ConstLanelets RouteHandler::getClosestLanelets(
+  const geometry_msgs::msg::Pose & target_pose) const
+{
+  lanelet::ConstLanelets target_lanelets;
+  lanelet::utils::query::getCurrentLanelets(road_lanelets_, target_pose, &target_lanelets);
+  return target_lanelets;
+}
 }  // namespace route_handler
