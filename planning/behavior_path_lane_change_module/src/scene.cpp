@@ -141,7 +141,7 @@ TurnSignalInfo NormalLaneChange::get_current_turn_signal_info()
   const auto original_turn_signal_info = prev_module_output_.turn_signal_info;
 
   const auto & current_lanes = getLaneChangeStatus().current_lanes;
-  const auto & is_valid = getLaneChangeStatus().is_valid_path;
+  const auto is_valid = getLaneChangeStatus().is_valid_path;
   const auto & lane_change_path = getLaneChangeStatus().lane_change_path;
   const auto & lane_change_param = getLaneChangeParam();
 
@@ -168,7 +168,7 @@ TurnSignalInfo NormalLaneChange::get_current_turn_signal_info()
     return current_turn_signal_info;
   }
 
-  const auto & min_length_for_turn_signal_activation =
+  const auto min_length_for_turn_signal_activation =
     lane_change_param.min_length_for_turn_signal_activation;
   const auto & route_handler = getRouteHandler();
   const auto & common_parameter = getCommonParam();
@@ -176,14 +176,14 @@ TurnSignalInfo NormalLaneChange::get_current_turn_signal_info()
     route_handler->getLateralIntervalsToPreferredLane(current_lanes.back());
   const double next_lane_change_buffer =
     utils::lane_change::calcMinimumLaneChangeLength(lane_change_param, shift_intervals);
-  const double & nearest_dist_threshold = common_parameter.ego_nearest_dist_threshold;
-  const double & nearest_yaw_threshold = common_parameter.ego_nearest_yaw_threshold;
-  const double & base_to_front = common_parameter.base_link2front;
+  const double nearest_dist_threshold = common_parameter.ego_nearest_dist_threshold;
+  const double nearest_yaw_threshold = common_parameter.ego_nearest_yaw_threshold;
+  const double base_to_front = common_parameter.base_link2front;
 
   const double buffer =
     next_lane_change_buffer + min_length_for_turn_signal_activation + base_to_front;
   const double path_length = motion_utils::calcArcLength(path.points);
-  const size_t & current_nearest_seg_idx =
+  const size_t current_nearest_seg_idx =
     motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
   const double dist_to_terminal = utils::getDistanceToEndOfLane(current_pose, current_lanes);
