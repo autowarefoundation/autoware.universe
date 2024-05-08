@@ -159,10 +159,10 @@ PoseSource PoseCovarianceModifierNode::pose_source_from_gnss_stddev(
     gnss_pose_stddev_z > threshold_gnss_stddev_z_max_) {
     return PoseSource::NDT;
   }
-
   if (gnss_pose_stddev_xy <= threshold_gnss_stddev_xy_bound_lower_) {
     return PoseSource::GNSS;
-  } else if (gnss_pose_stddev_xy <= threshold_gnss_stddev_xy_bound_upper_) {
+  }
+  if (gnss_pose_stddev_xy <= threshold_gnss_stddev_xy_bound_upper_) {
     return PoseSource::GNSS_NDT;
   }
   // If the gnss xy standard deviation is above the upper bound, use NDT pose

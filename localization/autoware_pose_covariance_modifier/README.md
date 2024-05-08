@@ -154,7 +154,7 @@ the [pose_twist_estimator.launch.xml](../../launch/tier4_localization_launch/lau
 ### Parameters
 
 The parameters are set
-in [config/autoware_pose_covariance_modifier.param.yaml](config/autoware_pose_covariance_modifier.param.yaml) .
+in [config/pose_covariance_modifier.param.yaml](config/pose_covariance_modifier.param.yaml) .
 
 {{ json_to_markdown("
 localization/autoware_pose_covariance_modifier/schema/pose_covariance_modifier.schema.json") }}
