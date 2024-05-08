@@ -276,6 +276,12 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     node.declare_parameter<double>("behavior_determination.pointcloud_voxel_grid_y");
   pointcloud_voxel_grid_z =
     node.declare_parameter<double>("behavior_determination.pointcloud_voxel_grid_z");
+  pointcloud_cluster_tolerance =
+    node.declare_parameter<double>("behavior_determination.pointcloud_cluster_tolerance");
+  pointcloud_min_cluster_size =
+    node.declare_parameter<int>("behavior_determination.pointcloud_min_cluster_size");
+  pointcloud_max_cluster_size =
+    node.declare_parameter<int>("behavior_determination.pointcloud_max_cluster_size");
   obstacle_velocity_threshold_from_cruise_to_stop = node.declare_parameter<double>(
     "behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
   obstacle_velocity_threshold_from_stop_to_cruise = node.declare_parameter<double>(
@@ -333,6 +339,23 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.decimate_trajectory_step_length",
     decimate_trajectory_step_length);
+  tier4_autoware_utils::updateParam<bool>(
+    parameters, "behavior_determination.use_pointcloud", use_pointcloud);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.pointcloud_search_radius", pointcloud_search_radius);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.pointcloud_voxel_grid_x", pointcloud_voxel_grid_x);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.pointcloud_voxel_grid_y", pointcloud_voxel_grid_y);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.pointcloud_voxel_grid_z", pointcloud_voxel_grid_z);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "behavior_determination.pointcloud_cluster_tolerance",
+    pointcloud_cluster_tolerance);
+  tier4_autoware_utils::updateParam<int>(
+    parameters, "behavior_determination.pointcloud_min_cluster_size", pointcloud_min_cluster_size);
+  tier4_autoware_utils::updateParam<int>(
+    parameters, "behavior_determination.pointcloud_max_cluster_size", pointcloud_max_cluster_size);
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.crossing_obstacle.obstacle_velocity_threshold",
     crossing_obstacle_velocity_threshold);
@@ -733,9 +756,9 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       tree->setInputCloud(filtered_points_ptr);
       std::vector<pcl::PointIndices> clusters;
       pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-      ec.setClusterTolerance(1);
-      ec.setMinClusterSize(1);
-      ec.setMaxClusterSize(100000);
+      ec.setClusterTolerance(p.pointcloud_cluster_tolerance);
+      ec.setMinClusterSize(p.pointcloud_min_cluster_size);
+      ec.setMaxClusterSize(p.pointcloud_max_cluster_size);
       ec.setSearchMethod(tree);
       ec.setInputCloud(filtered_points_ptr);
       ec.extract(clusters);

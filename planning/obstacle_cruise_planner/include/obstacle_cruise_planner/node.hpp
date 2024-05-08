@@ -193,6 +193,9 @@ private:
     double pointcloud_voxel_grid_x;
     double pointcloud_voxel_grid_y;
     double pointcloud_voxel_grid_z;
+    double pointcloud_cluster_tolerance;
+    int pointcloud_min_cluster_size;
+    int pointcloud_max_cluster_size;
     // hysteresis for stop and cruise
     double obstacle_velocity_threshold_from_cruise_to_stop;
     double obstacle_velocity_threshold_from_stop_to_cruise;
