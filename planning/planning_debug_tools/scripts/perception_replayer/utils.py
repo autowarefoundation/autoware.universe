@@ -146,7 +146,7 @@ class StopWatch:
             time.perf_counter() - self.start_times[name]
         ) * 1000  # Convert to milliseconds
         if self.verbose:
-            print(f"Time for {name}: {elapsed_time:.2f} ms")
+            print(f"Time for {name}: {elapsed_time: .2f} ms")
 
         # Reset the starting time for the name
         del self.start_times[name]
