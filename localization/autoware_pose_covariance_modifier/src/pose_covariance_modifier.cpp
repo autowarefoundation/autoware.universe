@@ -60,14 +60,13 @@ PoseCovarianceModifierNode::PoseCovarianceModifierNode(const rclcpp::NodeOptions
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "output_pose_with_covariance_topic", 10);
 
-  pub_str_pose_source_ = this->create_publisher<std_msgs::msg::String>(
-    "~/selected_pose_type", 10);
+  pub_str_pose_source_ = this->create_publisher<std_msgs::msg::String>("~/selected_pose_type", 10);
 
   if (debug_mode_) {
-    pub_double_ndt_position_stddev_ = this->create_publisher<std_msgs::msg::Float64>(
-      "~/debug/ndt_position_stddev", 10);
-    pub_double_gnss_position_stddev_ = this->create_publisher<std_msgs::msg::Float64>(
-      "~/debug/gnss_position_stddev", 10);
+    pub_double_ndt_position_stddev_ =
+      this->create_publisher<std_msgs::msg::Float64>("~/debug/ndt_position_stddev", 10);
+    pub_double_gnss_position_stddev_ =
+      this->create_publisher<std_msgs::msg::Float64>("~/debug/gnss_position_stddev", 10);
   }
 }
 
