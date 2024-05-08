@@ -39,7 +39,8 @@ PreprocessCuda::PreprocessCuda(const TransfusionConfig & config, cudaStream_t & 
 {
   mask_size_ = config_.grid_z_size_ * config_.grid_y_size_ * config_.grid_x_size_;
   voxels_size_ = config_.grid_z_size_ * config_.grid_y_size_ * config_.grid_x_size_ *
-                 config_.max_num_points_per_pillar_ * config_.num_point_feature_size_;
+                   config_.max_num_points_per_pillar_ * config_.num_point_feature_size_ +
+                 1;
   mask_ = cuda::make_unique<unsigned int[]>(mask_size_);
   voxels_ = cuda::make_unique<float[]>(voxels_size_);
 }
@@ -76,8 +77,8 @@ __global__ void generateVoxels_random_kernel(
   float t = points[point_idx * 5 + 4];
 
   if (
-    x < min_x_range || x >= max_x_range || y < min_y_range || y >= max_y_range || z < min_z_range ||
-    z >= max_z_range)
+    x <= min_x_range || x >= max_x_range || y <= min_y_range || y >= max_y_range ||
+    z <= min_z_range || z >= max_z_range)
     return;
 
   int voxel_idx = floorf((x - min_x_range) / pillar_x_size);
