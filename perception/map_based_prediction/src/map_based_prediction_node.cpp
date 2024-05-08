@@ -1225,11 +1225,13 @@ void MapBasedPredictionNode::updateCrosswalkUserHistory(
   CrosswalkUserData crosswalk_user_data;
   crosswalk_user_data.header = header;
   crosswalk_user_data.tracked_object = object;
+
   if (crosswalk_users_history_.count(object_id) == 0) {
     crosswalk_users_history_.emplace(object_id, std::deque<CrosswalkUserData>{crosswalk_user_data});
-  } else {
-    crosswalk_users_history_.at(object_id).push_back(crosswalk_user_data);
+    return;
   }
+
+  crosswalk_users_history_.at(object_id).push_back(crosswalk_user_data);
 }
 
 std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
