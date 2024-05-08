@@ -197,16 +197,9 @@ This enables a smooth transition between `GNSS Only` and `NDT Only` modes.
 
 In this mode, both NDT and GNSS poses are published from this node.
 
-#### Assumptions
-
-- Incoming NDT poses have a fixed covariance value.
-- Covariance provided by GNSS is reliable.
-
 #### NDT covariance calculation
 
-##### Goal
-
-- As the `gnss_std_dev` increases within its bounds, `ndt_std_dev` should proportionally decrease within its own bounds.
+As the `gnss_std_dev` increases within its bounds, `ndt_std_dev` should proportionally decrease within its own bounds.
 
 To achieve this, we first linearly interpolate:
 
@@ -216,7 +209,5 @@ To achieve this, we first linearly interpolate:
 - Target value: `ndt_std_dev_target`
 
 - Final value = `ndt_std_dev_bound_lower` + `ndt_std_dev_bound_upper` - `ndt_std_dev_target` (to get the inverse)
-
-#### Illustration
 
 <img width="300" src="media/range_lerp.svg" alt="range to range lerp animation">

@@ -96,11 +96,10 @@ void PoseCovarianceModifierNode::callback_gnss_pose_with_cov(
   publish_pose_type(pose_source_);
 
   if (pose_source_ == PoseSource::NDT) {
-    // if the pose source is only NDT, NDT pose will be used in the NDT pose callback
+    // if the pose source is only NDT, don't publish GNSS poses
     return;
   }
 
-  // If pose source is GNSS or GNSS_NDT publish GNSS poses
   pub_pose_with_covariance_stamped_->publish(*msg_pose_with_cov_in);
 
   if (debug_mode_) {
