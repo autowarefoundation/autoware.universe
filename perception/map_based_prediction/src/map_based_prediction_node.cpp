@@ -1251,7 +1251,7 @@ std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
   }
   std::string match_id = object_id;
   double best_score = std::numeric_limits<double>::max();
-  auto pos0 = current_users[object_id].kinematics.pose_with_covariance.pose.position;
+  const auto object_pos = current_users[object_id].kinematics.pose_with_covariance.pose.position;
   for (const auto & [user_id, user_history] : crosswalk_users_history_) {
     // user present in current_users and will be matched to itself
     if (current_users.count(user_id)) {
@@ -1259,8 +1259,10 @@ std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
     }
     // TODO(dkoldaev): implement more sophisticated scoring, for now simply dst to last position in
     // history
-    auto pos = user_history.back().tracked_object.kinematics.pose_with_covariance.pose.position;
-    double score = std::hypot(pos.x - pos0.x, pos.y - pos0.y);
+    const auto match_candidate_pos =
+      user_history.back().tracked_object.kinematics.pose_with_covariance.pose.position;
+    const double score =
+      std::hypot(match_candidate_pos.x - object_pos.x, match_candidate_pos.y - object_pos.y);
     if (score < best_score) {
       best_score = score;
       match_id = user_id;
