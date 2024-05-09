@@ -278,7 +278,6 @@ rcl_interfaces::msg::SetParametersResult VehicleCmdGate::onParameter(
   // Vehicle Parameter
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {
-    // TODO(daniel): we need to make a copy of filter
     VehicleCmdFilterParam p = filter_.getParam();
     p.wheel_base = vehicle_info.wheel_base_m;
     updateParam<double>(parameters, "nominal.vel_lim", p.vel_lim);
@@ -296,7 +295,6 @@ rcl_interfaces::msg::SetParametersResult VehicleCmdGate::onParameter(
   }
 
   {
-    // TODO(daniel): we need to make a copy of filter
     VehicleCmdFilterParam p = filter_on_transition_.getParam();
     p.wheel_base = vehicle_info.wheel_base_m;
     updateParam<double>(parameters, "on_transition.vel_lim", p.vel_lim);
