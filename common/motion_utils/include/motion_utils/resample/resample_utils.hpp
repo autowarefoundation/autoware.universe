@@ -21,7 +21,6 @@
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <string>
 #include <vector>
 
 namespace resample_utils
