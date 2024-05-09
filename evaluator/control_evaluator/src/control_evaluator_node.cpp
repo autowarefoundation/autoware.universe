@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
 // limitations under the License.
 
 #include "control_evaluator/control_evaluator_node.hpp"
-
-#include "boost/lexical_cast.hpp"
 
 #include <fstream>
 #include <iostream>
@@ -50,8 +48,7 @@ DiagnosticStatus controlEvaluatorNode::generateDiagnosticStatus(const bool is_em
   return status;
 }
 
-void controlEvaluatorNode::onDiagnostics(
-  [[maybe_unused]] const DiagnosticArray::ConstSharedPtr diag_msg)
+void controlEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg)
 {
   const auto start = now();
   const auto aeb_status =
