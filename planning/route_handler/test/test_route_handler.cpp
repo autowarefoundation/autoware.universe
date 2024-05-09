@@ -14,15 +14,22 @@
 
 #include "test_route_handler.hpp"
 
+#include "route_parser.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>
 
 namespace route_handler::test
 {
-TEST_F(TestRouteHandler, testSomething)
+TEST_F(TestRouteHandler, isRouteHandlerReadyTest)
 {
-  ASSERT_EQ(1, 1);
+  const auto planning_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("route_handler");
+  const auto rh_test_route = planning_test_utils_dir + "/test_route/rh_test.route";
+  ASSERT_FALSE(route_handler_->isHandlerReady());
+  route_handler_->setRoute(parse_route_file(rh_test_route));
+  ASSERT_TRUE(route_handler_->isHandlerReady());
 }
 
 int main(int argc, char * argv[])

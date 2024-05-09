@@ -26,7 +26,9 @@ if(BUILD_TESTING)
     route_parser)
 
   target_link_libraries(test_route_handler
-    route_handler)
+    route_handler
+    route_parser
+  )
 
 endif()
 
