@@ -280,8 +280,7 @@ void RayGroundFilterComponent::ExtractPointsIndices(
   size_t no_ground_count = 0;
   std::vector<bool> is_ground_idx(in_cloud_ptr->width, false);
   for (const auto & idx : in_indices.indices) {
-    if(std::size_t(idx) >= is_ground_idx.size())
-    { 
+    if (std::size_t(idx) >= is_ground_idx.size()) {
       continue;
     }
     is_ground_idx[idx] = true;
