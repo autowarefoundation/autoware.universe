@@ -83,7 +83,7 @@ LaneletRoute parse_route_file(const std::string & filename)
 
     lanelet_route.start_pose = (config["start_pose"]) ? parse_pose(config["start_pose"]) : Pose();
     lanelet_route.goal_pose = (config["goal_pose"]) ? parse_pose(config["goal_pose"]) : Pose();
-    lanelet_route.segments = parse_segments(config["segment"]);
+    lanelet_route.segments = parse_segments(config["segments"]);
   } catch (const std::exception & e) {
     RCLCPP_DEBUG(rclcpp::get_logger("route_handler"), "Exception caught: %s", e.what());
   }

@@ -17,6 +17,7 @@
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "gtest/gtest.h"
+#include <route_handler/route_handler.hpp>
 
 #include <lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
@@ -24,14 +25,13 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logging.hpp>
-#include <route_handler/route_handler.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 
 #include <lanelet2_io/Io.h>
 
-#include <memory>
 #include <string>
+#include <memory>
 namespace route_handler::test
 {
 
@@ -40,7 +40,9 @@ using autoware_auto_mapping_msgs::msg::HADMapBin;
 class TestRouteHandler : public ::testing::Test
 {
 public:
-  TestRouteHandler() { route_handler_ = std::make_shared<RouteHandler>(makeMapBinMsg()); }
+  TestRouteHandler(){
+    route_handler_ = std::make_shared<RouteHandler>(makeMapBinMsg());
+  }
   TestRouteHandler(const TestRouteHandler &) = delete;
   TestRouteHandler(TestRouteHandler &&) = delete;
   TestRouteHandler & operator=(const TestRouteHandler &) = delete;

@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 // Assuming the parseRouteFile function is in 'RouteHandler.h'
+#include "ament_index_cpp/get_package_share_directory.hpp"
 #include "route_parser.hpp"
 
 namespace route_handler::test
@@ -50,18 +51,6 @@ segments:
       primitive_type: lane
     - id: 33
       primitive_type: lane
-- preferred_primitive:
-    id: 44
-    primitive_type: ''
-  primitives:
-    - id: 55
-      primitive_type: lane
-    - id: 66
-      primitive_type: lane
-    - id: 77
-      primitive_type: lane
-    - id: 88
-      primitive_type: lane
 )";
 
 TEST(ParseFunctions, CompleteYAMLTest)
@@ -91,7 +80,7 @@ TEST(ParseFunctions, CompleteYAMLTest)
 
   // Test parsing of segments
   std::vector<LaneletSegment> segments = parse_segments(config["segments"]);
-  ASSERT_EQ(segments.size(), 2);  // Assuming only one segment in the provided YAML for this test
+  ASSERT_EQ(segments.size(), 1);  // Assuming only one segment in the provided YAML for this test
 
   const auto & segment0 = segments[0];
   EXPECT_EQ(segment0.preferred_primitive.id, 11);
@@ -100,20 +89,45 @@ TEST(ParseFunctions, CompleteYAMLTest)
   EXPECT_EQ(segment0.primitives[0].primitive_type, "lane");
   EXPECT_EQ(segment0.primitives[1].id, 33);
   EXPECT_EQ(segment0.primitives[1].primitive_type, "lane");
-
-  const auto & segment1 = segments[1];
-  EXPECT_EQ(segment1.preferred_primitive.id, 44);
-  EXPECT_EQ(segment1.primitives.size(), 4);
-  EXPECT_EQ(segment1.primitives[0].id, 55);
-  EXPECT_EQ(segment1.primitives[0].primitive_type, "lane");
-  EXPECT_EQ(segment1.primitives[1].id, 66);
-  EXPECT_EQ(segment1.primitives[1].primitive_type, "lane");
-  EXPECT_EQ(segment1.primitives[2].id, 77);
-  EXPECT_EQ(segment1.primitives[2].primitive_type, "lane");
-  EXPECT_EQ(segment1.primitives[3].id, 88);
-  EXPECT_EQ(segment1.primitives[3].primitive_type, "lane");
 }
 
+TEST(ParseFunction, CompleteFromFilename){
+    const auto planning_test_utils_dir =
+      ament_index_cpp::get_package_share_directory("route_handler");
+    const auto parser_test_route = planning_test_utils_dir + "/test_route/parser_test.route";
+
+
+    const auto lanelet_route = parse_route_file(parser_test_route);
+    EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.x, 1.0);
+    EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.y, 2.0);
+    EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.z, 3.0);
+
+    EXPECT_DOUBLE_EQ(lanelet_route.start_pose.orientation.x, 0.1);
+    EXPECT_DOUBLE_EQ(lanelet_route.start_pose.orientation.y, 0.2);
+    EXPECT_DOUBLE_EQ(lanelet_route.start_pose.orientation.z, 0.3);
+    EXPECT_DOUBLE_EQ(lanelet_route.start_pose.orientation.w, 0.4);
+
+    EXPECT_DOUBLE_EQ(lanelet_route.goal_pose.position.x, 4.0);
+    EXPECT_DOUBLE_EQ(lanelet_route.goal_pose.position.y, 5.0);
+    EXPECT_DOUBLE_EQ(lanelet_route.goal_pose.position.z, 6.0);
+    EXPECT_DOUBLE_EQ(lanelet_route.goal_pose.orientation.x, 0.5);
+    EXPECT_DOUBLE_EQ(lanelet_route.goal_pose.orientation.y, 0.6);
+    EXPECT_DOUBLE_EQ(lanelet_route.goal_pose.orientation.z, 0.7);
+    EXPECT_DOUBLE_EQ(lanelet_route.goal_pose.orientation.w, 0.8);
+
+    ASSERT_EQ(lanelet_route.segments.size(), 2);  // Assuming only one segment in the provided YAML for this test
+    const auto & segment1 = lanelet_route.segments[1];
+    EXPECT_EQ(segment1.preferred_primitive.id, 44);
+    EXPECT_EQ(segment1.primitives.size(), 4);
+    EXPECT_EQ(segment1.primitives[0].id, 55);
+    EXPECT_EQ(segment1.primitives[0].primitive_type, "lane");
+    EXPECT_EQ(segment1.primitives[1].id, 66);
+    EXPECT_EQ(segment1.primitives[1].primitive_type, "lane");
+    EXPECT_EQ(segment1.primitives[2].id, 77);
+    EXPECT_EQ(segment1.primitives[2].primitive_type, "lane");
+    EXPECT_EQ(segment1.primitives[3].id, 88);
+    EXPECT_EQ(segment1.primitives[3].primitive_type, "lane");
+}
 int main(int argc, char ** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
