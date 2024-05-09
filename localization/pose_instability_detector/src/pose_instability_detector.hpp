@@ -44,6 +44,8 @@ private:
   void callback_twist(TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr);
   void callback_timer();
 
+  void define_static_threshold();
+
   // subscribers and timer
   rclcpp::Subscription<Odometry>::SharedPtr odometry_sub_;
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_sub_;
@@ -54,12 +56,25 @@ private:
   rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   // parameters
-  const double threshold_diff_position_x_;
-  const double threshold_diff_position_y_;
-  const double threshold_diff_position_z_;
-  const double threshold_diff_angle_x_;
-  const double threshold_diff_angle_y_;
-  const double threshold_diff_angle_z_;
+  const double interval_sec_; // [sec]
+
+  double threshold_diff_position_x_; // longitudinal
+  double threshold_diff_position_y_; // lateral
+  double threshold_diff_position_z_;
+  double threshold_diff_angle_x_;
+  double threshold_diff_angle_y_;
+  double threshold_diff_angle_z_; //yaw
+
+  const double maximum_heading_velocity_; // [m/s]
+  const double velocity_scale_factor_tolerance_; // [%]
+
+  const double maximum_angular_velocity_; // [rad/s]
+  const double angular_velocity_scale_factor_tolerance_; // [%]
+  const double expected_angular_velocity_bias; // [rad/s]
+
+  const double pose_estimator_longitudinal_tolerance_; // [m]
+  const double pose_estimator_lateral_tolerance_; // [m]
+  const double pose_estimator_yaw_tolerance_; // [rad]
 
   // variables
   std::optional<Odometry> latest_odometry_ = std::nullopt;
