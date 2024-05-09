@@ -31,6 +31,7 @@
   <depend>rclcpp_components</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>yaml-cpp</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

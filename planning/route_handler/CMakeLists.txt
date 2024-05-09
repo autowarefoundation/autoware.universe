@@ -9,10 +9,22 @@ ament_auto_add_library(route_handler SHARED
 )
 
 if(BUILD_TESTING)
+  ament_auto_add_library(route_parser SHARED
+    test/route_parser.cpp)
+
+  target_link_libraries(route_parser
+    yaml-cpp
+  )
+
+  ament_add_ros_isolated_gtest(test_route_parser
+    test/test_route_parser.cpp)
+
   ament_add_ros_isolated_gtest(test_route_handler
     test/test_route_handler.cpp)
 
-  target_include_directories(test_route_handler PUBLIC test/include)
+  target_link_libraries(test_route_parser
+    route_parser)
+
   target_link_libraries(test_route_handler
     route_handler)
 

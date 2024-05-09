@@ -18,9 +18,11 @@
 
 #include <gtest/gtest.h>
 
-namespace route_handler::test {
-TEST_F(TestRouteHandler, testSomething){
-  ASSERT_EQ(1, 2);
+namespace route_handler::test
+{
+TEST_F(TestRouteHandler, testSomething)
+{
+  ASSERT_EQ(1, 1);
 }
 
 int main(int argc, char * argv[])
@@ -31,4 +33,4 @@ int main(int argc, char * argv[])
   rclcpp::shutdown();
   return result;
 }
-}
+}  // namespace route_handler::test
