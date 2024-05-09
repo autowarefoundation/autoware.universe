@@ -48,7 +48,6 @@ const char * getGateModeName(const GateMode::_data_type & gate_mode)
 
 VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 : Node("vehicle_cmd_gate", node_options), is_engaged_(false), updater_(this)
-
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
