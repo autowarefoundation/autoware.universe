@@ -189,9 +189,6 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
       node_, road_lanelet_id, crosswalk_lanelet_id, reg_elem_id, lanelet_map_ptr, p, logger,
       clock_));
     generateUUID(crosswalk_lanelet_id);
-    updateRTCStatus(
-      getUUID(crosswalk_lanelet_id), true, std::numeric_limits<double>::lowest(),
-      path.header.stamp);
   };
 
   const auto crosswalk_reg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(

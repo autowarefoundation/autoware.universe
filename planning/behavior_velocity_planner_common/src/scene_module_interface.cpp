@@ -31,7 +31,7 @@ SceneModuleInterface::SceneModuleInterface(
 : module_id_(module_id),
   activated_(false),
   safe_(false),
-  distance_(std::numeric_limits<double>::lowest()),
+  distance_(-10000.0),
   logger_(logger),
   clock_(clock)
 {
