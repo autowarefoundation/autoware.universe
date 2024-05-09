@@ -408,7 +408,6 @@ def launch_setup(context, *args, **kwargs):
             ),
         ]
     )
-
     return [group, control_validator_group]
 
 
