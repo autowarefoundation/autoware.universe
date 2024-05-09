@@ -42,7 +42,7 @@ public:
   /**
    * @brief publish the given metric statistic
    */
-  DiagnosticStatus generateDiagnosticStatus() const;
+  DiagnosticStatus generateDiagnosticStatus(const bool is_emergency_brake) const;
   void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
 
 private:
