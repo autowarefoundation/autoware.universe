@@ -256,8 +256,6 @@ rcl_interfaces::msg::SetParametersResult VehicleCmdGate::onParameter(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
-
-  for (int i = 0; i < 100; ++i) std::cerr << i << "AM I CALLED???\n";
   // Parameter
   updateParam<bool>(parameters, "use_emergency_handling", use_emergency_handling_);
   updateParam<bool>(
@@ -282,7 +280,7 @@ rcl_interfaces::msg::SetParametersResult VehicleCmdGate::onParameter(
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {
     // TODO(daniel): we need to make a copy of filter
-    VehicleCmdFilterParam p;
+    VehicleCmdFilterParam p = filter_.getParam();
     p.wheel_base = vehicle_info.wheel_base_m;
     updateParam<double>(parameters, "nominal.vel_lim", p.vel_lim);
     updateParam<std::vector<double>>(
@@ -300,7 +298,7 @@ rcl_interfaces::msg::SetParametersResult VehicleCmdGate::onParameter(
 
   {
     // TODO(daniel): we need to make a copy of filter
-    VehicleCmdFilterParam p;
+    VehicleCmdFilterParam p = filter_on_transition_.getParam();
     p.wheel_base = vehicle_info.wheel_base_m;
     updateParam<double>(parameters, "on_transition.vel_lim", p.vel_lim);
     updateParam<std::vector<double>>(
@@ -319,8 +317,6 @@ rcl_interfaces::msg::SetParametersResult VehicleCmdGate::onParameter(
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
   result.reason = "success";
-  std::cerr << "system_emergency_heartbeat_timeout_ " << system_emergency_heartbeat_timeout_
-            << "\n";
   return result;
 }
 
