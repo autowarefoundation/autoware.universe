@@ -202,13 +202,14 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   sensor_msgs::PointCloud2Iterator<float> it_x(points, "x");
   sensor_msgs::PointCloud2Iterator<float> it_y(points, "y");
   sensor_msgs::PointCloud2Iterator<float> it_z(points, "z");
-  sensor_msgs::PointCloud2ConstIterator<double> it_time_stamp(points, time_stamp_field_name_);
+  sensor_msgs::PointCloud2ConstIterator<std::uint32_t> it_time_stamp(
+    points, time_stamp_field_name_);
 
   float theta{0.0f};
   float x{0.0f};
   float y{0.0f};
-  double prev_time_stamp_sec{*it_time_stamp};
-  const double first_point_time_stamp_sec{*it_time_stamp};
+  std::uint32_t prev_time_stamp_sec{*it_time_stamp};
+  const std::uint32_t first_point_time_stamp_sec{*it_time_stamp};
 
   auto twist_it = std::lower_bound(
     std::begin(twist_queue_), std::end(twist_queue_), first_point_time_stamp_sec,
@@ -280,7 +281,8 @@ bool DistortionCorrectorComponent::undistortPointCloud(
       }
     }
 
-    const auto time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);
+    const double time_offset = 1e-9 * (static_cast<std::int64_t>(*it_time_stamp) -
+                                       static_cast<std::int64_t>(prev_time_stamp_sec));
 
     point.setValue(*it_x, *it_y, *it_z);
 
