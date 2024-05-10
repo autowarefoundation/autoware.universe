@@ -24,6 +24,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/utility/Optional.h>
@@ -36,12 +37,6 @@
 
 namespace autoware::remaining_distance_time_calculator
 {
-using autoware_auto_mapping_msgs::msg::HADMapBin;
-using autoware_internal_msgs::msg::MissionRemainingDistanceTime;
-using autoware_planning_msgs::msg::LaneletRoute;
-using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::Vector3;
-using nav_msgs::msg::Odometry;
 
 struct NodeParam
 {
@@ -54,9 +49,16 @@ public:
   explicit RemainingDistanceTimeCalculatorNode(const rclcpp::NodeOptions & options);
 
 private:
+  using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
+  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using Odometry = nav_msgs::msg::Odometry;
+  using VelocityLimit = tier4_planning_msgs::msg::VelocityLimit;
+  using MissionRemainingDistanceTime = autoware_internal_msgs::msg::MissionRemainingDistanceTime;
+
   rclcpp::Subscription<LaneletRoute>::SharedPtr sub_route_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
+  rclcpp::Subscription<VelocityLimit>::SharedPtr sub_planning_velocity_;
 
   rclcpp::Publisher<MissionRemainingDistanceTime>::SharedPtr pub_mission_remaining_distance_time_;
 
@@ -70,10 +72,11 @@ private:
   bool is_graph_ready_;
 
   // Data Buffer
-  Pose current_vehicle_pose_;
-  Vector3 current_vehicle_velocity_;
-  Pose goal_pose_;
+  geometry_msgs::msg::Pose current_vehicle_pose_;
+  geometry_msgs::msg::Vector3 current_vehicle_velocity_;
+  geometry_msgs::msg::Pose goal_pose_;
   bool has_received_route_;
+  double velocity_limit_;
 
   // Parameter
   NodeParam node_param_;
@@ -83,6 +86,7 @@ private:
   void on_odometry(const Odometry::ConstSharedPtr & msg);
   void on_route(const LaneletRoute::ConstSharedPtr & msg);
   void on_map(const HADMapBin::ConstSharedPtr & msg);
+  void on_velocity_limit(const VelocityLimit::ConstSharedPtr& msg);
 
   /**
    * @brief calculate mission remaining distance

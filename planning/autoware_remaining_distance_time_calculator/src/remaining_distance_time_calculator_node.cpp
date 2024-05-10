@@ -21,6 +21,8 @@
 #include <rclcpp/timer.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -34,7 +36,8 @@ RemainingDistanceTimeCalculatorNode::RemainingDistanceTimeCalculatorNode(
   const rclcpp::NodeOptions & options)
 : Node("remaining_distance_time_calculator", options),
   is_graph_ready_{false},
-  has_received_route_{false}
+  has_received_route_{false},
+  velocity_limit_{99.99}
 {
   using std::placeholders::_1;
 
@@ -49,6 +52,9 @@ RemainingDistanceTimeCalculatorNode::RemainingDistanceTimeCalculatorNode(
   sub_route_ = create_subscription<LaneletRoute>(
     "~/input/route", qos_transient_local,
     std::bind(&RemainingDistanceTimeCalculatorNode::on_route, this, _1));
+  sub_planning_velocity_ = create_subscription<tier4_planning_msgs::msg::VelocityLimit>(
+    "/planning/scenario_planning/current_max_velocity", qos_transient_local,
+    std::bind(&RemainingDistanceTimeCalculatorNode::on_velocity_limit, this, _1));
 
   pub_mission_remaining_distance_time_ = create_publisher<MissionRemainingDistanceTime>(
     "~/output/mission_remaining_distance_time",
@@ -82,6 +88,15 @@ void RemainingDistanceTimeCalculatorNode::on_route(const LaneletRoute::ConstShar
 {
   goal_pose_ = msg->goal_pose;
   has_received_route_ = true;
+}
+
+void RemainingDistanceTimeCalculatorNode::on_velocity_limit(
+  const VelocityLimit::ConstSharedPtr& msg)
+{
+  // store the velocity for releasing the stop
+  if (msg->max_velocity > 1e-5) {
+    velocity_limit_ = msg->max_velocity;
+  }
 }
 
 void RemainingDistanceTimeCalculatorNode::on_timer()
@@ -121,6 +136,7 @@ double RemainingDistanceTimeCalculatorNode::calculate_remaining_distance() const
       lanelet::ArcCoordinates arc_coord =
         lanelet::utils::getArcCoordinates({llt}, current_vehicle_pose_);
       double this_lanelet_length = lanelet::utils::getLaneletLength2d(llt);
+
       remaining_distance += this_lanelet_length - arc_coord.length;
     } else if (index == (remaining_shortest_path.size() - 1)) {
       lanelet::ArcCoordinates arc_coord = lanelet::utils::getArcCoordinates({llt}, goal_pose_);
@@ -138,17 +154,7 @@ double RemainingDistanceTimeCalculatorNode::calculate_remaining_distance() const
 double RemainingDistanceTimeCalculatorNode::calculate_remaining_time(
   const double remaining_distance) const
 {
-  double current_velocity_norm = std::sqrt(
-    current_vehicle_velocity_.x * current_vehicle_velocity_.x +
-    current_vehicle_velocity_.y * current_vehicle_velocity_.y);
-
-  if (remaining_distance < 0.01 || current_velocity_norm < 0.01) {
-    return 0.0;
-  }
-
-  double remaining_time = remaining_distance / current_velocity_norm;
-
-  return remaining_time;
+  return remaining_distance / velocity_limit_;
 }
 
 void RemainingDistanceTimeCalculatorNode::publish_mission_remaining_distance_time(

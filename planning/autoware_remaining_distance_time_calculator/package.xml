@@ -23,6 +23,7 @@
   <depend>route_handler</depend>
   <depend>std_msgs</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>tier4_planning_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
