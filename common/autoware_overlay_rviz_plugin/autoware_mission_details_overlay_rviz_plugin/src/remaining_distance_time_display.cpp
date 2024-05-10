@@ -14,6 +14,7 @@
 
 #include "remaining_distance_time_display.hpp"
 
+#include <QColor>
 #include <QFontDatabase>
 #include <QPainter>
 #include <ament_index_cpp/get_package_share_directory.hpp>
@@ -45,12 +46,10 @@ RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
 
   std::string dist_image = package_path + "/assets/path.png";
   std::string time_image = package_path + "/assets/av_timer.png";
-  distToGoalFlag.load(dist_image.c_str());
-  timeToGoalFlag.load(time_image.c_str());
-  scaledDistToGoalFlag =
-    distToGoalFlag.scaled(32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-  scaledTimeToGoalFlag =
-    timeToGoalFlag.scaled(32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  icon_dist_.load(dist_image.c_str());
+  icon_time_.load(time_image.c_str());
+  icon_dist_scaled_ = icon_dist_.scaled(28, 28, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+  icon_time_scaled_ = icon_time_.scaled(28, 28, Qt::KeepAspectRatio, Qt::SmoothTransformation);
 }
 
 void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
@@ -63,100 +62,94 @@ void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
 void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
   QPainter & painter, const QRectF & backgroundRect)
 {
-  QFont referenceFont("Quicksand", 80, QFont::Bold);
-  painter.setFont(referenceFont);
-  QRect referenceRect = painter.fontMetrics().boundingRect("88");
-  QPointF remainingDistReferencePos(
-    backgroundRect.width() / 2 - referenceRect.width() / 2, backgroundRect.height() / 3);
+  const QFont font("Quicksand", 15, QFont::Bold);
+  painter.setFont(font);
 
-  QPointF remainingTimeReferencePos(
-    backgroundRect.width() / 2 - referenceRect.width() / 2, backgroundRect.height() / 1.3);
+  // We'll display the distance and time in two rows
 
-  // ----------------- Remaining Distance -----------------
+  auto calculate_inner_rect = [](const QRectF & outer_rect, double ratio_x, double ratio_y) {
+    QSizeF size_inner(outer_rect.width() * ratio_x, outer_rect.height() * ratio_y);
+    QPointF top_left_inner = QPointF(
+      outer_rect.center().x() - size_inner.width() / 2,
+      outer_rect.center().y() - size_inner.height() / 2);
+    return QRectF(top_left_inner, size_inner);
+  };
 
-  int fontSize = 15;
-  QFont remainingDistancTimeFont("Quicksand", fontSize, QFont::Bold);
-  painter.setFont(remainingDistancTimeFont);
+  const QRectF rect_inner = calculate_inner_rect(backgroundRect, 0.7, 0.7);
 
-  // Remaining distance icon
-  QPointF remainingDistanceIconPos(
-    remainingDistReferencePos.x() - 25, remainingDistReferencePos.y());
-  painter.drawImage(
-    remainingDistanceIconPos.x(),
-    remainingDistanceIconPos.y() - scaledDistToGoalFlag.height() / 2.0, scaledDistToGoalFlag);
+  // Calculate distance row rectangle
+  const QSizeF distance_row_size(rect_inner.width(), rect_inner.height() / 2);
+  const QPointF distance_row_top_left(rect_inner.topLeft());
+  const QRectF distance_row_rect_outer(distance_row_top_left, distance_row_size);
 
-  // Remaining distance value
-  QString remainingDistanceValue = QString::number(
-    remaining_distance_ > 1000 ? remaining_distance_ / 1000 : remaining_distance_, 'f', 0);
-  QPointF remainingDistancePos;
-  switch (remainingDistanceValue.size()) {
-    case 1:
-      remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 55, remainingDistReferencePos.y() + 10);
-      break;
-    case 2:
-      remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 50, remainingDistReferencePos.y() + 10);
-      break;
-    case 3:
-      remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 45, remainingDistReferencePos.y() + 10);
-      break;
-    case 4:
-      remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 40, remainingDistReferencePos.y() + 10);
-      break;
-    default:
-      remainingDistancePos =
-        QPointF(remainingDistReferencePos.x() + 55, remainingDistReferencePos.y() + 10);
-      break;
+  // Calculate time row rectangle
+  const QSizeF time_row_size(rect_inner.width(), rect_inner.height() / 2);
+  const QPointF time_row_top_left(
+    rect_inner.topLeft().x(), rect_inner.topLeft().y() + rect_inner.height() / 2);
+  const QRectF time_row_rect_outer(time_row_top_left, time_row_size);
+
+  const auto rect_time = calculate_inner_rect(time_row_rect_outer, 1.0, 0.9);
+  const auto rect_dist = calculate_inner_rect(distance_row_rect_outer, 1.0, 0.9);
+
+  auto place_row = [&, this](
+                     const QRectF & rect, const QImage & icon, const QString & str_value,
+                     const QString & str_unit) {
+    // order: icon, value, unit
+
+    // place the icon
+    QPointF icon_top_left(rect.topLeft().x(), rect.center().y() - icon.height() / 2.0);
+    painter.drawImage(icon_top_left, icon);
+
+    // place the unit text
+    const float unit_width = 40.0;
+    QRectF rect_text_unit(
+      rect.topRight().x() - unit_width, rect.topRight().y(), unit_width, rect.height());
+
+    painter.setPen(gray);
+    painter.drawText(rect_text_unit, Qt::AlignLeft | Qt::AlignVCenter, str_unit);
+
+    // place the value text
+    const double margin_x = 5.0;  // margin around the text
+
+    const double used_width = icon.width() + rect_text_unit.width() + margin_x * 2.0;
+
+    QRectF rect_text(
+      rect.topLeft().x() + icon.width() + margin_x, rect.topLeft().y(), rect.width() - used_width,
+      rect.height());
+
+    painter.drawText(rect_text, Qt::AlignRight | Qt::AlignVCenter, str_value);
+  };
+
+  // remaining_time_ is in seconds
+  if (remaining_time_ <= 60) {
+    place_row(rect_time, icon_time_scaled_, QString::number(remaining_time_, 'f', 0), "sec");
+  } else if (remaining_time_ <= 600) {
+    place_row(rect_time, icon_time_scaled_, QString::number(remaining_time_ / 60.0, 'f', 1), "min");
+  } else if (remaining_time_ <= 3600) {
+    place_row(rect_time, icon_time_scaled_, QString::number(remaining_time_ / 60.0, 'f', 0), "min");
+  } else if (remaining_time_ <= 36000) {
+    place_row(
+      rect_time, icon_time_scaled_, QString::number(remaining_time_ / 3600.0, 'f', 1), "hrs");
+  } else {
+    place_row(
+      rect_time, icon_time_scaled_, QString::number(remaining_time_ / 3600.0, 'f', 0), "hrs");
   }
-  painter.setPen(gray);
-  painter.drawText(remainingDistancePos, remainingDistanceValue);
 
-  // Remaining distance unit
-  QString remainingDistUnitText = remaining_distance_ > 1000 ? "km" : "meter";
-  QPointF remainingDistancUnitPos(
-    remainingDistReferencePos.x() + 80, remainingDistReferencePos.y() + 10);
-  painter.drawText(remainingDistancUnitPos, remainingDistUnitText);
-
-  //  ----------------- Remaining Time -----------------
-  // Remaining time icon
-  painter.drawImage(
-    remainingDistanceIconPos.x(),
-    remainingDistanceIconPos.y() + scaledTimeToGoalFlag.height() / 2.0, scaledTimeToGoalFlag);
-
-  // Calculate remaining minutes and seconds
-  double remaining_time_mod = std::fmod(remaining_time_, 3600);
-  uint8_t remaining_minutes = static_cast<uint8_t>(remaining_time_mod / 60.0);
-  uint8_t remaining_seconds = static_cast<uint8_t>(std::fmod(remaining_time_mod, 60));
-
-  // Remaining minutes value
-  QString remainingminutesValue =
-    QString::number(remaining_minutes != 0 ? remaining_minutes : 0, 'f', 0);
-  QPointF remainingminutesValuePos(
-    remainingTimeReferencePos.x() + 55, remainingTimeReferencePos.y());
-  painter.setPen(gray);
-  if (remaining_minutes > 0) painter.drawText(remainingminutesValuePos, remainingminutesValue);
-  // Remaining minutes separator
-  QString minutesSeparatorText = "m";
-  QPointF minutesSeparatorTextPos(
-    remainingTimeReferencePos.x() + 80, remainingTimeReferencePos.y());
-  if (remaining_minutes > 0) painter.drawText(minutesSeparatorTextPos, minutesSeparatorText);
-
-  // Remaining seconds value
-  QString remainingsecondsValue =
-    QString::number(remaining_seconds != 0 ? remaining_seconds : 0, 'f', 0);
-  QPointF remainingsecondValuePos(
-    remainingTimeReferencePos.x() + 55, remainingTimeReferencePos.y());
-  painter.setPen(gray);
-  if (remaining_minutes <= 0) painter.drawText(remainingsecondValuePos, remainingsecondsValue);
-
-  // Remaining seconds separator
-  QString secondsSeparatorText = "s";
-  QPointF secondsSeparatorTextPos(
-    remainingTimeReferencePos.x() + 80, remainingTimeReferencePos.y());
-  if (remaining_minutes <= 0) painter.drawText(secondsSeparatorTextPos, secondsSeparatorText);
+  // remaining_distance_ is in meters
+  if (remaining_distance_ <= 10) {
+    place_row(rect_dist, icon_dist_scaled_, QString::number(remaining_distance_, 'f', 1), "m");
+  } else if (remaining_distance_ <= 1000) {
+    place_row(rect_dist, icon_dist_scaled_, QString::number(remaining_distance_, 'f', 0), "m");
+  } else if (remaining_distance_ <= 10000) {
+    place_row(
+      rect_dist, icon_dist_scaled_, QString::number(remaining_distance_ / 1000.0, 'f', 2), "km");
+  } else if (remaining_distance_ <= 100000) {
+    place_row(
+      rect_dist, icon_dist_scaled_, QString::number(remaining_distance_ / 1000.0, 'f', 1), "km");
+  } else {
+    place_row(
+      rect_dist, icon_dist_scaled_, QString::number(remaining_distance_ / 1000.0, 'f', 0), "km");
+  }
 }
 
 }  // namespace autoware::mission_details_overlay_rviz_plugin

@@ -93,8 +93,12 @@ MissionDetailsDisplay::~MissionDetailsDisplay()
   remaining_distance_time_topic_property_.reset();
 }
 
-void MissionDetailsDisplay::update(float /* wall_dt */, float /* ros_dt */)
+// mark maybe unused
+void MissionDetailsDisplay::update(float wall_dt, float ros_dt)
 {
+  (void)wall_dt;  // Mark as unused
+  (void)ros_dt;   // Mark as unused
+
   if (!overlay_) {
     return;
   }
@@ -146,7 +150,7 @@ void MissionDetailsDisplay::drawWidget(QImage & hud)
   QPainter painter(&hud);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  QRectF backgroundRect(0, 0, 225, 100);
+  QRectF backgroundRect(0, 0, 170, 100);
   drawHorizontalRoundedRectangle(painter, backgroundRect);
 
   if (remaining_distance_time_display_) {

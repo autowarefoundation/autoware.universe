@@ -46,10 +46,10 @@ private:
 
   QColor gray = QColor(194, 194, 194);
 
-  QImage distToGoalFlag;
-  QImage scaledDistToGoalFlag;
-  QImage timeToGoalFlag;
-  QImage scaledTimeToGoalFlag;
+  QImage icon_dist_;
+  QImage icon_dist_scaled_;
+  QImage icon_time_;
+  QImage icon_time_scaled_;
 };
 
 }  // namespace autoware::mission_details_overlay_rviz_plugin
