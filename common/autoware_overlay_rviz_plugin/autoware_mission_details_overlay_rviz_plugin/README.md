@@ -44,5 +44,5 @@ Similar to [autoware_overlay_rviz_plugin](../autoware_overlay_rviz_plugin/README
 
 ### Icons
 
-- https://fonts.google.com/icons?selected=Material+Symbols+Outlined:conversion_path:FILL@1;wght@400;GRAD@200;opsz@20&icon.size=20&icon.color=%23e8eaed&icon.query=path
-- https://fonts.google.com/icons?selected=Material+Symbols+Outlined:av_timer:FILL@1;wght@400;GRAD@200;opsz@20&icon.size=20&icon.color=%23e8eaed&icon.query=av+timer
+- <https://fonts.google.com/icons?selected=Material+Symbols+Outlined:conversion_path:FILL@1;wght@400;GRAD@200;opsz@20&icon.size=20&icon.color=%23e8eaed&icon.query=path>
+- <https://fonts.google.com/icons?selected=Material+Symbols+Outlined:av_timer:FILL@1;wght@400;GRAD@200;opsz@20&icon.size=20&icon.color=%23e8eaed&icon.query=av+timer>
