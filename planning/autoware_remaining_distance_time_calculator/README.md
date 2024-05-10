@@ -1,4 +1,4 @@
-## Mission Remaining Distance and Time Calculator
+## Remaining Distance and Time Calculator
 
 ### Role
 

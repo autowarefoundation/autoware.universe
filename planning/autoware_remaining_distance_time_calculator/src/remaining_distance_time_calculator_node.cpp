@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mission_remaining_distance_time_calculator/mission_remaining_distance_time_calculator_node.hpp"
+#include "remaining_distance_time_calculator_node.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -27,43 +27,43 @@
 #include <string>
 #include <utility>
 
-namespace mission_remaining_distance_time_calculator
+namespace autoware::remaining_distance_time_calculator
 {
 
-MissionRemainingDistanceTimeCalculatorNode::MissionRemainingDistanceTimeCalculatorNode(
+RemainingDistanceTimeCalculatorNode::RemainingDistanceTimeCalculatorNode(
   const rclcpp::NodeOptions & options)
-: Node("mission_remaining_distance_time_calculator", options)
+: Node("remaining_distance_time_calculator", options),
+  is_graph_ready_{false},
+  has_received_route_{false}
 {
   using std::placeholders::_1;
 
-  odometry_subscriber_ = create_subscription<Odometry>(
+  sub_odometry_ = create_subscription<Odometry>(
     "~/input/odometry", 1,
-    std::bind(&MissionRemainingDistanceTimeCalculatorNode::onOdometry, this, _1));
+    std::bind(&RemainingDistanceTimeCalculatorNode::on_odometry, this, _1));
 
   const auto qos_transient_local = rclcpp::QoS{1}.transient_local();
 
-  map_subscriber_ = create_subscription<HADMapBin>(
+  sub_map_ = create_subscription<HADMapBin>(
     "~/input/map", qos_transient_local,
-    std::bind(&MissionRemainingDistanceTimeCalculatorNode::onMap, this, _1));
-  route_subscriber_ = create_subscription<LaneletRoute>(
+    std::bind(&RemainingDistanceTimeCalculatorNode::on_map, this, _1));
+  sub_route_ = create_subscription<LaneletRoute>(
     "~/input/route", qos_transient_local,
-    std::bind(&MissionRemainingDistanceTimeCalculatorNode::onRoute, this, _1));
+    std::bind(&RemainingDistanceTimeCalculatorNode::on_route, this, _1));
 
-  mission_remaining_distance_time_publisher_ = create_publisher<MissionRemainingDistanceTime>(
+  pub_mission_remaining_distance_time_ = create_publisher<MissionRemainingDistanceTime>(
     "~/output/mission_remaining_distance_time",
     rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable());
 
-  // Node Parameter
-  node_param_.update_rate = declare_parameter<double>("update_rate", 10.0);
+  node_param_.update_rate = declare_parameter<double>("update_rate");
 
-  // Timer
   const auto period_ns = rclcpp::Rate(node_param_.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns,
-    std::bind(&MissionRemainingDistanceTimeCalculatorNode::onTimer, this));
+    std::bind(&RemainingDistanceTimeCalculatorNode::on_timer, this));
 }
 
-void MissionRemainingDistanceTimeCalculatorNode::onMap(const HADMapBin::ConstSharedPtr msg)
+void RemainingDistanceTimeCalculatorNode::on_map(const HADMapBin::ConstSharedPtr& msg)
 {
   route_handler_.setMap(*msg);
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
@@ -74,27 +74,28 @@ void MissionRemainingDistanceTimeCalculatorNode::onMap(const HADMapBin::ConstSha
   is_graph_ready_ = true;
 }
 
-void MissionRemainingDistanceTimeCalculatorNode::onOdometry(const Odometry::ConstSharedPtr msg)
+void RemainingDistanceTimeCalculatorNode::on_odometry(const Odometry::ConstSharedPtr& msg)
 {
   current_vehicle_pose_ = msg->pose.pose;
   current_vehicle_velocity_ = msg->twist.twist.linear;
 }
 
-void MissionRemainingDistanceTimeCalculatorNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
+void RemainingDistanceTimeCalculatorNode::on_route(const LaneletRoute::ConstSharedPtr& msg)
 {
   goal_pose_ = msg->goal_pose;
   has_received_route_ = true;
 }
 
-void MissionRemainingDistanceTimeCalculatorNode::onTimer()
+void RemainingDistanceTimeCalculatorNode::on_timer()
 {
   if (is_graph_ready_ && has_received_route_) {
-    double remaining_distance = calcuateMissionRemainingDistance();
-    double remaining_time = calcuateMissionRemainingTime(remaining_distance);
-    publishMissionRemainingDistanceTime(remaining_distance, remaining_time);
+    double remaining_distance = calculate_remaining_distance();
+    double remaining_time = calculate_remaining_time(remaining_distance);
+    publish_mission_remaining_distance_time(remaining_distance, remaining_time);
   }
 }
-double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingDistance() const
+
+double RemainingDistanceTimeCalculatorNode::calculate_remaining_distance() const
 {
   double remaining_distance = 0.0;
   size_t index = 0;
@@ -136,7 +137,7 @@ double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingDista
   return remaining_distance;
 }
 
-double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingTime(
+double RemainingDistanceTimeCalculatorNode::calculate_remaining_time(
   const double remaining_distance) const
 {
   double current_velocity_norm = std::sqrt(
@@ -152,18 +153,18 @@ double MissionRemainingDistanceTimeCalculatorNode::calcuateMissionRemainingTime(
   return remaining_time;
 }
 
-void MissionRemainingDistanceTimeCalculatorNode::publishMissionRemainingDistanceTime(
+void RemainingDistanceTimeCalculatorNode::publish_mission_remaining_distance_time(
   const double remaining_distance, const double remaining_time) const
 {
   MissionRemainingDistanceTime mission_remaining_distance_time;
 
   mission_remaining_distance_time.remaining_distance = remaining_distance;
   mission_remaining_distance_time.remaining_time = remaining_time;
-  mission_remaining_distance_time_publisher_->publish(mission_remaining_distance_time);
+  pub_mission_remaining_distance_time_->publish(mission_remaining_distance_time);
 }
 
-}  // namespace mission_remaining_distance_time_calculator
+}  // autoware::namespace mission_remaining_distance_time_calculator
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  mission_remaining_distance_time_calculator::MissionRemainingDistanceTimeCalculatorNode)
+  autoware::remaining_distance_time_calculator::RemainingDistanceTimeCalculatorNode)

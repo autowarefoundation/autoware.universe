@@ -15,9 +15,6 @@
 #ifndef MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
 #define MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
 
-// #include
-// "mission_remaining_distance_time_calculator/mission_remaining_distance_time_calculator.hpp"
-
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 
@@ -37,9 +34,8 @@
 
 #include <memory>
 
-namespace mission_remaining_distance_time_calculator
+namespace autoware::remaining_distance_time_calculator
 {
-
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_internal_msgs::msg::MissionRemainingDistanceTime;
 using autoware_planning_msgs::msg::LaneletRoute;
@@ -52,52 +48,26 @@ struct NodeParam
   double update_rate{0.0};
 };
 
-class MissionRemainingDistanceTimeCalculatorNode : public rclcpp::Node
+class RemainingDistanceTimeCalculatorNode : public rclcpp::Node
 {
 public:
-  explicit MissionRemainingDistanceTimeCalculatorNode(const rclcpp::NodeOptions & options);
+  explicit RemainingDistanceTimeCalculatorNode(const rclcpp::NodeOptions & options);
 
 private:
-  // Subscriber
-  rclcpp::Subscription<LaneletRoute>::SharedPtr route_subscriber_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr map_subscriber_;
-  rclcpp::Subscription<Odometry>::SharedPtr odometry_subscriber_;
+  rclcpp::Subscription<LaneletRoute>::SharedPtr sub_route_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
 
-  // Publisher
-  rclcpp::Publisher<MissionRemainingDistanceTime>::SharedPtr
-    mission_remaining_distance_time_publisher_;
+  rclcpp::Publisher<MissionRemainingDistanceTime>::SharedPtr pub_mission_remaining_distance_time_;
 
-  // Timer
   rclcpp::TimerBase::SharedPtr timer_;
 
-  // Route Handler
   route_handler::RouteHandler route_handler_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
   lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
   lanelet::ConstLanelets road_lanelets_;
   bool is_graph_ready_;
-
-  // Callback
-  void onTimer();
-  void onOdometry(const Odometry::ConstSharedPtr msg);
-  void onRoute(const LaneletRoute::ConstSharedPtr msg);
-  void onMap(const HADMapBin::ConstSharedPtr msg);
-
-  // Calculate and publish methods
-  /**
-   * @brief calculate mission remaining distance
-   */
-  double calcuateMissionRemainingDistance() const;
-  /**
-   * @brief calculate mission remaining time
-   */
-  double calcuateMissionRemainingTime(const double remaining_distance) const;
-  /**
-   * @brief publish mission remaining distance and time
-   */
-  void publishMissionRemainingDistanceTime(
-    const double remaining_distance, const double remaining_time) const;
 
   // Data Buffer
   Pose current_vehicle_pose_;
@@ -107,6 +77,28 @@ private:
 
   // Parameter
   NodeParam node_param_;
+
+  // Callbacks
+  void on_timer();
+  void on_odometry(const Odometry::ConstSharedPtr& msg);
+  void on_route(const LaneletRoute::ConstSharedPtr& msg);
+  void on_map(const HADMapBin::ConstSharedPtr& msg);
+
+  /**
+   * @brief calculate mission remaining distance
+   */
+  double calculate_remaining_distance() const;
+
+  /**
+   * @brief calculate mission remaining time
+   */
+  double calculate_remaining_time(double remaining_distance) const;
+
+  /**
+   * @brief publish mission remaining distance and time
+   */
+  void publish_mission_remaining_distance_time(
+    double remaining_distance, double remaining_time) const;
 };
-}  // namespace mission_remaining_distance_time_calculator
+}  // namespace autoware::remaining_distance_time_calculator
 #endif  // MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_

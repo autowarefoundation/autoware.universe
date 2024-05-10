@@ -57,6 +57,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <exec_depend>autoware_remaining_distance_time_calculator</exec_depend>
   <exec_depend>behavior_path_planner</exec_depend>
   <exec_depend>behavior_velocity_planner</exec_depend>
   <exec_depend>costmap_generator</exec_depend>
@@ -65,7 +66,6 @@
   <exec_depend>freespace_planner</exec_depend>
   <exec_depend>glog_component</exec_depend>
   <exec_depend>mission_planner</exec_depend>
-  <exec_depend>mission_remaining_distance_time_calculator</exec_depend>
   <exec_depend>motion_velocity_smoother</exec_depend>
   <exec_depend>obstacle_avoidance_planner</exec_depend>
   <exec_depend>obstacle_cruise_planner</exec_depend>
