@@ -17,17 +17,9 @@
 #include <QFontDatabase>
 #include <QPainter>
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <rviz_rendering/render_system.hpp>
 
-#include <OgreHardwarePixelBuffer.h>
-#include <OgreMaterialManager.h>
-#include <OgreTechnique.h>
-#include <OgreTexture.h>
-#include <OgreTextureManager.h>
-#include <qchar.h>
 #include <qpoint.h>
 
-#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <memory>
@@ -65,13 +57,8 @@ RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
 void RemainingDistanceTimeDisplay::updateRemainingDistanceTimeData(
   const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg)
 {
-  try {
-    remaining_distance_ = msg->remaining_distance;
-    remaining_time_ = msg->remaining_time;
-  } catch (const std::exception & e) {
-    // Log the error
-    std::cerr << "Error in processMessage: " << e.what() << std::endl;
-  }
+  remaining_distance_ = msg->remaining_distance;
+  remaining_time_ = msg->remaining_time;
 }
 
 void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(

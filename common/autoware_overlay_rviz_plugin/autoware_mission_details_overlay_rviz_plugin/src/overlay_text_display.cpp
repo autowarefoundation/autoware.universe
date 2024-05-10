@@ -60,10 +60,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
-#include <OgreHardwarePixelBuffer.h>
-#include <OgreMaterialManager.h>
-#include <OgreTexture.h>
-
 #include <regex>
 #include <sstream>
 

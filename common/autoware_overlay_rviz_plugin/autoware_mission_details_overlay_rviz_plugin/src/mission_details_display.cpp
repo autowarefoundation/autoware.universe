@@ -20,14 +20,7 @@
 #include <rviz_common/properties/ros_topic_property.hpp>
 #include <rviz_rendering/render_system.hpp>
 
-#include <OgreHardwarePixelBuffer.h>
-#include <OgreMaterialManager.h>
-#include <OgreTechnique.h>
-#include <OgreTexture.h>
-#include <OgreTextureManager.h>
-
 #include <algorithm>
-#include <cmath>
 #include <iomanip>
 #include <memory>
 #include <mutex>
