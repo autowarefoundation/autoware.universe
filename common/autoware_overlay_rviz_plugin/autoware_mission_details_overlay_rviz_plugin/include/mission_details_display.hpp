@@ -51,9 +51,7 @@ protected:
   void onDisable() override;
 
 private Q_SLOTS:
-  void updateOverlaySize();
-  void updateSmallOverlaySize();
-  void updateOverlayColor();
+  void update_size();
   void topic_updated_remaining_distance_time();
 
 private:
@@ -66,8 +64,7 @@ private:
   std::unique_ptr<rviz_common::properties::RosTopicProperty>
     remaining_distance_time_topic_property_;
 
-  void drawHorizontalRoundedRectangle(QPainter & painter, const QRectF & backgroundRect);
-  void drawVerticalRoundedRectangle(QPainter & painter, const QRectF & backgroundRect);
+  void draw_rounded_rect(QPainter & painter, const QRectF & backgroundRect);
   void setupRosSubscriptions();
 
   std::unique_ptr<RemainingDistanceTimeDisplay> remaining_distance_time_display_;
@@ -77,9 +74,9 @@ private:
 
   std::mutex property_mutex_;
 
-  void updateRemainingDistanceTimeData(
+  void cb_remaining_distance_time(
     const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
-  void drawWidget(QImage & hud);
+  void draw_widget(QImage & hud);
 };
 }  // namespace autoware::mission_details_overlay_rviz_plugin
 

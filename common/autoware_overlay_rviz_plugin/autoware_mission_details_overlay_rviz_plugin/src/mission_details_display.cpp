@@ -16,6 +16,7 @@
 
 #include <QFontDatabase>
 #include <QPainter>
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/properties/ros_topic_property.hpp>
 #include <rviz_rendering/render_system.hpp>
@@ -32,13 +33,13 @@ namespace autoware::mission_details_overlay_rviz_plugin
 MissionDetailsDisplay::MissionDetailsDisplay()
 {
   property_width_ = new rviz_common::properties::IntProperty(
-    "Width", 170, "Width of the overlay", this, SLOT(updateOverlaySize()));
+    "Width", 170, "Width of the overlay", this, SLOT(update_size()));
   property_height_ = new rviz_common::properties::IntProperty(
-    "Height", 100, "Height of the overlay", this, SLOT(updateOverlaySize()));
+    "Height", 100, "Height of the overlay", this, SLOT(update_size()));
   property_right_ = new rviz_common::properties::IntProperty(
-    "Right", 10, "Margin from the right border", this, SLOT(updateOverlaySize()));
+    "Right", 10, "Margin from the right border", this, SLOT(update_size()));
   property_top_ = new rviz_common::properties::IntProperty(
-    "Top", 10, "Margin from the top border", this, SLOT(updateOverlaySize()));
+    "Top", 10, "Margin from the top border", this, SLOT(update_size()));
 
   // Initialize the component displays
   remaining_distance_time_display_ = std::make_unique<RemainingDistanceTimeDisplay>();
@@ -53,9 +54,9 @@ void MissionDetailsDisplay::onInitialize()
   static int count = 0;
   std::stringstream ss;
   ss << "MissionDetailsDisplay" << count++;
-  overlay_.reset(new autoware::mission_details_overlay_rviz_plugin::OverlayObject(ss.str()));
+  overlay_ = std::make_shared<autoware::mission_details_overlay_rviz_plugin::OverlayObject>(ss.str());
   overlay_->show();
-  updateOverlaySize();
+  update_size();
 
   auto rviz_ros_node = context_->getRosNodeAbstraction();
 
@@ -78,7 +79,7 @@ void MissionDetailsDisplay::setupRosSubscriptions()
       remaining_distance_time_topic_property_->getTopicStd(),
       rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
       [this](const autoware_internal_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
-        updateRemainingDistanceTimeData(msg);
+        cb_remaining_distance_time(msg);
       });
 }
 
@@ -104,7 +105,7 @@ void MissionDetailsDisplay::update(float wall_dt, float ros_dt)
   autoware::mission_details_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
   QImage hud = buffer.getQImage(*overlay_);
   hud.fill(Qt::transparent);
-  drawWidget(hud);
+  draw_widget(hud);
 }
 
 void MissionDetailsDisplay::onEnable()
@@ -127,7 +128,7 @@ void MissionDetailsDisplay::onDisable()
   }
 }
 
-void MissionDetailsDisplay::updateRemainingDistanceTimeData(
+void MissionDetailsDisplay::cb_remaining_distance_time(
   const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg)
 {
   std::lock_guard<std::mutex> lock(property_mutex_);
@@ -138,7 +139,7 @@ void MissionDetailsDisplay::updateRemainingDistanceTimeData(
   }
 }
 
-void MissionDetailsDisplay::drawWidget(QImage & hud)
+void MissionDetailsDisplay::draw_widget(QImage & hud)
 {
   std::lock_guard<std::mutex> lock(property_mutex_);
 
@@ -150,7 +151,7 @@ void MissionDetailsDisplay::drawWidget(QImage & hud)
   painter.setRenderHint(QPainter::Antialiasing, true);
 
   QRectF backgroundRect(0, 0, qreal(property_width_->getInt()), qreal(property_height_->getInt()));
-  drawHorizontalRoundedRectangle(painter, backgroundRect);
+  draw_rounded_rect(painter, backgroundRect);
 
   if (remaining_distance_time_display_) {
     remaining_distance_time_display_->drawRemainingDistanceTimeDisplay(painter, backgroundRect);
@@ -159,33 +160,18 @@ void MissionDetailsDisplay::drawWidget(QImage & hud)
   painter.end();
 }
 
-void MissionDetailsDisplay::drawHorizontalRoundedRectangle(
+void MissionDetailsDisplay::draw_rounded_rect(
   QPainter & painter, const QRectF & backgroundRect)
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
-  colorFromHSV.setHsv(0, 0, 29);  // Hue, Saturation, Value
-  colorFromHSV.setAlphaF(0.60);   // Transparency
+  colorFromHSV.setHsv(0, 0, 29);
+  colorFromHSV.setAlphaF(0.60);
 
   painter.setBrush(colorFromHSV);
 
   painter.setPen(Qt::NoPen);
-  painter.drawRoundedRect(
-    backgroundRect, backgroundRect.height() / 2, backgroundRect.height() / 2);  // Circular ends
-}
-void MissionDetailsDisplay::drawVerticalRoundedRectangle(
-  QPainter & painter, const QRectF & backgroundRect)
-{
-  painter.setRenderHint(QPainter::Antialiasing, true);
-  QColor colorFromHSV;
-  colorFromHSV.setHsv(0, 0, 0);  // Hue, Saturation, Value
-  colorFromHSV.setAlphaF(0.65);  // Transparency
-
-  painter.setBrush(colorFromHSV);
-
-  painter.setPen(Qt::NoPen);
-  painter.drawRoundedRect(
-    backgroundRect, backgroundRect.width() / 2, backgroundRect.width() / 2);  // Circular ends
+  painter.drawRoundedRect(backgroundRect, backgroundRect.height() / 2, backgroundRect.height() / 2);
 }
 
 void MissionDetailsDisplay::reset()
@@ -194,7 +180,7 @@ void MissionDetailsDisplay::reset()
   overlay_->hide();
 }
 
-void MissionDetailsDisplay::updateOverlaySize()
+void MissionDetailsDisplay::update_size()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   overlay_->updateTextureSize(property_width_->getInt(), property_height_->getInt());
@@ -202,12 +188,6 @@ void MissionDetailsDisplay::updateOverlaySize()
   overlay_->setPosition(
     property_right_->getInt(), property_top_->getInt(), HorizontalAlignment::RIGHT,
     VerticalAlignment::TOP);
-  queueRender();
-}
-
-void MissionDetailsDisplay::updateOverlayColor()
-{
-  std::lock_guard<std::mutex> lock(mutex_);
   queueRender();
 }
 
@@ -222,7 +202,7 @@ void MissionDetailsDisplay::topic_updated_remaining_distance_time()
         remaining_distance_time_topic_property_->getTopicStd(),
         rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable(),
         [this](const autoware_internal_msgs::msg::MissionRemainingDistanceTime::SharedPtr msg) {
-          updateRemainingDistanceTimeData(msg);
+          cb_remaining_distance_time(msg);
         });
 }
 

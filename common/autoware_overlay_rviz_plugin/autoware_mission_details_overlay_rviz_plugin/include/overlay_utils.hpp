@@ -87,17 +87,9 @@ protected:
   Ogre::HardwarePixelBufferSharedPtr pixel_buffer_;
 };
 
-enum class VerticalAlignment : uint8_t {
-  CENTER,
-  TOP,
-  BOTTOM
-};
+enum class VerticalAlignment : uint8_t { CENTER, TOP, BOTTOM };
 
-enum class HorizontalAlignment : uint8_t {
-  LEFT,
-  RIGHT,
-  CENTER
-};
+enum class HorizontalAlignment : uint8_t { LEFT, RIGHT, CENTER };
 
 /**
  * Helper class for realizing an overlay object on top of the rviz 3D panel.
