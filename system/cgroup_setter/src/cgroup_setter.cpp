@@ -84,7 +84,7 @@ void CgroupSetter::checkCgroup(diagnostic_updater::DiagnosticStatusWrapper & sta
         }
     }
     if (allOK) {
-        if (timer_->is_active()) timer->cancel();
+        timer_->cancel();
         stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "All processes are added to cgroup.");
     } else {
         stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Some processes are not added to cgroup.");
