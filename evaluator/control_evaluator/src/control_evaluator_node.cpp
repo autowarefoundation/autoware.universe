@@ -32,8 +32,13 @@ controlEvaluatorNode::controlEvaluatorNode(const rclcpp::NodeOptions & node_opti
   control_diag_sub_ = create_subscription<DiagnosticArray>(
     "~/input/diagnostics", 1, std::bind(&controlEvaluatorNode::onDiagnostics, this, _1));
 
-  // List of metrics to calculate and publish
+  // Publisher
   metrics_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
+
+  // Timer callback to publish evaluator diagnostics
+  using namespace std::literals::chrono_literals;
+  timer_ =
+    rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&controlEvaluatorNode::onTimer, this));
 }
 
 DiagnosticStatus controlEvaluatorNode::generateDiagnosticStatus(const bool is_emergency_brake) const
@@ -48,6 +53,14 @@ DiagnosticStatus controlEvaluatorNode::generateDiagnosticStatus(const bool is_em
   return status;
 }
 
+void controlEvaluatorNode::onTimer()
+{
+  if (!metrics_msg_.status.empty()) {
+    metrics_pub_->publish(metrics_msg_);
+    metrics_msg_.status.clear();
+  }
+}
+
 void controlEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg)
 {
   const auto start = now();
@@ -60,13 +73,9 @@ void controlEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr d
   if (aeb_status == diag_msg->status.end()) return;
 
   const bool is_emergency_brake = (aeb_status->level == DiagnosticStatus::ERROR);
-  DiagnosticArray metrics_msg;
-  metrics_msg.header.stamp = now();
-  metrics_msg.status.emplace_back(generateDiagnosticStatus(is_emergency_brake));
+  metrics_msg_.header.stamp = now();
+  metrics_msg_.status.emplace_back(generateDiagnosticStatus(is_emergency_brake));
 
-  if (!metrics_msg.status.empty()) {
-    metrics_pub_->publish(metrics_msg);
-  }
   const auto runtime = (now() - start).seconds();
   RCLCPP_DEBUG(get_logger(), "control evaluation calculation time: %2.2f ms", runtime * 1e3);
 }

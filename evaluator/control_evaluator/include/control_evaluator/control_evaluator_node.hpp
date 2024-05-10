@@ -44,6 +44,7 @@ public:
    */
   DiagnosticStatus generateDiagnosticStatus(const bool is_emergency_brake) const;
   void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
+  void onTimer();
 
 private:
   rclcpp::Subscription<DiagnosticArray>::SharedPtr control_diag_sub_;
@@ -52,6 +53,8 @@ private:
   // Calculator
   // Metrics
   std::deque<rclcpp::Time> stamps_;
+  DiagnosticArray metrics_msg_;
+  rclcpp::TimerBase::SharedPtr timer_;
 };
 }  // namespace control_diagnostics
 
