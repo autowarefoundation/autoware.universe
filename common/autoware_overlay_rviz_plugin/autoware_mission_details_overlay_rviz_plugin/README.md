@@ -48,3 +48,10 @@ TBD.
 3. Enter the names of the topics if necessary `/planning/mission_remaining_distance_time`.
 
    ![select_topic_name](./assets/images/select_topic_name.png)
+
+## Credits
+
+### Icons
+
+- https://fonts.google.com/icons?selected=Material+Symbols+Outlined:conversion_path:FILL@1;wght@400;GRAD@200;opsz@20&icon.size=20&icon.color=%23e8eaed&icon.query=path
+- https://fonts.google.com/icons?selected=Material+Symbols+Outlined:av_timer:FILL@1;wght@400;GRAD@200;opsz@20&icon.size=20&icon.color=%23e8eaed&icon.query=av+timer
