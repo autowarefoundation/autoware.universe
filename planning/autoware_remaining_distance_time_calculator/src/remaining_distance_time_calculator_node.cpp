@@ -93,7 +93,6 @@ void RemainingDistanceTimeCalculatorNode::on_route(const LaneletRoute::ConstShar
 void RemainingDistanceTimeCalculatorNode::on_velocity_limit(
   const VelocityLimit::ConstSharedPtr& msg)
 {
-  // store the velocity for releasing the stop
   if (msg->max_velocity > 1e-5) {
     velocity_limit_ = msg->max_velocity;
   }
