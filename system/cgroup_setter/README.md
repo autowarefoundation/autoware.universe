@@ -70,6 +70,10 @@ settings:
     search_word: "__node:=system_monitor_container" # ["__node:=system_monitor_container"] or - "__node:=system_monitor_container"
 ```
 
+#### Notes
+
+- Write permission is required for a custom cgroup, and /sys/fs/cgroup/cgroup.procs to attach a PID to the cgroup.
+- A PID cannot be attached to a cgroup that has a small group.（only leaf cgroups）
 
 ## Assumptions / Known limits
 
