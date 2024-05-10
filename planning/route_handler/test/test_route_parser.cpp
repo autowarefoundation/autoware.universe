@@ -130,9 +130,4 @@ TEST(ParseFunction, CompleteFromFilename)
   EXPECT_EQ(segment1.primitives[3].id, 88);
   EXPECT_EQ(segment1.primitives[3].primitive_type, "lane");
 }
-int main(int argc, char ** argv)
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
 }  // namespace route_handler::test

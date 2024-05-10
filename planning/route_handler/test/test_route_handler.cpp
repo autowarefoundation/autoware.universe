@@ -32,12 +32,17 @@ TEST_F(TestRouteHandler, isRouteHandlerReadyTest)
   ASSERT_TRUE(route_handler_->isHandlerReady());
 }
 
-int main(int argc, char * argv[])
+TEST_F(TestRouteHandler, checkIfIDReturned)
 {
-  testing::InitGoogleTest(&argc, argv);
-  rclcpp::init(argc, argv);
-  bool result = RUN_ALL_TESTS();
-  rclcpp::shutdown();
-  return result;
+  const auto planning_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("route_handler");
+  const auto rh_test_route = planning_test_utils_dir + "/test_route/rh_test.route";
+
+  route_handler_->setRoute(parse_route_file(rh_test_route));
+  const auto lanelet = route_handler_->getLaneletsFromId(4870);
+
+  const auto is_in_goal_route_section = route_handler_->isInGoalRouteSection(lanelet);
+
+  ASSERT_TRUE(is_in_goal_route_section);
 }
 }  // namespace route_handler::test
