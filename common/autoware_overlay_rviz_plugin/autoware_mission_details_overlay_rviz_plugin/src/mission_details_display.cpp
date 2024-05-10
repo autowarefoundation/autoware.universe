@@ -32,13 +32,13 @@ namespace autoware::mission_details_overlay_rviz_plugin
 MissionDetailsDisplay::MissionDetailsDisplay()
 {
   property_width_ = new rviz_common::properties::IntProperty(
-    "Width", 225, "Width of the overlay", this, SLOT(updateOverlaySize()));
+    "Width", 170, "Width of the overlay", this, SLOT(updateOverlaySize()));
   property_height_ = new rviz_common::properties::IntProperty(
     "Height", 100, "Height of the overlay", this, SLOT(updateOverlaySize()));
-  property_left_ = new rviz_common::properties::IntProperty(
-    "Left", 10, "Left position of the overlay", this, SLOT(updateOverlayPosition()));
+  property_right_ = new rviz_common::properties::IntProperty(
+    "Right", 10, "Margin from the right border", this, SLOT(updateOverlaySize()));
   property_top_ = new rviz_common::properties::IntProperty(
-    "Top", 10, "Top position of the overlay", this, SLOT(updateOverlayPosition()));
+    "Top", 10, "Margin from the top border", this, SLOT(updateOverlaySize()));
 
   // Initialize the component displays
   remaining_distance_time_display_ = std::make_unique<RemainingDistanceTimeDisplay>();
@@ -56,7 +56,6 @@ void MissionDetailsDisplay::onInitialize()
   overlay_.reset(new autoware::mission_details_overlay_rviz_plugin::OverlayObject(ss.str()));
   overlay_->show();
   updateOverlaySize();
-  updateOverlayPosition();
 
   auto rviz_ros_node = context_->getRosNodeAbstraction();
 
@@ -150,7 +149,7 @@ void MissionDetailsDisplay::drawWidget(QImage & hud)
   QPainter painter(&hud);
   painter.setRenderHint(QPainter::Antialiasing, true);
 
-  QRectF backgroundRect(0, 0, 170, 100);
+  QRectF backgroundRect(0, 0, qreal(property_width_->getInt()), qreal(property_height_->getInt()));
   drawHorizontalRoundedRectangle(painter, backgroundRect);
 
   if (remaining_distance_time_display_) {
@@ -200,14 +199,8 @@ void MissionDetailsDisplay::updateOverlaySize()
   std::lock_guard<std::mutex> lock(mutex_);
   overlay_->updateTextureSize(property_width_->getInt(), property_height_->getInt());
   overlay_->setDimensions(overlay_->getTextureWidth(), overlay_->getTextureHeight());
-  queueRender();
-}
-
-void MissionDetailsDisplay::updateOverlayPosition()
-{
-  std::lock_guard<std::mutex> lock(mutex_);
   overlay_->setPosition(
-    property_left_->getInt(), property_top_->getInt(), HorizontalAlignment::RIGHT,
+    property_right_->getInt(), property_top_->getInt(), HorizontalAlignment::RIGHT,
     VerticalAlignment::TOP);
   queueRender();
 }

@@ -1,46 +1,33 @@
 # autoware_mission_details_overlay_rviz_plugin
 
-Plugin for displaying 2D overlays over the RViz2 3D scene for mission details (such as remaining distance and time).
-
-Based on the [jsk_visualization](https://github.com/jsk-ros-pkg/jsk_visualization)
-package, under the 3-Clause BSD license.
-
-## Purpose
-
-This plugin provides a visual and easy-to-understand display of mission details (remaining distance and time)
+This RViz plugin displays the remaining distance and time for the current mission.
 
 ## Inputs / Outputs
 
 ### Input
 
-| Name                                        | Type                                                        | Description                                               |
-| ------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
-| `/planning/mission_remaining_distance_time` | `autoware_planning_msgs::msg::MissionRemainingDistanceTime` | The topic is for mission remaining distance and time Data |
+| Name                                        | Type                                                        | Description                                          |
+|---------------------------------------------|-------------------------------------------------------------|------------------------------------------------------|
+| `/planning/mission_remaining_distance_time` | `autoware_planning_msgs::msg::MissionRemainingDistanceTime` | The topic is for mission remaining distance and time |
 
-## Parameter
+## Overlay Parameters
 
-### Core Parameters
+| Name     | Type | Default Value | Description                       |
+|----------|------|---------------|-----------------------------------|
+| `Width`  | int  | 170           | Width of the overlay [px]         |
+| `Height` | int  | 100           | Height of the overlay [px]        |
+| `Right`  | int  | 10            | Margin from the right border [px] |
+| `Top`    | int  | 10            | Margin from the top border [px]   |
 
-#### SignalDisplay
-
-| Name               | Type | Default Value | Description                       |
-| ------------------ | ---- | ------------- | --------------------------------- |
-| `property_width_`  | int  | 225           | Width of the plotter window [px]  |
-| `property_height_` | int  | 100           | Height of the plotter window [px] |
-| `property_left_`   | int  | 10            | Left of the plotter window [px]   |
-| `property_top_`    | int  | 10            | Top of the plotter window [px]    |
-
-Note that mission details display is aligned with top right corner of the screen.
-
-## Assumptions / Known limits
-
-TBD.
+The mission details display is aligned with top right corner of the screen.
 
 ## Usage
 
 Similar to [autoware_overlay_rviz_plugin](../autoware_overlay_rviz_plugin/README.md)
 
 ## Credits
+
+Based on the [jsk_visualization](https://github.com/jsk-ros-pkg/jsk_visualization) package.
 
 ### Icons
 

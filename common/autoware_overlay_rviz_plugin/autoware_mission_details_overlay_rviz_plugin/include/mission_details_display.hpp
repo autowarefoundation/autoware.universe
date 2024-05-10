@@ -53,7 +53,6 @@ protected:
 private Q_SLOTS:
   void updateOverlaySize();
   void updateSmallOverlaySize();
-  void updateOverlayPosition();
   void updateOverlayColor();
   void topic_updated_remaining_distance_time();
 
@@ -62,7 +61,7 @@ private:
   autoware::mission_details_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
   rviz_common::properties::IntProperty * property_width_;
   rviz_common::properties::IntProperty * property_height_;
-  rviz_common::properties::IntProperty * property_left_;
+  rviz_common::properties::IntProperty * property_right_;
   rviz_common::properties::IntProperty * property_top_;
   std::unique_ptr<rviz_common::properties::RosTopicProperty>
     remaining_distance_time_topic_property_;
