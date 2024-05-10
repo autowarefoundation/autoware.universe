@@ -19,6 +19,7 @@
 
 #include "autoware_adapi_v1_msgs/msg/planning_behavior.hpp"
 #include "autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp"
+#include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
@@ -38,6 +39,7 @@
 using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::VelocityFactor;
 using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
+using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;

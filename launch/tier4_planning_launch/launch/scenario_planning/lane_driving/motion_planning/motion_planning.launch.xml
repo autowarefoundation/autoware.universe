@@ -125,6 +125,7 @@
           <remap from="~/input/odometry" to="/localization/kinematic_state"/>
           <remap from="~/input/acceleration" to="/localization/acceleration"/>
           <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
+          <remap from="~/input/vector_map" to="/map/vector_map"/>
           <remap from="~/output/trajectory" to="$(var interface_output_topic)"/>
           <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons"/>
           <remap from="~/output/velocity_limit" to="/planning/scenario_planning/max_velocity_candidates"/>
@@ -159,6 +160,56 @@
           <param from="$(var nearest_search_param_path)"/>
           <param from="$(var obstacle_stop_planner_param_path)"/>
           <param from="$(var obstacle_stop_planner_acc_param_path)"/>
+          <!-- composable node config -->
+          <extra_arg name="use_intra_process_comms" value="false"/>
+        </composable_node>
+      </load_composable_node>
+    </group>
+
+    <!-- First Obstacle Cruise (original) -->
+    <group if="$(eval &quot;'$(var motion_stop_planner_type)' == 'obstacle_cruise_planner_with_pseudo_occlusion'&quot;)">
+      <load_composable_node target="/planning/scenario_planning/lane_driving/motion_planning/motion_planning_container">
+        <composable_node pkg="obstacle_cruise_planner" plugin="motion_planning::ObstacleCruisePlannerNode" name="obstacle_cruise_planner" namespace="">
+          <!-- topic remap -->
+          <remap from="~/input/trajectory" to="obstacle_velocity_limiter/trajectory"/>
+          <remap from="~/input/odometry" to="/localization/kinematic_state"/>
+          <remap from="~/input/acceleration" to="/localization/acceleration"/>
+          <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
+          <remap from="~/input/vector_map" to="/map/vector_map"/>
+          <remap from="~/output/trajectory" to="obstacle_cruise/trajectory"/>
+          <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons"/>
+          <remap from="~/output/velocity_limit" to="/planning/scenario_planning/max_velocity_candidates"/>
+          <remap from="~/output/clear_velocity_limit" to="/planning/scenario_planning/clear_velocity_limit"/>
+          <!-- params -->
+          <param from="$(var common_param_path)"/>
+          <param from="$(var vehicle_param_file)"/>
+          <param from="$(var nearest_search_param_path)"/>
+          <param from="$(var obstacle_cruise_planner_param_path)"/>
+          <!-- composable node config -->
+          <extra_arg name="use_intra_process_comms" value="false"/>
+        </composable_node>
+      </load_composable_node>
+    </group>
+
+    <!-- Second Obstacle Cruise (pseudo occlusion)-->
+    <group if="$(eval &quot;'$(var motion_stop_planner_type)' == 'obstacle_cruise_planner_with_pseudo_occlusion'&quot;)">
+      <load_composable_node target="/planning/scenario_planning/lane_driving/motion_planning/motion_planning_container">
+        <composable_node pkg="obstacle_cruise_planner" plugin="motion_planning::ObstacleCruisePlannerNode" name="obstacle_cruise_planner_pseudo_occlusion" namespace="">
+          <!-- topic remap -->
+          <remap from="~/input/trajectory" to="obstacle_cruise/trajectory"/>
+          <remap from="~/input/odometry" to="/localization/kinematic_state"/>
+          <remap from="~/input/acceleration" to="/localization/acceleration"/>
+          <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
+          <remap from="~/input/vector_map" to="/map/vector_map"/>
+          <remap from="~/output/trajectory" to="$(var interface_output_topic)"/>
+          <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons"/>
+          <remap from="~/output/velocity_limit" to="/planning/scenario_planning/max_velocity_candidates"/>
+          <remap from="~/output/clear_velocity_limit" to="/planning/scenario_planning/clear_velocity_limit"/>
+          <!-- params -->
+          <param from="$(var common_param_path)"/>
+          <param from="$(var vehicle_param_file)"/>
+          <param from="$(var nearest_search_param_path)"/>
+          <param from="$(var obstacle_cruise_planner_pseudo_occlusion_param_path)"/>
           <!-- composable node config -->
           <extra_arg name="use_intra_process_comms" value="false"/>
         </composable_node>

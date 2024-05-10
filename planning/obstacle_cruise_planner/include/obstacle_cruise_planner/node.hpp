@@ -19,6 +19,7 @@
 #include "obstacle_cruise_planner/optimization_based_planner/optimization_based_planner.hpp"
 #include "obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 #include "obstacle_cruise_planner/type_alias.hpp"
+#include "route_handler/route_handler.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
@@ -136,11 +137,15 @@ private:
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acc_sub_;
+  rclcpp::Subscription<HADMapBin>::SharedPtr lanelet_map_sub_;
 
   // data for callback functions
   PredictedObjects::ConstSharedPtr objects_ptr_{nullptr};
   Odometry::ConstSharedPtr ego_odom_ptr_{nullptr};
   AccelWithCovarianceStamped::ConstSharedPtr ego_accel_ptr_{nullptr};
+  HADMapBin::ConstSharedPtr vector_map_ptr_{nullptr};
+
+  std::unique_ptr<route_handler::RouteHandler> route_handler_;
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
@@ -198,6 +203,9 @@ private:
     // consideration for the current ego pose
     bool enable_to_consider_current_pose{false};
     double time_to_convergence{1.5};
+    bool work_as_pseudo_occlusion{false};
+    double max_obj_vel_for_pseudo_occlusion{0.0};
+    std::vector<lanelet::Id> focus_intersections_for_pseudo_occlusion{};
   };
   BehaviorDeterminationParam behavior_determination_param_;
 

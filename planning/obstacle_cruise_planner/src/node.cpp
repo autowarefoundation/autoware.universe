@@ -16,6 +16,7 @@
 
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
@@ -23,7 +24,16 @@
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <lanelet2_extension/utility/query.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
+
 #include <boost/format.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/geometry/algorithms/within.hpp>
+
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <algorithm>
 #include <chrono>
@@ -275,6 +285,14 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
     "behavior_determination.consider_current_pose.enable_to_consider_current_pose");
   time_to_convergence = node.declare_parameter<double>(
     "behavior_determination.consider_current_pose.time_to_convergence");
+  work_as_pseudo_occlusion = node.declare_parameter<bool>(
+    "behavior_determination.slow_down.pseudo_occlusion.enable_function");
+  if (work_as_pseudo_occlusion) {
+    max_obj_vel_for_pseudo_occlusion = node.declare_parameter<double>(
+      "behavior_determination.slow_down.pseudo_occlusion.max_obj_vel");
+    focus_intersections_for_pseudo_occlusion = node.declare_parameter<std::vector<lanelet::Id>>(
+      "behavior_determination.slow_down.pseudo_occlusion.focus_intersections");
+  }
 }
 
 void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
@@ -335,6 +353,17 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.consider_current_pose.time_to_convergence",
     time_to_convergence);
+  tier4_autoware_utils::updateParam<bool>(
+    parameters, "behavior_determination.slow_down.pseudo_occlusion.enable_function",
+    work_as_pseudo_occlusion);
+  if (work_as_pseudo_occlusion) {
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "behavior_determination.slow_down.pseudo_occlusion.max_obj_vel",
+      max_obj_vel_for_pseudo_occlusion);
+    tier4_autoware_utils::updateParam<std::vector<lanelet::Id>>(
+      parameters, "behavior_determination.slow_down.pseudo_occlusion.focus_intersections",
+      focus_intersections_for_pseudo_occlusion);
+  }
 }
 
 ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions & node_options)
@@ -357,6 +386,9 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   acc_sub_ = create_subscription<AccelWithCovarianceStamped>(
     "~/input/acceleration", rclcpp::QoS{1},
     [this](const AccelWithCovarianceStamped::ConstSharedPtr msg) { ego_accel_ptr_ = msg; });
+  lanelet_map_sub_ = create_subscription<HADMapBin>(
+    "~/input/vector_map", rclcpp::QoS(10).transient_local(),
+    [this](const HADMapBin::ConstSharedPtr msg) { vector_map_ptr_ = msg; });
 
   // publisher
   trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", 1);
@@ -483,14 +515,18 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
 
 void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
+  stop_watch_.tic(__func__);
   const auto traj_points = motion_utils::convertToTrajectoryPointArray(*msg);
 
   // check if subscribed variables are ready
-  if (traj_points.empty() || !ego_odom_ptr_ || !ego_accel_ptr_ || !objects_ptr_) {
+  if (
+    traj_points.empty() || !ego_odom_ptr_ || !ego_accel_ptr_ || !objects_ptr_ || !vector_map_ptr_) {
     return;
   }
+  if (route_handler_ == nullptr) {
+    route_handler_ = std::make_unique<route_handler::RouteHandler>(*vector_map_ptr_);
+  }
 
-  stop_watch_.tic(__func__);
   *debug_data_ptr_ = DebugData();
 
   const auto is_driving_forward = motion_utils::isDrivingForwardWithTwist(traj_points);
@@ -1127,6 +1163,37 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
     RCLCPP_INFO_EXPRESSION(
       get_logger(), enable_debug_info_,
       "[SlowDown] Ignore obstacle (%s) since there is no collision point", object_id.c_str());
+    return std::nullopt;
+  }
+
+  const auto is_occlusion_object = [&]() {
+    if (
+      std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y) >
+      behavior_determination_param_.max_obj_vel_for_pseudo_occlusion + 1e-6) {
+      return false;
+    }
+
+    if (motion_utils::calcLateralOffset(traj_points, obstacle.pose.position) > 0.0) {
+      return true;
+    }
+
+    for (const auto & id : behavior_determination_param_.focus_intersections_for_pseudo_occlusion) {
+      if (id == 0) {
+        continue;
+      }
+      const auto intersection_poly =
+        lanelet::utils::to2D(route_handler_->getLaneletMapPtr()->polygonLayer.get(id))
+          .basicPolygon();
+      if (
+        boost::geometry::within(obstacle_poly, intersection_poly) ||
+        boost::geometry::intersects(obstacle_poly, intersection_poly)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (behavior_determination_param_.work_as_pseudo_occlusion && !is_occlusion_object()) {
     return std::nullopt;
   }
 
