@@ -43,9 +43,8 @@ RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
     std::cout << "Failed to load the Quicksand font.";
   }
 
-  // Load the wheel image
-  std::string dist_image = package_path + "/assets/score_white.png";
-  std::string time_image = package_path + "/assets/timelapse.png";
+  std::string dist_image = package_path + "/assets/path.png";
+  std::string time_image = package_path + "/assets/av_timer.png";
   distToGoalFlag.load(dist_image.c_str());
   timeToGoalFlag.load(time_image.c_str());
   scaledDistToGoalFlag =
