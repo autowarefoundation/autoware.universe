@@ -1,0 +1,4 @@
+base_path: "/sys/fs/cgroup"
+settings:
+  - directory: "autoware/system_monitor"
+    search_word: 
