@@ -264,4 +264,4 @@ unsigned int OverlayObject::getTextureHeight() const
     return 0;
   }
 }
-}  // namespace autoware_mission_details_overlay_rviz_plugin
+}  // namespace autoware::mission_details_overlay_rviz_plugin

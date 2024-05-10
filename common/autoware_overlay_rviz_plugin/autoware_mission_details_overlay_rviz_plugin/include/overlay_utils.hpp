@@ -136,6 +136,6 @@ protected:
   Ogre::MaterialPtr panel_material_;
   Ogre::TexturePtr texture_;
 };
-}  // namespace autoware_mission_details_overlay_rviz_plugin
+}  // namespace autoware::mission_details_overlay_rviz_plugin
 
 #endif  // OVERLAY_UTILS_HPP_

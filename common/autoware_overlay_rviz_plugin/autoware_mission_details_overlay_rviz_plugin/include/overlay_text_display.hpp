@@ -151,6 +151,6 @@ protected Q_SLOTS:
 private:
   void processMessage(autoware_overlay_msgs::msg::OverlayText::ConstSharedPtr msg) override;
 };
-}  // namespace autoware_mission_details_overlay_rviz_plugin
+}  // namespace autoware::mission_details_overlay_rviz_plugin
 
 #endif  // OVERLAY_TEXT_DISPLAY_HPP_

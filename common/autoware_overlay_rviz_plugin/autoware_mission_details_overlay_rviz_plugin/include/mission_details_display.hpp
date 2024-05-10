@@ -82,6 +82,6 @@ private:
     const autoware_internal_msgs::msg::MissionRemainingDistanceTime::ConstSharedPtr & msg);
   void drawWidget(QImage & hud);
 };
-}  // namespace autoware_mission_details_overlay_rviz_plugin
+}  // namespace autoware::mission_details_overlay_rviz_plugin
 
 #endif  // MISSION_DETAILS_DISPLAY_HPP_

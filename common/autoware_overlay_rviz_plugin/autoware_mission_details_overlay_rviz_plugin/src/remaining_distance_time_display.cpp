@@ -173,4 +173,4 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
   if (remaining_minutes <= 0) painter.drawText(secondsSeparatorTextPos, secondsSeparatorText);
 }
 
-}  // namespace autoware_mission_details_overlay_rviz_plugin
+}  // namespace autoware::mission_details_overlay_rviz_plugin
