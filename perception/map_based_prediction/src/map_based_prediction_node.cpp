@@ -715,8 +715,10 @@ void replaceObjectYawWithLaneletsYaw(
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
 {
-  google::InitGoogleLogging("map_based_prediction_node");
-  google::InstallFailureSignalHandler();
+  if (!google::IsGoogleLoggingInitialized()) {
+    google::InitGoogleLogging("map_based_prediction_node");
+    google::InstallFailureSignalHandler();
+  }
   enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
   prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
   lateral_control_time_horizon_ =
@@ -1139,7 +1141,7 @@ bool MapBasedPredictionNode::doesPathCrossFence(
   const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line)
 {
   // check whether the predicted path cross with fence
-  for (size_t i = 0; i < predicted_path.path.size(); ++i) {
+  for (size_t i = 0; i < predicted_path.path.size() - 1; ++i) {
     for (size_t j = 0; j < fence_line.size() - 1; ++j) {
       if (isIntersecting(
             predicted_path.path[i].position, predicted_path.path[i + 1].position, fence_line[j],
