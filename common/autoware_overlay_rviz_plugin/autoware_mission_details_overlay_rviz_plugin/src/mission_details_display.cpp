@@ -16,7 +16,6 @@
 
 #include <QFontDatabase>
 #include <QPainter>
-#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/properties/ros_topic_property.hpp>
 #include <rviz_rendering/render_system.hpp>
@@ -54,7 +53,8 @@ void MissionDetailsDisplay::onInitialize()
   static int count = 0;
   std::stringstream ss;
   ss << "MissionDetailsDisplay" << count++;
-  overlay_ = std::make_shared<autoware::mission_details_overlay_rviz_plugin::OverlayObject>(ss.str());
+  overlay_ =
+    std::make_shared<autoware::mission_details_overlay_rviz_plugin::OverlayObject>(ss.str());
   overlay_->show();
   update_size();
 
@@ -160,8 +160,7 @@ void MissionDetailsDisplay::draw_widget(QImage & hud)
   painter.end();
 }
 
-void MissionDetailsDisplay::draw_rounded_rect(
-  QPainter & painter, const QRectF & backgroundRect)
+void MissionDetailsDisplay::draw_rounded_rect(QPainter & painter, const QRectF & backgroundRect)
 {
   painter.setRenderHint(QPainter::Antialiasing, true);
   QColor colorFromHSV;
