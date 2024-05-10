@@ -4,7 +4,7 @@
   <arg name="output/objects" default="objects"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
   <arg name="model_path" default="$(var data_path)/lidar_transfusion"/>
-  <arg name="model_param_path" default="$(find-pkg-share lidar_transfusion)/config/lidar_transfusion.param.yaml"/>
+  <arg name="model_param_path" default="$(find-pkg-share lidar_transfusion)/config/transfusion.param.yaml"/>
   <arg name="class_remapper_param_path" default="$(find-pkg-share lidar_transfusion)/config/detection_class_remapper.param.yaml"/>
   <arg name="build_only" default="false" description="shutdown node after TensorRT engine file is built"/>
   <arg name="log_level" default="info"/>
