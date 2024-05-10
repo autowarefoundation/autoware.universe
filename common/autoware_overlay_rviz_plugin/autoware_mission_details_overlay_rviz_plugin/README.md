@@ -7,13 +7,13 @@ This RViz plugin displays the remaining distance and time for the current missio
 ### Input
 
 | Name                                        | Type                                                        | Description                                          |
-|---------------------------------------------|-------------------------------------------------------------|------------------------------------------------------|
+| ------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------- |
 | `/planning/mission_remaining_distance_time` | `autoware_planning_msgs::msg::MissionRemainingDistanceTime` | The topic is for mission remaining distance and time |
 
 ## Overlay Parameters
 
 | Name     | Type | Default Value | Description                       |
-|----------|------|---------------|-----------------------------------|
+| -------- | ---- | ------------- | --------------------------------- |
 | `Width`  | int  | 170           | Width of the overlay [px]         |
 | `Height` | int  | 100           | Height of the overlay [px]        |
 | `Right`  | int  | 10            | Margin from the right border [px] |
