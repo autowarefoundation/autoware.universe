@@ -34,7 +34,7 @@ namespace tier4_calibration_rviz_plugin
 AccelBrakeMapCalibratorButtonPanel::AccelBrakeMapCalibratorButtonPanel(QWidget * parent)
 : rviz_common::Panel(parent)
 {
-  topic_label_ = new QLabel("Topic name of update suggest ");
+  topic_label_ = new QLabel("topic: ");
   topic_label_->setAlignment(Qt::AlignCenter);
 
   topic_edit_ =
@@ -115,13 +115,17 @@ void AccelBrakeMapCalibratorButtonPanel::callbackUpdateSuggest(
 
 void AccelBrakeMapCalibratorButtonPanel::editTopic()
 {
-  update_suggest_sub_.reset();
   rclcpp::Node::SharedPtr raw_node =
-    this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
-  update_suggest_sub_ = raw_node->create_subscription<std_msgs::msg::Bool>(
-    topic_edit_->text().toStdString(), 10,
-    std::bind(
-      &AccelBrakeMapCalibratorButtonPanel::callbackUpdateSuggest, this, std::placeholders::_1));
+      this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+  try {
+    update_suggest_sub_.reset();
+    update_suggest_sub_ = raw_node->create_subscription<std_msgs::msg::Bool>(
+      topic_edit_->text().toStdString(), 10,
+      std::bind(
+        &AccelBrakeMapCalibratorButtonPanel::callbackUpdateSuggest, this, std::placeholders::_1));
+  } catch (const rclcpp::exceptions::InvalidTopicNameError & e) {
+    RCLCPP_WARN_STREAM(raw_node->get_logger(), e.what());
+  }
   calibration_button_->setText("Wait for subscribe topic");
   calibration_button_->setEnabled(false);
 }
