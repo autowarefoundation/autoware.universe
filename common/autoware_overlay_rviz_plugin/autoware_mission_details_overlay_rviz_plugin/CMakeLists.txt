@@ -6,7 +6,6 @@ ament_auto_find_build_dependencies()
 
 set(
   headers_to_moc
-  include/overlay_text_display.hpp
   include/mission_details_display.hpp
 )
 
@@ -21,7 +20,6 @@ endforeach()
 
 set(
   display_source_files
-  src/overlay_text_display.cpp
   src/overlay_utils.cpp
   src/mission_details_display.cpp
   src/remaining_distance_time_display.cpp
@@ -63,7 +61,6 @@ ament_target_dependencies(
   PUBLIC
   rviz_common
   rviz_rendering
-  autoware_overlay_msgs
   autoware_internal_msgs
 )
 

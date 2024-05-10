@@ -54,8 +54,6 @@
 #include <QColor>
 #include <QImage>
 
-#include "autoware_overlay_msgs/msg/overlay_text.hpp"
-
 #include <OgreHardwarePixelBuffer.h>
 #include <OgreMaterialManager.h>
 #include <OgreTechnique.h>
@@ -90,15 +88,15 @@ protected:
 };
 
 enum class VerticalAlignment : uint8_t {
-  CENTER = autoware_overlay_msgs::msg::OverlayText::CENTER,
-  TOP = autoware_overlay_msgs::msg::OverlayText::TOP,
-  BOTTOM = autoware_overlay_msgs::msg::OverlayText::BOTTOM,
+  CENTER,
+  TOP,
+  BOTTOM
 };
 
 enum class HorizontalAlignment : uint8_t {
-  LEFT = autoware_overlay_msgs::msg::OverlayText::LEFT,
-  RIGHT = autoware_overlay_msgs::msg::OverlayText::RIGHT,
-  CENTER = autoware_overlay_msgs::msg::OverlayText::CENTER
+  LEFT,
+  RIGHT,
+  CENTER
 };
 
 /**
