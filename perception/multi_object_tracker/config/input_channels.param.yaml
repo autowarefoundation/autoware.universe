@@ -40,6 +40,7 @@
           name: "apollo"
           short_name: "Lap"
       # LIDAR-CAMERA - DNN
+      # cspell:ignore lidar_pointpainitng pointpainting
       lidar_pointpainitng:
         topic: "/perception/object_recognition/detection/pointpainting/objects"
         expected_interval: 0.1
