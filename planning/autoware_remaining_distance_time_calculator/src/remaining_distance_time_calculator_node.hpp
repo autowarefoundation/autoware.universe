@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
-#define MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
+#ifndef REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
+#define REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
@@ -80,9 +80,9 @@ private:
 
   // Callbacks
   void on_timer();
-  void on_odometry(const Odometry::ConstSharedPtr& msg);
-  void on_route(const LaneletRoute::ConstSharedPtr& msg);
-  void on_map(const HADMapBin::ConstSharedPtr& msg);
+  void on_odometry(const Odometry::ConstSharedPtr & msg);
+  void on_route(const LaneletRoute::ConstSharedPtr & msg);
+  void on_map(const HADMapBin::ConstSharedPtr & msg);
 
   /**
    * @brief calculate mission remaining distance
@@ -101,4 +101,4 @@ private:
     double remaining_distance, double remaining_time) const;
 };
 }  // namespace autoware::remaining_distance_time_calculator
-#endif  // MISSION_REMAINING_DISTANCE_TIME_CALCULATOR__MISSION_REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
+#endif  // REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_

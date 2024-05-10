@@ -1,9 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <arg
-    name="remaining_distance_time_calculator_param_path"
-    default="$(find-pkg-share autoware_remaining_distance_time_calculator)/config/remaining_distance_time_calculator.param.yaml"
-  />
+  <arg name="remaining_distance_time_calculator_param_path" default="$(find-pkg-share autoware_remaining_distance_time_calculator)/config/remaining_distance_time_calculator.param.yaml"/>
   <arg name="input_odometry" default="/localization/kinematic_state"/>
   <arg name="input_map" default="/map/vector_map"/>
   <arg name="input_route" default="/planning/mission_planning/route"/>

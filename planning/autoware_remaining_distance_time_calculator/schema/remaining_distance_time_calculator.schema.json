@@ -11,9 +11,7 @@
         "description": "Recalculate remaining distance and time at this rate, Hz"
       }
     },
-    "required": [
-      "update_rate"
-    ],
+    "required": ["update_rate"],
     "additionalProperties": false
   },
   "properties": {

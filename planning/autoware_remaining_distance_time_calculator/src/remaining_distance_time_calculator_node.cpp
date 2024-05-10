@@ -39,8 +39,7 @@ RemainingDistanceTimeCalculatorNode::RemainingDistanceTimeCalculatorNode(
   using std::placeholders::_1;
 
   sub_odometry_ = create_subscription<Odometry>(
-    "~/input/odometry", 1,
-    std::bind(&RemainingDistanceTimeCalculatorNode::on_odometry, this, _1));
+    "~/input/odometry", 1, std::bind(&RemainingDistanceTimeCalculatorNode::on_odometry, this, _1));
 
   const auto qos_transient_local = rclcpp::QoS{1}.transient_local();
 
@@ -59,11 +58,10 @@ RemainingDistanceTimeCalculatorNode::RemainingDistanceTimeCalculatorNode(
 
   const auto period_ns = rclcpp::Rate(node_param_.update_rate).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns,
-    std::bind(&RemainingDistanceTimeCalculatorNode::on_timer, this));
+    this, get_clock(), period_ns, std::bind(&RemainingDistanceTimeCalculatorNode::on_timer, this));
 }
 
-void RemainingDistanceTimeCalculatorNode::on_map(const HADMapBin::ConstSharedPtr& msg)
+void RemainingDistanceTimeCalculatorNode::on_map(const HADMapBin::ConstSharedPtr & msg)
 {
   route_handler_.setMap(*msg);
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
@@ -74,13 +72,13 @@ void RemainingDistanceTimeCalculatorNode::on_map(const HADMapBin::ConstSharedPtr
   is_graph_ready_ = true;
 }
 
-void RemainingDistanceTimeCalculatorNode::on_odometry(const Odometry::ConstSharedPtr& msg)
+void RemainingDistanceTimeCalculatorNode::on_odometry(const Odometry::ConstSharedPtr & msg)
 {
   current_vehicle_pose_ = msg->pose.pose;
   current_vehicle_velocity_ = msg->twist.twist.linear;
 }
 
-void RemainingDistanceTimeCalculatorNode::on_route(const LaneletRoute::ConstSharedPtr& msg)
+void RemainingDistanceTimeCalculatorNode::on_route(const LaneletRoute::ConstSharedPtr & msg)
 {
   goal_pose_ = msg->goal_pose;
   has_received_route_ = true;
@@ -163,7 +161,7 @@ void RemainingDistanceTimeCalculatorNode::publish_mission_remaining_distance_tim
   pub_mission_remaining_distance_time_->publish(mission_remaining_distance_time);
 }
 
-}  // autoware::namespace mission_remaining_distance_time_calculator
+}  // namespace autoware::remaining_distance_time_calculator
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
