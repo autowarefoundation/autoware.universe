@@ -116,7 +116,7 @@ void AccelBrakeMapCalibratorButtonPanel::callbackUpdateSuggest(
 void AccelBrakeMapCalibratorButtonPanel::editTopic()
 {
   rclcpp::Node::SharedPtr raw_node =
-      this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+    this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
   try {
     update_suggest_sub_.reset();
     update_suggest_sub_ = raw_node->create_subscription<std_msgs::msg::Bool>(
@@ -133,7 +133,7 @@ void AccelBrakeMapCalibratorButtonPanel::editTopic()
 void AccelBrakeMapCalibratorButtonPanel::editService()
 {
   rclcpp::Node::SharedPtr raw_node =
-      this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+    this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
   try {
     client_.reset();
     client_ = raw_node->create_client<tier4_vehicle_msgs::srv::UpdateAccelBrakeMap>(
