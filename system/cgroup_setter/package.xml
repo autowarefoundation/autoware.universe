@@ -12,10 +12,10 @@
 
   <depend>diagnostic_msgs</depend>
   <depend>diagnostic_updater</depend>
-  <depend>yaml-cpp</depend>
   <depend>libboost-filesystem-dev</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>yaml-cpp</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
