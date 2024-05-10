@@ -96,8 +96,9 @@ inline void ScanGroundFilterComponent::set_field_offsets(const PointCloud2ConstP
   int intensity_index = pcl::getFieldIndex(*input, "intensity");
   if (intensity_index != -1) {
     intensity_offset_ = input->fields[intensity_index].offset;
+    intensity_type_ = input->fields[intensity_index].datatype;
   } else {
-    intensity_offset_ = z_offset_ + sizeof(float);
+    intensity_offset_ = -1;
   }
   offset_initialized_ = true;
 }
@@ -571,13 +572,34 @@ void ScanGroundFilterComponent::extractObjectPoints(
   PointCloud2 & out_object_cloud)
 {
   size_t output_data_size = 0;
-  for (const auto & i : in_indices.indices) {
-    std::memcpy(
-      &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
-      in_cloud_ptr->point_step * sizeof(uint8_t));
-    *reinterpret_cast<float *>(&out_object_cloud.data[output_data_size + intensity_offset_]) =
-      1;  // set intensity to 1
-    output_data_size += in_cloud_ptr->point_step;
+
+  if (intensity_offset_ < 0) {
+    for (const auto & i : in_indices.indices) {
+      std::memcpy(
+        &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
+        in_cloud_ptr->point_step * sizeof(uint8_t));
+      *reinterpret_cast<float *>(&out_object_cloud.data[output_data_size + intensity_offset_]) =
+        1;  // set intensity to 1
+      output_data_size += in_cloud_ptr->point_step;
+    }
+  } else if (intensity_type_ == sensor_msgs::msg::PointField::FLOAT32) {
+    for (const auto & i : in_indices.indices) {
+      std::memcpy(
+        &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
+        in_cloud_ptr->point_step * sizeof(uint8_t));
+      *reinterpret_cast<float *>(&out_object_cloud.data[output_data_size + intensity_offset_]) =
+        1;  // set intensity to 1
+      output_data_size += in_cloud_ptr->point_step;
+    }
+  } else if (intensity_type_ == sensor_msgs::msg::PointField::UINT8) {
+    for (const auto & i : in_indices.indices) {
+      std::memcpy(
+        &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
+        in_cloud_ptr->point_step * sizeof(uint8_t));
+      *reinterpret_cast<uint8_t *>(&out_object_cloud.data[output_data_size + intensity_offset_]) =
+        1;  // set intensity to 1
+      output_data_size += in_cloud_ptr->point_step;
+    }
   }
 }
 
@@ -606,7 +628,7 @@ void ScanGroundFilterComponent::faster_filter(
   output.row_step = no_ground_indices.indices.size() * input->point_step;
   output.data.resize(output.row_step);
   output.width = no_ground_indices.indices.size();
-  output.fields.assign(input->fields.begin(), input->fields.begin() + 3);
+  output.fields = input->fields;
   output.is_dense = true;
   output.height = input->height;
   output.is_bigendian = input->is_bigendian;

@@ -173,7 +173,8 @@ std::shared_ptr<const DetectedObjectsWithFeature> ApolloLidarSegmentation::detec
   sensor_msgs::msg::PointCloud2 transformed_cloud;
   ApolloLidarSegmentation::transformCloud(input, transformed_cloud, z_offset_);
   // convert from ros to pcl
-  pcl::fromROSMsg(transformed_cloud, *pcl_pointcloud_ptr_);
+  pcl::fromROSMsg(
+    transformed_cloud, *pcl_pointcloud_ptr_);  // KL: here we will need manual conversion
 
   // inference pipeline
   auto output = pipeline->schedule(pcl_pointcloud_ptr_);

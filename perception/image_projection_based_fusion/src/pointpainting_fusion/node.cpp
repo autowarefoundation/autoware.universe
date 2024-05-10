@@ -264,6 +264,7 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   const sensor_msgs::msg::CameraInfo & camera_info,
   sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
+  using PointIndex = autoware_point_types::PointXYZIRCIndex;
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
@@ -295,15 +296,9 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   // sensor_msgs::msg::PointCloud2 transformed_pointcloud;
   // tf2::doTransform(painted_pointcloud_msg, transformed_pointcloud, transform_stamped);
 
-  const auto x_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::X))
-      .offset;
-  const auto y_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Y))
-      .offset;
-  const auto z_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Z))
-      .offset;
+  const auto x_offset = painted_pointcloud_msg.fields.at(static_cast<size_t>(PointIndex::X)).offset;
+  const auto y_offset = painted_pointcloud_msg.fields.at(static_cast<size_t>(PointIndex::Y)).offset;
+  const auto z_offset = painted_pointcloud_msg.fields.at(static_cast<size_t>(PointIndex::Z)).offset;
   const auto class_offset = painted_pointcloud_msg.fields.at(4).offset;
   const auto p_step = painted_pointcloud_msg.point_step;
   // projection matrix
