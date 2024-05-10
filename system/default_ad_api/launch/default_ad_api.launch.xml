@@ -1,0 +1,9 @@
+<launch>
+  <arg name="use_sim_time" default="false" description="use_sim_time"/>
+  <arg name="vehicle_model" default="sample_vehicle" description="vehicle model name"/>
+  <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
+    <arg name="use_sim_time" value="$(var use_sim_time)"/>
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+  </include>
+  <include file="$(find-pkg-share default_ad_api)/launch/default_ad_api.launch.py"/>
+</launch>

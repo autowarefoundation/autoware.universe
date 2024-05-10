@@ -5,6 +5,7 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/diagnostics.cpp
   src/fail_safe.cpp
   src/interface.cpp
   src/localization.cpp
