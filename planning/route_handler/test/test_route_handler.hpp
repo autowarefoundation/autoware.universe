@@ -40,7 +40,7 @@ using autoware_auto_mapping_msgs::msg::HADMapBin;
 class TestRouteHandler : public ::testing::Test
 {
 public:
-  TestRouteHandler() { route_handler_ = std::make_shared<RouteHandler>(makeMapBinMsg()); }
+  TestRouteHandler() : route_handler_(std::make_shared<RouteHandler>(makeMapBinMsg())) {}
   TestRouteHandler(const TestRouteHandler &) = delete;
   TestRouteHandler(TestRouteHandler &&) = delete;
   TestRouteHandler & operator=(const TestRouteHandler &) = delete;

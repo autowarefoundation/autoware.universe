@@ -55,9 +55,9 @@ std::vector<LaneletPrimitive> parse_lanelet_primitives(const YAML::Node & node)
 {
   std::vector<LaneletPrimitive> primitives;
   primitives.reserve(node.size());
-  for (const auto & p : node) {
-    primitives.emplace_back(parse_lanelet_primitive(p));
-  }
+  std::transform(node.begin(), node.end(), std::back_inserter(primitives), [&](const auto & p) {
+    return parse_lanelet_primitive(p);
+  });
 
   return primitives;
 }
