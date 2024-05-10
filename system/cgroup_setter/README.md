@@ -30,9 +30,13 @@ settings:
   - directory: "xxx/xxx"
     search_word: 
       - "xxxxx"
+      - "xxxxx"
+  - directory: "xxx/xxx"
+    search_word: 
+      - "xxxxx"
 ```
 The following is an example of joining the PID from running `pgrep -f`
-with the keyword `__node:=system_monitor_container` to a cgroup named `/sys/fs/cgrpi/autoware/system_monitor`.
+with the keyword `__node:=system_monitor_container` to a cgroup named `/sys/fs/cgroup/autoware/system_monitor`.
 
 example
 ```yaml
@@ -43,6 +47,7 @@ settings:
       - "__node:=system_monitor_container"
 ```
 #### Rules
+
 - The value of settings must be a sequence.
 
 example
