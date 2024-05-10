@@ -33,7 +33,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware_mission_details_overlay_rviz_plugin
+namespace autoware::mission_details_overlay_rviz_plugin
 {
 
 RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
@@ -141,23 +141,9 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
     remainingDistanceIconPos.y() + scaledTimeToGoalFlag.height() / 2.0, scaledTimeToGoalFlag);
 
   // Calculate remaining minutes and seconds
-  // uint8_t remainig_hours =  static_cast<uint8_t>(remaining_time_ / 3600.0);
   double remaining_time_mod = std::fmod(remaining_time_, 3600);
   uint8_t remaining_minutes = static_cast<uint8_t>(remaining_time_mod / 60.0);
   uint8_t remaining_seconds = static_cast<uint8_t>(std::fmod(remaining_time_mod, 60));
-
-  // // Remaining hours value
-  // QString remaininghoursValue =
-  //   QString::number(remaining_hours_ != 0 ? remaining_hours_ : 0, 'f', 0);
-  // QPointF remaininghoursValuePos(remainingTimeReferencePos.x() + 17,
-  // remainingTimeReferencePos.y()); painter.setPen(gray); if (remaining_hours_ != 0)
-  // painter.drawText(remaininghoursValuePos, remaininghoursValue);
-
-  // // Remaining hours separator
-  // QString hoursSeparatorText = "h";
-  // QPointF hoursSeparatorTextPos(remainingTimeReferencePos.x() + 35,
-  // remainingTimeReferencePos.y()); if (remaining_hours_ != 0)
-  // painter.drawText(hoursSeparatorTextPos, hoursSeparatorText);
 
   // Remaining minutes value
   QString remainingminutesValue =

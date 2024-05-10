@@ -67,7 +67,7 @@
 #include <regex>
 #include <sstream>
 
-namespace autoware_mission_details_overlay_rviz_plugin
+namespace autoware::mission_details_overlay_rviz_plugin
 {
 OverlayTextDisplay::OverlayTextDisplay()
 : texture_width_(0),
@@ -212,7 +212,7 @@ void OverlayTextDisplay::update(float /*wall_dt*/, float /*ros_dt*/)
 
   overlay_->updateTextureSize(texture_width_, texture_height_);
   {
-    autoware_mission_details_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
+    autoware::mission_details_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
     QImage Hud = buffer.getQImage(*overlay_, bg_color_);
     QPainter painter(&Hud);
     painter.setRenderHint(QPainter::Antialiasing, true);
@@ -297,7 +297,7 @@ void OverlayTextDisplay::processMessage(autoware_overlay_msgs::msg::OverlayText:
     static int count = 0;
     std::stringstream ss;
     ss << "OverlayTextDisplayObject" << count++;
-    overlay_.reset(new autoware_mission_details_overlay_rviz_plugin::OverlayObject(ss.str()));
+    overlay_.reset(new autoware::mission_details_overlay_rviz_plugin::OverlayObject(ss.str()));
     overlay_->show();
   }
   if (overlay_) {
@@ -554,4 +554,4 @@ void OverlayTextDisplay::updateLineWidth()
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  autoware_mission_details_overlay_rviz_plugin::OverlayTextDisplay, rviz_common::Display)
+  autoware::mission_details_overlay_rviz_plugin::OverlayTextDisplay, rviz_common::Display)

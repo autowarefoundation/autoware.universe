@@ -33,7 +33,7 @@
 #include <mutex>
 #include <string>
 
-namespace autoware_mission_details_overlay_rviz_plugin
+namespace autoware::mission_details_overlay_rviz_plugin
 {
 
 MissionDetailsDisplay::MissionDetailsDisplay()
@@ -60,7 +60,7 @@ void MissionDetailsDisplay::onInitialize()
   static int count = 0;
   std::stringstream ss;
   ss << "MissionDetailsDisplay" << count++;
-  overlay_.reset(new autoware_mission_details_overlay_rviz_plugin::OverlayObject(ss.str()));
+  overlay_.reset(new autoware::mission_details_overlay_rviz_plugin::OverlayObject(ss.str()));
   overlay_->show();
   updateOverlaySize();
   updateOverlayPosition();
@@ -105,7 +105,7 @@ void MissionDetailsDisplay::update(float /* wall_dt */, float /* ros_dt */)
   if (!overlay_) {
     return;
   }
-  autoware_mission_details_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
+  autoware::mission_details_overlay_rviz_plugin::ScopedPixelBuffer buffer = overlay_->getBuffer();
   QImage hud = buffer.getQImage(*overlay_);
   hud.fill(Qt::transparent);
   drawWidget(hud);
@@ -240,4 +240,4 @@ void MissionDetailsDisplay::topic_updated_remaining_distance_time()
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  autoware_mission_details_overlay_rviz_plugin::MissionDetailsDisplay, rviz_common::Display)
+  autoware::mission_details_overlay_rviz_plugin::MissionDetailsDisplay, rviz_common::Display)

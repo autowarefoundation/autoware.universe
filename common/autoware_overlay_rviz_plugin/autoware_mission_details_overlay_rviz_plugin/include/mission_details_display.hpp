@@ -34,7 +34,7 @@
 #include <mutex>
 #endif
 
-namespace autoware_mission_details_overlay_rviz_plugin
+namespace autoware::mission_details_overlay_rviz_plugin
 {
 class MissionDetailsDisplay : public rviz_common::Display
 {
@@ -59,7 +59,7 @@ private Q_SLOTS:
 
 private:
   std::mutex mutex_;
-  autoware_mission_details_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
+  autoware::mission_details_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
   rviz_common::properties::IntProperty * property_width_;
   rviz_common::properties::IntProperty * property_height_;
   rviz_common::properties::IntProperty * property_left_;

@@ -68,7 +68,7 @@
 #include <string>
 #endif
 
-namespace autoware_mission_details_overlay_rviz_plugin
+namespace autoware::mission_details_overlay_rviz_plugin
 {
 class OverlayTextDisplay
 : public rviz_common::RosTopicDisplay<autoware_overlay_msgs::msg::OverlayText>
@@ -79,7 +79,7 @@ public:
   virtual ~OverlayTextDisplay();
 
 protected:
-  autoware_mission_details_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
+  autoware::mission_details_overlay_rviz_plugin::OverlayObject::SharedPtr overlay_;
 
   int texture_width_;
   int texture_height_;

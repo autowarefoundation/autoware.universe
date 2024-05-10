@@ -12,6 +12,7 @@
   <license>BSD-3-Clause</license>
 
   <depend>autoware_internal_msgs</depend>
+  <depend>autoware_overlay_msgs</depend>
   <depend>boost</depend>
   <depend>rviz_common</depend>
   <depend>rviz_ogre_vendor</depend>

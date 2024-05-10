@@ -29,7 +29,7 @@
 #include <OgreMaterial.h>
 #include <OgreTexture.h>
 
-namespace autoware_mission_details_overlay_rviz_plugin
+namespace autoware::mission_details_overlay_rviz_plugin
 {
 
 class RemainingDistanceTimeDisplay
@@ -52,6 +52,6 @@ private:
   QImage scaledTimeToGoalFlag;
 };
 
-}  // namespace autoware_mission_details_overlay_rviz_plugin
+}  // namespace autoware::mission_details_overlay_rviz_plugin
 
 #endif  // REMAINING_DISTANCE_TIME_DISPLAY_HPP_

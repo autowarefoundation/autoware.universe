@@ -70,7 +70,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware_mission_details_overlay_rviz_plugin
+namespace autoware::mission_details_overlay_rviz_plugin
 {
 class OverlayObject;
 
