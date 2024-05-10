@@ -86,7 +86,7 @@ private:
   void on_odometry(const Odometry::ConstSharedPtr & msg);
   void on_route(const LaneletRoute::ConstSharedPtr & msg);
   void on_map(const HADMapBin::ConstSharedPtr & msg);
-  void on_velocity_limit(const VelocityLimit::ConstSharedPtr& msg);
+  void on_velocity_limit(const VelocityLimit::ConstSharedPtr & msg);
 
   /**
    * @brief calculate mission remaining distance
