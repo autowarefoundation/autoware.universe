@@ -30,7 +30,8 @@ private:
   std::optional<T> data_;
 
 public:
-  explicit InterProcessPollingSubscriber(rclcpp::Node * node, const std::string & topic_name)
+  explicit InterProcessPollingSubscriber(
+    rclcpp::Node * node, const std::string & topic_name, const rclcpp::QoS & qos = rclcpp::QoS{1})
   {
     auto noexec_callback_group =
       node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
@@ -38,16 +39,27 @@ public:
     noexec_subscription_options.callback_group = noexec_callback_group;
 
     subscriber_ = node->create_subscription<T>(
-      topic_name, rclcpp::QoS{1},
+      topic_name, qos,
       [node]([[maybe_unused]] const typename T::ConstSharedPtr msg) { assert(false); },
       noexec_subscription_options);
+    if (qos.get_rmw_qos_profile().depth > 1) {
+      RCLCPP_WARN(
+        node->get_logger(),
+        "InterProcessPollingSubscriber will be used with depth > 1, which may cause inefficient "
+        "serialization while updateLatestData()");
+    }
   };
   bool updateLatestData()
   {
     rclcpp::MessageInfo message_info;
     T tmp;
     // The queue size (QoS) must be 1 to get the last message data.
-    if (subscriber_->take(tmp, message_info)) {
+    bool is_latest_message_consumed = false;
+    // pop the queue until latest data
+    while (subscriber_->take(tmp, message_info)) {
+      is_latest_message_consumed = true;
+    }
+    if (is_latest_message_consumed) {
       data_ = tmp;
     }
     return data_.has_value();
