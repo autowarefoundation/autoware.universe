@@ -1803,7 +1803,7 @@ DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathRe
     [&ego_path_lines](
       strategy::distance_asymmetric<double> path_expand_strategy,
       strategy::distance_asymmetric<double> steer_expand_strategy,
-      std::vector<geometry_msgs::msg::Point> outer_body_path) -> tier4_autoware_utils::Polygon2d {
+      const std::vector<geometry_msgs::msg::Point> & outer_body_path) -> tier4_autoware_utils::Polygon2d {
     // reserve area based on the reference path
     tier4_autoware_utils::MultiPolygon2d path_poly;
     boost::geometry::buffer(
