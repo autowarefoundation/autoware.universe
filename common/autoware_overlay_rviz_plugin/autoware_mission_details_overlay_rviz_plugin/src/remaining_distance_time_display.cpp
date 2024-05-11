@@ -75,7 +75,9 @@ void RemainingDistanceTimeDisplay::drawRemainingDistanceTimeDisplay(
     return QRectF(top_left_inner, size_inner);
   };
 
-  const QRectF rect_inner = calculate_inner_rect(backgroundRect, 0.7, 0.7);
+  QRectF rect_inner = calculate_inner_rect(backgroundRect, 0.7, 0.7);
+  // Proportionally extend the rect to the right to account for visual icon distance to the left
+  rect_inner.setWidth(rect_inner.width() * 1.08);
 
   // Calculate distance row rectangle
   const QSizeF distance_row_size(rect_inner.width(), rect_inner.height() / 2);
