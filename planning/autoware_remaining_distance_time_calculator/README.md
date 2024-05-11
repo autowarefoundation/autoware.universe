@@ -7,7 +7,7 @@ This package aims to provide mission remaining distance and remaining time calcu
 ### Activation and Timing
 
 - The calculations are activated once we have a route planned for a mission in Autoware
-- The calculations are trigged timely based on the `update_rate` parameter
+- The calculations are triggered timely based on the `update_rate` parameter
 
 ### Module Parameters
 
