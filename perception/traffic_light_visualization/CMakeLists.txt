@@ -8,6 +8,7 @@ find_package(OpenCV REQUIRED)
 
 ament_auto_add_library(traffic_light_roi_visualizer_nodelet SHARED
   src/traffic_light_roi_visualizer/nodelet.cpp
+  src/traffic_light_roi_visualizer/shape_draw.cpp
 )
 
 target_link_libraries(traffic_light_roi_visualizer_nodelet
