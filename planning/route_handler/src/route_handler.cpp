@@ -1593,7 +1593,7 @@ double RouteHandler::getTotalLateralDistanceToPreferredLane(
   const lanelet::ConstLanelet & lanelet, const Direction direction) const
 {
   const auto intervals = getLateralIntervalsToPreferredLane(lanelet, direction);
-  return std::accumulate(intervals.begin(), intervals.end(), 0);
+  return std::accumulate(intervals.begin(), intervals.end(), 0.0);
 }
 
 std::vector<double> RouteHandler::getLateralIntervalsToPreferredLane(
