@@ -14,6 +14,8 @@
 
 #include "traffic_light_visualization/traffic_light_roi_visualizer/nodelet.hpp"  // NOLINT(whitespace/line_length)
 
+#include "traffic_light_visualization/traffic_light_roi_visualizer/shape_draw.hpp"  // NOLINT(whitespace/line_length)
+
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 
@@ -95,9 +97,9 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
   if (result.label.find("red") != std::string::npos) {
     color = cv::Scalar{255, 0, 0};
   } else if (result.label.find("yellow") != std::string::npos) {
-    color = cv::Scalar{0, 255, 0};
+    color = cv::Scalar{255, 255, 0};
   } else if (result.label.find("green") != std::string::npos) {
-    color = cv::Scalar{0, 0, 255};
+    color = cv::Scalar{0, 255, 0};
   } else {
     color = cv::Scalar{255, 255, 255};
   }
@@ -107,15 +109,29 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
     cv::Point(tl_roi.roi.x_offset + tl_roi.roi.width, tl_roi.roi.y_offset + tl_roi.roi.height),
     color, 3);
 
-  int offset = 40;
+  int y_offset = 10;
+  int x_offset = 15;
   cv::putText(
-    image, std::to_string(result.prob),
-    cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset - (offset * 0)), cv::FONT_HERSHEY_COMPLEX,
-    1.1, color, 3);
+    image, std::to_string(static_cast<int>(round(result.prob * 100))),
+    cv::Point(
+      tl_roi.roi.x_offset + tl_roi.roi.width + (x_offset * 0.5),
+      tl_roi.roi.y_offset + (y_offset * 0.75)),
+    cv::FONT_HERSHEY_COMPLEX, 0.5, color, 2);
 
-  cv::putText(
-    image, result.label, cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset - (offset * 1)),
-    cv::FONT_HERSHEY_COMPLEX, 1.1, color, 2);
+  std::string shape_name = result.label.find('-') != std::string::npos
+                             ? result.label.substr(result.label.find('-') + 1)
+                             : "unknown";
+
+  if (shape_name != "unknown") {
+    drawTrafficLightShape(
+      image, shape_name, cv::Point(tl_roi.roi.x_offset + (x_offset * 1), tl_roi.roi.y_offset),
+      color, 16);
+  } else {
+    cv::putText(
+      image, shape_name,
+      cv::Point(tl_roi.roi.x_offset + (x_offset * 0), tl_roi.roi.y_offset - (y_offset * 0.75)),
+      cv::FONT_HERSHEY_COMPLEX, 0.5, color, 2);
+  }
 
   return true;
 }
