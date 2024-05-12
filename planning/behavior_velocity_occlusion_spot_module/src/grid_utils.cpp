@@ -309,7 +309,7 @@ void imageToOccupancyGrid(const cv::Mat & cv_image, nav_msgs::msg::OccupancyGrid
       const int idx = (height - 1 - y) + (width - 1 - x) * height;
       unsigned char intensity = cv_image.at<unsigned char>(y, x);
       if (intensity == grid_utils::occlusion_cost_value::FREE_SPACE) {
-        intensity = grid_utils::occlusion_cost_value::FREE_SPACE;
+        // do nothing
       } else if (intensity == grid_utils::occlusion_cost_value::UNKNOWN_IMAGE) {
         intensity = grid_utils::occlusion_cost_value::UNKNOWN;
       } else if (intensity == grid_utils::occlusion_cost_value::OCCUPIED_IMAGE) {
