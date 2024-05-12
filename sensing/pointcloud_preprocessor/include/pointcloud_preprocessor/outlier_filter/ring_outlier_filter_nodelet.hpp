@@ -33,6 +33,10 @@ using point_cloud_msg_wrapper::PointCloud2Modifier;
 class RingOutlierFilterComponent : public pointcloud_preprocessor::Filter
 {
 protected:
+  using InputPointIndex = autoware_point_types::PointXYZIRCAEDTIndex;
+  using InputPointType = autoware_point_types::PointXYZIRCAEDT;
+  using OutputPointType = autoware_point_types::PointXYZIRC;
+
   virtual void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
 
@@ -75,8 +79,7 @@ private:
   }
 
   void setUpPointCloudFormat(
-    const PointCloud2ConstPtr & input, PointCloud2 & formatted_points, size_t points_size,
-    size_t num_fields);
+    const PointCloud2ConstPtr & input, PointCloud2 & formatted_points, size_t points_size);
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW

@@ -251,9 +251,12 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   // If there is a point that cannot be associated, record it to issue a warning
   bool twist_time_stamp_is_too_late = false;
   bool imu_time_stamp_is_too_late = false;
+  double global_point_stamp;
 
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
-    while (twist_it != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
+    global_point_stamp =
+      points.header.stamp.sec + 1e-9 * (points.header.stamp.nanosec + *it_time_stamp);
+    while (twist_it != std::end(twist_queue_) - 1 && global_point_stamp > twist_stamp) {
       ++twist_it;
       twist_stamp = rclcpp::Time(twist_it->header.stamp).seconds();
     }
@@ -261,19 +264,19 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     float v{static_cast<float>(twist_it->twist.linear.x)};
     float w{static_cast<float>(twist_it->twist.angular.z)};
 
-    if (std::abs(*it_time_stamp - twist_stamp) > 0.1) {
+    if (std::abs(global_point_stamp - twist_stamp) > 0.1) {
       twist_time_stamp_is_too_late = true;
       v = 0.0f;
       w = 0.0f;
     }
 
     if (use_imu_ && !angular_velocity_queue_.empty()) {
-      while (imu_it != std::end(angular_velocity_queue_) - 1 && *it_time_stamp > imu_stamp) {
+      while (imu_it != std::end(angular_velocity_queue_) - 1 && global_point_stamp > imu_stamp) {
         ++imu_it;
         imu_stamp = rclcpp::Time(imu_it->header.stamp).seconds();
       }
 
-      if (std::abs(*it_time_stamp - imu_stamp) > 0.1) {
+      if (std::abs(global_point_stamp - imu_stamp) > 0.1) {
         imu_time_stamp_is_too_late = true;
       } else {
         w = static_cast<float>(imu_it->vector.z);
@@ -309,7 +312,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
     *it_y = static_cast<float>(undistorted_point.getY());
     *it_z = static_cast<float>(undistorted_point.getZ());
 
-    prev_time_stamp_sec = *it_time_stamp;
+    prev_time_stamp_sec = global_point_stamp;
   }
 
   if (twist_time_stamp_is_too_late) {
