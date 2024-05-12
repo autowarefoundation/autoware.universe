@@ -86,36 +86,21 @@ bool isCollisionFree(
   const double radius)
 {
   const grid_map::Matrix & grid_data = grid["layer"];
-  bool polys = true;
   try {
-    if (polys) {
-      Point2d occlusion_p = {p1.x(), p1.y()};
-      Point2d collision_p = {p2.x(), p2.y()};
-      Polygon2d polygon = pointsToPoly(occlusion_p, collision_p, radius);
-      grid_map::Polygon grid_polygon;
-      for (const auto & point : polygon.outer()) {
-        grid_polygon.addVertex({point.x(), point.y()});
+    Point2d occlusion_p = {p1.x(), p1.y()};
+    Point2d collision_p = {p2.x(), p2.y()};
+    Polygon2d polygon = pointsToPoly(occlusion_p, collision_p, radius);
+    grid_map::Polygon grid_polygon;
+    for (const auto & point : polygon.outer()) {
+      grid_polygon.addVertex({point.x(), point.y()});
+    }
+    for (grid_map_utils::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd();
+         ++iterator) {
+      const grid_map::Index & index = *iterator;
+      if (grid_data(index.x(), index.y()) == grid_utils::occlusion_cost_value::OCCUPIED) {
+        return false;
       }
-      for (grid_map_utils::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd();
-           ++iterator) {
-        const grid_map::Index & index = *iterator;
-        if (grid_data(index.x(), index.y()) == grid_utils::occlusion_cost_value::OCCUPIED) {
-          return false;
-        }
-      }
-    } else {
-      std::vector<std::pair<grid_map::Position, grid_map::Position>> lines =
-        pointsToRays(p1, p2, radius);
-      for (const auto & p : lines) {
-        for (grid_map::LineIterator iterator(grid, p.first, p.second); !iterator.isPastEnd();
-             ++iterator) {
-          const grid_map::Index & index = *iterator;
-          if (grid_data(index.x(), index.y()) == grid_utils::occlusion_cost_value::OCCUPIED) {
-            return false;
-          }
-        }
-      }
-    }  // polys or not
+    }
   } catch (const std::invalid_argument & e) {
     std::cerr << e.what() << std::endl;
     return false;
