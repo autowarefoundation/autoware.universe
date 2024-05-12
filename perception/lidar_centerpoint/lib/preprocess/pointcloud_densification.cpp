@@ -61,7 +61,8 @@ PointCloudDensification::PointCloudDensification(const DensificationParam & para
 }
 
 bool PointCloudDensification::enqueuePointCloud(
-  const sensor_msgs::msg::PointCloud2 & pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
+  const sensor_msgs::msg::PointCloud2 & pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
+  cudaStream_t stream)
 {
   const auto header = pointcloud_msg.header;
 
@@ -73,9 +74,9 @@ bool PointCloudDensification::enqueuePointCloud(
     }
     auto affine_world2current = transformToEigen(transform_world2current.get());
 
-    enqueue(pointcloud_msg, affine_world2current);
+    enqueue(pointcloud_msg, affine_world2current, stream);
   } else {
-    enqueue(pointcloud_msg, Eigen::Affine3f::Identity());
+    enqueue(pointcloud_msg, Eigen::Affine3f::Identity(), stream);
   }
 
   dequeue();
@@ -84,12 +85,24 @@ bool PointCloudDensification::enqueuePointCloud(
 }
 
 void PointCloudDensification::enqueue(
-  const sensor_msgs::msg::PointCloud2 & msg, const Eigen::Affine3f & affine_world2current)
+  const sensor_msgs::msg::PointCloud2 & msg, const Eigen::Affine3f & affine_world2current,
+  cudaStream_t stream)
 {
   affine_world2current_ = affine_world2current;
   current_timestamp_ = rclcpp::Time(msg.header.stamp).seconds();
-  PointCloudWithTransform pointcloud = {msg, affine_world2current.inverse()};
-  pointcloud_cache_.push_front(pointcloud);
+
+  assert(sizeof(uint8_t) * msg.width * msg.height * msg.point_step % sizeof(float) == 0);
+  auto points_d = cuda::make_unique<float[]>(
+    sizeof(uint8_t) * msg.width * msg.height * msg.point_step / sizeof(float));
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    points_d.get(), msg.data.data(), sizeof(uint8_t) * msg.width * msg.height * msg.point_step,
+    cudaMemcpyHostToDevice, stream));
+
+  PointCloudWithTransform pointcloud = {
+    std::move(points_d), msg.header, msg.width * msg.height, msg.point_step,
+    affine_world2current.inverse()};
+
+  pointcloud_cache_.push_front(std::move(pointcloud));
 }
 
 void PointCloudDensification::dequeue()
