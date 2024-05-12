@@ -149,6 +149,11 @@ LIDAR_UTILS__DEFINE_FIELD_GENERATOR_FOR_MEMBER(time_stamp);
 
 LIDAR_UTILS__DEFINE_FIELD_GENERATOR_FOR_MEMBER(channel);
 
+using PointXYZIRCGenerator = std::tuple<
+  point_cloud_msg_wrapper::field_x_generator, point_cloud_msg_wrapper::field_y_generator,
+  point_cloud_msg_wrapper::field_z_generator, point_cloud_msg_wrapper::field_intensity_generator,
+  field_return_type_generator, field_channel_generator>;
+
 using PointXYZIRADRTGenerator = std::tuple<
   point_cloud_msg_wrapper::field_x_generator, point_cloud_msg_wrapper::field_y_generator,
   point_cloud_msg_wrapper::field_z_generator, point_cloud_msg_wrapper::field_intensity_generator,
@@ -162,6 +167,11 @@ using PointXYZIRCAEDTGenerator = std::tuple<
   field_elevation_generator, field_distance_generator, field_time_stamp_generator>;
 
 }  // namespace autoware_point_types
+
+POINT_CLOUD_REGISTER_POINT_STRUCT(
+  autoware_point_types::PointXYZIRC,
+  (float, x, x)(float, y, y)(float, z, z)(std::uint8_t, intensity, intensity)(
+    std::uint8_t, return_type, return_type)(std::uint16_t, channel, channel))
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
   autoware_point_types::PointXYZIRADRT,

@@ -434,7 +434,8 @@ void PointCloudDataSynchronizerComponent::convertToXYZIRCCloud(
 {
   output_ptr->header = input_ptr->header;
 
-  PointCloud2Modifier<PointXYZIRC> output_modifier{*output_ptr, input_ptr->header.frame_id};
+  PointCloud2Modifier<PointXYZIRC, autoware_point_types::PointXYZIRCGenerator> output_modifier{
+    *output_ptr, input_ptr->header.frame_id};
   output_modifier.reserve(input_ptr->width);
 
   bool has_valid_intensity =
@@ -442,9 +443,9 @@ void PointCloudDataSynchronizerComponent::convertToXYZIRCCloud(
       return field.name == "intensity" && field.datatype == sensor_msgs::msg::PointField::UINT8;
     });
 
-  bool has_valid_return_mode =
+  bool has_valid_return_type =
     std::any_of(input_ptr->fields.begin(), input_ptr->fields.end(), [](auto & field) {
-      return field.name == "return_mode" && field.datatype == sensor_msgs::msg::PointField::UINT8;
+      return field.name == "return_type" && field.datatype == sensor_msgs::msg::PointField::UINT8;
     });
 
   bool has_valid_channel =
@@ -456,10 +457,11 @@ void PointCloudDataSynchronizerComponent::convertToXYZIRCCloud(
   sensor_msgs::PointCloud2Iterator<float> it_y(*input_ptr, "y");
   sensor_msgs::PointCloud2Iterator<float> it_z(*input_ptr, "z");
 
-  if (has_valid_intensity && has_valid_return_mode && has_valid_channel) {
+  if (has_valid_intensity && has_valid_return_type && has_valid_channel) {
     sensor_msgs::PointCloud2Iterator<std::uint8_t> it_i(*input_ptr, "intensity");
     sensor_msgs::PointCloud2Iterator<std::uint8_t> it_r(*input_ptr, "return_type");
     sensor_msgs::PointCloud2Iterator<std::uint16_t> it_c(*input_ptr, "channel");
+
     for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_i, ++it_r, ++it_c) {
       PointXYZIRC point;
       point.x = *it_x;

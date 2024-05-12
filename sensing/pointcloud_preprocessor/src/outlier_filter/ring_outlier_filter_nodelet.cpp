@@ -18,6 +18,7 @@
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
+#include <pcl/for_each_type.h>
 #include <pcl/search/pcl_search.h>
 
 #include <algorithm>
@@ -63,9 +64,6 @@ void RingOutlierFilterComponent::faster_filter(
   const PointCloud2ConstPtr & input, const IndicesPtr & unused_indices, PointCloud2 & output,
   const TransformInfo & transform_info)
 {
-  using InputPointIndex = autoware_point_types::PointXYZIRCAEDTIndex;
-  using InputPointType = autoware_point_types::PointXYZIRCAEDT;
-  using OutputPointType = autoware_point_types::PointXYZIRC;
   std::scoped_lock lock(mutex_);
   if (unused_indices) {
     RCLCPP_WARN(get_logger(), "Indices are not supported and will be ignored");
@@ -280,10 +278,10 @@ void RingOutlierFilterComponent::faster_filter(
     }
   }
 
-  setUpPointCloudFormat(input, output, output_size, /*num_fields=*/4);
+  setUpPointCloudFormat(input, output, output_size);
 
   if (publish_outlier_pointcloud_) {
-    setUpPointCloudFormat(input, outlier_points, outlier_points_size, /*num_fields=*/4);
+    setUpPointCloudFormat(input, outlier_points, outlier_points_size);
     outlier_pointcloud_publisher_->publish(outlier_points);
   }
 
@@ -345,8 +343,7 @@ rcl_interfaces::msg::SetParametersResult RingOutlierFilterComponent::paramCallba
 }
 
 void RingOutlierFilterComponent::setUpPointCloudFormat(
-  const PointCloud2ConstPtr & input, PointCloud2 & formatted_points, size_t points_size,
-  size_t num_fields)
+  const PointCloud2ConstPtr & input, PointCloud2 & formatted_points, size_t points_size)
 {
   formatted_points.data.resize(points_size);
   // Note that `input->header.frame_id` is data before converted when `transform_info.need_transform
@@ -360,11 +357,15 @@ void RingOutlierFilterComponent::setUpPointCloudFormat(
   formatted_points.is_bigendian = input->is_bigendian;
   formatted_points.is_dense = input->is_dense;
 
-  sensor_msgs::PointCloud2Modifier pcd_modifier(formatted_points);
-  pcd_modifier.setPointCloud2Fields(
-    num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
-    sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
-    "intensity", 1, sensor_msgs::msg::PointField::FLOAT32);
+  // pcl::PCLPointCloud2 pcl_aux;
+  sensor_msgs::msg::PointCloud2 msg_aux;
+  // pcl_conversions::moveFromPCL(pcl_pc2, cloud);
+  pcl::toROSMsg(pcl::PointCloud<OutputPointType>(), msg_aux);
+  formatted_points.fields = msg_aux.fields;
+  // pcl::for_each_type<typename pcl::traits::fieldList<OutputPointType>::type>
+  // pcl::detail::FieldAdder<OutputPointType>(formatted_points.fields); pcl::for_each_type<typename
+  // pcl::traits::fieldList<OutputPointType>::type>
+  // (pcl::detail::FieldAdder<OutputPointType>(formatted_points.fields));
 }
 
 }  // namespace pointcloud_preprocessor
