@@ -333,14 +333,12 @@ void toQuantizedImage(
       unsigned char intensity = occupancy_grid.data.at(idx);
       if (intensity <= param.free_space_max) {
         continue;
-      } else if (param.free_space_max < intensity && intensity < param.occupied_min) {
+      } else if (intensity < param.occupied_min) {
         intensity = grid_utils::occlusion_cost_value::UNKNOWN_IMAGE;
         occlusion_image->at<unsigned char>(y, x) = intensity;
-      } else if (param.occupied_min <= intensity) {
+      } else {
         intensity = grid_utils::occlusion_cost_value::OCCUPIED_IMAGE;
         border_image->at<unsigned char>(y, x) = intensity;
-      } else {
-        throw std::logic_error("behavior_velocity[occlusion_spot_grid]: invalid if clause");
       }
     }
   }
