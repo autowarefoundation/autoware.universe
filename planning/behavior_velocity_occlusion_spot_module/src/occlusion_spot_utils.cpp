@@ -117,6 +117,9 @@ void calcSlowDownPointsForPossibleCollision(
   size_t collision_index = 0;
   double dist_along_path_point = offset;
   double dist_along_next_path_point = dist_along_path_point;
+  if (path.points.size() == 0) {
+    return;
+  }
   for (size_t idx = closest_idx; idx < path.points.size() - 1; idx++) {
     auto p_prev = path.points.at(idx).point;
     auto p_next = path.points.at(idx + 1).point;
