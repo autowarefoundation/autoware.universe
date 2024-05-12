@@ -87,11 +87,8 @@ boost::optional<LineString2d> NoStoppingAreaModule::getStopLineGeometry2d(
         const LineString2d line{{p0.x, p0.y}, {p1.x, p1.y}};
         std::vector<Point2d> collision_points;
         bg::intersection(area_poly, line, collision_points);
-        if (collision_points.empty()) {
-          continue;
-        }
-        const double yaw = tier4_autoware_utils::calcAzimuthAngle(p0, p1);
         if (!collision_points.empty()) {
+          const double yaw = tier4_autoware_utils::calcAzimuthAngle(p0, p1);
           geometry_msgs::msg::Point left_point;
           const double w = planner_data_->vehicle_info_.vehicle_width_m;
           const double l = stop_line_margin;
