@@ -429,7 +429,7 @@ bool isBlockedByPartition(const LineString2d & direction, const BasicPolygons2d 
 std::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const Point2d base_point,
-  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param, DebugData & debug_data)
+  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param, const DebugData & debug_data)
 {
   const double baselink_to_front = param.baselink_to_front;
   const double right_overhang = param.right_overhang;
