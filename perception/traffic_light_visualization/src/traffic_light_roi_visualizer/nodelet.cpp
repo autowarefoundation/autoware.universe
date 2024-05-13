@@ -109,29 +109,12 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
     cv::Point(tl_roi.roi.x_offset + tl_roi.roi.width, tl_roi.roi.y_offset + tl_roi.roi.height),
     color, 3);
 
-  int y_offset = 10;
-  int x_offset = 15;
-  cv::putText(
-    image, std::to_string(static_cast<int>(round(result.prob * 100))),
-    cv::Point(
-      tl_roi.roi.x_offset + tl_roi.roi.width + (x_offset * 0.5),
-      tl_roi.roi.y_offset + (y_offset * 0.75)),
-    cv::FONT_HERSHEY_COMPLEX, 0.5, color, 2);
-
   std::string shape_name = result.label.find('-') != std::string::npos
                              ? result.label.substr(result.label.find('-') + 1)
                              : "unknown";
 
-  if (shape_name != "unknown") {
-    drawTrafficLightShape(
-      image, shape_name, cv::Point(tl_roi.roi.x_offset + (x_offset * 1), tl_roi.roi.y_offset),
-      color, 16);
-  } else {
-    cv::putText(
-      image, shape_name,
-      cv::Point(tl_roi.roi.x_offset + (x_offset * 0), tl_roi.roi.y_offset - (y_offset * 0.75)),
-      cv::FONT_HERSHEY_COMPLEX, 0.5, color, 2);
-  }
+  drawTrafficLightShape(
+    image, shape_name, cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset), color, 16, result.prob);
 
   return true;
 }
