@@ -116,8 +116,18 @@ void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Tim
 
   // Update time
   latest_message_time_ = now;
-  latest_measurement_time_ =
-    latest_measurement_time_ < objects_time ? objects_time : latest_measurement_time_;
+  if (std::abs((latest_measurement_time_ - objects_time).seconds()) > 3.0) {
+    // Reset the latest measurement time if the time difference is too large
+    latest_measurement_time_ = objects_time;
+    RCLCPP_WARN(
+      node_.get_logger(),
+      "InputManager::updateTimingStatus %s: Resetting the latest measurement time to %f",
+      long_name_.c_str(), objects_time.seconds());
+  } else {
+    // Aware reversed message arrival
+    latest_measurement_time_ =
+      latest_measurement_time_ < objects_time ? objects_time : latest_measurement_time_;
+  }
 
   // Update the initial count, count only first 32 messages
   if (initial_count_ < 32) {
@@ -314,11 +324,27 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
     });
 
   // Update the latest object time
-  if (!objects_list.empty()) {
+  bool is_any_object = !objects_list.empty();
+  if (is_any_object) {
     latest_object_time_ = rclcpp::Time(objects_list.back().second.header.stamp);
+  } else {
+    // check time jump
+    if ((now - latest_object_time_).seconds() < 0.0) {
+      RCLCPP_WARN(
+        node_.get_logger(),
+        "InputManager::getObjects Time jump detected, now: %f, latest_object_time_: %f",
+        now.seconds(), latest_object_time_.seconds());
+      latest_object_time_ =
+        now - rclcpp::Duration::from_seconds(3.0);  // reset the latest object time to 3 seconds ago
+    } else {
+      RCLCPP_WARN(
+        node_.get_logger(),
+        "InputManager::getObjects No objects in the object list, object time band from %f to %f",
+        (now - object_oldest_time).seconds(), (now - object_latest_time).seconds());
+    }
   }
 
-  return !objects_list.empty();
+  return is_any_object;
 }
 
 }  // namespace multi_object_tracker
