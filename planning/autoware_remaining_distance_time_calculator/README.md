@@ -24,7 +24,7 @@ This package aims to provide mission remaining distance and remaining time calcu
   - For the current lanelet, the distance is calculated from the current vehicle position to the end of that lanelet.
   - For the goal lanelet, the distance is calculated from the start of the lanelet to the goal pose in this lanelet.
 - When there is only one lanelet remaining, the distance is calculated by getting the 2D distance between the current vehicle pose and goal pose.
-- Checks are added to handle cases when current lanelent, goal lanelet, or routing graph are not valid to prevent node process die.
+- Checks are added to handle cases when current lanelet, goal lanelet, or routing graph are not valid to prevent node process die.
   - In such cases when, last valid remaining distance and time are maintained.
 
 #### Remaining Time Calculation
