@@ -253,20 +253,6 @@ void InputManager::optimizeTimings()
         selected_stream_interval = interval_mean;
         selected_stream_interval_std = std::sqrt(interval_var);
       }
-
-      /* DEBUG */
-      std::string long_name, short_name;
-      rclcpp::Time latest_measurement_time, latest_message_time;
-      input_stream->getNames(long_name, short_name);
-      input_stream->getTimestamps(latest_measurement_time, latest_message_time);
-      double latency_message = (node_.now() - latest_message_time).seconds();
-      double latency_measurement = (node_.now() - latest_measurement_time).seconds();
-      RCLCPP_INFO(
-        node_.get_logger(),
-        "InputManager::getObjects %s: latency mean: %f, std: %f, interval mean: "
-        "%f, std: %f, latest measurement latency: %f, latest message latency: %f",
-        long_name.c_str(), latency_mean, std::sqrt(latency_var), interval_mean,
-        std::sqrt(interval_var), latency_measurement, latency_message);
     }
   }
 
