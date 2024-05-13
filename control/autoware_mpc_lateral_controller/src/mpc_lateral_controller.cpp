@@ -152,6 +152,8 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
 
   m_mpc->setLogger(logger_);
   m_mpc->setClock(clock_);
+
+  setupDiag();
 }
 
 MpcLateralController::~MpcLateralController()
@@ -227,6 +229,28 @@ std::shared_ptr<SteeringOffsetEstimator> MpcLateralController::createSteerOffset
   return steering_offset_;
 }
 
+void MpcLateralController::setStatus(
+  DiagnosticStatusWrapper & stat, const bool & is_mpc_solved)
+{
+  if (is_mpc_solved) {
+    stat.summary(DiagnosticStatus::OK, "MPC succeeded.");
+  } else {
+    const std::string & error_msg = "The MPC solver failed. Call MRM to stop the car.";
+    stat.summary(DiagnosticStatus::ERROR, error_msg);
+  }
+}
+
+void MpcLateralController::setupDiag()
+{
+  auto & d = diag_updater_;
+  d.setHardwareID("mpc_lateral_controller");
+
+  d.add("MPC_solve_checker", [&](auto & stat) {
+    setStatus(
+      stat, is_mpc_solved);
+  });
+}
+
 trajectory_follower::LateralOutput MpcLateralController::run(
   trajectory_follower::InputData const & input_data)
 {
@@ -254,6 +278,8 @@ trajectory_follower::LateralOutput MpcLateralController::run(
 
   const bool is_mpc_solved = m_mpc->calculateMPC(
     m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values);
+
+  diag_updater_.force_update();
 
   // reset previous MPC result
   // Note: When a large deviation from the trajectory occurs, the optimization stops and

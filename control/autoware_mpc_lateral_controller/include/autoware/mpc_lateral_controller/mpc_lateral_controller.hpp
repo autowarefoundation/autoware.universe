@@ -90,6 +90,12 @@ private:
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
 
+  Updater diag_updater_{this}; // Diagnostic updater for publishing diagnostic data.
+
+  void setStatus(DiagnosticStatusWrapper & stat, const bool & m_MPC_failed);
+
+  void setupDiag();
+
   std::unique_ptr<MPC> m_mpc;  // MPC object for trajectory following.
 
   // Check is mpc output converged
