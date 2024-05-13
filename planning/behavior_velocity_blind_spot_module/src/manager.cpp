@@ -79,7 +79,8 @@ void BlindSpotModuleManager::launchNewModules(
       logger_.get_child("blind_spot_module"), clock_));
     generateUUID(module_id);
     updateRTCStatus(
-      getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
+      getUUID(module_id), true, State::WAITING_FOR_EXECUTION, std::numeric_limits<double>::lowest(),
+      path.header.stamp);
   }
 }
 
