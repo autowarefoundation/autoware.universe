@@ -30,7 +30,7 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node, const std::string & frame_
   if (debug_settings_.publish_tentative_objects) {
     debug_tentative_objects_pub_ =
       node_.create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>(
-        "debug/tentative_objects", rclcpp::QoS{1});
+        "multi_object_tracker/debug/tentative_objects", rclcpp::QoS{1});
   }
 
   if (debug_settings_.publish_debug_markers) {
