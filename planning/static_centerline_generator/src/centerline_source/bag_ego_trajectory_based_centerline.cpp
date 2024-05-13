@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "static_centerline_generator/centerline_source/bag_ego_trajectory_based_centerline.hpp"
+#include "centerline_source/bag_ego_trajectory_based_centerline.hpp"
 
 #include "rclcpp/serialization.hpp"
 #include "rosbag2_cpp/reader.hpp"
-#include "static_centerline_generator/static_centerline_generator_node.hpp"
+#include "static_centerline_generator_node.hpp"
 
 #include <nav_msgs/msg/odometry.hpp>
 

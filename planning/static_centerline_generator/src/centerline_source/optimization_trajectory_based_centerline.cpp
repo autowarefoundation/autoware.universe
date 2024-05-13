@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "static_centerline_generator/centerline_source/optimization_trajectory_based_centerline.hpp"
+#include "centerline_source/optimization_trajectory_based_centerline.hpp"
 
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "obstacle_avoidance_planner/node.hpp"
 #include "path_smoother/elastic_band_smoother.hpp"
-#include "static_centerline_generator/static_centerline_generator_node.hpp"
-#include "static_centerline_generator/utils.hpp"
+#include "static_centerline_generator_node.hpp"
+#include "utils.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 
 namespace autoware::static_centerline_generator

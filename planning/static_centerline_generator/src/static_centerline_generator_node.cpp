@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "static_centerline_generator/static_centerline_generator_node.hpp"
+#include "static_centerline_generator_node.hpp"
 
 #include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
@@ -22,9 +22,9 @@
 #include "map_projection_loader/load_info_from_lanelet2_map.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
-#include "static_centerline_generator/centerline_source/bag_ego_trajectory_based_centerline.hpp"
-#include "static_centerline_generator/type_alias.hpp"
-#include "static_centerline_generator/utils.hpp"
+#include "centerline_source/bag_ego_trajectory_based_centerline.hpp"
+#include "type_alias.hpp"
+#include "utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 
