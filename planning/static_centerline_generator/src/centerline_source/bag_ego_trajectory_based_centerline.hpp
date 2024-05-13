@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef STATIC_CENTERLINE_GENERATOR__CENTERLINE_SOURCE__BAG_EGO_TRAJECTORY_BASED_CENTERLINE_HPP_
-#define STATIC_CENTERLINE_GENERATOR__CENTERLINE_SOURCE__BAG_EGO_TRAJECTORY_BASED_CENTERLINE_HPP_
+#ifndef CENTERLINE_SOURCE__BAG_EGO_TRAJECTORY_BASED_CENTERLINE_HPP_
+#define CENTERLINE_SOURCE__BAG_EGO_TRAJECTORY_BASED_CENTERLINE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "type_alias.hpp"
@@ -24,4 +24,4 @@ namespace autoware::static_centerline_generator
 {
 std::vector<TrajectoryPoint> generate_centerline_with_bag(rclcpp::Node & node);
 }  // namespace autoware::static_centerline_generator
-#endif  // STATIC_CENTERLINE_GENERATOR__CENTERLINE_SOURCE__BAG_EGO_TRAJECTORY_BASED_CENTERLINE_HPP_
+#endif  // CENTERLINE_SOURCE__BAG_EGO_TRAJECTORY_BASED_CENTERLINE_HPP_

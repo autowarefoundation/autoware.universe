@@ -19,8 +19,8 @@
 #include "obstacle_avoidance_planner/node.hpp"
 #include "path_smoother/elastic_band_smoother.hpp"
 #include "static_centerline_generator_node.hpp"
-#include "utils.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
+#include "utils.hpp"
 
 namespace autoware::static_centerline_generator
 {
