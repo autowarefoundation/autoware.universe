@@ -92,7 +92,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   std::vector<std::string> input_topic_names;
   std::vector<std::string> input_names_long;
   std::vector<std::string> input_names_short;
-  std::vector<double> input_expected_intervals;
+  std::vector<bool> input_is_spawn_enabled;
 
   if (selected_input_channels.empty()) {
     RCLCPP_ERROR(this->get_logger(), "No input topics are specified.");
@@ -106,10 +106,9 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     input_topic_names.push_back(input_topic_name);
 
     // required parameter, but can set a default value
-    const double default_expected_interval = 0.1;  // [s]
-    const double expected_interval = declare_parameter<double>(
-      "input_channels." + selected_input_channel + ".expected_interval", default_expected_interval);
-    input_expected_intervals.push_back(expected_interval);
+    const bool spawn_enabled = declare_parameter<bool>(
+      "input_channels." + selected_input_channel + ".can_spawn_new_tracker", true);
+    input_is_spawn_enabled.push_back(spawn_enabled);
 
     // optional parameters
     const std::string default_name = selected_input_channel;
@@ -130,7 +129,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     input_channels_[i].input_topic = input_topic_names[i];
     input_channels_[i].long_name = input_names_long[i];
     input_channels_[i].short_name = input_names_short[i];
-    input_channels_[i].expected_interval = input_expected_intervals[i];
+    input_channels_[i].is_spawn_enabled = input_is_spawn_enabled[i];
   }
 
   // Initialize input manager

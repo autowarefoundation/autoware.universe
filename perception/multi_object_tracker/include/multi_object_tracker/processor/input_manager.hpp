@@ -36,8 +36,7 @@ struct InputChannel
   std::string input_topic;  // topic name of the detection, e.g. "/detection/lidar"
   std::string long_name = "Detected Object";  // full name of the detection
   std::string short_name = "DET";             // abbreviation of the name
-  double expected_interval = 0.1;             // [s]
-  double expected_latency = 0.2;              // [s]
+  bool is_spawn_enabled = true;               // enable spawn of the object
 };
 
 class InputStream
@@ -56,7 +55,7 @@ public:
   void onMessage(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
   void updateTimingStatus(const rclcpp::Time & now, const rclcpp::Time & objects_time);
 
-  bool isTimeInitialized() const { return is_time_initialized_; }
+  bool isTimeInitialized() const { return initial_count_ > 0; }
   uint getIndex() const { return index_; }
   void getObjectsOlderThan(
     const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
@@ -99,7 +98,8 @@ private:
 
   std::function<void(const uint &)> func_trigger_;
 
-  bool is_time_initialized_{false};
+  // bool is_time_initialized_{false};
+  int initial_count_{0};
   double expected_interval_;
   double latency_mean_;
   double latency_var_;

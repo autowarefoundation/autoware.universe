@@ -31,15 +31,14 @@ void InputStream::init(const InputChannel & input_channel)
   input_topic_ = input_channel.input_topic;
   long_name_ = input_channel.long_name;
   short_name_ = input_channel.short_name;
-  expected_interval_ = input_channel.expected_interval;  // [s]
 
   // Initialize queue
   objects_que_.clear();
 
   // Initialize latency statistics
-  latency_mean_ = input_channel.expected_latency;  // [s]
+  latency_mean_ = 0.2;  // [s] (initial value)
   latency_var_ = 0.0;
-  interval_mean_ = expected_interval_;  // [s] (initial value)
+  interval_mean_ = 0.0;  // [s] (initial value)
   interval_var_ = 0.0;
 
   latest_measurement_time_ = node_.now();
@@ -49,7 +48,7 @@ void InputStream::init(const InputChannel & input_channel)
 bool InputStream::getTimestamps(
   rclcpp::Time & latest_measurement_time, rclcpp::Time & latest_message_time) const
 {
-  if (!is_time_initialized_) {
+  if (!isTimeInitialized()) {
     return false;
   }
   latest_measurement_time = latest_measurement_time_;
@@ -79,21 +78,38 @@ void InputStream::onMessage(
 
 void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Time & objects_time)
 {
-  // Filter parameters
-  constexpr double gain = 0.05;
+  // Update latency statistics
+  // skip initial messages for the latency statistics
+  if (initial_count_ > 4) {
+    const double latency = (now - objects_time).seconds();
+    if (initial_count_ < 16) {
+      // set higher gain for the initial messages
+      constexpr double initial_gain = 0.5;
+      latency_mean_ = (1.0 - initial_gain) * latency_mean_ + initial_gain * latency;
+    } else {
+      constexpr double gain = 0.05;
+      latency_mean_ = (1.0 - gain) * latency_mean_ + gain * latency;
+      const double latency_delta = latency - latency_mean_;
+      latency_var_ = (1.0 - gain) * latency_var_ + gain * latency_delta * latency_delta;
+    }
+  }
 
   // Calculate interval, Update interval statistics
-  if (is_time_initialized_) {
+  if (initial_count_ > 4) {
     const double interval = (now - latest_message_time_).seconds();
-    // Check if the interval is regular
-    // The interval is considered regular if it is within 0.5 and 1.5 times the expected interval
-    bool is_interval_regular =
-      interval > 0.5 * expected_interval_ && interval < 1.5 * expected_interval_;
-
-    if (is_interval_regular) {
-      interval_mean_ = (1.0 - gain) * interval_mean_ + gain * interval;
-      const double interval_delta = interval - interval_mean_;
-      interval_var_ = (1.0 - gain) * interval_var_ + gain * interval_delta * interval_delta;
+    if (initial_count_ < 24) {
+      // Initialization
+      constexpr double initial_gain = 0.5;
+      interval_mean_ = (1.0 - initial_gain) * interval_mean_ + initial_gain * interval;
+    } else {
+      // The interval is considered regular if it is within 0.5 and 1.5 times the mean interval
+      bool update_statistics = interval > 0.5 * interval_mean_ && interval < 1.5 * interval_mean_;
+      if (update_statistics) {
+        constexpr double gain = 0.05;
+        interval_mean_ = (1.0 - gain) * interval_mean_ + gain * interval;
+        const double interval_delta = interval - interval_mean_;
+        interval_var_ = (1.0 - gain) * interval_var_ + gain * interval_delta * interval_delta;
+      }
     }
   }
 
@@ -101,13 +117,11 @@ void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Tim
   latest_message_time_ = now;
   latest_measurement_time_ =
     latest_measurement_time_ < objects_time ? objects_time : latest_measurement_time_;
-  if (!is_time_initialized_) is_time_initialized_ = true;
 
-  // Update latency statistics
-  const double latency = (latest_message_time_ - objects_time).seconds();
-  latency_mean_ = (1.0 - gain) * latency_mean_ + gain * latency;
-  const double latency_delta = latency - latency_mean_;
-  latency_var_ = (1.0 - gain) * latency_var_ + gain * latency_delta * latency_delta;
+  // Update the initial count, count only first 32 messages
+  if (initial_count_ < 32) {
+    initial_count_++;
+  }
 }
 
 void InputStream::getObjectsOlderThan(
@@ -195,17 +209,6 @@ void InputManager::getObjectTimeInterval(
   if (input_streams_.at(target_stream_idx_)->isTimeInitialized()) {
     rclcpp::Time latest_measurement_time =
       input_streams_.at(target_stream_idx_)->getLatestMeasurementTime();
-    // if the object_latest_time is newer than the next expected message time, set it older
-    // than the next expected message time
-    rclcpp::Time next_expected_message_time =
-      latest_measurement_time +
-      rclcpp::Duration::from_seconds(
-        target_stream_interval_ -
-        1.0 *
-          target_stream_interval_std_);  // next expected message time with 1 sigma safety margin
-    object_latest_time = object_latest_time > next_expected_message_time
-                           ? next_expected_message_time
-                           : object_latest_time;
 
     // if the object_latest_time is older than the latest measurement time, set it as the latest
     // object time
