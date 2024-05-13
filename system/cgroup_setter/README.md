@@ -73,7 +73,7 @@ settings:
 #### Notes
 
 - Write permission is required for a custom cgroup, and /sys/fs/cgroup/cgroup.procs to attach a PID to the cgroup.
-- A PID cannot be attached to a cgroup that has a small group.（only leaf cgroups）
+- A PID cannot be attached to a cgroup that has a small group.（only leaf cgroup）
 
 ## Assumptions / Known limits
 
