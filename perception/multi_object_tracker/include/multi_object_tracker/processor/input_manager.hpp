@@ -65,6 +65,8 @@ public:
     long_name = long_name_;
     short_name = short_name_;
   }
+  bool isSpawnEnabled() const { return is_spawn_enabled_; }
+
   std::string getLongName() const { return long_name_; }
   size_t getObjectsCount() const { return objects_que_.size(); }
   void getTimeStatistics(
@@ -92,6 +94,7 @@ private:
   std::string input_topic_;
   std::string long_name_;
   std::string short_name_;
+  bool is_spawn_enabled_;
 
   size_t que_size_{30};
   std::deque<DetectedObjects> objects_que_;
@@ -125,6 +128,10 @@ public:
     rclcpp::Time & object_oldest_time) const;
   void optimizeTimings();
   bool getObjects(const rclcpp::Time & now, ObjectsList & objects_list);
+  bool isChannelSpawnEnabled(const uint & index) const
+  {
+    return input_streams_[index]->isSpawnEnabled();
+  }
 
 private:
   rclcpp::Node & node_;

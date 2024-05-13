@@ -31,6 +31,7 @@ void InputStream::init(const InputChannel & input_channel)
   input_topic_ = input_channel.input_topic;
   long_name_ = input_channel.long_name;
   short_name_ = input_channel.short_name;
+  is_spawn_enabled_ = input_channel.is_spawn_enabled;
 
   // Initialize queue
   objects_que_.clear();
@@ -166,8 +167,9 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
     return;
   }
 
+  // Initialize input streams
   sub_objects_array_.resize(input_size_);
-
+  bool is_any_spawn_enabled = false;
   for (size_t i = 0; i < input_size_; i++) {
     uint index(i);
     InputStream input_stream(node_, index);
@@ -175,6 +177,7 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
     input_stream.setTriggerFunction(
       std::bind(&InputManager::onTrigger, this, std::placeholders::_1));
     input_streams_.push_back(std::make_shared<InputStream>(input_stream));
+    is_any_spawn_enabled |= input_streams_.at(i)->isSpawnEnabled();
 
     // Set subscription
     RCLCPP_INFO(
@@ -186,6 +189,11 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
       input_channels[i].input_topic, rclcpp::QoS{1}, func);
   }
 
+  // Check if any spawn enabled input streams
+  if (!is_any_spawn_enabled) {
+    RCLCPP_ERROR(node_.get_logger(), "InputManager::init No spawn enabled input streams");
+    return;
+  }
   is_initialized_ = true;
 }
 

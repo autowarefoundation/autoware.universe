@@ -342,7 +342,9 @@ void MultiObjectTracker::runProcess(
   processor_->prune(measurement_time);
 
   /* spawn new tracker */
-  processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
+  if (input_manager_->isChannelSpawnEnabled(channel_index)) {
+    processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
+  }
 }
 
 void MultiObjectTracker::checkAndPublish(const rclcpp::Time & time)
