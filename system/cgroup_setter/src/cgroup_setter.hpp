@@ -17,33 +17,33 @@
  * @brief Cgroup setter class
  */
 
-#ifndef CGROUP_SETTER_HPP
-#define CGROUP_SETTER_HPP
+#ifndef CGROUP_SETTER_HPP_
+#define CGROUP_SETTER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 #include <map>
 #include <string>
 #include <utility>
 
-
-class CgroupSetter : public rclcpp::Node 
+class CgroupSetter : public rclcpp::Node
 {
 public:
-    explicit CgroupSetter(const rclcpp::NodeOptions& options);
+  explicit CgroupSetter(const rclcpp::NodeOptions & options);
 
 private:
-    void checkCgroup(diagnostic_updater::DiagnosticStatusWrapper & stat);
-    void checkProcessAndAddToCgroup();
-    std::string executeCommand(const std::string& cmd);
-    bool addToCgroup(const std::string& cgroupPath, const std::string& pid);
-    bool checkPIDExists(const std::string& filePath, const std::string & pid);
+  void checkCgroup(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkProcessAndAddToCgroup();
+  std::string executeCommand(const std::string & cmd);
+  bool addToCgroup(const std::string & cgroupPath, const std::string & pid);
+  bool checkPIDExists(const std::string & filePath, const std::string & pid);
 
-    std::map<std::pair<std::string, std::string>, bool> cgroup_map_;
-    char hostname_[256];
-    diagnostic_updater::Updater updater_;
-    rclcpp::TimerBase::SharedPtr timer_;
-    std::string base_path_;
+  std::map<std::pair<std::string, std::string>, bool> cgroup_map_;
+  char hostname_[256];
+  diagnostic_updater::Updater updater_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  std::string base_path_;
 };
 
-#endif // CGROUP_SETTER_HPP
+#endif  // CGROUP_SETTER_HPP_
