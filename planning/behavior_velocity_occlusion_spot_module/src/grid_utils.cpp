@@ -43,23 +43,6 @@ Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double radius)
   return line_poly;
 }
 
-std::vector<std::pair<grid_map::Position, grid_map::Position>> pointsToRays(
-  const grid_map::Position p0, const grid_map::Position p1, const double radius)
-{
-  using grid_map::Position;
-  std::vector<std::pair<Position, Position>> lines;
-  const double angle = atan2(p0.y() - p1.y(), p0.x() - p1.x());
-  const double r = radius;
-  lines.emplace_back(std::make_pair(p0, p1));
-  lines.emplace_back(std::make_pair(
-    Position(p0.x() + r * sin(angle), p0.y() - r * cos(angle)),
-    Position(p1.x() + r * sin(angle), p1.y() - r * cos(angle))));
-  lines.emplace_back(std::make_pair(
-    Position(p1.x() - r * sin(angle), p1.y() + r * cos(angle)),
-    Position(p0.x() - r * sin(angle), p0.y() + r * cos(angle))));
-  return lines;
-}
-
 void findOcclusionSpots(
   std::vector<grid_map::Position> & occlusion_spot_positions, const grid_map::GridMap & grid,
   const Polygon2d & polygon, [[maybe_unused]] double min_size)
