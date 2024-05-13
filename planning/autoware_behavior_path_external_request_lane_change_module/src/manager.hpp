@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__MANAGER_HPP_
-#define BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__MANAGER_HPP_
+#ifndef MANAGER_HPP_
+#define MANAGER_HPP_
 
 #include "behavior_path_lane_change_module/manager.hpp"
 #include "route_handler/route_handler.hpp"
@@ -55,4 +55,4 @@ public:
 };
 }  // namespace autoware::behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_EXTERNAL_REQUEST_LANE_CHANGE_MODULE__MANAGER_HPP_
+#endif  // MANAGER_HPP_

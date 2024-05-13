@@ -14,8 +14,8 @@
 
 #include "manager.hpp"
 
-#include "scene.hpp"
 #include "behavior_path_lane_change_module/interface.hpp"
+#include "scene.hpp"
 
 namespace autoware::behavior_path_planner
 {
