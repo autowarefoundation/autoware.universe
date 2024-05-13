@@ -107,11 +107,9 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
   cv::rectangle(
     image, cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset),
     cv::Point(tl_roi.roi.x_offset + tl_roi.roi.width, tl_roi.roi.y_offset + tl_roi.roi.height),
-    color, 3);
+    color, 2);
 
-  std::string shape_name = result.label.find('-') != std::string::npos
-                             ? result.label.substr(result.label.find('-') + 1)
-                             : "unknown";
+  std::string shape_name = extractShapeName(result.label);
 
   drawTrafficLightShape(
     image, shape_name, cv::Point(tl_roi.roi.x_offset, tl_roi.roi.y_offset), color, 16, result.prob);
