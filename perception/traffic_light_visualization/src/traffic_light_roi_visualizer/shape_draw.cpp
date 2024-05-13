@@ -61,7 +61,7 @@ void drawShape(
     params.image,
     cv::Rect(
       // width should take into account the text width
-      position.x, position.y, shapeImg.cols + 45, shapeImg.rows),
+      position.x - 2, position.y - 5, shapeImg.cols + 47, shapeImg.rows + 5),
     params.color,
     -1);  // Filled rectangle
 
