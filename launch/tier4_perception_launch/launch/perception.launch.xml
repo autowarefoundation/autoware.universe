@@ -122,27 +122,31 @@
   />
 
   <!-- Downsample pointcloud for perception usage -->
-  <arg name="downsample_input_pointcloud" default="false"/>
-  <arg name="downsample_voxel_size" default="0.05"/>
-  <let name="downsampled_pointcloud" value="/perception/common/pointcloud"/>
-  <let name="perception_pointcloud" value="$(var input/pointcloud)" unless="$(var downsample_input_pointcloud)"/>
-  <let name="perception_pointcloud" value="$(var downsampled_pointcloud)" if="$(var downsample_input_pointcloud)"/>
-  <group if="$(var downsample_input_pointcloud)">
-    <load_composable_node target="$(var pointcloud_container_name)">
-      <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::PickupBasedVoxelGridDownsampleFilterComponent" name="perception_input_pc_downsample_node" namespace="">
-        <remap from="input" to="$(var input/pointcloud)"/>
-        <remap from="output" to="$(var downsampled_pointcloud)"/>
-        <param name="voxel_size_x" value="$(var downsample_voxel_size)"/>
-        <param name="voxel_size_y" value="$(var downsample_voxel_size)"/>
-        <param name="voxel_size_z" value="$(var downsample_voxel_size)"/>
-        <extra_arg name="use_intra_process_comms" value="true"/>
-      </composable_node>
-    </load_composable_node>
-  </group>
+  <arg name="downsample_perception_common_pointcloud" default="false"/>
+  <arg name="common_downsample_voxel_size_x" default="0.05"/>
+  <arg name="common_downsample_voxel_size_y" default="0.05"/>
+  <arg name="common_downsample_voxel_size_z" default="0.05"/>
 
   <!-- Perception module -->
   <group>
     <push-ros-namespace namespace="perception"/>
+    <!-- Perception common preprocess -->
+    <let name="downsampled_pointcloud" value="/perception/common/pointcloud"/>
+    <let name="perception_pointcloud" value="$(var input/pointcloud)" unless="$(var downsample_input_pointcloud)"/>
+    <let name="perception_pointcloud" value="$(var downsampled_pointcloud)" if="$(var downsample_input_pointcloud)"/>
+    <group if="$(var downsample_input_pointcloud)">
+      <push-ros-namespace namespace="common"/>
+      <load_composable_node target="$(var pointcloud_container_name)">
+        <composable_node pkg="pointcloud_preprocessor" plugin="pointcloud_preprocessor::PickupBasedVoxelGridDownsampleFilterComponent" name="pointcloud_downsample_node" namespace="">
+          <remap from="input" to="$(var input/pointcloud)"/>
+          <remap from="output" to="$(var downsampled_pointcloud)"/>
+          <param name="voxel_size_x" value="$(var common_downsample_voxel_size_x)"/>
+          <param name="voxel_size_y" value="$(var common_downsample_voxel_size_y)"/>
+          <param name="voxel_size_z" value="$(var common_downsample_voxel_size_z)"/>
+          <extra_arg name="use_intra_process_comms" value="true"/>
+        </composable_node>
+      </load_composable_node>
+    </group>
 
     <!-- Object segmentation module -->
     <group>
