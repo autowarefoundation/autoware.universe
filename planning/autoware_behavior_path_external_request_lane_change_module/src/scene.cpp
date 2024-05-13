@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_external_request_lane_change_module/scene.hpp"
+#include "scene.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 

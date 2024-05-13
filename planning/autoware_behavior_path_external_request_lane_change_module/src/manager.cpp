@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_external_request_lane_change_module/manager.hpp"
+#include "manager.hpp"
 
-#include "behavior_path_external_request_lane_change_module/scene.hpp"
+#include "scene.hpp"
 #include "behavior_path_lane_change_module/interface.hpp"
 
 namespace autoware::behavior_path_planner
