@@ -37,7 +37,9 @@ RemainingDistanceTimeCalculatorNode::RemainingDistanceTimeCalculatorNode(
 : Node("remaining_distance_time_calculator", options),
   is_graph_ready_{false},
   has_received_route_{false},
-  velocity_limit_{99.99}
+  velocity_limit_{99.99},
+  remaining_distance_{0.0},
+  remaining_time_{0.0}
 {
   using std::placeholders::_1;
 
@@ -101,15 +103,14 @@ void RemainingDistanceTimeCalculatorNode::on_velocity_limit(
 void RemainingDistanceTimeCalculatorNode::on_timer()
 {
   if (is_graph_ready_ && has_received_route_) {
-    double remaining_distance = calculate_remaining_distance();
-    double remaining_time = calculate_remaining_time(remaining_distance);
-    publish_mission_remaining_distance_time(remaining_distance, remaining_time);
+    calculate_remaining_distance();
+    calculate_remaining_time();
+    publish_mission_remaining_distance_time();
   }
 }
 
-double RemainingDistanceTimeCalculatorNode::calculate_remaining_distance() const
+void RemainingDistanceTimeCalculatorNode::calculate_remaining_distance()
 {
-  double remaining_distance = 0.0;
   size_t index = 0;
 
   lanelet::ConstLanelet current_lanelet;
@@ -117,14 +118,14 @@ double RemainingDistanceTimeCalculatorNode::calculate_remaining_distance() const
         road_lanelets_, current_vehicle_pose_, &current_lanelet)) {
     RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find current lanelet.");
 
-    return 0.0;
+    return;
   }
 
   lanelet::ConstLanelet goal_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose_, &goal_lanelet)) {
     RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find goal lanelet.");
 
-    return 0.0;
+    return;
   }
 
   const lanelet::Optional<lanelet::routing::Route> optional_route =
@@ -132,15 +133,17 @@ double RemainingDistanceTimeCalculatorNode::calculate_remaining_distance() const
   if (!optional_route) {
     RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find proper route.");
 
-    return 0.0;
+    return;
   }
 
   lanelet::routing::LaneletPath remaining_shortest_path;
   remaining_shortest_path = optional_route->shortestPath();
 
+  remaining_distance_ = 0.0;
+
   for (auto & llt : remaining_shortest_path) {
     if (remaining_shortest_path.size() == 1) {
-      remaining_distance +=
+      remaining_distance_ +=
         tier4_autoware_utils::calcDistance2d(current_vehicle_pose_.position, goal_pose_.position);
       break;
     }
@@ -150,33 +153,29 @@ double RemainingDistanceTimeCalculatorNode::calculate_remaining_distance() const
         lanelet::utils::getArcCoordinates({llt}, current_vehicle_pose_);
       double this_lanelet_length = lanelet::utils::getLaneletLength2d(llt);
 
-      remaining_distance += this_lanelet_length - arc_coord.length;
+      remaining_distance_ += this_lanelet_length - arc_coord.length;
     } else if (index == (remaining_shortest_path.size() - 1)) {
       lanelet::ArcCoordinates arc_coord = lanelet::utils::getArcCoordinates({llt}, goal_pose_);
-      remaining_distance += arc_coord.length;
+      remaining_distance_ += arc_coord.length;
     } else {
-      remaining_distance += lanelet::utils::getLaneletLength2d(llt);
+      remaining_distance_ += lanelet::utils::getLaneletLength2d(llt);
     }
 
     index++;
   }
-
-  return remaining_distance;
 }
 
-double RemainingDistanceTimeCalculatorNode::calculate_remaining_time(
-  const double remaining_distance) const
+void RemainingDistanceTimeCalculatorNode::calculate_remaining_time()
 {
-  return remaining_distance / velocity_limit_;
+  remaining_time_ = remaining_distance_ / velocity_limit_;
 }
 
-void RemainingDistanceTimeCalculatorNode::publish_mission_remaining_distance_time(
-  const double remaining_distance, const double remaining_time) const
+void RemainingDistanceTimeCalculatorNode::publish_mission_remaining_distance_time()
 {
   MissionRemainingDistanceTime mission_remaining_distance_time;
 
-  mission_remaining_distance_time.remaining_distance = remaining_distance;
-  mission_remaining_distance_time.remaining_time = remaining_time;
+  mission_remaining_distance_time.remaining_distance = remaining_distance_;
+  mission_remaining_distance_time.remaining_time = remaining_time_;
   pub_mission_remaining_distance_time_->publish(mission_remaining_distance_time);
 }
 

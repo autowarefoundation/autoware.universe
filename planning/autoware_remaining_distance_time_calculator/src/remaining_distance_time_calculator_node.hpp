@@ -78,6 +78,9 @@ private:
   bool has_received_route_;
   double velocity_limit_;
 
+  double remaining_distance_;
+  double remaining_time_;
+
   // Parameter
   NodeParam node_param_;
 
@@ -91,18 +94,17 @@ private:
   /**
    * @brief calculate mission remaining distance
    */
-  double calculate_remaining_distance() const;
+  void calculate_remaining_distance();
 
   /**
    * @brief calculate mission remaining time
    */
-  double calculate_remaining_time(double remaining_distance) const;
+  void calculate_remaining_time();
 
   /**
    * @brief publish mission remaining distance and time
    */
-  void publish_mission_remaining_distance_time(
-    double remaining_distance, double remaining_time) const;
+  void publish_mission_remaining_distance_time();
 };
 }  // namespace autoware::remaining_distance_time_calculator
 #endif  // REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
