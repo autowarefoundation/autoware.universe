@@ -27,9 +27,9 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <vector>
-#include <memory>
 
 namespace bp = boost::process;
 
