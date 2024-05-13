@@ -113,13 +113,27 @@ double RemainingDistanceTimeCalculatorNode::calculate_remaining_distance() const
   size_t index = 0;
 
   lanelet::ConstLanelet current_lanelet;
-  lanelet::utils::query::getClosestLanelet(road_lanelets_, current_vehicle_pose_, &current_lanelet);
+  if (!lanelet::utils::query::getClosestLanelet(
+        road_lanelets_, current_vehicle_pose_, &current_lanelet)) {
+    RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find current lanelet.");
+
+    return 0.0;
+  }
 
   lanelet::ConstLanelet goal_lanelet;
-  lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose_, &goal_lanelet);
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose_, &goal_lanelet)) {
+    RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find goal lanelet.");
+
+    return 0.0;
+  }
 
   const lanelet::Optional<lanelet::routing::Route> optional_route =
     routing_graph_ptr_->getRoute(current_lanelet, goal_lanelet, 0);
+  if (!optional_route) {
+    RCLCPP_WARN_STREAM(this->get_logger(), "Failed to find proper route.");
+
+    return 0.0;
+  }
 
   lanelet::routing::LaneletPath remaining_shortest_path;
   remaining_shortest_path = optional_route->shortestPath();
