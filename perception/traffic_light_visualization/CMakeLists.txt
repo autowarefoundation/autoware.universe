@@ -25,6 +25,12 @@ ament_auto_add_executable(traffic_light_map_visualizer_node
   src/traffic_light_map_visualizer/main.cpp
 )
 
+# Copy the assets directory to the installation directory
+install(
+    DIRECTORY images/
+    DESTINATION share/${PROJECT_NAME}/images
+)
+
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
