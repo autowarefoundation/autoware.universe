@@ -28,6 +28,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <vector>
+#include <memory>
 
 namespace bp = boost::process;
 
@@ -71,7 +73,7 @@ CgroupSetter::CgroupSetter(const rclcpp::NodeOptions & options)
   updater_.add("Cgroup Setting", this, &CgroupSetter::checkCgroup);
 
   // Timer
-  using namespace std::chrono_literals;
+  using namespace std::literals::chrono_literals;
   timer_ = rclcpp::create_timer(
     this, this->get_clock(), 1s, std::bind(&CgroupSetter::checkProcessAndAddToCgroup, this));
 }
