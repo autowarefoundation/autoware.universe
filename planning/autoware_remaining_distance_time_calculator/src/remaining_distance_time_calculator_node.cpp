@@ -167,7 +167,9 @@ void RemainingDistanceTimeCalculatorNode::calculate_remaining_distance()
 
 void RemainingDistanceTimeCalculatorNode::calculate_remaining_time()
 {
-  remaining_time_ = remaining_distance_ / velocity_limit_;
+  if (velocity_limit_ > 0.0) {
+    remaining_time_ = remaining_distance_ / velocity_limit_;
+  }
 }
 
 void RemainingDistanceTimeCalculatorNode::publish_mission_remaining_distance_time()
