@@ -681,6 +681,18 @@
               ],
               "additionalProperties": false
             },
+            "merging_vehicle": {
+              "type": "object",
+              "properties": {
+                "th_overhang_distance": {
+                  "type": "number",
+                  "description": "Distance threshold to ignore merging/deviating vehicle to/from ego driving lane. The distance represents how the object polygon overlaps ego lane, and it's calculated from polygon overhang point and lane centerline. If the distance is more than this param, the module never avoid the object. (Basically, the ego stops behind of it.)",
+                  "default": 0.5
+                }
+              },
+              "required": ["th_overhang_distance"],
+              "additionalProperties": false
+            },
             "parked_vehicle": {
               "type": "object",
               "properties": {
@@ -803,6 +815,7 @@
             "object_check_return_pose_distance",
             "max_compensation_time",
             "detection_area",
+            "merging_vehicle",
             "parked_vehicle",
             "avoidance_for_ambiguous_vehicle",
             "intersection"
@@ -1379,14 +1392,9 @@
               "type": "boolean",
               "description": "Publish debug marker.",
               "default": "false"
-            },
-            "console": {
-              "type": "boolean",
-              "description": "Output debug info on console.",
-              "default": "false"
             }
           },
-          "required": ["marker", "console"],
+          "required": ["marker"],
           "additionalProperties": false
         }
       },

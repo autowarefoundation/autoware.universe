@@ -15,16 +15,12 @@
 #ifndef BEHAVIOR_PATH_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 #define BEHAVIOR_PATH_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 
+#include "behavior_path_avoidance_module/type_alias.hpp"
 #include "behavior_path_planner_common/data_manager.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/time.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
-
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/LineString.h>
@@ -38,20 +34,37 @@
 
 namespace behavior_path_planner
 {
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedPath;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Polygon2d;
-using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
-
-using geometry_msgs::msg::Point;
-using geometry_msgs::msg::Pose;
 
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
-
 using route_handler::Direction;
+
+enum class ObjectInfo {
+  NONE = 0,
+  // ignore reasons
+  OUT_OF_TARGET_AREA,
+  FURTHER_THAN_THRESHOLD,
+  FURTHER_THAN_GOAL,
+  IS_NOT_TARGET_OBJECT,
+  IS_NOT_PARKING_OBJECT,
+  TOO_NEAR_TO_CENTERLINE,
+  TOO_NEAR_TO_GOAL,
+  MOVING_OBJECT,
+  UNSTABLE_OBJECT,
+  CROSSWALK_USER,
+  ENOUGH_LATERAL_DISTANCE,
+  LESS_THAN_EXECUTION_THRESHOLD,
+  PARALLEL_TO_EGO_LANE,
+  MERGING_TO_EGO_LANE,
+  DEVIATING_FROM_EGO_LANE,
+  // unavoidable reasons
+  NEED_DECELERATION,
+  SAME_DIRECTION_SHIFT,
+  INSUFFICIENT_DRIVABLE_SPACE,
+  INSUFFICIENT_LONGITUDINAL_DISTANCE,
+  INVALID_SHIFT_LINE,
+  // others
+  AMBIGUOUS_STOPPED_VEHICLE,
+};
 
 struct ObjectParameter
 {
@@ -189,6 +202,9 @@ struct AvoidanceParameters
   double time_threshold_for_ambiguous_vehicle{0.0};
   double distance_threshold_for_ambiguous_vehicle{0.0};
 
+  // for merging/deviating vehicle
+  double th_overhang_distance{0.0};
+
   // parameters for safety check area
   bool enable_safety_check{false};
   bool check_current_lane{false};
@@ -322,7 +338,6 @@ struct AvoidanceParameters
 
   // debug
   bool publish_debug_marker = false;
-  bool print_debug_info = false;
 };
 
 struct ObjectData  // avoidance target
@@ -421,8 +436,8 @@ struct ObjectData  // avoidance target
   // overhang points (sort by distance)
   std::vector<std::pair<double, Point>> overhang_points{};
 
-  // unavoidable reason
-  std::string reason{};
+  // object detail info
+  ObjectInfo info{ObjectInfo::NONE};
 
   // lateral avoid margin
   std::optional<double> avoid_margin{std::nullopt};
