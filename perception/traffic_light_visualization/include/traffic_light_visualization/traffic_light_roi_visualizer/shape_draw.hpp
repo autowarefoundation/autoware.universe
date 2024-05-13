@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #pragma once
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
@@ -20,6 +21,7 @@
 
 #include <functional>
 #include <map>
+#include <string>
 
 struct DrawFunctionParams
 {
@@ -27,10 +29,14 @@ struct DrawFunctionParams
   cv::Point position;
   cv::Scalar color;
   int size;
+  float probability;
 };
 
 using DrawFunction = std::function<void(const DrawFunctionParams & params)>;
 
+void drawShape(
+  const DrawFunctionParams & params, const std::string & filename, bool flipHorizontally,
+  bool flipVertically, int x_offset, int y_offset);
 void drawCircle(const DrawFunctionParams & params);
 void drawLeftArrow(const DrawFunctionParams & params);
 void drawRightArrow(const DrawFunctionParams & params);
@@ -41,4 +47,4 @@ void drawDownRightArrow(const DrawFunctionParams & params);
 void drawCross(const DrawFunctionParams & params);
 void drawTrafficLightShape(
   cv::Mat & image, const std::string & shape, const cv::Point & position, const cv::Scalar & color,
-  int size);
+  int size, float probability);
