@@ -140,7 +140,8 @@ double TreeStructuredParzenEstimator::compute_log_likelihood_ratio(const Input &
   const double below = log_sum_exp(below_logs);
 
   // Multiply by a constant so that the score near the "below sample" becomes lower.
-  // TODO: It's theoretically incorrect, consider it again later.
+  // cspell:disable-line TODO(Shintaro Sakoda): It's theoretically incorrect, consider it again
+  // later.
   const double r = above - below * 5.0;
   return r;
 }
