@@ -71,7 +71,7 @@ void VirtualTrafficLightModuleManager::launchNewModules(
     const auto stop_line_opt = m.first->getStopLine();
     if (!stop_line_opt) {
       RCLCPP_FATAL(
-        logger_, "No stop line at traffic_light_reg_elem_id = %ld, please fix the map!",
+        logger_, "No stop line at virtual_traffic_light_reg_elem_id = %ld, please fix the map!",
         m.first->id());
       continue;
     }
