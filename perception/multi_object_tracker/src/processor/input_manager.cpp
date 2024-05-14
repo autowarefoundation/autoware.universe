@@ -98,7 +98,13 @@ void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Tim
   // Calculate interval, Update interval statistics
   if (initial_count_ > 4) {
     const double interval = (now - latest_message_time_).seconds();
-    if (initial_count_ < 24) {
+    if (interval < 0.0) {
+      RCLCPP_WARN(
+        node_.get_logger(),
+        "InputManager::updateTimingStatus %s: Negative interval detected, now: %f, "
+        "latest_message_time_: %f",
+        long_name_.c_str(), now.seconds(), latest_message_time_.seconds());
+    } else if (initial_count_ < 24) {
       // Initialization
       constexpr double initial_gain = 0.5;
       interval_mean_ = (1.0 - initial_gain) * interval_mean_ + initial_gain * interval;
