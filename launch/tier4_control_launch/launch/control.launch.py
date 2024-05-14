@@ -381,7 +381,7 @@ def launch_setup(context, *args, **kwargs):
         target_container="/control/control_container",
     )
 
-    # control validator check
+    # control validator checker
     control_validator_component = ComposableNode(
         package="control_validator",
         plugin="control_validator::ControlValidator",
