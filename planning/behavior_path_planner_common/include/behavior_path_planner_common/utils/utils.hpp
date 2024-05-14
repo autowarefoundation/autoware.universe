@@ -262,8 +262,8 @@ std::vector<Polygon2d> getTargetLaneletPolygons(
   const lanelet::ConstLanelets & lanelets, const Pose & pose, const double check_length,
   const std::string & target_type);
 
-PathWithLaneId getCenterLinePathFromRootLanelet(
-  const lanelet::ConstLanelet & root_lanelet,
+PathWithLaneId getCenterLinePathFromLanelet(
+  const lanelet::ConstLanelet & current_route_lanelet,
   const std::shared_ptr<const PlannerData> & planner_data);
 
 // route handler
@@ -298,6 +298,10 @@ lanelet::ConstLanelets extendPrevLane(
 
 lanelet::ConstLanelets extendLanes(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
+
+std::vector<lanelet::ConstLanelets> getPrecedingLanelets(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
+  const Pose & current_pose, const double backward_length);
 
 lanelet::ConstLanelets getBackwardLanelets(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
