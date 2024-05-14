@@ -365,6 +365,23 @@ def launch_setup(context, *args, **kwargs):
             f"The argument trajectory_follower_mode must be either trajectory_follower_node or smart_mpc_trajectory_follower, but {trajectory_follower_mode} was given."
         )
 
+    # control evaluator
+    control_evaluator_component = ComposableNode(
+        package="control_evaluator",
+        plugin="control_diagnostics::controlEvaluatorNode",
+        name="control_evaluator",
+        remappings=[
+            ("~/input/diagnostics", "/diagnostics"),
+            ("~/output/metrics", "~/metrics"),
+        ],
+    )
+
+    control_evaluator_loader = LoadComposableNodes(
+        composable_node_descriptions=[control_evaluator_component],
+        target_container="/control/control_container",
+    )
+
+    # control validator check
     control_validator_component = ComposableNode(
         package="control_validator",
         plugin="control_validator::ControlValidator",
@@ -390,6 +407,7 @@ def launch_setup(context, *args, **kwargs):
             obstacle_collision_checker_loader,
             autonomous_emergency_braking_loader,
             predicted_path_checker_loader,
+            control_evaluator_loader,
         ]
     )
 
