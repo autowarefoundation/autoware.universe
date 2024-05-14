@@ -230,13 +230,13 @@ std::shared_ptr<SteeringOffsetEstimator> MpcLateralController::createSteerOffset
 }
 
 void MpcLateralController::setStatus(
-  DiagnosticStatusWrapper & stat, const bool & is_mpc_solved)
+  diagnostic_updater::DiagnosticStatusWrapper & stat, const bool & is_mpc_solved)
 {
   if (is_mpc_solved) {
-    stat.summary(DiagnosticStatus::OK, "MPC succeeded.");
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "MPC succeeded.");
   } else {
     const std::string & error_msg = "The MPC solver failed. Call MRM to stop the car.";
-    stat.summary(DiagnosticStatus::ERROR, error_msg);
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, error_msg);
   }
 }
 

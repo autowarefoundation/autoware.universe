@@ -31,6 +31,7 @@
 #include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <deque>
 #include <memory>
 #include <string>
@@ -90,9 +91,9 @@ private:
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
 
-  Updater diag_updater_{this}; // Diagnostic updater for publishing diagnostic data.
+  diagnostic_updater::Updater diag_updater_{this}; // Diagnostic updater for publishing diagnostic data.
 
-  void setStatus(DiagnosticStatusWrapper & stat, const bool & m_MPC_failed);
+  void setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat, const bool & m_MPC_failed);
 
   void setupDiag();
 
