@@ -234,13 +234,16 @@ private:
     return std::any_of(start_itr, end_itr, [&footprint, &lanes](const auto & point) {
       const auto transform = pose2transform(point.point.pose);
       const auto shifted_vehicle_footprint = transformVector(footprint, transform);
-      return std::any_of(
-        lanes.begin(), lanes.end(), [&shifted_vehicle_footprint](const auto & lane) {
+
+      auto check_for_vehicle_and_bound_intersection =
+        [&shifted_vehicle_footprint](const auto & lane) {
           const auto & left_bound = lane.leftBound2d().basicLineString();
           const auto & right_bound = lane.rightBound2d().basicLineString();
           return intersects(left_bound, shifted_vehicle_footprint) ||
                  intersects(right_bound, shifted_vehicle_footprint);
-        });
+        };
+
+      return std::any_of(lanes.begin(), lanes.end(), check_for_vehicle_and_bound_intersection);
     });
   };
 
