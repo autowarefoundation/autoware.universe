@@ -242,7 +242,8 @@ void categorizeVehicles(
   return;
 }
 
-lanelet::ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineString2d & ll_string)
+lanelet::ArcCoordinates getOcclusionPoint(
+  const PredictedObject & obj, const ConstLineString2d & ll_string)
 {
   const auto poly = tier4_autoware_utils::toPolygon2d(obj);
   std::deque<lanelet::ArcCoordinates> arcs;
@@ -257,16 +258,18 @@ lanelet::ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const Con
    * Ego===============> path
    **/
   // sort by arc length
-  std::sort(arcs.begin(), arcs.end(), [](lanelet::ArcCoordinates arc1, lanelet::ArcCoordinates arc2) {
-    return arc1.length < arc2.length;
-  });
+  std::sort(
+    arcs.begin(), arcs.end(), [](lanelet::ArcCoordinates arc1, lanelet::ArcCoordinates arc2) {
+      return arc1.length < arc2.length;
+    });
   // remove closest 2 polygon point
   arcs.pop_front();
   arcs.pop_front();
   // sort by arc distance
-  std::sort(arcs.begin(), arcs.end(), [](lanelet::ArcCoordinates arc1, lanelet::ArcCoordinates arc2) {
-    return std::abs(arc1.distance) < std::abs(arc2.distance);
-  });
+  std::sort(
+    arcs.begin(), arcs.end(), [](lanelet::ArcCoordinates arc1, lanelet::ArcCoordinates arc2) {
+      return std::abs(arc1.distance) < std::abs(arc2.distance);
+    });
   // return closest to path point which is choosen by farthest 2 points.
   return arcs.at(0);
 }
