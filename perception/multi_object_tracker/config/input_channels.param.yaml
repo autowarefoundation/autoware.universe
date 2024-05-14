@@ -49,13 +49,14 @@
           short_name: "Lpp"
       lidar_pointpainting_validated:
         topic: "/perception/object_recognition/detection/pointpainting/validation/objects"
+        can_spawn_new_tracker: true
         optional:
           name: "pointpainting"
           short_name: "Lpp"
       # CAMERA-LIDAR
       camera_lidar_fusion:
         topic: "/perception/object_recognition/detection/clustering/camera_lidar_fusion/objects"
-        can_spawn_new_tracker: false
+        can_spawn_new_tracker: true
         optional:
           name: "camera_lidar_fusion"
           short_name: "CLf"
