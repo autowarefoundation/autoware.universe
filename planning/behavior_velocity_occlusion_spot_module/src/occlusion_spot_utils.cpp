@@ -243,7 +243,7 @@ void categorizeVehicles(
 }
 
 lanelet::ArcCoordinates getOcclusionPoint(
-  const PredictedObject & obj, const ConstLineString2d & ll_string)
+  const PredictedObject & obj, const lanelet::ConstLineString2d & ll_string)
 {
   const auto poly = tier4_autoware_utils::toPolygon2d(obj);
   std::deque<lanelet::ArcCoordinates> arcs;
@@ -293,7 +293,7 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   const lanelet::ArcCoordinates & arc_coord_occlusion_with_offset,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param)
 {
-  auto calcPosition = [](const ConstLineString2d & ll, const lanelet::ArcCoordinates & arc) {
+  auto calcPosition = [](const lanelet::ConstLineString2d & ll, const lanelet::ArcCoordinates & arc) {
     BasicPoint2d bp = lanelet::geometry::fromArcCoordinates;(ll, arc);
     Point position;
     position.x = bp[0];

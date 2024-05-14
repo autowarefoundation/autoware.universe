@@ -60,7 +60,6 @@ using geometry_msgs::msg::Pose;
 using lanelet::BasicLineString2d;
 using lanelet::BasicPoint2d;
 using lanelet::BasicPolygon2d;
-using lanelet::ConstLineString2d;
 using lanelet::LaneletMapPtr;
 using DetectionAreaIdx = std::optional<std::pair<double, double>>;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
