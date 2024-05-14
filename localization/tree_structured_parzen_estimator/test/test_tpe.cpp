@@ -36,7 +36,7 @@ TEST(TreeStructuredParzenEstimatorTest, TPE_is_better_than_random_search_on_sphe
   const std::string method = ((n_startup_trials == kInnerTrialsNum) ? "Random" : "TPE");
 
   const std::vector<double> sample_mean(5, 0.0);
-  const std::vector<double> sample_stddev {1.0, 1.0, 0.1, 0.1, 0.1};
+  const std::vector<double> sample_stddev{1.0, 1.0, 0.1, 0.1, 0.1};
 
   for (const int64_t n_startup_trials : {kInnerTrialsNum, kInnerTrialsNum / 2}) {
     const std::string method = ((n_startup_trials == kInnerTrialsNum) ? "Random" : "TPE");
