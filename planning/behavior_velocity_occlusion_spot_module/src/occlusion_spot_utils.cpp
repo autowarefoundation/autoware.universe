@@ -293,14 +293,16 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   const lanelet::ArcCoordinates & arc_coord_occlusion_with_offset,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param)
 {
-  auto calcPosition = [](const lanelet::ConstLineString2d & ll, const lanelet::ArcCoordinates & arc) {
-    BasicPoint2d bp = lanelet::geometry::fromArcCoordinates;(ll, arc);
-    Point position;
-    position.x = bp[0];
-    position.y = bp[1];
-    position.z = 0.0;
-    return position;
-  };
+  auto calcPosition =
+    [](const lanelet::ConstLineString2d & ll, const lanelet::ArcCoordinates & arc) {
+      BasicPoint2d bp = lanelet::geometry::fromArcCoordinates;
+      (ll, arc);
+      Point position;
+      position.x = bp[0];
+      position.y = bp[1];
+      position.z = 0.0;
+      return position;
+    };
   /**
    * @brief calculate obstacle collision intersection from arc coordinate info.
    *                                      ^
