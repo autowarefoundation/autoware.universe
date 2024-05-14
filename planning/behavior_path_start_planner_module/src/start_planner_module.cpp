@@ -241,9 +241,12 @@ void StartPlannerModule::updateData()
     DEBUG_PRINT("StartPlannerModule::updateData() received new route, reset status");
   }
 
+  constexpr double moving_velocity_threshold = 0.1;
+  const double & ego_velocity = planner_data_->self_odometry->twist.twist.linear.x;
   if (
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
-    status_.driving_forward && !status_.first_engaged_and_driving_forward_time) {
+    status_.driving_forward && !status_.first_engaged_and_driving_forward_time &&
+    ego_velocity > moving_velocity_threshold) {
     status_.first_engaged_and_driving_forward_time = clock_->now();
   }
 
@@ -1265,8 +1268,12 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
   // In Geometric pull out, the ego stops once and then steers the wheels to the opposite direction.
   // This sometimes causes the getBehaviorTurnSignalInfo method to detect the ego as stopped and
   // close to complete its shift, so it wrongly turns off the blinkers, this override helps avoid
-  // this issue.
+  // this issue. Also, if the ego is not engaged (so it is stopped), the blinkers should still be
+  // activated.
   const bool override_ego_stopped_check = std::invoke([&]() {
+    if (!status_.first_engaged_and_driving_forward_time) {
+      return true;
+    }
     if (status_.planner_type != PlannerType::GEOMETRIC) {
       return false;
     }
