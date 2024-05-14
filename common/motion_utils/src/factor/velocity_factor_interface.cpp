@@ -20,13 +20,14 @@ namespace motion_utils
 void VelocityFactorInterface::set(
   const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
   const Pose & curr_pose, const Pose & stop_pose, const VelocityFactorStatus status,
-  const std::string detail)
+  const std::string & detail)
 {
   const auto & curr_point = curr_pose.position;
   const auto & stop_point = stop_pose.position;
   velocity_factor_.behavior = behavior_;
   velocity_factor_.pose = stop_pose;
-  velocity_factor_.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
+  velocity_factor_.distance =
+    static_cast<float>(motion_utils::calcSignedArcLength(points, curr_point, stop_point));
   velocity_factor_.status = status;
   velocity_factor_.detail = detail;
 }

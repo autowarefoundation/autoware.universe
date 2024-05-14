@@ -36,14 +36,14 @@ using geometry_msgs::msg::Pose;
 class VelocityFactorInterface
 {
 public:
-  VelocityFactor get() const { return velocity_factor_; }
-  void init(const VelocityFactorBehavior behavior) { behavior_ = behavior; }
+  [[nodiscard]] VelocityFactor get() const { return velocity_factor_; }
+  void init(const VelocityFactorBehavior & behavior) { behavior_ = behavior; }
   void reset() { velocity_factor_.behavior = PlanningBehavior::UNKNOWN; }
 
   void set(
     const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
     const Pose & curr_pose, const Pose & stop_pose, const VelocityFactorStatus status,
-    const std::string detail = "");
+    const std::string & detail = "");
 
 private:
   VelocityFactorBehavior behavior_{VelocityFactor::UNKNOWN};
