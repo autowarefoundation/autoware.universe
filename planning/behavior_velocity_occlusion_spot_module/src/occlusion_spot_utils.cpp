@@ -242,7 +242,7 @@ void categorizeVehicles(
   return;
 }
 
-ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineString2d & ll_string)
+lanelet::ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineString2d & ll_string)
 {
   const auto poly = tier4_autoware_utils::toPolygon2d(obj);
   std::deque<lanelet::ArcCoordinates> arcs;
@@ -257,14 +257,14 @@ ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineStr
    * Ego===============> path
    **/
   // sort by arc length
-  std::sort(arcs.begin(), arcs.end(), [](ArcCoordinates arc1, ArcCoordinates arc2) {
+  std::sort(arcs.begin(), arcs.end(), [](lanelet::ArcCoordinates arc1, lanelet::ArcCoordinates arc2) {
     return arc1.length < arc2.length;
   });
   // remove closest 2 polygon point
   arcs.pop_front();
   arcs.pop_front();
   // sort by arc distance
-  std::sort(arcs.begin(), arcs.end(), [](ArcCoordinates arc1, ArcCoordinates arc2) {
+  std::sort(arcs.begin(), arcs.end(), [](lanelet::ArcCoordinates arc1, lanelet::ArcCoordinates arc2) {
     return std::abs(arc1.distance) < std::abs(arc2.distance);
   });
   // return closest to path point which is choosen by farthest 2 points.
@@ -286,11 +286,11 @@ double calcSignedLateralDistanceWithOffset(
 }
 
 PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
-  const ArcCoordinates & arc_coord_occlusion,
-  const ArcCoordinates & arc_coord_occlusion_with_offset,
+  const lanelet::ArcCoordinates & arc_coord_occlusion,
+  const lanelet::ArcCoordinates & arc_coord_occlusion_with_offset,
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param)
 {
-  auto calcPosition = [](const ConstLineString2d & ll, const ArcCoordinates & arc) {
+  auto calcPosition = [](const ConstLineString2d & ll, const lanelet::ArcCoordinates & arc) {
     BasicPoint2d bp = fromArcCoordinates(ll, arc);
     Point position;
     position.x = bp[0];
@@ -338,8 +338,8 @@ bool generatePossibleCollisionsFromObjects(
   lanelet::ConstLanelet path_lanelet = toPathLanelet(path);
   auto ll = path_lanelet.centerline2d();
   for (const auto & dyn : dyn_objects) {
-    ArcCoordinates arc_coord_occlusion = getOcclusionPoint(dyn, ll);
-    ArcCoordinates arc_coord_occlusion_with_offset = {
+    lanelet::ArcCoordinates arc_coord_occlusion = getOcclusionPoint(dyn, ll);
+    lanelet::ArcCoordinates arc_coord_occlusion_with_offset = {
       arc_coord_occlusion.length - param.baselink_to_front,
       calcSignedLateralDistanceWithOffset(
         arc_coord_occlusion.distance, param.right_overhang, param.left_overhang,
@@ -451,7 +451,7 @@ std::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpo
     if (length_to_col < offset_from_start_to_ego) {
       continue;
     }
-    ArcCoordinates arc_coord_collision_point = {
+    lanelet::ArcCoordinates arc_coord_collision_point = {
       length_to_col,
       calcSignedLateralDistanceWithOffset(
         arc_coord_occlusion_point.distance, right_overhang, left_overhang, wheel_tread)};

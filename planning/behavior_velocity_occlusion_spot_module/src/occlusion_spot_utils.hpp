@@ -57,7 +57,6 @@ using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
-using lanelet::ArcCoordinates;
 using lanelet::BasicLineString2d;
 using lanelet::BasicPoint2d;
 using lanelet::BasicPolygon2d;
