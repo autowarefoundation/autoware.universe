@@ -62,7 +62,6 @@ using lanelet::BasicPoint2d;
 using lanelet::BasicPolygon2d;
 using lanelet::ConstLineString2d;
 using lanelet::LaneletMapPtr;
-using lanelet::geometry::fromArcCoordinates;
 using DetectionAreaIdx = std::optional<std::pair<double, double>>;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 

@@ -291,7 +291,7 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param)
 {
   auto calcPosition = [](const ConstLineString2d & ll, const lanelet::ArcCoordinates & arc) {
-    BasicPoint2d bp = fromArcCoordinates(ll, arc);
+    BasicPoint2d bp = lanelet::geometry::fromArcCoordinates;(ll, arc);
     Point position;
     position.x = bp[0];
     position.y = bp[1];
