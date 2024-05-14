@@ -852,11 +852,11 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
   const double backward_length =
     parameters_->backward_goal_search_length + parameters_->decide_path_distance;
   const auto & prev_module_output_path = getPreviousModuleOutput().path;
-  const double prev_path_back_to_goal_dist = calcSignedArcLength(
-    prev_module_output_path.points, prev_module_output_path.points.back().point.pose.position,
+  const double prev_path_front_to_goal_dist = calcSignedArcLength(
+    prev_module_output_path.points, prev_module_output_path.points.front().point.pose.position,
     goal_pose.position);
   const auto & long_tail_reference_path = [&]() {
-    if (prev_path_back_to_goal_dist > backward_length) {
+    if (prev_path_front_to_goal_dist > backward_length) {
       return prev_module_output_path;
     }
     // get road lanes which is at least backward_length[m] behind the goal
@@ -865,7 +865,8 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
       /*forward_only_in_route*/ false);
     const auto goal_pose_length = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
     return planner_data_->route_handler->getCenterLinePath(
-      road_lanes, std::max(0.0, goal_pose_length - backward_length), goal_pose_length);
+      road_lanes, std::max(0.0, goal_pose_length - backward_length),
+      goal_pose_length + parameters_->forward_goal_search_length);
   }();
   for (const auto & pull_over_path : pull_over_path_candidates) {
     // check if goal is safe
