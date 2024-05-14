@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <behavior_velocity_planner_common/velocity_factor_interface.hpp>
+#include <motion_utils/factor/velocity_factor_interface.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 
-namespace behavior_velocity_planner
+namespace motion_utils
 {
 void VelocityFactorInterface::set(
   const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points,
@@ -31,4 +31,4 @@ void VelocityFactorInterface::set(
   velocity_factor_.detail = detail;
 }
 
-}  // namespace behavior_velocity_planner
+}  // namespace motion_utils
