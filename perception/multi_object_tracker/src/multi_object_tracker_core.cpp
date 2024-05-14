@@ -255,44 +255,6 @@ void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
   }
   // process end
   debugger_->endMeasurementTime(this->now());
-
-  /* DEBUG */
-  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
-  RCLCPP_INFO(
-    this->get_logger(), "MultiObjectTracker::onMessage Objects time range: %f - %f",
-    (current_time - latest_time).seconds(), (current_time - oldest_time).seconds());
-
-  // count objects on each channel
-  std::vector<int> object_counts;
-  object_counts.resize(input_channel_size_);
-  // initialize to zero
-  for (size_t i = 0; i < input_channel_size_; i++) {
-    object_counts[i] = 0;
-  }
-  for (const auto & objects_data : objects_list) {
-    object_counts[objects_data.first] += 1;
-  }
-  // print result
-  std::string object_counts_str = "MultiObjectTracker::onMessage Object counts: ";
-  for (size_t i = 0; i < input_channel_size_; i++) {
-    object_counts_str +=
-      input_channels_[i].long_name + " " + std::to_string(object_counts[i]) + "  ";
-  }
-  RCLCPP_INFO(this->get_logger(), object_counts_str.c_str());
-
-  std::string object_info_str = "";
-  object_info_str += "MultiObjectTracker::onMessage Objects channel and time: \n";
-  for (const auto & objects_data : objects_list) {
-    const auto & objects = objects_data.second;
-    const auto & channel_index = objects_data.first;
-    const auto & time = rclcpp::Time(objects.header.stamp);
-    // print object information
-    object_info_str += input_channels_[channel_index].long_name + " " +
-                       std::to_string((current_time - time).seconds()) + " \n";
-  }
-  RCLCPP_INFO(this->get_logger(), object_info_str.c_str());
-
-  /* DEBUG END */
 }
 
 void MultiObjectTracker::runProcess(
