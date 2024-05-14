@@ -105,19 +105,24 @@ bool checkCloseLaneletCondition(
   const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
   const double lane_yaw = lanelet::utils::getLaneletAngle(
     lanelet.second, object.kinematics.pose_with_covariance.pose.position);
-  const double delta_yaw = object_yaw - lane_yaw;
+  // just consider linear.x velocity to check if the object is moving forward or backward
+  double object_motion_yaw = object_yaw;
+  bool velocity_is_reverted = object.kinematics.twist_with_covariance.twist.linear.x < 0.0;
+  if (velocity_is_reverted) {
+    object_motion_yaw = tier4_autoware_utils::normalizeRadian(object_yaw + M_PI);
+  }
+  const double delta_yaw = object_motion_yaw - lane_yaw;
   const double normalized_delta_yaw = tier4_autoware_utils::normalizeRadian(delta_yaw);
-  const double abs_norm_delta = std::fabs(normalized_delta_yaw);
+  const double abs_norm_delta_yaw = std::fabs(normalized_delta_yaw);
 
   // Step4. Check if the closest lanelet is valid, and add all
   // of the lanelets that are below max_dist and max_delta_yaw
-  const double object_vel = object.kinematics.twist_with_covariance.twist.linear.x;
-  const bool is_yaw_reversed = M_PI - max_angle_diff_from_lane < abs_norm_delta && object_vel < 0.0;
-  if (is_yaw_reversed || abs_norm_delta < max_angle_diff_from_lane) {
-    return true;
+  if (abs_norm_delta_yaw > max_angle_diff_from_lane) {
+    return false;
   }
 
-  return false;
+  // if passed all the conditions, then return true
+  return true;
 }
 
 lanelet::ConstLanelets getClosestValidLanelets(
