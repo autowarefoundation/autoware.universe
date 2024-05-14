@@ -10,6 +10,8 @@ A method of operating scan in chronological order and removing noise based on th
 
 ![ring_outlier_filter](./image/outlier_filter-ring.drawio.svg)
 
+Another feature of this node is that it calculates visibility based on outlier pointcloud and publish score as a topic. With this function, for example, in heavy rain, the sensing module can notify that the processing performance has reached its limit, which can lead to ensuring the safety of the vehicle.
+
 ## Inputs / Outputs
 
 This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
@@ -22,14 +24,20 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Core Parameters
 
-| Name                         | Type    | Default Value | Description                                                                                              |
-| ---------------------------- | ------- | ------------- | -------------------------------------------------------------------------------------------------------- |
-| `distance_ratio`             | double  | 1.03          |                                                                                                          |
-| `object_length_threshold`    | double  | 0.1           |                                                                                                          |
-| `num_points_threshold`       | int     | 4             |                                                                                                          |
-| `max_rings_num`              | uint_16 | 128           |                                                                                                          |
-| `max_points_num_per_ring`    | size_t  | 4000          | Set this value large enough such that `HFoV / resolution < max_points_num_per_ring`                      |
-| `publish_outlier_pointcloud` | bool    | false         | Flag to publish outlier pointcloud. Due to performance concerns, please set to false during experiments. |
+| Name                         | Type    | Default Value | Description                                                                                                                   |
+| ---------------------------- | ------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `distance_ratio`             | double  | 1.03          |                                                                                                                               |
+| `object_length_threshold`    | double  | 0.1           |                                                                                                                               |
+| `num_points_threshold`       | int     | 4             |                                                                                                                               |
+| `max_rings_num`              | uint_16 | 128           |                                                                                                                               |
+| `max_points_num_per_ring`    | size_t  | 4000          | Set this value large enough such that `HFoV / resolution < max_points_num_per_ring`                                           |
+| `publish_outlier_pointcloud` | bool    | false         | Flag to publish outlier pointcloud and visibility score. Due to performance concerns, please set to false during experiments. |
+| `min_azimuth_deg`            | float   | 0.0           | The left limit of azimuth for visibility score calculation                                                                    |
+| `max_azimuth_deg`            | float   | 360.0         | The right limit of azimuth for visibility score calculation                                                                   |
+| `max_distance`               | float   | 12.0          | The limit distance for for visibility score calculation                                                                       |
+| `vertical_bins`              | int     | 128           | The number of vertical bin for visibility histogram                                                                           |
+| `horizontal_bins`            | int     | 36            | The number of horizontal bin for visibility histogram                                                                         |
+| `noise_threshold`            | int     | 2             | The parameter for determining whether it is noise                                                                             |
 
 ## Assumptions / Known limits
 

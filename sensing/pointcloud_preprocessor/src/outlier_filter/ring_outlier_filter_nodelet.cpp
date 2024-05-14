@@ -35,8 +35,6 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "ring_outlier_filter");
     outlier_pointcloud_publisher_ =
       this->create_publisher<PointCloud2>("debug/ring_outlier_filter", 1);
-    image_pub_ =
-      image_transport::create_publisher(this, "ring_outlier_filter/debug/frequency_image");
     visibility_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
       "ring_outlier_filter/debug/visibility", rclcpp::SensorDataQoS());
     stop_watch_ptr_->tic("cyclic_time");
@@ -325,8 +323,20 @@ rcl_interfaces::msg::SetParametersResult RingOutlierFilterComponent::paramCallba
   if (get_param(p, "vertical_bins", vertical_bins_)) {
     RCLCPP_DEBUG(get_logger(), "Setting new vertical_bins to: %d.", vertical_bins_);
   }
-  if (get_param(p, "max_azimuth_diff", max_azimuth_diff_)) {
-    RCLCPP_DEBUG(get_logger(), "Setting new max_azimuth_diff to: %f.", max_azimuth_diff_);
+  if (get_param(p, "horizontal_bins", horizontal_bins_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new horizontal_bins to: %d.", horizontal_bins_);
+  }
+  if (get_param(p, "noise_threshold", noise_threshold_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new noise_threshold to: %d.", noise_threshold_);
+  }
+  if (get_param(p, "max_azimuth_deg", max_azimuth_deg_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new max_azimuth_deg to: %f.", max_azimuth_deg_);
+  }
+  if (get_param(p, "min_azimuth_deg", min_azimuth_deg_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new min_azimuth_deg to: %f.", min_azimuth_deg_);
+  }
+  if (get_param(p, "max_distance", max_distance_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new max_distance to: %f.", max_distance_);
   }
 
   rcl_interfaces::msg::SetParametersResult result;

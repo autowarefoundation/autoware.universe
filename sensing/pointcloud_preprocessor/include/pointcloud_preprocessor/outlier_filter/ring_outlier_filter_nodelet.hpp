@@ -30,7 +30,6 @@
 
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -51,7 +50,6 @@ protected:
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
     const TransformInfo & transform_info);
 
-  image_transport::Publisher image_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr visibility_pub_;
 
 private:
@@ -69,7 +67,6 @@ private:
   int noise_threshold_;
   int vertical_bins_;
   int horizontal_bins_;
-  float max_azimuth_diff_;
 
   float min_azimuth_deg_;
   float max_azimuth_deg_;
