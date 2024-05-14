@@ -133,7 +133,8 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions node_options)
   }
 
   topic_publisher_ptr_ = std::make_unique<topic_publisher::TopicPublisher>(
-    this, spawn_object_cmd_, spawn_cmd_time_, node_running_mode_, node_params_.entity_params);
+    this, spawn_object_cmd_, ego_initialized_, spawn_cmd_time_, node_running_mode_,
+    node_params_.entity_params);
 
   // initialize the odometry before init the subscriber
   odometry_ptr_ = std::make_shared<Odometry>();
@@ -299,6 +300,7 @@ void ReactionAnalyzerNode::init_test_env(
         call_operation_mode_service_without_response();
       }
     }
+    ego_initialized_ = true;
 
     const bool is_ready =
       (is_initialization_requested && is_route_set_ &&
@@ -419,6 +421,7 @@ void ReactionAnalyzerNode::reset()
   std::lock_guard<std::mutex> lock(mutex_);
   spawn_cmd_time_ = std::nullopt;
   subscriber_ptr_->reset();
+  ego_initialized_ = false;
   RCLCPP_INFO(this->get_logger(), "Test - %zu is done, resetting..", test_iteration_count_);
 }
 }  // namespace reaction_analyzer

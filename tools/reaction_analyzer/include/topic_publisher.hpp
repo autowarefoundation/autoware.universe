@@ -179,7 +179,7 @@ class TopicPublisher
 {
 public:
   explicit TopicPublisher(
-    rclcpp::Node * node, std::atomic<bool> & spawn_object_cmd,
+    rclcpp::Node * node, std::atomic<bool> & spawn_object_cmd, std::atomic<bool> & ego_initialized,
     std::optional<rclcpp::Time> & spawn_cmd_time, const RunningMode & node_running_mode,
     const EntityParams & entity_params);
 
@@ -192,6 +192,8 @@ private:
   rclcpp::Node * node_;
   RunningMode node_running_mode_;
   std::atomic<bool> & spawn_object_cmd_;
+  std::atomic<bool> & ego_initialized_;  // used for planning_control mode because if pointcloud is
+                                         // published before ego is initialized, it causes crash
   EntityParams entity_params_;
   std::optional<rclcpp::Time> & spawn_cmd_time_;  // Set by a publisher function when the
                                                   // spawn_object_cmd_ is true

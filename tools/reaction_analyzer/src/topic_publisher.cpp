@@ -21,12 +21,13 @@ namespace reaction_analyzer::topic_publisher
 {
 
 TopicPublisher::TopicPublisher(
-  rclcpp::Node * node, std::atomic<bool> & spawn_object_cmd,
+  rclcpp::Node * node, std::atomic<bool> & spawn_object_cmd, std::atomic<bool> & ego_initialized,
   std::optional<rclcpp::Time> & spawn_cmd_time, const RunningMode & node_running_mode,
   const EntityParams & entity_params)
 : node_(node),
   node_running_mode_(node_running_mode),
   spawn_object_cmd_(spawn_object_cmd),
+  ego_initialized_(ego_initialized),
   entity_params_(entity_params),
   spawn_cmd_time_(spawn_cmd_time)
 {
@@ -192,6 +193,9 @@ void TopicPublisher::generic_message_publisher(const std::string & topic_name)
 
 void TopicPublisher::dummy_perception_publisher()
 {
+  if (!ego_initialized_) {
+    return;  // do not publish anything if ego is not initialized
+  }
   if (!spawn_object_cmd_) {
     // do not spawn it, send empty pointcloud
     pcl::PointCloud<pcl::PointXYZ> pcl_empty;
