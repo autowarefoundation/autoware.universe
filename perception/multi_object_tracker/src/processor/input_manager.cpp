@@ -321,7 +321,7 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
     latest_object_time_ = rclcpp::Time(objects_list.back().second.header.stamp);
   } else {
     // check time jump
-    if ((now - latest_object_time_).seconds() < 0.0) {
+    if (now < latest_object_time_) {
       RCLCPP_WARN(
         node_.get_logger(),
         "InputManager::getObjects Time jump detected, now: %f, latest_object_time_: %f",
@@ -329,7 +329,7 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
       latest_object_time_ =
         now - rclcpp::Duration::from_seconds(3.0);  // reset the latest object time to 3 seconds ago
     } else {
-      RCLCPP_WARN(
+      RCLCPP_DEBUG(
         node_.get_logger(),
         "InputManager::getObjects No objects in the object list, object time band from %f to %f",
         (now - object_oldest_time).seconds(), (now - object_latest_time).seconds());
