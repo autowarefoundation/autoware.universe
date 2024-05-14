@@ -4,13 +4,13 @@ project(system_error_monitor)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_library(system_error_monitor_component SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/system_error_monitor_core.cpp
 )
 
-rclcpp_components_register_node(system_error_monitor_component
+rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "AutowareErrorMonitor"
-  EXECUTABLE system_error_monitor)
+  EXECUTABLE ${PROJECT_NAME}_node)
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
