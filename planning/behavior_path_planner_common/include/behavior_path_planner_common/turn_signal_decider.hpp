@@ -238,9 +238,8 @@ private:
         lanes.begin(), lanes.end(), [&shifted_vehicle_footprint](const auto & lane) {
           const auto & left_bound = lane.leftBound2d().basicLineString();
           const auto & right_bound = lane.rightBound2d().basicLineString();
-          return (
-            intersects(left_bound, shifted_vehicle_footprint) ||
-            intersects(right_bound, shifted_vehicle_footprint));
+          return intersects(left_bound, shifted_vehicle_footprint) ||
+                 intersects(right_bound, shifted_vehicle_footprint);
         });
     });
   };
