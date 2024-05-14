@@ -14,18 +14,19 @@
 
 #ifndef AUTOWARE_PLANNING_TEST_MANAGER__AUTOWARE_PLANNING_TEST_MANAGER_UTILS_HPP_
 #define AUTOWARE_PLANNING_TEST_MANAGER__AUTOWARE_PLANNING_TEST_MANAGER_UTILS_HPP_
-#include <route_handler/route_handler.hpp>
-#include <nav_msgs/msg/odometry.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <planning_test_utils/planning_test_utils.hpp>
+#include <route_handler/route_handler.hpp>
+
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 namespace autoware_planning_test_manager::utils
 {
-using route_handler::RouteHandler;
-using nav_msgs::msg::Odometry;
-using geometry_msgs::msg::Pose;
 using autoware_planning_msgs::msg::LaneletRoute;
+using geometry_msgs::msg::Pose;
+using nav_msgs::msg::Odometry;
+using route_handler::RouteHandler;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 
 Pose createPoseFromLaneID(const lanelet::Id & lane_id)
@@ -92,7 +93,8 @@ LaneletRoute makeBehaviorRouteFromLaneId(const int & start_lane_id, const int & 
   // create local route sections
   route_handler->setRouteLanelets(path_lanelets);
   const auto local_route_sections = route_handler->createMapSegments(path_lanelets);
-  route_sections = test_utils::combineConsecutiveRouteSections(route_sections, local_route_sections);
+  route_sections =
+    test_utils::combineConsecutiveRouteSections(route_sections, local_route_sections);
   for (const auto & route_section : route_sections) {
     for (const auto & primitive : route_section.primitives) {
       std::cerr << "primitive: " << primitive.id << std::endl;
