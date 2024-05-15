@@ -22,6 +22,8 @@
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "utils.hpp"
 
+#include <algorithm>
+
 namespace autoware::static_centerline_generator
 {
 namespace

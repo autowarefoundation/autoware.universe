@@ -46,6 +46,7 @@
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
+#include <algorithm>
 #include <chrono>
 #include <filesystem>
 #include <fstream>

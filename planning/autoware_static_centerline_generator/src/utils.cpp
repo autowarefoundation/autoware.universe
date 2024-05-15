@@ -21,6 +21,9 @@
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/Lanelet.h>
+
+#include <limits>
+
 namespace autoware::static_centerline_generator
 {
 namespace

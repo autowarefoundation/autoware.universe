@@ -20,6 +20,9 @@
 
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <memory>
+#include <string>
+
 namespace autoware::static_centerline_generator
 {
 std::vector<TrajectoryPoint> generate_centerline_with_bag(rclcpp::Node & node)
