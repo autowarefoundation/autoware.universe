@@ -25,6 +25,7 @@
 
 namespace behavior_path_planner::utils::avoidance
 {
+
 using behavior_path_planner::PlannerData;
 using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
@@ -114,8 +115,6 @@ void fillAvoidanceNecessity(
 void fillObjectStoppableJudge(
   ObjectData & object_data, const ObjectDataArray & registered_objects,
   const double feasible_stop_distance, const std::shared_ptr<AvoidanceParameters> & parameters);
-
-void fillInitialPose(ObjectData & object_data, ObjectDataArray & detected_objects);
 
 void updateRegisteredObject(
   ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
