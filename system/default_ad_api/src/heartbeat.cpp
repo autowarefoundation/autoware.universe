@@ -21,7 +21,8 @@ namespace default_ad_api
 
 HeartbeatNode::HeartbeatNode(const rclcpp::NodeOptions & options) : Node("heartbeat", options)
 {
-  auto on_timer = [this]() {
+  // Move this function so that the timer no longer holds it as a reference.
+  const auto on_timer = [this]() {
     autoware_ad_api::system::Heartbeat::Message heartbeat;
     heartbeat.stamp = now();
     heartbeat.seq = ++sequence_;  // Wraps at 65535.
@@ -32,7 +33,7 @@ HeartbeatNode::HeartbeatNode(const rclcpp::NodeOptions & options) : Node("heartb
   adaptor.init_pub(pub_);
 
   const auto period = rclcpp::Rate(10.0).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period, on_timer);
+  timer_ = rclcpp::create_timer(this, get_clock(), period, std::move(on_timer));
 }
 
 }  // namespace default_ad_api
