@@ -573,8 +573,9 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
 
   lanelet::ConstLanelet current_lanelet = lanelet;
   double length = 0;
+  lanelet::ConstLanelets candidate_lanelets;
   while (rclcpp::ok() && length < min_length) {
-    lanelet::ConstLanelets candidate_lanelets;
+    candidate_lanelets.clear();
     if (!getPreviousLaneletsWithinRoute(current_lanelet, &candidate_lanelets)) {
       if (only_route_lanes) {
         break;
@@ -1681,8 +1682,9 @@ lanelet::ConstLanelets RouteHandler::getLaneSequenceUpTo(
   }
 
   lanelet::ConstLanelet current_lanelet = lanelet;
+  lanelet::ConstLanelets candidate_lanelets;
   while (rclcpp::ok()) {
-    lanelet::ConstLanelets candidate_lanelets;
+    candidate_lanelets.clear();
     if (!getPreviousLaneletsWithinRoute(current_lanelet, &candidate_lanelets)) {
       break;
     }
