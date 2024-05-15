@@ -15,7 +15,9 @@
 #ifndef POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 #define POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 
+#include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
+#include <sophus/se3.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
@@ -58,11 +60,17 @@ private:
   void onTwistWithCovarianceStamped(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
   void onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
+
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
     tf2::Transform * tf2_transform_ptr);
+  bool getTransform(
+    const std::string & target_frame, const std::string & source_frame,
+    tf2::Transform * tf2_transform_ptr, Eigen::Matrix4f & eigen_transform);
 
-  bool undistortPointCloud(const tf2::Transform & tf2_base_link_to_sensor, PointCloud2 & points);
+  bool undistortPointCloud(
+    const tf2::Transform & tf2_base_link_to_sensor, Eigen::Matrix4f & eigen_base_link_to_sensor,
+    PointCloud2 & points);
 
   rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
@@ -81,6 +89,7 @@ private:
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;
   bool use_imu_;
+  bool use_3d_distortion_correction_;
 };
 
 }  // namespace pointcloud_preprocessor

@@ -9,6 +9,7 @@ set(CGAL_DATA_DIR ".")
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(Sophus REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
@@ -19,6 +20,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${Sophus_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
@@ -86,6 +88,7 @@ target_link_libraries(pointcloud_preprocessor_filter
   faster_voxel_grid_downsample_filter
   ${Boost_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${Sophus_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
