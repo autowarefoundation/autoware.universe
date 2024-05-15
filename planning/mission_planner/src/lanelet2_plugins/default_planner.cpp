@@ -186,7 +186,6 @@ void DefaultPlanner::map_callback(const HADMapBin::ConstSharedPtr msg)
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
   lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
-  road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
   shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
   is_graph_ready_ = true;
 }
@@ -331,8 +330,16 @@ bool DefaultPlanner::is_goal_valid(
     }
   }
 
-  lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal, &closest_lanelet)) {
+  constexpr auto max_queries = 50;
+  lanelet::ConstLanelets goal_candidate_lanelets;
+  lanelet::BasicPoint2d goal_point{goal.position.x, goal.position.y};
+  auto nb_queries = 0;
+  lanelet_map_ptr_->laneletLayer.nearestUntil(goal_point, [&](const auto &, const auto & ll) {
+    if (route_handler_.isRoadLanelet(ll)) goal_candidate_lanelets.push_back(ll);
+    return (++nb_queries >= max_queries);
+  });
+  lanelet::ConstLanelet closest_lanelet;
+  if (!lanelet::utils::query::getClosestLanelet(goal_candidate_lanelets, goal, &closest_lanelet)) {
     return false;
   }
 
