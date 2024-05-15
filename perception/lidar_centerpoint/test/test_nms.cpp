@@ -16,7 +16,8 @@
 
 #include <gtest/gtest.h>
 
-TEST(NonMaximumSuppressionTest, Apply) {
+TEST(NonMaximumSuppressionTest, Apply)
+{
   centerpoint::NonMaximumSuppression nms;
   centerpoint::NMSParams params;
   params.search_distance_2d_ = 1.0;
