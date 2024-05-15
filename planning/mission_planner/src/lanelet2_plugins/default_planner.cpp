@@ -185,8 +185,6 @@ void DefaultPlanner::map_callback(const HADMapBin::ConstSharedPtr msg)
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
-  shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
   is_graph_ready_ = true;
 }
 
@@ -316,17 +314,15 @@ bool DefaultPlanner::is_goal_valid(
 
   // check if goal is in shoulder lanelet
   lanelet::Lanelet closest_shoulder_lanelet;
+  const auto shoulder_lanelets = route_handler_.getShoulderLaneletsAtPose(goal);
   if (lanelet::utils::query::getClosestLanelet(
-        shoulder_lanelets_, goal, &closest_shoulder_lanelet)) {
-    if (is_in_lane(closest_shoulder_lanelet, goal_lanelet_pt)) {
-      const auto lane_yaw =
-        lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
-      const auto goal_yaw = tf2::getYaw(goal.orientation);
-      const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
-      const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
-      if (std::abs(angle_diff) < th_angle) {
-        return true;
-      }
+        shoulder_lanelets, goal, &closest_shoulder_lanelet)) {
+    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
+    const auto goal_yaw = tf2::getYaw(goal.orientation);
+    const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
+    const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
+    if (std::abs(angle_diff) < th_angle) {
+      return true;
     }
   }
 
