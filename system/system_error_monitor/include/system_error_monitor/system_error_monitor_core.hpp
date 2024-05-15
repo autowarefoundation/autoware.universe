@@ -64,7 +64,7 @@ struct KeyName
 class AutowareErrorMonitor : public rclcpp::Node
 {
 public:
-  AutowareErrorMonitor(const rclcpp::NodeOptions & options);
+  explicit AutowareErrorMonitor(const rclcpp::NodeOptions & options);
 
 private:
   // Parameter
