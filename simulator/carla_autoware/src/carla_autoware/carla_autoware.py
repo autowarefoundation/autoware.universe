@@ -66,7 +66,7 @@ class InitializeInterface(object):
         self.timeout = self.param_["timeout"]
         self.sync_mode = self.param_["sync_mode"]
         self.fixed_delta_seconds = self.param_["fixed_delta_seconds"]
-        self.map_name = self.param_["map_name"]
+        self.map_name = self.param_["carla_map_name"]
         self.agent_role_name = self.param_["ego_vehicle_role_name"]
         self.vehicle_type = self.param_["vehicle_type"]
         self.spawn_point = self.param_["spawn_point"]
