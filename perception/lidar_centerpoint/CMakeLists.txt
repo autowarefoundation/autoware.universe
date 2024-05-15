@@ -156,6 +156,9 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ament_auto_add_gtest(test_ros_utils
       test/test_ros_utils.cpp
     )
+    ament_auto_add_gtest(test_nms
+      test/test_nms.cpp
+    )
   endif()
 
 else()
