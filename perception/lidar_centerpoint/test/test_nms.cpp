@@ -16,19 +16,16 @@
 
 #include <gtest/gtest.h>
 
-using namespace centerpoint;
-
-TEST(NonMaximumSuppressionTest, Apply)
-{
-  NonMaximumSuppression nms;
-  NMSParams params;
+TEST(NonMaximumSuppressionTest, Apply) {
+  centerpoint::NonMaximumSuppression nms;
+  centerpoint::NMSParams params;
   params.search_distance_2d_ = 1.0;
   params.iou_threshold_ = 0.2;
-  params.nms_type_ = NMS_TYPE::IoU_BEV;
+  params.nms_type_ = centerpoint::NMS_TYPE::IoU_BEV;
   params.target_class_names_ = {"CAR"};
   nms.setParameters(params);
 
-  std::vector<DetectedObject> input_objects(4);
+  std::vector<centerpoint::DetectedObject> input_objects(4);
 
   // Object 1
   autoware_auto_perception_msgs::msg::ObjectClassification obj1_classification;
@@ -90,7 +87,7 @@ TEST(NonMaximumSuppressionTest, Apply)
   input_objects[3].shape.dimensions.x = 0.5;
   input_objects[3].shape.dimensions.y = 0.5;
 
-  std::vector<DetectedObject> output_objects = nms.apply(input_objects);
+  std::vector<centerpoint::DetectedObject> output_objects = nms.apply(input_objects);
 
   // Assert the expected number of output objects
   EXPECT_EQ(output_objects.size(), 3);
