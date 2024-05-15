@@ -14,11 +14,11 @@ This ros package enables communication between Autoware and CARLA for autonomous
 # Setup
 
 ## install
-
-- [Autoware.Universe](https://autowarefoundation.github.io/autoware-documentation/galactic/installation/autoware/source-installation/)
 - [CARLA Installation](https://carla.readthedocs.io/en/latest/start_quickstart/)
 - [Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)
-- [Python wheel for CARLA 0.9.15 Ros2 Humble communication](https://github.com/gezp/carla_ros/releases/tag/carla-0.9.15-ubuntu-22.04)
+- [Python Package for CARLA 0.9.15 Ros2 Humble communication](https://github.com/gezp/carla_ros/releases/tag/carla-0.9.15-ubuntu-22.04)
+  - Install the wheel using pip.
+  - OR add the egg file to the `PYTHONPATH`.
 
   1. Download maps (y-axis inverted version) to arbitaly location
   2. Change names and create the map folder (example: Town01) inside `autoware_map`. (`point_cloud/Town01.pcd` -> `autoware_map/Town01/pointcloud_map.pcd`, `vector_maps/lanelet2/Town01.osm`-> `autoware_map/Town01/lanelet2_map.osm`)
@@ -43,7 +43,7 @@ cd CARLA
 2. Run ros nodes
 
 ```bash
-ros2 launch carla_autoware e2e_simulator.launch.xml map_path:=$HOME/autoware_map/Town01 vehicle_model:=sample_vehicle sensor_model:=awsim_sensor_kit simulator_type:=carla
+ros2 launch autoware_launch e2e_simulator.launch.xml map_path:=$HOME/autoware_map/Town01 vehicle_model:=sample_vehicle sensor_model:=awsim_sensor_kit simulator_type:=carla
 ```
 
 3. Set initial pose (Init by GNSS)
@@ -53,6 +53,6 @@ ros2 launch carla_autoware e2e_simulator.launch.xml map_path:=$HOME/autoware_map
 
 # Tips
 
-- If you want to edit the sensors configuration used in CARLA, edit `objects.json` located in `carla_autoware/config`.
+- If you want to edit the sensors configuration used in CARLA, edit `objects.json` located in `carla_autoware/config`. Make sure the sensor configuration is the same as the `sensor_kit` description used in Autoware.
 - Misalignment might occurs during initialization, pressing `init by gnss` button should fix it.
 - Naming the map folder according to the name of the CARLA map is important! (example: `Town01`, `Town10HD`, `Town02`).

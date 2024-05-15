@@ -5,7 +5,7 @@
   <arg name="ego_vehicle_role_name" default="ego_vehicle"/>
   <arg name="vehicle_type" default="vehicle.toyota.prius"/>
   <arg name="spawn_point" default="None"/>
-  <arg name="map_name" default="Town01"/>
+  <arg name="carla_map_name" default="Town01"/>
   <arg name="passive" default="False"/>
   <arg name="sync_mode" default="True"/>
   <arg name="fixed_delta_seconds" default="0.05" description="Timestep for CARLA, FPS=1/value"/>
@@ -20,7 +20,7 @@
     <param name="timeout" value="$(var timeout)"/>
     <param name="sync_mode" value="$(var sync_mode)"/>
     <param name="fixed_delta_seconds" value="$(var fixed_delta_seconds)"/>
-    <param name="map_name" value="$(var map_name)"/>
+    <param name="carla_map_name" value="$(var carla_map_name)"/>
     <param name="ego_vehicle_role_name" value="$(var ego_vehicle_role_name)"/>
     <param name="spawn_point" value="$(var spawn_point)"/>
     <param name="vehicle_type" value="$(var vehicle_type)"/>
@@ -31,10 +31,5 @@
   <node pkg="tf2_ros" exec="static_transform_publisher" name="ego_vehicle2base_link" args="0 0 0 0 0 0 /ego_vehicle /base_link "/>
   <node pkg="tf2_ros" exec="static_transform_publisher" name="velodyne_top" args="0 0 1 -1.5386 -0.015 0.001 /velodyne_top /velodyne_top_changed "/>
   <node pkg="tf2_ros" exec="static_transform_publisher" name="imu" args="0 0 1 -3.10519265 -0.015 -3.14059265359 /tamagawa/imu_link /tamagawa/imu_link_changed "/>
-  <node
-    pkg="tf2_ros"
-    exec="static_transform_publisher"
-    name="camera"
-    args="-0.05 -0.0175 1.1 0.0364 -0.015 0.001 /traffic_light_left_camera/camera_link /traffic_light_left_camera/camera_link_changed "
-  />
+  <node pkg="tf2_ros" exec="static_transform_publisher" name="camera" args="-0.05 -0.0175 1.1 0.0364 -0.015 0.001 /traffic_light_left_camera/camera_link /traffic_light_left_camera/camera_link_changed "/>
 </launch>

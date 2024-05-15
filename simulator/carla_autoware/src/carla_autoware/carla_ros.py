@@ -88,7 +88,7 @@ class carla_interface(object):
             "sync_mode": rclpy.Parameter.Type.BOOL,
             "timeout": rclpy.Parameter.Type.INTEGER,
             "fixed_delta_seconds": rclpy.Parameter.Type.DOUBLE,
-            "map_name": rclpy.Parameter.Type.STRING,
+            "carla_map_name": rclpy.Parameter.Type.STRING,
             "ego_vehicle_role_name": rclpy.Parameter.Type.STRING,
             "spawn_point": rclpy.Parameter.Type.STRING,
             "vehicle_type": rclpy.Parameter.Type.STRING,
