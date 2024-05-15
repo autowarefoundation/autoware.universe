@@ -5,7 +5,7 @@
   <arg name="ego_vehicle_role_name" default="ego_vehicle"/>
   <arg name="vehicle_type" default="vehicle.toyota.prius"/>
   <arg name="spawn_point" default="None"/>
-  <arg name="carla_map_name" default="Town01"/>
+  <arg name="carla_map" default="Town01"/>
   <arg name="passive" default="False"/>
   <arg name="sync_mode" default="True"/>
   <arg name="fixed_delta_seconds" default="0.05" description="Timestep for CARLA, FPS=1/value"/>
@@ -20,7 +20,7 @@
     <param name="timeout" value="$(var timeout)"/>
     <param name="sync_mode" value="$(var sync_mode)"/>
     <param name="fixed_delta_seconds" value="$(var fixed_delta_seconds)"/>
-    <param name="carla_map_name" value="$(var carla_map_name)"/>
+    <param name="carla_map" value="$(var carla_map)"/>
     <param name="ego_vehicle_role_name" value="$(var ego_vehicle_role_name)"/>
     <param name="spawn_point" value="$(var spawn_point)"/>
     <param name="vehicle_type" value="$(var vehicle_type)"/>

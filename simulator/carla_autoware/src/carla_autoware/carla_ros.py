@@ -88,7 +88,7 @@ class carla_interface(object):
             "sync_mode": rclpy.Parameter.Type.BOOL,
             "timeout": rclpy.Parameter.Type.INTEGER,
             "fixed_delta_seconds": rclpy.Parameter.Type.DOUBLE,
-            "carla_map_name": rclpy.Parameter.Type.STRING,
+            "carla_map": rclpy.Parameter.Type.STRING,
             "ego_vehicle_role_name": rclpy.Parameter.Type.STRING,
             "spawn_point": rclpy.Parameter.Type.STRING,
             "vehicle_type": rclpy.Parameter.Type.STRING,
@@ -144,7 +144,7 @@ class carla_interface(object):
             self.id_to_sensor_type_map[sensor["id"]] = sensor["type"]
             if sensor["type"] == "sensor.camera.rgb":
                 self.pub_camera = self.ros2_node.create_publisher(
-                    Image, "/perception/traffic_light_recognition/traffic_light/debug/rois", 1
+                    Image, "/sensing/camera/traffic_light/image_raw", 1
                 )
                 self.pub_camera_info = self.ros2_node.create_publisher(
                     CameraInfo, "/sensing/camera/traffic_light/camera_info", 1
