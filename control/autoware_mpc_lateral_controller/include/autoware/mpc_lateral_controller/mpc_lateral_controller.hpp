@@ -53,7 +53,7 @@ class MpcLateralController : public trajectory_follower::LateralControllerBase
 {
 public:
   /// \param node Reference to the node used only for the component and parameter initialization.
-  explicit MpcLateralController(rclcpp::Node & node);
+  explicit MpcLateralController(rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater_);
   virtual ~MpcLateralController();
 
 private:
@@ -93,8 +93,6 @@ private:
 
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
-
-  diagnostic_updater::Updater diag_updater_{this}; // Diagnostic updater for publishing diagnostic data.
 
   void setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat, const bool & m_is_mpc_solved);
 

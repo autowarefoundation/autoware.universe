@@ -73,6 +73,8 @@ private:
   double timeout_thr_sec_;
   boost::optional<LongitudinalOutput> longitudinal_output_{boost::none};
 
+  std::shared_ptr<diagnostic_updater::Updater> diag_updater_{this}; // Diagnostic updater for publishing diagnostic data.
+
   std::shared_ptr<trajectory_follower::LongitudinalControllerBase> longitudinal_controller_;
   std::shared_ptr<trajectory_follower::LateralControllerBase> lateral_controller_;
 
