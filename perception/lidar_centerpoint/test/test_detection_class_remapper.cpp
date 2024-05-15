@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
 #include <lidar_centerpoint/detection_class_remapper.hpp>
+
+#include <gtest/gtest.h>
 
 TEST(DetectionClassRemapperTest, MapClasses)
 {
@@ -26,16 +27,8 @@ TEST(DetectionClassRemapperTest, MapClasses)
     0, 0, 1,  // TRUCK can be remapped to TRAILER
     0, 1, 0   // TRAILER can be remapped to TRUCK
   };
-  std::vector<double> min_area_matrix = {
-    0.0, 0.0, 0.0,
-    0.0, 0.0, 10.0,
-    0.0, 0.0, 0.0
-  };
-  std::vector<double> max_area_matrix = {
-    0.0, 0.0, 0.0,
-    0.0, 0.0, 999.0,
-    0.0, 10.0, 0.0
-  };
+  std::vector<double> min_area_matrix = {0.0, 0.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0};
+  std::vector<double> max_area_matrix = {0.0, 0.0, 0.0, 0.0, 0.0, 999.0, 0.0, 10.0, 0.0};
 
   remapper.setParameters(allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 
@@ -92,8 +85,8 @@ TEST(DetectionClassRemapperTest, MapClasses)
   EXPECT_EQ(msg.objects[3].classification[0].label, 2);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

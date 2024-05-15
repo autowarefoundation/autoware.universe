@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
 #include "lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
+
+#include <gtest/gtest.h>
 
 using namespace centerpoint;
 
-TEST(NonMaximumSuppressionTest, Apply) {
+TEST(NonMaximumSuppressionTest, Apply)
+{
   NonMaximumSuppression nms;
   NMSParams params;
   params.search_distance_2d_ = 1.0;
@@ -32,7 +34,7 @@ TEST(NonMaximumSuppressionTest, Apply) {
   autoware_auto_perception_msgs::msg::ObjectClassification obj1_classification;
   obj1_classification.label = 0;  // Assuming "car" has label 0
   obj1_classification.probability = 1.0;
-  input_objects[0].classification = {obj1_classification}; // Assuming "car" has label 0
+  input_objects[0].classification = {obj1_classification};  // Assuming "car" has label 0
   input_objects[0].kinematics.pose_with_covariance.pose.position.x = 0.0;
   input_objects[0].kinematics.pose_with_covariance.pose.position.y = 0.0;
   input_objects[0].kinematics.pose_with_covariance.pose.orientation.x = 0.0;
@@ -47,7 +49,7 @@ TEST(NonMaximumSuppressionTest, Apply) {
   autoware_auto_perception_msgs::msg::ObjectClassification obj2_classification;
   obj2_classification.label = 0;  // Assuming "car" has label 0
   obj2_classification.probability = 1.0;
-  input_objects[1].classification = {obj2_classification}; // Assuming "car" has label 0
+  input_objects[1].classification = {obj2_classification};  // Assuming "car" has label 0
   input_objects[1].kinematics.pose_with_covariance.pose.position.x = 0.5;
   input_objects[1].kinematics.pose_with_covariance.pose.position.y = 0.5;
   input_objects[1].kinematics.pose_with_covariance.pose.orientation.x = 0.0;
@@ -62,7 +64,7 @@ TEST(NonMaximumSuppressionTest, Apply) {
   autoware_auto_perception_msgs::msg::ObjectClassification obj3_classification;
   obj3_classification.label = 0;  // Assuming "car" has label 0
   obj3_classification.probability = 1.0;
-  input_objects[2].classification = {obj3_classification}; // Assuming "car" has label 0
+  input_objects[2].classification = {obj3_classification};  // Assuming "car" has label 0
   input_objects[2].kinematics.pose_with_covariance.pose.position.x = 5.0;
   input_objects[2].kinematics.pose_with_covariance.pose.position.y = 5.0;
   input_objects[2].kinematics.pose_with_covariance.pose.orientation.x = 0.0;
@@ -77,7 +79,7 @@ TEST(NonMaximumSuppressionTest, Apply) {
   autoware_auto_perception_msgs::msg::ObjectClassification obj4_classification;
   obj4_classification.label = 1;  // Assuming "pedestrian" has label 1
   obj4_classification.probability = 1.0;
-  input_objects[3].classification = {obj4_classification}; // Assuming "pedestrian" has label 1
+  input_objects[3].classification = {obj4_classification};  // Assuming "pedestrian" has label 1
   input_objects[3].kinematics.pose_with_covariance.pose.position.x = 0.0;
   input_objects[3].kinematics.pose_with_covariance.pose.position.y = 0.0;
   input_objects[3].kinematics.pose_with_covariance.pose.orientation.x = 0.0;
@@ -114,9 +116,8 @@ TEST(NonMaximumSuppressionTest, Apply) {
   EXPECT_TRUE(is_input_object_3_included);
 }
 
-
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
