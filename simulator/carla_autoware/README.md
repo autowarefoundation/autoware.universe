@@ -14,9 +14,11 @@ This ros package enables communication between Autoware and CARLA for autonomous
 # Setup
 
 ## install
+
 - [CARLA Installation](https://carla.readthedocs.io/en/latest/start_quickstart/)
 - [Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)
 - [Python Package for CARLA 0.9.15 Ros2 Humble communication](https://github.com/gezp/carla_ros/releases/tag/carla-0.9.15-ubuntu-22.04)
+
   - Install the wheel using pip.
   - OR add the egg file to the `PYTHONPATH`.
 
