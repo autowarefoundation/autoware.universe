@@ -1181,6 +1181,14 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
       if (id == 0) {
         continue;
       }
+
+      if (!route_handler_->getLaneletMapPtr()->polygonLayer.exists(id)) {
+        RCLCPP_DEBUG(
+          rclcpp::get_logger("ObstacleCruisePlanner"),
+          "Specified Lanelet polygon id [%ld] is not exsit in the map", id);
+        continue;
+      }
+
       const auto intersection_poly =
         lanelet::utils::to2D(route_handler_->getLaneletMapPtr()->polygonLayer.get(id))
           .basicPolygon();
