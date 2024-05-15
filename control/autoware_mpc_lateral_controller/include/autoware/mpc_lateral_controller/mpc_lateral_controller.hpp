@@ -88,12 +88,15 @@ private:
   // Flag indicating whether to keep the steering control until it converges.
   bool m_keep_steer_control_until_converged;
 
+  // MPC colver checker.
+  bool m_is_mpc_solved{true};
+
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
 
   diagnostic_updater::Updater diag_updater_{this}; // Diagnostic updater for publishing diagnostic data.
 
-  void setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat, const bool & m_MPC_failed);
+  void setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat, const bool & m_is_mpc_solved);
 
   void setupDiag();
 
