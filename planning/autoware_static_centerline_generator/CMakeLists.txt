@@ -43,6 +43,10 @@ ament_auto_package(
     rviz
 )
 
+target_include_directories(main PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 if(BUILD_TESTING)
   add_launch_test(
     test/test_static_centerline_generator.test.py
