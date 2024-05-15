@@ -43,7 +43,8 @@ using tier4_autoware_utils::Polygon2d;
 using vehicle_info_util::VehicleInfo;
 
 bool isTargetObjectOncoming(
-  const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose);
+  const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose,
+  const double angle_threshold = M_PI_2);
 
 bool isTargetObjectFront(
   const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
@@ -54,11 +55,11 @@ bool isTargetObjectFront(
 
 Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double lon_length, const double lat_margin, const double is_stopped_obj,
+  const double lon_length, const double lat_margin, const bool is_stopped_obj,
   CollisionCheckDebug & debug);
 Polygon2d createExtendedPolygon(
   const Pose & obj_pose, const Shape & shape, const double lon_length, const double lat_margin,
-  const double is_stopped_obj, CollisionCheckDebug & debug);
+  const bool is_stopped_obj, CollisionCheckDebug & debug);
 
 PredictedPath convertToPredictedPath(
   const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);

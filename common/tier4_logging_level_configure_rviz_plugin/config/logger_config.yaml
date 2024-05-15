@@ -33,10 +33,14 @@ Planning:
       logger_name: planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner
     - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
       logger_name: tier4_autoware_utils
+    - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
+      logger_name: behavior_path_planner.path_shifter
 
   behavior_path_planner_avoidance:
     - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
       logger_name: planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.avoidance
+    - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
+      logger_name: planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.avoidance.utils
 
   behavior_path_planner_goal_planner:
     - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
@@ -49,10 +53,14 @@ Planning:
   behavior_path_avoidance_by_lane_change:
     - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
       logger_name: lane_change.AVOIDANCE_BY_LANE_CHANGE
+    - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
+      logger_name: lane_change.utils
 
   behavior_path_lane_change:
     - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
       logger_name: lane_change.NORMAL
+    - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
+      logger_name: lane_change.utils
 
   behavior_velocity_planner:
     - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner
@@ -75,6 +83,10 @@ Planning:
       logger_name: planning.scenario_planning.motion_velocity_smoother
     - node_name: /planning/scenario_planning/motion_velocity_smoother
       logger_name: tier4_autoware_utils
+
+  route_handler:
+    - node_name: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner
+      logger_name: route_handler
 
 # ============================================================
 # control

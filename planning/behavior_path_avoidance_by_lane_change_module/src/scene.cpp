@@ -125,7 +125,7 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
   // reference pose
   data.reference_pose = getEgoPose();
 
-  data.reference_path_rough = prev_module_path_;
+  data.reference_path_rough = prev_module_output_.path;
 
   const auto resample_interval = avoidance_parameters_->resample_interval_for_planning;
   data.reference_path = utils::resamplePathWithSpline(data.reference_path_rough, resample_interval);
@@ -145,7 +145,9 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
   const auto [object_within_target_lane, object_outside_target_lane] =
     utils::path_safety_checker::separateObjectsByLanelets(
       *planner_data_->dynamic_object, data.current_lanelets,
-      utils::path_safety_checker::isPolygonOverlapLanelet);
+      [](const auto & obj, const auto & lane) {
+        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane);
+      });
 
   // Assume that the maximum allocation for data.other object is the sum of
   // objects_within_target_lane and object_outside_target_lane. The maximum allocation for
@@ -164,7 +166,7 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
       [](const auto & object) {
         ObjectData other_object;
         other_object.object = object;
-        other_object.reason = "OutOfTargetArea";
+        other_object.info = ObjectInfo::OUT_OF_TARGET_AREA;
         return other_object;
       });
   }
@@ -273,12 +275,8 @@ double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
     return std::numeric_limits<double>::infinity();
   }
 
-  // get minimum lane change distance
-  const auto shift_intervals =
-    getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back(), direction_);
   return utils::lane_change::calcMinimumLaneChangeLength(
-    *lane_change_parameters_, shift_intervals,
-    lane_change_parameters_->backward_length_buffer_for_end_of_lane);
+    getRouteHandler(), current_lanes.back(), *lane_change_parameters_, direction_);
 }
 
 double AvoidanceByLaneChange::calcLateralOffset() const
