@@ -4,6 +4,10 @@ project(component_interface_utils)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/service_utils.cpp
+)
+
 include_directories(
   include
   SYSTEM

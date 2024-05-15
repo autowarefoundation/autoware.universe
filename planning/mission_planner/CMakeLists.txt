@@ -15,7 +15,6 @@ rclcpp_components_register_node(goal_pose_visualizer_component
 
 ament_auto_add_library(${PROJECT_NAME}_component SHARED
   src/mission_planner/arrival_checker.cpp
-  src/mission_planner/service_utils.cpp
   src/mission_planner/mission_planner.cpp
   src/mission_planner/route_selector.cpp
 )

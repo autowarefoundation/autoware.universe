@@ -14,7 +14,7 @@
 
 #include "route_selector.hpp"
 
-#include "service_utils.hpp"
+#include <component_interface_utils/service_utils.hpp>
 
 #include <array>
 #include <memory>
@@ -96,25 +96,26 @@ RouteSelector::RouteSelector(const rclcpp::NodeOptions & options)
   // Init main route interface.
   main_.srv_clear_route = create_service<ClearRoute>(
     "~/main/clear_route",
-    service_utils::handle_exception(&RouteSelector::on_clear_route_main, this));
+    component_interface_utils::handle_exception(&RouteSelector::on_clear_route_main, this));
   main_.srv_set_waypoint_route = create_service<SetWaypointRoute>(
     "~/main/set_waypoint_route",
-    service_utils::handle_exception(&RouteSelector::on_set_waypoint_route_main, this));
+    component_interface_utils::handle_exception(&RouteSelector::on_set_waypoint_route_main, this));
   main_.srv_set_lanelet_route = create_service<SetLaneletRoute>(
     "~/main/set_lanelet_route",
-    service_utils::handle_exception(&RouteSelector::on_set_lanelet_route_main, this));
+    component_interface_utils::handle_exception(&RouteSelector::on_set_lanelet_route_main, this));
   main_.pub_state_ = create_publisher<RouteState>("~/main/state", durable_qos);
   main_.pub_route_ = create_publisher<LaneletRoute>("~/main/route", durable_qos);
 
   // Init mrm route interface.
   mrm_.srv_clear_route = create_service<ClearRoute>(
-    "~/mrm/clear_route", service_utils::handle_exception(&RouteSelector::on_clear_route_mrm, this));
+    "~/mrm/clear_route",
+    component_interface_utils::handle_exception(&RouteSelector::on_clear_route_mrm, this));
   mrm_.srv_set_waypoint_route = create_service<SetWaypointRoute>(
     "~/mrm/set_waypoint_route",
-    service_utils::handle_exception(&RouteSelector::on_set_waypoint_route_mrm, this));
+    component_interface_utils::handle_exception(&RouteSelector::on_set_waypoint_route_mrm, this));
   mrm_.srv_set_lanelet_route = create_service<SetLaneletRoute>(
     "~/mrm/set_lanelet_route",
-    service_utils::handle_exception(&RouteSelector::on_set_lanelet_route_mrm, this));
+    component_interface_utils::handle_exception(&RouteSelector::on_set_lanelet_route_mrm, this));
   mrm_.pub_state_ = create_publisher<RouteState>("~/mrm/state", durable_qos);
   mrm_.pub_route_ = create_publisher<LaneletRoute>("~/mrm/route", durable_qos);
 
@@ -169,7 +170,7 @@ void RouteSelector::on_clear_route_main(
   }
 
   // Forward the request if not in MRM.
-  res->status = service_utils::sync_call(cli_clear_route_, req);
+  res->status = component_interface_utils::sync_call(cli_clear_route_, req);
 }
 
 void RouteSelector::on_set_waypoint_route_main(
@@ -188,7 +189,7 @@ void RouteSelector::on_set_waypoint_route_main(
   }
 
   // Forward the request if not in MRM.
-  res->status = service_utils::sync_call(cli_set_waypoint_route_, req);
+  res->status = component_interface_utils::sync_call(cli_set_waypoint_route_, req);
 }
 
 void RouteSelector::on_set_lanelet_route_main(
@@ -207,7 +208,7 @@ void RouteSelector::on_set_lanelet_route_main(
   }
 
   // Forward the request if not in MRM.
-  res->status = service_utils::sync_call(cli_set_lanelet_route_, req);
+  res->status = component_interface_utils::sync_call(cli_set_lanelet_route_, req);
 }
 
 void RouteSelector::on_clear_route_mrm(
@@ -225,7 +226,7 @@ void RouteSelector::on_set_waypoint_route_mrm(
   SetWaypointRoute::Request::SharedPtr req, SetWaypointRoute::Response::SharedPtr res)
 {
   req->uuid = uuid::generate_if_empty(req->uuid);
-  res->status = service_utils::sync_call(cli_set_waypoint_route_, req);
+  res->status = component_interface_utils::sync_call(cli_set_waypoint_route_, req);
 
   if (res->status.success) {
     mrm_operating_ = true;
@@ -239,7 +240,7 @@ void RouteSelector::on_set_lanelet_route_mrm(
   SetLaneletRoute::Request::SharedPtr req, SetLaneletRoute::Response::SharedPtr res)
 {
   req->uuid = uuid::generate_if_empty(req->uuid);
-  res->status = service_utils::sync_call(cli_set_lanelet_route_, req);
+  res->status = component_interface_utils::sync_call(cli_set_lanelet_route_, req);
 
   if (res->status.success) {
     mrm_operating_ = true;
@@ -273,13 +274,13 @@ ResponseStatus RouteSelector::resume_main_route(ClearRoute::Request::SharedPtr r
 
   // Clear the route if there is no request for the main route.
   if (std::holds_alternative<std::monostate>(main_request_)) {
-    return service_utils::sync_call(cli_clear_route_, req);
+    return component_interface_utils::sync_call(cli_clear_route_, req);
   }
 
   // Attempt to resume the main route if there is a planned route.
   if (const auto route = main_.get_route()) {
     const auto r = create_lanelet_request(route.value());
-    const auto status = service_utils::sync_call(cli_set_lanelet_route_, r);
+    const auto status = component_interface_utils::sync_call(cli_set_lanelet_route_, r);
     if (status.success) return status;
   }
 
@@ -287,11 +288,11 @@ ResponseStatus RouteSelector::resume_main_route(ClearRoute::Request::SharedPtr r
   // NOTE: Clear the waypoints to avoid returning. Remove this once resuming is supported.
   if (const auto request = std::get_if<WaypointRequest>(&main_request_)) {
     const auto r = create_goal_request(*request);
-    return service_utils::sync_call(cli_set_waypoint_route_, r);
+    return component_interface_utils::sync_call(cli_set_waypoint_route_, r);
   }
   if (const auto request = std::get_if<LaneletRequest>(&main_request_)) {
     const auto r = create_goal_request(*request);
-    return service_utils::sync_call(cli_set_waypoint_route_, r);
+    return component_interface_utils::sync_call(cli_set_waypoint_route_, r);
   }
   throw std::logic_error("route_selector: unknown main route request");
 }
