@@ -34,7 +34,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `publish_outlier_pointcloud` | bool    | false         | Flag to publish outlier pointcloud and visibility score. Due to performance concerns, please set to false during experiments. |
 | `min_azimuth_deg`            | float   | 0.0           | The left limit of azimuth for visibility score calculation                                                                    |
 | `max_azimuth_deg`            | float   | 360.0         | The right limit of azimuth for visibility score calculation                                                                   |
-| `max_distance`               | float   | 12.0          | The limit distance for for visibility score calculation                                                                       |
+| `max_distance`               | float   | 12.0          | The limit distance for visibility score calculation                                                                           |
 | `vertical_bins`              | int     | 128           | The number of vertical bin for visibility histogram                                                                           |
 | `horizontal_bins`            | int     | 36            | The number of horizontal bin for visibility histogram                                                                         |
 | `noise_threshold`            | int     | 2             | The parameter for determining whether it is noise                                                                             |
