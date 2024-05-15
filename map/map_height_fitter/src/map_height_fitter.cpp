@@ -200,12 +200,12 @@ double MapHeightFitter::Impl::get_ground_height(const Point & point) const
       }
     }
   } else if (fit_target_ == "vector_map") {
-    const auto closest_lanelets = vector_map_->laneletLayer.nearest(lanelet::BasicPoint2d{x, y}, 1);
-    if (closest_lanelets.empty()) {
+    const auto closest_points = vector_map_->pointLayer.nearest(lanelet::BasicPoint2d{x, y}, 1);
+    if (closest_points.empty()) {
       RCLCPP_WARN_STREAM(logger, "failed to get closest lanelet");
       return point.z;
     }
-    height = closest_lanelets.front().centerline().back().z();
+    height = closest_points.front().z();
   }
 
   return std::isfinite(height) ? height : point.z;
