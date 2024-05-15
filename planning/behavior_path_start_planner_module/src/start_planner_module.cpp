@@ -241,13 +241,17 @@ void StartPlannerModule::updateData()
     DEBUG_PRINT("StartPlannerModule::updateData() received new route, reset status");
   }
 
-  constexpr double moving_velocity_threshold = 0.1;
-  const double & ego_velocity = planner_data_->self_odometry->twist.twist.linear.x;
   if (
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
-    status_.driving_forward && !status_.first_engaged_and_driving_forward_time &&
-    ego_velocity > moving_velocity_threshold) {
+    status_.driving_forward && !status_.first_engaged_and_driving_forward_time) {
     status_.first_engaged_and_driving_forward_time = clock_->now();
+  }
+
+  constexpr double moving_velocity_threshold = 0.1;
+  const double & ego_velocity = planner_data_->self_odometry->twist.twist.linear.x;
+  if (status_.first_engaged_and_driving_forward_time && ego_velocity > moving_velocity_threshold) {
+    // Ego is engaged, and has moved
+    status_.has_departed = true;
   }
 
   status_.backward_driving_complete = hasFinishedBackwardDriving();
@@ -1270,10 +1274,8 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
   // close to complete its shift, so it wrongly turns off the blinkers, this override helps avoid
   // this issue. Also, if the ego is not engaged (so it is stopped), the blinkers should still be
   // activated.
-  const bool override_ego_stopped_check = std::invoke([&]() {
-    if (!status_.first_engaged_and_driving_forward_time) {
-      return true;
-    }
+
+  const bool geometric_planner_has_not_finished_first_path = std::invoke([&]() {
     if (status_.planner_type != PlannerType::GEOMETRIC) {
       return false;
     }
@@ -1283,6 +1285,9 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
       path.points, stop_point.point.pose.position, current_pose.position));
     return distance_from_ego_to_stop_point < distance_threshold;
   });
+
+  const bool override_ego_stopped_check =
+    !status_.has_departed || geometric_planner_has_not_finished_first_path;
 
   const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
     path, shift_start_idx, shift_end_idx, current_lanes, current_shift_length,
