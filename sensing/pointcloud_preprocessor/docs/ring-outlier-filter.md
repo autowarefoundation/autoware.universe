@@ -10,7 +10,39 @@ A method of operating scan in chronological order and removing noise based on th
 
 ![ring_outlier_filter](./image/outlier_filter-ring.drawio.svg)
 
-Another feature of this node is that it calculates visibility based on outlier pointcloud and publish score as a topic. With this function, for example, in heavy rain, the sensing module can notify that the processing performance has reached its limit, which can lead to ensuring the safety of the vehicle.
+Another feature of this node is that it calculates visibility score based on outlier pointcloud and publish score as a topic.
+
+### visibility score calculation algorithm
+
+The pointcloud is divided into vertical bins (rings) and horizontal bins (azimuth divisions).
+The algorithm starts by splitting the input point cloud into separate rings based on the ring value of each point. Then, for each ring, it iterates through the points and calculates the frequency of points within each horizontal bin. The frequency is determined by incrementing a counter for the corresponding bin based on the point's azimuth value.
+The frequency values are stored in a frequency image matrix, where each cell represents a specific ring and azimuth bin. After calculating the frequency image, the algorithm applies a noise threshold to create a binary image. Points with frequency values above the noise threshold are considered valid, while points below the threshold are considered noise.
+Finally, the algorithm calculates the visibility score by counting the number of non-zero pixels in the frequency image and dividing it by the total number of pixels (vertical bins multiplied by horizontal bins).
+
+```plantuml
+@startuml
+start
+
+:Convert input point cloud to PCL format;
+
+:Initialize vertical and horizontal bins;
+
+:Split point cloud into rings;
+
+while (For each ring) is (not empty)
+ :Calculate frequency of points in each azimuth bin;
+ :Update frequency image matrix;
+endwhile
+
+:Apply noise threshold to create binary image;
+
+:Count non-zero pixels in frequency image;
+
+:Calculate visibility score as complement of filled pixel ratio;
+
+stop
+@enduml
+```
 
 ## Inputs / Outputs
 
@@ -37,7 +69,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `max_distance`               | float   | 12.0          | The limit distance for visibility score calculation                                                                           |
 | `vertical_bins`              | int     | 128           | The number of vertical bin for visibility histogram                                                                           |
 | `horizontal_bins`            | int     | 36            | The number of horizontal bin for visibility histogram                                                                         |
-| `noise_threshold`            | int     | 2             | The parameter for determining whether it is noise                                                                             |
+| `noise_threshold`            | int     | 2             | The threshold value for distinguishing noise from valid points in the frequency image                                         |
 
 ## Assumptions / Known limits
 
