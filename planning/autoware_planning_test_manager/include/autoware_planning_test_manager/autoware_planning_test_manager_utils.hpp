@@ -21,6 +21,9 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <memory>
+#include <vector>
+
 namespace autoware_planning_test_manager::utils
 {
 using autoware_planning_msgs::msg::LaneletRoute;
