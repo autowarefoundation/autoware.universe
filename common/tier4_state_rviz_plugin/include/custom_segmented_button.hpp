@@ -1,5 +1,5 @@
-#ifndef CUSTOMSEGMENTEDBUTTON_HPP
-#define CUSTOMSEGMENTEDBUTTON_HPP
+#ifndef CUSTOM_SEGMENTED_BUTTON_HPP_
+#define CUSTOM_SEGMENTED_BUTTON_HPP_
 
 #include "custom_segmented_button_item.hpp"
 
@@ -38,4 +38,4 @@ private:
   QHBoxLayout * layout;
 };
 
-#endif  // CUSTOMSEGMENTEDBUTTON_HPP
+#endif  // CUSTOM_SEGMENTED_BUTTON_HPP_

@@ -1,5 +1,5 @@
-#ifndef CUSTOM_SLIDER_HPP
-#define CUSTOM_SLIDER_HPP
+#ifndef CUSTOM_SLIDER_HPP_
+#define CUSTOM_SLIDER_HPP_
 
 #include <QPaintEvent>
 #include <QPainter>
@@ -19,4 +19,4 @@ protected:
   void paintEvent(QPaintEvent * event) override;
 };
 
-#endif  // CUSTOM_SLIDER_HPP
+#endif  // CUSTOM_SLIDER_HPP_

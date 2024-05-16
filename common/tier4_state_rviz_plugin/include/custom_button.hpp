@@ -1,5 +1,5 @@
-#ifndef CUSTOM_ELEVATED_BUTTON_HPP
-#define CUSTOM_ELEVATED_BUTTON_HPP
+#ifndef CUSTOM_BUTTON_HPP_
+#define CUSTOM_BUTTON_HPP_
 
 #include <QColor>
 #include <QFontMetrics>
@@ -35,4 +35,4 @@ private:
   bool isHovered = false;
 };
 
-#endif  // CUSTOM_ELEVATED_BUTTON_HPP
+#endif  // CUSTOM_BUTTON_HPP_

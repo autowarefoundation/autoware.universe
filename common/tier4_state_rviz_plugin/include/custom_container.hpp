@@ -1,5 +1,5 @@
-#ifndef CUSTOM_CONTAINER_HPP
-#define CUSTOM_CONTAINER_HPP
+#ifndef CUSTOM_CONTAINER_HPP_
+#define CUSTOM_CONTAINER_HPP_
 
 #include <QFrame>
 #include <QGridLayout>
@@ -34,4 +34,4 @@ private:
   int cornerRadius;
 };
 
-#endif  // CUSTOM_CONTAINER_HPP
+#endif  // CUSTOM_CONTAINER_HPP_

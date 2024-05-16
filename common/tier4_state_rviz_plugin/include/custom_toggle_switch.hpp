@@ -1,6 +1,6 @@
 // CustomToggleSwitch.h
-#ifndef CUSTOMTOGGLESWITCH_H
-#define CUSTOMTOGGLESWITCH_H
+#ifndef CUSTOM_TOGGLE_SWITCH_HPP_
+#define CUSTOM_TOGGLE_SWITCH_HPP_
 
 #include <QCheckBox>
 #include <QColor>
@@ -26,4 +26,4 @@ private:
   QPoint dragStartPoint;
 };
 
-#endif  // CUSTOMTOGGLESWITCH_H
+#endif  // CUSTOM_TOGGLE_SWITCH_HPP_

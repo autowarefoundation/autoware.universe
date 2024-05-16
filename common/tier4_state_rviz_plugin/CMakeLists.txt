@@ -21,15 +21,15 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/custom_segmented_button.cpp
   src/custom_segmented_button_item.cpp
   src/custom_label.cpp
-  include/autoware_state_panel.hpp 
-  include/custom_button.hpp 
-  include/custom_container.hpp 
-  include/custom_icon_label.hpp 
-  include/custom_label.hpp 
-  include/custom_segmented_button_item.hpp 
-  include/custom_segmented_button.hpp 
-  include/custom_slider.hpp 
-  include/custom_toggle_switch.hpp 
+  include/autoware_state_panel.hpp
+  include/custom_button.hpp
+  include/custom_container.hpp
+  include/custom_icon_label.hpp
+  include/custom_label.hpp
+  include/custom_segmented_button_item.hpp
+  include/custom_segmented_button.hpp
+  include/custom_slider.hpp
+  include/custom_toggle_switch.hpp
   include/velocity_steering_factors_panel.hpp
 )
 

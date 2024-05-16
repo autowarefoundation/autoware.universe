@@ -1,5 +1,5 @@
-#ifndef CUSTOMSEGMENTEDBUTTONITEM_HPP
-#define CUSTOMSEGMENTEDBUTTONITEM_HPP
+#ifndef CUSTOM_SEGMENTED_BUTTON_ITEM_HPP_
+#define CUSTOM_SEGMENTED_BUTTON_ITEM_HPP_
 
 #include <QColor>
 #include <QHBoxLayout>
@@ -33,4 +33,4 @@ private:
   bool isHovered = false;
 };
 
-#endif  // CUSTOMSEGMENTEDBUTTONITEM_HPP
+#endif  // CUSTOM_SEGMENTED_BUTTON_ITEM_HPP_

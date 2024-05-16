@@ -1,5 +1,5 @@
-#ifndef CUSTOMLABEL_HPP
-#define CUSTOMLABEL_HPP
+#ifndef CUSTOM_LABEL_HPP_
+#define CUSTOM_LABEL_HPP_
 
 #include <QLabel>
 #include <QWidget>
@@ -24,4 +24,4 @@ private:
   QColor textColor = QColor("#FFFFFF");
 };
 
-#endif  // CUSTOMLABEL_HPP
+#endif  // CUSTOM_LABEL_HPP_

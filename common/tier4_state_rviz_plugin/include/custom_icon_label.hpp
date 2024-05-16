@@ -1,5 +1,5 @@
-#ifndef CUSTOMICONLABEL_HPP
-#define CUSTOMICONLABEL_HPP
+#ifndef CUSTOM_ICON_LABEL_HPP_
+#define CUSTOM_ICON_LABEL_HPP_
 
 #include <QColor>
 #include <QLabel>
@@ -32,4 +32,4 @@ private:
   QMap<IconState, QPixmap> iconMap;
 };
 
-#endif  // CUSTOMICONLABEL_HPP
+#endif  // CUSTOM_ICON_LABEL_HPP_
