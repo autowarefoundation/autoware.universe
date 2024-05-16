@@ -37,6 +37,7 @@
         motorcycle: true
         bicycle: true
         pedestrian: true
+        pointcloud: false
 
       cruise_obstacle_type:
         inside:
@@ -68,8 +69,10 @@
         motorcycle: true
         bicycle: true
         pedestrian: true
+        pointcloud: false
 
     behavior_determination:
+      use_pointcloud: false
       decimate_trajectory_step_length : 2.0 # longitudinal step length to calculate trajectory polygon for collision checking
 
       prediction_resampling_time_interval: 0.1
