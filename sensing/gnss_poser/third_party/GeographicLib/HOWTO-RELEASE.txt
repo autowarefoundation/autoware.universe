@@ -1,0 +1,214 @@
+Updating version
+  pom.xml include -SNAPSHOT in version
+  CMakeLists.txt set PROJECT_VERSION_SUFFIX to "-alpha" + LIBVERSION_{API,BUILD}
+  configure.ac AC_INIT + GEOGRAPHICLIB_VERSION_* + LT_{CURRENT,REVISION,AGE}
+  devel/test-distribution VERSION, SUFFIX, BRANCH
+  doc/GeographicLib.dox.in set date to mm-dd start new change log entry
+
+CMake configuration
+
+How this proceeds depends on whether you're building from a release
+package or not.  A release package (marked by a file named VERSION at
+the top level) has preprocessed man pages and so can be built without
+the extra tools needed for processing the pod-style man pages; in
+addition, the release package has a configure script (created by
+autogen.sh) for autoconf-style builds.
+
+CMake options and variables: see CMakeLists.txt for information
+
+BUILD_SHARED_LIBS ON
+BUILD_BOTH_LIBS OFF
+BUILD_DOCUMENTATION OFF
+USE_BOOST_FOR_EXAMPLES OFF
+CONVERT_WARNINGS_TO_ERRORS OFF (ON in non-RELEASE mode)
+BUILD_MANPAGES OFF (ON in non-release mode)
+GEOGRAPHICLIB_DATA /usr/local/share/GeographicLib or C:/ProgramData/GeographicLib
+GEOGRAPHICLIB_PRECISION 2
+  1 = float
+  2 = double
+  3 = extended
+  4 = quadruple (boost float128)
+  5 = variable (mpreal)
+
+Where things get installed.  Use an empty string to disable that installation
+
+CMAKE_INSTALL_PREFIX
+INCDIR "include" "Where to install header files"
+BINDIR "bin" "Where to install tools"
+SBINDIR "sbin" "Where to install admin tools" ("" for Windows)
+LIBDIR "lib" "Where to install libraries"
+  this is set to ${CMAKE_INSTALL_LIBDIR} if that's defined
+DLLDIR "bin" "Where to install dlls"
+MANDIR "share/man" "Where to install the man pages"
+CMAKEDIR "lib/cmake/GeographicLib "Where to install cmake configs"
+PKGDIR "lib/pkgconfig" "Where to install package config"
+DOCDIR "share/doc/GeographicLib" "Where to install documentation"
+EXAMPLEDIR "share/doc/GeographicLib-dev" "Where to install examples"
+
+CMAKE_DEBUG_POSTFIX  "The suffix for debug objects" "_d"
+
+Windows only
+PACKAGE_DEBUG_LIBS "Include debug versions of library in binary package" OFF
+
+CMake targets
+
+release mode
+  all test
+  sanitize hygiene check on source files (trailing blanks, etc)
+  exampleprograms compile example programs (this is separate cmake config)
+  experimental compile experimental code
+  package make binary package for Windows
+  package_source make source package
+
+maintainer
+  doc (if BUILD_DOCUMENTATION and doxygen found)
+  prep-source prep source distribute prior to making release package
+  distrib-man create extra versions of man pages
+  distrib-all distrib-man + run autogen for autoconf builds
+  dist Package release into a tar.gz + zip files
+  stage-doc copy documenation to staging area
+  stage-dist copy source distribution to data-distrib
+  deploy-doc deploy documentation from staging area to sourceforge
+  deploy-dist deploy source distributions from data-distrib to staging
+    area and then to sourceforge
+  deploy-data deploy geoid data etc
+  develprograms build experimental stuff
+
+Version update checks
+
+Add PROJECT_VERSION_SUFFIX = "-alpha" to
+  tar package of source
+
+Do not add PROJECT_VERSION_SUFFIX to
+  unpack directory for tar package
+  documentation
+
+Debian maintainers
+Francesco Paolo Lovergine (QA Page)
+Bas Couwenberg (QA Page)
+
+Fedora maintainer
+rmattes, smani
+
+binaries for cgi scripts
+run compile.sh (copy in cgi-bin)
+
+When ready for switch over, do
+cd /home/project-web/geographiclib
+rm bin
+ln -s bin-$VERSION bin
+
+make -f makefile-admin distrib-cgi
+update binaries for cgi applications
+
+Release checklist:
+
+Merge all changes to main
+test-distribution.sh: set SUFFIX= and BRANCH=main
+CMakeLists.txt set PROJECT_VERSION_SUFFIX suffix to ""
+pom.xml keeps SNAPSHOT for now
+Update NEWS
+Set date in NEWS and GeographicLib.dox.in
+run develop/test-distribution.sh
+run windows build
+copy windows installers to data-distrib/distrib-C++
+fix permissions on installers
+remove alpha/rc versions of installers
+switch C++/doc link to latest version
+In build directory:
+  make clean
+  make -j10 all
+  make stage-{doc,dist}
+  make deploy-{doc,dist}
+checkin and tag release branch & push
+tag main branch
+
+trigger build on build-open
+
+update binaries for cgi applications
+  make stage-cgi deploy-cgi
+  ssh -t karney,geographiclib@shell.sourceforge.net create
+  update VERSION in compile.sh and compile
+
+Local install
+sudo make -C $TEMP/relc/GeographicLib-$VERSION/BUILD-system install
+
+set default downloads for distrib-C++ on sourceforge
+
+post changes on sourceforge news + email to geographiclib-announce@lists.sourceforge.net
+
+VERSION=2.3
+
+Brew...
+
+  brew update + brew upgrade
+  cd /usr/local/Homebrew/Library/Taps/homebrew/homebrew-core/Formula
+  git checkout master; git pull?
+  edit geographiclib.rb
+  changing url (use github release tag) and shasum -a 256
+
+  export HOMEBREW_NO_INSTALL_FROM_API=1
+  brew uninstall geographiclib
+  brew install --build-from-source geographiclib
+  brew reinstall --build-from-source geographiclib
+  brew test geographiclib
+  brew audit --strict geographiclib
+  brew style geographiclib
+
+  git checkout -b geographiclib/$VERSION
+  git add geographiclib.rb
+  git commit -m "geographiclib $VERSION"
+  git push --set-upstream cffk geographiclib/$VERSION
+
+  trigger a PR
+
+conda-forge...
+
+  geographiclib-cpp-feedstock
+  edit README.md recipe/bld.bat recipe/build.sh recipe/meta.yaml
+  check build number in meta.yaml
+  needs patch file to turn off tests in signtest.cpp
+
+  conda remove -y -n build --all
+  conda create -y -n build
+  conda activate build
+  conda install -y conda-build conda-verify conda-forge-pinning
+
+  conda build recipe --variant-config-file $CONDA_PREFIX/conda_build_config.yaml
+  Package in ~/miniconda3/envs/build/conda-bld/linux-64/geographiclib-cpp-$VERSION-*.tar.bz2
+
+  conda deactivate
+  conda remove -y -n geog-test --all
+  conda create -y -n geog-test ~/miniconda3/envs/build/conda-bld/linux-64/geographiclib-cpp-$VERSION-*.tar.bz2
+  conda activate geog-test
+  type GeoConvert
+  GeoConvert --version
+
+  git checkout -b v$VERSION
+  commit changes
+  conda deactivate
+  conda activate build
+  conda install -y -c conda-forge conda-smithy
+  conda smithy rerender
+  commit changes
+  git push --set-upstream cffk v$VERSION
+  conda deactivate
+
+vcpkg...
+  git pull
+  git checkout -b geographiclib/$VERSION
+  update ports/geographiclib
+
+  ./vcpkg remove geographiclib
+  ./vcpkg install 'geographiclib[tools]'
+  binaries in installed/x64-linux/tools/geographiclib
+  libs in installed/x64-linux/{include,lib,debug/lib}
+
+  commit changes
+
+  ./vcpkg x-add-version geographiclib
+  # ./vcpkg x-add-version --all
+
+  commit again
+  commit message = [geographiclib] Update to version $VERSION
+  git push --set-upstream cffk geographiclib/$VERSION

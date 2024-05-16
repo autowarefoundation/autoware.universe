@@ -1,0 +1,49 @@
+<project
+    xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                        http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.sri.vt.majic</groupId>
+    <artifactId>majic-parent</artifactId>
+    <version>0.2.12</version>
+  </parent>
+
+  <groupId>com.sri.vt</groupId>
+  <artifactId>geographiclib</artifactId>
+  <version>2.3-SNAPSHOT</version>
+  <packaging>majic-cmake</packaging>
+  <name>GeographicLib</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.sri.vt.majic</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-cmake-configure</id>
+            <configuration>
+              <options>
+                <BUILD_BOTH_LIBS>ON</BUILD_BOTH_LIBS>
+                <CONVERT_WARNINGS_TO_ERRORS>ON</CONVERT_WARNINGS_TO_ERRORS>
+                <BUILD_DOCUMENTATION>OFF</BUILD_DOCUMENTATION>
+                <EXAMPLEDIR></EXAMPLEDIR>
+              </options>
+            </configuration>
+          </execution>
+          <execution>
+            <id>default-cmake-test</id>
+            <configuration>
+              <configs>
+                <config>Release</config>
+              </configs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,97 @@
+# Configure @PROJECT_NAME@
+#
+# Set
+#  @PROJECT_NAME@_FOUND = TRUE
+#  @PROJECT_NAME@_INCLUDE_DIRS = /usr/local/include
+#  @PROJECT_NAME@_SHARED_LIBRARIES = GeographicLib_SHARED (or empty)
+#  @PROJECT_NAME@_STATIC_LIBRARIES = GeographicLib_STATIC (or empty)
+#  @PROJECT_NAME@_LIBRARY_DIRS = /usr/local/lib
+#  @PROJECT_NAME@_BINARY_DIRS = /usr/local/bin
+#  @PROJECT_NAME@_VERSION = 1.34 (for example)
+#  @PROJECT_NAME_UPPER@_DATA = /usr/local/share/GeographicLib (for example)
+#  Depending on @PROJECT_NAME@_USE_STATIC_LIBS
+#    @PROJECT_NAME@_LIBRARIES = ${@PROJECT_NAME@_SHARED_LIBRARIES}, if OFF
+#    @PROJECT_NAME@_LIBRARIES = ${@PROJECT_NAME@_STATIC_LIBRARIES}, if ON
+#  If only one of the libraries is provided, then
+#    @PROJECT_NAME@_USE_STATIC_LIBS is ignored.
+#
+# Since cmake 2.8.11 or later, there's no need to include
+#   include_directories (${GeographicLib_INCLUDE_DIRS})
+# The variables are retained for information.
+#
+# The following variables are only relevant if the library has been
+# compiled with a default precision different from double:
+#  @PROJECT_NAME_UPPER@_PRECISION = the precision of the library (usually 2)
+#  @PROJECT_NAME@_HIGHPREC_LIBRARIES = the libraries need for high precision
+
+message (STATUS "Reading ${CMAKE_CURRENT_LIST_FILE}")
+# @PROJECT_NAME@_VERSION is set by version file
+message (STATUS
+  "@PROJECT_NAME@ configuration, version ${@PROJECT_NAME@_VERSION}")
+
+# Tell the user project where to find our headers and libraries
+get_filename_component (_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+if (IS_ABSOLUTE "@PROJECT_ROOT_DIR@")
+  # This is an uninstalled package (still in the build tree)
+  set (_ROOT "@PROJECT_ROOT_DIR@")
+  set (@PROJECT_NAME@_INCLUDE_DIRS "@PROJECT_INCLUDE_DIRS@")
+  set (@PROJECT_NAME@_LIBRARY_DIRS "${_ROOT}/src")
+  set (@PROJECT_NAME@_BINARY_DIRS "${_ROOT}/tools")
+else ()
+  # This is an installed package; figure out the paths relative to the
+  # current directory.
+  get_filename_component (_ROOT "${_DIR}/@PROJECT_ROOT_DIR@" ABSOLUTE)
+  set (@PROJECT_NAME@_INCLUDE_DIRS "${_ROOT}/include")
+  set (@PROJECT_NAME@_LIBRARY_DIRS "${_ROOT}/lib@LIB_SUFFIX@")
+  set (@PROJECT_NAME@_BINARY_DIRS "${_ROOT}/bin")
+endif ()
+set (@PROJECT_NAME_UPPER@_DATA "@GEOGRAPHICLIB_DATA@")
+set (@PROJECT_NAME_UPPER@_PRECISION @GEOGRAPHICLIB_PRECISION@)
+set (@PROJECT_NAME@_HIGHPREC_LIBRARIES "@HIGHPREC_LIBRARIES@")
+
+set (@PROJECT_NAME@_SHARED_LIBRARIES @CONFIG_SHARED_LIBRARIES@)
+set (@PROJECT_NAME@_STATIC_LIBRARIES @CONFIG_STATIC_LIBRARIES@)
+# Read in the exported definition of the library
+include ("${_DIR}/@PROJECT_NAME_LOWER@-targets.cmake")
+
+# For interoperability with older installations of GeographicLib and
+# with packages which depend on GeographicLib, @PROJECT_NAME@_LIBRARIES
+# etc. still point to the non-namespace variables.  Tentatively plan to
+# transition to namespace variables as follows:
+#
+# * namespace targets were introduced with version 1.47 (2017-02-15)
+# * switch @PROJECT_NAME@_LIBRARIES to point to namespace variable after
+#   2020-02
+# * remove non-namespace variables after 2023-02
+
+unset (_ROOT)
+unset (_DIR)
+
+if ((NOT @PROJECT_NAME@_SHARED_LIBRARIES) OR
+    (@PROJECT_NAME@_USE_STATIC_LIBS AND @PROJECT_NAME@_STATIC_LIBRARIES))
+  set (@PROJECT_NAME@_LIBRARIES ${@PROJECT_NAME@_STATIC_LIBRARIES})
+  message (STATUS "  \${@PROJECT_NAME@_LIBRARIES} set to static library")
+else ()
+  set (@PROJECT_NAME@_LIBRARIES ${@PROJECT_NAME@_SHARED_LIBRARIES})
+  message (STATUS "  \${@PROJECT_NAME@_LIBRARIES} set to shared library")
+endif ()
+
+# Check for the components requested.  This only supports components
+# STATIC and SHARED by checking the value of
+# @PROJECT_NAME@_${comp}_LIBRARIES.  No need to check if the component
+# is required or not--the version file took care of that.
+# @PROJECT_NAME@_${comp}_FOUND is set appropriately for each component.
+if (@PROJECT_NAME@_FIND_COMPONENTS)
+  foreach (comp ${@PROJECT_NAME@_FIND_COMPONENTS})
+    if (@PROJECT_NAME@_${comp}_LIBRARIES)
+      set (@PROJECT_NAME@_${comp}_FOUND TRUE)
+      message (STATUS "@PROJECT_NAME@ component ${comp} found")
+    else ()
+      set (@PROJECT_NAME@_${comp}_FOUND FALSE)
+      message (WARNING "@PROJECT_NAME@ component ${comp} not found")
+    endif ()
+  endforeach ()
+endif ()
+
+# @PROJECT_NAME@_FOUND is set to TRUE automatically
+set (@PROJECT_NAME_UPPER@_FOUND TRUE) # for backwards compatibility, deprecated

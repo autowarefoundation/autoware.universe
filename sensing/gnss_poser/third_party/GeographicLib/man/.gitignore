@@ -1,0 +1,8 @@
+*.1
+Makefile.in
+Makefile
+CMakeFiles
+cmake_install.cmake
+*.usage
+*.1.html
+*.tmp

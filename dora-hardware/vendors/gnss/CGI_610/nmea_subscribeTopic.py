@@ -70,6 +70,20 @@ class Operator:
             nmea_sentence_input = dora_input["value"]
             nmea_sentence_bytes = bytes(nmea_sentence_input.to_pylist())
             self.receDoraQuaternionStamped = pickle.loads(nmea_sentence_bytes)
+
+            sentence_dict = {
+                "frame_id": self.receDoraQuaternionStamped.header.frame_id,
+                "sec": self.receDoraQuaternionStamped.header.stamp.sec,
+                "nanosec": self.receDoraQuaternionStamped.header.stamp.nanosec,
+                "x": self.receDoraQuaternionStamped.quaternion.x,
+                "y": self.receDoraQuaternionStamped.quaternion.y,
+                "z": self.receDoraQuaternionStamped.quaternion.z,
+                "w": self.receDoraQuaternionStamped.quaternion.w,
+            }
+            json_string = json.dumps(sentence_dict, indent=4)  # 使用indent参数设置缩进宽度为4
+            print(json_string)
+            json_bytes = json_string.encode('utf-8')
+            send_output("DoraQuaternionStamped",json_bytes,dora_input["metadata"],)
             print(self.receDoraQuaternionStamped)
 
         elif "DoraTwistStamped" == dora_input["id"]:
