@@ -9,6 +9,7 @@ CustomSegmentedButtonItem::CustomSegmentedButtonItem(const QString & text, QWidg
 {
   setCheckable(true);
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  setCursor(Qt::PointingHandCursor);
 }
 
 void CustomSegmentedButtonItem::setColors(
