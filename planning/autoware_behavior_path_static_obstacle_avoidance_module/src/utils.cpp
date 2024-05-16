@@ -331,12 +331,36 @@ bool isWithinIntersection(
     object_polygon, utils::toPolygon2d(lanelet::utils::to2D(polygon.basicPolygon())));
 }
 
-bool isOnEgoLane(const ObjectData & object)
+bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
 {
   const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
-  return boost::geometry::within(
-    lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
-    object.overhang_lanelet.polygon2d().basicPolygon());
+  if (boost::geometry::within(
+        lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+        object.overhang_lanelet.polygon2d().basicPolygon())) {
+    return true;
+  }
+
+  // push previous lanelet
+  lanelet::ConstLanelets prev_lanelet;
+  if (route_handler->getPreviousLaneletsWithinRoute(object.overhang_lanelet, &prev_lanelet)) {
+    if (boost::geometry::within(
+          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+          prev_lanelet.front().polygon2d().basicPolygon())) {
+      return true;
+    }
+  }
+
+  // push next lanelet
+  lanelet::ConstLanelet next_lanelet;
+  if (route_handler->getNextLaneletWithinRoute(object.overhang_lanelet, &next_lanelet)) {
+    if (boost::geometry::within(
+          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+          next_lanelet.polygon2d().basicPolygon())) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 bool isParallelToEgoLane(const ObjectData & object, const double threshold)
@@ -754,7 +778,7 @@ bool isSatisfiedWithVehicleCondition(
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   object.behavior = getObjectBehavior(object, parameters);
-  object.is_on_ego_lane = isOnEgoLane(object);
+  object.is_on_ego_lane = isOnEgoLane(object, planner_data->route_handler);
 
   if (isNeverAvoidanceTarget(object, data, planner_data, parameters)) {
     return false;
