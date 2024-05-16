@@ -9,6 +9,8 @@ CustomSegmentedButton::CustomSegmentedButton(QWidget * parent)
   layout->setContentsMargins(0, 0, 0, 0);  // Ensure no margins around the layout
   layout->setSpacing(0);                   // Ensure no spacing between buttons
 
+  // can we give the component left and right margins ? not the stuff inside of it
+
   setLayout(layout);
 
   buttonGroup->setExclusive(true);
@@ -34,7 +36,7 @@ QButtonGroup * CustomSegmentedButton::getButtonGroup() const
 
 QSize CustomSegmentedButton::sizeHint() const
 {
-  return QSize(400, 45);  // Adjust the size hint as needed
+  return QSize(400, 40);  // Adjust the size hint as needed
 
   // return QSize(
   //   layout->count() * (layout->itemAt(0)->widget()->width()),
@@ -53,7 +55,8 @@ void CustomSegmentedButton::paintEvent(QPaintEvent *)
 
   // Draw background
   QPainterPath path;
-  path.addRoundedRect(rect(), height() / 2, height() / 2);
+  QRectF rect = this->rect().adjusted(1, 0, -1, 0);
+  path.addRoundedRect(rect, height() / 2, height() / 2);
 
   painter.setPen(QPen(QColor("#8a9297"), 3));
   painter.setBrush(QColor("#0F1417"));
