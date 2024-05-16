@@ -54,6 +54,7 @@
 #include <rviz_common/properties/bool_property.hpp>
 #include <rviz_common/properties/enum_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
+#include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/properties/string_property.hpp>
 #include <rviz_common/properties/tf_frame_property.hpp>
 #include <rviz_common/viewport_mouse_event.hpp>
@@ -163,6 +164,7 @@ protected:  // NOLINT for Qt
   rviz_common::properties::FloatProperty * max_velocity_;
   rviz_common::properties::FloatProperty * min_velocity_;
   rviz_common::properties::FloatProperty * accel_;
+  rviz_common::properties::IntProperty * max_num_points_;
   rviz_common::properties::TfFrameProperty * property_frame_;
 
 private:

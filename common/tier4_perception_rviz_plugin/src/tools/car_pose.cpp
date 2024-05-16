@@ -189,6 +189,8 @@ BusInitialPoseTool::BusInitialPoseTool()
     "Max velocity", 33.3, "Max velocity [m/s]", getPropertyContainer());
   min_velocity_ = new rviz_common::properties::FloatProperty(
     "Min velocity", -33.3, "Min velocity [m/s]", getPropertyContainer());
+  max_num_points_ = new rviz_common::properties::IntProperty(
+    "Max number of points", 0, "Max number of points in point cloud", getPropertyContainer());
   std_dev_x_->setMin(0);
   std_dev_y_->setMin(0);
   std_dev_z_->setMin(0);
@@ -234,6 +236,8 @@ Object BusInitialPoseTool::createObjectMsg() const
     std_dev_z_->getFloat() * std_dev_z_->getFloat();
   object.initial_state.pose_covariance.covariance[35] =
     std_dev_theta_->getFloat() * std_dev_theta_->getFloat();
+
+  object.max_num_points = max_num_points_->getInt();
 
   std::mt19937 gen(std::random_device{}());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
