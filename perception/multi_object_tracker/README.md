@@ -77,7 +77,7 @@ Available input channels are defined in [input_channels.param.yaml](config/input
 
 ### Core Parameters
 
-Node parameters are defined in [multi_object_tracker.param.yaml](config/multi_object_tracker.param.yaml) and association parameters are defined in [data_association.param.yaml](config/data_association.param.yaml).
+Node parameters are defined in [multi_object_tracker_node.param.yaml](config/multi_object_tracker_node.param.yaml) and association parameters are defined in [data_association_matrix.param.yaml](config/data_association_matrix.param.yaml).
 
 #### Node parameters
 
