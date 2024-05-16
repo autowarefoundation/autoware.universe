@@ -821,8 +821,6 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   RCLCPP_INFO_EXPRESSION(
     rclcpp::get_logger("ObstacleCruisePlanner"), enable_calculation_time_info_, "  %s := %f [ms]",
     __func__, calculation_time);
-  RCLCPP_INFO(
-    rclcpp::get_logger("ObstacleCruisePlanner"), "  %s := %f [ms]", __func__, calculation_time);
 
   return {stop_obstacles, cruise_obstacles, slow_down_obstacles};
 }
