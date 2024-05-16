@@ -573,45 +573,26 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
 
   lanelet::ConstLanelet current_lanelet = lanelet;
   double length = 0;
-  lanelet::ConstLanelets candidate_lanelets;
+  lanelet::ConstLanelets previous_lanelets;
   while (rclcpp::ok() && length < min_length) {
-    candidate_lanelets.clear();
-    if (!getPreviousLaneletsWithinRoute(current_lanelet, &candidate_lanelets)) {
-      if (only_route_lanes) {
-        break;
-      }
-      const auto prev_lanes = getPreviousLanelets(current_lanelet);
-      if (prev_lanes.empty()) {
-        break;
-      }
-      candidate_lanelets = prev_lanes;
+    previous_lanelets.clear();
+    if (!getPreviousLaneletsWithinRoute(current_lanelet, &previous_lanelets)) {
+      if (only_route_lanes) break;
+      const auto previous_lanelets = getPreviousLanelets(current_lanelet);
+      if (previous_lanelets.empty()) break;
     }
     // loop check
-    if (std::any_of(
-          candidate_lanelets.begin(), candidate_lanelets.end(),
-          [lanelet](auto & prev_llt) { return lanelet.id() == prev_llt.id(); })) {
+    if (std::any_of(previous_lanelets.begin(), previous_lanelets.end(), [lanelet](auto & prev_llt) {
+          return lanelet.id() == prev_llt.id();
+        })) {
       break;
     }
 
-    // If lanelet_sequence_backward with input lanelet contains all candidate lanelets,
-    // break the loop.
-    if (std::all_of(
-          candidate_lanelets.begin(), candidate_lanelets.end(),
-          [lanelet_sequence_backward, lanelet](auto & prev_llt) {
-            return std::any_of(
-              lanelet_sequence_backward.begin(), lanelet_sequence_backward.end(),
-              [prev_llt, lanelet](auto & llt) {
-                return (llt.id() == prev_llt.id() || lanelet.id() == prev_llt.id());
-              });
-          })) {
-      break;
-    }
-
-    for (const auto & prev_lanelet : candidate_lanelets) {
+    for (const auto & prev_lanelet : previous_lanelets) {
       if (std::any_of(
             lanelet_sequence_backward.begin(), lanelet_sequence_backward.end(),
-            [prev_lanelet, lanelet](auto & llt) {
-              return (llt.id() == prev_lanelet.id() || lanelet.id() == prev_lanelet.id());
+            [prev_lanelet, lanelet](auto & backward) {
+              return (backward.id() == prev_lanelet.id());
             })) {
         continue;
       }
