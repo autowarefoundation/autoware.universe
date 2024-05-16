@@ -1,10 +1,7 @@
 // CustomToggleSwitch.cpp
 #include "custom_toggle_switch.hpp"
 
-#include <QMouseEvent>
-#include <QPainter>
-
-CustomToggleSwitch::CustomToggleSwitch(QWidget * parent) : QCheckBox(parent)
+CustomToggleSwitch::CustomToggleSwitch(QWidget * parent) : QCheckBox(parent), isDragging(false)
 {
   setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
   setCursor(Qt::PointingHandCursor);
@@ -12,7 +9,7 @@ CustomToggleSwitch::CustomToggleSwitch(QWidget * parent) : QCheckBox(parent)
 
 QSize CustomToggleSwitch::sizeHint() const
 {
-  return QSize(50, 20);  // Preferred size of the toggle switch
+  return QSize(60, 30);  // Preferred size of the toggle switch
 }
 
 void CustomToggleSwitch::paintEvent(QPaintEvent *)
@@ -27,40 +24,57 @@ void CustomToggleSwitch::paintEvent(QPaintEvent *)
   QRect r = rect().adjusted(margin, margin, -margin, -margin);
   bool isChecked = this->isChecked();
 
-  // Draw Border that is larger than the background with a bit of thickness
-  QRect borederR = r.adjusted(-margin, -margin, margin, margin);
-  p.setPen(QPen(!isChecked ? QColor("#00E678") : QColor("#525252"), 2));
-  p.setBrush(Qt::NoBrush);
-  p.drawRoundedRect(borederR, circleRadius + 4, circleRadius + 4);
+  // Draw border that is larger than the background with a bit of thickness
+  QRect borderR = r.adjusted(-margin, -margin, margin, margin);
+  p.setBrush(isChecked ? QColor("#8bd0f0") : QColor("#303538"));
+  p.setPen(Qt::NoPen);
+  p.drawRoundedRect(borderR, circleRadius + 4, circleRadius + 4);
 
   // Draw background
-  p.setBrush(isChecked ? QColor("#00E678") : QColor("#525252"));
+  p.setBrush(isChecked ? QColor("#8bd0f0") : QColor("#303538"));
   p.setPen(Qt::NoPen);
   p.drawRoundedRect(r, circleRadius + 4, circleRadius + 4);
 
   // Draw indicator
-  int circleX = isChecked ? (r.right() - circleRadius * 2 - margin) : r.left() + margin;
+  int minX = r.left() + margin * 2;
+  int maxX = r.right() - circleRadius * 2 - margin;
+  int circleX =
+    isDragging ? qBound(minX, dragStartPoint.x() - circleRadius, maxX) : (isChecked ? maxX : minX);
   QRect circleRect(circleX, r.top() + margin, circleRadius * 2, circleRadius * 2);
-  p.setBrush(QColor("#FFF"));
+  p.setBrush(isChecked ? QColor("#003546") : QColor("#8a9297"));
   p.drawEllipse(circleRect);
 }
 
 void CustomToggleSwitch::mousePressEvent(QMouseEvent * event)
 {
-  if (event->buttons() & Qt::LeftButton) {
+  if (event->button() == Qt::LeftButton) {
     isDragging = true;
     dragStartPoint = event->pos();
   }
   QCheckBox::mousePressEvent(event);
 }
 
+void CustomToggleSwitch::mouseMoveEvent(QMouseEvent * event)
+{
+  if (isDragging) {
+    dragStartPoint = event->pos();
+    update();  // Force repaint
+  }
+  QCheckBox::mouseMoveEvent(event);
+}
+
 void CustomToggleSwitch::mouseReleaseEvent(QMouseEvent * event)
 {
   if (isDragging) {
-    if (qAbs(event->pos().x() - dragStartPoint.x()) < 10) {  // Simple click
-      setChecked(!isChecked());
+    if (rect().contains(event->pos())) {  // Ensure click is within the switch's bounds
+      int minX = rect().left() + 2;
+      int maxX = rect().right() - height() / 2 - 2;
+      int middleX = (minX + maxX) / 2;
+      bool newState = dragStartPoint.x() >= middleX;
+      setChecked(newState);
     }
     isDragging = false;
+    update();  // Force repaint
   }
   QCheckBox::mouseReleaseEvent(event);
 }
