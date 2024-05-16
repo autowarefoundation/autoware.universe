@@ -27,6 +27,7 @@
 // ROS 2 core
 #include <rclcpp/rclcpp.hpp>
 
+#include <vector>
 namespace mrm_emergency_stop_operator
 {
 using autoware_control_msgs::msg::Control;
@@ -48,6 +49,10 @@ public:
 private:
   // Parameters
   Parameters params_;
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+
+  rcl_interfaces::msg::SetParametersResult onParameter(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   // Subscriber
   rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;

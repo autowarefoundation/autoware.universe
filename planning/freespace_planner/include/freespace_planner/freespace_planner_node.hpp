@@ -133,6 +133,8 @@ private:
   size_t prev_target_index_;
   size_t target_index_;
   bool is_completed_ = false;
+  bool reset_in_progress_ = false;
+  bool is_new_parking_cycle_ = true;
 
   LaneletRoute::ConstSharedPtr route_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_;

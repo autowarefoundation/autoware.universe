@@ -58,6 +58,7 @@ public:
   void setActualSteerDiffLim(LimitArray v);
   void setCurrentSpeed(double v) { current_speed_ = v; }
   void setParam(const VehicleCmdFilterParam & p);
+  VehicleCmdFilterParam getParam() const;
   void setPrevCmd(const Control & v) { prev_cmd_ = v; }
 
   void limitLongitudinalWithVel(Control & input) const;

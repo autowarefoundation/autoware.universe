@@ -87,6 +87,11 @@ public:
     previous_obstacle_keep_time_ = previous_obstacle_keep_time;
   }
 
+  std::pair<double, double> getTimeout()
+  {
+    return {collision_keep_time_, previous_obstacle_keep_time_};
+  }
+
   bool checkObjectDataExpired(std::optional<ObjectData> & data, const double timeout)
   {
     if (!data.has_value()) return true;
@@ -137,13 +142,14 @@ public:
   {
     // remove old msg from deque
     const auto now = clock_->now();
-    std::remove_if(
-      obstacle_velocity_history_.begin(), obstacle_velocity_history_.end(),
-      [&](const auto & velocity_time_pair) {
-        const auto & vel_time = velocity_time_pair.second;
-        return ((now - vel_time).nanoseconds() * 1e-9 > previous_obstacle_keep_time_);
-      });
-
+    obstacle_velocity_history_.erase(
+      std::remove_if(
+        obstacle_velocity_history_.begin(), obstacle_velocity_history_.end(),
+        [&](const auto & velocity_time_pair) {
+          const auto & vel_time = velocity_time_pair.second;
+          return ((now - vel_time).nanoseconds() * 1e-9 > previous_obstacle_keep_time_);
+        }),
+      obstacle_velocity_history_.end());
     obstacle_velocity_history_.emplace_back(
       std::make_pair(current_object_velocity, current_object_velocity_time_stamp));
   }
@@ -199,8 +205,6 @@ public:
     });
 
     if (!estimated_velocity_opt.has_value()) {
-      this->setPreviousObjectData(closest_object);
-      this->resetVelocityHistory();
       return std::nullopt;
     }
 
@@ -246,6 +250,8 @@ public:
   void onTimer();
   void onPredictedTrajectory(const Trajectory::ConstSharedPtr input_msg);
   void onAutowareState(const AutowareState::ConstSharedPtr input_msg);
+  rcl_interfaces::msg::SetParametersResult onParameter(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   bool isDataReady();
 
@@ -321,6 +327,8 @@ public:
   double mpc_prediction_time_horizon_;
   double mpc_prediction_time_interval_;
   CollisionDataKeeper collision_data_keeper_;
+  // Parameter callback
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 

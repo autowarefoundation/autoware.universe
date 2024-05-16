@@ -90,6 +90,11 @@ void VehicleCmdFilter::setParam(const VehicleCmdFilterParam & p)
   }
 }
 
+VehicleCmdFilterParam VehicleCmdFilter::getParam() const
+{
+  return param_;
+}
+
 void VehicleCmdFilter::limitLongitudinalWithVel(Control & input) const
 {
   input.longitudinal.velocity = std::max(
