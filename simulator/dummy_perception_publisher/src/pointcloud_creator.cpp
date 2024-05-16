@@ -17,6 +17,7 @@
 
 #include <pcl/impl/point_types.hpp>
 
+#include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid_occlusion_estimation.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
@@ -250,6 +251,18 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
             z + z_random(random_generator)));
         }
       }
+    }
+  }
+
+  for (size_t i = 0; i < pointclouds.size(); ++i) {
+    auto & cloud = pointclouds.at(i);
+    const auto max_num_points = obj_infos.at(i).max_num_points;
+    if (max_num_points != 0 && cloud->size() > max_num_points) {
+      pcl::Indices indices;
+      pcl::ExtractIndices<pcl::PointXYZ> filter;
+      filter.setInputCloud(cloud);
+      filter.setIndices(0, cloud->size() / 2 - max_num_points / 2, 1, max_num_points);
+      filter.filter(*cloud);
     }
   }
 
