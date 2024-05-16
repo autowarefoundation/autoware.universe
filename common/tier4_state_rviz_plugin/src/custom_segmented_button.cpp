@@ -9,8 +9,6 @@ CustomSegmentedButton::CustomSegmentedButton(QWidget * parent)
   layout->setContentsMargins(0, 0, 0, 0);  // Ensure no margins around the layout
   layout->setSpacing(0);                   // Ensure no spacing between buttons
 
-  // can we give the component left and right margins ? not the stuff inside of it
-
   setLayout(layout);
 
   buttonGroup->setExclusive(true);
