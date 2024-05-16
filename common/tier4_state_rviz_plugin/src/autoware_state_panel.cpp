@@ -49,19 +49,19 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   // auto * diagnostic_group = makeDiagnosticGroup();
 
   diagnostic_v_layout->addLayout(routing_group);
-  diagnostic_v_layout->addSpacing(15);
+  // diagnostic_v_layout->addSpacing(5);
   diagnostic_v_layout->addLayout(localization_group);
-  diagnostic_v_layout->addSpacing(15);
+  // diagnostic_v_layout->addSpacing(5);
   diagnostic_v_layout->addLayout(motion_group);
-  diagnostic_v_layout->addSpacing(15);
+  // diagnostic_v_layout->addSpacing(5);
   diagnostic_v_layout->addLayout(fail_safe_group);
 
   // main_v_layout->addLayout(diagnostic_group);
 
   main_v_layout->addLayout(operation_mode_group);
-  main_v_layout->addSpacing(15);
+  // main_v_layout->addSpacing(5);
   main_v_layout->addLayout(diagnostic_v_layout);
-  main_v_layout->addSpacing(15);
+  // main_v_layout->addSpacing(5);
   main_v_layout->addLayout(velocity_limit_group);
 
   // Setting the layout
@@ -196,10 +196,10 @@ QVBoxLayout * AutowareStatePanel::makeOperationModeGroup()
 
   QVBoxLayout * groupLayout = new QVBoxLayout;
   // set these widgets to show up at the left and not stretch more than needed
-  groupLayout->setAlignment(Qt::AlignTop);
-
+  groupLayout->setAlignment(Qt::AlignCenter);
+  groupLayout->setContentsMargins(10, 0, 10, 0);
   groupLayout->addWidget(group1);
-  groupLayout->addSpacing(15);
+  // groupLayout->addSpacing(5);
   groupLayout->addWidget(segmented_button, 0, Qt::AlignCenter);
   return groupLayout;
 }
@@ -213,8 +213,6 @@ QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
   routing_icon = new CustomIconLabel(QColor("#84c2e6"));
 
   clear_route_button_ptr_ = new CustomElevatedButton("Clear Route");
-  clear_route_button_ptr_->setFixedWidth(
-    clear_route_button_ptr_->fontMetrics().horizontalAdvance("Clear Route") + 20);
   clear_route_button_ptr_->setCheckable(true);
   clear_route_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(clear_route_button_ptr_, SIGNAL(clicked()), SLOT(onClickClearRoute()));
@@ -298,7 +296,7 @@ QVBoxLayout * AutowareStatePanel::makeFailSafeGroup()
   custom_container2->getLayout()->addWidget(mrm_behavior_label_ptr_, 0, 1, 1, 5, Qt::AlignLeft);
 
   v_layout->addWidget(custom_container1);
-  v_layout->addSpacing(15);
+  // v_layout->addSpacing(5);
   v_layout->addWidget(custom_container2);
 
   group->addLayout(v_layout);
@@ -387,9 +385,9 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
 
   // Velocity Limit layout
   utility_layout->addWidget(velocity_limit_setter_ptr_);
-  utility_layout->addSpacing(15);
+  // utility_layout->addSpacing(5);
   utility_layout->addLayout(velocity_limit_layout);
-  utility_layout->addSpacing(15);
+  // utility_layout->addSpacing(5);
   utility_layout->addWidget(emergency_button_ptr_);
 
   return utility_layout;
