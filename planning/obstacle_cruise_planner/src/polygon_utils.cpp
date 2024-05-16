@@ -17,7 +17,6 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
-// #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 namespace
 {
@@ -45,34 +44,18 @@ PointWithStamp calcNearestCollisionPoint(
   return collision_points.at(min_idx);
 }
 
-// NOTE: max_lat_dist is used for efficient calculation to suppress boost::geometry's polygon
+// NOTE: max_dist is used for efficient calculation to suppress boost::geometry's polygon
 // calculation.
 std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const geometry_msgs::msg::Pose & object_pose, const rclcpp::Time & object_time,
-  const Shape & object_shape, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double max_lat_dist = std::numeric_limits<double>::max())
+  const Shape & object_shape, const double max_dist = std::numeric_limits<double>::max())
 {
-  // tier4_autoware_utils::StopWatch<
-  //   std::chrono::microseconds, std::chrono::nanoseconds, std::chrono::steady_clock>
-  //   stop_watch;
-  // stop_watch.tic(__func__);
-
   const auto obj_polygon = tier4_autoware_utils::toPolygon2d(object_pose, object_shape);
   for (size_t i = 0; i < traj_polygons.size(); ++i) {
-    const double center_dist =
+    const double approximated_dist =
       tier4_autoware_utils::calcDistance2d(traj_points.at(i).pose, object_pose);
-    if (center_dist > max_lat_dist) {
-      continue;
-    }
-
-    if (
-      (object_shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX ||
-       object_shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) &&
-      center_dist >
-        std::hypot(object_shape.dimensions.x * 0.5, object_shape.dimensions.y * 0.5) +
-          std::hypot(vehicle_info.vehicle_length_m, vehicle_info.vehicle_width_m * 0.5)) {
-      // std::cerr << "skip" << std::endl;
+    if (approximated_dist > max_dist) {
       continue;
     }
 
@@ -99,14 +82,9 @@ std::optional<std::pair<size_t, std::vector<PointWithStamp>>> getCollisionIndex(
     if (has_collision) {
       const auto collision_info =
         std::pair<size_t, std::vector<PointWithStamp>>{i, collision_geom_points};
-      // std::cerr << "getCollisionIndex(), until: " << i << ", time: " << stop_watch.toc(__func__)
-      //           << " [us]" << std::endl;
       return collision_info;
     }
   }
-
-  // std::cerr << "getCollisionIndex(), until: all, time: " << stop_watch.toc(__func__) << " [us]"
-  //           << std::endl;
 
   return std::nullopt;
 }
@@ -119,8 +97,8 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const Obstacle & obstacle, const bool is_driving_forward,
   const vehicle_info_util::VehicleInfo & vehicle_info)
 {
-  const auto collision_info = getCollisionIndex(
-    traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape, vehicle_info);
+  const auto collision_info =
+    getCollisionIndex(traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape);
   if (!collision_info) {
     return std::nullopt;
   }
@@ -152,17 +130,11 @@ std::vector<PointWithStamp> getCollisionPoints(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
   const rclcpp::Time & current_time, const bool is_driving_forward,
-  std::vector<size_t> & collision_index, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double max_lat_dist, const double max_prediction_time_for_collision_check)
+  std::vector<size_t> & collision_index, const double max_lat_dist,
+  const double max_prediction_time_for_collision_check)
 {
-  // tier4_autoware_utils::StopWatch<
-  //   std::chrono::microseconds, std::chrono::nanoseconds, std::chrono::steady_clock>
-  //   stop_watch;
-  // stop_watch.tic(__func__);
-
   std::vector<PointWithStamp> collision_points;
   for (size_t i = 0; i < predicted_path.path.size(); ++i) {
-    // stop_watch.tic(std::to_string(i));
     if (
       max_prediction_time_for_collision_check <
       rclcpp::Duration(predicted_path.time_step).seconds() * static_cast<double>(i)) {
@@ -177,19 +149,14 @@ std::vector<PointWithStamp> getCollisionPoints(
     }
 
     const auto collision_info = getCollisionIndex(
-      traj_points, traj_polygons, predicted_path.path.at(i), object_time, shape, vehicle_info,
-      max_lat_dist);
+      traj_points, traj_polygons, predicted_path.path.at(i), object_time, shape, max_lat_dist);
     if (collision_info) {
       const auto nearest_collision_point = calcNearestCollisionPoint(
         collision_info->first, collision_info->second, traj_points, is_driving_forward);
       collision_points.push_back(nearest_collision_point);
       collision_index.push_back(collision_info->first);
     }
-    // std::cerr << "getCollisionPoints(), " << i << ": " << stop_watch.toc(std::to_string(i))
-    //           << " [us]" << std::endl;
   }
-  // std::cerr << "getCollisionPoints(), total: " << stop_watch.toc(__func__) << " [us]" <<
-  // std::endl;
 
   return collision_points;
 }

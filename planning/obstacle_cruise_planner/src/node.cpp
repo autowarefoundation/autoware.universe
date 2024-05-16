@@ -821,8 +821,8 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   RCLCPP_INFO_EXPRESSION(
     rclcpp::get_logger("ObstacleCruisePlanner"), enable_calculation_time_info_, "  %s := %f [ms]",
     __func__, calculation_time);
-  // RCLCPP_INFO(
-  //   rclcpp::get_logger("ObstacleCruisePlanner"), "  %s := %f [ms]", __func__, calculation_time);
+  RCLCPP_INFO(
+    rclcpp::get_logger("ObstacleCruisePlanner"), "  %s := %f [ms]", __func__, calculation_time);
 
   return {stop_obstacles, cruise_obstacles, slow_down_obstacles};
 }
@@ -1076,7 +1076,12 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
   std::vector<size_t> collision_index;
   const auto collision_points = polygon_utils::getCollisionPoints(
     traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-    is_driving_forward_, collision_index, vehicle_info_);
+    is_driving_forward_, collision_index,
+    std::hypot(obstacle.shape.dimensions.x * 0.5, obstacle.shape.dimensions.y * 0.5) +
+      std::hypot(
+        vehicle_info_.vehicle_length_m,
+        vehicle_info_.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise) +
+      p.decimate_trajectory_step_length);
   return collision_points;
 }
 
@@ -1115,8 +1120,12 @@ ObstacleCruisePlannerNode::createCollisionPointsForOutsideCruiseObstacle(
   std::vector<size_t> collision_index;
   const auto collision_points = polygon_utils::getCollisionPoints(
     traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-    is_driving_forward_, collision_index, vehicle_info_,
-    vehicle_info_.vehicle_width_m + p.max_lat_margin_for_cruise,
+    is_driving_forward_, collision_index,
+    std::hypot(obstacle.shape.dimensions.x * 0.5, obstacle.shape.dimensions.y * 0.5) +
+      std::hypot(
+        vehicle_info_.vehicle_length_m,
+        vehicle_info_.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise) +
+      p.decimate_trajectory_step_length,
     p.max_prediction_time_for_collision_check);
   if (collision_points.empty()) {
     // Ignore vehicle obstacles outside the trajectory without collision
@@ -1192,7 +1201,12 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     std::vector<size_t> collision_index;
     const auto collision_points = polygon_utils::getCollisionPoints(
       traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-      is_driving_forward_, collision_index, vehicle_info_);
+      is_driving_forward_, collision_index,
+      std::hypot(obstacle.shape.dimensions.x * 0.5, obstacle.shape.dimensions.y * 0.5) +
+        std::hypot(
+          vehicle_info_.vehicle_length_m,
+          vehicle_info_.vehicle_width_m * 0.5 + p.max_lat_margin_for_stop) +
+        p.decimate_trajectory_step_length);
     if (collision_points.empty()) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), enable_debug_info_,
