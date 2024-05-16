@@ -57,14 +57,10 @@ using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
-using lanelet::ArcCoordinates;
 using lanelet::BasicLineString2d;
 using lanelet::BasicPoint2d;
 using lanelet::BasicPolygon2d;
-using lanelet::ConstLineString2d;
 using lanelet::LaneletMapPtr;
-using lanelet::geometry::fromArcCoordinates;
-using lanelet::geometry::toArcCoordinates;
 using DetectionAreaIdx = std::optional<std::pair<double, double>>;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
@@ -241,7 +237,8 @@ void calcSlowDownPointsForPossibleCollision(
 std::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpot(
   const grid_map::GridMap & grid, const std::vector<grid_map::Position> & occlusion_spot_positions,
   const double offset_from_start_to_ego, const Point2d base_point,
-  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param, DebugData & debug_data);
+  const lanelet::ConstLanelet & path_lanelet, const PlannerParam & param,
+  const DebugData & debug_data);
 //!< @brief generate possible collisions coming from occlusion spots on the side of the path
 bool generatePossibleCollisionsFromGridMap(
   std::vector<PossibleCollisionInfo> & possible_collisions, const grid_map::GridMap & grid,

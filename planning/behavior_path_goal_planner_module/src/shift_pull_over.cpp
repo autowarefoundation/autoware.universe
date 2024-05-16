@@ -28,11 +28,9 @@ namespace behavior_path_planner
 {
 ShiftPullOver::ShiftPullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
-  const LaneDepartureChecker & lane_departure_checker,
-  const std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map)
+  const LaneDepartureChecker & lane_departure_checker)
 : PullOverPlannerBase{node, parameters},
   lane_departure_checker_{lane_departure_checker},
-  occupancy_grid_map_{occupancy_grid_map},
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
 }
@@ -218,11 +216,6 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
       p.lane_ids.push_back(lane.id());
     }
     shifted_path.path.points.push_back(p);
-  }
-
-  // set the same z as the goal
-  for (auto & p : shifted_path.path.points) {
-    p.point.pose.position.z = goal_pose.position.z;
   }
 
   // set lane_id and velocity to shifted_path
