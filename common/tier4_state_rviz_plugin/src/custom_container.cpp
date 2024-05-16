@@ -49,6 +49,6 @@ void CustomContainer::paintEvent(QPaintEvent *)
   QPainterPath path;
   path.addRoundedRect(rect(), height() / 2, height() / 2);  // Use height for rounded corners
   painter.setPen(Qt::NoPen);
-  painter.setBrush(QColor("#354a54"));  // Background color
+  painter.setBrush(QColor("#0f1417"));  // Background color
   painter.drawPath(path);
 }
