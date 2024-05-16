@@ -53,6 +53,7 @@ struct ObjectInfo
   double std_dev_y;
   double std_dev_z;
   double std_dev_yaw;
+  std::size_t max_num_points;
   tf2::Transform tf_map2moved_object;
   // pose and twist
   geometry_msgs::msg::TwistWithCovariance twist_covariance_;

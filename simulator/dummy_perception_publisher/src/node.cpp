@@ -45,6 +45,7 @@ ObjectInfo::ObjectInfo(
   std_dev_y(std::sqrt(object.initial_state.pose_covariance.covariance[7])),
   std_dev_z(std::sqrt(object.initial_state.pose_covariance.covariance[14])),
   std_dev_yaw(std::sqrt(object.initial_state.pose_covariance.covariance[35])),
+  max_num_points(object.max_num_points),
   twist_covariance_(object.initial_state.twist_covariance),
   pose_covariance_(object.initial_state.pose_covariance)
 {

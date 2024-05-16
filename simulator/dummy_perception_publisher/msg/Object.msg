@@ -5,6 +5,7 @@ autoware_auto_perception_msgs/ObjectClassification classification
 autoware_auto_perception_msgs/Shape shape
 float32 max_velocity
 float32 min_velocity
+uint32 max_num_points
 
 uint8 ADD=0
 uint8 MODIFY=1
