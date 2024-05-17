@@ -6,8 +6,8 @@ CustomSegmentedButtonItem::CustomSegmentedButtonItem(const QString & text, QWidg
 : QPushButton(text, parent),
   bgColor("#0F1417"),
   checkedBgColor("#354A54"),
-  inactiveTextColor("#8a9297"),
-  activeTextColor("#d0e6f2"),
+  inactiveTextColor("#DFE3E7"),
+  activeTextColor("#D0E6F2"),
   isHovered(false),
   isActivated(false),
   isDisabled(false)
