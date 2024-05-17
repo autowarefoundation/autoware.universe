@@ -1,4 +1,4 @@
-#include "custom_label.hpp"
+#include "include/custom_label.hpp"
 
 #include <QColor>
 #include <QGraphicsDropShadowEffect>

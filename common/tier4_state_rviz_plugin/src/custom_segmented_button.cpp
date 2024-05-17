@@ -1,4 +1,4 @@
-#include "custom_segmented_button.hpp"
+#include "include/custom_segmented_button.hpp"
 
 #include <qsizepolicy.h>
 

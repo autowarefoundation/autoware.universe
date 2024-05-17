@@ -1,5 +1,5 @@
 // CustomToggleSwitch.cpp
-#include "custom_toggle_switch.hpp"
+#include "include/custom_toggle_switch.hpp"
 
 CustomToggleSwitch::CustomToggleSwitch(QWidget * parent) : QCheckBox(parent), isDragging(false)
 {

@@ -1,4 +1,4 @@
-#include "custom_slider.hpp"
+#include "include/custom_slider.hpp"
 
 CustomSlider::CustomSlider(Qt::Orientation orientation, QWidget * parent)
 : QSlider(orientation, parent)

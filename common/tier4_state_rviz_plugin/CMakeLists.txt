@@ -21,22 +21,20 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/custom_segmented_button.cpp
   src/custom_segmented_button_item.cpp
   src/custom_label.cpp
-  include/autoware_state_panel.hpp
-  include/custom_button.hpp
-  include/custom_container.hpp
-  include/custom_icon_label.hpp
-  include/custom_label.hpp
-  include/custom_segmented_button_item.hpp
-  include/custom_segmented_button.hpp
-  include/custom_slider.hpp
-  include/custom_toggle_switch.hpp
-  include/velocity_steering_factors_panel.hpp
+  src/include/autoware_state_panel.hpp
+  src/include/custom_button.hpp
+  src/include/custom_container.hpp
+  src/include/custom_icon_label.hpp
+  src/include/custom_label.hpp
+  src/include/custom_segmented_button_item.hpp
+  src/include/custom_segmented_button.hpp
+  src/include/custom_slider.hpp
+  src/include/custom_toggle_switch.hpp
+  src/include/velocity_steering_factors_panel.hpp
 )
 
 target_include_directories(
   ${PROJECT_NAME} PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
 )
 
 
@@ -48,19 +46,6 @@ target_link_libraries(${PROJECT_NAME}
 pluginlib_export_plugin_description_file(rviz_common plugins/plugin_description.xml)
 
 
-install(
-  TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include
-)
-
-install(
-  DIRECTORY include/
-  DESTINATION include
-)
 
 
 ament_auto_package(
