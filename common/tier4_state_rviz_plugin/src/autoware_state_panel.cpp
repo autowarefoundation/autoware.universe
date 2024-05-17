@@ -32,8 +32,8 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
 {
   // Panel Configuration
   this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  this->setMinimumWidth(400);
-  this->setMaximumWidth(400);
+  this->setMinimumWidth(420);
+  this->setMaximumWidth(420);
 
   // Layout
 
@@ -46,6 +46,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   auto * containerLayout = new QVBoxLayout(containerWidget);
   // Set the alignment of the layout
   containerLayout->setAlignment(Qt::AlignTop);
+  containerLayout->setSpacing(1);
 
   auto * operation_mode_group = makeOperationModeGroup();
   auto * diagnostic_v_layout = new QVBoxLayout;
@@ -192,6 +193,7 @@ QVBoxLayout * AutowareStatePanel::makeOperationModeGroup()
   CustomContainer * group1 = new CustomContainer(this);
 
   // add switch and label to the container
+  group1->setContentsMargins(0, 0, 0, 10);
   group1->getLayout()->addWidget(control_mode_switch_ptr_, 0, 0, 1, 1, Qt::AlignLeft);
   group1->getLayout()->addWidget(control_mode_label_ptr_, 0, 1, 1, 4, Qt::AlignLeft);
 
@@ -205,7 +207,7 @@ QVBoxLayout * AutowareStatePanel::makeOperationModeGroup()
   QVBoxLayout * groupLayout = new QVBoxLayout;
   // set these widgets to show up at the left and not stretch more than needed
   groupLayout->setAlignment(Qt::AlignCenter);
-  groupLayout->setContentsMargins(10, 0, 10, 0);
+  groupLayout->setContentsMargins(10, 0, 0, 0);
   groupLayout->addWidget(group1);
   // groupLayout->addSpacing(5);
   groupLayout->addWidget(segmented_button, 0, Qt::AlignCenter);
@@ -232,6 +234,8 @@ QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
   custom_container->getLayout()->addWidget(routing_label, 0, 1, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(clear_route_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
 
+  custom_container->setContentsMargins(10, 0, 0, 0);
+
   group->addWidget(custom_container);
 
   return group;
@@ -242,17 +246,19 @@ QVBoxLayout * AutowareStatePanel::makeLocalizationGroup()
   auto * group = new QVBoxLayout;
   auto * custom_container = new CustomContainer(this);
 
-  init_by_gnss_button_ptr_ = new CustomElevatedButton("Inititalize with GNSS");
+  init_by_gnss_button_ptr_ = new CustomElevatedButton("Initialize with GNSS");
   init_by_gnss_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(init_by_gnss_button_ptr_, SIGNAL(clicked()), SLOT(onClickInitByGnss()));
 
   localization_icon = new CustomIconLabel(QColor("#84c2e6"));
-  QLabel * localization_label = new QLabel("Localization");
+  QLabel * localization_label = new QLabel(" Localization");
   localization_label->setStyleSheet("color: #d0e6f2; font-weight: bold;");
 
   custom_container->getLayout()->addWidget(localization_icon, 0, 0, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(localization_label, 0, 1, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(init_by_gnss_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
+
+  custom_container->setContentsMargins(10, 0, 0, 0);
 
   group->addWidget(custom_container);
   return group;
@@ -275,6 +281,9 @@ QVBoxLayout * AutowareStatePanel::makeMotionGroup()
   custom_container->getLayout()->addWidget(motion_icon, 0, 0, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(motion_label, 0, 1, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(accept_start_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
+
+  custom_container->setContentsMargins(10, 0, 0, 0);
+
   group->addWidget(custom_container);
 
   return group;
@@ -306,6 +315,8 @@ QVBoxLayout * AutowareStatePanel::makeFailSafeGroup()
   v_layout->addWidget(custom_container1);
   // v_layout->addSpacing(5);
   v_layout->addWidget(custom_container2);
+
+  group->setContentsMargins(10, 0, 0, 0);
 
   group->addLayout(v_layout);
   return group;
@@ -352,9 +363,8 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
     velocity_limit_setter_ptr_->fontMetrics().horizontalAdvance("Set Velocity Limit"));
 
   velocity_limit_value_label_ = new QLabel("0");
-  // max width is set to fit the text
   velocity_limit_value_label_->setMaximumWidth(
-    velocity_limit_value_label_->fontMetrics().horizontalAdvance("999"));
+    velocity_limit_value_label_->fontMetrics().horizontalAdvance("0"));
 
   CustomSlider * pub_velocity_limit_slider_ = new CustomSlider(Qt::Horizontal);
   pub_velocity_limit_slider_->setRange(0, 100);
@@ -372,6 +382,8 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
 
   connect(pub_velocity_limit_slider_, &QSlider::valueChanged, this, [this](int value) {
     this->velocity_limit_value_label_->setText(QString::number(value));
+    velocity_limit_value_label_->setMaximumWidth(
+      velocity_limit_value_label_->fontMetrics().horizontalAdvance(QString::number(value)));
     if (!sliderIsDragging) {   // If the value changed without dragging, it's a click on the track
       onClickVelocityLimit();  // Call the function immediately since it's not a drag operation
     }
@@ -392,11 +404,14 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
   velocity_limit_layout->addWidget(velocity_limit_label);
 
   // Velocity Limit layout
+  utility_layout->addSpacing(15);
   utility_layout->addWidget(velocity_limit_setter_ptr_);
-  // utility_layout->addSpacing(5);
+  utility_layout->addSpacing(10);
   utility_layout->addLayout(velocity_limit_layout);
-  // utility_layout->addSpacing(5);
+  utility_layout->addSpacing(25);
   utility_layout->addWidget(emergency_button_ptr_);
+
+  utility_layout->setContentsMargins(15, 0, 15, 0);
 
   return utility_layout;
 }
@@ -465,27 +480,27 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
   switch (msg->state) {
     case RouteState::UNSET:
       state = Pending;
-      bgColor = QColor("#84c2e6");  // yellow
+      bgColor = QColor("#eef08b");
       break;
 
     case RouteState::SET:
       state = Active;
-      bgColor = QColor("#00e678");  // blue
+      bgColor = QColor("#00e678");
       break;
 
     case RouteState::ARRIVED:
       state = Danger;
-      bgColor = QColor("#f08b8b");  // orange
+      bgColor = QColor("#f08b8b");
       break;
 
     case RouteState::CHANGING:
+      bgColor = QColor("#eef08b");
       state = Pending;
-      bgColor = QColor("#eef08b");  // yellow
       break;
 
     default:
       state = None;
-      bgColor = QColor("#84c2e6");  // red
+      bgColor = QColor("#84c2e6");
       break;
   }
 
@@ -512,22 +527,22 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
   switch (msg->state) {
     case LocalizationInitializationState::UNINITIALIZED:
       state = None;
-      bgColor = QColor("#84c2e6");  // yellow
+      bgColor = QColor("#84c2e6");
       break;
 
     case LocalizationInitializationState::INITIALIZED:
       state = Active;
-      bgColor = QColor("#00e678");  // blue
+      bgColor = QColor("#00e678");
       break;
 
     case LocalizationInitializationState::INITIALIZING:
       state = Pending;
-      bgColor = QColor("#eef08b");  // yellow
+      bgColor = QColor("#eef08b");
       break;
 
     default:
       state = None;
-      bgColor = QColor("#84c2e6");  // red
+      bgColor = QColor("#84c2e6");
       break;
   }
 
