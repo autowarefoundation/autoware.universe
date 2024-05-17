@@ -22,7 +22,7 @@ void CustomSlider::paintEvent(QPaintEvent *)
   QRect handleRect =
     style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderHandle, this);
 
-  int trackThickness = 10;
+  int trackThickness = 14;
   int gap = 8;
 
   QRect beforeRect(
@@ -46,12 +46,12 @@ void CustomSlider::paintEvent(QPaintEvent *)
     centerY - trackThickness / 2);
 
   // Straight line to right side start
-  beforePath.lineTo(beforeRect.right() - trackThickness * 0.2, centerY - trackThickness / 2);
+  beforePath.lineTo(beforeRect.right() - trackThickness * 0.1, centerY - trackThickness / 2);
 
   // Right side with 20% roundedness
   beforePath.quadTo(beforeRect.right(), centerY - trackThickness / 2, beforeRect.right(), centerY);
   beforePath.quadTo(
-    beforeRect.right(), centerY + trackThickness / 2, beforeRect.right() - trackThickness * 0.2,
+    beforeRect.right(), centerY + trackThickness / 2, beforeRect.right() - trackThickness * 0.1,
     centerY + trackThickness / 2);
 
   // Close the path to the left side
@@ -64,19 +64,19 @@ void CustomSlider::paintEvent(QPaintEvent *)
   QPainterPath afterPath;
   afterPath.moveTo(afterRect.left(), centerY + trackThickness / 2);
   afterPath.quadTo(
-    afterRect.left(), centerY - trackThickness / 2, afterRect.left() + trackThickness * 0.2,
+    afterRect.left(), centerY - trackThickness / 2, afterRect.left() + trackThickness * 0.1,
     centerY - trackThickness / 2);
   afterPath.lineTo(afterRect.right() - trackThickness * 0.5, centerY - trackThickness / 2);
   afterPath.quadTo(afterRect.right(), centerY - trackThickness / 2, afterRect.right(), centerY);
   afterPath.quadTo(
     afterRect.right(), centerY + trackThickness / 2, afterRect.right() - trackThickness * 0.5,
     centerY + trackThickness / 2);
-  afterPath.lineTo(afterRect.left() + trackThickness * 0.2, centerY + trackThickness / 2);
+  afterPath.lineTo(afterRect.left() + trackThickness * 0.1, centerY + trackThickness / 2);
   afterPath.quadTo(afterRect.left(), centerY + trackThickness / 2, afterRect.left(), centerY);
   painter.fillPath(afterPath, inactiveTrackColor);
 
   painter.setBrush(QColor("#8bd0f0"));
-  int handleLineHeight = 25;
+  int handleLineHeight = 30;
   int handleLineWidth = 4;
   int handleLineRadius = 2;
   QRect handleLineRect(
