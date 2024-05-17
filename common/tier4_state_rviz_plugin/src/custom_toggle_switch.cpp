@@ -9,7 +9,7 @@ CustomToggleSwitch::CustomToggleSwitch(QWidget * parent) : QCheckBox(parent), is
 
 QSize CustomToggleSwitch::sizeHint() const
 {
-  return QSize(60, 30);  // Preferred size of the toggle switch
+  return QSize(50, 30);  // Preferred size of the toggle switch
 }
 
 void CustomToggleSwitch::paintEvent(QPaintEvent *)
