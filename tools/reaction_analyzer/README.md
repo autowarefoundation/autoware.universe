@@ -54,6 +54,11 @@ and `reaction_chain` list. `output_file_path` is the output file path is the pat
 will be stored. `test_iteration` defines how many tests will be performed. The `reaction_chain` list is the list of the
 pre-defined topics you want to measure their reaction times.
 
+**IMPORTANT:** Ensure the `reaction_chain` list is correctly defined:
+
+- For `perception_planning` mode, **do not** define `Control` nodes.
+- For `planning_control` mode, **do not** define `Perception` nodes.
+
 ### Prepared Test Environment
 
 - Download the demonstration test map from the
@@ -119,7 +124,8 @@ ros2 launch autoware_launch e2e_simulator.launch.xml vehicle_model:=sample_vehic
 - After the EGO stopped in desired position, please localize the dummy obstacle by using the traffic controller. You can
   control the traffic by pressing `ESC` button.
 
-**After localize EGO and dummy vehicle, we should write the positions of these entities in the map frame in `reaction_analyzer.param.yaml`. To achieve this:**
+**After localize EGO and dummy vehicle, we should write the positions of these entities in the map frame
+in `reaction_analyzer.param.yaml`. To achieve this:**
 
 - Get initialization pose from `/awsim/ground_truth/vehicle/pose` topic.
 - Get entity params from `/perception/object_recognition/objects` topic.
@@ -146,10 +152,12 @@ to run Autoware while recording.**
 ## Results
 
 The results will be stored in the `csv` file format and written to the `output_file_path` you defined. It shows each
-pipeline of the Autoware by using header timestamp of the messages, and it reports `Node Latency`, `Pipeline Latency`, and `Total Latency`
+pipeline of the Autoware by using header timestamp of the messages, and it reports `Node Latency`, `Pipeline Latency`,
+and `Total Latency`
 for each of the nodes.
 
-- `Node Latency`: The time difference between previous and current node's reaction timestamps.
+- `Node Latency`: The time difference between previous and current node's reaction timestamps. If it is the first node
+  in the pipeline, it is same as `Pipeline Latency`.
 - `Pipeline Latency`: The time difference between published time of the message and pipeline header time.
 - `Total Latency`: The time difference between the message's published timestamp and the spawn obstacle command sent
   timestamp.

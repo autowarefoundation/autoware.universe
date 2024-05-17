@@ -30,6 +30,7 @@
 #include <autoware_internal_msgs/msg/published_time.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <boost/uuid/string_generator.hpp>
 #include <boost/uuid/uuid.hpp>
@@ -40,6 +41,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <filesystem>
 #include <fstream>
 #include <map>
 #include <string>
@@ -254,6 +256,15 @@ PredictedObjects::SharedPtr create_entity_predicted_objects_ptr(const EntityPara
 rclcpp::SubscriptionOptions create_subscription_options(rclcpp::Node * node);
 
 /**
+ * @brief Creates a visualization marker for a polyhedron based on the provided entity parameters.
+ *
+ * @param params The parameters of the entity for which the marker is to be created. It includes the
+ * position, orientation, and dimensions of the entity.
+ * @return The created visualization marker for the polyhedron.
+ */
+visualization_msgs::msg::Marker create_polyhedron_marker(const EntityParams & params);
+
+/**
  * @brief Splits a string by a given delimiter.
  *
  * @param str The string to be split.
@@ -262,6 +273,14 @@ rclcpp::SubscriptionOptions create_subscription_options(rclcpp::Node * node);
  * delimiter.
  */
 std::vector<std::string> split(const std::string & str, char delimiter);
+
+/**
+ * @brief Checks if a folder exists.
+ *
+ * @param path The path to the folder.
+ * @return True if the folder exists, false otherwise.
+ */
+bool does_folder_exist(const std::string & path);
 
 /**
  * @brief Get the index of the trajectory point that is a certain distance away from the current

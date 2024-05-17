@@ -93,6 +93,7 @@ private:
   // Publishers
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_initial_pose_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_goal_pose_;
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_marker_;
 
   // Variables
   std::vector<PipelineMap> pipeline_map_vector_;
@@ -104,6 +105,7 @@ private:
   bool is_initialization_requested{false};
   bool is_route_set_{false};
   size_t test_iteration_count_{0};
+  visualization_msgs::msg::Marker entity_debug_marker_;
 
   // Functions
   void init_analyzer_variables();

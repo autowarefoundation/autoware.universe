@@ -120,6 +120,86 @@ rclcpp::SubscriptionOptions create_subscription_options(rclcpp::Node * node)
   return sub_opt;
 }
 
+visualization_msgs::msg::Marker create_polyhedron_marker(const EntityParams & params)
+{
+  visualization_msgs::msg::Marker marker;
+  marker.header.frame_id = "map";
+  marker.header.stamp = rclcpp::Time(0);
+  marker.ns = "entity";
+  marker.id = 0;
+  marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  marker.action = visualization_msgs::msg::Marker::ADD;
+
+  marker.pose.position.x = params.x;
+  marker.pose.position.y = params.y;
+  marker.pose.position.z = params.z;
+
+  tf2::Quaternion quaternion;
+  quaternion.setRPY(
+    tier4_autoware_utils::deg2rad(params.roll), tier4_autoware_utils::deg2rad(params.pitch),
+    tier4_autoware_utils::deg2rad(params.yaw));
+  marker.pose.orientation = tf2::toMsg(quaternion);
+
+  marker.scale.x = 0.1;  // Line width
+
+  marker.color.a = 1.0;  // Alpha
+  marker.color.r = 1.0;
+  marker.color.g = 0.0;
+  marker.color.b = 0.0;
+
+  // Define the 8 corners of the polyhedron
+  geometry_msgs::msg::Point p1, p2, p3, p4, p5, p6, p7, p8;
+
+  p1.x = params.x_l / 2.0;
+  p1.y = params.y_l / 2.0;
+  p1.z = params.z_l / 2.0;
+  p2.x = -params.x_l / 2.0;
+  p2.y = params.y_l / 2.0;
+  p2.z = params.z_l / 2.0;
+  p3.x = -params.x_l / 2.0;
+  p3.y = -params.y_l / 2.0;
+  p3.z = params.z_l / 2.0;
+  p4.x = params.x_l / 2.0;
+  p4.y = -params.y_l / 2.0;
+  p4.z = params.z_l / 2.0;
+  p5.x = params.x_l / 2.0;
+  p5.y = params.y_l / 2.0;
+  p5.z = -params.z_l / 2.0;
+  p6.x = -params.x_l / 2.0;
+  p6.y = params.y_l / 2.0;
+  p6.z = -params.z_l / 2.0;
+  p7.x = -params.x_l / 2.0;
+  p7.y = -params.y_l / 2.0;
+  p7.z = -params.z_l / 2.0;
+  p8.x = params.x_l / 2.0;
+  p8.y = -params.y_l / 2.0;
+  p8.z = -params.z_l / 2.0;
+
+  // Add points to the marker
+  marker.points.push_back(p1);
+  marker.points.push_back(p2);
+  marker.points.push_back(p3);
+  marker.points.push_back(p4);
+  marker.points.push_back(p1);
+
+  marker.points.push_back(p5);
+  marker.points.push_back(p6);
+  marker.points.push_back(p7);
+  marker.points.push_back(p8);
+  marker.points.push_back(p5);
+
+  marker.points.push_back(p1);
+  marker.points.push_back(p5);
+  marker.points.push_back(p6);
+  marker.points.push_back(p2);
+  marker.points.push_back(p3);
+  marker.points.push_back(p7);
+  marker.points.push_back(p4);
+  marker.points.push_back(p8);
+
+  return marker;
+}
+
 std::vector<std::string> split(const std::string & str, char delimiter)
 {
   std::vector<std::string> elements;
@@ -129,6 +209,11 @@ std::vector<std::string> split(const std::string & str, char delimiter)
     elements.push_back(item);
   }
   return elements;
+}
+
+bool does_folder_exist(const std::string & path)
+{
+  return std::filesystem::exists(path) && std::filesystem::is_directory(path);
 }
 
 size_t get_index_after_distance(
@@ -410,7 +495,7 @@ void write_results(
   }
 
   // tmp map to store latency results for statistics
-  std::map<std::string, std::vector<std::pair<double, double>>> tmp_latency_map;
+  std::map<std::string, std::vector<std::tuple<double, double, double>>> tmp_latency_map;
 
   size_t test_count = 0;
   for (const auto & pipeline_map : pipeline_map_vector) {
@@ -444,7 +529,8 @@ void write_results(
           const auto total_latency =
             calculate_time_diff_ms(spawn_cmd_time, reaction.published_stamp);
           file << node_latency << " - " << pipeline_latency << " - " << total_latency << ",";
-          tmp_latency_map[node_name].emplace_back(node_latency, total_latency);
+          tmp_latency_map[node_name].emplace_back(
+            std::make_tuple(node_latency, pipeline_latency, total_latency));
         } else {
           const auto & prev_reaction = pipeline_reactions[j - 1].second;
           const auto node_latency =
@@ -454,7 +540,8 @@ void write_results(
           const auto total_latency =
             calculate_time_diff_ms(spawn_cmd_time, reaction.published_stamp);
           file << node_latency << " - " << pipeline_latency << " - " << total_latency << ",";
-          tmp_latency_map[node_name].emplace_back(node_latency, total_latency);
+          tmp_latency_map[node_name].emplace_back(
+            std::make_tuple(node_latency, pipeline_latency, total_latency));
         }
       }
       file << "\n";
@@ -465,27 +552,36 @@ void write_results(
 
   file << "\nStatistics\n";
   file << "Node "
-          "Name,Min-NL,Max-NL,Mean-NL,Median-NL,Std-Dev-NL,Min-TL,Max-TL,Mean-TL,Median-TL,Std-Dev-"
-          "TL\n";
+          "Name,Min-NL,Max-NL,Mean-NL,Median-NL,Std-Dev-NL,Min-PL,Max-PL,Mean-PL,Median-PL,Std-Dev-"
+          "PL,Min-TL,Max-TL,Mean-TL,Median-TL,Std-Dev-TL\n";
   for (const auto & [node_name, latency_vec] : tmp_latency_map) {
     file << node_name << ",";
+
     std::vector<double> node_latencies;
+    std::vector<double> pipeline_latencies;
     std::vector<double> total_latencies;
 
     // Extract latencies
     for (const auto & latencies : latency_vec) {
-      node_latencies.push_back(latencies.first);
-      total_latencies.push_back(latencies.second);
+      double node_latency, pipeline_latency, total_latency;
+      std::tie(node_latency, pipeline_latency, total_latency) = latencies;
+      node_latencies.push_back(node_latency);
+      pipeline_latencies.push_back(pipeline_latency);
+      total_latencies.push_back(total_latency);
     }
 
     const auto stats_node_latency = calculate_statistics(node_latencies);
+    const auto stats_pipeline_latency = calculate_statistics(pipeline_latencies);
     const auto stats_total_latency = calculate_statistics(total_latencies);
 
     file << stats_node_latency.min << "," << stats_node_latency.max << ","
          << stats_node_latency.mean << "," << stats_node_latency.median << ","
-         << stats_node_latency.std_dev << "," << stats_total_latency.min << ","
-         << stats_total_latency.max << "," << stats_total_latency.mean << ","
-         << stats_total_latency.median << "," << stats_total_latency.std_dev << "\n";
+         << stats_node_latency.std_dev << "," << stats_pipeline_latency.min << ","
+         << stats_pipeline_latency.max << "," << stats_pipeline_latency.mean << ","
+         << stats_pipeline_latency.median << "," << stats_pipeline_latency.std_dev << ","
+         << stats_total_latency.min << "," << stats_total_latency.max << ","
+         << stats_total_latency.mean << "," << stats_total_latency.median << ","
+         << stats_total_latency.std_dev << "\n";
   }
   file.close();
   RCLCPP_INFO(node->get_logger(), "Results written to: %s", ss.str().c_str());

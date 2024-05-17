@@ -68,9 +68,15 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions node_options)
     return;
   }
 
+  node_params_.output_file_path = get_parameter("output_file_path").as_string();
+  // Check if the output file path is valid
+  if (!does_folder_exist(node_params_.output_file_path)) {
+    RCLCPP_ERROR(get_logger(), "Output file path is not valid. Node couldn't be initialized.");
+    return;
+  }
+
   node_params_.timer_period = get_parameter("timer_period").as_double();
   node_params_.test_iteration = get_parameter("test_iteration").as_int();
-  node_params_.output_file_path = get_parameter("output_file_path").as_string();
   node_params_.spawn_time_after_init = get_parameter("spawn_time_after_init").as_double();
   node_params_.spawn_distance_threshold = get_parameter("spawn_distance_threshold").as_double();
 
@@ -115,6 +121,7 @@ ReactionAnalyzerNode::ReactionAnalyzerNode(rclcpp::NodeOptions node_options)
     create_subscription_options(this));
 
   pub_goal_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("output/goal", rclcpp::QoS(1));
+  pub_marker_ = create_publisher<visualization_msgs::msg::Marker>("~/debug", 10);
 
   init_analyzer_variables();
 
@@ -166,6 +173,8 @@ void ReactionAnalyzerNode::on_timer()
       current_odometry_ptr);
     return;
   }
+
+  pub_marker_->publish(entity_debug_marker_);
 
   // Spawn the obstacle if the conditions are met
   spawn_obstacle(current_odometry_ptr->pose.pose.position);
@@ -244,7 +253,7 @@ void ReactionAnalyzerNode::calculate_results(
 void ReactionAnalyzerNode::init_analyzer_variables()
 {
   entity_pose_ = create_entity_pose(node_params_.entity_params);
-
+  entity_debug_marker_ = create_polyhedron_marker(node_params_.entity_params);
   goal_pose_.pose = pose_params_to_pose(node_params_.goal_pose);
 
   if (node_running_mode_ == RunningMode::PlanningControl) {

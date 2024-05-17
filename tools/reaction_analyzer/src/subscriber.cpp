@@ -162,10 +162,14 @@ std::optional<std::map<std::string, MessageBufferVariant>> SubscriberBase::get_m
   for (const auto & [key, variant] : message_buffers_) {
     if (auto * control_message = std::get_if<ControlCommandBuffer>(&variant)) {
       if (!control_message->second) {
+        RCLCPP_WARN_THROTTLE(
+          node_->get_logger(), *node_->get_clock(), 1000, "Waiting for %s to react", key.c_str());
         all_reacted = false;
       }
     } else if (auto * general_message = std::get_if<MessageBuffer>(&variant)) {
       if (!general_message->has_value()) {
+        RCLCPP_WARN_THROTTLE(
+          node_->get_logger(), *node_->get_clock(), 1000, "Waiting for %s to react", key.c_str());
         all_reacted = false;
       }
     }
