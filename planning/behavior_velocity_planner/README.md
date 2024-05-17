@@ -56,3 +56,13 @@ So for example, in order to stop at a stop line with the vehicles' front on the 
 | `max_accel`            | double               | (to be a global parameter) max acceleration of the vehicle                          |
 | `system_delay`         | double               | (to be a global parameter) delay time until output control command                  |
 | `delay_response_time`  | double               | (to be a global parameter) delay time of the vehicle's response to control commands |
+
+## Traffic Light Handling in sim/real
+
+The handling of traffic light information varies depending on the usage. In the below table, the traffic signal topic element for the corresponding lane is denoted as `info`, and if `info` is not available, it is denoted as `null`.
+
+| module \\ case                               | `info` is `null`         | `non-null` past observation (denoted as `info`) is available                                                                                                                      |
+| :------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| intersection_occlusion(`is_simulation = *`)  | GO(occlusion is ignored) | <ul><li>If `info` is `GREEN or UNKNOWN` occlusion is cared</li><li>If `info` is `RED or YELLOW` occlusion is ignored(GO) </li></ul>                                               |
+| traffic_light(sim, `is_simulation = true`)   | GO                       | <ul><li>If `info` is timeout, STOP whatever the color is</li> <li>If `info` is not timeout, then act according to the color. If `info` is `UNKNOWN`, STOP</li></ul> {: rowspan=2} |
+| traffic_light(real, `is_simulation = false`) | STOP                     | &#8288 {: style="padding:0"}                                                                                                                                                      |
