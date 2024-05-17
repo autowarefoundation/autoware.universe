@@ -16,9 +16,9 @@
 
 // Assuming the parseRouteFile function is in 'RouteHandler.h'
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "route_parser.hpp"
+#include "planning_test_utils/route_parser.hpp"
 
-namespace route_handler::test
+namespace test_utils
 {
 // Example YAML structure as a string for testing
 const char g_complete_yaml[] = R"(
@@ -94,8 +94,9 @@ TEST(ParseFunctions, CompleteYAMLTest)
 TEST(ParseFunction, CompleteFromFilename)
 {
   const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("route_handler");
-  const auto parser_test_route = planning_test_utils_dir + "/test_route/parser_test.route";
+    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto parser_test_route =
+    planning_test_utils_dir + "/test_data/lanelet_route_parser_test.yaml";
 
   const auto lanelet_route = parse_route_file(parser_test_route);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.x, 1.0);
@@ -130,4 +131,4 @@ TEST(ParseFunction, CompleteFromFilename)
   EXPECT_EQ(segment1.primitives[3].id, 88);
   EXPECT_EQ(segment1.primitives[3].primitive_type, "lane");
 }
-}  // namespace route_handler::test
+}  // namespace test_utils

@@ -65,8 +65,8 @@ public:
   static HADMapBin makeMapBinMsg()
   {
     const auto planning_test_utils_dir =
-      ament_index_cpp::get_package_share_directory("route_handler");
-    const auto lanelet2_path = planning_test_utils_dir + "/test_map/lanelet2_map.osm";
+      ament_index_cpp::get_package_share_directory("planning_test_utils");
+    const auto lanelet2_path = planning_test_utils_dir + "/test_map/2km_test.osm";
     double center_line_resolution = 5.0;
     // load map from file
     const auto map = loadMap(lanelet2_path);

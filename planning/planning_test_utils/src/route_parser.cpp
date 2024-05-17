@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "route_parser.hpp"
+#include "planning_test_utils/route_parser.hpp"
 
 #include <rclcpp/logging.hpp>
 
@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace route_handler::test
+namespace test_utils
 {
 Pose parse_pose(const YAML::Node & node)
 {
@@ -89,4 +89,4 @@ LaneletRoute parse_route_file(const std::string & filename)
   }
   return lanelet_route;
 }
-}  // namespace route_handler::test
+}  // namespace test_utils
