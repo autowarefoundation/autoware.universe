@@ -28,10 +28,12 @@ namespace default_ad_api
 class DiagnosticsNode : public rclcpp::Node
 {
 public:
-  DiagnosticsNode();
+  explicit DiagnosticsNode(const rclcpp::NodeOptions & options);
 
 private:
   using DiagGraph = diagnostic_graph_utils::DiagGraph;
+  using DiagUnit = diagnostic_graph_utils::DiagUnit;
+  using DiagLink = diagnostic_graph_utils::DiagLink;
   void on_create(DiagGraph::ConstSharedPtr graph);
   void on_update(DiagGraph::ConstSharedPtr graph);
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::DiagGraphStruct>::SharedPtr pub_struct_;
