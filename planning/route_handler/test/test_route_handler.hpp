@@ -59,61 +59,6 @@ public:
   TestRouteHandler & operator=(TestRouteHandler &&) = delete;
   ~TestRouteHandler() override = default;
 
-  static lanelet::LaneletMapPtr loadMap(const std::string & lanelet2_filename)
-  {
-    lanelet::ErrorMessages errors{};
-    lanelet::projection::MGRSProjector projector{};
-    auto map = lanelet::load(lanelet2_filename, projector, &errors);
-    if (errors.empty()) {
-      return map;
-    }
-
-    for (const auto & error : errors) {
-      RCLCPP_ERROR_STREAM(rclcpp::get_logger("map_loader"), error);
-    }
-    return nullptr;
-  }
-
-  static HADMapBin makeMapBinMsg()
-  {
-    const auto planning_test_utils_dir =
-      ament_index_cpp::get_package_share_directory("planning_test_utils");
-    const auto lanelet2_path = planning_test_utils_dir + "/test_map/2km_test.osm";
-    double center_line_resolution = 5.0;
-    // load map from file
-    const auto map = loadMap(lanelet2_path);
-    if (!map) {
-      return autoware_auto_mapping_msgs::msg::HADMapBin_<std::allocator<void>>{};
-    }
-
-    // overwrite centerline
-    lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
-
-    // create map bin msg
-    const auto map_bin_msg =
-      convertToMapBinMsg(map, lanelet2_path, rclcpp::Clock(RCL_ROS_TIME).now());
-    return map_bin_msg;
-  }
-
-  static HADMapBin convertToMapBinMsg(
-    const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename,
-    const rclcpp::Time & now)
-  {
-    std::string format_version{};
-    std::string map_version{};
-    lanelet::io_handlers::AutowareOsmParser::parseVersions(
-      lanelet2_filename, &format_version, &map_version);
-
-    HADMapBin map_bin_msg;
-    map_bin_msg.header.stamp = now;
-    map_bin_msg.header.frame_id = "map";
-    map_bin_msg.format_version = format_version;
-    map_bin_msg.map_version = map_version;
-    lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
-
-    return map_bin_msg;
-  }
-
   void set_lane_change_test_route()
   {
     const auto route_handler_dir = ament_index_cpp::get_package_share_directory("route_handler");
