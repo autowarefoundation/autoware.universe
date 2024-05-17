@@ -21,19 +21,7 @@ Eigen::Vector2d calcRawImageProjectedPoint(
 {
   cv::Point2d rectified_image_point = pinhole_camera_model.project3dToPixel(point3d);
 
-  cv::Point2d raw_image_point = rectified_image_point;
-
-  try {
-    const bool need_unrectify = std::any_of(
-      pinhole_camera_model.cameraInfo().d.begin(), pinhole_camera_model.cameraInfo().d.end(),
-      [](double distortion) { return distortion != 0.0; });
-
-    if (need_unrectify) {
-      raw_image_point = pinhole_camera_model.unrectifyPoint(rectified_image_point);
-    }
-  } catch (cv::Exception & e) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("image_projection_based_fusion"), e.what());
-  }
+  cv::Point2d raw_image_point = pinhole_camera_model.unrectifyPoint(rectified_image_point);
 
   return Eigen::Vector2d(raw_image_point.x, raw_image_point.y);
 }
