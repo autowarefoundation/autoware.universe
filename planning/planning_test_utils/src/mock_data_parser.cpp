@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "planning_test_utils/route_parser.hpp"
+#include "planning_test_utils/mock_data_parser.hpp"
 
 #include <rclcpp/logging.hpp>
 

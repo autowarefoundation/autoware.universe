@@ -14,7 +14,7 @@
 
 #include "test_route_handler.hpp"
 
-#include "planning_test_utils/route_parser.hpp"
+#include "planning_test_utils/mock_data_parser.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

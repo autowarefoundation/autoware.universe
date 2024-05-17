@@ -16,7 +16,7 @@
 
 // Assuming the parseRouteFile function is in 'RouteHandler.h'
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "planning_test_utils/route_parser.hpp"
+#include "planning_test_utils/mock_data_parser.hpp"
 
 namespace test_utils
 {
