@@ -252,9 +252,6 @@ VelocityPlanningResult OutOfLaneModule::plan(
     prev_inserted_point_ = point_to_insert;
     RCLCPP_DEBUG(logger_, "Avoiding lane %lu", point_to_insert->slowdown.lane_to_avoid.id());
     debug_data_.slowdowns = {*point_to_insert};
-    auto trajectory_idx = motion_utils::findNearestSegmentIndex(
-                            ego_trajectory_points, point_to_insert->point.pose.position) +
-                          1;
     if (point_to_insert->slowdown.velocity == 0.0)
       result.stop_points.push_back(point_to_insert->point.pose.position);
     else

@@ -150,8 +150,7 @@ void add_range_markers(
 
 void add_decision_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array, const OverlapRanges & ranges,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & trajectory_points,
-  const size_t first_ego_idx, const double z, const size_t prev_nb)
+  const double z, const size_t prev_nb)
 {
   auto debug_marker = get_base_marker();
   debug_marker.action = debug_marker.ADD;
@@ -222,9 +221,7 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(const DebugData &
   debug::add_range_markers(
     debug_marker_array, debug_data.ranges, debug_data.trajectory_points,
     debug_data.first_trajectory_idx, z, debug_data.prev_ranges);
-  debug::add_decision_markers(
-    debug_marker_array, debug_data.ranges, debug_data.trajectory_points,
-    debug_data.first_trajectory_idx, z, debug_data.prev_ranges);
+  debug::add_decision_markers(debug_marker_array, debug_data.ranges, z, debug_data.prev_ranges);
   return debug_marker_array;
 }
 
