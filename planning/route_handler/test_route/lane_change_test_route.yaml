@@ -1,6 +1,11 @@
+header:
+  stamp:
+    sec: 1715936953
+    nanosec: 67206425
+  frame_id: map
 start_pose:
   position:
-    x: -200.0
+    x: -50.0
     y: 1.75
     z: 0.0
   orientation:
@@ -10,7 +15,7 @@ start_pose:
     w: 1.0
 goal_pose:
   position:
-    x: 500.0
+    x: 70.0
     y: -1.75
     z: 0.0
   orientation:
@@ -19,54 +24,6 @@ goal_pose:
     z: 0.0
     w: 1.0
 segments:
-  - preferred_primitive:
-      id: 4735
-      primitive_type: ""
-    primitives:
-      - id: 4735
-        primitive_type: lane
-      - id: 5044
-        primitive_type: lane
-  - preferred_primitive:
-      id: 4740
-      primitive_type: ""
-    primitives:
-      - id: 4740
-        primitive_type: lane
-      - id: 5048
-        primitive_type: lane
-  - preferred_primitive:
-      id: 4745
-      primitive_type: ""
-    primitives:
-      - id: 4745
-        primitive_type: lane
-      - id: 5052
-        primitive_type: lane
-  - preferred_primitive:
-      id: 4750
-      primitive_type: ""
-    primitives:
-      - id: 4750
-        primitive_type: lane
-      - id: 5056
-        primitive_type: lane
-  - preferred_primitive:
-      id: 4755
-      primitive_type: ""
-    primitives:
-      - id: 4755
-        primitive_type: lane
-      - id: 5060
-        primitive_type: lane
-  - preferred_primitive:
-      id: 4760
-      primitive_type: ""
-    primitives:
-      - id: 4760
-        primitive_type: lane
-      - id: 5064
-        primitive_type: lane
   - preferred_primitive:
       id: 4765
       primitive_type: ""
@@ -84,7 +41,7 @@ segments:
       - id: 5072
         primitive_type: lane
   - preferred_primitive:
-      id: 9594
+      id: 4775
       primitive_type: ""
     primitives:
       - id: 4775
@@ -115,139 +72,22 @@ segments:
         primitive_type: lane
       - id: 5088
         primitive_type: lane
-  - preferred_primitive:
-      id: 5092
-      primitive_type: ""
-    primitives:
-      - id: 4790
-        primitive_type: lane
-      - id: 5092
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5096
-      primitive_type: ""
-    primitives:
-      - id: 4795
-        primitive_type: lane
-      - id: 5096
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5104
-      primitive_type: ""
-    primitives:
-      - id: 4800
-        primitive_type: lane
-      - id: 5104
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5100
-      primitive_type: ""
-    primitives:
-      - id: 4805
-        primitive_type: lane
-      - id: 5100
-        primitive_type: lane
-  - preferred_primitive:
-      id: 9813
-      primitive_type: ""
-    primitives:
-      - id: 4810
-        primitive_type: lane
-      - id: 9813
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5112
-      primitive_type: ""
-    primitives:
-      - id: 4815
-        primitive_type: lane
-      - id: 5112
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5116
-      primitive_type: ""
-    primitives:
-      - id: 4820
-        primitive_type: lane
-      - id: 5116
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5120
-      primitive_type: ""
-    primitives:
-      - id: 4825
-        primitive_type: lane
-      - id: 5120
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5124
-      primitive_type: ""
-    primitives:
-      - id: 4830
-        primitive_type: lane
-      - id: 5124
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5128
-      primitive_type: ""
-    primitives:
-      - id: 4835
-        primitive_type: lane
-      - id: 5128
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5132
-      primitive_type: ""
-    primitives:
-      - id: 4840
-        primitive_type: lane
-      - id: 5132
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5136
-      primitive_type: ""
-    primitives:
-      - id: 4845
-        primitive_type: lane
-      - id: 5136
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5140
-      primitive_type: ""
-    primitives:
-      - id: 4850
-        primitive_type: lane
-      - id: 5140
-        primitive_type: lane
-  - preferred_primitive:
-      id: 9817
-      primitive_type: ""
-    primitives:
-      - id: 4855
-        primitive_type: lane
-      - id: 9817
-        primitive_type: lane
-  - preferred_primitive:
-      id: 9821
-      primitive_type: ""
-    primitives:
-      - id: 4860
-        primitive_type: lane
-      - id: 9821
-        primitive_type: lane
-  - preferred_primitive:
-      id: 9825
-      primitive_type: ""
-    primitives:
-      - id: 4865
-        primitive_type: lane
-      - id: 9825
-        primitive_type: lane
-  - preferred_primitive:
-      id: 5156
-      primitive_type: ""
-    primitives:
-      - id: 4870
-        primitive_type: lane
-      - id: 5156
-        primitive_type: lane
+uuid:
+  uuid:
+    - 231
+    - 254
+    - 143
+    - 227
+    - 194
+    - 8
+    - 220
+    - 88
+    - 30
+    - 194
+    - 172
+    - 147
+    - 127
+    - 143
+    - 176
+    - 133
+allow_modification: false
