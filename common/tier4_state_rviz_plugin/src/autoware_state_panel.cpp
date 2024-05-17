@@ -177,9 +177,7 @@ QVBoxLayout * AutowareStatePanel::makeOperationModeGroup()
     &AutowareStatePanel::onSwitchStateChanged);
 
   control_mode_label_ptr_ = new QLabel("Autoware Control");
-  // set its width to fit the text
-  control_mode_label_ptr_->setFixedWidth(
-    control_mode_label_ptr_->fontMetrics().horizontalAdvance("Autoware Control"));
+  control_mode_label_ptr_->setStyleSheet("color: #d0e6f2; font-weight: bold;");
 
   CustomContainer * group1 = new CustomContainer(this);
 
