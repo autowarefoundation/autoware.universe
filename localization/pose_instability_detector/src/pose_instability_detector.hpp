@@ -23,6 +23,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <vector>
+#include <deque>
 
 class PoseInstabilityDetector : public rclcpp::Node
 {
@@ -45,6 +46,8 @@ private:
   void callback_timer();
 
   void define_static_threshold();
+  void dead_reckon(Odometry::SharedPtr & initial_pose, const rclcpp::Time & end_time, const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);
+  std::deque<TwistWithCovarianceStamped> clip_out_necessary_twist(const std::deque<TwistWithCovarianceStamped> & twist_buffer, const rclcpp::Time & start_time, const rclcpp::Time & end_time);
 
   // subscribers and timer
   rclcpp::Subscription<Odometry>::SharedPtr odometry_sub_;
@@ -58,28 +61,25 @@ private:
   // parameters
   const double interval_sec_; // [sec]
 
-  double threshold_diff_position_x_; // longitudinal
-  double threshold_diff_position_y_; // lateral
-  double threshold_diff_position_z_;
-  double threshold_diff_angle_x_;
-  double threshold_diff_angle_y_;
-  double threshold_diff_angle_z_; //yaw
+  double threshold_diff_position_x_;  // longitudinal
+  double threshold_diff_position_y_;  // lateral
+  double threshold_diff_angle_z_;     //yaw
 
-  const double maximum_heading_velocity_; // [m/s]
-  const double velocity_scale_factor_tolerance_; // [%]
+  const double maximum_heading_velocity_;                 // [m/s]
+  const double velocity_scale_factor_tolerance_;          // [%]
 
-  const double maximum_angular_velocity_; // [rad/s]
-  const double angular_velocity_scale_factor_tolerance_; // [%]
-  const double expected_angular_velocity_bias; // [rad/s]
+  const double maximum_angular_velocity_;                 // [rad/s]
+  const double angular_velocity_scale_factor_tolerance_;  // [%]
+  const double angular_velocity_bias_tolerance_;          // [rad/s]
 
-  const double pose_estimator_longitudinal_tolerance_; // [m]
-  const double pose_estimator_lateral_tolerance_; // [m]
-  const double pose_estimator_yaw_tolerance_; // [rad]
+  const double pose_estimator_longitudinal_tolerance_;    // [m]
+  const double pose_estimator_lateral_tolerance_;         // [m]
+  const double pose_estimator_yaw_tolerance_;             // [rad]
 
   // variables
   std::optional<Odometry> latest_odometry_ = std::nullopt;
   std::optional<Odometry> prev_odometry_ = std::nullopt;
-  std::vector<TwistWithCovarianceStamped> twist_buffer_;
+  std::deque<TwistWithCovarianceStamped> twist_buffer_;
 };
 
 #endif  // POSE_INSTABILITY_DETECTOR_HPP_
