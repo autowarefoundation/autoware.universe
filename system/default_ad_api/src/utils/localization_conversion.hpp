@@ -23,8 +23,10 @@
 namespace default_ad_api::localization_conversion
 {
 
-using ExternalInitializeRequest = autoware_adapi_v1_msgs::srv::InitializeLocalization::Request::SharedPtr;
-using InternalInitializeRequest = tier4_localization_msgs::srv::InitializeLocalization::Request::SharedPtr;
+using ExternalInitializeRequest =
+  autoware_adapi_v1_msgs::srv::InitializeLocalization::Request::SharedPtr;
+using InternalInitializeRequest =
+  tier4_localization_msgs::srv::InitializeLocalization::Request::SharedPtr;
 InternalInitializeRequest convert_request(const ExternalInitializeRequest & external);
 
 using ExternalResponse = autoware_adapi_v1_msgs::msg::ResponseStatus;

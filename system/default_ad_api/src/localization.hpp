@@ -37,11 +37,9 @@ private:
   Cli<localization_interface::Initialize> cli_initialize_;
   Sub<localization_interface::InitializationState> sub_state_;
 
-
-void on_initialize(
-  const autoware_ad_api::localization::Initialize::Service::Request::SharedPtr req,
-  const autoware_ad_api::localization::Initialize::Service::Response::SharedPtr res);
-
+  void on_initialize(
+    const autoware_ad_api::localization::Initialize::Service::Request::SharedPtr req,
+    const autoware_ad_api::localization::Initialize::Service::Response::SharedPtr res);
 };
 
 }  // namespace default_ad_api

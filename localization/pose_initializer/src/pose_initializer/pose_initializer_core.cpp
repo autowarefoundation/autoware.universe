@@ -22,8 +22,8 @@
 #include "stop_check_module.hpp"
 #include "yabloc_module.hpp"
 
-#include <sstream>
 #include <memory>
+#include <sstream>
 #include <vector>
 
 PoseInitializer::PoseInitializer() : Node("pose_initializer")
@@ -115,7 +115,8 @@ void PoseInitializer::change_node_trigger(bool flag, bool need_spin)
   }
 }
 
-void PoseInitializer::set_user_defined_initial_pose(const geometry_msgs::msg::Pose initial_pose, bool need_spin)
+void PoseInitializer::set_user_defined_initial_pose(
+  const geometry_msgs::msg::Pose initial_pose, bool need_spin)
 {
   try {
     change_state(State::Message::INITIALIZING);
@@ -152,7 +153,8 @@ void PoseInitializer::on_initialize(
       change_state(State::Message::INITIALIZING);
       change_node_trigger(false, false);
 
-      auto pose = req->pose_with_covariance.empty() ? get_gnss_pose() : req->pose_with_covariance.front();
+      auto pose =
+        req->pose_with_covariance.empty() ? get_gnss_pose() : req->pose_with_covariance.front();
       if (ndt_) {
         pose = ndt_->align_pose(pose);
       } else if (yabloc_) {
@@ -170,9 +172,11 @@ void PoseInitializer::on_initialize(
     } else if (req->method == Initialize::Service::Request::DIRECT) {
       if (req->pose_with_covariance.empty()) {
         std::stringstream message;
-        message << "No imput pose_with_covariance. If you wanna use DIRECT method, please input pose_with_covariance.";
+        message << "No imput pose_with_covariance. If you wanna use DIRECT method, please input "
+                   "pose_with_covariance.";
         RCLCPP_ERROR(get_logger(), message.str().c_str());
-        throw ServiceException(autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
+        throw ServiceException(
+          autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
       }
       auto pose = req->pose_with_covariance.front().pose.pose;
       set_user_defined_initial_pose(pose, false);
@@ -182,7 +186,8 @@ void PoseInitializer::on_initialize(
       std::stringstream message;
       message << "Unknown method type (=" << std::to_string(req->method) << ")";
       RCLCPP_ERROR(get_logger(), message.str().c_str());
-      throw ServiceException(autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
+      throw ServiceException(
+        autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
     }
 
   } catch (const ServiceException & error) {
