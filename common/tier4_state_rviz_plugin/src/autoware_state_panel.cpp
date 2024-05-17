@@ -36,8 +36,16 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   this->setMaximumWidth(400);
 
   // Layout
-  auto * main_v_layout = new QVBoxLayout;
-  main_v_layout->setAlignment(Qt::AlignTop);
+
+  // Create a new container widget
+  QWidget * containerWidget = new QWidget(this);
+  containerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+  containerWidget->setStyleSheet("QWidget { background-color: #0F1417; color: #d0e6f2; }");
+
+  auto * containerLayout = new QVBoxLayout(containerWidget);
+  // Set the alignment of the layout
+  containerLayout->setAlignment(Qt::AlignTop);
 
   auto * operation_mode_group = makeOperationModeGroup();
   auto * diagnostic_v_layout = new QVBoxLayout;
@@ -56,16 +64,18 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   // diagnostic_v_layout->addSpacing(5);
   diagnostic_v_layout->addLayout(fail_safe_group);
 
-  // main_v_layout->addLayout(diagnostic_group);
+  // containerLayout->addLayout(diagnostic_group);
 
-  main_v_layout->addLayout(operation_mode_group);
+  containerLayout->addLayout(operation_mode_group);
+  // containerLayout->addSpacing(5);
+  containerLayout->addLayout(diagnostic_v_layout);
   // main_v_layout->addSpacing(5);
-  main_v_layout->addLayout(diagnostic_v_layout);
-  // main_v_layout->addSpacing(5);
-  main_v_layout->addLayout(velocity_limit_group);
+  containerLayout->addLayout(velocity_limit_group);
 
-  // Setting the layout
-  setLayout(main_v_layout);
+  // Main layout for AutowareStatePanel
+  QVBoxLayout * mainLayout = new QVBoxLayout(this);
+  mainLayout->addWidget(containerWidget);
+  setLayout(mainLayout);
 }
 
 void AutowareStatePanel::onInitialize()
@@ -394,28 +404,31 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
 void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPtr msg)
 {
   auto changeButtonState = [this](
-                             QPushButton * button, const bool is_desired_mode_available,
+                             CustomSegmentedButtonItem * button,
+                             const bool is_desired_mode_available,
                              const uint8_t current_mode = OperationModeState::UNKNOWN,
                              const uint8_t desired_mode = OperationModeState::STOP) {
-    if (is_desired_mode_available && current_mode != desired_mode) {
-      activateButton(button);
-      button->setStyleSheet(
-        "QPushButton {"
-        "background-color: #8BD0F0;color: #003546;"
-        "font-weight: bold;"
-        "}"
-        "QPushButton:hover {"
-        "background-color: #84c2e6;"
-        "color: #003546;"
-        "}");
+    button->setHovered(false);  // Reset hover state
+    if (is_desired_mode_available) {
+      if (current_mode == desired_mode) {
+        // Enabled and Checked
+        button->setChecked(true);
+        button->setActivated(true);
+        button->setCheckableButton(false);
+        button->setDisabledButton(false);
+      } else {
+        // Enabled and Checkable
+        button->setChecked(false);
+        button->setActivated(false);
+        button->setCheckableButton(true);
+        button->setDisabledButton(false);
+      }
     } else {
-      button->setStyleSheet(
-        "QPushButton {"
-        "background-color: #292d30;color: #6e7276;"
-        "border: 2px solid #292d30;"
-        "font-weight: bold;"
-        "}");
-      deactivateButton(button);
+      // Disabled and Unchecked
+      button->setChecked(false);
+      button->setActivated(false);
+      button->setCheckableButton(false);
+      button->setDisabledButton(true);
     }
   };
 
@@ -437,6 +450,11 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
 
   // toggle switch for control mode
   changeToggleSwitchState(control_mode_switch_ptr_, !msg->is_autoware_control_enabled);
+
+  // routing
+  if (msg->is_in_transition) {
+    routing_icon->updateStyle(Pending, QColor("#eef08b"));
+  }
 }
 
 void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
