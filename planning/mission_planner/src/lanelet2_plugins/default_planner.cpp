@@ -325,18 +325,26 @@ bool DefaultPlanner::is_goal_valid(
       return true;
     }
   }
-
-  constexpr auto max_queries = 50;
-  lanelet::ConstLanelets goal_candidate_lanelets;
-  lanelet::BasicPoint2d goal_point{goal.position.x, goal.position.y};
-  auto nb_queries = 0;
-  lanelet_map_ptr_->laneletLayer.nearestUntil(goal_point, [&](const auto &, const auto & ll) {
-    if (route_handler_.isRoadLanelet(ll)) goal_candidate_lanelets.push_back(ll);
-    return (++nb_queries >= max_queries);
-  });
   lanelet::ConstLanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(goal_candidate_lanelets, goal, &closest_lanelet)) {
-    return false;
+  const auto road_lanelets_at_goal = route_handler_.getRoadLaneletsAtPose(goal);
+  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_at_goal, goal, &closest_lanelet)) {
+    // if no road lanelets directly at the goal, find the closest one
+    const lanelet::BasicPoint2d goal_point{goal.position.x, goal.position.y};
+    auto closest_dist = std::numeric_limits<double>::max();
+    const auto closest_road_lanelet_found = lanelet_map_ptr_->laneletLayer.nearestUntil(
+      goal_point, [&](const auto & bbox, const auto & ll) {
+        // this search is done by increasing distance between the bounding box and the goal
+        // we stop the search when the bounding box is further than the closest dist found
+        if (lanelet::geometry::distance2d(bbox, goal_point) > closest_dist)
+          return true;  // stop the search
+        const auto dist = lanelet::geometry::distance2d(goal_point, ll.polygon2d());
+        if (route_handler_.isRoadLanelet(ll) && dist < closest_dist) {
+          closest_dist = dist;
+          closest_lanelet = ll;
+        }
+        return false;  // continue the search
+      });
+    if (!closest_road_lanelet_found) return false;
   }
 
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
