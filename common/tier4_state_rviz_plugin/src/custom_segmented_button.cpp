@@ -56,12 +56,9 @@ void CustomSegmentedButton::paintEvent(QPaintEvent *)
   QRectF rect = this->rect().adjusted(1, 0, -1, 0);
   path.addRoundedRect(rect, height() / 2, height() / 2);
 
-  painter.setPen(QPen(QColor("#8a9297"), 3));
+  painter.setPen(Qt::NoPen);
   painter.setBrush(QColor("#0F1417"));
   painter.drawPath(path);
-
-  // Draw borders between buttons
-  drawBorders(painter);
 }
 
 void CustomSegmentedButton::drawBorders(QPainter & painter)
