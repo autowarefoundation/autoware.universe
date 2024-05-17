@@ -1,11 +1,17 @@
 #include "custom_segmented_button_item.hpp"
 
+#include <qnamespace.h>
+
 CustomSegmentedButtonItem::CustomSegmentedButtonItem(const QString & text, QWidget * parent)
 : QPushButton(text, parent),
   bgColor("#0F1417"),
   checkedBgColor("#354A54"),
   inactiveTextColor("#8a9297"),
-  activeTextColor("#d0e6f2")
+  activeTextColor("#d0e6f2"),
+  isHovered(false),
+  isActivated(false),
+  isDisabled(false)
+
 {
   setCheckable(true);
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -31,18 +37,62 @@ void CustomSegmentedButtonItem::setColors(
 //   setFixedSize(width, height);
 // }
 
+void CustomSegmentedButtonItem::setHovered(bool hovered)
+{
+  isHovered = hovered;
+  updateCheckableState();
+}
+
+void CustomSegmentedButtonItem::setCheckableButton(bool checkable)
+{
+  setCheckable(checkable);
+  updateCheckableState();
+}
+
+void CustomSegmentedButtonItem::updateCheckableState()
+{
+  setCursor(
+    isDisabled ? Qt::ForbiddenCursor
+               : (isCheckable() ? Qt::PointingHandCursor : Qt::ForbiddenCursor));
+  update();
+}
+
+void CustomSegmentedButtonItem::setDisabledButton(bool disabled)
+{
+  isDisabled = disabled;
+  updateCheckableState();
+}
+
+void CustomSegmentedButtonItem::setActivated(bool activated)
+{
+  isActivated = activated;
+  update();
+}
+
 void CustomSegmentedButtonItem::paintEvent(QPaintEvent *)
 {
   QPainter painter(this);
   painter.setRenderHint(QPainter::Antialiasing);
 
+  // Adjust opacity for disabled state
+  if (isDisabled) {
+    painter.setOpacity(0.3);
+  } else {
+    painter.setOpacity(1.0);
+  }
+
   // Determine the button's color based on its state
   QColor buttonColor;
-  if (isHovered && !isChecked()) {
+  if (isDisabled) {
+    buttonColor = bgColor;
+  } else if (isHovered && !isChecked() && isCheckable()) {
     buttonColor = hoverColor;
+  } else if (isActivated) {
+    buttonColor = checkedBgColor;
   } else {
     buttonColor = isChecked() ? checkedBgColor : bgColor;
   }
+
   // Determine if this is the first or last button
   bool isFirstButton = false;
   bool isLastButton = false;
@@ -56,45 +106,64 @@ void CustomSegmentedButtonItem::paintEvent(QPaintEvent *)
 
   // Draw button background
 
-  QRect buttonRect = rect().adjusted(1, 1, -1, -1);  // Adjust to fill the space;
-
-  //   make it shorter in height by making both top and bottom 1 less
-  buttonRect.setTop(buttonRect.top() + 1);
-  buttonRect.setBottom(buttonRect.bottom() - 1);
-  QPainterPath path;
-  int radius = (height() - 2) / 2;
+  QRect buttonRect = rect();
 
   if (isFirstButton) {
-    path.moveTo(buttonRect.right(), buttonRect.top());
-    path.arcTo(buttonRect.left(), buttonRect.top() - 0.5, 2 * radius, 2 * radius, 90, 180);
-    path.lineTo(buttonRect.right(), buttonRect.bottom());
-    path.lineTo(buttonRect.right(), buttonRect.top());
+    buttonRect.setLeft(buttonRect.left() + 1);
+  }
+  if (isLastButton) {
+    buttonRect.setRight(buttonRect.right() - 1);
+  }
+
+  QPainterPath path;
+  double radius = (height() - 2) / 2;
+
+  path.setFillRule(Qt::WindingFill);
+  if (isFirstButton) {
+    path.addRoundedRect(buttonRect, radius, radius);
+    path.addRect(QRect(
+      (buttonRect.left() + buttonRect.width() - radius),
+      buttonRect.top() + buttonRect.height() - radius, radius,
+      radius));  // Bottom Right
+    path.addRect(QRect(
+      (buttonRect.left() + buttonRect.width() - radius), buttonRect.top(), radius,
+      radius));  // Top Right
   } else if (isLastButton) {
-    path.moveTo(buttonRect.left(), buttonRect.top());
-    path.arcTo(
-      buttonRect.right() - 2 * radius, buttonRect.top() - 0.5, 2 * radius, 2 * radius, 90, -180);
-    path.lineTo(buttonRect.left(), buttonRect.bottom());
-    path.lineTo(buttonRect.left(), buttonRect.top());
+    path.addRoundedRect(buttonRect, radius, radius);
+    path.addRect(QRect(
+      (buttonRect.left()), buttonRect.top() + buttonRect.height() - radius, radius,
+      radius));  // Bottom left
+    path.addRect(QRect((buttonRect.left()), buttonRect.top(), radius,
+                       radius));  // Top Left
   } else {
     path.addRect(buttonRect);
   }
   painter.fillPath(path, buttonColor);
 
+  // Draw button border
+  painter.setPen(QPen(QColor("#8a9297"), 2));  // Color for the borders
+  painter.drawPath(path.simplified());
+
   // Draw button text
-  painter.setPen(isChecked() ? activeTextColor : inactiveTextColor);
+  QColor textColor = (isChecked() ? activeTextColor : inactiveTextColor);
+  painter.setPen(textColor);
   painter.drawText(rect(), Qt::AlignCenter, text());
 }
 
 void CustomSegmentedButtonItem::enterEvent(QEvent * event)
 {
-  isHovered = true;
-  update();
+  if (isCheckable()) {
+    isHovered = true;
+    update();
+  }
   QPushButton::enterEvent(event);
 }
 
 void CustomSegmentedButtonItem::leaveEvent(QEvent * event)
 {
-  isHovered = false;
-  update();
+  if (isCheckable()) {
+    isHovered = false;
+    update();
+  }
   QPushButton::leaveEvent(event);
 }
