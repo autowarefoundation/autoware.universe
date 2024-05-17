@@ -172,7 +172,7 @@ void PoseInitializer::on_initialize(
     } else if (req->method == Initialize::Service::Request::DIRECT) {
       if (req->pose_with_covariance.empty()) {
         std::stringstream message;
-        message << "No imput pose_with_covariance. If you wanna use DIRECT method, please input "
+        message << "No input pose_with_covariance. If you wanna use DIRECT method, please input "
                    "pose_with_covariance.";
         RCLCPP_ERROR(get_logger(), message.str().c_str());
         throw ServiceException(
@@ -190,11 +190,11 @@ void PoseInitializer::on_initialize(
         autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
     }
   } catch (const ServiceException & error) {
-    autoware_adapi_v1_msgs::msg::ResponseStatus respose_staus;
-    respose_staus = error.status();
-    res->status.success = respose_staus.success;
-    res->status.code = respose_staus.code;
-    res->status.message = respose_staus.message;
+    autoware_adapi_v1_msgs::msg::ResponseStatus respose_status;
+    respose_status = error.status();
+    res->status.success = respose_status.success;
+    res->status.code = respose_status.code;
+    res->status.message = respose_status.message;
     change_state(State::Message::UNINITIALIZED);
   }
 }
