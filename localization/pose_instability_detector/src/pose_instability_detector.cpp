@@ -17,21 +17,27 @@
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 #include <tf2/LinearMath/Quaternion.h>
 
-#include <string>
 #include <cmath>
+#include <string>
 
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
 : Node("pose_instability_detector", options),
   interval_sec_(this->declare_parameter<double>("interval_sec")),
   maximum_heading_velocity_(this->declare_parameter<double>("maximum_heading_velocity")),
-  velocity_scale_factor_tolerance_(this->declare_parameter<double>("velocity_scale_factor_tolerance")),
+  velocity_scale_factor_tolerance_(
+    this->declare_parameter<double>("velocity_scale_factor_tolerance")),
   maximum_angular_velocity_(this->declare_parameter<double>("maximum_angular_velocity")),
-  angular_velocity_scale_factor_tolerance_(this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
-  angular_velocity_bias_tolerance_(this->declare_parameter<double>("angular_velocity_bias_tolerance")),
-  pose_estimator_longitudinal_tolerance_(this->declare_parameter<double>("pose_estimator_longitudinal_tolerance")),
-  pose_estimator_lateral_tolerance_(this->declare_parameter<double>("pose_estimator_lateral_tolerance")),
+  angular_velocity_scale_factor_tolerance_(
+    this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
+  angular_velocity_bias_tolerance_(
+    this->declare_parameter<double>("angular_velocity_bias_tolerance")),
+  pose_estimator_longitudinal_tolerance_(
+    this->declare_parameter<double>("pose_estimator_longitudinal_tolerance")),
+  pose_estimator_lateral_tolerance_(
+    this->declare_parameter<double>("pose_estimator_lateral_tolerance")),
   pose_estimator_yaw_tolerance_(this->declare_parameter<double>("pose_estimator_yaw_tolerance"))
 {
   // Define static thresholds
@@ -75,7 +81,7 @@ void PoseInstabilityDetector::callback_timer()
     prev_odometry_ = latest_odometry_;
     return;
   }
-  
+
   // twist callback has to be called at least once
   if (twist_buffer_.empty()) {
     return;
@@ -122,8 +128,8 @@ void PoseInstabilityDetector::callback_timer()
   diff_pose.pose = ekf_to_DR;
   diff_pose_pub_->publish(diff_pose);
 
-  const std::vector<double> thresholds = {threshold_diff_position_x_, threshold_diff_position_y_,
-                                          threshold_diff_angle_z_};
+  const std::vector<double> thresholds = {
+    threshold_diff_position_x_, threshold_diff_position_y_, threshold_diff_angle_z_};
 
   const std::vector<std::string> labels = {"diff_position_x", "diff_position_y", "diff_angle_z"};
 
@@ -159,37 +165,51 @@ void PoseInstabilityDetector::callback_timer()
   prev_odometry_ = latest_odometry_;
 }
 
-void PoseInstabilityDetector::define_static_threshold(){
-  const double nominal_longitudinal_variation = maximum_heading_velocity_ * interval_sec_ * std::cos(0.5 * maximum_angular_velocity_ * interval_sec_);
-  const double nominal_lateral_variation = maximum_heading_velocity_ * interval_sec_ * std::sin(0.5 * maximum_angular_velocity_ * interval_sec_);
+void PoseInstabilityDetector::define_static_threshold()
+{
+  const double nominal_longitudinal_variation =
+    maximum_heading_velocity_ * interval_sec_ *
+    std::cos(0.5 * maximum_angular_velocity_ * interval_sec_);
+  const double nominal_lateral_variation =
+    maximum_heading_velocity_ * interval_sec_ *
+    std::sin(0.5 * maximum_angular_velocity_ * interval_sec_);
   const double nominal_yaw_variation = maximum_angular_velocity_ * interval_sec_;
 
   const std::vector<double> heading_velocity_error_range = {
     maximum_heading_velocity_ * (1 + velocity_scale_factor_tolerance_ * 0.01),
     maximum_heading_velocity_ * (1 - velocity_scale_factor_tolerance_ * 0.01),
     maximum_heading_velocity_ * (1 - velocity_scale_factor_tolerance_ * 0.01),
-    maximum_heading_velocity_ * (1 + velocity_scale_factor_tolerance_ * 0.01)
-  };
+    maximum_heading_velocity_ * (1 + velocity_scale_factor_tolerance_ * 0.01)};
 
   const std::vector<double> angular_velocity_error_range = {
-    maximum_angular_velocity_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) + std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
-    maximum_angular_velocity_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) + std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
-    maximum_angular_velocity_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) - std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
-    maximum_angular_velocity_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) - std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_
-  };
+    maximum_angular_velocity_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) +
+      std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
+    maximum_angular_velocity_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) +
+      std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
+    maximum_angular_velocity_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) -
+      std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
+    maximum_angular_velocity_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) -
+      std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_};
 
   double longitudinal_change = 0;
   double lateral_change = 0;
   double yaw_change = 0;
   for (int i = 0; i < 4; ++i) {
-    double range_corner_x = heading_velocity_error_range[i] * interval_sec_ * std::cos(0.5 * angular_velocity_error_range[i] * interval_sec_);
-    double range_corner_y = heading_velocity_error_range[i] * interval_sec_ * std::sin(0.5 * angular_velocity_error_range[i] * interval_sec_);
+    double range_corner_x = heading_velocity_error_range[i] * interval_sec_ *
+                            std::cos(0.5 * angular_velocity_error_range[i] * interval_sec_);
+    double range_corner_y = heading_velocity_error_range[i] * interval_sec_ *
+                            std::sin(0.5 * angular_velocity_error_range[i] * interval_sec_);
     double range_corner_yaw = angular_velocity_error_range[i] * interval_sec_;
     double nominal_to_range_corner_direction = std::atan2(range_corner_y, range_corner_x);
-    double nominal_to_range_corner_distance = std::hypot(range_corner_x - nominal_longitudinal_variation, range_corner_y - nominal_lateral_variation);
+    double nominal_to_range_corner_distance = std::hypot(
+      range_corner_x - nominal_longitudinal_variation, range_corner_y - nominal_lateral_variation);
 
-    double temp_longitudinal_change = nominal_to_range_corner_distance * std::cos(nominal_to_range_corner_direction - nominal_yaw_variation);
-    double temp_lateral_change = nominal_to_range_corner_distance * std::sin(nominal_to_range_corner_direction - nominal_yaw_variation);
+    double temp_longitudinal_change =
+      nominal_to_range_corner_distance *
+      std::cos(nominal_to_range_corner_direction - nominal_yaw_variation);
+    double temp_lateral_change =
+      nominal_to_range_corner_distance *
+      std::sin(nominal_to_range_corner_direction - nominal_yaw_variation);
 
     longitudinal_change = std::max(longitudinal_change, std::abs(temp_longitudinal_change));
     lateral_change = std::max(lateral_change, std::abs(temp_lateral_change));
@@ -201,7 +221,9 @@ void PoseInstabilityDetector::define_static_threshold(){
   threshold_diff_angle_z_ = yaw_change + pose_estimator_yaw_tolerance_;
 }
 
-void PoseInstabilityDetector::dead_reckon(Odometry::SharedPtr & initial_pose, const rclcpp::Time & end_time, const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose)
+void PoseInstabilityDetector::dead_reckon(
+  Odometry::SharedPtr & initial_pose, const rclcpp::Time & end_time,
+  const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose)
 {
   // get start time
   rclcpp::Time start_time = rclcpp::Time(initial_pose->header.stamp);
@@ -222,7 +244,8 @@ void PoseInstabilityDetector::dead_reckon(Odometry::SharedPtr & initial_pose, co
   };
 
   // cut out necessary twist data
-  std::deque<TwistWithCovarianceStamped> sliced_twist_deque = clip_out_necessary_twist(twist_deque, start_time, end_time);
+  std::deque<TwistWithCovarianceStamped> sliced_twist_deque =
+    clip_out_necessary_twist(twist_deque, start_time, end_time);
 
   // dead reckoning
   rclcpp::Time prev_time = rclcpp::Time(sliced_twist_deque.front().header.stamp);
@@ -238,9 +261,9 @@ void PoseInstabilityDetector::dead_reckon(Odometry::SharedPtr & initial_pose, co
 
     // average quaternion of two frames
     tf2::Quaternion average_quat;
-    average_quat.setRPY(ang_x + 0.5 * twist.angular.x * time_diff_sec,
-                        ang_y + 0.5 * twist.angular.y * time_diff_sec,
-                        ang_z + 0.5 * twist.angular.z * time_diff_sec);
+    average_quat.setRPY(
+      ang_x + 0.5 * twist.angular.x * time_diff_sec, ang_y + 0.5 * twist.angular.y * time_diff_sec,
+      ang_z + 0.5 * twist.angular.z * time_diff_sec);
 
     // Convert twist to world frame (take average of two frames)
     tf2::Vector3 linear_velocity(twist.linear.x, twist.linear.y, twist.linear.z);
@@ -267,9 +290,13 @@ void PoseInstabilityDetector::dead_reckon(Odometry::SharedPtr & initial_pose, co
   }
 }
 
-std::deque<PoseInstabilityDetector::TwistWithCovarianceStamped> PoseInstabilityDetector::clip_out_necessary_twist(const std::deque<TwistWithCovarianceStamped> & twist_buffer, const rclcpp::Time & start_time, const rclcpp::Time & end_time) 
+std::deque<PoseInstabilityDetector::TwistWithCovarianceStamped>
+PoseInstabilityDetector::clip_out_necessary_twist(
+  const std::deque<TwistWithCovarianceStamped> & twist_buffer, const rclcpp::Time & start_time,
+  const rclcpp::Time & end_time)
 {
-  // get iterator to the element that is right before start_time (if it does not exist, start_it = twist_buffer.begin())
+  // get iterator to the element that is right before start_time (if it does not exist, start_it =
+  // twist_buffer.begin())
   auto start_it = twist_buffer.begin();
   for (auto it = twist_buffer.begin(); it != twist_buffer.end(); ++it) {
     if (rclcpp::Time(it->header.stamp) > start_time) {
@@ -278,11 +305,12 @@ std::deque<PoseInstabilityDetector::TwistWithCovarianceStamped> PoseInstabilityD
     start_it = it;
   }
 
-  // get iterator to the element that is right after end_time (if it does not exist, end_it = twist_buffer.end())
+  // get iterator to the element that is right after end_time (if it does not exist, end_it =
+  // twist_buffer.end())
   auto end_it = twist_buffer.end();
   end_it--;
   for (auto it = end_it; it != twist_buffer.begin(); --it) {
-    if (rclcpp::Time(it->header.stamp) < end_time) { 
+    if (rclcpp::Time(it->header.stamp) < end_time) {
       break;
     }
     end_it = it;
@@ -291,27 +319,29 @@ std::deque<PoseInstabilityDetector::TwistWithCovarianceStamped> PoseInstabilityD
   // Create result deque
   std::deque<TwistWithCovarianceStamped> result_deque(start_it, end_it);
 
-  // If the result deque has only one element, return a deque that starts and ends with the same element
+  // If the result deque has only one element, return a deque that starts and ends with the same
+  // element
   if (result_deque.size() == 1) {
     TwistWithCovarianceStamped twist = *start_it;
     result_deque.clear();
 
     twist.header.stamp.sec = static_cast<int32_t>(start_time.seconds());
-    twist.header.stamp.nanosec = static_cast<uint32_t>(start_time.nanoseconds()%1000000000);
+    twist.header.stamp.nanosec = static_cast<uint32_t>(start_time.nanoseconds() % 1000000000);
     result_deque.push_back(twist);
 
     twist.header.stamp.sec = static_cast<int32_t>(end_time.seconds());
-    twist.header.stamp.nanosec = static_cast<uint32_t>(end_time.nanoseconds()%1000000000);
+    twist.header.stamp.nanosec = static_cast<uint32_t>(end_time.nanoseconds() % 1000000000);
     result_deque.push_back(twist);
 
     return result_deque;
   }
 
-  // If the first element is later than start_time, add the first element to the front of the result_deque
+  // If the first element is later than start_time, add the first element to the front of the
+  // result_deque
   if (rclcpp::Time(result_deque.front().header.stamp) > start_time) {
     TwistWithCovarianceStamped start_twist = *start_it;
     start_twist.header.stamp.sec = static_cast<int32_t>(start_time.seconds());
-    start_twist.header.stamp.nanosec = static_cast<uint32_t>(start_time.nanoseconds()%1000000000);
+    start_twist.header.stamp.nanosec = static_cast<uint32_t>(start_time.nanoseconds() % 1000000000);
     result_deque.push_front(start_twist);
   } else {
     // If the first element is earlier than start_time, interpolate the first element
@@ -323,19 +353,24 @@ std::deque<PoseInstabilityDetector::TwistWithCovarianceStamped> PoseInstabilityD
     result_deque[0].twist.twist.linear.x = twist1.linear.x * ratio + twist0.linear.x * (1 - ratio);
     result_deque[0].twist.twist.linear.y = twist1.linear.y * ratio + twist0.linear.y * (1 - ratio);
     result_deque[0].twist.twist.linear.z = twist1.linear.z * ratio + twist0.linear.z * (1 - ratio);
-    result_deque[0].twist.twist.angular.x = twist1.angular.x * ratio + twist0.angular.x * (1 - ratio);
-    result_deque[0].twist.twist.angular.y = twist1.angular.y * ratio + twist0.angular.y * (1 - ratio);
-    result_deque[0].twist.twist.angular.z = twist1.angular.z * ratio + twist0.angular.z * (1 - ratio);
+    result_deque[0].twist.twist.angular.x =
+      twist1.angular.x * ratio + twist0.angular.x * (1 - ratio);
+    result_deque[0].twist.twist.angular.y =
+      twist1.angular.y * ratio + twist0.angular.y * (1 - ratio);
+    result_deque[0].twist.twist.angular.z =
+      twist1.angular.z * ratio + twist0.angular.z * (1 - ratio);
 
     result_deque[0].header.stamp.sec = static_cast<int32_t>(start_time.seconds());
-    result_deque[0].header.stamp.nanosec = static_cast<uint32_t>(start_time.nanoseconds()%1000000000);
+    result_deque[0].header.stamp.nanosec =
+      static_cast<uint32_t>(start_time.nanoseconds() % 1000000000);
   }
 
-  // If the last element is earlier than end_time, add the last element to the back of the result_deque
+  // If the last element is earlier than end_time, add the last element to the back of the
+  // result_deque
   if (rclcpp::Time(result_deque.back().header.stamp) < end_time) {
     TwistWithCovarianceStamped end_twist = *end_it;
     end_twist.header.stamp.sec = static_cast<int32_t>(end_time.seconds());
-    end_twist.header.stamp.nanosec = static_cast<uint32_t>(end_time.nanoseconds()%1000000000);
+    end_twist.header.stamp.nanosec = static_cast<uint32_t>(end_time.nanoseconds() % 1000000000);
     result_deque.push_back(end_twist);
   } else {
     // If the last element is later than end_time, interpolate the last element
@@ -344,15 +379,23 @@ std::deque<PoseInstabilityDetector::TwistWithCovarianceStamped> PoseInstabilityD
     double ratio = (end_time - time0).seconds() / (time1 - time0).seconds();
     Twist twist0 = result_deque[result_deque.size() - 2].twist.twist;
     Twist twist1 = result_deque[result_deque.size() - 1].twist.twist;
-    result_deque[result_deque.size() - 1].twist.twist.linear.x = twist1.linear.x * ratio + twist0.linear.x * (1 - ratio);
-    result_deque[result_deque.size() - 1].twist.twist.linear.y = twist1.linear.y * ratio + twist0.linear.y * (1 - ratio);
-    result_deque[result_deque.size() - 1].twist.twist.linear.z = twist1.linear.z * ratio + twist0.linear.z * (1 - ratio);
-    result_deque[result_deque.size() - 1].twist.twist.angular.x = twist1.angular.x * ratio + twist0.angular.x * (1 - ratio);
-    result_deque[result_deque.size() - 1].twist.twist.angular.y = twist1.angular.y * ratio + twist0.angular.y * (1 - ratio);
-    result_deque[result_deque.size() - 1].twist.twist.angular.z = twist1.angular.z * ratio + twist0.angular.z * (1 - ratio);
+    result_deque[result_deque.size() - 1].twist.twist.linear.x =
+      twist1.linear.x * ratio + twist0.linear.x * (1 - ratio);
+    result_deque[result_deque.size() - 1].twist.twist.linear.y =
+      twist1.linear.y * ratio + twist0.linear.y * (1 - ratio);
+    result_deque[result_deque.size() - 1].twist.twist.linear.z =
+      twist1.linear.z * ratio + twist0.linear.z * (1 - ratio);
+    result_deque[result_deque.size() - 1].twist.twist.angular.x =
+      twist1.angular.x * ratio + twist0.angular.x * (1 - ratio);
+    result_deque[result_deque.size() - 1].twist.twist.angular.y =
+      twist1.angular.y * ratio + twist0.angular.y * (1 - ratio);
+    result_deque[result_deque.size() - 1].twist.twist.angular.z =
+      twist1.angular.z * ratio + twist0.angular.z * (1 - ratio);
 
-    result_deque[result_deque.size() - 1].header.stamp.sec = static_cast<int32_t>(end_time.seconds());
-    result_deque[result_deque.size() - 1].header.stamp.nanosec = static_cast<uint32_t>(end_time.nanoseconds()%1000000000);
+    result_deque[result_deque.size() - 1].header.stamp.sec =
+      static_cast<int32_t>(end_time.seconds());
+    result_deque[result_deque.size() - 1].header.stamp.nanosec =
+      static_cast<uint32_t>(end_time.nanoseconds() % 1000000000);
   }
 
   return result_deque;

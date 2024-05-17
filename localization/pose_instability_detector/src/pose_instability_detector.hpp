@@ -22,8 +22,8 @@
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
-#include <vector>
 #include <deque>
+#include <vector>
 
 class PoseInstabilityDetector : public rclcpp::Node
 {
@@ -46,8 +46,12 @@ private:
   void callback_timer();
 
   void define_static_threshold();
-  void dead_reckon(Odometry::SharedPtr & initial_pose, const rclcpp::Time & end_time, const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);
-  std::deque<TwistWithCovarianceStamped> clip_out_necessary_twist(const std::deque<TwistWithCovarianceStamped> & twist_buffer, const rclcpp::Time & start_time, const rclcpp::Time & end_time);
+  void dead_reckon(
+    Odometry::SharedPtr & initial_pose, const rclcpp::Time & end_time,
+    const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);
+  std::deque<TwistWithCovarianceStamped> clip_out_necessary_twist(
+    const std::deque<TwistWithCovarianceStamped> & twist_buffer, const rclcpp::Time & start_time,
+    const rclcpp::Time & end_time);
 
   // subscribers and timer
   rclcpp::Subscription<Odometry>::SharedPtr odometry_sub_;
@@ -59,22 +63,22 @@ private:
   rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   // parameters
-  const double interval_sec_; // [sec]
+  const double interval_sec_;  // [sec]
 
   double threshold_diff_position_x_;  // longitudinal
   double threshold_diff_position_y_;  // lateral
-  double threshold_diff_angle_z_;     //yaw
+  double threshold_diff_angle_z_;     // yaw
 
-  const double maximum_heading_velocity_;                 // [m/s]
-  const double velocity_scale_factor_tolerance_;          // [%]
+  const double maximum_heading_velocity_;         // [m/s]
+  const double velocity_scale_factor_tolerance_;  // [%]
 
   const double maximum_angular_velocity_;                 // [rad/s]
   const double angular_velocity_scale_factor_tolerance_;  // [%]
   const double angular_velocity_bias_tolerance_;          // [rad/s]
 
-  const double pose_estimator_longitudinal_tolerance_;    // [m]
-  const double pose_estimator_lateral_tolerance_;         // [m]
-  const double pose_estimator_yaw_tolerance_;             // [rad]
+  const double pose_estimator_longitudinal_tolerance_;  // [m]
+  const double pose_estimator_lateral_tolerance_;       // [m]
+  const double pose_estimator_yaw_tolerance_;           // [rad]
 
   // variables
   std::optional<Odometry> latest_odometry_ = std::nullopt;
