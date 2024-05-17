@@ -189,7 +189,6 @@ void PoseInitializer::on_initialize(
       throw ServiceException(
         autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
     }
-
   } catch (const ServiceException & error) {
     autoware_adapi_v1_msgs::msg::ResponseStatus respose_staus;
     respose_staus = error.status();
