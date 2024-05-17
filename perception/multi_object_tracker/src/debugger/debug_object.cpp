@@ -23,6 +23,31 @@
 #include <sstream>
 #include <string>
 
+namespace
+{
+std::string uuidToString(const unique_identifier_msgs::msg::UUID & uuid_msg)
+{
+  std::stringstream ss;
+  for (auto i = 0; i < 16; ++i) {
+    ss << std::hex << std::setfill('0') << std::setw(2) << +uuid_msg.uuid[i];
+  }
+  return ss.str();
+}
+
+boost::uuids::uuid uuidToBoostUuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
+{
+  const std::string uuid_str = uuidToString(uuid_msg);
+  boost::uuids::string_generator gen;
+  boost::uuids::uuid uuid = gen(uuid_str);
+  return uuid;
+}
+
+int32_t uuidToInt(const boost::uuids::uuid & uuid)
+{
+  return boost::uuids::hash_value(uuid);
+}
+}  // namespace
+
 TrackerObjectDebugger::TrackerObjectDebugger(std::string frame_id)
 {
   // set frame id
@@ -67,9 +92,9 @@ void TrackerObjectDebugger::collect(
 
     autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
     (*(tracker_itr))->getTrackedObject(message_time, tracked_object);
-    object_data.uuid = to_boost_uuid(tracked_object.object_id);
-    object_data.uuid_int = uuid_to_int(object_data.uuid);
-    object_data.uuid_str = uuid_to_string(tracked_object.object_id);
+    object_data.uuid = uuidToBoostUuid(tracked_object.object_id);
+    object_data.uuid_int = uuidToInt(object_data.uuid);
+    object_data.uuid_str = uuidToString(tracked_object.object_id);
 
     // tracker
     bool is_associated = false;

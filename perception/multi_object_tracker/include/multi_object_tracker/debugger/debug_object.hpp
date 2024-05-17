@@ -97,26 +97,6 @@ public:
     visualization_msgs::msg::MarkerArray & marker_array) const;
   void process();
   void getMessage(visualization_msgs::msg::MarkerArray & marker_array) const;
-
-private:
-  std::string uuid_to_string(const unique_identifier_msgs::msg::UUID & u) const
-  {
-    std::stringstream ss;
-    for (auto i = 0; i < 16; ++i) {
-      ss << std::hex << std::setfill('0') << std::setw(2) << +u.uuid[i];
-    }
-    return ss.str();
-  }
-
-  boost::uuids::uuid to_boost_uuid(const unique_identifier_msgs::msg::UUID & uuid_msg)
-  {
-    const std::string uuid_str = uuid_to_string(uuid_msg);
-    boost::uuids::string_generator gen;
-    boost::uuids::uuid uuid = gen(uuid_str);
-    return uuid;
-  }
-
-  int32_t uuid_to_int(const boost::uuids::uuid & uuid) { return boost::uuids::hash_value(uuid); }
 };
 
 #endif  // MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
