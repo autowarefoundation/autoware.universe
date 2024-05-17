@@ -25,6 +25,7 @@ ament_auto_add_library(radar_object_tracker_node SHARED
   src/tracker/model/linear_motion_tracker.cpp
   src/tracker/model/constant_turn_rate_motion_tracker.cpp
   src/utils/utils.cpp
+  src/utils/radar_object_tracker_utils.cpp
   src/data_association/data_association.cpp
   src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
 )
