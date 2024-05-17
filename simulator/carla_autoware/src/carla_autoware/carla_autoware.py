@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.sr/bin/env python
 
+import random
 import signal
 import time
 
@@ -66,15 +67,16 @@ class InitializeInterface(object):
         self.timeout = self.param_["timeout"]
         self.sync_mode = self.param_["sync_mode"]
         self.fixed_delta_seconds = self.param_["fixed_delta_seconds"]
-        self.map_name = self.param_["carla_map"]
+        self.carla_map = self.param_["carla_map"]
         self.agent_role_name = self.param_["ego_vehicle_role_name"]
         self.vehicle_type = self.param_["vehicle_type"]
         self.spawn_point = self.param_["spawn_point"]
+        self.use_traffic_manager = self.param_["use_traffic_manager"]
 
     def load_world(self):
         client = carla.Client(self.local_host, self.port)
         client.set_timeout(self.timeout)
-        client.load_world(self.map_name)
+        client.load_world(self.carla_map)
         self.world = client.get_world()
         if self.world is not None:
             settings = self.world.get_settings()
@@ -90,7 +92,9 @@ class InitializeInterface(object):
             if len(point_items) == 6:
                 spawn_point.location.x = float(point_items[0])
                 spawn_point.location.y = float(point_items[1])
-                spawn_point.location.z = float(point_items[2]) + 2
+                spawn_point.location.z = (
+                    float(point_items[2]) + 2
+                )  # +2 is used so the car did not stuck on the road when spawned.
                 spawn_point.rotation.roll = float(point_items[3])
                 spawn_point.rotation.pitch = float(point_items[4])
                 spawn_point.rotation.yaw = float(point_items[5])
@@ -103,6 +107,43 @@ class InitializeInterface(object):
             self.sensor_wrapper = SensorWrapper(self.interface)
             self.ego_vehicle = CarlaDataProvider.get_actor_by_name(self.agent_role_name)
             self.sensor_wrapper.setup_sensors(self.ego_vehicle, False)
+            ##########################################################################################################################################################
+            # TRAFFIC MANAGER
+            ##########################################################################################################################################################
+            if self.use_traffic_manager:
+                traffic_manager = client.get_trafficmanager()
+                traffic_manager.set_synchronous_mode(True)
+                traffic_manager.set_random_device_seed(0)
+                random.seed(0)
+                spawn_points_tm = self.world.get_map().get_spawn_points()
+                for i, spawn_point in enumerate(spawn_points_tm):
+                    self.world.debug.draw_string(spawn_point.location, str(i), life_time=10)
+                models = [
+                    "dodge",
+                    "audi",
+                    "model3",
+                    "mini",
+                    "mustang",
+                    "lincoln",
+                    "prius",
+                    "nissan",
+                    "crown",
+                    "impala",
+                ]
+                blueprints = []
+                for vehicle in self.world.get_blueprint_library().filter("*vehicle*"):
+                    if any(model in vehicle.id for model in models):
+                        blueprints.append(vehicle)
+                max_vehicles = 30
+                max_vehicles = min([max_vehicles, len(spawn_points_tm)])
+                vehicles = []
+                for i, spawn_point in enumerate(random.sample(spawn_points_tm, max_vehicles)):
+                    temp = self.world.try_spawn_actor(random.choice(blueprints), spawn_point)
+                    if temp is not None:
+                        vehicles.append(temp)
+
+                for vehicle in vehicles:
+                    vehicle.set_autopilot(True)
 
         else:
             print("Carla Interface Couldn't find the world, Carla is not Running")

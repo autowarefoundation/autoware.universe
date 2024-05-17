@@ -4,14 +4,12 @@
   <arg name="timeout" default="20"/>
   <arg name="ego_vehicle_role_name" default="ego_vehicle"/>
   <arg name="vehicle_type" default="vehicle.toyota.prius"/>
-  <arg name="spawn_point" default="None"/>
+  <arg name="spawn_point" default="None" description="location of ego vehicle spawn (default is random), example = [0.2 , 4.1, 0.4, 0., 0., 0.]"/>
   <arg name="carla_map" default="Town01"/>
-  <arg name="passive" default="False"/>
   <arg name="sync_mode" default="True"/>
   <arg name="fixed_delta_seconds" default="0.05" description="Timestep for CARLA, FPS=1/value"/>
-  <arg name="role_name" default="ego_vehicle"/>
-  <arg name="spawn_point" default="None" description="location of ego vehicle spawn (default is random), example = [0.2 , 4.1, 0.4, 0., 0., 0.]"/>
   <arg name="objects_definition_file" default="$(find-pkg-share carla_autoware)/objects.json"/>
+  <arg name="use_traffic_manager" default="False"/>
 
   <!-- CARLA Interface -->
   <node pkg="carla_autoware" exec="carla_autoware" name="carla_autoware" output="screen">
@@ -25,6 +23,7 @@
     <param name="spawn_point" value="$(var spawn_point)"/>
     <param name="vehicle_type" value="$(var vehicle_type)"/>
     <param name="objects_definition_file" value="$(var objects_definition_file)"/>
+    <param name="use_traffic_manager" value="$(var use_traffic_manager)"/>
   </node>
 
   <!-- Awsim configuration frame to CARLA frame -->

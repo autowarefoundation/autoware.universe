@@ -93,6 +93,7 @@ class carla_interface(object):
             "spawn_point": rclpy.Parameter.Type.STRING,
             "vehicle_type": rclpy.Parameter.Type.STRING,
             "objects_definition_file": rclpy.Parameter.Type.STRING,
+            "use_traffic_manager": rclpy.Parameter.Type.BOOL,
         }
         self.param_values = {}
         for param_name, param_type in self.parameters.items():
