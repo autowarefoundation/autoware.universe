@@ -5,7 +5,6 @@
   <version>0.1.0</version>
   <description>This package implements a map_based_prediction</description>
   <maintainer email="tomoya.kimura@tier4.jp">Tomoya Kimura</maintainer>
-  <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
@@ -17,9 +16,9 @@
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>glog</depend>
   <depend>interpolation</depend>
   <depend>lanelet2_extension</depend>
-  <depend>libgoogle-glog-dev</depend>
   <depend>motion_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
