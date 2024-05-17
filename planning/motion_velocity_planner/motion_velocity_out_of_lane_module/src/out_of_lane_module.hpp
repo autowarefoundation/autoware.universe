@@ -52,11 +52,7 @@ private:
   std::string module_name_;
   std::optional<out_of_lane::SlowdownToInsert> prev_inserted_point_{};
   rclcpp::Clock::SharedPtr clock_{};
-  rclcpp::Logger logger_ = rclcpp::get_logger("");
   rclcpp::Time prev_inserted_point_time_{};
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_publisher;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_publisher;
-  motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator{};
 
 protected:
   // Debug

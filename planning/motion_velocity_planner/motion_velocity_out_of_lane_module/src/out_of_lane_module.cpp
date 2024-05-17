@@ -50,10 +50,15 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
   logger_ = node.get_logger();
   clock_ = node.get_clock();
   init_parameters(node);
-  debug_publisher =
+  velocity_factor_interface_.init(motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
+
+  debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
-  virtual_wall_publisher =
+  virtual_wall_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
+  velocity_factor_publisher_ =
+    node.create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
+      std::string("/planning/velocity_factors/") + ns_, 1);
 }
 void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 {
@@ -258,6 +263,15 @@ VelocityPlanningResult OutOfLaneModule::plan(
       result.slowdown_intervals.emplace_back(
         point_to_insert->point.pose.position, point_to_insert->point.pose.position,
         point_to_insert->slowdown.velocity);
+
+    const auto is_approaching = motion_utils::calcSignedArcLength(
+                                  ego_trajectory_points, ego_data.pose.position,
+                                  point_to_insert->point.pose.position) > 0.1 &&
+                                ego_data.velocity > 0.1;
+    const auto status = is_approaching ? motion_utils::VelocityFactor::APPROACHING
+                                       : motion_utils::VelocityFactor::STOPPED;
+    velocity_factor_interface_.set(
+      ego_trajectory_points, ego_data.pose, point_to_insert->point.pose, status, "out_of_lane");
   } else if (!decisions.empty()) {
     RCLCPP_WARN(logger_, "Could not insert stop point (would violate max deceleration limits)");
   }
@@ -278,10 +292,11 @@ VelocityPlanningResult OutOfLaneModule::plan(
     total_time_us, calculate_lanelets_us, calculate_trajectory_footprints_us,
     calculate_overlapping_ranges_us, filter_predicted_objects_ms, calculate_decisions_us,
     calc_slowdown_points_us, insert_slowdown_points_us);
-  debug_publisher->publish(out_of_lane::debug::create_debug_marker_array(debug_data_));
+  debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(debug_data_));
   virtual_wall_marker_creator.add_virtual_walls(
     out_of_lane::debug::create_virtual_walls(debug_data_, params_));
-  virtual_wall_publisher->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
+  virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
+  velocity_factor_publisher_->publish(velocity_factor_interface_.get_array(clock_->now()));
   return result;
 }
 
