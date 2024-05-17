@@ -310,9 +310,6 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   image_geometry::PinholeCameraModel pinhole_camera_model;
   pinhole_camera_model.fromCameraInfo(camera_info);
 
-  Eigen::Matrix3f camera_projection;  // use only x,y,z
-  camera_projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2),
-    camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6);
   Eigen::Vector3f point_lidar, point_camera;
   /** dc : don't care
 
