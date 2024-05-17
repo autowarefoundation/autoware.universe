@@ -22,6 +22,7 @@
 #include "custom_icon_label.hpp"
 #include "custom_label.hpp"
 #include "custom_segmented_button.hpp"
+#include "custom_segmented_button_item.hpp"
 #include "custom_slider.hpp"
 #include "custom_toggle_switch.hpp"
 
@@ -129,10 +130,10 @@ protected:
 
   // Operation Mode
   QLabel * operation_mode_label_ptr_{nullptr};
-  QPushButton * stop_button_ptr_{nullptr};
-  QPushButton * auto_button_ptr_{nullptr};
-  QPushButton * local_button_ptr_{nullptr};
-  QPushButton * remote_button_ptr_{nullptr};
+  CustomSegmentedButtonItem * stop_button_ptr_{nullptr};
+  CustomSegmentedButtonItem * auto_button_ptr_{nullptr};
+  CustomSegmentedButtonItem * local_button_ptr_{nullptr};
+  CustomSegmentedButtonItem * remote_button_ptr_{nullptr};
 
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_change_to_autonomous_;
@@ -249,13 +250,23 @@ protected:
   static void activateButton(QAbstractButton * button)
   {
     button->setChecked(false);
-    button->setDisabled(false);
+    button->setEnabled(true);
   }
 
   static void deactivateButton(QAbstractButton * button)
   {
     button->setChecked(true);
-    button->setDisabled(true);
+    button->setEnabled(false);
+  }
+
+  static void updateSegmentedButtonItem(
+    CustomSegmentedButtonItem * item, bool is_active, bool is_disabled, bool is_checked,
+    bool is_checkable)
+  {
+    item->setActivated(is_active);
+    item->setDisabledButton(is_disabled);
+    item->setChecked(is_checked);
+    item->setCheckableButton(is_checkable);
   }
 };
 
