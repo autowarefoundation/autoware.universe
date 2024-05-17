@@ -7,6 +7,12 @@ CustomElevatedButton::CustomElevatedButton(
   setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
   setCursor(Qt::PointingHandCursor);
 
+  // set font weight to bold and size to 12
+  QFont font = this->font();
+  font.setWeight(QFont::Bold);
+  font.setFamily("Roboto");
+  setFont(font);
+
   // Set up drop shadow effect
   QGraphicsDropShadowEffect * shadowEffect = new QGraphicsDropShadowEffect(this);
   shadowEffect->setBlurRadius(15);
@@ -20,8 +26,8 @@ QSize CustomElevatedButton::sizeHint() const
   QFontMetrics fm(font());
   int textWidth = fm.horizontalAdvance(text());
   int textHeight = fm.height();
-  int width = textWidth + 40;    // Adding padding
-  int height = textHeight + 20;  // Adding padding
+  int width = textWidth + 45;    // Adding padding
+  int height = textHeight + 25;  // Adding padding
   return QSize(width, height);
 }
 
