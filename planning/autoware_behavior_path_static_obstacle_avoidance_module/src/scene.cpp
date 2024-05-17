@@ -917,10 +917,20 @@ BehaviorModuleOutput StaticObstacleAvoidanceModule::plan()
     ignore_signal_ = is_ignore ? std::make_optional(uuid) : std::nullopt;
   };
 
+  const auto is_large_deviation = [this](const auto & path) {
+    constexpr double THRESHOLD = 1.0;
+    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(path.points);
+    const auto lateral_deviation =
+      motion_utils::calcLateralOffset(path.points, getEgoPosition(), current_seg_idx);
+    return std::abs(lateral_deviation) > THRESHOLD;
+  };
+
   // turn signal info
   if (path_shifter_.getShiftLines().empty()) {
     output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   } else if (is_ignore_signal(path_shifter_.getShiftLines().front().id)) {
+    output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  } else if (is_large_deviation(spline_shift_path.path)) {
     output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   } else {
     const auto original_signal = getPreviousModuleOutput().turn_signal_info;
