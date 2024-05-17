@@ -98,7 +98,7 @@ TEST(ParseFunction, CompleteFromFilename)
   const auto parser_test_route =
     planning_test_utils_dir + "/test_data/lanelet_route_parser_test.yaml";
 
-  const auto lanelet_route = parse_route_file(parser_test_route);
+  const auto lanelet_route = parse_lanelet_route_file(parser_test_route);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.x, 1.0);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.y, 2.0);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.z, 3.0);

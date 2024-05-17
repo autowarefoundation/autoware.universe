@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_TEST_UTILS__ROUTE_PARSER_HPP_
-#define PLANNING_TEST_UTILS__ROUTE_PARSER_HPP_
+#ifndef PLANNING_TEST_UTILS__MOCK_DATA_PARSER_HPP_
+#define PLANNING_TEST_UTILS__MOCK_DATA_PARSER_HPP_
 
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
@@ -40,7 +40,7 @@ std::vector<LaneletPrimitive> parse_lanelet_primitives(const YAML::Node & node);
 
 std::vector<LaneletSegment> parse_segments(const YAML::Node & node);
 
-LaneletRoute parse_route_file(const std::string & filename);
+LaneletRoute parse_lanelet_route_file(const std::string & filename);
 }  // namespace test_utils
 
-#endif  // PLANNING_TEST_UTILS__ROUTE_PARSER_HPP_
+#endif  // PLANNING_TEST_UTILS__MOCK_DATA_PARSER_HPP_

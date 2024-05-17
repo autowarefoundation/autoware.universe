@@ -75,7 +75,7 @@ std::vector<LaneletSegment> parse_segments(const YAML::Node & node)
   return segments;
 }
 
-LaneletRoute parse_route_file(const std::string & filename)
+LaneletRoute parse_lanelet_route_file(const std::string & filename)
 {
   LaneletRoute lanelet_route;
   try {
