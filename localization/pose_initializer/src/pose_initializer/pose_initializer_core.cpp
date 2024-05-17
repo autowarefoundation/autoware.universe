@@ -172,7 +172,7 @@ void PoseInitializer::on_initialize(
     } else if (req->method == Initialize::Service::Request::DIRECT) {
       if (req->pose_with_covariance.empty()) {
         std::stringstream message;
-        message << "No input pose_with_covariance. If you wanna use DIRECT method, please input "
+        message << "No input pose_with_covariance. If you want to use DIRECT method, please input "
                    "pose_with_covariance.";
         RCLCPP_ERROR(get_logger(), message.str().c_str());
         throw ServiceException(
