@@ -122,7 +122,8 @@ void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Tim
 
   // Update time
   latest_message_time_ = now;
-  if (std::abs((latest_measurement_time_ - objects_time).seconds()) > 3.0) {
+  constexpr double delay_threshold = 3.0;  // [s]
+  if (std::abs((latest_measurement_time_ - objects_time).seconds()) > delay_threshold) {
     // Reset the latest measurement time if the time difference is too large
     latest_measurement_time_ = objects_time;
     RCLCPP_WARN(
