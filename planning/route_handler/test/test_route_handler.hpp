@@ -17,6 +17,8 @@
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "gtest/gtest.h"
+#include "planning_test_utils/mock_data_parser.hpp"
+#include "planning_test_utils/planning_test_utils.hpp"
 
 #include <lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
@@ -40,7 +42,17 @@ using autoware_auto_mapping_msgs::msg::HADMapBin;
 class TestRouteHandler : public ::testing::Test
 {
 public:
-  TestRouteHandler() : route_handler_(std::make_shared<RouteHandler>(makeMapBinMsg())) {}
+  TestRouteHandler()
+  {
+    const auto planning_test_utils_dir =
+      ament_index_cpp::get_package_share_directory("planning_test_utils");
+    const auto lanelet2_path = planning_test_utils_dir + "/test_map/2km_test.osm";
+    constexpr double center_line_resolution = 5.0;
+    const auto map_bin_msg = test_utils::make_map_bin_msg(lanelet2_path, center_line_resolution);
+    route_handler_ = std::make_shared<RouteHandler>(map_bin_msg);
+    set_lane_change_test_route();
+  }
+
   TestRouteHandler(const TestRouteHandler &) = delete;
   TestRouteHandler(TestRouteHandler &&) = delete;
   TestRouteHandler & operator=(const TestRouteHandler &) = delete;
@@ -100,6 +112,13 @@ public:
     lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
 
     return map_bin_msg;
+  }
+
+  void set_lane_change_test_route()
+  {
+    const auto route_handler_dir = ament_index_cpp::get_package_share_directory("route_handler");
+    const auto rh_test_route = route_handler_dir + "/test_route/lane_change_test_route.yaml";
+    route_handler_->setRoute(test_utils::parse_lanelet_route_file(rh_test_route));
   }
 
   std::shared_ptr<RouteHandler> route_handler_;

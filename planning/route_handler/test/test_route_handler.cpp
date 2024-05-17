@@ -14,8 +14,6 @@
 
 #include "test_route_handler.hpp"
 
-#include "planning_test_utils/mock_data_parser.hpp"
-
 #include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>
@@ -24,23 +22,12 @@ namespace route_handler::test
 {
 TEST_F(TestRouteHandler, isRouteHandlerReadyTest)
 {
-  const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("route_handler");
-  const auto rh_test_route = planning_test_utils_dir + "/test_route/rh_test.route";
-  ASSERT_FALSE(route_handler_->isHandlerReady());
-  route_handler_->setRoute(test_utils::parse_lanelet_route_file(rh_test_route));
   ASSERT_TRUE(route_handler_->isHandlerReady());
 }
 
 TEST_F(TestRouteHandler, checkIfIDReturned)
 {
-  const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("route_handler");
-  const auto rh_test_route = planning_test_utils_dir + "/test_route/rh_test.route";
-
-  route_handler_->setRoute(test_utils::parse_lanelet_route_file(rh_test_route));
   const auto lanelet = route_handler_->getLaneletsFromId(4870);
-
   const auto is_in_goal_route_section = route_handler_->isInGoalRouteSection(lanelet);
 
   ASSERT_TRUE(is_in_goal_route_section);
