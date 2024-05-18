@@ -1,7 +1,8 @@
 nodes:
   - id: CGI_610_driver_dora
     operator:
-      python: ./CGI_610_driver_dora.py
+ #     python: ./CGI_610_driver_dora.py
+      python: ./CGI_610_driver_dora_with_file.py
       inputs:
         tick: dora/timer/millis/50
       outputs:

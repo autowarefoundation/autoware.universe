@@ -46,13 +46,13 @@ nodes:
       outputs:
             - DoraGnssPose
 
-  - id: gnss_rviz2
-    operator:
-      python: src/gps_to_ros2.py
-      inputs:
-              # DoraSentence: gnss_sub/DoraSentence
-              DoraNavSatFix: gnss_poser/DoraNavSatFix
-              # DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
-              # DoraTwistStamped: gnss_sub/DoraTwistStamped
+  # - id: gnss_rviz2
+  #   operator:
+  #     python: src/gps_to_ros2.py
+  #     inputs:
+  #             # DoraSentence: gnss_sub/DoraSentence
+  #             DoraNavSatFix: gnss_poser/DoraNavSatFix
+  #             # DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
+  #             # DoraTwistStamped: gnss_sub/DoraTwistStamped
 
 

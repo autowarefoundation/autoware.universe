@@ -8,7 +8,9 @@ from transforms3d._gohlketransforms import quaternion_from_euler
 import math
 import pickle
 import time
-serial_port = "/dev/ttyUSB1"
+import numpy as np
+
+serial_port = "/dev/ttyUSB0"
 serial_baud = 115200
 
 
@@ -115,9 +117,9 @@ class Operator:
                         self.driver.current_fix.position_covariance_type = (
                             self.driver.getParameter_DoraNavSatFix.COVARIANCE_TYPE_APPROXIMATED()
                         )
-
+                       
                         # self.driver.current_fix.status.status  
-                        if (Status>>4 )> 3:
+                        if (Status & 0x0f)> 3:
                             self.driver.valid_fix = True
                         else:
                             self.driver.valid_fix = False
@@ -152,8 +154,12 @@ class Operator:
                             parsed_nmea_sentence,
                             dora_input["metadata"],
                         )
-          
-                        q = quaternion_from_euler(math.radians(data["Roll"]), math.radians(data["Pitch"]), math.radians(data["heading"]))
+
+                        print("roll-pitch-yaw:  ",data["Roll"],"  ",data["Pitch"],"  ",data["Heading"])
+                        q = quaternion_from_euler(math.radians(np.float32(data["Roll"])), math.radians(np.float32(data["Pitch"])), math.radians(np.float32(data["Heading"])))
+                        
+                        self.driver.current_heading.header.stamp = current_time
+                        self.driver.current_heading.header.frame_id = frame_id
                         self.driver.current_heading.quaternion.x = q[1]
                         self.driver.current_heading.quaternion.y = q[2]
                         self.driver.current_heading.quaternion.z = q[3]
