@@ -30,6 +30,16 @@ PathGenerator::PathGenerator(
   sampling_time_interval_(sampling_time_interval),
   min_crosswalk_user_velocity_(min_crosswalk_user_velocity)
 {
+  const size_t path_size_ = static_cast<size_t>(time_horizon_ / sampling_time_interval_ + 1);
+
+  const size_t max_predicted_path_size = 100;
+  if (path_size_ > max_predicted_path_size) {
+    const std::string error_msg =
+      "The predicted path size is too large: " + std::to_string(path_size_) + " > " +
+      std::to_string(max_predicted_path_size) +
+      ". Please check the definition of autoware_auto_msgs/msg/PredictedPath.";
+    throw std::invalid_argument(error_msg);
+  }
 }
 
 PredictedPath PathGenerator::generatePathForNonVehicleObject(const TrackedObject & object)
@@ -167,7 +177,7 @@ PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) 
 
   PredictedPath path;
   path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
-  path.path.reserve(static_cast<size_t>((duration) / sampling_time_interval_));
+  path.path.reserve(path_size_);
   for (double dt = 0.0; dt < duration; dt += sampling_time_interval_) {
     const auto future_obj_pose = tier4_autoware_utils::calcOffsetPose(
       object_pose, object_twist.linear.x * dt, object_twist.linear.y * dt, 0.0);
@@ -221,7 +231,7 @@ FrenetPath PathGenerator::generateFrenetPath(
     calcLatCoefficients(current_point, target_point, lateral_duration);
   const Eigen::Vector2d lon_coeff = calcLonCoefficients(current_point, target_point, duration);
 
-  path.reserve(static_cast<size_t>(duration / sampling_time_interval_));
+  path.reserve(path_size_);
   for (double t = 0.0; t <= duration; t += sampling_time_interval_) {
     const double current_acc =
       0.0;  // Currently we assume the object is traveling at a constant speed

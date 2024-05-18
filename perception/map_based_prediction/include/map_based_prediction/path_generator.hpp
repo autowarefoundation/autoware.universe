@@ -118,6 +118,8 @@ private:
   bool use_vehicle_acceleration_;
   double acceleration_exponential_half_life_;
 
+  size_t path_size_;
+
   // Member functions
   PredictedPath generateStraightPath(const TrackedObject & object) const;
 
