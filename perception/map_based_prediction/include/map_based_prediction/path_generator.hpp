@@ -125,7 +125,8 @@ private:
     const TrackedObject & object, const PosePath & ref_path, const double speed_limit = 0.0) const;
 
   FrenetPath generateFrenetPath(
-    const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length) const;
+    const FrenetPoint & current_point, const FrenetPoint & target_point,
+    const double max_length) const;
   Eigen::Vector3d calcLatCoefficients(
     const FrenetPoint & current_point, const FrenetPoint & target_point, const double T) const;
   Eigen::Vector2d calcLonCoefficients(
