@@ -210,7 +210,8 @@ PredictedPath PathGenerator::generatePolynomialPath(
 }
 
 FrenetPath PathGenerator::generateFrenetPath(
-  const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length) const
+  const FrenetPoint & current_point, const FrenetPoint & target_point,
+  const double max_length) const
 {
   FrenetPath path;
   const double duration = time_horizon_;
@@ -356,7 +357,8 @@ PosePath PathGenerator::interpolateReferencePath(
 }
 
 PredictedPath PathGenerator::convertToPredictedPath(
-  const TrackedObject & object, const FrenetPath & frenet_predicted_path, const PosePath & ref_path) const
+  const TrackedObject & object, const FrenetPath & frenet_predicted_path,
+  const PosePath & ref_path) const
 {
   PredictedPath predicted_path;
   predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);

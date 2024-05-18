@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "map_based_prediction/path_generator.hpp"
+
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
@@ -32,11 +33,12 @@ TrackedObject generate_static_object(const int label)
   classification.label = label;
 
   TrackedObjectKinematics kinematics;
-  kinematics.pose_with_covariance = geometry_msgs::msg::PoseWithCovariance(); // At origin
-  kinematics.twist_with_covariance = geometry_msgs::msg::TwistWithCovariance(); // Not moving
-  kinematics.acceleration_with_covariance = geometry_msgs::msg::AccelWithCovariance(); // Not accelerating
+  kinematics.pose_with_covariance = geometry_msgs::msg::PoseWithCovariance();    // At origin
+  kinematics.twist_with_covariance = geometry_msgs::msg::TwistWithCovariance();  // Not moving
+  kinematics.acceleration_with_covariance =
+    geometry_msgs::msg::AccelWithCovariance();  // Not accelerating
   kinematics.orientation_availability = TrackedObjectKinematics::UNAVAILABLE;
-  
+
   TrackedObject tracked_object;
   tracked_object.object_id = unique_identifier_msgs::msg::UUID();
   tracked_object.existence_probability = 1.0;
@@ -61,7 +63,8 @@ TEST(PathGenerator, test_generatePathForNonVehicleObject)
   TrackedObject tracked_object = generate_static_object(ObjectClassification::PEDESTRIAN);
 
   // Generate predicted path
-  const PredictedPath predicted_path = path_generator.generatePathForNonVehicleObject(tracked_object);
+  const PredictedPath predicted_path =
+    path_generator.generatePathForNonVehicleObject(tracked_object);
 
   // Check
   EXPECT_FALSE(predicted_path.path.empty());
@@ -85,7 +88,8 @@ TEST(PathGenerator, test_generatePathForLowSpeedVehicle)
   TrackedObject tracked_object = generate_static_object(ObjectClassification::CAR);
 
   // Generate predicted path
-  const PredictedPath predicted_path = path_generator.generatePathForLowSpeedVehicle(tracked_object);
+  const PredictedPath predicted_path =
+    path_generator.generatePathForLowSpeedVehicle(tracked_object);
 
   // Check
   EXPECT_FALSE(predicted_path.path.empty());
@@ -140,7 +144,8 @@ TEST(PathGenerator, test_generatePathForOnLaneVehicle)
   ref_paths.push_back(pose);
 
   // Generate predicted path
-  const PredictedPath predicted_path = path_generator.generatePathForOnLaneVehicle(tracked_object, ref_paths);
+  const PredictedPath predicted_path =
+    path_generator.generatePathForOnLaneVehicle(tracked_object, ref_paths);
 
   // Check
   EXPECT_FALSE(predicted_path.path.empty());
@@ -173,7 +178,8 @@ TEST(PathGenerator, test_generatePathForCrosswalkUser)
   reachable_crosswalk.back_left_point << -1.0, 1.0;
 
   // Generate predicted path
-  const PredictedPath predicted_path = path_generator.generatePathForCrosswalkUser(tracked_object, reachable_crosswalk);
+  const PredictedPath predicted_path =
+    path_generator.generatePathForCrosswalkUser(tracked_object, reachable_crosswalk);
 
   // Check
   EXPECT_FALSE(predicted_path.path.empty());
@@ -201,7 +207,8 @@ TEST(PathGenerator, test_generatePathToTargetPoint)
   target_point << 0.0, 0.0;
 
   // Generate predicted path
-  const PredictedPath predicted_path = path_generator.generatePathToTargetPoint(tracked_object, target_point);
+  const PredictedPath predicted_path =
+    path_generator.generatePathToTargetPoint(tracked_object, target_point);
 
   // Check
   EXPECT_FALSE(predicted_path.path.empty());
