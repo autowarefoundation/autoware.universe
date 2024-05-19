@@ -27,6 +27,7 @@
   <depend>motion_utils</depend>
   <depend>mpc_lateral_controller</depend>
   <depend>pid_longitudinal_controller</depend>
+  <depend>eadrc_longitudinal_controller</depend>
   <depend>pure_pursuit</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

@@ -16,6 +16,7 @@
 
 #include "mpc_lateral_controller/mpc_lateral_controller.hpp"
 #include "pid_longitudinal_controller/pid_longitudinal_controller.hpp"
+#include "eadrc_longitudinal_controller/eadrc_longitudinal_controller.hpp"
 #include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
 
@@ -56,6 +57,10 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
     case LongitudinalControllerMode::PID: {
       longitudinal_controller_ =
         std::make_shared<pid_longitudinal_controller::PidLongitudinalController>(*this);
+      break;
+    case LongitudinalControllerMode::EADRC:
+      longitudinal_controller_ =
+        std::make_shared<eadrc_longitudinal_controller::EadrcLongitudinalController>(*this);
       break;
     }
     default:
@@ -106,6 +111,7 @@ Controller::LongitudinalControllerMode Controller::getLongitudinalControllerMode
   const std::string & controller_mode) const
 {
   if (controller_mode == "pid") return LongitudinalControllerMode::PID;
+  else if (controller_mode == "eadrc") return LongitudinalControllerMode::EADRC;
 
   return LongitudinalControllerMode::INVALID;
 }
