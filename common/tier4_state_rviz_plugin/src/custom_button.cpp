@@ -4,7 +4,7 @@ CustomElevatedButton::CustomElevatedButton(
   const QString & text, const QColor & bgColor, const QColor & textColor, QWidget * parent)
 : QPushButton(text, parent), backgroundColor(bgColor), textColor(textColor)
 {
-  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   setCursor(Qt::PointingHandCursor);
 
   // set font weight to bold and size to 12
