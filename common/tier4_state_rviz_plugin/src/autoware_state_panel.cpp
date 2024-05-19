@@ -192,10 +192,16 @@ QVBoxLayout * AutowareStatePanel::makeOperationModeGroup()
 
   CustomContainer * group1 = new CustomContainer(this);
 
+  auto * horizontal_layout = new QHBoxLayout;
+  horizontal_layout->setSpacing(10);
+  horizontal_layout->setContentsMargins(0, 0, 0, 0);
+
+  horizontal_layout->addWidget(control_mode_switch_ptr_);
+  horizontal_layout->addWidget(control_mode_label_ptr_);
+
   // add switch and label to the container
   group1->setContentsMargins(0, 0, 0, 10);
-  group1->getLayout()->addWidget(control_mode_switch_ptr_, 0, 0, 1, 1, Qt::AlignLeft);
-  group1->getLayout()->addWidget(control_mode_label_ptr_, 0, 1, 1, 4, Qt::AlignLeft);
+  group1->getLayout()->addLayout(horizontal_layout, 0, 0, 1, 1, Qt::AlignLeft);
 
   // Create the CustomSegmentedButton
   segmented_button = new CustomSegmentedButton(this);
@@ -230,8 +236,14 @@ QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
   QLabel * routing_label = new QLabel("Routing");
   routing_label->setStyleSheet("color: #d0e6f2; font-weight: bold;");
 
-  custom_container->getLayout()->addWidget(routing_icon, 0, 0, 1, 1, Qt::AlignLeft);
-  custom_container->getLayout()->addWidget(routing_label, 0, 1, 1, 1, Qt::AlignLeft);
+  auto * horizontal_layout = new QHBoxLayout;
+  horizontal_layout->setSpacing(10);
+  horizontal_layout->setContentsMargins(0, 0, 0, 0);
+
+  horizontal_layout->addWidget(routing_icon);
+  horizontal_layout->addWidget(routing_label);
+
+  custom_container->getLayout()->addLayout(horizontal_layout, 0, 0, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(clear_route_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
 
   custom_container->setContentsMargins(10, 0, 0, 0);
@@ -254,8 +266,14 @@ QVBoxLayout * AutowareStatePanel::makeLocalizationGroup()
   QLabel * localization_label = new QLabel(" Localization");
   localization_label->setStyleSheet("color: #d0e6f2; font-weight: bold;");
 
-  custom_container->getLayout()->addWidget(localization_icon, 0, 0, 1, 1, Qt::AlignLeft);
-  custom_container->getLayout()->addWidget(localization_label, 0, 1, 1, 1, Qt::AlignLeft);
+  auto * horizontal_layout = new QHBoxLayout;
+  horizontal_layout->setSpacing(10);
+  horizontal_layout->setContentsMargins(0, 0, 0, 0);
+
+  horizontal_layout->addWidget(localization_icon);
+  horizontal_layout->addWidget(localization_label);
+
+  custom_container->getLayout()->addLayout(horizontal_layout, 0, 0, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(init_by_gnss_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
 
   custom_container->setContentsMargins(10, 0, 0, 0);
@@ -278,8 +296,15 @@ QVBoxLayout * AutowareStatePanel::makeMotionGroup()
   QLabel * motion_label = new QLabel("Motion");
   motion_label->setStyleSheet("color: #d0e6f2; font-weight: bold;");
 
-  custom_container->getLayout()->addWidget(motion_icon, 0, 0, 1, 1, Qt::AlignLeft);
-  custom_container->getLayout()->addWidget(motion_label, 0, 1, 1, 1, Qt::AlignLeft);
+  auto * horizontal_layout = new QHBoxLayout;
+  horizontal_layout->setSpacing(10);
+  horizontal_layout->setContentsMargins(0, 0, 0, 0);
+  horizontal_layout->setAlignment(Qt::AlignLeft);
+
+  horizontal_layout->addWidget(motion_icon);
+  horizontal_layout->addWidget(motion_label);
+
+  custom_container->getLayout()->addLayout(horizontal_layout, 0, 0, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(accept_start_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
 
   custom_container->setContentsMargins(10, 0, 0, 0);
@@ -306,11 +331,23 @@ QVBoxLayout * AutowareStatePanel::makeFailSafeGroup()
   mrm_state_label_ptr_->setStyleSheet("color: #d0e6f2; font-weight: bold;");
   mrm_behavior_label_ptr_->setStyleSheet("color: #d0e6f2; font-weight: bold;");
 
-  custom_container1->getLayout()->addWidget(mrm_state_icon, 0, 0, 1, 1, Qt::AlignLeft);
-  custom_container1->getLayout()->addWidget(mrm_state_label_ptr_, 0, 1, 1, 5, Qt::AlignLeft);
+  auto * horizontal_layout = new QHBoxLayout;
+  horizontal_layout->setSpacing(10);
+  horizontal_layout->setContentsMargins(0, 0, 0, 0);
 
-  custom_container2->getLayout()->addWidget(mrm_behavior_icon, 0, 0, 1, 1, Qt::AlignLeft);
-  custom_container2->getLayout()->addWidget(mrm_behavior_label_ptr_, 0, 1, 1, 5, Qt::AlignLeft);
+  horizontal_layout->addWidget(mrm_state_icon);
+  horizontal_layout->addWidget(mrm_state_label_ptr_);
+
+  custom_container1->getLayout()->addLayout(horizontal_layout, 0, 0, 1, 1, Qt::AlignLeft);
+
+  auto * horizontal_layout2 = new QHBoxLayout;
+  horizontal_layout2->setSpacing(10);
+  horizontal_layout2->setContentsMargins(0, 0, 0, 0);
+
+  horizontal_layout2->addWidget(mrm_behavior_icon);
+  horizontal_layout2->addWidget(mrm_behavior_label_ptr_);
+
+  custom_container2->getLayout()->addLayout(horizontal_layout2, 0, 0, 1, 1, Qt::AlignLeft);
 
   v_layout->addWidget(custom_container1);
   // v_layout->addSpacing(5);
@@ -400,6 +437,7 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
   QLabel * velocity_limit_label = new QLabel("km/h");
 
   velocity_limit_layout->addWidget(pub_velocity_limit_slider_);
+  velocity_limit_layout->addSpacing(5);
   velocity_limit_layout->addWidget(velocity_limit_value_label_);
   velocity_limit_layout->addWidget(velocity_limit_label);
 
