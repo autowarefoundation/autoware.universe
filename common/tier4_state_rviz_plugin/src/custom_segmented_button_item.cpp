@@ -1,7 +1,5 @@
 #include "include/custom_segmented_button_item.hpp"
 
-#include <qnamespace.h>
-
 CustomSegmentedButtonItem::CustomSegmentedButtonItem(const QString & text, QWidget * parent)
 : QPushButton(text, parent),
   bgColor("#0F1417"),
@@ -106,7 +104,7 @@ void CustomSegmentedButtonItem::paintEvent(QPaintEvent *)
 
   // Draw button background
 
-  QRect buttonRect = rect();
+  QRect buttonRect = rect().adjusted(0, 1, 0, -1);
 
   if (isFirstButton) {
     buttonRect.setLeft(buttonRect.left() + 1);
@@ -141,7 +139,10 @@ void CustomSegmentedButtonItem::paintEvent(QPaintEvent *)
   painter.fillPath(path, buttonColor);
 
   // Draw button border
-  painter.setPen(QPen(QColor("#8a9297"), 2));  // Color for the borders
+  QPen pen(QColor("#8a9297"), 1);
+  pen.setJoinStyle(Qt::RoundJoin);
+  pen.setCapStyle(Qt::RoundCap);
+  painter.setPen(pen);
   painter.drawPath(path.simplified());
 
   // Draw button text
