@@ -22,6 +22,10 @@ void CustomSlider::paintEvent(QPaintEvent *)
   QRect handleRect =
     style()->subControlRect(QStyle::CC_Slider, &opt, QStyle::SC_SliderHandle, this);
 
+  int value = this->value();
+  int minValue = this->minimum();
+  int maxValue = this->maximum();
+
   int trackThickness = 14;
   int gap = 8;
 
@@ -36,44 +40,38 @@ void CustomSlider::paintEvent(QPaintEvent *)
   QColor inactiveTrackColor("#004d64");
   QColor activeTrackColor("#8bd0f0");
 
-  // Manually create path for before track with asymmetric roundedness
-  QPainterPath beforePath;
-  beforePath.moveTo(beforeRect.left(), centerY + trackThickness / 2);  // Start from bottom-left
+  if (value > minValue) {
+    QPainterPath beforePath;
+    beforePath.moveTo(beforeRect.left(), centerY + trackThickness / 2);  // Start from bottom-left
+    beforePath.quadTo(
+      beforeRect.left(), centerY - trackThickness / 2, beforeRect.left() + trackThickness * 0.5,
+      centerY - trackThickness / 2);
+    beforePath.lineTo(beforeRect.right() - trackThickness * 0.1, centerY - trackThickness / 2);
+    beforePath.quadTo(
+      beforeRect.right(), centerY - trackThickness / 2, beforeRect.right(), centerY);
+    beforePath.quadTo(
+      beforeRect.right(), centerY + trackThickness / 2, beforeRect.right() - trackThickness * 0.1,
+      centerY + trackThickness / 2);
+    beforePath.lineTo(beforeRect.left() + trackThickness * 0.5, centerY + trackThickness / 2);
+    beforePath.quadTo(beforeRect.left(), centerY + trackThickness / 2, beforeRect.left(), centerY);
+    painter.fillPath(beforePath, activeTrackColor);
+  }
 
-  // Left side with 50% roundedness
-  beforePath.quadTo(
-    beforeRect.left(), centerY - trackThickness / 2, beforeRect.left() + trackThickness * 0.5,
-    centerY - trackThickness / 2);
-
-  // Straight line to right side start
-  beforePath.lineTo(beforeRect.right() - trackThickness * 0.1, centerY - trackThickness / 2);
-
-  // Right side with 20% roundedness
-  beforePath.quadTo(beforeRect.right(), centerY - trackThickness / 2, beforeRect.right(), centerY);
-  beforePath.quadTo(
-    beforeRect.right(), centerY + trackThickness / 2, beforeRect.right() - trackThickness * 0.1,
-    centerY + trackThickness / 2);
-
-  // Close the path to the left side
-  beforePath.lineTo(beforeRect.left() + trackThickness * 0.5, centerY + trackThickness / 2);
-  beforePath.quadTo(beforeRect.left(), centerY + trackThickness / 2, beforeRect.left(), centerY);
-
-  painter.fillPath(beforePath, activeTrackColor);
-
-  // After track path (asymmetric roundedness)
-  QPainterPath afterPath;
-  afterPath.moveTo(afterRect.left(), centerY + trackThickness / 2);
-  afterPath.quadTo(
-    afterRect.left(), centerY - trackThickness / 2, afterRect.left() + trackThickness * 0.1,
-    centerY - trackThickness / 2);
-  afterPath.lineTo(afterRect.right() - trackThickness * 0.5, centerY - trackThickness / 2);
-  afterPath.quadTo(afterRect.right(), centerY - trackThickness / 2, afterRect.right(), centerY);
-  afterPath.quadTo(
-    afterRect.right(), centerY + trackThickness / 2, afterRect.right() - trackThickness * 0.5,
-    centerY + trackThickness / 2);
-  afterPath.lineTo(afterRect.left() + trackThickness * 0.1, centerY + trackThickness / 2);
-  afterPath.quadTo(afterRect.left(), centerY + trackThickness / 2, afterRect.left(), centerY);
-  painter.fillPath(afterPath, inactiveTrackColor);
+  if (value < maxValue) {
+    QPainterPath afterPath;
+    afterPath.moveTo(afterRect.left(), centerY + trackThickness / 2);
+    afterPath.quadTo(
+      afterRect.left(), centerY - trackThickness / 2, afterRect.left() + trackThickness * 0.1,
+      centerY - trackThickness / 2);
+    afterPath.lineTo(afterRect.right() - trackThickness * 0.5, centerY - trackThickness / 2);
+    afterPath.quadTo(afterRect.right(), centerY - trackThickness / 2, afterRect.right(), centerY);
+    afterPath.quadTo(
+      afterRect.right(), centerY + trackThickness / 2, afterRect.right() - trackThickness * 0.5,
+      centerY + trackThickness / 2);
+    afterPath.lineTo(afterRect.left() + trackThickness * 0.1, centerY + trackThickness / 2);
+    afterPath.quadTo(afterRect.left(), centerY + trackThickness / 2, afterRect.left(), centerY);
+    painter.fillPath(afterPath, inactiveTrackColor);
+  }
 
   painter.setBrush(QColor("#8bd0f0"));
   int handleLineHeight = 30;
