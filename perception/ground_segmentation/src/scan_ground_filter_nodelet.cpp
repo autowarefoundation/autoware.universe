@@ -349,13 +349,12 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
     // check the first point in ray
     auto * p = &in_radial_ordered_clouds[i][0];
-    auto * prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
 
     bool initialized_first_gnd_grid = false;
     bool prev_list_init = false;
     pcl::PointXYZ p_orig_point, prev_p_orig_point;
     for (auto & point : in_radial_ordered_clouds[i]) {
-      prev_p = p;
+      auto * prev_p = p; // for checking the distance to prev point
       prev_p_orig_point = p_orig_point;
       p = &point;
       get_point_from_global_offset(in_cloud, p_orig_point, in_cloud->point_step * p->orig_index);
