@@ -21,6 +21,8 @@ sample-map-rosbag
 └── pointcloud_map_metadata.yaml
 ```
 
+![node_diagram](docs/map_projector_type.svg)
+
 ### Using local coordinate
 
 ```yaml
