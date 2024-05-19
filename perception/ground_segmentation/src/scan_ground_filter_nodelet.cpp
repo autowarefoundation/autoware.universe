@@ -469,7 +469,6 @@ void ScanGroundFilterComponent::classifyPointCloud(
     float prev_gnd_slope = 0.0f;
     float points_distance = 0.0f;
     PointsCentroid ground_cluster, non_ground_cluster;
-    float local_slope = 0.0f;
     PointLabel prev_point_label = PointLabel::INIT;
     pcl::PointXYZ prev_gnd_point(0, 0, 0), p_orig_point, prev_p_orig_point;
     // loop through each point in the radial div
