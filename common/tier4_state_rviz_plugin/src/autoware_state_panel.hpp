@@ -36,6 +36,8 @@
 #include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
+#include <std_msgs/msg/bool.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
@@ -69,6 +71,8 @@ public Q_SLOTS:  // NOLINT for Qt
   void onClickLocal();
   void onClickRemote();
   void onClickAutowareControl();
+  void onClickEngageAutoPark();
+  void onClickDisengageAutoPark();
   void onClickDirectControl();
   void onClickClearRoute();
   void onClickInitByGnss();
@@ -80,6 +84,7 @@ protected:
   // Layout
   QGroupBox * makeOperationModeGroup();
   QGroupBox * makeControlModeGroup();
+  QGroupBox * makeAutoParkModeGroup();
   QGroupBox * makeRoutingGroup();
   QGroupBox * makeLocalizationGroup();
   QGroupBox * makeMotionGroup();
@@ -106,6 +111,7 @@ protected:
   QPushButton * remote_button_ptr_{nullptr};
 
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr sub_auto_park_status_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_change_to_autonomous_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_change_to_stop_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_change_to_local_;
@@ -117,6 +123,13 @@ protected:
   QPushButton * disable_button_ptr_{nullptr};
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_enable_autoware_control_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_enable_direct_control_;
+
+  //// Auto Parking Mode
+  QLabel * park_mode_label_ptr_{nullptr};
+  QPushButton * p_enable_button_ptr_{nullptr};
+  rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr client_auto_park_;
+  bool auto_park_running_;
+  void onAutoParkStatus(const std_msgs::msg::Bool::ConstSharedPtr msg);
 
   //// Functions
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);

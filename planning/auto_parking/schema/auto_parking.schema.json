@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Auto Parking Node",
+  "type": "object",
+  "definitions": {
+    "auto_parking": {
+      "type": "object",
+      "properties": {
+        "update_rate": {
+          "type": "number",
+          "description": "timer's update rate",
+          "default": "5.0",
+          "minimum": 0.0
+        },
+        "th_arrived_distance_m": {
+          "type": "number",
+          "description": "threshold distance to check if vehicle has arrived at the trajectory's endpoint",
+          "default": "1.0",
+          "minimum": 0.0
+        },
+        "th_parking_space_distance_m": {
+          "type": "number",
+          "description": "threshold radius within which to search parking spaces",
+          "default": "10.0",
+          "minimum": 0.0
+        },
+        "vehicle_shape_margin_m": {
+          "type": "number",
+          "description": "vehcile margin for astar search",
+          "default": "0.2",
+          "minimum": 0.0
+        }
+      },
+      "required": [
+        "update_rate",
+        "th_arrived_distance_m",
+        "th_parking_space_distance_m",
+        "vehicle_shape_margin_m"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/auto_parking"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
