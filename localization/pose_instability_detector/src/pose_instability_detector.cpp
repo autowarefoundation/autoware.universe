@@ -27,14 +27,21 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
 : Node("pose_instability_detector", options),
   timer_period_(this->declare_parameter<double>("timer_period")),
   heading_velocity_maximum_(this->declare_parameter<double>("heading_velocity_maximum")),
-  heading_velocity_scale_factor_tolerance_(this->declare_parameter<double>("heading_velocity_scale_factor_tolerance")),
+  heading_velocity_scale_factor_tolerance_(
+    this->declare_parameter<double>("heading_velocity_scale_factor_tolerance")),
   angular_velocity_maximum_(this->declare_parameter<double>("angular_velocity_maximum")),
-  angular_velocity_scale_factor_tolerance_(this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
-  angular_velocity_bias_tolerance_(this->declare_parameter<double>("angular_velocity_bias_tolerance")),
-  pose_estimator_longitudinal_tolerance_(this->declare_parameter<double>("pose_estimator_longitudinal_tolerance")),
-  pose_estimator_lateral_tolerance_(this->declare_parameter<double>("pose_estimator_lateral_tolerance")),
-  pose_estimator_vertical_tolerance_(this->declare_parameter<double>("pose_estimator_vertical_tolerance")),
-  pose_estimator_angular_tolerance_(this->declare_parameter<double>("pose_estimator_angular_tolerance"))
+  angular_velocity_scale_factor_tolerance_(
+    this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
+  angular_velocity_bias_tolerance_(
+    this->declare_parameter<double>("angular_velocity_bias_tolerance")),
+  pose_estimator_longitudinal_tolerance_(
+    this->declare_parameter<double>("pose_estimator_longitudinal_tolerance")),
+  pose_estimator_lateral_tolerance_(
+    this->declare_parameter<double>("pose_estimator_lateral_tolerance")),
+  pose_estimator_vertical_tolerance_(
+    this->declare_parameter<double>("pose_estimator_vertical_tolerance")),
+  pose_estimator_angular_tolerance_(
+    this->declare_parameter<double>("pose_estimator_angular_tolerance"))
 {
   // Define subscibers, publishers and a timer.
   odometry_sub_ = this->create_subscription<Odometry>(
@@ -167,14 +174,37 @@ void PoseInstabilityDetector::callback_timer()
   prev_odometry_ = latest_odometry_;
 }
 
-void PoseInstabilityDetector::calculate_threshold(double interval_sec){
-  const double longitudinal_difference = heading_velocity_maximum_ * heading_velocity_scale_factor_tolerance_ * 0.01 * interval_sec;
-  const double lateral_difference = heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) * sin(0.5*(angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec);
-  const double vertical_difference = heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) * sin(0.5*(angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec);
+void PoseInstabilityDetector::calculate_threshold(double interval_sec)
+{
+  const double longitudinal_difference =
+    heading_velocity_maximum_ * heading_velocity_scale_factor_tolerance_ * 0.01 * interval_sec;
+  const double lateral_difference =
+    heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) *
+    sin(
+      0.5 *
+      (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
+       angular_velocity_bias_tolerance_) *
+      interval_sec);
+  const double vertical_difference =
+    heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) *
+    sin(
+      0.5 *
+      (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
+       angular_velocity_bias_tolerance_) *
+      interval_sec);
 
-  const double roll_difference = (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec;
-  const double pitch_difference = (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec;
-  const double yaw_difference = (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec;
+  const double roll_difference =
+    (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
+     angular_velocity_bias_tolerance_) *
+    interval_sec;
+  const double pitch_difference =
+    (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
+     angular_velocity_bias_tolerance_) *
+    interval_sec;
+  const double yaw_difference =
+    (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
+     angular_velocity_bias_tolerance_) *
+    interval_sec;
 
   threshold_diff_position_x_ = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
   threshold_diff_position_y_ = lateral_difference + pose_estimator_lateral_tolerance_;
