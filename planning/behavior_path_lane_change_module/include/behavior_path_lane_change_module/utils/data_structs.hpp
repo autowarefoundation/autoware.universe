@@ -20,6 +20,7 @@
 #include <interpolation/linear_interpolation.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/Polygon.h>
 
 #include <utility>
 #include <vector>
@@ -112,7 +113,9 @@ struct LaneChangeParameters
   double max_longitudinal_acc{1.0};
 
   // collision check
-  bool enable_prepare_segment_collision_check{true};
+  bool enable_collision_check_for_prepare_phase_in_general_lanes{false};
+  bool enable_collision_check_for_prepare_phase_in_intersection{true};
+  bool enable_collision_check_for_prepare_phase_in_turns{true};
   double prepare_segment_ignore_object_velocity_thresh{0.1};
   bool check_objects_on_current_lanes{true};
   bool check_objects_on_other_lanes{true};
@@ -193,11 +196,11 @@ struct LaneChangeTargetObjectIndices
   std::vector<size_t> other_lane{};
 };
 
-struct LaneChangeTargetObjects
+struct LaneChangeLanesFilteredObjects
 {
-  std::vector<utils::path_safety_checker::ExtendedPredictedObject> current_lane{};
-  std::vector<utils::path_safety_checker::ExtendedPredictedObject> target_lane{};
-  std::vector<utils::path_safety_checker::ExtendedPredictedObject> other_lane{};
+  utils::path_safety_checker::ExtendedPredictedObjects current_lane{};
+  utils::path_safety_checker::ExtendedPredictedObjects target_lane{};
+  utils::path_safety_checker::ExtendedPredictedObjects other_lane{};
 };
 
 enum class LaneChangeModuleType {
@@ -213,6 +216,13 @@ struct PathSafetyStatus
 {
   bool is_safe{true};
   bool is_object_coming_from_rear{false};
+};
+
+struct LanesPolygon
+{
+  std::optional<lanelet::BasicPolygon2d> current;
+  std::optional<lanelet::BasicPolygon2d> target;
+  std::vector<lanelet::BasicPolygon2d> target_backward;
 };
 }  // namespace behavior_path_planner::data::lane_change
 

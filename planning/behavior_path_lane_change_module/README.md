@@ -319,6 +319,171 @@ The detection area for the target lane can be expanded beyond its original bound
   </table>
 </div>
 
+##### Object filtering
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title NormalLaneChange::filterObjects Method Execution Flow
+
+start
+
+group "Filter Objects by Class" {
+:Iterate through each object in objects list;
+while (has not finished iterating through object list) is (TRUE)
+  if (current object type != param.object_types_to_check?) then (TRUE)
+  #LightPink:Remove current object;
+else (FALSE)
+  :Keep current object;
+endif
+end while
+end group
+
+if (object list is empty?) then (TRUE)
+  :Return empty result;
+  stop
+else (FALSE)
+endif
+
+group "Filter Oncoming Objects" #PowderBlue {
+:Iterate through each object in target lane objects list;
+while (has not finished iterating through object list?) is (TRUE)
+:check object's yaw with reference to ego's yaw.;
+if (yaw difference < 90 degree?) then (TRUE)
+  :Keep current object;
+else (FALSE)
+if (object is stopping?) then (TRUE)
+  :Keep current object;
+else (FALSE)
+  #LightPink:Remove current object;
+endif
+endif
+endwhile
+end group
+
+if (object list is empty?) then (TRUE)
+  :Return empty result;
+  stop
+else (FALSE)
+endif
+
+group "Filter Objects Ahead Terminal" #Beige {
+:Calculate lateral distance from ego to current lanes center;
+
+:Iterate through each object in objects list;
+while (has not finished iterating through object list) is (TRUE)
+  :Get current object's polygon;
+  :Initialize distance to terminal from object to max;
+  while (has not finished iterating through object polygon's vertices) is (TRUE)
+    :Calculate object's lateral distance to end of lane;
+    :Update minimum distance to terminal from object;
+  end while
+  if (Is object's distance to terminal exceeds minimum lane change length?) then (TRUE)
+      #LightPink:Remove current object;
+  else (FALSE)
+  endif
+end while
+end group
+
+if (object list is empty?) then (TRUE)
+  :Return empty result;
+  stop
+else (FALSE)
+endif
+
+group "Filter Objects By Lanelets" #LightGreen {
+
+:Iterate through each object in objects list;
+while (has not finished iterating through object list) is (TRUE)
+  :lateral distance diff = difference between object's lateral distance and ego's lateral distance to the current lanes' centerline.;
+  if (Object in target lane polygon, and lateral distance diff is more than half of ego's width?) then (TRUE)
+    :Add to target_lane_objects;
+    else (FALSE)
+      if (Object overlaps with backward target lanes?) then (TRUE)
+        :Add to target_lane_objects;
+      else (FALSE)
+        if (Object in current lane polygon?) then (TRUE)
+          :Add to current_lane_objects;
+        else (FALSE)
+          :Add to other_lane_objects;
+        endif
+      endif
+  endif
+end while
+
+:Return target lanes object,  current lanes object and other lanes object;
+end group
+
+:Generate path from current lanes;
+
+if (path empty?) then (TRUE)
+  :Return empty result;
+  stop
+else (FALSE)
+endif
+
+group "Filter Target Lanes' objects" #LightCyan {
+
+:Iterate through each object in target lane objects list;
+while (has not finished iterating through object list) is (TRUE)
+  :check object's velocity;
+  if(velocity is within threshold?) then (TRUE)
+  :Keep current object;
+  else (FALSE)
+    :check whether object is ahead of ego;
+    if(object is ahead of ego?) then (TRUE)
+      :keep current object;
+    else (FALSE)
+      #LightPink:remove current object;
+    endif
+   endif
+endwhile
+end group
+
+group "Filter Current Lanes' objects"  #LightYellow {
+
+:Iterate through each object in current lane objects list;
+while (has not finished iterating through object list) is (TRUE)
+  :check object's velocity;
+  if(velocity is within threshold?) then (TRUE)
+  :check whether object is ahead of ego;
+    if(object is ahead of ego?) then (TRUE)
+      :keep current object;
+    else (FALSE)
+      #LightPink:remove current object;
+    endif
+    else (FALSE)
+      #LightPink:remove current object;
+   endif
+endwhile
+end group
+
+group "Filter Other Lanes' objects"  #Lavender {
+
+:Iterate through each object in other lane objects list;
+while (has not finished iterating through object list) is (TRUE)
+  :check object's velocity;
+  if(velocity is within threshold?) then (TRUE)
+  :check whether object is ahead of ego;
+    if(object is ahead of ego?) then (TRUE)
+      :keep current object;
+    else (FALSE)
+      #LightPink:remove current object;
+    endif
+    else (FALSE)
+      #LightPink:remove current object;
+   endif
+endwhile
+end group
+
+:Trasform the objects into extended predicted object and return them as lane_change_target_objects;
+stop
+
+@enduml
+```
+
 ##### Collision check in prepare phase
 
 The ego vehicle may need to secure ample inter-vehicle distance ahead of the target vehicle before attempting a lane change. The flag `enable_collision_check_at_prepare_phase` can be enabled to gain this behavior. The following image illustrates the differences between the `false` and `true` cases.
@@ -551,13 +716,15 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 
 #### Additional parameters
 
-| Name                                       | Unit  | Type    | Description                                                                                                                                                | Default value |
-| :----------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `enable_collision_check_at_prepare_phase`  | [-]   | boolean | Perform collision check starting from prepare phase. If `false`, collision check only evaluated for lane changing phase.                                   | false         |
-| `prepare_phase_ignore_target_speed_thresh` | [m/s] | double  | Ignore collision check in prepare phase of object speed that is lesser that the configured value. `enable_collision_check_at_prepare_phase` must be `true` | 0.1           |
-| `check_objects_on_current_lanes`           | [-]   | boolean | If true, the lane change module check objects on current lanes when performing collision assessment.                                                       | false         |
-| `check_objects_on_other_lanes`             | [-]   | boolean | If true, the lane change module include objects on other lanes. when performing collision assessment                                                       | false         |
-| `use_all_predicted_path`                   | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                     | true          |
+| Name                                                     | Unit  | Type    | Description                                                                                                                                                                                                | Default value |
+| :------------------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `enable_collision_check_for_prepare_phase.general_lanes` | [-]   | boolean | Perform collision check starting from the prepare phase for situations not explicitly covered by other settings (e.g., intersections). If `false`, collision check only evaluated for lane changing phase. | false         |
+| `enable_collision_check_for_prepare_phase.intersection`  | [-]   | boolean | Perform collision check starting from prepare phase when ego is in intersection. If `false`, collision check only evaluated for lane changing phase.                                                       | true          |
+| `enable_collision_check_for_prepare_phase.turns`         | [-]   | boolean | Perform collision check starting from prepare phase when ego is in lanelet with turn direction tags. If `false`, collision check only evaluated for lane changing phase.                                   | true          |
+| `prepare_phase_ignore_target_speed_thresh`               | [m/s] | double  | Ignore collision check in prepare phase of object speed that is lesser that the configured value. `enable_collision_check_at_prepare_phase` must be `true`                                                 | 0.1           |
+| `check_objects_on_current_lanes`                         | [-]   | boolean | If true, the lane change module check objects on current lanes when performing collision assessment.                                                                                                       | false         |
+| `check_objects_on_other_lanes`                           | [-]   | boolean | If true, the lane change module include objects on other lanes. when performing collision assessment                                                                                                       | false         |
+| `use_all_predicted_path`                                 | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                                                                     | true          |
 
 #### safety constraints during lane change path is computed
 
