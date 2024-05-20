@@ -38,8 +38,7 @@ void ComponentMonitor::timer_callback()
   bp::ipstream is_err{std::move(err_pipe)};
 
   std::string cmd = "/bin/sh -c \"top -b -n 2 -d 0.2 -p ";
-  // cmd += std::to_string(pid_);
-  cmd += "10913";
+  cmd += std::to_string(pid_);
   cmd += " | tail -1 | awk '{print $9} {print $10}'\"";
 
   // RCLCPP_INFO_STREAM(get_logger(), "cmd: " << cmd);
