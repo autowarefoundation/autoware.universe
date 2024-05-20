@@ -461,7 +461,14 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
                              const bool is_desired_mode_available,
                              const uint8_t current_mode = OperationModeState::UNKNOWN,
                              const uint8_t desired_mode = OperationModeState::STOP) {
-    button->setHovered(false);  // Reset hover state
+    // reset all button states
+    button->setHovered(false);
+    button->setChecked(false);
+    button->setActivated(false);
+    button->setDisabledButton(true);
+    button->setCheckableButton(false);
+
+    // and set them accordingly
     if (is_desired_mode_available) {
       if (current_mode == desired_mode) {
         // Enabled and Checked
@@ -485,12 +492,6 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
     }
   };
 
-  auto changeToggleSwitchState = [this](CustomToggleSwitch * toggle_switch, const bool is_enabled) {
-    bool oldState = toggle_switch->blockSignals(true);  // Block signals
-    toggle_switch->setChecked(!is_enabled);
-    toggle_switch->blockSignals(oldState);  // Restore original signal blocking state
-  };
-
   // Button
   changeButtonState(
     auto_button_ptr_, msg->is_autonomous_mode_available, msg->mode, OperationModeState::AUTONOMOUS);
@@ -502,7 +503,14 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
     remote_button_ptr_, msg->is_remote_mode_available, msg->mode, OperationModeState::REMOTE);
 
   // toggle switch for control mode
-  changeToggleSwitchState(control_mode_switch_ptr_, !msg->is_autoware_control_enabled);
+  auto changeToggleSwitchState = [this](CustomToggleSwitch * toggle_switch, const bool is_enabled) {
+    bool oldState = toggle_switch->blockSignals(true);  // Block signals
+    toggle_switch->setCheckedState(!is_enabled);
+    toggle_switch->blockSignals(oldState);  // Restore original signal blocking state
+  };
+  if (msg->is_in_transition == false) {  // would cause a on off on flicker if in transition
+    changeToggleSwitchState(control_mode_switch_ptr_, !msg->is_autoware_control_enabled);
+  }
 
   // routing
   if (msg->is_in_transition) {
