@@ -409,6 +409,7 @@ public:
   MPCParam m_param;                      // MPC design parameters.
   std::deque<double> m_input_buffer;     // MPC output buffer for delay time compensation.
   double m_raw_steer_cmd_prev = 0.0;     // Previous MPC raw output.
+  double m_raw_steer_cmd_constraint_base = 0.0;  // Base value for raw steer command constraint.
 
   /* Parameters for control */
   double m_admissible_position_error;  // Threshold for lateral error to trigger stop command [m].

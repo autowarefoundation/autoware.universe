@@ -103,6 +103,7 @@ bool MPC::calculateMPC(
   // save previous input for the mpc rate limit
   m_raw_steer_cmd_pprev = m_raw_steer_cmd_prev;
   m_raw_steer_cmd_prev = ctrl_cmd.steering_tire_angle;
+  m_raw_steer_cmd_constraint_base = mpc_data.steer;
 
   /* calculate predicted trajectory */
   predicted_trajectory =
@@ -580,8 +581,8 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
   VectorXd steer_rate_limits = calcSteerRateLimitOnTrajectory(traj, current_velocity);
   VectorXd ubA = steer_rate_limits * prediction_dt;
   VectorXd lbA = -steer_rate_limits * prediction_dt;
-  ubA(0) = m_raw_steer_cmd_prev + steer_rate_limits(0) * m_ctrl_period;
-  lbA(0) = m_raw_steer_cmd_prev - steer_rate_limits(0) * m_ctrl_period;
+  ubA(0) = m_raw_steer_cmd_constraint_base + steer_rate_limits(0) * m_ctrl_period * 5;
+  lbA(0) = m_raw_steer_cmd_constraint_base - steer_rate_limits(0) * m_ctrl_period * 5;
 
   auto t_start = std::chrono::system_clock::now();
   bool solve_result = m_qpsolver_ptr->solve(H, f.transpose(), A, lb, ub, lbA, ubA, Uex);
