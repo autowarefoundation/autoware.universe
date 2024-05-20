@@ -1,11 +1,11 @@
 /**:
   ros__parameters:
-    interval_sec: 0.5                             # [sec]
+    timer_period: 0.5                             # [sec]
 
-    maximum_heading_velocity: 16.667              # [m/s]
-    velocity_scale_factor_tolerance: 3.0          # [%]
+    heading_velocity_maximum_: 16.667              # [m/s]
+    heading_velocity_scale_factor_tolerance: 3.0          # [%]
 
-    maximum_angular_velocity: 0.523               # [rad/s]
+    angular_velocity_maximum: 0.523               # [rad/s]
     angular_velocity_scale_factor_tolerance: 0.2  # [%]
     angular_velocity_bias_tolerance: 0.00698      # [rad/s]
 

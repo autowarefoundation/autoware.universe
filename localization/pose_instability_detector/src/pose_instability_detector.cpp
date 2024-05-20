@@ -25,24 +25,16 @@
 
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
 : Node("pose_instability_detector", options),
-  interval_sec_(this->declare_parameter<double>("interval_sec")),
-  maximum_heading_velocity_(this->declare_parameter<double>("maximum_heading_velocity")),
-  velocity_scale_factor_tolerance_(
-    this->declare_parameter<double>("velocity_scale_factor_tolerance")),
-  maximum_angular_velocity_(this->declare_parameter<double>("maximum_angular_velocity")),
-  angular_velocity_scale_factor_tolerance_(
-    this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
-  angular_velocity_bias_tolerance_(
-    this->declare_parameter<double>("angular_velocity_bias_tolerance")),
-  pose_estimator_longitudinal_tolerance_(
-    this->declare_parameter<double>("pose_estimator_longitudinal_tolerance")),
-  pose_estimator_lateral_tolerance_(
-    this->declare_parameter<double>("pose_estimator_lateral_tolerance")),
+  timer_period_(this->declare_parameter<double>("timer_period")),
+  heading_velocity_maximum_(this->declare_parameter<double>("heading_velocity_maximum")),
+  heading_velocity_scale_factor_tolerance_(this->declare_parameter<double>("heading_velocity_scale_factor_tolerance")),
+  angular_velocity_maximum_(this->declare_parameter<double>("angular_velocity_maximum")),
+  angular_velocity_scale_factor_tolerance_(this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
+  angular_velocity_bias_tolerance_(this->declare_parameter<double>("angular_velocity_bias_tolerance")),
+  pose_estimator_longitudinal_tolerance_(this->declare_parameter<double>("pose_estimator_longitudinal_tolerance")),
+  pose_estimator_lateral_tolerance_(this->declare_parameter<double>("pose_estimator_lateral_tolerance")),
   pose_estimator_yaw_tolerance_(this->declare_parameter<double>("pose_estimator_yaw_tolerance"))
 {
-  // Define static thresholds
-  define_static_threshold();
-
   // Define subscibers, publishers and a timer.
   odometry_sub_ = this->create_subscription<Odometry>(
     "~/input/odometry", 10,
@@ -53,7 +45,7 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
     std::bind(&PoseInstabilityDetector::callback_twist, this, std::placeholders::_1));
 
   timer_ = rclcpp::create_timer(
-    this, this->get_clock(), std::chrono::duration<double>(interval_sec_),
+    this, this->get_clock(), std::chrono::duration<double>(timer_period_),
     std::bind(&PoseInstabilityDetector::callback_timer, this));
 
   diff_pose_pub_ = this->create_publisher<PoseStamped>("~/debug/diff_pose", 10);
@@ -128,12 +120,17 @@ void PoseInstabilityDetector::callback_timer()
   diff_pose.pose = ekf_to_DR;
   diff_pose_pub_->publish(diff_pose);
 
-  const std::vector<double> thresholds = {
-    threshold_diff_position_x_, threshold_diff_position_y_, threshold_diff_angle_z_};
-
-  const std::vector<std::string> labels = {"diff_position_x", "diff_position_y", "diff_angle_z"};
-
   // publish diagnostics
+
+  calculate_threshold((stamp - rclcpp::Time(prev_odometry_->header.stamp)).seconds());
+
+  const std::vector<double> thresholds = {threshold_diff_position_x_, threshold_diff_position_y_,
+                                          threshold_diff_position_z_, threshold_diff_angle_x_,
+                                          threshold_diff_angle_y_,    threshold_diff_angle_z_};
+
+  const std::vector<std::string> labels = {"diff_position_x", "diff_position_y", "diff_position_z",
+                                           "diff_angle_x",    "diff_angle_y",    "diff_angle_z"};
+
   DiagnosticStatus status;
   status.name = "localization: pose_instability_detector";
   status.hardware_id = this->get_name();
@@ -165,41 +162,32 @@ void PoseInstabilityDetector::callback_timer()
   prev_odometry_ = latest_odometry_;
 }
 
-void PoseInstabilityDetector::define_static_threshold()
-{
-  const double nominal_longitudinal_variation =
-    maximum_heading_velocity_ * interval_sec_ *
-    std::cos(0.5 * maximum_angular_velocity_ * interval_sec_);
-  const double nominal_lateral_variation =
-    maximum_heading_velocity_ * interval_sec_ *
-    std::sin(0.5 * maximum_angular_velocity_ * interval_sec_);
-  const double nominal_yaw_variation = maximum_angular_velocity_ * interval_sec_;
+void PoseInstabilityDetector::calculate_threshold(double interval_sec){
+  const double nominal_longitudinal_variation = heading_velocity_maximum_ * interval_sec * std::cos(0.5 * angular_velocity_maximum_ * interval_sec);
+  const double nominal_lateral_variation = heading_velocity_maximum_ * interval_sec * std::sin(0.5 * angular_velocity_maximum_ * interval_sec);
+  const double nominal_yaw_variation = angular_velocity_maximum_ * interval_sec;
 
   const std::vector<double> heading_velocity_error_range = {
-    maximum_heading_velocity_ * (1 + velocity_scale_factor_tolerance_ * 0.01),
-    maximum_heading_velocity_ * (1 - velocity_scale_factor_tolerance_ * 0.01),
-    maximum_heading_velocity_ * (1 - velocity_scale_factor_tolerance_ * 0.01),
-    maximum_heading_velocity_ * (1 + velocity_scale_factor_tolerance_ * 0.01)};
+    heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01),
+    heading_velocity_maximum_ * (1 - heading_velocity_scale_factor_tolerance_ * 0.01),
+    heading_velocity_maximum_ * (1 - heading_velocity_scale_factor_tolerance_ * 0.01),
+    heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01)
+  };
 
   const std::vector<double> angular_velocity_error_range = {
-    maximum_angular_velocity_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) +
-      std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
-    maximum_angular_velocity_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) +
-      std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
-    maximum_angular_velocity_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) -
-      std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_,
-    maximum_angular_velocity_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) -
-      std::copysign(1.0, maximum_angular_velocity_) * angular_velocity_bias_tolerance_};
+    angular_velocity_maximum_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) + std::copysign(1.0, angular_velocity_maximum_) * angular_velocity_bias_tolerance_,
+    angular_velocity_maximum_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) + std::copysign(1.0, angular_velocity_maximum_) * angular_velocity_bias_tolerance_,
+    angular_velocity_maximum_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) - std::copysign(1.0, angular_velocity_maximum_) * angular_velocity_bias_tolerance_,
+    angular_velocity_maximum_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) - std::copysign(1.0, angular_velocity_maximum_) * angular_velocity_bias_tolerance_
+  };
 
   double longitudinal_change = 0;
   double lateral_change = 0;
   double yaw_change = 0;
   for (int i = 0; i < 4; ++i) {
-    double range_corner_x = heading_velocity_error_range[i] * interval_sec_ *
-                            std::cos(0.5 * angular_velocity_error_range[i] * interval_sec_);
-    double range_corner_y = heading_velocity_error_range[i] * interval_sec_ *
-                            std::sin(0.5 * angular_velocity_error_range[i] * interval_sec_);
-    double range_corner_yaw = angular_velocity_error_range[i] * interval_sec_;
+    double range_corner_x = heading_velocity_error_range[i] * interval_sec * std::cos(0.5 * angular_velocity_error_range[i] * interval_sec);
+    double range_corner_y = heading_velocity_error_range[i] * interval_sec * std::sin(0.5 * angular_velocity_error_range[i] * interval_sec);
+    double range_corner_yaw = angular_velocity_error_range[i] * interval_sec;
     double nominal_to_range_corner_direction = std::atan2(range_corner_y, range_corner_x);
     double nominal_to_range_corner_distance = std::hypot(
       range_corner_x - nominal_longitudinal_variation, range_corner_y - nominal_lateral_variation);
