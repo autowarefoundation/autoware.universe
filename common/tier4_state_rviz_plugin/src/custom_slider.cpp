@@ -40,7 +40,8 @@ void CustomSlider::paintEvent(QPaintEvent *)
   QColor inactiveTrackColor("#004d64");
   QColor activeTrackColor("#8bd0f0");
 
-  if (value > minValue) {
+  // only draw the active track if the value is more than the gap from the minimum
+  if (value > minValue + gap / 2) {
     QPainterPath beforePath;
     beforePath.moveTo(beforeRect.left(), centerY + trackThickness / 2);  // Start from bottom-left
     beforePath.quadTo(
@@ -57,7 +58,7 @@ void CustomSlider::paintEvent(QPaintEvent *)
     painter.fillPath(beforePath, activeTrackColor);
   }
 
-  if (value < maxValue) {
+  if (value < maxValue - gap / 2) {
     QPainterPath afterPath;
     afterPath.moveTo(afterRect.left(), centerY + trackThickness / 2);
     afterPath.quadTo(
