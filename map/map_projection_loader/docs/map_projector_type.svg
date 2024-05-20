@@ -169,18 +169,10 @@
     <rect
       style="fill:#f6f520;fill-opacity:1;stroke:none;stroke-width:0.78;stroke-miterlimit:4;stroke-dasharray:2.34, 2.34;stroke-dashoffset:0;stroke-opacity:1"
       id="rect77505"
-      width="151.93463"
+      width="156.80101"
       height="46.864109"
       x="687.38531"
       y="85.441116"
-    />
-    <rect
-      style="fill:#f6f520;fill-opacity:1;stroke:none;stroke-width:0.780001;stroke-miterlimit:4;stroke-dasharray:2.33998, 2.33998;stroke-dashoffset:0;stroke-opacity:1"
-      id="rect77505-8"
-      width="153.21111"
-      height="46.73283"
-      x="687.57892"
-      y="257.84259"
     />
     <rect
       style="fill:#c2f45c;fill-opacity:1;stroke:none;stroke-width:0.780001;stroke-miterlimit:4;stroke-dasharray:2.33998, 2.33998;stroke-dashoffset:0;stroke-opacity:1"
@@ -209,8 +201,8 @@
     <rect
       style="fill:#f6f520;fill-opacity:1;stroke:none;stroke-width:0.780001;stroke-miterlimit:4;stroke-dasharray:2.33998, 2.33998;stroke-dashoffset:0;stroke-opacity:1"
       id="rect77505-8-7"
-      width="153.21111"
-      height="46.73283"
+      width="202.53596"
+      height="39.360355"
       x="687.30652"
       y="466.69016"
     />
@@ -1949,30 +1941,8 @@
       <tspan id="tspan1635" x="687.94751" y="95.535385">
         <tspan id="tspan27104-4-7-70" style="font-size:11.6417px;stroke:none;stroke-width:0.529167;stroke-opacity:1" x="687.94751" y="95.535385">Strict Boundary.</tspan>
       </tspan>
-      <tspan id="tspan1637" x="687.94751" y="111.48724">Outside the mgrs grid is</tspan>
+      <tspan id="tspan1637" x="687.94751" y="111.48724">Outside of the mgrs grid is</tspan>
       <tspan x="687.94751" y="127.4391" id="tspan2785">projected to undefined xy</tspan>
-    </text>
-    <text
-      xml:space="preserve"
-      style="font-style:normal;font-weight:normal;font-size:11.6417px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.529167"
-      x="688.44775"
-      y="267.52325"
-      id="text27106-4-4-2-9"
-    >
-      <tspan x="688.44775" y="267.52325" id="tspan67474">No boundary,</tspan>
-      <tspan x="688.44775" y="283.4751" id="tspan67502">but larger projection error</tspan>
-      <tspan x="688.44775" y="299.42697" id="tspan67504">father from the meridian</tspan>
-    </text>
-    <text
-      xml:space="preserve"
-      style="font-style:normal;font-weight:normal;font-size:11.6417px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.529167"
-      x="688.44775"
-      y="476.46115"
-      id="text27106-4-4-2-9-6"
-    >
-      <tspan x="688.44775" y="476.46115" id="tspan67474-0">No boundary,</tspan>
-      <tspan x="688.44775" y="492.41299" id="tspan67502-6">but larger projection error</tspan>
-      <tspan x="688.44775" y="508.36487" id="tspan67504-2">father from the meridian</tspan>
     </text>
     <text
       xml:space="preserve"
@@ -3006,5 +2976,35 @@
       x="344.33868"
       y="509.15103"
     />
+    <text
+      xml:space="preserve"
+      style="font-style:normal;font-weight:normal;font-size:9.525px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.79375"
+      x="688.54028"
+      y="476.49408"
+      id="text121271"
+    >
+      <tspan id="tspan121269" style="font-size:9.525px;stroke-width:0.79375" x="688.54028" y="476.49408">No boundary,</tspan>
+      <tspan style="font-size:9.525px;stroke-width:0.79375" x="688.54028" y="489.54556" id="tspan125599">but farther away from the meridian,</tspan>
+      <tspan style="font-size:9.525px;stroke-width:0.79375" x="688.54028" y="502.59705" id="tspan125601">the greather the projection error becomes</tspan>
+    </text>
+    <rect
+      style="fill:#f6f520;fill-opacity:1;stroke:none;stroke-width:0.780001;stroke-miterlimit:4;stroke-dasharray:2.33998, 2.33998;stroke-dashoffset:0;stroke-opacity:1"
+      id="rect77505-8-7-3"
+      width="202.53596"
+      height="39.360355"
+      x="687.67926"
+      y="259.18802"
+    />
+    <text
+      xml:space="preserve"
+      style="font-style:normal;font-weight:normal;font-size:9.525px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.79375"
+      x="688.91302"
+      y="268.99194"
+      id="text121271-6"
+    >
+      <tspan id="tspan121269-7" style="font-size:9.525px;stroke-width:0.79375" x="688.91302" y="268.99194">No boundary,</tspan>
+      <tspan style="font-size:9.525px;stroke-width:0.79375" x="688.91302" y="282.04343" id="tspan125599-5">but farther away from the meridian,</tspan>
+      <tspan style="font-size:9.525px;stroke-width:0.79375" x="688.91302" y="295.09491" id="tspan125601-3">the greather the projection error becomes</tspan>
+    </text>
   </g>
 </svg>
