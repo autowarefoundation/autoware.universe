@@ -22,6 +22,8 @@
 #include <gtest/gtest.h>
 #include <math.h>
 
+namespace
+{
 double yawFromQuaternion(const geometry_msgs::msg::Quaternion & q)
 {
   return atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
@@ -31,6 +33,38 @@ double deg2rad(const double deg)
 {
   return deg / 180.0 * M_PI;
 }
+
+pcl::PointCloud<pcl::PointXYZ> createLShapeCluster(
+  const double length, const double width, const double height, const double yaw,
+  const double offset_x, const double offset_y)
+{
+  pcl::PointCloud<pcl::PointXYZ> cluster;
+  for (double x = -length / 2; x < length / 2; x += 0.4) {
+    cluster.push_back(pcl::PointXYZ(x, width / 2, 0.0));
+  }
+  for (double y = -width / 2; y < width / 2; y += 0.2) {
+    cluster.push_back(pcl::PointXYZ(-length / 2, y, 0.0));
+  }
+  cluster.push_back(pcl::PointXYZ(length / 2, -width / 2, 0.0));
+  cluster.push_back(pcl::PointXYZ(length / 2, width / 2, 0.0));
+  cluster.push_back(pcl::PointXYZ(-length / 2, -width / 2, 0.0));
+  cluster.push_back(pcl::PointXYZ(-length / 2, width / 2, 0.0));
+  cluster.push_back(pcl::PointXYZ(0.0, 0.0, height));
+
+  for (auto & point : cluster) {
+    const double x = point.x;
+    const double y = point.y;
+    // rotate
+    point.x = x * cos(yaw) - y * sin(yaw);
+    point.y = x * sin(yaw) + y * cos(yaw);
+    // offset
+    point.x += offset_x;
+    point.y += offset_y;
+  }
+
+  return cluster;
+}
+}  // namespace
 
 // test BoundingBoxShapeModel
 // 1. base case
@@ -44,12 +78,8 @@ TEST(BoundingBoxShapeModel, test_estimateShape)
   const double width = 2.0;
   const double height = 1.0;
 
-  pcl::PointCloud<pcl::PointXYZ> cluster;
-  cluster.push_back(pcl::PointXYZ(length / 2, -width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(length / 2, width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(-length / 2, -width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(-length / 2, width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(0.0, 0.0, height));
+  pcl::PointCloud<pcl::PointXYZ> cluster =
+    createLShapeCluster(length, width, height, 0.0, 0.0, 0.0);
 
   // Generate shape and pose output
   autoware_auto_perception_msgs::msg::Shape shape_output;
@@ -82,35 +112,11 @@ TEST(BoundingBoxShapeModel, test_estimateShape_rotated)
   const double length = 4.0;
   const double width = 2.0;
   const double height = 1.0;
-
-  pcl::PointCloud<pcl::PointXYZ> cluster;
-  for (double x = -length / 2; x < length / 2; x += 0.4) {
-    cluster.push_back(pcl::PointXYZ(x, width / 2, 0.0));
-  }
-  for (double y = -width / 2; y < width / 2; y += 0.2) {
-    cluster.push_back(pcl::PointXYZ(-length / 2, y, 0.0));
-  }
-  cluster.push_back(pcl::PointXYZ(length / 2, -width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(length / 2, width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(-length / 2, -width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(-length / 2, width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(0.0, 0.0, height));
-
-  // rotate cluster
   const double yaw = deg2rad(30.0);
   const double offset_x = 10.0;
   const double offset_y = 1.0;
-
-  for (auto & point : cluster) {
-    const double x = point.x;
-    const double y = point.y;
-    // rotate
-    point.x = x * cos(yaw) - y * sin(yaw);
-    point.y = x * sin(yaw) + y * cos(yaw);
-    // offset
-    point.x += offset_x;
-    point.y += offset_y;
-  }
+  pcl::PointCloud<pcl::PointXYZ> cluster =
+    createLShapeCluster(length, width, height, yaw, offset_x, offset_y);
 
   const auto ref_yaw_info =
     ReferenceYawInfo{static_cast<float>(yaw), static_cast<float>(deg2rad(10.0))};
@@ -150,12 +156,7 @@ TEST(CylinderShapeModel, test_estimateShape)
   CylinderShapeModel cylinder_shape_model = CylinderShapeModel();
 
   // Generate cluster
-  pcl::PointCloud<pcl::PointXYZ> cluster;
-  cluster.push_back(pcl::PointXYZ(0.0, 0.0, 0.0));
-  cluster.push_back(pcl::PointXYZ(1.0, 0.0, 0.0));
-  cluster.push_back(pcl::PointXYZ(0.0, 1.0, 0.0));
-  cluster.push_back(pcl::PointXYZ(1.0, 1.0, 0.0));
-
+  pcl::PointCloud<pcl::PointXYZ> cluster = createLShapeCluster(4.0, 2.0, 1.0, 0.0, 0.0, 0.0);
   // Generate shape and pose output
   autoware_auto_perception_msgs::msg::Shape shape_output;
   geometry_msgs::msg::Pose pose_output;
@@ -172,11 +173,7 @@ TEST(ConvexHullShapeModel, test_estimateShape)
   ConvexHullShapeModel convex_hull_shape_model = ConvexHullShapeModel();
 
   // Generate cluster
-  pcl::PointCloud<pcl::PointXYZ> cluster;
-  cluster.push_back(pcl::PointXYZ(0.0, 0.0, 0.0));
-  cluster.push_back(pcl::PointXYZ(1.0, 0.0, 0.0));
-  cluster.push_back(pcl::PointXYZ(0.0, 1.0, 0.0));
-  cluster.push_back(pcl::PointXYZ(1.0, 1.0, 0.0));
+  pcl::PointCloud<pcl::PointXYZ> cluster = createLShapeCluster(2.0, 1.0, 1.0, 0.0, 0.0, 0.0);
 
   // Generate shape and pose output
   autoware_auto_perception_msgs::msg::Shape shape_output;
@@ -191,38 +188,14 @@ TEST(ConvexHullShapeModel, test_estimateShape)
 TEST(ShapeEstimator, test_estimateShapeAndPose)
 {
   // Generate cluster
-  pcl::PointCloud<pcl::PointXYZ> cluster;
-  // fill points of L-shape
   double length = 4.0;
   double width = 2.0;
   double height = 1.0;
-  for (double x = -length / 2; x < length / 2; x += 0.4) {
-    cluster.push_back(pcl::PointXYZ(x, width / 2, 0.0));
-  }
-  for (double y = -width / 2; y < width / 2; y += 0.2) {
-    cluster.push_back(pcl::PointXYZ(-length / 2, y, 0.0));
-  }
-  cluster.push_back(pcl::PointXYZ(length / 2, -width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(length / 2, width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(-length / 2, -width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(-length / 2, width / 2, 0.0));
-  cluster.push_back(pcl::PointXYZ(0.0, 0.0, height));
-
-  // rotate cluster
   const double yaw = deg2rad(60.0);
   const double offset_x = 6.0;
   const double offset_y = -2.0;
-
-  for (auto & point : cluster) {
-    const double x = point.x;
-    const double y = point.y;
-    // rotate
-    point.x = x * cos(yaw) - y * sin(yaw);
-    point.y = x * sin(yaw) + y * cos(yaw);
-    // offset
-    point.x += offset_x;
-    point.y += offset_y;
-  }
+  pcl::PointCloud<pcl::PointXYZ> cluster =
+    createLShapeCluster(length, width, height, yaw, offset_x, offset_y);
 
   // Generate ShapeEstimator
   const bool use_corrector = true;
