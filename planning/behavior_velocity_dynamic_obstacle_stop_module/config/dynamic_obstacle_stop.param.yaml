@@ -5,8 +5,12 @@
       minimum_object_velocity: 0.5  # [m/s] objects with a velocity bellow this value are ignored
       stop_distance_buffer: 0.5  # [m] extra distance to add between the stop point and the collision point
       time_horizon: 5.0  # [s] time horizon used for collision checks
+      yaw_threshold: 2.35 # [rad] yaw threshold used for collision checks
+      yaw_threshold_behind_object: 1.0 # [rad] yaw threshold used for collision checks for objects behind the ego vehicle
       hysteresis: 1.0  # [m] once a collision has been detected, this hysteresis is used on the collision detection
       add_stop_duration_buffer : 0.5  # [s] duration where a collision must be continuously detected before a stop decision is added
       remove_stop_duration_buffer : 1.0  # [s] duration between no collision being detected and the stop decision being remove
       minimum_object_distance_from_ego_path: 1.0  # [m] minimum distance between the footprints of ego and an object to consider for collision
       ignore_unavoidable_collisions : true  # if true, ignore collisions that cannot be avoided by stopping (assuming the obstacle continues going straight)
+      ignore_objects_behind_ego: false  # if true, ignore objects that are behind the ego vehicle
+      behind_object_distance_threshold: 5.0  # [m] distance behind the ego vehicle to ignore objects
