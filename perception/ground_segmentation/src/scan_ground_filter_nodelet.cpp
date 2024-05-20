@@ -522,7 +522,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
       if (calculate_slope) {
         // far from the previous point
-        local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
+        auto local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
         if (local_slope - prev_gnd_slope > local_slope_max_angle) {
           // the point is outside of the local slope threshold
           p->point_state = PointLabel::NON_GROUND;
