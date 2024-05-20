@@ -263,7 +263,7 @@ QVBoxLayout * AutowareStatePanel::makeLocalizationGroup()
   connect(init_by_gnss_button_ptr_, SIGNAL(clicked()), SLOT(onClickInitByGnss()));
 
   localization_icon = new CustomIconLabel(QColor("#84c2e6"));
-  QLabel * localization_label = new QLabel(" Localization");
+  QLabel * localization_label = new QLabel("Localization");
   localization_label->setStyleSheet("color: #d0e6f2; font-weight: bold;");
 
   auto * horizontal_layout = new QHBoxLayout;
