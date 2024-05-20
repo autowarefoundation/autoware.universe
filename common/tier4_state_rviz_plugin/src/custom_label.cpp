@@ -13,6 +13,8 @@
 // limitations under the License.
 #include "include/custom_label.hpp"
 
+#include "src/include/material_colors.hpp"
+
 #include <QColor>
 #include <QGraphicsDropShadowEffect>
 #include <QLinearGradient>
@@ -27,9 +29,10 @@ CustomLabel::CustomLabel(const QString & text, QWidget * parent) : QLabel(text, 
 
   // Add shadow effect
   QGraphicsDropShadowEffect * shadowEffect = new QGraphicsDropShadowEffect(this);
-  shadowEffect->setBlurRadius(15);               // Blur radius for a smoother shadow
-  shadowEffect->setOffset(3, 3);                 // Offset for the shadow
-  shadowEffect->setColor(QColor(0, 0, 0, 120));  // Shadow color with transparency
+  shadowEffect->setBlurRadius(15);  // Blur radius for a smoother shadow
+  shadowEffect->setOffset(3, 3);    // Offset for the shadow
+  shadowEffect->setColor(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.shadow.c_str()));  // Shadow color
   setGraphicsEffect(shadowEffect);
 }
 

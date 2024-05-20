@@ -14,6 +14,8 @@
 #ifndef CUSTOM_BUTTON_HPP_
 #define CUSTOM_BUTTON_HPP_
 
+#include "material_colors.hpp"
+
 #include <QColor>
 #include <QFontMetrics>
 #include <QGraphicsDropShadowEffect>
@@ -28,11 +30,21 @@ class CustomElevatedButton : public QPushButton
 
 public:
   explicit CustomElevatedButton(
-    const QString & text, const QColor & bgColor = QColor("#171C1F"),
-    const QColor & textColor = QColor("#8bd0f0"), QWidget * parent = nullptr);
+    const QString & text,
+    const QColor & bgColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+    const QColor & textColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+    const QColor & hoverColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()),
+    const QColor & disabledBgColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+    const QColor & disabledTextColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_variant.c_str()),
+    QWidget * parent = nullptr);
   void updateStyle(
     const QString & text, const QColor & bgColor, const QColor & textColor,
-    const QColor & hoverColor);
+    const QColor & hoverColor, const QColor & disabledBgColor, const QColor & disabledTextColor);
 
 protected:
   void paintEvent(QPaintEvent * event) override;
@@ -42,9 +54,15 @@ protected:
   QSize minimumSizeHint() const override;
 
 private:
-  QColor backgroundColor = QColor("##171C1F");
-  QColor textColor = QColor("#8bd0f0");
-  QColor hoverColor = QColor("#3C3F41");
+  QColor backgroundColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str());
+  QColor textColor = QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
+  QColor hoverColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str());
+  QColor disabledBgColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.disabled_elevated_button_bg.c_str());
+  QColor disabledTextColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str());
   bool isHovered = false;
 };
 

@@ -14,6 +14,8 @@
 #ifndef CUSTOM_SEGMENTED_BUTTON_ITEM_HPP_
 #define CUSTOM_SEGMENTED_BUTTON_ITEM_HPP_
 
+#include "material_colors.hpp"
+
 #include <QColor>
 #include <QHBoxLayout>
 #include <QPainter>
@@ -46,9 +48,14 @@ private:
 
   QColor bgColor;
   QColor checkedBgColor;
-  QColor hoverColor = QColor("#3C3F41");
+  QColor hoverColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str());
   QColor inactiveTextColor;
   QColor activeTextColor;
+  QColor disabledBgColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str());
+  QColor disabledTextColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_variant.c_str());
   bool isHovered = false;
   bool isActivated = false;
   bool isDisabled = false;

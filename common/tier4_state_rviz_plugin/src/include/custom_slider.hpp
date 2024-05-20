@@ -13,6 +13,7 @@
 // limitations under the License.
 #ifndef CUSTOM_SLIDER_HPP_
 #define CUSTOM_SLIDER_HPP_
+#include "material_colors.hpp"
 
 #include <QPaintEvent>
 #include <QPainter>
@@ -26,7 +27,6 @@ class CustomSlider : public QSlider
 
 public:
   explicit CustomSlider(Qt::Orientation orientation, QWidget * parent = nullptr);
-  QColor blue_theme_color = QColor("#84c2e6");
 
 protected:
   void paintEvent(QPaintEvent * event) override;

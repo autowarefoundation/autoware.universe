@@ -15,10 +15,13 @@
 
 CustomSegmentedButtonItem::CustomSegmentedButtonItem(const QString & text, QWidget * parent)
 : QPushButton(text, parent),
-  bgColor("#0F1417"),
-  checkedBgColor("#354A54"),
-  inactiveTextColor("#DFE3E7"),
-  activeTextColor("#D0E6F2"),
+  bgColor(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str())),
+  checkedBgColor(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.secondary_container.c_str())),
+  inactiveTextColor(QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str())),
+  activeTextColor(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str())),
   isHovered(false),
   isActivated(false),
   isDisabled(false)
@@ -95,7 +98,7 @@ void CustomSegmentedButtonItem::paintEvent(QPaintEvent *)
   // Determine the button's color based on its state
   QColor buttonColor;
   if (isDisabled) {
-    buttonColor = bgColor;
+    buttonColor = disabledBgColor;
   } else if (isHovered && !isChecked() && isCheckable()) {
     buttonColor = hoverColor;
   } else if (isActivated) {
@@ -152,7 +155,7 @@ void CustomSegmentedButtonItem::paintEvent(QPaintEvent *)
   painter.fillPath(path, buttonColor);
 
   // Draw button border
-  QPen pen(QColor("#8a9297"), 1);
+  QPen pen(QColor(autoware::state_rviz_plugin::colors::default_colors.outline.c_str()), 1);
   pen.setJoinStyle(Qt::RoundJoin);
   pen.setCapStyle(Qt::RoundCap);
   painter.setPen(pen);

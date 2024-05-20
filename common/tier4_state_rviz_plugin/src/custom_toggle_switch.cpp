@@ -40,12 +40,25 @@ void CustomToggleSwitch::paintEvent(QPaintEvent *)
   QRect r = rect().adjusted(margin, margin, -margin, -margin);
   bool isChecked = this->isChecked();
 
+  QColor uncheckedIndicatorColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.outline.c_str());
+  QColor checkedIndicatorColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary.c_str());
+  QColor indicatorColor = isChecked ? checkedIndicatorColor : uncheckedIndicatorColor;
+
+  QColor uncheckedBgColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str());
+  QColor checkedBgColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
+
+  QColor bgColor = isChecked ? checkedBgColor : uncheckedBgColor;
+
   QRect borderR = r.adjusted(-margin, -margin, margin, margin);
-  p.setBrush(isChecked ? QColor("#8bd0f0") : QColor("#303538"));
+  p.setBrush(bgColor);
   p.setPen(Qt::NoPen);
   p.drawRoundedRect(borderR, circleRadius + 4, circleRadius + 4);
 
-  p.setBrush(isChecked ? QColor("#8bd0f0") : QColor("#303538"));
+  p.setBrush(bgColor);
   p.setPen(Qt::NoPen);
   p.drawRoundedRect(r, circleRadius + 4, circleRadius + 4);
 
@@ -53,7 +66,7 @@ void CustomToggleSwitch::paintEvent(QPaintEvent *)
   int maxX = r.right() - circleRadius * 2 - margin;
   int circleX = isChecked ? maxX : minX;
   QRect circleRect(circleX, r.top() + margin, circleRadius * 2, circleRadius * 2);
-  p.setBrush(isChecked ? QColor("#003546") : QColor("#8a9297"));
+  p.setBrush(indicatorColor);
   p.drawEllipse(circleRect);
 }
 

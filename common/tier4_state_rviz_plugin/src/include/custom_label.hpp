@@ -14,18 +14,23 @@
 #ifndef CUSTOM_LABEL_HPP_
 #define CUSTOM_LABEL_HPP_
 
+#include "material_colors.hpp"
+
+#include <QColor>
 #include <QLabel>
 #include <QWidget>
-
-#include <qcolor.h>
-
 class CustomLabel : public QLabel
 {
   Q_OBJECT
 
 public:
   explicit CustomLabel(const QString & text, QWidget * parent = nullptr);
-  void updateStyle(const QString & text, const QColor & bgColor, const QColor & textColor);
+  void updateStyle(
+    const QString & text,
+    const QColor & bgColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()),
+    const QColor & textColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
 
 protected:
   void paintEvent(QPaintEvent * event) override;
@@ -33,8 +38,9 @@ protected:
   QSize minimumSizeHint() const override;
 
 private:
-  QColor backgroundColor = QColor("#171C1F");
-  QColor textColor = QColor("#FFFFFF");
+  QColor backgroundColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str());
+  QColor textColor = QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str());
 };
 
 #endif  // CUSTOM_LABEL_HPP_

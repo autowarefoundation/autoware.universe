@@ -50,8 +50,10 @@ void CustomSlider::paintEvent(QPaintEvent *)
     handleRect.center().x() + gap, centerY - trackThickness / 2,
     grooveRect.right() - handleRect.center().x() - gap, trackThickness);
 
-  QColor inactiveTrackColor("#004d64");
-  QColor activeTrackColor("#8bd0f0");
+  QColor inactiveTrackColor(
+    autoware::state_rviz_plugin::colors::default_colors.primary_container.c_str());
+  QColor activeTrackColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
+  QColor handleColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str());
 
   // only draw the active track if the value is more than the gap from the minimum
   if (value > minValue + gap / 2) {
@@ -87,7 +89,7 @@ void CustomSlider::paintEvent(QPaintEvent *)
     painter.fillPath(afterPath, inactiveTrackColor);
   }
 
-  painter.setBrush(QColor("#8bd0f0"));
+  painter.setBrush(handleColor);
   int handleLineHeight = 30;
   int handleLineWidth = 4;
   int handleLineRadius = 2;
@@ -96,5 +98,5 @@ void CustomSlider::paintEvent(QPaintEvent *)
     handleLineHeight);
   QPainterPath handlePath;
   handlePath.addRoundedRect(handleLineRect, handleLineRadius, handleLineRadius);
-  painter.fillPath(handlePath, QColor("#8bd0f0"));
+  painter.fillPath(handlePath, handleColor);
 }

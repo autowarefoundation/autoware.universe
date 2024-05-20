@@ -14,6 +14,8 @@
 #ifndef CUSTOM_CONTAINER_HPP_
 #define CUSTOM_CONTAINER_HPP_
 
+#include "material_colors.hpp"
+
 #include <QFrame>
 #include <QGridLayout>
 #include <QPainter>

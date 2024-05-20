@@ -15,6 +15,7 @@
 #define CUSTOM_SEGMENTED_BUTTON_HPP_
 
 #include "custom_segmented_button_item.hpp"
+#include "material_colors.hpp"
 
 #include <QButtonGroup>
 #include <QColor>
@@ -45,8 +46,6 @@ protected:
   void paintEvent(QPaintEvent * event) override;
 
 private:
-  void drawBorders(QPainter & painter);  // Method to draw borders between buttons
-
   QButtonGroup * buttonGroup;
   QHBoxLayout * layout;
 };

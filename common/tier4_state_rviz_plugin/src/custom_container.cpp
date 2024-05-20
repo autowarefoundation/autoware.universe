@@ -13,6 +13,8 @@
 // limitations under the License.
 #include "include/custom_container.hpp"
 
+#include "src/include/material_colors.hpp"
+
 CustomContainer::CustomContainer(QWidget * parent) : QFrame(parent), cornerRadius(15)
 {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -62,6 +64,7 @@ void CustomContainer::paintEvent(QPaintEvent *)
   QPainterPath path;
   path.addRoundedRect(rect(), height() / 2, height() / 2);  // Use height for rounded corners
   painter.setPen(Qt::NoPen);
-  painter.setBrush(QColor("#0f1417"));  // Background color
+  painter.setBrush(QColor(
+    autoware::state_rviz_plugin::colors::default_colors.surface.c_str()));  // Background color
   painter.drawPath(path);
 }

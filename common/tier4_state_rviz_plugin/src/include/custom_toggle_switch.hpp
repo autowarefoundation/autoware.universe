@@ -14,6 +14,8 @@
 #ifndef CUSTOM_TOGGLE_SWITCH_HPP_
 #define CUSTOM_TOGGLE_SWITCH_HPP_
 
+#include "material_colors.hpp"
+
 #include <QCheckBox>
 #include <QColor>
 #include <QMouseEvent>

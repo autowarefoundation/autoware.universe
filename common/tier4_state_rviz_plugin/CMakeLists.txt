@@ -21,6 +21,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/custom_segmented_button.cpp
   src/custom_segmented_button_item.cpp
   src/custom_label.cpp
+  src/include/material_colors.hpp
   src/include/autoware_state_panel.hpp
   src/include/custom_button.hpp
   src/include/custom_container.hpp

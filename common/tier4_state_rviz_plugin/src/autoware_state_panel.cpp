@@ -18,6 +18,8 @@
 
 #include <rviz_common/display_context.hpp>
 
+#include <qcolor.h>
+
 #include <memory>
 #include <string>
 
@@ -41,7 +43,10 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   QWidget * containerWidget = new QWidget(this);
   containerWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-  containerWidget->setStyleSheet("QWidget { background-color: #0F1417; color: #d0e6f2; }");
+  containerWidget->setStyleSheet(
+    QString("QWidget { background-color: %1; color: %2; }")
+      .arg(autoware::state_rviz_plugin::colors::default_colors.background.c_str())
+      .arg(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
 
   auto * containerLayout = new QVBoxLayout(containerWidget);
   // Set the alignment of the layout
@@ -188,7 +193,9 @@ QVBoxLayout * AutowareStatePanel::makeOperationModeGroup()
     &AutowareStatePanel::onSwitchStateChanged);
 
   control_mode_label_ptr_ = new QLabel("Autoware Control");
-  control_mode_label_ptr_->setStyleSheet("color: #d0e6f2; font-weight: bold;");
+  control_mode_label_ptr_->setStyleSheet(
+    QString("color: %1; font-weight: bold;")
+      .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
 
   CustomContainer * group1 = new CustomContainer(this);
 
@@ -226,7 +233,8 @@ QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
 
   auto * custom_container = new CustomContainer(this);
 
-  routing_icon = new CustomIconLabel(QColor("#84c2e6"));
+  routing_icon = new CustomIconLabel(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()));
 
   clear_route_button_ptr_ = new CustomElevatedButton("Clear Route");
   clear_route_button_ptr_->setCheckable(true);
@@ -234,7 +242,9 @@ QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
   connect(clear_route_button_ptr_, SIGNAL(clicked()), SLOT(onClickClearRoute()));
 
   QLabel * routing_label = new QLabel("Routing");
-  routing_label->setStyleSheet("color: #d0e6f2; font-weight: bold;");
+  routing_label->setStyleSheet(
+    QString("color: %1; font-weight: bold;")
+      .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
 
   auto * horizontal_layout = new QHBoxLayout;
   horizontal_layout->setSpacing(10);
@@ -262,9 +272,12 @@ QVBoxLayout * AutowareStatePanel::makeLocalizationGroup()
   init_by_gnss_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(init_by_gnss_button_ptr_, SIGNAL(clicked()), SLOT(onClickInitByGnss()));
 
-  localization_icon = new CustomIconLabel(QColor("#84c2e6"));
+  localization_icon = new CustomIconLabel(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()));
   QLabel * localization_label = new QLabel("Localization");
-  localization_label->setStyleSheet("color: #d0e6f2; font-weight: bold;");
+  localization_label->setStyleSheet(
+    QString("color: %1; font-weight: bold;")
+      .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
 
   auto * horizontal_layout = new QHBoxLayout;
   horizontal_layout->setSpacing(10);
@@ -292,9 +305,12 @@ QVBoxLayout * AutowareStatePanel::makeMotionGroup()
   accept_start_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(accept_start_button_ptr_, SIGNAL(clicked()), SLOT(onClickAcceptStart()));
 
-  motion_icon = new CustomIconLabel(QColor("#84c2e6"));
+  motion_icon = new CustomIconLabel(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()));
   QLabel * motion_label = new QLabel("Motion");
-  motion_label->setStyleSheet("color: #d0e6f2; font-weight: bold;");
+  motion_label->setStyleSheet(
+    QString("color: %1; font-weight: bold;")
+      .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
 
   auto * horizontal_layout = new QHBoxLayout;
   horizontal_layout->setSpacing(10);
@@ -321,15 +337,21 @@ QVBoxLayout * AutowareStatePanel::makeFailSafeGroup()
   auto * custom_container1 = new CustomContainer(this);
   auto * custom_container2 = new CustomContainer(this);
 
-  mrm_state_icon = new CustomIconLabel(QColor("#84c2e6"));
-  mrm_behavior_icon = new CustomIconLabel(QColor("#84c2e6"));
+  mrm_state_icon = new CustomIconLabel(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()));
+  mrm_behavior_icon = new CustomIconLabel(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()));
 
   mrm_state_label_ptr_ = new QLabel("MRM State | Unknown");
   mrm_behavior_label_ptr_ = new QLabel("MRM Behavior | Unknown");
 
   // change text color
-  mrm_state_label_ptr_->setStyleSheet("color: #d0e6f2; font-weight: bold;");
-  mrm_behavior_label_ptr_->setStyleSheet("color: #d0e6f2; font-weight: bold;");
+  mrm_state_label_ptr_->setStyleSheet(
+    QString("color: %1; font-weight: bold;")
+      .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
+  mrm_behavior_label_ptr_->setStyleSheet(
+    QString("color: %1; font-weight: bold;")
+      .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
 
   auto * horizontal_layout = new QHBoxLayout;
   horizontal_layout->setSpacing(10);
@@ -514,7 +536,8 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
 
   // routing
   if (msg->is_in_transition) {
-    routing_icon->updateStyle(Pending, QColor("#eef08b"));
+    routing_icon->updateStyle(
+      Pending, QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str()));
   }
 }
 
@@ -526,27 +549,27 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
   switch (msg->state) {
     case RouteState::UNSET:
       state = Pending;
-      bgColor = QColor("#eef08b");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
       break;
 
     case RouteState::SET:
       state = Active;
-      bgColor = QColor("#00e678");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
       break;
 
     case RouteState::ARRIVED:
       state = Danger;
-      bgColor = QColor("#f08b8b");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.danger.c_str());
       break;
 
     case RouteState::CHANGING:
-      bgColor = QColor("#eef08b");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
       state = Pending;
       break;
 
     default:
       state = None;
-      bgColor = QColor("#84c2e6");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
       break;
   }
 
@@ -556,11 +579,15 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
     activateButton(clear_route_button_ptr_);
   } else {
     clear_route_button_ptr_->setStyleSheet(
-      "QPushButton {"
-      "background-color: #292d30;color: #6e7276;"
-      "border: 2px solid #292d30;"
-      "font-weight: bold;"
-      "}");
+      QString("QPushButton {"
+              "background-color: %1;color: %2;"
+              "border: 2px solid %3;"
+              "font-weight: bold;"
+              "}")
+        .arg(autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str())
+        .arg(autoware::state_rviz_plugin::colors::default_colors.outline.c_str())
+        .arg(
+          autoware::state_rviz_plugin::colors::default_colors.surface_container_highest.c_str()));
     deactivateButton(clear_route_button_ptr_);
   }
 }
@@ -573,22 +600,22 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
   switch (msg->state) {
     case LocalizationInitializationState::UNINITIALIZED:
       state = None;
-      bgColor = QColor("#84c2e6");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
       break;
 
     case LocalizationInitializationState::INITIALIZED:
       state = Active;
-      bgColor = QColor("#00e678");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
       break;
 
     case LocalizationInitializationState::INITIALIZING:
       state = Pending;
-      bgColor = QColor("#eef08b");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
       break;
 
     default:
       state = None;
-      bgColor = QColor("#84c2e6");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
       break;
   }
 
@@ -603,22 +630,22 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
   switch (msg->state) {
     case MotionState::STARTING:
       state = Pending;
-      bgColor = QColor("#eef08b");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
       break;
 
     case MotionState::MOVING:
       state = Active;
-      bgColor = QColor("#00e678");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
       break;
 
     case MotionState::STOPPED:
       state = None;
-      bgColor = QColor("#f08b8b");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.danger.c_str());
       break;
 
     default:
       state = Danger;
-      bgColor = QColor("#84c2e6");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
       break;
   }
 
@@ -640,31 +667,31 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
   switch (msg->state) {
     case MRMState::NONE:
       state = None;
-      bgColor = QColor("#84c2e6");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
       mrm_state = "MRM State | Inactive";
       break;
 
     case MRMState::MRM_OPERATING:
       state = Active;
-      bgColor = QColor("#84c2e6");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
       mrm_state = "MRM State | Operating";
       break;
 
     case MRMState::MRM_SUCCEEDED:
       state = Active;
-      bgColor = QColor("#00e678");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
       mrm_state = "MRM State | Successful";
       break;
 
     case MRMState::MRM_FAILED:
       state = Danger;
-      bgColor = QColor("#f08b8b");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.danger.c_str());
       mrm_state = "MRM State | Failed";
       break;
 
     default:
       state = None;
-      bgColor = QColor("#84c2e6");
+      bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
       mrm_state = "MRM State | Unknown";
       break;
   }
@@ -681,31 +708,31 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     switch (msg->behavior) {
       case MRMState::NONE:
         state = Crash;
-        bgColor = QColor("#84c2e6");
+        bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
         mrm_behavior = "MRM Behavior | Inactive";
         break;
 
       case MRMState::PULL_OVER:
         state = Crash;
-        bgColor = QColor("#00e678");
+        bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
         mrm_behavior = "MRM Behavior | Pull Over";
         break;
 
       case MRMState::COMFORTABLE_STOP:
         state = Crash;
-        bgColor = QColor("#eef08b");
+        bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
         mrm_behavior = "MRM Behavior | Comfortable Stop";
         break;
 
       case MRMState::EMERGENCY_STOP:
         state = Crash;
-        bgColor = QColor("#f08b8b");
+        bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.danger.c_str());
         mrm_behavior = "MRM Behavior | Emergency Stop";
         break;
 
       default:
         state = Crash;
-        bgColor = QColor("#84c2e6");
+        bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
         mrm_behavior = "MRM Behavior | Unknown";
         break;
     }
@@ -837,10 +864,19 @@ void AutowareStatePanel::onEmergencyStatus(
   current_emergency_ = msg->emergency;
   if (msg->emergency) {
     emergency_button_ptr_->updateStyle(
-      "Clear Emergency", QColor("#f08b8b"), QColor("#FFDAD6"), QColor("#ed7474"));
+      "Clear Emergency",
+      QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_error_container.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_error.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_error_container.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.error_container.c_str()));
   } else {
     emergency_button_ptr_->updateStyle(
-      "Set Emergency", QColor("#84c2e6"), QColor("#003546"), QColor("#8bd0f0"));
+      "Set Emergency", QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary_container.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_primary.c_str()),
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_tint.c_str()));
   }
 }
 

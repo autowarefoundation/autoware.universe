@@ -13,9 +13,17 @@
 // limitations under the License.
 #include "include/custom_button.hpp"
 
+#include "src/include/material_colors.hpp"
+
 CustomElevatedButton::CustomElevatedButton(
-  const QString & text, const QColor & bgColor, const QColor & textColor, QWidget * parent)
-: QPushButton(text, parent), backgroundColor(bgColor), textColor(textColor)
+  const QString & text, const QColor & bgColor, const QColor & textColor, const QColor & hoverColor,
+  const QColor & disabledBgColor, const QColor & disabledTextColor, QWidget * parent)
+: QPushButton(text, parent),
+  backgroundColor(bgColor),
+  textColor(textColor),
+  hoverColor(hoverColor),
+  disabledBgColor(disabledBgColor),
+  disabledTextColor(disabledTextColor)
 {
   setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   setCursor(Qt::PointingHandCursor);
@@ -30,7 +38,8 @@ CustomElevatedButton::CustomElevatedButton(
   QGraphicsDropShadowEffect * shadowEffect = new QGraphicsDropShadowEffect(this);
   shadowEffect->setBlurRadius(15);
   shadowEffect->setOffset(3, 3);
-  shadowEffect->setColor(QColor(0, 0, 0, 80));
+  shadowEffect->setColor(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.shadow.c_str()));
   setGraphicsEffect(shadowEffect);
 }
 
@@ -50,12 +59,15 @@ QSize CustomElevatedButton::minimumSizeHint() const
 }
 
 void CustomElevatedButton::updateStyle(
-  const QString & text, const QColor & bgColor, const QColor & textColor, const QColor & hoverColor)
+  const QString & text, const QColor & bgColor, const QColor & textColor, const QColor & hoverColor,
+  const QColor & disabledBgColor, const QColor & disabledTextColor)
 {
   setText(text);
   backgroundColor = bgColor;
   this->textColor = textColor;
   this->hoverColor = hoverColor;
+  this->disabledBgColor = disabledBgColor;
+  this->disabledTextColor = disabledTextColor;
   update();  // Force repaint
 }
 
@@ -68,9 +80,12 @@ void CustomElevatedButton::paintEvent(QPaintEvent *)
   opt.initFrom(this);
   QRect r = rect();
 
-  // Determine the button's color based on its state
   QColor buttonColor;
-  if (isHovered && isEnabled()) {
+  QColor currentTextColor = textColor;
+  if (!isEnabled()) {
+    buttonColor = disabledBgColor;
+    currentTextColor = disabledTextColor;
+  } else if (isHovered) {
     buttonColor = hoverColor;
   } else {
     buttonColor = backgroundColor;
@@ -86,8 +101,16 @@ void CustomElevatedButton::paintEvent(QPaintEvent *)
   painter.drawPath(backgroundPath);
 
   // Draw button text
-  painter.setPen(textColor);
+  painter.setPen(currentTextColor);
   painter.drawText(r, Qt::AlignCenter, text());
+
+  if (!isEnabled()) {
+    painter.setBrush(
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
+    painter.setPen(Qt::NoPen);
+    painter.setOpacity(0.12);
+    painter.drawPath(backgroundPath);
+  }
 }
 
 void CustomElevatedButton::enterEvent(QEvent * event)

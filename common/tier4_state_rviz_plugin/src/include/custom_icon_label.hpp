@@ -14,6 +14,8 @@
 #ifndef CUSTOM_ICON_LABEL_HPP_
 #define CUSTOM_ICON_LABEL_HPP_
 
+#include "material_colors.hpp"
+
 #include <QColor>
 #include <QLabel>
 #include <QMap>
@@ -30,7 +32,10 @@ class CustomIconLabel : public QLabel
   Q_OBJECT
 
 public:
-  explicit CustomIconLabel(const QColor & bgColor = QColor("#2C3E50"), QWidget * parent = nullptr);
+  explicit CustomIconLabel(
+    const QColor & bgColor =
+      QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str()),
+    QWidget * parent = nullptr);
   void updateStyle(IconState state, const QColor & bgColor);
 
 protected:
@@ -41,7 +46,8 @@ protected:
 private:
   void loadIcons();
   QPixmap icon;
-  QColor backgroundColor;
+  QColor backgroundColor =
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str());
   QMap<IconState, QPixmap> iconMap;
 };
 

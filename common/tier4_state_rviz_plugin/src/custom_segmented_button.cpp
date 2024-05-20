@@ -69,18 +69,7 @@ void CustomSegmentedButton::paintEvent(QPaintEvent *)
   path.addRoundedRect(rect(), height() / 2, height() / 2);
 
   painter.setPen(Qt::NoPen);
-  painter.setBrush(QColor("#0F1417"));
+  painter.setBrush(
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_low.c_str()));
   painter.drawPath(path);
-}
-
-void CustomSegmentedButton::drawBorders(QPainter & painter)
-{
-  painter.setPen(QPen(QColor("#8a9297"), 3));  // Color for the borders
-  const QList<QAbstractButton *> buttons = buttonGroup->buttons();
-  for (int i = 1; i < buttons.size(); ++i) {
-    QAbstractButton * button = buttons[i];
-    QRect buttonRect = button->geometry();
-    int x = buttonRect.left();
-    painter.drawLine(x, 0, x, height());
-  }
 }

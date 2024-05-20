@@ -25,20 +25,16 @@
 #include "custom_segmented_button_item.hpp"
 #include "custom_slider.hpp"
 #include "custom_toggle_switch.hpp"
+#include "material_colors.hpp"
 
 #include <QChar>
 #include <QColor>
-#include <QGridLayout>
 #include <QHBoxLayout>
-#include <QHeaderView>
 #include <QLabel>
-#include <QLayout>
 #include <QPushButton>
-#include <QScrollArea>
 #include <QSlider>
 #include <QSpinBox>
 #include <QString>
-#include <QTableWidget>
 #include <QVBoxLayout>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
