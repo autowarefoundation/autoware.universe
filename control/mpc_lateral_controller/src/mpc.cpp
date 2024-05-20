@@ -102,7 +102,7 @@ bool MPC::calculateMPC(
 
   // save previous input for the mpc rate limit
   m_raw_steer_cmd_pprev = m_raw_steer_cmd_prev;
-  m_raw_steer_cmd_prev = Uex(0);
+  m_raw_steer_cmd_prev = ctrl_cmd.steering_tire_angle;
 
   /* calculate predicted trajectory */
   predicted_trajectory =
