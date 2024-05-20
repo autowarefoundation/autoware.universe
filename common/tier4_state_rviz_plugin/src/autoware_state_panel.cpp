@@ -604,7 +604,7 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
       break;
 
     case MotionState::STOPPED:
-      state = Danger;
+      state = None;
       bgColor = QColor("#f08b8b");
       break;
 
