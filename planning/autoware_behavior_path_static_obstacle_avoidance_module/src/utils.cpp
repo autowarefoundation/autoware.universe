@@ -318,14 +318,20 @@ bool isWithinCrosswalk(
 bool isWithinIntersection(
   const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
 {
-  const std::string id = object.overhang_lanelet.attributeOr("intersection_area", "else");
-  if (id == "else") {
+  const std::string area_id = object.overhang_lanelet.attributeOr("intersection_area", "else");
+  if (area_id == "else") {
+    return false;
+  }
+
+  const std::string location = object.overhang_lanelet.attributeOr("location", "else");
+  if (location == "private") {
     return false;
   }
 
   const auto object_polygon = tier4_autoware_utils::toPolygon2d(object.object);
 
-  const auto polygon = route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(id.c_str()));
+  const auto polygon =
+    route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(area_id.c_str()));
 
   return boost::geometry::within(
     object_polygon, utils::toPolygon2d(lanelet::utils::to2D(polygon.basicPolygon())));
