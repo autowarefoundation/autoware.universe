@@ -160,6 +160,10 @@ Float32MultiArrayStamped MPC::generateDiagData(
   append_diag(iteration_num);             // [18] iteration number
   append_diag(runtime);                   // [19] runtime of the latest problem solved
   append_diag(objective_value);           // [20] objective value of the latest problem solved
+  append_diag(m_upper_actual_steer);      // [21] upper limit of actual steer
+  append_diag(m_lower_actual_steer);      // [22] lower limit of actual steer
+  append_diag(m_upper_MPC_steer);         // [23] upper limit of MPC steer
+  append_diag(m_lower_MPC_steer);         // [24] lower limit of MPC steer
 
   return diagnostic;
 }
@@ -581,8 +585,18 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
   VectorXd steer_rate_limits = calcSteerRateLimitOnTrajectory(traj, current_velocity);
   VectorXd ubA = steer_rate_limits * prediction_dt;
   VectorXd lbA = -steer_rate_limits * prediction_dt;
-  ubA(0) = m_raw_steer_cmd_constraint_base + steer_rate_limits(0) * m_ctrl_period * 5;
-  lbA(0) = m_raw_steer_cmd_constraint_base - steer_rate_limits(0) * m_ctrl_period * 5;
+  ubA(0) = m_raw_steer_cmd_constraint_base + steer_rate_limits(0) * m_ctrl_period;
+  lbA(0) = m_raw_steer_cmd_constraint_base - steer_rate_limits(0) * m_ctrl_period;
+
+  m_upper_actual_steer = m_upper_actual_steer_next;
+  m_lower_actual_steer = m_lower_actual_steer_next;
+  m_upper_MPC_steer = m_upper_MPC_steer_next;
+  m_lower_MPC_steer = m_lower_MPC_steer_next;
+
+  m_upper_actual_steer_next = m_raw_steer_cmd_constraint_base + steer_rate_limits(0) * m_ctrl_period;
+  m_lower_actual_steer_next = m_raw_steer_cmd_constraint_base - steer_rate_limits(0) * m_ctrl_period;
+  m_upper_MPC_steer_next = m_raw_steer_cmd_prev + steer_rate_limits(0) * m_ctrl_period;
+  m_lower_MPC_steer_next = m_raw_steer_cmd_prev - steer_rate_limits(0) * m_ctrl_period;
 
   auto t_start = std::chrono::system_clock::now();
   bool solve_result = m_qpsolver_ptr->solve(H, f.transpose(), A, lb, ub, lbA, ubA, Uex);

@@ -411,6 +411,16 @@ public:
   double m_raw_steer_cmd_prev = 0.0;     // Previous MPC raw output.
   double m_raw_steer_cmd_constraint_base = 0.0;  // Base value for raw steer command constraint.
 
+  double m_upper_actual_steer {};  // Upper limit of actual steering angle.
+  double m_lower_actual_steer {};  // Lower limit of actual steering angle.
+  double m_upper_MPC_steer {};     // Upper limit of MPC steering angle.
+  double m_lower_MPC_steer {};     // Lower limit of MPC steering angle.
+
+  double m_upper_actual_steer_next {};  // Upper limit of actual steering angle in the next step.
+  double m_lower_actual_steer_next {};  // Lower limit of actual steering angle in the next step.
+  double m_upper_MPC_steer_next {};     // Upper limit of MPC steering angle in the next step.
+  double m_lower_MPC_steer_next {};     // Lower limit of MPC steering angle in the next step.
+
   /* Parameters for control */
   double m_admissible_position_error;  // Threshold for lateral error to trigger stop command [m].
   double m_admissible_yaw_error_rad;   // Threshold for yaw error to trigger stop command [rad].
