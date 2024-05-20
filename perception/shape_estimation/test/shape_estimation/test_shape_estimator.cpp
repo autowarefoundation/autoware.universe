@@ -61,9 +61,9 @@ TEST(BoundingBoxShapeModel, test_estimateShape)
 
   // Check shape_output
   EXPECT_EQ(shape_output.type, autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX);
-  EXPECT_NEAR(shape_output.dimensions.x, length, 1);
-  EXPECT_NEAR(shape_output.dimensions.y, width, 1);
-  EXPECT_NEAR(shape_output.dimensions.z, height, 1);
+  EXPECT_NEAR(shape_output.dimensions.x, length, length * 0.1);
+  EXPECT_NEAR(shape_output.dimensions.y, width, width * 0.1);
+  EXPECT_NEAR(shape_output.dimensions.z, height, height * 0.1);
 
   // Check pose_output
   EXPECT_NEAR(pose_output.position.x, 0.0, 1e-2);
@@ -84,6 +84,12 @@ TEST(BoundingBoxShapeModel, test_estimateShape_rotated)
   const double height = 1.0;
 
   pcl::PointCloud<pcl::PointXYZ> cluster;
+  for (double x = -length / 2; x < length / 2; x += 0.4) {
+    cluster.push_back(pcl::PointXYZ(x, width / 2, 0.0));
+  }
+  for (double y = -width / 2; y < width / 2; y += 0.2) {
+    cluster.push_back(pcl::PointXYZ(-length / 2, y, 0.0));
+  }
   cluster.push_back(pcl::PointXYZ(length / 2, -width / 2, 0.0));
   cluster.push_back(pcl::PointXYZ(length / 2, width / 2, 0.0));
   cluster.push_back(pcl::PointXYZ(-length / 2, -width / 2, 0.0));
@@ -123,9 +129,9 @@ TEST(BoundingBoxShapeModel, test_estimateShape_rotated)
 
   // Check shape_output
   EXPECT_EQ(shape_output.type, autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX);
-  EXPECT_NEAR(shape_output.dimensions.x, length, 1);
-  EXPECT_NEAR(shape_output.dimensions.y, width, 1);
-  EXPECT_NEAR(shape_output.dimensions.z, height, 1);
+  EXPECT_NEAR(shape_output.dimensions.x, length, length * 0.1);
+  EXPECT_NEAR(shape_output.dimensions.y, width, width * 0.1);
+  EXPECT_NEAR(shape_output.dimensions.z, height, height * 0.1);
 
   // Check pose_output
   EXPECT_NEAR(pose_output.position.x, offset_x, 1.0);
@@ -134,8 +140,6 @@ TEST(BoundingBoxShapeModel, test_estimateShape_rotated)
 
   // transform quaternion to yaw
   const double pose_output_yaw = yawFromQuaternion(pose_output.orientation);
-  // print
-  std::cout << "yaw: " << yaw << "  pose_output_yaw: " << pose_output_yaw << std::endl;
   EXPECT_NEAR(pose_output_yaw, yaw, deg2rad(15.0));
 }
 
@@ -162,6 +166,26 @@ TEST(CylinderShapeModel, test_estimateShape)
 }
 
 // test ConvexHullShapeModel
+TEST(ConvexHullShapeModel, test_estimateShape)
+{
+  // Generate ConvexHullShapeModel
+  ConvexHullShapeModel convex_hull_shape_model = ConvexHullShapeModel();
+
+  // Generate cluster
+  pcl::PointCloud<pcl::PointXYZ> cluster;
+  cluster.push_back(pcl::PointXYZ(0.0, 0.0, 0.0));
+  cluster.push_back(pcl::PointXYZ(1.0, 0.0, 0.0));
+  cluster.push_back(pcl::PointXYZ(0.0, 1.0, 0.0));
+  cluster.push_back(pcl::PointXYZ(1.0, 1.0, 0.0));
+
+  // Generate shape and pose output
+  autoware_auto_perception_msgs::msg::Shape shape_output;
+  geometry_msgs::msg::Pose pose_output;
+
+  // Test estimateShape
+  const bool result = convex_hull_shape_model.estimate(cluster, shape_output, pose_output);
+  EXPECT_TRUE(result);
+}
 
 // test ShapeEstimator
 TEST(ShapeEstimator, test_estimateShapeAndPose)
@@ -172,13 +196,11 @@ TEST(ShapeEstimator, test_estimateShapeAndPose)
   double length = 4.0;
   double width = 2.0;
   double height = 1.0;
-  for (double x = -length / 2; x < length / 2; x += 0.1) {
-    cluster.push_back(pcl::PointXYZ(x, -width / 2, 0.0));
+  for (double x = -length / 2; x < length / 2; x += 0.4) {
     cluster.push_back(pcl::PointXYZ(x, width / 2, 0.0));
   }
-  for (double y = -width / 2; y < width / 2; y += 0.1) {
+  for (double y = -width / 2; y < width / 2; y += 0.2) {
     cluster.push_back(pcl::PointXYZ(-length / 2, y, 0.0));
-    cluster.push_back(pcl::PointXYZ(length / 2, y, 0.0));
   }
   cluster.push_back(pcl::PointXYZ(length / 2, -width / 2, 0.0));
   cluster.push_back(pcl::PointXYZ(length / 2, width / 2, 0.0));
@@ -189,7 +211,7 @@ TEST(ShapeEstimator, test_estimateShapeAndPose)
   // rotate cluster
   const double yaw = deg2rad(60.0);
   const double offset_x = 6.0;
-  const double offset_y = 2.0;
+  const double offset_y = -2.0;
 
   for (auto & point : cluster) {
     const double x = point.x;
@@ -216,10 +238,6 @@ TEST(ShapeEstimator, test_estimateShapeAndPose)
   ref_yaw_info = ReferenceYawInfo{static_cast<float>(yaw), static_cast<float>(deg2rad(10.0))};
   const auto label = autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
 
-  // const auto shape = autoware_auto_perception_msgs::msg::Shape(); // empty
-  // shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
-  // ref_shape_size_info = ReferenceShapeSizeInfo{shape, ReferenceShapeSizeInfo::Mode::Min};
-
   // Generate shape and pose output
   autoware_auto_perception_msgs::msg::Shape shape_output;
   geometry_msgs::msg::Pose pose_output;
@@ -242,7 +260,5 @@ TEST(ShapeEstimator, test_estimateShapeAndPose)
 
   // transform quaternion to yaw
   const double pose_output_yaw = yawFromQuaternion(pose_output.orientation);
-  // print
-  std::cout << "yaw: " << yaw << "  pose_output_yaw: " << pose_output_yaw << std::endl;
   EXPECT_NEAR(pose_output_yaw, yaw, deg2rad(15.0));
 }
