@@ -48,7 +48,7 @@ TrafficDisplay::TrafficDisplay()
 }
 
 void TrafficDisplay::updateTrafficLightData(
-  const autoware_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr & msg)
+  const autoware_perception_msgs::msg::TrafficSignal::ConstSharedPtr & msg)
 {
   current_traffic_ = *msg;
 }
@@ -62,16 +62,14 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   painter.setBrush(QBrush(tl_gray_, Qt::SolidPattern));
   painter.setPen(Qt::NoPen);
   // Define the area for the circle (background)
-  QRectF circleRect = backgroundRect;
-  circleRect.setWidth(backgroundRect.width() - 30);
-  circleRect.setHeight(backgroundRect.width() - 30);
+  QRectF circleRect = QRectF(50, 50, 50, 50);
   circleRect.moveTopRight(QPointF(
-    backgroundRect.left() + circleRect.width() + 15,
-    backgroundRect.top() + circleRect.height() + 30));
+    backgroundRect.right() - circleRect.width() - 75,
+    backgroundRect.top() + circleRect.height() / 2));
   painter.drawEllipse(circleRect);
 
-  if (!current_traffic_.signals.empty()) {
-    switch (current_traffic_.signals[0].elements[0].color) {
+  if (!current_traffic_.elements.empty()) {
+    switch (current_traffic_.elements[0].color) {
       case 1:
         painter.setBrush(QBrush(tl_red_));
         painter.drawEllipse(circleRect);
@@ -96,7 +94,7 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
   }
 
   // Scaling factor (e.g., 1.5 for 150% size)
-  float scaleFactor = 1.00;
+  float scaleFactor = 0.75;
 
   // Calculate the scaled size
   QSize scaledSize = traffic_light_image_.size() * scaleFactor;

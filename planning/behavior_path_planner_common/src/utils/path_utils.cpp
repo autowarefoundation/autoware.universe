@@ -447,6 +447,8 @@ std::vector<double> splineTwoPoints(
   std::vector<double> base_s, std::vector<double> base_x, const double begin_diff,
   const double end_diff, std::vector<double> new_s)
 {
+  assert(base_s.size() == 2 && base_x.size() == 2);
+
   const double h = base_s.at(1) - base_s.at(0);
 
   const double c = begin_diff;
@@ -643,15 +645,12 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
   const auto & modified_goal = planner_data->prev_modified_goal;
 
   const Pose goal_pose = modified_goal ? modified_goal->pose : route_handler->getGoalPose();
-  const auto shoulder_lanes = route_handler->getShoulderLanelets();
 
   lanelet::ConstLanelet goal_lane;
-  const bool is_failed_getting_lanelet = std::invoke([&]() {
-    if (isInLanelets(goal_pose, shoulder_lanes)) {
-      return !lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
-    }
-    return !route_handler->getGoalLanelet(&goal_lane);
-  });
+  const auto shoulder_goal_lanes = route_handler->getShoulderLaneletsAtPose(goal_pose);
+  if (!shoulder_goal_lanes.empty()) goal_lane = shoulder_goal_lanes.front();
+  const auto is_failed_getting_lanelet =
+    shoulder_goal_lanes.empty() && !route_handler->getGoalLanelet(&goal_lane);
   if (is_failed_getting_lanelet) {
     return output;
   }
