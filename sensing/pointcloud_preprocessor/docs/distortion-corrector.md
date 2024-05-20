@@ -45,3 +45,4 @@ Please note that the processing time difference between the two distortion metho
 ## Assumptions / Known limits
 
 - The node requires that time synchronization works well between the pointcloud, twist, and IMU.
+- If you want to use 3D distortion corrector without IMU, please check that the linear and angular velocity fields of your twist message are not empty.

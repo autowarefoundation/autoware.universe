@@ -41,7 +41,7 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   // Parameter
   time_stamp_field_name_ = declare_parameter("time_stamp_field_name", "time_stamp");
   use_imu_ = declare_parameter("use_imu", true);
-  use_3d_distortion_correction_ = declare_parameter<bool>("use_3d_distortion_correction");
+  use_3d_distortion_correction_ = declare_parameter("use_3d_distortion_correction", false);
 
   // Publisher
   undistorted_points_pub_ =
@@ -267,12 +267,6 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
   double twist_stamp = rclcpp::Time(twist_it->header.stamp).seconds();
 
-  // For performance, instantiate outside of the for-loop
-  tf2::Quaternion baselink_quat{};
-  tf2::Transform baselink_tf_odom{};
-  tf2::Vector3 point{};
-  tf2::Vector3 undistorted_point{};
-
   // For performance, avoid transform computation if unnecessary
   bool need_transform = points.header.frame_id != base_link_frame_;
 
@@ -286,10 +280,16 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   bool twist_time_stamp_is_too_late = false;
   bool imu_time_stamp_is_too_late = false;
 
+  // For performance, instantiate outside of the for-loop
+  tf2::Quaternion baselink_quat{};
+  tf2::Transform baselink_tf_odom{};
+
   // for 2d motion
+  tf2::Vector3 point{};
+  tf2::Vector3 undistorted_point{};
   float theta{0.0f};
-  float x{0.0f};
-  float y{0.0f};
+  float x{0.0f}, y{0.0f};
+  float v{0.0f}, w{0.0f};
 
   // for 3d motion
   Eigen::Vector4f point_eigen;
@@ -297,8 +297,7 @@ bool DistortionCorrectorComponent::undistortPointCloud(
   Eigen::Matrix4f transformation_matrix;
   Eigen::Matrix4f prev_transformation_matrix = Eigen::Matrix4f::Identity();
 
-  float v_x = 0.0f, v_y = 0.0f, v_z = 0.0f, w_x = 0.0f, w_y = 0.0f, w_z = 0.0f;  // 3d motion
-  float v = 0.0f, w = 0.0f;                                                      // 2d motion
+  float v_x{0.0f}, v_y = {0.0f}, v_z = {0.0f}, w_x = {0.0f}, w_y = {0.0f}, w_z = {0.0f};
 
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
     while (twist_it != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
