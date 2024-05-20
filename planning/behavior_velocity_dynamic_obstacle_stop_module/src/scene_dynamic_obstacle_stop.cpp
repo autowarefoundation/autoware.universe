@@ -91,7 +91,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     make_forward_footprints(dynamic_obstacles, params_, hysteresis);
   const auto footprints_duration_us = stopwatch.toc("footprints");
   stopwatch.tic("collisions");
-  auto collisions = find_collisions(ego_data, dynamic_obstacles, obstacle_forward_footprints);
+  auto collisions = find_collisions(ego_data, dynamic_obstacles, obstacle_forward_footprints, params_);
   update_object_map(object_map_, collisions, clock_->now(), ego_data.path.points, params_);
   std::optional<geometry_msgs::msg::Point> earliest_collision =
     find_earliest_collision(object_map_, ego_data);
