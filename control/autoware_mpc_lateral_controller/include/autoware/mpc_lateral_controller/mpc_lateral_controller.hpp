@@ -53,7 +53,7 @@ class MpcLateralController : public trajectory_follower::LateralControllerBase
 {
 public:
   /// \param node Reference to the node used only for the component and parameter initialization.
-  explicit MpcLateralController(rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater_);
+  explicit MpcLateralController(rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater);
   virtual ~MpcLateralController();
 
 private:
@@ -63,6 +63,8 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr m_pub_predicted_traj;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr m_pub_debug_values;
   rclcpp::Publisher<Float32Stamped>::SharedPtr m_pub_steer_offset;
+
+  std::shared_ptr<diagnostic_updater::Updater> diag_updater_{}; // Diagnostic updater for publishing diagnostic data.
 
   //!< @brief parameters for path smoothing
   TrajectoryFilteringParam m_trajectory_filtering_param;

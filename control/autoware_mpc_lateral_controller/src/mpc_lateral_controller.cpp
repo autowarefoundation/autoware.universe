@@ -35,12 +35,14 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
-MpcLateralController::MpcLateralController(rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater_)
+MpcLateralController::MpcLateralController(rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater)
 : clock_(node.get_clock()), logger_(node.get_logger().get_child("lateral_controller"))
 {
   const auto dp_int = [&](const std::string & s) { return node.declare_parameter<int>(s); };
   const auto dp_bool = [&](const std::string & s) { return node.declare_parameter<bool>(s); };
   const auto dp_double = [&](const std::string & s) { return node.declare_parameter<double>(s); };
+
+  diag_updater_ = diag_updater;
 
   m_mpc = std::make_unique<MPC>(node);
 
