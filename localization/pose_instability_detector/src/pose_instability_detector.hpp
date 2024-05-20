@@ -46,7 +46,7 @@ private:
   void callback_timer();
 
   void calculate_threshold(double interval_sec);
-  void dead_reckon(Odometry::SharedPtr & initial_pose, const rclcpp::Time & end_time, const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);
+  void dead_reckon(PoseStamped::SharedPtr & initial_pose, const rclcpp::Time & end_time, const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);
   std::deque<TwistWithCovarianceStamped> clip_out_necessary_twist(const std::deque<TwistWithCovarianceStamped> & twist_buffer, const rclcpp::Time & start_time, const rclcpp::Time & end_time);
 
   // subscribers and timer
@@ -77,7 +77,8 @@ private:
 
   const double pose_estimator_longitudinal_tolerance_;  // [m]
   const double pose_estimator_lateral_tolerance_;       // [m]
-  const double pose_estimator_yaw_tolerance_;           // [rad]
+  const double pose_estimator_vertical_tolerance_;      // [m]
+  const double pose_estimator_angular_tolerance_;           // [rad]
 
   // variables
   std::optional<Odometry> latest_odometry_ = std::nullopt;

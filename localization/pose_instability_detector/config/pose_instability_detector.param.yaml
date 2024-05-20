@@ -2,8 +2,8 @@
   ros__parameters:
     timer_period: 0.5                             # [sec]
 
-    heading_velocity_maximum_: 16.667              # [m/s]
-    heading_velocity_scale_factor_tolerance: 3.0          # [%]
+    heading_velocity_maximum: 16.667              # [m/s]
+    heading_velocity_scale_factor_tolerance: 3.0  # [%]
 
     angular_velocity_maximum: 0.523               # [rad/s]
     angular_velocity_scale_factor_tolerance: 0.2  # [%]
@@ -11,4 +11,5 @@
 
     pose_estimator_longitudinal_tolerance: 0.11   # [m]
     pose_estimator_lateral_tolerance: 0.11        # [m]
-    pose_estimator_yaw_tolerance: 0.000279        # [rad]
+    pose_estimator_vertical_tolerance: 0.11       # [m]
+    pose_estimator_angular_tolerance: 0.00631     # [rad]

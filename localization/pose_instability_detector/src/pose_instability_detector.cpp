@@ -33,7 +33,8 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
   angular_velocity_bias_tolerance_(this->declare_parameter<double>("angular_velocity_bias_tolerance")),
   pose_estimator_longitudinal_tolerance_(this->declare_parameter<double>("pose_estimator_longitudinal_tolerance")),
   pose_estimator_lateral_tolerance_(this->declare_parameter<double>("pose_estimator_lateral_tolerance")),
-  pose_estimator_yaw_tolerance_(this->declare_parameter<double>("pose_estimator_yaw_tolerance"))
+  pose_estimator_vertical_tolerance_(this->declare_parameter<double>("pose_estimator_vertical_tolerance")),
+  pose_estimator_angular_tolerance_(this->declare_parameter<double>("pose_estimator_angular_tolerance"))
 {
   // Define subscibers, publishers and a timer.
   odometry_sub_ = this->create_subscription<Odometry>(
@@ -79,6 +80,10 @@ void PoseInstabilityDetector::callback_timer()
     return;
   }
 
+  // time variables
+  const rclcpp::Time latest_odometry_time = rclcpp::Time(latest_odometry_->header.stamp);
+  const rclcpp::Time prev_odometry_time = rclcpp::Time(prev_odometry_->header.stamp);
+
   // define lambda function to convert quaternion to rpy
   auto quat_to_rpy = [](const Quaternion & quat) {
     tf2::Quaternion tf2_quat(quat.x, quat.y, quat.z, quat.w);
@@ -92,7 +97,7 @@ void PoseInstabilityDetector::callback_timer()
 
   // delete twist data older than prev_odometry_ (but preserve the one right before prev_odometry_)
   while (twist_buffer_.size() > 1) {
-    if (rclcpp::Time(twist_buffer_[1].header.stamp) < rclcpp::Time(prev_odometry_->header.stamp)) {
+    if (rclcpp::Time(twist_buffer_[1].header.stamp) < prev_odometry_time) {
       twist_buffer_.pop_front();
     } else {
       break;
@@ -100,29 +105,29 @@ void PoseInstabilityDetector::callback_timer()
   }
 
   // dead reckoning from prev_odometry_ to latest_odometry_
-  Odometry::SharedPtr prev_odometry = std::make_shared<Odometry>(*prev_odometry_);
+  PoseStamped::SharedPtr prev_pose = std::make_shared<PoseStamped>();
+  prev_pose->header = prev_odometry_->header;
+  prev_pose->pose = prev_odometry_->pose.pose;
+
   Pose::SharedPtr DR_pose = std::make_shared<Pose>();
-  dead_reckon(prev_odometry, rclcpp::Time(latest_odometry_->header.stamp), twist_buffer_, DR_pose);
+  dead_reckon(prev_pose, latest_odometry_time, twist_buffer_, DR_pose);
 
   // compare dead reckoning pose and latest_odometry_
   const Pose latest_ekf_pose = latest_odometry_->pose.pose;
   const Pose ekf_to_DR = tier4_autoware_utils::inverseTransformPose(*DR_pose, latest_ekf_pose);
   const geometry_msgs::msg::Point pos = ekf_to_DR.position;
   const auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_DR.orientation);
-  const std::vector<double> values = {pos.x, pos.y, ang_z};
-
-  const rclcpp::Time stamp = latest_odometry_->header.stamp;
+  const std::vector<double> values = {pos.x, pos.y, pos.z, ang_x, ang_y, ang_z};
 
   // publish diff_pose for debug
   PoseStamped diff_pose;
-  diff_pose.header.stamp = latest_odometry_->header.stamp;
+  diff_pose.header.stamp = latest_odometry_time;
   diff_pose.header.frame_id = "base_link";
   diff_pose.pose = ekf_to_DR;
   diff_pose_pub_->publish(diff_pose);
 
   // publish diagnostics
-
-  calculate_threshold((stamp - rclcpp::Time(prev_odometry_->header.stamp)).seconds());
+  calculate_threshold((latest_odometry_time - prev_odometry_time).seconds());
 
   const std::vector<double> thresholds = {threshold_diff_position_x_, threshold_diff_position_y_,
                                           threshold_diff_position_z_, threshold_diff_angle_x_,
@@ -154,7 +159,7 @@ void PoseInstabilityDetector::callback_timer()
   status.message = (all_ok ? "OK" : "WARN");
 
   DiagnosticArray diagnostics;
-  diagnostics.header.stamp = stamp;
+  diagnostics.header.stamp = latest_odometry_time;
   diagnostics.status.emplace_back(status);
   diagnostics_pub_->publish(diagnostics);
 
@@ -163,62 +168,32 @@ void PoseInstabilityDetector::callback_timer()
 }
 
 void PoseInstabilityDetector::calculate_threshold(double interval_sec){
-  const double nominal_longitudinal_variation = heading_velocity_maximum_ * interval_sec * std::cos(0.5 * angular_velocity_maximum_ * interval_sec);
-  const double nominal_lateral_variation = heading_velocity_maximum_ * interval_sec * std::sin(0.5 * angular_velocity_maximum_ * interval_sec);
-  const double nominal_yaw_variation = angular_velocity_maximum_ * interval_sec;
+  const double longitudinal_difference = heading_velocity_maximum_ * heading_velocity_scale_factor_tolerance_ * 0.01 * interval_sec;
+  const double lateral_difference = heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) * sin(0.5*(angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec);
+  const double vertical_difference = heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) * sin(0.5*(angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec);
 
-  const std::vector<double> heading_velocity_error_range = {
-    heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01),
-    heading_velocity_maximum_ * (1 - heading_velocity_scale_factor_tolerance_ * 0.01),
-    heading_velocity_maximum_ * (1 - heading_velocity_scale_factor_tolerance_ * 0.01),
-    heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01)
-  };
+  const double roll_difference = (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec;
+  const double pitch_difference = (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec;
+  const double yaw_difference = (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 + angular_velocity_bias_tolerance_) * interval_sec;
 
-  const std::vector<double> angular_velocity_error_range = {
-    angular_velocity_maximum_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) + std::copysign(1.0, angular_velocity_maximum_) * angular_velocity_bias_tolerance_,
-    angular_velocity_maximum_ * (1 + angular_velocity_scale_factor_tolerance_ * 0.01) + std::copysign(1.0, angular_velocity_maximum_) * angular_velocity_bias_tolerance_,
-    angular_velocity_maximum_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) - std::copysign(1.0, angular_velocity_maximum_) * angular_velocity_bias_tolerance_,
-    angular_velocity_maximum_ * (1 - angular_velocity_scale_factor_tolerance_ * 0.01) - std::copysign(1.0, angular_velocity_maximum_) * angular_velocity_bias_tolerance_
-  };
-
-  double longitudinal_change = 0;
-  double lateral_change = 0;
-  double yaw_change = 0;
-  for (int i = 0; i < 4; ++i) {
-    double range_corner_x = heading_velocity_error_range[i] * interval_sec * std::cos(0.5 * angular_velocity_error_range[i] * interval_sec);
-    double range_corner_y = heading_velocity_error_range[i] * interval_sec * std::sin(0.5 * angular_velocity_error_range[i] * interval_sec);
-    double range_corner_yaw = angular_velocity_error_range[i] * interval_sec;
-    double nominal_to_range_corner_direction = std::atan2(range_corner_y, range_corner_x);
-    double nominal_to_range_corner_distance = std::hypot(
-      range_corner_x - nominal_longitudinal_variation, range_corner_y - nominal_lateral_variation);
-
-    double temp_longitudinal_change =
-      nominal_to_range_corner_distance *
-      std::cos(nominal_to_range_corner_direction - nominal_yaw_variation);
-    double temp_lateral_change =
-      nominal_to_range_corner_distance *
-      std::sin(nominal_to_range_corner_direction - nominal_yaw_variation);
-
-    longitudinal_change = std::max(longitudinal_change, std::abs(temp_longitudinal_change));
-    lateral_change = std::max(lateral_change, std::abs(temp_lateral_change));
-    yaw_change = std::max(yaw_change, std::abs(range_corner_yaw - nominal_yaw_variation));
-  }
-
-  threshold_diff_position_x_ = longitudinal_change + pose_estimator_longitudinal_tolerance_;
-  threshold_diff_position_y_ = lateral_change + pose_estimator_lateral_tolerance_;
-  threshold_diff_angle_z_ = yaw_change + pose_estimator_yaw_tolerance_;
+  threshold_diff_position_x_ = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
+  threshold_diff_position_y_ = lateral_difference + pose_estimator_lateral_tolerance_;
+  threshold_diff_position_z_ = vertical_difference + pose_estimator_vertical_tolerance_;
+  threshold_diff_angle_x_ = roll_difference + pose_estimator_angular_tolerance_;
+  threshold_diff_angle_y_ = pitch_difference + pose_estimator_angular_tolerance_;
+  threshold_diff_angle_z_ = yaw_difference + pose_estimator_angular_tolerance_;
 }
 
 void PoseInstabilityDetector::dead_reckon(
-  Odometry::SharedPtr & initial_pose, const rclcpp::Time & end_time,
+  PoseStamped::SharedPtr & initial_pose, const rclcpp::Time & end_time,
   const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose)
 {
   // get start time
   rclcpp::Time start_time = rclcpp::Time(initial_pose->header.stamp);
 
   // initialize estimated_pose
-  estimated_pose->position = initial_pose->pose.pose.position;
-  estimated_pose->orientation = initial_pose->pose.pose.orientation;
+  estimated_pose->position = initial_pose->pose.position;
+  estimated_pose->orientation = initial_pose->pose.orientation;
 
   // define lambda function to convert quaternion to rpy
   auto quat_to_rpy = [](const Quaternion & quat) {
@@ -236,11 +211,11 @@ void PoseInstabilityDetector::dead_reckon(
     clip_out_necessary_twist(twist_deque, start_time, end_time);
 
   // dead reckoning
-  rclcpp::Time prev_time = rclcpp::Time(sliced_twist_deque.front().header.stamp);
+  rclcpp::Time prev_odometry_time = rclcpp::Time(sliced_twist_deque.front().header.stamp);
 
   for (size_t i = 1; i < sliced_twist_deque.size(); ++i) {
     const rclcpp::Time curr_time = rclcpp::Time(sliced_twist_deque[i].header.stamp);
-    const double time_diff_sec = (curr_time - prev_time).seconds();
+    const double time_diff_sec = (curr_time - prev_odometry_time).seconds();
 
     const Twist twist = sliced_twist_deque[i].twist.twist;
 
@@ -274,7 +249,7 @@ void PoseInstabilityDetector::dead_reckon(
     estimated_pose->orientation.w = quat.w();
 
     // update previous variables
-    prev_time = curr_time;
+    prev_odometry_time = curr_time;
   }
 }
 
