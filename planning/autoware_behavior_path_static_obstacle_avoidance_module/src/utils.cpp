@@ -628,14 +628,49 @@ bool isNeverAvoidanceTarget(
 
   if (object.is_on_ego_lane) {
     const auto right_lane =
-      planner_data->route_handler->getRightLanelet(object.overhang_lanelet, true, false);
+      planner_data->route_handler->getRightLanelet(object.overhang_lanelet, true, true);
+    if (right_lane.has_value() && isOnRight(object)) {
+      const lanelet::Attribute & right_lane_sub_type =
+        right_lane.value().attribute(lanelet::AttributeName::Subtype);
+      if (right_lane_sub_type != "road_shoulder") {
+        object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
+        RCLCPP_DEBUG(
+          rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+        return true;
+      }
+
+      const auto object_polygon = tier4_autoware_utils::toPolygon2d(object.object);
+      const auto is_disjoint_right_lane =
+        boost::geometry::disjoint(object_polygon, right_lane.value().polygon2d().basicPolygon());
+      if (is_disjoint_right_lane) {
+        object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
+        RCLCPP_DEBUG(
+          rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+        return true;
+      }
+    }
+
     const auto left_lane =
-      planner_data->route_handler->getLeftLanelet(object.overhang_lanelet, true, false);
-    if (right_lane.has_value() && left_lane.has_value()) {
-      object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
-      RCLCPP_DEBUG(
-        rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
-      return true;
+      planner_data->route_handler->getLeftLanelet(object.overhang_lanelet, true, true);
+    if (left_lane.has_value() && !isOnRight(object)) {
+      const lanelet::Attribute & left_lane_sub_type =
+        left_lane.value().attribute(lanelet::AttributeName::Subtype);
+      if (left_lane_sub_type != "road_shoulder") {
+        object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
+        RCLCPP_DEBUG(
+          rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+        return true;
+      }
+
+      const auto object_polygon = tier4_autoware_utils::toPolygon2d(object.object);
+      const auto is_disjoint_left_lane =
+        boost::geometry::disjoint(object_polygon, left_lane.value().polygon2d().basicPolygon());
+      if (is_disjoint_left_lane) {
+        object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
+        RCLCPP_DEBUG(
+          rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+        return true;
+      }
     }
   }
 
