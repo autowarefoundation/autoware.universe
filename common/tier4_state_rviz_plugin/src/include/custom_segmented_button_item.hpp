@@ -53,7 +53,7 @@ private:
   QColor inactiveTextColor;
   QColor activeTextColor;
   QColor disabledBgColor =
-    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_container_high.c_str());
+    QColor(autoware::state_rviz_plugin::colors::default_colors.surface_dim.c_str());
   QColor disabledTextColor =
     QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface_variant.c_str());
   bool isHovered = false;
