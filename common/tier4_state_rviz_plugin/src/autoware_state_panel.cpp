@@ -639,7 +639,7 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     case MRMState::MRM_OPERATING:
       state = Active;
       bgColor = QColor("#84c2e6");
-      mrm_state = "MRM State | Active";
+      mrm_state = "MRM State | Operating";
       break;
 
     case MRMState::MRM_SUCCEEDED:
