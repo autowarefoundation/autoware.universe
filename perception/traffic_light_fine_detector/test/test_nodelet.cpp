@@ -96,7 +96,7 @@ TEST(CalWeightedIouTest, Negative)
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
 }
 
-// This test case should be passed but it fails because of unappropriate type casting. Current
+// This test case should be passed but it fails because of inappropriate type casting. Current
 // result is 0.1097561, but it should be 0.0.
 // TEST(CalWeightedIouTest, Uint32Max)
 // {
