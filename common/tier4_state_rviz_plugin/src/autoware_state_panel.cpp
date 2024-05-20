@@ -609,7 +609,7 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
       break;
 
     default:
-      state = None;
+      state = Danger;
       bgColor = QColor("#84c2e6");
       break;
   }
