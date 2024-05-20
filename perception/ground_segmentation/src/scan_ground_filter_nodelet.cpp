@@ -388,16 +388,10 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       }
 
       // initialize lists of previous gnd grids
-      if (prev_list_init == false && initialized_first_gnd_grid == true) {
+      if (!prev_list_init) {
         float h = ground_cluster.getAverageHeight();
         float r = ground_cluster.getAverageRadius();
         initializeFirstGndGrids(h, r, p->grid_id, gnd_grids);
-        prev_list_init = true;
-      }
-
-      if (prev_list_init == false && initialized_first_gnd_grid == false) {
-        // assume first gnd grid is zero
-        initializeFirstGndGrids(0.0f, p->radius, p->grid_id, gnd_grids);
         prev_list_init = true;
       }
 
@@ -581,8 +575,6 @@ void ScanGroundFilterComponent::extractObjectPoints(
     std::memcpy(
       &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
       in_cloud_ptr->point_step * sizeof(uint8_t));
-    *reinterpret_cast<float *>(&out_object_cloud.data[output_data_size + intensity_offset_]) =
-      1;  // set intensity to 1
     output_data_size += in_cloud_ptr->point_step;
   }
 }
@@ -612,7 +604,7 @@ void ScanGroundFilterComponent::faster_filter(
   output.row_step = no_ground_indices.indices.size() * input->point_step;
   output.data.resize(output.row_step);
   output.width = no_ground_indices.indices.size();
-  output.fields.assign(input->fields.begin(), input->fields.begin() + 3);
+  output.fields = input->fields;
   output.is_dense = true;
   output.height = input->height;
   output.is_bigendian = input->is_bigendian;
