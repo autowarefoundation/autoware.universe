@@ -99,23 +99,11 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE traffic_light_fine_detector_node
   )
 
-  function(add_testcase filepath)
-    get_filename_component(filename ${filepath} NAME)
-    string(REGEX REPLACE ".cpp" "" test_name ${filename})
-
-    ament_add_gtest(${test_name} ${filepath})
-    target_link_libraries("${test_name}" traffic_light_fine_detector_nodelet)
-    ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
-  endfunction()
-
   if(BUILD_TESTING)
     find_package(ament_cmake_gtest REQUIRED)
-
-    file(GLOB_RECURSE TEST_FILES test/*.cpp)
-
-    foreach(filepath ${TEST_FILES})
-      add_testcase(${filepath})
-    endforeach()
+    ament_add_gtest(traffic_light_fine_detector_tests test/test_nodelet.cpp)
+    target_link_libraries(traffic_light_fine_detector_tests traffic_light_fine_detector_nodelet)
+    ament_target_dependencies(traffic_light_fine_detector_tests ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
   endif()
 
   ament_auto_package(INSTALL_TO_SHARE
