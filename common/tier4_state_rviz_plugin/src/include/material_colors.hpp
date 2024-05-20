@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MATERIAL_COLORS_HPP
-#define MATERIAL_COLORS_HPP
+#ifndef MATERIAL_COLORS_HPP_
+#define MATERIAL_COLORS_HPP_
 #include <string>
 
 namespace autoware
@@ -85,4 +85,4 @@ inline MaterialColors default_colors;
 }  // namespace state_rviz_plugin
 }  // namespace autoware
 
-#endif  // MATERIAL_COLORS_HPP
+#endif  // MATERIAL_COLORS_HPP_
