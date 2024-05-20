@@ -51,7 +51,7 @@ This `pose_initializer` is used via default AD API. For detailed description of 
 
 ### Using the GNSS estimated position
 
-```
+```bash
 ros2 service call /localization/initialize tier4_localization_msgs/srv/InitializeLocalization
 ```
 
@@ -59,7 +59,7 @@ The GNSS estimated position is used as the initial guess, and the localization a
 
 ### Using the input position
 
-```
+```bash
 ros2 service call /localization/initialize tier4_localization_msgs/srv/InitializeLocalization "
 pose_with_covariance:
   - header:
@@ -84,7 +84,7 @@ The input position is used as the initial guess, and the localization algorithm 
 
 ### Direct initial position set
 
-```
+```bash
 ros2 service call /localization/initialize tier4_localization_msgs/srv/InitializeLocalization "
 pose_with_covariance:
   - header:
@@ -109,7 +109,7 @@ The initial position is set directly by the input position without going through
 
 ### Via ros2 topic pub
 
-```
+```bash
 ros2 topic pub --once /initialpose geometry_msgs/msg/PoseWithCovarianceStamped "
 header:
   frame_id: map
