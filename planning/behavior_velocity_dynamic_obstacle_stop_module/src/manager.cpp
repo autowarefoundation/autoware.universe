@@ -35,7 +35,8 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   pp.stop_distance_buffer = getOrDeclareParameter<double>(node, ns + ".stop_distance_buffer");
   pp.time_horizon = getOrDeclareParameter<double>(node, ns + ".time_horizon");
   pp.yaw_threshold = getOrDeclareParameter<double>(node, ns + ".yaw_threshold");
-  pp.yaw_threshold_behind_object = getOrDeclareParameter<double>(node, ns + ".yaw_threshold_behind_object");
+  pp.yaw_threshold_behind_object =
+    getOrDeclareParameter<double>(node, ns + ".yaw_threshold_behind_object");
   pp.hysteresis = getOrDeclareParameter<double>(node, ns + ".hysteresis");
   pp.add_duration_buffer = getOrDeclareParameter<double>(node, ns + ".add_stop_duration_buffer");
   pp.remove_duration_buffer =
