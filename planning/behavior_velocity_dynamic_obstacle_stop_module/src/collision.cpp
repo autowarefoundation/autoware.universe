@@ -29,7 +29,7 @@ namespace behavior_velocity_planner::dynamic_obstacle_stop
 
 std::optional<geometry_msgs::msg::Point> find_closest_collision_point(
   const EgoData & ego_data, const geometry_msgs::msg::Pose & object_pose,
-  const tier4_autoware_utils::Polygon2d & object_footprint)
+  const tier4_autoware_utils::Polygon2d & object_footprint, const PlannerParam & params)
 {
   std::optional<geometry_msgs::msg::Point> closest_collision_point;
   auto closest_dist = std::numeric_limits<double>::max();
@@ -42,7 +42,8 @@ std::optional<geometry_msgs::msg::Point> find_closest_collision_point(
     const auto & ego_pose = ego_data.path.points[path_idx].point.pose;
     const auto angle_diff = tier4_autoware_utils::normalizeRadian(
       tf2::getYaw(ego_pose.orientation) - tf2::getYaw(object_pose.orientation));
-    if (std::abs(angle_diff) > (M_PI_2 + M_PI_4)) {  // TODO(Maxime): make this angle a parameter
+    if ((!params.ignore_objects_behind_ego && std::abs(angle_diff) < params.yaw_threshold_behind_object) ||
+        std::abs(angle_diff) > params.yaw_threshold) {
       tier4_autoware_utils::MultiPoint2d collision_points;
       boost::geometry::intersection(
         object_footprint.outer(), ego_footprint.outer(), collision_points);
@@ -62,14 +63,14 @@ std::optional<geometry_msgs::msg::Point> find_closest_collision_point(
 
 std::vector<Collision> find_collisions(
   const EgoData & ego_data,
-  const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects,
-  const tier4_autoware_utils::MultiPolygon2d & object_forward_footprints)
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
+  const tier4_autoware_utils::MultiPolygon2d & object_forward_footprints, const PlannerParam & params)
 {
   std::vector<Collision> collisions;
   for (auto object_idx = 0UL; object_idx < objects.size(); ++object_idx) {
     const auto & object_pose = objects[object_idx].kinematics.initial_pose_with_covariance.pose;
     const auto & object_footprint = object_forward_footprints[object_idx];
-    const auto collision = find_closest_collision_point(ego_data, object_pose, object_footprint);
+    const auto collision = find_closest_collision_point(ego_data, object_pose, object_footprint, params);
     if (collision) {
       Collision c;
       c.object_uuid = tier4_autoware_utils::toHexString(objects[object_idx].object_id);
