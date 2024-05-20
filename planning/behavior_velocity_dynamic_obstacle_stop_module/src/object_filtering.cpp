@@ -55,6 +55,12 @@ std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_obj
     const auto obj_arc_length = motion_utils::calcSignedArcLength(
       ego_data.path.points, ego_data.pose.position,
       o.kinematics.initial_pose_with_covariance.pose.position);
+    if(!params.ignore_objects_behind_ego){
+      return (obj_arc_length < 0.0 &&
+              std::abs(obj_arc_length) < params.behind_object_distance_threshold + o.shape.dimensions.x / 2.0) ||
+             obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
+                              params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
+    }
     return obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
                               params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
   };
