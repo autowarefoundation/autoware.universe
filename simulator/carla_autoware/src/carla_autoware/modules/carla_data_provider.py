@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.sr/bin/env python
 
-##############################################################
-# Copyright (c) 2018-2020 Intel Corporation
-#
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
-##############################################################
-
 """Modified CARLA Data Provider from CARLA scenario runner."""
 
 from __future__ import print_function

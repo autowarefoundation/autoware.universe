@@ -3,18 +3,14 @@
   <name>carla_autoware</name>
   <version>0.0.0</version>
   <description>The carla autoware bridge package</description>
-  <maintainer email="mradityagio@gmail.com">Muhammad Raditya Giovanni</maintainer>
+  <maintainer email="mradityagio@gmail.com">Muhammad Raditya GIOVANNI</maintainer>
   <maintainer email="maxime.clement@tier4.jp">Maxime CLEMENT</maintainer>
   <license>Apache License 2.0</license>
 
-  <exec_depend>ros2launch</exec_depend>
-  <exec_depend>ros_compatibility</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <depend>autoware_auto_control_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>carla_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>nav_msgs</depend>
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>sensor_msgs_py</depend>

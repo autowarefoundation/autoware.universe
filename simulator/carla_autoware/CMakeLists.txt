@@ -5,15 +5,14 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(
-  catkin REQUIRED COMPONENTS rospy std_msgs
-                             carla_msgs)
+  catkin REQUIRED COMPONENTS std_msgs)
 
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-ament_export_dependencies(rclpy rospy)
+ament_export_dependencies(rclpy)
 
 find_package(ros_environment REQUIRED)
 set(ROS_VERSION $ENV{ROS_VERSION})
