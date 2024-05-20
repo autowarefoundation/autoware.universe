@@ -1,4 +1,5 @@
 /**:
   ros__parameters:
+    allow_unsupported_version: false # flag to load unsupported format_version anyway. If true, just prints warning.
     center_line_resolution: 5.0         # [m]
     lanelet2_map_path: $(var lanelet2_map_path) # The lanelet2 map path

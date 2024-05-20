@@ -17,6 +17,7 @@
 
 #include <component_interface_specs/map.hpp>
 #include <component_interface_utils/rclcpp.hpp>
+#include <lanelet2_extension/version.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
@@ -32,6 +33,9 @@ using tier4_map_msgs::msg::MapProjectorInfo;
 
 class Lanelet2MapLoaderNode : public rclcpp::Node
 {
+public:
+  static constexpr lanelet::autoware::Version version = lanelet::autoware::version;
+
 public:
   explicit Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options);
 
