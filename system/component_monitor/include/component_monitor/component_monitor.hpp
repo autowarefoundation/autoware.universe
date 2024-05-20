@@ -2,7 +2,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "std_msgs/msg/float32.hpp"
+#include "std_msgs/msg/string.hpp"
 
 #include "boost/filesystem.hpp"
 #include "boost/process.hpp"
@@ -22,7 +22,10 @@ private:
   void timer_callback();
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr cpu_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr cpu_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr mem_pub_;
+
+  pid_t pid_;
 };
 
 }  // namespace autoware::component_monitor
