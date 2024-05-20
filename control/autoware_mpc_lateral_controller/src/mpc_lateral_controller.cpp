@@ -253,7 +253,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   }
 
   const bool is_mpc_solved = m_mpc->calculateMPC(
-    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values);
+    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values, is_under_control);
 
   // reset previous MPC result
   // Note: When a large deviation from the trajectory occurs, the optimization stops and
