@@ -205,7 +205,7 @@ private:
 
   AlgorithmType getAlgorithmType(const std::string & algorithm_name) const;
 
-  TrajectoryPoints calcTrajectoryVelocity(const TrajectoryPoints & traj_input) const;
+  TrajectoryPoints calcTrajectoryVelocity(const TrajectoryPoints & traj_input);
 
   bool smoothVelocity(
     const TrajectoryPoints & input, const size_t input_closest,
@@ -268,8 +268,8 @@ private:
 
   // helper functions
   size_t findNearestIndexFromEgo(const TrajectoryPoints & points) const;
-  bool isReverse(const TrajectoryPoints & points) const;
-  void flipVelocity(TrajectoryPoints & points) const;
+  geometry_msgs::msg::Pose flipPose(const geometry_msgs::msg::Pose & pose) const;
+  void flipTrajectory(TrajectoryPoints & points) const;
   void publishStopWatchTime();
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;

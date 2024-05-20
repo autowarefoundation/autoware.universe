@@ -22,6 +22,8 @@
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <tf2/LinearMath/Quaternion.h>
+
 #include <algorithm>
 #include <chrono>
 #include <limits>
@@ -362,7 +364,7 @@ void MotionVelocitySmootherNode::calcExternalVelocityLimit()
   if (
     std::fabs((external_velocity_limit_.velocity - external_velocity_limit_ptr_->max_velocity)) >
     eps) {
-    const double v0 = current_closest_point_from_prev_output_->longitudinal_velocity_mps;
+    const double v0 = std::fabs(current_closest_point_from_prev_output_->longitudinal_velocity_mps);
     const double a0 = current_closest_point_from_prev_output_->acceleration_mps2;
 
     if (isEngageStatus(v0)) {
@@ -471,17 +473,42 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   // ignore current external velocity limit next time
   external_velocity_limit_ptr_ = nullptr;
 
-  // For negative velocity handling, multiple -1 to velocity if it is for reverse.
-  // NOTE: this process must be in the beginning of the process
-  is_reverse_ = isReverse(input_points);
-  if (is_reverse_) {
-    flipVelocity(input_points);
+  // Trajectory must be either all forward or all backward.
+  bool is_forward_only = std::all_of(input_points.begin(), input_points.end(), [](const auto & tp) {
+    return tp.longitudinal_velocity_mps >= 0.0;
+  });
+  bool is_backward_only = std::all_of(
+    input_points.begin(), input_points.end(),
+    [](const auto & tp) { return tp.longitudinal_velocity_mps <= 0.0; });
+  if (!is_forward_only && !is_backward_only) {
+    RCLCPP_ERROR(
+      get_logger(),
+      "Input trajectory contains both forward and backward parts (unsupported). Trajectory will be "
+      "ignored.");
+    return;
   }
 
-  const auto output = calcTrajectoryVelocity(input_points);
+  // Backward trajectories are handled by "flipping" the all the poses (orientation, velocity,
+  // steering, etc), processing trajectories as if the vehicle was driving forward and flipping back
+  // the result. Note: if trajectory is both forward and backward, it means it is filled with 0.0.
+  // In such case we don't need to do anything.
+  if (!is_forward_only && is_backward_only) {
+    // flip the trajectory
+    is_reverse_ = true;
+    flipTrajectory(input_points);
+  }
+
+  // Note: only works with forward trajectories
+  auto output = calcTrajectoryVelocity(input_points);
   if (output.empty()) {
     RCLCPP_WARN(get_logger(), "Output Point is empty");
     return;
+  }
+
+  if (is_reverse_) {
+    // flip back orientation
+    is_reverse_ = false;
+    flipTrajectory(output);
   }
 
   // Note that output velocity is resampled by linear interpolation
@@ -497,12 +524,6 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
 
   // update previous step infomation
   updatePrevValues(output);
-
-  // for reverse velocity
-  // NOTE: this process must be in the end of the process
-  if (is_reverse_) {
-    flipVelocity(output_resampled);
-  }
 
   // publish message
   publishTrajectory(output_resampled);
@@ -533,7 +554,7 @@ void MotionVelocitySmootherNode::updateDataForExternalVelocityLimit()
 }
 
 TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
-  const TrajectoryPoints & traj_input) const
+  const TrajectoryPoints & traj_input)
 {
   TrajectoryPoints output{};  // velocity is optimized by qp solver
 
@@ -544,13 +565,14 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
     traj_input, input_closest, node_param_.extract_ahead_dist, node_param_.extract_behind_dist);
   if (traj_extracted.empty()) {
     RCLCPP_WARN(get_logger(), "Fail to extract the path from the input trajectory");
+    is_reverse_ = false;  // previous output is never flipped
     return prev_output_;
   }
 
   // Debug
   if (publish_debug_trajs_) {
     auto tmp = traj_extracted;
-    if (is_reverse_) flipVelocity(tmp);
+    if (is_reverse_) flipTrajectory(tmp);
     pub_trajectory_raw_->publish(toTrajectoryMsg(tmp));
   }
 
@@ -566,12 +588,13 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   // Debug
   if (publish_debug_trajs_) {
     auto tmp = traj_extracted;
-    if (is_reverse_) flipVelocity(tmp);
+    if (is_reverse_) flipTrajectory(tmp);
     pub_trajectory_vel_lim_->publish(toTrajectoryMsg(traj_extracted));
   }
 
   // Smoothing velocity
   if (!smoothVelocity(traj_extracted, traj_extracted_closest, output)) {
+    is_reverse_ = false;  // previous output is never flipped
     return prev_output_;
   }
 
@@ -604,10 +627,14 @@ bool MotionVelocitySmootherNode::smoothVelocity(
       ? smoother_->applySteeringRateLimit(traj_lateral_acc_filtered, false)
       : traj_lateral_acc_filtered;
 
+  // Note: if input trajectory poses have been flipped, ego pose/velocity should be flipped too.
+  const auto curr_pose =
+    is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
+  const auto curr_vel = (is_reverse_ ? -1.0 : 1.0) * current_odometry_ptr_->twist.twist.linear.x;
+
   // Resample trajectory with ego-velocity based interval distance
   auto traj_resampled = smoother_->resampleTrajectory(
-    traj_steering_rate_limited, current_odometry_ptr_->twist.twist.linear.x,
-    current_odometry_ptr_->pose.pose, node_param_.ego_nearest_dist_threshold,
+    traj_steering_rate_limited, curr_vel, curr_pose, node_param_.ego_nearest_dist_threshold,
     node_param_.ego_nearest_yaw_threshold);
 
   const size_t traj_resampled_closest = findNearestIndexFromEgo(traj_resampled);
@@ -618,8 +645,11 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   }
 
   // Publish Closest Resample Trajectory Velocity
-  publishClosestVelocity(
-    traj_resampled, current_odometry_ptr_->pose.pose, debug_closest_max_velocity_);
+  {
+    auto tmp = traj_resampled;
+    if (is_reverse_) flipTrajectory(tmp);
+    publishClosestVelocity(tmp, current_odometry_ptr_->pose.pose, debug_closest_max_velocity_);
+  }
 
   // Clip trajectory from closest point
   TrajectoryPoints clipped;
@@ -654,17 +684,17 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   if (publish_debug_trajs_) {
     {
       auto tmp = traj_lateral_acc_filtered;
-      if (is_reverse_) flipVelocity(tmp);
+      if (is_reverse_) flipTrajectory(tmp);
       pub_trajectory_latacc_filtered_->publish(toTrajectoryMsg(tmp));
     }
     {
       auto tmp = traj_resampled;
-      if (is_reverse_) flipVelocity(tmp);
+      if (is_reverse_) flipTrajectory(tmp);
       pub_trajectory_resampled_->publish(toTrajectoryMsg(tmp));
     }
     {
       auto tmp = traj_steering_rate_limited;
-      if (is_reverse_) flipVelocity(tmp);
+      if (is_reverse_) flipTrajectory(tmp);
       pub_trajectory_steering_rate_limited_->publish(toTrajectoryMsg(tmp));
     }
 
@@ -750,9 +780,12 @@ std::pair<Motion, MotionVelocitySmootherNode::InitializeType>
 MotionVelocitySmootherNode::calcInitialMotion(
   const TrajectoryPoints & input_traj, const size_t input_closest) const
 {
-  const double vehicle_speed = std::fabs(current_odometry_ptr_->twist.twist.linear.x);
+  // ego motion w.r.t trajectory orientation
+  const double vehicle_speed =
+    (is_reverse_ ? -1.0 : 1.0) * current_odometry_ptr_->twist.twist.linear.x;
   const double vehicle_acceleration = current_acceleration_ptr_->accel.accel.linear.x;
-  const double target_vel = std::fabs(input_traj.at(input_closest).longitudinal_velocity_mps);
+  // always > 0
+  const double target_vel = input_traj.at(input_closest).longitudinal_velocity_mps;
 
   // first time
   if (!current_closest_point_from_prev_output_) {
@@ -761,9 +794,10 @@ MotionVelocitySmootherNode::calcInitialMotion(
   }
 
   // when velocity tracking deviation is large
-  const double desired_vel = current_closest_point_from_prev_output_->longitudinal_velocity_mps;
+  const double desired_vel =
+    (is_reverse_ ? -1.0 : 1.0) * current_closest_point_from_prev_output_->longitudinal_velocity_mps;
   const double desired_acc = current_closest_point_from_prev_output_->acceleration_mps2;
-  const double vel_error = vehicle_speed - std::fabs(desired_vel);
+  const double vel_error = vehicle_speed - desired_vel;
 
   if (std::fabs(vel_error) > node_param_.replan_vel_deviation) {
     RCLCPP_DEBUG(
@@ -887,10 +921,7 @@ void MotionVelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & t
     0, traj.size(), max_velocity_with_deceleration_, traj);
 
   // insert the point at the distance of external velocity limit
-  const auto & current_pose = current_odometry_ptr_->pose.pose;
-  const size_t closest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    traj, current_pose, node_param_.ego_nearest_dist_threshold,
-    node_param_.ego_nearest_yaw_threshold);
+  const size_t closest_seg_idx = findNearestIndexFromEgo(traj);
   const auto inserted_index =
     motion_utils::insertTargetPoint(closest_seg_idx, external_velocity_limit_.dist, traj);
   if (!inserted_index) {
@@ -943,9 +974,9 @@ void MotionVelocitySmootherNode::publishDebugTrajectories(
       return;
     }
     if (is_reverse_) {
-      flipVelocity(debug_trajectories_tmp.at(0));
-      flipVelocity(debug_trajectories_tmp.at(1));
-      flipVelocity(debug_trajectories_tmp.at(2));
+      flipTrajectory(debug_trajectories_tmp.at(0));
+      flipTrajectory(debug_trajectories_tmp.at(1));
+      flipTrajectory(debug_trajectories_tmp.at(2));
     }
     pub_forward_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories_tmp.at(0)));
     pub_backward_filtered_trajectory_->publish(toTrajectoryMsg(debug_trajectories_tmp.at(1)));
@@ -1045,7 +1076,7 @@ bool MotionVelocitySmootherNode::isEngageStatus(const double target_vel) const
 {
   const double vehicle_speed = std::fabs(current_odometry_ptr_->twist.twist.linear.x);
   const double engage_vel_thr = node_param_.engage_velocity * node_param_.engage_exit_ratio;
-  return vehicle_speed < engage_vel_thr && target_vel >= node_param_.engage_velocity;
+  return vehicle_speed < engage_vel_thr && std::fabs(target_vel) >= node_param_.engage_velocity;
 }
 
 Trajectory MotionVelocitySmootherNode::toTrajectoryMsg(
@@ -1058,22 +1089,40 @@ Trajectory MotionVelocitySmootherNode::toTrajectoryMsg(
 
 size_t MotionVelocitySmootherNode::findNearestIndexFromEgo(const TrajectoryPoints & points) const
 {
+  const auto curr_pose =
+    is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
   return motion_utils::findFirstNearestIndexWithSoftConstraints(
-    points, current_odometry_ptr_->pose.pose, node_param_.ego_nearest_dist_threshold,
+    points, curr_pose, node_param_.ego_nearest_dist_threshold,
     node_param_.ego_nearest_yaw_threshold);
 }
 
-bool MotionVelocitySmootherNode::isReverse(const TrajectoryPoints & points) const
+geometry_msgs::msg::Pose MotionVelocitySmootherNode::flipPose(
+  const geometry_msgs::msg::Pose & pose) const
 {
-  if (points.empty()) return true;
+  geometry_msgs::msg::Pose output = pose;
 
-  return std::any_of(
-    points.begin(), points.end(), [](auto & pt) { return pt.longitudinal_velocity_mps < 0; });
+  // rotation by 180 degrees
+  tf2::Quaternion q_rot;
+  q_rot.setRPY(0, 0, M_PI);
+
+  tf2::Quaternion q;
+  tf2::fromMsg(pose.orientation, q);
+  q *= q_rot;
+  output.orientation = tf2::toMsg(q);
+  return output;
 }
-void MotionVelocitySmootherNode::flipVelocity(TrajectoryPoints & points) const
+
+void MotionVelocitySmootherNode::flipTrajectory(TrajectoryPoints & points) const
 {
   for (auto & pt : points) {
-    pt.longitudinal_velocity_mps *= -1.0;
+    pt.pose = flipPose(pt.pose);
+    pt.longitudinal_velocity_mps = -pt.longitudinal_velocity_mps;
+    pt.lateral_velocity_mps = -pt.lateral_velocity_mps;
+    // NOTE(VRichardJP) this is actually a directed acceleration so it should not be flipped
+    // pt.acceleration_mps2 = -pt.acceleration_mps2;
+    pt.heading_rate_rps = -pt.heading_rate_rps;
+    pt.front_wheel_angle_rad = -pt.front_wheel_angle_rad;
+    pt.rear_wheel_angle_rad = -pt.rear_wheel_angle_rad;
   }
 }
 
@@ -1097,7 +1146,9 @@ TrajectoryPoint MotionVelocitySmootherNode::calcProjectedTrajectoryPoint(
 TrajectoryPoint MotionVelocitySmootherNode::calcProjectedTrajectoryPointFromEgo(
   const TrajectoryPoints & trajectory) const
 {
-  return calcProjectedTrajectoryPoint(trajectory, current_odometry_ptr_->pose.pose);
+  auto curr_pose =
+    is_reverse_ ? flipPose(current_odometry_ptr_->pose.pose) : current_odometry_ptr_->pose.pose;
+  return calcProjectedTrajectoryPoint(trajectory, curr_pose);
 }
 
 }  // namespace motion_velocity_smoother
