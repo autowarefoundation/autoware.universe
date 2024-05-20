@@ -2,6 +2,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "autoware_internal_msgs/msg/system_usage.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #include "boost/filesystem.hpp"
@@ -22,8 +23,7 @@ private:
   void timer_callback();
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr cpu_pub_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr mem_pub_;
+  rclcpp::Publisher<autoware_internal_msgs::msg::SystemUsage>::SharedPtr usage_pub_;
 
   pid_t pid_;
 };
