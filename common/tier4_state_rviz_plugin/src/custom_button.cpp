@@ -96,21 +96,22 @@ void CustomElevatedButton::paintEvent(QPaintEvent *)
   // Draw button background
   QPainterPath backgroundPath;
   backgroundPath.addRoundedRect(r, cornerRadius, cornerRadius);
-  painter.setBrush(buttonColor);
+  if (!isEnabled()) {
+    painter.setBrush(
+      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
+    painter.setOpacity(0.12);
+  } else {
+    painter.setBrush(buttonColor);
+  }
   painter.setPen(Qt::NoPen);
   painter.drawPath(backgroundPath);
 
   // Draw button text
+  if (!isEnabled()) {
+    painter.setOpacity(0.38);
+  }
   painter.setPen(currentTextColor);
   painter.drawText(r, Qt::AlignCenter, text());
-
-  if (!isEnabled()) {
-    painter.setBrush(
-      QColor(autoware::state_rviz_plugin::colors::default_colors.on_surface.c_str()));
-    painter.setPen(Qt::NoPen);
-    painter.setOpacity(0.12);
-    painter.drawPath(backgroundPath);
-  }
 }
 
 void CustomElevatedButton::enterEvent(QEvent * event)
