@@ -16,7 +16,9 @@
 
 #include <gtest/gtest.h>
 
-using namespace image_projection_based_fusion;
+using image_projection_based_fusion::calcIoU;
+using image_projection_based_fusion::calcIoUX;
+using image_projection_based_fusion::calcIoUY;
 
 TEST(GeometryTest, CalcIoU)
 {
