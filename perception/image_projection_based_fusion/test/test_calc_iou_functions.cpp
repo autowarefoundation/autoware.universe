@@ -13,11 +13,13 @@
 // limitations under the License.
 
 #include "image_projection_based_fusion/utils/geometry.hpp"
+
 #include <gtest/gtest.h>
 
 using namespace image_projection_based_fusion;
 
-TEST(GeometryTest, CalcIoU) {
+TEST(GeometryTest, CalcIoU)
+{
   sensor_msgs::msg::RegionOfInterest roi1, roi2;
 
   // Overlapping ROIs
@@ -25,7 +27,7 @@ TEST(GeometryTest, CalcIoU) {
   roi1.y_offset = 0;
   roi1.width = 4;
   roi1.height = 4;
-  
+
   roi2.x_offset = 2;
   roi2.y_offset = 2;
   roi2.width = 4;
@@ -49,7 +51,8 @@ TEST(GeometryTest, CalcIoU) {
   EXPECT_EQ(iou, 0.0);
 }
 
-TEST(GeometryTest, CalcIoUX) {
+TEST(GeometryTest, CalcIoUX)
+{
   sensor_msgs::msg::RegionOfInterest roi1, roi2;
 
   // Overlapping ROIs on x-axis
@@ -79,7 +82,8 @@ TEST(GeometryTest, CalcIoUX) {
   EXPECT_EQ(ioux, 0.0);
 }
 
-TEST(GeometryTest, CalcIoUY) {
+TEST(GeometryTest, CalcIoUY)
+{
   sensor_msgs::msg::RegionOfInterest roi1, roi2;
 
   // Overlapping ROIs on y-axis
