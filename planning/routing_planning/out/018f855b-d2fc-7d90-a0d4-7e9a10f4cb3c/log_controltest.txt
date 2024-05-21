@@ -1,0 +1,3 @@
+test gnss poser for dora 
+Failed to open file
+exit test gnss poser ...
