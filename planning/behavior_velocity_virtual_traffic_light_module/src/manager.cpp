@@ -81,4 +81,4 @@ VirtualTrafficLightModuleManager::getModuleExpiredFunction(
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
   behavior_velocity_planner::VirtualTrafficLightModulePlugin,
-  behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::PluginInterface)

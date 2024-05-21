@@ -20,7 +20,7 @@
 #include <memory>
 #include <optional>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 
 template <class T>
@@ -33,7 +33,7 @@ public:
     scene_manager_->plan(path);
   };
   void updateSceneModuleInstances(
-    const std::shared_ptr<const PlannerData> & planner_data,
+    const std::shared_ptr<const ::behavior_velocity_planner::PlannerData> & planner_data,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override
   {
     scene_manager_->updateSceneModuleInstances(planner_data, path);
@@ -48,6 +48,6 @@ private:
   std::unique_ptr<T> scene_manager_;
 };
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__PLUGIN_WRAPPER_HPP_

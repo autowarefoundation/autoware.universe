@@ -52,7 +52,7 @@ private:
     const PathWithLaneId & path) override;
 };
 
-class WalkwayModulePlugin : public PluginWrapper<WalkwayModuleManager>
+class WalkwayModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<WalkwayModuleManager>
 {
 };
 

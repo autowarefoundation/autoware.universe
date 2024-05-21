@@ -94,4 +94,4 @@ BlindSpotModuleManager::getModuleExpiredFunction(
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::BlindSpotModulePlugin, behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::BlindSpotModulePlugin, autoware::behavior_velocity_planner::PluginInterface)

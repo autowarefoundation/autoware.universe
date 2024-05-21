@@ -53,7 +53,7 @@ private:
     const PathWithLaneId & path) override;
 };
 
-class CrosswalkModulePlugin : public PluginWrapper<CrosswalkModuleManager>
+class CrosswalkModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<CrosswalkModuleManager>
 {
 };
 }  // namespace behavior_velocity_planner

@@ -45,7 +45,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
-class NoDrivableLaneModulePlugin : public PluginWrapper<NoDrivableLaneModuleManager>
+class NoDrivableLaneModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<NoDrivableLaneModuleManager>
 {
 };
 

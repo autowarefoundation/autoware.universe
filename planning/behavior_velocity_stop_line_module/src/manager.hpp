@@ -58,7 +58,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
-class StopLineModulePlugin : public PluginWrapper<StopLineModuleManager>
+class StopLineModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<StopLineModuleManager>
 {
 };
 

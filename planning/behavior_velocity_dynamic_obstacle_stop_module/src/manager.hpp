@@ -49,7 +49,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
-class DynamicObstacleStopModulePlugin : public PluginWrapper<DynamicObstacleStopModuleManager>
+class DynamicObstacleStopModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<DynamicObstacleStopModuleManager>
 {
 };
 

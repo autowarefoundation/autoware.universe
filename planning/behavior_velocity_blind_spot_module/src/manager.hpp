@@ -45,7 +45,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
-class BlindSpotModulePlugin : public PluginWrapper<BlindSpotModuleManager>
+class BlindSpotModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<BlindSpotModuleManager>
 {
 };
 

@@ -204,4 +204,4 @@ void RunOutModuleManager::setDynamicObstacleCreator(
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::RunOutModulePlugin, behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::RunOutModulePlugin, autoware::behavior_velocity_planner::PluginInterface)

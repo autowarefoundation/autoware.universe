@@ -45,7 +45,7 @@ private:
   void setDynamicObstacleCreator(rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr);
 };
 
-class RunOutModulePlugin : public PluginWrapper<RunOutModuleManager>
+class RunOutModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<RunOutModuleManager>
 {
 };
 

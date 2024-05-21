@@ -193,4 +193,4 @@ bool TrafficLightModuleManager::hasSameTrafficLight(
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::TrafficLightModulePlugin, behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::TrafficLightModulePlugin, autoware::behavior_velocity_planner::PluginInterface)

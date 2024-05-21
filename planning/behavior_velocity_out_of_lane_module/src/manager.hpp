@@ -57,7 +57,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
-class OutOfLaneModulePlugin : public PluginWrapper<OutOfLaneModuleManager>
+class OutOfLaneModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<OutOfLaneModuleManager>
 {
 };
 
