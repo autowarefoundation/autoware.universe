@@ -75,6 +75,12 @@ std::vector<std::string> ComponentMonitor::get_fields(std::stringstream & std_ou
   return words;
 }
 
+float ComponentMonitor::to_float(std::string & str)
+{
+  std::replace(str.begin(), str.end(), ',', '.');
+  return std::strtof(str.c_str(), nullptr);
+}
+
 void ComponentMonitor::get_cpu_usage()
 {
   std::string cmd{"pidstat -u -p "};
@@ -84,9 +90,7 @@ void ComponentMonitor::get_cpu_usage()
   auto fields = get_fields(std_out);
 
   auto cpu_rate = fields[7];
-  std::replace(cpu_rate.begin(), cpu_rate.end(), ',', '.');
-
-  usage_msg_.cpu_usage_rate = std::strtof(cpu_rate.c_str(), nullptr);
+  usage_msg_.cpu_usage_rate = to_float(cpu_rate);
 }
 
 void ComponentMonitor::get_mem_usage()
@@ -100,11 +104,8 @@ void ComponentMonitor::get_mem_usage()
   auto mem_usage = fields[6];
   auto mem_usage_rate = fields[7];
 
-  std::replace(mem_usage.begin(), mem_usage.end(), ',', '.');
-  std::replace(mem_usage_rate.begin(), mem_usage_rate.end(), ',', '.');
-
-  usage_msg_.mem_usage_bytes = std::strtof(mem_usage.c_str(), nullptr);
-  usage_msg_.mem_usage_rate = std::strtof(mem_usage_rate.c_str(), nullptr);
+  usage_msg_.mem_usage_bytes = to_float(mem_usage);
+  usage_msg_.mem_usage_rate = to_float(mem_usage_rate);
 }
 
 }  // namespace autoware::component_monitor
