@@ -482,66 +482,35 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
 
 void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPtr msg)
 {
-  auto changeButtonState = [this](
-                             CustomSegmentedButtonItem * button,
-                             const bool is_desired_mode_available,
-                             const uint8_t current_mode = OperationModeState::UNKNOWN,
-                             const uint8_t desired_mode = OperationModeState::STOP) {
-    // reset all button states
+  auto updateButtonState = [](CustomSegmentedButtonItem* button, bool is_available,
+                              uint8_t current_mode, uint8_t desired_mode, bool disable) {
+    bool is_checked = (current_mode == desired_mode);
     button->setHovered(false);
-    button->setChecked(false);
-    button->setActivated(false);
-    button->setDisabledButton(true);
-    button->setCheckableButton(false);
 
-    // and set them accordingly
-    if (is_desired_mode_available) {
-      if (current_mode == desired_mode) {
-        // Enabled and Checked
-        button->setChecked(true);
-        button->setActivated(true);
-        button->setCheckableButton(false);
-        button->setDisabledButton(false);
-      } else {
-        // Enabled and Checkable
-        button->setChecked(false);
-        button->setActivated(false);
-        button->setCheckableButton(true);
-        button->setDisabledButton(false);
-      }
-    } else {
-      // Disabled and Unchecked
-      button->setChecked(false);
-      button->setActivated(false);
-      button->setCheckableButton(false);
-      button->setDisabledButton(true);
-    }
+    button->setActivated(is_checked);
+    button->setChecked(is_checked);
+    button->setDisabledButton(disable || !is_available);
+    button->setCheckableButton(!disable && is_available && !is_checked);
   };
 
-  // Button
-  changeButtonState(
-    auto_button_ptr_, msg->is_autonomous_mode_available, msg->mode, OperationModeState::AUTONOMOUS);
-  changeButtonState(
-    stop_button_ptr_, msg->is_stop_mode_available, msg->mode, OperationModeState::STOP);
-  changeButtonState(
-    local_button_ptr_, msg->is_local_mode_available, msg->mode, OperationModeState::LOCAL);
-  changeButtonState(
-    remote_button_ptr_, msg->is_remote_mode_available, msg->mode, OperationModeState::REMOTE);
+  bool disable_buttons = msg->is_in_transition;
+
+  updateButtonState(auto_button_ptr_, msg->is_autonomous_mode_available, msg->mode, OperationModeState::AUTONOMOUS, disable_buttons);
+  updateButtonState(stop_button_ptr_, msg->is_stop_mode_available, msg->mode, OperationModeState::STOP, disable_buttons);
+  updateButtonState(local_button_ptr_, msg->is_local_mode_available, msg->mode, OperationModeState::LOCAL, disable_buttons);
+  updateButtonState(remote_button_ptr_, msg->is_remote_mode_available, msg->mode, OperationModeState::REMOTE, disable_buttons);
 
   // toggle switch for control mode
-  auto changeToggleSwitchState = [this](CustomToggleSwitch * toggle_switch, const bool is_enabled) {
-    bool oldState = toggle_switch->blockSignals(true);  // Block signals
+  auto changeToggleSwitchState = [](CustomToggleSwitch * toggle_switch, const bool is_enabled) {
+    // Flick the switch without triggering its function
+    bool old_state = toggle_switch->blockSignals(true);
     toggle_switch->setCheckedState(!is_enabled);
-    toggle_switch->blockSignals(oldState);  // Restore original signal blocking state
+    toggle_switch->blockSignals(old_state);
   };
-  if (!msg->is_in_transition) {  // would cause a on off on flicker if in transition
-    changeToggleSwitchState(control_mode_switch_ptr_, !msg->is_autoware_control_enabled);
-  }
 
-  // routing
-  if (msg->is_in_transition) {
-    routing_icon->updateStyle(
-      Pending, QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str()));
+  if (!msg->is_in_transition) {
+    // would cause an on/off/on flicker if in transition
+    changeToggleSwitchState(control_mode_switch_ptr_, !msg->is_autoware_control_enabled);
   }
 }
 

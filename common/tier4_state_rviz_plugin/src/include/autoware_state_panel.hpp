@@ -246,16 +246,6 @@ protected:
     button->setChecked(true);
     button->setEnabled(false);
   }
-
-  static void updateSegmentedButtonItem(
-    CustomSegmentedButtonItem * item, bool is_active, bool is_disabled, bool is_checked,
-    bool is_checkable)
-  {
-    item->setActivated(is_active);
-    item->setDisabledButton(is_disabled);
-    item->setChecked(is_checked);
-    item->setCheckableButton(is_checkable);
-  }
 };
 
 }  // namespace rviz_plugins
