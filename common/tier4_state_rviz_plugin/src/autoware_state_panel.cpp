@@ -245,8 +245,8 @@ QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
   clear_route_button_ptr_->setCursor(Qt::PointingHandCursor);
   connect(clear_route_button_ptr_, SIGNAL(clicked()), SLOT(onClickClearRoute()));
 
-  QLabel * routing_label = new QLabel("Routing");
-  routing_label->setStyleSheet(
+  routing_label_ptr_ = new QLabel("Routing | Unknown");
+  routing_label_ptr_->setStyleSheet(
     QString("color: %1; font-weight: bold;")
       .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
 
@@ -255,7 +255,7 @@ QVBoxLayout * AutowareStatePanel::makeRoutingGroup()
   horizontal_layout->setContentsMargins(0, 0, 0, 0);
 
   horizontal_layout->addWidget(routing_icon);
-  horizontal_layout->addWidget(routing_label);
+  horizontal_layout->addWidget(routing_label_ptr_);
 
   custom_container->getLayout()->addLayout(horizontal_layout, 0, 0, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(clear_route_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
@@ -278,8 +278,8 @@ QVBoxLayout * AutowareStatePanel::makeLocalizationGroup()
 
   localization_icon = new CustomIconLabel(
     QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()));
-  QLabel * localization_label = new QLabel("Localization");
-  localization_label->setStyleSheet(
+  localization_label_ptr_ = new QLabel("Localization | Unknown");
+  localization_label_ptr_->setStyleSheet(
     QString("color: %1; font-weight: bold;")
       .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
 
@@ -288,7 +288,7 @@ QVBoxLayout * AutowareStatePanel::makeLocalizationGroup()
   horizontal_layout->setContentsMargins(0, 0, 0, 0);
 
   horizontal_layout->addWidget(localization_icon);
-  horizontal_layout->addWidget(localization_label);
+  horizontal_layout->addWidget(localization_label_ptr_);
 
   custom_container->getLayout()->addLayout(horizontal_layout, 0, 0, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(init_by_gnss_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
@@ -311,8 +311,8 @@ QVBoxLayout * AutowareStatePanel::makeMotionGroup()
 
   motion_icon = new CustomIconLabel(
     QColor(autoware::state_rviz_plugin::colors::default_colors.primary.c_str()));
-  QLabel * motion_label = new QLabel("Motion");
-  motion_label->setStyleSheet(
+  motion_label_ptr_ = new QLabel("Motion | Unknown");
+  motion_label_ptr_->setStyleSheet(
     QString("color: %1; font-weight: bold;")
       .arg(autoware::state_rviz_plugin::colors::default_colors.on_secondary_container.c_str()));
 
@@ -322,7 +322,7 @@ QVBoxLayout * AutowareStatePanel::makeMotionGroup()
   horizontal_layout->setAlignment(Qt::AlignLeft);
 
   horizontal_layout->addWidget(motion_icon);
-  horizontal_layout->addWidget(motion_label);
+  horizontal_layout->addWidget(motion_label_ptr_);
 
   custom_container->getLayout()->addLayout(horizontal_layout, 0, 0, 1, 1, Qt::AlignLeft);
   custom_container->getLayout()->addWidget(accept_start_button_ptr_, 0, 2, 1, 4, Qt::AlignRight);
@@ -534,7 +534,7 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
     toggle_switch->setCheckedState(!is_enabled);
     toggle_switch->blockSignals(oldState);  // Restore original signal blocking state
   };
-  if (msg->is_in_transition == false) {  // would cause a on off on flicker if in transition
+  if (!msg->is_in_transition) {  // would cause a on off on flicker if in transition
     changeToggleSwitchState(control_mode_switch_ptr_, !msg->is_autoware_control_enabled);
   }
 
@@ -549,26 +549,31 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
 {
   IconState state;
   QColor bgColor;
+  QString route_state = "Routing | Unknown";
 
   switch (msg->state) {
     case RouteState::UNSET:
       state = Pending;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
+      route_state = "Routing | Unset";
       break;
 
     case RouteState::SET:
       state = Active;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
+      route_state = "Routing | Set";
       break;
 
     case RouteState::ARRIVED:
       state = Danger;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.danger.c_str());
+      route_state = "Routing | Arrived";
       break;
 
     case RouteState::CHANGING:
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
       state = Pending;
+      route_state = "Routing | Changing";
       break;
 
     default:
@@ -578,6 +583,7 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
   }
 
   routing_icon->updateStyle(state, bgColor);
+  routing_label_ptr_->setText(route_state);
 
   if (msg->state == RouteState::SET) {
     activateButton(clear_route_button_ptr_);
@@ -600,21 +606,25 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
 {
   IconState state;
   QColor bgColor;
+  QString localization_state = "Localization | Unknown";
 
   switch (msg->state) {
     case LocalizationInitializationState::UNINITIALIZED:
       state = None;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.info.c_str());
+      localization_state = "Localization | Uninitialized";
       break;
 
     case LocalizationInitializationState::INITIALIZED:
       state = Active;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
+      localization_state = "Localization | Initialized";
       break;
 
     case LocalizationInitializationState::INITIALIZING:
       state = Pending;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
+      localization_state = "Localization | Initializing";
       break;
 
     default:
@@ -624,27 +634,32 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
   }
 
   localization_icon->updateStyle(state, bgColor);
+  localization_label_ptr_->setText(localization_state);
 }
 
 void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
 {
   IconState state;
   QColor bgColor;
+  QString motion_state = "Motion | Unknown";
 
   switch (msg->state) {
     case MotionState::STARTING:
       state = Pending;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.warning.c_str());
+      motion_state = "Motion | Starting";
       break;
 
     case MotionState::MOVING:
       state = Active;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.success.c_str());
+      motion_state = "Motion | Moving";
       break;
 
     case MotionState::STOPPED:
       state = None;
       bgColor = QColor(autoware::state_rviz_plugin::colors::default_colors.danger.c_str());
+      motion_state = "Motion | Stopped";
       break;
 
     default:
@@ -654,6 +669,7 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
   }
 
   motion_icon->updateStyle(state, bgColor);
+  motion_label_ptr_->setText(motion_state);
 
   if (msg->state == MotionState::STARTING) {
     activateButton(accept_start_button_ptr_);
@@ -745,122 +761,6 @@ void AutowareStatePanel::onMRMState(const MRMState::ConstSharedPtr msg)
     mrm_behavior_label_ptr_->setText(mrm_behavior);
   }
 }
-
-/* void AutowareStatePanel::onDiagnostics(const DiagnosticArray::ConstSharedPtr msg)
-{
-  for (const auto & status : msg->status) {
-    std::string statusName = status.name;  // Assuming name is a std::string
-    int level = status.level;              // Assuming level is an int
-
-    // Check if this status name already has an associated QLabel
-    auto it = statusLabels.find(statusName);
-    if (it != statusLabels.end()) {
-      // Status exists, update its display (QLabel) with the new level
-      updateStatusLabel(statusName, level);
-    } else {
-      // New status, add a QLabel for it to the map and the layout
-      addStatusLabel(statusName, level);
-    }
-  }
-} */
-
-/* void AutowareStatePanel::addStatusLabel(const std::string & name, int level)
-{
-  QString baseStyle =
-    "QLabel {"
-    "  border-radius: 4px;"
-    "  padding: 4px;"
-    "  margin: 2px;"
-    "  font-weight: bold;"
-    "  color: #003546;";
-
-  QString okStyle = baseStyle + "background-color: #84c2e6;}";
-  QString warnStyle = baseStyle + "background-color: #FFCC00;}";
-  QString errorStyle = baseStyle + "background-color: #f08b8b;}";
-  QString staleStyle = baseStyle + "background-color: #6c757d;}";
-
-  QString labelText = QString::fromStdString(name);
-  // + ": " +
-  //                     (level == diagnostic_msgs::msg::DiagnosticStatus::OK      ? "OK"
-  //                      : level == diagnostic_msgs::msg::DiagnosticStatus::WARN  ? "WARN"
-  //                      : level == diagnostic_msgs::msg::DiagnosticStatus::ERROR ? "ERROR"
-  //                                                                               : "STALE");
-
-  auto * label = new QLabel(labelText);
-  label->setMinimumHeight(30);  // for example, set a minimum height
-  label->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
-
-  // Adjust style based on level
-  QString styleSheet;
-  switch (level) {
-    case diagnostic_msgs::msg::DiagnosticStatus::OK:
-      styleSheet = okStyle;
-      break;
-    case diagnostic_msgs::msg::DiagnosticStatus::WARN:
-      styleSheet = warnStyle;
-      break;
-    case diagnostic_msgs::msg::DiagnosticStatus::ERROR:
-      styleSheet = errorStyle;
-      break;
-    default:
-      styleSheet = staleStyle;
-      break;
-  }
-
-  label->setStyleSheet(styleSheet);
-  diagnostic_layout_->addWidget(label);
-  statusLabels[name] = label;
-} */
-
-/* void AutowareStatePanel::updateStatusLabel(const std::string & name, int level)
-{
-  QString baseStyle =
-    "QLabel {"
-    "  border-radius: 4px;"
-    "  padding: 4px;"
-    "  margin: 2px;"
-    "  font-weight: bold;"
-    "  color: #003546;";
-
-  QString okStyle = baseStyle + "background-color: #84c2e6;}";
-  QString warnStyle = baseStyle + "background-color: #FFCC00;}";
-  QString errorStyle = baseStyle + "background-color: #f08b8b;}";
-  QString staleStyle = baseStyle + "background-color: #6c757d;}";
-
-  // Find the QLabel* associated with this status name
-  auto it = statusLabels.find(name);
-  if (it != statusLabels.end()) {
-    QLabel * label = it->second;
-
-    // Update label's text
-    QString labelText = QString::fromStdString(name);
-    // +": " + (level == diagnostic_msgs::msg::DiagnosticStatus::OK      ? "OK"
-    //          : level == diagnostic_msgs::msg::DiagnosticStatus::WARN  ? "WARN"
-    //          : level == diagnostic_msgs::msg::DiagnosticStatus::ERROR ? "ERROR"
-    //                                                                   : "STALE");
-    label->setText(labelText);
-
-    // Update style based on level, similar to addStatusLabel
-    QString styleSheet;
-    switch (level) {
-      case diagnostic_msgs::msg::DiagnosticStatus::OK:
-        styleSheet = okStyle;
-        break;
-      case diagnostic_msgs::msg::DiagnosticStatus::WARN:
-        styleSheet = warnStyle;
-        break;
-      case diagnostic_msgs::msg::DiagnosticStatus::ERROR:
-        styleSheet = errorStyle;
-        break;
-      default:
-        styleSheet = staleStyle;
-        break;
-    }
-    label->setStyleSheet(styleSheet);
-    label->adjustSize();  // Adjust the size of the label to fit the content if needed
-    label->update();      // Ensure the label is updated immediately
-  }
-} */
 
 void AutowareStatePanel::onEmergencyStatus(
   const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg)

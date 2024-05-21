@@ -153,6 +153,7 @@ protected:
   // Routing
   CustomIconLabel * routing_icon{nullptr};
   CustomElevatedButton * clear_route_button_ptr_{nullptr};
+  QLabel * routing_label_ptr_{nullptr};
 
   rclcpp::Subscription<RouteState>::SharedPtr sub_route_;
   rclcpp::Client<ClearRoute>::SharedPtr client_clear_route_;
@@ -162,6 +163,7 @@ protected:
   // Localization
   CustomIconLabel * localization_icon{nullptr};
   CustomElevatedButton * init_by_gnss_button_ptr_{nullptr};
+  QLabel * localization_label_ptr_{nullptr};
 
   rclcpp::Subscription<LocalizationInitializationState>::SharedPtr sub_localization_;
   rclcpp::Client<InitializeLocalization>::SharedPtr client_init_by_gnss_;
@@ -171,6 +173,7 @@ protected:
   // Motion
   CustomIconLabel * motion_icon{nullptr};
   CustomElevatedButton * accept_start_button_ptr_{nullptr};
+  QLabel * motion_label_ptr_{nullptr};
 
   rclcpp::Subscription<MotionState>::SharedPtr sub_motion_;
   rclcpp::Client<AcceptStart>::SharedPtr client_accept_start_;
@@ -186,17 +189,6 @@ protected:
   rclcpp::Subscription<MRMState>::SharedPtr sub_mrm_;
 
   void onMRMState(const MRMState::ConstSharedPtr msg);
-
-  // Diagnostic
-
-  // QLabel * diagnostic_label_ptr_{nullptr};
-  // QVBoxLayout * diagnostic_layout_{nullptr};
-  // std::unordered_map<std::string, QLabel *> statusLabels;
-
-  // rclcpp::Subscription<DiagnosticArray>::SharedPtr sub_diag_;
-  // void onDiagnostics(const DiagnosticArray::ConstSharedPtr msg);
-  // void addStatusLabel(const std::string & name, int level);
-  // void updateStatusLabel(const std::string & name, int level);
 
   // Others
   QLabel * velocity_limit_setter_ptr_;
