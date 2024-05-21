@@ -21,11 +21,16 @@ public:
 
 private:
   void timer_callback();
+  std::stringstream run_command(const std::string & cmd);
+  std::vector<std::string> get_fields(std::stringstream & std_out);
+  void get_cpu_usage();
+  void get_mem_usage();
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<autoware_internal_msgs::msg::SystemUsage>::SharedPtr usage_pub_;
 
   pid_t pid_;
+  autoware_internal_msgs::msg::SystemUsage usage_msg_{};
 };
 
 }  // namespace autoware::component_monitor
