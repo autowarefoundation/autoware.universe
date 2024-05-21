@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include <string>
+#include <memory>
 
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
 : Node("pose_instability_detector", options),
@@ -178,6 +179,43 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
 {
   const double longitudinal_difference =
     heading_velocity_maximum_ * heading_velocity_scale_factor_tolerance_ * 0.01 * interval_sec;
+
+  const double noise_include_heading_velocity_maximum =
+    heading_velocity_maximum_ * 
+    (1 + heading_velocity_scale_factor_tolerance_ * 0.01);
+  const double noise_include_angular_velocity_maximum =
+    angular_velocity_maximum_ * 
+    (1 + angular_velocity_scale_factor_tolerance_ * 0.01) + 
+    angular_velocity_bias_tolerance_;
+
+  const double nominal_maximum_variance_x = 
+    heading_velocity_maximum_ / angular_velocity_maximum_ *
+    sin(angular_velocity_maximum_ * interval_sec);
+  const double nominal_maximum_variance_y =
+    heading_velocity_maximum_ / angular_velocity_maximum_ *
+    (1 - cos(angular_velocity_maximum_ * interval_sec));
+
+  const double noise_included_maximum_variance_x =
+    noise_include_heading_velocity_maximum / noise_include_angular_velocity_maximum *
+    sin(noise_include_angular_velocity_maximum * interval_sec);
+  const double noise_included_maximum_variance_y =
+    noise_include_heading_velocity_maximum / noise_include_angular_velocity_maximum *
+    (1 - cos(noise_include_angular_velocity_maximum * interval_sec));
+
+  const double variance_difference_x =
+    std::abs(nominal_maximum_variance_x - noise_included_maximum_variance_x);
+  const double variance_difference_y =
+    std::abs(nominal_maximum_variance_y - noise_included_maximum_variance_y);
+
+  const double lateral_difference =
+    std::sqrt(
+      pow(variance_difference_x, 2) + pow(variance_difference_y, 2) -
+      pow(variance_difference_x * cos(angular_velocity_maximum_ * interval_sec) +
+            variance_difference_y * sin(angular_velocity_maximum_ * interval_sec), 2));
+
+  const double vertical_difference = lateral_difference;
+
+  /*
   const double lateral_difference =
     heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) *
     sin(
@@ -192,6 +230,7 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
       (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
        angular_velocity_bias_tolerance_) *
       interval_sec);
+  */
 
   const double roll_difference =
     (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
