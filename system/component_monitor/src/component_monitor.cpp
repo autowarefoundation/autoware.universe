@@ -24,7 +24,7 @@ void ComponentMonitor::timer_callback()
   get_cpu_usage();
   get_mem_usage();
 
-  usage_pub_->publish(usage_msg_);
+  if (usage_pub_->get_subscription_count() > 0) usage_pub_->publish(usage_msg_);
 }
 
 std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
