@@ -19,6 +19,7 @@
 #include <rviz_common/display_context.hpp>
 
 #include <qcolor.h>
+#include <qscrollarea.h>
 
 #include <memory>
 #include <string>
@@ -34,8 +35,6 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
 {
   // Panel Configuration
   this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  this->setMinimumWidth(420);
-  this->setMaximumWidth(420);
 
   // Layout
 
@@ -78,9 +77,14 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   // main_v_layout->addSpacing(5);
   containerLayout->addLayout(velocity_limit_group);
 
+  // Create a QScrollArea
+  QScrollArea * scrollArea = new QScrollArea(this);
+  scrollArea->setWidgetResizable(true);
+  scrollArea->setWidget(containerWidget);
+
   // Main layout for AutowareStatePanel
   QVBoxLayout * mainLayout = new QVBoxLayout(this);
-  mainLayout->addWidget(containerWidget);
+  mainLayout->addWidget(scrollArea);
   setLayout(mainLayout);
 }
 
