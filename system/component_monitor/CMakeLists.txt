@@ -21,8 +21,8 @@ rclcpp_components_register_node(${PROJECT_NAME}
 )
 
 ament_auto_package(
-#  INSTALL_TO_SHARE
+  INSTALL_TO_SHARE
 #  config
-#  launch
+  launch
 )
 
