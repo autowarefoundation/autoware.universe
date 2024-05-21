@@ -21,10 +21,11 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
 
 void ComponentMonitor::timer_callback()
 {
+  if (usage_pub_->get_subscription_count() == 0) return;
+
   get_cpu_usage();
   get_mem_usage();
-
-  if (usage_pub_->get_subscription_count() > 0) usage_pub_->publish(usage_msg_);
+  usage_pub_->publish(usage_msg_);
 }
 
 std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
