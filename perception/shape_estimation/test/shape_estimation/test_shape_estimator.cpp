@@ -18,7 +18,6 @@
 #include "shape_estimation/model/model.hpp"
 #include "shape_estimation/shape_estimator.hpp"
 
-#include <glog/logging.h>
 #include <gtest/gtest.h>
 #include <math.h>
 
