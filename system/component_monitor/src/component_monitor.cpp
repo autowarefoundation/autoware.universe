@@ -10,9 +10,9 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
   usage_pub_ = create_publisher<autoware_internal_msgs::msg::SystemUsage>(
     "component_system_usage", rclcpp::SensorDataQoS());
 
-  const auto p = bp::search_path("top");
+  const auto p = bp::search_path("pidstat");
   if (p.empty()) {
-    RCLCPP_ERROR_STREAM(get_logger(), "Couldn't find 'top' in path.");
+    RCLCPP_ERROR_STREAM(get_logger(), "Couldn't find 'pidstat' in path.");
     rclcpp::shutdown();
   }
 
