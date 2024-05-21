@@ -73,10 +73,7 @@ void CustomToggleSwitch::paintEvent(QPaintEvent *)
 void CustomToggleSwitch::mouseReleaseEvent(QMouseEvent * event)
 {
   if (event->button() == Qt::LeftButton) {
-    int middleX = rect().center().x();            // Calculate the middle of the switch
-    bool newState = event->pos().x() >= middleX;  // Determine new state based on click position
-
-    setCheckedState(newState);
+    setCheckedState(!isChecked());
   }
   QCheckBox::mouseReleaseEvent(event);
 }
