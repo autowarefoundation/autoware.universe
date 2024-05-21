@@ -219,21 +219,19 @@ bool MapUpdateModule::update_ndt(
   std::chrono::milliseconds timeout(10);
   std::future_status status = result.wait_for(timeout);
 
-  if (status == std::future_status::timeout)
-  {
+  if (status == std::future_status::timeout) {
     RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, "Waited for incoming PCDs for too long!");
   }
 
-  if (status != std::future_status::ready)
-  {
+  if (status != std::future_status::ready) {
     diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
 
     std::stringstream message;
     message << "pcd_loader service is not working.";
     diagnostics_ptr->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-      
-    return false;    
+
+    return false;
   }
 
   diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
