@@ -154,7 +154,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
     // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
-    if (name.empty()) {
+    if (name == "") {
       break;
     }
     planner_manager_.launchScenePlugin(*this, name);
@@ -182,7 +182,7 @@ void BehaviorVelocityPlannerNode::onUnloadPlugin(
 
 // NOTE: argument planner_data must not be referenced for multithreading
 bool BehaviorVelocityPlannerNode::isDataReady(
-  const PlannerData & planner_data, rclcpp::Clock clock) const
+  const PlannerData planner_data, rclcpp::Clock clock) const
 {
   const auto & d = planner_data;
 
@@ -465,7 +465,7 @@ void BehaviorVelocityPlannerNode::publishDebugMarker(
   for (size_t i = 0; i < path.points.size(); ++i) {
     visualization_msgs::msg::Marker marker;
     marker.header = path.header;
-    marker.id = static_cast<int32_t>(i);
+    marker.id = i;
     marker.type = visualization_msgs::msg::Marker::ARROW;
     marker.pose = path.points.at(i).pose;
     marker.scale.y = marker.scale.z = 0.05;

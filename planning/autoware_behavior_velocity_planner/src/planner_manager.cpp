@@ -35,7 +35,7 @@ std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
 }
 
 diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
-  const std::string & stop_reason, const geometry_msgs::msg::Pose & stop_pose)
+  const std::string stop_reason, const geometry_msgs::msg::Pose & stop_pose)
 {
   diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
   diagnostic_msgs::msg::KeyValue stop_reason_diag_kv;
@@ -83,7 +83,7 @@ void BehaviorVelocityPlannerManager::removeScenePlugin(
 {
   auto it = std::remove_if(
     scene_manager_plugins_.begin(), scene_manager_plugins_.end(),
-    [&](const std::shared_ptr<behavior_velocity_planner::PluginInterface> & plugin) {
+    [&](const std::shared_ptr<behavior_velocity_planner::PluginInterface> plugin) {
       return plugin->getModuleName() == name;
     });
 
@@ -109,11 +109,11 @@ autoware_auto_planning_msgs::msg::PathWithLaneId BehaviorVelocityPlannerManager:
   for (const auto & plugin : scene_manager_plugins_) {
     plugin->updateSceneModuleInstances(planner_data, input_path_msg);
     plugin->plan(&output_path_msg);
-    const auto first_stop_path_point_index_from_plugin = plugin->getFirstStopPathPointIndex();
+    const auto firstStopPathPointIndex = plugin->getFirstStopPathPointIndex();
 
-    if (first_stop_path_point_index_from_plugin) {
-      if (first_stop_path_point_index_from_plugin.value() < first_stop_path_point_index) {
-        first_stop_path_point_index = first_stop_path_point_index_from_plugin.value();
+    if (firstStopPathPointIndex) {
+      if (firstStopPathPointIndex.value() < first_stop_path_point_index) {
+        first_stop_path_point_index = firstStopPathPointIndex.value();
         stop_reason_msg = plugin->getModuleName();
       }
     }

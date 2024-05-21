@@ -111,7 +111,7 @@ private:
   BehaviorVelocityPlannerManager planner_manager_;
   bool is_driving_forward_{true};
   HADMapBin::ConstSharedPtr map_ptr_{nullptr};
-  bool has_received_map_{};
+  bool has_received_map_;
 
   rclcpp::Service<LoadPlugin>::SharedPtr srv_load_plugin_;
   rclcpp::Service<UnloadPlugin>::SharedPtr srv_unload_plugin_;
@@ -125,8 +125,8 @@ private:
   std::mutex mutex_;
 
   // function
-  geometry_msgs::msg::PoseStamped get_current_pose();
-  bool isDataReady(const PlannerData & planner_data, rclcpp::Clock clock) const;
+  geometry_msgs::msg::PoseStamped getCurrentPose();
+  bool isDataReady(const PlannerData planner_data, rclcpp::Clock clock) const;
   autoware_auto_planning_msgs::msg::Path generatePath(
     const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
