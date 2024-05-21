@@ -44,7 +44,7 @@ std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
   bp::ipstream is_err{std::move(err_pipe)};
 
   auto env = boost::this_process::environment();
-  env["LC_NUMERIC"] = "en_US.UTF-8";
+  env["LC_NUMERIC"] = "en_US.UTF-8";  // To make sure that decimal separator is a dot.
 
   bp::environment child_env = env;
   bp::child c(cmd, child_env, bp::std_out > is_out, bp::std_err > is_err);
