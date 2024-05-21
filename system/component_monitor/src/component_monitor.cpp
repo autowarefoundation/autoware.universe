@@ -81,6 +81,12 @@ float ComponentMonitor::to_float(std::string & str)
   return std::strtof(str.c_str(), nullptr);
 }
 
+uint32_t ComponentMonitor::to_uint32(std::string & str)
+{
+  std::replace(str.begin(), str.end(), ',', '.');
+  return std::strtoul(str.c_str(), nullptr, 10);
+}
+
 void ComponentMonitor::get_cpu_usage()
 {
   std::string cmd{"pidstat -u -p "};
@@ -104,7 +110,7 @@ void ComponentMonitor::get_mem_usage()
   auto mem_usage = fields[6];
   auto mem_usage_rate = fields[7];
 
-  usage_msg_.mem_usage_bytes = to_float(mem_usage);
+  usage_msg_.mem_usage_bytes = to_uint32(mem_usage);
   usage_msg_.mem_usage_rate = to_float(mem_usage_rate);
 }
 
