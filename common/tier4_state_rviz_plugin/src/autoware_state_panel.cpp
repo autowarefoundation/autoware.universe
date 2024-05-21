@@ -482,8 +482,9 @@ QVBoxLayout * AutowareStatePanel::makeVelocityLimitGroup()
 
 void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPtr msg)
 {
-  auto updateButtonState = [](CustomSegmentedButtonItem* button, bool is_available,
-                              uint8_t current_mode, uint8_t desired_mode, bool disable) {
+  auto updateButtonState = [](
+                             CustomSegmentedButtonItem * button, bool is_available,
+                             uint8_t current_mode, uint8_t desired_mode, bool disable) {
     bool is_checked = (current_mode == desired_mode);
     button->setHovered(false);
 
@@ -495,10 +496,18 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
 
   bool disable_buttons = msg->is_in_transition;
 
-  updateButtonState(auto_button_ptr_, msg->is_autonomous_mode_available, msg->mode, OperationModeState::AUTONOMOUS, disable_buttons);
-  updateButtonState(stop_button_ptr_, msg->is_stop_mode_available, msg->mode, OperationModeState::STOP, disable_buttons);
-  updateButtonState(local_button_ptr_, msg->is_local_mode_available, msg->mode, OperationModeState::LOCAL, disable_buttons);
-  updateButtonState(remote_button_ptr_, msg->is_remote_mode_available, msg->mode, OperationModeState::REMOTE, disable_buttons);
+  updateButtonState(
+    auto_button_ptr_, msg->is_autonomous_mode_available, msg->mode, OperationModeState::AUTONOMOUS,
+    disable_buttons);
+  updateButtonState(
+    stop_button_ptr_, msg->is_stop_mode_available, msg->mode, OperationModeState::STOP,
+    disable_buttons);
+  updateButtonState(
+    local_button_ptr_, msg->is_local_mode_available, msg->mode, OperationModeState::LOCAL,
+    disable_buttons);
+  updateButtonState(
+    remote_button_ptr_, msg->is_remote_mode_available, msg->mode, OperationModeState::REMOTE,
+    disable_buttons);
 
   // toggle switch for control mode
   auto changeToggleSwitchState = [](CustomToggleSwitch * toggle_switch, const bool is_enabled) {
