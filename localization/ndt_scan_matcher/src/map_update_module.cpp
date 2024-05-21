@@ -217,31 +217,25 @@ bool MapUpdateModule::update_ndt(
 
   // Wait for maximum 10 milliseconds
   std::chrono::milliseconds timeout(10);
-  auto start = std::chrono::system_clock::now();
+  std::future_status status = result.wait_for(timeout);
 
-  std::future_status status = result.wait_for(std::chrono::seconds(0));
-  while (status != std::future_status::ready) {
-    // check is_succeed_call_pcd_loader
-    if (!rclcpp::ok()) {
-      diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
-
-      std::stringstream message;
-      message << "pcd_loader service is not working.";
-      diagnostics_ptr->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-      return false;  // No update
-    }
-
-    auto cur = std::chrono::system_clock::now();
-
-    // Report an error if wait for too long
-    if (cur - start >= timeout) {
-      RCLCPP_WARN_STREAM_THROTTLE(
-        logger_, *clock_, 1000, "Waited for incoming PCDs for too long...");
-    }
-
-    status = result.wait_for(std::chrono::seconds(1));
+  if (status == std::future_status::timeout)
+  {
+    RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, "Waited for incoming PCDs for too long!");
   }
+
+  if (status != std::future_status::ready)
+  {
+    diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
+
+    std::stringstream message;
+    message << "pcd_loader service is not working.";
+    diagnostics_ptr->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+      
+    return false;    
+  }
+
   diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
 
   auto & maps_to_add = result.get()->new_pointcloud_with_ids;
