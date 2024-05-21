@@ -20,10 +20,10 @@ public:
 
 private:
   void timer_callback();
-  std::stringstream run_command(const std::string & cmd);
+  std::stringstream run_command(const std::string & cmd) const;
   static std::vector<std::string> get_fields(std::stringstream & std_out);
-  static float to_float(std::string & str);
-  static uint32_t to_uint32(std::string & str);
+  static float to_float(const std::string & str);
+  static uint32_t to_uint32(const std::string & str);
   void get_cpu_usage();
   void get_mem_usage();
 

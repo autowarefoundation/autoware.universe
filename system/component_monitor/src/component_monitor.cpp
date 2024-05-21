@@ -27,7 +27,7 @@ void ComponentMonitor::timer_callback()
   usage_pub_->publish(usage_msg_);
 }
 
-std::stringstream ComponentMonitor::run_command(const std::string & cmd)
+std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
 {
   int out_fd[2];
   if (pipe2(out_fd, O_CLOEXEC) != 0) {
@@ -43,7 +43,11 @@ std::stringstream ComponentMonitor::run_command(const std::string & cmd)
   bp::pipe err_pipe{err_fd[0], err_fd[1]};
   bp::ipstream is_err{std::move(err_pipe)};
 
-  bp::child c(cmd, bp::std_out > is_out, bp::std_err > is_err);
+  auto env = boost::this_process::environment();
+  env["LC_NUMERIC"] = "en_US.UTF-8";
+
+  bp::environment child_env = env;
+  bp::child c(cmd, child_env, bp::std_out > is_out, bp::std_err > is_err);
   c.wait();
 
   if (c.exit_code() != 0) {
@@ -75,18 +79,27 @@ std::vector<std::string> ComponentMonitor::get_fields(std::stringstream & std_ou
   return words;
 }
 
-float ComponentMonitor::to_float(std::string & str)
+float ComponentMonitor::to_float(const std::string & str)
 {
-  std::replace(str.begin(), str.end(), ',', '.');
   return std::strtof(str.c_str(), nullptr);
 }
 
-uint32_t ComponentMonitor::to_uint32(std::string & str)
+uint32_t ComponentMonitor::to_uint32(const std::string & str)
 {
-  std::replace(str.begin(), str.end(), ',', '.');
   return std::strtoul(str.c_str(), nullptr, 10);
 }
 
+/**
+ * @brief Get CPU usage of the component.
+ *
+ * @details The output of `pidstat -u -p PID` is like below:
+ *
+ * Linux 6.5.0-35-generic (leopc) 	21-05-2024 	_x86_64_	(16 CPU)
+ * 14:54:52      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command
+ * 14:54:52     1000      3280    0,00    0,00    0,00    0,00    0,00     0  awesome
+ *
+ * We get the 7th field, which is %CPU.
+ */
 void ComponentMonitor::get_cpu_usage()
 {
   std::string cmd{"pidstat -u -p "};
@@ -95,10 +108,21 @@ void ComponentMonitor::get_cpu_usage()
   auto std_out = run_command(cmd);
   const auto fields = get_fields(std_out);
 
-  auto cpu_rate = fields[7];
+  const auto & cpu_rate = fields[7];
   usage_msg_.cpu_usage_rate = to_float(cpu_rate);
 }
 
+/**
+ * @brief Get memory usage of the component.
+ *
+ * @details The output of `pidstat -r -p PID` is like below:
+ *
+ * Linux 6.5.0-35-generic (leopc) 	21-05-2024 	_x86_64_	(16 CPU)
+ * 14:54:52      UID       PID  minflt/s  majflt/s     VSZ     RSS   %MEM  Command
+ * 14:54:52     1000      3280   2426,99      0,00 1820884 1243692   1,90  awesome
+ *
+ * We get the 6th and 7th fields, which are RSS and %MEM, respectively.
+ */
 void ComponentMonitor::get_mem_usage()
 {
   std::string cmd{"pidstat -r -p "};
@@ -107,8 +131,8 @@ void ComponentMonitor::get_mem_usage()
   auto std_out = run_command(cmd);
   const auto fields = get_fields(std_out);
 
-  auto mem_usage = fields[6];
-  auto mem_usage_rate = fields[7];
+  const auto & mem_usage = fields[6];
+  const auto & mem_usage_rate = fields[7];
 
   usage_msg_.mem_usage_bytes = to_uint32(mem_usage);
   usage_msg_.mem_usage_rate = to_float(mem_usage_rate);
