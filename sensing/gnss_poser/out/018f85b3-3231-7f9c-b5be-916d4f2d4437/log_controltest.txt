@@ -1,0 +1,10 @@
+test gnss poser for dora 
+output_data_len: 21736
+  [2m2024-05-17T08:37:44.730833Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+exit test gnss poser ...

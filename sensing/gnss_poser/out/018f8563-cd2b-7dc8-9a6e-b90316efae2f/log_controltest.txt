@@ -1,0 +1,3 @@
+test gnss poser for dora 
+output_data_len: 21736
+exit test gnss poser ...

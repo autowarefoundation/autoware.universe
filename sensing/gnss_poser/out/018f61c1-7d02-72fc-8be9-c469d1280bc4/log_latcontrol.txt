@@ -1,0 +1,7 @@
+lat_control
+Input ID: DoraNavSatFix
+Input len: 0
+ 
+0
+JSON 解析错误 [json.exception.parse_error.101] parse error at line 1, column 1: attempting to parse an empty input; check that your input string or stream contains the expected JSON
+ 

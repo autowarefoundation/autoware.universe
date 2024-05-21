@@ -1,0 +1,5078 @@
+test gnss poser for dora 
+1
+output_data_len: 48
+  [2m2024-05-11T03:16:56.772241Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+2
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:56.876520Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+3
+output_data_len: 48
+  [2m2024-05-11T03:16:56.981121Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+4
+output_data_len: 48
+  [2m2024-05-11T03:16:57.080710Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+5
+output_data_len: 48
+  [2m2024-05-11T03:16:57.180977Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+6
+output_data_len: 48
+  [2m2024-05-11T03:16:57.281119Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+7
+output_data_len: 48
+  [2m2024-05-11T03:16:57.380958Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+8
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:16:57.474244Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+9
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:57.577823Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+10
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:57.685540Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+11
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:57.781045Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+12
+output_data_len: 48
+  [2m2024-05-11T03:16:57.881769Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+13
+output_data_len: 48
+  [2m2024-05-11T03:16:57.982448Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+14
+output_data_len: 48
+  [2m2024-05-11T03:16:58.082162Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+15
+output_data_len: 48
+  [2m2024-05-11T03:16:58.182304Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+16
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:16:58.272326Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+17
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:58.382874Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+18
+output_data_len: 48
+  [2m2024-05-11T03:16:58.483017Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+19
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:58.582862Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+20
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:58.683153Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+21
+output_data_len: 48
+  [2m2024-05-11T03:16:58.782330Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+22
+output_data_len: 48
+  [2m2024-05-11T03:16:58.882265Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+23
+output_data_len: 48
+  [2m2024-05-11T03:16:58.982055Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+24
+output_data_len: 48
+  [2m2024-05-11T03:16:59.082013Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+25
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:59.184299Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+26
+output_data_len: 48
+  [2m2024-05-11T03:16:59.282451Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+27
+output_data_len: 48
+  [2m2024-05-11T03:16:59.382976Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+28
+output_data_len: 48
+  [2m2024-05-11T03:16:59.482292Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+29
+output_data_len: 48
+  [2m2024-05-11T03:16:59.582285Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+30
+output_data_len: 48
+  [2m2024-05-11T03:16:59.682527Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+31
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:59.782819Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+32
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:59.883026Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+33
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:16:59.982670Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+34
+output_data_len: 48
+  [2m2024-05-11T03:17:00.082439Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+35
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:00.171397Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+36
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:00.282527Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+37
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:00.383107Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+38
+output_data_len: 48
+  [2m2024-05-11T03:17:00.482270Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+39
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:00.582952Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+40
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:00.682825Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+41
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:00.776619Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+42
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:00.880837Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+43
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:00.981128Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+44
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:01.082236Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+45
+output_data_len: 48
+  [2m2024-05-11T03:17:01.182387Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+46
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:01.283911Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+47
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:01.374188Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+48
+output_data_len: 48
+  [2m2024-05-11T03:17:01.482729Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+49
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:01.583160Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+50
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:01.682408Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+51
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:01.783301Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+52
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:01.882637Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+53
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:01.982285Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+54
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.082352Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+55
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.182503Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+56
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.282526Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+57
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.383197Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+58
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.471910Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+59
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:02.583329Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+60
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.682459Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+61
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.782485Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+62
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.882734Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+63
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:02.983089Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+64
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.082630Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+65
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.183176Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+66
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.283152Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+67
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.382860Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+68
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.483205Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+69
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.582664Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+70
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.683159Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+71
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.781582Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+72
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:03.880912Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+73
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:03.981595Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+74
+output_data_len: 48
+  [2m2024-05-11T03:17:04.082923Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+75
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:04.183139Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+76
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:04.283455Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+77
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:04.376692Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+78
+output_data_len: 48
+  [2m2024-05-11T03:17:04.482439Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+79
+output_data_len: 48
+  [2m2024-05-11T03:17:04.582619Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+80
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:04.682533Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+81
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:04.782341Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+82
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:04.882712Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+83
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:04.982748Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+84
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.082684Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+85
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.182966Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+86
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.283022Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+87
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.382314Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+88
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.482468Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+89
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.582514Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+90
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.682891Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+91
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.782688Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+92
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.882618Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+93
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:05.982257Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+94
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:06.082773Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+95
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:06.182638Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+96
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:06.273411Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+97
+output_data_len: 48
+  [2m2024-05-11T03:17:06.382739Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+98
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:06.483210Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+99
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:06.572327Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+100
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:06.675830Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+101
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:06.782940Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+102
+output_data_len: 48
+  [2m2024-05-11T03:17:06.882397Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+103
+output_data_len: 48
+  [2m2024-05-11T03:17:06.981105Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+104
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:07.082611Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+105
+output_data_len: 48
+  [2m2024-05-11T03:17:07.181327Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+106
+output_data_len: 48
+  [2m2024-05-11T03:17:07.281842Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+107
+output_data_len: 48
+  [2m2024-05-11T03:17:07.382270Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+108
+output_data_len: 48
+  [2m2024-05-11T03:17:07.482419Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+109
+output_data_len: 48
+  [2m2024-05-11T03:17:07.581714Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+110
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:07.676055Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+111
+output_data_len: 48
+  [2m2024-05-11T03:17:07.783135Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+112
+output_data_len: 48
+  [2m2024-05-11T03:17:07.882056Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+113
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:07.982518Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+114
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:08.081856Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+115
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:08.182360Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+116
+output_data_len: 48
+  [2m2024-05-11T03:17:08.282189Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+117
+output_data_len: 48
+  [2m2024-05-11T03:17:08.381598Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+118
+output_data_len: 48
+  [2m2024-05-11T03:17:08.481374Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+119
+output_data_len: 48
+  [2m2024-05-11T03:17:08.581725Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+120
+output_data_len: 48
+  [2m2024-05-11T03:17:08.681622Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+121
+output_data_len: 48
+  [2m2024-05-11T03:17:08.781197Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+122
+output_data_len: 48
+  [2m2024-05-11T03:17:08.881566Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+123
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:08.980885Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+124
+output_data_len: 48
+  [2m2024-05-11T03:17:09.081769Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+125
+output_data_len: 48
+  [2m2024-05-11T03:17:09.181537Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+126
+output_data_len: 48
+  [2m2024-05-11T03:17:09.281799Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+127
+output_data_len: 48
+  [2m2024-05-11T03:17:09.381509Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+128
+output_data_len: 48
+  [2m2024-05-11T03:17:09.481541Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+129
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:09.582596Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+130
+output_data_len: 48
+  [2m2024-05-11T03:17:09.681930Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+131
+output_data_len: 48
+  [2m2024-05-11T03:17:09.782520Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+132
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:09.882483Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+133
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:09.982644Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+134
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:10.082315Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+135
+output_data_len: 48
+  [2m2024-05-11T03:17:10.182390Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+136
+output_data_len: 48
+  [2m2024-05-11T03:17:10.282216Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+137
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:10.383100Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+138
+output_data_len: 48
+  [2m2024-05-11T03:17:10.482385Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+139
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:10.581807Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+140
+output_data_len: 48
+  [2m2024-05-11T03:17:10.682170Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+141
+output_data_len: 48
+  [2m2024-05-11T03:17:10.782848Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+142
+output_data_len: 48
+  [2m2024-05-11T03:17:10.882548Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+143
+output_data_len: 48
+  [2m2024-05-11T03:17:10.981855Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+144
+output_data_len: 48
+  [2m2024-05-11T03:17:11.082084Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+145
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:11.182721Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+146
+output_data_len: 48
+  [2m2024-05-11T03:17:11.282686Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+147
+output_data_len: 48
+  [2m2024-05-11T03:17:11.382176Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+148
+output_data_len: 48
+  [2m2024-05-11T03:17:11.482428Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+149
+output_data_len: 48
+  [2m2024-05-11T03:17:11.581936Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+150
+output_data_len: 48
+  [2m2024-05-11T03:17:11.682478Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+151
+output_data_len: 48
+  [2m2024-05-11T03:17:11.782779Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+152
+output_data_len: 48
+  [2m2024-05-11T03:17:11.882623Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+153
+output_data_len: 48
+  [2m2024-05-11T03:17:11.981157Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+154
+output_data_len: 48
+  [2m2024-05-11T03:17:12.082421Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+155
+output_data_len: 48
+  [2m2024-05-11T03:17:12.182557Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+156
+output_data_len: 48
+  [2m2024-05-11T03:17:12.282027Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+157
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:12.375932Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+158
+output_data_len: 48
+  [2m2024-05-11T03:17:12.481623Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+159
+output_data_len: 48
+  [2m2024-05-11T03:17:12.582029Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+160
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:12.675899Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+161
+output_data_len: 48
+  [2m2024-05-11T03:17:12.781211Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+162
+output_data_len: 48
+  [2m2024-05-11T03:17:12.881254Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+163
+output_data_len: 48
+  [2m2024-05-11T03:17:12.981293Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+164
+output_data_len: 48
+  [2m2024-05-11T03:17:13.082430Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+165
+output_data_len: 48
+  [2m2024-05-11T03:17:13.182128Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+166
+output_data_len: 48
+  [2m2024-05-11T03:17:13.282603Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+167
+output_data_len: 48
+  [2m2024-05-11T03:17:13.382731Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+168
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:13.482572Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+169
+output_data_len: 48
+  [2m2024-05-11T03:17:13.582656Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+170
+output_data_len: 48
+  [2m2024-05-11T03:17:13.682901Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+171
+output_data_len: 48
+  [2m2024-05-11T03:17:13.782239Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+172
+output_data_len: 48
+  [2m2024-05-11T03:17:13.882130Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+173
+output_data_len: 48
+  [2m2024-05-11T03:17:13.982182Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+174
+output_data_len: 48
+  [2m2024-05-11T03:17:14.082159Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+175
+output_data_len: 48
+  [2m2024-05-11T03:17:14.181461Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+176
+output_data_len: 48
+  [2m2024-05-11T03:17:14.281296Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+177
+output_data_len: 48
+  [2m2024-05-11T03:17:14.381435Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+178
+output_data_len: 48
+  [2m2024-05-11T03:17:14.481748Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+179
+output_data_len: 48
+  [2m2024-05-11T03:17:14.580792Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+180
+output_data_len: 48
+  [2m2024-05-11T03:17:14.681423Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+181
+output_data_len: 48
+  [2m2024-05-11T03:17:14.781607Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+182
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:14.880761Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+183
+output_data_len: 48
+  [2m2024-05-11T03:17:14.981506Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+184
+output_data_len: 48
+  [2m2024-05-11T03:17:15.076123Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+185
+output_data_len: 48
+  [2m2024-05-11T03:17:15.181170Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+186
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:15.282927Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+187
+output_data_len: 48
+  [2m2024-05-11T03:17:15.383043Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+188
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:15.482592Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+189
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:15.583339Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+190
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:15.683148Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+191
+output_data_len: 48
+  [2m2024-05-11T03:17:15.786518Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+192
+output_data_len: 48
+  [2m2024-05-11T03:17:15.882731Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+193
+output_data_len: 48
+  [2m2024-05-11T03:17:15.983050Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+194
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:16.083217Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+195
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:16.184425Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+196
+output_data_len: 48
+  [2m2024-05-11T03:17:16.284081Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+197
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:16.384452Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+198
+output_data_len: 48
+  [2m2024-05-11T03:17:16.484490Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+199
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:16.578893Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+200
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:16.685009Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+201
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:16.782353Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+202
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:16.882595Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+203
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:16.983006Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+204
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:17.082475Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+205
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:17.182946Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+206
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:17.282969Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+207
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:17.382508Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+208
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:17.482550Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+209
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:17.582787Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+210
+output_data_len: 48
+  [2m2024-05-11T03:17:17.682236Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+211
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:17.782486Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+212
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:17.874420Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+213
+output_data_len: 48
+  [2m2024-05-11T03:17:17.984145Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+214
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:18.083220Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+215
+output_data_len: 48
+  [2m2024-05-11T03:17:18.186521Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+216
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:18.282816Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+217
+output_data_len: 48
+  [2m2024-05-11T03:17:18.383034Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+218
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:18.476821Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+219
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:18.582570Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+220
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:18.682558Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+221
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:18.782840Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+222
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:18.883698Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+223
+output_data_len: 48
+  [2m2024-05-11T03:17:18.984098Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+224
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:19.083945Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+225
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:19.183862Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+226
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:19.284270Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+227
+output_data_len: 48
+  [2m2024-05-11T03:17:19.384009Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+228
+output_data_len: 48
+  [2m2024-05-11T03:17:19.483713Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+229
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:19.583749Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+230
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:19.683855Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+231
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:19.782769Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+232
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:19.882114Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+233
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:19.983417Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+234
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:20.082901Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+235
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:20.182355Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+236
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:20.283024Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+237
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:20.382520Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+238
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:20.483160Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+239
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:20.582813Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+240
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:20.682891Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+241
+output_data_len: 48
+  [2m2024-05-11T03:17:20.783177Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+242
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:20.882382Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+243
+output_data_len: 48
+  [2m2024-05-11T03:17:20.983134Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+244
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:21.082465Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+245
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:21.182346Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+246
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:21.282934Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+247
+output_data_len: 48
+  [2m2024-05-11T03:17:21.382187Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+248
+output_data_len: 48
+  [2m2024-05-11T03:17:21.482665Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+249
+output_data_len: 48
+  [2m2024-05-11T03:17:21.582501Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+250
+output_data_len: 48
+  [2m2024-05-11T03:17:21.682177Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+251
+output_data_len: 48
+  [2m2024-05-11T03:17:21.782346Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+252
+output_data_len: 48
+  [2m2024-05-11T03:17:21.882910Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+253
+output_data_len: 48
+  [2m2024-05-11T03:17:21.982075Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+254
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:22.072411Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+255
+output_data_len: 48
+  [2m2024-05-11T03:17:22.184046Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+256
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:22.284208Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+257
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:22.383691Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+258
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:22.482710Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+259
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:22.583441Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+260
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:22.683498Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+261
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:22.772851Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+262
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:22.871769Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+263
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:22.972054Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+264
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.083255Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+265
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.183313Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+266
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.283052Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+267
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.383116Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+268
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.482751Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+269
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.582946Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+270
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.682420Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+271
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.782607Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+272
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.883098Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+273
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:23.982446Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+274
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.083039Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+275
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.183177Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+276
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.282748Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+277
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.382720Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+278
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.482887Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+279
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.582726Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+280
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.682476Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+281
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.782316Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+282
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:24.874485Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+283
+output_data_len: 48
+  [2m2024-05-11T03:17:24.982300Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+284
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.073734Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+285
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:25.172212Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+286
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.273034Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+287
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.371611Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+288
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.485775Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+289
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.588187Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+290
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.679896Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+291
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.783039Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+292
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.882888Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+293
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:25.983073Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+294
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.083369Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+295
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.183143Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+296
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.283328Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+297
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.383052Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+298
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.482485Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+299
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.583172Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+300
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.682881Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+301
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.782988Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+302
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:26.883172Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+303
+output_data_len: 48
+  [2m2024-05-11T03:17:26.982870Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+304
+output_data_len: 48
+  [2m2024-05-11T03:17:27.082140Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+305
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:27.183038Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+306
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:27.282499Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+307
+output_data_len: 48
+  [2m2024-05-11T03:17:27.382118Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+308
+output_data_len: 48
+  [2m2024-05-11T03:17:27.482553Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+309
+output_data_len: 48
+  [2m2024-05-11T03:17:27.582126Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+310
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:27.672754Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+311
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:27.783174Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+312
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:27.872678Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+313
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:27.983786Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+314
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:28.073036Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+315
+output_data_len: 48
+  [2m2024-05-11T03:17:28.178648Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+316
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:28.280860Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+317
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:28.374047Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+318
+output_data_len: 48
+  [2m2024-05-11T03:17:28.481593Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+319
+output_data_len: 48
+  [2m2024-05-11T03:17:28.580937Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+320
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:28.674349Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+321
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:28.776907Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+322
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:28.875702Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+323
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:28.972865Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+324
+output_data_len: 48
+  [2m2024-05-11T03:17:29.080961Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+325
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.172762Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+326
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.273200Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+327
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.379222Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+328
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.478107Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+329
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.583457Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+330
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.682680Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+331
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.774315Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+332
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.880708Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+333
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:29.973205Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+334
+output_data_len: 48
+  [2m2024-05-11T03:17:30.079659Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+335
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:30.174064Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+336
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:30.280111Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+337
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:30.382558Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+338
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:30.482571Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+339
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:30.571583Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+340
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:30.674286Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+341
+output_data_len: 48
+  [2m2024-05-11T03:17:30.780848Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+342
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:30.883035Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+343
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:30.982841Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+344
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:31.082683Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+345
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:31.180885Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+346
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:31.271863Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+347
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:31.371568Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+348
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:31.471716Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+349
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:31.572247Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+350
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:31.673715Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+351
+output_data_len: 48
+  [2m2024-05-11T03:17:31.776993Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+352
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:31.881192Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+353
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:31.983077Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+354
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:32.082337Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+355
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:32.172091Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+356
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:32.271460Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+357
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:32.371806Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+358
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:32.477405Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+359
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:32.583133Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+360
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:32.682768Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+361
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:32.784536Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+362
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:32.882782Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+363
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:32.983018Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+364
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:33.082520Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+365
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:33.183286Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+366
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:33.282784Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+367
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:33.382484Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+368
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:33.482633Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+369
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:33.582727Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+370
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:33.682822Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+371
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:33.782517Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+372
+output_data_len: 48
+  [2m2024-05-11T03:17:33.883120Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+373
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:33.983216Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+374
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:34.082339Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+375
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:34.183052Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+376
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:34.282128Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+377
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:34.383015Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+378
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:34.483071Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+379
+output_data_len: 48
+  [2m2024-05-11T03:17:34.579047Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+380
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:34.682463Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+381
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:34.782775Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+382
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:34.882935Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+383
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:34.983091Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+384
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.082992Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+385
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.183100Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+386
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.282253Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+387
+output_data_len: 48
+  [2m2024-05-11T03:17:35.383573Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+388
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.483196Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+389
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.582225Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+390
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.682989Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+391
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.782626Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+392
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.882807Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+393
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:35.982837Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+394
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.083087Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+395
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.182584Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+396
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.282816Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+397
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.382379Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+398
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.483166Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+399
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.582649Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+400
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.682363Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+401
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.782242Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+402
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.882961Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+403
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:36.982143Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+404
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:37.083184Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+405
+output_data_len: 48
+  [2m2024-05-11T03:17:37.182674Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+406
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:37.282372Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+407
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:37.382519Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+408
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:37.483016Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+409
+output_data_len: 48
+  [2m2024-05-11T03:17:37.582807Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+410
+output_data_len: 48
+  [2m2024-05-11T03:17:37.682310Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+411
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:37.780732Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+412
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:37.883027Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+413
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:37.972536Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+414
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:38.080876Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+415
+output_data_len: 48
+  [2m2024-05-11T03:17:38.182470Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+416
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:38.283016Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+417
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:38.382789Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+418
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:38.471455Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+419
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:38.571773Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+420
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:38.672125Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+421
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:38.782973Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+422
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:38.882828Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+423
+output_data_len: 48
+  [2m2024-05-11T03:17:38.982799Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+424
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.082464Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+425
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.182911Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+426
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.283053Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+427
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.383094Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+428
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.483184Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+429
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.582708Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+430
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.674737Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+431
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.782977Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+432
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.882403Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+433
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:39.982836Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+434
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:40.082462Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+435
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:40.182696Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+436
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:40.282771Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+437
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:40.382836Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+438
+output_data_len: 48
+  [2m2024-05-11T03:17:40.482541Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+439
+output_data_len: 48
+  [2m2024-05-11T03:17:40.583599Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+440
+output_data_len: 48
+  [2m2024-05-11T03:17:40.682384Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+441
+output_data_len: 48
+  [2m2024-05-11T03:17:40.782459Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+442
+output_data_len: 48
+  [2m2024-05-11T03:17:40.882223Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+443
+output_data_len: 48
+  [2m2024-05-11T03:17:40.982136Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+444
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:41.072112Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+445
+output_data_len: 48
+  [2m2024-05-11T03:17:41.182259Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+446
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:41.271943Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+447
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:41.371621Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+448
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:41.473823Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+449
+output_data_len: 48
+  [2m2024-05-11T03:17:41.585409Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+450
+output_data_len: 48
+  [2m2024-05-11T03:17:41.682879Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+451
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:41.782241Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+452
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:41.883143Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+453
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:41.982802Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+454
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:42.073578Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+455
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:42.182700Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+456
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:42.282755Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+457
+output_data_len: 48
+  [2m2024-05-11T03:17:42.382398Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+458
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:42.482770Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+459
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:42.571123Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+460
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:42.672006Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+461
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:42.776368Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+462
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:42.882727Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+463
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:42.982385Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+464
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.082889Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+465
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.182802Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+466
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.283070Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+467
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.383114Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+468
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.482411Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+469
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.582562Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+470
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.682669Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+471
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.783099Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+472
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.882777Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+473
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:43.982384Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+474
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:44.082767Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+475
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:44.182949Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+476
+output_data_len: 48
+  [2m2024-05-11T03:17:44.282352Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+477
+output_data_len: 48
+  [2m2024-05-11T03:17:44.381871Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+478
+output_data_len: 48
+  [2m2024-05-11T03:17:44.481441Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+479
+output_data_len: 48
+  [2m2024-05-11T03:17:44.581042Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+480
+output_data_len: 48
+  [2m2024-05-11T03:17:44.681608Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+481
+output_data_len: 48
+  [2m2024-05-11T03:17:44.781877Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+482
+output_data_len: 48
+  [2m2024-05-11T03:17:44.881000Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+483
+output_data_len: 48
+  [2m2024-05-11T03:17:44.981179Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+484
+output_data_len: 48
+  [2m2024-05-11T03:17:45.080973Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+485
+output_data_len: 48
+  [2m2024-05-11T03:17:45.181399Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+486
+output_data_len: 48
+  [2m2024-05-11T03:17:45.281807Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+487
+output_data_len: 48
+  [2m2024-05-11T03:17:45.380971Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+488
+output_data_len: 48
+  [2m2024-05-11T03:17:45.482648Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+489
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:45.571456Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+490
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:45.676595Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+491
+output_data_len: 48
+  [2m2024-05-11T03:17:45.782357Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+492
+output_data_len: 48
+  [2m2024-05-11T03:17:45.880968Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+493
+output_data_len: 48
+  [2m2024-05-11T03:17:45.981510Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+494
+output_data_len: 48
+  [2m2024-05-11T03:17:46.080969Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+495
+output_data_len: 48
+  [2m2024-05-11T03:17:46.180798Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+496
+output_data_len: 48
+  [2m2024-05-11T03:17:46.281669Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+497
+output_data_len: 48
+  [2m2024-05-11T03:17:46.381366Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+498
+output_data_len: 48
+  [2m2024-05-11T03:17:46.481494Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+499
+output_data_len: 48
+  [2m2024-05-11T03:17:46.580871Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+500
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:46.671646Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+501
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:46.772828Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+502
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:46.871620Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+503
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:46.971783Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+504
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:47.071334Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+505
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:47.171361Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+506
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:47.271890Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+507
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:47.371794Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+508
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:47.471586Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+509
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:47.571673Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+510
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:47.671860Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+511
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:47.771327Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+512
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:47.871302Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+513
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:47.971288Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+514
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:48.071706Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+515
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:48.171980Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+516
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:48.271353Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+517
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:48.371273Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+518
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:48.471598Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+519
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:48.571528Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+520
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:48.672357Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+521
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:48.771854Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+522
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:48.876233Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+523
+output_data_len: 48
+  [2m2024-05-11T03:17:48.981157Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+524
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:49.081136Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+525
+output_data_len: 48
+  [2m2024-05-11T03:17:49.181408Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+526
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:49.280819Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+527
+output_data_len: 48
+  [2m2024-05-11T03:17:49.380704Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+528
+output_data_len: 48
+  [2m2024-05-11T03:17:49.480932Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+529
+output_data_len: 48
+  [2m2024-05-11T03:17:49.581014Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+530
+output_data_len: 48
+  [2m2024-05-11T03:17:49.680895Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+531
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:49.772537Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+532
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:49.875543Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+533
+output_data_len: 48
+  [2m2024-05-11T03:17:49.981120Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+534
+output_data_len: 48
+  [2m2024-05-11T03:17:50.081672Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+535
+output_data_len: 48
+  [2m2024-05-11T03:17:50.181458Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+536
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:50.280844Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+537
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:50.374079Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+538
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:50.473694Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+539
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:50.583952Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+540
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:50.681164Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+541
+output_data_len: 48
+  [2m2024-05-11T03:17:50.772647Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+542
+output_data_len: 48
+failed to send output
+  [2m2024-05-11T03:17:50.872071Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+543
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:50.973807Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+544
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:51.077487Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+545
+output_data_len: 48
+  [2m2024-05-11T03:17:51.181423Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+546
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:51.283068Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+547
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:51.382215Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+548
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:51.476331Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+549
+output_data_len: 48
+  [2m2024-05-11T03:17:51.583008Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+550
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:51.682879Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+551
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:51.783116Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+552
+output_data_len: 48
+  [2m2024-05-11T03:17:51.882245Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+553
+output_data_len: 48
+  [2m2024-05-11T03:17:51.981186Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+554
+output_data_len: 48
+  [2m2024-05-11T03:17:52.081855Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+555
+output_data_len: 48
+  [2m2024-05-11T03:17:52.182870Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+556
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:52.283335Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+557
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:52.382828Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+558
+output_data_len: 48
+  [2m2024-05-11T03:17:52.482288Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+559
+output_data_len: 48
+  [2m2024-05-11T03:17:52.581570Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+560
+output_data_len: 48
+  [2m2024-05-11T03:17:52.681581Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+561
+output_data_len: 48
+  [2m2024-05-11T03:17:52.781554Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+562
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:52.871941Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+563
+failed to send output
+output_data_len: 48
+  [2m2024-05-11T03:17:52.976367Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+564
+output_data_len: 48
+  [2m2024-05-11T03:17:53.079867Z[0m [31mERROR[0m [1;31mdora_node_api_c[0m[31m: [31munknown output
+
+Location:
+    apis/rust/node/src/node/mod.rs:205:13[0m
+    [2;3mat[0m apis/c/node/src/lib.rs:238
+
+failed to send output
+565

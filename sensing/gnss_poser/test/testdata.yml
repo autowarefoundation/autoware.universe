@@ -1,0 +1,16 @@
+nodes:
+  - id: datatest
+    custom:
+      source: data
+      outputs:
+        - DoraNavSatFix
+
+
+  - id: gnss_rviz2
+    operator:
+      python: gps_to_ros2.py
+      inputs:
+              DoraNavSatFix: datatest/DoraNavSatFix
+
+
+

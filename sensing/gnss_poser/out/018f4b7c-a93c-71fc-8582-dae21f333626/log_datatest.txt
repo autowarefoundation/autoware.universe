@@ -1,0 +1,3 @@
+test gnss poser for dora 
+[c node] ERROR: unexpected end of event
+exit test gnss poser ...

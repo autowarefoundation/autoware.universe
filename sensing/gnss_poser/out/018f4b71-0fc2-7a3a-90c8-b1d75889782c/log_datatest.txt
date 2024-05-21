@@ -1,0 +1,6 @@
+test gnss poser for dora 
+  [2m2024-05-06T01:07:31.913719Z[0m [33m WARN[0m [1;33mdora_node_api::event_stream::thread[0m[33m: [33mfailed to update HLC: incoming timestamp from 02203DA4F0014A2B95F078A121ED4AB8 exceeding delta 500ms is rejected: 2024-05-06T09:06:12.651600718Z vs. now: 2024-05-06T01:07:31.913694892Z[0m
+    [2;3mat[0m apis/rust/node/src/event_stream/thread.rs:121
+
+[c node] ERROR: unexpected end of event
+exit test gnss poser ...

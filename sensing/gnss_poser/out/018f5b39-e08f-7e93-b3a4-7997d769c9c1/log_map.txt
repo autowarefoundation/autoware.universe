@@ -1,0 +1,3 @@
+HELLO FROM C++ (using C API)
+terminate called after throwing an instance of 'nlohmann::json_abi_v3_11_3::detail::type_error'
+  what():  [json.exception.type_error.305] cannot use operator[] with a string argument with number

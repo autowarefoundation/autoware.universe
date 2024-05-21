@@ -1,0 +1,6 @@
+test gnss poser for dora 
+output_data_len: 21736
+  [2m2024-05-17T08:40:35.778147Z[0m [33m WARN[0m [1;33mdora_node_api::node[0m[33m: [33mtimeout while waiting for drop tokens; closing 1 shared memory regions that might still be used[0m
+    [2;3mat[0m apis/rust/node/src/node/mod.rs:371
+
+exit test gnss poser ...

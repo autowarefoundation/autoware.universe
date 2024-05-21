@@ -1,0 +1,5 @@
+lat_control
+Input Data length: 21736
++++++++++++++++++++++++++++++++
+terminate called without an active exception
+--------------------------------------------------

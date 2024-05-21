@@ -1,0 +1,4 @@
+lat_control
+[c node] received unexpected event: 2
+[c node] ERROR: unexpected end of event
+END lat_control

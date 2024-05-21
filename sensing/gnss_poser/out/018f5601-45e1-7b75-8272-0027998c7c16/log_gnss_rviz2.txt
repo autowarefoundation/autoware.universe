@@ -1,0 +1,6454 @@
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.55,
+    "latitude": 29.7466317,
+    "longitude": 106.55426473,
+    "x": 41.32296879626227,
+    "y": -16.426071083221313,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 255.97,
+    "latitude": 29.74662048,
+    "longitude": 106.55438429,
+    "x": 52.888525732216216,
+    "y": -17.669787554582943,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 255.07,
+    "latitude": 29.74660117,
+    "longitude": 106.5544867,
+    "x": 62.7950912996468,
+    "y": -19.810298135463746,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.92,
+    "latitude": 29.74660455,
+    "longitude": 106.55454627,
+    "x": 68.5575515173903,
+    "y": -19.43558189052423,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.9,
+    "latitude": 29.74674705,
+    "longitude": 106.55465916,
+    "x": 79.47776448758347,
+    "y": -3.6390086802980415,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.21,
+    "latitude": 29.74690009,
+    "longitude": 106.55466963,
+    "x": 80.49044034430013,
+    "y": 13.32588180237619,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74701572,
+    "longitude": 106.55461037,
+    "x": 74.75789499459086,
+    "y": 26.143728452761167,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703587,
+    "longitude": 106.55454693,
+    "x": 68.6210824600951,
+    "y": 28.377369096232318,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703592,
+    "longitude": 106.55454641,
+    "x": 68.57078080627355,
+    "y": 28.382911416800447,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703608,
+    "longitude": 106.55454585,
+    "x": 68.51660972247514,
+    "y": 28.400647502917813,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.7470369,
+    "longitude": 106.55454247,
+    "x": 68.18964864144174,
+    "y": 28.491544639553112,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703726,
+    "longitude": 106.55454027,
+    "x": 67.97683385705982,
+    "y": 28.531450280505815,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703734,
+    "longitude": 106.55453972,
+    "x": 67.92363016675868,
+    "y": 28.540318166244923,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703742,
+    "longitude": 106.55453918,
+    "x": 67.87139381768831,
+    "y": 28.549186056774083,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703757,
+    "longitude": 106.55453809,
+    "x": 67.76595378368282,
+    "y": 28.565813307428577,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.747038,
+    "longitude": 106.55453576,
+    "x": 67.54056355034133,
+    "y": 28.6134785631322,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703837,
+    "longitude": 106.55453304,
+    "x": 67.27744714500666,
+    "y": 28.654492440809346,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703844,
+    "longitude": 106.55453252,
+    "x": 67.2271454801806,
+    "y": 28.662251821073767,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.06,
+    "latitude": 29.74703849,
+    "longitude": 106.554532,
+    "x": 67.17684382851166,
+    "y": 28.667794148477753,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74705958,
+    "longitude": 106.55434899,
+    "x": 49.473562458404444,
+    "y": 31.005581051895373,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.61,
+    "latitude": 29.74705976,
+    "longitude": 106.55434698,
+    "x": 49.27912724703725,
+    "y": 31.02553361105114,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706009,
+    "longitude": 106.55434445,
+    "x": 49.034390512280595,
+    "y": 31.062113941749217,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706017,
+    "longitude": 106.5543438,
+    "x": 48.9715134678552,
+    "y": 31.070981873486595,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706044,
+    "longitude": 106.55433978,
+    "x": 48.58264324653382,
+    "y": 31.100910377154015,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706045,
+    "longitude": 106.55433896,
+    "x": 48.50332148108991,
+    "y": 31.102018558822774,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706046,
+    "longitude": 106.55433874,
+    "x": 48.4820400290529,
+    "y": 31.103126992338055,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706046,
+    "longitude": 106.55433852,
+    "x": 48.46075858087411,
+    "y": 31.10312689974653,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706046,
+    "longitude": 106.55433829,
+    "x": 48.43850979475778,
+    "y": 31.103126803403264,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706046,
+    "longitude": 106.55433807,
+    "x": 48.41722834684435,
+    "y": 31.10312671125468,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706045,
+    "longitude": 106.55433785,
+    "x": 48.39594690368187,
+    "y": 31.10201809286764,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.62,
+    "latitude": 29.74706042,
+    "longitude": 106.55433718,
+    "x": 48.33113523702309,
+    "y": 31.098692234012752,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.37,
+    "latitude": 29.74705883,
+    "longitude": 106.55418001,
+    "x": 33.1274747032426,
+    "y": 30.92237994864475,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.51,
+    "latitude": 29.74705685,
+    "longitude": 106.55412132,
+    "x": 27.45016611363092,
+    "y": 30.70287709272935,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.52,
+    "latitude": 29.74705682,
+    "longitude": 106.55412085,
+    "x": 27.4047012537963,
+    "y": 30.699551451300458,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.53,
+    "latitude": 29.7470568,
+    "longitude": 106.55412039,
+    "x": 27.360203727691328,
+    "y": 30.697334339548362,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.53,
+    "latitude": 29.74705677,
+    "longitude": 106.55411993,
+    "x": 27.315706162861943,
+    "y": 30.69400865199539,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.54,
+    "latitude": 29.74705675,
+    "longitude": 106.55411947,
+    "x": 27.271208637691863,
+    "y": 30.691791538970293,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.55,
+    "latitude": 29.74705672,
+    "longitude": 106.55411902,
+    "x": 27.22767845285199,
+    "y": 30.68846590357296,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.56,
+    "latitude": 29.7470567,
+    "longitude": 106.55411858,
+    "x": 27.185115603430535,
+    "y": 30.68624879662379,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.57,
+    "latitude": 29.74705666,
+    "longitude": 106.55411769,
+    "x": 27.09902252518332,
+    "y": 30.681814531540855,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.58,
+    "latitude": 29.74705664,
+    "longitude": 106.55411724,
+    "x": 27.055492337727618,
+    "y": 30.679597422300414,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.59,
+    "latitude": 29.74705661,
+    "longitude": 106.5541168,
+    "x": 27.012929491494855,
+    "y": 30.67627178974749,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.64,
+    "latitude": 29.74705639,
+    "longitude": 106.55411355,
+    "x": 26.69854472365435,
+    "y": 30.651883703413986,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.71,
+    "latitude": 29.74705588,
+    "longitude": 106.55410749,
+    "x": 26.11233796597262,
+    "y": 30.59534782912933,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.84,
+    "latitude": 29.74703227,
+    "longitude": 106.5539257,
+    "x": 8.527093199442369,
+    "y": 27.978095630256284,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.74701999,
+    "longitude": 106.5538837,
+    "x": 4.464270103183934,
+    "y": 26.616823799714147,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.74701983,
+    "longitude": 106.55388313,
+    "x": 4.409131779910546,
+    "y": 26.599087358082755,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.02,
+    "latitude": 29.74701968,
+    "longitude": 106.55388256,
+    "x": 4.3539934629407515,
+    "y": 26.582459485588554,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.03,
+    "latitude": 29.74701874,
+    "longitude": 106.55387909,
+    "x": 4.0183268247457224,
+    "y": 26.478257935164997,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.04,
+    "latitude": 29.74701826,
+    "longitude": 106.55387734,
+    "x": 3.8490424986895215,
+    "y": 26.425048657638094,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.04,
+    "latitude": 29.74701811,
+    "longitude": 106.55387676,
+    "x": 3.7929368323830817,
+    "y": 26.408420745215473,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.03,
+    "latitude": 29.74701793,
+    "longitude": 106.55387622,
+    "x": 3.740700520248698,
+    "y": 26.38846721272443,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.03,
+    "latitude": 29.74701776,
+    "longitude": 106.55387568,
+    "x": 3.68846421182408,
+    "y": 26.36962224950436,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.74701698,
+    "longitude": 106.55387318,
+    "x": 3.446629437212251,
+    "y": 26.283157043856292,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.74701617,
+    "longitude": 106.5538703,
+    "x": 3.1680357839786355,
+    "y": 26.193366335724857,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.74701603,
+    "longitude": 106.55386982,
+    "x": 3.12160350806759,
+    "y": 26.177846954999325,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.7470159,
+    "longitude": 106.55386934,
+    "x": 3.075171232484233,
+    "y": 26.16343610290445,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.83,
+    "latitude": 29.74689246,
+    "longitude": 106.55378431,
+    "x": -5.150119922263658,
+    "y": 12.479788823062837,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.83,
+    "latitude": 29.74689208,
+    "longitude": 106.55378441,
+    "x": -5.140446537467125,
+    "y": 12.43766482352041,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.83,
+    "latitude": 29.74689131,
+    "longitude": 106.55378462,
+    "x": -5.120132429678977,
+    "y": 12.352308298506191,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.82,
+    "latitude": 29.74688976,
+    "longitude": 106.55378506,
+    "x": -5.077569525615315,
+    "y": 12.180486701346041,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.81,
+    "latitude": 29.74688791,
+    "longitude": 106.55378559,
+    "x": -5.026300570459567,
+    "y": 11.975409316823434,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.81,
+    "latitude": 29.74688755,
+    "longitude": 106.55378569,
+    "x": -5.016627185037488,
+    "y": 11.935502370441384,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.81,
+    "latitude": 29.74688718,
+    "longitude": 106.5537858,
+    "x": -5.005986459272861,
+    "y": 11.894486896444818,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.8,
+    "latitude": 29.74688509,
+    "longitude": 106.55378651,
+    "x": -4.937305387822215,
+    "y": 11.662804877303392,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.79,
+    "latitude": 29.74688366,
+    "longitude": 106.55378705,
+    "x": -4.885069067624687,
+    "y": 11.504285593593877,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.79,
+    "latitude": 29.7468833,
+    "longitude": 106.55378719,
+    "x": -4.871526319358138,
+    "y": 11.464378645467402,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.79,
+    "latitude": 29.74688294,
+    "longitude": 106.55378733,
+    "x": -4.857983569794676,
+    "y": 11.424471696667588,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.79,
+    "latitude": 29.74688258,
+    "longitude": 106.55378747,
+    "x": -4.844440821485959,
+    "y": 11.384564749421266,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.06,
+    "latitude": 29.7467901,
+    "longitude": 106.55382908,
+    "x": -0.819338122190339,
+    "y": 1.1329138094026485,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.29,
+    "latitude": 29.74677657,
+    "longitude": 106.55383536,
+    "x": -0.21184779180229374,
+    "y": -0.36692218314999847,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.3,
+    "latitude": 29.74677643,
+    "longitude": 106.55383544,
+    "x": -0.20410905969266846,
+    "y": -0.3824415518226112,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.3,
+    "latitude": 29.74677641,
+    "longitude": 106.55383545,
+    "x": -0.2031417190329422,
+    "y": -0.3846586045550551,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.3,
+    "latitude": 29.7467764,
+    "longitude": 106.55383546,
+    "x": -0.20217437691728768,
+    "y": -0.3857671300207004,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.3,
+    "latitude": 29.74677638,
+    "longitude": 106.55383548,
+    "x": -0.20023969339768843,
+    "y": -0.3879841821377006,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.3,
+    "latitude": 29.74677637,
+    "longitude": 106.55383549,
+    "x": -0.19927235270545307,
+    "y": -0.38909270916616645,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.31,
+    "latitude": 29.74677637,
+    "longitude": 106.55383549,
+    "x": -0.19927235297141566,
+    "y": -0.3890927098022843,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.32,
+    "latitude": 29.74677652,
+    "longitude": 106.55383552,
+    "x": -0.19637032742115645,
+    "y": -0.3724648167217677,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.32,
+    "latitude": 29.74677653,
+    "longitude": 106.55383552,
+    "x": -0.19637032738864757,
+    "y": -0.37135629061348996,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.32,
+    "latitude": 29.74677654,
+    "longitude": 106.55383552,
+    "x": -0.19637032735613869,
+    "y": -0.37024776410091276,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.32,
+    "latitude": 29.74677655,
+    "longitude": 106.55383553,
+    "x": -0.1954029863335368,
+    "y": -0.36913923806558446,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.33,
+    "latitude": 29.74677663,
+    "longitude": 106.55383553,
+    "x": -0.19540298652043997,
+    "y": -0.3602710289224127,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.5538359,
+    "x": -0.1596113518070733,
+    "y": -0.3059532462346948,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.5538359,
+    "x": -0.1596113518070733,
+    "y": -0.3059532462346948,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.5538359,
+    "x": -0.1596113518070733,
+    "y": -0.3059532462346948,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.5538359,
+    "x": -0.1596113518070733,
+    "y": -0.3059532462346948,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677713,
+    "longitude": 106.5538359,
+    "x": -0.15961135150921546,
+    "y": -0.3048447196834776,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677713,
+    "longitude": 106.55383591,
+    "x": -0.1586440091800403,
+    "y": -0.30484471995391305,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677713,
+    "longitude": 106.55383591,
+    "x": -0.1586440091800403,
+    "y": -0.30484471995391305,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677713,
+    "longitude": 106.55383591,
+    "x": -0.1586440091800403,
+    "y": -0.30484471995391305,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677713,
+    "longitude": 106.55383592,
+    "x": -0.15767666841312766,
+    "y": -0.3048447199939477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677713,
+    "longitude": 106.55383592,
+    "x": -0.15767666841312766,
+    "y": -0.3048447199939477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677713,
+    "longitude": 106.55383592,
+    "x": -0.15767666841312766,
+    "y": -0.3048447199939477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677714,
+    "longitude": 106.55383592,
+    "x": -0.1576766683384503,
+    "y": -0.30373619340981617,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.37,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464245589545,
+    "y": -0.32479819232356477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.37,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464245589545,
+    "y": -0.32479819232356477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.37,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464245589545,
+    "y": -0.32479819232356477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.37,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464245589545,
+    "y": -0.32479819232356477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.37,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464245589545,
+    "y": -0.32479819232356477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.37,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464245589545,
+    "y": -0.32479819232356477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.37,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464245589545,
+    "y": -0.32479819232356477,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.1451012292036432,
+    "y": -0.3126044062725142,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.1451012292036432,
+    "y": -0.3126044062725142,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677707,
+    "longitude": 106.55383605,
+    "x": -0.1451012293943147,
+    "y": -0.31149588013132234,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677707,
+    "longitude": 106.55383605,
+    "x": -0.1451012293943147,
+    "y": -0.31149588013132234,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677707,
+    "longitude": 106.55383605,
+    "x": -0.1451012293943147,
+    "y": -0.31149588013132234,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677707,
+    "longitude": 106.55383606,
+    "x": -0.14413388885058243,
+    "y": -0.31149588013844265,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677707,
+    "longitude": 106.55383606,
+    "x": -0.14413388885058243,
+    "y": -0.31149588013844265,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677707,
+    "longitude": 106.55383606,
+    "x": -0.14413388885058243,
+    "y": -0.31149588013844265,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677708,
+    "longitude": 106.55383606,
+    "x": -0.1441338885527247,
+    "y": -0.31038735358722525,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677708,
+    "longitude": 106.55383606,
+    "x": -0.1441338885527247,
+    "y": -0.31038735358722525,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677708,
+    "longitude": 106.55383606,
+    "x": -0.1441338885527247,
+    "y": -0.31038735358722525,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677708,
+    "longitude": 106.55383606,
+    "x": -0.1441338885527247,
+    "y": -0.31038735358722525,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677708,
+    "longitude": 106.55383606,
+    "x": -0.1441338885527247,
+    "y": -0.31038735358722525,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 257.29,
+    "latitude": 29.74672162,
+    "longitude": 106.55385659,
+    "x": 1.8418201105012675,
+    "y": -6.458276756398643,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.72,
+    "latitude": 29.74660782,
+    "longitude": 106.55394031,
+    "x": 9.940421819740282,
+    "y": -19.07330514608138,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.65,
+    "latitude": 29.74662446,
+    "longitude": 106.55412318,
+    "x": 27.63022756304373,
+    "y": -17.228686881038474,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.43,
+    "latitude": 29.74663057,
+    "longitude": 106.5542918,
+    "x": 43.9415666305375,
+    "y": -16.551324283316884,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 255.09,
+    "latitude": 29.74660152,
+    "longitude": 106.55448656,
+    "x": 62.78154847238048,
+    "y": -19.77149985184841,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.24,
+    "latitude": 29.74668981,
+    "longitude": 106.55465087,
+    "x": 78.67588706838094,
+    "y": -9.984218651371867,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.18,
+    "latitude": 29.74691694,
+    "longitude": 106.5546689,
+    "x": 80.41981068618163,
+    "y": 15.193747657816777,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.04,
+    "latitude": 29.74704009,
+    "longitude": 106.55451201,
+    "x": 65.24313230232943,
+    "y": 28.84514676699896,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.78,
+    "latitude": 29.74705211,
+    "longitude": 106.55440854,
+    "x": 55.234068962664914,
+    "y": 30.177539890010298,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.78,
+    "latitude": 29.74705214,
+    "longitude": 106.55440805,
+    "x": 55.18666935382302,
+    "y": 30.18086523430487,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.78,
+    "latitude": 29.74705218,
+    "longitude": 106.55440756,
+    "x": 55.139269738305885,
+    "y": 30.18529910527724,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.77,
+    "latitude": 29.74705222,
+    "longitude": 106.55440706,
+    "x": 55.09090269825469,
+    "y": 30.189732922312558,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.74,
+    "latitude": 29.74705268,
+    "longitude": 106.55440105,
+    "x": 54.50953167160097,
+    "y": 30.240722123983765,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.74,
+    "latitude": 29.74705272,
+    "longitude": 106.55440057,
+    "x": 54.463099396102024,
+    "y": 30.24515600177554,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.74,
+    "latitude": 29.74705276,
+    "longitude": 106.55440009,
+    "x": 54.41666712068742,
+    "y": 30.249589879710424,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.73,
+    "latitude": 29.74705283,
+    "longitude": 106.55439915,
+    "x": 54.325737166330434,
+    "y": 30.257349071944446,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.73,
+    "latitude": 29.74705287,
+    "longitude": 106.55439868,
+    "x": 54.280272230499996,
+    "y": 30.261782954756683,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.72,
+    "latitude": 29.74705294,
+    "longitude": 106.55439777,
+    "x": 54.19224429242819,
+    "y": 30.269542161971202,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.72,
+    "latitude": 29.74705297,
+    "longitude": 106.55439732,
+    "x": 54.14871403966649,
+    "y": 30.272867528502896,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.73,
+    "latitude": 29.7470537,
+    "longitude": 106.55439231,
+    "x": 53.664077084078244,
+    "y": 30.353787636502318,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.39,
+    "latitude": 29.74706109,
+    "longitude": 106.55424087,
+    "x": 39.01469613879725,
+    "y": 31.17292592306824,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.27,
+    "latitude": 29.74705976,
+    "longitude": 106.55421407,
+    "x": 36.422228770871556,
+    "y": 31.02548262990532,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.27,
+    "latitude": 29.74705972,
+    "longitude": 106.55421347,
+    "x": 36.36418847539382,
+    "y": 31.021048338203194,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.27,
+    "latitude": 29.74705954,
+    "longitude": 106.5542054,
+    "x": 35.583546378821694,
+    "y": 31.001092357039383,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.28,
+    "latitude": 29.74705954,
+    "longitude": 106.55420478,
+    "x": 35.52357144858737,
+    "y": 31.00109221501133,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.28,
+    "latitude": 29.74705954,
+    "longitude": 106.55420414,
+    "x": 35.46166178441149,
+    "y": 31.00109201831799,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.28,
+    "latitude": 29.74705954,
+    "longitude": 106.5542035,
+    "x": 35.39975212139368,
+    "y": 31.001091821935937,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.29,
+    "latitude": 29.74705951,
+    "longitude": 106.55420032,
+    "x": 35.092138546578724,
+    "y": 30.99776532261744,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.32,
+    "latitude": 29.74705938,
+    "longitude": 106.55419421,
+    "x": 34.50109493324202,
+    "y": 30.983352790066693,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.32,
+    "latitude": 29.74705937,
+    "longitude": 106.55419362,
+    "x": 34.444021965724396,
+    "y": 30.98224408838096,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.32,
+    "latitude": 29.74705935,
+    "longitude": 106.55419303,
+    "x": 34.38694899948351,
+    "y": 30.98002686033152,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.33,
+    "latitude": 29.74705925,
+    "longitude": 106.5541897,
+    "x": 34.06482536627429,
+    "y": 30.968940662420238,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.34,
+    "latitude": 29.74705914,
+    "longitude": 106.55418699,
+    "x": 33.80267672311875,
+    "y": 30.956746129753004,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.66,
+    "latitude": 29.74704287,
+    "longitude": 106.55397043,
+    "x": 12.853998790127175,
+    "y": 29.153136723876678,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.67,
+    "latitude": 29.74704277,
+    "longitude": 106.55396988,
+    "x": 12.800795184352602,
+    "y": 29.14205144676535,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.67,
+    "latitude": 29.74704268,
+    "longitude": 106.55396933,
+    "x": 12.747591558809788,
+    "y": 29.132074649628382,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.68,
+    "latitude": 29.74704211,
+    "longitude": 106.55396594,
+    "x": 12.419663773289512,
+    "y": 29.068888334747875,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.69,
+    "latitude": 29.7470416,
+    "longitude": 106.55396318,
+    "x": 12.152678324944928,
+    "y": 29.01235325160219,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.69,
+    "latitude": 29.7470415,
+    "longitude": 106.55396262,
+    "x": 12.098507359314404,
+    "y": 29.001267930795585,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.69,
+    "latitude": 29.74704139,
+    "longitude": 106.55396206,
+    "x": 12.044336395853342,
+    "y": 28.98907408389792,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.69,
+    "latitude": 29.74704128,
+    "longitude": 106.5539615,
+    "x": 11.990165431668235,
+    "y": 28.976880238226727,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.7,
+    "latitude": 29.74704106,
+    "longitude": 106.55396034,
+    "x": 11.877954166334675,
+    "y": 28.952492587894675,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.7,
+    "latitude": 29.74704085,
+    "longitude": 106.55395918,
+    "x": 11.765742880647668,
+    "y": 28.929213419396024,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.7,
+    "latitude": 29.74704073,
+    "longitude": 106.55395861,
+    "x": 11.710604576833546,
+    "y": 28.915911047577183,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.72,
+    "latitude": 29.74703978,
+    "longitude": 106.55395402,
+    "x": 11.266596169588198,
+    "y": 28.8106006941467,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696401,
+    "longitude": 106.55378677,
+    "x": -4.912150743262065,
+    "y": 20.41129371018827,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696363,
+    "longitude": 106.55378659,
+    "x": -4.929562875701914,
+    "y": 20.36916972175151,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696175,
+    "longitude": 106.55378571,
+    "x": -5.01468885857114,
+    "y": 20.16076683482259,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696137,
+    "longitude": 106.55378555,
+    "x": -5.030166312559522,
+    "y": 20.118642846029513,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696061,
+    "longitude": 106.55378523,
+    "x": -5.061121220355274,
+    "y": 20.034394868338893,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696023,
+    "longitude": 106.55378506,
+    "x": -5.07756601435669,
+    "y": 19.99227088084312,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74695985,
+    "longitude": 106.5537849,
+    "x": -5.093043468568252,
+    "y": 19.950146892082962,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74695947,
+    "longitude": 106.55378474,
+    "x": -5.108520923002995,
+    "y": 19.908022902547113,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74695908,
+    "longitude": 106.55378459,
+    "x": -5.123031037234032,
+    "y": 19.864790388402874,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74695708,
+    "longitude": 106.55378378,
+    "x": -5.201385664397205,
+    "y": 19.643085215373702,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74695668,
+    "longitude": 106.55378363,
+    "x": -5.2158957816886,
+    "y": 19.598744174525812,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74695628,
+    "longitude": 106.55378347,
+    "x": -5.231373237430768,
+    "y": 19.554403133531917,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.98,
+    "latitude": 29.7468016,
+    "longitude": 106.55382388,
+    "x": -1.3223554560624127,
+    "y": 2.407718962965696,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.99,
+    "latitude": 29.74679971,
+    "longitude": 106.55382475,
+    "x": -1.2381967939402396,
+    "y": 2.1982075063594553,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.7467978,
+    "longitude": 106.55382564,
+    "x": -1.1521034489809607,
+    "y": 1.9864790007625623,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.7467975,
+    "longitude": 106.55382577,
+    "x": -1.1395280154014051,
+    "y": 1.9532232136893448,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.7467972,
+    "longitude": 106.55382591,
+    "x": -1.1259852415434661,
+    "y": 1.9199674269746667,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.02,
+    "latitude": 29.74679532,
+    "longitude": 106.55382675,
+    "x": -1.0447285955741605,
+    "y": 1.711564495881943,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.03,
+    "latitude": 29.74679439,
+    "longitude": 106.55382717,
+    "x": -1.0041002717401748,
+    "y": 1.6084715591269143,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.03,
+    "latitude": 29.74679409,
+    "longitude": 106.55382731,
+    "x": -0.9905574964166483,
+    "y": 1.5752157720251132,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.03,
+    "latitude": 29.74679379,
+    "longitude": 106.55382744,
+    "x": -0.9779820621253831,
+    "y": 1.541959984924707,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.04,
+    "latitude": 29.74679349,
+    "longitude": 106.55382757,
+    "x": -0.9654066304707275,
+    "y": 1.5087042005234474,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.04,
+    "latitude": 29.7467932,
+    "longitude": 106.5538277,
+    "x": -0.9528311959237731,
+    "y": 1.4765569386898052,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.04,
+    "latitude": 29.74679291,
+    "longitude": 106.55382783,
+    "x": -0.9402557611114698,
+    "y": 1.4444096777034021,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383579,
+    "x": -0.17025210898197274,
+    "y": -0.31371293078702567,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383579,
+    "x": -0.17025210898197274,
+    "y": -0.31371293078702567,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677706,
+    "longitude": 106.55383579,
+    "x": -0.17025210913047573,
+    "y": -0.3126044037656799,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059394142853,
+    "y": -0.32036408548736706,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793493152152,
+    "y": -0.3203640854144181,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793493152152,
+    "y": -0.3203640854144181,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793493152152,
+    "y": -0.3203640854144181,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677697,
+    "longitude": 106.55383599,
+    "x": -0.1509052771447027,
+    "y": -0.3225811386779054,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677697,
+    "longitude": 106.55383599,
+    "x": -0.1509052771447027,
+    "y": -0.3225811386779054,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677696,
+    "longitude": 106.55383599,
+    "x": -0.15090527717721158,
+    "y": -0.3236896647861829,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677696,
+    "longitude": 106.55383598,
+    "x": -0.15187261816730446,
+    "y": -0.3236896647132339,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677696,
+    "longitude": 106.55383598,
+    "x": -0.15187261816730446,
+    "y": -0.3236896647132339,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677696,
+    "longitude": 106.55383598,
+    "x": -0.15187261812452246,
+    "y": -0.32368966404420196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677695,
+    "longitude": 106.55383598,
+    "x": -0.15187261819919984,
+    "y": -0.3247981906283335,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677695,
+    "longitude": 106.55383598,
+    "x": -0.15187261819919984,
+    "y": -0.3247981906283335,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383601,
+    "x": -0.14897059505833365,
+    "y": -0.3192555616444257,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383601,
+    "x": -0.14897059505833365,
+    "y": -0.3192555616444257,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383601,
+    "x": -0.14897059505833365,
+    "y": -0.3192555616444257,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383601,
+    "x": -0.14897059505833365,
+    "y": -0.3192555616444257,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383601,
+    "x": -0.14897059505833365,
+    "y": -0.3192555616444257,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383602,
+    "x": -0.14800325291017036,
+    "y": -0.319255561406093,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383602,
+    "x": -0.1480032541993238,
+    "y": -0.30262767106836763,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 257.06,
+    "latitude": 29.74665898,
+    "longitude": 106.55387768,
+    "x": 3.881947706807354,
+    "y": -13.402087313876999,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.61,
+    "latitude": 29.74661403,
+    "longitude": 106.55405683,
+    "x": 21.211906623405344,
+    "y": -18.384894069921003,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.46,
+    "latitude": 29.74663073,
+    "longitude": 106.55428928,
+    "x": 43.69779627087631,
+    "y": -16.53358889178735,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 255.99,
+    "latitude": 29.74662157,
+    "longitude": 106.55437719,
+    "x": 52.201711611623935,
+    "y": -17.548961451349797,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 255.14,
+    "latitude": 29.74660228,
+    "longitude": 106.55448404,
+    "x": 62.53777797543508,
+    "y": -19.687253371238015,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.05,
+    "latitude": 29.74671612,
+    "longitude": 106.55465488,
+    "x": 79.06376834969014,
+    "y": -7.067683215941597,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.09,
+    "latitude": 29.74699156,
+    "longitude": 106.55463799,
+    "x": 77.429704326174,
+    "y": 23.465547791098764,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.02,
+    "latitude": 29.74703276,
+    "longitude": 106.55456587,
+    "x": 70.45322395137366,
+    "y": 28.032628716768258,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.02,
+    "latitude": 29.74703288,
+    "longitude": 106.55456532,
+    "x": 70.4000202295058,
+    "y": 28.045930694603015,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.02,
+    "latitude": 29.74703356,
+    "longitude": 106.55456201,
+    "x": 70.07983059387159,
+    "y": 28.121308452788057,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.02,
+    "latitude": 29.74703399,
+    "longitude": 106.55455985,
+    "x": 69.87088510426335,
+    "y": 28.16897376538899,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.02,
+    "latitude": 29.74703409,
+    "longitude": 106.55455933,
+    "x": 69.82058341440695,
+    "y": 28.180058710843,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.82,
+    "latitude": 29.74705158,
+    "longitude": 106.55441618,
+    "x": 55.97311632870462,
+    "y": 30.118791880351623,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.6,
+    "latitude": 29.74705825,
+    "longitude": 106.55435302,
+    "x": 49.86340039265107,
+    "y": 30.85814872961312,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.6,
+    "latitude": 29.74705832,
+    "longitude": 106.55435277,
+    "x": 49.83921689465276,
+    "y": 30.865908304040858,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.6,
+    "latitude": 29.74705844,
+    "longitude": 106.55435229,
+    "x": 49.7927845853599,
+    "y": 30.879210409328998,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.6,
+    "latitude": 29.74705851,
+    "longitude": 106.55435209,
+    "x": 49.773437779311045,
+    "y": 30.886970004670047,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.6,
+    "latitude": 29.74705864,
+    "longitude": 106.55435171,
+    "x": 49.73667885148232,
+    "y": 30.901380679454444,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.61,
+    "latitude": 29.74705888,
+    "longitude": 106.55435099,
+    "x": 49.667030435023996,
+    "y": 30.927985041490235,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.61,
+    "latitude": 29.74705893,
+    "longitude": 106.55435082,
+    "x": 49.650585654328204,
+    "y": 30.933527598605714,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.61,
+    "latitude": 29.74705898,
+    "longitude": 106.55435067,
+    "x": 49.63607555222788,
+    "y": 30.93907016370986,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.61,
+    "latitude": 29.74705908,
+    "longitude": 106.55435037,
+    "x": 49.60705534569875,
+    "y": 30.950155295707773,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.61,
+    "latitude": 29.74705919,
+    "longitude": 106.55435008,
+    "x": 49.579002475076564,
+    "y": 30.962348956563872,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.61,
+    "latitude": 29.74705928,
+    "longitude": 106.55434982,
+    "x": 49.5538516278955,
+    "y": 30.97232557883875,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.61,
+    "latitude": 29.74705948,
+    "longitude": 106.55434925,
+    "x": 49.49871323261268,
+    "y": 30.994495854220787,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.49,
+    "latitude": 29.74705674,
+    "longitude": 106.55414564,
+    "x": 29.802733414195238,
+    "y": 30.69068923933159,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.49,
+    "latitude": 29.74705673,
+    "longitude": 106.55414502,
+    "x": 29.742758427330696,
+    "y": 30.689580553238745,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.49,
+    "latitude": 29.74705674,
+    "longitude": 106.5541444,
+    "x": 29.682783433545733,
+    "y": 30.69068891987972,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.49,
+    "latitude": 29.74705672,
+    "longitude": 106.55414048,
+    "x": 29.303586727512002,
+    "y": 30.688470866819603,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.49,
+    "latitude": 29.74705669,
+    "longitude": 106.55413435,
+    "x": 28.71060820410093,
+    "y": 30.685143749169598,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.49,
+    "latitude": 29.7470567,
+    "longitude": 106.55413367,
+    "x": 28.64482917981187,
+    "y": 30.68625210633632,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.49,
+    "latitude": 29.74705669,
+    "longitude": 106.55413299,
+    "x": 28.579050161327327,
+    "y": 30.685143411742395,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.49,
+    "latitude": 29.74705669,
+    "longitude": 106.55413232,
+    "x": 28.514238477814843,
+    "y": 30.685143246066755,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.5,
+    "latitude": 29.7470567,
+    "longitude": 106.55412911,
+    "x": 28.203722845412702,
+    "y": 30.686251032652862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.5,
+    "latitude": 29.74705674,
+    "longitude": 106.55412678,
+    "x": 27.978332951398404,
+    "y": 30.69068456873606,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.5,
+    "latitude": 29.74705675,
+    "longitude": 106.55412623,
+    "x": 27.925129327012645,
+    "y": 30.691792961151254,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.5,
+    "latitude": 29.74705676,
+    "longitude": 106.55412569,
+    "x": 27.87289304364681,
+    "y": 30.69290135678584,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.89,
+    "latitude": 29.74702782,
+    "longitude": 106.55391099,
+    "x": 7.104137915313636,
+    "y": 27.484800688861338,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.89,
+    "latitude": 29.74702765,
+    "longitude": 106.55391047,
+    "x": 7.053836296754545,
+    "y": 27.465955711487457,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.9,
+    "latitude": 29.74702669,
+    "longitude": 106.5539073,
+    "x": 6.7471898953893445,
+    "y": 27.35953704847966,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.93,
+    "latitude": 29.74702475,
+    "longitude": 106.55390061,
+    "x": 6.100040214420158,
+    "y": 27.144482719357097,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.94,
+    "latitude": 29.74702459,
+    "longitude": 106.55390005,
+    "x": 6.045869244790687,
+    "y": 27.126746313084535,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.95,
+    "latitude": 29.74702346,
+    "longitude": 106.55389617,
+    "x": 5.670541754888294,
+    "y": 27.0014826953349,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.98,
+    "latitude": 29.74702203,
+    "longitude": 106.55389109,
+    "x": 5.179133593435427,
+    "y": 26.842963333967724,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.98,
+    "latitude": 29.74702187,
+    "longitude": 106.55389053,
+    "x": 5.124962612642397,
+    "y": 26.825226888669086,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.98,
+    "latitude": 29.74702171,
+    "longitude": 106.55388997,
+    "x": 5.070791630063923,
+    "y": 26.80749044444237,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.98,
+    "latitude": 29.74702156,
+    "longitude": 106.5538894,
+    "x": 5.01565330874733,
+    "y": 26.79086252645842,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.99,
+    "latitude": 29.74702141,
+    "longitude": 106.55388883,
+    "x": 4.96051499420269,
+    "y": 26.774234650309822,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.99,
+    "latitude": 29.74702125,
+    "longitude": 106.55388826,
+    "x": 4.905376671345832,
+    "y": 26.75649820572457,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74691462,
+    "longitude": 106.55377944,
+    "x": -5.621213471033059,
+    "y": 14.936283188211181,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74691247,
+    "longitude": 106.55377979,
+    "x": -5.587356686497206,
+    "y": 14.697950039560634,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74691205,
+    "longitude": 106.55377987,
+    "x": -5.5796179877242835,
+    "y": 14.651391934845874,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74691164,
+    "longitude": 106.55377995,
+    "x": -5.571879288484829,
+    "y": 14.605942358585747,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74691121,
+    "longitude": 106.55378001,
+    "x": -5.566075263803661,
+    "y": 14.55827570650084,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74690915,
+    "longitude": 106.55378038,
+    "x": -5.530283790247154,
+    "y": 14.329919292633047,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.7469075,
+    "longitude": 106.55378067,
+    "x": -5.502231015954776,
+    "y": 14.14701245823255,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74690709,
+    "longitude": 106.55378074,
+    "x": -5.495459657174718,
+    "y": 14.101562880505455,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74690668,
+    "longitude": 106.5537808,
+    "x": -5.489655629594032,
+    "y": 14.056113281323334,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74690428,
+    "longitude": 106.55378128,
+    "x": -5.443223429766023,
+    "y": 13.790066974102935,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.85,
+    "latitude": 29.7468991,
+    "longitude": 106.55378247,
+    "x": -5.328110208310236,
+    "y": 13.21585033228937,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.85,
+    "latitude": 29.7468987,
+    "longitude": 106.55378258,
+    "x": -5.317469486177007,
+    "y": 13.171509279322542,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.21,
+    "latitude": 29.74677819,
+    "longitude": 106.5538343,
+    "x": -0.3143859822394215,
+    "y": -0.18734092731295582,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.21,
+    "latitude": 29.74677805,
+    "longitude": 106.55383437,
+    "x": -0.307614592458358,
+    "y": -0.20286029552195495,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.22,
+    "latitude": 29.74677783,
+    "longitude": 106.5538345,
+    "x": -0.2950391547234489,
+    "y": -0.2272478730813381,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.22,
+    "latitude": 29.74677777,
+    "longitude": 106.55383454,
+    "x": -0.2911697891726873,
+    "y": -0.233899029881816,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.23,
+    "latitude": 29.74677771,
+    "longitude": 106.55383458,
+    "x": -0.2873004234415274,
+    "y": -0.24055018778853987,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.24,
+    "latitude": 29.74677743,
+    "longitude": 106.55383476,
+    "x": -0.2698882776035012,
+    "y": -0.27158892366464915,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.25,
+    "latitude": 29.74677727,
+    "longitude": 106.55383487,
+    "x": -0.25924752191907363,
+    "y": -0.28932534406280896,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.25,
+    "latitude": 29.74677723,
+    "longitude": 106.5538349,
+    "x": -0.256345497739748,
+    "y": -0.29375944931655273,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.27,
+    "latitude": 29.74677693,
+    "longitude": 106.55383511,
+    "x": -0.23603132814652106,
+    "y": -0.32701523802445487,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.28,
+    "latitude": 29.74677684,
+    "longitude": 106.55383519,
+    "x": -0.22829259605536323,
+    "y": -0.3369919740297127,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.28,
+    "latitude": 29.7467768,
+    "longitude": 106.55383521,
+    "x": -0.22635791282396212,
+    "y": -0.34142607913895295,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.28,
+    "latitude": 29.74677677,
+    "longitude": 106.55383523,
+    "x": -0.22442322986756935,
+    "y": -0.34475165825011,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677711,
+    "longitude": 106.55383587,
+    "x": -0.16251337570258262,
+    "y": -0.30706177199246754,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677711,
+    "longitude": 106.55383587,
+    "x": -0.16251337570258262,
+    "y": -0.30706177199246754,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677711,
+    "longitude": 106.55383587,
+    "x": -0.16251337570258262,
+    "y": -0.30706177199246754,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677711,
+    "longitude": 106.55383587,
+    "x": -0.16251337570258262,
+    "y": -0.30706177199246754,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677711,
+    "longitude": 106.55383588,
+    "x": -0.16154603493567,
+    "y": -0.3070617720325022,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.55383588,
+    "x": -0.1615460349031611,
+    "y": -0.3059532459242247,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.55383588,
+    "x": -0.1615460349031611,
+    "y": -0.3059532459242247,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.55383588,
+    "x": -0.1615460349031611,
+    "y": -0.3059532459242247,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.55383588,
+    "x": -0.1615460349031611,
+    "y": -0.3059532459242247,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.55383589,
+    "x": -0.16057869257398583,
+    "y": -0.3059532461946599,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.55383589,
+    "x": -0.16057869257398583,
+    "y": -0.3059532461946599,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677712,
+    "longitude": 106.55383589,
+    "x": -0.16057869257398583,
+    "y": -0.3059532461946599,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677694,
+    "longitude": 106.55383595,
+    "x": -0.15477464213749126,
+    "y": -0.3259067166508387,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677694,
+    "longitude": 106.55383595,
+    "x": -0.15477464218027337,
+    "y": -0.32590671691557116,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677694,
+    "longitude": 106.55383595,
+    "x": -0.15477464218027337,
+    "y": -0.32590671691557116,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677694,
+    "longitude": 106.55383595,
+    "x": -0.15477464218027337,
+    "y": -0.32590671691557116,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677694,
+    "longitude": 106.55383595,
+    "x": -0.15477464218027337,
+    "y": -0.32590671691557116,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677694,
+    "longitude": 106.55383595,
+    "x": -0.15477464218027337,
+    "y": -0.32590671691557116,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677695,
+    "longitude": 106.55383595,
+    "x": -0.15477464214776449,
+    "y": -0.32479819121159315,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677705,
+    "longitude": 106.55383604,
+    "x": -0.14606857178789412,
+    "y": -0.31371293269286316,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677705,
+    "longitude": 106.55383604,
+    "x": -0.14606857178789412,
+    "y": -0.31371293269286316,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677705,
+    "longitude": 106.55383604,
+    "x": -0.14606857178789412,
+    "y": -0.31371293269286316,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.14510122889551225,
+    "y": -0.31260440596914196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.14510122889551225,
+    "y": -0.31260440596914196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.14510122889551225,
+    "y": -0.31260440596914196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.14510122889551225,
+    "y": -0.31260440596914196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.14510122889551225,
+    "y": -0.31260440596914196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.43,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.14510122889551225,
+    "y": -0.31260440596914196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.1451012292036432,
+    "y": -0.3126044062725142,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.1451012292036432,
+    "y": -0.3126044062725142,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.44,
+    "latitude": 29.74677706,
+    "longitude": 106.55383605,
+    "x": -0.1451012292036432,
+    "y": -0.3126044062725142,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.83,
+    "latitude": 29.74664188,
+    "longitude": 106.5538861,
+    "x": 4.69645119232137,
+    "y": -15.297667111049787,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.55,
+    "latitude": 29.74661644,
+    "longitude": 106.55407415,
+    "x": 22.887344674518463,
+    "y": -18.117735675497137,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 255.86,
+    "latitude": 29.74661793,
+    "longitude": 106.55439978,
+    "x": 54.38694088984175,
+    "y": -17.952454309496765,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.02,
+    "latitude": 29.74672355,
+    "longitude": 106.55465601,
+    "x": 79.17307179271347,
+    "y": -6.244047452916219,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.09,
+    "latitude": 29.74699117,
+    "longitude": 106.55463826,
+    "x": 77.45582278649958,
+    "y": 23.422315456096097,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.86,
+    "latitude": 29.74705113,
+    "longitude": 106.55442297,
+    "x": 56.62993988032628,
+    "y": 30.068911708230956,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.85,
+    "latitude": 29.74705117,
+    "longitude": 106.55442246,
+    "x": 56.58060549644534,
+    "y": 30.073345514514784,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.85,
+    "latitude": 29.7470512,
+    "longitude": 106.55442196,
+    "x": 56.53223854710906,
+    "y": 30.076670848359143,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.85,
+    "latitude": 29.74705127,
+    "longitude": 106.55442096,
+    "x": 56.43550464266633,
+    "y": 30.08443004139471,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.84,
+    "latitude": 29.7470514,
+    "longitude": 106.554419,
+    "x": 56.24590610430579,
+    "y": 30.098839876003353,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.83,
+    "latitude": 29.74705152,
+    "longitude": 106.55441712,
+    "x": 56.064046282658055,
+    "y": 30.11214122688643,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.82,
+    "latitude": 29.74705155,
+    "longitude": 106.55441666,
+    "x": 56.019548600266155,
+    "y": 30.11546653421445,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.82,
+    "latitude": 29.74705158,
+    "longitude": 106.55441618,
+    "x": 55.97311632870462,
+    "y": 30.118791880351623,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.82,
+    "latitude": 29.74705165,
+    "longitude": 106.55441524,
+    "x": 55.882186456373546,
+    "y": 30.1265511066348,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.81,
+    "latitude": 29.74705177,
+    "longitude": 106.55441337,
+    "x": 55.701293975793064,
+    "y": 30.139852467712622,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.8,
+    "latitude": 29.74705193,
+    "longitude": 106.55441098,
+    "x": 55.47009986392864,
+    "y": 30.15758768727178,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.39,
+    "latitude": 29.74706076,
+    "longitude": 106.5542304,
+    "x": 38.001892859376454,
+    "y": 31.136341074975466,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.38,
+    "latitude": 29.74706073,
+    "longitude": 106.55422995,
+    "x": 37.95836257991229,
+    "y": 31.133015300468674,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.38,
+    "latitude": 29.7470607,
+    "longitude": 106.55422948,
+    "x": 37.91289768155335,
+    "y": 31.129689567864197,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.36,
+    "latitude": 29.74706054,
+    "longitude": 106.55422704,
+    "x": 37.67686703018872,
+    "y": 31.11195225586362,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.34,
+    "latitude": 29.74706037,
+    "longitude": 106.55422451,
+    "x": 37.432130336508074,
+    "y": 31.093106393521886,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.34,
+    "latitude": 29.74706033,
+    "longitude": 106.55422399,
+    "x": 37.381828749532346,
+    "y": 31.088672121936714,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.34,
+    "latitude": 29.7470603,
+    "longitude": 106.55422348,
+    "x": 37.33249449801721,
+    "y": 31.08534637927556,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.33,
+    "latitude": 29.74706027,
+    "longitude": 106.55422296,
+    "x": 37.282192848809316,
+    "y": 31.082020583695105,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.31,
+    "latitude": 29.74706011,
+    "longitude": 106.55422033,
+    "x": 37.0277827689194,
+    "y": 31.064283225652318,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.3,
+    "latitude": 29.74705998,
+    "longitude": 106.55421816,
+    "x": 36.81787030563517,
+    "y": 31.04987164494355,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.3,
+    "latitude": 29.74705995,
+    "longitude": 106.5542176,
+    "x": 36.76369936065563,
+    "y": 31.04654588857484,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.29,
+    "latitude": 29.74705992,
+    "longitude": 106.55421703,
+    "x": 36.70856102043831,
+    "y": 31.04322008094627,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.61,
+    "latitude": 29.74704483,
+    "longitude": 106.55398377,
+    "x": 14.144428444689336,
+    "y": 29.37040918328672,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.62,
+    "latitude": 29.74704479,
+    "longitude": 106.55398327,
+    "x": 14.0960615305656,
+    "y": 29.36597506267836,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.62,
+    "latitude": 29.74704464,
+    "longitude": 106.5539822,
+    "x": 13.992556295195165,
+    "y": 29.349347040332805,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.63,
+    "latitude": 29.74704427,
+    "longitude": 106.55397953,
+    "x": 13.734276898307604,
+    "y": 29.308331297506378,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.64,
+    "latitude": 29.74704397,
+    "longitude": 106.55397744,
+    "x": 13.53210314045753,
+    "y": 29.275075311639164,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.64,
+    "latitude": 29.74704389,
+    "longitude": 106.55397693,
+    "x": 13.482768871168282,
+    "y": 29.266207042813075,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.64,
+    "latitude": 29.74704381,
+    "longitude": 106.55397639,
+    "x": 13.430532583746725,
+    "y": 29.257338770926424,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704373,
+    "longitude": 106.55397585,
+    "x": 13.378296316921965,
+    "y": 29.248470544076717,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704365,
+    "longitude": 106.5539753,
+    "x": 13.325092691453829,
+    "y": 29.23960227150238,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704356,
+    "longitude": 106.55397476,
+    "x": 13.27285640498916,
+    "y": 29.229625473936814,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704348,
+    "longitude": 106.55397423,
+    "x": 13.221587455559678,
+    "y": 29.220757203461275,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704339,
+    "longitude": 106.5539737,
+    "x": 13.170318508468332,
+    "y": 29.21078040798949,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.84,
+    "latitude": 29.74697712,
+    "longitude": 106.5537949,
+    "x": -4.1257030514424615,
+    "y": 21.864571137721615,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.84,
+    "latitude": 29.74697675,
+    "longitude": 106.55379461,
+    "x": -4.153755913243511,
+    "y": 21.82355567882548,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.85,
+    "latitude": 29.74697564,
+    "longitude": 106.55379373,
+    "x": -4.238881844723188,
+    "y": 21.700509336837307,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.85,
+    "latitude": 29.74697379,
+    "longitude": 106.55379239,
+    "x": -4.368505422422776,
+    "y": 21.49543204008853,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.85,
+    "latitude": 29.74697342,
+    "longitude": 106.55379214,
+    "x": -4.392688927489562,
+    "y": 21.45441658059785,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.85,
+    "latitude": 29.74697305,
+    "longitude": 106.55379188,
+    "x": -4.417839771369143,
+    "y": 21.41340112157441,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74697086,
+    "longitude": 106.55379046,
+    "x": -4.555202095504555,
+    "y": 21.170633972319546,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74696936,
+    "longitude": 106.55378961,
+    "x": -4.6374260296120715,
+    "y": 21.004355076652907,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74696898,
+    "longitude": 106.55378938,
+    "x": -4.659674857948666,
+    "y": 20.962231089904776,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.7469686,
+    "longitude": 106.55378914,
+    "x": -4.68289102500138,
+    "y": 20.9201071041849,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74696553,
+    "longitude": 106.55378753,
+    "x": -4.838632850204036,
+    "y": 20.579789627935682,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74696515,
+    "longitude": 106.55378734,
+    "x": -4.857012321136827,
+    "y": 20.537665640089962,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.91,
+    "latitude": 29.74681345,
+    "longitude": 106.55381784,
+    "x": -1.906629311574967,
+    "y": 3.721322544614433,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.91,
+    "latitude": 29.74681313,
+    "longitude": 106.55381804,
+    "x": -1.8872824953753602,
+    "y": 3.6858497029828774,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.91,
+    "latitude": 29.7468128,
+    "longitude": 106.55381823,
+    "x": -1.8689030194444773,
+    "y": 3.6492683361689577,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.92,
+    "latitude": 29.74681119,
+    "longitude": 106.55381918,
+    "x": -1.7770056453789926,
+    "y": 3.47079561178547,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.92,
+    "latitude": 29.74680989,
+    "longitude": 106.5538199,
+    "x": -1.7073571078371244,
+    "y": 3.3266871972821206,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.93,
+    "latitude": 29.74680957,
+    "longitude": 106.55382007,
+    "x": -1.6909123159176618,
+    "y": 3.291214361996155,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.93,
+    "latitude": 29.74680925,
+    "longitude": 106.55382023,
+    "x": -1.6754348630212237,
+    "y": 3.2557415217569385,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.94,
+    "latitude": 29.74680734,
+    "longitude": 106.5538212,
+    "x": -1.5816028042709207,
+    "y": 3.04401301160143,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.95,
+    "latitude": 29.74680605,
+    "longitude": 106.55382181,
+    "x": -1.5225950150858731,
+    "y": 2.9010131308332237,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.95,
+    "latitude": 29.74680572,
+    "longitude": 106.55382196,
+    "x": -1.5080849029466883,
+    "y": 2.86443176338442,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.95,
+    "latitude": 29.74680539,
+    "longitude": 106.55382211,
+    "x": -1.4935747899147813,
+    "y": 2.8278503970168565,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.97,
+    "latitude": 29.7468035,
+    "longitude": 106.55382297,
+    "x": -1.4103834785662384,
+    "y": 2.618338946226754,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.746777,
+    "longitude": 106.55383573,
+    "x": -0.1760561571358671,
+    "y": -0.3192555606660439,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.746777,
+    "longitude": 106.55383573,
+    "x": -0.1760561571358671,
+    "y": -0.3192555606660439,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.746777,
+    "longitude": 106.55383573,
+    "x": -0.1760561571358671,
+    "y": -0.3192555606660439,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677701,
+    "longitude": 106.55383574,
+    "x": -0.1750888161554336,
+    "y": -0.3181470351065696,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677702,
+    "longitude": 106.55383575,
+    "x": -0.17412147393259292,
+    "y": -0.3170385086884042,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677702,
+    "longitude": 106.55383575,
+    "x": -0.17412147393259292,
+    "y": -0.3170385086884042,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677702,
+    "longitude": 106.55383575,
+    "x": -0.17412147393259292,
+    "y": -0.3170385086884042,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677702,
+    "longitude": 106.55383575,
+    "x": -0.17412147393259292,
+    "y": -0.3170385086884042,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677703,
+    "longitude": 106.55383576,
+    "x": -0.17315413339852026,
+    "y": -0.31592998306310105,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677703,
+    "longitude": 106.55383603,
+    "x": -0.1470359107159187,
+    "y": -0.31592998115360493,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677703,
+    "longitude": 106.55383603,
+    "x": -0.1470359107159187,
+    "y": -0.31592998115360493,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677702,
+    "longitude": 106.55383603,
+    "x": -0.1470359107484276,
+    "y": -0.3170385072618829,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677702,
+    "longitude": 106.55383603,
+    "x": -0.1470359107484276,
+    "y": -0.3170385072618829,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677702,
+    "longitude": 106.55383603,
+    "x": -0.1470359107484276,
+    "y": -0.3170385072618829,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677702,
+    "longitude": 106.55383602,
+    "x": -0.14800325173852058,
+    "y": -0.31703850718893367,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325181319796,
+    "y": -0.3181470333687657,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325181319796,
+    "y": -0.3181470333687657,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325181319796,
+    "y": -0.3181470333687657,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325181319796,
+    "y": -0.3181470333687657,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.746777,
+    "longitude": 106.55383601,
+    "x": -0.1489705936435708,
+    "y": -0.31925555853185017,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059394142853,
+    "y": -0.32036408548736706,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793608032202,
+    "y": -0.3203640878908758,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793608032202,
+    "y": -0.3203640878908758,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793608032202,
+    "y": -0.3203640878908758,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793608032202,
+    "y": -0.3203640878908758,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793608032202,
+    "y": -0.3203640878908758,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793608032202,
+    "y": -0.3203640878908758,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793608032202,
+    "y": -0.3203640878908758,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.149937936304116,
+    "y": -0.32036408805113936,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.46,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.14800325374268974,
+    "y": -0.3037361969777417,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.46,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.14800325374268974,
+    "y": -0.3037361969777417,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.46,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.14800325374268974,
+    "y": -0.3037361969777417,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.46,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.14800325374268974,
+    "y": -0.3037361969777417,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.46,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.14800325374268974,
+    "y": -0.3037361969777417,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.46,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.14800325374268974,
+    "y": -0.3037361969777417,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 257.25,
+    "latitude": 29.7467484,
+    "longitude": 106.55384762,
+    "x": 0.9741136277097565,
+    "y": -3.4896421854098065,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.71,
+    "latitude": 29.74660649,
+    "longitude": 106.55399337,
+    "x": 15.07314661328116,
+    "y": -19.220733412212564,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 255.65,
+    "latitude": 29.74661402,
+    "longitude": 106.55441787,
+    "x": 56.13686520356072,
+    "y": -18.385878900769168,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.2,
+    "latitude": 29.74690646,
+    "longitude": 106.55466957,
+    "x": 80.48463108924935,
+    "y": 14.032012847710613,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.72,
+    "latitude": 29.74705297,
+    "longitude": 106.55439732,
+    "x": 54.14871403966649,
+    "y": 30.272867528502896,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.73,
+    "latitude": 29.7470537,
+    "longitude": 106.55439231,
+    "x": 53.664077084078244,
+    "y": 30.353787636502318,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.73,
+    "latitude": 29.74705377,
+    "longitude": 106.55439186,
+    "x": 53.62054680921803,
+    "y": 30.361547110123784,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.73,
+    "latitude": 29.74705384,
+    "longitude": 106.55439141,
+    "x": 53.57701653409246,
+    "y": 30.36930658330231,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.73,
+    "latitude": 29.74705424,
+    "longitude": 106.55438866,
+    "x": 53.310998203907,
+    "y": 30.413646351182205,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.74,
+    "latitude": 29.74705451,
+    "longitude": 106.55438683,
+    "x": 53.13397517877968,
+    "y": 30.443575758259467,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.74,
+    "latitude": 29.74705458,
+    "longitude": 106.55438637,
+    "x": 53.08947756606623,
+    "y": 30.451335228676598,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.74,
+    "latitude": 29.74705464,
+    "longitude": 106.55438593,
+    "x": 53.046914634774915,
+    "y": 30.45798618249618,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.74,
+    "latitude": 29.74705471,
+    "longitude": 106.55438548,
+    "x": 53.00338436034871,
+    "y": 30.465745657251105,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.73,
+    "latitude": 29.74705494,
+    "longitude": 106.5543833,
+    "x": 52.79250434137336,
+    "y": 30.491240710343103,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.72,
+    "latitude": 29.74705512,
+    "longitude": 106.55438108,
+    "x": 52.57775499476452,
+    "y": 30.5111931170269,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.72,
+    "latitude": 29.74705516,
+    "longitude": 106.55438063,
+    "x": 52.53422473668415,
+    "y": 30.515627015743423,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.33,
+    "latitude": 29.74705925,
+    "longitude": 106.5541897,
+    "x": 34.06482536627429,
+    "y": 30.968940662420238,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.34,
+    "latitude": 29.74705914,
+    "longitude": 106.55418699,
+    "x": 33.80267672311875,
+    "y": 30.956746129753004,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.34,
+    "latitude": 29.74705912,
+    "longitude": 106.55418646,
+    "x": 33.751407788212994,
+    "y": 30.95452892270278,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.34,
+    "latitude": 29.7470591,
+    "longitude": 106.55418594,
+    "x": 33.70110619236071,
+    "y": 30.95231171923973,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.35,
+    "latitude": 29.74705908,
+    "longitude": 106.55418541,
+    "x": 33.649837311714975,
+    "y": 30.95009456151443,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.36,
+    "latitude": 29.74705897,
+    "longitude": 106.55418273,
+    "x": 33.39059067975363,
+    "y": 30.93790004708208,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.37,
+    "latitude": 29.74705886,
+    "longitude": 106.55418055,
+    "x": 33.179710973006245,
+    "y": 30.925705681177817,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.37,
+    "latitude": 29.74705883,
+    "longitude": 106.55418001,
+    "x": 33.1274747032426,
+    "y": 30.92237994864475,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.37,
+    "latitude": 29.7470588,
+    "longitude": 106.55417946,
+    "x": 33.07427109495618,
+    "y": 30.919054213814697,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.37,
+    "latitude": 29.74705877,
+    "longitude": 106.5541789,
+    "x": 33.020100148146994,
+    "y": 30.91572847507044,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.37,
+    "latitude": 29.74705874,
+    "longitude": 106.55417834000001,
+    "x": 32.96592920200736,
+    "y": 30.912402736631748,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.38,
+    "latitude": 29.74705867,
+    "longitude": 106.5541772,
+    "x": 32.85565268491375,
+    "y": 30.90464277909116,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.72,
+    "latitude": 29.74703978,
+    "longitude": 106.55395402,
+    "x": 11.266596169588198,
+    "y": 28.8106006941467,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.72,
+    "latitude": 29.74703966,
+    "longitude": 106.55395344,
+    "x": 11.210490526695931,
+    "y": 28.797298323160753,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.72,
+    "latitude": 29.74703954,
+    "longitude": 106.55395287,
+    "x": 11.155352222561955,
+    "y": 28.783995952431006,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.73,
+    "latitude": 29.74703878,
+    "longitude": 106.55394946,
+    "x": 10.825489755227531,
+    "y": 28.699747684192886,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.77,
+    "latitude": 29.74703747,
+    "longitude": 106.55394404,
+    "x": 10.301192264153853,
+    "y": 28.5545304377839,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.77,
+    "latitude": 29.74703734,
+    "longitude": 106.55394355,
+    "x": 10.253792669431462,
+    "y": 28.540119553708234,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.78,
+    "latitude": 29.74703709,
+    "longitude": 106.55394254,
+    "x": 10.156091477868888,
+    "y": 28.51240635405796,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.8,
+    "latitude": 29.74703638,
+    "longitude": 106.55393992,
+    "x": 9.9026487789173,
+    "y": 28.43370085596209,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.8,
+    "latitude": 29.74703578,
+    "longitude": 106.55393783,
+    "x": 9.700474995996274,
+    "y": 28.36718910634506,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.81,
+    "latitude": 29.74703563,
+    "longitude": 106.55393731,
+    "x": 9.650173399837119,
+    "y": 28.35056121413441,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.81,
+    "latitude": 29.74703549,
+    "longitude": 106.55393679,
+    "x": 9.59987178809564,
+    "y": 28.335041805230567,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.81,
+    "latitude": 29.74703519,
+    "longitude": 106.55393574,
+    "x": 9.49830122639926,
+    "y": 28.30178593190541,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74695628,
+    "longitude": 106.55378347,
+    "x": -5.231373237430768,
+    "y": 19.554403133531917,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.88,
+    "latitude": 29.74695384,
+    "longitude": 106.55378261,
+    "x": -5.314564582583785,
+    "y": 19.283922780650556,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.9,
+    "latitude": 29.74694889,
+    "longitude": 106.55378109,
+    "x": -5.4616005096672176,
+    "y": 18.73520244126439,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.9,
+    "latitude": 29.74694847,
+    "longitude": 106.55378098,
+    "x": -5.472241270681224,
+    "y": 18.688644346139196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.9,
+    "latitude": 29.74694804,
+    "longitude": 106.55378087,
+    "x": -5.482882031812073,
+    "y": 18.640977724762617,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.9,
+    "latitude": 29.74694719,
+    "longitude": 106.55378064,
+    "x": -5.505130893969964,
+    "y": 18.546753009153846,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.9,
+    "latitude": 29.74694548,
+    "longitude": 106.55378022,
+    "x": -5.545759261125294,
+    "y": 18.357195047946863,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.89,
+    "latitude": 29.74693973,
+    "longitude": 106.55377897,
+    "x": -5.666677053826852,
+    "y": 17.719792515850123,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.89,
+    "latitude": 29.74693929,
+    "longitude": 106.55377889,
+    "x": -5.6744157969720685,
+    "y": 17.671017366777484,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.89,
+    "latitude": 29.74693884,
+    "longitude": 106.55377882,
+    "x": -5.68118720182553,
+    "y": 17.6211336907193,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.89,
+    "latitude": 29.74693797,
+    "longitude": 106.55377869,
+    "x": -5.693762669576785,
+    "y": 17.52469191790884,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.9,
+    "latitude": 29.74693624,
+    "longitude": 106.55377848,
+    "x": -5.714076914236482,
+    "y": 17.33291692365316,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.04,
+    "latitude": 29.7467932,
+    "longitude": 106.5538277,
+    "x": -0.9528311959237731,
+    "y": 1.4765569386898052,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.04,
+    "latitude": 29.74679291,
+    "longitude": 106.55382783,
+    "x": -0.9402557611114698,
+    "y": 1.4444096777034021,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.04,
+    "latitude": 29.74679263,
+    "longitude": 106.55382796,
+    "x": -0.9276803262244893,
+    "y": 1.4133709433011308,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.05,
+    "latitude": 29.74679206,
+    "longitude": 106.55382821,
+    "x": -0.9034967997477156,
+    "y": 1.3501849497385696,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.06,
+    "latitude": 29.74679037,
+    "longitude": 106.55382896,
+    "x": -0.8309462157155434,
+    "y": 1.16284401748631,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.06,
+    "latitude": 29.7467901,
+    "longitude": 106.55382908,
+    "x": -0.819338122190339,
+    "y": 1.1329138094026485,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.06,
+    "latitude": 29.74678984,
+    "longitude": 106.55382919,
+    "x": -0.8086973690920212,
+    "y": 1.104092127577494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.07,
+    "latitude": 29.74678958,
+    "longitude": 106.5538293,
+    "x": -0.7980566173755675,
+    "y": 1.0752704481108906,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.07,
+    "latitude": 29.74678907,
+    "longitude": 106.55382952,
+    "x": -0.7767751123466616,
+    "y": 1.018735608973124,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.07,
+    "latitude": 29.74678881,
+    "longitude": 106.55382963,
+    "x": -0.7661343595136927,
+    "y": 0.9899139271093294,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.08,
+    "latitude": 29.7467883,
+    "longitude": 106.55382986,
+    "x": -0.7438855131877901,
+    "y": 0.9333790902414275,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.09,
+    "latitude": 29.7467866,
+    "longitude": 106.55383057,
+    "x": -0.6752042876481715,
+    "y": 0.744929632450332,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383579,
+    "x": -0.17025210898197274,
+    "y": -0.31371293078702567,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383579,
+    "x": -0.17025210898197274,
+    "y": -0.31371293078702567,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677706,
+    "longitude": 106.55383579,
+    "x": -0.17025210913047573,
+    "y": -0.3126044037656799,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677706,
+    "longitude": 106.55383579,
+    "x": -0.17025210913047573,
+    "y": -0.3126044037656799,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677706,
+    "longitude": 106.55383579,
+    "x": -0.17025210913047573,
+    "y": -0.3126044037656799,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677706,
+    "longitude": 106.5538358,
+    "x": -0.16928476680130045,
+    "y": -0.31260440403611534,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677706,
+    "longitude": 106.5538358,
+    "x": -0.16928476680130045,
+    "y": -0.31260440403611534,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677706,
+    "longitude": 106.5538358,
+    "x": -0.1692847664931696,
+    "y": -0.3126044037327427,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677706,
+    "longitude": 106.55383581,
+    "x": -0.1683174255030766,
+    "y": -0.3126044038056919,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677706,
+    "longitude": 106.55383581,
+    "x": -0.1683174255030766,
+    "y": -0.3126044038056919,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677706,
+    "longitude": 106.55383581,
+    "x": -0.1683174255030766,
+    "y": -0.3126044038056919,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.39,
+    "latitude": 29.74677707,
+    "longitude": 106.55383581,
+    "x": -0.1683174256515796,
+    "y": -0.311495877188646,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677696,
+    "longitude": 106.55383598,
+    "x": -0.15187261812452246,
+    "y": -0.32368966404420196,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677695,
+    "longitude": 106.55383598,
+    "x": -0.15187261819919984,
+    "y": -0.3247981906283335,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677695,
+    "longitude": 106.55383598,
+    "x": -0.15187261819919984,
+    "y": -0.3247981906283335,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677695,
+    "longitude": 106.55383598,
+    "x": -0.15187261819919984,
+    "y": -0.3247981906283335,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677695,
+    "longitude": 106.55383598,
+    "x": -0.15187261819919984,
+    "y": -0.3247981906283335,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677695,
+    "longitude": 106.55383598,
+    "x": -0.15187261819919984,
+    "y": -0.3247981906283335,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677694,
+    "longitude": 106.55383597,
+    "x": -0.15283996011452328,
+    "y": -0.32590671612770494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677694,
+    "longitude": 106.55383597,
+    "x": -0.15283996011452328,
+    "y": -0.32590671612770494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677694,
+    "longitude": 106.55383597,
+    "x": -0.15283996011452328,
+    "y": -0.32590671612770494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677694,
+    "longitude": 106.55383597,
+    "x": -0.15283996011452328,
+    "y": -0.32590671612770494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677694,
+    "longitude": 106.55383597,
+    "x": -0.15283996011452328,
+    "y": -0.32590671612770494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.34,
+    "latitude": 29.74677693,
+    "longitude": 106.55383596,
+    "x": -0.15380730113712504,
+    "y": -0.32701524256733316,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383601,
+    "x": -0.14897059505833365,
+    "y": -0.3192555616444257,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383602,
+    "x": -0.14800325291017036,
+    "y": -0.319255561406093,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.746777,
+    "longitude": 106.55383602,
+    "x": -0.14800325291017036,
+    "y": -0.319255561406093,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325291982996,
+    "y": -0.3181470357736691,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325291982996,
+    "y": -0.3181470357736691,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.42,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325318579244,
+    "y": -0.3181470364097867,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.42,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325318579244,
+    "y": -0.3181470364097867,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.42,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325318579244,
+    "y": -0.3181470364097867,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.42,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325318579244,
+    "y": -0.3181470364097867,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.42,
+    "latitude": 29.74677702,
+    "longitude": 106.55383603,
+    "x": -0.14703591216319056,
+    "y": -0.31703851077875767,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.42,
+    "latitude": 29.74677702,
+    "longitude": 106.55383603,
+    "x": -0.14703591216319056,
+    "y": -0.31703851077875767,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.42,
+    "latitude": 29.74677702,
+    "longitude": 106.55383603,
+    "x": -0.14703591216319056,
+    "y": -0.31703851077875767,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383601,
+    "x": -0.14897059657066747,
+    "y": -0.3026276712737862,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.553836,
+    "x": -0.14993793756076046,
+    "y": -0.3026276712008371,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383599,
+    "x": -0.15090527993210423,
+    "y": -0.3026276714062557,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 257.32,
+    "latitude": 29.74670557,
+    "longitude": 106.55386242,
+    "x": 2.405781180372686,
+    "y": -8.237462128706031,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.7,
+    "latitude": 29.74661291,
+    "longitude": 106.55404389,
+    "x": 19.960164735558,
+    "y": -18.50905161939761,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 256.47,
+    "latitude": 29.7466307,
+    "longitude": 106.55428485,
+    "x": 43.26926329467058,
+    "y": -16.53691616612159,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 255.09,
+    "latitude": 29.74660154,
+    "longitude": 106.55448653,
+    "x": 62.77864643035057,
+    "y": -19.76928281553349,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.99,
+    "latitude": 29.74672882,
+    "longitude": 106.55465678,
+    "x": 79.24755260795938,
+    "y": -5.659853598682538,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.82,
+    "latitude": 29.74705155,
+    "longitude": 106.55441666,
+    "x": 56.019548600266155,
+    "y": 30.11546653421445,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.82,
+    "latitude": 29.74705158,
+    "longitude": 106.55441618,
+    "x": 55.97311632870462,
+    "y": 30.118791880351623,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.82,
+    "latitude": 29.74705165,
+    "longitude": 106.55441524,
+    "x": 55.882186456373546,
+    "y": 30.1265511066348,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.81,
+    "latitude": 29.74705177,
+    "longitude": 106.55441337,
+    "x": 55.701293975793064,
+    "y": 30.139852467712622,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.8,
+    "latitude": 29.74705193,
+    "longitude": 106.55441098,
+    "x": 55.47009986392864,
+    "y": 30.15758768727178,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.79,
+    "latitude": 29.74705197,
+    "longitude": 106.5544105,
+    "x": 55.4236675002411,
+    "y": 30.16202151302921,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.79,
+    "latitude": 29.747052,
+    "longitude": 106.55441001,
+    "x": 55.37626788975261,
+    "y": 30.16534685538958,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.78,
+    "latitude": 29.74705207,
+    "longitude": 106.55440904,
+    "x": 55.28243591655364,
+    "y": 30.173106025540328,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.78,
+    "latitude": 29.74705211,
+    "longitude": 106.55440854,
+    "x": 55.234068962664914,
+    "y": 30.177539890010298,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.78,
+    "latitude": 29.74705214,
+    "longitude": 106.55440805,
+    "x": 55.18666935382302,
+    "y": 30.18086523430487,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.78,
+    "latitude": 29.74705218,
+    "longitude": 106.55440756,
+    "x": 55.139269738305885,
+    "y": 30.18529910527724,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.77,
+    "latitude": 29.74705222,
+    "longitude": 106.55440706,
+    "x": 55.09090269825469,
+    "y": 30.189732922312558,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.34,
+    "latitude": 29.7470603,
+    "longitude": 106.55422348,
+    "x": 37.33249449801721,
+    "y": 31.08534637927556,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.33,
+    "latitude": 29.74706027,
+    "longitude": 106.55422296,
+    "x": 37.282192848809316,
+    "y": 31.082020583695105,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.31,
+    "latitude": 29.74706011,
+    "longitude": 106.55422033,
+    "x": 37.0277827689194,
+    "y": 31.064283225652318,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.3,
+    "latitude": 29.74705998,
+    "longitude": 106.55421816,
+    "x": 36.81787030563517,
+    "y": 31.04987164494355,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.3,
+    "latitude": 29.74705995,
+    "longitude": 106.5542176,
+    "x": 36.76369936065563,
+    "y": 31.04654588857484,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.29,
+    "latitude": 29.74705992,
+    "longitude": 106.55421703,
+    "x": 36.70856102043831,
+    "y": 31.04322008094627,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.29,
+    "latitude": 29.74705989,
+    "longitude": 106.55421645,
+    "x": 36.65245539828671,
+    "y": 31.039894318556012,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.28,
+    "latitude": 29.74705983,
+    "longitude": 106.55421527,
+    "x": 36.53830942128438,
+    "y": 31.0332427399689,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.27,
+    "latitude": 29.74705976,
+    "longitude": 106.55421407,
+    "x": 36.422228770871556,
+    "y": 31.02548262990532,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.27,
+    "latitude": 29.74705972,
+    "longitude": 106.55421347,
+    "x": 36.36418847539382,
+    "y": 31.021048338203194,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.27,
+    "latitude": 29.74705954,
+    "longitude": 106.5542054,
+    "x": 35.583546378821694,
+    "y": 31.001092357039383,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 252.28,
+    "latitude": 29.74705954,
+    "longitude": 106.55420478,
+    "x": 35.52357144858737,
+    "y": 31.00109221501133,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.64,
+    "latitude": 29.74704381,
+    "longitude": 106.55397639,
+    "x": 13.430532583746725,
+    "y": 29.257338770926424,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704373,
+    "longitude": 106.55397585,
+    "x": 13.378296316921965,
+    "y": 29.248470544076717,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704365,
+    "longitude": 106.5539753,
+    "x": 13.325092691453829,
+    "y": 29.23960227150238,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704356,
+    "longitude": 106.55397476,
+    "x": 13.27285640498916,
+    "y": 29.229625473936814,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704348,
+    "longitude": 106.55397423,
+    "x": 13.221587455559678,
+    "y": 29.220757203461275,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.74704339,
+    "longitude": 106.5539737,
+    "x": 13.170318508468332,
+    "y": 29.21078040798949,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.65,
+    "latitude": 29.7470433,
+    "longitude": 106.55397316,
+    "x": 13.11808222164164,
+    "y": 29.20080361022856,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.66,
+    "latitude": 29.74704287,
+    "longitude": 106.55397043,
+    "x": 12.853998790127175,
+    "y": 29.153136723876678,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.67,
+    "latitude": 29.74704277,
+    "longitude": 106.55396988,
+    "x": 12.800795184352602,
+    "y": 29.14205144676535,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.67,
+    "latitude": 29.74704268,
+    "longitude": 106.55396933,
+    "x": 12.747591558809788,
+    "y": 29.132074649628382,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.68,
+    "latitude": 29.74704211,
+    "longitude": 106.55396594,
+    "x": 12.419663773289512,
+    "y": 29.068888334747875,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.69,
+    "latitude": 29.7470416,
+    "longitude": 106.55396318,
+    "x": 12.152678324944928,
+    "y": 29.01235325160219,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74696936,
+    "longitude": 106.55378961,
+    "x": -4.6374260296120715,
+    "y": 21.004355076652907,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74696898,
+    "longitude": 106.55378938,
+    "x": -4.659674857948666,
+    "y": 20.962231089904776,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.7469686,
+    "longitude": 106.55378914,
+    "x": -4.68289102500138,
+    "y": 20.9201071041849,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74696553,
+    "longitude": 106.55378753,
+    "x": -4.838632850204036,
+    "y": 20.579789627935682,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.86,
+    "latitude": 29.74696515,
+    "longitude": 106.55378734,
+    "x": -4.857012321136827,
+    "y": 20.537665640089962,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696477,
+    "longitude": 106.55378714,
+    "x": -4.876359140015929,
+    "y": 20.49554168504319,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696439,
+    "longitude": 106.55378696,
+    "x": -4.89377127196725,
+    "y": 20.45341769701645,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696401,
+    "longitude": 106.55378677,
+    "x": -4.912150743262065,
+    "y": 20.41129371018827,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696363,
+    "longitude": 106.55378659,
+    "x": -4.929562875701914,
+    "y": 20.36916972175151,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696175,
+    "longitude": 106.55378571,
+    "x": -5.01468885857114,
+    "y": 20.16076683482259,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696137,
+    "longitude": 106.55378555,
+    "x": -5.030166312559522,
+    "y": 20.118642846029513,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.87,
+    "latitude": 29.74696061,
+    "longitude": 106.55378523,
+    "x": -5.061121220355274,
+    "y": 20.034394868338893,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.94,
+    "latitude": 29.74680734,
+    "longitude": 106.5538212,
+    "x": -1.5816028042709207,
+    "y": 3.04401301160143,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.95,
+    "latitude": 29.74680605,
+    "longitude": 106.55382181,
+    "x": -1.5225950150858731,
+    "y": 2.9010131308332237,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.95,
+    "latitude": 29.74680572,
+    "longitude": 106.55382196,
+    "x": -1.5080849029466883,
+    "y": 2.86443176338442,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.95,
+    "latitude": 29.74680539,
+    "longitude": 106.55382211,
+    "x": -1.4935747899147813,
+    "y": 2.8278503970168565,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.97,
+    "latitude": 29.7468035,
+    "longitude": 106.55382297,
+    "x": -1.4103834785662384,
+    "y": 2.618338946226754,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.97,
+    "latitude": 29.74680222,
+    "longitude": 106.55382358,
+    "x": -1.3513756819656229,
+    "y": 2.4764475862708615,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.98,
+    "latitude": 29.74680191,
+    "longitude": 106.55382373,
+    "x": -1.3368655698165401,
+    "y": 2.4420832760161613,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.98,
+    "latitude": 29.7468016,
+    "longitude": 106.55382388,
+    "x": -1.3223554560624127,
+    "y": 2.407718962965696,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 253.99,
+    "latitude": 29.74679971,
+    "longitude": 106.55382475,
+    "x": -1.2381967939402396,
+    "y": 2.1982075063594553,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.7467978,
+    "longitude": 106.55382564,
+    "x": -1.1521034489809607,
+    "y": 1.9864790007625623,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.7467975,
+    "longitude": 106.55382577,
+    "x": -1.1395280154014051,
+    "y": 1.9532232136893448,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.01,
+    "latitude": 29.7467972,
+    "longitude": 106.55382591,
+    "x": -1.1259852415434661,
+    "y": 1.9199674269746667,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677702,
+    "longitude": 106.55383575,
+    "x": -0.17412147393259292,
+    "y": -0.3170385086884042,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677702,
+    "longitude": 106.55383575,
+    "x": -0.17412147393259292,
+    "y": -0.3170385086884042,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677703,
+    "longitude": 106.55383576,
+    "x": -0.17315413339852026,
+    "y": -0.31592998306310105,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677704,
+    "longitude": 106.55383577,
+    "x": -0.17218679077148724,
+    "y": -0.31482145637801984,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677705,
+    "longitude": 106.55383578,
+    "x": -0.17121944974888537,
+    "y": -0.3137129307469908,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325181319796,
+    "y": -0.3181470333687657,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325181319796,
+    "y": -0.3181470333687657,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325181319796,
+    "y": -0.3181470333687657,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.36,
+    "latitude": 29.74677701,
+    "longitude": 106.55383602,
+    "x": -0.14800325181319796,
+    "y": -0.3181470333687657,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.746777,
+    "longitude": 106.55383601,
+    "x": -0.1489705936435708,
+    "y": -0.31925555853185017,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059394142853,
+    "y": -0.32036408548736706,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059394142853,
+    "y": -0.32036408548736706,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059394142853,
+    "y": -0.32036408548736706,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793493152152,
+    "y": -0.3203640854144181,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793493152152,
+    "y": -0.3203640854144181,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793493152152,
+    "y": -0.3203640854144181,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.35,
+    "latitude": 29.74677697,
+    "longitude": 106.55383599,
+    "x": -0.1509052771447027,
+    "y": -0.3225811386779054,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.4,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.14993793608032202,
+    "y": -0.3203640878908758,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.553836,
+    "x": -0.149937936304116,
+    "y": -0.32036408805113936,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.41,
+    "latitude": 29.74677699,
+    "longitude": 106.55383601,
+    "x": -0.14897059509084265,
+    "y": -0.3203640881570029,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677714,
+    "longitude": 106.55383602,
+    "x": -0.1480032542318327,
+    "y": -0.30373619758094494,
+    "z": 0
+}
+Python Operator working
+{
+    "altitude": 254.47,
+    "latitude": 29.74677715,
+    "longitude": 106.55383602,
+    "x": -0.1480032541993238,
+    "y": -0.30262767106836763,
+    "z": 0
+}
+Python Operator working

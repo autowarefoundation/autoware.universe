@@ -1,0 +1,19 @@
+nodes:
+  - id: controltest
+    custom:
+      source: controldata
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - road_lane
+
+
+  - id: road
+    custom:
+      source: ../../planning/routing_planning/build/routing_planning_node
+      inputs:
+        road_lane: controltest/road_lane
+#      outputs:
+#        - SteeringCmd
+
+

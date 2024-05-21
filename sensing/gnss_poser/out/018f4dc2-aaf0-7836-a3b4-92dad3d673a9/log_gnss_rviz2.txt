@@ -1,0 +1,25 @@
+Python Operator working
+{
+    "altitude": 256.96,
+    "latitude": 29.74677988,
+    "longitude": 106.55383755,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0
+}
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+RuntimeError: Dora Runtime raised an error.
+
+Caused by:
+   0: main task failed
+   1: operator gnss_rviz2/op raised an error
+   2: error in Python module at /home/zxd/autoware.universe/sensing/gnss_poser/src/gps_to_ros2_test.py
+   3: Traceback (most recent call last):
+        File "/home/zxd/autoware.universe/sensing/gnss_poser/src/gps_to_ros2_test.py", line 120, in on_event
+          "orientation": {"w": np.float64(o_w), "x": np.float64(o_x), "y": np.float64(o_y), "z": np.float64(o_z)},
+
+      NameError: name 'o_w' is not defined
+
+Location:
+    binaries/runtime/src/operator/python.rs:28:9
