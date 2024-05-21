@@ -128,6 +128,7 @@ public:
       {
         double collision_start_margin_time;
         double collision_end_margin_time;
+        double passthrough_distance_margin_for_preemptive_start;
       } not_prioritized;
       struct YieldOnGreeTrafficLight
       {

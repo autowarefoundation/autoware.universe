@@ -76,6 +76,7 @@
         not_prioritized:
           collision_start_margin_time: 3.0
           collision_end_margin_time: 2.0
+          passthrough_distance_margin_for_preemptive_start: 10.0
         yield_on_green_traffic_light:
           distance_to_assigned_lanelet_start: 10.0
           duration: 3.0
