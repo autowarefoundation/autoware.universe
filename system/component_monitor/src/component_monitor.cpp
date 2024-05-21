@@ -93,7 +93,7 @@ void ComponentMonitor::get_cpu_usage()
   cmd += std::to_string(pid_);
 
   auto std_out = run_command(cmd);
-  auto fields = get_fields(std_out);
+  const auto fields = get_fields(std_out);
 
   auto cpu_rate = fields[7];
   usage_msg_.cpu_usage_rate = to_float(cpu_rate);
@@ -105,7 +105,7 @@ void ComponentMonitor::get_mem_usage()
   cmd += std::to_string(pid_);
 
   auto std_out = run_command(cmd);
-  auto fields = get_fields(std_out);
+  const auto fields = get_fields(std_out);
 
   auto mem_usage = fields[6];
   auto mem_usage_rate = fields[7];
