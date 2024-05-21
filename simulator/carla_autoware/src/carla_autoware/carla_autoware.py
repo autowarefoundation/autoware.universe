@@ -60,6 +60,8 @@ class InitializeInterface(object):
         self.world = None
         self.sensor_wrapper = None
         self.ego_vehicle = None
+        self.timestamp_last_run = 0.0
+        self.delta_step = 0.0
 
         # Parameter for Initializing Carla World
         self.local_host = self.param_["host"]
@@ -72,6 +74,7 @@ class InitializeInterface(object):
         self.vehicle_type = self.param_["vehicle_type"]
         self.spawn_point = self.param_["spawn_point"]
         self.use_traffic_manager = self.param_["use_traffic_manager"]
+        self.max_real_delta_seconds = self.param_["max_real_delta_seconds"]
 
     def load_world(self):
         client = carla.Client(self.local_host, self.port)
@@ -164,6 +167,11 @@ class InitializeInterface(object):
                 if snapshot:
                     timestamp = snapshot.timestamp
             if timestamp:
+                self.delta_step = timestamp.elapsed_seconds - self.timestamp_last_run
+                if self.delta_step < self.max_real_delta_seconds:
+                    # Add a wait to match the max_real_delta_seconds
+                    time.sleep(self.max_real_delta_seconds - self.delta_step)
+                self.timestamp_last_run = timestamp.elapsed_seconds
                 self.bridge_loop._tick_sensor(timestamp)
 
     def _stop_loop(self, signum, frame):

@@ -10,6 +10,7 @@
   <arg name="fixed_delta_seconds" default="0.05" description="Timestep for CARLA, FPS=1/value"/>
   <arg name="objects_definition_file" default="$(find-pkg-share carla_autoware)/objects.json"/>
   <arg name="use_traffic_manager" default="False"/>
+  <arg name="max_real_delta_seconds" default="0.05"/>
 
   <!-- CARLA Interface -->
   <node pkg="carla_autoware" exec="carla_autoware" name="carla_autoware" output="screen">
@@ -24,6 +25,7 @@
     <param name="vehicle_type" value="$(var vehicle_type)"/>
     <param name="objects_definition_file" value="$(var objects_definition_file)"/>
     <param name="use_traffic_manager" value="$(var use_traffic_manager)"/>
+    <param name="max_real_delta_seconds" value="$(var max_real_delta_seconds)"/>
   </node>
 
   <!-- Awsim configuration frame to CARLA frame -->

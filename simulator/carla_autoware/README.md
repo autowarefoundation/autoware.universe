@@ -73,6 +73,7 @@ All the key parameters can be configured in `carla_autoware.launch.xml`.
 | `fixed_delta_seconds`     | double | 0.05                                            | Time step for the simulation (related to client FPS)                                                                                                                |
 | `objects_definition_file` | string | "$(find-pkg-share carla_autoware)/objects.json" | Sensor parameters file that are used for spawning sensor in CARLA                                                                                                   |
 | `use_traffic_manager`     | bool   | True                                            | Boolean flag to set traffic manager in CARLA                                                                                                                        |
+| `max_real_delta_seconds`  | double | 0.05                                            | Parameter to limit the simulation speed below `fixed_delta_seconds`                                                                                                 |
 
 ### Configurable Parameters for Sensors
 
