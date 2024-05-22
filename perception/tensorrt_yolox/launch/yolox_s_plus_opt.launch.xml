@@ -4,7 +4,7 @@
   <arg name="input/image" default="/sensing/camera/camera0/image_rect_color"/>
   <arg name="output/objects" default="/perception/object_recognition/detection/rois0"/>
   <arg name="output/mask" default="/perception/object_recognition/detection/mask0"/>
-  <arg name="model_name" default="yoloXP-sPlus-T4-960x960-pseudo-finetune-semseg"/>
+  <arg name="model_name" default="yolox-sPlus-opt-pseudoV2-T4-960x960-T4-seg16cls"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
   <arg name="model_path" default="$(var data_path)/tensorrt_yolox"/>
   <arg name="score_threshold" default="0.35"/>
