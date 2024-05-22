@@ -37,6 +37,7 @@
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
@@ -60,9 +61,6 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/search/pcl_search.h>
 #include <pcl_conversions/pcl_conversions.h>
-
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -195,6 +193,12 @@ public:
       SLOT(updateTopic()));
     qos_profile_points_property = new rviz_common::properties::QosProfileProperty(
       m_default_pointcloud_topic, qos_profile_points);
+    m_object_fill_type_property = new rviz_common::properties::EnumProperty(
+      "Object Fill Type", "skeleton", "Change object fill type in visualization", this);
+    m_object_fill_type_property->addOption(
+      "skeleton", static_cast<int>(detail::ObjectFillType::Skeleton));
+    m_object_fill_type_property->addOption("Fill", static_cast<int>(detail::ObjectFillType::Fill));
+
     // iterate over default values to create and initialize the properties.
     for (const auto & map_property_it : detail::kDefaultObjectPropertyValues) {
       const auto & class_property_values = map_property_it.second;
@@ -416,9 +420,13 @@ protected:
     const bool & is_orientation_available) const
   {
     const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
+    const auto fill_type =
+      static_cast<detail::ObjectFillType>(m_object_fill_type_property->getOptionInt());
+
     if (m_display_type_property->getOptionInt() == 0) {
       return detail::get_shape_marker_ptr(
-        shape_msg, centroid, orientation, color_rgba, line_width, is_orientation_available);
+        shape_msg, centroid, orientation, color_rgba, line_width, is_orientation_available,
+        fill_type);
     } else if (m_display_type_property->getOptionInt() == 1) {
       return detail::get_2d_shape_marker_ptr(
         shape_msg, centroid, orientation, color_rgba, line_width, is_orientation_available);
@@ -860,6 +868,8 @@ private:
   rviz_common::properties::EnumProperty * m_simple_visualize_mode_property;
   // Property to set confidence interval of state estimations
   rviz_common::properties::EnumProperty * m_confidence_interval_property;
+  // Property to set visualization type
+  rviz_common::properties::EnumProperty * m_object_fill_type_property;
   // Property to enable/disable label visualization
   rviz_common::properties::BoolProperty m_display_label_property;
   // Property to enable/disable uuid visualization

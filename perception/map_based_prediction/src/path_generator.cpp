@@ -32,7 +32,7 @@ PathGenerator::PathGenerator(
 {
 }
 
-PredictedPath PathGenerator::generatePathForNonVehicleObject(const TrackedObject & object)
+PredictedPath PathGenerator::generatePathForNonVehicleObject(const TrackedObject & object) const
 {
   return generateStraightPath(object);
 }
@@ -50,14 +50,18 @@ PredictedPath PathGenerator::generatePathToTargetPoint(
   const auto velocity = std::max(std::hypot(obj_vel.x, obj_vel.y), min_crosswalk_user_velocity_);
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
+  const auto pedestrian_to_entry_point_normalized = pedestrian_to_entry_point.normalized();
+  const auto pedestrian_to_entry_point_orientation = tier4_autoware_utils::createQuaternionFromYaw(
+    std::atan2(pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
+
   for (double dt = 0.0; dt < arrival_time + ep; dt += sampling_time_interval_) {
     geometry_msgs::msg::Pose world_frame_pose;
     world_frame_pose.position.x =
-      obj_pos.x + velocity * pedestrian_to_entry_point.normalized().x() * dt;
+      obj_pos.x + velocity * pedestrian_to_entry_point_normalized.x() * dt;
     world_frame_pose.position.y =
-      obj_pos.y + velocity * pedestrian_to_entry_point.normalized().y() * dt;
+      obj_pos.y + velocity * pedestrian_to_entry_point_normalized.y() * dt;
     world_frame_pose.position.z = obj_pos.z;
-    world_frame_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
+    world_frame_pose.orientation = pedestrian_to_entry_point_orientation;
     predicted_path.path.push_back(world_frame_pose);
     if (predicted_path.path.size() >= predicted_path.path.max_size()) {
       break;
@@ -88,41 +92,37 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const auto velocity = std::max(std::hypot(obj_vel.x, obj_vel.y), min_crosswalk_user_velocity_);
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
+  const auto pedestrian_to_entry_point_normalized = pedestrian_to_entry_point.normalized();
+  const auto pedestrian_to_entry_point_orientation = tier4_autoware_utils::createQuaternionFromYaw(
+    std::atan2(pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
+  const auto entry_to_exit_point_normalized = entry_to_exit_point.normalized();
+  const auto entry_to_exit_point_orientation = tier4_autoware_utils::createQuaternionFromYaw(
+    std::atan2(entry_to_exit_point_normalized.y(), entry_to_exit_point_normalized.x()));
+
   for (double dt = 0.0; dt < time_horizon_ + ep; dt += sampling_time_interval_) {
     geometry_msgs::msg::Pose world_frame_pose;
     if (dt < arrival_time) {
       world_frame_pose.position.x =
-        obj_pos.x + velocity * pedestrian_to_entry_point.normalized().x() * dt;
+        obj_pos.x + velocity * pedestrian_to_entry_point_normalized.x() * dt;
       world_frame_pose.position.y =
-        obj_pos.y + velocity * pedestrian_to_entry_point.normalized().y() * dt;
+        obj_pos.y + velocity * pedestrian_to_entry_point_normalized.y() * dt;
       world_frame_pose.position.z = obj_pos.z;
-      world_frame_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
+      world_frame_pose.orientation = pedestrian_to_entry_point_orientation;
       predicted_path.path.push_back(world_frame_pose);
     } else {
       world_frame_pose.position.x =
         reachable_crosswalk.front_center_point.x() +
-        velocity * entry_to_exit_point.normalized().x() * (dt - arrival_time);
+        velocity * entry_to_exit_point_normalized.x() * (dt - arrival_time);
       world_frame_pose.position.y =
         reachable_crosswalk.front_center_point.y() +
-        velocity * entry_to_exit_point.normalized().y() * (dt - arrival_time);
+        velocity * entry_to_exit_point_normalized.y() * (dt - arrival_time);
       world_frame_pose.position.z = obj_pos.z;
-      world_frame_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
+      world_frame_pose.orientation = entry_to_exit_point_orientation;
       predicted_path.path.push_back(world_frame_pose);
     }
     if (predicted_path.path.size() >= predicted_path.path.max_size()) {
       break;
     }
-  }
-
-  // calculate orientation of each point
-  if (predicted_path.path.size() >= 2) {
-    for (size_t i = 0; i < predicted_path.path.size() - 1; i++) {
-      const auto yaw = tier4_autoware_utils::calcAzimuthAngle(
-        predicted_path.path.at(i).position, predicted_path.path.at(i + 1).position);
-      predicted_path.path.at(i).orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
-    }
-    predicted_path.path.back().orientation =
-      predicted_path.path.at(predicted_path.path.size() - 2).orientation;
   }
 
   predicted_path.confidence = 1.0;
@@ -143,13 +143,13 @@ PredictedPath PathGenerator::generatePathForLowSpeedVehicle(const TrackedObject 
   return path;
 }
 
-PredictedPath PathGenerator::generatePathForOffLaneVehicle(const TrackedObject & object)
+PredictedPath PathGenerator::generatePathForOffLaneVehicle(const TrackedObject & object) const
 {
   return generateStraightPath(object);
 }
 
 PredictedPath PathGenerator::generatePathForOnLaneVehicle(
-  const TrackedObject & object, const PosePath & ref_paths, const double speed_limit)
+  const TrackedObject & object, const PosePath & ref_paths, const double speed_limit) const
 {
   if (ref_paths.size() < 2) {
     return generateStraightPath(object);
@@ -178,7 +178,7 @@ PredictedPath PathGenerator::generateStraightPath(const TrackedObject & object) 
 }
 
 PredictedPath PathGenerator::generatePolynomialPath(
-  const TrackedObject & object, const PosePath & ref_path, const double speed_limit)
+  const TrackedObject & object, const PosePath & ref_path, const double speed_limit) const
 {
   // Get current Frenet Point
   const double ref_path_len = motion_utils::calcArcLength(ref_path);
@@ -210,7 +210,8 @@ PredictedPath PathGenerator::generatePolynomialPath(
 }
 
 FrenetPath PathGenerator::generateFrenetPath(
-  const FrenetPoint & current_point, const FrenetPoint & target_point, const double max_length)
+  const FrenetPoint & current_point, const FrenetPoint & target_point,
+  const double max_length) const
 {
   FrenetPath path;
   const double duration = time_horizon_;
@@ -252,7 +253,7 @@ FrenetPath PathGenerator::generateFrenetPath(
 }
 
 Eigen::Vector3d PathGenerator::calcLatCoefficients(
-  const FrenetPoint & current_point, const FrenetPoint & target_point, const double T)
+  const FrenetPoint & current_point, const FrenetPoint & target_point, const double T) const
 {
   // Lateral Path Calculation
   // Quintic polynomial for d
@@ -278,7 +279,7 @@ Eigen::Vector3d PathGenerator::calcLatCoefficients(
 }
 
 Eigen::Vector2d PathGenerator::calcLonCoefficients(
-  const FrenetPoint & current_point, const FrenetPoint & target_point, const double T)
+  const FrenetPoint & current_point, const FrenetPoint & target_point, const double T) const
 {
   // Longitudinal Path Calculation
   // Quadric polynomial
@@ -296,7 +297,7 @@ Eigen::Vector2d PathGenerator::calcLonCoefficients(
 }
 
 PosePath PathGenerator::interpolateReferencePath(
-  const PosePath & base_path, const FrenetPath & frenet_predicted_path)
+  const PosePath & base_path, const FrenetPath & frenet_predicted_path) const
 {
   PosePath interpolated_path;
   const size_t interpolate_num = frenet_predicted_path.size();
@@ -356,7 +357,8 @@ PosePath PathGenerator::interpolateReferencePath(
 }
 
 PredictedPath PathGenerator::convertToPredictedPath(
-  const TrackedObject & object, const FrenetPath & frenet_predicted_path, const PosePath & ref_path)
+  const TrackedObject & object, const FrenetPath & frenet_predicted_path,
+  const PosePath & ref_path) const
 {
   PredictedPath predicted_path;
   predicted_path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
@@ -385,7 +387,7 @@ PredictedPath PathGenerator::convertToPredictedPath(
 }
 
 FrenetPoint PathGenerator::getFrenetPoint(
-  const TrackedObject & object, const PosePath & ref_path, const double speed_limit)
+  const TrackedObject & object, const PosePath & ref_path, const double speed_limit) const
 {
   FrenetPoint frenet_point;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
