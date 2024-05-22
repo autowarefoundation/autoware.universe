@@ -60,8 +60,7 @@ class InitializeInterface(object):
         self.world = None
         self.sensor_wrapper = None
         self.ego_vehicle = None
-        self.timestamp_last_run = 0.0
-        self.delta_step = 0.0
+        self.prev_tick_wall_time = 0.0
 
         # Parameter for Initializing Carla World
         self.local_host = self.param_["host"]
@@ -167,11 +166,11 @@ class InitializeInterface(object):
                 if snapshot:
                     timestamp = snapshot.timestamp
             if timestamp:
-                self.delta_step = timestamp.elapsed_seconds - self.timestamp_last_run
-                if self.delta_step < self.max_real_delta_seconds:
+                delta_step = time.time() - self.prev_tick_wall_time
+                if delta_step <= self.max_real_delta_seconds:
                     # Add a wait to match the max_real_delta_seconds
-                    time.sleep(self.max_real_delta_seconds - self.delta_step)
-                self.timestamp_last_run = timestamp.elapsed_seconds
+                    time.sleep(self.max_real_delta_seconds - delta_step)
+                self.prev_tick_wall_time = time.time()
                 self.bridge_loop._tick_sensor(timestamp)
 
     def _stop_loop(self, signum, frame):
