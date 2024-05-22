@@ -473,12 +473,16 @@ MPCTrajectory clipTrajectoryByLength(const MPCTrajectory & trajectory, const dou
   clipped_trajectory.push_back(trajectory.at(0));
 
   double current_length = 0.0;
-  for (size_t i = 1; i < trajectory.size(); ++i) {
-    current_length += calcDistance3d(trajectory, i, i - 1);
-    if (current_length > length) {
-      break;
-    }
-    clipped_trajectory.push_back(trajectory.at(i));
+  {  
+    size_t i = 1;
+    do {
+      clipped_trajectory.push_back(trajectory.at(i));
+      current_length += calcDistance3d(trajectory, i, i - 1);
+      if (current_length > length) {
+        break;
+      }
+      ++i;
+    } while (i < trajectory.size());
   }
 
   return clipped_trajectory;
