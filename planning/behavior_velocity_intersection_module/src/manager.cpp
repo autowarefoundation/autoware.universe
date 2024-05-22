@@ -593,7 +593,7 @@ bool MergeFromPrivateModuleManager::hasSameParentLaneletAndTurnDirectionWithRegi
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::IntersectionModulePlugin, autoware::behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::IntersectionModulePlugin, behavior_velocity_planner::PluginInterface)
 PLUGINLIB_EXPORT_CLASS(
   behavior_velocity_planner::MergeFromPrivateModulePlugin,
-  autoware::behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::PluginInterface)

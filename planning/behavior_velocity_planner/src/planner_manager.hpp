@@ -36,10 +36,8 @@
 #include <string>
 #include <vector>
 
-namespace autoware::behavior_velocity_planner
+namespace behavior_velocity_planner
 {
-using ::behavior_velocity_planner::PlannerData;
-
 class BehaviorVelocityPlannerManager
 {
 public:
@@ -58,6 +56,6 @@ private:
   pluginlib::ClassLoader<PluginInterface> plugin_loader_;
   std::vector<std::shared_ptr<PluginInterface>> scene_manager_plugins_;
 };
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace behavior_velocity_planner
 
 #endif  // PLANNER_MANAGER_HPP_

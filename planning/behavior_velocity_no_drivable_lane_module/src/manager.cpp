@@ -70,4 +70,4 @@ NoDrivableLaneModuleManager::getModuleExpiredFunction(
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::NoDrivableLaneModulePlugin, autoware::behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::NoDrivableLaneModulePlugin, behavior_velocity_planner::PluginInterface)

@@ -81,11 +81,11 @@ private:
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
 };
 
-class IntersectionModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<IntersectionModuleManager>
+class IntersectionModulePlugin : public PluginWrapper<IntersectionModuleManager>
 {
 };
 
-class MergeFromPrivateModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<MergeFromPrivateModuleManager>
+class MergeFromPrivateModulePlugin : public PluginWrapper<MergeFromPrivateModuleManager>
 {
 };
 

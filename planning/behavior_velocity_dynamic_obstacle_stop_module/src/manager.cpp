@@ -73,4 +73,4 @@ DynamicObstacleStopModuleManager::getModuleExpiredFunction(
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
   behavior_velocity_planner::DynamicObstacleStopModulePlugin,
-  autoware::behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::PluginInterface)

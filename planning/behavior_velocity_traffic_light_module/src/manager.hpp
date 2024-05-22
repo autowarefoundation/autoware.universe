@@ -61,7 +61,7 @@ private:
   std::optional<int> nearest_ref_stop_path_point_index_;
 };
 
-class TrafficLightModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<TrafficLightModuleManager>
+class TrafficLightModulePlugin : public PluginWrapper<TrafficLightModuleManager>
 {
 };
 

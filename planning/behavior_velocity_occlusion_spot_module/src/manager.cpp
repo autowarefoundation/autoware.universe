@@ -140,4 +140,4 @@ OcclusionSpotModuleManager::getModuleExpiredFunction(
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::OcclusionSpotModulePlugin, autoware::behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::OcclusionSpotModulePlugin, behavior_velocity_planner::PluginInterface)

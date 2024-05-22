@@ -22,23 +22,22 @@
 
 #include <memory>
 
-namespace autoware::behavior_velocity_planner
+namespace behavior_velocity_planner
 {
 
 class PluginInterface
 {
-
 public:
   virtual ~PluginInterface() = default;
   virtual void init(rclcpp::Node & node) = 0;
   virtual void plan(autoware_auto_planning_msgs::msg::PathWithLaneId * path) = 0;
   virtual void updateSceneModuleInstances(
-    const std::shared_ptr<const ::behavior_velocity_planner::PlannerData> & planner_data,
+    const std::shared_ptr<const PlannerData> & planner_data,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
   virtual std::optional<int> getFirstStopPathPointIndex() = 0;
   virtual const char * getModuleName() = 0;
 };
 
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace behavior_velocity_planner
 
 #endif  // BEHAVIOR_VELOCITY_PLANNER_COMMON__PLUGIN_INTERFACE_HPP_

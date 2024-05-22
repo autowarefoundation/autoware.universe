@@ -44,7 +44,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
-class VirtualTrafficLightModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<VirtualTrafficLightModuleManager>
+class VirtualTrafficLightModulePlugin : public PluginWrapper<VirtualTrafficLightModuleManager>
 {
 };
 

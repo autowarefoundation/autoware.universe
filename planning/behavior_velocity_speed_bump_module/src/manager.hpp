@@ -45,7 +45,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
-class SpeedBumpModulePlugin : public autoware::behavior_velocity_planner::PluginWrapper<SpeedBumpModuleManager>
+class SpeedBumpModulePlugin : public PluginWrapper<SpeedBumpModuleManager>
 {
 };
 

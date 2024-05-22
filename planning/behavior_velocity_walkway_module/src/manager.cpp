@@ -104,4 +104,4 @@ WalkwayModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::WalkwayModulePlugin, autoware::behavior_velocity_planner::PluginInterface)
+  behavior_velocity_planner::WalkwayModulePlugin, behavior_velocity_planner::PluginInterface)
