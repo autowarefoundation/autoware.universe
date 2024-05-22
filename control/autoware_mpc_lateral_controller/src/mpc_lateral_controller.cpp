@@ -245,9 +245,9 @@ void MpcLateralController::setStatus(
 void MpcLateralController::setupDiag()
 {
   auto & d = diag_updater_;
-  d.setHardwareID("mpc_lateral_controller");
+  d->setHardwareID("mpc_lateral_controller");
 
-  d.add("MPC_solve_checker", [&](auto & stat) {
+  d->add("MPC_solve_checker", [&](auto & stat) {
     setStatus(
       stat, m_is_mpc_solved);
   });
@@ -283,7 +283,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
 
   m_is_mpc_solved = is_mpc_solved; // for diagnostic updater
 
-  diag_updater_.force_update();
+  diag_updater_->force_update();
 
   // reset previous MPC result
   // Note: When a large deviation from the trajectory occurs, the optimization stops and
