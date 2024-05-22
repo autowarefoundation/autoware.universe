@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(component_monitor)
+project(autoware_component_monitor)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
