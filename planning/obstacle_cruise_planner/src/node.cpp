@@ -28,7 +28,9 @@
 #include <boost/format.hpp>
 
 #include <pcl/common/centroid.h>
+#include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -222,6 +224,15 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const auto traj = motion_utils::convertToTrajectory(traj_points);
   const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
   return motion_utils::convertToTrajectoryPointArray(resampled_traj);
+}
+
+geometry_msgs::msg::Point toGeomPoint(const pcl::PointXYZ & point)
+{
+  geometry_msgs::msg::Point geom_point;
+  geom_point.x = point.x;
+  geom_point.y = point.y;
+  geom_point.z = point.z;
+  return geom_point;
 }
 
 geometry_msgs::msg::Point toGeomPoint(const tier4_autoware_utils::Point2d & point)
@@ -724,7 +735,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
   if (p.use_pointcloud) {
     const auto & pointcloud = pointcloud_sub_.getData();
 
-    // transform pointcloud
+    // 1. transform pointcloud
     std::optional<geometry_msgs::msg::TransformStamped> transform_stamped{};
     try {
       transform_stamped = tf_buffer_->lookupTransform(
@@ -745,6 +756,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       PointCloud::Ptr transformed_points_ptr(new PointCloud);
       pcl::fromROSMsg(transformed_points, *transformed_points_ptr);
 
+      // 2. downsample & cluster pointcloud
       PointCloud::Ptr filtered_points_ptr(new PointCloud);
       pcl::VoxelGrid<pcl::PointXYZ> filter;
       filter.setInputCloud(transformed_points_ptr);
@@ -768,33 +780,72 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
         center_points.push_back(getVehicleCenterFromBase(traj_point.pose, vehicle_info_).position);
       }
 
-      // search obstacle candidate pointcloud to reduce calculation cost
       for (const auto & cluster_indices : clusters) {
-        Eigen::Vector4d centroid;
-        if (pcl::compute3DCentroid(*filtered_points_ptr, cluster_indices, centroid) != 0) {
-          for (const auto & center_point : center_points) {
-            const double ego_to_obstacle_distance =
-              std::hypot(center_point.x - centroid.x(), center_point.y - centroid.y());
-            if (ego_to_obstacle_distance < p.pointcloud_search_radius) {
-              geometry_msgs::msg::Point obstacle_position;
-              obstacle_position.x = centroid.x();
-              obstacle_position.y = centroid.y();
-              MultiPoint2d obstacle_rel_points;
-              for (const auto & index : cluster_indices.indices) {
-                const auto & point = filtered_points_ptr->points.at(index);
-                bg::append(
-                  obstacle_rel_points, Point2d(point.x - centroid.x(), point.y - centroid.y()));
+        // 3. filter clusters
+        pcl::IndicesConstPtr cluster_indices_ptr =
+          pcl::make_shared<pcl::Indices>(cluster_indices.indices);
+        PointCloud::Ptr cluster_points_ptr(new PointCloud);
+        pcl::ExtractIndices<pcl::PointXYZ> extract;
+        extract.setInputCloud(filtered_points_ptr);
+        extract.setIndices(cluster_indices_ptr);
+        extract.filter(*cluster_points_ptr);
+
+        std::optional<double> ego_to_obstacle_distance = std::nullopt;
+        pcl::PointXYZ front_obstacle_point;
+        pcl::PointXYZ back_obstacle_point;
+        double min_obstacle_distance = std::numeric_limits<double>::max();
+        std::optional<pcl::index_t> closest_obstacle_point_index = std::nullopt;
+        pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+        kdtree.setInputCloud(cluster_points_ptr);
+
+        for (const auto & center_point : center_points) {
+          pcl::PointXYZ point(center_point.x, center_point.y, 0.0);
+          pcl::Indices index(1);
+          std::vector<float> sqr_distance(1);
+          if (kdtree.nearestKSearch(point, 1, index, sqr_distance) > 0) {
+            if (!ego_to_obstacle_distance) {
+              // Check if the obstacle is in front of the ego.
+              const auto ego_idx =
+                ego_nearest_param_.findIndex(traj_points, ego_odom_sub_.getData().pose.pose);
+              ego_to_obstacle_distance = calcDistanceToFrontVehicle(
+                traj_points, ego_idx, toGeomPoint(cluster_points_ptr->points[index.front()]));
+              if (!ego_to_obstacle_distance) {
+                RCLCPP_INFO_EXPRESSION(
+                  get_logger(), enable_debug_info_,
+                  "Ignore obstacle since it is not front obstacle.");
+                break;
               }
-              Polygon2d obstacle_footprint;
-              bg::convex_hull(obstacle_rel_points, obstacle_footprint);
-              const double lat_dist_from_obstacle_to_traj =
-                motion_utils::calcLateralOffset(traj_points, obstacle_position);
-              target_obstacles.emplace_back(
-                pointcloud.header.stamp, obstacle_position, toGeomPoly(obstacle_footprint),
-                ego_to_obstacle_distance, lat_dist_from_obstacle_to_traj);
-              break;
+              front_obstacle_point = cluster_points_ptr->points[index.front()];
+            } else {
+              back_obstacle_point = cluster_points_ptr->points[index.front()];
+            }
+            const auto min_distance = std::sqrt(sqr_distance.front());
+            if (min_distance < p.pointcloud_search_radius && min_distance < min_obstacle_distance) {
+              min_obstacle_distance = min_distance;
+              closest_obstacle_point_index = index.front();
             }
           }
+        }
+
+        if (closest_obstacle_point_index) {
+          const auto closest_obstacle_point =
+            toGeomPoint(cluster_points_ptr->points[*closest_obstacle_point_index]);
+
+          // 4. Check if lateral distance is smaller than the threshold
+          const auto lat_dist_from_obstacle_to_traj =
+            motion_utils::calcLateralOffset(traj_points, closest_obstacle_point);
+          const auto max_lat_margin =
+            std::max(p.max_lat_margin_for_stop, p.max_lat_margin_for_slow_down);
+          if (max_lat_margin < lat_dist_from_obstacle_to_traj) {
+            RCLCPP_INFO_EXPRESSION(
+              get_logger(), enable_debug_info_,
+              "Ignore obstacle since it is too far from the trajectory.");
+            continue;
+          }
+
+          target_obstacles.emplace_back(
+            pointcloud.header.stamp, cluster_points_ptr, front_obstacle_point, back_obstacle_point,
+            *ego_to_obstacle_distance, lat_dist_from_obstacle_to_traj);
         }
       }
     }
@@ -931,9 +982,9 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
 
     // Calculate distance between trajectory and obstacle first
     double precise_lat_dist = std::numeric_limits<double>::max();
-    for (const auto & traj_poly : decimated_traj_polys) {
-      const double current_precise_lat_dist = bg::distance(traj_poly, obstacle_poly);
-      precise_lat_dist = std::min(precise_lat_dist, current_precise_lat_dist);
+      for (const auto & traj_poly : decimated_traj_polys) {
+        const double current_precise_lat_dist = bg::distance(traj_poly, obstacle_poly);
+        precise_lat_dist = std::min(precise_lat_dist, current_precise_lat_dist);
     }
 
     if (!p.use_pointcloud) {
