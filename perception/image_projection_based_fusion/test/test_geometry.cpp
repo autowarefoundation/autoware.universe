@@ -17,8 +17,7 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-TEST(objectToVertices,
-test_objectToVertices)
+TEST(objectToVertices, test_objectToVertices)
 {
   // Test `boundingBoxToVertices()` and `cylinderToVertices()` simultaneously
   // Test at Shape::BOUNDING_BOX
@@ -71,14 +70,16 @@ test_objectToVertices)
   EXPECT_TRUE(vertices.empty());
 }
 
-TEST(transformPoints,
-test_transformPoints)
+TEST(transformPoints, test_transformPoints)
 {
   std::vector<Eigen::Vector3d> input_points;
   Eigen::Vector3d point(0.0, 0.0, 0.0);
   input_points.push_back(point);
   Eigen::Translation<double, 3> translation(1.0, 1.0, 1.0);
-  Eigen::Matrix3d rotation = (Eigen::AngleAxisd(M_PI/4, Eigen::Vector3d::UnitX()) * Eigen::AngleAxisd(M_PI/4, Eigen::Vector3d::UnitY()) * Eigen::AngleAxisd(M_PI/4, Eigen::Vector3d::UnitZ())).toRotationMatrix();
+  Eigen::Matrix3d rotation = (Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d::UnitX()) *
+                              Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d::UnitY()) *
+                              Eigen::AngleAxisd(M_PI / 4, Eigen::Vector3d::UnitZ()))
+                               .toRotationMatrix();
   Eigen::Affine3d affine_transform = rotation * translation;
   std::vector<Eigen::Vector3d> output_points;
 
@@ -90,8 +91,7 @@ test_transformPoints)
   EXPECT_NEAR(output_points.at(0).z(), 1.5, 1e-6);
 }
 
-TEST(is_inside,
-test_is_inside)
+TEST(is_inside, test_is_inside)
 {
   // Test default pattern
   sensor_msgs::msg::RegionOfInterest outer;
@@ -129,8 +129,7 @@ test_is_inside)
   EXPECT_FALSE(inside_flag);
 }
 
-TEST(sanitizeROI,
-test_sanitizeROI)
+TEST(sanitizeROI, test_sanitizeROI)
 {
   // Test default pattern
   sensor_msgs::msg::RegionOfInterest roi;
@@ -138,8 +137,8 @@ test_sanitizeROI)
   roi.y_offset = 20;
   roi.height = 200;
   roi.width = 100;
-  int height_ = 400; // image height
-  int width_ = 300;  // image width
+  int height_ = 400;  // image height
+  int width_ = 300;   // image width
 
   image_projection_based_fusion::sanitizeROI(roi, width_, height_);
 
@@ -156,7 +155,7 @@ test_sanitizeROI)
 
   EXPECT_EQ(roi.height, 0);
   EXPECT_EQ(roi.width, 0);
-  
+
   // Test patten that roi does not fit within image
   roi.x_offset = 10;
   roi.y_offset = 20;
