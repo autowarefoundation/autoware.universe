@@ -102,6 +102,8 @@ public:
   // for lanelet
   bool getPreviousLaneletsWithinRoute(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * prev_lanelets) const;
+  bool getNextLaneletsWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelets * next_lanelets) const;
   bool getNextLaneletWithinRoute(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   bool isDeadEndLanelet(const lanelet::ConstLanelet & lanelet) const;
@@ -246,6 +248,10 @@ public:
   bool getClosestLaneletWithConstrainsWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
     const double yaw_threshold) const;
+  boost::optional<lanelet::ConstLanelet> getClosestRouteLaneletFromCurrent(
+    const Pose & search_pose, const lanelet::ConstLanelet & current_closest_lanelet,
+    const double dist_threshold, const double yaw_threshold) const;
+
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
   lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids & ids) const;
   lanelet::ConstLanelets getLaneletSequence(

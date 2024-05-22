@@ -424,20 +424,28 @@ BehaviorModuleOutput PlannerManager::getReferencePath(const std::shared_ptr<Plan
   const auto backward_length =
     std::max(p.backward_path_length, p.backward_path_length + extra_margin);
 
-  const auto lanelet_sequence = route_handler->getLaneletSequence(
-    current_route_lanelet_.value(), pose, backward_length, p.forward_path_length);
+  const auto closest_lanelet_from_current = route_handler->getClosestRouteLaneletFromCurrent(
+    pose, current_route_lanelet_.value(), p.ego_nearest_dist_threshold,
+    p.ego_nearest_yaw_threshold);
 
-  lanelet::ConstLanelet closest_lane{};
-  const auto could_calculate_closest_lanelet =
-    lanelet::utils::query::getClosestLaneletWithConstrains(
-      lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
-      p.ego_nearest_yaw_threshold) ||
-    lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane);
+  if (closest_lanelet_from_current) {
+    current_route_lanelet_ = closest_lanelet_from_current.get();
+  } else {
+    const auto lanelet_sequence = route_handler->getLaneletSequence(
+      current_route_lanelet_.value(), pose, backward_length, p.forward_path_length);
 
-  if (could_calculate_closest_lanelet)
-    current_route_lanelet_ = closest_lane;
-  else
-    resetCurrentRouteLanelet(data);
+    lanelet::ConstLanelet closest_lane{};
+    const auto could_calculate_closest_lanelet =
+      lanelet::utils::query::getClosestLaneletWithConstrains(
+        lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+        p.ego_nearest_yaw_threshold) ||
+      lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane);
+
+    if (could_calculate_closest_lanelet)
+      current_route_lanelet_ = closest_lane;
+    else
+      resetCurrentRouteLanelet(data);
+  }
 
   const auto reference_path = utils::getReferencePath(*current_route_lanelet_, data);
   publishDebugRootReferencePath(reference_path);
