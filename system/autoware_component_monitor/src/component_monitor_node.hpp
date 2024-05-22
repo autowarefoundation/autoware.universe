@@ -3,6 +3,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_internal_msgs/msg/system_usage.hpp"
+#include "std_msgs/msg/header.hpp"
 
 #include "boost/filesystem.hpp"
 #include "boost/process.hpp"
@@ -20,6 +21,7 @@ public:
 
 private:
   void timer_callback();
+  void publish();
   std::stringstream run_command(const std::string & cmd) const;
   static std::vector<std::string> get_fields(std::stringstream & std_out);
   static float to_float(const std::string & str);

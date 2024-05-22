@@ -17,6 +17,7 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
   }
 
   pid_ = getpid();
+  usage_msg_.pid = pid_;
 }
 
 void ComponentMonitor::timer_callback()
@@ -25,6 +26,15 @@ void ComponentMonitor::timer_callback()
 
   get_cpu_usage();
   get_mem_usage();
+  publish();
+}
+
+void ComponentMonitor::publish()
+{
+  std_msgs::msg::Header header;
+  header.stamp = now();
+  header.frame_id = "component_monitor";
+  usage_msg_.header = header;
   usage_pub_->publish(usage_msg_);
 }
 
