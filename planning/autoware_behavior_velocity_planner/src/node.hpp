@@ -18,8 +18,8 @@
 #include "planner_manager.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
-#include <behavior_velocity_planner/srv/load_plugin.hpp>
-#include <behavior_velocity_planner/srv/unload_plugin.hpp>
+#include <autoware_behavior_velocity_planner/srv/load_plugin.hpp>
+#include <autoware_behavior_velocity_planner/srv/unload_plugin.hpp>
 #include <behavior_velocity_planner_common/planner_data.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
@@ -47,8 +47,8 @@
 namespace behavior_velocity_planner
 {
 using autoware_auto_mapping_msgs::msg::HADMapBin;
-using behavior_velocity_planner::srv::LoadPlugin;
-using behavior_velocity_planner::srv::UnloadPlugin;
+using autoware_behavior_velocity_planner::srv::LoadPlugin;
+using autoware_behavior_velocity_planner::srv::UnloadPlugin;
 using tier4_planning_msgs::msg::VelocityLimit;
 
 class BehaviorVelocityPlannerNode : public rclcpp::Node
