@@ -1,4 +1,4 @@
-#include "component_monitor/component_monitor.hpp"
+#include "component_monitor_node.hpp"
 
 namespace autoware::component_monitor
 {
