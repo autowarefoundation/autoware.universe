@@ -68,20 +68,20 @@ TEST(GeometryTest, CalcIoUX)
   roi2.width = 4;
   roi2.height = 4;
 
-  double ioux = calcIoUX(roi1, roi2);
-  EXPECT_NEAR(ioux, 2.0 / 6.0, 1e-6);
+  double iou_x = calcIoUX(roi1, roi2);
+  EXPECT_NEAR(iou_x, 2.0 / 6.0, 1e-6);
 
   // Non-overlapping ROIs on x-axis
   roi2.x_offset = 5;
 
-  ioux = calcIoUX(roi1, roi2);
-  EXPECT_EQ(ioux, 0.0);
+  iou_x = calcIoUX(roi1, roi2);
+  EXPECT_EQ(iou_x, 0.0);
 
   // Zero width ROI
   roi1.width = 0;
 
-  ioux = calcIoUX(roi1, roi2);
-  EXPECT_EQ(ioux, 0.0);
+  iou_x = calcIoUX(roi1, roi2);
+  EXPECT_EQ(iou_x, 0.0);
 }
 
 TEST(GeometryTest, CalcIoUY)
@@ -99,20 +99,20 @@ TEST(GeometryTest, CalcIoUY)
   roi2.width = 4;
   roi2.height = 4;
 
-  double iouy = calcIoUY(roi1, roi2);
-  EXPECT_NEAR(iouy, 2.0 / 6.0, 1e-6);
+  double iou_y = calcIoUY(roi1, roi2);
+  EXPECT_NEAR(iou_y, 2.0 / 6.0, 1e-6);
 
   // Non-overlapping ROIs on y-axis
   roi2.y_offset = 5;
 
-  iouy = calcIoUY(roi1, roi2);
-  EXPECT_EQ(iouy, 0.0);
+  iou_y = calcIoUY(roi1, roi2);
+  EXPECT_EQ(iou_y, 0.0);
 
   // Zero height ROI
   roi1.height = 0;
 
-  iouy = calcIoUY(roi1, roi2);
-  EXPECT_EQ(iouy, 0.0);
+  iou_y = calcIoUY(roi1, roi2);
+  EXPECT_EQ(iou_y, 0.0);
 }
 
 int main(int argc, char ** argv)
