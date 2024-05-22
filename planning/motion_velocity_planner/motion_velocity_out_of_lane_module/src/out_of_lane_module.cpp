@@ -56,9 +56,6 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
   virtual_wall_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
-  velocity_factor_publisher_ =
-    node.create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
-      std::string("/planning/velocity_factors/") + ns_, 1);
 }
 void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 {
@@ -196,7 +193,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
     if (overlapped_lanelet_it != other_lanelets.end()) {
       debug_data_.current_overlapped_lanelets.push_back(*overlapped_lanelet_it);
       RCLCPP_DEBUG(logger_, "Ego is already overlapping a lane, skipping the module\n");
-      return result;  // TODO(Maxime): properly populate the result
+      return result;
     }
   }
   // Calculate overlapping ranges
@@ -296,7 +293,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   virtual_wall_marker_creator.add_virtual_walls(
     out_of_lane::debug::create_virtual_walls(debug_data_, params_));
   virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
-  velocity_factor_publisher_->publish(velocity_factor_interface_.get_array(clock_->now()));
+  result.velocity_factor = velocity_factor_interface_.get();
   return result;
 }
 

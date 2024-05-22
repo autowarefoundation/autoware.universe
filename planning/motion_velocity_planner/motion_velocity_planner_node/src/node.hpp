@@ -90,6 +90,8 @@ private:
   // publishers
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
+  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
+    velocity_factor_publisher_;
 
   //  parameters
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;

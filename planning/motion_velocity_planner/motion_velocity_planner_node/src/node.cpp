@@ -152,6 +152,9 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   // Publishers
   trajectory_pub_ =
     this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
+  velocity_factor_publisher_ =
+    this->create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
+      "~/output/velocity_factors", 1);
 
   // Parameters
   planner_data_.stop_line_extend_length = declare_parameter<double>("stop_line_extend_length");
@@ -402,6 +405,10 @@ autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate
     smoothed_trajectory_points, std::make_shared<const PlannerData>(planner_data_));
 
   autoware_auto_planning_msgs::msg::Trajectory output_trajectory_msg = input_trajectory_msg;
+  autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factors;
+  velocity_factors.header.frame_id = "map";
+  velocity_factors.header.stamp = get_clock()->now();
+
   for (const auto & planning_result : planning_results) {
     for (const auto & stop_point : planning_result.stop_points) {
       const auto seg_idx =
@@ -426,8 +433,10 @@ autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate
         RCLCPP_WARN(get_logger(), "Failed to insert slowdown points");
       }
     }
+    velocity_factors.factors.push_back(planning_result.velocity_factor);
   }
 
+  velocity_factor_publisher_->publish(velocity_factors);
   return output_trajectory_msg;
 }
 

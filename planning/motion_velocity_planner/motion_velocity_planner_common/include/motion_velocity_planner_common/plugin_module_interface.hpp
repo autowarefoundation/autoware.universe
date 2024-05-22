@@ -44,8 +44,6 @@ public:
   rclcpp::Logger logger_ = rclcpp::get_logger("");
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_publisher_;
-  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
-    velocity_factor_publisher_;
   motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator{};
 };
 
