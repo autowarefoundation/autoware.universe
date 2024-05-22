@@ -32,6 +32,13 @@
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
+#include <boost/geometry/strategies/buffer.hpp>
+#include <boost/geometry/strategies/transform.hpp>
+#include <boost/polygon/polygon.hpp>
+
 #include <algorithm>
 #include <map>
 #include <string>
@@ -195,6 +202,10 @@ AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_bounding_box_orientation_l
   std::vector<geometry_msgs::msg::Point> & points);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_bounding_box_bottom_line_list(
+  const autoware_auto_perception_msgs::msg::Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & points);
+
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC void calc_2d_bounding_box_bottom_triangle_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points);
 
