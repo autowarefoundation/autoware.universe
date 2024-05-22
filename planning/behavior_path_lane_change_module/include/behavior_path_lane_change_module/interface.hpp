@@ -67,7 +67,7 @@ public:
 
   bool isExecutionReady() const override;
 
-  bool isRootLaneletToBeUpdated() const override
+  bool isCurrentRouteLaneletToBeReset() const override
   {
     return getCurrentStatus() == ModuleStatus::SUCCESS;
   }
@@ -92,9 +92,6 @@ public:
   void setData(const std::shared_ptr<const PlannerData> & data) override;
 
   MarkerArray getModuleVirtualWall() override;
-
-  TurnSignalInfo getCurrentTurnSignalInfo(
-    const PathWithLaneId & path, const TurnSignalInfo & original_turn_signal_info);
 
   // TODO(someone): remove this, and use base class function
   [[deprecated]] BehaviorModuleOutput run() override
