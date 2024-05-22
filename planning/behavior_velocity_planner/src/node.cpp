@@ -311,6 +311,7 @@ void BehaviorVelocityPlannerNode::onParam()
   // lock(mutex_);
   planner_data_.velocity_smoother_ =
     std::make_unique<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(*this);
+  planner_data_.velocity_smoother_->setWheelBase(planner_data_.vehicle_info_.wheel_base_m);
 }
 
 void BehaviorVelocityPlannerNode::onLaneletMap(
@@ -352,6 +353,7 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
       planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id].stamp =
         msg->stamp;
     } else {
+      // if (1)the observation is not UNKNOWN or (2)the very first observation is UNKNOWN
       planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id] = traffic_signal;
     }
   }

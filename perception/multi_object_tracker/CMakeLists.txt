@@ -22,6 +22,8 @@ include_directories(
 # Generate exe file
 set(MULTI_OBJECT_TRACKER_SRC
   src/multi_object_tracker_core.cpp
+  src/debugger.cpp
+  src/processor/processor.cpp
   src/data_association/data_association.cpp
   src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
   src/tracker/motion_model/motion_model_base.cpp
@@ -49,9 +51,8 @@ target_link_libraries(multi_object_tracker_node
   glog::glog
 )
 
-rclcpp_components_register_node(multi_object_tracker_node
-  PLUGIN "MultiObjectTracker"
-  EXECUTABLE multi_object_tracker
+ament_auto_add_executable(${PROJECT_NAME}
+  src/multi_object_tracker_node.cpp
 )
 
 ament_auto_package(INSTALL_TO_SHARE

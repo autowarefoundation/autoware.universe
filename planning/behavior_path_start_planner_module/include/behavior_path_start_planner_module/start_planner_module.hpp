@@ -74,6 +74,8 @@ struct PullOutStatus
   //! record the first time when ego started forward-driving (maybe after backward driving
   //! completion) in AUTONOMOUS operation mode
   std::optional<rclcpp::Time> first_engaged_and_driving_forward_time{std::nullopt};
+  // record if the ego has departed from the start point
+  bool has_departed{false};
 
   PullOutStatus() {}
 };
@@ -155,6 +157,24 @@ public:
   bool isFreespacePlanning() const { return status_.planner_type == PlannerType::FREESPACE; }
 
 private:
+  struct StartPlannerData
+  {
+    StartPlannerParameters parameters;
+    PlannerData planner_data;
+    ModuleStatus current_status;
+    PullOutStatus main_thread_pull_out_status;
+    bool is_stopped;
+
+    StartPlannerData clone() const;
+    void update(
+      const StartPlannerParameters & parameters, const PlannerData & planner_data,
+      const ModuleStatus & current_status, const PullOutStatus & pull_out_status,
+      const bool is_stopped);
+  };
+  std::optional<PullOutStatus> freespace_thread_status_{std::nullopt};
+  std::optional<StartPlannerData> start_planner_data_{std::nullopt};
+  std::mutex start_planner_data_mutex_;
+
   // Flag class for managing whether a certain callback is running in multi-threading
   class ScopedFlag
   {
@@ -290,14 +310,12 @@ private:
   bool hasFinishedBackwardDriving() const;
   bool hasCollisionWithDynamicObjects() const;
   bool isStopped();
-  bool isStuck();
   bool hasFinishedCurrentPath();
   void updateSafetyCheckTargetObjectsData(
     const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const;
   bool isSafePath() const;
   void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
-  lanelet::ConstLanelets createDepartureCheckLanes() const;
 
   // check if the goal is located behind the ego in the same route segment.
   bool isGoalBehindOfEgoInSameRouteSegment() const;
@@ -308,7 +326,9 @@ private:
   SafetyCheckParams createSafetyCheckParams() const;
   // freespace planner
   void onFreespacePlannerTimer();
-  bool planFreespacePath();
+  std::optional<PullOutStatus> planFreespacePath(
+    const StartPlannerParameters & parameters,
+    const std::shared_ptr<const PlannerData> & planner_data, const PullOutStatus & pull_out_status);
 
   void setDebugData();
   void logPullOutStatus(rclcpp::Logger::Level log_level = rclcpp::Logger::Level::Info) const;

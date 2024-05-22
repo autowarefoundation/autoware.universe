@@ -21,6 +21,7 @@
 #include "obstacle_cruise_planner/type_alias.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -54,15 +55,19 @@ private:
     const std::vector<TrajectoryPoint> & traj_points,
     const vehicle_info_util::VehicleInfo & vehicle_info,
     const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
-  std::vector<Obstacle> convertToObstacles(const std::vector<TrajectoryPoint> & traj_points) const;
+  std::vector<Obstacle> convertToObstacles(
+    const Odometry & odometry, const PredictedObjects & objects,
+    const std::vector<TrajectoryPoint> & traj_points) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
+    const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
   std::vector<TrajectoryPoint> decimateTrajectoryPoints(
-    const std::vector<TrajectoryPoint> & traj_points) const;
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points) const;
   std::optional<StopObstacle> createStopObstacle(
-    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const double precise_lateral_dist) const;
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const double precise_lateral_dist) const;
   bool isStopObstacle(const uint8_t label) const;
   bool isInsideCruiseObstacle(const uint8_t label) const;
   bool isOutsideCruiseObstacle(const uint8_t label) const;
@@ -87,12 +92,14 @@ private:
   bool isObstacleCrossing(
     const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle) const;
   double calcCollisionTimeMargin(
-    const std::vector<PointWithStamp> & collision_points,
+    const Odometry & odometry, const std::vector<PointWithStamp> & collision_points,
     const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward) const;
   std::optional<SlowDownObstacle> createSlowDownObstacle(
-    const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
-    const double precise_lat_dist);
-  PlannerData createPlannerData(const std::vector<TrajectoryPoint> & traj_points) const;
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const Obstacle & obstacle, const double precise_lat_dist);
+  PlannerData createPlannerData(
+    const Odometry & odometry, const AccelWithCovarianceStamped & acc,
+    const std::vector<TrajectoryPoint> & traj_points) const;
 
   void checkConsistency(
     const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
@@ -138,14 +145,12 @@ private:
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
-  rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acc_sub_;
-
-  // data for callback functions
-  PredictedObjects::ConstSharedPtr objects_ptr_{nullptr};
-  Odometry::ConstSharedPtr ego_odom_ptr_{nullptr};
-  AccelWithCovarianceStamped::ConstSharedPtr ego_accel_ptr_{nullptr};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
+    this, "~/input/odometry"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
+    this, "~/input/objects"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
+    this, "~/input/acceleration"};
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
