@@ -263,7 +263,7 @@ void TrtYoloXNode::replaceLabelMap()
 
 int TrtYoloXNode::mapRoiLabel2SegLabel(const int32_t roi_label_index)
 {
-  if (roi_overlay_segment_labels_.isTarget(static_cast<uint8_t>(roi_label_index))) {
+  if (roi_overlay_segment_labels_.isOverlay(static_cast<uint8_t>(roi_label_index))) {
     std::string label = label_map_[roi_label_index];
 
     return remap_roi_to_semantic_[label];

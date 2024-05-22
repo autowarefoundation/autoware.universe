@@ -16,7 +16,7 @@
 #define TENSORRT_YOLOX__TENSORRT_YOLOX_NODE_HPP_
 
 #include "object_recognition_utils/object_recognition_utils.hpp"
-#include "utils/utils.hpp"
+#include "tensorrt_yolox/utils.hpp"
 
 #include <image_transport/image_transport.hpp>
 #include <opencv2/opencv.hpp>
@@ -82,7 +82,7 @@ private:
     {"BICYCLE", 18},     // bicycle
     {"MOTORBIKE", 17},   // motorcycle
   };
-  utils::FilterTargetLabel roi_overlay_segment_labels_;
+  utils::RoiOverlaySegmenLabel roi_overlay_segment_labels_;
 };
 
 }  // namespace tensorrt_yolox
