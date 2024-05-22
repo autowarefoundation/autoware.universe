@@ -75,28 +75,26 @@ struct Obstacle
   }
 
   Obstacle(
-    const rclcpp::Time & arg_stamp, const geometry_msgs::msg::Point & position,
-    const geometry_msgs::msg::Polygon & footprint, const double ego_to_obstacle_distance,
-    const double lat_dist_from_obstacle_to_traj)
+    const rclcpp::Time & arg_stamp, const PointCloud::Ptr & cloud,
+    const pcl::PointXYZ & front_point, const pcl::PointXYZ & back_point,
+    const double ego_to_obstacle_distance, const double lat_dist_from_obstacle_to_traj)
   : stamp(arg_stamp),
-    orientation_reliable(false),
-    twist_reliable(false),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
-    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj)
+    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
+    cloud(cloud),
+    front_point(front_point),
+    back_point(back_point)
   {
-    pose.position = position;
-    pose.orientation.x = 0;
-    pose.orientation.y = 0;
-    pose.orientation.z = 0;
-    pose.orientation.w = 1;
-
-    shape.type = Shape::POLYGON;
-    shape.footprint = footprint;
   }
 
+  // available for PredictedObject only
   Polygon2d toPolygon() const { return tier4_autoware_utils::toPolygon2d(pose, shape); }
 
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
+  double ego_to_obstacle_distance;
+  double lat_dist_from_obstacle_to_traj;
+
+  // for PredictedObject
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
   bool orientation_reliable;
   Twist twist;
@@ -105,8 +103,11 @@ struct Obstacle
   std::string uuid;
   Shape shape;
   std::vector<PredictedPath> predicted_paths;
-  double ego_to_obstacle_distance;
-  double lat_dist_from_obstacle_to_traj;
+
+  // for PointCloud
+  PointCloud::Ptr cloud;
+  pcl::PointXYZ front_point;
+  pcl::PointXYZ back_point;
 };
 
 struct TargetObstacleInterface
