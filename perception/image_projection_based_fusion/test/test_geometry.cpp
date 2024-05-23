@@ -157,10 +157,10 @@ TEST(sanitizeROI, test_sanitizeROI)
     roi.y_offset = 20;
     roi.height = 200;
     roi.width = 100;
-    int height_ = 400;  // image height
-    int width_ = 300;   // image width
+    int height = 400;  // image height
+    int width = 300;   // image width
 
-    image_projection_based_fusion::sanitizeROI(roi, width_, height_);
+    image_projection_based_fusion::sanitizeROI(roi, width, height);
 
     EXPECT_EQ(roi.height, 200);
     EXPECT_EQ(roi.width, 100);
@@ -171,10 +171,10 @@ TEST(sanitizeROI, test_sanitizeROI)
     sensor_msgs::msg::RegionOfInterest roi;
     roi.x_offset = 100;
     roi.y_offset = 200;
-    int height_ = 100;
-    int width_ = 50;
+    int height = 100;
+    int width = 50;
 
-    image_projection_based_fusion::sanitizeROI(roi, width_, height_);
+    image_projection_based_fusion::sanitizeROI(roi, width, height);
 
     EXPECT_EQ(roi.height, 0);
     EXPECT_EQ(roi.width, 0);
@@ -187,10 +187,10 @@ TEST(sanitizeROI, test_sanitizeROI)
     roi.y_offset = 20;
     roi.height = 500;
     roi.width = 400;
-    int height_ = 100;
-    int width_ = 50;
+    int height = 100;
+    int width = 50;
 
-    image_projection_based_fusion::sanitizeROI(roi, width_, height_);
+    image_projection_based_fusion::sanitizeROI(roi, width, height);
 
     EXPECT_EQ(roi.height, 80);
     EXPECT_EQ(roi.width, 40);
