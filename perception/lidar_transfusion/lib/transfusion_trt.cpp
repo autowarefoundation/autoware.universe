@@ -78,8 +78,8 @@ void TransfusionTRT::initPtr()
   voxel_num_d_ = cuda::make_unique<unsigned int[]>(voxel_num_size_);
   voxel_idxs_d_ = cuda::make_unique<unsigned int[]>(voxel_idxs_size_);
   points_d_ = cuda::make_unique<float[]>(config_.cloud_capacity_ * config_.num_point_feature_size_);
-  pre_ptr_.reset(new PreprocessCuda(config_, stream_));
-  post_ptr_.reset(new PostprocessCuda(config_, stream_));
+  pre_ptr_ = std::make_unique<PreprocessCuda>(config_, stream_);
+  post_ptr_ = std::make_unique<PostprocessCuda>(config_, stream_);
 }
 
 bool TransfusionTRT::detect(

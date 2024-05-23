@@ -55,7 +55,7 @@ public:
 
 private:
   std::unique_ptr<PointCloudDensification> pd_ptr_{nullptr};
-  std::shared_ptr<PreprocessCuda> pre_ptr_;
+  std::unique_ptr<PreprocessCuda> pre_ptr_{nullptr};
   TransfusionConfig config_;
   cuda::unique_ptr<unsigned char[]> cloud_data_d_{nullptr};
   cuda::unique_ptr<float[]> affine_past2current_d_{nullptr};

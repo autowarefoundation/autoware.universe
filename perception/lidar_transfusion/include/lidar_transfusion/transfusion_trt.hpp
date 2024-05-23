@@ -84,21 +84,22 @@ protected:
 
   std::unique_ptr<NetworkTRT> network_trt_ptr_{nullptr};
   std::unique_ptr<VoxelGenerator> vg_ptr_{nullptr};
-  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
-  std::shared_ptr<PreprocessCuda> pre_ptr_;
-  std::shared_ptr<PostprocessCuda> post_ptr_;
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{
+    nullptr};
+  std::unique_ptr<PreprocessCuda> pre_ptr_{nullptr};
+  std::unique_ptr<PostprocessCuda> post_ptr_{nullptr};
   cudaStream_t stream_{nullptr};
 
   TransfusionConfig config_;
 
   // input of pre-process
 
-  unsigned int voxel_features_size_ = 0;
-  unsigned int voxel_num_size_ = 0;
-  unsigned int voxel_idxs_size_ = 0;
-  unsigned int cls_size_ = 0;
-  unsigned int box_size_ = 0;
-  unsigned int dir_cls_size_ = 0;
+  unsigned int voxel_features_size_{0};
+  unsigned int voxel_num_size_{0};
+  unsigned int voxel_idxs_size_{0};
+  unsigned int cls_size_{0};
+  unsigned int box_size_{0};
+  unsigned int dir_cls_size_{0};
   cuda::unique_ptr<float[]> points_d_{nullptr};
   cuda::unique_ptr<unsigned int> params_input_d_{nullptr};
   cuda::unique_ptr<float[]> voxel_features_d_{nullptr};
