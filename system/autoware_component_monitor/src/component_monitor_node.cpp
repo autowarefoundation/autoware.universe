@@ -118,7 +118,7 @@ uint32_t ComponentMonitor::to_uint32(const std::string & str)
 /**
  * @brief Get CPU usage of the component.
  *
- * @details The output of `pidstat -u -p PID` is like below:
+ * @details The output of `pidstat -u -h 1 1 -p PID` is like below:
  *
  * Linux 6.5.0-35-generic (leopc) 	21-05-2024 	_x86_64_	(16 CPU)
  * 14:54:52      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command
@@ -128,7 +128,7 @@ uint32_t ComponentMonitor::to_uint32(const std::string & str)
  */
 void ComponentMonitor::get_cpu_usage()
 {
-  std::string cmd{"pidstat -u -p "};
+  std::string cmd{"pidstat -u -h 1 1 -p "};
   cmd += std::to_string(pid_);
 
   auto std_out = run_command(cmd);
@@ -141,7 +141,7 @@ void ComponentMonitor::get_cpu_usage()
 /**
  * @brief Get memory usage of the component.
  *
- * @details The output of `pidstat -r -p PID` is like below:
+ * @details The output of `pidstat -r -h 1 1 -p PID` is like below:
  *
  * Linux 6.5.0-35-generic (leopc) 	21-05-2024 	_x86_64_	(16 CPU)
  * 14:54:52      UID       PID  minflt/s  majflt/s     VSZ     RSS   %MEM  Command
@@ -151,7 +151,7 @@ void ComponentMonitor::get_cpu_usage()
  */
 void ComponentMonitor::get_mem_usage()
 {
-  std::string cmd{"pidstat -r -p "};
+  std::string cmd{"pidstat -r -h 1 1 -p "};
   cmd += std::to_string(pid_);
 
   auto std_out = run_command(cmd);
