@@ -2,7 +2,6 @@
   <arg name="container_name" default="pointcloud_container" description="container name to attach"/>
 
   <load_composable_node target="$(var container_name)">
-    <composable_node pkg="autoware_component_monitor" plugin="autoware::component_monitor::ComponentMonitor"
-                     name="component_monitor"/>
+    <composable_node pkg="autoware_component_monitor" plugin="autoware::component_monitor::ComponentMonitor" name="component_monitor"/>
   </load_composable_node>
 </launch>
