@@ -19,6 +19,8 @@
 
 #include <tf2_eigen/tf2_eigen.hpp>
 
+// delete this
+#include <chrono>
 #include <deque>
 #include <optional>
 #include <string>
@@ -250,10 +252,13 @@ void DistortionCorrectorComponent::undistortPointCloud(PointCloud2 & pointcloud)
   // If there is a point in a pointlcoud that cannot be associated, record it to issue a warning
   bool is_twist_time_stamp_too_late = false;
   bool is_imu_time_stamp_is_too_late = false;
+  bool is_twist_valid = true;
+  bool is_imu_valid = true;
 
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_time_stamp) {
-    bool is_twist_valid = true;
-    bool is_imu_valid = true;
+    auto start = std::chrono::high_resolution_clock::now();
+    is_twist_valid = true;
+    is_imu_valid = true;
 
     // Get closest twist information
     while (it_twist != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
@@ -280,7 +285,7 @@ void DistortionCorrectorComponent::undistortPointCloud(PointCloud2 & pointcloud)
       is_imu_valid = false;
     }
 
-    const auto time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);
+    float time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);
 
     // std::cout << "before undistortPoint" << std::endl;
     // std::cout << "it_x: " << *it_x << " it_y: " << *it_y << " it_z: " << *it_z << std::endl;
@@ -293,6 +298,10 @@ void DistortionCorrectorComponent::undistortPointCloud(PointCloud2 & pointcloud)
     // std::cout << "it_x: " << *it_x << " it_y: " << *it_y << " it_z: " << *it_z << std::endl;
     // std::cout << "//////////////////\n" << std::endl;
     prev_time_stamp_sec = *it_time_stamp;
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "Function execution time: " << duration.count() << " seconds" << std::endl;
   }
 
   warnIfTimestampsTooLate(is_twist_time_stamp_too_late, is_imu_time_stamp_is_too_late);

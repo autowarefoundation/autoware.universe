@@ -38,6 +38,7 @@
 #include <tf2_ros/transform_listener.h>
 
 // Include tier4 autoware utils
+// delete unused
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
@@ -67,8 +68,8 @@ public:
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float time_offset,
-    bool is_twist_valid, bool is_imu_valid) = 0;
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
+    bool & is_twist_valid, bool & is_imu_valid) = 0;
 
   virtual void setPointCloudTransform(
     const std::string & base_link_frame, const std::string & lidar_frame) = 0;
@@ -96,8 +97,8 @@ public:
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float time_offset,
-    bool is_twist_valid, bool is_imu_valid) override;
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
+    bool & is_twist_valid, bool & is_imu_valid) override;
 
   void setPointCloudTransform(const std::string & base_link_frame, const std::string & lidar_frame);
 };
@@ -121,8 +122,8 @@ public:
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float time_offset,
-    bool is_twist_valid, bool is_imu_valid) override;
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
+    bool & is_twist_valid, bool & is_imu_valid) override;
   void setPointCloudTransform(const std::string & base_link_frame, const std::string & lidar_frame);
 };
 
