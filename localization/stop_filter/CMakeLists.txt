@@ -14,8 +14,6 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTOR SingleThreadedExecutor
 )
 
-ament_target_dependencies(stop_filter)
-
 ament_auto_package(
   INSTALL_TO_SHARE
   launch
