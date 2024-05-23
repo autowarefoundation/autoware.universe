@@ -18,8 +18,7 @@
       MOTORCYCLE : true
       BICYCLE : true
       PEDESTRIAN : true
-/**:
-  ros__parameters:
+
     model_path: "$(var data_path)/tensorrt_yolox/$(var model_name).onnx"
     label_path: "$(var data_path)/tensorrt_yolox/label.txt"
     score_threshold: 0.35
