@@ -2,7 +2,7 @@
   ros__parameters:
     filter_target_label:
       UNKNOWN : true
-      CAR : true
+      CAR : false
       TRUCK : false
       BUS : false
       TRAILER : false
@@ -16,6 +16,6 @@
        enabled: true
       # velocity direction based filter
       lanelet_direction_filter:
-        enabled: true
+        enabled: false
         velocity_yaw_threshold: 0.785398 # [rad] (45 deg)
         object_speed_threshold: 3.0 # [m/s]
