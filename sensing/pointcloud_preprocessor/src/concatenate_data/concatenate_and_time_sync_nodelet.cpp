@@ -705,7 +705,7 @@ void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus()
   {
     diagnostic_msgs::msg::KeyValue key_value_msg;
     key_value_msg.key = "consecutiveConcatenateFailures";
-    key_value_msg.value = std::to_string(consecutive_concatenate_failures_);
+    key_value_msg.value = std::to_string(consecutive_concatenate_failures);
     diag_status_msg.values.push_back(key_value_msg);
   }
 
