@@ -436,11 +436,12 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
     std::make_shared<const PlannerData>(planner_data), *input_path_msg);
 
   // screening
-  const auto filtered_path = ::behavior_velocity_planner::filterLitterPathPoint(to_path(velocity_planned_path));
+  const auto filtered_path =
+    ::behavior_velocity_planner::filterLitterPathPoint(to_path(velocity_planned_path));
 
   // interpolation
-  const auto interpolated_path_msg =
-    ::behavior_velocity_planner::interpolatePath(filtered_path, forward_path_length_, behavior_output_path_interval_);
+  const auto interpolated_path_msg = ::behavior_velocity_planner::interpolatePath(
+    filtered_path, forward_path_length_, behavior_output_path_interval_);
 
   // check stop point
   output_path_msg = ::behavior_velocity_planner::filterStopPathPoint(interpolated_path_msg);
