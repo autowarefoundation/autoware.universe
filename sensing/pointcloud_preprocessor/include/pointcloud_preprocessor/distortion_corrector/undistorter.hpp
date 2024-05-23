@@ -83,6 +83,8 @@ public:
   tf2::Vector3 point_tf;
   tf2::Vector3 undistorted_point_tf;
   float theta;
+  float x;
+  float y;
 
   // TF
   tf2::Transform tf2_lidar_to_base_link;

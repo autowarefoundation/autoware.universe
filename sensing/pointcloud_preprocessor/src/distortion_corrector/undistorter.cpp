@@ -34,20 +34,20 @@ void Undistorter::setIMUTransform(
     tf2_imu_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
     tf2_imu_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
     is_imu_transfrom_exist = true;
-  }
+  } else {
+    try {
+      const auto transform_msg =
+        tf2_buffer.lookupTransform(base_link_frame, imu_frame, tf2::TimePointZero);
+      tf2::convert(transform_msg.transform, tf2_imu_to_base_link);
+      is_imu_transfrom_exist = true;
+    } catch (const tf2::TransformException & ex) {
+      // RCLCPP_WARN(get_logger(), "%s", ex.what());
+      // RCLCPP_ERROR(
+      //   get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
 
-  try {
-    const auto transform_msg =
-      tf2_buffer.lookupTransform(base_link_frame, imu_frame, tf2::TimePointZero);
-    tf2::convert(transform_msg.transform, tf2_imu_to_base_link);
-    is_imu_transfrom_exist = true;
-  } catch (const tf2::TransformException & ex) {
-    // RCLCPP_WARN(get_logger(), "%s", ex.what());
-    // RCLCPP_ERROR(
-    //   get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
-
-    tf2_imu_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
-    tf2_imu_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
+      tf2_imu_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
+      tf2_imu_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
+    }
   }
 
   geometry_imu_to_base_link_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
@@ -57,6 +57,8 @@ void Undistorter::setIMUTransform(
 
 void Undistorter2D::initialize()
 {
+  x = 0.0f;
+  y = 0.0f;
   theta = 0.0f;
 }
 
@@ -73,23 +75,23 @@ void Undistorter2D::setPointCloudTransform(
     tf2_lidar_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
     tf2_base_link_to_lidar = tf2_lidar_to_base_link;
     is_pointcloud_transfrom_exist = true;
-  }
+  } else {
+    try {
+      const auto transform_msg =
+        tf2_buffer.lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
+      tf2::convert(transform_msg.transform, tf2_lidar_to_base_link);
+      tf2_base_link_to_lidar = tf2_lidar_to_base_link.inverse();
+      is_pointcloud_transfrom_exist = true;
+      is_pointcloud_transform_needed = true;
+    } catch (const tf2::TransformException & ex) {
+      // RCLCPP_WARN(get_logger(), "%s", ex.what());
+      // RCLCPP_ERROR(
+      //   get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
 
-  try {
-    const auto transform_msg =
-      tf2_buffer.lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
-    tf2::convert(transform_msg.transform, tf2_lidar_to_base_link);
-    tf2_base_link_to_lidar = tf2_lidar_to_base_link.inverse();
-    is_pointcloud_transfrom_exist = true;
-    is_pointcloud_transform_needed = true;
-  } catch (const tf2::TransformException & ex) {
-    // RCLCPP_WARN(get_logger(), "%s", ex.what());
-    // RCLCPP_ERROR(
-    //   get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
-
-    tf2_lidar_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
-    tf2_lidar_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
-    tf2_base_link_to_lidar = tf2_lidar_to_base_link;
+      tf2_lidar_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
+      tf2_lidar_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
+      tf2_base_link_to_lidar = tf2_lidar_to_base_link;
+    }
   }
 }
 
@@ -127,7 +129,7 @@ void Undistorter2D::undistortPoint(
   bool is_twist_valid, bool is_imu_valid)
 {
   // Initialize linear velocity and angular velocity
-  float x{0.0f}, y{0.0f}, v{0.0f}, w{0.0f};
+  float v{0.0f}, w{0.0f};
   if (is_twist_valid) {
     v = static_cast<float>(it_twist->twist.linear.x);
     w = static_cast<float>(it_twist->twist.angular.z);
