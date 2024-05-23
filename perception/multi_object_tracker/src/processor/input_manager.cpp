@@ -80,8 +80,8 @@ void InputStream::onMessage(
 void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Time & objects_time)
 {
   // Define constants
-  constexpr int SKIP_COUNT = 4; // Skip the initial messages
-  constexpr int INITIALIZATION_COUNT = 16; // Initialization process count
+  constexpr int SKIP_COUNT = 4;             // Skip the initial messages
+  constexpr int INITIALIZATION_COUNT = 16;  // Initialization process count
 
   // Update latency statistics
   // skip initial messages for the latency statistics
