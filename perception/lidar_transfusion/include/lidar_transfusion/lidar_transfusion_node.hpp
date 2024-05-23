@@ -43,9 +43,10 @@ class LIDAR_TRANSFUSION_PUBLIC LidarTransfusionNode : public rclcpp::Node
 {
 public:
   explicit LidarTransfusionNode(const rclcpp::NodeOptions & options);
-  void cloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
 
 private:
+  void cloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
+
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::ConstSharedPtr cloud_sub_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
 
