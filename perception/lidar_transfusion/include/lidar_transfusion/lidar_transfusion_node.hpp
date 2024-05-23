@@ -47,8 +47,9 @@ public:
 private:
   void cloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
 
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::ConstSharedPtr cloud_sub_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::ConstSharedPtr cloud_sub_{nullptr};
+  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_{
+    nullptr};
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
@@ -59,7 +60,7 @@ private:
 
   NonMaximumSuppression iou_bev_nms_;
 
-  std::unique_ptr<TransfusionTRT> detector_ptr_;
+  std::unique_ptr<TransfusionTRT> detector_ptr_{nullptr};
 
   // debugger
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{
