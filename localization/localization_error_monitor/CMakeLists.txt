@@ -15,8 +15,6 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTOR SingleThreadedExecutor
 )
 
-ament_target_dependencies(${PROJECT_NAME})
-
 if(BUILD_TESTING)
   function(add_testcase filepath)
     get_filename_component(filename ${filepath} NAME)
