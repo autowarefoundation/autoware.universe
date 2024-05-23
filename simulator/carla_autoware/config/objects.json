@@ -21,17 +21,17 @@
       "spawn_point": {
         "x": 0.0,
         "y": 0.0,
-        "z": 2.6,
+        "z": 3.1,
         "roll": 0.0,
         "pitch": 0.0,
         "yaw": 0.0
       },
-      "range": 20,
-      "channels": 32,
-      "points_per_second": 200000,
-      "upper_fov": 3.0,
-      "lower_fov": -27.0,
-      "rotation_frequency": 20,
+      "range": 100,
+      "channels": 64,
+      "points_per_second": 1200000,
+      "upper_fov": 10.0,
+      "lower_fov": -30.0,
+      "rotation_frequency": 50,
       "noise_stddev": 0.0
     },
     {
