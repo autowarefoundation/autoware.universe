@@ -97,27 +97,13 @@ void ObjectLaneletFilterNode::objectCallback(
   lanelet::ConstLanelets intersected_shoulder_lanelets =
     getIntersectedLanelets(convex_hull, shoulder_lanelets_);
 
-  int index = 0;
-  for (const auto & object : transformed_objects.objects) {
-    const auto footprint = setFootprint(object);
-    const auto & label = object.classification.front().label;
-    if (filter_target_.isTarget(label)) {
-      Polygon2d polygon;
-      for (const auto & point : footprint.points) {
-        const geometry_msgs::msg::Point32 point_transformed =
-          tier4_autoware_utils::transformPoint(point, object.kinematics.pose_with_covariance.pose);
-        polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
-      }
-      polygon.outer().push_back(polygon.outer().front());
-      if (isPolygonOverlapLanelets(polygon, intersected_road_lanelets)) {
-        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
-      } else if (isPolygonOverlapLanelets(polygon, intersected_shoulder_lanelets)) {
-        output_object_msg.objects.emplace_back(input_msg->objects.at(index));
-      }
-    } else {
-      output_object_msg.objects.emplace_back(input_msg->objects.at(index));
-    }
-    ++index;
+  // filtering process
+  for (size_t index = 0; index < transformed_objects.objects.size(); ++index) {
+    const auto & transformed_object = transformed_objects.objects.at(index);
+    const auto & input_object = input_msg->objects.at(index);
+    filterObject(
+      transformed_object, input_object, intersected_road_lanelets, intersected_shoulder_lanelets,
+      output_object_msg);
   }
   object_pub_->publish(output_object_msg);
   published_time_publisher_->publish_if_subscribed(object_pub_, output_object_msg.header.stamp);
@@ -130,6 +116,40 @@ void ObjectLaneletFilterNode::objectCallback(
       .count();
   debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
     "debug/pipeline_latency_ms", pipeline_latency);
+}
+
+bool ObjectLaneletFilterNode::filterObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & transformed_object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & input_object,
+  const lanelet::ConstLanelets & intersected_road_lanelets,
+  const lanelet::ConstLanelets & intersected_shoulder_lanelets,
+  autoware_auto_perception_msgs::msg::DetectedObjects & output_object_msg)
+{
+  const auto & label = transformed_object.classification.front().label;
+  if (filter_target_.isTarget(label)) {
+    // 1. is polygon overlap with road lanelets or shoulder lanelets
+    Polygon2d polygon;
+    const auto footprint = setFootprint(transformed_object);
+    for (const auto & point : footprint.points) {
+      const geometry_msgs::msg::Point32 point_transformed = tier4_autoware_utils::transformPoint(
+        point, transformed_object.kinematics.pose_with_covariance.pose);
+      polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
+    }
+    polygon.outer().push_back(polygon.outer().front());
+    const bool is_polygon_overlap =
+      isPolygonOverlapLanelets(polygon, intersected_road_lanelets) ||
+      isPolygonOverlapLanelets(polygon, intersected_shoulder_lanelets);
+
+    // push back to output object
+    if (is_polygon_overlap) {
+      output_object_msg.objects.emplace_back(input_object);
+      return true;
+    }
+  } else {
+    output_object_msg.objects.emplace_back(input_object);
+    return true;
+  }
+  return false;
 }
 
 geometry_msgs::msg::Polygon ObjectLaneletFilterNode::setFootprint(

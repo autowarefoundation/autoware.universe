@@ -63,6 +63,12 @@ private:
 
   utils::FilterTargetLabel filter_target_;
 
+  bool filterObject(
+    const autoware_auto_perception_msgs::msg::DetectedObject & transformed_object,
+    const autoware_auto_perception_msgs::msg::DetectedObject & input_object,
+    const lanelet::ConstLanelets & intersected_road_lanelets,
+    const lanelet::ConstLanelets & intersected_shoulder_lanelets,
+    autoware_auto_perception_msgs::msg::DetectedObjects & output_object_msg);
   LinearRing2d getConvexHull(const autoware_auto_perception_msgs::msg::DetectedObjects &);
   lanelet::ConstLanelets getIntersectedLanelets(
     const LinearRing2d &, const lanelet::ConstLanelets &);
