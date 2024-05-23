@@ -78,9 +78,9 @@ struct Unsafe
   const std::optional<autoware_auto_perception_msgs::msg::PredictedObject> collision_obstacle;
 };
 
-struct Safe : public std::monostate
+struct Safe
 {
-  using std::monostate::monostate;
+  const size_t stop_line_idx;
 };
 
 using BlindSpotDecision = std::variant<InternalError, OverPassJudge, Unsafe, Safe>;
@@ -117,8 +117,8 @@ public:
 
   BlindSpotModule(
     const int64_t module_id, const int64_t lane_id, const TurnDirection turn_direction,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const std::shared_ptr<const PlannerData> planner_data, const PlannerParam & planner_param,
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
@@ -144,18 +144,25 @@ private:
   void initializeRTCStatus();
   BlindSpotDecision modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
   // setDafe(), setDistance()
-  void setRTCStatus(const BlindSpotDecision & decision);
+  void setRTCStatus(
+    const BlindSpotDecision & decision,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
   template <typename Decision>
-  void setRTCStatusByDecision(const Decision & decision);
+  void setRTCStatusByDecision(
+    const Decision & decision, const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
   // stop/GO
-  void reactRTCApproval(PathWithLaneId * path, StopReason * stop_reason) const;
+  void reactRTCApproval(
+    const BlindSpotDecision & decision, PathWithLaneId * path, StopReason * stop_reason);
   template <typename Decision>
-  void reactRTCApprovalByDecision(const Decision & decision) const;
+  void reactRTCApprovalByDecision(
+    const Decision & decision, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+    StopReason * stop_reason);
 
   std::optional<InterpolatedPathInfo> generateInterpolatedPathInfo(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path) const;
 
-  std::optional<lanelet::ConstLanelet> getSiblingStraightLanelet() const;
+  std::optional<lanelet::ConstLanelet> getSiblingStraightLanelet(
+    const std::shared_ptr<const PlannerData> planner_data) const;
 
   /**
    * @brief Generate a stop line and insert it into the path.

@@ -44,28 +44,10 @@ namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 
-namespace
-{
-[[maybe_unused]] geometry_msgs::msg::Polygon toGeomPoly(const lanelet::CompoundPolygon3d & poly)
-{
-  geometry_msgs::msg::Polygon geom_poly;
-
-  for (const auto & p : poly) {
-    geometry_msgs::msg::Point32 geom_point;
-    geom_point.x = p.x();
-    geom_point.y = p.y();
-    geom_point.z = p.z();
-    geom_poly.points.push_back(geom_point);
-  }
-
-  return geom_poly;
-}
-}  // namespace
-
 BlindSpotModule::BlindSpotModule(
   const int64_t module_id, const int64_t lane_id, const TurnDirection turn_direction,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock)
+  const std::shared_ptr<const PlannerData> planner_data, const PlannerParam & planner_param,
+  const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   planner_param_{planner_param},
@@ -73,7 +55,7 @@ BlindSpotModule::BlindSpotModule(
   is_over_pass_judge_line_(false)
 {
   velocity_factor_.init(PlanningBehavior::REAR_CHECK);
-  sibling_straight_lanelet_ = getSiblingStraightLanelet();
+  sibling_straight_lanelet_ = getSiblingStraightLanelet(planner_data);
 }
 
 void BlindSpotModule::initializeRTCStatus()
@@ -130,33 +112,39 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(
     collision_obstacle.has_value() ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("state_machine"), *clock_);
 
-  if (state_machine_.getState() != StateMachine::State::STOP) {
+  if (state_machine_.getState() == StateMachine::State::STOP) {
     return Unsafe{stop_line_idx, collision_obstacle};
   }
 
-  return Safe{};
-  /* set stop speed */
-  /*
-  setSafe(state_machine_.getState() != StateMachine::State::STOP);
-  setDistance(motion_utils::calcSignedArcLength(
-    input_path.points, current_pose.position,
-    input_path.points.at(stop_line_idx).point.pose.position));
-  */
-  /*
-  if (!isActivated()) {
-    constexpr double stop_vel = 0.0;
-    planning_utils::setVelocityFromIndex(stop_line_idx, stop_vel, path);
-    debug_data_.virtual_wall_pose = planning_utils::getAheadPose(
-    stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, input_path);
+  return Safe{stop_line_idx};
+}
 
-    tier4_planning_msgs::msg::StopFactor stop_factor;
-    stop_factor.stop_pose = debug_data_.stop_point_pose;  // stop_point_poseを消したので直す
-    stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
-    planning_utils::appendStopReason(stop_factor, stop_reason);
-    velocity_factor_.set(
-      input_path.points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
-  }
-  */
+// template-specification based visitor pattern
+// https://en.cppreference.com/w/cpp/utility/variant/visit
+template <class... Ts>
+struct VisitorSwitch : Ts...
+{
+  using Ts::operator()...;
+};
+template <class... Ts>
+VisitorSwitch(Ts...) -> VisitorSwitch<Ts...>;
+
+void BlindSpotModule::setRTCStatus(
+  const BlindSpotDecision & decision, const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+{
+  std::visit(
+    VisitorSwitch{[&](const auto & sub_decision) { setRTCStatusByDecision(sub_decision, path); }},
+    decision);
+}
+
+void BlindSpotModule::reactRTCApproval(
+  const BlindSpotDecision & decision, PathWithLaneId * path, StopReason * stop_reason)
+{
+  std::visit(
+    VisitorSwitch{[&](const auto & sub_decision) {
+      reactRTCApprovalByDecision(sub_decision, path, stop_reason);
+    }},
+    decision);
 }
 
 bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -166,6 +154,9 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   initializeRTCStatus();
   const auto decision = modifyPathVelocityDetail(path, stop_reason);
+  const auto & input_path = *path;
+  setRTCStatus(decision, input_path);
+  reactRTCApproval(decision, path, stop_reason);
 
   return true;
 }
@@ -223,10 +214,11 @@ std::optional<InterpolatedPathInfo> BlindSpotModule::generateInterpolatedPathInf
   return interpolated_path_info;
 }
 
-std::optional<lanelet::ConstLanelet> BlindSpotModule::getSiblingStraightLanelet() const
+std::optional<lanelet::ConstLanelet> BlindSpotModule::getSiblingStraightLanelet(
+  const std::shared_ptr<const PlannerData> planner_data) const
 {
-  const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
-  const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
+  const auto lanelet_map_ptr = planner_data->route_handler_->getLaneletMapPtr();
+  const auto routing_graph_ptr = planner_data->route_handler_->getRoutingGraphPtr();
 
   const auto assigned_lane = lanelet_map_ptr->laneletLayer.get(lane_id_);
   for (const auto & prev : routing_graph_ptr->previous(assigned_lane)) {
