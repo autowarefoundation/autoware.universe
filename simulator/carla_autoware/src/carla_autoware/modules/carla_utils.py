@@ -108,16 +108,3 @@ def ros_pose_to_carla_transform(ros_pose):
         carla.Location(ros_pose.position.x, -ros_pose.position.y, ros_pose.position.z),
         ros_quaternion_to_carla_rotation(ros_pose.orientation),
     )
-
-
-def steer_to_angle_map(max_steering_angle):
-    """Compute the mapping from steering values to corresponding angles."""
-    left_steer = -1
-    right_steer = 1
-    left_angle = np.radians(-max_steering_angle)
-    right_angle = -left_angle
-    steer_values = [left_steer, right_steer]
-    angle_values = [left_angle, right_angle]
-    coefficients = np.polyfit(steer_values, angle_values, 1)
-    mapping_function = np.poly1d(coefficients)
-    return mapping_function
