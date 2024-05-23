@@ -22,6 +22,10 @@
 #include "boost/filesystem.hpp"
 #include "boost/process.hpp"
 
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
