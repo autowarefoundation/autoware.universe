@@ -79,11 +79,15 @@ void InputStream::onMessage(
 
 void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Time & objects_time)
 {
+  // Define constants
+  constexpr int SKIP_COUNT = 4; // Skip the initial messages
+  constexpr int INITIALIZATION_COUNT = 16; // Initialization process count
+
   // Update latency statistics
   // skip initial messages for the latency statistics
-  if (initial_count_ > 4) {
+  if (initial_count_ > SKIP_COUNT) {
     const double latency = (now - objects_time).seconds();
-    if (initial_count_ < 16) {
+    if (initial_count_ < INITIALIZATION_COUNT) {
       // set higher gain for the initial messages
       constexpr double initial_gain = 0.5;
       latency_mean_ = (1.0 - initial_gain) * latency_mean_ + initial_gain * latency;
@@ -96,7 +100,7 @@ void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Tim
   }
 
   // Calculate interval, Update interval statistics
-  if (initial_count_ > 4) {
+  if (initial_count_ > SKIP_COUNT) {
     const double interval = (now - latest_message_time_).seconds();
     if (interval < 0.0) {
       RCLCPP_WARN(
@@ -104,7 +108,7 @@ void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Tim
         "InputManager::updateTimingStatus %s: Negative interval detected, now: %f, "
         "latest_message_time_: %f",
         long_name_.c_str(), now.seconds(), latest_message_time_.seconds());
-    } else if (initial_count_ < 24) {
+    } else if (initial_count_ < INITIALIZATION_COUNT) {
       // Initialization
       constexpr double initial_gain = 0.5;
       interval_mean_ = (1.0 - initial_gain) * interval_mean_ + initial_gain * interval;
@@ -136,8 +140,8 @@ void InputStream::updateTimingStatus(const rclcpp::Time & now, const rclcpp::Tim
       latest_measurement_time_ < objects_time ? objects_time : latest_measurement_time_;
   }
 
-  // Update the initial count, count only first 32 messages
-  if (initial_count_ < 32) {
+  // Update the initial count
+  if (initial_count_ < INITIALIZATION_COUNT) {
     initial_count_++;
   }
 }
