@@ -118,7 +118,8 @@ TEST(is_inside, test_is_inside)
     inner.height = 399;
     inner.width = 299;
 
-    const bool inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
+    const bool inside_flag =
+      image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
 
     EXPECT_TRUE(inside_flag);
   }
@@ -129,7 +130,8 @@ TEST(is_inside, test_is_inside)
     inner.x_offset = 29;
     inner.y_offset = 39;
 
-    const bool inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
+    const bool inside_flag =
+      image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
 
     EXPECT_FALSE(inside_flag);
   }
@@ -142,7 +144,8 @@ TEST(is_inside, test_is_inside)
     inner.height = 401;
     inner.width = 301;
 
-    const bool inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
+    const bool inside_flag =
+      image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
 
     EXPECT_FALSE(inside_flag);
   }
@@ -150,7 +153,7 @@ TEST(is_inside, test_is_inside)
 
 TEST(sanitizeROI, test_sanitizeROI)
 {
-  {  
+  {
     // Test default pattern
     sensor_msgs::msg::RegionOfInterest roi;
     roi.x_offset = 10;
