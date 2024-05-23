@@ -23,9 +23,13 @@
 
 namespace
 {
-float updateProbability(float prior, float true_positive, float false_positive)
+float updateProbability(const float & prior, const float & true_positive, const float & false_positive)
 {
-  return (prior * true_positive) / (prior * true_positive + (1 - prior) * false_positive);
+  constexpr float maximum_probability = 0.999;
+  constexpr float minimum_probability = 0.100;
+  const float probability =
+    (prior * true_positive) / (prior * true_positive + (1 - prior) * false_positive);
+  return std::max(std::min(probability, maximum_probability), minimum_probability);
 }
 }  // namespace
 
@@ -90,9 +94,8 @@ bool Tracker::updateWithMeasurement(
     }
 
     // update total existence probability
-    const float & existence_probability_from_object = object.existence_probability;
     total_existence_probability_ = updateProbability(
-      total_existence_probability_, existence_probability_from_object, probability_false_detection);
+      total_existence_probability_, object.existence_probability, probability_false_detection);
   }
 
   last_update_with_measurement_time_ = measurement_time;
