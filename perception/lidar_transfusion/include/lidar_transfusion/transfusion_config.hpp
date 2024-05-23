@@ -81,11 +81,11 @@ public:
   ///// INPUT PARAMETERS /////
   const std::size_t cloud_capacity_{1000000};
   ///// KERNEL PARAMETERS /////
-  const std::size_t threads_for_voxel_{256};   // threads number for a block
+  const std::size_t threads_for_voxel_{256};  // threads number for a block
   const std::size_t points_per_voxel_{20};
-  const std::size_t warp_size_{32};            // one warp(32 threads) for one pillar
-  const std::size_t pillars_per_block_{64};    // one thread deals with one pillar
-                                               // and a block has pillars_per_block threads
+  const std::size_t warp_size_{32};          // one warp(32 threads) for one pillar
+  const std::size_t pillars_per_block_{64};  // one thread deals with one pillar
+                                             // and a block has pillars_per_block threads
   const std::size_t pillar_feature_size_{64};
   std::size_t max_voxels_{60000};
 
