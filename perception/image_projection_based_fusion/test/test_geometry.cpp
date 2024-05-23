@@ -25,49 +25,60 @@ TEST(objectToVertices, test_objectToVertices)
   pose.position.x = 1.0;
   pose.position.y = 2.0;
   pose.position.z = 3.0;
-  const double q_scalar = std::sin(M_PI / 12);
+  const double angle = M_PI / 12;
   pose.orientation.x = 0.0;
   pose.orientation.y = 0.0;
-  pose.orientation.z = q_scalar;
-  pose.orientation.w = std::cos(M_PI / 12);
-  autoware_auto_perception_msgs::msg::Shape shape;
-  shape.type = 0;
-  shape.dimensions.x = 4.0;
-  shape.dimensions.y = 6.0;
-  shape.dimensions.z = 8.0;
-  std::vector<Eigen::Vector3d> vertices;
+  pose.orientation.z = std::sin(angle);
+  pose.orientation.w = std::cos(angle);
+  {
+    autoware_auto_perception_msgs::msg::Shape shape;
+    shape.type = 0;
+    shape.dimensions.x = 4.0;
+    shape.dimensions.y = 6.0;
+    shape.dimensions.z = 8.0;
+    std::vector<Eigen::Vector3d> vertices;
 
-  image_projection_based_fusion::objectToVertices(pose, shape, vertices);
+    image_projection_based_fusion::objectToVertices(pose, shape, vertices);
 
-  EXPECT_FALSE(vertices.empty());
-  EXPECT_NEAR(vertices.at(0).x(), 1.2320508075688772935274, 1e-6);
-  EXPECT_NEAR(vertices.at(0).y(), 5.598076211353315940291, 1e-6);
-  EXPECT_NEAR(vertices.at(0).z(), -1.0, 1e-6);
-  EXPECT_NEAR(vertices.at(7).x(), -2.232050807568877293527, 1e-6);
-  EXPECT_NEAR(vertices.at(7).y(), 3.598076211353315940291, 1e-6);
-  EXPECT_NEAR(vertices.at(7).z(), 7.0, 1e-6);
+    EXPECT_FALSE(vertices.empty());
+    EXPECT_NEAR(vertices.at(0).x(), 1.2320508075688772935274, 1e-6);
+    EXPECT_NEAR(vertices.at(0).y(), 5.598076211353315940291, 1e-6);
+    EXPECT_NEAR(vertices.at(0).z(), -1.0, 1e-6);
+    EXPECT_NEAR(vertices.at(7).x(), -2.232050807568877293527, 1e-6);
+    EXPECT_NEAR(vertices.at(7).y(), 3.598076211353315940291, 1e-6);
+    EXPECT_NEAR(vertices.at(7).z(), 7.0, 1e-6);
+  }
 
-  // Test at Shape::CYLINDER
-  shape.type = 1;
-  vertices.clear();
+  {
+    // Test at Shape::CYLINDER
+    autoware_auto_perception_msgs::msg::Shape shape;
+    shape.type = 1;
+    shape.dimensions.x = 4.0;
+    shape.dimensions.y = 6.0;
+    shape.dimensions.z = 8.0;
+    std::vector<Eigen::Vector3d> vertices;
 
-  image_projection_based_fusion::objectToVertices(pose, shape, vertices);
+    image_projection_based_fusion::objectToVertices(pose, shape, vertices);
 
-  EXPECT_FALSE(vertices.empty());
-  EXPECT_NEAR(vertices.at(0).x(), 2.732050807568877293528, 1e-6);
-  EXPECT_NEAR(vertices.at(0).y(), 3.0, 1e-6);
-  EXPECT_NEAR(vertices.at(0).z(), 7.0, 1e-6);
-  EXPECT_NEAR(vertices.at(11).x(), 2.732050807568877293528, 1e-6);
-  EXPECT_NEAR(vertices.at(11).y(), 1.0, 1e-6);
-  EXPECT_NEAR(vertices.at(11).z(), -1.0, 1e-6);
+    EXPECT_FALSE(vertices.empty());
+    EXPECT_NEAR(vertices.at(0).x(), 2.732050807568877293528, 1e-6);
+    EXPECT_NEAR(vertices.at(0).y(), 3.0, 1e-6);
+    EXPECT_NEAR(vertices.at(0).z(), 7.0, 1e-6);
+    EXPECT_NEAR(vertices.at(11).x(), 2.732050807568877293528, 1e-6);
+    EXPECT_NEAR(vertices.at(11).y(), 1.0, 1e-6);
+    EXPECT_NEAR(vertices.at(11).z(), -1.0, 1e-6);
+  }
 
-  // Test at Shape::POLYGON (Nothing to do)
-  shape.type = 2;
-  vertices.clear();
+  {
+    // Test at Shape::POLYGON (Nothing to do)
+    autoware_auto_perception_msgs::msg::Shape shape;
+    shape.type = 2;
+    std::vector<Eigen::Vector3d> vertices;
 
-  image_projection_based_fusion::objectToVertices(pose, shape, vertices);
+    image_projection_based_fusion::objectToVertices(pose, shape, vertices);
 
-  EXPECT_TRUE(vertices.empty());
+    EXPECT_TRUE(vertices.empty());
+  }
 }
 
 TEST(transformPoints, test_transformPoints)
@@ -99,73 +110,91 @@ TEST(is_inside, test_is_inside)
   outer.y_offset = 40;
   outer.height = 400;
   outer.width = 300;
-  sensor_msgs::msg::RegionOfInterest inner;
-  inner.x_offset = 31;
-  inner.y_offset = 41;
-  inner.height = 399;
-  inner.width = 299;
   const double outer_offset_scale = 1.0;
+  {
+    sensor_msgs::msg::RegionOfInterest inner;
+    inner.x_offset = 31;
+    inner.y_offset = 41;
+    inner.height = 399;
+    inner.width = 299;
 
-  bool inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
+    const bool inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
 
-  EXPECT_TRUE(inside_flag);
+    EXPECT_TRUE(inside_flag);
+  }
 
-  // Test left-top outside pattern
-  inner.x_offset = 29;
-  inner.y_offset = 39;
+  {
+    // Test left-top outside pattern
+    sensor_msgs::msg::RegionOfInterest inner;
+    inner.x_offset = 29;
+    inner.y_offset = 39;
 
-  inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
+    const bool inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
 
-  EXPECT_FALSE(inside_flag);
+    EXPECT_FALSE(inside_flag);
+  }
 
-  // Test right-bottom outside pattern
-  inner.x_offset = 31;
-  inner.y_offset = 41;
-  inner.height = 401;
-  inner.width = 301;
+  {
+    // Test right-bottom outside pattern
+    sensor_msgs::msg::RegionOfInterest inner;
+    inner.x_offset = 31;
+    inner.y_offset = 41;
+    inner.height = 401;
+    inner.width = 301;
 
-  inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
+    const bool inside_flag = image_projection_based_fusion::is_inside(outer, inner, outer_offset_scale);
 
-  EXPECT_FALSE(inside_flag);
+    EXPECT_FALSE(inside_flag);
+  }
 }
 
 TEST(sanitizeROI, test_sanitizeROI)
 {
-  // Test default pattern
-  sensor_msgs::msg::RegionOfInterest roi;
-  roi.x_offset = 10;
-  roi.y_offset = 20;
-  roi.height = 200;
-  roi.width = 100;
-  int height_ = 400;  // image height
-  int width_ = 300;   // image width
+  {  
+    // Test default pattern
+    sensor_msgs::msg::RegionOfInterest roi;
+    roi.x_offset = 10;
+    roi.y_offset = 20;
+    roi.height = 200;
+    roi.width = 100;
+    int height_ = 400;  // image height
+    int width_ = 300;   // image width
 
-  image_projection_based_fusion::sanitizeROI(roi, width_, height_);
+    image_projection_based_fusion::sanitizeROI(roi, width_, height_);
 
-  EXPECT_EQ(roi.height, 200);
-  EXPECT_EQ(roi.width, 100);
+    EXPECT_EQ(roi.height, 200);
+    EXPECT_EQ(roi.width, 100);
+  }
 
-  // Test pattern that x_offset or y_offset is not in image
-  roi.x_offset = 100;
-  roi.y_offset = 200;
-  height_ = 100;
-  width_ = 50;
+  {
+    // Test pattern that x_offset or y_offset is not in image
+    sensor_msgs::msg::RegionOfInterest roi;
+    roi.x_offset = 100;
+    roi.y_offset = 200;
+    int height_ = 100;
+    int width_ = 50;
 
-  image_projection_based_fusion::sanitizeROI(roi, width_, height_);
+    image_projection_based_fusion::sanitizeROI(roi, width_, height_);
 
-  EXPECT_EQ(roi.height, 0);
-  EXPECT_EQ(roi.width, 0);
+    EXPECT_EQ(roi.height, 0);
+    EXPECT_EQ(roi.width, 0);
+  }
 
-  // Test patten that roi does not fit within image
-  roi.x_offset = 10;
-  roi.y_offset = 20;
-  roi.height = 500;
-  roi.width = 400;
+  {
+    // Test patten that roi does not fit within image
+    sensor_msgs::msg::RegionOfInterest roi;
+    roi.x_offset = 10;
+    roi.y_offset = 20;
+    roi.height = 500;
+    roi.width = 400;
+    int height_ = 100;
+    int width_ = 50;
 
-  image_projection_based_fusion::sanitizeROI(roi, width_, height_);
+    image_projection_based_fusion::sanitizeROI(roi, width_, height_);
 
-  EXPECT_EQ(roi.height, 80);
-  EXPECT_EQ(roi.width, 40);
+    EXPECT_EQ(roi.height, 80);
+    EXPECT_EQ(roi.width, 40);
+  }
 }
 
 int main(int argc, char * argv[])
