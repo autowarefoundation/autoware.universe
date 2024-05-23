@@ -182,6 +182,7 @@ uint32_t ComponentMonitor::to_uint32(const std::string & str)
   return std::strtoul(str.c_str(), nullptr, 10);
 }
 
+// cspell: ignore mebibytes,gibibytes,tebibytes,pebibytes,exbibytes
 uint64_t ComponentMonitor::mib_to_kib(uint64_t mebibytes)
 {
   return mebibytes * 1024;
