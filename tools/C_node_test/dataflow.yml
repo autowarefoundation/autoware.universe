@@ -1,0 +1,25 @@
+nodes:
+  #rslidar driver   node
+  - id: node_A
+    custom:
+      source: build/node_A
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - counter_A
+
+
+  - id: node_B
+    custom:
+      source: build/node_B
+      inputs:
+        tick: dora/timer/millis/10
+      outputs:
+        - counter_B
+        
+  - id: node_C
+    custom:
+      source: build/node_C
+      inputs:
+        counter_A: node_A/counter_A
+        counter_B: node_B/counter_B
