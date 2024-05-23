@@ -378,11 +378,15 @@ class carla_interface(object):
     def control_callback(self, in_cmd):
         """Convert and publish CARLA Ego Vehicle Control to AUTOWARE."""
         out_cmd = carla.VehicleAckermannControl(
-            steer=numpy.clip(-math.degrees(in_cmd.lateral.steering_tire_angle)/self.max_steering_angle, -1.0, 1.0),
+            steer=numpy.clip(
+                -math.degrees(in_cmd.lateral.steering_tire_angle) / self.max_steering_angle,
+                -1.0,
+                1.0,
+            ),
             steer_speed=in_cmd.lateral.steering_tire_rotation_rate,
             speed=in_cmd.longitudinal.speed,
             acceleration=in_cmd.longitudinal.acceleration,
-            jerk=in_cmd.longitudinal.jerk
+            jerk=in_cmd.longitudinal.jerk,
         )
         self.current_control = out_cmd
 
@@ -414,7 +418,7 @@ class carla_interface(object):
         out_steering_state.steering_tire_angle = -math.radians(
             ego_vehicle.get_wheel_steer_angle(carla.VehicleWheelLocation.FL_Wheel)
         )
-        
+
         out_gear_state.stamp = out_vel_state.header.stamp
         out_gear_state.report = GearReport.DRIVE
 
