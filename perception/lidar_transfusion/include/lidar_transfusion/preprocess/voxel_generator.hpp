@@ -14,8 +14,6 @@
 
 #ifndef LIDAR_TRANSFUSION__PREPROCESS__VOXEL_GENERATOR_HPP_
 #define LIDAR_TRANSFUSION__PREPROCESS__VOXEL_GENERATOR_HPP_
-#define AFF_MAT_SIZE 16         // 4x4 matrix
-#define MAX_CLOUD_STEP_SIZE 35  // PointXYZIRCADT
 
 #include "lidar_transfusion/cuda_utils.hpp"
 #include "lidar_transfusion/preprocess/pointcloud_densification.hpp"
@@ -38,6 +36,8 @@
 
 namespace lidar_transfusion
 {
+constexpr size_t AFF_MAT_SIZE = 16;           // 4x4 matrix
+constexpr size_t MAX_CLOUD_STEP_SIZE = 35;    // PointXYZIRCADT
 
 class VoxelGenerator
 {
