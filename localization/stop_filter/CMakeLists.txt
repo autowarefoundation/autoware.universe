@@ -4,10 +4,16 @@ project(stop_filter)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_executable(stop_filter
-  src/stop_filter_node.cpp
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/stop_filter.cpp
 )
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "StopFilter"
+  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTOR SingleThreadedExecutor
+)
+
 ament_target_dependencies(stop_filter)
 
 ament_auto_package(
