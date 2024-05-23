@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 namespace
 {
@@ -128,4 +128,4 @@ diagnostic_msgs::msg::DiagnosticStatus BehaviorVelocityPlannerManager::getStopRe
 {
   return stop_reason_diag_;
 }
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
