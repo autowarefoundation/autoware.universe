@@ -127,7 +127,6 @@ The `carla_ros.py` sets up the CARLA world:
 ## Tips
 
 - Misalignment might occurs during initialization, pressing `init by gnss` button should fix it.
-- Changing the `fixed_delta_seconds` can increase the simulation tick (default 0.05 s), some sensors params in `objects.json` need to be adjusted when it is changed (example: LIDAR rotation frequency have to match the FPS).
 
 ## Known Issues and Future Works
 
@@ -137,5 +136,3 @@ The `carla_ros.py` sets up the CARLA world:
   - Sensor currently not automatically configurated to have the same location as the Autoware Sensor kit. The current work around is to create a new frame of each sensors with (0, 0, 0, 0, 0, 0) coordinate relative to base_link and attach each sensor on the new frame (`carla_autoware.launch.xml` Line 28). This work around is very limited and restrictive, as when the sensor_kit is changed the sensor location will be wrongly attached.
 - Traffic light recognition.
   - Currently the HDmap of CARLA did not have information regarding the traffic light which is necessary for Autoware to conduct traffic light recognition.
-- Ego Vehicle Control.
-  - Currently during sharp turning the ego-vehicle have large lateral error.
