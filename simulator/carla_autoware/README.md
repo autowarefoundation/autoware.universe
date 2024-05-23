@@ -127,6 +127,7 @@ The `carla_ros.py` sets up the CARLA world:
 ## Tips
 
 - Misalignment might occurs during initialization, pressing `init by gnss` button should fix it.
+- Changing the `fixed_delta_seconds` can increase the simulation tick (default 0.05 s), some sensors params in `objects.json` need to be adjusted when it is changed (example: LIDAR rotation frequency have to match the FPS).
 
 ## Known Issues and Future Works
 
