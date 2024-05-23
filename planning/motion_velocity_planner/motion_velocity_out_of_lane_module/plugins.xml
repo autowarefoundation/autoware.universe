@@ -1,3 +1,0 @@
-<library path="motion_velocity_out_of_lane_module">
-  <class type="motion_velocity_planner::OutOfLaneModule" base_class_type="motion_velocity_planner::PluginModuleInterface"/>
-</library>

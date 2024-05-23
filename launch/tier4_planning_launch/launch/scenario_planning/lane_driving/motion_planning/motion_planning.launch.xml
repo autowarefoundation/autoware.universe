@@ -10,7 +10,7 @@
   <arg name="motion_velocity_planner_launch_modules" default="["/>
   <let
     name="motion_velocity_planner_launch_modules"
-    value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + 'motion_velocity_planner::OutOfLaneModule, '&quot;)"
+    value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + 'autoware::motion_velocity_planner::OutOfLaneModule, '&quot;)"
     if="$(var launch_motion_out_of_lane_module)"
   />
   <let
@@ -112,7 +112,7 @@
   <!-- plan slowdown or stops on the final trajectory -->
   <group>
     <load_composable_node target="/planning/scenario_planning/lane_driving/motion_planning/motion_planning_container">
-      <composable_node pkg="motion_velocity_planner_node" plugin="motion_velocity_planner::MotionVelocityPlannerNode" name="motion_velocity_planner" namespace="">
+      <composable_node pkg="autoware_motion_velocity_planner_node" plugin="autoware::motion_velocity_planner::MotionVelocityPlannerNode" name="motion_velocity_planner" namespace="">
         <!-- topic remap -->
         <remap from="~/input/trajectory" to="obstacle_avoidance_planner/trajectory"/>
         <remap from="~/input/vector_map" to="/map/vector_map"/>
