@@ -10,4 +10,22 @@ node_C: 接受 node_A 和 node_B发送的数据并显示
 
 
 
-测试结论，未出现  502 问题 
+**测试结论，未出现  502 问题** 
+
+
+
+## 编译方法 
+
+```
+mkdir build
+cd build
+cmake ..
+make
+```
+
+## 启动数据流
+
+```
+dora start dataflow.yml --name test
+```
+
