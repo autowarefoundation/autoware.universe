@@ -211,9 +211,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Diagnostic Updater
   {
-    updater_.setHardwareID("concatenate_data_checker");
-    updater_.add(
-      "concat_status", this, &PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus);
+    diagnostics_pub_ =
+      this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
   }
 }
 
@@ -463,7 +462,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish()
     }
   }
 
-  updater_.force_update();
+  checkConcatStatus();
 
   cloud_stdmap_ = cloud_stdmap_tmp_;
   std::for_each(std::begin(cloud_stdmap_tmp_), std::end(cloud_stdmap_tmp_), [](auto & e) {
@@ -684,21 +683,45 @@ void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
   twist_ptr_queue_.push_back(twist_ptr);
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus(
-  diagnostic_updater::DiagnosticStatusWrapper & stat)
+void PointCloudConcatenateDataSynchronizerComponent::checkConcatStatus()
 {
+  diagnostic_msgs::msg::DiagnosticStatus diag_status_msg;
+  diag_status_msg.name = std::string(this->get_name()) + ": concat_status";
+  diag_status_msg.hardware_id = "concatenate_data_checker";
+
   for (const std::string & e : input_topics_) {
-    const std::string subscribe_status = not_subscribed_topic_names_.count(e) ? "NG" : "OK";
-    stat.add(e, subscribe_status);
+    diagnostic_msgs::msg::KeyValue key_value_msg;
+    key_value_msg.key = e;
+    key_value_msg.value = not_subscribed_topic_names_.count(e) ? "NG" : "OK";
+    diag_status_msg.values.push_back(key_value_msg);
   }
 
-  const int8_t level = not_subscribed_topic_names_.empty()
-                         ? diagnostic_msgs::msg::DiagnosticStatus::OK
-                         : diagnostic_msgs::msg::DiagnosticStatus::WARN;
-  const std::string message = not_subscribed_topic_names_.empty()
-                                ? "Concatenate all topics"
-                                : "Some topics are not concatenated";
-  stat.summary(level, message);
+  if (not_subscribed_topic_names_.size() > 0) {
+    consecutive_concatenate_failures += 1;
+  } else {
+    consecutive_concatenate_failures = 0;
+  }
+
+  {
+    diagnostic_msgs::msg::KeyValue key_value_msg;
+    key_value_msg.key = "consecutiveConcatenateFailures";
+    key_value_msg.value = std::to_string(consecutive_concatenate_failures_);
+    diag_status_msg.values.push_back(key_value_msg);
+  }
+
+  if (consecutive_concatenate_failures > 1) {
+    diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+    diag_status_msg.message = "Some topics are not concatenated";
+  } else {
+    diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+    diag_status_msg.message = "Concatenate all topics";
+  }
+
+  diagnostic_msgs::msg::DiagnosticArray diag_msg;
+  diag_msg.header.stamp = this->now();
+  diag_msg.status.push_back(diag_status_msg);
+
+  diagnostics_pub_->publish(diag_msg);
 }
 }  // namespace pointcloud_preprocessor
 

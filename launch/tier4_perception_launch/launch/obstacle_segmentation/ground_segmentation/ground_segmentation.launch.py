@@ -435,7 +435,7 @@ class GroundSegmentationPipeline:
         return ComposableNode(
             package="pointcloud_preprocessor",
             plugin="pointcloud_preprocessor::PointCloudConcatenationComponent",
-            name="concatenate_data",
+            name="concatenate_ground",
             remappings=[
                 ("output", output_topic),
             ],

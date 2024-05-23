@@ -63,11 +63,11 @@
 // ROS includes
 #include "autoware_point_types/types.hpp"
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
@@ -138,7 +138,7 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
   rclcpp::TimerBase::SharedPtr timer_;
-  diagnostic_updater::Updater updater_{this};
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   const std::string input_twist_topic_type_;
 
@@ -180,7 +180,9 @@ private:
   void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);
   void timer_callback();
 
-  void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void checkConcatStatus();
+  int consecutive_concatenate_failures{0};
+
   std::string replaceSyncTopicNamePostfix(
     const std::string & original_topic_name, const std::string & postfix);
 
