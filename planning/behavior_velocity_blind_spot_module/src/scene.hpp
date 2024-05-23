@@ -36,14 +36,6 @@
 
 namespace behavior_velocity_planner
 {
-struct BlindSpotPolygons
-{
-  std::vector<lanelet::CompoundPolygon3d> conflict_areas;
-  std::vector<lanelet::CompoundPolygon3d> detection_areas;
-  std::vector<lanelet::CompoundPolygon3d> opposite_conflict_areas;
-  std::vector<lanelet::CompoundPolygon3d> opposite_detection_areas;
-};
-
 /**
  * @brief  wrapper class of interpolated path with lane id
  */
@@ -93,10 +85,7 @@ public:
   struct DebugData
   {
     std::optional<geometry_msgs::msg::Pose> virtual_wall_pose{std::nullopt};
-    std::vector<lanelet::CompoundPolygon3d> conflict_areas;
-    std::vector<lanelet::CompoundPolygon3d> detection_areas;
-    std::vector<lanelet::CompoundPolygon3d> opposite_conflict_areas;
-    std::vector<lanelet::CompoundPolygon3d> opposite_detection_areas;
+    std::optional<lanelet::CompoundPolygon3d> detection_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
   };
 
@@ -135,6 +124,7 @@ private:
   const PlannerParam planner_param_;
   const TurnDirection turn_direction_;
   std::optional<lanelet::ConstLanelet> sibling_straight_lanelet_{std::nullopt};
+  std::optional<lanelet::ConstLanelets> blind_spot_lanelets_{std::nullopt};
 
   // state variables
   bool is_over_pass_judge_line_{false};
@@ -181,6 +171,8 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const geometry_msgs::msg::Pose & stop_point_pose) const;
 
+  double computeTimeToPassStopLine(const lanelet::ConstLanelets & blind_spot_lanelets) const;
+
   /**
    * @brief Check obstacle is in blind spot areas.
    * Condition1: Object's position is in broad blind spot area.
@@ -192,7 +184,8 @@ private:
    * @return true when an object is detected in blind spot
    */
   std::optional<autoware_auto_perception_msgs::msg::PredictedObject> isCollisionDetected(
-    const BlindSpotPolygons & area);
+    const lanelet::ConstLanelets & blind_spot_lanelets, const lanelet::CompoundPolygon3d & area,
+    const double ego_time_to_reach_stop_line);
 
   /**
    * @brief Create half lanelet
@@ -206,6 +199,9 @@ private:
   lanelet::ConstLanelet generateExtendedOppositeAdjacentLanelet(
     const lanelet::ConstLanelet lanelet, const TurnDirection direction) const;
 
+  lanelet::ConstLanelets generateBlindSpotLanelets(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) const;
+
   /**
    * @brief Make blind spot areas. Narrow area is made from closest path point to stop line index.
    * Broad area is made from backward expanded point to stop line point
@@ -213,8 +209,9 @@ private:
    * @param closest_idx closest path point index from ego car in path points
    * @return Blind spot polygons
    */
-  std::optional<BlindSpotPolygons> generateBlindSpotPolygons(
+  std::optional<lanelet::CompoundPolygon3d> generateBlindSpotPolygons(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
+    const lanelet::ConstLanelets & blind_spot_lanelets,
     const geometry_msgs::msg::Pose & pose) const;
 
   /**
