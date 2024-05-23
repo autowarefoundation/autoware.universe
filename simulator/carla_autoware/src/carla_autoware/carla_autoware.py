@@ -48,7 +48,7 @@ class SensorLoop(object):
                 ego_action = self.sensor()
             except SensorReceivedNoData as e:
                 raise RuntimeError(e)
-            self.ego_vehicle.apply_control(ego_action)
+            self.ego_vehicle.apply_ackermann_control(ego_action)
         if self.running:
             CarlaDataProvider.get_world().tick()
 

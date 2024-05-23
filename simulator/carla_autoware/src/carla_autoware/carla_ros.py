@@ -46,7 +46,6 @@ from .modules.carla_utils import carla_location_to_ros_point
 from .modules.carla_utils import carla_rotation_to_ros_quaternion
 from .modules.carla_utils import create_cloud
 from .modules.carla_utils import ros_pose_to_carla_transform
-from .modules.carla_utils import steer_to_angle_map
 from .modules.carla_wrapper import SensorInterface
 
 
@@ -119,7 +118,7 @@ class carla_interface(object):
             PoseWithCovarianceStamped, "initialpose", self.initialpose_callback, 1
         )
 
-        self.current_control = carla.VehicleControl()
+        self.current_control = carla.VehicleAckermannControl()
 
         # Direct data publishing from CARLA for Autoware
         self.pub_pose_with_cov = self.ros2_node.create_publisher(
@@ -378,23 +377,13 @@ class carla_interface(object):
 
     def control_callback(self, in_cmd):
         """Convert and publish CARLA Ego Vehicle Control to AUTOWARE."""
-        out_cmd = carla.VehicleControl()
-        self.target_vel = in_cmd.longitudinal.speed
-        self.vel_diff = self.target_vel - self.current_vel
-
-        if self.vel_diff > 0:
-            out_cmd.throttle = 0.75
-            out_cmd.brake = 0.0
-        elif self.vel_diff <= 0.0:
-            out_cmd.throttle = 0.0
-            if self.target_vel <= 0.0:
-                out_cmd.brake = 0.75
-            elif self.vel_diff > -1:
-                out_cmd.brake = 0.0
-            else:
-                out_cmd.brake = 0.01
-
-        out_cmd.steer = -in_cmd.lateral.steering_tire_angle
+        out_cmd = carla.VehicleAckermannControl(
+            steer=numpy.clip(-math.degrees(in_cmd.lateral.steering_tire_angle)/self.max_steering_angle, -1.0, 1.0),
+            steer_speed=in_cmd.lateral.steering_tire_rotation_rate,
+            speed=in_cmd.longitudinal.speed,
+            acceleration=in_cmd.longitudinal.acceleration,
+            jerk=in_cmd.longitudinal.jerk
+        )
         self.current_control = out_cmd
 
     def ego_status(self):
@@ -406,7 +395,6 @@ class carla_interface(object):
             self.param_values["ego_vehicle_role_name"]
         )
 
-        in_status = ego_vehicle.get_control()
         self.current_vel = CarlaDataProvider.get_velocity(
             CarlaDataProvider.get_actor_by_name(self.param_values["ego_vehicle_role_name"])
         )
@@ -423,10 +411,10 @@ class carla_interface(object):
         out_vel_state.heading_rate = 0.0
 
         out_steering_state.stamp = out_vel_state.header.stamp
-        out_steering_state.steering_tire_angle = steer_to_angle_map(self.max_steering_angle)(
-            in_status.steer
+        out_steering_state.steering_tire_angle = -math.radians(
+            ego_vehicle.get_wheel_steer_angle(carla.VehicleWheelLocation.FL_Wheel)
         )
-
+        
         out_gear_state.stamp = out_vel_state.header.stamp
         out_gear_state.report = GearReport.DRIVE
 
