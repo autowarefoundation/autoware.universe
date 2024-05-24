@@ -16,8 +16,6 @@
 #ifndef MOTION_UTILS__FACTOR__VELOCITY_FACTOR_INTERFACE_HPP_
 #define MOTION_UTILS__FACTOR__VELOCITY_FACTOR_INTERFACE_HPP_
 
-#include <rclcpp/time.hpp>
-
 #include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
@@ -38,14 +36,6 @@ class VelocityFactorInterface
 {
 public:
   [[nodiscard]] VelocityFactor get() const { return velocity_factor_; }
-  [[nodiscard]] autoware_adapi_v1_msgs::msg::VelocityFactorArray get_array(
-    const rclcpp::Time & now) const
-  {
-    autoware_adapi_v1_msgs::msg::VelocityFactorArray array;
-    array.header.stamp = now;
-    array.factors.push_back(velocity_factor_);
-    return array;
-  }
   void init(const VelocityFactorBehavior & behavior) { behavior_ = behavior; }
   void reset() { velocity_factor_.behavior = PlanningBehavior::UNKNOWN; }
 
