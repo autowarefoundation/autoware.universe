@@ -559,6 +559,9 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
     marker_ptr->scale.y = 1.0;  // Set scale to 1 for TRIANGLE_LIST
     marker_ptr->scale.z = 1.0;  // Set scale to 1 for TRIANGLE_LIST
     if (is_orientation_available) {
+      calc_2d_bounding_box_bottom_direction_line_list(shape_msg, marker_ptr->points);
+    } else {
+      calc_2d_bounding_box_bottom_orientation_line_list(shape_msg, marker_ptr->points);
     }
   } else if (shape_msg.type == Shape::CYLINDER) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
