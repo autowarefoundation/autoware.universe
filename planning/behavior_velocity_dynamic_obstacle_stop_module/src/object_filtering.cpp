@@ -59,8 +59,9 @@ std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_obj
       return (obj_arc_length < 0.0 &&
               std::abs(obj_arc_length) <
                 params.behind_object_distance_threshold + o.shape.dimensions.x / 2.0) ||
+             (obj_arc_length > o.shape.dimensions.x / 2.0 ||
              obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
-                                params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
+                                params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0);
     }
     return obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
                               params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
