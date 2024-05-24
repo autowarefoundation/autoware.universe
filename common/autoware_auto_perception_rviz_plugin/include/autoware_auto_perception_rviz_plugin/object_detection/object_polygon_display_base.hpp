@@ -220,6 +220,11 @@ public:
 
   void onInitialize() override
   {
+    static int init_count = 0;
+    RCLCPP_INFO(
+      rclcpp::get_logger("autoware_auto_perception_plugin"), "onInitialize called %d times",
+      init_count++);
+
     RosTopicDisplay::RTDClass::onInitialize();
     m_marker_common.initialize(this->context_, this->scene_node_);
     QString message_type = QString::fromStdString(rosidl_generator_traits::name<MsgT>());
@@ -264,6 +269,11 @@ public:
 
   void reset() override
   {
+    static int reset_count = 0;
+    RCLCPP_INFO(
+      rclcpp::get_logger("autoware_auto_perception_plugin"), "reset called %d times",
+      reset_count++);
+
     RosTopicDisplay::reset();
     m_marker_common.clearMarkers();
     point_cloud_common->reset();
@@ -281,6 +291,10 @@ public:
 
   void updateTopic() override
   {
+    static int update_count = 0;
+    RCLCPP_INFO(
+      rclcpp::get_logger("autoware_auto_perception_plugin"), "updateTopic called %d times",
+      update_count++);
     unsubscribe();
     reset();
     subscribe();
@@ -328,7 +342,10 @@ public:
   {
     RosTopicDisplay::unsubscribe();
     pointcloud_subscription.reset();
-    RCLCPP_INFO(rclcpp::get_logger("autoware_auto_perception_plugin"), "Unsubscribe called");
+    static int unsubscribe_count = 0;
+    RCLCPP_INFO(
+      rclcpp::get_logger("autoware_auto_perception_plugin"), "Unsubscribe called %d times",
+      unsubscribe_count++);
   }
 
   void clear_markers() { m_marker_common.clearMarkers(); }
@@ -772,6 +789,7 @@ protected:
     if (!m_publish_objs_pointcloud->getBool()) {
       return;
     }
+
     pointCloudBuffer_mutex.lock();
     pointCloudBuffer.push_front(input_pointcloud_msg);
     if (pointCloudBuffer.size() > 5) {
