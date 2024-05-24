@@ -16,7 +16,6 @@
 #define TENSORRT_YOLOX__TENSORRT_YOLOX_NODE_HPP_
 
 #include "object_recognition_utils/object_recognition_utils.hpp"
-#include "tensorrt_yolox/utils.hpp"
 
 #include <image_transport/image_transport.hpp>
 #include <opencv2/opencv.hpp>
@@ -26,6 +25,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <std_msgs/msg/header.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
+#include <tier4_perception_msgs/msg/semantic.hpp>
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>
@@ -43,9 +43,28 @@
 namespace tensorrt_yolox
 {
 using LabelMap = std::map<int, std::string>;
-
+using Label = tier4_perception_msgs::msg::Semantic;
 class TrtYoloXNode : public rclcpp::Node
 {
+  struct RoiOverlaySegmenLabel
+  {
+    bool UNKNOWN;
+    bool CAR;
+    bool TRUCK;
+    bool BUS;
+    bool MOTORCYCLE;
+    bool BICYCLE;
+    bool PEDESTRIAN;
+    bool ANIMAL;
+    bool isOverlay(const uint8_t label) const
+    {
+      return (label == Label::UNKNOWN && UNKNOWN) || (label == Label::CAR && CAR) ||
+             (label == Label::TRUCK && TRUCK) || (label == Label::BUS && BUS) ||
+             (label == Label::ANIMAL && ANIMAL) || (label == Label::MOTORBIKE && MOTORCYCLE) ||
+             (label == Label::BICYCLE && BICYCLE) || (label == Label::PEDESTRIAN && PEDESTRIAN);
+    };
+  };  // struct RoiOverlaySegmenLabel
+
 public:
   explicit TrtYoloXNode(const rclcpp::NodeOptions & node_options);
 
@@ -73,16 +92,16 @@ private:
   float overlap_roi_score_threshold_;
   // TODO(badai-nguyen): change to function
   std::map<std::string, int> remap_roi_to_semantic_ = {
-    {"UNKNOWN", 19},     // other
-    {"ANIMAL", 19},      // other
-    {"PEDESTRIAN", 11},  // person
-    {"CAR", 13},         // car
-    {"TRUCK", 14},       // truck
-    {"BUS", 15},         // bus
-    {"BICYCLE", 18},     // bicycle
-    {"MOTORBIKE", 17},   // motorcycle
+    {"UNKNOWN", 3},     // other
+    {"ANIMAL", 0},      // other
+    {"PEDESTRIAN", 6},  // person
+    {"CAR", 7},         // car
+    {"TRUCK", 7},       // truck
+    {"BUS", 7},         // bus
+    {"BICYCLE", 8},     // bicycle
+    {"MOTORBIKE", 8},   // motorcycle
   };
-  utils::RoiOverlaySegmenLabel roi_overlay_segment_labels_;
+  RoiOverlaySegmenLabel roi_overlay_segment_labels_;
 };
 
 }  // namespace tensorrt_yolox

@@ -7,7 +7,7 @@
   <arg name="model_name" default="yolox-sPlus-opt-pseudoV2-T4-960x960-T4-seg16cls"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
   <arg name="yolox_param_path" default="$(find-pkg-share tensorrt_yolox)/config/yolox_s_plus_opt.param.yaml"/>
-git   <arg name="use_decompress" default="true" description="use image decompress"/>
+  <arg name="use_decompress" default="true" description="use image decompress"/>
   <arg name="build_only" default="false" description="exit after trt engine is built"/>
 
   <node pkg="image_transport_decompressor" exec="image_transport_decompressor_node" name="image_transport_decompressor_node" if="$(var use_decompress)">

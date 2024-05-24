@@ -109,6 +109,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
     declare_parameter<bool>("roi_overlay_segment_label.BICYCLE");
   roi_overlay_segment_labels_.PEDESTRIAN =
     declare_parameter<bool>("roi_overlay_segment_label.PEDESTRIAN");
+  roi_overlay_segment_labels_.ANIMAL = declare_parameter<bool>("roi_overlay_segment_label.ANIMAL");
   replaceLabelMap();
 
   tensorrt_common::BuildConfig build_config(

@@ -8,20 +8,21 @@
     overlap_roi_score_threshold: 0.3
 
     # publish color mask for result visualization
-    is_publish_color_mask: false
+    is_publish_color_mask: true
 
     roi_overlay_segment_label:
       UNKNOWN : true
-      CAR : true
-      TRUCK : true
-      BUS : true
+      CAR : false
+      TRUCK : false
+      BUS : false
       MOTORCYCLE : true
       BICYCLE : true
       PEDESTRIAN : true
+      ANIMAL: true
 
     model_path: "$(var data_path)/tensorrt_yolox/$(var model_name).onnx"
     label_path: "$(var data_path)/tensorrt_yolox/label.txt"
-    color_map_path: $(var data_path)/tensorrt_yolox/semseg_color_map.csv"/>
+    color_map_path: "$(var data_path)/tensorrt_yolox/semseg_color_map.csv"
     score_threshold: 0.35
     nms_threshold: 0.7
     precision: "int8" # Operation precision to be used on inference. Valid value is one of: [fp32, fp16, int8].
