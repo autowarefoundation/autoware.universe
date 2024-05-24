@@ -1,4 +1,4 @@
-// Copyright 2024-2024 TIER IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ void cut_predicted_path_beyond_line(
   autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const lanelet::BasicLineString2d & stop_line, const double object_front_overhang)
 {
+  if (predicted_path.path.empty() || stop_line.size() < 2) return;
+
   auto stop_line_idx = 0UL;
   bool found = false;
   lanelet::BasicSegment2d path_segment;
