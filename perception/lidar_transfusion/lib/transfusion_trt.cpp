@@ -104,11 +104,10 @@ bool TransfusionTRT::detect(
   proc_timing.emplace(
     "debug/processing_time/inference_ms", stop_watch_ptr_->toc("processing/inner", true));
 
-  if (false) {
 #ifdef CPU_PROCESSING
-  } else if (!postprocessCPU(det_boxes3d)) {
+  if (!postprocessCPU(det_boxes3d)) {
 #else
-  } else if (!postprocess(det_boxes3d)) {
+  if (!postprocess(det_boxes3d)) {
 #endif
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("lidar_transfusion"), "Fail to postprocess and skip to detect.");
