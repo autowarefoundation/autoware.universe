@@ -2,6 +2,7 @@
   ros__parameters:
     dynamic_obstacle_stop: # module to stop or before entering the immediate path of a moving object
       extra_object_width: 1.0  # [m] extra width around detected objects
+      extra_object_footprint_width: 0.0 # [m] extra width around detected objects for footprint
       minimum_object_velocity: 0.5  # [m/s] objects with a velocity bellow this value are ignored
       stop_distance_buffer: 0.5  # [m] extra distance to add between the stop point and the collision point
       time_horizon: 5.0  # [s] time horizon used for collision checks

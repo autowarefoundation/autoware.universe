@@ -38,6 +38,7 @@ using Rtree = boost::geometry::index::rtree<BoxIndexPair, boost::geometry::index
 struct PlannerParam
 {
   double extra_object_width;
+  double extra_object_footprint_width;
   double minimum_object_velocity;
   double stop_distance_buffer;
   double time_horizon;

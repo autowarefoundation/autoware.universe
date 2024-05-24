@@ -86,10 +86,10 @@ tier4_autoware_utils::MultiPolygon2d create_object_footprints(
   tier4_autoware_utils::MultiPolygon2d footprints;
 
   for (const auto & object : objects) {
-    const auto front = object.shape.dimensions.x / 2 + params.extra_object_width;
-    const auto rear = -object.shape.dimensions.x / 2 - params.extra_object_width;
-    const auto left = object.shape.dimensions.y / 2 + params.extra_object_width;
-    const auto right = -object.shape.dimensions.y / 2 - params.extra_object_width;
+    const auto front = object.shape.dimensions.x / 2 + params.extra_object_footprint_width;
+    const auto rear = -object.shape.dimensions.x / 2 - params.extra_object_footprint_width;
+    const auto left = object.shape.dimensions.y / 2 + params.extra_object_footprint_width;
+    const auto right = -object.shape.dimensions.y / 2 - params.extra_object_footprint_width;
     tier4_autoware_utils::Polygon2d base_footprint;
     base_footprint.outer() = {
       Point2d{front, left}, Point2d{front, right}, Point2d{rear, right}, Point2d{rear, left},
