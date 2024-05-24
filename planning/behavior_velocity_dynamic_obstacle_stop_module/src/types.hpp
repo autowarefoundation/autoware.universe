@@ -52,6 +52,7 @@ struct PlannerParam
   double behind_object_distance_threshold;
   bool ignore_unavoidable_collisions;
   bool ignore_objects_behind_ego;
+  bool use_predicted_path;
 };
 
 struct EgoData

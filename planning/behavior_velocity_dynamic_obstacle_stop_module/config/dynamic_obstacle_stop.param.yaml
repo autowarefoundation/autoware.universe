@@ -14,3 +14,4 @@
       ignore_unavoidable_collisions : true  # if true, ignore collisions that cannot be avoided by stopping (assuming the obstacle continues going straight)
       ignore_objects_behind_ego: false  # if true, ignore objects that are behind the ego vehicle
       behind_object_distance_threshold: 5.0  # [m] distance behind the ego vehicle to ignore objects
+      use_predicted_path: false  # if true, use the predicted path of the object to calculate the collision point
