@@ -690,7 +690,7 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
 }
 
 lanelet::ConstLanelets RouteHandler::getRoadLaneletsAtPose(
-  const Pose & pose, const std::optional<double> yaw_threshold) const
+  const Pose & pose, const std::optional<double> & yaw_threshold) const
 {
   lanelet::ConstLanelets road_lanelets_at_pose;
   const lanelet::BasicPoint2d p{pose.position.x, pose.position.y};
