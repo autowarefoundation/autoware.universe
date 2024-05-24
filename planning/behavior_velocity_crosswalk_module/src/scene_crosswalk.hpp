@@ -262,8 +262,9 @@ public:
       current_uuids_.push_back(uuid);
 
       const bool is_object_on_ego_path =
+        !attention_area.outer().empty() &&
         boost::geometry::distance(tier4_autoware_utils::fromMsg(position).to_2d(), attention_area) <
-        0.5;
+          0.5;
 
       // add new object
       if (objects.count(uuid) == 0) {
