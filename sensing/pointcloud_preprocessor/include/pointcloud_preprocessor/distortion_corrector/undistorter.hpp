@@ -145,7 +145,7 @@ public:
     const std::string & base_link_frame, const std::string & lidar_frame) override;
 };
 
-class Undistorter3D : public Undistorter<Undistorter2D>
+class Undistorter3D : public Undistorter<Undistorter3D>
 {
 public:
   // defined outside of for loop for performance reasons.
