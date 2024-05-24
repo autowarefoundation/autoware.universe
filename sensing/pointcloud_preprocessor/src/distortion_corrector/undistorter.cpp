@@ -231,16 +231,16 @@ void Undistorter<Derived>::undistortPointCloud(
     // std::cout << "it_x: " << *it_x << " it_y: " << *it_y << " it_z: " << *it_z << std::endl;
 
     // Undistorted a single point based on the strategy
-    auto start = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
     undistortPoint(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
     // std::cout << "after undistortPoint" << std::endl;
     // std::cout << "it_x: " << *it_x << " it_y: " << *it_y << " it_z: " << *it_z << std::endl;
     // std::cout << "//////////////////\n" << std::endl;
     prev_time_stamp_sec = *it_time_stamp;
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = end - start;
-    std::cout << "Function execution time: " << duration.count() << " seconds" << std::endl;
+    // auto end = std::chrono::high_resolution_clock::now();
+    // std::chrono::duration<double> duration = end - start;
+    // std::cout << "Function execution time: " << duration.count() << " seconds" << std::endl;
   }
 
   warnIfTimestampsTooLate(is_twist_time_stamp_too_late, is_imu_time_stamp_is_too_late);
