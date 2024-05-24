@@ -100,10 +100,10 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   if(BUILD_TESTING)
-    find_package(ament_cmake_gtest REQUIRED)
-    ament_add_gtest(traffic_light_fine_detector_tests test/test_nodelet.cpp)
-    target_link_libraries(traffic_light_fine_detector_tests traffic_light_fine_detector_nodelet)
-    ament_target_dependencies(traffic_light_fine_detector_tests ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+    ament_auto_add_gtest(traffic_light_fine_detector_tests
+      test/test_nodelet.cpp
+      src/nodelet.cpp
+    )
   endif()
 
   ament_auto_package(INSTALL_TO_SHARE
