@@ -57,9 +57,6 @@ private:
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
 
-  std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
-  std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
-
   tf2_ros::Buffer tf2_buffer{get_clock()};
 
   std::string base_link_frame_ = "base_link";
@@ -67,28 +64,12 @@ private:
   bool use_imu_;
   bool use_3d_distortion_correction_;
 
-  std::unique_ptr<Undistorter> undistorter_;
+  std::unique_ptr<UndistorterBase> undistorter_;
 
   void onPointCloud(PointCloud2::UniquePtr points_msg);
   void onTwistWithCovarianceStamped(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
   void onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
-
-  void getTransformTF(
-    const std::string & target_frame, const std::string & source_frame,
-    tf2::Transform * tf2_transform_ptr);
-
-  void undistortPointCloud(PointCloud2 & points);
-
-  bool isInputValid(PointCloud2 & points);
-
-  void getIteratorOfTwistAndIMU(
-    double first_point_time_stamp_sec,
-    std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
-
-  void warnIfTimestampsTooLate(
-    bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_is_too_late);
 };
 
 }  // namespace pointcloud_preprocessor

@@ -51,31 +51,72 @@
 
 namespace pointcloud_preprocessor
 {
-class Undistorter
+
+class UndistorterBase
+{
+public:
+  virtual void processTwistMessage(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) = 0;
+  virtual void processIMUMessage(
+    const std::string & base_link_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) = 0;
+  virtual void setPointCloudTransform(
+    const std::string & base_link_frame, const std::string & lidar_frame) = 0;
+  virtual void initialize() = 0;
+  virtual void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
+};
+
+template <class Derived>
+class Undistorter : public UndistorterBase
 {
 public:
   bool is_pointcloud_transform_needed = false;
   bool is_pointcloud_transfrom_exist = false;
   bool is_imu_transfrom_exist = false;
   tf2_ros::Buffer & tf2_buffer;
-  geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr;
+
+  std::deque<geometry_msgs::msg::TwistStamped> twist_queue;
+  std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue;
 
   explicit Undistorter(tf2_ros::Buffer & buffer) : tf2_buffer(buffer) {}
-  void setIMUTransform(const std::string & target_frame, const std::string & source_frame);
+  void processTwistMessage(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
+
+  void processIMUMessage(
+    const std::string & base_link_frame,
+    const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
+  void getIMUTransformation(
+    const std::string & base_link_frame, const std::string & imu_frame,
+    geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
+  void storeIMUToQueue(
+    const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg,
+    geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
+
+  bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
+  void getIteratorOfTwistAndIMU(
+    bool use_imu, double first_point_time_stamp_sec,
+    std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
+  void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) override;
+  void warnIfTimestampsTooLate(
+    bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_is_too_late);
 
   virtual void initialize() = 0;
-  virtual void undistortPoint(
+  void undistortPoint(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
-    bool & is_twist_valid, bool & is_imu_valid) = 0;
+    bool & is_twist_valid, bool & is_imu_valid)
+  {
+    static_cast<Derived *>(this)->implementation(
+      it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
+  };
 
   virtual void setPointCloudTransform(
     const std::string & base_link_frame, const std::string & lidar_frame) = 0;
 };
 
-class Undistorter2D : public Undistorter
+class Undistorter2D : public Undistorter<Undistorter2D>
 {
 public:
   // defined outside of for loop for performance reasons.
@@ -93,17 +134,18 @@ public:
 
   explicit Undistorter2D(tf2_ros::Buffer & buffer) : Undistorter(buffer) {}
   void initialize() override;
-  void undistortPoint(
+  void implementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
-    bool & is_twist_valid, bool & is_imu_valid) override;
+    bool & is_twist_valid, bool & is_imu_valid);
 
-  void setPointCloudTransform(const std::string & base_link_frame, const std::string & lidar_frame);
+  void setPointCloudTransform(
+    const std::string & base_link_frame, const std::string & lidar_frame) override;
 };
 
-class Undistorter3D : public Undistorter
+class Undistorter3D : public Undistorter<Undistorter2D>
 {
 public:
   // defined outside of for loop for performance reasons.
@@ -118,13 +160,14 @@ public:
 
   explicit Undistorter3D(tf2_ros::Buffer & buffer) : Undistorter(buffer) {}
   void initialize() override;
-  void undistortPoint(
+  void implementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
-    bool & is_twist_valid, bool & is_imu_valid) override;
-  void setPointCloudTransform(const std::string & base_link_frame, const std::string & lidar_frame);
+    bool & is_twist_valid, bool & is_imu_valid);
+  void setPointCloudTransform(
+    const std::string & base_link_frame, const std::string & lidar_frame) override;
 };
 
 }  // namespace pointcloud_preprocessor
