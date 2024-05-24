@@ -689,7 +689,8 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
   return lanelet_sequence;
 }
 
-lanelet::ConstLanelets RouteHandler::getRoadLaneletsAtPose(const Pose & pose) const
+lanelet::ConstLanelets RouteHandler::getRoadLaneletsAtPose(
+  const Pose & pose, const std::optional<double> yaw_threshold) const
 {
   lanelet::ConstLanelets road_lanelets_at_pose;
   const lanelet::BasicPoint2d p{pose.position.x, pose.position.y};
@@ -697,6 +698,15 @@ lanelet::ConstLanelets RouteHandler::getRoadLaneletsAtPose(const Pose & pose) co
   for (const auto & lanelet_at_pose : lanelets_at_pose) {
     // confirm that the pose is inside the lanelet since "search" does an approximation with boxes
     const auto is_pose_inside_lanelet = lanelet::geometry::inside(lanelet_at_pose, p);
+
+    if (yaw_threshold) {
+      const auto lane_yaw = lanelet::utils::getLaneletAngle(lanelet_at_pose, pose.position);
+      const double yaw = tf2::getYaw(pose.orientation);
+      if (*yaw_threshold < std::abs(tier4_autoware_utils::normalizeRadian(lane_yaw - yaw))) {
+        continue;
+      }
+    }
+
     if (is_pose_inside_lanelet && isRoadLanelet(lanelet_at_pose))
       road_lanelets_at_pose.push_back(lanelet_at_pose);
   }

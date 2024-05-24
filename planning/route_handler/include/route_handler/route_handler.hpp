@@ -277,7 +277,8 @@ public:
   std::optional<lanelet::ConstLanelet> getPullOverTarget(const Pose & goal_pose) const;
   std::optional<lanelet::ConstLanelet> getPullOutStartLane(
     const Pose & pose, const double vehicle_width) const;
-  lanelet::ConstLanelets getRoadLaneletsAtPose(const Pose & pose) const;
+  lanelet::ConstLanelets getRoadLaneletsAtPose(
+    const Pose & pose, const std::optional<double> yaw_threshold = std::nullopt) const;
   std::optional<lanelet::ConstLanelet> getLeftShoulderLanelet(
     const lanelet::ConstLanelet & lanelet) const;
   std::optional<lanelet::ConstLanelet> getRightShoulderLanelet(
