@@ -59,7 +59,7 @@ private:
   TransfusionConfig config_;
   cuda::unique_ptr<unsigned char[]> cloud_data_d_{nullptr};
   cuda::unique_ptr<float[]> affine_past2current_d_{nullptr};
-  std::vector<float> points_cpu_;
+  std::vector<float> points_;
   cudaStream_t stream_;
   CloudInfo cloud_info_;
   bool is_initialized_{false};

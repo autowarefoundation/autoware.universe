@@ -43,8 +43,8 @@ TransfusionTRT::TransfusionTRT(
 
   CHECK_CUDA_ERROR(cudaStreamCreate(&stream_));
 
-#ifdef CPU_PROCESSING
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Using CPU processing");
+#ifdef HOST_PROCESSING
+  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Using HOST processing");
 #else
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Using GPU processing");
 #endif
@@ -104,8 +104,8 @@ bool TransfusionTRT::detect(
   proc_timing.emplace(
     "debug/processing_time/inference_ms", stop_watch_ptr_->toc("processing/inner", true));
 
-#ifdef CPU_PROCESSING
-  if (!postprocessCPU(det_boxes3d)) {
+#ifdef HOST_PROCESSING
+  if (!postprocessHost(det_boxes3d)) {
 #else
   if (!postprocess(det_boxes3d)) {
 #endif
@@ -143,47 +143,45 @@ bool TransfusionTRT::preprocess(
   pre_ptr_->generateVoxels(
     points_d_.get(), count, params_input_d_.get(), voxel_features_d_.get(), voxel_num_d_.get(),
     voxel_idxs_d_.get());
-  unsigned int params_input_cpu;
+  unsigned int params_input;
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    &params_input_cpu, params_input_d_.get(), sizeof(unsigned int), cudaMemcpyDeviceToHost,
-    stream_));
+    &params_input, params_input_d_.get(), sizeof(unsigned int), cudaMemcpyDeviceToHost, stream_));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
-  if (params_input_cpu < config_.min_voxel_size_) {
+  if (params_input < config_.min_voxel_size_) {
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("lidar_transfusion"),
-      "Too few voxels (" << params_input_cpu << ") for actual optimization profile ("
+      "Too few voxels (" << params_input << ") for actual optimization profile ("
                          << config_.min_voxel_size_ << ")");
     return false;
   }
 
-  if (params_input_cpu > config_.max_voxels_) {
-    params_input_cpu = config_.max_voxels_;
+  if (params_input > config_.max_voxels_) {
+    params_input = config_.max_voxels_;
   }
   RCLCPP_DEBUG_STREAM(
-    rclcpp::get_logger("lidar_transfusion"), "Generated input voxels: " << params_input_cpu);
+    rclcpp::get_logger("lidar_transfusion"), "Generated input voxels: " << params_input);
 
   network_trt_ptr_->context->setTensorAddress(
     network_trt_ptr_->getTensorName(NetworkIO::voxels), voxel_features_d_.get());
   network_trt_ptr_->context->setInputShape(
     network_trt_ptr_->getTensorName(NetworkIO::voxels),
     nvinfer1::Dims3{
-      static_cast<int32_t>(params_input_cpu),
-      static_cast<int32_t>(config_.max_num_points_per_pillar_),
+      static_cast<int32_t>(params_input), static_cast<int32_t>(config_.max_num_points_per_pillar_),
       static_cast<int32_t>(config_.num_point_feature_size_)});
   network_trt_ptr_->context->setTensorAddress(
     network_trt_ptr_->getTensorName(NetworkIO::num_points), voxel_num_d_.get());
   network_trt_ptr_->context->setInputShape(
     network_trt_ptr_->getTensorName(NetworkIO::num_points),
-    nvinfer1::Dims{1, {static_cast<int32_t>(params_input_cpu)}});
+    nvinfer1::Dims{1, {static_cast<int32_t>(params_input)}});
   network_trt_ptr_->context->setTensorAddress(
     network_trt_ptr_->getTensorName(NetworkIO::coors), voxel_idxs_d_.get());
   network_trt_ptr_->context->setInputShape(
     network_trt_ptr_->getTensorName(NetworkIO::coors),
     nvinfer1::Dims2{
-      static_cast<int32_t>(params_input_cpu), static_cast<int32_t>(config_.num_point_values_)});
+      static_cast<int32_t>(params_input), static_cast<int32_t>(config_.num_point_values_)});
   network_trt_ptr_->context->setTensorAddress(
     network_trt_ptr_->getTensorName(NetworkIO::cls_score), cls_output_d_.get());
   network_trt_ptr_->context->setTensorAddress(
@@ -214,28 +212,28 @@ bool TransfusionTRT::postprocess(std::vector<Box3D> & det_boxes3d)
   return true;
 }
 
-bool TransfusionTRT::postprocessCPU(std::vector<Box3D> & det_boxes3d)
+bool TransfusionTRT::postprocessHost(std::vector<Box3D> & det_boxes3d)
 {
-  std::vector<float> cls_output_cpu(cls_size_);
-  std::vector<float> box_output_cpu(box_size_);
-  std::vector<float> dir_cls_output_cpu(dir_cls_size_);
+  std::vector<float> cls_output(cls_size_);
+  std::vector<float> box_output(box_size_);
+  std::vector<float> dir_cls_output(dir_cls_size_);
 
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    cls_output_cpu.data(), cls_output_d_.get(), cls_size_ * sizeof(float), cudaMemcpyDeviceToHost,
+    cls_output.data(), cls_output_d_.get(), cls_size_ * sizeof(float), cudaMemcpyDeviceToHost,
     stream_));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    box_output_cpu.data(), box_output_d_.get(), box_size_ * sizeof(float), cudaMemcpyDeviceToHost,
+    box_output.data(), box_output_d_.get(), box_size_ * sizeof(float), cudaMemcpyDeviceToHost,
     stream_));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    dir_cls_output_cpu.data(), dir_cls_output_d_.get(), dir_cls_size_ * sizeof(float),
+    dir_cls_output.data(), dir_cls_output_d_.get(), dir_cls_size_ * sizeof(float),
     cudaMemcpyDeviceToHost, stream_));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   for (size_t i = 0; i < config_.num_proposals_; ++i) {
     auto class_id = 0;
-    auto max_score = cls_output_cpu[i];
+    auto max_score = cls_output[i];
     for (size_t j = 1; j < config_.num_classes_; ++j) {
-      auto score = cls_output_cpu[config_.num_proposals_ * j + i];
+      auto score = cls_output[config_.num_proposals_ * j + i];
       if (max_score < score) {
         max_score = score;
         class_id = j;
@@ -246,15 +244,14 @@ bool TransfusionTRT::postprocessCPU(std::vector<Box3D> & det_boxes3d)
     }
     det_boxes3d.emplace_back(lidar_transfusion::Box3D{
       class_id, max_score,
-      box_output_cpu[i] * config_.num_point_values_ * config_.voxel_x_size_ + config_.min_x_range_,
-      box_output_cpu[i + config_.num_proposals_] * config_.num_point_values_ *
-          config_.voxel_y_size_ +
+      box_output[i] * config_.num_point_values_ * config_.voxel_x_size_ + config_.min_x_range_,
+      box_output[i + config_.num_proposals_] * config_.num_point_values_ * config_.voxel_y_size_ +
         config_.min_y_range_,
-      box_output_cpu[i + 2 * config_.num_proposals_],
-      std::exp(box_output_cpu[i + 3 * config_.num_proposals_]),
-      std::exp(box_output_cpu[i + 4 * config_.num_proposals_]),
-      std::exp(box_output_cpu[i + 5 * config_.num_proposals_]),
-      std::atan2(dir_cls_output_cpu[i], dir_cls_output_cpu[i + config_.num_proposals_])});
+      box_output[i + 2 * config_.num_proposals_],
+      std::exp(box_output[i + 3 * config_.num_proposals_]),
+      std::exp(box_output[i + 4 * config_.num_proposals_]),
+      std::exp(box_output[i + 5 * config_.num_proposals_]),
+      std::atan2(dir_cls_output[i], dir_cls_output[i + config_.num_proposals_])});
   }
   return true;
 }

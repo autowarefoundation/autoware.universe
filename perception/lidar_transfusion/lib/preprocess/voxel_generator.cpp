@@ -27,7 +27,7 @@ VoxelGenerator::VoxelGenerator(
   pd_ptr_ = std::make_unique<PointCloudDensification>(densification_param);
   pre_ptr_ = std::make_unique<PreprocessCuda>(config_, stream_);
   cloud_data_d_ = cuda::make_unique<unsigned char[]>(config_.cloud_capacity_ * MAX_CLOUD_STEP_SIZE);
-  points_cpu_.resize(config_.cloud_capacity_ * config_.num_point_feature_size_);
+  points_.resize(config_.cloud_capacity_ * config_.num_point_feature_size_);
   affine_past2current_d_ = cuda::make_unique<float[]>(AFF_MAT_SIZE);
 }
 
@@ -71,7 +71,7 @@ std::size_t VoxelGenerator::generateSweepPoints(
     float time_lag = static_cast<float>(
       pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_msg.header.stamp).seconds());
 
-#ifdef CPU_PROCESSING
+#ifdef HOST_PROCESSING
     for (sensor_msgs::PointCloud2ConstIterator<float> x_iter(msg, "x"), y_iter(msg, "y"),
          z_iter(msg, "z"), intensity_iter(msg, "intensity");
          x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter, ++intensity_iter) {
@@ -81,17 +81,17 @@ std::size_t VoxelGenerator::generateSweepPoints(
       point_past << *x_iter, *y_iter, *z_iter;
       point_current = affine_past2current * point_past;
 
-      points_cpu_.at(points_agg * config_.num_point_feature_size_) = point_current.x();
-      points_cpu_.at(points_agg * config_.num_point_feature_size_ + 1) = point_current.y();
-      points_cpu_.at(points_agg * config_.num_point_feature_size_ + 2) = point_current.z();
-      points_cpu_.at(points_agg * config_.num_point_feature_size_ + 3) = *intensity_iter;
-      points_cpu_.at(points_agg * config_.num_point_feature_size_ + 4) = time_lag;
+      points_.at(points_agg * config_.num_point_feature_size_) = point_current.x();
+      points_.at(points_agg * config_.num_point_feature_size_ + 1) = point_current.y();
+      points_.at(points_agg * config_.num_point_feature_size_ + 2) = point_current.z();
+      points_.at(points_agg * config_.num_point_feature_size_ + 3) = *intensity_iter;
+      points_.at(points_agg * config_.num_point_feature_size_ + 4) = time_lag;
       ++points_agg;
     }
   }
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    points_d.get(), points_cpu_.data(),
-    points_agg * config_.num_point_feature_size_ * sizeof(float), cudaMemcpyHostToDevice));
+    points_d.get(), points_.data(), points_agg * config_.num_point_feature_size_ * sizeof(float),
+    cudaMemcpyHostToDevice));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
 #else
