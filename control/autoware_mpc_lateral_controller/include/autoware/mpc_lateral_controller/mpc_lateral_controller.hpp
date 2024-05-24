@@ -90,7 +90,7 @@ private:
   // Flag indicating whether to keep the steering control until it converges.
   bool m_keep_steer_control_until_converged;
 
-  // MPC colver checker.
+  // MPC solver checker.
   bool m_is_mpc_solved{true};
 
   // trajectory buffer for detecting new trajectory
