@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Autoware Foundation
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ekf_localizer/ekf_localizer.hpp"
+#include "scene.hpp"
+
+#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <memory>
 
-int main(int argc, char ** argv)
+namespace autoware::behavior_path_planner
 {
-  rclcpp::init(argc, argv);
-  rclcpp::NodeOptions node_options;
-  auto node = std::make_shared<EKFLocalizer>("ekf_localizer", node_options);
+using ::behavior_path_planner::LaneChangeModuleType;
 
-  rclcpp::spin(node);
-
-  return 0;
+ExternalRequestLaneChange::ExternalRequestLaneChange(
+  const std::shared_ptr<LaneChangeParameters> & parameters, Direction direction)
+: NormalLaneChange(parameters, LaneChangeModuleType::EXTERNAL_REQUEST, direction)
+{
 }
+}  // namespace autoware::behavior_path_planner
