@@ -32,14 +32,14 @@ else()
 endif()
 
 if(BUILD_TESTING)
-  # ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-  #   test/src/test_node_interface.cpp TODO(Maxime)
-  # )
-  # target_link_libraries(test_${PROJECT_NAME}
-  #   gtest_main
-  #   ${PROJECT_NAME}_lib
-  # )
-  # target_include_directories(test_${PROJECT_NAME} PRIVATE src)
+  ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
+    test/src/test_node_interface.cpp
+  )
+  target_link_libraries(test_${PROJECT_NAME}
+    gtest_main
+    ${PROJECT_NAME}_lib
+  )
+  target_include_directories(test_${PROJECT_NAME} PRIVATE src)
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
