@@ -264,7 +264,7 @@ std::vector<visualization_msgs::msg::Marker::SharedPtr> PredictedObjectsDisplay:
   if (pointCloudBuffer.empty()) {
     return markers;
   }
-  // poincloud pub
+  // pointcloud pub
   sensor_msgs::msg::PointCloud2::ConstSharedPtr closest_pointcloud =
     std::make_shared<sensor_msgs::msg::PointCloud2>(
       getNearestPointCloud(pointCloudBuffer, msg->header.stamp));
