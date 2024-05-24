@@ -138,7 +138,6 @@ bool TransfusionTRT::preprocess(
 
   const auto count = vg_ptr_->generateSweepPoints(msg, points_d_);
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Generated sweep points: " << count);
-  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   pre_ptr_->generateVoxels(
     points_d_.get(), count, params_input_d_.get(), voxel_features_d_.get(), voxel_num_d_.get(),
