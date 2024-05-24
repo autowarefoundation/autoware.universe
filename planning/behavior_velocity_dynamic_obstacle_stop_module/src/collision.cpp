@@ -70,11 +70,21 @@ std::vector<Collision> find_collisions(
   const PlannerParam & params)
 {
   std::vector<Collision> collisions;
+  std::optional<geometry_msgs::msg::Point> collision;
   for (auto object_idx = 0UL; object_idx < objects.size(); ++object_idx) {
     const auto & object_pose = objects[object_idx].kinematics.initial_pose_with_covariance.pose;
-    const auto & object_footprint = object_forward_footprints[object_idx];
-    const auto collision =
-      find_closest_collision_point(ego_data, object_pose, object_footprint, params);
+    if (!params.ignore_objects_behind_ego){
+        tier4_autoware_utils::MultiPolygon2d object_footprint;
+        for (const auto &polygon : object_forward_footprints) {
+          object_footprint.push_back(polygon);
+          collision =
+            find_closest_collision_point(ego_data, object_pose, polygon, params);
+        }
+    } else {
+      const auto &object_footprint = object_forward_footprints[object_idx];
+      collision =
+        find_closest_collision_point(ego_data, object_pose, object_footprint, params);
+    }
     if (collision) {
       Collision c;
       c.object_uuid = tier4_autoware_utils::toHexString(objects[object_idx].object_id);
