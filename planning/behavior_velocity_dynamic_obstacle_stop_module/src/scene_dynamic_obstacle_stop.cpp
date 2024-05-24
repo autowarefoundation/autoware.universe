@@ -90,7 +90,7 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   tier4_autoware_utils::MultiPolygon2d obstacle_predicted_footprints;
   std::vector<Collision> collisions;
   double footprints_duration_us;
-  if (params_.use_predicted_path){
+  if (params_.use_predicted_path) {
     stopwatch.tic("footprints");
     obstacle_predicted_footprints = create_object_footprints(dynamic_obstacles, params_);
     footprints_duration_us = stopwatch.toc("footprints");
@@ -100,12 +100,10 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     debug_data_.obstacle_footprints = obstacle_predicted_footprints;
   } else {
     stopwatch.tic("footprints");
-    obstacle_forward_footprints =
-      make_forward_footprints(dynamic_obstacles, params_, hysteresis);
+    obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_, hysteresis);
     footprints_duration_us = stopwatch.toc("footprints");
     stopwatch.tic("collisions");
-    collisions =
-      find_collisions(ego_data, dynamic_obstacles, obstacle_forward_footprints, params_);
+    collisions = find_collisions(ego_data, dynamic_obstacles, obstacle_forward_footprints, params_);
     debug_data_.obstacle_footprints = obstacle_forward_footprints;
   }
   update_object_map(object_map_, collisions, clock_->now(), ego_data.path.points, params_);

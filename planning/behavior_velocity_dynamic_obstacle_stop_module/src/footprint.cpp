@@ -61,8 +61,9 @@ tier4_autoware_utils::Polygon2d make_forward_footprint(
     {}};
 }
 
-//create footprint using predicted_path of object
-tier4_autoware_utils::Polygon2d translate_polygon(const tier4_autoware_utils::Polygon2d & polygon, const double x, const double y)
+// create footprint using predicted_path of object
+tier4_autoware_utils::Polygon2d translate_polygon(
+  const tier4_autoware_utils::Polygon2d & polygon, const double x, const double y)
 {
   tier4_autoware_utils::Polygon2d translated_polygon;
   const boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translation(x, y);
@@ -70,7 +71,8 @@ tier4_autoware_utils::Polygon2d translate_polygon(const tier4_autoware_utils::Po
   return translated_polygon;
 }
 
-tier4_autoware_utils::Polygon2d create_footprint(const geometry_msgs::msg::Pose & pose, const tier4_autoware_utils::Polygon2d& base_footprint)
+tier4_autoware_utils::Polygon2d create_footprint(
+  const geometry_msgs::msg::Pose & pose, const tier4_autoware_utils::Polygon2d & base_footprint)
 {
   const auto angle = tf2::getYaw(pose.orientation);
   return translate_polygon(
@@ -78,7 +80,8 @@ tier4_autoware_utils::Polygon2d create_footprint(const geometry_msgs::msg::Pose 
 }
 
 tier4_autoware_utils::MultiPolygon2d create_object_footprints(
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects, const PlannerParam & params)
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
+  const PlannerParam & params)
 {
   tier4_autoware_utils::MultiPolygon2d footprints;
 
