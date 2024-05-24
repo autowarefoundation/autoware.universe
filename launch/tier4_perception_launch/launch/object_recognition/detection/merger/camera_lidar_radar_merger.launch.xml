@@ -7,9 +7,8 @@
 
   <!-- Pipeline junctions -->
   <arg name="lidar_detection_model"/>
-  <!-- <arg name="use_radar_tracking_fusion"/> -->
-  <!-- <arg name="use_detection_by_tracker"/> -->
-
+  <arg name="use_radar_tracking_fusion"/>
+  <arg name="use_detection_by_tracker"/>
   <arg name="use_near_radar_fusion" default="false"/>
 
   <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
