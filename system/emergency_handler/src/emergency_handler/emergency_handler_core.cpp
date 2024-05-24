@@ -26,10 +26,9 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped");
   param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop");
   param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency");
-
   using std::placeholders::_1;
 
-  // Subscriber
+  // Subscriber with callback
   sub_hazard_status_stamped_ =
     create_subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>(
       "~/input/hazard_status", rclcpp::QoS{1},
@@ -38,17 +37,41 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
       "~/input/prev_control_command", rclcpp::QoS{1},
       std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
+
+  // Subscriber without callback
+  rclcpp::CallbackGroup::SharedPtr cb_group_noexec = this->create_callback_group(
+        rclcpp::CallbackGroupType::MutuallyExclusive, false);
+  auto subscription_options = rclcpp::SubscriptionOptions();
+  subscription_options.callback_group = cb_group_noexec;
+
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onOdometry, this, _1));
-  // subscribe control mode
+    "~/input/odometry", rclcpp::QoS{1},
+    [this]([[maybe_unused]] nav_msgs::msg::Odometry::SharedPtr) -> void
+    {
+      assert(false);
+    }, subscription_options);
+
   sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
-    "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
+    "~/input/control_mode", rclcpp::QoS{1},
+    [this]([[maybe_unused]] autoware_auto_vehicle_msgs::msg::ControlModeReport::SharedPtr) -> void
+    {
+      assert(false);
+    }, subscription_options);
+
+  // subscribe control mode
   sub_mrm_comfortable_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
-    std::bind(&EmergencyHandler::onMrmComfortableStopStatus, this, _1));
+    [this]([[maybe_unused]] tier4_system_msgs::msg::MrmBehaviorStatus::SharedPtr) -> void
+    {
+      assert(false);
+    }, subscription_options);
+
   sub_mrm_emergency_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/input/mrm/emergency_stop/status", rclcpp::QoS{1},
-    std::bind(&EmergencyHandler::onMrmEmergencyStopStatus, this, _1));
+    [this]([[maybe_unused]] tier4_system_msgs::msg::MrmBehaviorStatus::SharedPtr) -> void
+    {
+      assert(false);
+    }, subscription_options);
 
   // Publisher
   pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
@@ -73,13 +96,8 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     client_mrm_emergency_stop_group_);
 
   // Initialize
-  odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
-  control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
-  mrm_comfortable_stop_status_ =
-    std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
-  mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_state_.stamp = this->now();
   mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::NORMAL;
   mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MrmState::NONE;
@@ -105,29 +123,6 @@ void EmergencyHandler::onPrevControlCommand(
   control_command->stamp = msg->stamp;
   prev_control_command_ =
     autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(control_command);
-}
-
-void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
-{
-  odom_ = msg;
-}
-
-void EmergencyHandler::onControlMode(
-  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
-{
-  control_mode_ = msg;
-}
-
-void EmergencyHandler::onMrmComfortableStopStatus(
-  const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg)
-{
-  mrm_comfortable_stop_status_ = msg;
-}
-
-void EmergencyHandler::onMrmEmergencyStopStatus(
-  const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg)
-{
-  mrm_emergency_stop_status_ = msg;
 }
 
 autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
@@ -290,17 +285,14 @@ bool EmergencyHandler::isDataReady()
     return false;
   }
 
-  if (
-    param_.use_comfortable_stop && mrm_comfortable_stop_status_->state ==
-                                     tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) {
+  if (param_.use_comfortable_stop && !isComfortableStopStatusAvailable()) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for mrm comfortable stop to become available...");
     return false;
   }
 
-  if (
-    mrm_emergency_stop_status_->state == tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) {
+  if (!isEmergencyStopStatusAvailable()) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for mrm emergency stop to become available...");
@@ -372,13 +364,11 @@ void EmergencyHandler::transitionTo(const int new_state)
 void EmergencyHandler::updateMrmState()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
-  using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
   // Check emergency
   const bool is_emergency = isEmergency();
-
   // Get mode
-  const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
+  const bool is_auto_mode = isAutonomous();
 
   // State Machine
   if (mrm_state_.state == MrmState::NORMAL) {
@@ -452,10 +442,36 @@ bool EmergencyHandler::isEmergency()
 
 bool EmergencyHandler::isStopped()
 {
-  constexpr auto th_stopped_velocity = 0.001;
-  if (odom_->twist.twist.linear.x < th_stopped_velocity) {
-    return true;
-  }
+  auto odom = std::make_shared<nav_msgs::msg::Odometry>();
+  rclcpp::MessageInfo msg_info;
+  if(!sub_odom_->take(*odom, msg_info)) return false;
 
-  return false;
+  constexpr auto th_stopped_velocity = 0.001;
+  return (odom->twist.twist.linear.x < th_stopped_velocity);
+}
+
+bool EmergencyHandler::isAutonomous()
+{
+  using autoware_auto_vehicle_msgs::msg::ControlModeReport;
+
+  auto control_mode = std::make_shared<autoware_auto_vehicle_msgs::msg::ControlModeReport>();
+  rclcpp::MessageInfo msg_info;
+  if(!sub_control_mode_->take(*control_mode, msg_info)) return false;
+  return control_mode->mode == ControlModeReport::AUTONOMOUS;
+}
+
+bool EmergencyHandler::isComfortableStopStatusAvailable()
+{
+  auto status = std::make_shared<tier4_system_msgs::msg::MrmBehaviorStatus>();
+  rclcpp::MessageInfo msg_info;
+  if(!sub_mrm_comfortable_stop_status_->take(*status, msg_info)) return false;
+  return status->state != tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE;
+}
+
+bool EmergencyHandler::isEmergencyStopStatusAvailable()
+{
+  auto status = std::make_shared<tier4_system_msgs::msg::MrmBehaviorStatus>();
+  rclcpp::MessageInfo msg_info;
+  if(!sub_mrm_emergency_stop_status_->take(*status, msg_info)) return false;
+  return status->state != tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE;
 }

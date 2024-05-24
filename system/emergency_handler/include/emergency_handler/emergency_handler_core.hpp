@@ -71,21 +71,11 @@ private:
 
   autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status_stamped_;
   autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr prev_control_command_;
-  nav_msgs::msg::Odometry::ConstSharedPtr odom_;
-  autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
-  tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr mrm_comfortable_stop_status_;
-  tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr mrm_emergency_stop_status_;
 
   void onHazardStatusStamped(
     const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg);
   void onPrevControlCommand(
     const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
-  void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
-  void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
-  void onMrmComfortableStopStatus(
-    const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
-  void onMrmEmergencyStopStatus(
-    const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
 
   // Publisher
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
@@ -141,6 +131,9 @@ private:
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
   bool isEmergency();
+  bool isAutonomous();
+  bool isComfortableStopStatusAvailable();
+  bool isEmergencyStopStatusAvailable();
 };
 
 #endif  // EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_
