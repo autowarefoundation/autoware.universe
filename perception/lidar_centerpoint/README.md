@@ -204,6 +204,8 @@ ln -s /PATH/TO/DATASET/ /PATH/TO/mmdetection3d/data/tier4_dataset/
 
 Create `.pkl` files for training, evaluation, and testing.
 
+The dataset was formatted according to T4Dataset specifications, with 'sample_dataset' designated as one of its versions.
+
 ```bash
 python tools/create_data.py T4Dataset --root-path data/sample_dataset/ --out-dir data/sample_dataset/ --extra-tag T4Dataset --version sample_dataset --annotation-hz 2
 ```
