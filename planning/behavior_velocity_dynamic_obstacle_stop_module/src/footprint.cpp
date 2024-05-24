@@ -14,8 +14,10 @@
 
 #include "footprint.hpp"
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <boost/geometry/algorithms/envelope.hpp>
@@ -28,6 +30,7 @@
 
 namespace behavior_velocity_planner::dynamic_obstacle_stop
 {
+using Point2d = tier4_autoware_utils::Point2d;
 tier4_autoware_utils::MultiPolygon2d make_forward_footprints(
   const std::vector<autoware_perception_msgs::msg::PredictedObject> & obstacles,
   const PlannerParam & params, const double hysteresis)
@@ -56,6 +59,44 @@ tier4_autoware_utils::Polygon2d make_forward_footprint(
      {shape.x / 2.0, -lateral_offset},
      {longitudinal_offset, -lateral_offset}},
     {}};
+}
+
+//create footprint using predicted_path of object
+tier4_autoware_utils::Polygon2d translate_polygon(const tier4_autoware_utils::Polygon2d & polygon, const double x, const double y)
+{
+  tier4_autoware_utils::Polygon2d translated_polygon;
+  const boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translation(x, y);
+  boost::geometry::transform(polygon, translated_polygon, translation);
+  return translated_polygon;
+}
+
+tier4_autoware_utils::Polygon2d create_footprint(const geometry_msgs::msg::Pose & pose, const tier4_autoware_utils::Polygon2d& base_footprint)
+{
+  const auto angle = tf2::getYaw(pose.orientation);
+  return translate_polygon(
+    tier4_autoware_utils::rotatePolygon(base_footprint, angle), pose.position.x, pose.position.y);
+}
+
+tier4_autoware_utils::MultiPolygon2d create_object_footprints(
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects, const PlannerParam & params)
+{
+  tier4_autoware_utils::MultiPolygon2d footprints;
+
+  for (const auto & object : objects) {
+    const auto front = object.shape.dimensions.x / 2 + params.extra_object_width;
+    const auto rear = -object.shape.dimensions.x / 2 - params.extra_object_width;
+    const auto left = object.shape.dimensions.y / 2 + params.extra_object_width;
+    const auto right = -object.shape.dimensions.y / 2 - params.extra_object_width;
+    tier4_autoware_utils::Polygon2d base_footprint;
+    base_footprint.outer() = {
+      Point2d{front, left}, Point2d{front, right}, Point2d{rear, right}, Point2d{rear, left},
+      Point2d{front, left}};
+    for (const auto & path : object.kinematics.predicted_paths)
+      for (const auto & pose : path.path)
+        footprints.push_back(create_footprint(pose, base_footprint));
+  }
+
+  return footprints;
 }
 
 tier4_autoware_utils::Polygon2d project_to_pose(
