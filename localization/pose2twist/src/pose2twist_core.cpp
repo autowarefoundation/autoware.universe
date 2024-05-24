@@ -24,8 +24,7 @@
 #include <cstddef>
 #include <functional>
 
-Pose2Twist::Pose2Twist(const rclcpp::NodeOptions & options)
-: rclcpp::Node("pose2twist", options)
+Pose2Twist::Pose2Twist(const rclcpp::NodeOptions & options) : rclcpp::Node("pose2twist", options)
 {
   using std::placeholders::_1;
 
