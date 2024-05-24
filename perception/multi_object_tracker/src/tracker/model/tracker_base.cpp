@@ -23,13 +23,19 @@
 
 namespace
 {
-float updateProbability(const float & prior, const float & true_positive, const float & false_positive)
+float updateProbability(
+  const float & prior, const float & true_positive, const float & false_positive)
 {
   constexpr float maximum_probability = 0.999;
   constexpr float minimum_probability = 0.100;
   const float probability =
     (prior * true_positive) / (prior * true_positive + (1 - prior) * false_positive);
   return std::max(std::min(probability, maximum_probability), minimum_probability);
+}
+float decayProbability(const float & prior, const float & delta_time)
+{
+  constexpr float decay_rate = log(0.5) / 0.3;  // half-life (50% decay) of 0.3s
+  return prior * std::exp(decay_rate * delta_time);
 }
 }  // namespace
 
@@ -76,8 +82,8 @@ bool Tracker::updateWithMeasurement(
     ++total_measurement_count_;
 
     // existence probability on each channel
-    const double delta_time = (measurement_time - last_update_with_measurement_time_).seconds();
-    const double decay_rate = -log(0.5) / 0.3;  // 50% decay in 0.3s
+    const double delta_time =
+      std::abs((measurement_time - last_update_with_measurement_time_).seconds());
     constexpr float probability_true_detection = 0.9;
     constexpr float probability_false_detection = 0.2;
 
@@ -90,7 +96,7 @@ bool Tracker::updateWithMeasurement(
       if (i == channel_index) {
         continue;
       }
-      existence_probabilities_[i] *= std::exp(decay_rate * delta_time);
+      existence_probabilities_[i] = decayProbability(existence_probabilities_[i], delta_time);
     }
 
     // update total existence probability
@@ -114,11 +120,10 @@ bool Tracker::updateWithoutMeasurement(const rclcpp::Time & now)
   {
     // decay existence probability
     double const delta_time = (now - last_update_with_measurement_time_).seconds();
-    const double decay_rate = -log(0.5) / 0.3;  // 50% decay in 0.3s
     for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
-      existence_probabilities_[i] *= std::exp(-decay_rate * delta_time);
+      existence_probabilities_[i] = decayProbability(existence_probabilities_[i], delta_time);
     }
-    total_existence_probability_ *= std::exp(-decay_rate * delta_time);
+    total_existence_probability_ = decayProbability(total_existence_probability_, delta_time);
   }
 
   return true;
