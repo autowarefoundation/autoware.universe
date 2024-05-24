@@ -15,7 +15,7 @@
 #ifndef TIER4_AUTOWARE_UTILS__MATH__TRIGONOMETRY_HPP_
 #define TIER4_AUTOWARE_UTILS__MATH__TRIGONOMETRY_HPP_
 
-#include<utility>
+#include <utility>
 
 namespace tier4_autoware_utils
 {
