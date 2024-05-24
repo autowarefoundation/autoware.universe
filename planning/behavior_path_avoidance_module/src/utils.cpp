@@ -1916,7 +1916,7 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
     std::for_each(objects.begin(), objects.end(), [&p, &ret, &parameters](const auto & object) {
       if (filtering_utils::isSafetyCheckTargetObjectType(object.object, parameters)) {
         // check only moving objects
-        if (filtering_utils::isMovingObject(object, parameters)) {
+        if (filtering_utils::isMovingObject(object, parameters) || !object.is_parked) {
           ret.objects.push_back(object.object);
         }
       }
@@ -2221,7 +2221,7 @@ DrivableLanes generateExpandedDrivableLanes(
           break;
         }
         if (i == max_recursive_search_num - 1) {
-          RCLCPP_ERROR(
+          RCLCPP_DEBUG(
             rclcpp::get_logger(logger_namespace), "Drivable area expansion reaches max iteration.");
         }
       }

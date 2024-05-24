@@ -1079,7 +1079,11 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
   std::vector<size_t> collision_index;
   const auto collision_points = polygon_utils::getCollisionPoints(
     traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-    is_driving_forward_, collision_index);
+    is_driving_forward_, collision_index,
+    calcObstacleMaxLength(obstacle.shape) + p.decimate_trajectory_step_length +
+      std::hypot(
+        vehicle_info_.vehicle_length_m,
+        vehicle_info_.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise));
   return collision_points;
 }
 
@@ -1119,7 +1123,10 @@ ObstacleCruisePlannerNode::createCollisionPointsForOutsideCruiseObstacle(
   const auto collision_points = polygon_utils::getCollisionPoints(
     traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
     is_driving_forward_, collision_index,
-    vehicle_info_.vehicle_width_m + p.max_lat_margin_for_cruise,
+    calcObstacleMaxLength(obstacle.shape) + p.decimate_trajectory_step_length +
+      std::hypot(
+        vehicle_info_.vehicle_length_m,
+        vehicle_info_.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise),
     p.max_prediction_time_for_collision_check);
   if (collision_points.empty()) {
     // Ignore vehicle obstacles outside the trajectory without collision
@@ -1196,7 +1203,11 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     std::vector<size_t> collision_index;
     const auto collision_points = polygon_utils::getCollisionPoints(
       traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape, now(),
-      is_driving_forward_, collision_index);
+      is_driving_forward_, collision_index,
+      calcObstacleMaxLength(obstacle.shape) + p.decimate_trajectory_step_length +
+        std::hypot(
+          vehicle_info_.vehicle_length_m,
+          vehicle_info_.vehicle_width_m * 0.5 + p.max_lat_margin_for_stop));
     if (collision_points.empty()) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), enable_debug_info_,
@@ -1367,7 +1378,6 @@ void ObstacleCruisePlannerNode::checkConsistency(
   const auto current_closest_stop_obstacle =
     obstacle_cruise_utils::getClosestStopObstacle(stop_obstacles);
 
-  // If previous closest obstacle ptr is not set
   if (!prev_closest_stop_obstacle_ptr_) {
     if (current_closest_stop_obstacle) {
       prev_closest_stop_obstacle_ptr_ =
@@ -1376,44 +1386,23 @@ void ObstacleCruisePlannerNode::checkConsistency(
     return;
   }
 
-  // Put previous closest target obstacle if necessary
   const auto predicted_object_itr = std::find_if(
     predicted_objects.objects.begin(), predicted_objects.objects.end(),
     [&](PredictedObject predicted_object) {
       return tier4_autoware_utils::toHexString(predicted_object.object_id) ==
              prev_closest_stop_obstacle_ptr_->uuid;
     });
-
-  // If previous closest obstacle is not in the current perception lists
-  // just return the current target obstacles
+  // If previous closest obstacle disappear from the perception result, do nothing anymore.
   if (predicted_object_itr == predicted_objects.objects.end()) {
     return;
   }
 
-  // Previous closest obstacle is in the perception lists
-  const auto obstacle_itr = std::find_if(
+  const auto is_disappeared_from_stop_obstacle = std::none_of(
     stop_obstacles.begin(), stop_obstacles.end(),
     [&](const auto & obstacle) { return obstacle.uuid == prev_closest_stop_obstacle_ptr_->uuid; });
-
-  // Previous closest obstacle is both in the perception lists and target obstacles
-  if (obstacle_itr != stop_obstacles.end()) {
-    if (current_closest_stop_obstacle) {
-      if ((current_closest_stop_obstacle->uuid == prev_closest_stop_obstacle_ptr_->uuid)) {
-        // prev_closest_obstacle is current_closest_stop_obstacle just return the target
-        // obstacles(in target obstacles)
-        prev_closest_stop_obstacle_ptr_ =
-          std::make_shared<StopObstacle>(*current_closest_stop_obstacle);
-      } else {
-        // New obstacle becomes new stop obstacle
-        prev_closest_stop_obstacle_ptr_ =
-          std::make_shared<StopObstacle>(*current_closest_stop_obstacle);
-      }
-    } else {
-      // Previous closest stop obstacle becomes cruise obstacle
-      prev_closest_stop_obstacle_ptr_ = nullptr;
-    }
-  } else {
-    // prev obstacle is not in the target obstacles, but in the perception list
+  if (is_disappeared_from_stop_obstacle) {
+    // re-evaluate as a stop candidate, and overwrite the current decision if "maintain stop"
+    // condition is satisfied
     const double elapsed_time = (current_time - prev_closest_stop_obstacle_ptr_->stamp).seconds();
     if (
       predicted_object_itr->kinematics.initial_twist_with_covariance.twist.linear.x <
@@ -1422,13 +1411,13 @@ void ObstacleCruisePlannerNode::checkConsistency(
       stop_obstacles.push_back(*prev_closest_stop_obstacle_ptr_);
       return;
     }
+  }
 
-    if (current_closest_stop_obstacle) {
-      prev_closest_stop_obstacle_ptr_ =
-        std::make_shared<StopObstacle>(*current_closest_stop_obstacle);
-    } else {
-      prev_closest_stop_obstacle_ptr_ = nullptr;
-    }
+  if (current_closest_stop_obstacle) {
+    prev_closest_stop_obstacle_ptr_ =
+      std::make_shared<StopObstacle>(*current_closest_stop_obstacle);
+  } else {
+    prev_closest_stop_obstacle_ptr_ = nullptr;
   }
 }
 
