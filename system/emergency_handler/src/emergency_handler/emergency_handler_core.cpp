@@ -38,41 +38,6 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
       "~/input/prev_control_command", rclcpp::QoS{1},
       std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
 
-  // Subscriber without callback
-  rclcpp::CallbackGroup::SharedPtr cb_group_noexec = this->create_callback_group(
-        rclcpp::CallbackGroupType::MutuallyExclusive, false);
-  auto subscription_options = rclcpp::SubscriptionOptions();
-  subscription_options.callback_group = cb_group_noexec;
-
-  sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/odometry", rclcpp::QoS{1},
-    [this]([[maybe_unused]] nav_msgs::msg::Odometry::SharedPtr) -> void
-    {
-      assert(false);
-    }, subscription_options);
-
-  sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
-    "~/input/control_mode", rclcpp::QoS{1},
-    [this]([[maybe_unused]] autoware_auto_vehicle_msgs::msg::ControlModeReport::SharedPtr) -> void
-    {
-      assert(false);
-    }, subscription_options);
-
-  // subscribe control mode
-  sub_mrm_comfortable_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
-    "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
-    [this]([[maybe_unused]] tier4_system_msgs::msg::MrmBehaviorStatus::SharedPtr) -> void
-    {
-      assert(false);
-    }, subscription_options);
-
-  sub_mrm_emergency_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
-    "~/input/mrm/emergency_stop/status", rclcpp::QoS{1},
-    [this]([[maybe_unused]] tier4_system_msgs::msg::MrmBehaviorStatus::SharedPtr) -> void
-    {
-      assert(false);
-    }, subscription_options);
-
   // Publisher
   pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "~/output/control_command", rclcpp::QoS{1});
@@ -442,36 +407,31 @@ bool EmergencyHandler::isEmergency()
 
 bool EmergencyHandler::isStopped()
 {
-  auto odom = std::make_shared<nav_msgs::msg::Odometry>();
-  rclcpp::MessageInfo msg_info;
-  if(!sub_odom_->take(*odom, msg_info)) return false;
-
+  if(!sub_odom_.updateLatestData()) return false;
+  auto odom = sub_odom_.getData();
   constexpr auto th_stopped_velocity = 0.001;
-  return (odom->twist.twist.linear.x < th_stopped_velocity);
+  return (odom.twist.twist.linear.x < th_stopped_velocity);
 }
 
 bool EmergencyHandler::isAutonomous()
 {
   using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
-  auto control_mode = std::make_shared<autoware_auto_vehicle_msgs::msg::ControlModeReport>();
-  rclcpp::MessageInfo msg_info;
-  if(!sub_control_mode_->take(*control_mode, msg_info)) return false;
-  return control_mode->mode == ControlModeReport::AUTONOMOUS;
+  if(!sub_control_mode_.updateLatestData()) return false;
+  auto mode = sub_control_mode_.getData();
+  return mode.mode == ControlModeReport::AUTONOMOUS;
 }
 
 bool EmergencyHandler::isComfortableStopStatusAvailable()
 {
-  auto status = std::make_shared<tier4_system_msgs::msg::MrmBehaviorStatus>();
-  rclcpp::MessageInfo msg_info;
-  if(!sub_mrm_comfortable_stop_status_->take(*status, msg_info)) return false;
-  return status->state != tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE;
+  if(!sub_mrm_comfortable_stop_status_.updateLatestData()) return false;
+  auto status = sub_mrm_comfortable_stop_status_.getData();
+  return status.state != tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE;
 }
 
 bool EmergencyHandler::isEmergencyStopStatusAvailable()
 {
-  auto status = std::make_shared<tier4_system_msgs::msg::MrmBehaviorStatus>();
-  rclcpp::MessageInfo msg_info;
-  if(!sub_mrm_emergency_stop_status_->take(*status, msg_info)) return false;
-  return status->state != tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE;
+  if(!sub_mrm_emergency_stop_status_.updateLatestData()) return false;
+  auto status = sub_mrm_emergency_stop_status_.getData();
+  return status.state != tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE;
 }
