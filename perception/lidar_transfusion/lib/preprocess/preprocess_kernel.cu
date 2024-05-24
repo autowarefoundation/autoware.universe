@@ -73,7 +73,7 @@ __global__ void generateVoxels_random_kernel(
   float x = points[point_idx * 5];
   float y = points[point_idx * 5 + 1];
   float z = points[point_idx * 5 + 2];
-  float w = points[point_idx * 5 + 3];
+  float i = points[point_idx * 5 + 3];
   float t = points[point_idx * 5 + 4];
 
   if (
@@ -92,7 +92,7 @@ __global__ void generateVoxels_random_kernel(
   atomicExch(address + 0, x);
   atomicExch(address + 1, y);
   atomicExch(address + 2, z);
-  atomicExch(address + 3, w);
+  atomicExch(address + 3, i);
   atomicExch(address + 4, t);
 }
 
