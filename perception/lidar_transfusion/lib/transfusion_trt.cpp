@@ -61,9 +61,10 @@ TransfusionTRT::~TransfusionTRT()
 void TransfusionTRT::initPtr()
 {
   // point cloud to voxels
-  voxel_features_size_ = config_.max_voxels_ * config_.max_num_points_per_pillar_ * 5;
+  voxel_features_size_ =
+    config_.max_voxels_ * config_.max_num_points_per_pillar_ * config_.num_point_feature_size_;
   voxel_num_size_ = config_.max_voxels_;
-  voxel_idxs_size_ = config_.max_voxels_ * 4;
+  voxel_idxs_size_ = config_.max_voxels_ * config_.num_point_values_;
 
   // output of TRT -- input of post-process
   cls_size_ = config_.num_proposals_ * config_.num_classes_;
