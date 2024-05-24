@@ -13,20 +13,19 @@
 // limitations under the License.
 
 #include "footprint.hpp"
-
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-#include <boost/geometry/algorithms/envelope.hpp>
+#include <boost/geometry.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <tf2/utils.h>
 
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 namespace behavior_velocity_planner::dynamic_obstacle_stop
 {
