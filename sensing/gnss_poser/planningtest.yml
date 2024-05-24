@@ -3,7 +3,7 @@ nodes:
     operator:
       python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
       inputs:
-        tick: dora/timer/millis/10
+        tick: dora/timer/millis/20
       outputs:
         - DoraSentence
         - DoraNavSatFix
@@ -88,6 +88,15 @@ nodes:
         raw_path: planning/raw_path
       outputs:
         - SteeringCmd
+        
+  # - id: gnss_rviz2
+  #   operator:
+  #     python: src/gps_xyz_to_ros2.py
+  #     inputs:
+  #             # DoraSentence: gnss_sub/DoraSentence
+  #             DoraNavSatFix: gnss_poser/DoraNavSatFix
+  #             # DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
+  #             # DoraTwistStamped: gnss_sub/DoraTwistStamped
 
 
 
