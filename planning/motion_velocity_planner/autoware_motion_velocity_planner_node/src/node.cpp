@@ -146,9 +146,6 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
     "~/service/unload_plugin",
     std::bind(&MotionVelocityPlannerNode::on_unload_plugin, this, _1, _2));
 
-  // set velocity smoother param
-  on_param();
-
   // Publishers
   trajectory_pub_ =
     this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
@@ -157,11 +154,12 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
       "~/output/velocity_factors", 1);
 
   // Parameters
-  planner_data_.stop_line_extend_length = declare_parameter<double>("stop_line_extend_length");
   // nearest search
   planner_data_.ego_nearest_dist_threshold =
     declare_parameter<double>("ego_nearest_dist_threshold");
   planner_data_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+  // set velocity smoother param
+  on_param();
 
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
@@ -199,42 +197,47 @@ void MotionVelocityPlannerNode::on_unload_plugin(
 bool MotionVelocityPlannerNode::is_data_ready() const
 {
   const auto & d = planner_data_;
+  constexpr auto throttle_duration = 3000;  // [ms]
   auto clock = *get_clock();
 
   // from callbacks
   if (!d.current_odometry) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current odometry");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, "Waiting for current odometry");
     return false;
   }
 
   if (!d.current_velocity) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current velocity");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, "Waiting for current velocity");
     return false;
   }
   if (!d.current_acceleration) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current acceleration");
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, throttle_duration, "Waiting for current acceleration");
     return false;
   }
   if (!d.predicted_objects) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for predicted_objects");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, "Waiting for predicted_objects");
     return false;
   }
   if (!d.no_ground_pointcloud) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for pointcloud");
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, "Waiting for pointcloud");
     return false;
   }
   if (!map_ptr_) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for the initialization of map");
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, throttle_duration, "Waiting for the initialization of map");
     return false;
   }
   if (!d.velocity_smoother_) {
     RCLCPP_INFO_THROTTLE(
-      get_logger(), clock, 3000, "Waiting for the initialization of velocity smoother");
+      get_logger(), clock, throttle_duration,
+      "Waiting for the initialization of velocity smoother");
     return false;
   }
   if (!d.occupancy_grid) {
     RCLCPP_INFO_THROTTLE(
-      get_logger(), clock, 3000, "Waiting for the initialization of occupancy grid map");
+      get_logger(), clock, throttle_duration,
+      "Waiting for the initialization of occupancy grid map");
     return false;
   }
   return true;
@@ -415,7 +418,11 @@ autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate
         motion_utils::findNearestSegmentIndex(output_trajectory_msg.points, stop_point);
       const auto insert_idx =
         motion_utils::insertTargetPoint(seg_idx, stop_point, output_trajectory_msg.points);
-      if (insert_idx) output_trajectory_msg.points[*insert_idx].longitudinal_velocity_mps = 0.0;
+      if (insert_idx) {
+        output_trajectory_msg.points[*insert_idx].longitudinal_velocity_mps = 0.0;
+      } else {
+        RCLCPP_WARN(get_logger(), "Failed to insert stop point");
+      }
     }
     for (const auto & slowdown_interval : planning_result.slowdown_intervals) {
       const auto from_seg_idx =
@@ -430,7 +437,7 @@ autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate
         for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
           output_trajectory_msg.points[idx].longitudinal_velocity_mps = 0.0;
       } else {
-        RCLCPP_WARN(get_logger(), "Failed to insert slowdown points");
+        RCLCPP_WARN(get_logger(), "Failed to insert slowdown point");
       }
     }
     velocity_factors.factors.push_back(planning_result.velocity_factor);
@@ -450,9 +457,9 @@ rcl_interfaces::msg::SetParametersResult MotionVelocityPlannerNode::on_set_param
     planner_manager_.update_module_parameters(parameters);
   }
 
-  updateParam(parameters, "stop_line_extend_length", planner_data_.stop_line_extend_length);
   updateParam(parameters, "ego_nearest_dist_threshold", planner_data_.ego_nearest_dist_threshold);
   updateParam(parameters, "ego_nearest_yaw_threshold", planner_data_.ego_nearest_yaw_threshold);
+  on_param();
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;

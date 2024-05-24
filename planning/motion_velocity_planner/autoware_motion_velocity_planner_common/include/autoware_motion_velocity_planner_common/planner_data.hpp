@@ -57,8 +57,6 @@ struct PlannerData
   explicit PlannerData(rclcpp::Node & node)
   : vehicle_info_(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo())
   {
-    system_delay = node.declare_parameter<double>("system_delay");
-    delay_response_time = node.declare_parameter<double>("delay_response_time");
   }
 
   // msgs from callbacks that are used for data-ready
@@ -86,11 +84,6 @@ struct PlannerData
   std::shared_ptr<motion_velocity_smoother::SmootherBase> velocity_smoother_{};
   // parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
-
-  // additional parameters
-  double system_delay;
-  double delay_response_time;
-  double stop_line_extend_length;
 
   /**
    *@fn
