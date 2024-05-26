@@ -14,7 +14,7 @@
         "range": {
           "type": "number",
           "default": 60,
-          "description": "Half of the length of feature map sides. [m]."
+          "description": "Half of the length of feature map sides.[m]."
         },
         "width": {
           "type": "number",
