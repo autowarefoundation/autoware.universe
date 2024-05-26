@@ -102,7 +102,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   if(BUILD_TESTING)
     ament_auto_add_gtest(traffic_light_fine_detector_tests
       test/test_nodelet.cpp
-      src/nodelet.cpp
     )
   endif()
 
