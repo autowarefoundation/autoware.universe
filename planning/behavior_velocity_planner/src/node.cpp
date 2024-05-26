@@ -146,6 +146,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     declare_parameter<double>("ego_nearest_dist_threshold");
   planner_data_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
+  // is simulation or not
+  planner_data_.is_simulation = declare_parameter<bool>("is_simulation");
+
   // Initialize PlannerManager
   for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
     // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
@@ -156,6 +159,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 void BehaviorVelocityPlannerNode::onLoadPlugin(
@@ -307,6 +311,7 @@ void BehaviorVelocityPlannerNode::onParam()
   // lock(mutex_);
   planner_data_.velocity_smoother_ =
     std::make_unique<motion_velocity_smoother::AnalyticalJerkConstrainedSmoother>(*this);
+  planner_data_.velocity_smoother_->setWheelBase(planner_data_.vehicle_info_.wheel_base_m);
 }
 
 void BehaviorVelocityPlannerNode::onLaneletMap(
@@ -348,6 +353,7 @@ void BehaviorVelocityPlannerNode::onTrafficSignals(
       planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id].stamp =
         msg->stamp;
     } else {
+      // if (1)the observation is not UNKNOWN or (2)the very first observation is UNKNOWN
       planner_data_.traffic_light_id_map_last_observed_[signal.traffic_signal_id] = traffic_signal;
     }
   }
@@ -396,6 +402,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
   lk.unlock();
 
   path_pub_->publish(output_path_msg);
+  published_time_publisher_->publish_if_subscribed(path_pub_, output_path_msg.header.stamp);
   stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
 
   if (debug_viz_pub_->get_subscription_count() > 0) {

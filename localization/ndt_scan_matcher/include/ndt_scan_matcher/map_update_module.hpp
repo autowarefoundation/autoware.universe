@@ -16,6 +16,8 @@
 #define NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
 #include "localization_util/util_func.hpp"
+#include "ndt_scan_matcher/diagnostics_module.hpp"
+#include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -35,28 +37,38 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 class MapUpdateModule
 {
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
-  using NormalDistributionsTransform =
-    pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
+  using NdtType = pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
+  using NdtPtrType = std::shared_ptr<NdtType>;
 
 public:
   MapUpdateModule(
-    rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-    std::shared_ptr<NormalDistributionsTransform> ndt_ptr);
+    rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
+    HyperParameters::DynamicMapLoading param);
 
 private:
   friend class NDTScanMatcher;
 
-  void update_ndt(
-    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
-    const std::vector<std::string> & map_ids_to_remove);
-  void update_map(const geometry_msgs::msg::Point & position);
-  [[nodiscard]] bool should_update_map(const geometry_msgs::msg::Point & position) const;
+  void callback_timer(
+    const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+
+  [[nodiscard]] bool should_update_map(
+    const geometry_msgs::msg::Point & position,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+  void update_map(
+    const geometry_msgs::msg::Point & position,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+  // Update the specified NDT
+  bool update_ndt(
+    const geometry_msgs::msg::Point & position, NdtType & ndt,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
   void publish_partial_pcd_map();
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
@@ -64,15 +76,18 @@ private:
   rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr
     pcd_loader_client_;
 
-  std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
+  NdtPtrType & ndt_ptr_;
   std::mutex * ndt_ptr_mutex_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
 
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
-  const double dynamic_map_loading_update_distance_;
-  const double dynamic_map_loading_map_radius_;
-  const double lidar_radius_;
+
+  HyperParameters::DynamicMapLoading param_;
+
+  // Indicate if there is a prefetch thread waiting for being collected
+  NdtPtrType secondary_ndt_ptr_;
+  bool need_rebuild_;
 };
 
 #endif  // NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_

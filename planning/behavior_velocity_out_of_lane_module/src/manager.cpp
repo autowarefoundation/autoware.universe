@@ -38,6 +38,8 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
   pp.mode = getOrDeclareParameter<std::string>(node, ns + ".mode");
   pp.skip_if_already_overlapping =
     getOrDeclareParameter<bool>(node, ns + ".skip_if_already_overlapping");
+  pp.ignore_overlaps_over_lane_changeable_lanelets =
+    getOrDeclareParameter<bool>(node, ns + ".ignore_overlaps_over_lane_changeable_lanelets");
 
   pp.time_threshold = getOrDeclareParameter<double>(node, ns + ".threshold.time_threshold");
   pp.intervals_ego_buffer = getOrDeclareParameter<double>(node, ns + ".intervals.ego_time_buffer");
@@ -51,6 +53,8 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
   pp.objects_min_confidence =
     getOrDeclareParameter<double>(node, ns + ".objects.predicted_path_min_confidence");
   pp.objects_dist_buffer = getOrDeclareParameter<double>(node, ns + ".objects.distance_buffer");
+  pp.objects_cut_predicted_paths_beyond_red_lights =
+    getOrDeclareParameter<bool>(node, ns + ".objects.cut_predicted_paths_beyond_red_lights");
 
   pp.overlap_min_dist = getOrDeclareParameter<double>(node, ns + ".overlap.minimum_distance");
   pp.overlap_extra_length = getOrDeclareParameter<double>(node, ns + ".overlap.extra_length");

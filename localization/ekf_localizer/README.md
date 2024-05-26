@@ -78,65 +78,33 @@ The parameters are set in `launch/ekf_localizer.launch` .
 
 ### For Node
 
-| Name                       | Type   | Description                                                                               | Default value |
-| :------------------------- | :----- | :---------------------------------------------------------------------------------------- | :------------ |
-| show_debug_info            | bool   | Flag to display debug info                                                                | false         |
-| predict_frequency          | double | Frequency for filtering and publishing [Hz]                                               | 50.0          |
-| tf_rate                    | double | Frequency for tf broadcasting [Hz]                                                        | 10.0          |
-| publish_tf                 | bool   | Whether to publish tf                                                                     | true          |
-| extend_state_step          | int    | Max delay step which can be dealt with in EKF. Large number increases computational cost. | 50            |
-| enable_yaw_bias_estimation | bool   | Flag to enable yaw bias estimation                                                        | true          |
+{{ json_to_markdown("localization/ekf_localizer/schema/sub/node.sub_schema.json") }}
 
 ### For pose measurement
 
-| Name                          | Type   | Description                                                   | Default value |
-| :---------------------------- | :----- | :------------------------------------------------------------ | :------------ |
-| pose_additional_delay         | double | Additional delay time for pose measurement [s]                | 0.0           |
-| pose_measure_uncertainty_time | double | Measured time uncertainty used for covariance calculation [s] | 0.01          |
-| pose_smoothing_steps          | int    | A value for smoothing steps                                   | 5             |
-| pose_gate_dist                | double | Limit of Mahalanobis distance used for outliers detection     | 10000.0       |
+{{ json_to_markdown("localization/ekf_localizer/schema/sub/pose_measurement.sub_schema.json") }}
 
 ### For twist measurement
 
-| Name                   | Type   | Description                                               | Default value |
-| :--------------------- | :----- | :-------------------------------------------------------- | :------------ |
-| twist_additional_delay | double | Additional delay time for twist [s]                       | 0.0           |
-| twist_smoothing_steps  | int    | A value for smoothing steps                               | 2             |
-| twist_gate_dist        | double | Limit of Mahalanobis distance used for outliers detection | 10000.0       |
+{{ json_to_markdown("localization/ekf_localizer/schema/sub/twist_measurement.sub_schema.json") }}
 
 ### For process noise
 
-| Name                   | Type   | Description                                                                                                      | Default value |
-| :--------------------- | :----- | :--------------------------------------------------------------------------------------------------------------- | :------------ |
-| proc_stddev_vx_c       | double | Standard deviation of process noise in time differentiation expression of linear velocity x, noise for d_vx = 0  | 2.0           |
-| proc_stddev_wz_c       | double | Standard deviation of process noise in time differentiation expression of angular velocity z, noise for d_wz = 0 | 0.2           |
-| proc_stddev_yaw_c      | double | Standard deviation of process noise in time differentiation expression of yaw, noise for d_yaw = omega           | 0.005         |
-| proc_stddev_yaw_bias_c | double | Standard deviation of process noise in time differentiation expression of yaw_bias, noise for d_yaw_bias = 0     | 0.001         |
+{{ json_to_markdown("localization/ekf_localizer/schema/sub/process_noise.sub_schema.json") }}
 
 note: process noise for positions x & y are calculated automatically from nonlinear dynamics.
 
 ### Simple 1D Filter Parameters
 
-| Name                  | Type   | Description                                     | Default value |
-| :-------------------- | :----- | :---------------------------------------------- | :------------ |
-| z_filter_proc_dev     | double | Simple1DFilter - Z filter process deviation     | 1.0           |
-| roll_filter_proc_dev  | double | Simple1DFilter - Roll filter process deviation  | 0.01          |
-| pitch_filter_proc_dev | double | Simple1DFilter - Pitch filter process deviation | 0.01          |
+{{ json_to_markdown("localization/ekf_localizer/schema/sub/simple_1d_filter_parameters.sub_schema.json") }}
 
 ### For diagnostics
 
-| Name                                  | Type   | Description                                                                                                                                | Default value |
-| :------------------------------------ | :----- | :----------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| pose_no_update_count_threshold_warn   | size_t | The threshold at which a WARN state is triggered due to the Pose Topic update not happening continuously for a certain number of times.    | 50            |
-| pose_no_update_count_threshold_error  | size_t | The threshold at which an ERROR state is triggered due to the Pose Topic update not happening continuously for a certain number of times.  | 250           |
-| twist_no_update_count_threshold_warn  | size_t | The threshold at which a WARN state is triggered due to the Twist Topic update not happening continuously for a certain number of times.   | 50            |
-| twist_no_update_count_threshold_error | size_t | The threshold at which an ERROR state is triggered due to the Twist Topic update not happening continuously for a certain number of times. | 250           |
+{{ json_to_markdown("localization/ekf_localizer/schema/sub/diagnostics.sub_schema.json") }}
 
 ### Misc
 
-| Name                              | Type   | Description                                                                                        | Default value  |
-| :-------------------------------- | :----- | :------------------------------------------------------------------------------------------------- | :------------- |
-| threshold_observable_velocity_mps | double | Minimum value for velocity that will be used for EKF. Mainly used for dead zone in velocity sensor | 0.0 (disabled) |
+{{ json_to_markdown("localization/ekf_localizer/schema/sub/misc.sub_schema.json") }}
 
 ## How to tune EKF parameters
 
@@ -161,6 +129,26 @@ Increasing the number will improve the smoothness of the estimation, but may hav
 - `proc_stddev_wz_c` : set to maximum angular acceleration
 - `proc_stddev_yaw_c` : This parameter describes the correlation between the yaw and yaw rate. A large value means the change in yaw does not correlate to the estimated yaw rate. If this is set to 0, it means the change in estimated yaw is equal to yaw rate. Usually, this should be set to 0.
 - `proc_stddev_yaw_bias_c` : This parameter is the standard deviation for the rate of change in yaw bias. In most cases, yaw bias is constant, so it can be very small, but must be non-zero.
+
+### 3. Tune gate parameters
+
+EKF performs gating using Mahalanobis distance before updating by observation. The gate size is determined by the `pose_gate_dist` parameter and the `twist_gate_dist`. If the Mahalanobis distance is larger than this value, the observation is ignored.
+
+This gating process is based on a statistical test using the chi-square distribution. As modeled, we assume that the Mahalanobis distance follows a chi-square distribution with 3 degrees of freedom for pose and 2 degrees of freedom for twist.
+
+Currently, the accuracy of covariance estimation itself is not very good, so it is recommended to set the significance level to a very small value to reduce rejection due to false positives.
+
+| Significance level | Threshold for 2 dof | Threshold for 3 dof |
+| ------------------ | ------------------- | ------------------- |
+| $10 ^ {-2}$        | 9.21                | 11.3                |
+| $10 ^ {-3}$        | 13.8                | 16.3                |
+| $10 ^ {-4}$        | 18.4                | 21.1                |
+| $10 ^ {-5}$        | 23.0                | 25.9                |
+| $10 ^ {-6}$        | 27.6                | 30.7                |
+| $10 ^ {-7}$        | 32.2                | 35.4                |
+| $10 ^ {-8}$        | 36.8                | 40.1                |
+| $10 ^ {-9}$        | 41.4                | 44.8                |
+| $10 ^ {-10}$       | 46.1                | 49.5                |
 
 ## Kalman Filter Model
 

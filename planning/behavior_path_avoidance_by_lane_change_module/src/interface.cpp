@@ -16,13 +16,9 @@
 
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "behavior_path_planner_common/marker_utils/utils.hpp"
 
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
 namespace behavior_path_planner
 {
@@ -45,7 +41,8 @@ AvoidanceByLaneChangeInterface::AvoidanceByLaneChangeInterface(
 
 bool AvoidanceByLaneChangeInterface::isExecutionRequested() const
 {
-  return module_type_->isLaneChangeRequired() && module_type_->specialRequiredCheck();
+  return module_type_->isLaneChangeRequired() && module_type_->specialRequiredCheck() &&
+         module_type_->isValidPath();
 }
 void AvoidanceByLaneChangeInterface::processOnEntry()
 {
@@ -60,7 +57,10 @@ void AvoidanceByLaneChangeInterface::updateRTCStatus(
     return (dir == Direction::LEFT) ? "left" : "right";
   });
 
+  const auto state = isWaitingApproval() ? State::WAITING_FOR_EXECUTION : State::RUNNING;
+
   rtc_interface_ptr_map_.at(direction)->updateCooperateStatus(
-    uuid_map_.at(direction), isExecutionReady(), start_distance, finish_distance, clock_->now());
+    uuid_map_.at(direction), isExecutionReady(), state, start_distance, finish_distance,
+    clock_->now());
 }
 }  // namespace behavior_path_planner

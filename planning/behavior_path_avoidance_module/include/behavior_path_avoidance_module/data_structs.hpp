@@ -15,16 +15,12 @@
 #ifndef BEHAVIOR_PATH_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 #define BEHAVIOR_PATH_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 
+#include "behavior_path_avoidance_module/type_alias.hpp"
 #include "behavior_path_planner_common/data_manager.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/time.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
-
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/LineString.h>
@@ -38,20 +34,37 @@
 
 namespace behavior_path_planner
 {
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedPath;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Polygon2d;
-using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
-
-using geometry_msgs::msg::Point;
-using geometry_msgs::msg::Pose;
 
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
-
 using route_handler::Direction;
+
+enum class ObjectInfo {
+  NONE = 0,
+  // ignore reasons
+  OUT_OF_TARGET_AREA,
+  FURTHER_THAN_THRESHOLD,
+  FURTHER_THAN_GOAL,
+  IS_NOT_TARGET_OBJECT,
+  IS_NOT_PARKING_OBJECT,
+  TOO_NEAR_TO_CENTERLINE,
+  TOO_NEAR_TO_GOAL,
+  MOVING_OBJECT,
+  UNSTABLE_OBJECT,
+  CROSSWALK_USER,
+  ENOUGH_LATERAL_DISTANCE,
+  LESS_THAN_EXECUTION_THRESHOLD,
+  PARALLEL_TO_EGO_LANE,
+  MERGING_TO_EGO_LANE,
+  DEVIATING_FROM_EGO_LANE,
+  // unavoidable reasons
+  NEED_DECELERATION,
+  SAME_DIRECTION_SHIFT,
+  INSUFFICIENT_DRIVABLE_SPACE,
+  INSUFFICIENT_LONGITUDINAL_DISTANCE,
+  INVALID_SHIFT_LINE,
+  // others
+  AMBIGUOUS_STOPPED_VEHICLE,
+};
 
 struct ObjectParameter
 {
@@ -69,13 +82,13 @@ struct ObjectParameter
 
   double envelope_buffer_margin{0.0};
 
-  double avoid_margin_lateral{1.0};
+  double lateral_soft_margin{1.0};
 
-  double safety_buffer_lateral{1.0};
+  double lateral_hard_margin{1.0};
 
-  double safety_buffer_longitudinal{0.0};
+  double lateral_hard_margin_for_parked_vehicle{1.0};
 
-  bool use_conservative_buffer_longitudinal{true};
+  double longitudinal_margin{0.0};
 };
 
 struct AvoidanceParameters
@@ -98,7 +111,7 @@ struct AvoidanceParameters
   bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
-  bool enable_force_avoidance_for_stopped_vehicle{false};
+  bool enable_avoidance_for_ambiguous_vehicle{false};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
@@ -114,6 +127,9 @@ struct AvoidanceParameters
 
   // use intersection area for avoidance
   bool use_intersection_areas{false};
+
+  // use freespace area for avoidance
+  bool use_freespace_areas{false};
 
   // consider avoidance return dead line
   bool enable_dead_line_for_goal{false};
@@ -137,6 +153,9 @@ struct AvoidanceParameters
 
   // To prevent large acceleration while avoidance.
   double max_acceleration{0.0};
+
+  // To prevent large acceleration while avoidance.
+  double min_velocity_to_limit_max_acceleration{0.0};
 
   // upper distance for envelope polygon expansion.
   double upper_distance_for_polygon_expansion{0.0};
@@ -179,16 +198,12 @@ struct AvoidanceParameters
   double object_check_min_road_shoulder_width{0.0};
 
   // force avoidance
-  double threshold_time_force_avoidance_for_stopped_vehicle{0.0};
-  double force_avoidance_distance_threshold{0.0};
+  double closest_distance_to_wait_and_see_for_ambiguous_vehicle{0.0};
+  double time_threshold_for_ambiguous_vehicle{0.0};
+  double distance_threshold_for_ambiguous_vehicle{0.0};
 
-  // when complete avoidance motion, there is a distance margin with the object
-  // for longitudinal direction
-  double longitudinal_collision_margin_min_distance{0.0};
-
-  // when complete avoidance motion, there is a time margin with the object
-  // for longitudinal direction
-  double longitudinal_collision_margin_time{0.0};
+  // for merging/deviating vehicle
+  double th_overhang_distance{0.0};
 
   // parameters for safety check area
   bool enable_safety_check{false};
@@ -210,8 +225,8 @@ struct AvoidanceParameters
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
 
-  // keep target velocity in yield maneuver
-  double yield_velocity{0.0};
+  bool consider_front_overhang{true};
+  bool consider_rear_overhang{true};
 
   // maximum stop distance
   double stop_max_distance{0.0};
@@ -237,11 +252,11 @@ struct AvoidanceParameters
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double soft_road_shoulder_margin{1.0};
+  double soft_drivable_bound_margin{1.0};
 
   // The margin is configured so that the generated avoidance trajectory does not come near to the
   // road shoulder.
-  double hard_road_shoulder_margin{1.0};
+  double hard_drivable_bound_margin{1.0};
 
   // Even if the obstacle is very large, it will not avoid more than this length for right direction
   double max_right_shift_length{0.0};
@@ -270,23 +285,20 @@ struct AvoidanceParameters
   // line.
   double lateral_small_shift_threshold{0.0};
 
-  // use for judge if the ego is shifting or not.
-  double lateral_avoid_check_threshold{0.0};
+  // use for return shift approval.
+  double ratio_for_return_shift_approval{0.0};
 
   // For shift line generation process. The continuous shift length is quantized by this value.
-  double quantize_filter_threshold{0.0};
+  double quantize_size{0.0};
 
   // For shift line generation process. Merge small shift lines. (First step)
-  double same_grad_filter_1_threshold{0.0};
+  double th_similar_grad_1{0.0};
 
   // For shift line generation process. Merge small shift lines. (Second step)
-  double same_grad_filter_2_threshold{0.0};
+  double th_similar_grad_2{0.0};
 
   // For shift line generation process. Merge small shift lines. (Third step)
-  double same_grad_filter_3_threshold{0.0};
-
-  // For shift line generation process. Remove sharp(=jerky) shift line.
-  double sharp_shift_filter_threshold{0.0};
+  double th_similar_grad_3{0.0};
 
   // policy
   bool use_shorten_margin_immediately{false};
@@ -325,20 +337,22 @@ struct AvoidanceParameters
   bool enable_bound_clipping{false};
 
   // debug
-  bool publish_debug_marker = false;
-  bool print_debug_info = false;
+  bool enable_other_objects_marker{false};
+  bool enable_other_objects_info{false};
+  bool enable_detection_area_marker{false};
+  bool enable_drivable_bound_marker{false};
+  bool enable_safety_check_marker{false};
+  bool enable_shift_line_marker{false};
+  bool enable_lane_marker{false};
+  bool enable_misc_marker{false};
 };
 
 struct ObjectData  // avoidance target
 {
   ObjectData() = default;
 
-  ObjectData(PredictedObject obj, double lat, double lon, double len, double overhang)
-  : object(std::move(obj)),
-    to_centerline(lat),
-    longitudinal(lon),
-    length(len),
-    overhang_dist(overhang)
+  ObjectData(PredictedObject obj, double lat, double lon, double len)
+  : object(std::move(obj)), to_centerline(lat), longitudinal(lon), length(len)
   {
   }
 
@@ -362,9 +376,6 @@ struct ObjectData  // avoidance target
   // longitudinal length of vehicle, in Frenet coordinate
   double length{0.0};
 
-  // lateral distance to the closest footprint, in Frenet coordinate
-  double overhang_dist{0.0};
-
   // lateral shiftable ratio
   double shiftable_ratio{0.0};
 
@@ -372,7 +383,7 @@ struct ObjectData  // avoidance target
   double distance_factor{0.0};
 
   // count up when object disappeared. Removed when it exceeds threshold.
-  rclcpp::Time last_seen;
+  rclcpp::Time last_seen{rclcpp::Clock(RCL_ROS_TIME).now()};
   double lost_time{0.0};
 
   // count up when object moved. Removed when it exceeds threshold.
@@ -383,14 +394,12 @@ struct ObjectData  // avoidance target
   rclcpp::Time last_move;
   double stop_time{0.0};
 
-  // store the information of the lanelet which the object's overhang is currently occupying
+  // It is one of the ego driving lanelets (closest lanelet to the object) and used in the logic to
+  // check whether the object is on the ego lane.
   lanelet::ConstLanelet overhang_lanelet;
 
   // the position at the detected moment
   Pose init_pose;
-
-  // the position of the overhang
-  Pose overhang_pose;
 
   // envelope polygon
   Polygon2d envelope_poly{};
@@ -419,17 +428,29 @@ struct ObjectData  // avoidance target
   // is within intersection area
   bool is_within_intersection{false};
 
+  // is parked vehicle on road shoulder
+  bool is_parked{false};
+
+  // is driving on ego current lane
+  bool is_on_ego_lane{false};
+
+  // is ambiguous stopped vehicle.
+  bool is_ambiguous{false};
+
   // object direction.
   Direction direction{Direction::NONE};
 
-  // unavoidable reason
-  std::string reason{};
+  // overhang points (sort by distance)
+  std::vector<std::pair<double, Point>> overhang_points{};
+
+  // object detail info
+  ObjectInfo info{ObjectInfo::NONE};
 
   // lateral avoid margin
   std::optional<double> avoid_margin{std::nullopt};
 
   // the nearest bound point (use in road shoulder distance calculation)
-  std::optional<Point> nearest_bound_point{std::nullopt};
+  std::optional<std::pair<Point, Point>> narrowest_place{std::nullopt};
 };
 using ObjectDataArray = std::vector<ObjectData>;
 
@@ -446,9 +467,6 @@ struct AvoidLine : public ShiftLine
 
   // Distance from ego to end point in Frenet
   double end_longitudinal = 0.0;
-
-  // for unique_id
-  UUID id{};
 
   // for the case the point is created by merge other points
   std::vector<UUID> parent_ids{};
@@ -538,13 +556,15 @@ struct AvoidancePlanningData
 
   std::vector<DrivableLanes> drivable_lanes{};
 
-  lanelet::BasicLineString3d right_bound{};
+  std::vector<Point> right_bound{};
 
-  lanelet::BasicLineString3d left_bound{};
+  std::vector<Point> left_bound{};
 
   bool safe{false};
 
   bool valid{false};
+
+  bool ready{false};
 
   bool success{false};
 
