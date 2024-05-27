@@ -20,6 +20,7 @@
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
@@ -87,6 +88,11 @@ public:
     previous_obstacle_keep_time_ = previous_obstacle_keep_time;
   }
 
+  std::pair<double, double> getTimeout()
+  {
+    return {collision_keep_time_, previous_obstacle_keep_time_};
+  }
+
   bool checkObjectDataExpired(std::optional<ObjectData> & data, const double timeout)
   {
     if (!data.has_value()) return true;
@@ -137,13 +143,14 @@ public:
   {
     // remove old msg from deque
     const auto now = clock_->now();
-    std::remove_if(
-      obstacle_velocity_history_.begin(), obstacle_velocity_history_.end(),
-      [&](const auto & velocity_time_pair) {
-        const auto & vel_time = velocity_time_pair.second;
-        return ((now - vel_time).nanoseconds() * 1e-9 > previous_obstacle_keep_time_);
-      });
-
+    obstacle_velocity_history_.erase(
+      std::remove_if(
+        obstacle_velocity_history_.begin(), obstacle_velocity_history_.end(),
+        [&](const auto & velocity_time_pair) {
+          const auto & vel_time = velocity_time_pair.second;
+          return ((now - vel_time).nanoseconds() * 1e-9 > previous_obstacle_keep_time_);
+        }),
+      obstacle_velocity_history_.end());
     obstacle_velocity_history_.emplace_back(
       std::make_pair(current_object_velocity, current_object_velocity_time_stamp));
   }
@@ -199,8 +206,6 @@ public:
     });
 
     if (!estimated_velocity_opt.has_value()) {
-      this->setPreviousObjectData(closest_object);
-      this->resetVelocityHistory();
       return std::nullopt;
     }
 
@@ -220,18 +225,28 @@ private:
   rclcpp::Clock::SharedPtr clock_;
 };
 
+static rclcpp::SensorDataQoS SingleDepthSensorQoS()
+{
+  rclcpp::SensorDataQoS qos;
+  qos.get_rmw_qos_profile().depth = 1;
+  return qos;
+}
+
 class AEB : public rclcpp::Node
 {
 public:
   explicit AEB(const rclcpp::NodeOptions & node_options);
 
   // subscriber
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_;
-  rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;
-  rclcpp::Subscription<Imu>::SharedPtr sub_imu_;
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;
-  rclcpp::Subscription<AutowareState>::SharedPtr sub_autoware_state_;
-
+  tier4_autoware_utils::InterProcessPollingSubscriber<PointCloud2> sub_point_cloud_{
+    this, "~/input/pointcloud", SingleDepthSensorQoS()};
+  tier4_autoware_utils::InterProcessPollingSubscriber<VelocityReport> sub_velocity_{
+    this, "~/input/velocity"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Imu> sub_imu_{this, "~/input/imu"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_traj_{
+    this, "~/input/predicted_trajectory"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<AutowareState> sub_autoware_state_{
+    this, "/autoware/state"};
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_ego_path_publisher_;  // debug
@@ -241,13 +256,12 @@ public:
 
   // callback
   void onPointCloud(const PointCloud2::ConstSharedPtr input_msg);
-  void onVelocity(const VelocityReport::ConstSharedPtr input_msg);
   void onImu(const Imu::ConstSharedPtr input_msg);
   void onTimer();
-  void onPredictedTrajectory(const Trajectory::ConstSharedPtr input_msg);
-  void onAutowareState(const AutowareState::ConstSharedPtr input_msg);
+  rcl_interfaces::msg::SetParametersResult onParameter(
+    const std::vector<rclcpp::Parameter> & parameters);
 
-  bool isDataReady();
+  bool fetchLatestData();
 
   // main function
   void onCheckCollision(DiagnosticStatusWrapper & stat);
@@ -321,6 +335,8 @@ public:
   double mpc_prediction_time_horizon_;
   double mpc_prediction_time_interval_;
   CollisionDataKeeper collision_data_keeper_;
+  // Parameter callback
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 };
 }  // namespace autoware::motion::control::autonomous_emergency_braking
 

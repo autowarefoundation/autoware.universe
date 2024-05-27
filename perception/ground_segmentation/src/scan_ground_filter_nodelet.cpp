@@ -350,13 +350,12 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
     // check the first point in ray
     auto * p = &in_radial_ordered_clouds[i][0];
-    auto * prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
 
     bool initialized_first_gnd_grid = false;
     bool prev_list_init = false;
     pcl::PointXYZ p_orig_point, prev_p_orig_point;
     for (auto & point : in_radial_ordered_clouds[i]) {
-      prev_p = p;
+      auto * prev_p = p;  // for checking the distance to prev point
       prev_p_orig_point = p_orig_point;
       p = &point;
       get_point_from_global_offset(in_cloud, p_orig_point, in_cloud->point_step * p->orig_index);
@@ -470,7 +469,6 @@ void ScanGroundFilterComponent::classifyPointCloud(
     float prev_gnd_slope = 0.0f;
     float points_distance = 0.0f;
     PointsCentroid ground_cluster, non_ground_cluster;
-    float local_slope = 0.0f;
     PointLabel prev_point_label = PointLabel::INIT;
     pcl::PointXYZ prev_gnd_point(0, 0, 0), p_orig_point, prev_p_orig_point;
     // loop through each point in the radial div
@@ -525,7 +523,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
       if (calculate_slope) {
         // far from the previous point
-        local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
+        auto local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
         if (local_slope - prev_gnd_slope > local_slope_max_angle) {
           // the point is outside of the local slope threshold
           p->point_state = PointLabel::NON_GROUND;
@@ -573,33 +571,11 @@ void ScanGroundFilterComponent::extractObjectPoints(
 {
   size_t output_data_size = 0;
 
-  if (intensity_offset_ < 0) {
-    for (const auto & i : in_indices.indices) {
-      std::memcpy(
-        &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
-        in_cloud_ptr->point_step * sizeof(uint8_t));
-      *reinterpret_cast<float *>(&out_object_cloud.data[output_data_size + intensity_offset_]) =
-        1;  // set intensity to 1
-      output_data_size += in_cloud_ptr->point_step;
-    }
-  } else if (intensity_type_ == sensor_msgs::msg::PointField::FLOAT32) {
-    for (const auto & i : in_indices.indices) {
-      std::memcpy(
-        &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
-        in_cloud_ptr->point_step * sizeof(uint8_t));
-      *reinterpret_cast<float *>(&out_object_cloud.data[output_data_size + intensity_offset_]) =
-        1;  // set intensity to 1
-      output_data_size += in_cloud_ptr->point_step;
-    }
-  } else if (intensity_type_ == sensor_msgs::msg::PointField::UINT8) {
-    for (const auto & i : in_indices.indices) {
-      std::memcpy(
-        &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
-        in_cloud_ptr->point_step * sizeof(uint8_t));
-      *reinterpret_cast<uint8_t *>(&out_object_cloud.data[output_data_size + intensity_offset_]) =
-        1;  // set intensity to 1
-      output_data_size += in_cloud_ptr->point_step;
-    }
+  for (const auto & i : in_indices.indices) {
+    std::memcpy(
+      &out_object_cloud.data[output_data_size], &in_cloud_ptr->data[i * in_cloud_ptr->point_step],
+      in_cloud_ptr->point_step * sizeof(uint8_t));
+    output_data_size += in_cloud_ptr->point_step;
   }
 }
 

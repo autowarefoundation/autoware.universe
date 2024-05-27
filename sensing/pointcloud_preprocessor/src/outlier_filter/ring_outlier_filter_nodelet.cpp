@@ -14,17 +14,16 @@
 
 #include "pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
 
-#include "autoware_auto_geometry/common_3d.hpp"
+#include "autoware_point_types/types.hpp"
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
-
-#include <pcl/for_each_type.h>
-#include <pcl/search/pcl_search.h>
 
 #include <algorithm>
 #include <vector>
 namespace pointcloud_preprocessor
 {
+using autoware_point_types::PointXYZIRADRT;
+
 RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("RingOutlierFilter", options)
 {
@@ -36,6 +35,8 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "ring_outlier_filter");
     outlier_pointcloud_publisher_ =
       this->create_publisher<PointCloud2>("debug/ring_outlier_filter", 1);
+    visibility_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
+      "ring_outlier_filter/debug/visibility", rclcpp::SensorDataQoS());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
@@ -51,6 +52,13 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
       static_cast<size_t>(declare_parameter("max_points_num_per_ring", 4000));
     publish_outlier_pointcloud_ =
       static_cast<bool>(declare_parameter("publish_outlier_pointcloud", false));
+
+    min_azimuth_deg_ = static_cast<float>(declare_parameter("min_azimuth_deg", 0.0));
+    max_azimuth_deg_ = static_cast<float>(declare_parameter("max_azimuth_deg", 360.0));
+    max_distance_ = static_cast<float>(declare_parameter("max_distance", 12.0));
+    vertical_bins_ = static_cast<int>(declare_parameter("vertical_bins", 128));
+    horizontal_bins_ = static_cast<int>(declare_parameter("horizontal_bins", 36));
+    noise_threshold_ = static_cast<int>(declare_parameter("noise_threshold", 2));
   }
 
   using std::placeholders::_1;
@@ -74,13 +82,7 @@ void RingOutlierFilterComponent::faster_filter(
   output.data.resize(output.point_step * input->width);
   size_t output_size = 0;
 
-  // Set up the noise points cloud, if noise points are to be published.
-  PointCloud2 outlier_points;
-  size_t outlier_points_size = 0;
-  if (publish_outlier_pointcloud_) {
-    outlier_points.point_step = sizeof(OutputPointType);
-    outlier_points.data.resize(outlier_points.point_step * input->width);
-  }
+  pcl::PointCloud<InputPointType>::Ptr outlier_pcl(new pcl::PointCloud<InputPointType>);
 
   const auto input_channel_offset =
     input->fields.at(static_cast<size_t>(InputPointIndex::Channel)).offset;
@@ -177,34 +179,19 @@ void RingOutlierFilterComponent::faster_filter(
         }
       } else if (publish_outlier_pointcloud_) {
         for (int i = walk_first_idx; i <= walk_last_idx; i++) {
-          auto outlier_ptr =
-            reinterpret_cast<OutputPointType *>(&outlier_points.data[outlier_points_size]);
           auto input_ptr =
             reinterpret_cast<const InputPointType *>(&input->data[indices[walk_first_idx]]);
+          InputPointType outlier_point = *input_ptr;
+
           if (transform_info.need_transform) {
             Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
             p = transform_info.eigen_transform * p;
-            outlier_ptr->x = p[0];
-            outlier_ptr->y = p[1];
-            outlier_ptr->z = p[2];
-          } else {
-            outlier_ptr->x = input_ptr->x;
-            outlier_ptr->y = input_ptr->y;
-            outlier_ptr->z = input_ptr->z;
+            outlier_point.x = p[0];
+            outlier_point.y = p[1];
+            outlier_point.z = p[2];
           }
-          const float & intensity = *reinterpret_cast<const float *>(
-            &input->data[indices[walk_first_idx] + input_intensity_offset]);
-          outlier_ptr->intensity = intensity;
 
-          const std::uint8_t & return_type = *reinterpret_cast<const std::uint8_t *>(
-            &input->data[indices[i] + input_return_type_offset]);
-          outlier_ptr->return_type = return_type;
-
-          const std::uint8_t & channel = *reinterpret_cast<const std::uint8_t *>(
-            &input->data[indices[i] + input_channel_offset]);
-          outlier_ptr->channel = channel;
-
-          outlier_points_size += outlier_points.point_step;
+          outlier_pcl->push_back(outlier_point);
         }
       }
 
@@ -247,33 +234,17 @@ void RingOutlierFilterComponent::faster_filter(
       }
     } else if (publish_outlier_pointcloud_) {
       for (int i = walk_first_idx; i < walk_last_idx; i++) {
-        auto outlier_ptr =
-          reinterpret_cast<OutputPointType *>(&outlier_points.data[outlier_points_size]);
         auto input_ptr = reinterpret_cast<const InputPointType *>(&input->data[indices[i]]);
+        InputPointType outlier_point = *input_ptr;
         if (transform_info.need_transform) {
           Eigen::Vector4f p(input_ptr->x, input_ptr->y, input_ptr->z, 1);
           p = transform_info.eigen_transform * p;
-          outlier_ptr->x = p[0];
-          outlier_ptr->y = p[1];
-          outlier_ptr->z = p[2];
-        } else {
-          outlier_ptr->x = input_ptr->x;
-          outlier_ptr->y = input_ptr->y;
-          outlier_ptr->z = input_ptr->z;
+          outlier_point.x = p[0];
+          outlier_point.y = p[1];
+          outlier_point.z = p[2];
         }
-        const float & intensity =
-          *reinterpret_cast<const float *>(&input->data[indices[i] + input_intensity_offset]);
-        outlier_ptr->intensity = intensity;
 
-        const std::uint8_t & return_type = *reinterpret_cast<const std::uint8_t *>(
-          &input->data[indices[i] + input_return_type_offset]);
-        outlier_ptr->return_type = return_type;
-
-        const std::uint8_t & channel =
-          *reinterpret_cast<const std::uint8_t *>(&input->data[indices[i] + input_channel_offset]);
-        outlier_ptr->channel = channel;
-
-        outlier_points_size += outlier_points.point_step;
+        outlier_pcl->push_back(outlier_point);
       }
     }
   }
@@ -281,8 +252,14 @@ void RingOutlierFilterComponent::faster_filter(
   setUpPointCloudFormat(input, output, output_size);
 
   if (publish_outlier_pointcloud_) {
-    setUpPointCloudFormat(input, outlier_points, outlier_points_size);
-    outlier_pointcloud_publisher_->publish(outlier_points);
+    PointCloud2 outlier;
+    pcl::toROSMsg(*outlier_pcl, outlier);
+    outlier.header = input->header;
+
+    tier4_debug_msgs::msg::Float32Stamped visibility_msg;
+    visibility_msg.data = calculateVisibilityScore(outlier);
+    visibility_msg.stamp = input->header.stamp;
+    visibility_pub_->publish(visibility_msg);
   }
 
   // add processing time for debug
@@ -334,6 +311,24 @@ rcl_interfaces::msg::SetParametersResult RingOutlierFilterComponent::paramCallba
     RCLCPP_DEBUG(
       get_logger(), "Setting new publish_outlier_pointcloud to: %d.", publish_outlier_pointcloud_);
   }
+  if (get_param(p, "vertical_bins", vertical_bins_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new vertical_bins to: %d.", vertical_bins_);
+  }
+  if (get_param(p, "horizontal_bins", horizontal_bins_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new horizontal_bins to: %d.", horizontal_bins_);
+  }
+  if (get_param(p, "noise_threshold", noise_threshold_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new noise_threshold to: %d.", noise_threshold_);
+  }
+  if (get_param(p, "max_azimuth_deg", max_azimuth_deg_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new max_azimuth_deg to: %f.", max_azimuth_deg_);
+  }
+  if (get_param(p, "min_azimuth_deg", min_azimuth_deg_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new min_azimuth_deg to: %f.", min_azimuth_deg_);
+  }
+  if (get_param(p, "max_distance", max_distance_)) {
+    RCLCPP_DEBUG(get_logger(), "Setting new max_distance to: %f.", max_distance_);
+  }
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -366,6 +361,61 @@ void RingOutlierFilterComponent::setUpPointCloudFormat(
   // pcl::detail::FieldAdder<OutputPointType>(formatted_points.fields); pcl::for_each_type<typename
   // pcl::traits::fieldList<OutputPointType>::type>
   // (pcl::detail::FieldAdder<OutputPointType>(formatted_points.fields));
+}
+
+float RingOutlierFilterComponent::calculateVisibilityScore(
+  const sensor_msgs::msg::PointCloud2 & input)
+{
+  pcl::PointCloud<PointXYZIRADRT>::Ptr input_cloud(new pcl::PointCloud<PointXYZIRADRT>);
+  pcl::fromROSMsg(input, *input_cloud);
+
+  const uint32_t vertical_bins = vertical_bins_;
+  const uint32_t horizontal_bins = horizontal_bins_;
+  const float max_azimuth = max_azimuth_deg_ * (M_PI / 180.f);
+  const float min_azimuth = min_azimuth_deg_ * (M_PI / 180.f);
+
+  const uint32_t horizontal_resolution =
+    static_cast<uint32_t>((max_azimuth - min_azimuth) / horizontal_bins);
+
+  std::vector<pcl::PointCloud<PointXYZIRADRT>> ring_point_clouds(vertical_bins);
+  cv::Mat frequency_image(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+
+  // Split points into rings
+  for (const auto & point : input_cloud->points) {
+    ring_point_clouds.at(point.ring).push_back(point);
+  }
+
+  // Calculate frequency for each bin in each ring
+  for (const auto & ring_points : ring_point_clouds) {
+    if (ring_points.empty()) continue;
+
+    const uint ring_id = ring_points.front().ring;
+    std::vector<int> frequency_in_ring(horizontal_bins, 0);
+
+    for (const auto & point : ring_points.points) {
+      if (point.azimuth < min_azimuth || point.azimuth >= max_azimuth) continue;
+      if (point.distance >= max_distance_) continue;
+
+      const uint bin_index =
+        static_cast<uint>((point.azimuth - min_azimuth) / horizontal_resolution);
+
+      frequency_in_ring[bin_index]++;
+      frequency_in_ring[bin_index] =
+        std::min(frequency_in_ring[bin_index], 255);  // Ensure value is within uchar range
+
+      frequency_image.at<uchar>(ring_id, bin_index) =
+        static_cast<uchar>(frequency_in_ring[bin_index]);
+    }
+  }
+
+  cv::Mat binary_image;
+  cv::inRange(frequency_image, noise_threshold_, 255, binary_image);
+
+  const int num_pixels = cv::countNonZero(frequency_image);
+  const float num_filled_pixels =
+    static_cast<float>(num_pixels) / static_cast<float>(vertical_bins * horizontal_bins);
+
+  return 1.0f - num_filled_pixels;
 }
 
 }  // namespace pointcloud_preprocessor

@@ -912,8 +912,14 @@ double getRoadShoulderDistance(
         }
       }
 
+      const auto envelope_polygon_width =
+        boost::geometry::area(object.envelope_poly) /
+        std::max(object.length, 1e-3);  // prevent division by zero
+
       {
-        const auto p2 = calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? -1.0 : 1.0), 0.0).position;
+        const auto p2 =
+          calcOffsetPose(p_tmp, 0.0, (isOnRight(object) ? -0.5 : 0.5) * envelope_polygon_width, 0.0)
+            .position;
         const auto opt_intersect =
           tier4_autoware_utils::intersect(p1.second, p2, bound.at(i - 1), bound.at(i));
 
@@ -1910,7 +1916,7 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
     std::for_each(objects.begin(), objects.end(), [&p, &ret, &parameters](const auto & object) {
       if (filtering_utils::isSafetyCheckTargetObjectType(object.object, parameters)) {
         // check only moving objects
-        if (filtering_utils::isMovingObject(object, parameters)) {
+        if (filtering_utils::isMovingObject(object, parameters) || !object.is_parked) {
           ret.objects.push_back(object.object);
         }
       }
@@ -2215,7 +2221,7 @@ DrivableLanes generateExpandedDrivableLanes(
           break;
         }
         if (i == max_recursive_search_num - 1) {
-          RCLCPP_ERROR(
+          RCLCPP_DEBUG(
             rclcpp::get_logger(logger_namespace), "Drivable area expansion reaches max iteration.");
         }
       }
