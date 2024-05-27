@@ -58,25 +58,18 @@ std::pair<float, float> sin_and_cos(float radian)
     (static_cast<int>(std::round(degree)) % discrete_arcs_num_360 + discrete_arcs_num_360) %
     discrete_arcs_num_360;
 
-  float sin, cos;
   if (idx < discrete_arcs_num_90) {
-    sin = g_sin_table[idx];
-    cos = g_sin_table[discrete_arcs_num_90 - idx];
+    return {g_sin_table[idx], g_sin_table[discrete_arcs_num_90 - idx]};
   } else if (discrete_arcs_num_90 <= idx && idx < 2 * discrete_arcs_num_90) {
     idx = 2 * discrete_arcs_num_90 - idx;
-    sin = g_sin_table[idx];
-    cos = -1.f * g_sin_table[discrete_arcs_num_90 - idx];
+    return {g_sin_table[idx], - g_sin_table[discrete_arcs_num_90 - idx]};
   } else if (2 * discrete_arcs_num_90 <= idx && idx < 3 * discrete_arcs_num_90) {
     idx = idx - 2 * discrete_arcs_num_90;
-    sin = -1.f * g_sin_table[idx];
-    cos = -1.f * g_sin_table[discrete_arcs_num_90 - idx];
-  } else {  // 3 * discrete_arcs_num_90 <= idx && idx < 4 * discrete_arcs_num_90
+    return {- g_sin_table[idx], - g_sin_table[discrete_arcs_num_90 - idx]};
+  } else { // 3 * discrete_arcs_num_90 <= idx && idx < 4 * discrete_arcs_num_90
     idx = 4 * discrete_arcs_num_90 - idx;
-    sin = -1.f * g_sin_table[idx];
-    cos = g_sin_table[discrete_arcs_num_90 - idx];
+    return {- g_sin_table[idx], g_sin_table[discrete_arcs_num_90 - idx]};
   }
-
-  return std::make_pair(sin, cos);
 }
 
 }  // namespace tier4_autoware_utils
