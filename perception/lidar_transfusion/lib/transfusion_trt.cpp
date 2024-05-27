@@ -230,12 +230,18 @@ bool TransfusionTRT::postprocessHost(std::vector<Box3D> & det_boxes3d)
 
   for (size_t i = 0; i < config_.num_proposals_; ++i) {
     auto class_id = 0;
-    auto max_score = cls_output[i];
-    for (size_t j = 1; j < config_.num_classes_; ++j) {
-      auto score = cls_output[config_.num_proposals_ * j + i];
-      if (max_score < score) {
-        max_score = score;
-        class_id = j;
+    float max_score = 0.f;
+    float yaw_sin = dir_cls_output[i];
+    float yaw_cos = dir_cls_output[i + config_.num_proposals_];
+    float yaw_norm = sqrtf(yaw_sin * yaw_sin + yaw_cos * yaw_cos);
+    if (yaw_norm >= config_.yaw_norm_thresholds_[class_id]) {
+      max_score = cls_output[i];
+      for (size_t j = 1; j < config_.num_classes_; ++j) {
+        auto score = cls_output[config_.num_proposals_ * j + i];
+        if (max_score < score) {
+          max_score = score;
+          class_id = j;
+        }
       }
     }
     if (max_score < config_.score_threshold_) {
