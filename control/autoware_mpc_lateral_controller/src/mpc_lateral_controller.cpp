@@ -252,8 +252,11 @@ trajectory_follower::LateralOutput MpcLateralController::run(
     m_is_ctrl_cmd_prev_initialized = true;
   }
 
+  const bool is_driving_manually = input_data.current_operation_mode.mode == autoware_adapi_v1_msgs::msg::OperationModeState::LOCAL ||
+                                   input_data.current_operation_mode.mode == autoware_adapi_v1_msgs::msg::OperationModeState::REMOTE;
+
   const bool is_mpc_solved = m_mpc->calculateMPC(
-    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values, is_under_control);
+    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values, is_driving_manually);
 
   // reset previous MPC result
   // Note: When a large deviation from the trajectory occurs, the optimization stops and
