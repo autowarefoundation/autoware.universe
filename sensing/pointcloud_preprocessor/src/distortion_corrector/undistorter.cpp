@@ -186,7 +186,7 @@ void Undistorter<Derived>::undistortPointCloud(
     imu_stamp = rclcpp::Time(it_imu->header.stamp).seconds();
   }
 
-  // If there is a point in a pointlcoud that cannot be associated, record it to issue a warning
+  // If there is a point in a pointcloud that cannot be associated, record it to issue a warning
   bool is_twist_time_stamp_too_late = false;
   bool is_imu_time_stamp_is_too_late = false;
   bool is_twist_valid = true;
@@ -327,7 +327,7 @@ void Undistorter3D::setPointCloudTransform(
   }
 }
 
-void Undistorter2D::undistortPointImplemention(
+void Undistorter2D::undistortPointImplementation(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
@@ -372,7 +372,7 @@ void Undistorter2D::undistortPointImplemention(
   *it_z = static_cast<float>(undistorted_point_tf_.getZ());
 }
 
-void Undistorter3D::undistortPointImplemention(
+void Undistorter3D::undistortPointImplementation(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,

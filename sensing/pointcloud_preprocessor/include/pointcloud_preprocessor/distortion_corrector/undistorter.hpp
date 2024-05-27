@@ -106,7 +106,7 @@ public:
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
     bool & is_twist_valid, bool & is_imu_valid)
   {
-    static_cast<Derived *>(this)->undistortPointImplemention(
+    static_cast<Derived *>(this)->undistortPointImplementation(
       it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
   };
 
@@ -133,7 +133,7 @@ private:
 public:
   explicit Undistorter2D(rclcpp::Node * node) : Undistorter(node) {}
   void initialize() override;
-  void undistortPointImplemention(
+  void undistortPointImplementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
@@ -160,7 +160,7 @@ private:
 public:
   explicit Undistorter3D(rclcpp::Node * node) : Undistorter(node) {}
   void initialize() override;
-  void undistortPointImplemention(
+  void undistortPointImplementation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
