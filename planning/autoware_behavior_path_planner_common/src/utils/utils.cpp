@@ -489,15 +489,13 @@ bool isInLaneletWithYawThreshold(
 }
 
 bool isEgoOutOfRoute(
-  const Pose & self_pose,
-  const lanelet::ConstLanelet & current_lanelet,
+  const Pose & self_pose, const lanelet::ConstLanelet & current_lanelet,
   const std::optional<PoseWithUuidStamped> & modified_goal,
   const std::shared_ptr<RouteHandler> & route_handler)
 {
   const double threshold = std::numeric_limits<double>::max();
   const auto closest_road_lane = route_handler->getClosestRouteLaneletFromCurrent(
-    self_pose, current_lanelet, threshold, threshold
-  );
+    self_pose, current_lanelet, threshold, threshold);
   if (!closest_road_lane) {
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("behavior_path_planner").get_child("util"),
@@ -522,9 +520,9 @@ bool isEgoOutOfRoute(
 
   // If ego vehicle is over goal on goal lane, return true
   const double yaw_threshold = tier4_autoware_utils::deg2rad(90);
-  if (closest_road_lane.get().id() == goal_lane.id() &&
-      isInLaneletWithYawThreshold(self_pose, goal_lane, yaw_threshold)
-  ) {
+  if (
+    closest_road_lane.get().id() == goal_lane.id() &&
+    isInLaneletWithYawThreshold(self_pose, goal_lane, yaw_threshold)) {
     constexpr double buffer = 1.0;
     const auto ego_arc_coord = lanelet::utils::getArcCoordinates({goal_lane}, self_pose);
     const auto goal_arc_coord =

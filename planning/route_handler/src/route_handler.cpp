@@ -575,27 +575,24 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
   double length = 0;
   lanelet::ConstLanelets previous_lanelets;
 
-  auto checkForLoop = [&lanelet](const lanelet::ConstLanelets& lanelets_to_check, const bool is_route_lanelets)
-  {
+  auto checkForLoop =
+    [&lanelet](const lanelet::ConstLanelets & lanelets_to_check, const bool is_route_lanelets) {
     if (is_route_lanelets) {
       return std::none_of(
           lanelets_to_check.begin(), lanelets_to_check.end(),
-          [lanelet](auto & prev_llt) { return lanelet.id() != prev_llt.id(); }
-        );
+          [lanelet](auto & prev_llt) { return lanelet.id() != prev_llt.id(); });
     }
     return std::any_of(
         lanelets_to_check.begin(), lanelets_to_check.end(),
-        [lanelet](auto & prev_llt) { return lanelet.id() == prev_llt.id(); }
-      );
+        [lanelet](auto & prev_llt) { return lanelet.id() == prev_llt.id(); });
   };
 
-  auto isNewLanelet = [&lanelet, &lanelet_sequence_backward](const lanelet::ConstLanelet& lanelet_to_check)
-  {
+  auto isNewLanelet = [&lanelet,
+                       &lanelet_sequence_backward](const lanelet::ConstLanelet & lanelet_to_check) {
     if (lanelet.id() == lanelet_to_check.id()) return false;
     return std::none_of(
         lanelet_sequence_backward.begin(), lanelet_sequence_backward.end(),
-        [&lanelet_to_check](auto & backward) { return (backward.id() == lanelet_to_check.id()); }
-      );
+      [&lanelet_to_check](auto & backward) { return (backward.id() == lanelet_to_check.id()); });
   };
 
   while (rclcpp::ok() && length < min_length) {
