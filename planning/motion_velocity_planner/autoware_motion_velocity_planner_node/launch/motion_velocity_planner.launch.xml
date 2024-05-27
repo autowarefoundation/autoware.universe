@@ -12,7 +12,6 @@
   <arg name="motion_velocity_config_path"/>
   <arg name="motion_velocity_planner_param_path"/>
   <arg name="motion_velocity_planner_out_of_lane_module_param_path"/>
-  <arg name="motion_velocity_planner_dynamic_obstacle_stop_module_param_path"/>
   <!-- <arg name="motion_velocity_planner_template_module_param_path"/> -->
   <arg name="motion_velocity_planner_param_file" default="$(find-pkg-share autoware_motion_velocity_planner_node)/config/motion_velocity_planner.param.yaml"/>
 
@@ -36,7 +35,6 @@
     <param from="$(var nearest_search_param_path)"/>
     <param from="$(var motion_velocity_planner_param_path)"/>
     <param from="$(var motion_velocity_planner_out_of_lane_module_param_path)"/>
-    <param from="$(var motion_velocity_planner_dynamic_obstacle_stop_module_param_path)"/>
     <!-- <param from="$(var motion_velocity_planner_template_param_path)"/> -->
 
     <param from="$(var motion_velocity_planner_param_file)"/>

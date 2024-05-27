@@ -135,7 +135,6 @@
         <param from="$(var motion_velocity_smoother_type_param_path)"/>
         <param from="$(var motion_velocity_planner_param_path)"/>
         <param from="$(var motion_velocity_planner_out_of_lane_module_param_path)"/>
-        <param from="$(var motion_velocity_planner_dynamic_obstacle_stop_module_param_path)"/>
         <!-- <param from="$(var motion_velocity_planner_template_param_path)"/> -->
         <!-- composable node config -->
         <extra_arg name="use_intra_process_comms" value="false"/>
