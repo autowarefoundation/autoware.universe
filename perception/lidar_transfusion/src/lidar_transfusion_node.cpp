@@ -24,22 +24,22 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
 {
   // network
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
-  const std::string trt_precision = this->declare_parameter("trt_precision", "fp16");
+  const std::string trt_precision = this->declare_parameter<std::string>("trt_precision");
   const auto voxels_num = this->declare_parameter<std::vector<int64_t>>("voxels_num");
   const auto point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
   const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
-  const std::string onnx_path = this->declare_parameter<std::string>("onnx_path", "");
-  const std::string engine_path = this->declare_parameter<std::string>("engine_path", "");
+  const std::string onnx_path = this->declare_parameter<std::string>("onnx_path");
+  const std::string engine_path = this->declare_parameter<std::string>("engine_path");
 
   // pre-process
   const std::string densification_world_frame_id =
-    this->declare_parameter("densification_world_frame_id", "map");
+    this->declare_parameter<std::string>("densification_world_frame_id");
   const int densification_num_past_frames =
-    this->declare_parameter("densification_num_past_frames", 1);
+    this->declare_parameter<uint16_t>("densification_num_past_frames");
 
   // post-process
   const float circle_nms_dist_threshold =
-    static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold", 0.5));
+    static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold"));
   {  // IoU NMS
     NMSParams p;
     p.nms_type_ = NMS_TYPE::IoU_BEV;
@@ -52,7 +52,7 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
   const auto yaw_norm_thresholds =
     this->declare_parameter<std::vector<double>>("yaw_norm_thresholds");
   const float score_threshold =
-    static_cast<float>(this->declare_parameter<double>("score_threshold", 0.2));
+    static_cast<float>(this->declare_parameter<double>("score_threshold"));
 
   NetworkParam network_param(onnx_path, engine_path, trt_precision);
   DensificationParam densification_param(
@@ -89,7 +89,7 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
     stop_watch_ptr_->tic("processing/total");
   }
 
-  if (this->declare_parameter("build_only", false)) {
+  if (this->declare_parameter<bool>("build_only", false)) {
     RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
     rclcpp::shutdown();
   }
