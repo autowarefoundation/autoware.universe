@@ -10,6 +10,9 @@ import time
 import pickle
 import math
 from transforms3d._gohlketransforms import euler_from_quaternion
+from datetime import datetime
+
+
 
 pose = {
     'header': 
@@ -43,7 +46,9 @@ pose = {
     }
 class Operator:
     def __init__(self) -> None:
-        pass
+        self.flage1 =0
+        self.flage2=0
+        
     def on_event(
         self,
         dora_event,
@@ -58,14 +63,14 @@ class Operator:
         dora_input: dict,
         send_output: Callable[[str, bytes], None],
     ):
-        print("gndd_poser_sub")
+        #print("ekf_sub")
 
         if "DoraNavSatFix" == dora_input["id"]:
-            #print("DoraNavSatFix   crp")
+            #print("DoraNavSatFix ")
             data = dora_input["value"].to_pylist()
             json_string = ''.join(chr(int(num)) for num in data)
             # js
-            print(json_string)
+            #print(json_string)
             # 假设 json_string 是收到的 JSON 数据字符串
             json_dict = json.loads(json_string)
             # 从 JSON 数据中提取关键字
@@ -78,8 +83,9 @@ class Operator:
             pose["position"]["vx"] = 0.0
             pose["position"]["vy"] = 0.0
             pose["position"]["vz"] = 0.0
+            self.flage1=1
 
-        if "DoraQuaternionStamped" == dora_input["id"]:
+        elif "DoraQuaternionStamped" == dora_input["id"]:
             #print("DoraQuaternionStamped")
             data = dora_input["value"].to_pylist()
             json_string = ''.join(chr(int(num)) for num in data)
@@ -101,17 +107,24 @@ class Operator:
             q[2] =  pose["orientation"]["y"]
             q[3] =  pose["orientation"]["z"]
             [Roll ,Pitch ,Heading]= euler_from_quaternion(q)
-            print("roll-pitch-yaw:  ",Roll*57.3,"  ",Pitch*57.3,"  ",Heading*57.3)            
+            #print("roll-pitch-yaw:  ",Roll*57.3,"  ",Pitch*57.3,"  ",Heading*57.3)            
 
             pose["orientation"]["Roll"] = np.float64(Roll)
             pose["orientation"]["Pitch"] = np.float64(Pitch)
             pose["orientation"]["Heading"] = np.float64(Heading)
-  
-            # 发布JSON-DoraNavSatFix消息
-            json_string = json.dumps(pose, indent=4)  # 使用indent参数设置缩进宽度为4
-            print(json_string)
-            json_bytes = json_string.encode('utf-8')
-            send_output("DoraGnssPose",json_bytes,dora_input["metadata"],)
+            self.flage2=1
+        else:
+            if self.flage1>0 and self.flage2>0 :
+                now = datetime.now()# 获取当前时间
+                timestamp_ms = round(now.timestamp() * 1000)# 转换为毫秒格式
+                # print(timestamp_ms)# 打印时间戳（毫秒）
+                # 发布JSON-DoraNavSatFix消息
+                json_string = json.dumps(pose, indent=4)  # 使用indent参数设置缩进宽度为4
+                print("pub time:  ",timestamp_ms)
+                json_bytes = json_string.encode('utf-8')
+                send_output("DoraGnssPose",json_bytes,dora_input["metadata"],)
+                
+
         return DoraStatus.CONTINUE
 
     
