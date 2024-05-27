@@ -1,4 +1,4 @@
-// Copyright 2023- Autoware Foundation
+// Copyright 2024 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pose_instability_detector.hpp"
+#ifndef HEARTBEAT_HPP_
+#define HEARTBEAT_HPP_
 
+#include <autoware_ad_api_specs/system.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-int main(int argc, char ** argv)
+// This file should be included after messages.
+#include "utils/types.hpp"
+
+namespace default_ad_api
 {
-  rclcpp::init(argc, argv);
-  auto pose_instability_detector = std::make_shared<PoseInstabilityDetector>();
-  rclcpp::spin(pose_instability_detector);
-  rclcpp::shutdown();
-  return 0;
-}
+
+class HeartbeatNode : public rclcpp::Node
+{
+public:
+  explicit HeartbeatNode(const rclcpp::NodeOptions & options);
+
+private:
+  rclcpp::TimerBase::SharedPtr timer_;
+  Pub<autoware_ad_api::system::Heartbeat> pub_;
+  uint16_t sequence_ = 0;
+};
+
+}  // namespace default_ad_api
+
+#endif  // HEARTBEAT_HPP_
