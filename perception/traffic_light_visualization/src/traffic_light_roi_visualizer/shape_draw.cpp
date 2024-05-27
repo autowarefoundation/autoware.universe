@@ -61,7 +61,7 @@ void drawShape(
     params.image,
     cv::Rect(
       // width should take into account the text width
-      position.x - 2, position.y - 5, shapeImg.cols + 47, shapeImg.rows + 5),
+      position.x - 2, position.y - 5, shapeImg.cols + 70, shapeImg.rows + 12),
     params.color,
     -1);  // Filled rectangle
 
@@ -82,7 +82,7 @@ void drawShape(
   cv::putText(
     params.image, std::to_string(static_cast<int>(round(params.probability * 100))) + "%",
     cv::Point(position.x + shapeImg.cols + 5, position.y + shapeImg.rows / 2 + 5),
-    cv::FONT_HERSHEY_COMPLEX, 0.45, cv::Scalar(0, 0, 0), 2);
+    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 0), 2, cv::LINE_AA);
 }
 
 void drawCircle(const DrawFunctionParams & params)
