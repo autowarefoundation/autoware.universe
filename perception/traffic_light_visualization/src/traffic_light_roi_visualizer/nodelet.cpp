@@ -95,13 +95,13 @@ bool TrafficLightRoiVisualizerNodelet::createRect(
 {
   cv::Scalar color;
   if (result.label.find("red") != std::string::npos) {
-    color = cv::Scalar{255, 0, 0};
+    color = cv::Scalar{254, 149, 149};
   } else if (result.label.find("yellow") != std::string::npos) {
-    color = cv::Scalar{255, 255, 0};
+    color = cv::Scalar{254, 250, 149};
   } else if (result.label.find("green") != std::string::npos) {
-    color = cv::Scalar{0, 255, 0};
+    color = cv::Scalar{149, 254, 161};
   } else {
-    color = cv::Scalar{255, 255, 255};
+    color = cv::Scalar{250, 250, 250};
   }
 
   cv::rectangle(
