@@ -48,6 +48,8 @@ public:
   void initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg) override;
   bool ready() const override;
   LaneletRoute plan(const RoutePoints & points) override;
+  void updateRoute(const PlannerPlugin::LaneletRoute & route) override;
+  void clearRoute() override;
   MarkerArray visualize(const LaneletRoute & route) const override;
   MarkerArray visualize_debug_footprint(tier4_autoware_utils::LinearRing2d goal_footprint_) const;
   vehicle_info_util::VehicleInfo vehicle_info_;
@@ -56,11 +58,6 @@ private:
   using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
   using Pose = geometry_msgs::msg::Pose;
   bool is_graph_ready_;
-  lanelet::LaneletMapPtr lanelet_map_ptr_;
-  lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
-  lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
-  lanelet::ConstLanelets road_lanelets_;
-  lanelet::ConstLanelets shoulder_lanelets_;
   route_handler::RouteHandler route_handler_;
 
   DefaultPlannerParameters param_;
@@ -102,9 +99,6 @@ private:
    * route_sections) and return the z-aligned goal position
    */
   Pose refine_goal_height(const Pose & goal, const RouteSections & route_sections);
-
-  void updateRoute(const PlannerPlugin::LaneletRoute & route);
-  void clearRoute();
 };
 
 }  // namespace mission_planner::lanelet2

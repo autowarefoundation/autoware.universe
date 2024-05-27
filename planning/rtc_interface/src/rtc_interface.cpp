@@ -81,7 +81,8 @@ Module getModuleType(const std::string & module_name)
 namespace rtc_interface
 {
 RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name, const bool enable_rtc)
-: logger_{node->get_logger().get_child("RTCInterface[" + name + "]")},
+: clock_{node->get_clock()},
+  logger_{node->get_logger().get_child("RTCInterface[" + name + "]")},
   is_auto_mode_enabled_{!enable_rtc},
   is_locked_{false}
 {
@@ -263,6 +264,16 @@ void RTCInterface::removeStoredCommand(const UUID & uuid)
     stored_commands_.erase(itr);
     return;
   }
+}
+
+void RTCInterface::removeExpiredCooperateStatus()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  const auto itr = std::remove_if(
+    registered_status_.statuses.begin(), registered_status_.statuses.end(),
+    [this](const auto & status) { return (clock_->now() - status.stamp).seconds() > 10.0; });
+
+  registered_status_.statuses.erase(itr, registered_status_.statuses.end());
 }
 
 void RTCInterface::clearCooperateStatus()
