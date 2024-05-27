@@ -33,7 +33,6 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   }
 
   // Parameter
-  time_stamp_field_name_ = declare_parameter("time_stamp_field_name", "time_stamp");
   use_imu_ = declare_parameter("use_imu", true);
   use_3d_distortion_correction_ = declare_parameter("use_3d_distortion_correction", false);
 

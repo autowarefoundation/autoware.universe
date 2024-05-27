@@ -15,18 +15,16 @@
 #ifndef POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 #define POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 
+#include "pointcloud_preprocessor/distortion_corrector/undistorter.hpp"
+
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-
-// Include tier4 autoware utils
-#include "pointcloud_preprocessor/distortion_corrector/undistorter.hpp"
-
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <memory>
 #include <string>
@@ -51,7 +49,6 @@ private:
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
 
   std::string base_link_frame_ = "base_link";
-  std::string time_stamp_field_name_;
   bool use_imu_;
   bool use_3d_distortion_correction_;
 
