@@ -577,21 +577,21 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
 
   auto checkForLoop =
     [&lanelet](const lanelet::ConstLanelets & lanelets_to_check, const bool is_route_lanelets) {
-    if (is_route_lanelets) {
-      return std::none_of(
+      if (is_route_lanelets) {
+        return std::none_of(
           lanelets_to_check.begin(), lanelets_to_check.end(),
           [lanelet](auto & prev_llt) { return lanelet.id() != prev_llt.id(); });
-    }
-    return std::any_of(
+      }
+      return std::any_of(
         lanelets_to_check.begin(), lanelets_to_check.end(),
         [lanelet](auto & prev_llt) { return lanelet.id() == prev_llt.id(); });
-  };
+    };
 
   auto isNewLanelet = [&lanelet,
                        &lanelet_sequence_backward](const lanelet::ConstLanelet & lanelet_to_check) {
     if (lanelet.id() == lanelet_to_check.id()) return false;
     return std::none_of(
-        lanelet_sequence_backward.begin(), lanelet_sequence_backward.end(),
+      lanelet_sequence_backward.begin(), lanelet_sequence_backward.end(),
       [&lanelet_to_check](auto & backward) { return (backward.id() == lanelet_to_check.id()); });
   };
 
@@ -608,7 +608,7 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceUpTo(
     if (checkForLoop(previous_lanelets, is_route_lanelets)) break;
 
     for (const auto & prev_lanelet : previous_lanelets) {
-      if (!isNewLanelet(prev_lanelet)) continue;
+      if (!isNewLanelet(prev_lanelet) || exists(goal_lanelets_, prev_lanelet)) continue;
       lanelet_sequence_backward.push_back(prev_lanelet);
       length +=
         static_cast<double>(boost::geometry::length(prev_lanelet.centerline().basicLineString()));
