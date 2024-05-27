@@ -275,13 +275,14 @@ void NDTScanMatcher::callback_sensor_points(
   // check skipping_publish_num
   static size_t skipping_publish_num = 0;
   const size_t error_skipping_publish_num = 5;
-  skipping_publish_num = is_succeed_scan_matching ? 0 : (skipping_publish_num + 1);
+  skipping_publish_num =
+    ((is_succeed_scan_matching || !is_activated_) ? 0 : (skipping_publish_num + 1));
   diagnostics_scan_points_->addKeyValue("skipping_publish_num", skipping_publish_num);
   if (skipping_publish_num >= error_skipping_publish_num) {
     std::stringstream message;
     message << "skipping_publish_num exceed limit (" << skipping_publish_num << " times).";
     diagnostics_scan_points_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
   diagnostics_scan_points_->publish();
@@ -464,17 +465,14 @@ bool NDTScanMatcher::callback_sensor_points_main(
   diagnostics_scan_points_->addKeyValue("transform_probability", ndt_result.transform_probability);
   diagnostics_scan_points_->addKeyValue(
     "nearest_voxel_transformation_likelihood", ndt_result.nearest_voxel_transformation_likelihood);
-  std::string score_name = "";
   double score = 0.0;
   double score_threshold = 0.0;
   if (param_.score_estimation.converged_param_type == ConvergedParamType::TRANSFORM_PROBABILITY) {
-    score_name = "Transform Probability";
     score = ndt_result.transform_probability;
     score_threshold = param_.score_estimation.converged_param_transform_probability;
   } else if (
     param_.score_estimation.converged_param_type ==
     ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
-    score_name = "Nearest Voxel Transformation Likelihood";
     score = ndt_result.nearest_voxel_transformation_likelihood;
     score_threshold =
       param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood;
@@ -1072,3 +1070,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
 
   return result_pose_with_cov_msg;
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)
