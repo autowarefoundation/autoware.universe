@@ -57,7 +57,7 @@ void Undistorter<Derived>::getIMUTransformation(
   const std::string & base_link_frame, const std::string & imu_frame,
   geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr)
 {
-  if (is_imu_transfrom_exist_) {
+  if (is_imu_transform_exist_) {
     return;
   }
 
@@ -65,13 +65,13 @@ void Undistorter<Derived>::getIMUTransformation(
   if (base_link_frame == imu_frame) {
     tf2_imu_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
     tf2_imu_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
-    is_imu_transfrom_exist_ = true;
+    is_imu_transform_exist_ = true;
   } else {
     try {
       const auto transform_msg =
         tf_buffer_.lookupTransform(base_link_frame, imu_frame, tf2::TimePointZero);
       tf2::convert(transform_msg.transform, tf2_imu_to_base_link);
-      is_imu_transfrom_exist_ = true;
+      is_imu_transform_exist_ = true;
     } catch (const tf2::TransformException & ex) {
       RCLCPP_WARN(node_->get_logger(), "%s", ex.what());
       RCLCPP_ERROR(
@@ -266,7 +266,7 @@ void Undistorter3D::initialize()
 void Undistorter2D::setPointCloudTransform(
   const std::string & base_link_frame, const std::string & lidar_frame)
 {
-  if (is_pointcloud_transfrom_exist_) {
+  if (is_pointcloud_transform_exist_) {
     return;
   }
 
@@ -274,14 +274,14 @@ void Undistorter2D::setPointCloudTransform(
     tf2_lidar_to_base_link_.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
     tf2_lidar_to_base_link_.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
     tf2_base_link_to_lidar_ = tf2_lidar_to_base_link_;
-    is_pointcloud_transfrom_exist_ = true;
+    is_pointcloud_transform_exist_ = true;
   } else {
     try {
       const auto transform_msg =
         tf_buffer_.lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
       tf2::convert(transform_msg.transform, tf2_lidar_to_base_link_);
       tf2_base_link_to_lidar_ = tf2_lidar_to_base_link_.inverse();
-      is_pointcloud_transfrom_exist_ = true;
+      is_pointcloud_transform_exist_ = true;
       is_pointcloud_transform_needed_ = true;
     } catch (const tf2::TransformException & ex) {
       RCLCPP_WARN(node_->get_logger(), "%s", ex.what());
@@ -299,14 +299,14 @@ void Undistorter2D::setPointCloudTransform(
 void Undistorter3D::setPointCloudTransform(
   const std::string & base_link_frame, const std::string & lidar_frame)
 {
-  if (is_pointcloud_transfrom_exist_) {
+  if (is_pointcloud_transform_exist_) {
     return;
   }
 
   if (base_link_frame == lidar_frame) {
     eigen_lidar_to_base_link_ = Eigen::Matrix4f::Identity();
     eigen_base_link_to_lidar_ = Eigen::Matrix4f::Identity();
-    is_pointcloud_transfrom_exist_ = true;
+    is_pointcloud_transform_exist_ = true;
   }
 
   try {
@@ -315,7 +315,7 @@ void Undistorter3D::setPointCloudTransform(
     eigen_lidar_to_base_link_ =
       tf2::transformToEigen(transform_msg.transform).matrix().cast<float>();
     eigen_base_link_to_lidar_ = eigen_lidar_to_base_link_.inverse();
-    is_pointcloud_transfrom_exist_ = true;
+    is_pointcloud_transform_exist_ = true;
     is_pointcloud_transform_needed_ = true;
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN(node_->get_logger(), "%s", ex.what());
@@ -327,7 +327,7 @@ void Undistorter3D::setPointCloudTransform(
   }
 }
 
-void Undistorter2D::undistortPointImplemenation(
+void Undistorter2D::undistortPointImplemention(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
@@ -372,7 +372,7 @@ void Undistorter2D::undistortPointImplemenation(
   *it_z = static_cast<float>(undistorted_point_tf_.getZ());
 }
 
-void Undistorter3D::undistortPointImplemenation(
+void Undistorter3D::undistortPointImplemention(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
