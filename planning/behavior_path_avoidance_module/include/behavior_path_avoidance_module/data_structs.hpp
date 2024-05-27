@@ -566,6 +566,8 @@ struct AvoidancePlanningData
 
   bool ready{false};
 
+  bool cancel{false};
+
   bool success{false};
 
   bool comfortable{false};

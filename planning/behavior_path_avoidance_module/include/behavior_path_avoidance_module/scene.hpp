@@ -30,6 +30,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
@@ -64,7 +65,13 @@ public:
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
-  bool isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const;
+  /**
+   * @brief return the result whether the module can stop path generation process.
+   * @param avoidance data.
+   * @return [first]  it will be true when the ego avoid all obstacles.
+   *         [second] it will be true when all obstacles have gone.
+   */
+  std::pair<bool, bool> isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const;
 
   bool canTransitSuccessState() override;
 
@@ -359,7 +366,7 @@ private:
    * @brief reset registered shift lines.
    * @details reset only when the base offset is zero. Otherwise, sudden steering will be caused;
    */
-  void removeRegisteredShiftLines()
+  void removeRegisteredShiftLines(const uint8_t state)
   {
     constexpr double threshold = 0.1;
     if (std::abs(path_shifter_.getBaseOffset()) > threshold) {
@@ -370,15 +377,19 @@ private:
     unlockNewModuleLaunch();
 
     for (const auto & left_shift : left_shift_array_) {
-      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
-        left_shift.uuid, true, State::FAILED, std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest(), clock_->now());
+      if (rtc_interface_ptr_map_.at("left")->isRegistered(left_shift.uuid)) {
+        rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+          left_shift.uuid, true, state, std::numeric_limits<double>::lowest(),
+          std::numeric_limits<double>::lowest(), clock_->now());
+      }
     }
 
     for (const auto & right_shift : right_shift_array_) {
-      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
-        right_shift.uuid, true, State::FAILED, std::numeric_limits<double>::lowest(),
-        std::numeric_limits<double>::lowest(), clock_->now());
+      if (rtc_interface_ptr_map_.at("right")->isRegistered(right_shift.uuid)) {
+        rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+          right_shift.uuid, true, state, std::numeric_limits<double>::lowest(),
+          std::numeric_limits<double>::lowest(), clock_->now());
+      }
     }
 
     if (!path_shifter_.getShiftLines().empty()) {

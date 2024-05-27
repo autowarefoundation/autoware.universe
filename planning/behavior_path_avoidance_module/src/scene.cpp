@@ -115,14 +115,15 @@ bool AvoidanceModule::isExecutionReady() const
   return avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid && avoid_data_.ready;
 }
 
-bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const
+std::pair<bool, bool> AvoidanceModule::isSatisfiedSuccessCondition(
+  const AvoidancePlanningData & data) const
 {
   const bool has_avoidance_target = std::any_of(
     data.target_objects.begin(), data.target_objects.end(),
     [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 
   if (has_avoidance_target) {
-    return false;
+    return {false, false};
   }
 
   // If the ego is on the shift line, keep RUNNING.
@@ -133,7 +134,7 @@ bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & 
     };
     for (const auto & shift_line : path_shifter_.getShiftLines()) {
       if (within(shift_line, idx)) {
-        return false;
+        return {false, false};
       }
     }
   }
@@ -142,17 +143,21 @@ bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & 
   const bool has_base_offset =
     std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_execution_threshold;
 
+  if (has_base_offset) {
+    return {false, false};
+  }
+
   // Nothing to do. -> EXIT.
-  if (!has_shift_point && !has_base_offset) {
-    return true;
+  if (!has_shift_point) {
+    return {true, false};
   }
 
   // Be able to canceling avoidance path. -> EXIT.
   if (!helper_->isShifted() && parameters_->enable_cancel_maneuver) {
-    return true;
+    return {false, true};
   }
 
-  return false;
+  return {false, false};
 }
 
 bool AvoidanceModule::canTransitSuccessState()
@@ -183,7 +188,7 @@ bool AvoidanceModule::canTransitSuccessState()
     }
   }
 
-  return data.success;
+  return data.cancel || data.success;
 }
 
 void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugData & debug)
@@ -502,7 +507,9 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
 void AvoidanceModule::fillEgoStatus(
   AvoidancePlanningData & data, [[maybe_unused]] DebugData & debug) const
 {
-  data.success = isSatisfiedSuccessCondition(data);
+  const auto [success, cancel] = isSatisfiedSuccessCondition(data);
+  data.cancel = cancel;
+  data.success = success;
 
   /**
    * Find the nearest object that should be avoid. When the ego follows reference path,
@@ -870,11 +877,15 @@ BehaviorModuleOutput AvoidanceModule::plan()
   updatePathShifter(data.safe_shift_line);
 
   if (data.success) {
-    removeRegisteredShiftLines();
+    removeRegisteredShiftLines(State::SUCCEEDED);
+  }
+
+  if (data.cancel) {
+    removeRegisteredShiftLines(State::FAILED);
   }
 
   if (data.yield_required) {
-    removeRegisteredShiftLines();
+    removeRegisteredShiftLines(State::FAILED);
   }
 
   // generate path with shift points that have been inserted.
