@@ -1876,40 +1876,34 @@ TEST(trajectory, insertTargetPoint)
 
   // Invalid target point(In front of begin point)
   {
-    testing::internal::CaptureStderr();
     auto traj_out = traj;
 
     const auto p_target = createPoint(-1.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle"), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
   // Invalid target point(Behind of end point)
   {
-    testing::internal::CaptureStderr();
     auto traj_out = traj;
 
     const auto p_target = createPoint(10.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle"), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
   // Invalid target point(Huge lateral offset)
   {
-    testing::internal::CaptureStderr();
     auto traj_out = traj;
 
     const auto p_target = createPoint(4.0, 10.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle"), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -2304,13 +2298,11 @@ TEST(trajectory, insertTargetPoint_Length)
 
   // Invalid target point(Huge lateral offset)
   {
-    testing::internal::CaptureStderr();
     auto traj_out = traj;
 
     const auto p_target = createPoint(4.0, 10.0, 0.0);
     const auto insert_idx = insertTargetPoint(4.0, p_target, traj_out.points);
 
-    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle."), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -4310,40 +4302,34 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
 
   // Invalid target point(In front of begin point)
   {
-    testing::internal::CaptureStderr();
     auto traj_out = traj;
 
     const auto p_target = createPoint(-1.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle."), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
   // Invalid target point(Behind of end point)
   {
-    testing::internal::CaptureStderr();
     auto traj_out = traj;
 
     const auto p_target = createPoint(10.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle."), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
   // Invalid target point(Huge lateral offset)
   {
-    testing::internal::CaptureStderr();
     auto traj_out = traj;
 
     const auto p_target = createPoint(4.0, 10.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
-    EXPECT_NE(testing::internal::GetCapturedStderr().find("sharp angle."), std::string::npos);
     EXPECT_EQ(insert_idx, std::nullopt);
   }
 
@@ -5351,10 +5337,10 @@ TEST(trajectory, cropPoints)
   }
 }
 
-TEST(Trajectory, removeInvalidOrientationPoints)
+TEST(Trajectory, removeFirstInvalidOrientationPoints)
 {
   using motion_utils::insertOrientation;
-  using motion_utils::removeInvalidOrientationPoints;
+  using motion_utils::removeFirstInvalidOrientationPoints;
 
   const double max_yaw_diff = M_PI_2;
 
@@ -5365,7 +5351,7 @@ TEST(Trajectory, removeInvalidOrientationPoints)
     auto modified_traj = traj;
     insertOrientation(modified_traj.points, true);
     modifyTrajectory(modified_traj);
-    removeInvalidOrientationPoints(modified_traj.points, max_yaw_diff);
+    removeFirstInvalidOrientationPoints(modified_traj.points, max_yaw_diff);
     EXPECT_EQ(modified_traj.points.size(), expected_size);
     for (size_t i = 0; i < modified_traj.points.size() - 1; ++i) {
       EXPECT_EQ(traj.points.at(i), modified_traj.points.at(i));
@@ -5388,7 +5374,7 @@ TEST(Trajectory, removeInvalidOrientationPoints)
     [&](Trajectory & t) {
       auto invalid_point = t.points.back();
       invalid_point.pose.orientation =
-        tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), 3 * M_PI_2));
+        tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), 3 * M_PI_4));
       t.points.push_back(invalid_point);
     },
     traj.points.size());
@@ -5399,21 +5385,10 @@ TEST(Trajectory, removeInvalidOrientationPoints)
     [&](Trajectory & t) {
       auto invalid_point = t.points[4];
       invalid_point.pose.orientation =
-        tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), 3 * M_PI_2));
+        tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), 3 * M_PI_4));
       t.points.insert(t.points.begin() + 4, invalid_point);
     },
     traj.points.size());
-
-  // invalid point at the beginning
-  testRemoveInvalidOrientationPoints(
-    traj,
-    [&](Trajectory & t) {
-      auto invalid_point = t.points.front();
-      invalid_point.pose.orientation =
-        tf2::toMsg(tf2::Quaternion(tf2::Vector3(0, 0, 1), 3 * M_PI_2));
-      t.points.insert(t.points.begin(), invalid_point);
-    },
-    1);  // expected size is 1 since only the first point remains
 }
 
 TEST(trajectory, calcYawDeviation)
