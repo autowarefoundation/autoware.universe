@@ -206,7 +206,7 @@ __global__ void generateVoxelsInput_kernel(
   unsigned char z_datatype, unsigned char intensity_datatype, unsigned char x_size,
   unsigned char y_size, unsigned char z_size, unsigned char intensity_size, unsigned int point_step,
   bool is_bigendian, unsigned int cloud_capacity, unsigned int points_agg, unsigned int points_size,
-  float time_lag, float * affine_past2current, float * points)
+  float time_lag, float * affine_transform, float * points)
 {
   int point_idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (point_idx >= points_size || points_agg + point_idx >= cloud_capacity) return;
@@ -224,12 +224,12 @@ __global__ void generateVoxelsInput_kernel(
   float z = cast_field(z_raw, z_datatype);
   float intensity = cast_field(intensity_raw, intensity_datatype);
 
-  float x_affined = affine_past2current[0] * x + affine_past2current[1] * y +
-                    affine_past2current[2] * z + affine_past2current[3];
-  float y_affined = affine_past2current[4] * x + affine_past2current[5] * y +
-                    affine_past2current[6] * z + affine_past2current[7];
-  float z_affined = affine_past2current[8] * x + affine_past2current[9] * y +
-                    affine_past2current[10] * z + affine_past2current[11];
+  float x_affined = affine_transform[0] * x + affine_transform[1] * y + affine_transform[2] * z +
+                    affine_transform[3];
+  float y_affined = affine_transform[4] * x + affine_transform[5] * y + affine_transform[6] * z +
+                    affine_transform[7];
+  float z_affined = affine_transform[8] * x + affine_transform[9] * y + affine_transform[10] * z +
+                    affine_transform[11];
 
   points[(points_agg + point_idx) * 5] = x_affined;
   points[(points_agg + point_idx) * 5 + 1] = y_affined;
@@ -241,7 +241,7 @@ __global__ void generateVoxelsInput_kernel(
 // extract data from cloud byte array
 cudaError_t PreprocessCuda::generateVoxelsInput_launch(
   uint8_t * cloud_data, CloudInfo & cloud_info, unsigned int points_agg, unsigned int points_size,
-  float time_lag, float * affine_past2current, float * points)
+  float time_lag, float * affine_transform, float * points)
 {
   dim3 threads = {1024};
   dim3 blocks = {divup(points_size, threads.x * threads.y)};
@@ -250,7 +250,7 @@ cudaError_t PreprocessCuda::generateVoxelsInput_launch(
     cloud_info.intensity_offset, cloud_info.x_datatype, cloud_info.y_datatype,
     cloud_info.z_datatype, cloud_info.intensity_datatype, cloud_info.x_size, cloud_info.y_size,
     cloud_info.z_size, cloud_info.intensity_size, cloud_info.point_step, cloud_info.is_bigendian,
-    config_.cloud_capacity_, points_agg, points_size, time_lag, affine_past2current, points);
+    config_.cloud_capacity_, points_agg, points_size, time_lag, affine_transform, points);
   cudaError_t err = cudaGetLastError();
   return err;
 }

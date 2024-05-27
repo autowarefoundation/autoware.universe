@@ -57,7 +57,7 @@ public:
 
   cudaError_t generateVoxelsInput_launch(
     uint8_t * cloud_data, CloudInfo & cloud_info, unsigned int points_agg, unsigned int points_size,
-    float time_lag, float * affine_past2current, float * points);
+    float time_lag, float * affine_transform, float * points);
 
 private:
   TransfusionConfig config_;
