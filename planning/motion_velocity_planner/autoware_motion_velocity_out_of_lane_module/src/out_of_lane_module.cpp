@@ -269,6 +269,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
                                        : motion_utils::VelocityFactor::STOPPED;
     velocity_factor_interface_.set(
       ego_trajectory_points, ego_data.pose, point_to_insert->point.pose, status, "out_of_lane");
+    result.velocity_factor = velocity_factor_interface_.get();
   } else if (!decisions.empty()) {
     RCLCPP_WARN(logger_, "Could not insert stop point (would violate max deceleration limits)");
   }
@@ -293,7 +294,6 @@ VelocityPlanningResult OutOfLaneModule::plan(
   virtual_wall_marker_creator.add_virtual_walls(
     out_of_lane::debug::create_virtual_walls(debug_data_, params_));
   virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
-  result.velocity_factor = velocity_factor_interface_.get();
   return result;
 }
 

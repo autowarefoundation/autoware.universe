@@ -41,7 +41,7 @@ struct VelocityPlanningResult
 {
   std::vector<geometry_msgs::msg::Point> stop_points{};
   std::vector<SlowdownInterval> slowdown_intervals{};
-  autoware_adapi_v1_msgs::msg::VelocityFactor velocity_factor{};
+  std::optional<autoware_adapi_v1_msgs::msg::VelocityFactor> velocity_factor{};
 };
 }  // namespace autoware::motion_velocity_planner
 

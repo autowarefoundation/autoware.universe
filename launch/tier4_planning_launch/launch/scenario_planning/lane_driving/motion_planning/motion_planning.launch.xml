@@ -125,6 +125,7 @@
         <remap from="~/input/occupancy_grid" to="/perception/occupancy_grid_map/map"/>
         <remap from="~/output/trajectory" to="motion_velocity_planner/trajectory"/>
         <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons"/>
+        <remap from="~/output/velocity_factors" to="/planning/velocity_factors/motion_velocity_planner"/>
         <!-- params -->
         <param name="launch_modules" value="$(var motion_velocity_planner_launch_modules)"/>
         <param from="$(var common_param_path)"/>

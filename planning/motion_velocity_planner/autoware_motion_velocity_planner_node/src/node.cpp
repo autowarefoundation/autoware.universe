@@ -440,7 +440,8 @@ autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate
         RCLCPP_WARN(get_logger(), "Failed to insert slowdown point");
       }
     }
-    velocity_factors.factors.push_back(planning_result.velocity_factor);
+    if (planning_result.velocity_factor)
+      velocity_factors.factors.push_back(*planning_result.velocity_factor);
   }
 
   velocity_factor_publisher_->publish(velocity_factors);
