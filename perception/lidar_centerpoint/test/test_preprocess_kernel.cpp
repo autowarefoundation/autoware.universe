@@ -353,7 +353,8 @@ TEST_F(PreprocessKernelTest, VoxelOverflowTest)
 
   ASSERT_EQ(cudaSuccess, code);
 
-  std::vector<float> encoder_features(max_point_in_voxel_size_ * config_encoder_in_feature_size_, 0.f);
+  std::vector<float> encoder_features(
+    max_point_in_voxel_size_ * config_encoder_in_feature_size_, 0.f);
 
   CHECK_CUDA_ERROR(cudaMemcpy(
     encoder_features.data(), encoder_in_features_d_.get(),
