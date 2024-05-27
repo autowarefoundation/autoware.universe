@@ -138,7 +138,7 @@ private:
   std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array_{};
 
   bool is_initialized_{false};
-  rclcpp::Time latest_object_time_;
+  rclcpp::Time latest_exported_object_time_;
 
   size_t input_size_;
   std::vector<std::shared_ptr<InputStream>> input_streams_;

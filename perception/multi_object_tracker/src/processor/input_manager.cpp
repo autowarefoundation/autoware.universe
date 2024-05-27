@@ -176,7 +176,7 @@ void InputStream::getObjectsOlderThan(
 ////////////////////////////
 InputManager::InputManager(rclcpp::Node & node) : node_(node)
 {
-  latest_object_time_ = node_.now();
+  latest_exported_object_time_ = node_.now() - rclcpp::Duration::from_seconds(3.0);
 }
 
 void InputManager::init(const std::vector<InputChannel> & input_channels)
@@ -239,7 +239,7 @@ void InputManager::getObjectTimeInterval(
     rclcpp::Time latest_measurement_time =
       input_streams_.at(target_stream_idx_)->getLatestMeasurementTime();
 
-    // if the object_latest_time is older than the latest measurement time, set it as the latest
+    // if the object_latest_time is older than the latest measurement time, set it to the latest
     // object time
     object_latest_time =
       object_latest_time < latest_measurement_time ? latest_measurement_time : object_latest_time;
@@ -248,8 +248,9 @@ void InputManager::getObjectTimeInterval(
   object_oldest_time = object_latest_time - rclcpp::Duration::from_seconds(1.0);
   // if the object_oldest_time is older than the latest object time, set it to the latest object
   // time
-  object_oldest_time =
-    object_oldest_time > latest_object_time_ ? object_oldest_time : latest_object_time_;
+  object_oldest_time = object_oldest_time < latest_exported_object_time_
+                         ? latest_exported_object_time_
+                         : object_oldest_time;
 }
 
 void InputManager::optimizeTimings()
@@ -320,19 +321,20 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
              0;
     });
 
-  // Update the latest object time
+  // Update the latest exported object time
   bool is_any_object = !objects_list.empty();
   if (is_any_object) {
-    latest_object_time_ = rclcpp::Time(objects_list.back().second.header.stamp);
+    latest_exported_object_time_ = rclcpp::Time(objects_list.back().second.header.stamp);
   } else {
     // check time jump
-    if (now < latest_object_time_) {
+    if (now < latest_exported_object_time_) {
       RCLCPP_WARN(
         node_.get_logger(),
-        "InputManager::getObjects Time jump detected, now: %f, latest_object_time_: %f",
-        now.seconds(), latest_object_time_.seconds());
-      latest_object_time_ =
-        now - rclcpp::Duration::from_seconds(3.0);  // reset the latest object time to 3 seconds ago
+        "InputManager::getObjects Time jump detected, now: %f, latest_exported_object_time_: %f",
+        now.seconds(), latest_exported_object_time_.seconds());
+      latest_exported_object_time_ =
+        now - rclcpp::Duration::from_seconds(
+                3.0);  // reset the latest exported object time to 3 seconds ago
     } else {
       RCLCPP_DEBUG(
         node_.get_logger(),
