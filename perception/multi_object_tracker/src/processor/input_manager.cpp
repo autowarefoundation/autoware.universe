@@ -150,7 +150,14 @@ void InputStream::getObjectsOlderThan(
   const rclcpp::Time & object_latest_time, const rclcpp::Time & object_oldest_time,
   ObjectsList & objects_list)
 {
-  assert(object_latest_time.nanoseconds() > object_oldest_time.nanoseconds());
+  if (object_latest_time < object_oldest_time) {
+    RCLCPP_WARN(
+      node_.get_logger(),
+      "InputManager::getObjectsOlderThan %s: Invalid object time interval, object_latest_time: %f, "
+      "object_oldest_time: %f",
+      long_name_.c_str(), object_latest_time.seconds(), object_oldest_time.seconds());
+    return;
+  }
 
   for (const auto & object : objects_que_) {
     const rclcpp::Time object_time = rclcpp::Time(object.header.stamp);
@@ -251,6 +258,16 @@ void InputManager::getObjectTimeInterval(
   object_oldest_time = object_oldest_time < latest_exported_object_time_
                          ? latest_exported_object_time_
                          : object_oldest_time;
+
+  // check the object time interval is valid
+  if (object_oldest_time > object_latest_time) {
+    RCLCPP_WARN(
+      node_.get_logger(),
+      "InputManager::getObjectTimeInterval Invalid object time interval, object_latest_time: %f, "
+      "object_oldest_time: %f",
+      (now - object_latest_time).seconds(), (now - object_oldest_time).seconds());
+    object_oldest_time = object_latest_time - rclcpp::Duration::from_seconds(1.0);
+  }
 }
 
 void InputManager::optimizeTimings()
