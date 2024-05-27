@@ -90,7 +90,8 @@ public:
   std::size_t max_voxels_{60000};
 
   ///// NETWORK PARAMETERS /////
-  const std::size_t num_classes_{10};
+  const std::size_t batch_size_{1};
+  const std::size_t num_classes_{5};
   const std::size_t num_point_feature_size_{5};  // x, y, z, intensity, lag
   // the dimension of the input cloud
   float min_x_range_{-76.8};

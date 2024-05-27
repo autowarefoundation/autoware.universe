@@ -22,6 +22,7 @@
 
 #include <NvInfer.h>
 
+#include <array>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -31,6 +32,21 @@
 namespace lidar_transfusion
 {
 
+struct ProfileDimension
+{
+  nvinfer1::Dims min;
+  nvinfer1::Dims opt;
+  nvinfer1::Dims max;
+
+  bool operator!=(const ProfileDimension & rhs) const
+  {
+    return min.nbDims != rhs.min.nbDims || opt.nbDims != rhs.opt.nbDims ||
+           max.nbDims != rhs.max.nbDims || !std::equal(min.d, min.d + min.nbDims, rhs.min.d) ||
+           !std::equal(opt.d, opt.d + opt.nbDims, rhs.opt.d) ||
+           !std::equal(max.d, max.d + max.nbDims, rhs.max.d);
+  }
+};
+
 class NetworkTRT
 {
 public:
@@ -39,10 +55,6 @@ public:
 
   bool init(
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision);
-  bool setProfile(
-    nvinfer1::IBuilder & builder, nvinfer1::INetworkDefinition & network,
-    nvinfer1::IBuilderConfig & config);
-  bool validateNetworkIO();
   const char * getTensorName(NetworkIO name);
 
   tensorrt_common::TrtUniquePtr<nvinfer1::ICudaEngine> engine{nullptr};
@@ -55,12 +67,19 @@ private:
   bool saveEngine(const std::string & engine_path);
   bool loadEngine(const std::string & engine_path);
   bool createContext();
+  bool setProfile(
+    nvinfer1::IBuilder & builder, nvinfer1::INetworkDefinition & network,
+    nvinfer1::IBuilderConfig & config);
+  bool validateNetworkIO();
+  nvinfer1::Dims validateTensorShape(NetworkIO name, const std::vector<int> shape);
 
   tensorrt_common::TrtUniquePtr<nvinfer1::IRuntime> runtime_{nullptr};
   tensorrt_common::TrtUniquePtr<nvinfer1::IHostMemory> plan_{nullptr};
   tensorrt_common::Logger logger_;
   TransfusionConfig config_;
   std::vector<const char *> tensors_names_;
+
+  std::array<ProfileDimension, 3> in_profile_dims_;
 };
 
 }  // namespace lidar_transfusion
