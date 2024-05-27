@@ -224,16 +224,16 @@ __global__ void generateVoxelsInput_kernel(
   float z = cast_field(z_raw, z_datatype);
   float intensity = cast_field(intensity_raw, intensity_datatype);
 
-  float x_affined = affine_transform[0] * x + affine_transform[1] * y + affine_transform[2] * z +
-                    affine_transform[3];
-  float y_affined = affine_transform[4] * x + affine_transform[5] * y + affine_transform[6] * z +
-                    affine_transform[7];
-  float z_affined = affine_transform[8] * x + affine_transform[9] * y + affine_transform[10] * z +
-                    affine_transform[11];
+  float x_transformed = affine_transform[0] * x + affine_transform[1] * y +
+                        affine_transform[2] * z + affine_transform[3];
+  float y_transformed = affine_transform[4] * x + affine_transform[5] * y +
+                        affine_transform[6] * z + affine_transform[7];
+  float z_transformed = affine_transform[8] * x + affine_transform[9] * y +
+                        affine_transform[10] * z + affine_transform[11];
 
-  points[(points_agg + point_idx) * 5] = x_affined;
-  points[(points_agg + point_idx) * 5 + 1] = y_affined;
-  points[(points_agg + point_idx) * 5 + 2] = z_affined;
+  points[(points_agg + point_idx) * 5] = x_transformed;
+  points[(points_agg + point_idx) * 5 + 1] = y_transformed;
+  points[(points_agg + point_idx) * 5 + 2] = z_transformed;
   points[(points_agg + point_idx) * 5 + 3] = intensity;
   points[(points_agg + point_idx) * 5 + 4] = time_lag;
 }
