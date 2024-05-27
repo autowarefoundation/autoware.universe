@@ -232,7 +232,7 @@ std::shared_ptr<SteeringOffsetEstimator> MpcLateralController::createSteerOffset
 }
 
 void MpcLateralController::setStatus(
-  diagnostic_updater::DiagnosticStatusWrapper & stat, const bool & m_is_mpc_solved)
+  diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   if (m_is_mpc_solved) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "MPC succeeded.");
@@ -249,7 +249,7 @@ void MpcLateralController::setupDiag()
 
   d->add("MPC_solve_checker", [&](auto & stat) {
     setStatus(
-      stat, m_is_mpc_solved);
+      stat);
   });
 }
 

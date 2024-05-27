@@ -96,7 +96,7 @@ private:
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
 
-  void setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat, const bool & m_is_mpc_solved);
+  void setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   void setupDiag();
 
