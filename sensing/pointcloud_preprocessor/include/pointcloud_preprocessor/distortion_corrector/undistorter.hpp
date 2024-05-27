@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,19 +35,10 @@
 #endif
 
 #include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-
-// Include tier4 autoware utils
-// delete unused
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <deque>
-#include <functional>
 #include <memory>
-#include <optional>
 #include <string>
-#include <variant>
 
 namespace pointcloud_preprocessor
 {
@@ -69,15 +60,16 @@ template <class Derived>
 class Undistorter : public UndistorterBase
 {
 public:
-  bool is_pointcloud_transform_needed = false;
-  bool is_pointcloud_transfrom_exist = false;
-  bool is_imu_transfrom_exist = false;
-  tf2_ros::Buffer & tf2_buffer;
+  bool is_pointcloud_transform_needed_{false};
+  bool is_pointcloud_transfrom_exist_{false};
+  bool is_imu_transfrom_exist_{false};
+  rclcpp::Node * node_;
+  std::unique_ptr<tf2_ros::Buffer> tf2_buffer_ptr_;
 
-  std::deque<geometry_msgs::msg::TwistStamped> twist_queue;
-  std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue;
+  std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
+  std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
-  explicit Undistorter(tf2_ros::Buffer & buffer) : tf2_buffer(buffer) {}
+  explicit Undistorter(rclcpp::Node * node);
   void processTwistMessage(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
 
@@ -108,7 +100,7 @@ public:
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
     bool & is_twist_valid, bool & is_imu_valid)
   {
-    static_cast<Derived *>(this)->implementation(
+    static_cast<Derived *>(this)->undistortPointImplemenation(
       it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
   };
 
@@ -118,23 +110,24 @@ public:
 
 class Undistorter2D : public Undistorter<Undistorter2D>
 {
-public:
+private:
   // defined outside of for loop for performance reasons.
-  tf2::Quaternion baselink_quat;
-  tf2::Transform baselink_tf_odom;
-  tf2::Vector3 point_tf;
-  tf2::Vector3 undistorted_point_tf;
-  float theta;
-  float x;
-  float y;
+  tf2::Quaternion baselink_quat_;
+  tf2::Transform baselink_tf_odom_;
+  tf2::Vector3 point_tf_;
+  tf2::Vector3 undistorted_point_tf_;
+  float theta_;
+  float x_;
+  float y_;
 
   // TF
-  tf2::Transform tf2_lidar_to_base_link;
-  tf2::Transform tf2_base_link_to_lidar;
+  tf2::Transform tf2_lidar_to_base_link_;
+  tf2::Transform tf2_base_link_to_lidar_;
 
-  explicit Undistorter2D(tf2_ros::Buffer & buffer) : Undistorter(buffer) {}
+public:
+  explicit Undistorter2D(rclcpp::Node * node) : Undistorter(node) {}
   void initialize() override;
-  void implementation(
+  void undistortPointImplemenation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
@@ -147,20 +140,21 @@ public:
 
 class Undistorter3D : public Undistorter<Undistorter3D>
 {
-public:
+private:
   // defined outside of for loop for performance reasons.
-  Eigen::Vector4f point_eigen;
-  Eigen::Vector4f undistorted_point_eigen;
-  Eigen::Matrix4f transformation_matrix;
-  Eigen::Matrix4f prev_transformation_matrix;
+  Eigen::Vector4f point_eigen_;
+  Eigen::Vector4f undistorted_point_eigen_;
+  Eigen::Matrix4f transformation_matrix_;
+  Eigen::Matrix4f prev_transformation_matrix_;
 
   // TF
-  Eigen::Matrix4f eigen_lidar_to_base_link;
-  Eigen::Matrix4f eigen_base_link_to_lidar;
+  Eigen::Matrix4f eigen_lidar_to_base_link_;
+  Eigen::Matrix4f eigen_base_link_to_lidar_;
 
-  explicit Undistorter3D(tf2_ros::Buffer & buffer) : Undistorter(buffer) {}
+public:
+  explicit Undistorter3D(rclcpp::Node * node) : Undistorter(node) {}
   void initialize() override;
-  void implementation(
+  void undistortPointImplemenation(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,

@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,16 +15,6 @@
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
 #include "pointcloud_preprocessor/distortion_corrector/undistorter.hpp"
-#include "tier4_autoware_utils/math/trigonometry.hpp"
-
-#include <tf2_eigen/tf2_eigen.hpp>
-
-// delete this
-#include <chrono>
-#include <deque>
-#include <optional>
-#include <string>
-#include <utility>
 
 namespace pointcloud_preprocessor
 {
@@ -66,9 +56,9 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   // Setup the undistortor
 
   if (use_3d_distortion_correction_) {
-    undistorter_ = std::make_unique<Undistorter3D>(tf2_buffer);
+    undistorter_ = std::make_unique<Undistorter3D>(this);
   } else {
-    undistorter_ = std::make_unique<Undistorter2D>(tf2_buffer);
+    undistorter_ = std::make_unique<Undistorter2D>(this);
   }
 }
 

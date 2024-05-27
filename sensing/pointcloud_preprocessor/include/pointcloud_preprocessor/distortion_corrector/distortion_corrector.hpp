@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,15 +15,12 @@
 #ifndef POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 #define POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 
-#include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
-#include <sophus/se3.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 // Include tier4 autoware utils
 #include "pointcloud_preprocessor/distortion_corrector/undistorter.hpp"
@@ -31,12 +28,8 @@
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <deque>
-#include <functional>
 #include <memory>
-#include <optional>
 #include <string>
-#include <variant>
 
 namespace pointcloud_preprocessor
 {
@@ -56,8 +49,6 @@ private:
 
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
-
-  tf2_ros::Buffer tf2_buffer{get_clock()};
 
   std::string base_link_frame_ = "base_link";
   std::string time_stamp_field_name_;

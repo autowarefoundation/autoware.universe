@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,13 +18,15 @@
 
 #include <tf2_eigen/tf2_eigen.hpp>
 
-#include <deque>
-#include <optional>
-#include <string>
-#include <utility>
-
 namespace pointcloud_preprocessor
 {
+
+template <class Derived>
+Undistorter<Derived>::Undistorter(rclcpp::Node * node)
+{
+  node_ = node;
+  tf2_buffer_ptr_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
+}
 
 template <class Derived>
 void Undistorter<Derived>::processTwistMessage(
@@ -33,16 +35,16 @@ void Undistorter<Derived>::processTwistMessage(
   geometry_msgs::msg::TwistStamped msg;
   msg.header = twist_msg->header;
   msg.twist = twist_msg->twist.twist;
-  twist_queue.push_back(msg);
+  twist_queue_.push_back(msg);
 
-  while (!twist_queue.empty()) {
+  while (!twist_queue_.empty()) {
     // for replay rosbag
-    if (rclcpp::Time(twist_queue.front().header.stamp) > rclcpp::Time(twist_msg->header.stamp)) {
-      twist_queue.pop_front();
+    if (rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(twist_msg->header.stamp)) {
+      twist_queue_.pop_front();
     } else if (  // NOLINT
-      rclcpp::Time(twist_queue.front().header.stamp) <
+      rclcpp::Time(twist_queue_.front().header.stamp) <
       rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
-      twist_queue.pop_front();
+      twist_queue_.pop_front();
     }
     break;
   }
@@ -63,7 +65,7 @@ void Undistorter<Derived>::getIMUTransformation(
   const std::string & base_link_frame, const std::string & imu_frame,
   geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr)
 {
-  if (is_imu_transfrom_exist) {
+  if (is_imu_transfrom_exist_) {
     return;
   }
 
@@ -71,17 +73,18 @@ void Undistorter<Derived>::getIMUTransformation(
   if (base_link_frame == imu_frame) {
     tf2_imu_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
     tf2_imu_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
-    is_imu_transfrom_exist = true;
+    is_imu_transfrom_exist_ = true;
   } else {
     try {
       const auto transform_msg =
-        tf2_buffer.lookupTransform(base_link_frame, imu_frame, tf2::TimePointZero);
+        tf2_buffer_ptr_->lookupTransform(base_link_frame, imu_frame, tf2::TimePointZero);
       tf2::convert(transform_msg.transform, tf2_imu_to_base_link);
-      is_imu_transfrom_exist = true;
+      is_imu_transfrom_exist_ = true;
     } catch (const tf2::TransformException & ex) {
-      // RCLCPP_WARN(get_logger(), "%s", ex.what());
-      // RCLCPP_ERROR(
-      //   get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+      RCLCPP_WARN(node_->get_logger(), "%s", ex.what());
+      RCLCPP_ERROR(
+        node_->get_logger(), "Please publish TF %s to %s", base_link_frame.c_str(),
+        imu_frame.c_str());
 
       tf2_imu_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
       tf2_imu_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
@@ -103,18 +106,18 @@ void Undistorter<Derived>::storeIMUToQueue(
   geometry_msgs::msg::Vector3Stamped transformed_angular_velocity;
   tf2::doTransform(angular_velocity, transformed_angular_velocity, *geometry_imu_to_base_link_ptr);
   transformed_angular_velocity.header = imu_msg->header;
-  angular_velocity_queue.push_back(transformed_angular_velocity);
+  angular_velocity_queue_.push_back(transformed_angular_velocity);
 
-  while (!angular_velocity_queue.empty()) {
+  while (!angular_velocity_queue_.empty()) {
     // for replay rosbag
     if (
-      rclcpp::Time(angular_velocity_queue.front().header.stamp) >
+      rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
       rclcpp::Time(imu_msg->header.stamp)) {
-      angular_velocity_queue.pop_front();
+      angular_velocity_queue_.pop_front();
     } else if (  // NOLINT
-      rclcpp::Time(angular_velocity_queue.front().header.stamp) <
+      rclcpp::Time(angular_velocity_queue_.front().header.stamp) <
       rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
-      angular_velocity_queue.pop_front();
+      angular_velocity_queue_.pop_front();
     }
     break;
   }
@@ -127,29 +130,30 @@ void Undistorter<Derived>::getIteratorOfTwistAndIMU(
   std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu)
 {
   it_twist = std::lower_bound(
-    std::begin(twist_queue), std::end(twist_queue), first_point_time_stamp_sec,
+    std::begin(twist_queue_), std::end(twist_queue_), first_point_time_stamp_sec,
     [](const geometry_msgs::msg::TwistStamped & x, const double t) {
       return rclcpp::Time(x.header.stamp).seconds() < t;
     });
-  it_twist = it_twist == std::end(twist_queue) ? std::end(twist_queue) - 1 : it_twist;
+  it_twist = it_twist == std::end(twist_queue_) ? std::end(twist_queue_) - 1 : it_twist;
 
-  if (use_imu && !angular_velocity_queue.empty()) {
+  if (use_imu && !angular_velocity_queue_.empty()) {
     it_imu = std::lower_bound(
-      std::begin(angular_velocity_queue), std::end(angular_velocity_queue),
+      std::begin(angular_velocity_queue_), std::end(angular_velocity_queue_),
       first_point_time_stamp_sec, [](const geometry_msgs::msg::Vector3Stamped & x, const double t) {
         return rclcpp::Time(x.header.stamp).seconds() < t;
       });
     it_imu =
-      it_imu == std::end(angular_velocity_queue) ? std::end(angular_velocity_queue) - 1 : it_imu;
+      it_imu == std::end(angular_velocity_queue_) ? std::end(angular_velocity_queue_) - 1 : it_imu;
   }
 }
 
 template <class Derived>
 bool Undistorter<Derived>::isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud)
 {
-  if (pointcloud.data.empty() || twist_queue.empty()) {
-    // RCLCPP_WARN_STREAM_THROTTLE(
-    //   get_logger(), *get_clock(), 10000 /* ms */, "input pointcloud or twist_queue_ is empty.");
+  if (pointcloud.data.empty() || twist_queue_.empty()) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      "input pointcloud or twist_queue_ is empty.");
     return false;
   }
 
@@ -157,9 +161,9 @@ bool Undistorter<Derived>::isInputValid(sensor_msgs::msg::PointCloud2 & pointclo
     std::cbegin(pointcloud.fields), std::cend(pointcloud.fields),
     [](const sensor_msgs::msg::PointField & field) { return field.name == "time_stamp"; });
   if (time_stamp_field_it == pointcloud.fields.cend()) {
-    // RCLCPP_WARN_STREAM_THROTTLE(
-    //   get_logger(), *get_clock(), 10000 /* ms */,
-    //   "Required field time stamp doesn't exist in the point cloud.");
+    RCLCPP_WARN_STREAM_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      "Required field time stamp doesn't exist in the point cloud.");
     return false;
   }
   return true;
@@ -186,7 +190,7 @@ void Undistorter<Derived>::undistortPointCloud(
   // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
   double twist_stamp = rclcpp::Time(it_twist->header.stamp).seconds();
   double imu_stamp{0.0};
-  if (use_imu && !angular_velocity_queue.empty()) {
+  if (use_imu && !angular_velocity_queue_.empty()) {
     imu_stamp = rclcpp::Time(it_imu->header.stamp).seconds();
   }
 
@@ -201,7 +205,7 @@ void Undistorter<Derived>::undistortPointCloud(
     is_imu_valid = true;
 
     // Get closest twist information
-    while (it_twist != std::end(twist_queue) - 1 && *it_time_stamp > twist_stamp) {
+    while (it_twist != std::end(twist_queue_) - 1 && *it_time_stamp > twist_stamp) {
       ++it_twist;
       twist_stamp = rclcpp::Time(it_twist->header.stamp).seconds();
     }
@@ -211,8 +215,8 @@ void Undistorter<Derived>::undistortPointCloud(
     }
 
     // Get closest IMU information
-    if (use_imu && !angular_velocity_queue.empty()) {
-      while (it_imu != std::end(angular_velocity_queue) - 1 && *it_time_stamp > imu_stamp) {
+    if (use_imu && !angular_velocity_queue_.empty()) {
+      while (it_imu != std::end(angular_velocity_queue_) - 1 && *it_time_stamp > imu_stamp) {
         ++it_imu;
         imu_stamp = rclcpp::Time(it_imu->header.stamp).seconds();
       }
@@ -227,20 +231,10 @@ void Undistorter<Derived>::undistortPointCloud(
 
     float time_offset = static_cast<float>(*it_time_stamp - prev_time_stamp_sec);
 
-    // std::cout << "before undistortPoint" << std::endl;
-    // std::cout << "it_x: " << *it_x << " it_y: " << *it_y << " it_z: " << *it_z << std::endl;
-
     // Undistorted a single point based on the strategy
-    // auto start = std::chrono::high_resolution_clock::now();
     undistortPoint(it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
-    // std::cout << "after undistortPoint" << std::endl;
-    // std::cout << "it_x: " << *it_x << " it_y: " << *it_y << " it_z: " << *it_z << std::endl;
-    // std::cout << "//////////////////\n" << std::endl;
-    prev_time_stamp_sec = *it_time_stamp;
 
-    // auto end = std::chrono::high_resolution_clock::now();
-    // std::chrono::duration<double> duration = end - start;
-    // std::cout << "Function execution time: " << duration.count() << " seconds" << std::endl;
+    prev_time_stamp_sec = *it_time_stamp;
   }
 
   warnIfTimestampsTooLate(is_twist_time_stamp_too_late, is_imu_time_stamp_is_too_late);
@@ -251,60 +245,63 @@ void Undistorter<Derived>::warnIfTimestampsTooLate(
   bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_is_too_late)
 {
   if (is_twist_time_stamp_too_late) {
-    // RCLCPP_WARN_STREAM_THROTTLE(
-    //   get_logger(), *get_clock(), 10000 /* ms */,
-    //   "twist time_stamp is too late. Could not interpolate.");
+    RCLCPP_WARN_STREAM_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      "twist time_stamp is too late. Could not interpolate.");
     std::cout << "twist time_stamp is too late. Could not interpolate." << std::endl;
   }
 
   if (is_imu_time_stamp_is_too_late) {
-    // RCLCPP_WARN_STREAM_THROTTLE(
-    //   get_logger(), *get_clock(), 10000 /* ms */,
-    //   "imu time_stamp is too late. Could not interpolate.");
+    RCLCPP_WARN_STREAM_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
+      "imu time_stamp is too late. Could not interpolate.");
     std::cout << "imu time_stamp is too late. Could not interpolate." << std::endl;
   }
 }
 
+///////////////////////// Functions for different undistortion strategies /////////////////////////
+
 void Undistorter2D::initialize()
 {
-  x = 0.0f;
-  y = 0.0f;
-  theta = 0.0f;
+  x_ = 0.0f;
+  y_ = 0.0f;
+  theta_ = 0.0f;
 }
 
 void Undistorter3D::initialize()
 {
-  prev_transformation_matrix = Eigen::Matrix4f::Identity();
+  prev_transformation_matrix_ = Eigen::Matrix4f::Identity();
 }
 
 void Undistorter2D::setPointCloudTransform(
   const std::string & base_link_frame, const std::string & lidar_frame)
 {
-  if (is_pointcloud_transfrom_exist) {
+  if (is_pointcloud_transfrom_exist_) {
     return;
   }
 
   if (base_link_frame == lidar_frame) {
-    tf2_lidar_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
-    tf2_lidar_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
-    tf2_base_link_to_lidar = tf2_lidar_to_base_link;
-    is_pointcloud_transfrom_exist = true;
+    tf2_lidar_to_base_link_.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
+    tf2_lidar_to_base_link_.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
+    tf2_base_link_to_lidar_ = tf2_lidar_to_base_link_;
+    is_pointcloud_transfrom_exist_ = true;
   } else {
     try {
       const auto transform_msg =
-        tf2_buffer.lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
-      tf2::convert(transform_msg.transform, tf2_lidar_to_base_link);
-      tf2_base_link_to_lidar = tf2_lidar_to_base_link.inverse();
-      is_pointcloud_transfrom_exist = true;
-      is_pointcloud_transform_needed = true;
+        tf2_buffer_ptr_->lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
+      tf2::convert(transform_msg.transform, tf2_lidar_to_base_link_);
+      tf2_base_link_to_lidar_ = tf2_lidar_to_base_link_.inverse();
+      is_pointcloud_transfrom_exist_ = true;
+      is_pointcloud_transform_needed_ = true;
     } catch (const tf2::TransformException & ex) {
-      // RCLCPP_WARN(get_logger(), "%s", ex.what());
-      // RCLCPP_ERROR(
-      //   get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+      RCLCPP_WARN(node_->get_logger(), "%s", ex.what());
+      RCLCPP_ERROR(
+        node_->get_logger(), "Please publish TF %s to %s", base_link_frame.c_str(),
+        lidar_frame.c_str());
 
-      tf2_lidar_to_base_link.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
-      tf2_lidar_to_base_link.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
-      tf2_base_link_to_lidar = tf2_lidar_to_base_link;
+      tf2_lidar_to_base_link_.setOrigin(tf2::Vector3(0.0, 0.0, 0.0));
+      tf2_lidar_to_base_link_.setRotation(tf2::Quaternion(0.0, 0.0, 0.0, 1.0));
+      tf2_base_link_to_lidar_ = tf2_lidar_to_base_link_;
     }
   }
 }
@@ -312,34 +309,35 @@ void Undistorter2D::setPointCloudTransform(
 void Undistorter3D::setPointCloudTransform(
   const std::string & base_link_frame, const std::string & lidar_frame)
 {
-  if (is_pointcloud_transfrom_exist) {
+  if (is_pointcloud_transfrom_exist_) {
     return;
   }
 
   if (base_link_frame == lidar_frame) {
-    eigen_lidar_to_base_link = Eigen::Matrix4f::Identity();
-    eigen_base_link_to_lidar = Eigen::Matrix4f::Identity();
-    is_pointcloud_transfrom_exist = true;
+    eigen_lidar_to_base_link_ = Eigen::Matrix4f::Identity();
+    eigen_base_link_to_lidar_ = Eigen::Matrix4f::Identity();
+    is_pointcloud_transfrom_exist_ = true;
   }
 
   try {
     const auto transform_msg =
-      tf2_buffer.lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
-    eigen_lidar_to_base_link =
+      tf2_buffer_ptr_->lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
+    eigen_lidar_to_base_link_ =
       tf2::transformToEigen(transform_msg.transform).matrix().cast<float>();
-    eigen_base_link_to_lidar = eigen_lidar_to_base_link.inverse();
-    is_pointcloud_transfrom_exist = true;
-    is_pointcloud_transform_needed = true;
+    eigen_base_link_to_lidar_ = eigen_lidar_to_base_link_.inverse();
+    is_pointcloud_transfrom_exist_ = true;
+    is_pointcloud_transform_needed_ = true;
   } catch (const tf2::TransformException & ex) {
-    // RCLCPP_WARN(get_logger(), "%s", ex.what());
-    // RCLCPP_ERROR(
-    //   get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
-    eigen_lidar_to_base_link = Eigen::Matrix4f::Identity();
-    eigen_base_link_to_lidar = Eigen::Matrix4f::Identity();
+    RCLCPP_WARN(node_->get_logger(), "%s", ex.what());
+    RCLCPP_ERROR(
+      node_->get_logger(), "Please publish TF %s to %s", base_link_frame.c_str(),
+      lidar_frame.c_str());
+    eigen_lidar_to_base_link_ = Eigen::Matrix4f::Identity();
+    eigen_base_link_to_lidar_ = Eigen::Matrix4f::Identity();
   }
 }
 
-void Undistorter2D::implementation(
+void Undistorter2D::undistortPointImplemenation(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
@@ -357,34 +355,34 @@ void Undistorter2D::implementation(
   }
 
   // Undistort point
-  point_tf.setValue(*it_x, *it_y, *it_z);
+  point_tf_.setValue(*it_x, *it_y, *it_z);
 
-  if (is_pointcloud_transform_needed) {
-    point_tf = tf2_lidar_to_base_link * point_tf;
+  if (is_pointcloud_transform_needed_) {
+    point_tf_ = tf2_lidar_to_base_link_ * point_tf_;
   }
-  theta += w * time_offset;
-  baselink_quat.setValue(
-    0, 0, tier4_autoware_utils::sin(theta * 0.5f),
-    tier4_autoware_utils::cos(theta * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
+  theta_ += w * time_offset;
+  baselink_quat_.setValue(
+    0, 0, tier4_autoware_utils::sin(theta_ * 0.5f),
+    tier4_autoware_utils::cos(theta_ * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
   const float dis = v * time_offset;
-  x += dis * tier4_autoware_utils::cos(theta);
-  y += dis * tier4_autoware_utils::sin(theta);
+  x_ += dis * tier4_autoware_utils::cos(theta_);
+  y_ += dis * tier4_autoware_utils::sin(theta_);
 
-  baselink_tf_odom.setOrigin(tf2::Vector3(x, y, 0.0));
-  baselink_tf_odom.setRotation(baselink_quat);
+  baselink_tf_odom_.setOrigin(tf2::Vector3(x_, y_, 0.0));
+  baselink_tf_odom_.setRotation(baselink_quat_);
 
-  undistorted_point_tf = baselink_tf_odom * point_tf;
+  undistorted_point_tf_ = baselink_tf_odom_ * point_tf_;
 
-  if (is_pointcloud_transform_needed) {
-    undistorted_point_tf = tf2_base_link_to_lidar * undistorted_point_tf;
+  if (is_pointcloud_transform_needed_) {
+    undistorted_point_tf_ = tf2_base_link_to_lidar_ * undistorted_point_tf_;
   }
 
-  *it_x = static_cast<float>(undistorted_point_tf.getX());
-  *it_y = static_cast<float>(undistorted_point_tf.getY());
-  *it_z = static_cast<float>(undistorted_point_tf.getZ());
+  *it_x = static_cast<float>(undistorted_point_tf_.getX());
+  *it_y = static_cast<float>(undistorted_point_tf_.getY());
+  *it_z = static_cast<float>(undistorted_point_tf_.getZ());
 }
 
-void Undistorter3D::implementation(
+void Undistorter3D::undistortPointImplemenation(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
@@ -408,25 +406,25 @@ void Undistorter3D::implementation(
   }
 
   // Undistort point
-  point_eigen << *it_x, *it_y, *it_z, 1.0;
-  if (is_pointcloud_transform_needed) {
-    point_eigen = eigen_lidar_to_base_link * point_eigen;
+  point_eigen_ << *it_x, *it_y, *it_z, 1.0;
+  if (is_pointcloud_transform_needed_) {
+    point_eigen_ = eigen_lidar_to_base_link_ * point_eigen_;
   }
 
   Sophus::SE3f::Tangent twist(v_x_, v_y_, v_z_, w_x_, w_y_, w_z_);
   twist = twist * time_offset;
-  transformation_matrix = Sophus::SE3f::exp(twist).matrix();
-  transformation_matrix = transformation_matrix * prev_transformation_matrix;
-  undistorted_point_eigen = transformation_matrix * point_eigen;
+  transformation_matrix_ = Sophus::SE3f::exp(twist).matrix();
+  transformation_matrix_ = transformation_matrix_ * prev_transformation_matrix_;
+  undistorted_point_eigen_ = transformation_matrix_ * point_eigen_;
 
-  if (is_pointcloud_transform_needed) {
-    undistorted_point_eigen = eigen_base_link_to_lidar * undistorted_point_eigen;
+  if (is_pointcloud_transform_needed_) {
+    undistorted_point_eigen_ = eigen_base_link_to_lidar_ * undistorted_point_eigen_;
   }
-  *it_x = undistorted_point_eigen[0];
-  *it_y = undistorted_point_eigen[1];
-  *it_z = undistorted_point_eigen[2];
+  *it_x = undistorted_point_eigen_[0];
+  *it_y = undistorted_point_eigen_[1];
+  *it_z = undistorted_point_eigen_[2];
 
-  prev_transformation_matrix = transformation_matrix;
+  prev_transformation_matrix_ = transformation_matrix_;
 }
 
 }  // namespace pointcloud_preprocessor
