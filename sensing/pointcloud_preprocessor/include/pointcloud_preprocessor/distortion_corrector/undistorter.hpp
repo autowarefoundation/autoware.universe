@@ -35,6 +35,8 @@
 #endif
 
 #include <tf2_ros/buffer.h>
+#include <tf2_ros/buffer_interface.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <deque>
 #include <memory>
@@ -64,12 +66,16 @@ public:
   bool is_pointcloud_transfrom_exist_{false};
   bool is_imu_transfrom_exist_{false};
   rclcpp::Node * node_;
-  std::unique_ptr<tf2_ros::Buffer> tf2_buffer_ptr_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
-  explicit Undistorter(rclcpp::Node * node);
+  explicit Undistorter(rclcpp::Node * node)
+  : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
+  {
+  }
   void processTwistMessage(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
 

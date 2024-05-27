@@ -20,14 +20,6 @@
 
 namespace pointcloud_preprocessor
 {
-
-template <class Derived>
-Undistorter<Derived>::Undistorter(rclcpp::Node * node)
-{
-  node_ = node;
-  tf2_buffer_ptr_ = std::make_unique<tf2_ros::Buffer>(node->get_clock());
-}
-
 template <class Derived>
 void Undistorter<Derived>::processTwistMessage(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg)
@@ -77,7 +69,7 @@ void Undistorter<Derived>::getIMUTransformation(
   } else {
     try {
       const auto transform_msg =
-        tf2_buffer_ptr_->lookupTransform(base_link_frame, imu_frame, tf2::TimePointZero);
+        tf_buffer_.lookupTransform(base_link_frame, imu_frame, tf2::TimePointZero);
       tf2::convert(transform_msg.transform, tf2_imu_to_base_link);
       is_imu_transfrom_exist_ = true;
     } catch (const tf2::TransformException & ex) {
@@ -248,14 +240,12 @@ void Undistorter<Derived>::warnIfTimestampsTooLate(
     RCLCPP_WARN_STREAM_THROTTLE(
       node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
       "twist time_stamp is too late. Could not interpolate.");
-    std::cout << "twist time_stamp is too late. Could not interpolate." << std::endl;
   }
 
   if (is_imu_time_stamp_is_too_late) {
     RCLCPP_WARN_STREAM_THROTTLE(
       node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
       "imu time_stamp is too late. Could not interpolate.");
-    std::cout << "imu time_stamp is too late. Could not interpolate." << std::endl;
   }
 }
 
@@ -288,7 +278,7 @@ void Undistorter2D::setPointCloudTransform(
   } else {
     try {
       const auto transform_msg =
-        tf2_buffer_ptr_->lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
+        tf_buffer_.lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
       tf2::convert(transform_msg.transform, tf2_lidar_to_base_link_);
       tf2_base_link_to_lidar_ = tf2_lidar_to_base_link_.inverse();
       is_pointcloud_transfrom_exist_ = true;
@@ -321,7 +311,7 @@ void Undistorter3D::setPointCloudTransform(
 
   try {
     const auto transform_msg =
-      tf2_buffer_ptr_->lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
+      tf_buffer_.lookupTransform(base_link_frame, lidar_frame, tf2::TimePointZero);
     eigen_lidar_to_base_link_ =
       tf2::transformToEigen(transform_msg.transform).matrix().cast<float>();
     eigen_base_link_to_lidar_ = eigen_lidar_to_base_link_.inverse();
