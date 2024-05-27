@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This package detects target objects e.g., cars, trucks, bicycles, and pedestrians with semantic segmentation header including vehicle such as cars, trucks, buses and pedestrian, building, vegetation, road, sidewalk on a image based on [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) model.
+This package detects target objects e.g., cars, trucks, bicycles, and pedestrians and segment target objects such as cars, trucks, buses and pedestrian, building, vegetation, road, sidewalk on a image based on [YOLOX](https://github.com/Megvii-BaseDetection/YOLOX) model with multi-header structure.
 
 ## Inner-workings / Algorithms
 
@@ -58,16 +58,16 @@ Zheng Ge, Songtao Liu, Feng Wang, Zeming Li, Jian Sun, "YOLOX: Exceeding YOLO Se
 | `calibration_image_list_path`          | string | ""            | Path to a file which contains path to images. Those images will be used for int8 quantization.                                                                                                                                           |
 | `yolox_s_plus_opt_param_path`          | string | ""            | Path to parameter file                                                                                                                                                                                                                   |
 | `is_publish_color_mask`                | bool   | false         | If true, publish color mask for result visualization                                                                                                                                                                                     |
-| `is_roi_overlap_segment`               | bool   | true          | If true, overlay detected object roi onto semantic segmentation as roi higher priority                                                                                                                                                   |
+| `is_roi_overlap_segment`               | bool   | true          | If true, overlay detected object roi onto semantic segmentation to avoid over-filtering pointcloud especially small size objects                                                                                                         |
 | `overlap_roi_score_threshold`          | float  | 0.3           | minimum existence_probability of detected roi considered to replace segmentation                                                                                                                                                         |
-| `roi_overlay_segment_label.UNKNOWN`    | bool   | true          | If true, unknown objects roi will be overlay onto sematic segmentation mask.                                                                                                                                                             |
-| `roi_overlay_segment_label.CAR`        | bool   | true          | If true, car objects roi will be overlay onto sematic segmentation mask.                                                                                                                                                                 |
-| `roi_overlay_segment_label.TRUCK`      | bool   | true          | If true, truck objects roi will be overlay onto sematic segmentation mask.                                                                                                                                                               |
-| `roi_overlay_segment_label.BUS`        | bool   | true          | If true, bus objects roi will be overlay onto sematic segmentation mask.                                                                                                                                                                 |
-| `roi_overlay_segment_label.TRAILER`    | bool   | true          | If true, trailer objects roi will be overlay onto sematic segmentation mask.                                                                                                                                                             |
-| `roi_overlay_segment_label.MOTORCYCLE` | bool   | true          | If true, motorcycle objects roi will be overlay onto sematic segmentation mask.                                                                                                                                                          |
-| `roi_overlay_segment_label.BICYCLE`    | bool   | true          | If true, bicycle objects roi will be overlay onto sematic segmentation mask.                                                                                                                                                             |
-| `roi_overlay_segment_label.PEDESTRIAN` | bool   | true          | If true, pedestrian objects roi will be overlay onto sematic segmentation mask.                                                                                                                                                          |
+| `roi_overlay_segment_label.UNKNOWN`    | bool   | true          | If true, unknown objects roi will be overlaid onto sematic segmentation mask.                                                                                                                                                            |
+| `roi_overlay_segment_label.CAR`        | bool   | false         | If true, car objects roi will be overlaid onto sematic segmentation mask.                                                                                                                                                                |
+| `roi_overlay_segment_label.TRUCK`      | bool   | false         | If true, truck objects roi will be overlaid onto sematic segmentation mask.                                                                                                                                                              |
+| `roi_overlay_segment_label.BUS`        | bool   | false         | If true, bus objects roi will be overlaid onto sematic segmentation mask.                                                                                                                                                                |
+| `roi_overlay_segment_label.MOTORCYCLE` | bool   | true          | If true, motorcycle objects roi will be overlaid onto sematic segmentation mask.                                                                                                                                                         |
+| `roi_overlay_segment_label.BICYCLE`    | bool   | true          | If true, bicycle objects roi will be overlaid onto sematic segmentation mask.                                                                                                                                                            |
+| `roi_overlay_segment_label.PEDESTRIAN` | bool   | true          | If true, pedestrian objects roi will be overlaid onto sematic segmentation mask.                                                                                                                                                         |
+| `roi_overlay_segment_label.ANIMAL`     | bool   | true          | If true, animal objects roi will be overlaid onto sematic segmentation mask.                                                                                                                                                             |
 
 ## Assumptions / Known limits
 
@@ -85,28 +85,24 @@ those are labeled as `UNKNOWN`, while detected rectangles are drawn in the visua
 
 The semantic segmentation mask are gray image whose pixel is index of one of the followings:
 
-| index | semantic name |
-| ----- | ------------- |
-| 0     | road          |
-| 1     | sidewalk      |
-| 2     | building      |
-| 3     | wall          |
-| 4     | fence         |
-| 5     | pole          |
-| 6     | traffic_light |
-| 7     | traffic_sign  |
-| 8     | vegetation    |
-| 9     | terrain       |
-| 10    | sky           |
-| 11    | person        |
-| 12    | ride          |
-| 13    | car           |
-| 14    | truck         |
-| 15    | bus           |
-| 16    | train         |
-| 17    | motorcycle    |
-| 18    | bicycle       |
-| 19    | others        |
+| index | semantic name    |
+| ----- | ---------------- |
+| 0     | road             |
+| 1     | building         |
+| 2     | wall             |
+| 3     | obstacle         |
+| 4     | traffic_light    |
+| 5     | traffic_sign     |
+| 6     | person           |
+| 7     | vehicle          |
+| 8     | bike             |
+| 9     | road             |
+| 10    | sidewalk         |
+| 11    | roadPaint        |
+| 12    | curbstone        |
+| 13    | crosswalk_others |
+| 14    | vegetation       |
+| 15    | sky              |
 
 ## Onnx model
 
@@ -118,11 +114,12 @@ hence these parameters are ignored when users specify ONNX models including this
 
 This package accepts both `EfficientNMS_TRT` attached ONNXs and [models published from the official YOLOX repository](https://github.com/Megvii-BaseDetection/YOLOX/tree/main/demo/ONNXRuntime#download-onnx-models) (we referred to them as "plain" models).
 
-In addition to `yolox-tiny.onnx`, a custom model named `yolox-sPlus-opt.onnx` is either available.
-This model is based on YOLOX-s and tuned to perform more accurate detection with almost comparable execution speed with `yolox-tiny`.
+In addition to `yolox-tiny.onnx`, a custom model named `yolox-sPlus-opt-pseudoV2-T4-960x960-T4-seg16cls` is either available.
+This model is multi-header structure model which is based on YOLOX-s and tuned to perform more accurate detection with almost comparable execution speed with `yolox-tiny`.
 To get better results with this model, users are recommended to use some specific running arguments
 such as `precision:=int8`, `calibration_algorithm:=Entropy`, `clip_value:=6.0`.
 Users can refer `launch/yolox_sPlus_opt.launch.xml` to see how this model can be used.
+Beside detection result, this model also output image semantic segmentation result for pointcloud filtering purpose.
 
 All models are automatically converted to TensorRT format.
 These converted files will be saved in the same directory as specified ONNX files
