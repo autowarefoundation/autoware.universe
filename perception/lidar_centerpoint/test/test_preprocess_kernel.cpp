@@ -173,10 +173,10 @@ TEST_F(PreprocessKernelTest, BasicTest)
 
   ASSERT_EQ(cudaSuccess, code);
 
-  unsigned int num_pillars;
-  std::vector<float> voxel_features(point_feature_size_);
-  float num_voxels;
-  std::vector<int> voxel_coordinates(3);
+  unsigned int num_pillars{};
+  std::vector<float> voxel_features(point_feature_size_, 0.f);
+  float num_voxels{};
+  std::vector<int> voxel_coordinates(3, 0);
 
   CHECK_CUDA_ERROR(cudaMemcpy(
     &num_pillars, num_voxels_d_.get(), 1 * sizeof(unsigned int), cudaMemcpyDeviceToHost));
@@ -208,7 +208,7 @@ TEST_F(PreprocessKernelTest, BasicTest)
 
   ASSERT_EQ(cudaSuccess, code);
 
-  std::vector<float> encoder_features(config_encoder_in_feature_size_);
+  std::vector<float> encoder_features(config_encoder_in_feature_size_, 0.f);
 
   CHECK_CUDA_ERROR(cudaMemcpy(
     encoder_features.data(), encoder_in_features_d_.get(),
@@ -315,10 +315,10 @@ TEST_F(PreprocessKernelTest, VoxelOverflowTest)
 
   ASSERT_EQ(cudaSuccess, code);
 
-  unsigned int num_pillars;
-  std::vector<float> voxel_features(max_point_in_voxel_size_ * point_feature_size_);
-  float num_voxels;
-  std::vector<int> voxel_coordinates(3);
+  unsigned int num_pillars{};
+  std::vector<float> voxel_features(max_point_in_voxel_size_ * point_feature_size_, 0.f);
+  float num_voxels{};
+  std::vector<int> voxel_coordinates(3, 0);
 
   CHECK_CUDA_ERROR(cudaMemcpy(
     &num_pillars, num_voxels_d_.get(), 1 * sizeof(unsigned int), cudaMemcpyDeviceToHost));
@@ -353,7 +353,7 @@ TEST_F(PreprocessKernelTest, VoxelOverflowTest)
 
   ASSERT_EQ(cudaSuccess, code);
 
-  std::vector<float> encoder_features(max_point_in_voxel_size_ * config_encoder_in_feature_size_);
+  std::vector<float> encoder_features(max_point_in_voxel_size_ * config_encoder_in_feature_size_, 0.f);
 
   CHECK_CUDA_ERROR(cudaMemcpy(
     encoder_features.data(), encoder_in_features_d_.get(),

@@ -56,7 +56,7 @@ void PostprocessKernelTest::SetUp()
   head_out_rot_d_ = cuda::make_unique<float[]>(grid_xy_size * config_ptr_->head_out_rot_size_);
   head_out_vel_d_ = cuda::make_unique<float[]>(grid_xy_size * config_ptr_->head_out_vel_size_);
 
-  std::vector<float> heatmap_host_vector(grid_xy_size * config_ptr_->class_size_);
+  std::vector<float> heatmap_host_vector(grid_xy_size * config_ptr_->class_size_, 0.f);
   std::fill(heatmap_host_vector.begin(), heatmap_host_vector.end(), -1e6);
   cudaMemcpy(
     head_out_heatmap_d_.get(), heatmap_host_vector.data(),

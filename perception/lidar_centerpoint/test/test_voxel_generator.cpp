@@ -200,7 +200,7 @@ TEST_F(VoxelGeneratorTest, TwoFrames)
     EXPECT_EQ(static_cast<double>(0), points[i * config.point_feature_size_ + 3]);
   }
 
-  // Check valid points forthe oldest pointcloud
+  // Check valid points for the oldest pointcloud
   for (std::size_t i = 0; i < points_per_pointcloud_; ++i) {
     // There are tf conversions, so results are not numerically the same
     EXPECT_NEAR(
