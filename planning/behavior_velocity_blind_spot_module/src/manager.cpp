@@ -16,7 +16,6 @@
 
 #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <tier4_autoware_utils/ros/parameter.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
@@ -28,12 +27,10 @@
 
 namespace behavior_velocity_planner
 {
-using tier4_autoware_utils::getOrDeclareParameter;
 
 BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc"))
+    node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
 {
   const std::string ns(getModuleName());
   planner_param_.use_pass_judge_line =
@@ -66,17 +63,21 @@ void BlindSpotModuleManager::launchNewModules(
     }
 
     // Is turning lane?
-    const std::string turn_direction = ll.attributeOr("turn_direction", "else");
-    if (turn_direction != "left" && turn_direction != "right") {
+    const std::string turn_direction_str = ll.attributeOr("turn_direction", "else");
+    if (turn_direction_str != "left" && turn_direction_str != "right") {
       continue;
     }
+    const auto turn_direction = turn_direction_str == "left"
+                                  ? BlindSpotModule::TurnDirection::LEFT
+                                  : BlindSpotModule::TurnDirection::RIGHT;
 
     registerModule(std::make_shared<BlindSpotModule>(
-      module_id, lane_id, planner_data_, planner_param_, logger_.get_child("blind_spot_module"),
-      clock_));
+      module_id, lane_id, turn_direction, planner_data_, planner_param_,
+      logger_.get_child("blind_spot_module"), clock_));
     generateUUID(module_id);
     updateRTCStatus(
-      getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
+      getUUID(module_id), true, State::WAITING_FOR_EXECUTION, std::numeric_limits<double>::lowest(),
+      path.header.stamp);
   }
 }
 

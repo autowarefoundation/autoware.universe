@@ -86,6 +86,7 @@ public:
     NO_OBSTACLE = 1,
     PASS = 2,
     LOW_JERK = 3,
+    UNKNOWN = 4,
   };
 
   struct TextWithPosition
@@ -109,6 +110,7 @@ public:
   void pushPredictedVehiclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushPredictedObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
+  void pushEgoCutLine(const std::vector<geometry_msgs::msg::Point> & line);
   void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushMandatoryDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushTravelTimeTexts(
@@ -134,6 +136,7 @@ private:
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_debug_pointcloud_;
   std::vector<geometry_msgs::msg::Point> collision_points_;
   std::vector<geometry_msgs::msg::Point> nearest_collision_point_;
+  std::vector<geometry_msgs::msg::Point> ego_cut_line_;
   std::vector<geometry_msgs::msg::Pose> stop_pose_;
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_vehicle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_obstacle_polygons_;

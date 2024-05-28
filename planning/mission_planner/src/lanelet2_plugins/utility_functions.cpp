@@ -1,4 +1,4 @@
-// Copyright 2019 Autoware Foundation
+// Copyright 2019-2024 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,11 +21,6 @@
 #include <unordered_set>
 #include <utility>
 
-bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id)
-{
-  return set.find(id) != set.end();
-}
-
 tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
   tier4_autoware_utils::LinearRing2d footprint)
 {
@@ -40,14 +35,6 @@ tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
   return footprint_polygon;
 }
 
-void set_color(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a)
-{
-  cl->r = r;
-  cl->g = g;
-  cl->b = b;
-  cl->a = a;
-}
-
 void insert_marker_array(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2)
 {
@@ -55,7 +42,7 @@ void insert_marker_array(
 }
 
 lanelet::ConstLanelet combine_lanelets_with_shoulder(
-  const lanelet::ConstLanelets & lanelets, const lanelet::ConstLanelets & shoulder_lanelets)
+  const lanelet::ConstLanelets & lanelets, const route_handler::RouteHandler & route_handler)
 {
   lanelet::Points3d lefts;
   lanelet::Points3d rights;
@@ -64,50 +51,41 @@ lanelet::ConstLanelet combine_lanelets_with_shoulder(
   std::vector<uint64_t> right_bound_ids;
 
   for (const auto & llt : lanelets) {
-    if (llt.id() != 0) {
+    if (llt.id() != lanelet::InvalId) {
       left_bound_ids.push_back(llt.leftBound().id());
       right_bound_ids.push_back(llt.rightBound().id());
     }
   }
 
+  // lambda to add bound to target_bound
+  const auto add_bound = [](const auto & bound, auto & target_bound) {
+    std::transform(
+      bound.begin(), bound.end(), std::back_inserter(target_bound),
+      [](const auto & pt) { return lanelet::Point3d(pt); });
+  };
   for (const auto & llt : lanelets) {
-    // lambda to check if shoulder lane which share left bound with lanelets exist
-    const auto find_bound_shared_shoulder =
-      [&shoulder_lanelets](const auto & lanelet_bound, const auto & get_shoulder_bound) {
-        return std::find_if(
-          shoulder_lanelets.begin(), shoulder_lanelets.end(),
-          [&lanelet_bound, &get_shoulder_bound](const auto & shoulder_llt) {
-            return lanelet_bound.id() == get_shoulder_bound(shoulder_llt).id();
-          });
-      };
-
-    // lambda to add bound to target_bound
-    const auto add_bound = [](const auto & bound, auto & target_bound) {
-      std::transform(
-        bound.begin(), bound.end(), std::back_inserter(target_bound),
-        [](const auto & pt) { return lanelet::Point3d(pt); });
-    };
-
     // check if shoulder lanelets which has RIGHT bound same to LEFT bound of lanelet exist
-    const auto left_shared_shoulder_it = find_bound_shared_shoulder(
-      llt.leftBound(), [](const auto & shoulder_llt) { return shoulder_llt.rightBound(); });
-    if (left_shared_shoulder_it != shoulder_lanelets.end()) {
+    const auto left_shared_shoulder = route_handler.getLeftShoulderLanelet(llt);
+    if (left_shared_shoulder) {
       // if exist, add left bound of SHOULDER lanelet to lefts
-      add_bound(left_shared_shoulder_it->leftBound(), lefts);
+      add_bound(left_shared_shoulder->leftBound(), lefts);
     } else if (
       // if not exist, add left bound of lanelet to lefts
+      // if the **left** of this lanelet does not match any of the **right** bounds of `lanelets`,
+      // then its left bound constitutes the left boundary of the entire merged lanelet
       std::count(right_bound_ids.begin(), right_bound_ids.end(), llt.leftBound().id()) < 1) {
       add_bound(llt.leftBound(), lefts);
     }
 
     // check if shoulder lanelets which has LEFT bound same to RIGHT bound of lanelet exist
-    const auto right_shared_shoulder_it = find_bound_shared_shoulder(
-      llt.rightBound(), [](const auto & shoulder_llt) { return shoulder_llt.leftBound(); });
-    if (right_shared_shoulder_it != shoulder_lanelets.end()) {
+    const auto right_shared_shoulder = route_handler.getRightShoulderLanelet(llt);
+    if (right_shared_shoulder) {
       // if exist, add right bound of SHOULDER lanelet to rights
-      add_bound(right_shared_shoulder_it->rightBound(), rights);
+      add_bound(right_shared_shoulder->rightBound(), rights);
     } else if (
       // if not exist, add right bound of lanelet to rights
+      // if the **right** of this lanelet does not match any of the **left** bounds of `lanelets`,
+      // then its right bound constitutes the right boundary of the entire merged lanelet
       std::count(left_bound_ids.begin(), left_bound_ids.end(), llt.rightBound().id()) < 1) {
       add_bound(llt.rightBound(), rights);
     }

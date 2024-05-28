@@ -16,7 +16,7 @@ jobs:
   build-and-test-differential:
     needs: prevent-no-label-execution
     if: ${{ needs.prevent-no-label-execution.outputs.run == 'true' }}
-    runs-on: [self-hosted, linux, X64]
+    runs-on: ubuntu-latest
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
@@ -28,13 +28,16 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
+            container: ghcr.io/autowarefoundation/autoware-openadk:latest-prebuilt
             build-depends-repos: build_depends.repos
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Show disk space before the tasks
+        run: df -h
 
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
@@ -69,15 +72,20 @@ jobs:
           verbose: true
           flags: differential
 
+      - name: Show disk space after the tasks
+        run: df -h
+
   clang-tidy-differential:
-    runs-on: [self-hosted, linux, X64]
-    container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
-    needs: build-and-test-differential
+    runs-on: ubuntu-latest
+    container: ghcr.io/autowarefoundation/autoware-openadk:latest-prebuilt-cuda
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Show disk space before the tasks
+        run: df -h
 
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1

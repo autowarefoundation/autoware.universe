@@ -73,6 +73,8 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
 
 RunOutDebug::RunOutDebug(rclcpp::Node & node) : node_(node)
 {
+  accel_reason_ = AccelReason::UNKNOWN;
+
   pub_debug_values_ =
     node.create_publisher<Float32MultiArrayStamped>("~/debug/run_out/debug_values", 1);
   pub_accel_reason_ = node.create_publisher<Int32Stamped>("~/debug/run_out/accel_reason", 1);
@@ -84,6 +86,14 @@ void RunOutDebug::pushCollisionPoints(const geometry_msgs::msg::Point & point)
 {
   const auto point_with_height = createPoint(point.x, point.y, height_);
   collision_points_.push_back(point_with_height);
+}
+
+void RunOutDebug::pushEgoCutLine(const std::vector<geometry_msgs::msg::Point> & line)
+{
+  for (const auto & point : line) {
+    const auto point_with_height = createPoint(point.x, point.y, height_);
+    ego_cut_line_.push_back(point_with_height);
+  }
 }
 
 void RunOutDebug::pushCollisionPoints(const std::vector<geometry_msgs::msg::Point> & points)
@@ -160,6 +170,7 @@ void RunOutDebug::clearDebugMarker()
   predicted_obstacle_polygons_.clear();
   collision_obstacle_polygons_.clear();
   travel_time_texts_.clear();
+  ego_cut_line_.clear();
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
@@ -263,6 +274,16 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
         mandatory_detection_area_polygons_, current_time, "mandatory_detection_area_polygons",
         createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999), height_),
       &msg);
+  }
+
+  if (!ego_cut_line_.empty()) {
+    auto marker = createDefaultMarker(
+      "map", current_time, "ego_cut_line", 0, visualization_msgs::msg::Marker::LINE_LIST,
+      createMarkerScale(0.2, 0.2, 0.2), createMarkerColor(0.7, 0.0, 0.7, 0.999));
+    for (const auto & p : ego_cut_line_) {
+      marker.points.push_back(p);
+    }
+    msg.markers.push_back(marker);
   }
 
   if (!travel_time_texts_.empty()) {

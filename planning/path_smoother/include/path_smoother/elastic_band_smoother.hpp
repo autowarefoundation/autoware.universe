@@ -23,6 +23,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <optional>
@@ -36,7 +38,7 @@ class ElasticBandSmoother : public rclcpp::Node
 public:
   explicit ElasticBandSmoother(const rclcpp::NodeOptions & node_options);
 
-  // NOTE: This is for the static_centerline_optimizer package which utilizes the following
+  // NOTE: This is for the static_centerline_generator package which utilizes the following
   // instance.
   std::shared_ptr<EBPathSmoother> getElasticBandSmoother() const { return eb_path_smoother_ptr_; }
 
@@ -112,6 +114,8 @@ private:
     const std::vector<TrajectoryPoint> & optimized_points) const;
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace path_smoother
 
