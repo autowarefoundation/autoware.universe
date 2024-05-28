@@ -50,7 +50,7 @@ class Operator:
             }
         }
     
-    def pub_ekf_pose_pthread(self,dora_event,send_output):
+    def pub_ekf_pose_pthread(self,dora_event,send_output,dora_input):
             now = datetime.now()# 获取当前时间
             timestamp_ms = round(now.timestamp() * 1000)# 转换为毫秒格式
             # print(timestamp_ms)# 打印时间戳（毫秒）
@@ -85,7 +85,7 @@ class Operator:
             # 假设 json_string 是收到的 JSON 数据字符串
             json_dict = json.loads(json_string)
             # 从 JSON 数据中提取关键字
-            self.pose["header"]["frame_id"] = "gnss"
+            self.pose["header"]["frame_id"] = json_dict["frame_id"]
             # pose["header"]["stamp"]["sec"] = json_dict["sec"]
             # pose["header"]["stamp"]["nanosec"] = json_dict["nanosec"]
             self.pose["position"]["x"] = np.float64(json_dict["x"])
@@ -97,7 +97,7 @@ class Operator:
             self.flage1=1
             now = datetime.now()# 获取当前时间
             timestamp_ms = round(now.timestamp() * 1000)# 转换为毫秒格式
-            print("DoraNavSatFix time: ",timestamp_ms," rx-y-z:  ",self.pose["position"]["x"],"  ",self.pose["position"]["y"],"  ",self.pose["position"]["z"])       
+            print("DoraNavSatFix seq:", json_dict["seq"]," time: ",timestamp_ms," rx-y-z:  ",self.pose["position"]["x"],"  ",self.pose["position"]["y"],"  ",self.pose["position"]["z"])       
         elif "DoraQuaternionStamped" == dora_input["id"]:
             #print("DoraQuaternionStamped")
             data = dora_input["value"].to_pylist()
@@ -119,10 +119,16 @@ class Operator:
             q[1] =  self.pose["orientation"]["x"]
             q[2] =  self.pose["orientation"]["y"]
             q[3] =  self.pose["orientation"]["z"]
+
+            q[0] = 0.9586
+            q[1] = -0.02
+            q[2] = -0.0377
+            q[3] = 0.0702
+ 
             [Roll ,Pitch ,Heading]= euler_from_quaternion(q)
             now = datetime.now()# 获取当前时间
             timestamp_ms = round(now.timestamp() * 1000)# 转换为毫秒格式
-            print("DoraQuaternionStamped time: ",timestamp_ms," roll-pitch-yaw:  ",Roll*57.3,"  ",Pitch*57.3,"  ",Heading*57.3)            
+            print("QuaternionStamped seq:",json_dict["seq"]," time: ",timestamp_ms," roll-pitch-yaw:  ",Roll,"  ",Pitch,"  ",Heading)            
 
             self.pose["orientation"]["Roll"] = np.float64(Roll)
             self.pose["orientation"]["Pitch"] = np.float64(Pitch)

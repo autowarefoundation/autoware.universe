@@ -8,6 +8,7 @@ struct Header{
     // 使用与 Python 类中相同的数据类型和字段名称
     std::string frame_id;
     std::string stamp;
+    uint32_t seq;
     int sec;
     int nanosec;
 };

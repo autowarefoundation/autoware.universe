@@ -98,6 +98,11 @@ namespace gnss_poser
       // 创建一个空的 JSON 对象
       json j;
       // 添加数据到 JSON 对象
+      j["frame_id"] = nav_sat_fix_msg_ptr.header.frame_id;
+      j["seq"] = nav_sat_fix_msg_ptr.header.seq ;
+      j["sec"] = nav_sat_fix_msg_ptr.header.sec;
+      j["nanosec"] = nav_sat_fix_msg_ptr.header.nanosec;
+
       j["x"] = position.x;
       j["y"] = position.y;
       j["z"] = position.z;
@@ -249,6 +254,7 @@ int run(void *dora_context)
                 
                 // 获取数据
                 navSatFix.header.frame_id = j["frame_id"];
+                navSatFix.header.seq = j["seq"];
                 navSatFix.header.sec = j["sec"];
                 navSatFix.header.nanosec = j["nanosec"];
                 navSatFix.latitude = j["latitude"].get<double>();
@@ -268,8 +274,8 @@ int run(void *dora_context)
                 gettimeofday(&tv, NULL);
                 
                 printf("\nNavSatFix event,   cnt_run: %d  time: %ld,%f ms \n",cnt_run,tv.tv_sec , tv.tv_usec/1000.0f);
-                cout<<"seq: "<<j["seq"]<<endl;
-                
+                cout<<"seq: "<<navSatFix.header.seq<<endl;
+
                 GnssPoser.callbackNavSatFix(navSatFix);
               } 
               catch (const json::parse_error& e) 

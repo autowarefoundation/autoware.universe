@@ -40,10 +40,10 @@ nodes:
               DoraNavSatFix: gnss_poser/DoraNavSatFix
 ##############################################################################################
   - id: gnss_ekf
-    custom:
-      source: build/gnss_ekf
-    # operator:
-    #   python: ../../localization/ekf_localizer/src/gnss_ekf.py
+    # custom:
+    #   source: build/gnss_ekf
+    operator:
+      python: ../../localization/ekf_localizer/src/gnss_ekf.py
       inputs:
               DoraNavSatFix: gnss_poser/DoraNavSatFix
               DoraQuaternionStamped: gnss/DoraQuaternionStamped
@@ -56,8 +56,4 @@ nodes:
       python: src/ekf_xyz_to_ros2.py
       inputs:
               DoraNavSatFix: gnss_ekf/DoraGnssPose
-
-
-
-
 

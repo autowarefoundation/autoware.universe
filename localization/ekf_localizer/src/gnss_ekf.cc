@@ -9,7 +9,7 @@ extern "C"
 #include <cmath>
 #include <sys/time.h>
 #include <mutex>
-#include <Eigen/Dense>
+
 #include <cstdint>
 #include <memory>
 #include <string.h>
@@ -17,6 +17,11 @@ extern "C"
 #include <string.h>
 #include <thread>
 #include <chrono>
+
+#include "ekf_msg.hpp"
+#include <Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -28,12 +33,15 @@ using namespace std;
 json j_pose;
 uint32_t count_1=0,count_2;
 
+GNSS gnss_measure; //获取gnss输入数据
+IMU imu_measure; //获取 imu 输入数据
+
 void* EKF_fusion_pthread(void *dora_context)
 {
   uint32_t count=0;
   const int rate = 50;   // 设定频率为 xx HZ
   const chrono::milliseconds interval((int)(1000/rate));
-  std::mutex mtx; // 
+ 
   while(true)
   {
       count++;
@@ -48,9 +56,41 @@ void* EKF_fusion_pthread(void *dora_context)
       // std::cout << "y: " << j["y"] << std::endl;
       // std::cout << "z: " << j["z"] << std::endl;
       // 将 JSON 对象序列化为字符串
-      mtx.lock();
+      
+          
+      j_pose["header"]["frame_id"] = gnss_measure.header.frame_id;
+      j_pose["header"]["stamp"]["sec"] = gnss_measure.header.sec;
+      j_pose["header"]["stamp"]["nanosec"] = gnss_measure.header.nanosec;
+      j_pose["position"]["x"] = gnss_measure.x;
+      j_pose["position"]["y"] = gnss_measure.y;
+      j_pose["position"]["z"] = gnss_measure.z;   
+
+      j_pose["orientation"]["x"] = imu_measure.qx;
+      j_pose["orientation"]["y"] = imu_measure.qy;
+      j_pose["orientation"]["z"] = imu_measure.qz;
+      j_pose["orientation"]["w"] = imu_measure.qw;
+
+      Eigen::Quaterniond q;
+      q.w() = imu_measure.qw;
+      q.x() = imu_measure.qx;
+      q.y() = imu_measure.qy;
+      q.z() = imu_measure.qz;
+
+      q.w() = 0.9586;
+      q.x() = -0.02;
+      q.y() = -0.0377;
+      q.z() = 0.0702;
+
+      Eigen::Matrix3d R = q.toRotationMatrix();
+
+      Eigen::Vector3d eulerAngle = R.eulerAngles(2,1,0);
+      cout << "roll(x) pitch(y) yaw(z) = " << eulerAngle.transpose() << endl;
+  
+      // j_pose["orientation"]["Roll"] = ea(0);
+      // j_pose["orientation"]["Pitch"] = ea(1);
+      // j_pose["orientation"]["Heading"] = ea(2);
       std::string json_string = j_pose.dump(4); // 参数 4 表示缩进宽度
-      mtx.unlock();
+      
       // 将字符串转换为 char* 类型
       char *c_json_string = new char[json_string.length() + 1];
       strcpy(c_json_string, json_string.c_str());
@@ -68,9 +108,10 @@ void* EKF_fusion_pthread(void *dora_context)
 }
 int run(void *dora_context)
 {
-    
+    std::mutex mtx_DoraNavSatFix,mtx_DoraQuaternionStamped; // mtx.unlock();
     while(true)
     {
+         
         void *event = dora_next_event(dora_context);
         
         if (event == NULL)
@@ -108,26 +149,47 @@ int run(void *dora_context)
             {
               count_1++;
               printf("NavSatFix event: cnt: %d\n",count_1);
+              cout<<" seq"<<j["seq"]<<endl;
               //std::cout << "<----print---->" <<j<< std::endl;
-              j_pose["position"]["x"] = j["x"];
-              j_pose["position"]["y"] = j["y"];
-              j_pose["position"]["z"] = j["z"];
+              mtx_DoraNavSatFix.lock();
+              //gnss_measure.header.frame_id = j["frame_id"];
+              gnss_measure.header.seq = j["seq"];
+              gnss_measure.header.sec = j["sec"];
+              gnss_measure.header.nanosec = j["nanosec"];
+              gnss_measure.x = j["x"];
+              gnss_measure.y = j["y"];
+              gnss_measure.z = j["z"];
+              mtx_DoraNavSatFix.unlock();
+              // j_pose["position"]["x"] = j["x"];
+              // j_pose["position"]["y"] = j["y"];
+              // j_pose["position"]["z"] = j["z"];
             }
             else if(strcmp(id, "DoraQuaternionStamped") == 0)
             {
               count_2 ++;
               printf("QuaternionStamped event: cnt: %d\n",count_2);
+              cout<<" seq"<<j["seq"]<<endl;
                
               //std::cout << "<----print---->" <<j << std::endl; 
+              mtx_DoraQuaternionStamped.lock();
+              //imu_measure.header.frame_id = j["frame_id"];
+              imu_measure.header.seq = j["seq"];
+              imu_measure.header.sec = j["sec"];
+              imu_measure.header.nanosec = j["nanosec"];
+              imu_measure.qx = j["x"];
+              imu_measure.qy = j["y"];
+              imu_measure.qz = j["z"];
+              imu_measure.qw = j["z"];
+              mtx_DoraQuaternionStamped.unlock();
 
-              j_pose["header"]["frame_id"] = j["frame_id"];
-              j_pose["header"]["stamp"]["sec"] = j["sec"];
-              j_pose["header"]["stamp"]["nanosec"] = j["nanosec"];
+              // j_pose["header"]["frame_id"] = j["frame_id"];
+              // j_pose["header"]["stamp"]["sec"] = j["sec"];
+              // j_pose["header"]["stamp"]["nanosec"] = j["nanosec"];
 
-              j_pose["orientation"]["x"] = j["x"];
-              j_pose["orientation"]["y"] = j["y"];
-              j_pose["orientation"]["z"] = j["z"];
-              j_pose["orientation"]["w"] = j["w"];
+              // j_pose["orientation"]["x"] = j["x"];
+              // j_pose["orientation"]["y"] = j["y"];
+              // j_pose["orientation"]["z"] = j["z"];
+              // j_pose["orientation"]["w"] = j["w"];
             }
       }
       else if (ty == DoraEventType_Stop)
