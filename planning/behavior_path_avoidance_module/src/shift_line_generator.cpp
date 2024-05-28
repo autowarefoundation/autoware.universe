@@ -17,16 +17,8 @@
 #include "behavior_path_avoidance_module/utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
-
-#include <tier4_planning_msgs/msg/detail/avoidance_debug_factor__struct.hpp>
-
 namespace behavior_path_planner::utils::avoidance
 {
-
-using tier4_autoware_utils::generateUUID;
-using tier4_autoware_utils::getPoint;
-using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 
 namespace
 {
@@ -123,7 +115,6 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 {
   // To be consistent with changes in the ego position, the current shift length is considered.
   const auto current_ego_shift = helper_->getEgoShift();
-  const auto & base_link2rear = data_->parameters.base_link2rear;
 
   // Calculate feasible shift length
   const auto get_shift_profile =
@@ -140,13 +131,10 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     // calculate remaining distance.
     const auto prepare_distance = helper_->getNominalPrepareDistance();
-    const auto & additional_buffer_longitudinal =
-      object_parameter.use_conservative_buffer_longitudinal ? data_->parameters.base_link2front
-                                                            : 0.0;
-    const auto constant = object_parameter.safety_buffer_longitudinal +
-                          additional_buffer_longitudinal + prepare_distance;
-    const auto has_enough_distance = object.longitudinal > constant + nominal_avoid_distance;
-    const auto remaining_distance = object.longitudinal - constant;
+    const auto constant_distance = helper_->getFrontConstantDistance(object);
+    const auto has_enough_distance =
+      object.longitudinal > constant_distance + prepare_distance + nominal_avoid_distance;
+    const auto remaining_distance = object.longitudinal - constant_distance - prepare_distance;
     const auto avoidance_distance =
       has_enough_distance ? nominal_avoid_distance : remaining_distance;
 
@@ -185,32 +173,39 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // prepare distance is not enough. unavoidable.
-    if (remaining_distance < 1e-3) {
-      object.reason = AvoidanceDebugFactor::REMAINING_DISTANCE_LESS_THAN_ZERO;
+    if (avoidance_distance < 1e-3) {
+      object.info = ObjectInfo::INSUFFICIENT_LONGITUDINAL_DISTANCE;
       return std::nullopt;
     }
 
     // calculate lateral jerk.
     const auto required_jerk = PathShifter::calcJerkFromLatLonDistance(
-      avoiding_shift, remaining_distance, helper_->getAvoidanceEgoSpeed());
+      avoiding_shift, avoidance_distance, helper_->getAvoidanceEgoSpeed());
 
     // relax lateral jerk limit. avoidable.
     if (required_jerk < helper_->getLateralMaxJerkLimit()) {
       return std::make_pair(desire_shift_length, avoidance_distance);
     }
 
+    constexpr double LON_DIST_BUFFER = 1e-3;
+
     // avoidance distance is not enough. unavoidable.
     if (!isBestEffort(parameters_->policy_deceleration)) {
-      object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
-      return std::nullopt;
+      if (avoidance_distance < helper_->getMinAvoidanceDistance(avoiding_shift) + LON_DIST_BUFFER) {
+        object.info = ObjectInfo::INSUFFICIENT_LONGITUDINAL_DISTANCE;
+        return std::nullopt;
+      } else {
+        object.info = ObjectInfo::NEED_DECELERATION;
+        return std::nullopt;
+      }
     }
 
     // output avoidance path under lateral jerk constraints.
     const auto feasible_relative_shift_length = PathShifter::calcLateralDistFromJerk(
-      remaining_distance, helper_->getLateralMaxJerkLimit(), helper_->getAvoidanceEgoSpeed());
+      avoidance_distance, helper_->getLateralMaxJerkLimit(), helper_->getAvoidanceEgoSpeed());
 
     if (std::abs(feasible_relative_shift_length) < parameters_->lateral_execution_threshold) {
-      object.reason = "LessThanExecutionThreshold";
+      object.info = ObjectInfo::LESS_THAN_EXECUTION_THRESHOLD;
       return std::nullopt;
     }
 
@@ -218,16 +213,28 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       desire_shift_length > 0.0 ? feasible_relative_shift_length + current_ego_shift
                                 : -1.0 * feasible_relative_shift_length + current_ego_shift;
 
-    const auto infeasible =
-      std::abs(feasible_shift_length - object.overhang_dist) <
-      0.5 * data_->parameters.vehicle_width + object_parameter.safety_buffer_lateral;
-    if (infeasible) {
-      RCLCPP_DEBUG(rclcpp::get_logger(""), "feasible shift length is not enough to avoid. ");
-      object.reason = AvoidanceDebugFactor::TOO_LARGE_JERK;
+    if (
+      avoidance_distance <
+      helper_->getMinAvoidanceDistance(feasible_shift_length) + LON_DIST_BUFFER) {
+      object.info = ObjectInfo::INSUFFICIENT_LONGITUDINAL_DISTANCE;
       return std::nullopt;
     }
 
-    return std::make_pair(feasible_shift_length, avoidance_distance);
+    const double LAT_DIST_BUFFER = desire_shift_length > 0.0 ? 1e-3 : -1e-3;
+
+    const auto lateral_hard_margin = object.is_parked
+                                       ? object_parameter.lateral_hard_margin_for_parked_vehicle
+                                       : object_parameter.lateral_hard_margin;
+    const auto infeasible =
+      std::abs(feasible_shift_length - object.overhang_points.front().first) - LAT_DIST_BUFFER <
+      0.5 * data_->parameters.vehicle_width + lateral_hard_margin;
+    if (infeasible) {
+      RCLCPP_DEBUG(rclcpp::get_logger(""), "feasible shift length is not enough to avoid. ");
+      object.info = ObjectInfo::NEED_DECELERATION;
+      return std::nullopt;
+    }
+
+    return std::make_pair(feasible_shift_length - LAT_DIST_BUFFER, avoidance_distance);
   };
 
   const auto is_forward_object = [](const auto & object) { return object.longitudinal > 0.0; };
@@ -239,7 +246,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
   AvoidOutlines outlines;
   for (auto & o : data.target_objects) {
     if (!o.avoid_margin.has_value()) {
-      o.reason = AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN;
+      o.info = ObjectInfo::INSUFFICIENT_DRIVABLE_SPACE;
       if (o.avoid_required && is_forward_object(o)) {
         break;
       } else {
@@ -251,7 +258,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     const auto desire_shift_length =
       helper_->getShiftLength(o, is_object_on_right, o.avoid_margin.value());
     if (utils::avoidance::isSameDirectionShift(is_object_on_right, desire_shift_length)) {
-      o.reason = AvoidanceDebugFactor::SAME_DIRECTION_SHIFT;
+      o.info = ObjectInfo::SAME_DIRECTION_SHIFT;
       if (o.avoid_required && is_forward_object(o)) {
         break;
       } else {
@@ -259,11 +266,8 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       }
     }
 
-    // use each object param
-    const auto object_type = utils::getHighestProbLabel(o.object.classification);
-    const auto object_parameter = parameters_->object_parameters.at(object_type);
+    // calculate feasible shift length based on behavior policy
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
-
     if (!feasible_shift_profile.has_value()) {
       if (o.avoid_required && is_forward_object(o)) {
         break;
@@ -278,12 +282,8 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     AvoidLine al_avoid;
     {
-      const auto & additional_buffer_longitudinal =
-        object_parameter.use_conservative_buffer_longitudinal ? data_->parameters.base_link2front
-                                                              : 0.0;
-      const auto offset =
-        object_parameter.safety_buffer_longitudinal + additional_buffer_longitudinal;
-      const auto to_shift_end = o.longitudinal - offset;
+      const auto constant_distance = helper_->getFrontConstantDistance(o);
+      const auto to_shift_end = o.longitudinal - constant_distance;
       const auto path_front_to_ego = data.arclength_from_ego.at(data.ego_closest_path_index);
 
       // start point (use previous linear shift length as start shift length.)
@@ -319,8 +319,8 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
     AvoidLine al_return;
     {
-      const auto offset = object_parameter.safety_buffer_longitudinal + base_link2rear + o.length;
-      const auto to_shift_start = o.longitudinal + offset;
+      const auto constant_distance = helper_->getRearConstantDistance(o);
+      const auto to_shift_start = o.longitudinal + constant_distance;
 
       // start point
       al_return.start_shift_length = feasible_shift_profile.value().first;
@@ -369,7 +369,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     } else if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
       outlines.emplace_back(al_avoid, al_return);
     } else {
-      o.reason = "InvalidShiftLine";
+      o.info = ObjectInfo::INVALID_SHIFT_LINE;
       continue;
     }
 
@@ -863,7 +863,7 @@ AvoidLineArray ShiftLineGenerator::applyTrimProcess(
   // - Combine avoid points that have almost same gradient.
   // this is to remove the noise.
   {
-    const auto THRESHOLD = parameters_->same_grad_filter_1_threshold;
+    const auto THRESHOLD = parameters_->th_similar_grad_1;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
     debug.step3_grad_filtered_1st = sl_array_trimmed;
   }
@@ -871,7 +871,7 @@ AvoidLineArray ShiftLineGenerator::applyTrimProcess(
   // - Quantize the shift length to reduce the shift point noise
   // This is to remove the noise coming from detection accuracy, interpolation, resampling, etc.
   {
-    const auto THRESHOLD = parameters_->quantize_filter_threshold;
+    const auto THRESHOLD = parameters_->quantize_size;
     applyQuantizeProcess(sl_array_trimmed, THRESHOLD);
     debug.step3_quantize_filtered = sl_array_trimmed;
   }
@@ -885,14 +885,14 @@ AvoidLineArray ShiftLineGenerator::applyTrimProcess(
 
   // - Combine avoid points that have almost same gradient (again)
   {
-    const auto THRESHOLD = parameters_->same_grad_filter_2_threshold;
+    const auto THRESHOLD = parameters_->th_similar_grad_2;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
     debug.step3_grad_filtered_2nd = sl_array_trimmed;
   }
 
   // - Combine avoid points that have almost same gradient (again)
   {
-    const auto THRESHOLD = parameters_->same_grad_filter_3_threshold;
+    const auto THRESHOLD = parameters_->th_similar_grad_3;
     applySimilarGradFilter(sl_array_trimmed, THRESHOLD);
     debug.step3_grad_filtered_3rd = sl_array_trimmed;
   }
@@ -929,7 +929,7 @@ void ShiftLineGenerator::applySmallShiftFilter(
       continue;
     }
 
-    if (s.start_longitudinal + 1e-3 < helper_->getMinimumPrepareDistance()) {
+    if (!helper_->isEnoughPrepareDistance(s.start_longitudinal)) {
       continue;
     }
 
@@ -1173,13 +1173,13 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     std::max(nominal_prepare_distance - last_sl_distance, 0.0);
 
   double prepare_distance_scaled = std::max(
-    helper_->getMinimumPrepareDistance(), std::max(nominal_prepare_distance, last_sl_distance));
+    helper_->getNominalPrepareDistance(), std::max(nominal_prepare_distance, last_sl_distance));
   double avoid_distance_scaled = nominal_avoid_distance;
   if (remaining_distance < prepare_distance_scaled + avoid_distance_scaled) {
     const auto scale = (remaining_distance - last_sl_distance) /
                        std::max(nominal_avoid_distance + variable_prepare_distance, 0.1);
     prepare_distance_scaled = std::max(
-      helper_->getMinimumPrepareDistance(), last_sl_distance + scale * nominal_prepare_distance);
+      helper_->getNominalPrepareDistance(), last_sl_distance + scale * nominal_prepare_distance);
     avoid_distance_scaled *= scale;
   }
 
@@ -1292,7 +1292,7 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
     const auto & candidate = shift_lines.at(i);
 
     // prevent sudden steering.
-    if (candidate.start_longitudinal + 1e-3 < helper_->getMinimumPrepareDistance()) {
+    if (!helper_->isEnoughPrepareDistance(candidate.start_longitudinal)) {
       break;
     }
 

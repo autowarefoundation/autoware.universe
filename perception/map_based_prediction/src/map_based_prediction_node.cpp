@@ -585,6 +585,52 @@ bool hasPotentialToReach(
   return false;
 }
 
+template <typename T>
+std::unordered_set<std::string> removeOldObjectsHistory(
+  const double current_time, const double buffer_time,
+  std::unordered_map<std::string, std::deque<T>> & target_objects)
+{
+  std::unordered_set<std::string> invalid_object_id;
+  for (auto iter = target_objects.begin(); iter != target_objects.end(); ++iter) {
+    const std::string object_id = iter->first;
+    std::deque<T> & object_data = iter->second;
+
+    // If object data is empty, we are going to delete the buffer for the obstacle
+    if (object_data.empty()) {
+      invalid_object_id.insert(object_id);
+      continue;
+    }
+
+    const double latest_object_time = rclcpp::Time(object_data.back().header.stamp).seconds();
+
+    // Delete Old Objects
+    if (current_time - latest_object_time > buffer_time) {
+      invalid_object_id.insert(object_id);
+      continue;
+    }
+
+    // Delete old information
+    while (!object_data.empty()) {
+      const double post_object_time = rclcpp::Time(object_data.front().header.stamp).seconds();
+      if (current_time - post_object_time <= buffer_time) {
+        break;
+      }
+      object_data.pop_front();
+    }
+
+    if (object_data.empty()) {
+      invalid_object_id.insert(object_id);
+      continue;
+    }
+  }
+
+  for (const auto & key : invalid_object_id) {
+    target_objects.erase(key);
+  }
+
+  return invalid_object_id;
+}
+
 /**
  * @brief change label for prediction
  *
@@ -644,14 +690,6 @@ ObjectClassification::_label_type changeLabelForPrediction(
     default:
       return label;
   }
-}
-
-StringStamped createStringStamped(const rclcpp::Time & now, const double data)
-{
-  StringStamped msg;
-  msg.stamp = now;
-  msg.data = std::to_string(data);
-  return msg;
 }
 
 // NOTE: These two functions are copied from the route_handler package.
@@ -723,8 +761,10 @@ void replaceObjectYawWithLaneletsYaw(
 MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_options)
 : Node("map_based_prediction", node_options), debug_accumulated_time_(0.0)
 {
-  google::InitGoogleLogging("map_based_prediction_node");
-  google::InstallFailureSignalHandler();
+  if (!google::IsGoogleLoggingInitialized()) {
+    google::InitGoogleLogging("map_based_prediction_node");
+    google::InstallFailureSignalHandler();
+  }
   enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
   prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
   lateral_control_time_horizon_ =
@@ -782,11 +822,22 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
    * parameter control the estimated path length = vx * th * (rate)  */
   prediction_time_horizon_rate_for_validate_lane_length_ =
     declare_parameter<double>("prediction_time_horizon_rate_for_validate_shoulder_lane_length");
-
+  match_lost_and_appeared_crosswalk_users_ =
+    declare_parameter<bool>("use_crosswalk_user_history.match_lost_and_appeared_users");
+  remember_lost_crosswalk_users_ =
+    declare_parameter<bool>("use_crosswalk_user_history.remember_lost_users");
   use_vehicle_acceleration_ = declare_parameter<bool>("use_vehicle_acceleration");
   speed_limit_multiplier_ = declare_parameter<double>("speed_limit_multiplier");
   acceleration_exponential_half_life_ =
     declare_parameter<double>("acceleration_exponential_half_life");
+
+  use_crosswalk_signal_ = declare_parameter<bool>("crosswalk_with_signal.use_crosswalk_signal");
+  threshold_velocity_assumed_as_stopping_ =
+    declare_parameter<double>("crosswalk_with_signal.threshold_velocity_assumed_as_stopping");
+  distance_set_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
+    "crosswalk_with_signal.distance_set_for_no_intention_to_walk");
+  timeout_set_for_no_intention_to_walk_ = declare_parameter<std::vector<double>>(
+    "crosswalk_with_signal.timeout_set_for_no_intention_to_walk");
 
   path_generator_ = std::make_shared<PathGenerator>(
     prediction_time_horizon_, lateral_control_time_horizon_, prediction_sampling_time_interval_,
@@ -801,14 +852,23 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sub_map_ = this->create_subscription<HADMapBin>(
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
+  sub_traffic_signals_ = this->create_subscription<TrafficSignalArray>(
+    "/traffic_signals", 1,
+    std::bind(&MapBasedPredictionNode::trafficSignalsCallback, this, std::placeholders::_1));
 
   pub_objects_ = this->create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
   pub_debug_markers_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
-  pub_calculation_time_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
+  processing_time_publisher_ =
+    std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "map_based_prediction");
 
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&MapBasedPredictionNode::onParam, this, std::placeholders::_1));
+
+  stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
+  stop_watch_ptr_->tic("cyclic_time");
+  stop_watch_ptr_->tic("processing_time");
 }
 
 rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
@@ -859,11 +919,11 @@ PredictedObject MapBasedPredictionNode::convertToPredictedObject(
 
 void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
 {
-  RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Start loading lanelet");
+  RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  RCLCPP_INFO(get_logger(), "[Map Based Prediction]: Map is loaded");
+  RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Map is loaded");
 
   const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   const auto crosswalks = lanelet::utils::query::crosswalkLanelets(all_lanelets);
@@ -872,9 +932,17 @@ void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
 }
 
+void MapBasedPredictionNode::trafficSignalsCallback(const TrafficSignalArray::ConstSharedPtr msg)
+{
+  traffic_signal_id_map_.clear();
+  for (const auto & signal : msg->signals) {
+    traffic_signal_id_map_[signal.traffic_signal_id] = signal;
+  }
+}
+
 void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPtr in_objects)
 {
-  stop_watch_.tic();
+  stop_watch_ptr_->toc("processing_time", true);
   // Guard for map pointer and frame transformation
   if (!lanelet_map_ptr_) {
     return;
@@ -899,7 +967,19 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // Remove old objects information in object history
   const double objects_detected_time = rclcpp::Time(in_objects->header.stamp).seconds();
-  removeOldObjectsHistory(objects_detected_time);
+  removeOldObjectsHistory(objects_detected_time, object_buffer_time_length_, road_users_history);
+  removeStaleTrafficLightInfo(in_objects);
+
+  auto invalidated_crosswalk_users = removeOldObjectsHistory(
+    objects_detected_time, object_buffer_time_length_, crosswalk_users_history_);
+  // delete matches that point to invalid object
+  for (auto it = known_matches_.begin(); it != known_matches_.end();) {
+    if (invalidated_crosswalk_users.count(it->second)) {
+      it = known_matches_.erase(it);
+    } else {
+      ++it;
+    }
+  }
 
   // result output
   PredictedObjects output;
@@ -908,6 +988,20 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // result debug
   visualization_msgs::msg::MarkerArray debug_markers;
+
+  // get current crosswalk users for later prediction
+  std::unordered_map<std::string, TrackedObject> current_crosswalk_users;
+  for (const auto & object : in_objects->objects) {
+    const auto label_for_prediction =
+      changeLabelForPrediction(object.classification.front().label, object, lanelet_map_ptr_);
+    if (
+      label_for_prediction == ObjectClassification::PEDESTRIAN ||
+      label_for_prediction == ObjectClassification::BICYCLE) {
+      const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
+      current_crosswalk_users.emplace(object_id, object);
+    }
+  }
+  std::unordered_set<std::string> predicted_crosswalk_users_ids;
 
   for (const auto & object : in_objects->objects) {
     std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
@@ -929,6 +1023,12 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     switch (label) {
       case ObjectClassification::PEDESTRIAN:
       case ObjectClassification::BICYCLE: {
+        std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
+        if (match_lost_and_appeared_crosswalk_users_) {
+          object_id = tryMatchNewObjectToDisappeared(object_id, current_crosswalk_users);
+        }
+        predicted_crosswalk_users_ids.insert(object_id);
+        updateCrosswalkUserHistory(output.header, transformed_object, object_id);
         const auto predicted_object_crosswalk =
           getPredictedObjectAsCrosswalkUser(transformed_object);
         output.objects.push_back(predicted_object_crosswalk);
@@ -946,7 +1046,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         const auto current_lanelets = getCurrentLanelets(transformed_object);
 
         // Update Objects History
-        updateObjectsHistory(output.header, transformed_object, current_lanelets);
+        updateRoadUsersHistory(output.header, transformed_object, current_lanelets);
 
         // For off lane obstacles
         if (current_lanelets.empty()) {
@@ -1094,11 +1194,102 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
     }
   }
 
+  // process lost crosswalk users to tackle unstable detection
+  if (remember_lost_crosswalk_users_) {
+    for (const auto & [id, crosswalk_user] : crosswalk_users_history_) {
+      // get a predicted path for crosswalk users in history who didn't get path yet using latest
+      // message
+      if (predicted_crosswalk_users_ids.count(id) == 0) {
+        const auto predicted_object =
+          getPredictedObjectAsCrosswalkUser(crosswalk_user.back().tracked_object);
+        output.objects.push_back(predicted_object);
+      }
+    }
+  }
+
   // Publish Results
   pub_objects_->publish(output);
+  published_time_publisher_->publish_if_subscribed(pub_objects_, output.header.stamp);
   pub_debug_markers_->publish(debug_markers);
-  const auto calculation_time_msg = createStringStamped(now(), stop_watch_.toc());
-  pub_calculation_time_->publish(calculation_time_msg);
+  const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+  const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    "debug/cyclic_time_ms", cyclic_time_ms);
+  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    "debug/processing_time_ms", processing_time_ms);
+}
+
+void MapBasedPredictionNode::updateCrosswalkUserHistory(
+  const std_msgs::msg::Header & header, const TrackedObject & object, const std::string & object_id)
+{
+  CrosswalkUserData crosswalk_user_data;
+  crosswalk_user_data.header = header;
+  crosswalk_user_data.tracked_object = object;
+
+  if (crosswalk_users_history_.count(object_id) == 0) {
+    crosswalk_users_history_.emplace(object_id, std::deque<CrosswalkUserData>{crosswalk_user_data});
+    return;
+  }
+
+  crosswalk_users_history_.at(object_id).push_back(crosswalk_user_data);
+}
+
+std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
+  const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users)
+{
+  const auto known_match_opt = [&]() -> std::optional<std::string> {
+    if (!known_matches_.count(object_id)) {
+      return std::nullopt;
+    }
+
+    std::string match_id = known_matches_[object_id];
+    // object in the history is already matched to something (possibly itself)
+    if (crosswalk_users_history_.count(match_id)) {
+      // avoid matching two appeared users to one user in history
+      current_users[match_id] = crosswalk_users_history_[match_id].back().tracked_object;
+      return match_id;
+    } else {
+      RCLCPP_WARN_STREAM(
+        get_logger(), "Crosswalk user was "
+                        << object_id << "was matched to " << match_id
+                        << " but history for the crosswalk user was deleted. Rematching");
+    }
+    return std::nullopt;
+  }();
+  //  early return if the match is already known
+  if (known_match_opt.has_value()) {
+    return known_match_opt.value();
+  }
+
+  std::string match_id = object_id;
+  double best_score = std::numeric_limits<double>::max();
+  const auto object_pos = current_users[object_id].kinematics.pose_with_covariance.pose.position;
+  for (const auto & [user_id, user_history] : crosswalk_users_history_) {
+    // user present in current_users and will be matched to itself
+    if (current_users.count(user_id)) {
+      continue;
+    }
+    // TODO(dkoldaev): implement more sophisticated scoring, for now simply dst to last position in
+    // history
+    const auto match_candidate_pos =
+      user_history.back().tracked_object.kinematics.pose_with_covariance.pose.position;
+    const double score =
+      std::hypot(match_candidate_pos.x - object_pos.x, match_candidate_pos.y - object_pos.y);
+    if (score < best_score) {
+      best_score = score;
+      match_id = user_id;
+    }
+  }
+
+  if (object_id != match_id) {
+    RCLCPP_INFO_STREAM(
+      get_logger(), "[Map Based Prediction]: Matched " << object_id << " to " << match_id);
+    // avoid matching two appeared users to one user in history
+    current_users[match_id] = crosswalk_users_history_[match_id].back().tracked_object;
+  }
+
+  known_matches_[object_id] = match_id;
+  return match_id;
 }
 
 bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)
@@ -1117,7 +1308,7 @@ bool MapBasedPredictionNode::doesPathCrossFence(
   const PredictedPath & predicted_path, const lanelet::ConstLineString3d & fence_line)
 {
   // check whether the predicted path cross with fence
-  for (size_t i = 0; i < predicted_path.path.size(); ++i) {
+  for (size_t i = 0; i < predicted_path.path.size() - 1; ++i) {
     for (size_t j = 0; j < fence_line.size() - 1; ++j) {
       if (isIntersecting(
             predicted_path.path[i].position, predicted_path.path[i + 1].position, fence_line[j],
@@ -1216,8 +1407,17 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       }
     }
   }
+
   // try to find the edge points for all crosswalks and generate path to the crosswalk edge
   for (const auto & crosswalk : crosswalks_) {
+    const auto crosswalk_signal_id_opt = getTrafficSignalId(crosswalk);
+    if (crosswalk_signal_id_opt.has_value() && use_crosswalk_signal_) {
+      if (!calcIntentionToCrossWithTrafficSignal(
+            object, crosswalk, crosswalk_signal_id_opt.value())) {
+        continue;
+      }
+    }
+
     const auto edge_points = getCrosswalkEdgePoints(crosswalk);
 
     const auto reachable_first = hasPotentialToReach(
@@ -1281,6 +1481,13 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   // assumption: the object vx is much larger than vy
   if (object.kinematics.twist_with_covariance.twist.linear.x >= 0.0) return;
 
+  // calculate absolute velocity and do nothing if it is too slow
+  const double abs_object_speed = std::hypot(
+    object.kinematics.twist_with_covariance.twist.linear.x,
+    object.kinematics.twist_with_covariance.twist.linear.y);
+  constexpr double min_abs_speed = 1e-1;  // 0.1 m/s
+  if (abs_object_speed < min_abs_speed) return;
+
   switch (object.kinematics.orientation_availability) {
     case autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN: {
       const auto original_yaw =
@@ -1305,46 +1512,20 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   return;
 }
 
-void MapBasedPredictionNode::removeOldObjectsHistory(const double current_time)
+void MapBasedPredictionNode::removeStaleTrafficLightInfo(
+  const TrackedObjects::ConstSharedPtr in_objects)
 {
-  std::vector<std::string> invalid_object_id;
-  for (auto iter = objects_history_.begin(); iter != objects_history_.end(); ++iter) {
-    const std::string object_id = iter->first;
-    std::deque<ObjectData> & object_data = iter->second;
-
-    // If object data is empty, we are going to delete the buffer for the obstacle
-    if (object_data.empty()) {
-      invalid_object_id.push_back(object_id);
-      continue;
+  for (auto it = stopped_times_against_green_.begin(); it != stopped_times_against_green_.end();) {
+    const bool isDisappeared = std::none_of(
+      in_objects->objects.begin(), in_objects->objects.end(),
+      [&it](autoware_auto_perception_msgs::msg::TrackedObject obj) {
+        return tier4_autoware_utils::toHexString(obj.object_id) == it->first.first;
+      });
+    if (isDisappeared) {
+      it = stopped_times_against_green_.erase(it);
+    } else {
+      ++it;
     }
-
-    const double latest_object_time = rclcpp::Time(object_data.back().header.stamp).seconds();
-
-    // Delete Old Objects
-    if (current_time - latest_object_time > 2.0) {
-      invalid_object_id.push_back(object_id);
-      continue;
-    }
-
-    // Delete old information
-    while (!object_data.empty()) {
-      const double post_object_time = rclcpp::Time(object_data.front().header.stamp).seconds();
-      if (current_time - post_object_time > 2.0) {
-        // Delete Old Position
-        object_data.pop_front();
-      } else {
-        break;
-      }
-    }
-
-    if (object_data.empty()) {
-      invalid_object_id.push_back(object_id);
-      continue;
-    }
-  }
-
-  for (const auto & key : invalid_object_id) {
-    objects_history_.erase(key);
   }
 }
 
@@ -1448,9 +1629,9 @@ bool MapBasedPredictionNode::checkCloseLaneletCondition(
   // If the object is in the objects history, we check if the target lanelet is
   // inside the current lanelets id or following lanelets
   const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
-  if (objects_history_.count(object_id) != 0) {
+  if (road_users_history.count(object_id) != 0) {
     const std::vector<lanelet::ConstLanelet> & possible_lanelet =
-      objects_history_.at(object_id).back().future_possible_lanelets;
+      road_users_history.at(object_id).back().future_possible_lanelets;
 
     bool not_in_possible_lanelet =
       std::find(possible_lanelet.begin(), possible_lanelet.end(), lanelet.second) ==
@@ -1517,7 +1698,7 @@ float MapBasedPredictionNode::calculateLocalLikelihood(
   return static_cast<float>(1.0 / dist);
 }
 
-void MapBasedPredictionNode::updateObjectsHistory(
+void MapBasedPredictionNode::updateRoadUsersHistory(
   const std_msgs::msg::Header & header, const TrackedObject & object,
   const LaneletsData & current_lanelets_data)
 {
@@ -1541,13 +1722,13 @@ void MapBasedPredictionNode::updateObjectsHistory(
     single_object_data.lateral_kinematics_set[current_lane] = lateral_kinematics;
   }
 
-  if (objects_history_.count(object_id) == 0) {
+  if (road_users_history.count(object_id) == 0) {
     // New Object(Create a new object in object histories)
     std::deque<ObjectData> object_data = {single_object_data};
-    objects_history_.emplace(object_id, object_data);
+    road_users_history.emplace(object_id, object_data);
   } else {
     // Object that is already in the object buffer
-    std::deque<ObjectData> & object_data = objects_history_.at(object_id);
+    std::deque<ObjectData> & object_data = road_users_history.at(object_id);
     // get previous object data and update
     const auto prev_object_data = object_data.back();
     updateLateralKinematicsVector(
@@ -1735,10 +1916,10 @@ Maneuver MapBasedPredictionNode::predictObjectManeuver(
   }();
 
   const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
-  if (objects_history_.count(object_id) == 0) {
+  if (road_users_history.count(object_id) == 0) {
     return current_maneuver;
   }
-  auto & object_info = objects_history_.at(object_id);
+  auto & object_info = road_users_history.at(object_id);
 
   // update maneuver in object history
   if (!object_info.empty()) {
@@ -1774,11 +1955,11 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByTimeToLaneChange(
 {
   // Step1. Check if we have the object in the buffer
   const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
-  if (objects_history_.count(object_id) == 0) {
+  if (road_users_history.count(object_id) == 0) {
     return Maneuver::LANE_FOLLOW;
   }
 
-  const std::deque<ObjectData> & object_info = objects_history_.at(object_id);
+  const std::deque<ObjectData> & object_info = road_users_history.at(object_id);
 
   // Step2. Check if object history length longer than history_time_length
   const int latest_id = static_cast<int>(object_info.size()) - 1;
@@ -1845,11 +2026,11 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
 {
   // Step1. Check if we have the object in the buffer
   const std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
-  if (objects_history_.count(object_id) == 0) {
+  if (road_users_history.count(object_id) == 0) {
     return Maneuver::LANE_FOLLOW;
   }
 
-  const std::deque<ObjectData> & object_info = objects_history_.at(object_id);
+  const std::deque<ObjectData> & object_info = road_users_history.at(object_id);
   const double current_time = (this->get_clock()->now()).seconds();
 
   // Step2. Get the previous id
@@ -2006,12 +2187,12 @@ void MapBasedPredictionNode::updateFuturePossibleLanelets(
   const TrackedObject & object, const lanelet::routing::LaneletPaths & paths)
 {
   std::string object_id = tier4_autoware_utils::toHexString(object.object_id);
-  if (objects_history_.count(object_id) == 0) {
+  if (road_users_history.count(object_id) == 0) {
     return;
   }
 
   std::vector<lanelet::ConstLanelet> & possible_lanelets =
-    objects_history_.at(object_id).back().future_possible_lanelets;
+    road_users_history.at(object_id).back().future_possible_lanelets;
   for (const auto & path : paths) {
     for (const auto & lanelet : path) {
       bool not_in_buffer = std::find(possible_lanelets.begin(), possible_lanelets.end(), lanelet) ==
@@ -2211,6 +2392,101 @@ bool MapBasedPredictionNode::isDuplicated(
 
   return false;
 }
+
+std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
+  const lanelet::ConstLanelet & way_lanelet)
+{
+  const auto traffic_light_reg_elems =
+    way_lanelet.regulatoryElementsAs<const lanelet::TrafficLight>();
+  if (traffic_light_reg_elems.empty()) {
+    return std::nullopt;
+  } else if (traffic_light_reg_elems.size() > 1) {
+    RCLCPP_ERROR(
+      get_logger(),
+      "[Map Based Prediction]: "
+      "Multiple regulatory elements as TrafficLight are defined to one lanelet object.");
+  }
+  return traffic_light_reg_elems.front()->id();
+}
+
+std::optional<TrafficSignalElement> MapBasedPredictionNode::getTrafficSignalElement(
+  const lanelet::Id & id)
+{
+  if (traffic_signal_id_map_.count(id) != 0) {
+    const auto & signal_elements = traffic_signal_id_map_.at(id).elements;
+    if (signal_elements.size() > 1) {
+      RCLCPP_ERROR(
+        get_logger(), "[Map Based Prediction]: Multiple TrafficSignalElement_ are received.");
+    } else if (!signal_elements.empty()) {
+      return signal_elements.front();
+    }
+  }
+  return std::nullopt;
+}
+
+bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSignal(
+  const TrackedObject & object, const lanelet::ConstLanelet & crosswalk,
+  const lanelet::Id & signal_id)
+{
+  const auto signal_color = [&] {
+    const auto elem_opt = getTrafficSignalElement(signal_id);
+    return elem_opt ? elem_opt.value().color : TrafficSignalElement::UNKNOWN;
+  }();
+
+  const auto key = std::make_pair(tier4_autoware_utils::toHexString(object.object_id), signal_id);
+  if (
+    signal_color == TrafficSignalElement::GREEN &&
+    tier4_autoware_utils::calcNorm(object.kinematics.twist_with_covariance.twist.linear) <
+      threshold_velocity_assumed_as_stopping_) {
+    stopped_times_against_green_.try_emplace(key, this->get_clock()->now());
+
+    const auto timeout_no_intention_to_walk = [&]() {
+      auto InterpolateMap = [](
+                              const std::vector<double> & key_set,
+                              const std::vector<double> & value_set, const double query) {
+        if (query <= key_set.front()) {
+          return value_set.front();
+        } else if (query >= key_set.back()) {
+          return value_set.back();
+        }
+        for (size_t i = 0; i < key_set.size() - 1; ++i) {
+          if (key_set.at(i) <= query && query <= key_set.at(i + 1)) {
+            auto ratio =
+              (query - key_set.at(i)) / std::max(key_set.at(i + 1) - key_set.at(i), 1.0e-5);
+            ratio = std::clamp(ratio, 0.0, 1.0);
+            return value_set.at(i) + ratio * (value_set.at(i + 1) - value_set.at(i));
+          }
+        }
+        return value_set.back();
+      };
+
+      const auto obj_position = object.kinematics.pose_with_covariance.pose.position;
+      const double distance_to_crosswalk = boost::geometry::distance(
+        crosswalk.polygon2d().basicPolygon(),
+        lanelet::BasicPoint2d(obj_position.x, obj_position.y));
+      return InterpolateMap(
+        distance_set_for_no_intention_to_walk_, timeout_set_for_no_intention_to_walk_,
+        distance_to_crosswalk);
+    }();
+
+    if (
+      (this->get_clock()->now() - stopped_times_against_green_.at(key)).seconds() >
+      timeout_no_intention_to_walk) {
+      return false;
+    }
+
+  } else {
+    stopped_times_against_green_.erase(key);
+    // If the pedestrian disappears, another function erases the old data.
+  }
+
+  if (signal_color == TrafficSignalElement::RED) {
+    return false;
+  }
+
+  return true;
+}
+
 }  // namespace map_based_prediction
 
 #include <rclcpp_components/register_node_macro.hpp>

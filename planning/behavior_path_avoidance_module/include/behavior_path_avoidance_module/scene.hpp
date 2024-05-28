@@ -18,6 +18,7 @@
 #include "behavior_path_avoidance_module/data_structs.hpp"
 #include "behavior_path_avoidance_module/helper.hpp"
 #include "behavior_path_avoidance_module/shift_line_generator.hpp"
+#include "behavior_path_avoidance_module/type_alias.hpp"
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
 
@@ -25,26 +26,18 @@
 #include <rclcpp/node.hpp>
 #include <rclcpp/time.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
-
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
 {
 
-using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestIndex;
-
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
-
 using helper::avoidance::AvoidanceHelper;
+using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 
 class AvoidanceModule : public SceneModuleInterface
 {
@@ -72,13 +65,18 @@ public:
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
-  bool isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const;
+  /**
+   * @brief return the result whether the module can stop path generation process.
+   * @param avoidance data.
+   * @return it will return AvoidanceState::RUNNING when there are obstacles ego should avoid.
+   *         it will return AvoidanceState::CANCEL when all obstacles have gone.
+   *         it will return AvoidanceState::SUCCEEDED when the ego avoid all obstacles.
+   */
+  AvoidanceState getCurrentModuleState(const AvoidancePlanningData & data) const;
 
   bool canTransitSuccessState() override;
 
   bool canTransitFailureState() override { return false; }
-
-  bool canTransitIdleToRunningState() override { return true; }
 
   /**
    * @brief update RTC status for candidate shift line.
@@ -88,15 +86,17 @@ private:
   {
     if (candidate.lateral_shift > 0.0) {
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
-        uuid_map_.at("left"), isExecutionReady(), candidate.start_distance_to_path_change,
-        candidate.finish_distance_to_path_change, clock_->now());
+        uuid_map_.at("left"), isExecutionReady(), State::WAITING_FOR_EXECUTION,
+        candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
+        clock_->now());
       candidate_uuid_ = uuid_map_.at("left");
       return;
     }
     if (candidate.lateral_shift < 0.0) {
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
-        uuid_map_.at("right"), isExecutionReady(), candidate.start_distance_to_path_change,
-        candidate.finish_distance_to_path_change, clock_->now());
+        uuid_map_.at("right"), isExecutionReady(), State::WAITING_FOR_EXECUTION,
+        candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
+        clock_->now());
       candidate_uuid_ = uuid_map_.at("right");
       return;
     }
@@ -116,10 +116,10 @@ private:
 
     for (const auto & left_shift : left_shift_array_) {
       const double start_distance =
-        calcSignedArcLength(path.points, ego_idx, left_shift.start_pose.position);
+        motion_utils::calcSignedArcLength(path.points, ego_idx, left_shift.start_pose.position);
       const double finish_distance = start_distance + left_shift.relative_longitudinal;
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
-        left_shift.uuid, true, start_distance, finish_distance, clock_->now());
+        left_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
           {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
@@ -129,10 +129,10 @@ private:
 
     for (const auto & right_shift : right_shift_array_) {
       const double start_distance =
-        calcSignedArcLength(path.points, ego_idx, right_shift.start_pose.position);
+        motion_utils::calcSignedArcLength(path.points, ego_idx, right_shift.start_pose.position);
       const double finish_distance = start_distance + right_shift.relative_longitudinal;
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
-        right_shift.uuid, true, start_distance, finish_distance, clock_->now());
+        right_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
       if (finish_distance > -1.0e-03) {
         steering_factor_interface_ptr_->updateSteeringFactor(
           {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
@@ -147,9 +147,15 @@ private:
   void removeCandidateRTCStatus()
   {
     if (rtc_interface_ptr_map_.at("left")->isRegistered(candidate_uuid_)) {
-      rtc_interface_ptr_map_.at("left")->removeCooperateStatus(candidate_uuid_);
-    } else if (rtc_interface_ptr_map_.at("right")->isRegistered(candidate_uuid_)) {
-      rtc_interface_ptr_map_.at("right")->removeCooperateStatus(candidate_uuid_);
+      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+        candidate_uuid_, true, State::FAILED, std::numeric_limits<double>::lowest(),
+        std::numeric_limits<double>::lowest(), clock_->now());
+    }
+
+    if (rtc_interface_ptr_map_.at("right")->isRegistered(candidate_uuid_)) {
+      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+        candidate_uuid_, true, State::FAILED, std::numeric_limits<double>::lowest(),
+        std::numeric_limits<double>::lowest(), clock_->now());
     }
   }
 
@@ -190,14 +196,6 @@ private:
    */
   void updateRTCData();
 
-  // ego state check
-
-  /**
-   * @brief update ego status based on avoidance path and surround condition.
-   * @param ego status. (NOT_AVOID, AVOID, YIELD, AVOID_EXECUTE, AVOID_PATH_NOT_READY)
-   */
-  AvoidanceState updateEgoState(const AvoidancePlanningData & data) const;
-
   // ego behavior update
 
   /**
@@ -236,11 +234,10 @@ private:
   void insertPrepareVelocity(ShiftedPath & shifted_path) const;
 
   /**
-   * @brief insert decel point in output path in order to yield. the ego decelerates within
-   * accel/jerk constraints.
+   * @brief insert max velocity in output path to limit acceleration.
    * @param target path.
    */
-  void insertYieldVelocity(ShiftedPath & shifted_path) const;
+  void insertAvoidanceVelocity(ShiftedPath & shifted_path) const;
 
   /**
    * @brief calculate stop distance based on object's overhang.
@@ -362,7 +359,7 @@ private:
    * @brief reset registered shift lines.
    * @details reset only when the base offset is zero. Otherwise, sudden steering will be caused;
    */
-  void removeRegisteredShiftLines()
+  void removeRegisteredShiftLines(const uint8_t state)
   {
     constexpr double threshold = 0.1;
     if (std::abs(path_shifter_.getBaseOffset()) > threshold) {
@@ -372,10 +369,25 @@ private:
 
     unlockNewModuleLaunch();
 
+    for (const auto & left_shift : left_shift_array_) {
+      if (rtc_interface_ptr_map_.at("left")->isRegistered(left_shift.uuid)) {
+        rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+          left_shift.uuid, true, state, std::numeric_limits<double>::lowest(),
+          std::numeric_limits<double>::lowest(), clock_->now());
+      }
+    }
+
+    for (const auto & right_shift : right_shift_array_) {
+      if (rtc_interface_ptr_map_.at("right")->isRegistered(right_shift.uuid)) {
+        rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+          right_shift.uuid, true, state, std::numeric_limits<double>::lowest(),
+          std::numeric_limits<double>::lowest(), clock_->now());
+      }
+    }
+
     if (!path_shifter_.getShiftLines().empty()) {
       left_shift_array_.clear();
       right_shift_array_.clear();
-      removeRTCStatus();
     }
 
     generator_.reset();
@@ -406,6 +418,8 @@ private:
 
   bool safe_{true};
 
+  std::optional<UUID> ignore_signal_{std::nullopt};
+
   std::shared_ptr<AvoidanceHelper> helper_;
 
   std::shared_ptr<AvoidanceParameters> parameters_;
@@ -424,9 +438,6 @@ private:
 
   // TODO(Satoshi OTA) create detected object manager.
   ObjectDataArray registered_objects_;
-
-  // TODO(Satoshi OTA) remove mutable.
-  mutable ObjectDataArray detected_objects_;
 
   // TODO(Satoshi OTA) remove this variable.
   mutable ObjectDataArray ego_stopped_objects_;

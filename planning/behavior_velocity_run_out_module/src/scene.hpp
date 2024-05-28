@@ -17,6 +17,7 @@
 
 #include "debug.hpp"
 #include "dynamic_obstacle.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
 #include "state_machine.hpp"
 #include "utils.hpp"
 
@@ -24,6 +25,8 @@
 
 #include <memory>
 #include <optional>
+#include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -63,6 +66,11 @@ private:
   std::shared_ptr<RunOutDebug> debug_ptr_;
   std::unique_ptr<run_out_utils::StateMachine> state_machine_;
   std::shared_ptr<rclcpp::Time> first_detected_time_;
+  std::optional<double> stop_point_generation_time_;
+  std::optional<geometry_msgs::msg::Pose> last_stop_point_;
+
+  std::optional<unique_identifier_msgs::msg::UUID> last_stop_obstacle_uuid_;
+  std::unordered_map<std::string, double> obstacle_in_ego_path_times_;
 
   // Function
   Polygons2d createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const;
@@ -114,7 +122,7 @@ private:
     const geometry_msgs::msg::Pose & current_pose, const float current_vel,
     const float current_acc) const;
 
-  void insertStopPoint(
+  bool insertStopPoint(
     const std::optional<geometry_msgs::msg::Pose> stop_point,
     autoware_auto_planning_msgs::msg::PathWithLaneId & path);
 
@@ -123,10 +131,15 @@ private:
     const PlannerParam & planner_param, const PathWithLaneId & smoothed_path,
     PathWithLaneId & output_path);
 
-  void insertStoppingVelocity(
+  bool insertStoppingVelocity(
     const std::optional<DynamicObstacle> & dynamic_obstacle,
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
     PathWithLaneId & output_path);
+
+  bool insertStoppingVelocity(
+    const std::optional<DynamicObstacle> & dynamic_obstacle,
+    const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
+    PathWithLaneId & output_path, std::optional<geometry_msgs::msg::Pose> & stopping_point);
 
   void insertApproachingVelocity(
     const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
@@ -136,9 +149,26 @@ private:
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
     PathWithLaneId & path) const;
 
+  /**
+   * @brief Creates a virtual line segment that is perpendicular to the ego vehicle and that passes
+   * through the ego's base link and excludes objects with paths that intersect that line segment.
+   * @param [in] dynamic_obstacles obstacles to be filtered.
+   * @param [in] current_pose ego vehicle's current pose.
+   * @return a vector of dynamic obstacles that don't intersect the line segment.
+   */
+  std::vector<DynamicObstacle> excludeObstaclesCrossingEgoCutLine(
+    const std::vector<DynamicObstacle> & dynamic_obstacles,
+    const geometry_msgs::msg::Pose & current_pose) const;
+
+  std::vector<DynamicObstacle> excludeObstaclesBasedOnLabel(
+    const std::vector<DynamicObstacle> & dynamic_obstacles) const;
+
   std::vector<DynamicObstacle> excludeObstaclesOutSideOfPartition(
     const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path,
     const geometry_msgs::msg::Pose & current_pose) const;
+
+  std::vector<DynamicObstacle> excludeObstaclesOnEgoPath(
+    const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path);
 
   void publishDebugValue(
     const PathWithLaneId & path, const std::vector<DynamicObstacle> extracted_obstacles,

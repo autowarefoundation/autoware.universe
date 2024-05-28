@@ -81,7 +81,8 @@ Module getModuleType(const std::string & module_name)
 namespace rtc_interface
 {
 RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name, const bool enable_rtc)
-: logger_{node->get_logger().get_child("RTCInterface[" + name + "]")},
+: clock_{node->get_clock()},
+  logger_{node->get_logger().get_child("RTCInterface[" + name + "]")},
   is_auto_mode_enabled_{!enable_rtc},
   is_locked_{false}
 {
@@ -201,8 +202,8 @@ void RTCInterface::onTimer()
 }
 
 void RTCInterface::updateCooperateStatus(
-  const UUID & uuid, const bool safe, const double start_distance, const double finish_distance,
-  const rclcpp::Time & stamp)
+  const UUID & uuid, const bool safe, const uint8_t state, const double start_distance,
+  const double finish_distance, const rclcpp::Time & stamp)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   // Find registered status which has same uuid
@@ -218,6 +219,7 @@ void RTCInterface::updateCooperateStatus(
     status.module = module_;
     status.safe = safe;
     status.command_status.type = Command::DEACTIVATE;
+    status.state.type = State::WAITING_FOR_EXECUTION;
     status.start_distance = start_distance;
     status.finish_distance = finish_distance;
     status.auto_mode = is_auto_mode_enabled_;
@@ -228,6 +230,7 @@ void RTCInterface::updateCooperateStatus(
   // If the registered status is found, update status
   itr->stamp = stamp;
   itr->safe = safe;
+  itr->state.type = state;
   itr->start_distance = start_distance;
   itr->finish_distance = finish_distance;
 }
@@ -261,6 +264,16 @@ void RTCInterface::removeStoredCommand(const UUID & uuid)
     stored_commands_.erase(itr);
     return;
   }
+}
+
+void RTCInterface::removeExpiredCooperateStatus()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  const auto itr = std::remove_if(
+    registered_status_.statuses.begin(), registered_status_.statuses.end(),
+    [this](const auto & status) { return (clock_->now() - status.stamp).seconds() > 10.0; });
+
+  registered_status_.statuses.erase(itr, registered_status_.statuses.end());
 }
 
 void RTCInterface::clearCooperateStatus()

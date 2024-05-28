@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 
 #include "behavior_path_goal_planner_module/goal_searcher_base.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 
@@ -41,13 +42,34 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+using Polygon2d = tier4_autoware_utils::Polygon2d;
 
 lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
   const double forward_distance);
+
+/*
+ * @brief expand pull_over_lanes to the opposite side of drivable roads by bound_offset.
+ * bound_offset must be positive regardless of left_side is true/false
+ */
+lanelet::ConstLanelets generateExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, const double bound_offset);
+
+lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
+  const lanelet::ConstLanelets & pull_over_lanes, const bool left_side,
+  const geometry_msgs::msg::Pose ego_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const double outer_road_offset, const double inner_road_offset);
+PredictedObjects extractObjectsInExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, double bound_offset, const PredictedObjects & objects);
 PredictedObjects filterObjectsByLateralDistance(
   const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
   const double distance_thresh, const bool filter_inside);
+PredictedObjects extractStaticObjectsInExpandedPullOverLanes(
+  const RouteHandler & route_handler, const bool left_side, const double backward_distance,
+  const double forward_distance, double bound_offset, const PredictedObjects & objects,
+  const double velocity_thresh);
 
 double calcLateralDeviationBetweenPaths(
   const PathWithLaneId & reference_path, const PathWithLaneId & target_path);
@@ -65,6 +87,10 @@ PathWithLaneId extendPath(
   const PathWithLaneId & prev_module_path, const PathWithLaneId & reference_path,
   const Pose & extend_pose);
 
+std::vector<Polygon2d> createPathFootPrints(
+  const PathWithLaneId & path, const double base_to_front, const double base_to_rear,
+  const double width);
+
 // debug
 MarkerArray createPullOverAreaMarkerArray(
   const tier4_autoware_utils::MultiPolygon2d area_polygons, const std_msgs::msg::Header & header,
@@ -75,6 +101,9 @@ MarkerArray createTextsMarkerArray(
   const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
 MarkerArray createGoalCandidatesMarkerArray(
   const GoalCandidates & goal_candidates, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createLaneletPolygonMarkerArray(
+  const lanelet::CompoundPolygon3d & polygon, const std_msgs::msg::Header & header,
+  const std::string & ns, const std_msgs::msg::ColorRGBA & color);
 MarkerArray createNumObjectsToAvoidTextsMarkerArray(
   const GoalCandidates & goal_candidates, std::string && ns,
   const std_msgs::msg::ColorRGBA & color);
