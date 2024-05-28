@@ -33,10 +33,6 @@ The following illustrates the design of the map.
 
 ![straight_diagram](./images/2km-test.svg)
 
-## Implemented tests
-
-The mock data parser is unit tested to ensure there are no defects when parsing the input data.
-
 ## Example use cases
 
 ### Autoware Planning Test Manager
