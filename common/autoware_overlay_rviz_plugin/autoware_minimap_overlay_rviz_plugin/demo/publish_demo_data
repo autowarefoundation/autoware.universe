@@ -2,12 +2,14 @@
 """
 Periodically publish gps positions in a circle around a given origin as NavSatFix messages.
 """
-import rclpy
-import math
-import numpy as np
 from argparse import ArgumentParser
+import math
+
+import numpy as np
+import rclpy
 from rclpy.time import CONVERSION_CONSTANT
-from sensor_msgs.msg import NavSatFix, NavSatStatus
+from sensor_msgs.msg import NavSatFix
+from sensor_msgs.msg import NavSatStatus
 
 
 class CircularTranslate:

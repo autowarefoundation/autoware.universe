@@ -1,5 +1,5 @@
-#ifndef MINIMAP_H
-#define MINIMAP_H
+#ifndef MINIMAP_HPP_
+#define MINIMAP_HPP_
 
 #include "overlay_utils.hpp"
 #include "rviz_common/properties/color_property.hpp"
@@ -92,4 +92,4 @@ private:
 
 }  // namespace autoware_minimap_overlay_rviz_plugin
 
-#endif  // MINIMAP_H
+#endif  // MINIMAP_HPP_

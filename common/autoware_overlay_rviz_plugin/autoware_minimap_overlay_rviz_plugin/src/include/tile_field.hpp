@@ -1,20 +1,23 @@
-#ifndef TILE_FIELD_HPP
-#define TILE_FIELD_HPP
+#ifndef TILE_FIELD_HPP_
+#define TILE_FIELD_HPP_
 
 #include "tile.hpp"
+
 #include <QImage>
 #include <QObject>
+
 #include <cmath>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 
-class TileField : public QObject {
+class TileField : public QObject
+{
   Q_OBJECT
 
 public:
-  TileField(QObject *parent = nullptr);
+  TileField(QObject * parent = nullptr);
   ~TileField();
 
   void initializeTiles(int center_x_tile, int center_y_tile);
@@ -44,4 +47,4 @@ private:
   std::mutex tile_mutex_;
 };
 
-#endif // TILE_FIELD_HPP
+#endif  // TILE_FIELD_HPP_

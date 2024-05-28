@@ -31,7 +31,7 @@ set(
   src/include/minimap.hpp
   src/include/tile.hpp
   src/include/tile_field.hpp
-  src/include/overlay_utils.hpp  
+  src/include/overlay_utils.hpp
 )
 
 foreach(header "${headers_to_moc}")
@@ -59,7 +59,7 @@ target_compile_options(
   "-DVEHICLEMAP_VERSION=\"${vehicle_map_VERSION}\""
 )
 
-target_include_directories(${PROJECT_NAME} 
+target_include_directories(${PROJECT_NAME}
   PRIVATE src
   PRIVATE /usr/include/x86_64-linux-gnu/qt5
   PRIVATE ${OGRE_INCLUDE_DIRS}
@@ -67,9 +67,9 @@ target_include_directories(${PROJECT_NAME}
   PRIVATE ${rviz_default_plugins_INCLUDE_DIRS}
 )
 
-target_link_libraries(${PROJECT_NAME} 
-  Qt5::Network  
-  Qt5::Widgets 
+target_link_libraries(${PROJECT_NAME}
+  Qt5::Network
+  Qt5::Widgets
   ${OGRE_LIBRARIES}
   ${rviz_common_LIBRARIES}
   ${rviz_default_plugins_LIBRARIES}
