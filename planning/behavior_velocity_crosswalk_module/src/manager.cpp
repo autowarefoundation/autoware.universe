@@ -90,6 +90,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<std::vector<double>>(node, ns + ".pass_judge.ego_pass_later_margin_y");
   cp.ego_pass_later_additional_margin =
     getOrDeclareParameter<double>(node, ns + ".pass_judge.ego_pass_later_additional_margin");
+  cp.ego_min_assumed_speed =
+    getOrDeclareParameter<double>(node, ns + ".pass_judge.ego_min_assumed_speed");
   cp.max_offset_to_crosswalk_for_yield = getOrDeclareParameter<double>(
     node, ns + ".pass_judge.no_stop_decision.max_offset_to_crosswalk_for_yield");
   cp.min_acc_for_no_stop_decision =
@@ -135,8 +137,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.occlusion_min_size = getOrDeclareParameter<double>(node, ns + ".occlusion.min_size");
   cp.occlusion_free_space_max = getOrDeclareParameter<int>(node, ns + ".occlusion.free_space_max");
   cp.occlusion_occupied_min = getOrDeclareParameter<int>(node, ns + ".occlusion.occupied_min");
-  cp.occlusion_ignore_with_red_traffic_light =
-    getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_with_red_traffic_light");
+  cp.occlusion_ignore_with_traffic_light =
+    getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_with_traffic_light");
   cp.occlusion_ignore_behind_predicted_objects =
     getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_behind_predicted_objects");
 
@@ -188,8 +190,8 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
       clock_));
     generateUUID(crosswalk_lanelet_id);
     updateRTCStatus(
-      getUUID(crosswalk_lanelet_id), true, std::numeric_limits<double>::lowest(),
-      path.header.stamp);
+      getUUID(crosswalk_lanelet_id), true, State::WAITING_FOR_EXECUTION,
+      std::numeric_limits<double>::lowest(), path.header.stamp);
   };
 
   const auto crosswalk_reg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(

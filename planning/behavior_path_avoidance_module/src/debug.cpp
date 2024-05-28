@@ -19,26 +19,12 @@
 
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
-
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
 
 #include <string>
 #include <vector>
 
-namespace marker_utils::avoidance_marker
+namespace behavior_path_planner::utils::avoidance
 {
-
-using tier4_autoware_utils::appendMarkerArray;
-using tier4_autoware_utils::calcDistance2d;
-using tier4_autoware_utils::calcOffsetPose;
-using tier4_autoware_utils::createDefaultMarker;
-using tier4_autoware_utils::createMarkerColor;
-using tier4_autoware_utils::createMarkerScale;
-using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::getPose;
-using visualization_msgs::msg::Marker;
-
 namespace
 {
 
@@ -144,7 +130,8 @@ MarkerArray createToDrivableBoundDistance(const ObjectDataArray & objects, std::
   return msg;
 }
 
-MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::string && ns)
+MarkerArray createObjectInfoMarkerArray(
+  const ObjectDataArray & objects, std::string && ns, const bool verbose)
 {
   MarkerArray msg;
 
@@ -153,7 +140,7 @@ MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::st
     createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 0.0, 1.0));
 
   for (const auto & object : objects) {
-    {
+    if (verbose) {
       marker.id = uuidToInt32(object.object.object_id);
       marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
       std::ostringstream string_stream;
@@ -174,9 +161,11 @@ MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::st
 
     {
       marker.id = uuidToInt32(object.object.object_id);
+      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
       marker.pose.position.z += 2.0;
       std::ostringstream string_stream;
-      string_stream << object.reason << (object.is_parked ? "(PARKED)" : "");
+      string_stream << magic_enum::enum_name(object.info) << (object.is_parked ? "(PARKED)" : "");
+      string_stream << (object.is_ambiguous ? "(WAIT AND SEE)" : "");
       marker.text = string_stream.str();
       marker.color = createMarkerColor(1.0, 1.0, 1.0, 0.999);
       marker.scale = createMarkerScale(0.6, 0.6, 0.6);
@@ -214,7 +203,7 @@ MarkerArray avoidableObjectsMarkerArray(const ObjectDataArray & objects, std::st
       createMarkerColor(1.0, 1.0, 0.0, 0.8)),
     &msg);
 
-  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
+  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info", true), &msg);
   appendMarkerArray(createObjectPolygonMarkerArray(objects, ns + "_envelope_polygon"), &msg);
   appendMarkerArray(createToDrivableBoundDistance(objects, ns + "_to_drivable_bound"), &msg);
   appendMarkerArray(createOverhangLaneletMarkerArray(objects, ns + "_overhang_lanelet"), &msg);
@@ -233,7 +222,7 @@ MarkerArray unAvoidableObjectsMarkerArray(const ObjectDataArray & objects, std::
       createMarkerColor(1.0, 0.0, 0.0, 0.8)),
     &msg);
 
-  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
+  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info", true), &msg);
   appendMarkerArray(createObjectPolygonMarkerArray(objects, ns + "_envelope_polygon"), &msg);
   appendMarkerArray(createToDrivableBoundDistance(objects, ns + "_to_drivable_bound"), &msg);
   appendMarkerArray(createOverhangLaneletMarkerArray(objects, ns + "_overhang_lanelet"), &msg);
@@ -441,14 +430,13 @@ MarkerArray createTargetObjectsMarkerArray(const ObjectDataArray & objects, cons
   return msg;
 }
 
-MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, const std::string & ns)
+MarkerArray createOtherObjectsMarkerArray(
+  const ObjectDataArray & objects, const ObjectInfo & info, const bool verbose)
 {
-  using behavior_path_planner::utils::convertToSnakeCase;
-
-  const auto filtered_objects = [&objects, &ns]() {
+  const auto filtered_objects = [&objects, &info]() {
     ObjectDataArray ret{};
     for (const auto & o : objects) {
-      if (o.reason != ns) {
+      if (o.info != info) {
         continue;
       }
       ret.push_back(o);
@@ -460,18 +448,21 @@ MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, const
   MarkerArray msg;
   msg.markers.reserve(filtered_objects.size() * 2);
 
+  std::ostringstream string_stream;
+  string_stream << magic_enum::enum_name(info);
+
+  std::string ns = string_stream.str();
+  transform(ns.begin(), ns.end(), ns.begin(), tolower);
+
   appendMarkerArray(
     createObjectsCubeMarkerArray(
-      filtered_objects, "others_" + convertToSnakeCase(ns) + "_cube",
-      createMarkerScale(3.0, 1.5, 1.5), createMarkerColor(0.0, 1.0, 0.0, 0.8)),
+      filtered_objects, "others_" + ns + "_cube", createMarkerScale(3.0, 1.5, 1.5),
+      createMarkerColor(0.0, 1.0, 0.0, 0.8)),
     &msg);
   appendMarkerArray(
-    createObjectInfoMarkerArray(filtered_objects, "others_" + convertToSnakeCase(ns) + "_info"),
-    &msg);
+    createObjectInfoMarkerArray(filtered_objects, "others_" + ns + "_info", verbose), &msg);
   appendMarkerArray(
-    createOverhangLaneletMarkerArray(
-      filtered_objects, "others_" + convertToSnakeCase(ns) + "_overhang_lanelet"),
-    &msg);
+    createOverhangLaneletMarkerArray(filtered_objects, "others_" + ns + "_overhang_lanelet"), &msg);
 
   return msg;
 }
@@ -513,7 +504,8 @@ MarkerArray createDrivableBounds(
 }
 
 MarkerArray createDebugMarkerArray(
-  const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug)
+  const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug,
+  const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   using behavior_path_planner::utils::transformToLanelets;
   using lanelet::visualization::laneletsAsTriangleMarkerArray;
@@ -528,7 +520,6 @@ MarkerArray createDebugMarkerArray(
   using marker_utils::showPolygon;
   using marker_utils::showPredictedPath;
   using marker_utils::showSafetyCheckInfo;
-  using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
   MarkerArray msg;
@@ -548,7 +539,7 @@ MarkerArray createDebugMarkerArray(
     };
 
   const auto addObjects = [&](const ObjectDataArray & objects, const auto & ns) {
-    add(createOtherObjectsMarkerArray(objects, ns));
+    add(createOtherObjectsMarkerArray(objects, ns, parameters->enable_other_objects_info));
   };
 
   const auto addShiftLength =
@@ -563,28 +554,27 @@ MarkerArray createDebugMarkerArray(
   };
 
   // ignore objects
-  {
-    addObjects(data.other_objects, AvoidanceDebugFactor::OBJECT_IS_BEHIND_THRESHOLD);
-    addObjects(data.other_objects, AvoidanceDebugFactor::OBJECT_IS_IN_FRONT_THRESHOLD);
-    addObjects(data.other_objects, AvoidanceDebugFactor::OBJECT_IS_NOT_TYPE);
-    addObjects(data.other_objects, AvoidanceDebugFactor::OBJECT_BEHIND_PATH_GOAL);
-    addObjects(data.other_objects, AvoidanceDebugFactor::TOO_NEAR_TO_CENTERLINE);
-    addObjects(data.other_objects, AvoidanceDebugFactor::NOT_PARKING_OBJECT);
-    addObjects(data.other_objects, std::string("MovingObject"));
-    addObjects(data.other_objects, std::string("CrosswalkUser"));
-    addObjects(data.other_objects, std::string("OutOfTargetArea"));
-    addObjects(data.other_objects, std::string("NotNeedAvoidance"));
-    addObjects(data.other_objects, std::string("LessThanExecutionThreshold"));
-    addObjects(data.other_objects, std::string("TooNearToGoal"));
-    addObjects(data.other_objects, std::string("ParallelToEgoLane"));
-    addObjects(data.other_objects, std::string("MergingToEgoLane"));
-    addObjects(data.other_objects, std::string("UnstableObject"));
-    addObjects(data.other_objects, std::string("AmbiguousStoppedVehicle"));
-    addObjects(data.other_objects, std::string("AmbiguousStoppedVehicle(wait-and-see)"));
+  if (parameters->enable_other_objects_marker) {
+    addObjects(data.other_objects, ObjectInfo::FURTHER_THAN_THRESHOLD);
+    addObjects(data.other_objects, ObjectInfo::IS_NOT_TARGET_OBJECT);
+    addObjects(data.other_objects, ObjectInfo::FURTHER_THAN_GOAL);
+    addObjects(data.other_objects, ObjectInfo::TOO_NEAR_TO_CENTERLINE);
+    addObjects(data.other_objects, ObjectInfo::IS_NOT_PARKING_OBJECT);
+    addObjects(data.other_objects, ObjectInfo::MOVING_OBJECT);
+    addObjects(data.other_objects, ObjectInfo::CROSSWALK_USER);
+    addObjects(data.other_objects, ObjectInfo::OUT_OF_TARGET_AREA);
+    addObjects(data.other_objects, ObjectInfo::ENOUGH_LATERAL_DISTANCE);
+    addObjects(data.other_objects, ObjectInfo::LESS_THAN_EXECUTION_THRESHOLD);
+    addObjects(data.other_objects, ObjectInfo::TOO_NEAR_TO_GOAL);
+    addObjects(data.other_objects, ObjectInfo::PARALLEL_TO_EGO_LANE);
+    addObjects(data.other_objects, ObjectInfo::MERGING_TO_EGO_LANE);
+    addObjects(data.other_objects, ObjectInfo::DEVIATING_FROM_EGO_LANE);
+    addObjects(data.other_objects, ObjectInfo::UNSTABLE_OBJECT);
+    addObjects(data.other_objects, ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE);
   }
 
   // shift line pre-process
-  {
+  if (parameters->enable_shift_line_marker) {
     addAvoidLine(debug.step1_registered_shift_line, "step1_registered_shift_line", 0.2, 0.2, 1.0);
     addAvoidLine(debug.step1_current_shift_line, "step1_current_shift_line", 0.2, 0.4, 0.8, 0.3);
     addAvoidLine(debug.step1_merged_shift_line, "step1_merged_shift_line", 0.2, 0.6, 0.6, 0.3);
@@ -593,39 +583,39 @@ MarkerArray createDebugMarkerArray(
   }
 
   // merge process
-  {
+  if (parameters->enable_shift_line_marker) {
     addAvoidLine(debug.step2_merged_shift_line, "step2_merged_shift_line", 0.2, 1.0, 0.0, 0.3);
   }
 
   // trimming process
-  {
+  if (parameters->enable_shift_line_marker) {
     addAvoidLine(debug.step3_grad_filtered_1st, "step3_grad_filtered_1st", 0.2, 0.8, 0.0, 0.3);
     addAvoidLine(debug.step3_grad_filtered_2nd, "step3_grad_filtered_2nd", 0.4, 0.6, 0.0, 0.3);
     addAvoidLine(debug.step3_grad_filtered_3rd, "step3_grad_filtered_3rd", 0.6, 0.4, 0.0, 0.3);
   }
 
   // registering process
-  {
+  if (parameters->enable_shift_line_marker) {
     addShiftLine(shifter.getShiftLines(), "step4_old_shift_line", 1.0, 1.0, 0.0, 0.3);
     addAvoidLine(data.new_shift_line, "step4_new_shift_line", 1.0, 0.0, 0.0, 0.3);
   }
 
   // safety check
-  {
+  if (parameters->enable_safety_check_marker) {
     add(showSafetyCheckInfo(debug.collision_check, "object_debug_info"));
     add(showPredictedPath(debug.collision_check, "ego_predicted_path"));
     add(showPolygon(debug.collision_check, "ego_and_target_polygon_relation"));
   }
 
   // shift length
-  {
+  if (parameters->enable_shift_line_marker) {
     addShiftLength(debug.pos_shift, "merged_length_pos", 0.0, 0.7, 0.5);
     addShiftLength(debug.neg_shift, "merged_length_neg", 0.0, 0.5, 0.7);
     addShiftLength(debug.total_shift, "merged_length_total", 0.99, 0.4, 0.2);
   }
 
   // shift grad
-  {
+  if (parameters->enable_shift_line_marker) {
     addShiftGrad(debug.pos_shift_grad, debug.pos_shift, "merged_grad_pos", 0.0, 0.7, 0.5);
     addShiftGrad(debug.neg_shift_grad, debug.neg_shift, "merged_grad_neg", 0.0, 0.5, 0.7);
     addShiftGrad(debug.total_forward_grad, debug.total_shift, "grad_forward", 0.99, 0.4, 0.2);
@@ -633,15 +623,20 @@ MarkerArray createDebugMarkerArray(
   }
 
   // detection area
-  size_t i = 0;
-  for (const auto & detection_area : debug.detection_areas) {
-    add(createPolygonMarkerArray(detection_area, "detection_area", i++, 0.16, 1.0, 0.69, 0.1));
+  if (parameters->enable_detection_area_marker) {
+    size_t i = 0;
+    for (const auto & detection_area : debug.detection_areas) {
+      add(createPolygonMarkerArray(detection_area, "detection_area", i++, 0.16, 1.0, 0.69, 0.1));
+    }
   }
 
-  // misc
-  {
-    add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
+  // drivable bound
+  if (parameters->enable_drivable_bound_marker) {
     add(createDrivableBounds(data, "drivable_bound", 1.0, 0.0, 0.42));
+  }
+
+  // lane
+  if (parameters->enable_lane_marker) {
     add(laneletsAsTriangleMarkerArray(
       "drivable_lanes", transformToLanelets(data.drivable_lanes),
       createMarkerColor(0.16, 1.0, 0.69, 0.2)));
@@ -651,9 +646,14 @@ MarkerArray createDebugMarkerArray(
       "safety_check_lanes", debug.safety_check_lanes, createMarkerColor(1.0, 0.0, 0.42, 0.2)));
   }
 
+  // misc
+  if (parameters->enable_misc_marker) {
+    add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
+  }
+
   return msg;
 }
-}  // namespace marker_utils::avoidance_marker
+}  // namespace behavior_path_planner::utils::avoidance
 
 std::string toStrInfo(const behavior_path_planner::ShiftLineArray & sl_arr)
 {
