@@ -1,7 +1,8 @@
 nav:
+  - 'Introduction': common
   - 'Testing Libraries':
     - 'autoware_testing': common/autoware_testing/design/autoware_testing-design
-    - 'fake_test_node': fake_test_node/design/fake_test_node-design
+    - 'fake_test_node': common/fake_test_node/design/fake_test_node-design
   - 'Common Libraries':
     - 'autoware_auto_common':
       - 'comparisons': common/autoware_auto_common/design/comparisons
@@ -9,7 +10,7 @@ nav:
       - 'interval': common/autoware_auto_geometry/design/interval
       - 'polygon intersection 2d': common/autoware_auto_geometry/design/polygon_intersection_2d-design
       - 'spatial hash': common/autoware_auto_geometry/design/spatial-hash-design
-    - 'autoware_auto_tf2': common/autoware_auto_tf2/design
+    - 'autoware_auto_tf2': common/autoware_auto_tf2/design/autoware-auto-tf2-design
     - 'autoware_point_types': common/autoware_point_types
     - 'Cuda Utils': common/cuda_utils
     - 'Geography Utils': common/geography_utils
