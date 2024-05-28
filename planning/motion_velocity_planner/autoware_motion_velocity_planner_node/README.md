@@ -11,7 +11,7 @@ It loads modules as plugins. Please refer to the links listed below for detail o
 
 Each module calculates stop and slow down points to be inserted in the ego trajectory.
 These points are assumed to correspond to the `base_link` frame of the ego vehicle as it follows the trajectory.
-This means that to stop before a wall, a stop point is inserted in the trajectory at a distance ahead of the wall equal to the vehicle front offset (wheelbase + front overhange, see the [vehicle dimensions](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/vehicle-dimensions/).
+This means that to stop before a wall, a stop point is inserted in the trajectory at a distance ahead of the wall equal to the vehicle front offset (wheelbase + front overhang, see the [vehicle dimensions](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/components/vehicle-dimensions/).
 
 ![set_stop_velocity](./docs/set_stop_velocity.drawio.svg)
 
