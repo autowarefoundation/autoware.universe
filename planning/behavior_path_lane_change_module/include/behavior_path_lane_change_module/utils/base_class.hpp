@@ -37,6 +37,9 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using data::lane_change::CommonData;
+using data::lane_change::CommonDataPtr;
+using data::lane_change::Lanes;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -50,7 +53,10 @@ public:
   LaneChangeBase(
     std::shared_ptr<LaneChangeParameters> parameters, LaneChangeModuleType type,
     Direction direction)
-  : lane_change_parameters_{std::move(parameters)}, direction_{direction}, type_{type}
+  : lane_change_parameters_{std::move(parameters)},
+    common_data_{std::make_shared<CommonData>()},
+    direction_{direction},
+    type_{type}
   {
   }
 
@@ -151,7 +157,16 @@ public:
 
   bool isValidPath() const { return status_.is_valid_path; }
 
-  void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
+  void setData(const std::shared_ptr<const PlannerData> & data)
+  {
+    planner_data_ = data;
+    if (common_data_->bpp_params) {
+      common_data_->bpp_params = std::make_shared<BehaviorPathPlannerParameters>(data->parameters);
+    }
+    common_data_->self_odometry = data->self_odometry;
+    common_data_->lc_params = lane_change_parameters_;
+    common_data_->direction = direction_;
+  }
 
   void toNormalState() { current_lane_change_state_ = LaneChangeStates::Normal; }
 
@@ -217,6 +232,7 @@ protected:
   LaneChangeStates current_lane_change_state_{};
 
   std::shared_ptr<LaneChangeParameters> lane_change_parameters_{};
+  CommonDataPtr common_data_;
   std::shared_ptr<LaneChangePath> abort_path_{};
   std::shared_ptr<const PlannerData> planner_data_{};
   BehaviorModuleOutput prev_module_output_{};

@@ -501,6 +501,12 @@ bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) c
   return exists(route_ptr_->segments.back().primitives, lanelet.id());
 }
 
+bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelets & lanes) const
+{
+  return std::any_of(
+    lanes.rbegin(), lanes.rend(), [&](const auto & lane) { return isInGoalRouteSection(lane); });
+}
+
 lanelet::ConstLanelets RouteHandler::getLaneletsFromIds(const lanelet::Ids & ids) const
 {
   lanelet::ConstLanelets lanelets;

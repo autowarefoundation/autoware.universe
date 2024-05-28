@@ -88,7 +88,8 @@ public:
   static bool isRouteLooped(const RouteSections & route_sections);
 
   // for goal
-  bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
+  [[nodiscard]] bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
+  [[nodiscard]] bool isInGoalRouteSection(const lanelet::ConstLanelets & lanelets) const;
   Pose getGoalPose() const;
   Pose getStartPose() const;
   Pose getOriginalStartPose() const;
