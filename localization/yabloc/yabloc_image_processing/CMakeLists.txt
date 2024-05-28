@@ -30,31 +30,37 @@ target_link_libraries(${PROJECT_NAME} ${PCL_LIBRARIES} ${OpenCV_LIBS})
 # Executable
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "yabloc::graph_segment::GraphSegment"
-  EXECUTABLE yabloc_graph_segment
+  EXECUTABLE yabloc_graph_segment_node
   EXECUTOR SingleThreadedExecutor
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "yabloc::lanelet2_overlay::Lanelet2Overlay"
-  EXECUTABLE yabloc_lanelet2_overlay
+  EXECUTABLE yabloc_lanelet2_overlay_node
   EXECUTOR SingleThreadedExecutor
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "yabloc::line_segment_detector::LineSegmentDetector"
-  EXECUTABLE yabloc_line_segment_detector
+  EXECUTABLE yabloc_line_segment_detector_node
+  EXECUTOR SingleThreadedExecutor
+)
+
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "yabloc::line_segment_detector::LineSegmentsOverlay"
+  EXECUTABLE yabloc_line_segments_overlay_node
   EXECUTOR SingleThreadedExecutor
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "yabloc::segment_filter::SegmentFilter"
-  EXECUTABLE yabloc_segment_filter
+  EXECUTABLE yabloc_segment_filter_node
   EXECUTOR SingleThreadedExecutor
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "yabloc::undistort::UndistortNode"
-  EXECUTABLE yabloc_undistort
+  EXECUTABLE yabloc_undistort_node
   EXECUTOR SingleThreadedExecutor
 )
 
