@@ -1,5 +1,7 @@
 <launch>
   <arg name="input_particle_pose" default="/localization/pose_twist_fusion_filter/pose"/>
+  <arg name="ground_server_param_path" default="$(find-pkg-share yabloc_common)/config/ground_server.param.yaml"/>
+  <arg name="ll2_decomposer_param_path" default="$(find-pkg-share yabloc_common)/config/ll2_decomposer.param.yaml"/>
 
   <!-- ground server -->
   <arg name="output_height" default="height"/>
