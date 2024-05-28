@@ -120,7 +120,7 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     const auto candidate = planCandidate();
     path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     updateRTCStatus(
-      candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change, true,
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
       State::ABORTING);
   } else {
     clearWaitingApproval();
