@@ -27,7 +27,7 @@ nav:
     - 'Signal Processing':
       - 'Introduction': common/signal_processing
       - 'Butterworth Filter': common/signal_processing/documentation/ButterworthFilter
-    - 'TensorRT Common': 'common/tensorrt_common
+    - 'TensorRT Common': common/tensorrt_common
     - 'tier4_autoware_utils': common/tier4_autoware_utils
     - 'traffic_light_utils': common/traffic_light_utils
     - 'TVM Utility':
