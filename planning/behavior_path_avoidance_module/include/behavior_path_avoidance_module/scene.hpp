@@ -68,10 +68,11 @@ private:
   /**
    * @brief return the result whether the module can stop path generation process.
    * @param avoidance data.
-   * @return [first]  it will be true when the ego avoid all obstacles.
-   *         [second] it will be true when all obstacles have gone.
+   * @return it will return AvoidanceState::RUNNING when there are obstacles ego should avoid.
+   *         it will return AvoidanceState::CANCEL when all obstacles have gone.
+   *         it will return AvoidanceState::SUCCEEDED when the ego avoid all obstacles.
    */
-  std::pair<bool, bool> isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const;
+  AvoidanceState getCurrentModuleState(const AvoidancePlanningData & data) const;
 
   bool canTransitSuccessState() override;
 
@@ -194,14 +195,6 @@ private:
    * @brief update RTC status.
    */
   void updateRTCData();
-
-  // ego state check
-
-  /**
-   * @brief update ego status based on avoidance path and surround condition.
-   * @param ego status. (NOT_AVOID, AVOID, YIELD, AVOID_EXECUTE, AVOID_PATH_NOT_READY)
-   */
-  AvoidanceState updateEgoState(const AvoidancePlanningData & data) const;
 
   // ego behavior update
 

@@ -115,15 +115,14 @@ bool AvoidanceModule::isExecutionReady() const
   return avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid && avoid_data_.ready;
 }
 
-std::pair<bool, bool> AvoidanceModule::isSatisfiedSuccessCondition(
-  const AvoidancePlanningData & data) const
+AvoidanceState AvoidanceModule::getCurrentModuleState(const AvoidancePlanningData & data) const
 {
   const bool has_avoidance_target = std::any_of(
     data.target_objects.begin(), data.target_objects.end(),
     [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 
   if (has_avoidance_target) {
-    return {false, false};
+    return AvoidanceState::RUNNING;
   }
 
   // If the ego is on the shift line, keep RUNNING.
@@ -134,7 +133,7 @@ std::pair<bool, bool> AvoidanceModule::isSatisfiedSuccessCondition(
     };
     for (const auto & shift_line : path_shifter_.getShiftLines()) {
       if (within(shift_line, idx)) {
-        return {false, false};
+        return AvoidanceState::RUNNING;
       }
     }
   }
@@ -144,20 +143,20 @@ std::pair<bool, bool> AvoidanceModule::isSatisfiedSuccessCondition(
     std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_execution_threshold;
 
   if (has_base_offset) {
-    return {false, false};
+    return AvoidanceState::RUNNING;
   }
 
   // Nothing to do. -> EXIT.
   if (!has_shift_point) {
-    return {true, false};
+    return AvoidanceState::SUCCEEDED;
   }
 
   // Be able to canceling avoidance path. -> EXIT.
   if (!helper_->isShifted() && parameters_->enable_cancel_maneuver) {
-    return {false, true};
+    return AvoidanceState::CANCEL;
   }
 
-  return {false, false};
+  return AvoidanceState::RUNNING;
 }
 
 bool AvoidanceModule::canTransitSuccessState()
@@ -188,7 +187,7 @@ bool AvoidanceModule::canTransitSuccessState()
     }
   }
 
-  return data.cancel || data.success;
+  return data.state == AvoidanceState::CANCEL || data.state == AvoidanceState::SUCCEEDED;
 }
 
 void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugData & debug)
@@ -507,9 +506,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
 void AvoidanceModule::fillEgoStatus(
   AvoidancePlanningData & data, [[maybe_unused]] DebugData & debug) const
 {
-  const auto [success, cancel] = isSatisfiedSuccessCondition(data);
-  data.cancel = cancel;
-  data.success = success;
+  data.state = getCurrentModuleState(data);
 
   /**
    * Find the nearest object that should be avoid. When the ego follows reference path,
@@ -640,27 +637,6 @@ void AvoidanceModule::fillDebugData(
   }
 }
 
-AvoidanceState AvoidanceModule::updateEgoState(const AvoidancePlanningData & data) const
-{
-  if (data.yield_required) {
-    return AvoidanceState::YIELD;
-  }
-
-  if (!data.avoid_required) {
-    return AvoidanceState::NOT_AVOID;
-  }
-
-  if (!data.found_avoidance_path) {
-    return AvoidanceState::AVOID_PATH_NOT_READY;
-  }
-
-  if (isWaitingApproval() && path_shifter_.getShiftLines().empty()) {
-    return AvoidanceState::AVOID_PATH_READY;
-  }
-
-  return AvoidanceState::AVOID_EXECUTE;
-}
-
 void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, ShiftedPath & path)
 {
   if (parameters_->disable_path_update) {
@@ -670,29 +646,30 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
   insertPrepareVelocity(path);
   insertAvoidanceVelocity(path);
 
-  switch (data.state) {
-    case AvoidanceState::NOT_AVOID: {
-      break;
-    }
-    case AvoidanceState::YIELD: {
+  const auto insert_velocity = [this, &data, &path]() {
+    if (data.yield_required) {
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
-      break;
+      return;
     }
-    case AvoidanceState::AVOID_PATH_NOT_READY: {
+
+    if (!data.avoid_required) {
+      return;
+    }
+
+    if (!data.found_avoidance_path) {
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
-      break;
+      return;
     }
-    case AvoidanceState::AVOID_PATH_READY: {
+
+    if (isWaitingApproval() && path_shifter_.getShiftLines().empty()) {
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
-      break;
+      return;
     }
-    case AvoidanceState::AVOID_EXECUTE: {
-      insertStopPoint(isBestEffort(parameters_->policy_deceleration), path);
-      break;
-    }
-    default:
-      throw std::domain_error("invalid behavior");
-  }
+
+    insertStopPoint(isBestEffort(parameters_->policy_deceleration), path);
+  };
+
+  insert_velocity();
 
   insertReturnDeadLine(isBestEffort(parameters_->policy_deceleration), path);
 
@@ -876,11 +853,11 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   updatePathShifter(data.safe_shift_line);
 
-  if (data.success) {
+  if (data.state == AvoidanceState::SUCCEEDED) {
     removeRegisteredShiftLines(State::SUCCEEDED);
   }
 
-  if (data.cancel) {
+  if (data.state == AvoidanceState::CANCEL) {
     removeRegisteredShiftLines(State::FAILED);
   }
 
@@ -951,8 +928,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
     spline_shift_path.path = utils::resamplePathWithSpline(
       spline_shift_path.path, parameters_->resample_interval_for_output);
   }
-
-  avoid_data_.state = updateEgoState(data);
 
   // update output data
   {
