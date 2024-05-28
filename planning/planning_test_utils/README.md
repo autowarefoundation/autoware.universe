@@ -1,12 +1,12 @@
-# Planning Test Utils
+# Test Utils
 
 ## Background
 
-Several planning components and modules have already adopted unit testing, so a common library to ease the process of writing unit tests is necessary.
+Several Autoware's components and modules have already adopted unit testing, so a common library to ease the process of writing unit tests is necessary.
 
 ## Purpose
 
-The objective of the `planning_test_utils` is to develop a unit testing library for the planning components. This library will include
+The objective of the `test_utils` is to develop a unit testing library for the Autoware components. This library will include
 
 - commonly used functions
 - input/mock data parser
@@ -36,3 +36,9 @@ The following illustrates the design of the map.
 ## Implemented tests
 
 The mock data parser is unit tested to ensure there are no defects when parsing the input data.
+
+## Example use cases
+
+### Autoware Planning Test Manager
+
+The goal of the [Autoware Planning Test Manager](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_planning_test_manager/) is to test planning module nodes. The `PlanningInterfaceTestManager` class ([source code](https://github.com/autowarefoundation/autoware.universe/blob/main/planning/autoware_planning_test_manager/src/autoware_planning_test_manager.cpp)) creates wrapper functions based on the `test_utils` functions.
