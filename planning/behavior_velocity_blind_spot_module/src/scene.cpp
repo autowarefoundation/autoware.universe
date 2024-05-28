@@ -67,6 +67,9 @@ void BlindSpotModule::initializeRTCStatus()
 BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(
   PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
+  if (planner_param_.use_pass_judge_line && is_over_pass_judge_line_) {
+    return OverPassJudge{"already over the pass judge line. no plan needed."};
+  }
   const auto & input_path = *path;
 
   /* set stop-line and stop-judgement-line for base_link */
@@ -98,6 +101,7 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(
 
   const auto is_over_pass_judge = isOverPassJudge(input_path, stop_line_pose);
   if (is_over_pass_judge) {
+    is_over_pass_judge_line_ = true;
     return is_over_pass_judge.value();
   }
 
@@ -121,7 +125,8 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(
   const auto & detection_area = detection_area_opt.value();
   debug_data_.detection_area = detection_area;
 
-  const auto ego_time_to_reach_stop_line = computeTimeToPassStopLine(blind_spot_lanelets);
+  const auto ego_time_to_reach_stop_line = computeTimeToPassStopLine(
+    blind_spot_lanelets, path->points.at(critical_stopline_idx).point.pose);
   /* calculate dynamic collision around detection area */
   const auto collision_obstacle = isCollisionDetected(
     blind_spot_lanelets, path->points.at(critical_stopline_idx).point.pose, detection_area,
@@ -439,14 +444,19 @@ std::optional<OverPassJudge> BlindSpotModule::isOverPassJudge(
 }
 
 double BlindSpotModule::computeTimeToPassStopLine(
-  const lanelet::ConstLanelets & blind_spot_lanelets) const
+  const lanelet::ConstLanelets & blind_spot_lanelets,
+  const geometry_msgs::msg::Pose & stop_line_pose) const
 {
+  // egoが停止している時にそのまま速度を使うと衝突しなくなってしまうのでegoについては最低速度を使う
   const auto & current_pose = planner_data_->current_odometry->pose;
   const auto current_arc_ego =
     lanelet::utils::getArcCoordinates(blind_spot_lanelets, current_pose).length;
-  const auto remaining_distance =
-    lanelet::utils::getLaneletLength3d(blind_spot_lanelets) - current_arc_ego;
-  return remaining_distance / (planner_data_->current_velocity->twist.linear.x);
+  const auto stopline_arc_ego =
+    lanelet::utils::getArcCoordinates(blind_spot_lanelets, stop_line_pose).length;
+  const auto remaining_distance = stopline_arc_ego - current_arc_ego;
+  return remaining_distance / std::max<double>(
+                                planner_param_.ttc_ego_minimal_velocity,
+                                planner_data_->current_velocity->twist.linear.x);
 }
 
 std::optional<autoware_auto_perception_msgs::msg::PredictedObject>
@@ -480,7 +490,8 @@ BlindSpotModule::isCollisionDetected(
       (object_arc_length - stop_line_arc_ego) /
       (object.kinematics.initial_twist_with_covariance.twist.linear.x);
     const auto ttc = ego_time_to_reach_stop_line - object_time_to_reach_stop_line;
-    if (-2.0 < ttc && ttc < 2.0) {
+    RCLCPP_INFO(logger_, "object ttc is %f", ttc);
+    if (planner_param_.ttc_min < ttc && ttc < planner_param_.ttc_max) {
       return object;
     }
   }
@@ -677,7 +688,7 @@ std::optional<lanelet::CompoundPolygon3d> BlindSpotModule::generateBlindSpotPoly
   const auto stop_line_arc_ego =
     lanelet::utils::getArcCoordinates(blind_spot_lanelets, stop_line_pose).length;
   const auto detection_area_start_length_ego =
-    std::max<double>(stop_line_arc_ego - planner_param_.backward_length, 0.0);
+    std::max<double>(stop_line_arc_ego - planner_param_.backward_detection_length, 0.0);
   return lanelet::utils::getPolygonFromArcLength(
     blind_spot_lanelets, detection_area_start_length_ego, stop_line_arc_ego);
 }

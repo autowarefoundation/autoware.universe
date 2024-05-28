@@ -92,16 +92,16 @@ public:
 public:
   struct PlannerParam
   {
-    bool use_pass_judge_line;  //! distance which ego can stop with max brake
-    double stop_line_margin;   //! distance from auto-generated stopline to detection_area boundary
-    double backward_length;  //! distance[m] from closest path point to the edge of beginning point
-    double ignore_width_from_center_line;  //! ignore width from center line from detection_area
-    double
-      max_future_movement_time;  //! maximum time[second] for considering future movement of object
-    double threshold_yaw_diff;   //! threshold of yaw difference between ego and target object
-    double
-      adjacent_extend_width;  //! the width of extended detection/conflict area on adjacent lane
+    bool use_pass_judge_line;
+    double stop_line_margin;
+    double backward_detection_length;
+    double ignore_width_from_center_line;
+    double adjacent_extend_width;
     double opposite_adjacent_extend_width;
+    double max_future_movement_time;
+    double ttc_min;
+    double ttc_max;
+    double ttc_ego_minimal_velocity;
   };
 
   BlindSpotModule(
@@ -171,7 +171,9 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const geometry_msgs::msg::Pose & stop_point_pose) const;
 
-  double computeTimeToPassStopLine(const lanelet::ConstLanelets & blind_spot_lanelets) const;
+  double computeTimeToPassStopLine(
+    const lanelet::ConstLanelets & blind_spot_lanelets,
+    const geometry_msgs::msg::Pose & stop_line_pose) const;
 
   /**
    * @brief Check obstacle is in blind spot areas.
