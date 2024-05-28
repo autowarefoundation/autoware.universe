@@ -19,6 +19,7 @@
 #include "gnss_module.hpp"
 #include "ndt_localization_trigger_module.hpp"
 #include "ndt_module.hpp"
+#include "nerf_module.hpp"
 #include "stop_check_module.hpp"
 #include "yabloc_module.hpp"
 
@@ -48,6 +49,9 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
   if (declare_parameter<bool>("ndt_enabled")) {
     ndt_ = std::make_unique<NdtModule>(this);
     ndt_localization_trigger_ = std::make_unique<NdtLocalizationTriggerModule>(this);
+  }
+  if (declare_parameter<bool>("nerf_enabled", false)) {
+    nerf_ = std::make_unique<NeRFModule>(this);
   }
   if (declare_parameter<bool>("stop_check_enabled")) {
     // Add 1.0 sec margin for twist buffer.
@@ -157,6 +161,8 @@ void PoseInitializer::on_initialize(
       // If both the NDT and YabLoc initializer are enabled, prioritize NDT as it offers more
       // accuracy pose.
       pose = yabloc_->align_pose(pose);
+    } else if (nerf_) {
+      pose = nerf_->align_pose(pose);
     }
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
