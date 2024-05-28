@@ -27,13 +27,12 @@
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
-#include <limits>
-#include <string>
-#include <sstream>
 #include <fstream>
 #include <iomanip>
+#include <limits>
+#include <sstream>
+#include <string>
 #include <utility>
-
 
 LidarMarkerLocalizer::LidarMarkerLocalizer() : Node("lidar_marker_localizer"), is_activated_(false)
 {
@@ -102,8 +101,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer() : Node("lidar_marker_localizer"), i
   pub_marker_detected_ = this->create_publisher<PoseArray>("~/debug/marker_detected", 10);
   pub_debug_pose_with_covariance_ =
     this->create_publisher<PoseWithCovarianceStamped>("~/debug/pose_with_covariance", 10);
-  pub_marker_pointcloud =
-    this->create_publisher<PointCloud2>("~/debug/marker_pointcloud", 10);
+  pub_marker_pointcloud = this->create_publisher<PointCloud2>("~/debug/marker_pointcloud", 10);
   service_trigger_node_ = this->create_service<SetBool>(
     "~/service/trigger_node_srv",
     std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
@@ -482,9 +480,10 @@ std::array<double, 36> LidarMarkerLocalizer::rotate_covariance(
   return ret_covariance;
 }
 
-void LidarMarkerLocalizer::save_intensity(const PointCloud2::ConstSharedPtr & points_msg_ptr, const Pose marker_pose)
+void LidarMarkerLocalizer::save_intensity(
+  const PointCloud2::ConstSharedPtr & points_msg_ptr, const Pose marker_pose)
 {
-  if(!param_.enable_save_log) {
+  if (!param_.enable_save_log) {
     return;
   }
 
@@ -495,13 +494,14 @@ void LidarMarkerLocalizer::save_intensity(const PointCloud2::ConstSharedPtr & po
 
   pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr marker_points_ptr(
     new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
-  pcl::PointCloud<pcl::PointXYZI>::Ptr marker_points_xyzi_ptr(
-    new pcl::PointCloud<pcl::PointXYZI>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr marker_points_xyzi_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   std::vector<int> ring_array;
 
   // extract marker pointcloud
   for (const autoware_point_types::PointXYZIRADRT & point : points_ptr->points) {
-    const double xy_distance = std::sqrt(std::pow(point.x - marker_pose.position.x, 2.0) + std::pow(point.y - marker_pose.position.y, 2.0));
+    const double xy_distance = std::sqrt(
+      std::pow(point.x - marker_pose.position.x, 2.0) +
+      std::pow(point.y - marker_pose.position.y, 2.0));
     // const double z_distance = std::fabs(point.z - marker_pose.position.z);
     // if (xy_distance < 0.40 && z_distance < 0.55) {
     if (xy_distance < 0.40) {
@@ -521,13 +521,16 @@ void LidarMarkerLocalizer::save_intensity(const PointCloud2::ConstSharedPtr & po
   // transform input_frame to save_frame_id
   pcl::PointCloud<pcl::PointXYZI>::Ptr marker_points_sensor_frame_ptr(
     new pcl::PointCloud<pcl::PointXYZI>);
-  transform_sensor_measurement(param_.save_frame_id, points_msg_ptr->header.frame_id, marker_points_xyzi_ptr, marker_points_sensor_frame_ptr);
+  transform_sensor_measurement(
+    param_.save_frame_id, points_msg_ptr->header.frame_id, marker_points_xyzi_ptr,
+    marker_points_sensor_frame_ptr);
 
   // to csv format
   std::stringstream log_message;
   size_t i = 0;
-  log_message << "point.position.x,point.position.y,point.position.z,point.intensity,point.ring" << std::endl;
-  for (const auto &point : marker_points_sensor_frame_ptr->points) {
+  log_message << "point.position.x,point.position.y,point.position.z,point.intensity,point.ring"
+              << std::endl;
+  for (const auto & point : marker_points_sensor_frame_ptr->points) {
     log_message << point.x;
     log_message << "," << point.y;
     log_message << "," << point.z;
@@ -536,17 +539,16 @@ void LidarMarkerLocalizer::save_intensity(const PointCloud2::ConstSharedPtr & po
     log_message << std::endl;
   }
 
-
   // create file name
   const double times_seconds = rclcpp::Time(points_msg_ptr->header.stamp).seconds();
   double time_integer_tmp;
   double time_decimal = std::modf(times_seconds, &time_integer_tmp);
   long int time_integer = static_cast<long int>(time_integer_tmp);
-  struct tm* time_info;
+  struct tm * time_info;
   time_info = std::localtime(&time_integer);
   std::stringstream file_name;
-  file_name << param_.savefile_name << std::put_time(time_info, "%Y%m%d-%H%M%S") 
-            << "-" << std::setw(3) << std::setfill('0') << static_cast<int>((time_decimal)*1000) << ".csv";
+  file_name << param_.savefile_name << std::put_time(time_info, "%Y%m%d-%H%M%S") << "-"
+            << std::setw(3) << std::setfill('0') << static_cast<int>((time_decimal)*1000) << ".csv";
 
   // write log_message to file
   std::filesystem::path savefile_directory_path = param_.savefile_directory_path;
@@ -555,7 +557,6 @@ void LidarMarkerLocalizer::save_intensity(const PointCloud2::ConstSharedPtr & po
   csv_file << log_message.str();
   csv_file.close();
   std::cerr << savefile_directory_path.c_str() << std::endl;
-
 
   // visualize for debug
   marker_points_sensor_frame_ptr->width = marker_points_sensor_frame_ptr->size();
@@ -570,7 +571,7 @@ void LidarMarkerLocalizer::save_intensity(const PointCloud2::ConstSharedPtr & po
   pub_marker_pointcloud->publish(viz_pointcloud_msg);
 }
 
-template<typename PointType>
+template <typename PointType>
 void LidarMarkerLocalizer::transform_sensor_measurement(
   const std::string & source_frame, const std::string & target_frame,
   const pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_input_ptr,

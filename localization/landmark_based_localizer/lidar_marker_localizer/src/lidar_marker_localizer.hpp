@@ -46,8 +46,8 @@
 
 #include <geometry_msgs/msg/pose_array.hpp>
 
-#include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
+#include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 class LidarMarkerLocalizer : public rclcpp::Node
@@ -110,7 +110,7 @@ private:
     const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const;
   void save_intensity(const PointCloud2::ConstSharedPtr & points_msg_ptr, const Pose marker_pose);
 
-  template<typename PointType>
+  template <typename PointType>
   void transform_sensor_measurement(
     const std::string & source_frame, const std::string & target_frame,
     const pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_input_ptr,
