@@ -17,6 +17,7 @@
 #include <autoware_point_types/types.hpp>
 #include <rclcpp/qos.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/transform/transforms.hpp>
 
 #include <geometry_msgs/msg/vector3.hpp>
 
@@ -24,9 +25,15 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <algorithm>
+#include <chrono>
+#include <filesystem>
 #include <limits>
 #include <string>
+#include <sstream>
+#include <fstream>
+#include <iomanip>
 #include <utility>
+
 
 LidarMarkerLocalizer::LidarMarkerLocalizer() : Node("lidar_marker_localizer"), is_activated_(false)
 {
@@ -57,6 +64,11 @@ LidarMarkerLocalizer::LidarMarkerLocalizer() : Node("lidar_marker_localizer"), i
   for (std::size_t i = 0; i < base_covariance.size(); ++i) {
     param_.base_covariance[i] = base_covariance[i];
   }
+
+  param_.enable_save_log = this->declare_parameter<bool>("enable_save_log");
+  param_.savefile_directory_path = this->declare_parameter<std::string>("savefile_directory_path");
+  param_.savefile_name = this->declare_parameter<std::string>("savefile_name");
+  param_.save_frame_id = this->declare_parameter<std::string>("save_frame_id");
 
   ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
     this->get_logger(), param_.self_pose_timeout_sec, param_.self_pose_distance_tolerance_m);
@@ -90,7 +102,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer() : Node("lidar_marker_localizer"), i
   pub_marker_detected_ = this->create_publisher<PoseArray>("~/debug/marker_detected", 10);
   pub_debug_pose_with_covariance_ =
     this->create_publisher<PoseWithCovarianceStamped>("~/debug/pose_with_covariance", 10);
-
+  pub_marker_pointcloud =
+    this->create_publisher<PointCloud2>("~/debug/marker_pointcloud", 10);
   service_trigger_node_ = this->create_service<SetBool>(
     "~/service/trigger_node_srv",
     std::bind(&LidarMarkerLocalizer::service_trigger_node, this, _1, _2),
@@ -260,6 +273,10 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
     diagnostics_module_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     return;
+  }
+
+  if (distance_from_self_pose_to_nearest_marker < 2.0) {
+    save_intensity(points_msg_ptr, detected_landmarks.at(0).pose);
   }
 
   // (5) Apply diff pose to self pose
@@ -463,4 +480,123 @@ std::array<double, 36> LidarMarkerLocalizer::rotate_covariance(
   }
 
   return ret_covariance;
+}
+
+void LidarMarkerLocalizer::save_intensity(const PointCloud2::ConstSharedPtr & points_msg_ptr, const Pose marker_pose)
+{
+  if(!param_.enable_save_log) {
+    return;
+  }
+
+  // convert from ROSMsg to PCL
+  pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr points_ptr(
+    new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
+  pcl::fromROSMsg(*points_msg_ptr, *points_ptr);
+
+  pcl::PointCloud<autoware_point_types::PointXYZIRADRT>::Ptr marker_points_ptr(
+    new pcl::PointCloud<autoware_point_types::PointXYZIRADRT>);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr marker_points_xyzi_ptr(
+    new pcl::PointCloud<pcl::PointXYZI>);
+  std::vector<int> ring_array;
+
+  // extract marker pointcloud
+  for (const autoware_point_types::PointXYZIRADRT & point : points_ptr->points) {
+    const double xy_distance = std::sqrt(std::pow(point.x - marker_pose.position.x, 2.0) + std::pow(point.y - marker_pose.position.y, 2.0));
+    // const double z_distance = std::fabs(point.z - marker_pose.position.z);
+    // if (xy_distance < 0.40 && z_distance < 0.55) {
+    if (xy_distance < 0.40) {
+      marker_points_ptr->push_back(point);
+
+      pcl::PointXYZI xyzi;
+      xyzi.x = point.x;
+      xyzi.y = point.y;
+      xyzi.z = point.z;
+      xyzi.intensity = point.intensity;
+      marker_points_xyzi_ptr->push_back(xyzi);
+
+      ring_array.push_back(point.ring);
+    }
+  }
+
+  // transform input_frame to save_frame_id
+  pcl::PointCloud<pcl::PointXYZI>::Ptr marker_points_sensor_frame_ptr(
+    new pcl::PointCloud<pcl::PointXYZI>);
+  transform_sensor_measurement(param_.save_frame_id, points_msg_ptr->header.frame_id, marker_points_xyzi_ptr, marker_points_sensor_frame_ptr);
+
+  // to csv format
+  std::stringstream log_message;
+  size_t i = 0;
+  log_message << "point.position.x,point.position.y,point.position.z,point.intensity,point.ring" << std::endl;
+  for (const auto &point : marker_points_sensor_frame_ptr->points) {
+    log_message << point.x;
+    log_message << "," << point.y;
+    log_message << "," << point.z;
+    log_message << "," << point.intensity;
+    log_message << "," << ring_array.at(i++);
+    log_message << std::endl;
+  }
+
+
+  // create file name
+  const double times_seconds = rclcpp::Time(points_msg_ptr->header.stamp).seconds();
+  double time_integer_tmp;
+  double time_decimal = std::modf(times_seconds, &time_integer_tmp);
+  long int time_integer = static_cast<long int>(time_integer_tmp);
+  struct tm* time_info;
+  time_info = std::localtime(&time_integer);
+  std::stringstream file_name;
+  file_name << param_.savefile_name << std::put_time(time_info, "%Y%m%d-%H%M%S") 
+            << "-" << std::setw(3) << std::setfill('0') << static_cast<int>((time_decimal)*1000) << ".csv";
+
+  // write log_message to file
+  std::filesystem::path savefile_directory_path = param_.savefile_directory_path;
+  std::filesystem::create_directories(savefile_directory_path);
+  std::ofstream csv_file(savefile_directory_path.append(file_name.str()));
+  csv_file << log_message.str();
+  csv_file.close();
+  std::cerr << savefile_directory_path.c_str() << std::endl;
+
+
+  // visualize for debug
+  marker_points_sensor_frame_ptr->width = marker_points_sensor_frame_ptr->size();
+  marker_points_sensor_frame_ptr->height = 1;
+  marker_points_sensor_frame_ptr->is_dense = false;
+
+  PointCloud2 viz_pointcloud_msg;
+  pcl::toROSMsg(*marker_points_sensor_frame_ptr, viz_pointcloud_msg);
+  viz_pointcloud_msg.header = points_msg_ptr->header;
+  viz_pointcloud_msg.header.frame_id = param_.save_frame_id;
+
+  pub_marker_pointcloud->publish(viz_pointcloud_msg);
+}
+
+template<typename PointType>
+void LidarMarkerLocalizer::transform_sensor_measurement(
+  const std::string & source_frame, const std::string & target_frame,
+  const pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_input_ptr,
+  pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_output_ptr)
+{
+  if (source_frame == target_frame) {
+    sensor_points_output_ptr = sensor_points_input_ptr;
+    return;
+  }
+
+  geometry_msgs::msg::TransformStamped transform;
+  try {
+    transform = tf_buffer_->lookupTransform(source_frame, target_frame, tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+    RCLCPP_WARN(
+      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+    // Since there is no clear error handling policy, temporarily return as is.
+    sensor_points_output_ptr = sensor_points_input_ptr;
+    return;
+  }
+
+  const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
+    tier4_autoware_utils::transform2pose(transform);
+  const Eigen::Matrix4f base_to_sensor_matrix =
+    pose_to_matrix4f(target_to_source_pose_stamped.pose);
+  tier4_autoware_utils::transformPointCloud(
+    *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }

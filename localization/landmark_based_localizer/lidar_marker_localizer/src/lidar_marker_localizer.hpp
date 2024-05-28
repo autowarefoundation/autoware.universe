@@ -47,6 +47,8 @@
 #include <geometry_msgs/msg/pose_array.hpp>
 
 #include <pcl/point_types.h>
+#include <pcl/common/transforms.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 class LidarMarkerLocalizer : public rclcpp::Node
 {
@@ -80,6 +82,11 @@ class LidarMarkerLocalizer : public rclcpp::Node
     double limit_distance_from_self_pose_to_nearest_marker;
     double limit_distance_from_self_pose_to_marker;
     std::array<double, 36> base_covariance;
+
+    bool enable_save_log;
+    std::string savefile_directory_path;
+    std::string savefile_name;
+    std::string save_frame_id;
   };
 
 public:
@@ -101,6 +108,13 @@ private:
     const std::vector<landmark_manager::Landmark> & landmarks) const;
   std::array<double, 36> rotate_covariance(
     const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const;
+  void save_intensity(const PointCloud2::ConstSharedPtr & points_msg_ptr, const Pose marker_pose);
+
+  template<typename PointType>
+  void transform_sensor_measurement(
+    const std::string & source_frame, const std::string & target_frame,
+    const pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_input_ptr,
+    pcl::shared_ptr<pcl::PointCloud<PointType>> & sensor_points_output_ptr);
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -115,6 +129,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_mapped_;
   rclcpp::Publisher<PoseArray>::SharedPtr pub_marker_detected_;
   rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pub_debug_pose_with_covariance_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_marker_pointcloud;
 
   std::shared_ptr<DiagnosticsModule> diagnostics_module_;
 
