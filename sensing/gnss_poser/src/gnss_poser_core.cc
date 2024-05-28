@@ -273,8 +273,11 @@ int run(void *dora_context)
                 struct timeval tv;
                 gettimeofday(&tv, NULL);
                 
-                printf("\nNavSatFix event,   cnt_run: %d  time: %ld,%f ms \n",cnt_run,tv.tv_sec , tv.tv_usec/1000.0f);
-                cout<<"seq: "<<navSatFix.header.seq<<endl;
+                //printf("\nNavSatFix event,   cnt_run: %d  time: %ld,%f ms \n",cnt_run,tv.tv_sec , tv.tv_usec/1000.0f);
+                cout << "NavSatFix event count: "<<cnt_run<<" data_seq "<< j["seq"]<<" time is: "  
+                  << tv.tv_sec <<","<< tv.tv_usec/1000.0f<<" ms " <<std::endl;
+              
+                //"seq: "<<navSatFix.header.seq<<endl;
 
                 GnssPoser.callbackNavSatFix(navSatFix);
               } 

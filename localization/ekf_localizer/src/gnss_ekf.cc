@@ -52,12 +52,14 @@ void* EKF_fusion_pthread(void *dora_context)
        << "count:" <<count << std::endl;
       //cout<<j_pose<<endl;
 
-      // std::cout << "x: " << j["x"] << std::endl;
-      // std::cout << "y: " << j["y"] << std::endl;
+
       // std::cout << "z: " << j["z"] << std::endl;
       // 将 JSON 对象序列化为字符串
       
-          
+      std::cout <<"The EKF_fusion pub pose seq: "<<gnss_measure.header.seq
+                <<" x: "<< gnss_measure.x
+                <<" y: "<< gnss_measure.y
+                <<" z: "<< gnss_measure.z<< std::endl;
       j_pose["header"]["frame_id"] = gnss_measure.header.frame_id;
       j_pose["header"]["stamp"]["sec"] = gnss_measure.header.sec;
       j_pose["header"]["stamp"]["nanosec"] = gnss_measure.header.nanosec;
@@ -82,11 +84,10 @@ void* EKF_fusion_pthread(void *dora_context)
       // q.z() = 0.0702;
       Eigen::Matrix3d R = q.toRotationMatrix();
       Eigen::Vector3d eulerAngle = R.eulerAngles(2,1,0);
-      cout << "roll(x) pitch(y) yaw(z) = " << eulerAngle.transpose() << endl;
-  
-      // j_pose["orientation"]["Roll"] = ea(0);
-      // j_pose["orientation"]["Pitch"] = ea(1);
-      // j_pose["orientation"]["Heading"] = ea(2);
+      cout << "yaw(z) roll(x) pitch(y) = " << eulerAngle.transpose() << endl<< std::endl;
+      j_pose["orientation"]["Heading"] = eulerAngle(0);
+      j_pose["orientation"]["Pitch"] = eulerAngle(1);
+      j_pose["orientation"]["Roll"] = eulerAngle(2);
       std::string json_string = j_pose.dump(4); // 参数 4 表示缩进宽度
       
       // 将字符串转换为 char* 类型
@@ -106,7 +107,9 @@ void* EKF_fusion_pthread(void *dora_context)
 }
 int run(void *dora_context)
 {
-    std::mutex mtx_DoraNavSatFix,mtx_DoraQuaternionStamped; // mtx.unlock();
+    std::mutex mtx_DoraNavSatFix;
+    std::mutex mtx_DoraQuaternionStamped; // mtx.unlock();
+
     while(true)
     {
          
@@ -146,8 +149,16 @@ int run(void *dora_context)
             if (strcmp(id, "DoraNavSatFix") == 0)
             {
               count_1++;
-              printf("NavSatFix event: cnt: %d\n",count_1);
-              cout<<" seq"<<j["seq"]<<endl;
+              struct timeval tv;
+              gettimeofday(&tv, NULL);
+
+              cout << "NavSatFix event count: "<<count_2<<" data_seq "<< j["seq"]<<" time is: "  
+                  << tv.tv_sec <<","<< tv.tv_usec/1000.0f<<" ms " <<std::endl;
+              
+              cout<<" NavSatFix recived seq "<<j["seq"]
+                      <<" x: " << j["x"] 
+                      <<" y: " << j["y"] 
+                      <<" z: " << j["z"] <<endl;
               //std::cout << "<----print---->" <<j<< std::endl;
               mtx_DoraNavSatFix.lock();
               //gnss_measure.header.frame_id = j["frame_id"];
@@ -158,6 +169,7 @@ int run(void *dora_context)
               gnss_measure.y = j["y"];
               gnss_measure.z = j["z"];
               mtx_DoraNavSatFix.unlock();
+
               // j_pose["position"]["x"] = j["x"];
               // j_pose["position"]["y"] = j["y"];
               // j_pose["position"]["z"] = j["z"];
@@ -165,10 +177,18 @@ int run(void *dora_context)
             else if(strcmp(id, "DoraQuaternionStamped") == 0)
             {
               count_2 ++;
-              printf("QuaternionStamped event: cnt: %d\n",count_2);
-              cout<<" seq"<<j["seq"]<<endl;
-               
+              //printf("QuaternionStamped event: cnt: %d\n",count_2);
+              struct timeval tv;
+              gettimeofday(&tv, NULL);
+
+              cout << "Quaternion event count: "<<count_2<<" data_seq "<< j["seq"]<<" time is: "  
+                  << tv.tv_sec <<","<< tv.tv_usec/1000.0f<<" ms " <<std::endl;
+              cout<<" Quaternion recived seq "<<j["seq"]
+                      <<" x: " << j["x"] 
+                      <<" y: " << j["y"] 
+                      <<" z: " << j["z"] <<endl; 
               //std::cout << "<----print---->" <<j << std::endl; 
+
               mtx_DoraQuaternionStamped.lock();
               //imu_measure.header.frame_id = j["frame_id"];
               imu_measure.header.seq = j["seq"];

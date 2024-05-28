@@ -1,9 +1,10 @@
 nodes:
   - id: gnss
     operator:
-      python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
+      python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora_with_file.py  #读取文件用于测试
+      #python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
       inputs:
-        tick: dora/timer/millis/10
+        tick: dora/timer/millis/20
       outputs:
         - DoraSentence
         - DoraNavSatFix
@@ -12,47 +13,56 @@ nodes:
     env:
       DEVICE_INDEX: 0
 
-  - id: gnss_sub
-    operator:
-      python: ../../dora-hardware/vendors/gnss/CGI_610/nmea_subscribeTopic.py
-      inputs:
-              DoraSentence: gnss/DoraSentence
-              DoraNavSatFix: gnss/DoraNavSatFix
-              DoraQuaternionStamped: gnss/DoraQuaternionStamped
-              DoraTwistStamped: gnss/DoraTwistStamped
-      outputs:
-        - DoraNavSatFix
-        - DoraQuaternionStamped
+  # - id: gnss_sub  #数据格式转换 json
+  #   operator:
+  #     python: ../../dora-hardware/vendors/gnss/CGI_610/nmea_subscribeTopic.py
+  #     inputs:
+  #             DoraSentence: gnss/DoraSentence
+  #             DoraNavSatFix: gnss/DoraNavSatFix
+  #             DoraQuaternionStamped: gnss/DoraQuaternionStamped
+  #             DoraTwistStamped: gnss/DoraTwistStamped
+  #     outputs:
+  #       - DoraNavSatFix
+  #       - DoraQuaternionStamped
 
-  - id: gnss_poser
+  - id: gnss_poser  #坐标系转化
     custom:
       source: ../../sensing/gnss_poser/build/gnss_poser_core
       inputs:
-        DoraNavSatFix: gnss_sub/DoraNavSatFix 
+        DoraNavSatFix: gnss/DoraNavSatFix 
       outputs:
-        - DoraSentence
-        - DoraNavSatFix
-        - DoraQuaternionStamped
-        - DoraTwistStamped
+        - DoraNavSatFix 
 
-  - id: gnss_poser_sub
+  - id: gnss_rviz2  #在RVIZ2中显示转换后的轨迹 （E-N-U）
     operator:
-      python: src/gnss_poser_sub.py
+      python: ../../sensing/gnss_poser/src/gps_to_ros2.py
       inputs:
-              # DoraSentence: gnss_sub/DoraSentence
               DoraNavSatFix: gnss_poser/DoraNavSatFix
-              DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
-              # DoraTwistStamped: gnss_sub/DoraTwistStamped
+##############################################################################################
+  # - id: gnss_ekf  # python 实现
+  #   # custom:
+  #   #   source: build/gnss_ekf
+  #   operator:
+  #     python: ../../localization/ekf_localizer/src/gnss_ekf.py
+  #     inputs:
+  #             DoraNavSatFix: gnss_poser/DoraNavSatFix
+  #             DoraQuaternionStamped: gnss/DoraQuaternionStamped
+  #             tick: dora/timer/millis/20
+  #     outputs:
+  #           - DoraGnssPose
+
+  - id: gnss_ekf  # c/c++节点
+    custom:
+      source: build/gnss_ekf
+      inputs:
+              DoraNavSatFix: gnss_poser/DoraNavSatFix
+              DoraQuaternionStamped: gnss/DoraQuaternionStamped
       outputs:
             - DoraGnssPose
 
-  # - id: gnss_rviz2
-  #   operator:
-  #     python: src/gps_to_ros2.py
-  #     inputs:
-  #             # DoraSentence: gnss_sub/DoraSentence
-  #             DoraNavSatFix: gnss_poser/DoraNavSatFix
-  #             # DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
-  #             # DoraTwistStamped: gnss_sub/DoraTwistStamped
-
+  - id: ekf_odom_rviz2  #在rviz中显示数据
+    operator:
+      python: src/ekf_odom_to_ros2.py
+      inputs:
+              DoraGnssPose: gnss_ekf/DoraGnssPose
 
