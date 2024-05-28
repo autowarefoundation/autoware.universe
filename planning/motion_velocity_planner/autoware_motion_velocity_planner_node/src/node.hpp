@@ -85,7 +85,6 @@ private:
   void on_virtual_traffic_light_states(
     const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg);
   void on_occupancy_grid(const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg);
-  void on_param();
 
   // publishers
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
@@ -95,11 +94,13 @@ private:
 
   //  parameters
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;
+  bool smooth_velocity_before_planning_{};
+  /// @brief set parameters of the velocity smoother
+  void set_velocity_smoother_params();
 
   // members
   PlannerData planner_data_;
   MotionVelocityPlannerManager planner_manager_;
-  bool is_driving_forward_{true};
   HADMapBin::ConstSharedPtr map_ptr_{nullptr};
   bool has_received_map_ = false;
 
@@ -124,8 +125,11 @@ private:
   void insert_slowdown(
     autoware_auto_planning_msgs::msg::Trajectory & trajectory,
     const autoware::motion_velocity_planner::SlowdownInterval & slowdown_interval) const;
+  autoware::motion_velocity_planner::TrajectoryPoints smooth_trajectory(
+    const autoware::motion_velocity_planner::TrajectoryPoints & trajectory_points,
+    const autoware::motion_velocity_planner::PlannerData & planner_data) const;
   autoware_auto_planning_msgs::msg::Trajectory generate_trajectory(
-    const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory_msg);
+    autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points);
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
