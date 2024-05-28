@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for ground_segmentation",
+  "title": "Parameters for ground_segmentation.",
   "type": "object",
   "definitions": {
     "ground_segmentation": {
