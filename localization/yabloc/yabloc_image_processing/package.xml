@@ -22,6 +22,7 @@
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>tier4_autoware_utils</depend>
+  <depend>rclcpp_components</depend>
   <depend>visualization_msgs</depend>
   <depend>yabloc_common</depend>
 
