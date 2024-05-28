@@ -400,6 +400,39 @@ void MotionVelocityPlannerNode::on_trajectory(
     trajectory_pub_, output_trajectory_msg.header.stamp);
 }
 
+void MotionVelocityPlannerNode::insert_stop(
+  autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+  const geometry_msgs::msg::Point & stop_point) const
+{
+  const auto seg_idx = motion_utils::findNearestSegmentIndex(trajectory.points, stop_point);
+  const auto insert_idx = motion_utils::insertTargetPoint(seg_idx, stop_point, trajectory.points);
+  if (insert_idx) {
+    trajectory.points[*insert_idx].longitudinal_velocity_mps = 0.0;
+  } else {
+    RCLCPP_WARN(get_logger(), "Failed to insert stop point");
+  }
+}
+
+void MotionVelocityPlannerNode::insert_slowdown(
+  autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+  const autoware::motion_velocity_planner::SlowdownInterval & slowdown_interval) const
+{
+  const auto from_seg_idx =
+    motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.from);
+  const auto from_insert_idx =
+    motion_utils::insertTargetPoint(from_seg_idx, slowdown_interval.from, trajectory.points);
+  const auto to_seg_idx =
+    motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.to);
+  const auto to_insert_idx =
+    motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
+  if (from_insert_idx && to_insert_idx) {
+    for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
+      trajectory.points[idx].longitudinal_velocity_mps = 0.0;
+  } else {
+    RCLCPP_WARN(get_logger(), "Failed to insert slowdown point");
+  }
+}
+
 autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_trajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory_msg)
 {
@@ -413,33 +446,10 @@ autoware_auto_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate
   velocity_factors.header.stamp = get_clock()->now();
 
   for (const auto & planning_result : planning_results) {
-    for (const auto & stop_point : planning_result.stop_points) {
-      const auto seg_idx =
-        motion_utils::findNearestSegmentIndex(output_trajectory_msg.points, stop_point);
-      const auto insert_idx =
-        motion_utils::insertTargetPoint(seg_idx, stop_point, output_trajectory_msg.points);
-      if (insert_idx) {
-        output_trajectory_msg.points[*insert_idx].longitudinal_velocity_mps = 0.0;
-      } else {
-        RCLCPP_WARN(get_logger(), "Failed to insert stop point");
-      }
-    }
-    for (const auto & slowdown_interval : planning_result.slowdown_intervals) {
-      const auto from_seg_idx =
-        motion_utils::findNearestSegmentIndex(output_trajectory_msg.points, slowdown_interval.from);
-      const auto from_insert_idx = motion_utils::insertTargetPoint(
-        from_seg_idx, slowdown_interval.from, output_trajectory_msg.points);
-      const auto to_seg_idx =
-        motion_utils::findNearestSegmentIndex(output_trajectory_msg.points, slowdown_interval.to);
-      const auto to_insert_idx = motion_utils::insertTargetPoint(
-        to_seg_idx, slowdown_interval.to, output_trajectory_msg.points);
-      if (from_insert_idx && to_insert_idx) {
-        for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
-          output_trajectory_msg.points[idx].longitudinal_velocity_mps = 0.0;
-      } else {
-        RCLCPP_WARN(get_logger(), "Failed to insert slowdown point");
-      }
-    }
+    for (const auto & stop_point : planning_result.stop_points)
+      insert_stop(output_trajectory_msg, stop_point);
+    for (const auto & slowdown_interval : planning_result.slowdown_intervals)
+      insert_slowdown(output_trajectory_msg, slowdown_interval);
     if (planning_result.velocity_factor)
       velocity_factors.factors.push_back(*planning_result.velocity_factor);
   }

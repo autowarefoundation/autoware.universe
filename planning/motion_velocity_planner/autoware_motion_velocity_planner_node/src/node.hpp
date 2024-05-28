@@ -118,6 +118,12 @@ private:
 
   // function
   bool is_data_ready() const;
+  void insert_stop(
+    autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+    const geometry_msgs::msg::Point & stop_point) const;
+  void insert_slowdown(
+    autoware_auto_planning_msgs::msg::Trajectory & trajectory,
+    const autoware::motion_velocity_planner::SlowdownInterval & slowdown_interval) const;
   autoware_auto_planning_msgs::msg::Trajectory generate_trajectory(
     const autoware_auto_planning_msgs::msg::Trajectory & input_trajectory_msg);
 
