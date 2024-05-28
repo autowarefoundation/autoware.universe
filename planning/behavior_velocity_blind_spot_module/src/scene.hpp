@@ -184,7 +184,8 @@ private:
    * @return true when an object is detected in blind spot
    */
   std::optional<autoware_auto_perception_msgs::msg::PredictedObject> isCollisionDetected(
-    const lanelet::ConstLanelets & blind_spot_lanelets, const lanelet::CompoundPolygon3d & area,
+    const lanelet::ConstLanelets & blind_spot_lanelets,
+    const geometry_msgs::msg::Pose & stop_line_pose, const lanelet::CompoundPolygon3d & area,
     const double ego_time_to_reach_stop_line);
 
   /**
@@ -222,22 +223,13 @@ private:
   bool isTargetObjectType(const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
-   * @brief Check if at least one of object's predicted position is in area
-   * @param object Dynamic object
-   * @param area Area defined by polygon
-   * @return True when at least one of object's predicted position is in area
-   */
-  bool isPredictedPathInArea(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const std::vector<lanelet::CompoundPolygon3d> & areas, geometry_msgs::msg::Pose ego_pose) const;
-
-  /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
    * @param objects_ptr target objects
    * @param time_thr    time threshold to cut path
    */
-  void cutPredictPathWithDuration(
-    autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
+  autoware_auto_perception_msgs::msg::PredictedObject cutPredictPathWithDuration(
+    const std_msgs::msg::Header & header,
+    const autoware_auto_perception_msgs::msg::PredictedObject & object,
     const double time_thr) const;
 
   StateMachine state_machine_;  //! for state

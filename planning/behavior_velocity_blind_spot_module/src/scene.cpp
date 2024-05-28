@@ -112,8 +112,9 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(
   }
   const auto & blind_spot_lanelets = blind_spot_lanelets_.value();
 
-  const auto detection_area_opt =
-    generateBlindSpotPolygons(input_path, closest_idx, blind_spot_lanelets, stop_line_pose);
+  const auto detection_area_opt = generateBlindSpotPolygons(
+    input_path, closest_idx, blind_spot_lanelets,
+    path->points.at(critical_stopline_idx).point.pose);
   if (!detection_area_opt) {
     return InternalError{"Failed to generate BlindSpotPolygons"};
   }
@@ -122,8 +123,9 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(
 
   const auto ego_time_to_reach_stop_line = computeTimeToPassStopLine(blind_spot_lanelets);
   /* calculate dynamic collision around detection area */
-  const auto collision_obstacle =
-    isCollisionDetected(blind_spot_lanelets, detection_area, ego_time_to_reach_stop_line);
+  const auto collision_obstacle = isCollisionDetected(
+    blind_spot_lanelets, path->points.at(critical_stopline_idx).point.pose, detection_area,
+    ego_time_to_reach_stop_line);
   state_machine_.setStateWithMarginTime(
     collision_obstacle.has_value() ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("state_machine"), *clock_);
@@ -381,27 +383,28 @@ std::optional<std::pair<size_t, size_t>> BlindSpotModule::generateStopLine(
   return std::make_pair(stopline_idx_default_opt.value(), stopline_idx_critical_opt.value());
 }
 
-void BlindSpotModule::cutPredictPathWithDuration(
-  autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr, const double time_thr) const
+autoware_auto_perception_msgs::msg::PredictedObject BlindSpotModule::cutPredictPathWithDuration(
+  const std_msgs::msg::Header & header,
+  const autoware_auto_perception_msgs::msg::PredictedObject & object_original,
+  const double time_thr) const
 {
+  auto object = object_original;
   const rclcpp::Time current_time = clock_->now();
 
-  for (auto & object : objects_ptr->objects) {                         // each objects
-    for (auto & predicted_path : object.kinematics.predicted_paths) {  // each predicted paths
-      const auto origin_path = predicted_path;
-      predicted_path.path.clear();
+  for (auto & predicted_path : object.kinematics.predicted_paths) {  // each predicted paths
+    const auto origin_path = predicted_path;
+    predicted_path.path.clear();
 
-      for (size_t k = 0; k < origin_path.path.size(); ++k) {  // each path points
-        const auto & predicted_pose = origin_path.path.at(k);
-        const auto predicted_time =
-          rclcpp::Time(objects_ptr->header.stamp) +
-          rclcpp::Duration(origin_path.time_step) * static_cast<double>(k);
-        if ((predicted_time - current_time).seconds() < time_thr) {
-          predicted_path.path.push_back(predicted_pose);
-        }
+    for (size_t k = 0; k < origin_path.path.size(); ++k) {  // each path points
+      const auto & predicted_pose = origin_path.path.at(k);
+      const auto predicted_time = rclcpp::Time(header.stamp) +
+                                  rclcpp::Duration(origin_path.time_step) * static_cast<double>(k);
+      if ((predicted_time - current_time).seconds() < time_thr) {
+        predicted_path.path.push_back(predicted_pose);
       }
     }
   }
+  return object;
 }
 
 std::optional<OverPassJudge> BlindSpotModule::isOverPassJudge(
@@ -448,55 +451,40 @@ double BlindSpotModule::computeTimeToPassStopLine(
 
 std::optional<autoware_auto_perception_msgs::msg::PredictedObject>
 BlindSpotModule::isCollisionDetected(
-  [[maybe_unused]] const lanelet::ConstLanelets & blind_spot_lanelets,
-  const lanelet::CompoundPolygon3d & area,
-  [[maybe_unused]] const double ego_time_to_reach_stop_line)
+  const lanelet::ConstLanelets & blind_spot_lanelets,
+  const geometry_msgs::msg::Pose & stop_line_pose, const lanelet::CompoundPolygon3d & area,
+  const double ego_time_to_reach_stop_line)
 {
-  // TODO(Mamoru Sobue): only do this for target object
-  autoware_auto_perception_msgs::msg::PredictedObjects objects =
-    *(planner_data_->predicted_objects);
-  cutPredictPathWithDuration(&objects, planner_param_.max_future_movement_time);
-
   // check objects in blind spot areas
-  for (const auto & object : objects.objects) {
-    if (!isTargetObjectType(object)) {
+  const auto stop_line_arc_ego =
+    lanelet::utils::getArcCoordinates(blind_spot_lanelets, stop_line_pose).length;
+  for (const auto & original_object : planner_data_->predicted_objects->objects) {
+    if (!isTargetObjectType(original_object)) {
       continue;
     }
-
+    const auto object = cutPredictPathWithDuration(
+      planner_data_->predicted_objects->header, original_object,
+      planner_param_.max_future_movement_time);
     // right direction
     const bool exist_in_detection_area = bg::within(
       to_bg2d(object.kinematics.initial_pose_with_covariance.pose.position),
       lanelet::utils::to2D(area));
-    if (exist_in_detection_area) {
+    if (!exist_in_detection_area) {
+      continue;
+    }
+    const auto object_arc_length =
+      lanelet::utils::getArcCoordinates(
+        blind_spot_lanelets, object.kinematics.initial_pose_with_covariance.pose)
+        .length;
+    const auto object_time_to_reach_stop_line =
+      (object_arc_length - stop_line_arc_ego) /
+      (object.kinematics.initial_twist_with_covariance.twist.linear.x);
+    const auto ttc = ego_time_to_reach_stop_line - object_time_to_reach_stop_line;
+    if (-2.0 < ttc && ttc < 2.0) {
       return object;
     }
   }
   return std::nullopt;
-}
-
-bool BlindSpotModule::isPredictedPathInArea(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object,
-  const std::vector<lanelet::CompoundPolygon3d> & areas, geometry_msgs::msg::Pose ego_pose) const
-{
-  const auto ego_yaw = tf2::getYaw(ego_pose.orientation);
-  const auto threshold_yaw_diff = planner_param_.threshold_yaw_diff;
-  // NOTE: iterating all paths including those of low confidence
-  return std::any_of(
-    areas.begin(), areas.end(), [&object, &ego_yaw, &threshold_yaw_diff](const auto & area) {
-      const auto area_2d = lanelet::utils::to2D(area);
-      return std::any_of(
-        object.kinematics.predicted_paths.begin(), object.kinematics.predicted_paths.end(),
-        [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & path) {
-          return std::any_of(
-            path.path.begin(), path.path.end(),
-            [&area_2d, &ego_yaw, &threshold_yaw_diff](const auto & point) {
-              const auto is_in_area = bg::within(to_bg2d(point.position), area_2d);
-              const auto match_yaw =
-                std::fabs(ego_yaw - tf2::getYaw(point.orientation)) < threshold_yaw_diff;
-              return is_in_area && match_yaw;
-            });
-        });
-    });
 }
 
 lanelet::ConstLanelet BlindSpotModule::generateHalfLanelet(
