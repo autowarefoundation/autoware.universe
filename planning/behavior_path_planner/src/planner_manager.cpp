@@ -111,6 +111,8 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     const bool is_any_module_running =
       is_any_approved_module_running || is_any_candidate_module_running_or_idle;
 
+    updateCurrentRouteLanelet(data);
+
     const bool is_out_of_route = utils::isEgoOutOfRoute(
       data->self_odometry->pose.pose, current_route_lanelet_.value(), data->prev_modified_goal,
       data->route_handler);
@@ -415,7 +417,7 @@ BehaviorModuleOutput PlannerManager::runKeepLastModules(
   return output;
 }
 
-BehaviorModuleOutput PlannerManager::getReferencePath(const std::shared_ptr<PlannerData> & data)
+void PlannerManager::updateCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data)
 {
   const auto & route_handler = data->route_handler;
   const auto & pose = data->self_odometry->pose.pose;
@@ -431,29 +433,35 @@ BehaviorModuleOutput PlannerManager::getReferencePath(const std::shared_ptr<Plan
 
   if (closest_lanelet_from_current) {
     current_route_lanelet_ = closest_lanelet_from_current.get();
-  } else {
-    const auto lanelet_sequence = route_handler->getLaneletSequence(
-      current_route_lanelet_.value(), pose, backward_length, p.forward_path_length);
-
-    lanelet::ConstLanelet closest_lane{};
-    const auto could_calculate_closest_lanelet =
-      lanelet::utils::query::getClosestLaneletWithConstrains(
-        lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
-        p.ego_nearest_yaw_threshold) ||
-      lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane);
-
-    if (could_calculate_closest_lanelet)
-      current_route_lanelet_ = closest_lane;
-    else
-      resetCurrentRouteLanelet(data);
+    return;
   }
 
+  const auto lanelet_sequence = route_handler->getLaneletSequence(
+    current_route_lanelet_.value(), pose, backward_length, p.forward_path_length);
+
+  lanelet::ConstLanelet closest_lane{};
+  const auto could_calculate_closest_lanelet =
+    lanelet::utils::query::getClosestLaneletWithConstrains(
+      lanelet_sequence, pose, &closest_lane, p.ego_nearest_dist_threshold,
+      p.ego_nearest_yaw_threshold) ||
+    lanelet::utils::query::getClosestLanelet(lanelet_sequence, pose, &closest_lane);
+
+  if (could_calculate_closest_lanelet)
+    current_route_lanelet_ = closest_lane;
+  else
+    resetCurrentRouteLanelet(data);
+}
+
+BehaviorModuleOutput PlannerManager::getReferencePath(
+  const std::shared_ptr<PlannerData> & data) const
+{
   const auto reference_path = utils::getReferencePath(*current_route_lanelet_, data);
   publishDebugRootReferencePath(reference_path);
   return reference_path;
 }
 
-void PlannerManager::publishDebugRootReferencePath(const BehaviorModuleOutput & reference_path)
+void PlannerManager::publishDebugRootReferencePath(
+  const BehaviorModuleOutput & reference_path) const
 {
   using visualization_msgs::msg::Marker;
   MarkerArray array;

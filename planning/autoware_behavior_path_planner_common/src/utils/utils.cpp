@@ -489,20 +489,10 @@ bool isInLaneletWithYawThreshold(
 }
 
 bool isEgoOutOfRoute(
-  const Pose & self_pose, const lanelet::ConstLanelet & current_lanelet,
+  const Pose & self_pose, const lanelet::ConstLanelet & closest_road_lane,
   const std::optional<PoseWithUuidStamped> & modified_goal,
   const std::shared_ptr<RouteHandler> & route_handler)
 {
-  const double threshold = std::numeric_limits<double>::max();
-  const auto closest_road_lane = route_handler->getClosestRouteLaneletFromCurrent(
-    self_pose, current_lanelet, threshold, threshold);
-  if (!closest_road_lane) {
-    RCLCPP_WARN_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("util"),
-      "cannot find closest road lanelet");
-    return false;
-  }
-
   const Pose & goal_pose = (modified_goal && modified_goal->uuid == route_handler->getRouteUuid())
                              ? modified_goal->pose
                              : route_handler->getGoalPose();
@@ -521,7 +511,7 @@ bool isEgoOutOfRoute(
   // If ego vehicle is over goal on goal lane, return true
   const double yaw_threshold = tier4_autoware_utils::deg2rad(90);
   if (
-    closest_road_lane.get().id() == goal_lane.id() &&
+    closest_road_lane.id() == goal_lane.id() &&
     isInLaneletWithYawThreshold(self_pose, goal_lane, yaw_threshold)) {
     constexpr double buffer = 1.0;
     const auto ego_arc_coord = lanelet::utils::getArcCoordinates({goal_lane}, self_pose);
@@ -541,12 +531,12 @@ bool isEgoOutOfRoute(
   const bool is_in_shoulder_lane = !route_handler->getShoulderLaneletsAtPose(self_pose).empty();
   // Check if ego vehicle is in road lane
   const bool is_in_road_lane = std::invoke([&]() {
-    if (lanelet::utils::isInLanelet(self_pose, closest_road_lane.get())) {
+    if (lanelet::utils::isInLanelet(self_pose, closest_road_lane)) {
       return true;
     }
 
     // check previous lanes for backward driving (e.g. pull out)
-    const auto prev_lanes = route_handler->getPreviousLanelets(closest_road_lane.get());
+    const auto prev_lanes = route_handler->getPreviousLanelets(closest_road_lane);
     for (const auto & lane : prev_lanes) {
       if (lanelet::utils::isInLanelet(self_pose, lane)) {
         return true;
