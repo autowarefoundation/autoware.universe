@@ -120,10 +120,10 @@ class Operator:
             q[2] =  self.pose["orientation"]["y"]
             q[3] =  self.pose["orientation"]["z"]
 
-            q[0] = 0.9586
-            q[1] = -0.02
-            q[2] = -0.0377
-            q[3] = 0.0702
+            # q[0] = 0.9586
+            # q[1] = -0.02
+            # q[2] = -0.0377
+            # q[3] = 0.0702
  
             [Roll ,Pitch ,Heading]= euler_from_quaternion(q)
             now = datetime.now()# 获取当前时间

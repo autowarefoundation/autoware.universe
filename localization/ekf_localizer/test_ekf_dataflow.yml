@@ -39,7 +39,7 @@ nodes:
       inputs:
               DoraNavSatFix: gnss_poser/DoraNavSatFix
 ##############################################################################################
-  - id: gnss_ekf
+  - id: gnss_ekf  # python 实现
     # custom:
     #   source: build/gnss_ekf
     operator:
@@ -47,13 +47,23 @@ nodes:
       inputs:
               DoraNavSatFix: gnss_poser/DoraNavSatFix
               DoraQuaternionStamped: gnss/DoraQuaternionStamped
-              #tick: dora/timer/millis/20
+              tick: dora/timer/millis/20
       outputs:
             - DoraGnssPose
 
-  - id: ekf_rviz2  #在rviz中显示数据
+        
+  # - id: gnss_ekf  # c/c++节点
+  #   # custom:
+  #   #   source: build/gnss_ekf
+  #     inputs:
+  #             DoraNavSatFix: gnss_poser/DoraNavSatFix
+  #             DoraQuaternionStamped: gnss/DoraQuaternionStamped
+  #     outputs:
+  #           - DoraGnssPose
+
+  - id: ekf_odom_rviz2  #在rviz中显示数据
     operator:
-      python: src/ekf_xyz_to_ros2.py
+      python: src/ekf_odom_to_ros2.py
       inputs:
-              DoraNavSatFix: gnss_ekf/DoraGnssPose
+              DoraGnssPose: gnss_ekf/DoraGnssPose
 

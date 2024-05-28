@@ -76,13 +76,11 @@ void* EKF_fusion_pthread(void *dora_context)
       q.y() = imu_measure.qy;
       q.z() = imu_measure.qz;
 
-      q.w() = 0.9586;
-      q.x() = -0.02;
-      q.y() = -0.0377;
-      q.z() = 0.0702;
-
+      // q.w() = 0.9586; //测试数据 EIGEN转换结果与MATLAB 和 python转换结果都不同
+      // q.x() = -0.02;  // 测试日期 20240528
+      // q.y() = -0.0377;
+      // q.z() = 0.0702;
       Eigen::Matrix3d R = q.toRotationMatrix();
-
       Eigen::Vector3d eulerAngle = R.eulerAngles(2,1,0);
       cout << "roll(x) pitch(y) yaw(z) = " << eulerAngle.transpose() << endl;
   
