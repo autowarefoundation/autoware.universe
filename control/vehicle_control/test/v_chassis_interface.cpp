@@ -5,11 +5,6 @@
 #include <chrono>
 #include <ctime>
 #include <sys/time.h>
-#include <thread>
-#include <mutex>
- 
-std::mutex mtx;
-
 using namespace std;
 
 
@@ -74,15 +69,13 @@ void set_steering_cmd(const float angle)
         temp = static_cast<int16_t>(control_mode.angle_require * 10.4f);
         std::cout << "control_mode.angle_require = " << control_mode.angle_require << std::endl;
         std::cout << "temp =  " << temp << std::endl;
-        mgs_id132.ACU_ChassisSteerAngleTarget = fabs(temp) <= 480.0f ? temp : (fabs(temp) / temp) * 480.0f;
+        mgs_id132.ACU_ChassisSteerAngleTarget = fabs(temp) <= 500.0f ? temp : (fabs(temp) / temp) * 500.0f;
         mgs_id132.ACU_ChassisSteerAngleRearTarget = -mgs_id132.ACU_ChassisSteerAngleTarget;
     }
     else
-    {   
-        std::lock_guard<std::mutex> guard(mtx);
-        mgs_id132.ACU_ChassisSteerAngleTarget = fabs(angle) <= 480.0f ? angle : (fabs(angle) / angle) * 480.0f;
+    {
+        mgs_id132.ACU_ChassisSteerAngleTarget = fabs(angle) <= 500.0f ? angle : (fabs(angle) / angle) * 500.0f;
     }
-     
     return;
 }
 ///-------------------------------------------------------------------------------------------------------------
@@ -201,101 +194,6 @@ pthread_t start_status_monitor_thread()
     return id;
 }
 
-void* test_control(void*);
-pthread_t start_test_control_thread()
-{
-    pthread_t id = 0;
-    // 开启获取车辆状态线程
-    if (pthread_create(&id, nullptr, test_control, nullptr) != 0)
-    {
-        std::cerr << "create test_control thread fail!" << std::endl;
-        exit(-1);
-    }
-    return id;
-}
- 
-
-
-void* test_control(void *)
-{
-  const int rate = 50;  // 设定频率为50HZ
-  const chrono::milliseconds interval((int)(1000 / rate));
-
-  while(true)
-  {
-
-    vehicle_ready();
-    static struct can_frame frame; // 发送帧结构
-
-    //--------------------------------------------------------------------------------
-    // //-->>发送控制消息
-    if (
-        (brakeClear == 1) ||
-        (mgs_id531.VCU_ChassisBrakePadlFb > 0 && mgs_id130.ACU_ChassisSpeedCtrl != 0))
-    {
-        // std::cout<<"-----------------"<<std::endl;
-        mgs_id131.ACU_ChassisBrakeEn = 1;
-        mgs_id131.ACU_ChassisBrakePdlTarget = 0;
-        mgs_id130.ACU_ChassisSpeedCtrl = 0;
-        brakeClear = 0;
-    }
-    memset(&frame, 0, sizeof(frame)); 
-    mgs_id130.ACU_ChassisDriverEnCtrl = 1;
-    mgs_id130.ACU_ChassisSpeedCtrl = 1;           // 清空缓存区
-    frame_encapsulation_ID130(mgs_id130, frame); // 填充帧消息
-//-->>条件编译
-#ifdef NO_LOCAL_DEBUG
-    write_socketcan_frame(can_fd, frame); // 发送帧消息
-#endif
-
-    memset(&frame, 0, sizeof(frame)); // 清空缓存区
-    // 刹车标志置零前需保持刹车标志不变再将刹车值置零
-
-    frame_encapsulation_ID131(mgs_id131, frame); // 填充帧消息
-//-->>条件编译
-#ifdef NO_LOCAL_DEBUG
-    write_socketcan_frame(can_fd, frame); // 发送帧消息
-#endif
-
-    memset(&frame, 0, sizeof(frame));
-    // mgs_id132.ACU_ChassisSteerEnCtrl = 1;
-    // mgs_id132.ACU_ChassisSteerAngleTarget = 480;  // 清空缓存区
-    frame_encapsulation_ID132(mgs_id132, frame); // 填充帧消息
-    // auto start = std::chrono::system_clock::now(); // 获取当前时间
-    // std::time_t pub_angle_time = std::chrono::system_clock::to_time_t(start);
-    // std::cout << "The pub_angle_time time is: " << std::ctime(&pub_angle_time);
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    cout << "The can bus pub for test2 is: " <<  tv.tv_usec/1000
-    << "  mgs_id132.ACU_ChassisSteerAngleTarget "<< mgs_id132.ACU_ChassisSteerAngleTarget 
-     << "  mgs_id132.ACU_ChassisSteerEnCtrl "<< (uint16_t)mgs_id132.ACU_ChassisSteerEnCtrl
-    << "  mgs_id130.ACU_ChassisSpeedCtrl " <<  mgs_id130.ACU_ChassisSpeedCtrl
-    << "  mgs_id130.ACU_ChassisDriverEnCtrl  " <<  (uint16_t)mgs_id130.ACU_ChassisDriverEnCtrl
-    <<endl;
-                
-
-//-->>条件编译
-#ifdef NO_LOCAL_DEBUG
-    write_socketcan_frame(can_fd, frame); // 发送帧消息
-#endif
-
-    // 灯光控制报文封装发送
-    memset(&frame, 0, sizeof(frame)); // 清空缓存区
-    // mgs_id133.ACU_VehicleLeftLampCtrl = 0;
-    // mgs_id133.ACU_VehicleRightLampCtrl = 1;
-    frame_encapsulation_ID133(mgs_id133, frame); // 填充帧消息
-//-->>条件编译
-#ifdef NO_LOCAL_DEBUG
-    write_socketcan_frame(can_fd, frame); // 发送帧消息
-#endif
-
-
-      this_thread::sleep_for(interval);
-    // ros::spinOnce();
-  }
-  
-}
-
 /**
  * @brief start_send_timer开启控制报文发送定时器
  * @param t_ms
@@ -316,8 +214,6 @@ void start_send_timer(int t_ms)
     }
     return;
 }
-
-
 
 /**
  * @brief msg_send_recall
@@ -361,20 +257,15 @@ static void msg_send_recall(int signo)
 #endif
 
     memset(&frame, 0, sizeof(frame));
-    mgs_id132.ACU_ChassisSteerEnCtrl = 1;
-    //mgs_id132.ACU_ChassisSteerAngleTarget = 480;  // 清空缓存区
+    //mgs_id132.ACU_ChassisSteerEnCtrl = 1;
+    //mgs_id132.ACU_ChassisSteerAngleTarget = 500;  // 清空缓存区
     frame_encapsulation_ID132(mgs_id132, frame); // 填充帧消息
     // auto start = std::chrono::system_clock::now(); // 获取当前时间
     // std::time_t pub_angle_time = std::chrono::system_clock::to_time_t(start);
     // std::cout << "The pub_angle_time time is: " << std::ctime(&pub_angle_time);
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    cout << "The can bus pub is: " <<  tv.tv_usec/1000
-    << "  mgs_id132.ACU_ChassisSteerAngleTarget "<< mgs_id132.ACU_ChassisSteerAngleTarget 
-     << "  mgs_id132.ACU_ChassisSteerEnCtrl "<< (uint16_t)mgs_id132.ACU_ChassisSteerEnCtrl
-    << "  mgs_id130.ACU_ChassisSpeedCtrl " <<  mgs_id130.ACU_ChassisSpeedCtrl
-    << "  mgs_id130.ACU_ChassisDriverEnCtrl  " <<  (uint16_t)mgs_id130.ACU_ChassisDriverEnCtrl
-    <<endl;
+    // struct timeval tv;
+    // gettimeofday(&tv, NULL);
+    // cout << "The pub_angle_timee mil time is: " << tv.tv_sec*1000 + tv.tv_usec/1000 << endl;
                 
 
 //-->>条件编译

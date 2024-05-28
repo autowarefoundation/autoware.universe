@@ -4,7 +4,7 @@ extern "C"
 #include "operator_api.h"
 #include "operator_types.h"
 }
-
+#include <sys/time.h>
 #include "pure_pursuit.h"
 #include "interface_lat.h"
 #include <chrono>
@@ -53,9 +53,10 @@ void ros_veh_para_init()
  * @param msg
  */
 void veh_status_callback(char *msg)
-{
+{   
     VehicleStat_h *vehiclestat_data = reinterpret_cast<VehicleStat_h *>(msg);
-    pure_set_veh_speed(vehiclestat_data->veh_speed);
+    float speed = 1.0;
+    pure_set_veh_speed(/*vehiclestat_data->veh_speed*/speed);
     // std::cout<<"veh_speed : "<<msg->veh_speed<<std::endl;
     return;
 }
@@ -138,30 +139,35 @@ void ref_path_callback(char *msg)
 
 
 void calculate_angle(void *dora_context){
-    struct SteeringCmd_h steer_msg;
 
-    const int rate = 200;   // 设定频率为200HZ
-    const chrono::milliseconds interval((int)(1000/rate));
-
-    steer_msg.SteeringAngle = -pure_pursuit(); 
-    std::cout << "steer_msg: " << steer_msg.SteeringAngle << std::endl;
-
-    SteeringCmd_h* Steerptr = &steer_msg;
-    char *output_data = (char *)Steerptr;
-    size_t output_data_len = sizeof(steer_msg);
-
-
-    std::string out_id = "SteeringCmd";
-    int result = dora_send_output(dora_context, &out_id[0], out_id.length(), output_data, output_data_len);
-
-    this_thread::sleep_for(interval);
     return;
 }
 
-void thread_func(void * dora_context){
-    while (true)
+void *thread_func(void * dora_context){
+    while(true)
     {
-        calculate_angle(dora_context);
+        struct SteeringCmd_h steer_msg;
+
+        const int rate = 100;   // 设定频率为100HZ
+        const chrono::milliseconds interval((int)(1000/rate));
+
+
+        steer_msg.SteeringAngle = -pure_pursuit(); 
+
+        // struct timeval tv;
+        // gettimeofday(&tv, NULL);
+        // cout << "The thread_func time is: "  << tv.tv_sec <<","<< tv.tv_usec/1000<<" ms " 
+        //  << "  steer_msg: " << steer_msg.SteeringAngle << std::endl;
+
+        SteeringCmd_h* Steerptr = &steer_msg;
+        char *output_data = (char *)Steerptr;
+        size_t output_data_len = sizeof(steer_msg);
+
+
+        std::string out_id = "SteeringCmd";
+        int result = dora_send_output(dora_context, &out_id[0], out_id.length(), output_data, output_data_len);
+        this_thread::sleep_for(interval);
+
     }
     
 }
@@ -211,19 +217,23 @@ int run(void *dora_context)
             }
             else if (strcmp("raw_path", data_id) == 0)
             {
-                std::cout << " " <<std::endl;
+                // std::cout << " " <<std::endl;
+                struct timeval tv;
+                gettimeofday(&tv, NULL);
+                cout << "The raw_path time is: "  << tv.tv_sec <<","<< tv.tv_usec/1000<<" ms " 
+                 << endl;
                 ref_path_callback(data);
             }
             
-            std::thread t(thread_func, dora_context);
+            
+            // this_thread::sleep_for(interval);
 
-            t.join();
+            // std::thread t(thread_func, dora_context);
+
+            // t.join();
 
 
-        }
-
-
-        
+        }       
         else if (ty == DoraEventType_Stop)
         {
             printf("[c node] received stop event\n");
@@ -232,7 +242,6 @@ int run(void *dora_context)
         {
             printf("[c node] received unexpected event: %d\n", ty);
         }
-
         free_dora_event(event);
     }
     return 0;
@@ -246,9 +255,17 @@ int main()
     auto dora_context = init_dora_context_from_env();
     //std::cout << "////////////////////////////" << std::endl;
 
+    pthread_t id = 0;
+    // 开启车辆状态线程
+    if (pthread_create(&id, nullptr, thread_func, dora_context) != 0)
+    {
+        std::cerr << "create thread_func thread fail!" << std::endl;
+        exit(-1);
+    }
+    
     auto ret = run(dora_context);
     free_dora_context(dora_context);
-
+    pthread_cancel(id);
     std::cout << "END lat_control" << std::endl;
 
     return ret;

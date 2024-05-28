@@ -27,11 +27,15 @@ void pure_set_veh_speed(const float arg){
 void pure_set_ref_path(const std::vector<float> &x,const std::vector<float> &y){
     ref_path_veh.clear();
     Eigen:: Vector2f temp_point;
-
     for (uint32_t i = 0;i < x.size();i++){
         temp_point << x[i],y[i];
         ref_path_veh.push_back(temp_point);
     }
+    // for (uint32_t i = 0;i < ref_path_veh.size();i++){
+    //     std::cout<<"row_path X Y:"<<ref_path_veh[i].transpose()<<std::endl;
+    //     // std::cout<<"row_path Y:"<<ref_path_veh[1]<<std::endl;
+    // }
+    // std::cout<<"row_path size :"<<ref_path_veh.size()<<std::endl;
     return;
 }
 
@@ -184,7 +188,7 @@ static float set_La_f(const float speed){
 #endif
     // cout << "set_La_f_speed = " << speed <<endl;
     float speed_km = speed * 3.6;
-    if(speed_km < 1.34f * 3.6f)                                    return 1.5;
+    if(speed_km < 1.34f * 3.6f)                                    return 2.5;
     else if(1.34f * 3.6f <= speed_km && speed_km < 5.36f * 3.6f)   return 1.5 * speed_km/3.6f;
     else                                                           return 5.5;
     // std::cout<<"---------------------------------:"<<speed<<std::endl;
@@ -199,14 +203,14 @@ static float set_La_f(const float speed){
 static float ackermann_steering(const Eigen:: Vector2f &goal_point,const float La){
     //->计算预瞄向量相对航向的角度
     float tgangle = atan2(goal_point[1],goal_point[0]) -static_cast<float>(M_PI_2);
-    std::cout << "tgangle is: " << tgangle << std::endl;
+    // std::cout << "tgangle is: " << tgangle << std::endl;
 
     //->由当前位姿所得平均车轮转角，此处以车辆后轴中心为参考点计算得到的自行车模型车轮转向角 参考公式 4.2
     float delta = atan2(2 * veh_para.wheelbase * sin(tgangle),La);
     if(fabsf(delta)  > veh_para.max_wheel_angle * M_PI / 180){
         delta = delta/fabs(delta) * veh_para.max_wheel_angle * M_PI / 180;
     }
-    std::cout << "delta is: " << delta << std::endl;
+    // std::cout << "delta is(rad): " << delta << std::endl;
 
     //->由平均角delta计算得到内轮转角 推导公式
     float deltai = atan2(veh_para.wheelbase * tan(delta),veh_para.wheelbase - (veh_para.f_tread/2)*tan(fabs(delta)));
@@ -216,12 +220,12 @@ static float ackermann_steering(const Eigen:: Vector2f &goal_point,const float L
 
     //->内轮转角弧度转化为度
     deltai = deltai*180/static_cast<float>(M_PI);
-    std::cout << "deltai is: " << deltai << std::endl;
+    // std::cout << "deltai is: " << deltai << std::endl;
 
     //->转换车轮转角至方向盘转角（CAN控制命令）
-    if(fabs(deltai)<=25)                           return deltai*34.2f;
-    else if (fabs(deltai)>25 && fabs(deltai)<=30)  return deltai*33.5f;
-    else                                           return deltai*32.2;
+    if(fabs(deltai)<=25)                           return deltai*19.2f;
+    else if (fabs(deltai)>25 && fabs(deltai)<=30)  return deltai*18.5f;
+    else                                           return deltai*17.2f;
 }
 
 
@@ -235,12 +239,12 @@ float pure_pursuit(){
     //->搜索相关路径段
     uint32_t Segment_index = search_releve_seg_ind(ref_path_veh,1);
     //->设置预瞄距离
-    float aim_La = set_La_f(veh_speed) + 1.5;
-    std::cout << "aim_La = " << aim_La << std::endl;
+    float aim_La = set_La_f(veh_speed) + 2;
+    // std::cout << "aim_La = " << aim_La << std::endl;
     // ROS_INFO_THROTTLE(1,"aim_La = %f", aim_La);
     //->搜索预瞄点
     Eigen::Vector2f goal_aim_point = search_goal_point(aim_La,ref_path_veh,Segment_index);
-    std::cout << "Vector is : " << goal_aim_point[0] << goal_aim_point[1] << std::endl;
+    // std::cout << "Vector is : " << goal_aim_point[0] << goal_aim_point[1] << std::endl;
     //-->>阿克曼转向计算控制转角
     return  ackermann_steering(goal_aim_point,aim_La);
 }

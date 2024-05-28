@@ -70,7 +70,7 @@ extern int can_fd;
  * @return
  */
 pthread_t start_status_monitor_thread();
-pthread_t start_test_control_thread();
+
 //pthread_t start_manual_auto_driving_thread();
 
 // /**

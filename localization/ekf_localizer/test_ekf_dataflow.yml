@@ -1,7 +1,7 @@
 nodes:
   - id: gnss
     operator:
-      python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora_with_file.py
+      python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora_with_file.py  #读取文件用于测试
       #python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
       inputs:
         tick: dora/timer/millis/20
@@ -13,38 +13,41 @@ nodes:
     env:
       DEVICE_INDEX: 0
 
-  - id: gnss_sub  
-    operator:
-      python: ../../dora-hardware/vendors/gnss/CGI_610/nmea_subscribeTopic.py
-      inputs:
-              DoraSentence: gnss/DoraSentence
-              DoraNavSatFix: gnss/DoraNavSatFix
-              DoraQuaternionStamped: gnss/DoraQuaternionStamped
-              DoraTwistStamped: gnss/DoraTwistStamped
-      outputs:
-        - DoraNavSatFix
-        - DoraQuaternionStamped
+  # - id: gnss_sub  #数据格式转换 json
+  #   operator:
+  #     python: ../../dora-hardware/vendors/gnss/CGI_610/nmea_subscribeTopic.py
+  #     inputs:
+  #             DoraSentence: gnss/DoraSentence
+  #             DoraNavSatFix: gnss/DoraNavSatFix
+  #             DoraQuaternionStamped: gnss/DoraQuaternionStamped
+  #             DoraTwistStamped: gnss/DoraTwistStamped
+  #     outputs:
+  #       - DoraNavSatFix
+  #       - DoraQuaternionStamped
 
   - id: gnss_poser  #坐标系转化
     custom:
       source: ../../sensing/gnss_poser/build/gnss_poser_core
       inputs:
-        DoraNavSatFix: gnss_sub/DoraNavSatFix 
+        DoraNavSatFix: gnss/DoraNavSatFix 
       outputs:
-        - DoraSentence
-        - DoraNavSatFix
-        - DoraQuaternionStamped
-        - DoraTwistStamped
+        - DoraNavSatFix 
 
-  - id: gnss_ekf
-    #custom:
-    #  source: build/gnss_ekf
+  - id: gnss_rviz2  #在RVIZ2中显示转换后的轨迹 （E-N-U）
     operator:
-      python: ../../localization/ekf_localizer/src/gnss_ekf.py
+      python: ../../sensing/gnss_poser/src/gps_to_ros2.py
       inputs:
               DoraNavSatFix: gnss_poser/DoraNavSatFix
-              DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
-              tick: dora/timer/millis/5
+##############################################################################################
+  - id: gnss_ekf
+    custom:
+      source: build/gnss_ekf
+    # operator:
+    #   python: ../../localization/ekf_localizer/src/gnss_ekf.py
+      inputs:
+              DoraNavSatFix: gnss_poser/DoraNavSatFix
+              DoraQuaternionStamped: gnss/DoraQuaternionStamped
+              #tick: dora/timer/millis/20
       outputs:
             - DoraGnssPose
 

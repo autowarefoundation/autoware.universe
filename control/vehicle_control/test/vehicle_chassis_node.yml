@@ -1,0 +1,12 @@
+nodes:
+  # rslidar driver node
+  - id: VehicleStat
+    custom:
+      source: build/vehicle_chassis_node
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - vehicle_chassis_node
+
+
+

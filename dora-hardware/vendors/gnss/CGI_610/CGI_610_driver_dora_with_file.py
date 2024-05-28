@@ -9,17 +9,25 @@ import math
 import pickle
 import time
 import numpy as np
+from datetime import datetime
+
+
+import json
+from json import *
+
 """
  读取目录下的文件 cgi610_outdata ，取其中的数据   
 """
 
 class Operator:
 
-
+    
     # 打开串口读取数据
     def __init__(self):
         self.f = open("/home/crp/autoware.universe/dora-hardware/vendors/gnss/CGI_610/cgi610_outdata.txt")
-        
+        self.cnt1 =0
+        self.cnt2 =0
+        self.cnt3 =0
         self.driver = DoraNMEADriver()
 
     def on_event(
@@ -74,7 +82,7 @@ class Operator:
                 # print("flag1")
                 # for key, value in parsed_sentence.items():
                 #     print(f"Key: {key}, Value: {value}" )
-
+                 
                 timestamp = None
                 frame_id = self.driver.get_frame_id()
 
@@ -120,13 +128,37 @@ class Operator:
                         self.driver.current_fix.longitude = data["Longitude"]
                         self.driver.current_fix.altitude = data["Altitude"]
                         # 发布解析得到的DoraNavSatFix消息类型
-                        nmea_Publish_instance = self.driver.current_fix
-                        parsed_nmea_sentence = pickle.dumps(nmea_Publish_instance)
-                        send_output(
-                            "DoraNavSatFix",
-                            parsed_nmea_sentence,
-                            dora_input["metadata"],
-                        )
+                        #nmea_Publish_instance = self.driver.current_fix
+                        #parsed_nmea_sentence = pickle.dumps(nmea_Publish_instance)
+                        # send_output(
+                        #     "DoraNavSatFix",
+                        #     parsed_nmea_sentence,
+                        #     dora_input["metadata"],
+                        # )
+                        # 发布JSON-DoraNavSatFix消息
+                        self.cnt1 =self.cnt1+1
+                        sentence_dict = {
+                            "seq": self.cnt1,
+                            "frame_id": self.driver.current_fix.header.frame_id,
+                            "sec": self.driver.current_fix.header.stamp.sec,
+                            "nanosec": self.driver.current_fix.header.stamp.nanosec,
+                            "latitude": self.driver.current_fix.latitude,
+                            "longitude": self.driver.current_fix.longitude,
+                            "altitude": self.driver.current_fix.altitude,
+                            "position_covariance": self.driver.current_fix.position_covariance,
+                            "position_covariance_type": self.driver.current_fix.position_covariance_type,
+                            "status": self.driver.current_fix.status.status,
+                            "service": self.driver.current_fix.status.service
+                        }
+                        
+                        json_string = json.dumps(sentence_dict, indent=4)  # 使用indent参数设置缩进宽度为4
+                        #print(json_string)
+                        json_bytes = json_string.encode('utf-8')
+                        send_output("DoraNavSatFix",json_bytes,dora_input["metadata"],)
+
+                        now = datetime.now()# 获取当前时间
+                        timestamp_ms = round(now.timestamp() * 1000)# 转换为毫秒格式
+                        print("counter: ",self.cnt1 ,"NavSatFix  pub time: ", timestamp_ms)# 打印时间戳（毫秒）
                     else:
                         print("GPS error, Warming == ",Warming)
 
@@ -140,7 +172,7 @@ class Operator:
                         #  发布解析得到的DoraTwistStamped消息类型
                         nmea_Publish_instance = self.driver.current_vel
                         parsed_nmea_sentence = pickle.dumps(nmea_Publish_instance)
-                        print(parsed_nmea_sentence)
+                        #print(parsed_nmea_sentence)
                         send_output(
                             "DoraTwistStamped",
                             parsed_nmea_sentence,
@@ -157,16 +189,35 @@ class Operator:
                         self.driver.current_heading.quaternion.z = q[3]
                         self.driver.current_heading.quaternion.w = q[0]
                         # 发布解析得到的DoraQuaternionStamped消息类型
-                        nmea_Publish_instance = self.driver.current_heading
-                        parsed_nmea_sentence = pickle.dumps(nmea_Publish_instance)
-                        # print(parsed_nmea_sentence)
-                        send_output(
-                            "DoraQuaternionStamped",
-                            parsed_nmea_sentence,
-                            dora_input["metadata"],
-                        )
-                return DoraStatus.CONTINUE
+                        # nmea_Publish_instance = self.driver.current_heading
+                        # parsed_nmea_sentence = pickle.dumps(nmea_Publish_instance)
+                        # # print(parsed_nmea_sentence)
+                        # send_output(
+                        #     "DoraQuaternionStamped",
+                        #     parsed_nmea_sentence,
+                        #     dora_input["metadata"],
+                        # )
+                        self.cnt2 = self.cnt2+1
+                        # 以json字符从的形似发布
+                        sentence_dict = {
+                            "seq": self.cnt2,
+                            "frame_id": self.driver.current_heading.header.frame_id,
+                            "sec": self.driver.current_heading.header.stamp.sec,
+                            "nanosec": self.driver.current_heading.header.stamp.nanosec,
+                            "x": self.driver.current_heading.quaternion.x,
+                            "y": self.driver.current_heading.quaternion.y,
+                            "z": self.driver.current_heading.quaternion.z,
+                            "w": self.driver.current_heading.quaternion.w,
+                        }
+                        json_string = json.dumps(sentence_dict, indent=4)  # 使用indent参数设置缩进宽度为4
+                        #print(json_string)
+                        json_bytes = json_string.encode('utf-8')
+                        send_output("DoraQuaternionStamped",json_bytes,dora_input["metadata"],)
+                        now = datetime.now()# 获取当前时间
+                        timestamp_ms = round(now.timestamp() * 1000)# 转换为毫秒格式
+                        print("counter: ",self.cnt2 ,"QuaternionStamped  pub time: ", timestamp_ms)# 打印时间戳（毫秒）
 
+                return DoraStatus.CONTINUE
             except ValueError as e:
                 print(
                     "Value error, likely due to missing fields in the NMEA message. Error was: %s. "
