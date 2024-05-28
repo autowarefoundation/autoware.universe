@@ -53,6 +53,9 @@ protected Q_SLOTS:
   void updateOverlayPosition();
   void onTilesUpdated();
   void updateZoomLevel();
+  void updateLatitude();
+  void updateLongitude();
+  void updateTopic();
 
 protected:
   void onEnable() override;
@@ -76,6 +79,9 @@ private:
   rviz_common::properties::IntProperty * property_zoom_;
   rviz_common::properties::FloatProperty * alpha_property_;
   rviz_common::properties::ColorProperty * background_color_property_;
+  rviz_common::properties::FloatProperty * property_latitude_;
+  rviz_common::properties::FloatProperty * property_longitude_;
+  rviz_common::properties::StringProperty * property_topic_;
 
   int zoom_;
 

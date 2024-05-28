@@ -17,17 +17,16 @@ namespace autoware_minimap_overlay_rviz_plugin
 VehicleMapDisplay::VehicleMapDisplay() : rviz_common::Display(), overlay_(nullptr)
 {
   property_width_ = new rviz_common::properties::IntProperty(
-    "Width", 300, "Width of the overlay", this, SLOT(updateOverlaySize()));
+    "Width", 256, "Width of the overlay", this, SLOT(updateOverlaySize()));
   property_height_ = new rviz_common::properties::IntProperty(
-    "Height", 300, "Height of the overlay", this, SLOT(updateOverlaySize()));
+    "Height", 256, "Height of the overlay", this, SLOT(updateOverlaySize()));
   property_left_ = new rviz_common::properties::IntProperty(
-    "Left", 0, "Left position of the overlay", this, SLOT(updateOverlayPosition()));
+    "Left", 15, "Left position of the overlay", this, SLOT(updateOverlayPosition()));
   property_top_ = new rviz_common::properties::IntProperty(
-    "Top", 0, "Top position of the overlay", this, SLOT(updateOverlayPosition()));
+    "Top", 15, "Top position of the overlay", this, SLOT(updateOverlayPosition()));
 
   alpha_property_ = new rviz_common::properties::FloatProperty(
-    "Alpha", 0.7, "Amount of transparency to apply to the overlay.", this,
-    SLOT(updateOverlaySize()));
+    "Alpha", 0, "Amount of transparency to apply to the overlay.", this, SLOT(updateOverlaySize()));
 
   background_color_property_ = new rviz_common::properties::ColorProperty(
     "Background Color", QColor(0, 0, 0), "Color to draw the background.", this,
@@ -39,7 +38,19 @@ VehicleMapDisplay::VehicleMapDisplay() : rviz_common::Display(), overlay_(nullpt
   property_zoom_->setMin(15);
   property_zoom_->setMax(19);
 
+  property_latitude_ = new rviz_common::properties::FloatProperty(
+    "Latitude", 0.0, "Latitude of the center position", this, SLOT(updateLatitude()));
+
+  property_longitude_ = new rviz_common::properties::FloatProperty(
+    "Longitude", 0.0, "Longitude of the center position", this, SLOT(updateLongitude()));
+
+  property_topic_ = new rviz_common::properties::StringProperty(
+    "Topic", "fix", "NavSatFix topic to subscribe to", this, SLOT(updateTopic()));
+
   zoom_ = property_zoom_->getInt();
+
+  latitude_ = property_latitude_->getFloat();
+  longitude_ = property_longitude_->getFloat();
 
   tile_field_ = std::make_unique<TileField>(this);
   connect(tile_field_.get(), &TileField::tilesUpdated, this, &VehicleMapDisplay::onTilesUpdated);
@@ -61,8 +72,7 @@ void VehicleMapDisplay::onInitialize()
   updateOverlayPosition();
 
   node_ = context_->getRosNodeAbstraction().lock()->get_raw_node();
-  nav_sat_fix_sub_ = node_->create_subscription<sensor_msgs::msg::NavSatFix>(
-    "fix", 10, std::bind(&VehicleMapDisplay::navSatFixCallback, this, std::placeholders::_1));
+  updateTopic();
 }
 
 void VehicleMapDisplay::reset()
@@ -150,7 +160,7 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
   painter.setBrush(colorFromHSV);
 
   // Define the visible rectangle
-  QRectF visibleRect(backgroundRect.width() / 2 - 150, backgroundRect.height() / 2 - 150, 300, 300);
+  QRectF visibleRect(backgroundRect.width() / 2 - 112, backgroundRect.height() / 2 - 112, 225, 225);
 
   // Define the circular clipping path
   QPainterPath path;
@@ -201,20 +211,52 @@ void VehicleMapDisplay::onTilesUpdated()
 void VehicleMapDisplay::updateZoomLevel()
 {
   zoom_ = property_zoom_->getInt();  // Update the zoom level
-  queueRender();                     // Request re-rendering
+  tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
+  queueRender();  // Request re-rendering
+}
+
+void VehicleMapDisplay::updateLatitude()
+{
+  latitude_ = property_latitude_->getFloat();
+  int new_center_x_tile = tile_field_->long2tilex(longitude_, zoom_);
+  int new_center_y_tile = tile_field_->lat2tiley(latitude_, zoom_);
+  center_x_tile_ = new_center_x_tile;
+  center_y_tile_ = new_center_y_tile;
+  tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
+  queueRender();
+}
+
+void VehicleMapDisplay::updateLongitude()
+{
+  longitude_ = property_longitude_->getFloat();
+  int new_center_x_tile = tile_field_->long2tilex(longitude_, zoom_);
+  int new_center_y_tile = tile_field_->lat2tiley(latitude_, zoom_);
+  center_x_tile_ = new_center_x_tile;
+  center_y_tile_ = new_center_y_tile;
+  tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
+  queueRender();
+}
+
+void VehicleMapDisplay::updateTopic()
+{
+  std::string topic = property_topic_->getStdString();
+  if (!topic.empty()) {
+    nav_sat_fix_sub_ = node_->create_subscription<sensor_msgs::msg::NavSatFix>(
+      topic, 10, std::bind(&VehicleMapDisplay::navSatFixCallback, this, std::placeholders::_1));
+  }
 }
 
 void VehicleMapDisplay::navSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
 {
   // Convert GPS coordinates to tile coordinates
-  double lat = msg->latitude;
-  double lon = msg->longitude;
+  latitude_ = msg->latitude;
+  longitude_ = msg->longitude;
 
-  latitude_ = lat;
-  longitude_ = lon;
+  property_longitude_->setFloat(longitude_);
+  property_latitude_->setFloat(latitude_);
 
-  int new_center_x_tile = tile_field_->long2tilex(lon, zoom_);
-  int new_center_y_tile = tile_field_->lat2tiley(lat, zoom_);
+  int new_center_x_tile = tile_field_->long2tilex(longitude_, zoom_);
+  int new_center_y_tile = tile_field_->lat2tiley(latitude_, zoom_);
 
   center_x_tile_ = new_center_x_tile;
   center_y_tile_ = new_center_y_tile;
