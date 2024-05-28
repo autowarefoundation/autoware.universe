@@ -22,37 +22,53 @@ namespace lidar_transfusion
 LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
 : Node("lidar_transfusion", options), tf_buffer_(this->get_clock())
 {
+  auto descriptor = rcl_interfaces::msg::ParameterDescriptor{}.set__read_only(true);
   // network
-  class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
-  const std::string trt_precision = this->declare_parameter<std::string>("trt_precision");
-  const auto voxels_num = this->declare_parameter<std::vector<int64_t>>("voxels_num");
-  const auto point_cloud_range = this->declare_parameter<std::vector<double>>("point_cloud_range");
-  const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
-  const std::string onnx_path = this->declare_parameter<std::string>("onnx_path");
-  const std::string engine_path = this->declare_parameter<std::string>("engine_path");
+  class_names_ = this->declare_parameter<std::vector<std::string>>("class_names", descriptor);
+  const std::string trt_precision =
+    this->declare_parameter<std::string>("trt_precision", descriptor);
+  const auto voxels_num = this->declare_parameter<std::vector<int64_t>>("voxels_num", descriptor);
+  std::cout << voxels_num[0] << std::endl;
+  const auto point_cloud_range =
+    this->declare_parameter<std::vector<double>>("point_cloud_range", descriptor);
+  const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size", descriptor);
+  const std::string onnx_path = this->declare_parameter<std::string>("onnx_path", descriptor);
+  const std::string engine_path = this->declare_parameter<std::string>("engine_path", descriptor);
+
+  if (point_cloud_range.size() != 6) {
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("lidar_transfusion"),
+      "The size of point_cloud_range != 6: use the default parameters.");
+  }
+  if (voxel_size.size() != 3) {
+    RCLCPP_WARN_STREAM(
+      rclcpp::get_logger("lidar_transfusion"),
+      "The size of voxel_size != 3: use the default parameters.");
+  }
 
   // pre-process
   const std::string densification_world_frame_id =
-    this->declare_parameter<std::string>("densification_world_frame_id");
+    this->declare_parameter<std::string>("densification_world_frame_id", descriptor);
   const int densification_num_past_frames =
-    this->declare_parameter<uint16_t>("densification_num_past_frames");
+    this->declare_parameter<int64_t>("densification_num_past_frames", descriptor);
 
   // post-process
   const float circle_nms_dist_threshold =
-    static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold"));
+    static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold", descriptor));
   {  // IoU NMS
     NMSParams p;
     p.nms_type_ = NMS_TYPE::IoU_BEV;
     p.target_class_names_ =
-      this->declare_parameter<std::vector<std::string>>("iou_nms_target_class_names");
-    p.search_distance_2d_ = this->declare_parameter<double>("iou_nms_search_distance_2d");
-    p.iou_threshold_ = this->declare_parameter<double>("iou_nms_threshold");
+      this->declare_parameter<std::vector<std::string>>("iou_nms_target_class_names", descriptor);
+    p.search_distance_2d_ =
+      this->declare_parameter<double>("iou_nms_search_distance_2d", descriptor);
+    p.iou_threshold_ = this->declare_parameter<double>("iou_nms_threshold", descriptor);
     iou_bev_nms_.setParameters(p);
   }
   const auto yaw_norm_thresholds =
-    this->declare_parameter<std::vector<double>>("yaw_norm_thresholds");
+    this->declare_parameter<std::vector<double>>("yaw_norm_thresholds", descriptor);
   const float score_threshold =
-    static_cast<float>(this->declare_parameter<double>("score_threshold"));
+    static_cast<float>(this->declare_parameter<double>("score_threshold", descriptor));
 
   NetworkParam network_param(onnx_path, engine_path, trt_precision);
   DensificationParam densification_param(
@@ -62,9 +78,11 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
     score_threshold);
 
   const auto allow_remapping_by_area_matrix =
-    this->declare_parameter<std::vector<int64_t>>("allow_remapping_by_area_matrix");
-  const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
-  const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
+    this->declare_parameter<std::vector<int64_t>>("allow_remapping_by_area_matrix", descriptor);
+  const auto min_area_matrix =
+    this->declare_parameter<std::vector<double>>("min_area_matrix", descriptor);
+  const auto max_area_matrix =
+    this->declare_parameter<std::vector<double>>("max_area_matrix", descriptor);
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 
@@ -89,7 +107,7 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
     stop_watch_ptr_->tic("processing/total");
   }
 
-  if (this->declare_parameter<bool>("build_only", false)) {
+  if (this->declare_parameter<bool>("build_only", false, descriptor)) {
     RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
     rclcpp::shutdown();
   }
