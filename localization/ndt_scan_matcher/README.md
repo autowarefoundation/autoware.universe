@@ -31,13 +31,13 @@ One optional function is regularization. Please see the regularization chapter i
 | `ndt_pose_with_covariance`        | `geometry_msgs::msg::PoseWithCovarianceStamped` | estimated pose with covariance                                                                                                           |
 | `/diagnostics`                    | `diagnostic_msgs::msg::DiagnosticArray`         | diagnostics                                                                                                                              |
 | `points_aligned`                  | `sensor_msgs::msg::PointCloud2`                 | [debug topic] pointcloud aligned by scan matching                                                                                        |
-| `points_aligned_no_ground`        | `sensor_msgs::msg::PointCloud2`                 | [debug topic] de-grounded pointcloud aligned by scan matching                                                                            |
+| `points_aligned_no_ground`        | `sensor_msgs::msg::PointCloud2`                 | [debug topic] no ground pointcloud aligned by scan matching                                                                              |
 | `initial_pose_with_covariance`    | `geometry_msgs::msg::PoseWithCovarianceStamped` | [debug topic] initial pose used in scan matching                                                                                         |
 | `multi_ndt_pose`                  | `geometry_msgs::msg::PoseArray`                 | [debug topic] estimated poses from multiple initial poses in real-time covariance estimation                                             |
 | `multi_initial_pose`              | `geometry_msgs::msg::PoseArray`                 | [debug topic] initial poses for real-time covariance estimation                                                                          |
 | `exe_time_ms`                     | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] execution time for scan matching [ms]                                                                                      |
 | `transform_probability`           | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching                                                                                                     |
-| `no_ground_transform_probability` | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching based on de-grounded LiDAR scan                                                                     |
+| `no_ground_transform_probability` | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] score of scan matching based on no ground LiDAR scan                                                                       |
 | `iteration_num`                   | `tier4_debug_msgs::msg::Int32Stamped`           | [debug topic] number of scan matching iterations                                                                                         |
 | `initial_to_result_relative_pose` | `geometry_msgs::msg::PoseStamped`               | [debug topic] relative pose between the initial point and the convergence point                                                          |
 | `initial_to_result_distance`      | `tier4_debug_msgs::msg::Float32Stamped`         | [debug topic] distance difference between the initial point and the convergence point [m]                                                |
@@ -56,28 +56,33 @@ One optional function is regularization. Please see the regularization chapter i
 
 ### Core Parameters
 
-| Name                                                      | Type                   | Description                                                                                        |
-| --------------------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------- |
-| `base_frame`                                              | string                 | Vehicle reference frame                                                                            |
-| `ndt_base_frame`                                          | string                 | NDT reference frame                                                                                |
-| `map_frame`                                               | string                 | map frame                                                                                          |
-| `input_sensor_points_queue_size`                          | int                    | Subscriber queue size                                                                              |
-| `trans_epsilon`                                           | double                 | The max difference between two consecutive transformations to consider convergence                 |
-| `step_size`                                               | double                 | The newton line search maximum step length                                                         |
-| `resolution`                                              | double                 | The ND voxel grid resolution [m]                                                                   |
-| `max_iterations`                                          | int                    | The number of iterations required to calculate alignment                                           |
-| `converged_param_type`                                    | int                    | The type of indicators for scan matching score (0: TP, 1: NVTL)                                    |
-| `converged_param_transform_probability`                   | double                 | TP threshold for deciding whether to trust the estimation result (when converged_param_type = 0)   |
-| `converged_param_nearest_voxel_transformation_likelihood` | double                 | NVTL threshold for deciding whether to trust the estimation result (when converged_param_type = 1) |
-| `initial_estimate_particles_num`                          | int                    | The number of particles to estimate initial pose                                                   |
-| `n_startup_trials`                                        | int                    | The number of initial random trials in the TPE (Tree-Structured Parzen Estimator).                 |
-| `lidar_topic_timeout_sec`                                 | double                 | Tolerance of timestamp difference between current time and sensor pointcloud                       |
-| `initial_pose_timeout_sec`                                | int                    | Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]                |
-| `initial_pose_distance_tolerance_m`                       | double                 | Tolerance of distance difference between two initial poses used for linear interpolation. [m]      |
-| `num_threads`                                             | int                    | Number of threads used for parallel computing                                                      |
-| `output_pose_covariance`                                  | std::array<double, 36> | The covariance of output pose                                                                      |
+#### Frame
 
-(TP: Transform Probability, NVTL: Nearest Voxel Transform Probability)
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/frame.json") }}
+
+#### Sensor Points
+
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/sensor_points.json") }}
+
+#### Ndt
+
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/ndt.json") }}
+
+#### Initial Pose Estimation
+
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/initial_pose_estimation.json") }}
+
+#### Validation
+
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/validation.json") }}
+
+#### Score Estimation
+
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/score_estimation.json") }}
+
+#### Covariance
+
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/covariance.json") }}
 
 ## Regularization
 
@@ -153,10 +158,7 @@ This is because if the base position is far off from the true value, NDT scan ma
 
 ### Parameters
 
-| Name                          | Type   | Description                                                            |
-| ----------------------------- | ------ | ---------------------------------------------------------------------- |
-| `regularization_enabled`      | bool   | Flag to add regularization term to NDT optimization (FALSE by default) |
-| `regularization_scale_factor` | double | Coefficient of the regularization term.                                |
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/ndt_regularization.json") }}
 
 Regularization is disabled by default because GNSS is not always accurate enough to serve the appropriate base position in any scenes.
 
@@ -206,11 +208,7 @@ Using the feature, `ndt_scan_matcher` can theoretically handle any large size ma
 
 ### Parameters
 
-| Name                                  | Type   | Description                                                  |
-| ------------------------------------- | ------ | ------------------------------------------------------------ |
-| `dynamic_map_loading_update_distance` | double | Distance traveled to load new map(s)                         |
-| `dynamic_map_loading_map_radius`      | double | Map loading radius for every update                          |
-| `lidar_radius`                        | double | LiDAR radius used for localization (only used for diagnosis) |
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/dynamic_map_loading.json") }}
 
 ### Notes for dynamic map loading
 
@@ -228,21 +226,16 @@ Here is a split PCD map for `sample-map-rosbag` from Autoware tutorial: [`sample
 |  single file   |  at once (standard)  |
 | multiple files |     dynamically      |
 
-## Scan matching score based on de-grounded LiDAR scan
+## Scan matching score based on no ground LiDAR scan
 
 ### Abstract
 
-This is a function that uses de-grounded LiDAR scan to estimate the scan matching score. This score can reflect the current localization performance more accurately.
+This is a function that uses no ground LiDAR scan to estimate the scan matching score. This score can reflect the current localization performance more accurately.
 [related issue](https://github.com/autowarefoundation/autoware.universe/issues/2044).
 
 ### Parameters
 
-<!-- cspell: ignore degrounded -->
-
-| Name                                  | Type   | Description                                                                           |
-| ------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
-| `estimate_scores_for_degrounded_scan` | bool   | Flag for using scan matching score based on de-grounded LiDAR scan (FALSE by default) |
-| `z_margin_for_ground_removal`         | double | Z-value margin for removal ground points                                              |
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/score_estimation_no_ground_points.json") }}
 
 ## 2D real-time covariance estimation
 
@@ -261,8 +254,104 @@ Note that this function may spoil healthy system behavior if it consumes much ca
 initial_pose_offset_model is rotated around (x,y) = (0,0) in the direction of the first principal component of the Hessian matrix.
 initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.
 
-| Name                          | Type                | Description                                                       |
-| ----------------------------- | ------------------- | ----------------------------------------------------------------- |
-| `use_covariance_estimation`   | bool                | Flag for using real-time covariance estimation (FALSE by default) |
-| `initial_pose_offset_model_x` | std::vector<double> | X-axis offset [m]                                                 |
-| `initial_pose_offset_model_y` | std::vector<double> | Y-axis offset [m]                                                 |
+{{ json_to_markdown("localization/ndt_scan_matcher/schema/sub/covariance_covariance_estimation.json") }}
+
+## Diagnostics
+
+### scan_matching_status
+
+<img src="./media/diagnostic_scan_matching_status.png" alt="drawing" width="600"/>
+
+| Name                                      | Description                                                                            | Transition condition to Warning                                                                                                                                                                                                                                                                                                                                          | Transition condition to Error | Whether to reject the estimation result (affects `skipping_publish_num`)                            |
+| ----------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------------------- |
+| `topic_time_stamp`                        | the time stamp of input topic                                                          | none                                                                                                                                                                                                                                                                                                                                                                     | none                          | no                                                                                                  |
+| `sensor_points_size`                      | the size of sensor points                                                              | the size is 0                                                                                                                                                                                                                                                                                                                                                            | none                          | yes                                                                                                 |
+| `sensor_points_delay_time_sec`            | the delay time of sensor points                                                        | the time is **longer** than `validation.lidar_topic_timeout_sec`                                                                                                                                                                                                                                                                                                         | none                          | yes                                                                                                 |
+| `is_succeed_transform_sensor_points`      | whether transform sensor points is succeed or not                                      | none                                                                                                                                                                                                                                                                                                                                                                     | failed                        | yes                                                                                                 |
+| `sensor_points_max_distance`              | the max distance of sensor points                                                      | the max distance is **shorter** than `sensor_points.required_distance`                                                                                                                                                                                                                                                                                                   | none                          | yes                                                                                                 |
+| `is_activated`                            | whether the node is in the "activate" state or not                                     | not "activate" state                                                                                                                                                                                                                                                                                                                                                     | none                          | if `is_activated` is false, then estimation is not executed and `skipping_publish_num` is set to 0. |
+| `is_succeed_interpolate_initial_pose`     | whether the interpolate of initial pose is succeed or not                              | failed. <br> (1) the size of `initial_pose_buffer_` is **smaller** than 2. <br> (2) the timestamp difference between initial_pose and sensor pointcloud is **longer** than `validation.initial_pose_timeout_sec`. <br> (3) distance difference between two initial poses used for linear interpolation is **longer** than `validation.initial_pose_distance_tolerance_m` | none                          | yes                                                                                                 |
+| `is_set_map_points`                       | whether the map points is set or not                                                   | not set                                                                                                                                                                                                                                                                                                                                                                  | none                          | yes                                                                                                 |
+| `iteration_num`                           | the number of times calculate alignment                                                | the number of times is **larger** than `ndt.max_iterations`                                                                                                                                                                                                                                                                                                              | none                          | yes                                                                                                 |
+| `local_optimal_solution_oscillation_num`  | the number of times the solution is judged to be oscillating                           | the number of times is **larger** than 10                                                                                                                                                                                                                                                                                                                                | none                          | yes                                                                                                 |
+| `transform_probability`                   | the score of how well the map aligns with the sensor points                            | the score is **smaller** than`score_estimation.converged_param_transform_probability` (only in the case of `score_estimation.converged_param_type` is 0=TRANSFORM_PROBABILITY)                                                                                                                                                                                           | none                          | yes                                                                                                 |
+| `nearest_voxel_transformation_likelihood` | the score of how well the map aligns with the sensor points                            | the score is **smaller** than `score_estimation.converged_param_nearest_voxel_transformation_likelihood` (only in the case of `score_estimation.converged_param_type` is 1=NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD)                                                                                                                                                      | none                          | yes                                                                                                 |
+| `distance_initial_to_result`              | the distance between the position before convergence processing and the position after | the distance is **longer** than 3                                                                                                                                                                                                                                                                                                                                        | none                          | no                                                                                                  |
+| `execution_time`                          | the time for convergence processing                                                    | the time is **longer** than `validation.critical_upper_bound_exe_time_ms`                                                                                                                                                                                                                                                                                                | none                          | no                                                                                                  |
+| `skipping_publish_num`                    | the number of times rejected estimation results consecutively                          | the number of times is 5 or more                                                                                                                                                                                                                                                                                                                                         | none                          | -                                                                                                   |
+
+※The `sensor_points_callback` shares the same callback group as the `trigger_node_service` and `ndt_align_service`. Consequently, if the initial pose estimation takes too long, this diagnostic may become stale.
+
+### initial_pose_subscriber_status
+
+<img src="./media/diagnostic_initial_pose_subscriber_status.png" alt="drawing" width="600"/>
+
+| Name                   | Description                                                        | Transition condition to Warning | Transition condition to Error |
+| ---------------------- | ------------------------------------------------------------------ | ------------------------------- | ----------------------------- |
+| `topic_time_stamp`     | the time stamp of input topic                                      | none                            | none                          |
+| `is_activated`         | whether the node is in the "activate" state or not                 | not "activate" state            | none                          |
+| `is_expected_frame_id` | whether the input frame_id is the same as `frame.map_frame` or not | none                            | not the same                  |
+
+### regularization_pose_subscriber_status
+
+<img src="./media/diagnostic_regularization_pose_subscriber_status.png" alt="drawing" width="600"/>
+
+| Name               | Description                   | Transition condition to Warning | Transition condition to Error |
+| ------------------ | ----------------------------- | ------------------------------- | ----------------------------- |
+| `topic_time_stamp` | the time stamp of input topic | none                            | none                          |
+
+### trigger_node_service_status
+
+<img src="./media/diagnostic_trigger_node_service_status.png" alt="drawing" width="600"/>
+
+| Name                      | Description                                        | Transition condition to Warning | Transition condition to Error |
+| ------------------------- | -------------------------------------------------- | ------------------------------- | ----------------------------- |
+| `service_call_time_stamp` | the time stamp of service calling                  | none                            | none                          |
+| `is_activated`            | whether the node is in the "activate" state or not | none                            | none                          |
+| `is_succeed_service`      | whether the process of service is succeed or not   | none                            | none                          |
+
+※
+This diagnostic is only published when the service is called, so it becomes stale after the initial pose estimation is completed.
+
+### ndt_align_service_status
+
+<img src="./media/diagnostic_ndt_align_service_status.png" alt="drawing" width="600"/>
+
+| Name                                | Description                                                                                                                                                                                                                                             | Transition condition to Warning | Transition condition to Error                               |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ----------------------------------------------------------- |
+| `service_call_time_stamp`           | the time stamp of service calling                                                                                                                                                                                                                       | none                            | none                                                        |
+| `is_succeed_transform_initial_pose` | whether transform initial pose is succeed or not                                                                                                                                                                                                        | none                            | failed                                                      |
+| `is_need_rebuild`                   | whether it need to rebuild the map. If the map has not been loaded yet or if `distance_last_update_position_to_current_position encounters` is an Error state, it is considered necessary to reconstruct the map, and `is_need_rebuild` becomes `True`. | none                            | none                                                        |
+| `maps_size_before`                  | the number of maps before update map                                                                                                                                                                                                                    | none                            | none                                                        |
+| `is_succeed_call_pcd_loader`        | whether call pcd_loader service is succeed or not                                                                                                                                                                                                       | failed                          | none                                                        |
+| `maps_to_add_size`                  | the number of maps to be added                                                                                                                                                                                                                          | none                            | none                                                        |
+| `maps_to_remove_size`               | the number of maps to be removed                                                                                                                                                                                                                        | none                            | none                                                        |
+| `map_update_execution_time`         | the time for map updating                                                                                                                                                                                                                               | none                            | none                                                        |
+| `maps_size_after`                   | the number of maps after update map                                                                                                                                                                                                                     | none                            | none                                                        |
+| `is_updated_map`                    | whether map is updated. If the map update couldn't be performed or there was no need to update the map, it becomes `False`                                                                                                                              | none                            | `is_updated_map` is `False` but `is_need_rebuild` is `True` |
+| `is_set_map_points`                 | whether the map points is set or not                                                                                                                                                                                                                    | not set                         | none                                                        |
+| `is_set_sensor_points`              | whether the sensor points is set or not                                                                                                                                                                                                                 | not set                         | none                                                        |
+| `best_particle_score`               | the best score of particle                                                                                                                                                                                                                              | none                            | none                                                        |
+| `is_succeed_service`                | whether the process of service is succeed or not                                                                                                                                                                                                        | failed                          | none                                                        |
+
+※
+This diagnostic is only published when the service is called, so it becomes stale after the initial pose estimation is completed.
+
+### map_update_status
+
+<img src="./media/diagnostic_map_update_status.png" alt="drawing" width="600"/>
+
+| Name                                                | Description                                                                                                                                                                                                                                             | Transition condition to Warning | Transition condition to Error                                                                           |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `timer_callback_time_stamp`                         | the time stamp of timer_callback calling                                                                                                                                                                                                                | none                            | none                                                                                                    |
+| `is_activated`                                      | whether the node is in the "activate" state or not                                                                                                                                                                                                      | not "activate" state            | none                                                                                                    |
+| `is_set_last_update_position`                       | whether the `last_update_position` is set or not                                                                                                                                                                                                        | not set                         | none                                                                                                    |
+| `distance_last_update_position_to_current_position` | the distance of `last_update_position` to current position                                                                                                                                                                                              | none                            | (the distance + `dynamic_map_loading.lidar_radius`) is **larger** than `dynamic_map_loading.map_radius` |
+| `is_need_rebuild`                                   | whether it need to rebuild the map. If the map has not been loaded yet or if `distance_last_update_position_to_current_position encounters` is an Error state, it is considered necessary to reconstruct the map, and `is_need_rebuild` becomes `True`. | none                            | none                                                                                                    |
+| `maps_size_before`                                  | the number of maps before update map                                                                                                                                                                                                                    | none                            | none                                                                                                    |
+| `is_succeed_call_pcd_loader`                        | whether call pcd_loader service is succeed or not                                                                                                                                                                                                       | failed                          | none                                                                                                    |
+| `maps_to_add_size`                                  | the number of maps to be added                                                                                                                                                                                                                          | none                            | none                                                                                                    |
+| `maps_to_remove_size`                               | the number of maps to be removed                                                                                                                                                                                                                        | none                            | none                                                                                                    |
+| `map_update_execution_time`                         | the time for map updating                                                                                                                                                                                                                               | none                            | none                                                                                                    |
+| `maps_size_after`                                   | the number of maps after update map                                                                                                                                                                                                                     | none                            | none                                                                                                    |
+| `is_updated_map`                                    | whether map is updated. If the map update couldn't be performed or there was no need to update the map, it becomes `False`                                                                                                                              | none                            | `is_updated_map` is `False` but `is_need_rebuild` is `True`                                             |

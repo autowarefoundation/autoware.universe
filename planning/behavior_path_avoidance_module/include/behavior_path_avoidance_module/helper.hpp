@@ -16,13 +16,14 @@
 #define BEHAVIOR_PATH_AVOIDANCE_MODULE__HELPER_HPP_
 
 #include "behavior_path_avoidance_module/data_structs.hpp"
+#include "behavior_path_avoidance_module/type_alias.hpp"
 #include "behavior_path_avoidance_module/utils.hpp"
-
-#include <motion_utils/distance/distance.hpp>
+#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace behavior_path_planner::helper::avoidance
@@ -30,8 +31,6 @@ namespace behavior_path_planner::helper::avoidance
 
 using behavior_path_planner::PathShifter;
 using behavior_path_planner::PlannerData;
-using motion_utils::calcDecelDistWithJerkAndAccConstraints;
-using motion_utils::findNearestIndex;
 
 class AvoidanceHelper
 {
@@ -59,6 +58,11 @@ public:
   double getEgoSpeed() const { return std::abs(data_->self_odometry->twist.twist.linear.x); }
 
   geometry_msgs::msg::Pose getEgoPose() const { return data_->self_odometry->pose.pose; }
+
+  geometry_msgs::msg::Point getEgoPosition() const
+  {
+    return data_->self_odometry->pose.pose.position;
+  }
 
   static size_t getConstraintsMapIndex(const double velocity, const std::vector<double> & values)
   {
@@ -93,16 +97,18 @@ public:
     return std::max(getEgoSpeed(), values.at(idx));
   }
 
-  double getMinimumPrepareDistance() const
+  double getNominalPrepareDistance(const double velocity) const
   {
     const auto & p = parameters_;
-    return std::max(getEgoSpeed() * p->min_prepare_time, p->min_prepare_distance);
+    const auto & values = p->velocity_map;
+    const auto idx = getConstraintsMapIndex(velocity, values);
+    return std::max(values.at(idx) * p->max_prepare_time, p->min_prepare_distance);
   }
 
   double getNominalPrepareDistance() const
   {
     const auto & p = parameters_;
-    return std::max(getEgoSpeed() * p->max_prepare_time, p->min_prepare_distance);
+    return std::max(getAvoidanceEgoSpeed() * p->max_prepare_time, p->min_prepare_distance);
   }
 
   double getNominalAvoidanceDistance(const double shift_length) const
@@ -134,6 +140,26 @@ public:
       shift_length, getLateralMaxJerkLimit(), getAvoidanceEgoSpeed());
   }
 
+  double getFrontConstantDistance(const ObjectData & object) const
+  {
+    const auto object_type = utils::getHighestProbLabel(object.object.classification);
+    const auto object_parameter = parameters_->object_parameters.at(object_type);
+    if (!parameters_->consider_front_overhang) {
+      return object_parameter.longitudinal_margin;
+    }
+    return object_parameter.longitudinal_margin + data_->parameters.base_link2front;
+  }
+
+  double getRearConstantDistance(const ObjectData & object) const
+  {
+    const auto object_type = utils::getHighestProbLabel(object.object.classification);
+    const auto object_parameter = parameters_->object_parameters.at(object_type);
+    if (!parameters_->consider_rear_overhang) {
+      return object_parameter.longitudinal_margin;
+    }
+    return object_parameter.longitudinal_margin + data_->parameters.base_link2rear + object.length;
+  }
+
   double getEgoShift() const
   {
     validate();
@@ -151,14 +177,14 @@ public:
   double getShift(const Point & p) const
   {
     validate();
-    const auto idx = findNearestIndex(prev_reference_path_.points, p);
+    const auto idx = motion_utils::findNearestIndex(prev_reference_path_.points, p);
     return prev_spline_shift_path_.shift_length.at(idx);
   }
 
   double getLinearShift(const Point & p) const
   {
     validate();
-    const auto idx = findNearestIndex(prev_reference_path_.points, p);
+    const auto idx = motion_utils::findNearestIndex(prev_reference_path_.points, p);
     return prev_linear_shift_path_.shift_length.at(idx);
   }
 
@@ -176,7 +202,8 @@ public:
   {
     using utils::avoidance::calcShiftLength;
 
-    const auto shift_length = calcShiftLength(is_on_right, object.overhang_dist, margin);
+    const auto shift_length =
+      calcShiftLength(is_on_right, object.overhang_points.front().first, margin);
     return is_on_right ? std::min(shift_length, getLeftShiftBound())
                        : std::max(shift_length, getRightShiftBound());
   }
@@ -242,6 +269,20 @@ public:
     return *itr;
   }
 
+  std::pair<double, double> getDistanceToAccelEndPoint(const PathWithLaneId & path)
+  {
+    updateAccelEndPoint(path);
+
+    if (!max_v_point_.has_value()) {
+      return std::make_pair(0.0, std::numeric_limits<double>::max());
+    }
+
+    const auto start_idx = data_->findEgoIndex(path.points);
+    const auto distance = motion_utils::calcSignedArcLength(
+      path.points, start_idx, max_v_point_.value().first.position);
+    return std::make_pair(distance, max_v_point_.value().second);
+  }
+
   double getFeasibleDecelDistance(
     const double target_velocity, const bool use_hard_constraints = true) const
   {
@@ -249,7 +290,7 @@ public:
     const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
     const auto & a_lim = use_hard_constraints ? p->max_deceleration : p->nominal_deceleration;
     const auto & j_lim = use_hard_constraints ? p->max_jerk : p->nominal_jerk;
-    const auto ret = calcDecelDistWithJerkAndAccConstraints(
+    const auto ret = motion_utils::calcDecelDistWithJerkAndAccConstraints(
       getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
 
     if (!!ret) {
@@ -259,18 +300,96 @@ public:
     return std::numeric_limits<double>::max();
   }
 
+  bool isEnoughPrepareDistance(const double prepare_distance) const
+  {
+    const auto & p = parameters_;
+    return prepare_distance >
+           std::max(getEgoSpeed() * p->min_prepare_distance, p->min_prepare_distance);
+  }
+
   bool isComfortable(const AvoidLineArray & shift_lines) const
   {
+    const auto JERK_BUFFER = 0.1;  // [m/sss]
     return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
       return PathShifter::calcJerkFromLatLonDistance(
                line.getRelativeLength(), line.getRelativeLongitudinal(), getAvoidanceEgoSpeed()) <
-             getLateralMaxJerkLimit();
+             getLateralMaxJerkLimit() + JERK_BUFFER;
     });
+  }
+
+  bool isReady(const ObjectDataArray & objects) const
+  {
+    if (objects.empty()) {
+      return true;
+    }
+
+    const auto object = objects.front();
+
+    if (!object.is_ambiguous) {
+      return true;
+    }
+
+    if (!object.avoid_margin.has_value()) {
+      return true;
+    }
+
+    const auto is_object_on_right = utils::avoidance::isOnRight(object);
+    const auto desire_shift_length =
+      getShiftLength(object, is_object_on_right, object.avoid_margin.value());
+
+    const auto prepare_distance = getNominalPrepareDistance(0.0);
+    const auto constant_distance = getFrontConstantDistance(object);
+    const auto avoidance_distance = getMinAvoidanceDistance(desire_shift_length);
+
+    return object.longitudinal <
+           prepare_distance + constant_distance + avoidance_distance +
+             parameters_->closest_distance_to_wait_and_see_for_ambiguous_vehicle;
+  }
+
+  static bool isAbsolutelyNotAvoidable(const ObjectData & object)
+  {
+    if (object.is_avoidable) {
+      return false;
+    }
+
+    // can avoid it after deceleration.
+    if (object.info == ObjectInfo::NEED_DECELERATION) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool isReady(const AvoidLineArray & new_shift_lines, const double current_shift_length) const
+  {
+    if (std::abs(current_shift_length) < 1e-3) {
+      return true;
+    }
+
+    if (new_shift_lines.empty()) {
+      return true;
+    }
+
+    const auto front_shift_relative_length = new_shift_lines.front().getRelativeLength();
+
+    // same direction shift.
+    if (current_shift_length > 0.0 && front_shift_relative_length > 0.0) {
+      return true;
+    }
+
+    // same direction shift.
+    if (current_shift_length < 0.0 && front_shift_relative_length < 0.0) {
+      return true;
+    }
+
+    // keep waiting the other side shift approval until the ego reaches shift length threshold.
+    const auto ego_shift_ratio = (current_shift_length - getEgoShift()) / current_shift_length;
+    return ego_shift_ratio < parameters_->ratio_for_return_shift_approval + 1e-3;
   }
 
   bool isShifted() const
   {
-    return std::abs(getEgoShift()) > parameters_->lateral_avoid_check_threshold;
+    return std::abs(getEgoShift()) > parameters_->lateral_execution_threshold;
   }
 
   bool isInitialized() const
@@ -288,6 +407,57 @@ public:
     }
 
     return true;
+  }
+
+  void updateAccelEndPoint(const PathWithLaneId & path)
+  {
+    const auto & p = parameters_;
+    const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
+    if (a_now < 0.0) {
+      max_v_point_ = std::nullopt;
+      return;
+    }
+
+    if (getEgoSpeed() < p->min_velocity_to_limit_max_acceleration) {
+      max_v_point_ = std::nullopt;
+      return;
+    }
+
+    if (max_v_point_.has_value()) {
+      return;
+    }
+
+    const auto v0 = getEgoSpeed() + p->buf_slow_down_speed;
+
+    const auto t_neg_jerk = std::max(0.0, a_now - p->max_acceleration) / p->max_jerk;
+    const auto v_neg_jerk = v0 + a_now * t_neg_jerk + std::pow(t_neg_jerk, 2.0) / 2.0;
+    const auto x_neg_jerk = v0 * t_neg_jerk + a_now * std::pow(t_neg_jerk, 2.0) / 2.0 +
+                            p->max_jerk * std::pow(t_neg_jerk, 3.0) / 6.0;
+
+    const auto & v_max = data_->parameters.max_vel;
+    if (v_max < v_neg_jerk) {
+      max_v_point_ = std::nullopt;
+      return;
+    }
+
+    const auto t_max_accel = (v_max - v_neg_jerk) / p->max_acceleration;
+    const auto x_max_accel =
+      v_neg_jerk * t_max_accel + p->max_acceleration * std::pow(t_max_accel, 2.0) / 2.0;
+
+    const auto point = motion_utils::calcLongitudinalOffsetPose(
+      path.points, getEgoPosition(), x_neg_jerk + x_max_accel);
+    if (point.has_value()) {
+      max_v_point_ = std::make_pair(point.value(), v_max);
+      return;
+    }
+
+    const auto x_end =
+      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), path.points.size() - 1);
+    const auto t_end =
+      (std::sqrt(v0 * v0 + 2.0 * p->max_acceleration * x_end) - v0) / p->max_acceleration;
+    const auto v_end = v0 + p->max_acceleration * t_end;
+
+    max_v_point_ = std::make_pair(getPose(path.points.back()), v_end);
   }
 
   void reset()
@@ -340,6 +510,8 @@ private:
   ShiftedPath prev_linear_shift_path_;
 
   lanelet::ConstLanelets prev_driving_lanes_;
+
+  std::optional<std::pair<Pose, double>> max_v_point_;
 };
 }  // namespace behavior_path_planner::helper::avoidance
 

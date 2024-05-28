@@ -135,25 +135,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE lidar_centerpoint_node
   )
 
-  ## single inference node ##
-  ament_auto_add_library(single_inference_lidar_centerpoint_component SHARED
-    src/single_inference_node.cpp
-  )
-
-  target_link_libraries(single_inference_lidar_centerpoint_component
-    centerpoint_lib
-  )
-
-  rclcpp_components_register_node(single_inference_lidar_centerpoint_component
-    PLUGIN "centerpoint::SingleInferenceLidarCenterPointNode"
-    EXECUTABLE single_inference_lidar_centerpoint_node
-  )
-
-  install(PROGRAMS
-    scripts/lidar_centerpoint_visualizer.py
-    DESTINATION lib/${PROJECT_NAME}
-  )
-
   ament_export_dependencies(ament_cmake_python)
 
   ament_auto_package(
@@ -166,6 +147,20 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     TARGETS centerpoint_cuda_lib
     DESTINATION lib
   )
+
+  if(BUILD_TESTING)
+    find_package(ament_cmake_gtest REQUIRED)
+    ament_auto_add_gtest(test_detection_class_remapper
+      test/test_detection_class_remapper.cpp
+    )
+    ament_auto_add_gtest(test_ros_utils
+      test/test_ros_utils.cpp
+    )
+    ament_auto_add_gtest(test_nms
+      test/test_nms.cpp
+    )
+  endif()
+
 else()
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()

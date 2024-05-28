@@ -126,6 +126,8 @@ private:
   double timeout_sec_ = 0.1;
 
   bool publish_synchronized_pointcloud_;
+  bool keep_input_frame_in_synchronized_pointcloud_;
+  std::string synchronized_pointcloud_postfix_;
 
   std::set<std::string> not_subscribed_topic_names_;
 
@@ -179,6 +181,8 @@ private:
   void timer_callback();
 
   void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  std::string replaceSyncTopicNamePostfix(
+    const std::string & original_topic_name, const std::string & postfix);
 
   /** \brief processing time publisher. **/
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;

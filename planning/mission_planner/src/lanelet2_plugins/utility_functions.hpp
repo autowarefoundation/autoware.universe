@@ -1,4 +1,4 @@
-// Copyright 2019 Autoware Foundation
+// Copyright 2019-2024 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #define LANELET2_PLUGINS__UTILITY_FUNCTIONS_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -30,8 +31,6 @@
 #include <unordered_set>
 #include <vector>
 
-bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id);
-
 template <typename T>
 bool exists(const std::vector<T> & vectors, const T & item)
 {
@@ -45,12 +44,18 @@ bool exists(const std::vector<T> & vectors, const T & item)
 
 tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
   tier4_autoware_utils::LinearRing2d footprint);
-void set_color(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a);
 void insert_marker_array(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2);
 
+/**
+ * @brief create a single merged lanelet whose left/right bounds consist of the leftmost/rightmost
+ * bound of the original lanelets or the left/right bound of its adjacent road_shoulder respectively
+ * @param lanelets topologically sorted sequence of lanelets
+ * @param route_handler route handler to query the lanelet map
+ */
 lanelet::ConstLanelet combine_lanelets_with_shoulder(
-  const lanelet::ConstLanelets & lanelets, const lanelet::ConstLanelets & shoulder_lanelets);
+  const lanelet::ConstLanelets & lanelets, const route_handler::RouteHandler & route_handler);
+
 std::vector<geometry_msgs::msg::Point> convertCenterlineToPoints(const lanelet::Lanelet & lanelet);
 geometry_msgs::msg::Pose convertBasicPoint3dToPose(
   const lanelet::BasicPoint3d & point, const double lane_yaw);

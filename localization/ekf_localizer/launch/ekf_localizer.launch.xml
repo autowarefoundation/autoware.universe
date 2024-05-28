@@ -17,15 +17,13 @@
   <arg name="output_twist_name" default="ekf_twist"/>
   <arg name="output_twist_with_covariance_name" default="ekf_twist_with_covariance"/>
 
-  <node pkg="ekf_localizer" exec="ekf_localizer" name="ekf_localizer" output="screen">
+  <node pkg="ekf_localizer" exec="ekf_localizer_node" output="both">
     <remap from="in_pose_with_covariance" to="$(var input_pose_with_cov_name)"/>
 
     <remap from="in_twist_with_covariance" to="$(var input_twist_with_cov_name)"/>
 
     <remap from="initialpose" to="$(var input_initial_pose_name)"/>
     <remap from="trigger_node_srv" to="$(var input_trigger_node_service_name)"/>
-
-    <param name="pose_frame_id" value="map"/>
 
     <remap from="ekf_odom" to="$(var output_odom_name)"/>
     <remap from="ekf_pose" to="$(var output_pose_name)"/>

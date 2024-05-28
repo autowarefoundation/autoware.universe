@@ -102,7 +102,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   const float circle_nms_dist_threshold = static_cast<float>(
     this->declare_parameter<double>("post_process_params.circle_nms_dist_threshold"));
   const auto yaw_norm_thresholds =
-    this->declare_parameter<std::vector<double>>("model_params.yaw_norm_thresholds");
+    this->declare_parameter<std::vector<double>>("post_process_params.yaw_norm_thresholds");
   // densification param
   const std::string densification_world_frame_id =
     this->declare_parameter<std::string>("densification_params.world_frame_id");
@@ -141,6 +141,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     }
   }
   has_twist_ = this->declare_parameter<bool>("model_params.has_twist");
+  has_variance_ = this->declare_parameter<bool>("model_params.has_variance");
   const std::size_t point_feature_size = static_cast<std::size_t>(
     this->declare_parameter<std::int64_t>("model_params.point_feature_size"));
   const std::size_t max_voxel_size =
@@ -189,7 +190,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   centerpoint::CenterPointConfig config(
     class_names_.size(), point_feature_size, max_voxel_size, pointcloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
-    yaw_norm_thresholds);
+    yaw_norm_thresholds, has_variance_);
 
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
@@ -401,7 +402,7 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
   raw_objects.reserve(det_boxes3d.size());
   for (const auto & box3d : det_boxes3d) {
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
+    box3DToDetectedObject(box3d, class_names_, has_twist_, has_variance_, obj);
     raw_objects.emplace_back(obj);
   }
 
