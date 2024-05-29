@@ -73,7 +73,7 @@ PedestrianTracker::PedestrianTracker(
   } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
     cylinder_ = {object.shape.dimensions.x, object.shape.dimensions.z};
   } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
-    // do not update polygon shape, use default value
+    // do not update polygon shape
   }
   // set maximum and minimum size
   constexpr double max_size = 5.0;

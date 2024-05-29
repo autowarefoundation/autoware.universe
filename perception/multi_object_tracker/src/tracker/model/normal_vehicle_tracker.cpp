@@ -82,7 +82,8 @@ NormalVehicleTracker::NormalVehicleTracker(
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
-        "BigVehicleTracker::BigVehicleTracker: Failed to convert convex hull to bounding box.");
+        "NormalVehicleTracker::NormalVehicleTracker: Failed to convert convex hull to bounding "
+        "box.");
       bounding_box_ = {3.0, 2.0, 1.8};  // default value
     } else {
       bounding_box_ = {
@@ -205,12 +206,17 @@ autoware_auto_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpda
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
   autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-  // if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-  //   utils::convertConvexHullToBoundingBox(object, bbox_object);
-  // } else {
-  //   bbox_object = object;
-  // }
-  bbox_object = object;
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
+      RCLCPP_WARN(
+        logger_,
+        "NormalVehicleTracker::getUpdatingObject: Failed to convert convex hull to bounding box.");
+      bbox_object = object;
+    }
+
+  } else {
+    bbox_object = object;
+  }
 
   // get offset measurement
   int nearest_corner_index = utils::getNearestCornerOrSurface(
