@@ -79,10 +79,12 @@ BigVehicleTracker::BigVehicleTracker(
     last_input_bounding_box_ = bounding_box_;
   } else {
     autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-    if (!utils::convertConvexHullToBoundingBox(object, bbox_object)){
-      RCLCPP_WARN(logger_, "BigVehicleTracker::BigVehicleTracker: Failed to convert convex hull to bounding box.");
-      bounding_box_ = {6.0, 2.0, 2.0}; // default value
-    }else{
+    if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
+      RCLCPP_WARN(
+        logger_,
+        "BigVehicleTracker::BigVehicleTracker: Failed to convert convex hull to bounding box.");
+      bounding_box_ = {6.0, 2.0, 2.0};  // default value
+    } else {
       bounding_box_ = {
         bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
         bbox_object.shape.dimensions.z};
