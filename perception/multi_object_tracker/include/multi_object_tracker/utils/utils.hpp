@@ -35,6 +35,7 @@
 #include <cmath>
 #include <tuple>
 #include <vector>
+#include <iostream>
 
 namespace utils
 {
@@ -295,17 +296,21 @@ inline void calcAnchorPointOffset(
  * @param input_object: input convex hull objects
  * @param output_object: output bounding box objects
  */
-inline void convertConvexHullToBoundingBox(
+inline bool convertConvexHullToBoundingBox(
   const autoware_auto_perception_msgs::msg::DetectedObject & input_object,
   autoware_auto_perception_msgs::msg::DetectedObject & output_object)
 {
+  // check footprint size
+  if (input_object.shape.footprint.points.size() < 3) {
+    return false;
+  }
+
+  // look for bounding box boundary
   double max_x = 0;
   double max_y = 0;
   double min_x = 0;
   double min_y = 0;
   double max_z = 0;
-
-  // look for bounding box boundary
   for (size_t i = 0; i < input_object.shape.footprint.points.size(); ++i) {
     const double foot_x = input_object.shape.footprint.points.at(i).x;
     const double foot_y = input_object.shape.footprint.points.at(i).y;
@@ -340,6 +345,10 @@ inline void convertConvexHullToBoundingBox(
   output_object.shape.dimensions.x = length;
   output_object.shape.dimensions.y = width;
   output_object.shape.dimensions.z = height;
+
+  // print debug info, object size
+  std::cout << "convertConvexHullToBoundingBox: length: " << length << ", width: " << width << ", height: " << height << std::endl;
+  return true;
 }
 
 inline bool getMeasurementYaw(

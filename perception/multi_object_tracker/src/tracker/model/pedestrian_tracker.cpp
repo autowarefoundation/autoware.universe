@@ -66,19 +66,28 @@ PedestrianTracker::PedestrianTracker(
 
   // OBJECT SHAPE MODEL
   bounding_box_ = {0.5, 0.5, 1.7};
-  cylinder_ = {0.3, 1.7};
+  cylinder_ = {0.5, 1.7};
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
     cylinder_ = {object.shape.dimensions.x, object.shape.dimensions.z};
+  } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    // do not update polygon shape, use default value
   }
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
-  cylinder_.width = std::max(cylinder_.width, 0.3);
-  cylinder_.height = std::max(cylinder_.height, 0.3);
+  // set maximum and minimum size
+  constexpr double max_size = 5.0;
+  bounding_box_.length = std::max(bounding_box_.length, max_size);
+  bounding_box_.width = std::max(bounding_box_.width, max_size);
+  bounding_box_.height = std::max(bounding_box_.height, max_size);
+  cylinder_.width = std::max(cylinder_.width, max_size);
+  cylinder_.height = std::max(cylinder_.height, max_size);
+  constexpr double min_size = 0.3;
+  bounding_box_.length = std::max(bounding_box_.length, min_size);
+  bounding_box_.width = std::max(bounding_box_.width, min_size);
+  bounding_box_.height = std::max(bounding_box_.height, min_size);
+  cylinder_.width = std::max(cylinder_.width, min_size);
+  cylinder_.height = std::max(cylinder_.height, min_size);
 
   // Set motion model parameters
   {

@@ -79,16 +79,25 @@ NormalVehicleTracker::NormalVehicleTracker(
     last_input_bounding_box_ = bounding_box_;
   } else {
     autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-    utils::convertConvexHullToBoundingBox(object, bbox_object);
-    bounding_box_ = {
-      bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
-      bbox_object.shape.dimensions.z};
+    if (!utils::convertConvexHullToBoundingBox(object, bbox_object)){
+      RCLCPP_WARN(logger_, "BigVehicleTracker::BigVehicleTracker: Failed to convert convex hull to bounding box.");
+      bounding_box_ = {3.0, 2.0, 1.8}; // default value
+    }else{
+      bounding_box_ = {
+        bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
+        bbox_object.shape.dimensions.z};
+    }
     last_input_bounding_box_ = bounding_box_;
   }
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
+  // set maximum and minimum size
+  constexpr double max_size = 20.0;
+  bounding_box_.length = std::max(bounding_box_.length, max_size);
+  bounding_box_.width = std::max(bounding_box_.width, max_size);
+  bounding_box_.height = std::max(bounding_box_.height, max_size);
+  constexpr double min_size = 1.0;
+  bounding_box_.length = std::max(bounding_box_.length, min_size);
+  bounding_box_.width = std::max(bounding_box_.width, min_size);
+  bounding_box_.height = std::max(bounding_box_.height, min_size);
 
   // Set motion model parameters
   {
@@ -194,11 +203,12 @@ autoware_auto_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpda
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
   autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    utils::convertConvexHullToBoundingBox(object, bbox_object);
-  } else {
-    bbox_object = object;
-  }
+  // if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  //   utils::convertConvexHullToBoundingBox(object, bbox_object);
+  // } else {
+  //   bbox_object = object;
+  // }
+  bbox_object = object;
 
   // get offset measurement
   int nearest_corner_index = utils::getNearestCornerOrSurface(
@@ -329,10 +339,17 @@ bool NormalVehicleTracker::measureWithShape(
   bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
   last_input_bounding_box_ = {
     object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
+
+  // set maximum and minimum size
+  constexpr double max_size = 20.0;
+  bounding_box_.length = std::max(bounding_box_.length, max_size);
+  bounding_box_.width = std::max(bounding_box_.width, max_size);
+  bounding_box_.height = std::max(bounding_box_.height, max_size);
+  constexpr double min_size = 1.0;
+  bounding_box_.length = std::max(bounding_box_.length, min_size);
+  bounding_box_.width = std::max(bounding_box_.width, min_size);
+  bounding_box_.height = std::max(bounding_box_.height, min_size);
+
 
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);
