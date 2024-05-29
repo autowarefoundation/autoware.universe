@@ -42,56 +42,56 @@ tensorrt_yolox::Object createYoloxBbox(
 
 TEST(CalWeightedIouTest, NoOverlap)
 {
-  sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 10, 10);
-  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.9f, 0);
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 10, 10);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.9f, 0);
 
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
 }
 
 TEST(CalWeightedIouTest, PartiallyOverlap1)
 {
-  sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(15, 15, 10, 10);
-  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.7f, 0);
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(15, 15, 10, 10);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.7f, 0);
 
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.1f);
 }
 
 TEST(CalWeightedIouTest, PartiallyOverlap2)
 {
-  sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 10, 10);
-  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(-5, -5, 10, 10, 0.7f, 0);
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 10, 10);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(-5, -5, 10, 10, 0.7f, 0);
 
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.1f);
 }
 
 TEST(CalWeightedIouTest, Included1)
 {
-  sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(20, 20, 10, 10);
-  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.5f, 0);
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(20, 20, 10, 10);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.5f, 0);
 
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.5f);
 }
 
 TEST(CalWeightedIouTest, Included2)
 {
-  sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(20, 20, 100, 100);
-  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.5f, 0);
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(20, 20, 100, 100);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.5f, 0);
 
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.005f);
 }
 
 TEST(CalWeightedIouTest, Zero)
 {
-  sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 0, 0);
-  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(0, 0, 0, 0, 0.5f, 0);
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 0, 0);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(0, 0, 0, 0, 0.5f, 0);
 
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
 }
 
 TEST(CalWeightedIouTest, Negative)
 {
-  sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 10, 10);
-  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(-5, -5, -5, 10, 0.5f, 0);
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 10, 10);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(-5, -5, -5, 10, 0.5f, 0);
 
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
 }
@@ -100,9 +100,9 @@ TEST(CalWeightedIouTest, Negative)
 // So it is disabled now. Current result is 0.1097561, but it should be 0.0.
 TEST(CalWeightedIouTest, DISABLED_Uint32Max)
 {
-  sensor_msgs::msg::RegionOfInterest map_based_bbox =
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox =
     createMapBasedBbox(UINT32_MAX, UINT32_MAX, 10, 10);
-  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(-5, -5, 10, 10, 0.5f, 0);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(-5, -5, 10, 10, 0.5f, 0);
 
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
 }
