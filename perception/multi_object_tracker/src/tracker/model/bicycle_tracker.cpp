@@ -71,10 +71,12 @@ BicycleTracker::BicycleTracker(
   } else {
     bounding_box_ = {1.0, 0.5, 1.7};
   }
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
+  // set maximum and minimum size
+  constexpr double max_size = 5.0;
+  constexpr double min_size = 0.3;
+  bounding_box_.length = std::min(std::max(bounding_box_.length, min_size), max_size);
+  bounding_box_.width = std::min(std::max(bounding_box_.width, min_size), max_size);
+  bounding_box_.height = std::min(std::max(bounding_box_.height, min_size), max_size);
 
   // Set motion model parameters
   {
@@ -167,16 +169,7 @@ autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingOb
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 {
-  autoware_auto_perception_msgs::msg::DetectedObject updating_object;
-
-  // // OBJECT SHAPE MODEL
-  // // convert to bounding box if input is convex shape
-  // if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-  //   utils::convertConvexHullToBoundingBox(object, updating_object);
-  // } else {
-  //   updating_object = object;
-  // }
-  updating_object = object;
+  autoware_auto_perception_msgs::msg::DetectedObject updating_object = object;
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
