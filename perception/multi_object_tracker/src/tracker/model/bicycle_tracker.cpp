@@ -255,9 +255,9 @@ bool BicycleTracker::measureWithShape(
 
   // set maximum and minimum size
   constexpr double max_size = 10.0;
-  bounding_box_.length = std::max(bounding_box_.length, max_size);
-  bounding_box_.width = std::max(bounding_box_.width, max_size);
-  bounding_box_.height = std::max(bounding_box_.height, max_size);
+  bounding_box_.length = std::min(bounding_box_.length, max_size);
+  bounding_box_.width = std::min(bounding_box_.width, max_size);
+  bounding_box_.height = std::min(bounding_box_.height, max_size);
   constexpr double min_size = 0.3;
   bounding_box_.length = std::max(bounding_box_.length, min_size);
   bounding_box_.width = std::max(bounding_box_.width, min_size);
