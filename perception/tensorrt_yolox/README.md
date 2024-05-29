@@ -83,7 +83,7 @@ The label contained in detected 2D bounding boxes (i.e., `out/objects`) will be 
 If other labels (case insensitive) are contained in the file specified via the `label_file` parameter,
 those are labeled as `UNKNOWN`, while detected rectangles are drawn in the visualization result (`out/image`).
 
-The semantic segmentation mask are gray image whose pixel is index of one of the followings:
+The semantic segmentation mask is a gray image whose each pixel is index of one following class:
 
 | index | semantic name    |
 | ----- | ---------------- |

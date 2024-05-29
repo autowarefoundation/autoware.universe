@@ -916,7 +916,6 @@ bool TrtYoloX::feedforwardAndDecode(
 
   for (size_t i = 0; i < batch_size; ++i) {
     auto image_size = images[i].size();
-    auto & out_mask = out_masks[i];
     float * batch_prob = out_prob_h_.get() + (i * out_elem_num_per_batch_);
     ObjectArray object_array;
     decodeOutputs(batch_prob, object_array, scales_[i], image_size);
@@ -948,14 +947,14 @@ bool TrtYoloX::feedforwardAndDecode(
         } else {
           mask = getMaskImage(&(segmentation_results[counter]), output_dims, out_w, out_h);
         }
-        segmentation_masks_.push_back(mask);
+        segmentation_masks_.emplace_back(std::move(mask));
         counter += out_elem_num;
       }
+      // semantic segmentation was fixed as first task
+      out_masks.at(i) = segmentation_masks_.at(0);
     } else {
       continue;
     }
-    // Assume semantic segmentation is first task
-    out_mask = segmentation_masks_.at(0);
   }
   return true;
 }
