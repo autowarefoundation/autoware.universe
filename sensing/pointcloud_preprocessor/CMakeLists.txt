@@ -58,6 +58,23 @@ ament_target_dependencies(faster_voxel_grid_downsample_filter
   sensor_msgs
 )
 
+
+add_library(undistorter SHARED
+  src/distortion_corrector/undistorter.cpp
+)
+
+target_include_directories(undistorter PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+)
+
+ament_target_dependencies(undistorter
+  rclcpp
+  sensor_msgs
+  tf2_eigen
+  tier4_autoware_utils
+)
+
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/utility/utilities.cpp
   src/concatenate_data/concatenate_and_time_sync_nodelet.cpp
@@ -78,7 +95,6 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/pointcloud_accumulator/pointcloud_accumulator_nodelet.cpp
   src/vector_map_filter/lanelet2_map_filter_nodelet.cpp
   src/distortion_corrector/distortion_corrector.cpp
-  src/distortion_corrector/undistorter.cpp
   src/blockage_diag/blockage_diag_nodelet.cpp
   src/polygon_remover/polygon_remover.cpp
   src/vector_map_filter/vector_map_inside_area_filter.cpp
@@ -87,6 +103,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
 target_link_libraries(pointcloud_preprocessor_filter
   pointcloud_preprocessor_filter_base
   faster_voxel_grid_downsample_filter
+  undistorter
   ${Boost_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${Sophus_LIBRARIES}
