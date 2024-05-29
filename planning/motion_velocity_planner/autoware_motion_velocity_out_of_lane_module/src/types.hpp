@@ -100,7 +100,7 @@ struct Slowdown
 struct SlowdownToInsert
 {
   Slowdown slowdown{};
-  autoware_auto_planning_msgs::msg::Trajectory::_points_type::value_type point{};
+  autoware_auto_planning_msgs::msg::TrajectoryPoint point{};
 };
 
 /// @brief bound of an overlap range (either the first, or last bound)
