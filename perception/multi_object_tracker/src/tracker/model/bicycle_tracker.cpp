@@ -169,7 +169,17 @@ autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingOb
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 {
-  autoware_auto_perception_msgs::msg::DetectedObject updating_object = object;
+  autoware_auto_perception_msgs::msg::DetectedObject updating_object;
+
+  // OBJECT SHAPE MODEL
+  // convert to bounding box if input is convex shape
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    if(!utils::convertConvexHullToBoundingBox(object, updating_object)){
+      updating_object = object;
+    }
+  } else {
+    updating_object = object;
+  }
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
