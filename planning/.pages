@@ -18,7 +18,7 @@ nav:
         - 'Side Shift': planning/behavior_path_side_shift_module
         - 'Start Planner': planning/behavior_path_start_planner_module
   - 'Behavior Velocity Planner':
-    - 'About Behavior Velocity': planning/behavior_velocity_planner
+    - 'About Behavior Velocity': planning/autoware_behavior_velocity_planner
     - 'Template for Custom Module': planning/behavior_velocity_template_module
     - 'Available Module':
         - 'Blind Spot': planning/behavior_velocity_blind_spot_module
@@ -80,5 +80,6 @@ nav:
       - 'About Planning Debug Tools': https://github.com/autowarefoundation/autoware_tools/tree/main/planning/planning_debug_tools
       - 'Stop Reason Visualizer': https://github.com/autowarefoundation/autoware_tools/blob/main/planning/planning_debug_tools/doc-stop-reason-visualizer.md
     - 'Planning Test Utils': planning/planning_test_utils
+    - 'Planning Test Manager': planning/autoware_planning_test_manager
     - 'Planning Topic Converter': planning/planning_topic_converter
     - 'Planning Validator': planning/planning_validator

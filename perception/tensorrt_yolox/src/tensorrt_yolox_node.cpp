@@ -251,6 +251,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     output_color_mask_msg->header = msg->header;
     color_mask_pub_.publish(output_color_mask_msg);
   }
+
 }
 
 bool TrtYoloXNode::readLabelFile(const std::string & label_path)
