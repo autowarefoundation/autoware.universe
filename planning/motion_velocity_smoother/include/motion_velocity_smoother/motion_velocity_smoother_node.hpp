@@ -28,6 +28,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_listener.h"
+#include "std_srvs/srv/set_bool.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
@@ -67,6 +68,7 @@ using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
 using visualization_msgs::msg::MarkerArray;
+using std_srvs::srv::SetBool;
 
 struct Motion
 {
@@ -91,6 +93,8 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
+  rclcpp::Service<SetBool>::SharedPtr srv_adjust_common_param;
+  rclcpp::Service<SetBool>::SharedPtr srv_slow_driving;
 
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
   AccelWithCovarianceStamped::ConstSharedPtr current_acceleration_ptr_;
@@ -153,6 +157,9 @@ private:
     AlgorithmType algorithm_type;  // Option : JerkFiltered, Linf, L2
 
     bool plan_from_ego_speed_on_manual_mode = true;
+
+    double adjusted_max_acceleration; // enable strong acceleration
+    double adjusted_max_jerk;         // enable strong acceleration
   } node_param_{};
 
   struct ExternalVelocityLimit
@@ -161,6 +168,8 @@ private:
     double dist{0.0};      // distance to set external velocity limit
     std::string sender{""};
   };
+
+
   ExternalVelocityLimit
     external_velocity_limit_;  // velocity and distance constraint  of external velocity limit
 
@@ -242,6 +251,9 @@ private:
 
   // parameter handling
   void initCommonParam();
+  void onAdjustParam(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
+  bool adjustParam;
+  void onSlow(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
 
   // debug
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;

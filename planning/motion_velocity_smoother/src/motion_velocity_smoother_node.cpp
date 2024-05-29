@@ -38,6 +38,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
 : Node("motion_velocity_smoother", node_options)
 {
   using std::placeholders::_1;
+  using std::placeholders::_2;
 
   // set common params
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -71,6 +72,15 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   sub_operation_mode_ = create_subscription<OperationModeState>(
     "~/input/operation_mode_state", 1,
     [this](const OperationModeState::ConstSharedPtr msg) { operation_mode_ = *msg; });
+
+  srv_adjust_common_param = create_service<SetBool>(
+      "~/adjust_common_param",
+      std::bind(&MotionVelocitySmootherNode::onAdjustParam, this, _1, _2));
+  adjustParam = false;
+
+  srv_slow_driving = create_service<SetBool>(
+    "~/slow_driving",
+    std::bind(&MotionVelocitySmootherNode::onSlow, this, _1, _2));
 
   // parameter update
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -189,6 +199,9 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     update_param("ego_nearest_dist_threshold", p.ego_nearest_dist_threshold);
     update_param("ego_nearest_yaw_threshold", p.ego_nearest_yaw_threshold);
     update_param_bool("plan_from_ego_speed_on_manual_mode", p.plan_from_ego_speed_on_manual_mode);
+
+    update_param("adjusted_max_acceleration", p.adjusted_max_acceleration);
+    update_param("adjusted_max_jerk", p.adjusted_max_jerk);
   }
 
   {
@@ -308,6 +321,9 @@ void MotionVelocitySmootherNode::initCommonParam()
 
   p.plan_from_ego_speed_on_manual_mode =
     declare_parameter<bool>("plan_from_ego_speed_on_manual_mode");
+
+  p.adjusted_max_acceleration = declare_parameter<double>("adjusted_max_acceleration");
+  p.adjusted_max_jerk = declare_parameter<double>("adjusted_max_jerk");
 }
 
 void MotionVelocitySmootherNode::publishTrajectory(const TrajectoryPoints & trajectory) const
@@ -1098,6 +1114,44 @@ TrajectoryPoint MotionVelocitySmootherNode::calcProjectedTrajectoryPointFromEgo(
   const TrajectoryPoints & trajectory) const
 {
   return calcProjectedTrajectoryPoint(trajectory, current_odometry_ptr_->pose.pose);
+}
+
+void MotionVelocitySmootherNode::onAdjustParam(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
+{
+  bool success = true;
+        
+  if(request->data && !adjustParam)
+  {
+    smoother_->setMaxAccel(get_parameter("adjusted_max_acceleration").as_double());
+    smoother_->setMaxJerk(get_parameter("adjusted_max_jerk").as_double());
+    
+    adjustParam = true;
+  }
+  else if(!request->data && adjustParam)
+  {
+    smoother_->setMaxAccel(get_parameter("normal.max_acc").as_double());
+    smoother_->setMaxJerk(get_parameter("normal.max_jerk").as_double());
+    
+    adjustParam = false; 
+  }
+  std::string message = success ? "Operation completed successfully" : "Operation failed";
+        
+  response->success = success;
+  response->message = message;
+}
+
+void MotionVelocitySmootherNode::onSlow(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
+{
+  bool success = true;
+        
+  if(request->data)
+  {
+    RCLCPP_INFO(get_logger(),"Slow True");
+  }
+  std::string message = success ? "Operation completed successfully" : "Operation failed";
+        
+  response->success = success;
+  response->message = message;
 }
 
 }  // namespace motion_velocity_smoother
