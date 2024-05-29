@@ -744,32 +744,6 @@ void calc_bounding_box_orientation_line_list(
   calc_line_list_from_points(point_list, point_pairs, 2, points);
 }
 
-// void calc_2d_bounding_box_bottom_line_list(
-//   const autoware_auto_perception_msgs::msg::Shape & shape,
-//   std::vector<geometry_msgs::msg::Point> & points)
-// {
-//   const double length_half = shape.dimensions.x * 0.5;
-//   const double width_half = shape.dimensions.y * 0.5;
-//   const double height_half = shape.dimensions.z * 0.5;
-//   geometry_msgs::msg::Point point;
-
-//   // bounding box corner points
-//   // top surface, clockwise
-//   const double point_list[4][3] = {
-//     {length_half, width_half, -height_half},
-//     {length_half, -width_half, -height_half},
-//     {-length_half, -width_half, -height_half},
-//     {-length_half, width_half, -height_half},
-//   };
-//   const int point_pairs[4][2] = {
-//     {0, 1},
-//     {1, 2},
-//     {2, 3},
-//     {3, 0},
-//   };
-//   calc_line_list_from_points(point_list, point_pairs, 4, points);
-// }
-
 void calc_2d_bounding_box_bottom_line_list(
   const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::Point> & points)
