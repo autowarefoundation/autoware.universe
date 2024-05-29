@@ -19,6 +19,8 @@
 #include <experimental/filesystem>
 #include <opencv2/core.hpp>
 
+#include <fstream>
+
 namespace fs = std::experimental::filesystem::v1;
 
 void test(const std::string & train_result_dir, const std::string & dataset_dir)

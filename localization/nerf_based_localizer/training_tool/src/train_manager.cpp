@@ -29,6 +29,8 @@
 
 #include <fmt/core.h>
 
+#include <fstream>
+
 namespace fs = std::experimental::filesystem::v1;
 using Tensor = torch::Tensor;
 

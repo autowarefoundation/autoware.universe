@@ -19,6 +19,8 @@
 #include <experimental/filesystem>
 #include <opencv2/core.hpp>
 
+#include <fstream>
+
 namespace fs = std::experimental::filesystem::v1;
 
 enum Dir { kUp, kUpRight, kRight, kDownRight, kDown, kDownLeft, kLeft, kUpLeft, kDirNum };
