@@ -96,13 +96,13 @@ TEST(CalWeightedIouTest, Negative)
   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
 }
 
-// This test case should be passed but it fails because of inappropriate type casting. Current
-// result is 0.1097561, but it should be 0.0.
-// TEST(CalWeightedIouTest, Uint32Max)
-// {
-//   sensor_msgs::msg::RegionOfInterest map_based_bbox =
-//     createMapBasedBbox(UINT32_MAX, UINT32_MAX, 10, 10);
-//   tensorrt_yolox::Object yolox_bbox = createYoloxBbox(-5, -5, 10, 10, 0.5f, 0);
+// This test case should be passed but it fails because of inappropriate type casting.
+// So it is disabled now. Current result is 0.1097561, but it should be 0.0.
+TEST(CalWeightedIouTest, DISABLED_Uint32Max)
+{
+  sensor_msgs::msg::RegionOfInterest map_based_bbox =
+    createMapBasedBbox(UINT32_MAX, UINT32_MAX, 10, 10);
+  tensorrt_yolox::Object yolox_bbox = createYoloxBbox(-5, -5, 10, 10, 0.5f, 0);
 
-//   EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
-// }
+  EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
+}
