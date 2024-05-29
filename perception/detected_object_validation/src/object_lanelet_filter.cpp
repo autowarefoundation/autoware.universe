@@ -156,7 +156,7 @@ bool ObjectLaneletFilterNode::filterObject(
     // 2. check if objects velocity is the same with the lanelet direction
     const bool orientation_not_available =
       transformed_object.kinematics.orientation_availability ==
-      autoware_auto_perception_msgs::msg::ObjectFeature::UNAVAILABLE;
+      autoware_auto_perception_msgs::msg::TrackedObjectKinematics::UNAVAILABLE;
     if (filter_settings_.lanelet_direction_filter && !orientation_not_available) {
       const bool is_same_direction =
         isSameDirectionWithLanelets(intersected_road_lanelets, transformed_object) ||
