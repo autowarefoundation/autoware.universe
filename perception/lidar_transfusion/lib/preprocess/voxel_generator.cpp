@@ -28,7 +28,7 @@ VoxelGenerator::VoxelGenerator(
   pre_ptr_ = std::make_unique<PreprocessCuda>(config_, stream_);
   cloud_data_d_ = cuda::make_unique<unsigned char[]>(config_.cloud_capacity_ * MAX_CLOUD_STEP_SIZE);
   points_.resize(config_.cloud_capacity_ * config_.num_point_feature_size_);
-  affine_transform_d_ = cuda::make_unique<float[]>(AFF_MAT_SIZE);
+  affine_past2current_d_ = cuda::make_unique<float[]>(AFF_MAT_SIZE);
 }
 
 bool VoxelGenerator::enqueuePointCloud(
@@ -96,20 +96,20 @@ std::size_t VoxelGenerator::generateSweepPoints(
 #else
     size_t points_size = pc_msg.width * pc_msg.height;
     cuda::clear_async(cloud_data_d_.get(), config_.cloud_capacity_ * MAX_CLOUD_STEP_SIZE, stream_);
-    cuda::clear_async(affine_transform_d_.get(), AFF_MAT_SIZE, stream_);
+    cuda::clear_async(affine_past2current_d_.get(), AFF_MAT_SIZE, stream_);
     CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
     CHECK_CUDA_ERROR(cudaMemcpyAsync(
       cloud_data_d_.get(), pc_msg.data.data(), pc_msg.data.size() * sizeof(unsigned char),
       cudaMemcpyHostToDevice, stream_));
     CHECK_CUDA_ERROR(cudaMemcpyAsync(
-      affine_transform_d_.get(), affine_past2current.data(), AFF_MAT_SIZE * sizeof(float),
+      affine_past2current_d_.get(), affine_past2current.data(), AFF_MAT_SIZE * sizeof(float),
       cudaMemcpyHostToDevice, stream_));
     CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
     pre_ptr_->generateVoxelsInput_launch(
       cloud_data_d_.get(), cloud_info_, points_agg, points_size, time_lag,
-      affine_transform_d_.get(), points_d.get());
+      affine_past2current_d_.get(), points_d.get());
     CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
     points_agg += points_size;
   }
