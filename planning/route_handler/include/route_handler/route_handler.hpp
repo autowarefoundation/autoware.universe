@@ -248,8 +248,19 @@ public:
   bool getClosestLaneletWithConstrainsWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
     const double yaw_threshold) const;
-  boost::optional<lanelet::ConstLanelet> getClosestRouteLaneletFromCurrent(
-    const Pose & search_pose, const lanelet::ConstLanelet & current_closest_lanelet,
+
+  /**
+   * Finds the closest route lanelet to the search pose satisfying the distance and yaw constraints
+   * with respect to a reference lanelet, the search set will include previous route lanelets,
+   * next route lanelets, and neighbors of reference lanelet. If it fails it will return an empty
+   * boost::optional
+   * @param search_pose pose to find closest lanelet to
+   * @param reference_lanelet reference lanelet to decide the search set
+   * @param dist_threshold distance constraint closest lanelet must be within
+   * @param yaw_threshold yaw constraint closest lanelet direction must be within
+   */
+  boost::optional<lanelet::ConstLanelet> getClosestRouteLaneletFromLanelet(
+    const Pose & search_pose, const lanelet::ConstLanelet & reference_lanelet,
     const double dist_threshold, const double yaw_threshold) const;
 
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;

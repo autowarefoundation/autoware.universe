@@ -427,7 +427,7 @@ void PlannerManager::updateCurrentRouteLanelet(const std::shared_ptr<PlannerData
   const auto backward_length =
     std::max(p.backward_path_length, p.backward_path_length + extra_margin);
 
-  const auto closest_lanelet_from_current = route_handler->getClosestRouteLaneletFromCurrent(
+  const auto closest_lanelet_from_current = route_handler->getClosestRouteLaneletFromLanelet(
     pose, current_route_lanelet_.value(), p.ego_nearest_dist_threshold,
     p.ego_nearest_yaw_threshold);
 

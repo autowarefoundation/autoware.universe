@@ -893,24 +893,23 @@ bool RouteHandler::getClosestLaneletWithConstrainsWithinRoute(
     route_lanelets_, search_pose, closest_lanelet, dist_threshold, yaw_threshold);
 }
 
-boost::optional<lanelet::ConstLanelet> RouteHandler::getClosestRouteLaneletFromCurrent(
-  const Pose & search_pose, const lanelet::ConstLanelet & current_lanelet,
+boost::optional<lanelet::ConstLanelet> RouteHandler::getClosestRouteLaneletFromLanelet(
+  const Pose & search_pose, const lanelet::ConstLanelet & reference_lanelet,
   const double dist_threshold, const double yaw_threshold) const
 {
   boost::optional<lanelet::ConstLanelet> closest_lanelet = {};
 
   lanelet::ConstLanelets previous_lanelets, next_lanelets, lanelet_sequence;
-  if (getPreviousLaneletsWithinRoute(current_lanelet, &previous_lanelets)) {
+  if (getPreviousLaneletsWithinRoute(reference_lanelet, &previous_lanelets)) {
     lanelet_sequence = previous_lanelets;
   }
 
-  lanelet_sequence.push_back(current_lanelet);
-  const auto & current_neighbors =
-    lanelet::utils::query::getAllNeighbors(routing_graph_ptr_, current_lanelet);
+  lanelet_sequence.push_back(reference_lanelet);
+  const auto & ref_lanelet_neighbors = getNeighborsWithinRoute(reference_lanelet);
   lanelet_sequence.insert(
-    lanelet_sequence.end(), current_neighbors.begin(), current_neighbors.end());
+    lanelet_sequence.end(), ref_lanelet_neighbors.begin(), ref_lanelet_neighbors.end());
 
-  if (getNextLaneletsWithinRoute(current_lanelet, &next_lanelets)) {
+  if (getNextLaneletsWithinRoute(reference_lanelet, &next_lanelets)) {
     lanelet_sequence.insert(lanelet_sequence.end(), next_lanelets.begin(), next_lanelets.end());
   }
 
