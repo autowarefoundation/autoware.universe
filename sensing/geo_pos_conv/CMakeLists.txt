@@ -37,8 +37,8 @@ endif()
 
 include_directories(
   ${EIGEN3_INCLUDE_DIRS}
-  $ENV{HOME}/dora/apis/c/node #dora的头文件路径 node_api.h
-  $ENV{HOME}/dora/apis/c/operator
+  $ENV{HOME}/dora_project/dora/apis/c/node #dora的头文件路径 node_api.h
+  $ENV{HOME}/dora_project/dora/apis/c/operator
   ./include
 )
 
@@ -46,7 +46,7 @@ add_library(geo_pos_conv src/geo_pos_conv.cc )# 添加所有需要的源文件
 target_link_libraries(geo_pos_conv
   ${EIGEN_LIBRARIES}
   # glog::glog
-  $ENV{HOME}/dora/target/release/libdora_node_api_c.a
+  $ENV{HOME}/dora_project/dora/target/release/libdora_node_api_c.a
   #$ENV{HOME}/dora/target/debug/libdora_node_api_c.a
   m
   rt

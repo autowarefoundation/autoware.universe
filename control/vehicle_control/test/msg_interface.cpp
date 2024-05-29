@@ -32,11 +32,6 @@ void veh_pose_callback(char *imu_data)
 void steer_cmd_callback(char *steer_data)
 {
     SteeringCmd_h *steering_data = reinterpret_cast<SteeringCmd_h *>(steer_data);
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    cout << "The receive_angle_time mil time is: " << tv.tv_sec << "," << tv.tv_usec/1000<<" ms " 
-    << " SteeringAngle: " << steering_data->SteeringAngle 
-    << endl;
     set_steering_cmd(steering_data->SteeringAngle);
     return;
 }
@@ -78,15 +73,16 @@ int run(void *dora_context)
             size_t data_id_len;
             read_dora_input_data(event, &data, &data_len);
             read_dora_input_id(event, &data_id, &data_id_len);
-            if (strcmp("SteeringCmd", data_id) == 0)
-            {
-                // auto start = std::chrono::system_clock::now(); // 获取当前时间
-                // std::time_t receive_angle_time = std::chrono::system_clock::to_time_t(start);
-                // std::cout << "The receive_angle_time time is: " << std::ctime(&receive_angle_time); // 打印时间
-
-
-                steer_cmd_callback(data);
-            }
+            // if (strcmp("SteeringCmd", data_id) == 0)
+            // {
+            //     // auto start = std::chrono::system_clock::now(); // 获取当前时间
+            //     // std::time_t receive_angle_time = std::chrono::system_clock::to_time_t(start);
+            //     // std::cout << "The receive_angle_time time is: " << std::ctime(&receive_angle_time); // 打印时间
+            //     struct timeval tv;
+            //     gettimeofday(&tv, NULL);
+            //     cout << "The receive_angle_time mil time is: " << tv.tv_sec*1000 + tv.tv_usec/1000 << endl;
+            //     steer_cmd_callback(data);
+            // }
             // else if (strcmp("TrqBreCmd", data_id) == 0)
             // {
             //     trq_bre_cmd_callback(data);
@@ -100,8 +96,8 @@ int run(void *dora_context)
           
 
 
-            const int rate = 200;   // 设定频率为200HZ
-            const chrono::milliseconds interval((int)(1000/rate));
+            // const int rate = 200;   // 设定频率为200HZ
+            // const chrono::milliseconds interval((int)(1000/rate));
 
             /// -------------------------------------------------------------------------------------------------------------------------
 
@@ -109,11 +105,7 @@ int run(void *dora_context)
             get_veh_status(VehicleStat);
             //-->>发布车辆状态
             VehicleStatus_msg.veh_speed = 1/*VehicleStat.VehicleSpeed*/; // 汽车速度
-            struct timeval tv;
-            gettimeofday(&tv, NULL);
-            get_veh_status(VehicleStat);
-            //cout << "veh_control/msg_interface: ms" << tv.tv_usec / 1000
-             //   << " VehicleStat.VehicleSpeed: " << VehicleStat.VehicleSpeed << endl;
+
             // pub_veh_statu.publish(VehicleStatus_msg); // 发布消息
             // ros::spinOnce();
 
@@ -131,7 +123,7 @@ int run(void *dora_context)
             //     return 1;
             // }
 
-            this_thread::sleep_for(interval);
+            // this_thread::sleep_for(interval);
 
                 
 
@@ -153,7 +145,7 @@ int run(void *dora_context)
 
 int main()
 {
-    std::cout << "HELLO control" << std::endl;
+    std::cout << "HELLO FROM C++ (using C API)" << std::endl;
 
     //----->>初始化CAN卡
     canid_t filter_canid[] = {0x530, 0x531, 0x532, 0x534};
@@ -177,7 +169,7 @@ int main()
     pthread_cancel(client_thread_id);
     close(can_fd);
 
-    std::cout << "GOODBYE  control" << std::endl;
+    std::cout << "GOODBYE FROM C++ node (using C API)" << std::endl;
 
     return ret;
 }

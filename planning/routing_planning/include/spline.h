@@ -288,7 +288,7 @@ void spline::set_points(const std::vector<double>& x,
     assert(x.size()>2);
     m_x=x;
     m_y=y;
-    int   n=x.size();
+    int n=x.size();
     // TODO: maybe sort x and y, rather than returning an error
 //    for(int i=0; i<n-1; i++) {
 //        assert(m_x[i]<m_x[i+1]);
@@ -370,6 +370,7 @@ void spline::set_points(const std::vector<double>& x,
     m_c[n-1]=3.0*m_a[n-2]*h*h+2.0*m_b[n-2]*h+m_c[n-2];   // = f'_{n-2}(x_{n-1})
     if(m_force_linear_extrapolation==true)
         m_b[n-1]=0.0;
+
 }
 
 double spline::operator() (double x) const

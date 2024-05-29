@@ -31,10 +31,10 @@ void pure_set_ref_path(const std::vector<float> &x,const std::vector<float> &y){
         temp_point << x[i],y[i];
         ref_path_veh.push_back(temp_point);
     }
-    // for (uint32_t i = 0;i < ref_path_veh.size();i++){
-    //     std::cout<<"row_path X Y:"<<ref_path_veh[i].transpose()<<std::endl;
-    //     // std::cout<<"row_path Y:"<<ref_path_veh[1]<<std::endl;
-    // }
+    for (uint32_t i = 0;i < ref_path_veh.size();i++){
+        std::cout<<"row_path X Y:"<<ref_path_veh[i]<<std::endl;
+        // std::cout<<"row_path Y:"<<ref_path_veh[1]<<std::endl;
+    }
     // std::cout<<"row_path size :"<<ref_path_veh.size()<<std::endl;
     return;
 }
@@ -239,7 +239,7 @@ float pure_pursuit(){
     //->搜索相关路径段
     uint32_t Segment_index = search_releve_seg_ind(ref_path_veh,1);
     //->设置预瞄距离
-    float aim_La = set_La_f(veh_speed) + 2;
+    float aim_La = set_La_f(veh_speed) + 2.0;
     // std::cout << "aim_La = " << aim_La << std::endl;
     // ROS_INFO_THROTTLE(1,"aim_La = %f", aim_La);
     //->搜索预瞄点

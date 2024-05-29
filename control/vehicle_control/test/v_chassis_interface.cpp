@@ -257,8 +257,8 @@ static void msg_send_recall(int signo)
 #endif
 
     memset(&frame, 0, sizeof(frame));
-    //mgs_id132.ACU_ChassisSteerEnCtrl = 1;
-    //mgs_id132.ACU_ChassisSteerAngleTarget = 500;  // 清空缓存区
+    // mgs_id132.ACU_ChassisSteerEnCtrl = 1;
+    // mgs_id132.ACU_ChassisSteerAngleTarget = 500;  // 清空缓存区
     frame_encapsulation_ID132(mgs_id132, frame); // 填充帧消息
     // auto start = std::chrono::system_clock::now(); // 获取当前时间
     // std::time_t pub_angle_time = std::chrono::system_clock::to_time_t(start);
