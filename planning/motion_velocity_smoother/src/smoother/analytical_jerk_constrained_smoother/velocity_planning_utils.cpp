@@ -201,11 +201,9 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   // for debug
   RCLCPP_DEBUG(rclcpp::get_logger("velocity_planning_utils"), "Calculate stop velocity.");
   for (unsigned int i = 0; i < ts.size(); ++i) {
-    RCLCPP_DEBUG_STREAM(
-      rclcpp::get_logger("velocity_planning_utils"), "--- "
-                                                       << "t: " << ts.at(i) << ", x: " << xs.at(i)
-                                                       << ", v: " << vs.at(i) << ", a: " << as.at(i)
-                                                       << ", j: " << js.at(i));
+    RCLCPP_DEBUG(
+      rclcpp::get_logger("velocity_planning_utils"), "--- t: %f, x: %f, v: %f, a: %f, j: %f",
+      ts.at(i), xs.at(i), vs.at(i), as.at(i), js.at(i));
   }
 
   const double a_target = 0.0;
