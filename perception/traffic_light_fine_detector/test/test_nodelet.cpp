@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 
 sensor_msgs::msg::RegionOfInterest createMapBasedBbox(
-  uint32_t x_offset, uint32_t y_offset, uint32_t width, uint32_t height)
+  const uint32_t x_offset, const uint32_t y_offset, const uint32_t width, const uint32_t height)
 {
   sensor_msgs::msg::RegionOfInterest bbox;
   bbox.x_offset = x_offset;
@@ -28,7 +28,8 @@ sensor_msgs::msg::RegionOfInterest createMapBasedBbox(
 }
 
 tensorrt_yolox::Object createYoloxBbox(
-  int32_t x_offset, int32_t y_offset, int32_t width, int32_t height, float score, int32_t type)
+  const int32_t x_offset, const int32_t y_offset, const int32_t width, const int32_t height,
+  const float score, const int32_t type)
 {
   tensorrt_yolox::Object bbox;
   bbox.x_offset = x_offset;
