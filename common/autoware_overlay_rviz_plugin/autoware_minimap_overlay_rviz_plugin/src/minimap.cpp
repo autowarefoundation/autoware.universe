@@ -160,7 +160,8 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
   painter.setBrush(colorFromHSV);
 
   // Define the visible rectangle
-  QRectF visibleRect(backgroundRect.width() / 2 - 112, backgroundRect.height() / 2 - 112, 225, 225);
+  QRectF visibleRect(
+    backgroundRect.width() / 2 - 112.5, backgroundRect.height() / 2 - 112.5, 225, 225);
 
   // Define the circular clipping path
   QPainterPath path;
