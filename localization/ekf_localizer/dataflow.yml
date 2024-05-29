@@ -31,8 +31,9 @@ nodes:
     custom:
       source: ../../sensing/gnss_poser/build/gnss_poser_core
       inputs:
-        DoraNavSatFix: gnss/DoraNavSatFix
-      queue_size: 1000
+        DoraNavSatFix:
+          source: gnss/DoraNavSatFix
+          queue_size: 1000
       outputs:
         - DoraNavSatFix 
 
@@ -40,8 +41,9 @@ nodes:
     operator:
       python: ../../sensing/gnss_poser/src/gps_to_ros2.py
       inputs:
-        DoraNavSatFix: gnss_poser/DoraNavSatFix
-      queue_size: 1000 
+        DoraNavSatFix:
+          source: gnss_poser/DoraNavSatFix
+          queue_size: 1000 
 ##############################################################################################
   # - id: gnss_ekf  # python 实现
   #   # custom:
@@ -59,16 +61,20 @@ nodes:
     custom:
       source: build/gnss_ekf
       inputs:
-              DoraNavSatFix: gnss_poser/DoraNavSatFix
-              DoraQuaternionStamped: gnss/DoraQuaternionStamped
+              DoraNavSatFix:
+                source: gnss_poser/DoraNavSatFix
+                queue_size: 1000 
+              DoraQuaternionStamped:
+                source: gnss/DoraQuaternionStamped
+                queue_size: 1000
       outputs:
             - DoraGnssPose
-      queue_size: 1000 
       
   - id: ekf_odom_rviz2  #在rviz中显示数据
     operator:
       python: src/ekf_odom_to_ros2.py
       inputs:
-          DoraGnssPose: gnss_ekf/DoraGnssPose
-      queue_size: 1000
+          DoraGnssPose:
+            source: gnss_ekf/DoraGnssPose
+            queue_size: 1000
 
