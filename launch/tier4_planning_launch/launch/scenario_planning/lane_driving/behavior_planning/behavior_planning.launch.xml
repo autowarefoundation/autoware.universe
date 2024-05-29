@@ -82,12 +82,12 @@
   />
   <let
     name="behavior_path_planner_launch_modules"
-    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::ExternalRequestLaneChangeRightModuleManager, '&quot;)"
+    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'autoware::behavior_path_planner::ExternalRequestLaneChangeRightModuleManager, '&quot;)"
     if="$(var launch_external_request_lane_change_right_module)"
   />
   <let
     name="behavior_path_planner_launch_modules"
-    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager, '&quot;)"
+    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'autoware::behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager, '&quot;)"
     if="$(var launch_external_request_lane_change_left_module)"
   />
   <let
@@ -220,7 +220,7 @@
       <extra_arg name="use_intra_process_comms" value="false"/>
     </composable_node>
 
-    <composable_node pkg="behavior_velocity_planner" plugin="behavior_velocity_planner::BehaviorVelocityPlannerNode" name="behavior_velocity_planner" namespace="">
+    <composable_node pkg="autoware_behavior_velocity_planner" plugin="autoware::behavior_velocity_planner::BehaviorVelocityPlannerNode" name="behavior_velocity_planner" namespace="">
       <!-- topic remap -->
       <remap from="~/input/path_with_lane_id" to="path_with_lane_id"/>
       <remap from="~/input/vector_map" to="$(var input_vector_map_topic_name)"/>

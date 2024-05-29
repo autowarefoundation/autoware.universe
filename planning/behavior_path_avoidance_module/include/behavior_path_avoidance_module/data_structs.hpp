@@ -337,7 +337,14 @@ struct AvoidanceParameters
   bool enable_bound_clipping{false};
 
   // debug
-  bool publish_debug_marker = false;
+  bool enable_other_objects_marker{false};
+  bool enable_other_objects_info{false};
+  bool enable_detection_area_marker{false};
+  bool enable_drivable_bound_marker{false};
+  bool enable_safety_check_marker{false};
+  bool enable_shift_line_marker{false};
+  bool enable_lane_marker{false};
+  bool enable_misc_marker{false};
 };
 
 struct ObjectData  // avoidance target
@@ -494,11 +501,9 @@ using AvoidOutlines = std::vector<AvoidOutline>;
  * avoidance state
  */
 enum class AvoidanceState {
-  NOT_AVOID = 0,
-  AVOID_EXECUTE,
-  YIELD,
-  AVOID_PATH_READY,
-  AVOID_PATH_NOT_READY,
+  RUNNING = 0,
+  CANCEL,
+  SUCCEEDED,
 };
 
 /*
@@ -507,7 +512,7 @@ enum class AvoidanceState {
 struct AvoidancePlanningData
 {
   // ego final state
-  AvoidanceState state{AvoidanceState::NOT_AVOID};
+  AvoidanceState state{AvoidanceState::RUNNING};
 
   // un-shifted pose (for current lane detection)
   Pose reference_pose;
@@ -558,8 +563,6 @@ struct AvoidancePlanningData
   bool valid{false};
 
   bool ready{false};
-
-  bool success{false};
 
   bool comfortable{false};
 

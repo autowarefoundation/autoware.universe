@@ -165,6 +165,9 @@ if(BUILD_TESTING)
   ament_auto_add_gtest(test_calc_iou_functions
     test/test_calc_iou_functions.cpp
   )
+  ament_auto_add_gtest(test_utils
+    test/test_utils.cpp
+  )
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
