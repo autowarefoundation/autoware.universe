@@ -174,7 +174,7 @@ autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingOb
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    if(!utils::convertConvexHullToBoundingBox(object, updating_object)){
+    if (!utils::convertConvexHullToBoundingBox(object, updating_object)) {
       updating_object = object;
     }
   } else {
