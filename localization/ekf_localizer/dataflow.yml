@@ -4,7 +4,9 @@ nodes:
       python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora_with_file.py  #读取文件用于测试
       #python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
       inputs:
-        tick: dora/timer/millis/20
+        tick: 
+          source: dora/timer/millis/20
+          queue_size: 1000
       outputs:
         - DoraSentence
         - DoraNavSatFix
@@ -29,7 +31,8 @@ nodes:
     custom:
       source: ../../sensing/gnss_poser/build/gnss_poser_core
       inputs:
-        DoraNavSatFix: gnss/DoraNavSatFix 
+        DoraNavSatFix: gnss/DoraNavSatFix
+      queue_size: 1000
       outputs:
         - DoraNavSatFix 
 
@@ -37,7 +40,8 @@ nodes:
     operator:
       python: ../../sensing/gnss_poser/src/gps_to_ros2.py
       inputs:
-              DoraNavSatFix: gnss_poser/DoraNavSatFix
+        DoraNavSatFix: gnss_poser/DoraNavSatFix
+      queue_size: 1000 
 ##############################################################################################
   # - id: gnss_ekf  # python 实现
   #   # custom:
@@ -59,10 +63,12 @@ nodes:
               DoraQuaternionStamped: gnss/DoraQuaternionStamped
       outputs:
             - DoraGnssPose
-
+      queue_size: 1000 
+      
   - id: ekf_odom_rviz2  #在rviz中显示数据
     operator:
       python: src/ekf_odom_to_ros2.py
       inputs:
-              DoraGnssPose: gnss_ekf/DoraGnssPose
+          DoraGnssPose: gnss_ekf/DoraGnssPose
+      queue_size: 1000
 

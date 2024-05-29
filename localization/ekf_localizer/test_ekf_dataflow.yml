@@ -5,6 +5,7 @@ nodes:
       #python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
       inputs:
         tick: dora/timer/millis/20
+      queue_size: 1000 
       outputs:
         - DoraSentence
         - DoraNavSatFix
@@ -38,6 +39,7 @@ nodes:
       python: ../../sensing/gnss_poser/src/gps_to_ros2.py
       inputs:
               DoraNavSatFix: gnss_poser/DoraNavSatFix
+      queue_size: 1000 
 ##############################################################################################
   - id: gnss_ekf  # python 实现
     # custom:
@@ -48,6 +50,7 @@ nodes:
               DoraNavSatFix: gnss_poser/DoraNavSatFix
               DoraQuaternionStamped: gnss/DoraQuaternionStamped
               tick: dora/timer/millis/20
+      queue_size: 1000 
       outputs:
             - DoraGnssPose
 
@@ -66,4 +69,5 @@ nodes:
       python: src/ekf_odom_to_ros2.py
       inputs:
               DoraGnssPose: gnss_ekf/DoraGnssPose
+      queue_size: 1000 
 
