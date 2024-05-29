@@ -317,7 +317,7 @@ public:
     try {
       rclcpp::SubscriptionOptions sub_opts;
       sub_opts.event_callbacks.message_lost_callback = [&](rclcpp::QOSMessageLostInfo & info) {
-        std::ostringstream sstm;
+        std::ostringstream sstream;
         sstm << "Some messages were lost:\n>\tNumber of new lost messages: "
              << info.total_count_change
              << " \n>\tTotal number of messages lost: " << info.total_count;
