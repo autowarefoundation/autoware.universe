@@ -306,6 +306,20 @@ bool NormalVehicleTracker::measureWithPose(
 bool NormalVehicleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
+  if (!object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    // do not update shape if the input is not a bounding box
+    return false;
+  }
+
+  // check object size abnormality
+  constexpr double size_max = 30.0;  // [m]
+  constexpr double size_min = 1.0;   // [m]
+  if (object.shape.dimensions.x > size_max || object.shape.dimensions.y > size_max) {
+    return false;
+  } else if (object.shape.dimensions.x < size_min || object.shape.dimensions.y < size_min) {
+    return false;
+  }
+
   constexpr double gain = 0.1;
   constexpr double gain_inv = 1.0 - gain;
 

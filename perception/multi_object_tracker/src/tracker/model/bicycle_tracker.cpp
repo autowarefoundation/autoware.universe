@@ -226,22 +226,41 @@ bool BicycleTracker::measureWithPose(
 bool BicycleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
+  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
   if (!object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
-    return true;
+    return false;
   }
 
-  constexpr double gain = 0.1;
-  constexpr double gain_inv = 1.0 - gain;
+  // check bound box size abnormality
+  constexpr double size_max = 30.0;  // [m]
+  constexpr double size_min = 0.1;   // [m]
+  if (
+    bbox_object.shape.dimensions.x > size_max || bbox_object.shape.dimensions.y > size_max ||
+    bbox_object.shape.dimensions.z > size_max) {
+    return false;
+  } else if (
+    bbox_object.shape.dimensions.x < size_min || bbox_object.shape.dimensions.y < size_min ||
+    bbox_object.shape.dimensions.z < size_min) {
+    return false;
+  }
 
   // update object size
-  bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
-  bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
-  bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
-  // set minimum size
-  bounding_box_.length = std::max(bounding_box_.length, 0.3);
-  bounding_box_.width = std::max(bounding_box_.width, 0.3);
-  bounding_box_.height = std::max(bounding_box_.height, 0.3);
+  constexpr double gain = 0.1;
+  constexpr double gain_inv = 1.0 - gain;
+  bounding_box_.length = gain_inv * bounding_box_.length + gain * bbox_object.shape.dimensions.x;
+  bounding_box_.width = gain_inv * bounding_box_.width + gain * bbox_object.shape.dimensions.y;
+  bounding_box_.height = gain_inv * bounding_box_.height + gain * bbox_object.shape.dimensions.z;
+
+  // set maximum and minimum size
+  constexpr double max_size = 10.0;
+  bounding_box_.length = std::max(bounding_box_.length, max_size);
+  bounding_box_.width = std::max(bounding_box_.width, max_size);
+  bounding_box_.height = std::max(bounding_box_.height, max_size);
+  constexpr double min_size = 0.3;
+  bounding_box_.length = std::max(bounding_box_.length, min_size);
+  bounding_box_.width = std::max(bounding_box_.width, min_size);
+  bounding_box_.height = std::max(bounding_box_.height, min_size);
 
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);
