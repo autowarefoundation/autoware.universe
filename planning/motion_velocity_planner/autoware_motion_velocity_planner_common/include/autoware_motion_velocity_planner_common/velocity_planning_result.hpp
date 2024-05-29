@@ -29,8 +29,10 @@ namespace autoware::motion_velocity_planner
 {
 struct SlowdownInterval
 {
-  SlowdownInterval(geometry_msgs::msg::Point from_, geometry_msgs::msg::Point to_, const double vel)
-  : from{std::move(from_)}, to{std::move(to_)}, velocity{vel}
+  SlowdownInterval(
+    const geometry_msgs::msg::Point & from_, const geometry_msgs::msg::Point & to_,
+    const double vel)
+  : from{from_}, to{to_}, velocity{vel}
   {
   }
   geometry_msgs::msg::Point from{};
