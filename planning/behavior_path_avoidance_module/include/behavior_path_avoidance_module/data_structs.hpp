@@ -134,10 +134,12 @@ struct AvoidanceParameters
   // consider avoidance return dead line
   bool enable_dead_line_for_goal{false};
   bool enable_dead_line_for_traffic_light{false};
+  bool enable_dead_line_for_traffic_jam{false};
 
   // module try to return original path to keep this distance from edge point of the path.
   double dead_line_buffer_for_goal{0.0};
   double dead_line_buffer_for_traffic_light{0.0};
+  double dead_line_buffer_for_traffic_jam{0.0};
 
   // max deceleration for
   double max_deceleration{0.0};

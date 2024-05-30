@@ -228,6 +228,9 @@
           traffic_light:
             enable: true                                # [-]
             buffer: 3.0                                 # [m]
+          traffic_jam:
+            enable: true                                # [-]
+            buffer: 8.0                                 # [m]
 
       # For cancel maneuver
       cancel:

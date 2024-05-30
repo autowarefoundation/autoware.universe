@@ -166,7 +166,7 @@ DrivableLanes generateExpandedDrivableLanes(
 
 double calcDistanceToReturnDeadLine(
   const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
-  const std::shared_ptr<const PlannerData> & planner_data,
+  ObjectDataArray & other_objects, const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters);
 
 double calcDistanceToAvoidStartLine(

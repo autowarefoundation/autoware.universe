@@ -283,9 +283,13 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.enable_dead_line_for_goal = getOrDeclareParameter<bool>(*node, ns + "goal.enable");
     p.enable_dead_line_for_traffic_light =
       getOrDeclareParameter<bool>(*node, ns + "traffic_light.enable");
+    p.enable_dead_line_for_traffic_jam =
+      getOrDeclareParameter<bool>(*node, ns + "traffic_jam.enable");
     p.dead_line_buffer_for_goal = getOrDeclareParameter<double>(*node, ns + "goal.buffer");
     p.dead_line_buffer_for_traffic_light =
       getOrDeclareParameter<double>(*node, ns + "traffic_light.buffer");
+    p.dead_line_buffer_for_traffic_jam =
+      getOrDeclareParameter<double>(*node, ns + "traffic_jam.buffer");
   }
 
   // cancel
