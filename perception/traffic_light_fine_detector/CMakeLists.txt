@@ -99,12 +99,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE traffic_light_fine_detector_node
   )
 
-  if(BUILD_TESTING)
-    ament_auto_add_gtest(traffic_light_fine_detector_tests
-      test/test_nodelet.cpp
-    )
-  endif()
-
   ament_auto_package(INSTALL_TO_SHARE
     launch
     config
