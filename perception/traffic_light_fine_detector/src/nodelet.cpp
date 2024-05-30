@@ -29,21 +29,6 @@ namespace fs = ::std::experimental::filesystem;
 
 namespace traffic_light
 {
-float calWeightedIou(
-  const sensor_msgs::msg::RegionOfInterest & bbox1, const tensorrt_yolox::Object & bbox2)
-{
-  int x1 = std::max(static_cast<int>(bbox1.x_offset), bbox2.x_offset);
-  int x2 = std::min(static_cast<int>(bbox1.x_offset + bbox1.width), bbox2.x_offset + bbox2.width);
-  int y1 = std::max(static_cast<int>(bbox1.y_offset), bbox2.y_offset);
-  int y2 = std::min(static_cast<int>(bbox1.y_offset + bbox1.height), bbox2.y_offset + bbox2.height);
-  int area1 = std::max(x2 - x1, 0) * std::max(y2 - y1, 0);
-  int area2 = bbox1.width * bbox1.height + bbox2.width * bbox2.height - area1;
-  if (area2 == 0) {
-    return 0.0;
-  }
-  return bbox2.score * area1 / area2;
-}
-
 inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
 {
   return std::vector<float>(double_vector.begin(), double_vector.end());
@@ -221,7 +206,7 @@ float TrafficLightFineDetectorNodelet::evalMatchScore(
     float max_score = 0.0f;
     const sensor_msgs::msg::RegionOfInterest & expected_roi = roi_p.second.roi;
     for (const tensorrt_yolox::Object & detection : id2detections[tlr_id]) {
-      float score = calWeightedIou(expected_roi, detection);
+      float score = traffic_light::calWeightedIou(expected_roi, detection);
       if (score >= max_score) {
         max_score = score;
         id2bestDetection[tlr_id] = detection;
