@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.17)
 project(tensorrt_yolox)
 
-cmake_policy(SET CMP0104 NEW)
-set(CMAKE_CUDA_ARCHITECTURES 86)
-
 find_package(tensorrt_common)
 if(NOT ${tensorrt_common_FOUND})
   message(WARNING "The tensorrt_common package is not found. Please check its dependencies.")

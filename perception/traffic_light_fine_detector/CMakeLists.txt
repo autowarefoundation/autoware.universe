@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(traffic_light_fine_detector)
 
-cmake_policy(SET CMP0104 NEW)
-set(CMAKE_CUDA_ARCHITECTURES 86)
-
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
