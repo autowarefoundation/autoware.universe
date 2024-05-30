@@ -222,11 +222,7 @@ ament_auto_package(INSTALL_TO_SHARE
 
 if(BUILD_TESTING)
   add_ros_test(
-    test/test_distortion_corrector.py
-    TIMEOUT "30"
-  )
-  add_ros_test(
-    test/test_distortion_corrector_use_imu_false.py
+    test/test_distortion_corrector_node.py
     TIMEOUT "30"
   )
 endif()
