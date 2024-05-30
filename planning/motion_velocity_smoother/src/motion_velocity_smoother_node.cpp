@@ -324,6 +324,7 @@ void MotionVelocitySmootherNode::initCommonParam()
 
   p.adjusted_max_acceleration = declare_parameter<double>("adjusted_max_acceleration");
   p.adjusted_max_jerk = declare_parameter<double>("adjusted_max_jerk");
+  p.adjusted_max_lateral_acceleration = declare_parameter<double>("adjusted_max_lateral_acceleration");
 }
 
 void MotionVelocitySmootherNode::publishTrajectory(const TrajectoryPoints & trajectory) const
@@ -1131,6 +1132,7 @@ void MotionVelocitySmootherNode::onAdjustParam(const std::shared_ptr<SetBool::Re
   {
     smoother_->setMaxAccel(get_parameter("normal.max_acc").as_double());
     smoother_->setMaxJerk(get_parameter("normal.max_jerk").as_double());
+    smoother_->setMaxLatAccel(get_parameter("max_lateral_accel").as_double());
     
     adjustParam = false; 
   }
@@ -1143,12 +1145,8 @@ void MotionVelocitySmootherNode::onAdjustParam(const std::shared_ptr<SetBool::Re
 void MotionVelocitySmootherNode::onSlow(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
 {
   bool success = true;
-        
-  if(request->data)
-  {
-    RCLCPP_INFO(get_logger(),"Slow True");
-  }
-  std::string message = success ? "Operation completed successfully" : "Operation failed";
+
+  std::string message = request->data ? "Slow driving" : "Default";
         
   response->success = success;
   response->message = message;

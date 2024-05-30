@@ -158,8 +158,9 @@ private:
 
     bool plan_from_ego_speed_on_manual_mode = true;
 
-    double adjusted_max_acceleration; // enable strong acceleration
-    double adjusted_max_jerk;         // enable strong acceleration
+    double adjusted_max_acceleration;           // enable strong acceleration
+    double adjusted_max_jerk;                   // enable strong acceleration
+    double adjusted_max_lateral_acceleration;   // enable strong acceleration
   } node_param_{};
 
   struct ExternalVelocityLimit

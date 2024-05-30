@@ -81,6 +81,7 @@ public:
   void setWheelBase(const double wheel_base);
   void setMaxAccel(const double max_accel);
   void setMaxJerk(const double max_jerk);
+  void setMaxLatAccel(const double max_accel);
 
   void setParam(const BaseParam & param);
   BaseParam getBaseParam() const;
