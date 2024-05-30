@@ -648,23 +648,25 @@ bool NormalLaneChange::hasFinishedLaneChange() const
 {
   const auto & current_pose = getEgoPose();
   const auto & lane_change_end = status_.lane_change_path.info.shift_line.end;
-  const double dist_to_lane_change_end = utils::getSignedDistance(
+  const auto dist_to_lane_change_end = utils::getSignedDistance(
     current_pose, lane_change_end, status_.lane_change_path.info.target_lanes);
-  double finish_judge_buffer = lane_change_parameters_->lane_change_finish_judge_buffer;
 
-  // If ego velocity is low, relax finish judge buffer
-  const double ego_velocity = getEgoVelocity();
-  if (std::abs(ego_velocity) < 1.0) {
-    finish_judge_buffer = 0.0;
-  }
+  const auto finish_judge_buffer = std::invoke([&]() {
+    const double ego_velocity = getEgoVelocity();
+    // If ego velocity is low, relax finish judge buffer
+    if (std::abs(ego_velocity) < 1.0) {
+      return 0.0;
+    }
+    return lane_change_parameters_->lane_change_finish_judge_buffer;
+  });
 
-  const auto reach_lane_change_end = dist_to_lane_change_end + finish_judge_buffer < 0.0;
+  const auto has_passed_end_pose = dist_to_lane_change_end + finish_judge_buffer < 0.0;
 
   lane_change_debug_.distance_to_lane_change_finished =
     dist_to_lane_change_end + finish_judge_buffer;
 
-  if (!reach_lane_change_end) {
-    return false;
+  if (has_passed_end_pose) {
+    return true;
   }
 
   const auto arc_length = lanelet::utils::getArcCoordinates(status_.target_lanes, current_pose);
