@@ -25,6 +25,7 @@ using data::lane_change::LCParamPtr;
 using data::lane_change::RouteHandlerPtr;
 using route_handler::Direction;
 
+bool is_mandatory_lane_change(LaneChangeModuleType type);
 bool is_near_end_of_current_lanes(const CommonDataPtr & common_data, const double threshold);
 }  // namespace behavior_path_planner::utils::lane_change::validation
 

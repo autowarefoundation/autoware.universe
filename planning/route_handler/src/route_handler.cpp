@@ -501,7 +501,7 @@ bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) c
   return exists(route_ptr_->segments.back().primitives, lanelet.id());
 }
 
-bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelets & lanes) const
+[[nodiscard]] bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelets & lanes) const
 {
   return std::any_of(
     lanes.rbegin(), lanes.rend(), [&](const auto & lane) { return isInGoalRouteSection(lane); });
@@ -1415,27 +1415,35 @@ int RouteHandler::getNumLaneToPreferredLane(
     return 0;
   }
 
-  if ((direction == Direction::NONE) || (direction == Direction::RIGHT)) {
-    int num{0};
-    const auto & right_lanes =
-      lanelet::utils::query::getAllNeighborsRight(routing_graph_ptr_, lanelet);
-    for (const auto & right : right_lanes) {
-      num--;
-      if (exists(preferred_lanelets_, right)) {
+  const auto calc_num_to_preferred = [&](const auto & get_neighbors, auto op) -> int {
+    int num = 0;
+    const auto neighbors = get_neighbors(routing_graph_ptr_, lanelet);
+    for (const auto & neighbor : neighbors) {
+      num = op(num, 1);
+      if (exists(preferred_lanelets_, neighbor)) {
         return num;
       }
     }
+    return 0;  // Default return if no preferred lane is found in this direction.
+  };
+
+  if ((direction == Direction::NONE) || (direction == Direction::RIGHT)) {
+    const auto result =
+      calc_num_to_preferred(lanelet::utils::query::getAllNeighborsRight, std::minus<>());
+    if (result != 0) {
+      return result;
+    }
+  }
+
+  if (direction == Direction::RIGHT) {
+    return 0;
   }
 
   if ((direction == Direction::NONE) || (direction == Direction::LEFT)) {
-    const auto & left_lanes =
-      lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_, lanelet);
-    int num = 0;
-    for (const auto & left : left_lanes) {
-      num++;
-      if (exists(preferred_lanelets_, left)) {
-        return num;
-      }
+    const auto result =
+      calc_num_to_preferred(lanelet::utils::query::getAllNeighborsLeft, std::plus<>());
+    if (result != 0) {
+      return result;
     }
   }
 

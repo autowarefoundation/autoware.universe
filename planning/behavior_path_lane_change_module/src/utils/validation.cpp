@@ -19,6 +19,12 @@
 namespace behavior_path_planner::utils::lane_change::validation
 {
 using calculation::calc_min_lane_change_length;
+
+bool is_mandatory_lane_change(LaneChangeModuleType type)
+{
+  return (type == LaneChangeModuleType::NORMAL) ||
+         (type == LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE);
+}
 bool is_near_end_of_current_lanes(const CommonDataPtr & common_data, const double threshold)
 {
   const auto & current_lanes = common_data->lanes.current;

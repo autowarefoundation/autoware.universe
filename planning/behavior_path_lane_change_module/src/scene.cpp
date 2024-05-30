@@ -892,19 +892,18 @@ std::vector<double> NormalLaneChange::calcPrepareDuration() const
     const auto base_link2front = common_data_->bpp_params->base_link2front;
     const auto min_len_for_turn_signal =
       common_data_->lc_params->min_length_for_turn_signal_activation;
-
     return base_link2front + min_len_for_turn_signal;
   });
 
+  const auto prepare_duration = common_data_->lc_params->lane_change_prepare_duration;
   if (utils::lane_change::validation::is_near_end_of_current_lanes(common_data_, threshold)) {
-    return {common_data_->lc_params->lane_change_prepare_duration};
+    return {prepare_duration};
   }
 
   std::vector<double> prepare_durations;
   constexpr double step = 0.5;
 
-  for (double duration = lane_change_parameters_->lane_change_prepare_duration; duration >= 0.0;
-       duration -= step) {
+  for (double duration = prepare_duration; duration >= 0.0; duration -= step) {
     prepare_durations.push_back(duration);
   }
 
@@ -1327,7 +1326,7 @@ bool NormalLaneChange::getLaneChangePaths(
 {
   lane_change_debug_.collision_check_objects.clear();
   if (current_lanes.empty() || target_lanes.empty()) {
-    RCLCPP_WARN(logger_, "target_neighbor_preferred_lane_poly_2d is empty. Not expected.");
+    RCLCPP_DEBUG(logger_, "empty lanes, no lane change necessary.");
     return false;
   }
   const auto & route_handler = *getRouteHandler();
@@ -1359,17 +1358,17 @@ bool NormalLaneChange::getLaneChangePaths(
   const auto sorted_lane_ids =
     utils::lane_change::getSortedLaneIds(route_handler, getEgoPose(), current_lanes, target_lanes);
 
-  const auto target_neighbor_preferred_lane_poly_2d =
+  const auto neighbor_of_preferred_lanes =
     utils::lane_change::getTargetNeighborLanesPolygon(route_handler, current_lanes, type_);
-  if (target_neighbor_preferred_lane_poly_2d.empty()) {
-    RCLCPP_WARN(logger_, "target_neighbor_preferred_lane_poly_2d is empty. Not expected.");
+  if (neighbor_of_preferred_lanes.empty()) {
+    RCLCPP_WARN(logger_, "neighbor_of_preferred_lanes is empty. Not expected.");
     return false;
   }
 
   const auto filtered_objects = filterObjects(current_lanes, target_lanes);
   const auto target_objects = getTargetObjects(filtered_objects, current_lanes);
 
-  const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
+  const auto prepare_durations = calcPrepareDuration();
 
   candidate_paths->reserve(
     longitudinal_acc_sampling_values.size() * lateral_acc_sampling_num * prepare_durations.size());
@@ -1501,7 +1500,7 @@ bool NormalLaneChange::getLaneChangePaths(
         const auto target_lane_poly_2d = lanelet::utils::to2D(target_lane_polygon).basicPolygon();
 
         const auto is_valid_start_point =
-          boost::geometry::covered_by(lc_start_point, target_neighbor_preferred_lane_poly_2d) ||
+          boost::geometry::covered_by(lc_start_point, neighbor_of_preferred_lanes) ||
           boost::geometry::covered_by(lc_start_point, target_lane_poly_2d);
 
         LaneChangeInfo lane_change_info;

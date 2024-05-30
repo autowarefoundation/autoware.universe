@@ -89,7 +89,7 @@ public:
 
   // for goal
   [[nodiscard]] bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
-  [[nodiscard]] bool isInGoalRouteSection(const lanelet::ConstLanelets & lanelets) const;
+  [[nodiscard]] bool isInGoalRouteSection(const lanelet::ConstLanelets & lanes) const;
   Pose getGoalPose() const;
   Pose getStartPose() const;
   Pose getOriginalStartPose() const;

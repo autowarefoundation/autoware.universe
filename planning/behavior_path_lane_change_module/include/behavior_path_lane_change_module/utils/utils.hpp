@@ -95,11 +95,6 @@ std::vector<std::vector<int64_t>> getSortedLaneIds(
   const RouteHandler & route_handler, const Pose & current_pose,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes);
 
-lanelet::ConstLanelets getTargetPreferredLanes(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Direction & direction,
-  const LaneChangeModuleType & type);
-
 lanelet::ConstLanelets getTargetNeighborLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const LaneChangeModuleType & type);
@@ -107,10 +102,6 @@ lanelet::ConstLanelets getTargetNeighborLanes(
 lanelet::BasicPolygon2d getTargetNeighborLanesPolygon(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType & type);
-
-bool isPathInLanelets(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
@@ -146,10 +137,6 @@ bool hasEnoughLengthToLaneChangeAfterAbort(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelets & current_lanes,
   const Pose & curent_pose, const double abort_return_dist,
   const LaneChangeParameters & lane_change_parameters, const Direction direction);
-
-double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer = 0.0);
-
-double calcLateralBufferForFiltering(const double vehicle_width, const double lateral_buffer);
 
 std::string getStrDirection(const std::string & name, const Direction direction);
 

@@ -160,10 +160,11 @@ public:
   void setData(const std::shared_ptr<const PlannerData> & data)
   {
     planner_data_ = data;
-    if (common_data_->bpp_params) {
+    if (!common_data_->bpp_params) {
       common_data_->bpp_params = std::make_shared<BehaviorPathPlannerParameters>(data->parameters);
     }
     common_data_->self_odometry = data->self_odometry;
+    common_data_->route_handler = data->route_handler;
     common_data_->lc_params = lane_change_parameters_;
     common_data_->direction = direction_;
   }
