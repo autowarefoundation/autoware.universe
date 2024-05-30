@@ -108,6 +108,7 @@ struct PredictedRefPath
 
 struct PredictionTimeHorizon
 {
+  // cspell: ignore Mamoru Sobue
   // NOTE(Mamoru Sobue): motorcycle belongs to "vehicle" and bicycle to "pedestrian"
   double vehicle;
   double pedestrian;
