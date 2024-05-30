@@ -579,7 +579,25 @@ bool StartPlannerModule::isExecutionReady() const
 
 bool StartPlannerModule::canTransitSuccessState()
 {
-  return hasFinishedPullOut();
+  // Freespace Planner:
+  // - Can transit to success if the goal position is reached.
+  // - Cannot transit to success if the goal position is not reached.
+  if (status_.planner_type == PlannerType::FREESPACE) {
+    return hasReachedFreespaceEnd();
+  }
+
+  // Other Planners:
+  // - Cannot transit to success if the vehicle is driving in reverse.
+  // - Cannot transit to success if a safe path cannot be found due to:
+  //   - Insufficient margin against static objects.
+  //   - No path found that stays within the lane.
+  //   In such cases, a stop point needs to be embedded and keep running start_planner.
+  // - Can transit to success if the end point of the pullout path is reached.
+  if (!status_.driving_forward || !status_.found_pull_out_path) {
+    return false;
+  }
+
+  return hasReachedPullOutEnd();
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
@@ -1180,17 +1198,16 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   return stop_objects_in_pull_out_lanes;
 }
 
-bool StartPlannerModule::hasFinishedPullOut() const
+bool StartPlannerModule::hasReachedFreespaceEnd() const
 {
-  if (!status_.driving_forward || !status_.found_pull_out_path) {
-    return false;
-  }
-
   const auto current_pose = planner_data_->self_odometry->pose.pose;
-  if (status_.planner_type == PlannerType::FREESPACE) {
-    return tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_path.end_pose) <
-           parameters_->th_arrived_distance;
-  }
+  return tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_path.end_pose) <
+         parameters_->th_arrived_distance;
+}
+
+bool StartPlannerModule::hasReachedPullOutEnd() const
+{
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
 
   // check that ego has passed pull out end point
   const double backward_path_length =
@@ -1205,9 +1222,8 @@ bool StartPlannerModule::hasFinishedPullOut() const
 
   // offset to not finish the module before engage
   constexpr double offset = 0.1;
-  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > offset;
 
-  return has_finished;
+  return arclength_current.length - arclength_pull_out_end.length > offset;
 }
 
 bool StartPlannerModule::needToPrepareBlinkerBeforeStartDrivingForward() const
