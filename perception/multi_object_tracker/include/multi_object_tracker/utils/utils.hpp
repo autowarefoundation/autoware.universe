@@ -33,7 +33,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 #include <tuple>
 #include <vector>
 
@@ -346,9 +345,6 @@ inline bool convertConvexHullToBoundingBox(
   output_object.shape.dimensions.y = width;
   output_object.shape.dimensions.z = height;
 
-  // print debug info, object size
-  std::cout << "convertConvexHullToBoundingBox: length: " << length << ", width: " << width
-            << ", height: " << height << std::endl;
   return true;
 }
 
