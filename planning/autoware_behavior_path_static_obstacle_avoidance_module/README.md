@@ -760,7 +760,7 @@ WIP
 
 The avoidance specific parameter configuration file can be located at `src/autoware/launcher/planning_launch/config/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/avoidance/avoidance.param.yaml`.
 
-{{ json_to_markdown("planning/behavior_path_avoidance_module/schema/avoidance.schema.json") }}
+{{ json_to_markdown("planning/autoware_behavior_path_static_obstacle_avoidance_module/schema/avoidance.schema.json") }}
 
 ## Future extensions / Unimplemented parts
 

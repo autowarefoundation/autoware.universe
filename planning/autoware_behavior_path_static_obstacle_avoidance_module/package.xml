@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>behavior_path_avoidance_module</name>
+  <name>autoware_behavior_path_static_obstacle_avoidance_module</name>
   <version>0.1.0</version>
-  <description>The behavior_path_avoidance_module package</description>
+  <description>The autoware_behavior_path_static_obstacle_avoidance_module package</description>
 
   <maintainer email="takamasa.horibe@tier4.jp">Takamasa Horibe</maintainer>
   <maintainer email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</maintainer>

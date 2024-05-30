@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_avoidance_module/debug.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/debug.hpp"
 
 #include "behavior_path_planner_common/marker_utils/utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-namespace behavior_path_planner::utils::avoidance
+namespace behavior_path_planner::utils::static_obstacle_avoidance
 {
 namespace
 {
@@ -653,7 +653,7 @@ MarkerArray createDebugMarkerArray(
 
   return msg;
 }
-}  // namespace behavior_path_planner::utils::avoidance
+}  // namespace behavior_path_planner::utils::static_obstacle_avoidance
 
 std::string toStrInfo(const behavior_path_planner::ShiftLineArray & sl_arr)
 {

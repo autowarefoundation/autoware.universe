@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_avoidance_module/data_structs.hpp"
-#include "behavior_path_avoidance_module/utils.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 using behavior_path_planner::ObjectData;
-using behavior_path_planner::utils::avoidance::isOnRight;
-using behavior_path_planner::utils::avoidance::isSameDirectionShift;
-using behavior_path_planner::utils::avoidance::isShiftNecessary;
+using behavior_path_planner::utils::static_obstacle_avoidance::isOnRight;
+using behavior_path_planner::utils::static_obstacle_avoidance::isSameDirectionShift;
+using behavior_path_planner::utils::static_obstacle_avoidance::isShiftNecessary;
 
 TEST(BehaviorPathPlanningAvoidanceUtilsTest, shiftLengthDirectionTest)
 {

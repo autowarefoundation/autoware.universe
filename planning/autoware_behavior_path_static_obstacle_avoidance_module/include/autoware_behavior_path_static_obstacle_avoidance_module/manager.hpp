@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_AVOIDANCE_MODULE__MANAGER_HPP_
-#define BEHAVIOR_PATH_AVOIDANCE_MODULE__MANAGER_HPP_
+#ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__MANAGER_HPP_
+#define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__MANAGER_HPP_
 
-#include "behavior_path_avoidance_module/data_structs.hpp"
-#include "behavior_path_avoidance_module/scene.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/scene.hpp"
 #include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 
 #include <rclcpp/node.hpp>
@@ -28,16 +28,18 @@
 namespace behavior_path_planner
 {
 
-class AvoidanceModuleManager : public SceneModuleManagerInterface
+class StaticObstacleAvoidanceModuleManager : public SceneModuleManagerInterface
 {
 public:
-  AvoidanceModuleManager() : SceneModuleManagerInterface{"avoidance"} {}
+  StaticObstacleAvoidanceModuleManager() : SceneModuleManagerInterface{"static_obstacle_avoidance"}
+  {
+  }
 
   void init(rclcpp::Node * node) override;
 
   std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() override
   {
-    return std::make_unique<AvoidanceModule>(
+    return std::make_unique<StaticObstacleAvoidanceModule>(
       name_, *node_, parameters_, rtc_interface_ptr_map_,
       objects_of_interest_marker_interface_ptr_map_);
   }
@@ -50,4 +52,4 @@ private:
 
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_AVOIDANCE_MODULE__MANAGER_HPP_
+#endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__MANAGER_HPP_

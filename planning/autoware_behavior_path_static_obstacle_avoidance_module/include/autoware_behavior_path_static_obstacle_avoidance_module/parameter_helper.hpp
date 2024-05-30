@@ -11,12 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef BEHAVIOR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
-#define BEHAVIOR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
+#ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
+#define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
 
 #include "tier4_autoware_utils/ros/parameter.hpp"
 
-#include <behavior_path_avoidance_module/data_structs.hpp>
+#include <autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
 #include <rclcpp/node.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detail/object_classification__struct.hpp>
@@ -403,4 +403,4 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
 }
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
+#endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_

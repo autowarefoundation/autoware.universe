@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_avoidance_module/shift_line_generator.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/shift_line_generator.hpp"
 
-#include "behavior_path_avoidance_module/utils.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
-namespace behavior_path_planner::utils::avoidance
+namespace behavior_path_planner::utils::static_obstacle_avoidance
 {
 
 namespace
@@ -123,7 +123,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     // use each object param
     const auto object_type = utils::getHighestProbLabel(object.object.classification);
     const auto object_parameter = parameters_->object_parameters.at(object_type);
-    const auto is_object_on_right = utils::avoidance::isOnRight(object);
+    const auto is_object_on_right = utils::static_obstacle_avoidance::isOnRight(object);
 
     // use absolute dist for return-to-center, relative dist from current for avoiding.
     const auto avoiding_shift = desire_shift_length - current_ego_shift;
@@ -254,10 +254,11 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       }
     }
 
-    const auto is_object_on_right = utils::avoidance::isOnRight(o);
+    const auto is_object_on_right = utils::static_obstacle_avoidance::isOnRight(o);
     const auto desire_shift_length =
       helper_->getShiftLength(o, is_object_on_right, o.avoid_margin.value());
-    if (utils::avoidance::isSameDirectionShift(is_object_on_right, desire_shift_length)) {
+    if (utils::static_obstacle_avoidance::isSameDirectionShift(
+          is_object_on_right, desire_shift_length)) {
       o.info = ObjectInfo::SAME_DIRECTION_SHIFT;
       if (o.avoid_required && is_forward_object(o)) {
         break;
@@ -302,7 +303,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
         return std::clamp(data.to_start_point, nearest_avoid_distance, furthest_avoid_distance);
       }();
 
-      al_avoid.start_idx = utils::avoidance::findPathIndexFromArclength(
+      al_avoid.start_idx = utils::static_obstacle_avoidance::findPathIndexFromArclength(
         data.arclength_from_ego, al_avoid.start_longitudinal + path_front_to_ego);
       al_avoid.start = data.reference_path.points.at(al_avoid.start_idx).point.pose;
       al_avoid.start_shift_length = helper_->getLinearShift(al_avoid.start.position);
@@ -314,7 +315,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       // misc
       al_avoid.id = generateUUID();
       al_avoid.object = o;
-      al_avoid.object_on_right = utils::avoidance::isOnRight(o);
+      al_avoid.object_on_right = utils::static_obstacle_avoidance::isOnRight(o);
     }
 
     AvoidLine al_return;
@@ -340,7 +341,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       // misc
       al_return.id = generateUUID();
       al_return.object = o;
-      al_return.object_on_right = utils::avoidance::isOnRight(o);
+      al_return.object_on_right = utils::static_obstacle_avoidance::isOnRight(o);
     }
 
     const bool skip_return_shift = [&]() {
@@ -376,7 +377,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     o.is_avoidable = true;
   }
 
-  utils::avoidance::fillAdditionalInfoFromLongitudinal(data, outlines);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromLongitudinal(data, outlines);
 
   debug.step1_current_shift_line = toArray(outlines);
 
@@ -479,7 +480,7 @@ void ShiftLineGenerator::generateTotalShiftLine(
     const auto & al = avoid_lines.at(j);
     for (size_t i = 0; i < N; ++i) {
       // calc current interpolated shift
-      const auto i_shift = utils::avoidance::lerpShiftLengthOnArc(arcs.at(i), al);
+      const auto i_shift = utils::static_obstacle_avoidance::lerpShiftLengthOnArc(arcs.at(i), al);
 
       // update maximum shift for positive direction
       if (i_shift > sl.pos_shift_line.at(i)) {
@@ -548,8 +549,8 @@ void ShiftLineGenerator::generateTotalShiftLine(
 AvoidLineArray ShiftLineGenerator::extractShiftLinesFromLine(
   const AvoidancePlanningData & data, ShiftLineData & shift_line_data) const
 {
-  using utils::avoidance::setEndData;
-  using utils::avoidance::setStartData;
+  using utils::static_obstacle_avoidance::setEndData;
+  using utils::static_obstacle_avoidance::setStartData;
 
   const auto & path = data.reference_path;
   const auto & arcs = data.arclength_from_ego;
@@ -706,8 +707,9 @@ AvoidOutlines ShiftLineGenerator::applyMergeProcess(
     }
   }
 
-  utils::avoidance::fillAdditionalInfoFromLongitudinal(data, ret);
-  utils::avoidance::fillAdditionalInfoFromLongitudinal(data, debug.step1_merged_shift_line);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromLongitudinal(data, ret);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromLongitudinal(
+    data, debug.step1_merged_shift_line);
 
   return ret;
 }
@@ -749,8 +751,9 @@ AvoidOutlines ShiftLineGenerator::applyFillGapProcess(
     helper_->alignShiftLinesOrder(outline.middle_lines, false);
   }
 
-  utils::avoidance::fillAdditionalInfoFromLongitudinal(data, ret);
-  utils::avoidance::fillAdditionalInfoFromLongitudinal(data, debug.step1_filled_shift_line);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromLongitudinal(data, ret);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromLongitudinal(
+    data, debug.step1_filled_shift_line);
 
   return ret;
 }
@@ -771,7 +774,7 @@ AvoidLineArray ShiftLineGenerator::applyFillGapProcess(
   // fill gap between ego and nearest shift line.
   if (sorted.front().start_longitudinal > 0.0) {
     AvoidLine ego_line{};
-    utils::avoidance::setEndData(
+    utils::static_obstacle_avoidance::setEndData(
       ego_line, helper_->getEgoLinearShift(), data.reference_pose, data.ego_closest_path_index,
       0.0);
 
@@ -795,8 +798,9 @@ AvoidLineArray ShiftLineGenerator::applyFillGapProcess(
 
   helper_->alignShiftLinesOrder(ret, false);
 
-  utils::avoidance::fillAdditionalInfoFromLongitudinal(data, ret);
-  utils::avoidance::fillAdditionalInfoFromLongitudinal(data, debug.step1_front_shift_line);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromLongitudinal(data, ret);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromLongitudinal(
+    data, debug.step1_front_shift_line);
 
   return ret;
 }
@@ -806,7 +810,8 @@ AvoidLineArray ShiftLineGenerator::applyCombineProcess(
   DebugData & debug) const
 {
   debug.step1_registered_shift_line = registered_lines;
-  return utils::avoidance::combineRawShiftLinesWithUniqueCheck(registered_lines, shift_lines);
+  return utils::static_obstacle_avoidance::combineRawShiftLinesWithUniqueCheck(
+    registered_lines, shift_lines);
 }
 
 AvoidLineArray ShiftLineGenerator::applyMergeProcess(
@@ -821,7 +826,7 @@ AvoidLineArray ShiftLineGenerator::applyMergeProcess(
 
   // set parent id
   for (auto & al : merged_shift_lines) {
-    al.parent_ids = utils::avoidance::calcParentIds(shift_lines, al);
+    al.parent_ids = utils::static_obstacle_avoidance::calcParentIds(shift_lines, al);
   }
 
   // sort by distance from ego.
@@ -963,15 +968,15 @@ void ShiftLineGenerator::applySimilarGradFilter(
   for (size_t i = 1; i < input.size(); ++i) {
     AvoidLine combine{};
 
-    utils::avoidance::setStartData(
+    utils::static_obstacle_avoidance::setStartData(
       combine, base_line.start_shift_length, base_line.start, base_line.start_idx,
       base_line.start_longitudinal);
-    utils::avoidance::setEndData(
+    utils::static_obstacle_avoidance::setEndData(
       combine, input.at(i).end_shift_length, input.at(i).end, input.at(i).end_idx,
       input.at(i).end_longitudinal);
 
-    combine.parent_ids =
-      utils::avoidance::concatParentIds(base_line.parent_ids, input.at(i).parent_ids);
+    combine.parent_ids = utils::static_obstacle_avoidance::concatParentIds(
+      base_line.parent_ids, input.at(i).parent_ids);
 
     combine_buffer.push_back(input.at(i));
 
@@ -1060,14 +1065,16 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
 
     // avoidance points: No, shift points: Yes -> select last shift point.
     if (!has_candidate_point && has_registered_point) {
-      last_sl = utils::avoidance::fillAdditionalInfo(data, AvoidLine{last_.value()});
+      last_sl =
+        utils::static_obstacle_avoidance::fillAdditionalInfo(data, AvoidLine{last_.value()});
     }
 
     // avoidance points: Yes, shift points: Yes -> select the last one from both.
     if (has_candidate_point && has_registered_point) {
       helper_->alignShiftLinesOrder(ret, false);
       const auto & al = ret.back();
-      const auto & sl = utils::avoidance::fillAdditionalInfo(data, AvoidLine{last_.value()});
+      const auto & sl =
+        utils::static_obstacle_avoidance::fillAdditionalInfo(data, AvoidLine{last_.value()});
       last_sl = (sl.end_longitudinal > al.end_longitudinal) ? sl : al;
     }
 
@@ -1190,8 +1197,8 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     al.start_idx = last_sl.end_idx;
     al.start = last_sl.end;
     al.start_longitudinal = arclength_from_ego.at(al.start_idx);
-    al.end_idx =
-      utils::avoidance::findPathIndexFromArclength(arclength_from_ego, prepare_distance_scaled);
+    al.end_idx = utils::static_obstacle_avoidance::findPathIndexFromArclength(
+      arclength_from_ego, prepare_distance_scaled);
     al.end = data.reference_path.points.at(al.end_idx).point.pose;
     al.end_longitudinal = prepare_distance_scaled;
     al.end_shift_length = last_sl.end_shift_length;
@@ -1204,11 +1211,11 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   {
     AvoidLine al;
     al.id = generateUUID();
-    al.start_idx =
-      utils::avoidance::findPathIndexFromArclength(arclength_from_ego, prepare_distance_scaled);
+    al.start_idx = utils::static_obstacle_avoidance::findPathIndexFromArclength(
+      arclength_from_ego, prepare_distance_scaled);
     al.start = data.reference_path.points.at(al.start_idx).point.pose;
     al.start_longitudinal = prepare_distance_scaled;
-    al.end_idx = utils::avoidance::findPathIndexFromArclength(
+    al.end_idx = utils::static_obstacle_avoidance::findPathIndexFromArclength(
       arclength_from_ego, prepare_distance_scaled + avoid_distance_scaled);
     al.end = data.reference_path.points.at(al.end_idx).point.pose;
     al.end_longitudinal = arclength_from_ego.at(al.end_idx);
@@ -1315,7 +1322,7 @@ AvoidLineArray ShiftLineGenerator::findNewShiftLine(
 
 void ShiftLineGenerator::updateRegisteredRawShiftLines(const AvoidancePlanningData & data)
 {
-  utils::avoidance::fillAdditionalInfoFromPoint(data, raw_registered_);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromPoint(data, raw_registered_);
 
   AvoidLineArray avoid_lines;
 
@@ -1364,7 +1371,7 @@ void ShiftLineGenerator::setRawRegisteredShiftLine(
   }
 
   auto future_with_info = shift_lines;
-  utils::avoidance::fillAdditionalInfoFromPoint(data, future_with_info);
+  utils::static_obstacle_avoidance::fillAdditionalInfoFromPoint(data, future_with_info);
 
   // sort by longitudinal
   std::sort(future_with_info.begin(), future_with_info.end(), [](auto a, auto b) {
@@ -1405,4 +1412,4 @@ void ShiftLineGenerator::setRawRegisteredShiftLine(
     }
   }
 }
-}  // namespace behavior_path_planner::utils::avoidance
+}  // namespace behavior_path_planner::utils::static_obstacle_avoidance

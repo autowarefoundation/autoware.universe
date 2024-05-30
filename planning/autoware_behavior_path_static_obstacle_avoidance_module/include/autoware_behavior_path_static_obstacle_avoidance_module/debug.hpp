@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_AVOIDANCE_MODULE__DEBUG_HPP_
-#define BEHAVIOR_PATH_AVOIDANCE_MODULE__DEBUG_HPP_
+#ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
+#define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
 
-#include "behavior_path_avoidance_module/data_structs.hpp"
-#include "behavior_path_avoidance_module/type_alias.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 
 #include <memory>
 #include <string>
 
-namespace behavior_path_planner::utils::avoidance
+namespace behavior_path_planner::utils::static_obstacle_avoidance
 {
 
 using behavior_path_planner::AvoidanceParameters;
@@ -50,7 +50,7 @@ MarkerArray createOtherObjectsMarkerArray(
 MarkerArray createDebugMarkerArray(
   const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug,
   const std::shared_ptr<AvoidanceParameters> & parameters);
-}  // namespace behavior_path_planner::utils::avoidance
+}  // namespace behavior_path_planner::utils::static_obstacle_avoidance
 
 std::string toStrInfo(const behavior_path_planner::ShiftLineArray & sl_arr);
 
@@ -60,4 +60,4 @@ std::string toStrInfo(const behavior_path_planner::ShiftLine & sl);
 
 std::string toStrInfo(const behavior_path_planner::AvoidLine & ap);
 
-#endif  // BEHAVIOR_PATH_AVOIDANCE_MODULE__DEBUG_HPP_
+#endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_

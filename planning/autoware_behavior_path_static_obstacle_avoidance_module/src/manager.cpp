@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_avoidance_module/manager.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/manager.hpp"
 
-#include "behavior_path_avoidance_module/parameter_helper.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/parameter_helper.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
@@ -26,7 +26,7 @@
 
 namespace behavior_path_planner
 {
-void AvoidanceModuleManager::init(rclcpp::Node * node)
+void StaticObstacleAvoidanceModuleManager::init(rclcpp::Node * node)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::getOrDeclareParameter;
@@ -39,7 +39,8 @@ void AvoidanceModuleManager::init(rclcpp::Node * node)
   parameters_ = std::make_shared<AvoidanceParameters>(p);
 }
 
-void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parameter> & parameters)
+void StaticObstacleAvoidanceModuleManager::updateModuleParams(
+  const std::vector<rclcpp::Parameter> & parameters)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::updateParam;
@@ -282,4 +283,5 @@ void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parame
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_path_planner::AvoidanceModuleManager, behavior_path_planner::SceneModuleManagerInterface)
+  behavior_path_planner::StaticObstacleAvoidanceModuleManager,
+  behavior_path_planner::SceneModuleManagerInterface)

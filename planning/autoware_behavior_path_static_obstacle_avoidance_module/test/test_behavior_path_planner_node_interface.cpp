@@ -47,7 +47,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
     ament_index_cpp::get_package_share_directory("behavior_path_planner");
 
   std::vector<std::string> module_names;
-  module_names.emplace_back("behavior_path_planner::AvoidanceModuleManager");
+  module_names.emplace_back("behavior_path_planner::StaticObstacleAvoidanceModuleManager");
 
   std::vector<rclcpp::Parameter> params;
   params.emplace_back("launch_modules", module_names);
@@ -60,7 +60,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
                    behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
                    behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
                    behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
-                   ament_index_cpp::get_package_share_directory("behavior_path_avoidance_module") +
+                   ament_index_cpp::get_package_share_directory(
+                     "autoware_behavior_path_static_obstacle_avoidance_module") +
                      "/config/avoidance.param.yaml"});
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);

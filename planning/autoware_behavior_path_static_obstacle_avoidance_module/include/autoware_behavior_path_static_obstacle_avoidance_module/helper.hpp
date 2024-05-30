@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_AVOIDANCE_MODULE__HELPER_HPP_
-#define BEHAVIOR_PATH_AVOIDANCE_MODULE__HELPER_HPP_
+#ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__HELPER_HPP_
+#define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__HELPER_HPP_
 
-#include "behavior_path_avoidance_module/data_structs.hpp"
-#include "behavior_path_avoidance_module/type_alias.hpp"
-#include "behavior_path_avoidance_module/utils.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <algorithm>
@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner::helper::avoidance
+namespace behavior_path_planner::helper::static_obstacle_avoidance
 {
 
 using behavior_path_planner::PathShifter;
@@ -200,7 +200,7 @@ public:
   double getShiftLength(
     const ObjectData & object, const bool & is_on_right, const double & margin) const
   {
-    using utils::avoidance::calcShiftLength;
+    using utils::static_obstacle_avoidance::calcShiftLength;
 
     const auto shift_length =
       calcShiftLength(is_on_right, object.overhang_points.front().first, margin);
@@ -333,7 +333,7 @@ public:
       return true;
     }
 
-    const auto is_object_on_right = utils::avoidance::isOnRight(object);
+    const auto is_object_on_right = utils::static_obstacle_avoidance::isOnRight(object);
     const auto desire_shift_length =
       getShiftLength(object, is_object_on_right, object.avoid_margin.value());
 
@@ -513,6 +513,6 @@ private:
 
   std::optional<std::pair<Pose, double>> max_v_point_;
 };
-}  // namespace behavior_path_planner::helper::avoidance
+}  // namespace behavior_path_planner::helper::static_obstacle_avoidance
 
-#endif  // BEHAVIOR_PATH_AVOIDANCE_MODULE__HELPER_HPP_
+#endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__HELPER_HPP_

@@ -14,8 +14,8 @@
 
 #include "behavior_path_planner_common/utils/utils.hpp"
 
-#include "behavior_path_avoidance_module/data_structs.hpp"
-#include "behavior_path_avoidance_module/utils.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
@@ -37,7 +37,7 @@
 #include <string>
 #include <vector>
 
-namespace behavior_path_planner::utils::avoidance
+namespace behavior_path_planner::utils::static_obstacle_avoidance
 {
 
 using autoware_perception_msgs::msg::TrafficSignalElement;
@@ -1681,7 +1681,8 @@ void filterTargetObjects(
     }
 
     // Find the footprint point closest to the path, set to object_data.overhang_distance.
-    o.overhang_points = utils::avoidance::calcEnvelopeOverhangDistance(o, data.reference_path);
+    o.overhang_points =
+      utils::static_obstacle_avoidance::calcEnvelopeOverhangDistance(o, data.reference_path);
     o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
 
     // TODO(Satoshi Ota) parametrize stop time threshold if need.
@@ -2303,4 +2304,4 @@ double calcDistanceToReturnDeadLine(
 
   return distance_to_return_dead_line;
 }
-}  // namespace behavior_path_planner::utils::avoidance
+}  // namespace behavior_path_planner::utils::static_obstacle_avoidance
