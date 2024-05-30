@@ -4,6 +4,7 @@ nodes:
       python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
       inputs:
         tick: dora/timer/millis/20
+      queue_size: 1000
       outputs:
         - DoraSentence
         - DoraNavSatFix
@@ -12,69 +13,83 @@ nodes:
     env:
       DEVICE_INDEX: 0
 
-  - id: gnss_sub
-    operator:
-      python: ../../dora-hardware/vendors/gnss/CGI_610/nmea_subscribeTopic.py
-      inputs:
-              DoraSentence: gnss/DoraSentence
-              DoraNavSatFix: gnss/DoraNavSatFix
-              DoraQuaternionStamped: gnss/DoraQuaternionStamped
-              DoraTwistStamped: gnss/DoraTwistStamped
-      outputs:
-        - DoraNavSatFix
-        - DoraQuaternionStamped
+  # - id: gnss_sub
+  #   operator:
+  #     python: ../../dora-hardware/vendors/gnss/CGI_610/nmea_subscribeTopic.py
+  #     inputs:
+  #             DoraSentence: gnss/DoraSentence
+  #             DoraNavSatFix: gnss/DoraNavSatFix
+  #             DoraQuaternionStamped: gnss/DoraQuaternionStamped
+  #             DoraTwistStamped: gnss/DoraTwistStamped
+  #     outputs:
+  #       - DoraNavSatFix
+  #       - DoraQuaternionStamped
 
   - id: gnss_poser
     custom:
       source: ../../sensing/gnss_poser/build/gnss_poser_core
       inputs:
-        DoraNavSatFix: gnss_sub/DoraNavSatFix 
+        DoraNavSatFix: gnss/DoraNavSatFix 
       outputs:
         - DoraSentence
         - DoraNavSatFix
         - DoraQuaternionStamped
         - DoraTwistStamped
 
-  - id: gnss_poser_sub
+  - id: gnss_rviz2  #在RVIZ2中显示转换后的轨迹 （E-N-U）
     operator:
-      python: ../../localization/ekf_localizer/src/gnss_poser_sub.py
+      python: ../../sensing/gnss_poser/src/gps_to_ros2.py
       inputs:
-              # DoraSentence: gnss_sub/DoraSentence
               DoraNavSatFix: gnss_poser/DoraNavSatFix
-              DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
-              # DoraTwistStamped: gnss_sub/DoraTwistStamped
+      queue_size: 1000 
+######################################################################
+  - id: gnss_ekf
+    operator:
+      python: ../../localization/ekf_localizer/src/gnss_ekf.py
+      inputs:
+              DoraNavSatFix: gnss_poser/DoraNavSatFix
+              DoraQuaternionStamped: gnss/DoraQuaternionStamped
+              tick: dora/timer/millis/20
+      queue_size: 1000 
       outputs:
             - DoraGnssPose
-      
-  - id: controltest
+
+  - id: ekf_odom_rviz2  #在rviz中显示数据
+    operator:
+      python: ../../localization/ekf_localizer/src/ekf_odom_to_ros2.py
+      inputs:
+              DoraGnssPose: gnss_ekf/DoraGnssPose
+      queue_size: 1000 
+###############################################################
+  - id: controltest # 发布地图轨迹
     custom:
       source: controldata
       inputs:
-        tick: dora/timer/millis/10
+        tick: dora/timer/millis/20
       outputs:
         - road_lane
       
-  - id: road_lane
+  - id: road_lane_publisher_node #获取自身位姿
     custom:
       source: ../../map/road_line_publisher/build/road_lane_publisher_node
       inputs:
               road_lane: controltest/road_lane
-              DoraGnssPose: gnss_poser_sub/DoraGnssPose
+              DoraGnssPose: gnss_ekf/DoraGnssPose
       outputs:
-            - cur_pose_all
+            - cur_pose_all  #输出频率 2ms /20ms 一个数据？
             
-  - id: planning
+  - id: planning  #局部路径
     custom:
       source: ../../planning/routing_planning/build/routing_planning_node
       inputs:
-              road_lane: controltest/road_lane
-              cur_pose_all: road_lane/cur_pose_all
+              road_lane: controltest/road_lane   #全局地图
+              cur_pose_all: road_lane_publisher_node/cur_pose_all
       outputs:
-            - raw_path
+            - raw_path  #频率更新慢，不定时长 1ms - 5s
         
   - id: control
     custom:
-      source: ../../control/vehicle_control/vehicle_chassis_n3/build/vehicle_chassis_node
+      source: ../../control/vehicle_control/test/build/vehicle_chassis_node
       inputs:
         SteeringCmd: latcontrol/SteeringCmd
       outputs:
@@ -87,7 +102,7 @@ nodes:
         VehicleStat: control/VehicleStat
         raw_path: planning/raw_path
       outputs:
-        - SteeringCmd
+        - SteeringCmd #100hz
         
   # - id: gnss_rviz2
   #   operator:

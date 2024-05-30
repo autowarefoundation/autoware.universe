@@ -1,0 +1,18 @@
+nodes:
+  - id: datatest
+    custom:
+      source: data
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - DoraNavSatFix
+
+
+  - id: gnss_rviz2
+    operator:
+      python: src/gps_to_ros2_test.py
+      inputs:
+              DoraNavSatFix: datatest/DoraNavSatFix
+
+
+

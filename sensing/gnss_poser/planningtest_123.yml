@@ -1,0 +1,85 @@
+nodes:
+  - id: gnss
+    operator:
+      python: ../../dora-hardware/vendors/gnss/CGI_610/CGI_610_driver_dora.py
+      inputs:
+        tick: dora/timer/millis/20
+      outputs:
+        - DoraSentence
+        - DoraNavSatFix
+        - DoraQuaternionStamped
+        - DoraTwistStamped
+    env:
+      DEVICE_INDEX: 0
+
+  - id: gnss_sub
+    operator:
+      python: ../../dora-hardware/vendors/gnss/CGI_610/nmea_subscribeTopic.py
+      inputs:
+              DoraSentence: gnss/DoraSentence
+              DoraNavSatFix: gnss/DoraNavSatFix
+              DoraQuaternionStamped: gnss/DoraQuaternionStamped
+              DoraTwistStamped: gnss/DoraTwistStamped
+      outputs:
+        - DoraNavSatFix
+        - DoraQuaternionStamped
+
+  - id: gnss_poser
+    custom:
+      source: ../../sensing/gnss_poser/build/gnss_poser_core
+      inputs:
+        DoraNavSatFix: gnss_sub/DoraNavSatFix 
+      outputs:
+        - DoraSentence
+        - DoraNavSatFix
+        - DoraQuaternionStamped
+        - DoraTwistStamped
+
+  - id: gnss_poser_sub
+    operator:
+      python: ../../localization/ekf_localizer/src/gnss_poser_sub.py
+      inputs:
+              # DoraSentence: gnss_sub/DoraSentence
+              DoraNavSatFix: gnss_poser/DoraNavSatFix
+              DoraQuaternionStamped: gnss_sub/DoraQuaternionStamped
+              # DoraTwistStamped: gnss_sub/DoraTwistStamped
+      outputs:
+            - DoraGnssPose
+      
+  - id: controltest
+    custom:
+      source: controldata
+      inputs:
+        tick: dora/timer/millis/10
+      outputs:
+        - road_lane
+      
+  - id: road_lane
+    custom:
+      source: ../../map/road_line_publisher/build/road_lane_publisher_node
+      inputs:
+              road_lane: controltest/road_lane
+              DoraGnssPose: gnss_poser_sub/DoraGnssPose
+      outputs:
+            - cur_pose_all
+            
+  - id: planning
+    custom:
+      source: ../../planning/routing_planning/build/routing_planning_node
+      inputs:
+              road_lane: controltest/road_lane
+              cur_pose_all: road_lane/cur_pose_all
+      outputs:
+            - raw_path
+
+  - id: planning_path_to_ros2
+    operator:
+      python: ../../planning/routing_planning/planning_path_to_ros2.py
+      inputs:
+              raw_path: planning/raw_path
+
+
+
+
+
+

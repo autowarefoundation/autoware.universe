@@ -134,6 +134,49 @@ class Operator:
                 ros2_path = ROS2Path(path_data_dict['header'], path_data_dict['poses'])
                 ros_format_path = ros2_path.to_ros_format()
                 self.path_data_publisher.publish(pa.array([ros_format_path]))
- 
+
+
+
+
+
+
+            
+            # data = dora_event["value"].to_pylist()
+            # # print("====================")
+            # # print(data)
+            # # print("=====================")
+            # json_string = ''.join(chr(int(num)) for num in data)
+            # # js
+            # print(json_string)
+            # # 假设 json_string 是收到的 JSON 数据字符串
+            # json_dict = json.loads(json_string)
+            # # 从 JSON 数据中提取关键字
+            # p_x = json_dict["x"]
+            # p_y = json_dict["y"]
+            # p_z = json_dict["z"]
+            # p_z = 0
+            # latitude = json_dict["latitude"]
+            # longitude = json_dict["longitude"]
+            # altitude = json_dict["altitude"]
+            # with open("out.txt", 'a') as self.file:
+            #     self.file.write(str(p_x)+' '+str(p_y)+' '+str(p_z)+' '+str(latitude)+' '+str(longitude)+' '+str(altitude)+'\n')
+            # o_w = 1.0
+            # o_x = 0.0
+            # o_y = 0.0
+            # o_z = 0.0
+            # # p_x = json_dict["pose"]["position"]["x"]
+            # # p_y = json_dict["pose"]["position"]["y"]
+            # # p_z = json_dict["pose"]["position"]["z"]
+            # new_pose = {
+            #     "orientation": {"w": np.float64(o_w), "x": np.float64(o_x), "y": np.float64(o_y), "z": np.float64(o_z)},
+            #     "position": {"x": np.float64(p_x), "y": np.float64(p_y), "z": np.float64(p_z)}
+            # }
+            # path_data_dict["poses"].append(new_pose)
+            
+            # ros2_path = ROS2Path(path_data_dict['header'], path_data_dict['poses'])
+            # ros_format_path = ros2_path.to_ros_format()
+
+      
+            # self.path_data_publisher.publish(pa.array([ros_format_path]))
         return DoraStatus.CONTINUE
         

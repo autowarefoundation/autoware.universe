@@ -48,6 +48,10 @@ namespace gnss_poser
         nav_sat_fix_origin_.latitude = nav_sat_fix_msg_ptr.latitude;
         nav_sat_fix_origin_.longitude = nav_sat_fix_msg_ptr.longitude;
         nav_sat_fix_origin_.altitude = nav_sat_fix_msg_ptr.altitude;
+        
+        nav_sat_fix_origin_.latitude = 29.746722;
+        nav_sat_fix_origin_.longitude = 106.553791;
+        nav_sat_fix_origin_.altitude = 239.360000;
       }
       if (!is_fixed) {
         

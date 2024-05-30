@@ -1,0 +1,19 @@
+nodes:
+  - id: controltest
+    custom:
+      source: controldata
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - road_lane
+
+
+  - id: latcontrol
+    custom:
+      source: ../../control/vehicle_control/lat_controller/build/lat_controller_node
+      inputs:
+        road_lane: controltest/road_lane
+      outputs:
+        - SteeringCmd
+
+

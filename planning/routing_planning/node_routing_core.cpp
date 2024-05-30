@@ -27,14 +27,22 @@ void toPath(Path_h &path_msg, CurrentPose &current_pose_temp)
 {
     path_msg.x_ref.resize(paths.x_ref.size());
     path_msg.y_ref.resize(paths.y_ref.size());
+    int con = 0;
     for (int i = 0; i < paths.x_ref.size(); i++)
     {
         double shift_x = paths.x_ref[i] - current_pose_temp.x;
         double shift_y = paths.y_ref[i] - current_pose_temp.y;
+        con++;
+        std::cout << "****************" << con << "***************"<< std::endl;
+        std::cout << "paths X: " << paths.x_ref[i] << " paths Y: " << paths.y_ref[i] << std::endl;
+        std::cout << "current X: " << current_pose_temp.x << " current Y: " << current_pose_temp.y << std::endl;
+        std::cout << "shift X: " << shift_x << " shift Y: " << shift_y << std::endl;
         
         //将路径点转换到车辆坐标系（后轮中心）
         path_msg.x_ref[i]=shift_x * sin(current_pose_temp.yaw) - shift_y * cos(current_pose_temp.yaw);
         path_msg.y_ref[i]=shift_y * sin(current_pose_temp.yaw) + shift_x * cos(current_pose_temp.yaw);
+
+        std::cout << "path: X: " << path_msg.x_ref[i] << " path Y: " << path_msg.y_ref[i] << std::endl;
     }
     return;
 }

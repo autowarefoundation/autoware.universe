@@ -1,0 +1,19 @@
+nodes:
+  - id: controltest
+    custom:
+      source: controldata
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - DoraNavSatFix
+
+
+  - id: latcontrol
+    custom:
+      source: ../../control/vehicle_control/lat_controller/build/lat_controller_test_node
+      inputs:
+        DoraNavSatFix: controltest/DoraNavSatFix
+      outputs:
+        - SteeringCmd
+
+

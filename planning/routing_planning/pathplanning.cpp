@@ -1,4 +1,5 @@
 #include "pathplanning.h"
+#include <iostream>
 
 //获取参考路径     
 PathPlanning::PathPlanning()
@@ -17,7 +18,7 @@ PathPlanning::~PathPlanning()
 void PathPlanning::get_plan_dis(float vel_speed_ref)
 {
     plan_distance = 15 + vel_speed_ref * 0.277; //单位m
-    // cout<<"plan_dis_temp: "<<plan_dis_temp<<endl;
+    cout<<"plan_dis_temp: "<<plan_distance<<endl;
     return;
 }
 
@@ -33,6 +34,8 @@ void PathPlanning::Get_Path_Ref(LaneLine &laneline)
         map_waypoints_x.push_back(laneline.points[i].x);
         map_waypoints_y.push_back(laneline.points[i].y);
         map_waypoints_s.push_back(laneline.points[i].s);
+        // std::cout << "map X: " << map_waypoints_x[i] << " map Y: " << map_waypoints_y[i] 
+        // << " map S: " << map_waypoints_s[i] << std::endl;
     }
 
     return;
@@ -47,7 +50,8 @@ void PathPlanning::Get_Curr_Sta(CurrentPose &curr_pose_temp, /*CurrentState &cur
     this->curr_car_x = curr_pose_temp.x;
     this->curr_car_y = curr_pose_temp.y;
 
-    this->vel_speed_self = 3.6; /*curr_state.velocity;*/
+    this->vel_speed_self = velocity; /*curr_state.velocity;*/
+    // std::cout << "speed: " << vel_speed_self << std::endl;
     return;
 }
 
@@ -63,41 +67,42 @@ void PathPlanning::simple_from_spline()
     static double last_point_d = 0;
     static double last_point_s = 0;
     
-    is_changing_lane = false;   
-    if ( is_changing_lane==true && fabs(last_point_d-curr_car_d)>0.5 && fabs(last_point_s-curr_car_s)>1  )  //处于变道中，且未行驶完上次规划的路径，就不重新规划，继续使用上次的路径   && first_time>1
-    {
-        //cout<< "I am here"<<endl;
+    // is_changing_lane = false;   
+    // if ( is_changing_lane==true && fabs(last_point_d-curr_car_d)>0.5 && fabs(last_point_s-curr_car_s)>1  )  //处于变道中，且未行驶完上次规划的路径，就不重新规划，继续使用上次的路径   && first_time>1
+    // {
+    //     //cout<< "I am here"<<endl;
 
-        double last_to_dis = distance(curr_car_x, curr_car_y, previous_path_x[30], previous_path_y[30]);
-        if (last_to_dis > 1)
-        {
-            int j = 0;
-            int passed_points_num = NextWaypoint(curr_car_x, curr_car_y, previous_path_x, previous_path_y);
-            for (int i = passed_points_num; i < 30; i++)     
-            {
-                x_ref[j] = previous_path_x[passed_points_num + j];
-                y_ref[j] = previous_path_y[passed_points_num + j];
-                j++;
-            }
+    //     double last_to_dis = distance(curr_car_x, curr_car_y, previous_path_x[30], previous_path_y[30]);
+    //     if (last_to_dis > 1)
+    //     {
+    //         int j = 0;
+    //         int passed_points_num = NextWaypoint(curr_car_x, curr_car_y, previous_path_x, previous_path_y);
+    //         for (int i = passed_points_num; i < 30; i++)     
+    //         {
+    //             x_ref[j] = previous_path_x[passed_points_num + j];
+    //             y_ref[j] = previous_path_y[passed_points_num + j];
+    //             j++;
+    //         }
 
-            for(int i=j; i<30; i++)          //确保路径点数量，下位机需要30个点
-            {
-                x_ref[j] = previous_path_x[30-1];
-                y_ref[j] = previous_path_y[30-1];
-            }
+    //         for(int i=j; i<30; i++)          //确保路径点数量，下位机需要30个点
+    //         {
+    //             x_ref[j] = previous_path_x[30-1];
+    //             y_ref[j] = previous_path_y[30-1];
+    //         }
 
-            return;
-        }
-        else  is_changing_lane = false;   //变道完成
-    }
+    //         return;
+    //     }
+    //     else  is_changing_lane = false;   //变道完成
+    // }
 
     
     for (int i = 0; i < 30; i++)
     {
         double target_s;
         double target_d;
-        target_s = curr_car_s + i*(plan_distance/30);                 //取plan_distance/30为一间隔   (i+1)
+        target_s = curr_car_s + i*(plan_distance/50);                 //取plan_distance/30为一间隔   (i+1)
         target_d = s_path(target_s);
+        // std::cout << "target S: " << target_s << " target D: " <<target_d<<std::endl;
 
         //if(i == 0)
         //cout<<"target_s   "<<target_s<<"   "<<"target_d:   "<<target_d<<endl;
@@ -121,6 +126,7 @@ void PathPlanning::simple_from_spline()
             last_point_s = target_s;
             last_point_d = target_d;
         }
+        // std::cout << "x_ref: " << x_ref[i] << " y_ref: " << y_ref[i] << std::endl;
     }
 
     return;
@@ -148,7 +154,7 @@ void PathPlanning::push_sd(vector<double> &pts_s,vector<double> &pts_d)
     }
      else{
         pts_s.push_back(curr_car_s);
-        pts_s.push_back(curr_car_s + first_s);
+        pts_s.push_back(curr_car_s + first_s + 0.5);
         pts_s.push_back(curr_car_s + first_s + 1);
         pts_s.push_back(curr_car_s + first_s + 2);
         pts_s.push_back(curr_car_s + first_s + 3);
@@ -158,18 +164,39 @@ void PathPlanning::push_sd(vector<double> &pts_s,vector<double> &pts_d)
         pts_s.push_back(curr_car_s + first_s + 5+(plan_distance - first_s - 5)*4/5);
         pts_s.push_back(curr_car_s + plan_distance);
 
-        pts_d.push_back(curr_car_d);
-        pts_d.push_back(curr_car_d + (offset-curr_car_d));
-        pts_d.push_back(curr_car_d + (offset-curr_car_d));
-        pts_d.push_back(curr_car_d + (offset-curr_car_d));  
-        pts_d.push_back(curr_car_d + (offset-curr_car_d));  
-        pts_d.push_back(curr_car_d + (offset-curr_car_d));
-        pts_d.push_back(curr_car_d + (offset-curr_car_d));
-        pts_d.push_back(curr_car_d + (offset-curr_car_d));  
-        pts_d.push_back(curr_car_d + (offset-curr_car_d));  
-        pts_d.push_back(curr_car_d + (offset-curr_car_d)); 
+        // pts_d.push_back(curr_car_d);
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d));
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d));
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d));  
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d));  
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d));
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d));
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d));  
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d));  
+        // pts_d.push_back(curr_car_d + (offset-curr_car_d)); 
 
-     } 
+
+        double decay_factor = 0.3; 
+        int sequence_length = 10; 
+        double step_size = std::abs(curr_car_d) * decay_factor; 
+
+        for(int i = 0; i < sequence_length; i++) {
+            double new_d;
+            if(i<3){
+                if (curr_car_d > 0) {
+                    new_d = curr_car_d - step_size * i;
+                } else {
+                    new_d = curr_car_d + step_size * i;
+                }
+            }
+            if (i > 3 || i == 3) {
+                new_d = 0.0;
+            }
+            pts_d.push_back(new_d);
+        }
+    }
+
+     
      return;  
 
 }
@@ -185,8 +212,18 @@ void PathPlanning::calculate_trajectory()
     //cout<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
     //for(int i=0;i<pts_d.size();i++)
     //cout<<pts_d[i]<<" ";
+    // std::cout<< "****************************"<<std::endl;
+    for(int i = 0; i < pts_d.size(); i++){
+        std::cout << "s: " << pts_s[i] << " d: " << pts_d[i] << std::endl;
+    }
 
-    this->s_path.set_points(pts_s,pts_d);                                //路径曲线拟合
+    this->s_path.set_points(pts_s,pts_d,true);                                //路径曲线拟合
+    
+
+
+    // double Z_s = curr_car_s;
+    // double Z_d = s_path(Z_s);
+    // std::cout << " Z D: " <<Z_d<<std::endl;
 
     simple_from_spline();                                   //采样拟合曲线并转为笛卡尔坐标
 
@@ -203,7 +240,7 @@ void PathPlanning::generate_path(CurrentPose &curr_pose, LaneLine &lanelines, /*
 
     Get_Curr_Sta(curr_pose, velocity);                                    //获取主车当前状态（位姿和速度）
 
-    get_plan_dis(this->vel_speed_self);                                     //计算规划距离    
+    get_plan_dis(/*this->vel_speed_self*/velocity);                                     //计算规划距离    
 
     calculate_trajectory();                                                  //计算轨迹
 
