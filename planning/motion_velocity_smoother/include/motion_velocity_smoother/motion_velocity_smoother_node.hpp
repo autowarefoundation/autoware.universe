@@ -28,7 +28,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_listener.h"
-#include "std_srvs/srv/set_bool.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
@@ -42,6 +41,7 @@
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "std_srvs/srv/set_bool.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
@@ -64,11 +64,11 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
+using std_srvs::srv::SetBool;
 using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
 using visualization_msgs::msg::MarkerArray;
-using std_srvs::srv::SetBool;
 
 struct Motion
 {
@@ -158,9 +158,9 @@ private:
 
     bool plan_from_ego_speed_on_manual_mode = true;
 
-    double adjusted_max_acceleration;           // enable strong acceleration
-    double adjusted_max_jerk;                   // enable strong acceleration
-    double adjusted_max_lateral_acceleration;   // enable strong acceleration
+    double adjusted_max_acceleration;          // enable strong acceleration
+    double adjusted_max_jerk;                  // enable strong acceleration
+    double adjusted_max_lateral_acceleration;  // enable strong acceleration
   } node_param_{};
 
   struct ExternalVelocityLimit
@@ -169,7 +169,6 @@ private:
     double dist{0.0};      // distance to set external velocity limit
     std::string sender{""};
   };
-
 
   ExternalVelocityLimit
     external_velocity_limit_;  // velocity and distance constraint  of external velocity limit
@@ -252,9 +251,11 @@ private:
 
   // parameter handling
   void initCommonParam();
-  void onAdjustParam(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
+  void onAdjustParam(
+    const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
   bool adjustParam;
-  void onSlow(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
+  void onSlow(
+    const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
 
   // debug
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;

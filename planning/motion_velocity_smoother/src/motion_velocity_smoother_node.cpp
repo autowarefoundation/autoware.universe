@@ -74,13 +74,11 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
     [this](const OperationModeState::ConstSharedPtr msg) { operation_mode_ = *msg; });
 
   srv_adjust_common_param = create_service<SetBool>(
-      "~/adjust_common_param",
-      std::bind(&MotionVelocitySmootherNode::onAdjustParam, this, _1, _2));
+    "~/adjust_common_param", std::bind(&MotionVelocitySmootherNode::onAdjustParam, this, _1, _2));
   adjustParam = false;
 
   srv_slow_driving = create_service<SetBool>(
-    "~/slow_driving",
-    std::bind(&MotionVelocitySmootherNode::onSlow, this, _1, _2));
+    "~/slow_driving", std::bind(&MotionVelocitySmootherNode::onSlow, this, _1, _2));
 
   // parameter update
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -324,7 +322,8 @@ void MotionVelocitySmootherNode::initCommonParam()
 
   p.adjusted_max_acceleration = declare_parameter<double>("adjusted_max_acceleration");
   p.adjusted_max_jerk = declare_parameter<double>("adjusted_max_jerk");
-  p.adjusted_max_lateral_acceleration = declare_parameter<double>("adjusted_max_lateral_acceleration");
+  p.adjusted_max_lateral_acceleration =
+    declare_parameter<double>("adjusted_max_lateral_acceleration");
 }
 
 void MotionVelocitySmootherNode::publishTrajectory(const TrajectoryPoints & trajectory) const
@@ -1117,37 +1116,36 @@ TrajectoryPoint MotionVelocitySmootherNode::calcProjectedTrajectoryPointFromEgo(
   return calcProjectedTrajectoryPoint(trajectory, current_odometry_ptr_->pose.pose);
 }
 
-void MotionVelocitySmootherNode::onAdjustParam(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
+void MotionVelocitySmootherNode::onAdjustParam(
+  const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
 {
   bool success = true;
-        
-  if(request->data && !adjustParam)
-  {
+
+  if (request->data && !adjustParam) {
     smoother_->setMaxAccel(get_parameter("adjusted_max_acceleration").as_double());
     smoother_->setMaxJerk(get_parameter("adjusted_max_jerk").as_double());
-    
+
     adjustParam = true;
-  }
-  else if(!request->data && adjustParam)
-  {
+  } else if (!request->data && adjustParam) {
     smoother_->setMaxAccel(get_parameter("normal.max_acc").as_double());
     smoother_->setMaxJerk(get_parameter("normal.max_jerk").as_double());
     smoother_->setMaxLatAccel(get_parameter("max_lateral_accel").as_double());
-    
-    adjustParam = false; 
+
+    adjustParam = false;
   }
   std::string message = success ? "Operation completed successfully" : "Operation failed";
-        
+
   response->success = success;
   response->message = message;
 }
 
-void MotionVelocitySmootherNode::onSlow(const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
+void MotionVelocitySmootherNode::onSlow(
+  const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
 {
   bool success = true;
 
   std::string message = request->data ? "Slow driving" : "Default";
-        
+
   response->success = success;
   response->message = message;
 }
