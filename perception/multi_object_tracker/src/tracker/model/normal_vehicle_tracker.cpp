@@ -23,6 +23,7 @@
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/msg_covariance.hpp>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -128,6 +129,7 @@ NormalVehicleTracker::NormalVehicleTracker(
 
   // Set initial state
   {
+    using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
@@ -153,13 +155,11 @@ NormalVehicleTracker::NormalVehicleTracker(
       const double cos_yaw = std::cos(yaw);
       const double sin_yaw = std::sin(yaw);
       const double sin_2yaw = std::sin(2.0 * yaw);
-      pose_cov[utils::MSG_COV_IDX::X_X] =
-        p0_cov_x * cos_yaw * cos_yaw + p0_cov_y * sin_yaw * sin_yaw;
-      pose_cov[utils::MSG_COV_IDX::X_Y] = 0.5 * (p0_cov_x - p0_cov_y) * sin_2yaw;
-      pose_cov[utils::MSG_COV_IDX::Y_Y] =
-        p0_cov_x * sin_yaw * sin_yaw + p0_cov_y * cos_yaw * cos_yaw;
-      pose_cov[utils::MSG_COV_IDX::Y_X] = pose_cov[utils::MSG_COV_IDX::X_Y];
-      pose_cov[utils::MSG_COV_IDX::YAW_YAW] = p0_cov_yaw;
+      pose_cov[XYZRPY_COV_IDX::X_X] = p0_cov_x * cos_yaw * cos_yaw + p0_cov_y * sin_yaw * sin_yaw;
+      pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5 * (p0_cov_x - p0_cov_y) * sin_2yaw;
+      pose_cov[XYZRPY_COV_IDX::Y_Y] = p0_cov_x * sin_yaw * sin_yaw + p0_cov_y * cos_yaw * cos_yaw;
+      pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];
+      pose_cov[XYZRPY_COV_IDX::YAW_YAW] = p0_cov_yaw;
     }
 
     if (!object.kinematics.has_twist_covariance) {
@@ -167,7 +167,7 @@ NormalVehicleTracker::NormalVehicleTracker(
         autoware::universe_utils::kmph2mps(1000);  // in object coordinate [m/s]
       vel_cov = std::pow(p0_stddev_vel, 2.0);
     } else {
-      vel_cov = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
+      vel_cov = object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::X_X];
     }
 
     const double slip = 0.0;
@@ -245,26 +245,27 @@ autoware_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpdatingO
                             autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
 
     // fill covariance matrix
+    using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
     const double cos_yaw = std::cos(pose_yaw);
     const double sin_yaw = std::sin(pose_yaw);
     const double sin_2yaw = std::sin(2.0f * pose_yaw);
-    pose_cov[utils::MSG_COV_IDX::X_X] =
-      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;                // x - x
-    pose_cov[utils::MSG_COV_IDX::X_Y] = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
-    pose_cov[utils::MSG_COV_IDX::Y_Y] =
-      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;            // y - y
-    pose_cov[utils::MSG_COV_IDX::Y_X] = pose_cov[utils::MSG_COV_IDX::X_Y];  // y - x
-    pose_cov[utils::MSG_COV_IDX::X_YAW] = 0.0;                              // x - yaw
-    pose_cov[utils::MSG_COV_IDX::Y_YAW] = 0.0;                              // y - yaw
-    pose_cov[utils::MSG_COV_IDX::YAW_X] = 0.0;                              // yaw - x
-    pose_cov[utils::MSG_COV_IDX::YAW_Y] = 0.0;                              // yaw - y
-    pose_cov[utils::MSG_COV_IDX::YAW_YAW] = ekf_params_.r_cov_yaw;          // yaw - yaw
+    pose_cov[XYZRPY_COV_IDX::X_X] =
+      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;            // x - x
+    pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
+    pose_cov[XYZRPY_COV_IDX::Y_Y] =
+      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;    // y - y
+    pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];  // y - x
+    pose_cov[XYZRPY_COV_IDX::X_YAW] = 0.0;                          // x - yaw
+    pose_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;                          // y - yaw
+    pose_cov[XYZRPY_COV_IDX::YAW_X] = 0.0;                          // yaw - x
+    pose_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;                          // yaw - y
+    pose_cov[XYZRPY_COV_IDX::YAW_YAW] = ekf_params_.r_cov_yaw;      // yaw - yaw
     if (!is_yaw_available) {
-      pose_cov[utils::MSG_COV_IDX::YAW_YAW] *= 1e3;  // yaw is not available, multiply large value
+      pose_cov[XYZRPY_COV_IDX::YAW_YAW] *= 1e3;  // yaw is not available, multiply large value
     }
     auto & twist_cov = updating_object.kinematics.twist_with_covariance.covariance;
-    twist_cov[utils::MSG_COV_IDX::X_X] = ekf_params_.r_cov_vel;  // vel - vel
+    twist_cov[XYZRPY_COV_IDX::X_X] = ekf_params_.r_cov_vel;  // vel - vel
   }
 
   return updating_object;

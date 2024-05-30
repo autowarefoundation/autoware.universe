@@ -38,45 +38,6 @@
 
 namespace utils
 {
-enum MSG_COV_IDX {
-  X_X = 0,
-  X_Y = 1,
-  X_Z = 2,
-  X_ROLL = 3,
-  X_PITCH = 4,
-  X_YAW = 5,
-  Y_X = 6,
-  Y_Y = 7,
-  Y_Z = 8,
-  Y_ROLL = 9,
-  Y_PITCH = 10,
-  Y_YAW = 11,
-  Z_X = 12,
-  Z_Y = 13,
-  Z_Z = 14,
-  Z_ROLL = 15,
-  Z_PITCH = 16,
-  Z_YAW = 17,
-  ROLL_X = 18,
-  ROLL_Y = 19,
-  ROLL_Z = 20,
-  ROLL_ROLL = 21,
-  ROLL_PITCH = 22,
-  ROLL_YAW = 23,
-  PITCH_X = 24,
-  PITCH_Y = 25,
-  PITCH_Z = 26,
-  PITCH_ROLL = 27,
-  PITCH_PITCH = 28,
-  PITCH_YAW = 29,
-  YAW_X = 30,
-  YAW_Y = 31,
-  YAW_Z = 32,
-  YAW_ROLL = 33,
-  YAW_PITCH = 34,
-  YAW_YAW = 35
-};
-
 enum BBOX_IDX {
   FRONT_SURFACE = 0,
   RIGHT_SURFACE = 1,
@@ -156,34 +117,6 @@ inline int getNearestCornerOrSurface(
 }
 
 /**
- * @brief Get the Nearest Corner or Surface from detected object
- * @param object: input object
- * @param yaw: object yaw angle (after solved front and back uncertainty)
- * @param self_transform
- * @return nearest corner or surface index
- */
-inline int getNearestCornerOrSurfaceFromObject(
-  const autoware_perception_msgs::msg::DetectedObject & object, const double & yaw,
-  const geometry_msgs::msg::Transform & self_transform)
-{
-  // only work for BBOX shape
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    return BBOX_IDX::INVALID;
-  }
-
-  // extract necessary information from input object
-  double x, y, width, length;
-  x = object.kinematics.pose_with_covariance.pose.position.x;
-  y = object.kinematics.pose_with_covariance.pose.position.y;
-  // yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation); //not use raw yaw
-  // now
-  width = object.shape.dimensions.y;
-  length = object.shape.dimensions.x;
-
-  return getNearestCornerOrSurface(x, y, yaw, width, length, self_transform);
-}
-
-/**
  * @brief Calc bounding box center offset caused by shape change
  * @param dw: width update [m] =  w_new - w_old
  * @param dl: length update [m] = l_new - l_old
@@ -223,30 +156,6 @@ inline Eigen::Vector2d calcOffsetVectorFromShapeChange(
     offset(1, 0) = dw / 2.0;  // move left
   }
   return offset;  // do nothing if indx == INVALID or INSIDE
-}
-
-/**
- * @brief post-processing to recover bounding box center from tracking point and offset vector
- * @param x: x of tracking point estimated with ekf
- * @param y: y of tracking point estimated with ekf
- * @param yaw: yaw of tracking point estimated with ekf
- * @param dw: diff of width: w_estimated - w_input
- * @param dl: diff of length: l_estimated - l_input
- * @param indx: closest corner or surface index
- * @param tracking_offset: tracking offset between bounding box center and tracking point
- */
-inline Eigen::Vector2d recoverFromTrackingPoint(
-  const double x, const double y, const double yaw, const double dw, const double dl,
-  const int indx, const Eigen::Vector2d & tracking_offset)
-{
-  const Eigen::Vector2d tracking_point{x, y};
-  const Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw).toRotationMatrix();
-
-  const Eigen::Vector2d shape_change_offset = calcOffsetVectorFromShapeChange(dw, dl, indx);
-
-  Eigen::Vector2d output_center = tracking_point - R * tracking_offset - R * shape_change_offset;
-
-  return output_center;
 }
 
 /**

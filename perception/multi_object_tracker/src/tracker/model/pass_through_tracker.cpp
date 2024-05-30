@@ -16,6 +16,8 @@
 // Author: v1.0 Yutaka Shimizu
 //
 
+#include <tier4_autoware_utils/ros/msg_covariance.hpp>
+
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -86,25 +88,26 @@ bool PassThroughTracker::measure(
 bool PassThroughTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
+  using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Z_Z] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_X] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_Y] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::Y_X] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::Y_Y] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::Z_Z] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::ROLL_ROLL] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::PITCH_PITCH] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::YAW_YAW] = 0.0;
 
   // twist covariance
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Z_Z] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::X_X] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::Y_Y] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::Z_Z] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::ROLL_ROLL] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::PITCH_PITCH] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::YAW_YAW] = 0.0;
 
   const double dt = (time - last_update_time_).seconds();
   if (0.5 /*500msec*/ < dt) {

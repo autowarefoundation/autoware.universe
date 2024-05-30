@@ -23,6 +23,7 @@
 
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/msg_covariance.hpp>
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
@@ -31,6 +32,7 @@
 // cspell: ignore CTRV
 // Bicycle CTRV motion model
 // CTRV : Constant Turn Rate and constant Velocity
+using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 BicycleMotionModel::BicycleMotionModel()
 : MotionModel(), logger_(rclcpp::get_logger("BicycleMotionModel"))
@@ -117,9 +119,9 @@ bool BicycleMotionModel::initialize(
 
   // initialize covariance matrix P
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(DIM, DIM);
-  P(IDX::X, IDX::X) = pose_cov[utils::MSG_COV_IDX::X_X];
-  P(IDX::Y, IDX::Y) = pose_cov[utils::MSG_COV_IDX::Y_Y];
-  P(IDX::YAW, IDX::YAW) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
+  P(IDX::X, IDX::X) = pose_cov[XYZRPY_COV_IDX::X_X];
+  P(IDX::Y, IDX::Y) = pose_cov[XYZRPY_COV_IDX::Y_Y];
+  P(IDX::YAW, IDX::YAW) = pose_cov[XYZRPY_COV_IDX::YAW_YAW];
   P(IDX::VEL, IDX::VEL) = vel_cov;
   P(IDX::SLIP, IDX::SLIP) = slip_cov;
 
@@ -147,10 +149,10 @@ bool BicycleMotionModel::updateStatePose(
   C(1, IDX::Y) = 1.0;
 
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
-  R(0, 0) = pose_cov[utils::MSG_COV_IDX::X_X];
-  R(0, 1) = pose_cov[utils::MSG_COV_IDX::X_Y];
-  R(1, 0) = pose_cov[utils::MSG_COV_IDX::Y_X];
-  R(1, 1) = pose_cov[utils::MSG_COV_IDX::Y_Y];
+  R(0, 0) = pose_cov[XYZRPY_COV_IDX::X_X];
+  R(0, 1) = pose_cov[XYZRPY_COV_IDX::X_Y];
+  R(1, 0) = pose_cov[XYZRPY_COV_IDX::Y_X];
+  R(1, 1) = pose_cov[XYZRPY_COV_IDX::Y_Y];
 
   return ekf_.update(Y, C, R);
 }
@@ -186,15 +188,15 @@ bool BicycleMotionModel::updateStatePoseHead(
   C(2, IDX::YAW) = 1.0;
 
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
-  R(0, 0) = pose_cov[utils::MSG_COV_IDX::X_X];
-  R(0, 1) = pose_cov[utils::MSG_COV_IDX::X_Y];
-  R(1, 0) = pose_cov[utils::MSG_COV_IDX::Y_X];
-  R(1, 1) = pose_cov[utils::MSG_COV_IDX::Y_Y];
-  R(0, 2) = pose_cov[utils::MSG_COV_IDX::X_YAW];
-  R(1, 2) = pose_cov[utils::MSG_COV_IDX::Y_YAW];
-  R(2, 0) = pose_cov[utils::MSG_COV_IDX::YAW_X];
-  R(2, 1) = pose_cov[utils::MSG_COV_IDX::YAW_Y];
-  R(2, 2) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
+  R(0, 0) = pose_cov[XYZRPY_COV_IDX::X_X];
+  R(0, 1) = pose_cov[XYZRPY_COV_IDX::X_Y];
+  R(1, 0) = pose_cov[XYZRPY_COV_IDX::Y_X];
+  R(1, 1) = pose_cov[XYZRPY_COV_IDX::Y_Y];
+  R(0, 2) = pose_cov[XYZRPY_COV_IDX::X_YAW];
+  R(1, 2) = pose_cov[XYZRPY_COV_IDX::Y_YAW];
+  R(2, 0) = pose_cov[XYZRPY_COV_IDX::YAW_X];
+  R(2, 1) = pose_cov[XYZRPY_COV_IDX::YAW_Y];
+  R(2, 2) = pose_cov[XYZRPY_COV_IDX::YAW_YAW];
 
   return ekf_.update(Y, C, R);
 }
@@ -232,16 +234,16 @@ bool BicycleMotionModel::updateStatePoseHeadVel(
   C(3, IDX::VEL) = 1.0;
 
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
-  R(0, 0) = pose_cov[utils::MSG_COV_IDX::X_X];
-  R(0, 1) = pose_cov[utils::MSG_COV_IDX::X_Y];
-  R(1, 0) = pose_cov[utils::MSG_COV_IDX::Y_X];
-  R(1, 1) = pose_cov[utils::MSG_COV_IDX::Y_Y];
-  R(0, 2) = pose_cov[utils::MSG_COV_IDX::X_YAW];
-  R(1, 2) = pose_cov[utils::MSG_COV_IDX::Y_YAW];
-  R(2, 0) = pose_cov[utils::MSG_COV_IDX::YAW_X];
-  R(2, 1) = pose_cov[utils::MSG_COV_IDX::YAW_Y];
-  R(2, 2) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
-  R(3, 3) = twist_cov[utils::MSG_COV_IDX::X_X];
+  R(0, 0) = pose_cov[XYZRPY_COV_IDX::X_X];
+  R(0, 1) = pose_cov[XYZRPY_COV_IDX::X_Y];
+  R(1, 0) = pose_cov[XYZRPY_COV_IDX::Y_X];
+  R(1, 1) = pose_cov[XYZRPY_COV_IDX::Y_Y];
+  R(0, 2) = pose_cov[XYZRPY_COV_IDX::X_YAW];
+  R(1, 2) = pose_cov[XYZRPY_COV_IDX::Y_YAW];
+  R(2, 0) = pose_cov[XYZRPY_COV_IDX::YAW_X];
+  R(2, 1) = pose_cov[XYZRPY_COV_IDX::YAW_Y];
+  R(2, 2) = pose_cov[XYZRPY_COV_IDX::YAW_YAW];
+  R(3, 3) = twist_cov[XYZRPY_COV_IDX::X_X];
 
   return ekf_.update(Y, C, R);
 }
@@ -445,14 +447,14 @@ bool BicycleMotionModel::getPredictedState(
   constexpr double zz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double rr_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double pp_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  pose_cov[utils::MSG_COV_IDX::X_X] = P(IDX::X, IDX::X);
-  pose_cov[utils::MSG_COV_IDX::X_Y] = P(IDX::X, IDX::Y);
-  pose_cov[utils::MSG_COV_IDX::Y_X] = P(IDX::Y, IDX::X);
-  pose_cov[utils::MSG_COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
-  pose_cov[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
-  pose_cov[utils::MSG_COV_IDX::Z_Z] = zz_cov;
-  pose_cov[utils::MSG_COV_IDX::ROLL_ROLL] = rr_cov;
-  pose_cov[utils::MSG_COV_IDX::PITCH_PITCH] = pp_cov;
+  pose_cov[XYZRPY_COV_IDX::X_X] = P(IDX::X, IDX::X);
+  pose_cov[XYZRPY_COV_IDX::X_Y] = P(IDX::X, IDX::Y);
+  pose_cov[XYZRPY_COV_IDX::Y_X] = P(IDX::Y, IDX::X);
+  pose_cov[XYZRPY_COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
+  pose_cov[XYZRPY_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
+  pose_cov[XYZRPY_COV_IDX::Z_Z] = zz_cov;
+  pose_cov[XYZRPY_COV_IDX::ROLL_ROLL] = rr_cov;
+  pose_cov[XYZRPY_COV_IDX::PITCH_PITCH] = pp_cov;
 
   // set twist covariance
   Eigen::MatrixXd cov_jacob(3, 2);
@@ -466,18 +468,18 @@ bool BicycleMotionModel::getPredictedState(
   constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  twist_cov[utils::MSG_COV_IDX::X_X] = twist_cov_mat(0, 0);
-  twist_cov[utils::MSG_COV_IDX::X_Y] = twist_cov_mat(0, 1);
-  twist_cov[utils::MSG_COV_IDX::X_YAW] = twist_cov_mat(0, 2);
-  twist_cov[utils::MSG_COV_IDX::Y_X] = twist_cov_mat(1, 0);
-  twist_cov[utils::MSG_COV_IDX::Y_Y] = twist_cov_mat(1, 1);
-  twist_cov[utils::MSG_COV_IDX::Y_YAW] = twist_cov_mat(1, 2);
-  twist_cov[utils::MSG_COV_IDX::YAW_X] = twist_cov_mat(2, 0);
-  twist_cov[utils::MSG_COV_IDX::YAW_Y] = twist_cov_mat(2, 1);
-  twist_cov[utils::MSG_COV_IDX::YAW_YAW] = twist_cov_mat(2, 2);
-  twist_cov[utils::MSG_COV_IDX::Z_Z] = vz_cov;
-  twist_cov[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
-  twist_cov[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
+  twist_cov[XYZRPY_COV_IDX::X_X] = twist_cov_mat(0, 0);
+  twist_cov[XYZRPY_COV_IDX::X_Y] = twist_cov_mat(0, 1);
+  twist_cov[XYZRPY_COV_IDX::X_YAW] = twist_cov_mat(0, 2);
+  twist_cov[XYZRPY_COV_IDX::Y_X] = twist_cov_mat(1, 0);
+  twist_cov[XYZRPY_COV_IDX::Y_Y] = twist_cov_mat(1, 1);
+  twist_cov[XYZRPY_COV_IDX::Y_YAW] = twist_cov_mat(1, 2);
+  twist_cov[XYZRPY_COV_IDX::YAW_X] = twist_cov_mat(2, 0);
+  twist_cov[XYZRPY_COV_IDX::YAW_Y] = twist_cov_mat(2, 1);
+  twist_cov[XYZRPY_COV_IDX::YAW_YAW] = twist_cov_mat(2, 2);
+  twist_cov[XYZRPY_COV_IDX::Z_Z] = vz_cov;
+  twist_cov[XYZRPY_COV_IDX::ROLL_ROLL] = wx_cov;
+  twist_cov[XYZRPY_COV_IDX::PITCH_PITCH] = wy_cov;
 
   return true;
 }
