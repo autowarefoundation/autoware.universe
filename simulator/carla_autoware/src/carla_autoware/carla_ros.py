@@ -17,7 +17,6 @@ import logging
 import math
 import threading
 
-from autoware_auto_control_msgs.msg import AckermannControlCommand
 from autoware_auto_vehicle_msgs.msg import ControlModeReport
 from autoware_auto_vehicle_msgs.msg import GearReport
 from autoware_auto_vehicle_msgs.msg import SteeringReport
@@ -37,6 +36,8 @@ from sensor_msgs.msg import Imu
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs.msg import PointField
 from std_msgs.msg import Header
+from tier4_vehicle_msgs.msg import ActuationCommandStamped
+from tier4_vehicle_msgs.msg import ActuationStatusStamped
 from transforms3d.euler import euler2quat
 
 from .modules.carla_data_provider import CarlaDataProvider
@@ -111,14 +112,14 @@ class carla_interface(object):
 
         # Subscribing Autoware Control messages and converting to CARLA control
         self.sub_control = self.ros2_node.create_subscription(
-            AckermannControlCommand, "/control/command/control_cmd", self.control_callback, 1
+            ActuationCommandStamped, "/control/command/actuation_cmd", self.control_callback, 1
         )
 
         self.sub_vehicle_initialpose = self.ros2_node.create_subscription(
             PoseWithCovarianceStamped, "initialpose", self.initialpose_callback, 1
         )
 
-        self.current_control = carla.VehicleAckermannControl()
+        self.current_control = carla.VehicleControl()
 
         # Direct data publishing from CARLA for Autoware
         self.pub_pose_with_cov = self.ros2_node.create_publisher(
@@ -138,6 +139,9 @@ class carla_interface(object):
         )
         self.pub_gear_state = self.ros2_node.create_publisher(
             GearReport, "/vehicle/status/gear_status", 1
+        )
+        self.actuation_status = self.ros2_node.create_publisher(
+            ActuationStatusStamped, "/vehicle/status/actuation_status", 1
         )
 
         # Create Publisher for each Physical Sensors
@@ -172,7 +176,6 @@ class carla_interface(object):
         input_data = self.sensor_interface.get_data()
         timestamp = GameTime.get_time()
         control = self.run_step(input_data, timestamp)
-        control.manual_gear_shift = False
         return control
 
     def get_param(self):
@@ -377,17 +380,10 @@ class carla_interface(object):
 
     def control_callback(self, in_cmd):
         """Convert and publish CARLA Ego Vehicle Control to AUTOWARE."""
-        out_cmd = carla.VehicleAckermannControl(
-            steer=numpy.clip(
-                -math.degrees(in_cmd.lateral.steering_tire_angle) / self.max_steering_angle,
-                -1.0,
-                1.0,
-            ),
-            steer_speed=in_cmd.lateral.steering_tire_rotation_rate,
-            speed=in_cmd.longitudinal.speed,
-            acceleration=in_cmd.longitudinal.acceleration,
-            jerk=in_cmd.longitudinal.jerk,
-        )
+        out_cmd = carla.VehicleControl()
+        out_cmd.throttle = in_cmd.actuation.accel_cmd
+        out_cmd.steer = -in_cmd.actuation.steer_cmd
+        out_cmd.brake = in_cmd.actuation.brake_cmd
         self.current_control = out_cmd
 
     def ego_status(self):
@@ -398,6 +394,7 @@ class carla_interface(object):
         ego_vehicle = CarlaDataProvider.get_actor_by_name(
             self.param_values["ego_vehicle_role_name"]
         )
+        control = ego_vehicle.get_control()
 
         self.current_vel = CarlaDataProvider.get_velocity(
             CarlaDataProvider.get_actor_by_name(self.param_values["ego_vehicle_role_name"])
@@ -408,6 +405,7 @@ class carla_interface(object):
         out_ctrl_mode = ControlModeReport()
         out_gear_state = GearReport()
         out_traffic = TrafficSignalArray()
+        out_actuation_status = ActuationStatusStamped()
 
         out_vel_state.header = self.get_msg_header(frame_id="base_link")
         out_vel_state.longitudinal_velocity = self.current_vel
@@ -425,6 +423,14 @@ class carla_interface(object):
         out_ctrl_mode.stamp = out_vel_state.header.stamp
         out_ctrl_mode.mode = ControlModeReport.AUTONOMOUS
 
+        out_actuation_status.header = self.get_msg_header(frame_id="base_link")
+        out_actuation_status.status.accel_status = control.throttle
+        out_actuation_status.status.brake_status = control.brake
+        out_actuation_status.status.steer_status = -math.radians(
+            ego_vehicle.get_wheel_steer_angle(carla.VehicleWheelLocation.FL_Wheel)
+        )
+
+        self.actuation_status.publish(out_actuation_status)
         self.pub_vel_state.publish(out_vel_state)
         self.pub_steering_state.publish(out_steering_state)
         self.pub_ctrl_mode.publish(out_ctrl_mode)

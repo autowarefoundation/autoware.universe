@@ -12,7 +12,8 @@ setup(
     version="0.0.0",
     packages=[package_name],
     data_files=[
-        ("share/" + package_name, glob("config/objects.json")),
+        ("share/" + package_name, glob("config/*")),
+        ("share/" + package_name, glob("calibration_maps/*.csv")),
         ("share/" + package_name, ["package.xml"]),
         (os.path.join("share", package_name), glob("launch/carla_autoware.launch.xml")),
     ],
