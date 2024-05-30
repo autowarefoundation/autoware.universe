@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_DYNAMIC_AVOIDANCE_MODULE__SCENE_HPP_
-#define BEHAVIOR_PATH_DYNAMIC_AVOIDANCE_MODULE__SCENE_HPP_
+#ifndef AUTOWARE_BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
+#define AUTOWARE_BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
 
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
@@ -164,7 +164,7 @@ struct LatFeasiblePaths
   std::vector<geometry_msgs::msg::Point> left_path;
   std::vector<geometry_msgs::msg::Point> right_path;
 };
-class DynamicAvoidanceModule : public SceneModuleInterface
+class DynamicObstacleAvoidanceModule : public SceneModuleInterface
 {
 public:
   struct DynamicAvoidanceObject
@@ -336,7 +336,7 @@ public:
     std::string reason{""};
   };
 
-  DynamicAvoidanceModule(
+  DynamicObstacleAvoidanceModule(
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<DynamicAvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
@@ -444,8 +444,8 @@ private:
       getLogger(), parameters_->enable_debug_info, reason_text.c_str(), obj_uuid.c_str());
   }
 
-  std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> target_objects_;
-  // std::vector<DynamicAvoidanceModule::DynamicAvoidanceObject> prev_target_objects_;
+  std::vector<DynamicObstacleAvoidanceModule::DynamicAvoidanceObject> target_objects_;
+  // std::vector<DynamicObstacleAvoidanceModule::DynamicAvoidanceObject> prev_target_objects_;
   std::optional<std::vector<PathPointWithLaneId>> prev_input_ref_path_points_{std::nullopt};
   std::optional<std::vector<PathPointWithLaneId>> ref_path_before_lane_change_{std::nullopt};
   std::shared_ptr<DynamicAvoidanceParameters> parameters_;
@@ -458,4 +458,4 @@ private:
 };
 }  // namespace behavior_path_planner
 
-#endif  // BEHAVIOR_PATH_DYNAMIC_AVOIDANCE_MODULE__SCENE_HPP_
+#endif  // AUTOWARE_BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_

@@ -1,4 +1,4 @@
-# Dynamic avoidance design
+# Avoidance module for dynamic objects
 
 This module is under development.
 

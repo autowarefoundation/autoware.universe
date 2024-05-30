@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_dynamic_avoidance_module/manager.hpp"
+#include "autoware_behavior_path_dynamic_obstacle_avoidance_module/manager.hpp"
 
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
@@ -37,7 +37,7 @@ PolygonGenerationMethod convertToPolygonGenerationMethod(const std::string & str
 }
 }  // namespace
 
-void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
+void DynamicObstacleAvoidanceModuleManager::init(rclcpp::Node * node)
 {
   // init manager interface
   initInterface(node, {""});
@@ -149,7 +149,7 @@ void DynamicAvoidanceModuleManager::init(rclcpp::Node * node)
   parameters_ = std::make_shared<DynamicAvoidanceParameters>(p);
 }
 
-void DynamicAvoidanceModuleManager::updateModuleParams(
+void DynamicObstacleAvoidanceModuleManager::updateModuleParams(
   [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
@@ -287,7 +287,7 @@ void DynamicAvoidanceModuleManager::updateModuleParams(
   });
 }
 
-bool DynamicAvoidanceModuleManager::isAlwaysExecutableModule() const
+bool DynamicObstacleAvoidanceModuleManager::isAlwaysExecutableModule() const
 {
   return true;
 }
@@ -295,5 +295,5 @@ bool DynamicAvoidanceModuleManager::isAlwaysExecutableModule() const
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_path_planner::DynamicAvoidanceModuleManager,
+  behavior_path_planner::DynamicObstacleAvoidanceModuleManager,
   behavior_path_planner::SceneModuleManagerInterface)

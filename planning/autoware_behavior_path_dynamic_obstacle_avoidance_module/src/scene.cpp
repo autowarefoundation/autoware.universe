@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_dynamic_avoidance_module/scene.hpp"
+#include "autoware_behavior_path_dynamic_obstacle_avoidance_module/scene.hpp"
 
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
@@ -301,7 +301,7 @@ std::vector<geometry_msgs::msg::Point> convertToPoints(
 }
 }  // namespace
 
-DynamicAvoidanceModule::DynamicAvoidanceModule(
+DynamicObstacleAvoidanceModule::DynamicObstacleAvoidanceModule(
   const std::string & name, rclcpp::Node & node,
   std::shared_ptr<DynamicAvoidanceParameters> parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
@@ -315,7 +315,7 @@ DynamicAvoidanceModule::DynamicAvoidanceModule(
 {
 }
 
-bool DynamicAvoidanceModule::isExecutionRequested() const
+bool DynamicObstacleAvoidanceModule::isExecutionRequested() const
 {
   RCLCPP_DEBUG(getLogger(), "DYNAMIC AVOIDANCE isExecutionRequested.");
 
@@ -339,13 +339,13 @@ bool DynamicAvoidanceModule::isExecutionRequested() const
   return !target_objects_.empty();
 }
 
-bool DynamicAvoidanceModule::isExecutionReady() const
+bool DynamicObstacleAvoidanceModule::isExecutionReady() const
 {
   RCLCPP_DEBUG(getLogger(), "DYNAMIC AVOIDANCE isExecutionReady.");
   return true;
 }
 
-void DynamicAvoidanceModule::updateData()
+void DynamicObstacleAvoidanceModule::updateData()
 {
   // stop_watch_.tic(std::string(__func__));
 
@@ -380,12 +380,12 @@ void DynamicAvoidanceModule::updateData()
   //   [ms]");
 }
 
-bool DynamicAvoidanceModule::canTransitSuccessState()
+bool DynamicObstacleAvoidanceModule::canTransitSuccessState()
 {
   return target_objects_.empty();
 }
 
-BehaviorModuleOutput DynamicAvoidanceModule::plan()
+BehaviorModuleOutput DynamicObstacleAvoidanceModule::plan()
 {
   // stop_watch_.tic(std::string(__func__));
 
@@ -444,19 +444,19 @@ BehaviorModuleOutput DynamicAvoidanceModule::plan()
   return output;
 }
 
-CandidateOutput DynamicAvoidanceModule::planCandidate() const
+CandidateOutput DynamicObstacleAvoidanceModule::planCandidate() const
 {
   auto candidate_path = utils::generateCenterLinePath(planner_data_);
   return CandidateOutput(*candidate_path);
 }
 
-BehaviorModuleOutput DynamicAvoidanceModule::planWaitingApproval()
+BehaviorModuleOutput DynamicObstacleAvoidanceModule::planWaitingApproval()
 {
   BehaviorModuleOutput out = plan();
   return out;
 }
 
-ObjectType DynamicAvoidanceModule::getObjectType(const uint8_t label) const
+ObjectType DynamicObstacleAvoidanceModule::getObjectType(const uint8_t label) const
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
 
@@ -487,7 +487,7 @@ ObjectType DynamicAvoidanceModule::getObjectType(const uint8_t label) const
   return ObjectType::OUT_OF_SCOPE;
 }
 
-void DynamicAvoidanceModule::registerRegulatedObjects(
+void DynamicObstacleAvoidanceModule::registerRegulatedObjects(
   const std::vector<DynamicAvoidanceObject> & prev_objects)
 {
   const auto input_path = getPreviousModuleOutput().path;
@@ -575,7 +575,7 @@ void DynamicAvoidanceModule::registerRegulatedObjects(
   }
 }
 
-void DynamicAvoidanceModule::registerUnregulatedObjects(
+void DynamicObstacleAvoidanceModule::registerUnregulatedObjects(
   const std::vector<DynamicAvoidanceObject> & prev_objects)
 {
   const auto input_path = getPreviousModuleOutput().path;
@@ -649,7 +649,7 @@ void DynamicAvoidanceModule::registerUnregulatedObjects(
   }
 }
 
-void DynamicAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObjects(
+void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObjects(
   const std::vector<DynamicAvoidanceObject> & prev_objects)
 {
   const auto & input_path = getPreviousModuleOutput().path;
@@ -809,7 +809,7 @@ void DynamicAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObjects(
   // prev_input_ref_path_points_ = input_ref_path_points;
 }
 
-void DynamicAvoidanceModule::determineWhetherToAvoidAgainstUnregulatedObjects(
+void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstUnregulatedObjects(
   const std::vector<DynamicAvoidanceObject> & prev_objects)
 {
   const auto & input_path = getPreviousModuleOutput().path;
@@ -870,7 +870,7 @@ void DynamicAvoidanceModule::determineWhetherToAvoidAgainstUnregulatedObjects(
   }
 }
 
-LatFeasiblePaths DynamicAvoidanceModule::generateLateralFeasiblePaths(
+LatFeasiblePaths DynamicObstacleAvoidanceModule::generateLateralFeasiblePaths(
   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const
 {
   const double lat_acc = parameters_->max_ego_lat_acc;
@@ -907,7 +907,7 @@ LatFeasiblePaths DynamicAvoidanceModule::generateLateralFeasiblePaths(
   return ego_lat_feasible_paths;
 }
 
-[[maybe_unused]] void DynamicAvoidanceModule::updateRefPathBeforeLaneChange(
+[[maybe_unused]] void DynamicObstacleAvoidanceModule::updateRefPathBeforeLaneChange(
   const std::vector<PathPointWithLaneId> & ego_ref_path_points)
 {
   if (ref_path_before_lane_change_) {
@@ -934,7 +934,7 @@ LatFeasiblePaths DynamicAvoidanceModule::generateLateralFeasiblePaths(
 }
 
 [[maybe_unused]] std::optional<std::pair<size_t, size_t>>
-DynamicAvoidanceModule::calcCollisionSection(
+DynamicObstacleAvoidanceModule::calcCollisionSection(
   const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & obj_path) const
 {
   const size_t ego_idx = planner_data_->findEgoIndex(ego_path);
@@ -971,7 +971,7 @@ DynamicAvoidanceModule::calcCollisionSection(
   return std::make_pair(*collision_start_idx, ego_path.size() - 1);
 }
 
-TimeWhileCollision DynamicAvoidanceModule::calcTimeWhileCollision(
+TimeWhileCollision DynamicObstacleAvoidanceModule::calcTimeWhileCollision(
   const std::vector<PathPointWithLaneId> & ego_path, const double obj_tangent_vel,
   const LatLonOffset & lat_lon_offset) const
 {
@@ -1027,7 +1027,7 @@ TimeWhileCollision DynamicAvoidanceModule::calcTimeWhileCollision(
   return TimeWhileCollision{time_to_start_collision, time_to_end_collision};
 }
 
-bool DynamicAvoidanceModule::isObjectFarFromPath(
+bool DynamicObstacleAvoidanceModule::isObjectFarFromPath(
   const PredictedObject & predicted_object, const double obj_dist_to_path) const
 {
   const double obj_max_length = calcObstacleMaxLength(predicted_object.shape);
@@ -1037,7 +1037,7 @@ bool DynamicAvoidanceModule::isObjectFarFromPath(
   return parameters_->max_obj_lat_offset_to_ego_path < min_obj_dist_to_path;
 }
 
-bool DynamicAvoidanceModule::willObjectCutIn(
+bool DynamicObstacleAvoidanceModule::willObjectCutIn(
   const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & predicted_path,
   const double obj_tangent_vel, const LatLonOffset & lat_lon_offset) const
 {
@@ -1079,7 +1079,7 @@ bool DynamicAvoidanceModule::willObjectCutIn(
   return true;
 }
 
-DynamicAvoidanceModule::DecisionWithReason DynamicAvoidanceModule::willObjectCutOut(
+DynamicObstacleAvoidanceModule::DecisionWithReason DynamicObstacleAvoidanceModule::willObjectCutOut(
   const double obj_tangent_vel, const double obj_normal_vel, const bool is_object_left,
   const std::optional<DynamicAvoidanceObject> & prev_object) const
 {
@@ -1120,7 +1120,7 @@ DynamicAvoidanceModule::DecisionWithReason DynamicAvoidanceModule::willObjectCut
   return DecisionWithReason{false};
 }
 
-[[maybe_unused]] bool DynamicAvoidanceModule::willObjectBeOutsideEgoChangingPath(
+[[maybe_unused]] bool DynamicObstacleAvoidanceModule::willObjectBeOutsideEgoChangingPath(
   const geometry_msgs::msg::Pose & obj_pose,
   const autoware_auto_perception_msgs::msg::Shape & obj_shape, const double obj_vel) const
 {
@@ -1139,7 +1139,8 @@ DynamicAvoidanceModule::DecisionWithReason DynamicAvoidanceModule::willObjectCut
   return true;
 }
 
-std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> DynamicAvoidanceModule::getAdjacentLanes(
+std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets>
+DynamicObstacleAvoidanceModule::getAdjacentLanes(
   const double forward_distance, const double backward_distance) const
 {
   const auto & rh = planner_data_->route_handler;
@@ -1179,7 +1180,8 @@ std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> DynamicAvoidanceModule
   return std::make_pair(right_lanes, left_lanes);
 }
 
-DynamicAvoidanceModule::LatLonOffset DynamicAvoidanceModule::getLateralLongitudinalOffset(
+DynamicObstacleAvoidanceModule::LatLonOffset
+DynamicObstacleAvoidanceModule::getLateralLongitudinalOffset(
   const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
   const autoware_auto_perception_msgs::msg::Shape & obj_shape) const
 {
@@ -1213,7 +1215,7 @@ DynamicAvoidanceModule::LatLonOffset DynamicAvoidanceModule::getLateralLongitudi
     obj_lon_min_max_offset.max_value, obj_lon_min_max_offset.min_value};
 }
 
-MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
+MinMaxValue DynamicObstacleAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
   const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
   const geometry_msgs::msg::Pose & obj_pose, const Polygon2d & obj_points, const double obj_vel,
   const PredictedPath & obj_path, const autoware_auto_perception_msgs::msg::Shape & obj_shape,
@@ -1286,7 +1288,7 @@ MinMaxValue DynamicAvoidanceModule::calcMinMaxLongitudinalOffsetToAvoid(
     obj_lon_offset.max_value + end_length_to_avoid};
 }
 
-double DynamicAvoidanceModule::calcValidLengthToAvoid(
+double DynamicObstacleAvoidanceModule::calcValidLengthToAvoid(
   const PredictedPath & obj_path, const geometry_msgs::msg::Pose & obj_pose,
   const autoware_auto_perception_msgs::msg::Shape & obj_shape,
   const bool is_object_same_direction) const
@@ -1379,7 +1381,8 @@ double DynamicAvoidanceModule::calcValidLengthToAvoid(
 }
 
 // min value denotes near side, max value denotes far side
-std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoidRegulatedObject(
+std::optional<MinMaxValue>
+DynamicObstacleAvoidanceModule::calcMinMaxLateralOffsetToAvoidRegulatedObject(
   const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
   const Polygon2d & obj_points, const geometry_msgs::msg::Point & obj_pos, const double obj_vel,
   const bool is_collision_left, const double obj_normal_vel,
@@ -1473,7 +1476,8 @@ std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoi
 }
 
 // min value denotes near side, max value denotes far side
-std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoidUnregulatedObject(
+std::optional<MinMaxValue>
+DynamicObstacleAvoidanceModule::calcMinMaxLateralOffsetToAvoidUnregulatedObject(
   const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
   const std::optional<DynamicAvoidanceObject> & prev_object,
   const DynamicAvoidanceObject & object) const
@@ -1557,7 +1561,7 @@ std::optional<MinMaxValue> DynamicAvoidanceModule::calcMinMaxLateralOffsetToAvoi
 
 // NOTE: object does not have const only to update min_bound_lat_offset.
 std::optional<tier4_autoware_utils::Polygon2d>
-DynamicAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
+DynamicObstacleAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object) const
 {
   if (!object.lon_offset_to_avoid || !object.lat_offset_to_avoid) {
@@ -1663,7 +1667,7 @@ DynamicAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
 
 // should be replace by the function calcPredictedPathBasedDynamicObstaclePolygon() (takagi)
 std::optional<tier4_autoware_utils::Polygon2d>
-DynamicAvoidanceModule::calcObjectPathBasedDynamicObstaclePolygon(
+DynamicObstacleAvoidanceModule::calcObjectPathBasedDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object) const
 {
   const auto obj_path = *std::max_element(
@@ -1722,7 +1726,7 @@ DynamicAvoidanceModule::calcObjectPathBasedDynamicObstaclePolygon(
 // except for the area required for ego safety.
 // input: an object, the minimum area required for ego safety, and some global params
 std::optional<tier4_autoware_utils::Polygon2d>
-DynamicAvoidanceModule::calcPredictedPathBasedDynamicObstaclePolygon(
+DynamicObstacleAvoidanceModule::calcPredictedPathBasedDynamicObstaclePolygon(
   const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const
 {
   std::vector<geometry_msgs::msg::Pose> obj_poses;
@@ -1783,8 +1787,8 @@ DynamicAvoidanceModule::calcPredictedPathBasedDynamicObstaclePolygon(
 // Calculate the driving area required to ensure the safety of the own vehicle.
 // It is assumed that this area will not be clipped.
 // input: ego's reference path, ego's pose, ego's speed, and some global params
-DynamicAvoidanceModule::EgoPathReservePoly DynamicAvoidanceModule::calcEgoPathReservePoly(
-  const PathWithLaneId & ego_path) const
+DynamicObstacleAvoidanceModule::EgoPathReservePoly
+DynamicObstacleAvoidanceModule::calcEgoPathReservePoly(const PathWithLaneId & ego_path) const
 {
   // This function require almost 0.5 ms. Should be refactored in the future
   // double calculation_time;
