@@ -40,3 +40,11 @@ tensorrt_yolox::Object createYoloxBbox(
   bbox.type = type;
   return bbox;
 }
+
+TEST(CalWeightedIouTest, NoOverlap)
+{
+  const sensor_msgs::msg::RegionOfInterest map_based_bbox = createMapBasedBbox(0, 0, 10, 10);
+  const tensorrt_yolox::Object yolox_bbox = createYoloxBbox(20, 20, 10, 10, 0.9f, 0);
+
+  EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
+}
