@@ -14,6 +14,19 @@
 
 #include "traffic_light_fine_detector/nodelet.hpp"
 
+#include <gtest/gtest.h>
+
+sensor_msgs::msg::RegionOfInterest createMapBasedBbox(
+  const uint32_t x_offset, const uint32_t y_offset, const uint32_t width, const uint32_t height)
+{
+  sensor_msgs::msg::RegionOfInterest bbox;
+  bbox.x_offset = x_offset;
+  bbox.y_offset = y_offset;
+  bbox.width = width;
+  bbox.height = height;
+  return bbox;
+}
+
 tensorrt_yolox::Object createYoloxBbox(
   const int32_t x_offset, const int32_t y_offset, const int32_t width, const int32_t height,
   const float score, const int32_t type)
