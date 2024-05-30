@@ -16,6 +16,7 @@
 #define LIDAR_TRANSFUSION__UTILS_HPP_
 
 #include <cstddef>
+#include <iostream>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -45,23 +46,40 @@ struct CloudInfo
   uint8_t y_datatype;
   uint8_t z_datatype;
   uint8_t intensity_datatype;
-  uint8_t x_size;
-  uint8_t y_size;
-  uint8_t z_size;
-  uint8_t intensity_size;
+  uint8_t x_count;
+  uint8_t y_count;
+  uint8_t z_count;
+  uint8_t intensity_count;
   uint32_t point_step;
   bool is_bigendian;
-};
 
-const std::unordered_map<uint8_t, uint8_t> datatype2size = {
-  {1, 1},  // uint8
-  {2, 1},  // int8
-  {3, 2},  // uint16
-  {4, 2},  // int16
-  {5, 4},  // uint32
-  {6, 4},  // int32
-  {7, 4},  // float32
-  {8, 8},  // float64
+  CloudInfo()
+  : x_offset(0),
+    y_offset(4),
+    z_offset(8),
+    intensity_offset(12),
+    x_datatype(7),
+    y_datatype(7),
+    z_datatype(7),
+    intensity_datatype(7),
+    x_count(1),
+    y_count(1),
+    z_count(1),
+    intensity_count(1),
+    point_step(16),
+    is_bigendian(false)
+  {
+  }
+
+  bool operator!=(const CloudInfo & rhs) const
+  {
+    return x_offset != rhs.x_offset || y_offset != rhs.y_offset || z_offset != rhs.z_offset ||
+           intensity_offset != rhs.intensity_offset || x_datatype != rhs.x_datatype ||
+           y_datatype != rhs.y_datatype || z_datatype != rhs.z_datatype ||
+           intensity_datatype != rhs.intensity_datatype || x_count != rhs.x_count ||
+           y_count != rhs.y_count || z_count != rhs.z_count ||
+           intensity_count != rhs.intensity_count || is_bigendian != rhs.is_bigendian;
+  }
 };
 
 enum NetworkIO { voxels = 0, num_points, coors, cls_score, dir_pred, bbox_pred, ENUM_SIZE };

@@ -5,9 +5,6 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 add_compile_options(-Wno-deprecated-declarations)
-if(HOST_PROCESSING)
-  add_definitions(-DHOST_PROCESSING)  # cSpell:ignore DHOST_PROCESSING
-endif()
 
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
 

@@ -42,12 +42,6 @@ TransfusionTRT::TransfusionTRT(
   initPtr();
 
   CHECK_CUDA_ERROR(cudaStreamCreate(&stream_));
-
-#ifdef HOST_PROCESSING
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Using HOST processing");
-#else
-  RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Using GPU processing");
-#endif
 }
 
 TransfusionTRT::~TransfusionTRT()
@@ -69,7 +63,7 @@ void TransfusionTRT::initPtr()
   // output of TRT -- input of post-process
   cls_size_ = config_.num_proposals_ * config_.num_classes_;
   box_size_ = config_.num_proposals_ * config_.num_box_values_;
-  dir_cls_size_ = config_.num_proposals_ * 2;
+  dir_cls_size_ = config_.num_proposals_ * 2;  // x, y
   cls_output_d_ = cuda::make_unique<float[]>(cls_size_);
   box_output_d_ = cuda::make_unique<float[]>(box_size_);
   dir_cls_output_d_ = cuda::make_unique<float[]>(dir_cls_size_);
@@ -104,11 +98,7 @@ bool TransfusionTRT::detect(
   proc_timing.emplace(
     "debug/processing_time/inference_ms", stop_watch_ptr_->toc("processing/inner", true));
 
-#ifdef HOST_PROCESSING
-  if (!postprocessHost(det_boxes3d)) {
-#else
   if (!postprocess(det_boxes3d)) {
-#endif
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("lidar_transfusion"), "Fail to postprocess and skip to detect.");
     return false;
@@ -135,6 +125,7 @@ bool TransfusionTRT::preprocess(
   cuda::clear_async(params_input_d_.get(), 1, stream_);
   cuda::clear_async(
     points_d_.get(), config_.cloud_capacity_ * config_.num_point_feature_size_, stream_);
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   const auto count = vg_ptr_->generateSweepPoints(msg, points_d_);
   RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), "Generated sweep points: " << count);
@@ -208,56 +199,6 @@ bool TransfusionTRT::postprocess(std::vector<Box3D> & det_boxes3d)
   CHECK_CUDA_ERROR(post_ptr_->generateDetectedBoxes3D_launch(
     cls_output_d_.get(), box_output_d_.get(), dir_cls_output_d_.get(), det_boxes3d, stream_));
   CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
-  return true;
-}
-
-bool TransfusionTRT::postprocessHost(std::vector<Box3D> & det_boxes3d)
-{
-  std::vector<float> cls_output(cls_size_);
-  std::vector<float> box_output(box_size_);
-  std::vector<float> dir_cls_output(dir_cls_size_);
-
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    cls_output.data(), cls_output_d_.get(), cls_size_ * sizeof(float), cudaMemcpyDeviceToHost,
-    stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    box_output.data(), box_output_d_.get(), box_size_ * sizeof(float), cudaMemcpyDeviceToHost,
-    stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    dir_cls_output.data(), dir_cls_output_d_.get(), dir_cls_size_ * sizeof(float),
-    cudaMemcpyDeviceToHost, stream_));
-  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
-
-  for (size_t i = 0; i < config_.num_proposals_; ++i) {
-    auto class_id = 0;
-    float max_score = 0.f;
-    float yaw_sin = dir_cls_output[i];
-    float yaw_cos = dir_cls_output[i + config_.num_proposals_];
-    float yaw_norm = sqrtf(yaw_sin * yaw_sin + yaw_cos * yaw_cos);
-    if (yaw_norm >= config_.yaw_norm_thresholds_[class_id]) {
-      max_score = cls_output[i];
-      for (size_t j = 1; j < config_.num_classes_; ++j) {
-        auto score = cls_output[config_.num_proposals_ * j + i];
-        if (max_score < score) {
-          max_score = score;
-          class_id = j;
-        }
-      }
-    }
-    if (max_score < config_.score_threshold_) {
-      continue;
-    }
-    det_boxes3d.emplace_back(lidar_transfusion::Box3D{
-      class_id, max_score,
-      box_output[i] * config_.num_point_values_ * config_.voxel_x_size_ + config_.min_x_range_,
-      box_output[i + config_.num_proposals_] * config_.num_point_values_ * config_.voxel_y_size_ +
-        config_.min_y_range_,
-      box_output[i + 2 * config_.num_proposals_],
-      std::exp(box_output[i + 3 * config_.num_proposals_]),
-      std::exp(box_output[i + 4 * config_.num_proposals_]),
-      std::exp(box_output[i + 5 * config_.num_proposals_]),
-      std::atan2(dir_cls_output[i], dir_cls_output[i + config_.num_proposals_])});
-  }
   return true;
 }
 

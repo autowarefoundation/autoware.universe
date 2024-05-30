@@ -58,7 +58,9 @@ Eigen::Affine3f transformToEigen(const geometry_msgs::msg::Transform & t)
 namespace lidar_transfusion
 {
 
-PointCloudDensification::PointCloudDensification(const DensificationParam & param) : param_(param)
+PointCloudDensification::PointCloudDensification(
+  const DensificationParam & param, cudaStream_t & stream)
+: param_(param), stream_(stream)
 {
 }
 
@@ -90,7 +92,19 @@ void PointCloudDensification::enqueue(
 {
   affine_world2current_ = affine_world2current;
   current_timestamp_ = rclcpp::Time(msg.header.stamp).seconds();
-  pointcloud_cache_.emplace_front(PointCloudWithTransform{msg, affine_world2current.inverse()});
+
+  assert(sizeof(uint8_t) * msg.width * msg.height * msg.point_step % sizeof(float) == 1);
+  auto points_d = cuda::make_unique<float[]>(
+    sizeof(uint8_t) * msg.width * msg.height * msg.point_step / sizeof(float));
+
+  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    points_d.get(), msg.data.data(), sizeof(uint8_t) * msg.width * msg.height * msg.point_step,
+    cudaMemcpyHostToDevice, stream_));
+
+  PointCloudWithTransform pointcloud = {
+    std::move(points_d), msg.header, msg.width * msg.height, affine_world2current.inverse()};
+
+  pointcloud_cache_.push_front(std::move(pointcloud));
 }
 
 void PointCloudDensification::dequeue()

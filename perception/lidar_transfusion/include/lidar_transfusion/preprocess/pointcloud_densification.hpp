@@ -15,6 +15,8 @@
 #ifndef LIDAR_TRANSFUSION__PREPROCESS__POINTCLOUD_DENSIFICATION_HPP_
 #define LIDAR_TRANSFUSION__PREPROCESS__POINTCLOUD_DENSIFICATION_HPP_
 
+#include "lidar_transfusion/cuda_utils.hpp"
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 #ifdef ROS_DISTRO_GALACTIC
@@ -49,17 +51,19 @@ private:
 
 struct PointCloudWithTransform
 {
-  sensor_msgs::msg::PointCloud2 pointcloud_msg;
+  cuda::unique_ptr<float[]> points_d{nullptr};
+  std_msgs::msg::Header header;
+  size_t num_points{0};
   Eigen::Affine3f affine_past2world;
 };
 
 class PointCloudDensification
 {
 public:
-  explicit PointCloudDensification(const DensificationParam & param);
+  explicit PointCloudDensification(const DensificationParam & param, cudaStream_t & stream);
 
   bool enqueuePointCloud(
-    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
+    const sensor_msgs::msg::PointCloud2 & msg, const tf2_ros::Buffer & tf_buffer);
 
   double getCurrentTimestamp() const { return current_timestamp_; }
   Eigen::Affine3f getAffineWorldToCurrent() const { return affine_world2current_; }
@@ -71,6 +75,14 @@ public:
   {
     return iter == pointcloud_cache_.end();
   }
+  size_t getIdx(std::list<PointCloudWithTransform>::iterator iter)
+  {
+    return std::distance(pointcloud_cache_.begin(), iter);
+  }
+  size_t getCacheSize()
+  {
+    return std::distance(pointcloud_cache_.begin(), pointcloud_cache_.end());
+  }
   unsigned int pointcloud_cache_size() const { return param_.pointcloud_cache_size(); }
 
 private:
@@ -81,6 +93,7 @@ private:
   double current_timestamp_{0.0};
   Eigen::Affine3f affine_world2current_;
   std::list<PointCloudWithTransform> pointcloud_cache_;
+  cudaStream_t stream_;
 };
 
 }  // namespace lidar_transfusion

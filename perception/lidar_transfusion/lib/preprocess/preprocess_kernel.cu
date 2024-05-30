@@ -164,93 +164,43 @@ cudaError_t PreprocessCuda::generateBaseFeatures_launch(
   return err;
 }
 
-__device__ int decode_field(
-  unsigned char * cloud_data, unsigned long point_offset, unsigned int field_offset,
-  unsigned char field_size, bool is_bigendian)
-{
-  int value = 0;
-  for (int i = 0; i < field_size; i++) {
-    int step = is_bigendian ? field_size - i - 1 : i;
-    value |= cloud_data[point_offset + field_offset + i] << (step * 8);
-  }
-  return value;
-}
-
-__device__ float cast_field(int & field_raw, unsigned char & field_type)
-{
-  switch (field_type) {
-    case 1:  // INT8
-      return static_cast<float>(reinterpret_cast<char &>(field_raw));
-    case 2:  // UINT8
-      return static_cast<float>(reinterpret_cast<unsigned char &>(field_raw));
-    case 3:  // INT16
-      return static_cast<float>(reinterpret_cast<short &>(field_raw));
-    case 4:  // UINT16
-      return static_cast<float>(reinterpret_cast<unsigned short &>(field_raw));
-    case 5:  // INT32
-      return static_cast<float>(reinterpret_cast<int &>(field_raw));
-    case 6:  // UINT32
-      return static_cast<float>(reinterpret_cast<unsigned int &>(field_raw));
-    case 7:  // FLOAT32
-      return reinterpret_cast<float &>(field_raw);
-    case 8:  // FLOAT64
-      return static_cast<float>(reinterpret_cast<double &>(field_raw));
-    default:
-      return 0.0;
-  }
-}
-
-__global__ void generateVoxelsInput_kernel(
-  unsigned char * cloud_data, unsigned int x_offset, unsigned int y_offset, unsigned int z_offset,
-  unsigned int intensity_offset, unsigned char x_datatype, unsigned char y_datatype,
-  unsigned char z_datatype, unsigned char intensity_datatype, unsigned char x_size,
-  unsigned char y_size, unsigned char z_size, unsigned char intensity_size, unsigned int point_step,
-  bool is_bigendian, unsigned int cloud_capacity, unsigned int points_agg, unsigned int points_size,
-  float time_lag, float * affine_transform, float * points)
+__global__ void generateSweepPoints_kernel(
+  const float * input_points, size_t points_size, int input_point_step, float time_lag,
+  const float * transform_array, int num_features, float * output_points)
 {
   int point_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (point_idx >= points_size || points_agg + point_idx >= cloud_capacity) return;
+  if (point_idx >= points_size) return;
 
-  unsigned long point_offset = point_idx * point_step;
+  const float input_x = input_points[point_idx * input_point_step + 0];
+  const float input_y = input_points[point_idx * input_point_step + 1];
+  const float input_z = input_points[point_idx * input_point_step + 2];
+  const float intensity = input_points[point_idx * input_point_step + 3];
 
-  int x_raw = decode_field(cloud_data, point_offset, x_offset, x_size, is_bigendian);
-  int y_raw = decode_field(cloud_data, point_offset, y_offset, y_size, is_bigendian);
-  int z_raw = decode_field(cloud_data, point_offset, z_offset, z_size, is_bigendian);
-  int intensity_raw =
-    decode_field(cloud_data, point_offset, intensity_offset, intensity_size, is_bigendian);
-
-  float x = cast_field(x_raw, x_datatype);
-  float y = cast_field(y_raw, y_datatype);
-  float z = cast_field(z_raw, z_datatype);
-  float intensity = cast_field(intensity_raw, intensity_datatype);
-
-  float x_transformed = affine_transform[0] * x + affine_transform[1] * y +
-                        affine_transform[2] * z + affine_transform[3];
-  float y_transformed = affine_transform[4] * x + affine_transform[5] * y +
-                        affine_transform[6] * z + affine_transform[7];
-  float z_transformed = affine_transform[8] * x + affine_transform[9] * y +
-                        affine_transform[10] * z + affine_transform[11];
-
-  points[(points_agg + point_idx) * 5] = x_transformed;
-  points[(points_agg + point_idx) * 5 + 1] = y_transformed;
-  points[(points_agg + point_idx) * 5 + 2] = z_transformed;
-  points[(points_agg + point_idx) * 5 + 3] = intensity;
-  points[(points_agg + point_idx) * 5 + 4] = time_lag;
+  output_points[point_idx * num_features] = transform_array[0] * input_x +
+                                            transform_array[1] * input_y +
+                                            transform_array[2] * input_z + transform_array[3];
+  output_points[point_idx * num_features + 1] = transform_array[4] * input_x +
+                                                transform_array[5] * input_y +
+                                                transform_array[6] * input_z + transform_array[7];
+  output_points[point_idx * num_features + 2] = transform_array[8] * input_x +
+                                                transform_array[9] * input_y +
+                                                transform_array[10] * input_z + transform_array[11];
+  output_points[point_idx * num_features + 3] = intensity;
+  output_points[point_idx * num_features + 4] = time_lag;
 }
 
-// extract data from cloud byte array
-cudaError_t PreprocessCuda::generateVoxelsInput_launch(
-  uint8_t * cloud_data, CloudInfo & cloud_info, unsigned int points_agg, unsigned int points_size,
-  float time_lag, float * affine_transform, float * points)
+cudaError_t PreprocessCuda::generateSweepPoints_launch(
+  const float * input_points, size_t points_size, int input_point_step, float time_lag,
+  const float * transform_array, float * output_points)
 {
-  dim3 threads = {1024};
-  dim3 blocks = {divup(points_size, threads.x * threads.y)};
-  generateVoxelsInput_kernel<<<blocks, threads, 0, stream_>>>(
-    cloud_data, cloud_info.x_offset, cloud_info.y_offset, cloud_info.z_offset,
-    cloud_info.intensity_offset, cloud_info.x_datatype, cloud_info.y_datatype,
-    cloud_info.z_datatype, cloud_info.intensity_datatype, cloud_info.x_size, cloud_info.y_size,
-    cloud_info.z_size, cloud_info.intensity_size, cloud_info.point_step, cloud_info.is_bigendian,
-    config_.cloud_capacity_, points_agg, points_size, time_lag, affine_transform, points);
+  int threadNum = config_.threads_for_voxel_;
+  dim3 blocks((points_size + threadNum - 1) / threadNum);
+  dim3 threads(threadNum);
+
+  generateSweepPoints_kernel<<<blocks, threads, 0, stream_>>>(
+    input_points, points_size, input_point_step, time_lag, transform_array,
+    config_.num_point_feature_size_, output_points);
+
   cudaError_t err = cudaGetLastError();
   return err;
 }

@@ -14,27 +14,47 @@
 
 #include "lidar_transfusion/preprocess/voxel_generator.hpp"
 
+#include "lidar_transfusion/preprocess/preprocess_kernel.hpp"
+
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 namespace lidar_transfusion
 {
+
+std::ostream & operator<<(std::ostream & os, const CloudInfo & info)
+{
+  os << "x_offset: " << static_cast<int>(info.x_offset) << std::endl;
+  os << "y_offset: " << static_cast<int>(info.y_offset) << std::endl;
+  os << "z_offset: " << static_cast<int>(info.z_offset) << std::endl;
+  os << "intensity_offset: " << static_cast<int>(info.intensity_offset) << std::endl;
+  os << "x_datatype: " << static_cast<int>(info.x_datatype) << std::endl;
+  os << "y_datatype: " << static_cast<int>(info.y_datatype) << std::endl;
+  os << "z_datatype: " << static_cast<int>(info.z_datatype) << std::endl;
+  os << "intensity_datatype: " << static_cast<int>(info.intensity_datatype) << std::endl;
+  os << "x_count: " << static_cast<int>(info.x_count) << std::endl;
+  os << "y_count: " << static_cast<int>(info.y_count) << std::endl;
+  os << "z_count: " << static_cast<int>(info.z_count) << std::endl;
+  os << "intensity_count: " << static_cast<int>(info.intensity_count) << std::endl;
+  os << "point_step: " << static_cast<int>(info.point_step) << std::endl;
+  os << "is_bigendian: " << static_cast<int>(info.is_bigendian) << std::endl;
+  return os;
+}
 
 VoxelGenerator::VoxelGenerator(
   const DensificationParam & densification_param, const TransfusionConfig & config,
   cudaStream_t & stream)
 : config_(config), stream_(stream)
 {
-  pd_ptr_ = std::make_unique<PointCloudDensification>(densification_param);
+  pd_ptr_ = std::make_unique<PointCloudDensification>(densification_param, stream_);
   pre_ptr_ = std::make_unique<PreprocessCuda>(config_, stream_);
   cloud_data_d_ = cuda::make_unique<unsigned char[]>(config_.cloud_capacity_ * MAX_CLOUD_STEP_SIZE);
-  points_.resize(config_.cloud_capacity_ * config_.num_point_feature_size_);
   affine_past2current_d_ = cuda::make_unique<float[]>(AFF_MAT_SIZE);
 }
 
 bool VoxelGenerator::enqueuePointCloud(
-  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
+  const sensor_msgs::msg::PointCloud2 & msg, const tf2_ros::Buffer & tf_buffer)
 {
-  return pd_ptr_->enqueuePointCloud(input_pointcloud_msg, tf_buffer);
+  return pd_ptr_->enqueuePointCloud(msg, tf_buffer);
 }
 
 std::size_t VoxelGenerator::generateSweepPoints(
@@ -42,96 +62,65 @@ std::size_t VoxelGenerator::generateSweepPoints(
 {
   if (!is_initialized_) {
     initCloudInfo(msg);
-    RCLCPP_DEBUG_STREAM(
-      rclcpp::get_logger("lidar_transfusion"),
-      "PointCloud2 msg information:"
-        << "\nx offset: " << cloud_info_.x_offset << "\ny offset: " << cloud_info_.y_offset
-        << "\nz offset: " << cloud_info_.z_offset
-        << "\nintensity offset: " << cloud_info_.intensity_offset
-        << "\nx datatype: " << static_cast<uint32_t>(cloud_info_.x_datatype)
-        << "\ny datatype: " << static_cast<uint32_t>(cloud_info_.y_datatype)
-        << "\nz datatype: " << static_cast<uint32_t>(cloud_info_.z_datatype)
-        << "\nintensity datatype: " << static_cast<uint32_t>(cloud_info_.intensity_datatype)
-        << "\npoint step: " << cloud_info_.point_step
-        << "\nis bigendian: " << cloud_info_.is_bigendian);
+    std::stringstream ss;
+    ss << "Input point cloud information: " << std::endl << cloud_info_;
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("lidar_transfusion"), ss.str());
+
+    CloudInfo default_cloud_info;
+    if (cloud_info_ != default_cloud_info) {
+      ss << "Expected point cloud information: " << std::endl << default_cloud_info;
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("lidar_transfusion"), ss.str());
+      throw std::runtime_error("Input point cloud has unsupported format");
+    }
+    is_initialized_ = true;
   }
 
-  Eigen::Vector3f point_current, point_past;
-  size_t points_agg{};
+  size_t point_counter{0};
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
   for (auto pc_cache_iter = pd_ptr_->getPointCloudCacheIter(); !pd_ptr_->isCacheEnd(pc_cache_iter);
        pc_cache_iter++) {
-    if (points_agg >= config_.cloud_capacity_) {
+    auto sweep_num_points = pc_cache_iter->num_points;
+    if (point_counter + sweep_num_points >= config_.cloud_capacity_) {
+      RCLCPP_WARN_STREAM(
+        rclcpp::get_logger("lidar_transfusion"), "Exceeding cloud capacity. Used "
+                                                   << pd_ptr_->getIdx(pc_cache_iter) << " out of "
+                                                   << pd_ptr_->getCacheSize() << " sweep(s)");
       break;
     }
-    auto pc_msg = pc_cache_iter->pointcloud_msg;
+    auto shift = point_counter * config_.num_point_feature_size_;
     auto affine_past2current =
       pd_ptr_->getAffineWorldToCurrent() * pc_cache_iter->affine_past2world;
     float time_lag = static_cast<float>(
-      pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_msg.header.stamp).seconds());
+      pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_cache_iter->header.stamp).seconds());
 
-#ifdef HOST_PROCESSING
-    for (sensor_msgs::PointCloud2ConstIterator<float> x_iter(msg, "x"), y_iter(msg, "y"),
-         z_iter(msg, "z"), intensity_iter(msg, "intensity");
-         x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter, ++intensity_iter) {
-      if (points_agg >= config_.cloud_capacity_) {
-        break;
-      }
-      point_past << *x_iter, *y_iter, *z_iter;
-      point_current = affine_past2current * point_past;
-
-      points_.at(points_agg * config_.num_point_feature_size_) = point_current.x();
-      points_.at(points_agg * config_.num_point_feature_size_ + 1) = point_current.y();
-      points_.at(points_agg * config_.num_point_feature_size_ + 2) = point_current.z();
-      points_.at(points_agg * config_.num_point_feature_size_ + 3) = *intensity_iter;
-      points_.at(points_agg * config_.num_point_feature_size_ + 4) = time_lag;
-      ++points_agg;
-    }
-  }
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    points_d.get(), points_.data(), points_agg * config_.num_point_feature_size_ * sizeof(float),
-    cudaMemcpyHostToDevice));
-  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
-
-#else
-    size_t points_size = pc_msg.width * pc_msg.height;
-    cuda::clear_async(cloud_data_d_.get(), config_.cloud_capacity_ * MAX_CLOUD_STEP_SIZE, stream_);
-    cuda::clear_async(affine_past2current_d_.get(), AFF_MAT_SIZE, stream_);
-    CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
-
-    CHECK_CUDA_ERROR(cudaMemcpyAsync(
-      cloud_data_d_.get(), pc_msg.data.data(), pc_msg.data.size() * sizeof(unsigned char),
-      cudaMemcpyHostToDevice, stream_));
     CHECK_CUDA_ERROR(cudaMemcpyAsync(
       affine_past2current_d_.get(), affine_past2current.data(), AFF_MAT_SIZE * sizeof(float),
       cudaMemcpyHostToDevice, stream_));
     CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
 
-    pre_ptr_->generateVoxelsInput_launch(
-      cloud_data_d_.get(), cloud_info_, points_agg, points_size, time_lag,
-      affine_past2current_d_.get(), points_d.get());
-    CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
-    points_agg += points_size;
+    pre_ptr_->generateSweepPoints_launch(
+      pc_cache_iter->points_d.get(), sweep_num_points, cloud_info_.point_step / sizeof(float),
+      time_lag, affine_past2current_d_.get(), points_d.get() + shift);
+    point_counter += sweep_num_points;
   }
-#endif
 
-  return std::min(points_agg, config_.cloud_capacity_);
+  return point_counter;
 }
 
 void VoxelGenerator::initCloudInfo(const sensor_msgs::msg::PointCloud2 & msg)
 {
-  std::tie(cloud_info_.x_offset, cloud_info_.x_datatype, cloud_info_.x_size) =
+  std::tie(cloud_info_.x_offset, cloud_info_.x_datatype, cloud_info_.x_count) =
     getFieldInfo(msg, "x");
-  std::tie(cloud_info_.y_offset, cloud_info_.y_datatype, cloud_info_.y_size) =
+  std::tie(cloud_info_.y_offset, cloud_info_.y_datatype, cloud_info_.y_count) =
     getFieldInfo(msg, "y");
-  std::tie(cloud_info_.z_offset, cloud_info_.z_datatype, cloud_info_.z_size) =
+  std::tie(cloud_info_.z_offset, cloud_info_.z_datatype, cloud_info_.z_count) =
     getFieldInfo(msg, "z");
   std::tie(
-    cloud_info_.intensity_offset, cloud_info_.intensity_datatype, cloud_info_.intensity_size) =
+    cloud_info_.intensity_offset, cloud_info_.intensity_datatype, cloud_info_.intensity_count) =
     getFieldInfo(msg, "intensity");
   cloud_info_.point_step = msg.point_step;
   cloud_info_.is_bigendian = msg.is_bigendian;
-  is_initialized_ = true;
 }
 
 std::tuple<const uint32_t, const uint8_t, const uint8_t> VoxelGenerator::getFieldInfo(
@@ -139,16 +128,9 @@ std::tuple<const uint32_t, const uint8_t, const uint8_t> VoxelGenerator::getFiel
 {
   for (const auto & field : msg.fields) {
     if (field.name == field_name) {
-      if (field.count == 1) {
-        return std::make_tuple(field.offset, field.datatype, datatype2size.at(field.datatype));
-      } else {
-        RCLCPP_ERROR_STREAM(
-          rclcpp::get_logger("lidar_transfusion"),
-          "Unsupported field for " << field_name << ". [Actual / Supported] count: " << field.count
-                                   << " / 1.");
-      }
+      return std::make_tuple(field.offset, field.datatype, field.count);
     }
   }
-  throw std::runtime_error("Incompatible point cloud message for field: " + field_name);
+  throw std::runtime_error("Missing field: " + field_name);
 }
 }  // namespace lidar_transfusion

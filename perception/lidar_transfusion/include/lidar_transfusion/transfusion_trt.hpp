@@ -80,7 +80,6 @@ protected:
   bool inference();
 
   bool postprocess(std::vector<Box3D> & det_boxes3d);
-  bool postprocessHost(std::vector<Box3D> & det_boxes3d);
 
   std::unique_ptr<NetworkTRT> network_trt_ptr_{nullptr};
   std::unique_ptr<VoxelGenerator> vg_ptr_{nullptr};

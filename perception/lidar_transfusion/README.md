@@ -72,12 +72,6 @@ The default logging severity level for `lidar_transfusion` is `info`. For debugg
 ros2 launch lidar_transfusion lidar_transfusion.launch.xml log_level:=debug
 ```
 
-### The `HOST_PROCESSING` build definition
-
-<!-- cSpell:ignore DHOST_PROCESSING -->
-
-You can force host (CPU) point cloud processing with `-DHOST_PROCESSING` flag while using `colcon build` syntax. Note that HOST processing only supports `FLOAT32` cloud points.
-
 ## Assumptions / Known limits
 
 ## Trained Models

@@ -48,7 +48,7 @@ public:
   std::size_t generateSweepPoints(
     const sensor_msgs::msg::PointCloud2 & msg, cuda::unique_ptr<float[]> & points_d);
   bool enqueuePointCloud(
-    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
+    const sensor_msgs::msg::PointCloud2 & msg, const tf2_ros::Buffer & tf_buffer);
   void initCloudInfo(const sensor_msgs::msg::PointCloud2 & msg);
   std::tuple<const uint32_t, const uint8_t, const uint8_t> getFieldInfo(
     const sensor_msgs::msg::PointCloud2 & msg, const std::string & field_name);
