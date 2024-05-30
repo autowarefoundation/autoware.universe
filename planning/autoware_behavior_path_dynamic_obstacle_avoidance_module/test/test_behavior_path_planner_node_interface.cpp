@@ -62,7 +62,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
                    behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
                    ament_index_cpp::get_package_share_directory(
                      "autoware_behavior_path_dynamic_obstacle_avoidance_module") +
-                     "/config/dynamic_avoidance.param.yaml"});
+                     "/config/dynamic_obstacle_avoidance.param.yaml"});
 
   return std::make_shared<BehaviorPathPlannerNode>(node_options);
 }
