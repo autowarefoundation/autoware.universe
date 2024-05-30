@@ -42,12 +42,12 @@
   <arg name="behavior_path_planner_launch_modules" default="["/>
   <let
     name="behavior_path_planner_launch_modules"
-    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::AvoidanceModuleManager, '&quot;)"
+    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::StaticObstacleAvoidanceModuleManager, '&quot;)"
     if="$(var launch_avoidance_module)"
   />
   <let
     name="behavior_path_planner_launch_modules"
-    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::DynamicAvoidanceModuleManager, '&quot;)"
+    value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'behavior_path_planner::DynamicObstacleAvoidanceModuleManager, '&quot;)"
     if="$(var launch_dynamic_avoidance_module)"
   />
   <let
