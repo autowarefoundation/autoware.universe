@@ -1180,12 +1180,12 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     return std::nullopt;
   }
 
-  const double lat_margin_for_stop =
+  const double max_lat_margin_for_stop =
     (obstacle.classification.label == ObjectClassification::UNKNOWN)
       ? p.max_lat_margin_for_stop_against_unknown
       : p.max_lat_margin_for_stop;
 
-  if (precise_lat_dist > std::max(lat_margin_for_stop, 1e-3)) {
+  if (precise_lat_dist > std::max(max_lat_margin_for_stop, 1e-3)) {
     return std::nullopt;
   }
 
@@ -1218,7 +1218,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
       calcObstacleMaxLength(obstacle.shape) + p.decimate_trajectory_step_length +
         std::hypot(
           vehicle_info_.vehicle_length_m,
-          vehicle_info_.vehicle_width_m * 0.5 + lat_margin_for_stop));
+          vehicle_info_.vehicle_width_m * 0.5 + max_lat_margin_for_stop));
     if (collision_points.empty()) {
       RCLCPP_INFO_EXPRESSION(
         get_logger(), enable_debug_info_,
@@ -1244,7 +1244,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
 
   // calculate collision points with trajectory with lateral stop margin
   const auto traj_polys_with_lat_margin =
-    createOneStepPolygons(traj_points, vehicle_info_, odometry.pose.pose, lat_margin_for_stop);
+    createOneStepPolygons(traj_points, vehicle_info_, odometry.pose.pose, max_lat_margin_for_stop);
 
   const auto collision_point = polygon_utils::getCollisionPoint(
     traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);
