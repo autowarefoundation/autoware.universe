@@ -200,6 +200,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
 
     update_param("adjusted_max_acceleration", p.adjusted_max_acceleration);
     update_param("adjusted_max_jerk", p.adjusted_max_jerk);
+    update_param("adjusted_max_lateral_acceleration", p.adjusted_max_lateral_acceleration);
   }
 
   {
@@ -1124,6 +1125,7 @@ void MotionVelocitySmootherNode::onAdjustParam(
   if (request->data && !adjustParam) {
     smoother_->setMaxAccel(get_parameter("adjusted_max_acceleration").as_double());
     smoother_->setMaxJerk(get_parameter("adjusted_max_jerk").as_double());
+    smoother_->setMaxLatAccel(get_parameter("adjusted_max_lateral_acceleration").as_double());
 
     adjustParam = true;
   } else if (!request->data && adjustParam) {
