@@ -103,11 +103,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ament_auto_add_gtest(traffic_light_fine_detector_tests
       test/test_nodelet.cpp
     )
-
-    target_include_directories(traffic_light_fine_detector_tests PUBLIC
-      lib/include
-    )
-
     target_link_libraries(traffic_light_fine_detector_tests
       ${NVINFER}
       ${NVONNXPARSER}
