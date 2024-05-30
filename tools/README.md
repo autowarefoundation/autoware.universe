@@ -1,7 +1,8 @@
-# test tool 
+# Here are some minimal test tools helping reproduce issues.
 
-## C_Python_test is the one for reproduce #515
-## c_node_test is the one for reproduce #502
-
+## Folder C_Python_test 
+It is a minimal example the one for reproduce #515. For instructions please go to folder and you will see the steps.
+## Folder C_node_test
+It is a minimal example the one for reproduce #502. For instructions please go to folder and you will see the steps.
 
 
