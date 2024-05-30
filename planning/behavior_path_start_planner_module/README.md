@@ -93,11 +93,11 @@ The `StartPlannerModule` is designed to initiate its execution based on specific
 
 The `StartPlannerModule` terminates when specific conditions are met, depending on the type of planner being used. The `canTransitSuccessState` function determines whether the module should transition to the success state based on the following criteria:
 
-#### When the Freespace Planner is active:
+#### When the Freespace Planner is active
 
 - If the end point of the freespace path is reached, the module transitions to the success state.
 
-#### When any other type of planner is active:
+#### When any other type of planner is active
 
 The transition to the success state is determined by the following conditions:
 
