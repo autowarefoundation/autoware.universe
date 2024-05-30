@@ -103,16 +103,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ament_auto_add_gtest(traffic_light_fine_detector_tests
       test/test_nodelet.cpp
     )
-    target_link_libraries(traffic_light_fine_detector_tests
-      ${NVINFER}
-      ${NVONNXPARSER}
-      ${NVINFER_PLUGIN}
-      ${CUDA_LIBRARIES}
-      ${CUBLAS_LIBRARIES}
-      ${CUDNN_LIBRARY}
-      ${OpenCV_LIB}
-      stdc++fs
-    )
   endif()
 
   ament_auto_package(INSTALL_TO_SHARE
