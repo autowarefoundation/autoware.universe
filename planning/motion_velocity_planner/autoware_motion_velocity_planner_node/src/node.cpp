@@ -334,7 +334,8 @@ void MotionVelocityPlannerNode::insert_stop(
   const auto seg_idx = motion_utils::findNearestSegmentIndex(trajectory.points, stop_point);
   const auto insert_idx = motion_utils::insertTargetPoint(seg_idx, stop_point, trajectory.points);
   if (insert_idx) {
-    trajectory.points[*insert_idx].longitudinal_velocity_mps = 0.0;
+    for (auto idx = *insert_idx; idx < trajectory.points.size(); ++idx)
+      trajectory.points[idx].longitudinal_velocity_mps = 0.0;
   } else {
     RCLCPP_WARN(get_logger(), "Failed to insert stop point");
   }
