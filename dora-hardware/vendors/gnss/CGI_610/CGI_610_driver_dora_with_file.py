@@ -9,6 +9,7 @@ import math
 import pickle
 import time
 import numpy as np
+import os
 from datetime import datetime
 
 
@@ -24,7 +25,9 @@ class Operator:
     
     # 打开串口读取数据
     def __init__(self):
-        self.f = open("/home/crp/autoware.universe/dora-hardware/vendors/gnss/CGI_610/cgi610_outdata.txt")
+        current_dir = os.path.dirname(__file__)
+        file_path = os.path.join(current_dir, "cgi610_outdata.txt")
+        self.f = open(file_path)
         self.cnt1 =0
         self.cnt2 =0
         self.cnt3 =0
