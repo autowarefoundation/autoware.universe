@@ -12,6 +12,8 @@
   <arg name="use_radar_tracking_fusion" default="false" description="use radar tracking fusion"/>
 
   <!-- External interface -->
+  <arg name="input/detection_input_channels" default="['detected_objects']"/>
+  <!-- detection_input_channels: Input channels for multi object tracker, reference: multi_object_tracker/config/input_channels.param.yaml -->
   <arg name="input/radar/objects" default="/perception/object_recognition/detection/radar/far_objects"/>
   <arg name="output/objects" default="/perception/object_recognition/tracking/objects"/>
 
@@ -19,7 +21,7 @@
   <let name="radar_tracker/input/objects" value="$(var input/radar/objects)"/>
   <let name="radar_tracker/output/objects" value="/perception/object_recognition/tracking/radar/far_objects"/>
 
-  <let name="multi_object_tracker/input/selected_input_channels" value="['detected_objects']"/>
+  <let name="multi_object_tracker/input/selected_input_channels" value="$(var input/detection_input_channels)"/>
   <let name="multi_object_tracker/output/objects" value="$(var output/objects)" unless="$(var use_radar_tracking_fusion)"/>
   <let name="multi_object_tracker/output/objects" value="/perception/object_recognition/tracking/near_objects" if="$(var use_radar_tracking_fusion)"/>
 

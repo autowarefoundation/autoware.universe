@@ -17,6 +17,8 @@
   <let name="without_dbt_and_filter" value="$(eval &quot;'$(var use_detection_by_tracker)'=='false' and '$(var use_object_filter)'=='false' &quot;)"/>
 
   <!-- external interfaces -->
+  <arg name="input/pointcloud_map/pointcloud" default="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud"/>
+  <arg name="input/obstacle_segmentation/pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
   <arg name="input/lidar_ml/objects" default="$(var lidar_detection_model)/objects"/>
   <arg name="input/lidar_rule/objects" default="clustering/objects"/>
   <arg name="input/detection_by_tracker/objects" default="detection_by_tracker/objects"/>
@@ -24,7 +26,7 @@
 
   <!-- internal interfaces -->
   <let name="validator/input/objects" value="$(var input/lidar_ml/objects)"/>
-  <let name="validator/input/obstacle_pointcloud" value="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud" if="$(var use_pointcloud_map)"/>
+  <let name="validator/input/obstacle_pointcloud" value="$(var input/pointcloud_map/pointcloud)" if="$(var use_pointcloud_map)"/>
   <let name="validator/input/obstacle_pointcloud" value="$(var input/obstacle_segmentation/pointcloud)" unless="$(var use_pointcloud_map)"/>
   <let name="validator/output/objects" value="$(var lidar_detection_model)/validation/objects"/>
 
