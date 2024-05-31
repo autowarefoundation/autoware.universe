@@ -14,7 +14,7 @@ ament_auto_add_library(gyro_bias_estimator SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "ImuCorrector"
+  PLUGIN "imu_corrector::ImuCorrector"
   EXECUTABLE ${PROJECT_NAME}_node
   EXECUTOR SingleThreadedExecutor
 )
