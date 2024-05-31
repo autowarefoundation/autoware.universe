@@ -76,6 +76,7 @@ private:
   const double heading_velocity_scale_factor_tolerance_;  // [%]
 
   const double angular_velocity_maximum_;                 // [rad/s]
+  const double angular_velocity_standard_deviation_;      // [rad/s]
   const double angular_velocity_scale_factor_tolerance_;  // [%]
   const double angular_velocity_bias_tolerance_;          // [rad/s]
 

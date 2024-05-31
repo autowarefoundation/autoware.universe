@@ -31,6 +31,8 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
   heading_velocity_scale_factor_tolerance_(
     this->declare_parameter<double>("heading_velocity_scale_factor_tolerance")),
   angular_velocity_maximum_(this->declare_parameter<double>("angular_velocity_maximum")),
+  angular_velocity_standard_deviation_(
+    this->declare_parameter<double>("angular_velocity_standard_deviation")),
   angular_velocity_scale_factor_tolerance_(
     this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
   angular_velocity_bias_tolerance_(
@@ -245,12 +247,14 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
      angular_velocity_bias_tolerance_) *
     interval_sec;
 
+  const double dead_reckoning_angular_process_noise = 3 *angular_velocity_standard_deviation_ * sqrt(interval_sec);
+
   threshold_diff_position_x_ = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
   threshold_diff_position_y_ = lateral_difference + pose_estimator_lateral_tolerance_;
   threshold_diff_position_z_ = vertical_difference + pose_estimator_vertical_tolerance_;
-  threshold_diff_angle_x_ = roll_difference + pose_estimator_angular_tolerance_;
-  threshold_diff_angle_y_ = pitch_difference + pose_estimator_angular_tolerance_;
-  threshold_diff_angle_z_ = yaw_difference + pose_estimator_angular_tolerance_;
+  threshold_diff_angle_x_ = roll_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
+  threshold_diff_angle_y_ = pitch_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
+  threshold_diff_angle_z_ = yaw_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
 }
 
 void PoseInstabilityDetector::dead_reckon(
@@ -286,7 +290,7 @@ void PoseInstabilityDetector::dead_reckon(
     const rclcpp::Time curr_time = rclcpp::Time(sliced_twist_deque[i].header.stamp);
     const double time_diff_sec = (curr_time - prev_odometry_time).seconds();
 
-    const Twist twist = sliced_twist_deque[i].twist.twist;
+    const Twist twist = sliced_twist_deque[i-1].twist.twist;
 
     // quat to rpy
     auto [ang_x, ang_y, ang_z] = quat_to_rpy(estimated_pose->orientation);
