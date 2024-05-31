@@ -1306,26 +1306,26 @@ lanelet::ConstLanelets extendNextLane(
 {
   if (lanes.empty()) return lanes;
 
-  auto extended_lanes = lanes;
+  const auto next_lanes = route_handler->getNextLanelets(lanes.back());
+  if (next_lanes.empty()) return lanes;
 
   // Add next lane
-  const auto next_lanes = route_handler->getNextLanelets(extended_lanes.back());
-  if (!next_lanes.empty()) {
-    std::optional<lanelet::ConstLanelet> target_next_lane;
-    if (!only_in_route) {
-      target_next_lane = next_lanes.front();
+  auto extended_lanes = lanes;
+  std::optional<lanelet::ConstLanelet> target_next_lane;
+  for (const auto & next_lane : next_lanes) {
+    // skip overlapping lanes
+    if (next_lane.id() == lanes.front().id()) continue;
+    
+    // if route lane, set target and break
+    if (route_handler->isRouteLanelet(next_lane)) {
+      target_next_lane = next_lane;
+      break;
     }
-    // use the next lane in route if it exists
-    for (const auto & next_lane : next_lanes) {
-      if (route_handler->isRouteLanelet(next_lane)) {
-        target_next_lane = next_lane;
-      }
-    }
-    if (target_next_lane) {
-      extended_lanes.push_back(*target_next_lane);
-    }
+    if (!only_in_route && !target_next_lane) target_next_lane = next_lane;
   }
-
+  if (target_next_lane) {
+    extended_lanes.push_back(*target_next_lane);
+  }
   return extended_lanes;
 }
 
@@ -1335,24 +1335,25 @@ lanelet::ConstLanelets extendPrevLane(
 {
   if (lanes.empty()) return lanes;
 
-  auto extended_lanes = lanes;
+  const auto prev_lanes = route_handler->getPreviousLanelets(lanes.front());
+  if (prev_lanes.empty()) return lanes;
 
   // Add previous lane
-  const auto prev_lanes = route_handler->getPreviousLanelets(extended_lanes.front());
-  if (!prev_lanes.empty()) {
-    std::optional<lanelet::ConstLanelet> target_prev_lane;
-    if (!only_in_route) {
-      target_prev_lane = prev_lanes.front();
+  auto extended_lanes = lanes;
+  std::optional<lanelet::ConstLanelet> target_prev_lane;
+  for (const auto & prev_lane : prev_lanes) {
+    // skip overlapping lanes
+    if (prev_lane.id() == lanes.back().id()) continue;
+
+    // if route lane, set target and break
+    if (route_handler->isRouteLanelet(prev_lane)) {
+      target_prev_lane = prev_lane;
+      break;
     }
-    // use the previous lane in route if it exists
-    for (const auto & prev_lane : prev_lanes) {
-      if (route_handler->isRouteLanelet(prev_lane)) {
-        target_prev_lane = prev_lane;
-      }
-    }
-    if (target_prev_lane) {
-      extended_lanes.insert(extended_lanes.begin(), *target_prev_lane);
-    }
+    if (!only_in_route && !target_prev_lane) target_prev_lane = prev_lane;
+  }
+  if (target_prev_lane) {
+    extended_lanes.insert(extended_lanes.begin(), *target_prev_lane);
   }
   return extended_lanes;
 }
