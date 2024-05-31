@@ -271,7 +271,7 @@ bool NetworkTRT::validateNetworkIO()
       engine->getProfileShape(tensors_names_[i], 0, nvinfer1::OptProfileSelector::kMAX)};
 
     tensorrt_common::LOG_INFO(logger_)
-      << "Engine input profile shape for " << tensors_names_[i] << ": " << engine_dims << std::endl;
+      << "Profile for " << tensors_names_[i] << ": " << engine_dims << std::endl;
 
     if (engine_dims != in_profile_dims_[i]) {
       tensorrt_common::LOG_ERROR(logger_)

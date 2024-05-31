@@ -28,7 +28,6 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
   const std::string trt_precision =
     this->declare_parameter<std::string>("trt_precision", descriptor);
   const auto voxels_num = this->declare_parameter<std::vector<int64_t>>("voxels_num", descriptor);
-  std::cout << voxels_num[0] << std::endl;
   const auto point_cloud_range =
     this->declare_parameter<std::vector<double>>("point_cloud_range", descriptor);
   const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size", descriptor);
