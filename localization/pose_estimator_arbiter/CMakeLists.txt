@@ -16,7 +16,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 target_include_directories(${PROJECT_NAME} PUBLIC src)
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "PoseEstimatorArbiter"
+  PLUGIN "pose_estimator_arbiter::PoseEstimatorArbiter"
   EXECUTABLE ${PROJECT_NAME}_node
   EXECUTOR MultiThreadedExecutor
 )
