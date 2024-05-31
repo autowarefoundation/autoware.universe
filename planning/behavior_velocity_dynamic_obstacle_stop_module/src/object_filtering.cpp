@@ -55,16 +55,16 @@ std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_obj
     const auto obj_arc_length = motion_utils::calcSignedArcLength(
       ego_data.path.points, ego_data.pose.position,
       o.kinematics.initial_pose_with_covariance.pose.position);
-    if (!params.ignore_objects_behind_ego) {
-      return (obj_arc_length < 0.0 &&
-              std::abs(obj_arc_length) <
-                params.behind_object_distance_threshold + o.shape.dimensions.x / 2.0) ||
-             (obj_arc_length > o.shape.dimensions.x / 2.0 ||
-              obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
-                                 params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0);
-    }
-    return obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx +
-                              params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
+    
+    bool is_behind_object = obj_arc_length < 0.0 && std::abs(obj_arc_length) < params.behind_object_distance_threshold + o.shape.dimensions.x / 2.0;
+    bool is_near_ego = obj_arc_length > 0.0 && obj_arc_length < params.behind_object_distance_threshold + o.shape.dimensions.x / 2.0;
+    bool is_in_front_of_ego = obj_arc_length > o.shape.dimensions.x / 2.0;
+    bool is_past_ego_end = obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx + params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
+
+    if (!params.ignore_objects_behind_ego)
+      return is_behind_object || is_near_ego || is_in_front_of_ego || is_past_ego_end;
+
+    return is_in_front_of_ego || is_past_ego_end;
   };
   const auto is_unavoidable = [&](const auto & o) {
     const auto & o_pose = o.kinematics.initial_pose_with_covariance.pose;
