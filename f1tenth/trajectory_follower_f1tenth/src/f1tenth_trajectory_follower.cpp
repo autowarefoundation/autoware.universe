@@ -33,7 +33,7 @@ F1tenthTrajectoryFollower::F1tenthTrajectoryFollower(const rclcpp::NodeOptions &
   drive_cmd_ = create_publisher<AckermannDriveStamped>("/drive", 1);
   traj_marker_pub_ = create_publisher<Marker>("/wp_marker", 1);
   goal_marker_pub_ = create_publisher<Marker>("/goal_marker", 1);
-
+  
   sub_kinematics_ = create_subscription<Odometry>(
     "input/kinematics", 1, [this](const Odometry::SharedPtr msg) { odometry_ = msg; });
   sub_trajectory_ = create_subscription<Trajectory>(
@@ -143,8 +143,8 @@ double F1tenthTrajectoryFollower::calcSteerCmd()
   constexpr auto lookahead_time = 3.0;
   constexpr auto min_lookahead = 3.0;
   const auto lookahead = min_lookahead + lookahead_time * std::abs(odometry_->twist.twist.linear.x);
-  const auto kp = 25.0 * wheel_base / (lookahead * lookahead);
-  const auto kd = 5.0 * wheel_base / lookahead;
+  const auto kp = 3.0 * wheel_base / (lookahead * lookahead);
+  const auto kd = 2.0 * wheel_base / lookahead;
 
   constexpr auto steer_lim = 1.0;
 
