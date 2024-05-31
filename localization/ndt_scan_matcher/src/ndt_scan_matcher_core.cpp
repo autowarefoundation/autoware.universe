@@ -197,7 +197,7 @@ void NDTScanMatcher::callback_timer()
 
   map_update_module_->callback_timer(is_activated_, latest_ekf_position_, diagnostics_map_update_);
 
-  diagnostics_map_update_->publish();
+  diagnostics_map_update_->publish(this->now());
 }
 
 void NDTScanMatcher::callback_initial_pose(
@@ -207,7 +207,7 @@ void NDTScanMatcher::callback_initial_pose(
 
   callback_initial_pose_main(initial_pose_msg_ptr);
 
-  diagnostics_initial_pose_->publish();
+  diagnostics_initial_pose_->publish(initial_pose_msg_ptr->header.stamp);
 }
 
 void NDTScanMatcher::callback_initial_pose_main(
@@ -260,7 +260,7 @@ void NDTScanMatcher::callback_regularization_pose(
 
   regularization_pose_buffer_->push_back(pose_conv_msg_ptr);
 
-  diagnostics_regularization_pose_->publish();
+  diagnostics_regularization_pose_->publish(pose_conv_msg_ptr->header.stamp);
 }
 
 void NDTScanMatcher::callback_sensor_points(
@@ -286,7 +286,7 @@ void NDTScanMatcher::callback_sensor_points(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  diagnostics_scan_points_->publish();
+  diagnostics_scan_points_->publish(sensor_points_msg_in_sensor_frame->header.stamp);
 }
 
 bool NDTScanMatcher::callback_sensor_points_main(
@@ -878,7 +878,7 @@ void NDTScanMatcher::service_trigger_node(
 
   diagnostics_trigger_node_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
   diagnostics_trigger_node_->addKeyValue("is_succeed_service", res->success);
-  diagnostics_trigger_node_->publish();
+  diagnostics_trigger_node_->publish(this->now());
 }
 
 void NDTScanMatcher::service_ndt_align(
@@ -899,7 +899,7 @@ void NDTScanMatcher::service_ndt_align(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  diagnostics_ndt_align_->publish();
+  diagnostics_ndt_align_->publish(this->now());
 }
 
 void NDTScanMatcher::service_ndt_align_main(
