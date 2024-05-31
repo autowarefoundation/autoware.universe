@@ -583,7 +583,12 @@ bool StartPlannerModule::canTransitSuccessState()
   // - Can transit to success if the goal position is reached.
   // - Cannot transit to success if the goal position is not reached.
   if (status_.planner_type == PlannerType::FREESPACE) {
-    return hasReachedFreespaceEnd();
+    if (hasReachedFreespaceEnd()) {
+      RCLCPP_DEBUG(
+        getLogger(), "Transit to success: Freespace planner reached the end point of the path.");
+      return true;
+    }
+    return false;
   }
 
   // Other Planners:
@@ -597,7 +602,12 @@ bool StartPlannerModule::canTransitSuccessState()
     return false;
   }
 
-  return hasReachedPullOutEnd();
+  if (hasReachedPullOutEnd()) {
+    RCLCPP_DEBUG(getLogger(), "Transit to success: Reached the end point of the pullout path.");
+    return true;
+  }
+
+  return false;
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
