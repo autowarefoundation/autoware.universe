@@ -20,7 +20,7 @@ rclcpp_components_register_node(${PROJECT_NAME}
 )
 
 rclcpp_components_register_node(gyro_bias_estimator
-  PLUGIN "GyroBiasEstimator"
+  PLUGIN "imu_corrector::GyroBiasEstimator"
   EXECUTABLE gyro_bias_estimator_node
   EXECUTOR SingleThreadedExecutor
 )
