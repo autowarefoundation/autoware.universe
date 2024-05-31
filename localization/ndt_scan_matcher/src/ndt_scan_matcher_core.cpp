@@ -193,15 +193,15 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
 
 void NDTScanMatcher::callback_timer()
 {
-  const rclcpp::Time now_ros_time = this->now();
+  const rclcpp::Time ros_time_now = this->now();
 
   diagnostics_map_update_->clear();
 
-  diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", now_ros_time.nanoseconds());
+  diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", ros_time_now.nanoseconds());
 
   map_update_module_->callback_timer(is_activated_, latest_ekf_position_, diagnostics_map_update_);
 
-  diagnostics_map_update_->publish(now_ros_time);
+  diagnostics_map_update_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::callback_initial_pose(
@@ -871,10 +871,10 @@ void NDTScanMatcher::service_trigger_node(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
-  const rclcpp::Time now_ros_time = this->now();
+  const rclcpp::Time ros_time_now = this->now();
 
   diagnostics_trigger_node_->clear();
-  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", now_ros_time.nanoseconds());
+  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", ros_time_now.nanoseconds());
 
   is_activated_ = req->data;
   if (is_activated_) {
@@ -884,18 +884,18 @@ void NDTScanMatcher::service_trigger_node(
 
   diagnostics_trigger_node_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
   diagnostics_trigger_node_->addKeyValue("is_succeed_service", res->success);
-  diagnostics_trigger_node_->publish(now_ros_time);
+  diagnostics_trigger_node_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::service_ndt_align(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
-  const rclcpp::Time now_ros_time = this->now();
+  const rclcpp::Time ros_time_now = this->now();
 
   diagnostics_ndt_align_->clear();
 
-  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", now_ros_time.nanoseconds());
+  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", ros_time_now.nanoseconds());
 
   service_ndt_align_main(req, res);
 
@@ -909,7 +909,7 @@ void NDTScanMatcher::service_ndt_align(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  diagnostics_ndt_align_->publish(now_ros_time);
+  diagnostics_ndt_align_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::service_ndt_align_main(
