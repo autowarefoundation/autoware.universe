@@ -18,7 +18,7 @@ import time
 
 import carla
 
-from .carla_ros import carla_interface
+from .carla_ros import carla_ros2_interface
 from .modules.carla_data_provider import CarlaDataProvider
 from .modules.carla_data_provider import GameTime
 from .modules.carla_wrapper import SensorReceivedNoData
@@ -54,7 +54,7 @@ class SensorLoop(object):
 
 class InitializeInterface(object):
     def __init__(self):
-        self.interface = carla_interface()
+        self.interface = carla_ros2_interface()
         self.param_ = self.interface.get_param()
         self.world = None
         self.sensor_wrapper = None

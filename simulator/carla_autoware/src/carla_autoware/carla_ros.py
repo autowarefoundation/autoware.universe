@@ -13,7 +13,6 @@
 # limitations under the License.sr/bin/env python
 
 import json
-import logging
 import math
 import threading
 
@@ -40,7 +39,6 @@ from tier4_vehicle_msgs.msg import ActuationCommandStamped
 from tier4_vehicle_msgs.msg import ActuationStatusStamped
 from transforms3d.euler import euler2quat
 
-from .modules.carla_data_provider import CarlaDataProvider
 from .modules.carla_data_provider import GameTime
 from .modules.carla_data_provider import datetime
 from .modules.carla_utils import carla_location_to_ros_point
@@ -50,7 +48,7 @@ from .modules.carla_utils import ros_pose_to_carla_transform
 from .modules.carla_wrapper import SensorInterface
 
 
-class carla_interface(object):
+class carla_ros2_interface(object):
     def __init__(self):
         self.sensor_interface = SensorInterface()
         self.timestamp = None
@@ -77,8 +75,7 @@ class carla_interface(object):
 
         # initialize ros2 node
         rclpy.init(args=None)
-        self.ros2_node = rclpy.create_node("carla_interface")
-        self.logger = logging.getLogger("log")
+        self.ros2_node = rclpy.create_node("carla_ros2_interface")
         self.parameters = {
             "host": rclpy.Parameter.Type.STRING,
             "port": rclpy.Parameter.Type.INTEGER,
@@ -157,13 +154,15 @@ class carla_interface(object):
                         PointCloud2, f'/sensing/lidar/{sensor["id"]}/pointcloud', 10
                     )
                 else:
-                    self.logger.info("Please use Top, Right, or Left as the LIDAR ID")
+                    self.ros2_node.get_logger().info(
+                        "Please use Top, Right, or Left as the LIDAR ID"
+                    )
             elif sensor["type"] == "sensor.other.imu":
                 self.pub_imu = self.ros2_node.create_publisher(
                     Imu, "/sensing/imu/tamagawa/imu_raw", 1
                 )
             else:
-                self.logger.info("No Publisher for this Sensor")
+                self.ros2_node.get_logger().info("No Publisher for this Sensor")
                 pass
 
         self.spin_thread = threading.Thread(target=rclpy.spin, args=(self.ros2_node,))
@@ -245,15 +244,9 @@ class carla_interface(object):
         header = self.get_msg_header(frame_id="map")
         out_pose_with_cov = PoseWithCovarianceStamped()
         pose_carla = Pose()
-        pose_carla.position = carla_location_to_ros_point(
-            CarlaDataProvider.get_transform(
-                CarlaDataProvider.get_actor_by_name(self.param_values["ego_vehicle_role_name"])
-            ).location
-        )
+        pose_carla.position = carla_location_to_ros_point(self.ego_actor.get_transform().location)
         pose_carla.orientation = carla_rotation_to_ros_quaternion(
-            CarlaDataProvider.get_transform(
-                CarlaDataProvider.get_actor_by_name(self.param_values["ego_vehicle_role_name"])
-            ).rotation
+            self.ego_actor.get_transform().rotation
         )
         out_pose_with_cov.header = header
         out_pose_with_cov.pose.pose = pose_carla
@@ -461,7 +454,7 @@ class carla_interface(object):
             elif sensor_type == "sensor.other.imu":
                 self.imu(data[1])
             else:
-                self.logger.info("No Publisher for [{key}] Sensor")
+                self.ros2_node.get_logger().info("No Publisher for [{key}] Sensor")
 
         # Publish ego vehicle status
         self.ego_status()

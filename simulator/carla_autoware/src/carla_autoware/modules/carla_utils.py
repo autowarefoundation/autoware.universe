@@ -6,7 +6,6 @@ import sys
 import carla
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
-import numpy as np
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs.msg import PointField
 from transforms3d.euler import euler2quat
