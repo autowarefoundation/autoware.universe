@@ -36,7 +36,7 @@ using DrawFunction = std::function<void(const DrawFunctionParams & params)>;
 
 void drawShape(
   const DrawFunctionParams & params, const std::string & filename, bool flipHorizontally,
-  bool flipVertically, int x_offset, int y_offset);
+  bool flipVertically, int x_offset, int y_offset, double scale_factor = 0.25);
 void drawCircle(const DrawFunctionParams & params);
 void drawLeftArrow(const DrawFunctionParams & params);
 void drawRightArrow(const DrawFunctionParams & params);
@@ -45,6 +45,7 @@ void drawDownArrow(const DrawFunctionParams & params);
 void drawDownLeftArrow(const DrawFunctionParams & params);
 void drawDownRightArrow(const DrawFunctionParams & params);
 void drawCross(const DrawFunctionParams & params);
+void drawUnknown(const DrawFunctionParams & params);
 void drawTrafficLightShape(
   cv::Mat & image, const std::string & shape, const cv::Point & position, const cv::Scalar & color,
   int size, float probability);
