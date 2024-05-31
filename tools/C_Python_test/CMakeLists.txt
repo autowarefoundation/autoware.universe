@@ -27,10 +27,10 @@ pkg_check_modules(YAMLCPP REQUIRED yaml-cpp>=0.5)
  
 include_directories(
   ${YAMLCPP_INCLUDE_DIRS}
-  $ENV{HOME}/dora/apis/c/node #dora的头文件路径 node_api.h
+  $ENV{HOME}/dora_project/dora/apis/c/node #dora的头文件路径 node_api.h
   #/home/nvidia/dora_project/dora/apis/c/node
-  $ENV{HOME}/dora/apis/c/operator
-  $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/ #C++ros的头文件路径
+  $ENV{HOME}/dora_project/dora/apis/c/operator
+  $ENV{HOME}/dora_project/dora/examples/c++-ros2-dataflow/build/ #C++ros的头文件路径
   
 )
 
@@ -38,7 +38,7 @@ add_executable(node_A node.cc )
 target_link_libraries(node_A
   ${YAMLCPP_LIBRARIES}
   # glog::glog
-  $ENV{HOME}/dora/target/release/libdora_node_api_c.a
+  $ENV{HOME}/dora_project/dora/target/release/libdora_node_api_c.a
   m
   rt
   dl 
