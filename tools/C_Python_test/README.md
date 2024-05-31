@@ -73,4 +73,4 @@ dora start dataflow.yml  --name test
 dora logs test node_B
 ~~~
 
-if everthing is ok you should see the expected result and what actually received from this logs display
+if everthing is ok you should see the expected result and what actually received from this logs display. We found more nodes involved the most chances the package lost can be found. From this example you may not see data lost each time when you run as this test tool only simulated two nodes. But keep trying and you will be able to reproduce it.
