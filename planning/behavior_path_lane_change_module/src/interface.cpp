@@ -225,7 +225,7 @@ bool LaneChangeInterface::canTransitFailureState()
   updateDebugMarker();
   log_debug_throttled(__func__);
 
-  if(getPreviousModuleOutput().path.points.empty()){
+  if (getPreviousModuleOutput().path.points.empty()) {
     return true;
   }
 
