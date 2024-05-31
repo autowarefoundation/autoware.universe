@@ -1582,15 +1582,19 @@ std::vector<geometry_msgs::msg::Point> postProcess(
       calcLongitudinalOffsetGoalPoint(tmp_bound, goal_pose, goal_start_idx, vehicle_length);
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(goal_point).orientation(goal_pose.orientation);
-    const size_t goal_nearest_idx = findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2);
-    const size_t goal_idx = ((goal_start_idx - start_idx)*(goal_start_idx - start_idx) > (goal_nearest_idx - start_idx)*(goal_nearest_idx - start_idx)) ? goal_start_idx : goal_nearest_idx;
+    const size_t goal_nearest_idx =
+      findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2);
+    const size_t goal_idx = ((goal_start_idx - start_idx) * (goal_start_idx - start_idx) >
+                             (goal_nearest_idx - start_idx) * (goal_nearest_idx - start_idx))
+                              ? goal_start_idx
+                              : goal_nearest_idx;
     return std::make_pair(goal_idx, goal_point);
   }();
 
   // Insert middle points
   size_t step = (start_idx < goal_idx) ? 1 : -1;
   for (size_t i = start_idx + step; i != goal_idx + step; i += step) {
-    const auto &next_point = tmp_bound.at(i);
+    const auto & next_point = tmp_bound.at(i);
     const double dist = tier4_autoware_utils::calcDistance2d(processed_bound.back(), next_point);
     if (dist > overlap_threshold) {
       processed_bound.push_back(next_point);

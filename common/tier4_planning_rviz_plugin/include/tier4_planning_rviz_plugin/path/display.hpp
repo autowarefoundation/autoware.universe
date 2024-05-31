@@ -82,9 +82,9 @@ void visualizeBound(
       }
       const float adjusted_width = width / std::sin(diff_angle);
       if (std::abs(adjusted_width) > 1.0) {
-          return std::make_pair(normal_vector_angle, adjusted_width / std::abs(adjusted_width));
+        return std::make_pair(normal_vector_angle, adjusted_width / std::abs(adjusted_width));
       } else {
-          return std::make_pair(normal_vector_angle, adjusted_width);
+        return std::make_pair(normal_vector_angle, adjusted_width);
       }
     }();
 
