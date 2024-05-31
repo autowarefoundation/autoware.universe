@@ -51,6 +51,7 @@ sudo apt-get install nlohmann-json3-dev
 sudo apt-get install libmsgpack-dev
 sudo apt-get install pkg-config
 sudo apt-get install libeigen3-dev
+sudo apt-get install libpcap-dev
 
 
 
