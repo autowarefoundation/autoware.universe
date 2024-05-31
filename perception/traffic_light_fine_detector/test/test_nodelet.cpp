@@ -49,5 +49,7 @@ TEST(CalWeightedIouTest, NoOverlap)
   // check size of map_based_bbox and yolox_bbox
   EXPECT_EQ(map_based_bbox.width, 10);
   EXPECT_EQ(yolox_bbox.width, 10);
+  const float iou = traffic_light::calWeightedIou(map_based_bbox, yolox_bbox);
+  EXPECT_FLOAT_EQ(iou, 0.0f);
   // EXPECT_FLOAT_EQ(traffic_light::calWeightedIou(map_based_bbox, yolox_bbox), 0.0f);
 }
