@@ -26,15 +26,14 @@ from .modules.carla_wrapper import SensorWrapper
 
 
 class SensorLoop(object):
-    def __init__(self, role_name):
+    def __init__(self):
         self.start_game_time = None
         self.start_system_time = None
         self.sensor = None
-        self.ego_vehicle = None
+        self.ego_actor = None
         self.running = False
         self.timestamp_last_run = 0.0
         self.timeout = 20.0
-        self.role_name = role_name
 
     def _stop_loop(self):
         self.running = False
@@ -48,7 +47,7 @@ class SensorLoop(object):
                 ego_action = self.sensor()
             except SensorReceivedNoData as e:
                 raise RuntimeError(e)
-            self.ego_vehicle.apply_control(ego_action)
+            self.ego_actor.apply_control(ego_action)
         if self.running:
             CarlaDataProvider.get_world().tick()
 
@@ -59,7 +58,7 @@ class InitializeInterface(object):
         self.param_ = self.interface.get_param()
         self.world = None
         self.sensor_wrapper = None
-        self.ego_vehicle = None
+        self.ego_actor = None
         self.prev_tick_wall_time = 0.0
 
         # Parameter for Initializing Carla World
@@ -80,83 +79,78 @@ class InitializeInterface(object):
         client.set_timeout(self.timeout)
         client.load_world(self.carla_map)
         self.world = client.get_world()
-        if self.world is not None:
-            settings = self.world.get_settings()
-            settings.fixed_delta_seconds = self.fixed_delta_seconds
-            settings.synchronous_mode = self.sync_mode
-            self.world.apply_settings(settings)
-            CarlaDataProvider.set_world(self.world)
-            CarlaDataProvider.set_client(client)
-            spawn_point = carla.Transform()
-            spawn_point = carla.Transform()
-            point_items = self.spawn_point.split(",")
-            randomize = False
-            if len(point_items) == 6:
-                spawn_point.location.x = float(point_items[0])
-                spawn_point.location.y = float(point_items[1])
-                spawn_point.location.z = (
-                    float(point_items[2]) + 2
-                )  # +2 is used so the car did not stuck on the road when spawned.
-                spawn_point.rotation.roll = float(point_items[3])
-                spawn_point.rotation.pitch = float(point_items[4])
-                spawn_point.rotation.yaw = float(point_items[5])
-            else:
-                randomize = True
-            CarlaDataProvider.request_new_actor(
-                self.vehicle_type, spawn_point, self.agent_role_name, random_location=randomize
-            )
-
-            self.sensor_wrapper = SensorWrapper(self.interface)
-            self.ego_vehicle = CarlaDataProvider.get_actor_by_name(self.agent_role_name)
-            self.sensor_wrapper.setup_sensors(self.ego_vehicle, False)
-            ##########################################################################################################################################################
-            # TRAFFIC MANAGER
-            ##########################################################################################################################################################
-            if self.use_traffic_manager:
-                traffic_manager = client.get_trafficmanager()
-                traffic_manager.set_synchronous_mode(True)
-                traffic_manager.set_random_device_seed(0)
-                random.seed(0)
-                spawn_points_tm = self.world.get_map().get_spawn_points()
-                for i, spawn_point in enumerate(spawn_points_tm):
-                    self.world.debug.draw_string(spawn_point.location, str(i), life_time=10)
-                models = [
-                    "dodge",
-                    "audi",
-                    "model3",
-                    "mini",
-                    "mustang",
-                    "lincoln",
-                    "prius",
-                    "nissan",
-                    "crown",
-                    "impala",
-                ]
-                blueprints = []
-                for vehicle in self.world.get_blueprint_library().filter("*vehicle*"):
-                    if any(model in vehicle.id for model in models):
-                        blueprints.append(vehicle)
-                max_vehicles = 30
-                max_vehicles = min([max_vehicles, len(spawn_points_tm)])
-                vehicles = []
-                for i, spawn_point in enumerate(random.sample(spawn_points_tm, max_vehicles)):
-                    temp = self.world.try_spawn_actor(random.choice(blueprints), spawn_point)
-                    if temp is not None:
-                        vehicles.append(temp)
-
-                for vehicle in vehicles:
-                    vehicle.set_autopilot(True)
-
+        settings = self.world.get_settings()
+        settings.fixed_delta_seconds = self.fixed_delta_seconds
+        settings.synchronous_mode = self.sync_mode
+        self.world.apply_settings(settings)
+        CarlaDataProvider.set_world(self.world)
+        CarlaDataProvider.set_client(client)
+        spawn_point = carla.Transform()
+        point_items = self.spawn_point.split(",")
+        randomize = False
+        if len(point_items) == 6:
+            spawn_point.location.x = float(point_items[0])
+            spawn_point.location.y = float(point_items[1])
+            spawn_point.location.z = (
+                float(point_items[2]) + 2
+            )  # +2 is used so the car did not stuck on the road when spawned.
+            spawn_point.rotation.roll = float(point_items[3])
+            spawn_point.rotation.pitch = float(point_items[4])
+            spawn_point.rotation.yaw = float(point_items[5])
         else:
-            print("Carla Interface Couldn't find the world, Carla is not Running")
+            randomize = True
+        self.ego_actor = CarlaDataProvider.request_new_actor(
+            self.vehicle_type, spawn_point, self.agent_role_name, random_location=randomize
+        )
+        self.interface.ego_actor = self.ego_actor  # TODO improve design
+        self.interface.physics_control = self.ego_actor.get_physics_control()
+
+        self.sensor_wrapper = SensorWrapper(self.interface)
+        self.sensor_wrapper.setup_sensors(self.ego_actor, False)
+        ##########################################################################################################################################################
+        # TRAFFIC MANAGER
+        ##########################################################################################################################################################
+        if self.use_traffic_manager:
+            traffic_manager = client.get_trafficmanager()
+            traffic_manager.set_synchronous_mode(True)
+            traffic_manager.set_random_device_seed(0)
+            random.seed(0)
+            spawn_points_tm = self.world.get_map().get_spawn_points()
+            for i, spawn_point in enumerate(spawn_points_tm):
+                self.world.debug.draw_string(spawn_point.location, str(i), life_time=10)
+            models = [
+                "dodge",
+                "audi",
+                "model3",
+                "mini",
+                "mustang",
+                "lincoln",
+                "prius",
+                "nissan",
+                "crown",
+                "impala",
+            ]
+            blueprints = []
+            for vehicle in self.world.get_blueprint_library().filter("*vehicle*"):
+                if any(model in vehicle.id for model in models):
+                    blueprints.append(vehicle)
+            max_vehicles = 30
+            max_vehicles = min([max_vehicles, len(spawn_points_tm)])
+            vehicles = []
+            for i, spawn_point in enumerate(random.sample(spawn_points_tm, max_vehicles)):
+                temp = self.world.try_spawn_actor(random.choice(blueprints), spawn_point)
+                if temp is not None:
+                    vehicles.append(temp)
+
+            for vehicle in vehicles:
+                vehicle.set_autopilot(True)
 
     def run_bridge(self):
-        self.bridge_loop = SensorLoop(self.agent_role_name)
+        self.bridge_loop = SensorLoop()
         self.bridge_loop.sensor = self.sensor_wrapper
-        self.bridge_loop.ego_vehicle = self.ego_vehicle
+        self.bridge_loop.ego_actor = self.ego_actor
         self.bridge_loop.start_system_time = time.time()
         self.bridge_loop.start_game_time = GameTime.get_time()
-        self.bridge_loop.role_name = self.agent_role_name
         self.bridge_loop.running = True
         while self.bridge_loop.running:
             timestamp = None
@@ -179,20 +173,20 @@ class InitializeInterface(object):
     def _cleanup(self):
         self.sensor_wrapper.cleanup()
         CarlaDataProvider.cleanup()
-        if self.ego_vehicle:
-            self.ego_vehicle.destroy()
-            self.ego_vehicle = None
+        if self.ego_actor:
+            self.ego_actor.destroy()
+            self.ego_actor = None
 
         if self.interface:
+            self.interface.shutdown()
             self.interface = None
 
 
 def main():
     carla_bridge = InitializeInterface()
     carla_bridge.load_world()
-    stop_bridge = signal.signal(signal.SIGINT, carla_bridge._stop_loop)
+    signal.signal(signal.SIGINT, carla_bridge._stop_loop)
     carla_bridge.run_bridge()
-    signal.signal(signal.SIGINT, stop_bridge)
     carla_bridge._cleanup()
 
 

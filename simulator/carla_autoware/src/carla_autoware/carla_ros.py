@@ -53,17 +53,15 @@ from .modules.carla_wrapper import SensorInterface
 class carla_interface(object):
     def __init__(self):
         self.sensor_interface = SensorInterface()
-        self.setup()
-
-    def setup(self):
         self.timestamp = None
+        self.ego_actor = None
+        self.physics_control = None
         self.channels = 0
         self.id_to_sensor_type_map = {}
         self.id_to_camera_info_map = {}
         self.cv_bridge = CvBridge()
         self.first_ = True
         self.pub_lidar = {}
-
         self.sensor_frequencies = {
             "top": 11,
             "left": 11,
@@ -73,7 +71,6 @@ class carla_interface(object):
             "status": 50,
             "pose": 2,
         }
-        self.max_steering_angle = 45
         self.publish_prev_times = {
             sensor: datetime.datetime.now() for sensor in self.sensor_frequencies
         }
@@ -140,7 +137,7 @@ class carla_interface(object):
         self.pub_gear_state = self.ros2_node.create_publisher(
             GearReport, "/vehicle/status/gear_status", 1
         )
-        self.actuation_status = self.ros2_node.create_publisher(
+        self.pub_actuation_status = self.ros2_node.create_publisher(
             ActuationStatusStamped, "/vehicle/status/actuation_status", 1
         )
 
@@ -229,23 +226,13 @@ class carla_interface(object):
         point_cloud_msg = create_cloud(header, fields, lidar_data)
         self.pub_lidar[id_].publish(point_cloud_msg)
 
-    def get_ego_vehicle(self):
-        for car in CarlaDataProvider.get_world().get_actors().filter("vehicle.*"):
-            if car.attributes["role_name"] == self.agent_role_name:
-                return car
-        return None
-
     def initialpose_callback(self, data):
         """Transform RVIZ initial pose to CARLA."""
-        self.ego_vehicle = CarlaDataProvider.get_actor_by_name(
-            self.param_values["ego_vehicle_role_name"]
-        )
-
         pose = data.pose.pose
         pose.position.z += 2.0
         carla_pose_transform = ros_pose_to_carla_transform(pose)
-        if self.ego_vehicle is not None:
-            self.ego_vehicle.set_transform(carla_pose_transform)
+        if self.ego_actor is not None:
+            self.ego_actor.set_transform(carla_pose_transform)
         else:
             print("Can't find Ego Vehicle")
 
@@ -382,7 +369,17 @@ class carla_interface(object):
         """Convert and publish CARLA Ego Vehicle Control to AUTOWARE."""
         out_cmd = carla.VehicleControl()
         out_cmd.throttle = in_cmd.actuation.accel_cmd
-        out_cmd.steer = -in_cmd.actuation.steer_cmd
+        # convert base on steer curve of the vehicle
+        steer_curve = self.physics_control.steering_curve
+        current_vel = self.ego_actor.get_velocity()
+        max_steer_ratio = numpy.interp(
+            abs(current_vel.x), [v.x for v in steer_curve], [v.y for v in steer_curve]
+        )
+        out_cmd.steer = (
+            -in_cmd.actuation.steer_cmd
+            * max_steer_ratio
+            * math.radians(self.physics_control.wheels[0].max_steer_angle)
+        )
         out_cmd.brake = in_cmd.actuation.brake_cmd
         self.current_control = out_cmd
 
@@ -390,15 +387,21 @@ class carla_interface(object):
         """Publish ego vehicle status."""
         if self.checkFrequency("status"):
             return
-        self.publish_prev_times["status"] = datetime.datetime.now()
-        ego_vehicle = CarlaDataProvider.get_actor_by_name(
-            self.param_values["ego_vehicle_role_name"]
-        )
-        control = ego_vehicle.get_control()
 
-        self.current_vel = CarlaDataProvider.get_velocity(
-            CarlaDataProvider.get_actor_by_name(self.param_values["ego_vehicle_role_name"])
-        )
+        self.publish_prev_times["status"] = datetime.datetime.now()
+
+        # convert velocity from cartesian to ego frame
+        trans_mat = numpy.array(self.ego_actor.get_transform().get_matrix()).reshape(4, 4)
+        rot_mat = trans_mat[0:3, 0:3]
+        inv_rot_mat = rot_mat.T
+        vel_vec = numpy.array(
+            [
+                self.ego_actor.get_velocity().x,
+                self.ego_actor.get_velocity().y,
+                self.ego_actor.get_velocity().z,
+            ]
+        ).reshape(3, 1)
+        ego_velocity = (inv_rot_mat @ vel_vec).T[0]
 
         out_vel_state = VelocityReport()
         out_steering_state = SteeringReport()
@@ -408,13 +411,15 @@ class carla_interface(object):
         out_actuation_status = ActuationStatusStamped()
 
         out_vel_state.header = self.get_msg_header(frame_id="base_link")
-        out_vel_state.longitudinal_velocity = self.current_vel
-        out_vel_state.lateral_velocity = 0.0
-        out_vel_state.heading_rate = 0.0
+        out_vel_state.longitudinal_velocity = ego_velocity[0]
+        out_vel_state.lateral_velocity = ego_velocity[1]
+        out_vel_state.heading_rate = (
+            self.ego_actor.get_transform().transform_vector(self.ego_actor.get_angular_velocity()).z
+        )
 
         out_steering_state.stamp = out_vel_state.header.stamp
         out_steering_state.steering_tire_angle = -math.radians(
-            ego_vehicle.get_wheel_steer_angle(carla.VehicleWheelLocation.FL_Wheel)
+            self.ego_actor.get_wheel_steer_angle(carla.VehicleWheelLocation.FL_Wheel)
         )
 
         out_gear_state.stamp = out_vel_state.header.stamp
@@ -423,14 +428,13 @@ class carla_interface(object):
         out_ctrl_mode.stamp = out_vel_state.header.stamp
         out_ctrl_mode.mode = ControlModeReport.AUTONOMOUS
 
+        control = self.ego_actor.get_control()
         out_actuation_status.header = self.get_msg_header(frame_id="base_link")
         out_actuation_status.status.accel_status = control.throttle
         out_actuation_status.status.brake_status = control.brake
-        out_actuation_status.status.steer_status = -math.radians(
-            ego_vehicle.get_wheel_steer_angle(carla.VehicleWheelLocation.FL_Wheel)
-        )
+        out_actuation_status.status.steer_status = -control.steer
 
-        self.actuation_status.publish(out_actuation_status)
+        self.pub_actuation_status.publish(out_actuation_status)
         self.pub_vel_state.publish(out_vel_state)
         self.pub_steering_state.publish(out_steering_state)
         self.pub_ctrl_mode.publish(out_ctrl_mode)
@@ -462,3 +466,6 @@ class carla_interface(object):
         # Publish ego vehicle status
         self.ego_status()
         return self.current_control
+
+    def shutdown(self):
+        self.ros2_node.destroy_node()
