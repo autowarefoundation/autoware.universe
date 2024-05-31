@@ -19,7 +19,7 @@
 
 void drawShape(
   const DrawFunctionParams & params, const std::string & filename, bool flipHorizontally,
-  bool flipVertically, int x_offset, int y_offset)
+  bool flipVertically, int x_offset, int y_offset, double scale_factor)
 {
   std::string filepath =
     ament_index_cpp::get_package_share_directory("traffic_light_visualization") + "/images/" +
@@ -38,8 +38,6 @@ void drawShape(
     cv::flip(shapeImg, shapeImg, 0);  // Flip vertically
   }
 
-  // Resize image if needed
-  double scale_factor = 0.25;  // Scale factor to reduce the size by 50%
   cv::resize(
     shapeImg, shapeImg, cv::Size(params.size, params.size), scale_factor, scale_factor,
     cv::INTER_AREA);
@@ -56,12 +54,19 @@ void drawShape(
     return;
   }
 
-  // Draw a rectangle background before placing the image
+  // Calculate the width of the text
+  std::string probabilityText =
+    std::to_string(static_cast<int>(round(params.probability * 100))) + "%";
+  int baseline = 0;
+  cv::Size textSize = cv::getTextSize(probabilityText, cv::FONT_HERSHEY_SIMPLEX, 0.7, 2, &baseline);
+
+  // Adjust the filled rectangle to be at the top edge and the correct width
+  int filledRectWidth =
+    shapeImg.cols + (filename != "unknown.png" ? textSize.width + 10 : 5);  // Add some padding
+  int filledRectHeight = shapeImg.rows + 10;                                // Add some padding
+
   cv::rectangle(
-    params.image,
-    cv::Rect(
-      // width should take into account the text width
-      position.x - 2, position.y - 5, shapeImg.cols + 70, shapeImg.rows + 12),
+    params.image, cv::Rect(position.x - 2, position.y - 5, filledRectWidth, filledRectHeight),
     params.color,
     -1);  // Filled rectangle
 
@@ -78,60 +83,69 @@ void drawShape(
     }
   }
 
-  // position the probability text right next to the shape
-  cv::putText(
-    params.image, std::to_string(static_cast<int>(round(params.probability * 100))) + "%",
-    cv::Point(position.x + shapeImg.cols + 5, position.y + shapeImg.rows / 2 + 5),
-    cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 0), 2, cv::LINE_AA);
+  // Position the probability text right next to the shape
+  if (filename != "unknown.png") {
+    cv::putText(
+      params.image, probabilityText,
+      cv::Point(
+        position.x + shapeImg.cols + 5, position.y + shapeImg.rows / 2 + textSize.height / 2),
+      cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 0), 2, cv::LINE_AA);
+  }
 }
 
-void drawCircle(const DrawFunctionParams & params)
+void drawCross(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2;
+  int y_offset = params.size / 2 + 5;
   drawShape(params, "circle.png", false, false, 0, -y_offset);
 }
 
 void drawLeftArrow(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2 + 10;
+  int y_offset = params.size / 2 + 5;
   drawShape(params, "left_arrow.png", false, false, 0, -y_offset);
 }
 
 void drawRightArrow(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2 + 10;
+  int y_offset = params.size / 2 + 5;
   drawShape(params, "left_arrow.png", true, false, 0, -y_offset);
 }
 
 void drawStraightArrow(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2 + 10;  // This adjusts the base position upwards
+  int y_offset = params.size / 2 + 5;  // This adjusts the base position upwards
 
   drawShape(params, "straight_arrow.png", false, false, 0, -y_offset);
 }
 void drawDownArrow(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2 + 10;  // This adjusts the base position upwards
+  int y_offset = params.size / 2 + 5;  // This adjusts the base position upwards
   drawShape(params, "straight_arrow.png", false, true, 0, -y_offset);
 }
 
 void drawDownLeftArrow(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2 + 15;
+  int y_offset = params.size / 2 + 5;
   drawShape(params, "down_left_arrow.png", false, false, 0, -y_offset);
 }
 
 void drawDownRightArrow(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2 + 15;
+  int y_offset = params.size / 2 + 5;
   drawShape(params, "down_left_arrow.png", true, false, 0, -y_offset);
 }
 
-void drawCross(const DrawFunctionParams & params)
+void drawCircle(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2 + 10;
+  int y_offset = params.size / 2 + 5;
 
   drawShape(params, "cross.png", false, false, 0, -y_offset);
+}
+
+void drawUnknown(const DrawFunctionParams & params)
+{
+  int y_offset = params.size / 2;
+  drawShape(params, "unknown.png", false, false, 0, -y_offset);
 }
 
 void drawTrafficLightShape(
@@ -146,13 +160,13 @@ void drawTrafficLightShape(
     {"down", drawDownArrow},
     {"down_left", drawDownLeftArrow},
     {"down_right", drawDownRightArrow},
-    {"cross", drawCross}};
+    {"cross", drawCross},
+    {"unknown", drawUnknown}};
   auto it = shapeToFunction.find(shape);
   if (it != shapeToFunction.end()) {
     DrawFunctionParams params{image, position, color, size, probability};
     it->second(params);
   } else {
-    cv::putText(
-      image, "?", cv::Point(position.x, position.y - 5), cv::FONT_HERSHEY_COMPLEX, 0.5, color, 2);
+    std::cerr << "Unknown shape: " << shape << std::endl;
   }
 }
