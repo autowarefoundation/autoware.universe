@@ -49,6 +49,7 @@ set(CMAKE_CXX_COMPILER "/home/xiling2/Desktop/tools/clang+llvm-12.0.0-x86_64-lin
 sudo apt-get install libyaml-cpp-dev
 sudo apt-get install nlohmann-json3-dev
 sudo apt-get install libmsgpack-dev
+sudo apt-get install pkg-config
 
 
 
