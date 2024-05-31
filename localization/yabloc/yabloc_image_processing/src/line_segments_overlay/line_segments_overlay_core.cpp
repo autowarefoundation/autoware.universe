@@ -24,7 +24,7 @@
 namespace yabloc::line_segments_overlay
 {
 LineSegmentsOverlay::LineSegmentsOverlay(const rclcpp::NodeOptions & options)
-: Node("overlay_lanelet2", options),
+: Node("line_segments_overlay", options),
   max_buffer_size_(static_cast<size_t>(declare_parameter<int>("max_buffer_size", 5)))
 {
   using std::placeholders::_1;

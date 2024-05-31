@@ -47,7 +47,7 @@ rclcpp_components_register_node(${PROJECT_NAME}
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "yabloc::line_segment_detector::LineSegmentsOverlay"
+  PLUGIN "yabloc::line_segments_overlay::LineSegmentsOverlay"
   EXECUTABLE yabloc_line_segments_overlay_node
   EXECUTOR SingleThreadedExecutor
 )
