@@ -115,14 +115,14 @@ bool AvoidanceModule::isExecutionReady() const
   return avoid_data_.safe && avoid_data_.comfortable && avoid_data_.valid && avoid_data_.ready;
 }
 
-bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & data) const
+AvoidanceState AvoidanceModule::getCurrentModuleState(const AvoidancePlanningData & data) const
 {
   const bool has_avoidance_target = std::any_of(
     data.target_objects.begin(), data.target_objects.end(),
     [this](const auto & o) { return !helper_->isAbsolutelyNotAvoidable(o); });
 
   if (has_avoidance_target) {
-    return false;
+    return AvoidanceState::RUNNING;
   }
 
   // If the ego is on the shift line, keep RUNNING.
@@ -133,7 +133,7 @@ bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & 
     };
     for (const auto & shift_line : path_shifter_.getShiftLines()) {
       if (within(shift_line, idx)) {
-        return false;
+        return AvoidanceState::RUNNING;
       }
     }
   }
@@ -142,17 +142,21 @@ bool AvoidanceModule::isSatisfiedSuccessCondition(const AvoidancePlanningData & 
   const bool has_base_offset =
     std::abs(path_shifter_.getBaseOffset()) > parameters_->lateral_execution_threshold;
 
+  if (has_base_offset) {
+    return AvoidanceState::RUNNING;
+  }
+
   // Nothing to do. -> EXIT.
-  if (!has_shift_point && !has_base_offset) {
-    return true;
+  if (!has_shift_point) {
+    return AvoidanceState::SUCCEEDED;
   }
 
   // Be able to canceling avoidance path. -> EXIT.
   if (!helper_->isShifted() && parameters_->enable_cancel_maneuver) {
-    return true;
+    return AvoidanceState::CANCEL;
   }
 
-  return false;
+  return AvoidanceState::RUNNING;
 }
 
 bool AvoidanceModule::canTransitSuccessState()
@@ -183,7 +187,7 @@ bool AvoidanceModule::canTransitSuccessState()
     }
   }
 
-  return data.success;
+  return data.state == AvoidanceState::CANCEL || data.state == AvoidanceState::SUCCEEDED;
 }
 
 void AvoidanceModule::fillFundamentalData(AvoidancePlanningData & data, DebugData & debug)
@@ -409,9 +413,9 @@ bool AvoidanceModule::canYieldManeuver(const AvoidancePlanningData & data) const
   const auto registered_lines = path_shifter_.getShiftLines();
   if (!registered_lines.empty()) {
     const size_t idx = planner_data_->findEgoIndex(path_shifter_.getReferencePath().points);
-    const auto to_shift_start_point = motion_utils::calcSignedArcLength(
+    const auto prepare_distance = motion_utils::calcSignedArcLength(
       path_shifter_.getReferencePath().points, idx, registered_lines.front().start_idx);
-    if (to_shift_start_point < helper_->getMinimumPrepareDistance()) {
+    if (!helper_->isEnoughPrepareDistance(prepare_distance)) {
       RCLCPP_DEBUG(
         getLogger(),
         "Distance to shift start point is less than minimum prepare distance. The distance is not "
@@ -502,7 +506,7 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
 void AvoidanceModule::fillEgoStatus(
   AvoidancePlanningData & data, [[maybe_unused]] DebugData & debug) const
 {
-  data.success = isSatisfiedSuccessCondition(data);
+  data.state = getCurrentModuleState(data);
 
   /**
    * Find the nearest object that should be avoid. When the ego follows reference path,
@@ -633,27 +637,6 @@ void AvoidanceModule::fillDebugData(
   }
 }
 
-AvoidanceState AvoidanceModule::updateEgoState(const AvoidancePlanningData & data) const
-{
-  if (data.yield_required) {
-    return AvoidanceState::YIELD;
-  }
-
-  if (!data.avoid_required) {
-    return AvoidanceState::NOT_AVOID;
-  }
-
-  if (!data.found_avoidance_path) {
-    return AvoidanceState::AVOID_PATH_NOT_READY;
-  }
-
-  if (isWaitingApproval() && path_shifter_.getShiftLines().empty()) {
-    return AvoidanceState::AVOID_PATH_READY;
-  }
-
-  return AvoidanceState::AVOID_EXECUTE;
-}
-
 void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, ShiftedPath & path)
 {
   if (parameters_->disable_path_update) {
@@ -663,29 +646,30 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
   insertPrepareVelocity(path);
   insertAvoidanceVelocity(path);
 
-  switch (data.state) {
-    case AvoidanceState::NOT_AVOID: {
-      break;
-    }
-    case AvoidanceState::YIELD: {
+  const auto insert_velocity = [this, &data, &path]() {
+    if (data.yield_required) {
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
-      break;
+      return;
     }
-    case AvoidanceState::AVOID_PATH_NOT_READY: {
+
+    if (!data.avoid_required) {
+      return;
+    }
+
+    if (!data.found_avoidance_path) {
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
-      break;
+      return;
     }
-    case AvoidanceState::AVOID_PATH_READY: {
+
+    if (isWaitingApproval() && path_shifter_.getShiftLines().empty()) {
       insertWaitPoint(isBestEffort(parameters_->policy_deceleration), path);
-      break;
+      return;
     }
-    case AvoidanceState::AVOID_EXECUTE: {
-      insertStopPoint(isBestEffort(parameters_->policy_deceleration), path);
-      break;
-    }
-    default:
-      throw std::domain_error("invalid behavior");
-  }
+
+    insertStopPoint(isBestEffort(parameters_->policy_deceleration), path);
+  };
+
+  insert_velocity();
 
   insertReturnDeadLine(isBestEffort(parameters_->policy_deceleration), path);
 
@@ -869,12 +853,16 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   updatePathShifter(data.safe_shift_line);
 
-  if (data.success) {
-    removeRegisteredShiftLines();
+  if (data.state == AvoidanceState::SUCCEEDED) {
+    removeRegisteredShiftLines(State::SUCCEEDED);
+  }
+
+  if (data.state == AvoidanceState::CANCEL) {
+    removeRegisteredShiftLines(State::FAILED);
   }
 
   if (data.yield_required) {
-    removeRegisteredShiftLines();
+    removeRegisteredShiftLines(State::FAILED);
   }
 
   // generate path with shift points that have been inserted.
@@ -940,8 +928,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
     spline_shift_path.path = utils::resamplePathWithSpline(
       spline_shift_path.path, parameters_->resample_interval_for_output);
   }
-
-  avoid_data_.state = updateEgoState(data);
 
   // update output data
   {
@@ -1360,12 +1346,7 @@ void AvoidanceModule::updateDebugMarker(
   const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const
 {
   debug_marker_.markers.clear();
-
-  if (!parameters_->publish_debug_marker) {
-    return;
-  }
-
-  debug_marker_ = utils::avoidance::createDebugMarkerArray(data, shifter, debug);
+  debug_marker_ = utils::avoidance::createDebugMarkerArray(data, shifter, debug, parameters_);
 }
 
 void AvoidanceModule::updateAvoidanceDebugData(
@@ -1417,10 +1398,11 @@ double AvoidanceModule::calcDistanceToStopLine(const ObjectData & object) const
   const auto avoidance_distance = helper_->getMinAvoidanceDistance(
     helper_->getShiftLength(object, utils::avoidance::isOnRight(object), avoid_margin));
   const auto constant_distance = helper_->getFrontConstantDistance(object);
+  const auto prepare_distance = helper_->getNominalPrepareDistance(0.0);
 
   return object.longitudinal -
          std::min(
-           avoidance_distance + constant_distance + p->min_prepare_distance + p->stop_buffer,
+           avoidance_distance + constant_distance + prepare_distance + p->stop_buffer,
            p->stop_max_distance);
 }
 
@@ -1449,7 +1431,7 @@ void AvoidanceModule::insertReturnDeadLine(
   const auto buffer = std::max(0.0, to_shifted_path_end - to_reference_path_end);
 
   const auto min_return_distance =
-    helper_->getMinAvoidanceDistance(shift_length) + helper_->getMinimumPrepareDistance();
+    helper_->getMinAvoidanceDistance(shift_length) + helper_->getNominalPrepareDistance(0.0);
   const auto to_stop_line = data.to_return_point - min_return_distance - buffer;
 
   // If we don't need to consider deceleration constraints, insert a deceleration point
