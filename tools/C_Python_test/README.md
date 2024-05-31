@@ -72,3 +72,5 @@ dora up
 dora start dataflow.yml  --name test
 dora logs test node_B
 ~~~
+
+if everthing is ok you should see the expected result and what actually received from this logs display
