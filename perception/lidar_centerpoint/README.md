@@ -27,6 +27,7 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 | `debug/processing_time_ms` | `tier4_debug_msgs::msg::Float64Stamped`               | processing time (ms) |
 
 ## Parameters
+
 {{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_ml_package.schema.json") }}
 {{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_tiny_ml_package.schema.json") }}
 {{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint.schema.json") }}
