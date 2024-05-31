@@ -49,7 +49,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   // publish the necessary topics from test_manager second argument is topic name
   test_manager->publishOdometry(test_target_node, "/localization/kinematic_state");
   test_manager->publishMaxVelocity(
-    test_target_node, "motion_velocity_smoother/input/external_velocity_limit_mps");
+    test_target_node, "velocity_smoother/input/external_velocity_limit_mps");
 
   // set scenario_selector's input topic name(this topic is changed to test node)
   test_manager->setTrajectoryInputTopicName("input/parking/trajectory");
@@ -73,7 +73,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 | Node                      | Test name                                                                                 | exceptional input | output         | Exceptional input pattern                                                             |
 | ------------------------- | ----------------------------------------------------------------------------------------- | ----------------- | -------------- | ------------------------------------------------------------------------------------- |
 | planning_validator        | NodeTestWithExceptionTrajectory                                                           | trajectory        | trajectory     | Empty, single point, path with duplicate points                                       |
-| motion_velocity_smoother  | NodeTestWithExceptionTrajectory                                                           | trajectory        | trajectory     | Empty, single point, path with duplicate points                                       |
+| velocity_smoother         | NodeTestWithExceptionTrajectory                                                           | trajectory        | trajectory     | Empty, single point, path with duplicate points                                       |
 | obstacle_cruise_planner   | NodeTestWithExceptionTrajectory                                                           | trajectory        | trajectory     | Empty, single point, path with duplicate points                                       |
 | obstacle_stop_planner     | NodeTestWithExceptionTrajectory                                                           | trajectory        | trajectory     | Empty, single point, path with duplicate points                                       |
 | obstacle_velocity_limiter | NodeTestWithExceptionTrajectory                                                           | trajectory        | trajectory     | Empty, single point, path with duplicate points                                       |
