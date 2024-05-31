@@ -193,11 +193,15 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
 
 void NDTScanMatcher::callback_timer()
 {
+  const rclcpp::Time now_ros_time = this->now();
+
   diagnostics_map_update_->clear();
+
+  diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", now_ros_time.nanoseconds());
 
   map_update_module_->callback_timer(is_activated_, latest_ekf_position_, diagnostics_map_update_);
 
-  diagnostics_map_update_->publish(this->now());
+  diagnostics_map_update_->publish(now_ros_time);
 }
 
 void NDTScanMatcher::callback_initial_pose(
@@ -867,8 +871,10 @@ void NDTScanMatcher::service_trigger_node(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
+  const rclcpp::Time now_ros_time = this->now();
+
   diagnostics_trigger_node_->clear();
-  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", this->now().nanoseconds());
+  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", now_ros_time.nanoseconds());
 
   is_activated_ = req->data;
   if (is_activated_) {
@@ -878,14 +884,18 @@ void NDTScanMatcher::service_trigger_node(
 
   diagnostics_trigger_node_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
   diagnostics_trigger_node_->addKeyValue("is_succeed_service", res->success);
-  diagnostics_trigger_node_->publish(this->now());
+  diagnostics_trigger_node_->publish(now_ros_time);
 }
 
 void NDTScanMatcher::service_ndt_align(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
+  const rclcpp::Time now_ros_time = this->now();
+
   diagnostics_ndt_align_->clear();
+
+  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", now_ros_time.nanoseconds());
 
   service_ndt_align_main(req, res);
 
@@ -899,15 +909,13 @@ void NDTScanMatcher::service_ndt_align(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  diagnostics_ndt_align_->publish(this->now());
+  diagnostics_ndt_align_->publish(now_ros_time);
 }
 
 void NDTScanMatcher::service_ndt_align_main(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
-  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", this->now().nanoseconds());
-
   // get TF from pose_frame to map_frame
   const std::string & target_frame = param_.frame.map_frame;
   const std::string & source_frame = req->pose_with_covariance.header.frame_id;
