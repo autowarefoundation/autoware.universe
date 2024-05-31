@@ -36,7 +36,7 @@ using DrawFunction = std::function<void(const DrawFunctionParams & params)>;
 
 void drawShape(
   const DrawFunctionParams & params, const std::string & filename, bool flipHorizontally,
-  bool flipVertically, int x_offset, int y_offset, double scale_factor = 0.25);
+  bool flipVertically, int x_offset, int y_offset, double scale_factor = 0.3);
 void drawCircle(const DrawFunctionParams & params);
 void drawLeftArrow(const DrawFunctionParams & params);
 void drawRightArrow(const DrawFunctionParams & params);

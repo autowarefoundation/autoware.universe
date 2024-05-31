@@ -58,7 +58,8 @@ void drawShape(
   std::string probabilityText =
     std::to_string(static_cast<int>(round(params.probability * 100))) + "%";
   int baseline = 0;
-  cv::Size textSize = cv::getTextSize(probabilityText, cv::FONT_HERSHEY_SIMPLEX, 0.7, 2, &baseline);
+  cv::Size textSize =
+    cv::getTextSize(probabilityText, cv::FONT_HERSHEY_SIMPLEX, 0.75, 2, &baseline);
 
   // Adjust the filled rectangle to be at the top edge and the correct width
   int filledRectWidth =
@@ -89,11 +90,11 @@ void drawShape(
       params.image, probabilityText,
       cv::Point(
         position.x + shapeImg.cols + 5, position.y + shapeImg.rows / 2 + textSize.height / 2),
-      cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 0), 2, cv::LINE_AA);
+      cv::FONT_HERSHEY_SIMPLEX, 0.75, cv::Scalar(0, 0, 0), 2, cv::LINE_AA);
   }
 }
 
-void drawCross(const DrawFunctionParams & params)
+void drawCircle(const DrawFunctionParams & params)
 {
   int y_offset = params.size / 2 + 5;
   drawShape(params, "circle.png", false, false, 0, -y_offset);
@@ -135,7 +136,7 @@ void drawDownRightArrow(const DrawFunctionParams & params)
   drawShape(params, "down_left_arrow.png", true, false, 0, -y_offset);
 }
 
-void drawCircle(const DrawFunctionParams & params)
+void drawCross(const DrawFunctionParams & params)
 {
   int y_offset = params.size / 2 + 5;
 
@@ -144,7 +145,7 @@ void drawCircle(const DrawFunctionParams & params)
 
 void drawUnknown(const DrawFunctionParams & params)
 {
-  int y_offset = params.size / 2;
+  int y_offset = params.size / 2 + 5;
   drawShape(params, "unknown.png", false, false, 0, -y_offset);
 }
 
