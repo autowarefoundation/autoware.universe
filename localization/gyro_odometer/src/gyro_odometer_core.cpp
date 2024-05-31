@@ -91,7 +91,7 @@ void GyroOdometerNode::callbackVehicleTwist(
   vehicle_twist_queue_.push_back(*vehicle_twist_ptr);
   concatGyroAndOdometer();
 
-  diagnostics_->publish();
+  diagnostics_->publish(vehicle_twist_ptr->header.stamp);
 }
 
 
@@ -105,7 +105,7 @@ void GyroOdometerNode::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr i
   gyro_queue_.push_back(*imu_msg_ptr);
   concatGyroAndOdometer();
 
-  diagnostics_->publish();
+  diagnostics_->publish(imu_msg_ptr->header.stamp);
 }
 
 
