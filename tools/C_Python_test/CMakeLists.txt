@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 # set compiler
-# set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
-set(CMAKE_CXX_COMPILER "/home/xiling2/Desktop/tools/clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04/bin/clang++")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
+# set(CMAKE_CXX_COMPILER "/home/xiling2/Desktop/tools/clang+llvm-12.0.0-x86_64-linux-gnu-ubuntu-20.04/bin/clang++")
 
 
 project(test_c_node)
