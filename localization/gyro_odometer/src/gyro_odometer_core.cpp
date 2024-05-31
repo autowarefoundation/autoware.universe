@@ -25,8 +25,8 @@
 
 #include <cmath>
 #include <memory>
-#include <string>
 #include <sstream>
+#include <string>
 
 namespace autoware::gyro_odometer
 {
@@ -84,7 +84,8 @@ void GyroOdometerNode::callbackVehicleTwist(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr vehicle_twist_ptr)
 {
   diagnostics_->clear();
-  diagnostics_->addKeyValue("topic_time_stamp", static_cast<rclcpp::Time>(vehicle_twist_ptr->header.stamp).nanoseconds());
+  diagnostics_->addKeyValue(
+    "topic_time_stamp", static_cast<rclcpp::Time>(vehicle_twist_ptr->header.stamp).nanoseconds());
 
   vehicle_twist_arrived_ = true;
   latest_vehicle_twist_rostime_ = vehicle_twist_ptr->header.stamp;
@@ -94,11 +95,11 @@ void GyroOdometerNode::callbackVehicleTwist(
   diagnostics_->publish(vehicle_twist_ptr->header.stamp);
 }
 
-
 void GyroOdometerNode::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr)
 {
   diagnostics_->clear();
-  diagnostics_->addKeyValue("topic_time_stamp", static_cast<rclcpp::Time>(imu_msg_ptr->header.stamp).nanoseconds());
+  diagnostics_->addKeyValue(
+    "topic_time_stamp", static_cast<rclcpp::Time>(imu_msg_ptr->header.stamp).nanoseconds());
 
   imu_arrived_ = true;
   latest_imu_rostime_ = imu_msg_ptr->header.stamp;
@@ -107,7 +108,6 @@ void GyroOdometerNode::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr i
 
   diagnostics_->publish(imu_msg_ptr->header.stamp);
 }
-
 
 void GyroOdometerNode::concatGyroAndOdometer()
 {
@@ -118,7 +118,8 @@ void GyroOdometerNode::concatGyroAndOdometer()
     std::stringstream message;
     message << "Twist msg is not subscribed";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
 
     vehicle_twist_queue_.clear();
     gyro_queue_.clear();
@@ -128,7 +129,8 @@ void GyroOdometerNode::concatGyroAndOdometer()
     std::stringstream message;
     message << "Imu msg is not subscribed";
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+    diagnostics_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
 
     vehicle_twist_queue_.clear();
     gyro_queue_.clear();
@@ -142,7 +144,8 @@ void GyroOdometerNode::concatGyroAndOdometer()
   diagnostics_->addKeyValue("imu_time_stamp_dt", imu_dt);
   if (vehicle_twist_dt > message_timeout_sec_) {
     const std::string message = fmt::format(
-      "Vehicle twist msg is timeout. vehicle_twist_dt: {}[sec], tolerance {}[sec]", vehicle_twist_dt, message_timeout_sec_);
+      "Vehicle twist msg is timeout. vehicle_twist_dt: {}[sec], tolerance {}[sec]",
+      vehicle_twist_dt, message_timeout_sec_);
     RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message);
     diagnostics_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::ERROR, message);
 
@@ -181,9 +184,11 @@ void GyroOdometerNode::concatGyroAndOdometer()
   diagnostics_->addKeyValue("is_succeed_transform_imu", is_succeed_transform_imu);
   if (!is_succeed_transform_imu) {
     std::stringstream message;
-    message << "Please publish TF " << output_frame_ << " to " << gyro_queue_.front().header.frame_id;
+    message << "Please publish TF " << output_frame_ << " to "
+            << gyro_queue_.front().header.frame_id;
     RCLCPP_ERROR_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
-    diagnostics_->updateLevelAndMessage(diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+    diagnostics_->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
 
     vehicle_twist_queue_.clear();
     gyro_queue_.clear();
@@ -202,8 +207,7 @@ void GyroOdometerNode::concatGyroAndOdometer()
 
     gyro.header.frame_id = output_frame_;
     gyro.angular_velocity = transformed_angular_velocity.vector;
-    gyro.angular_velocity_covariance =
-      transformCovariance(gyro.angular_velocity_covariance);
+    gyro.angular_velocity_covariance = transformCovariance(gyro.angular_velocity_covariance);
   }
 
   using COV_IDX_XYZ = tier4_autoware_utils::xyz_covariance_index::XYZ_COV_IDX;
