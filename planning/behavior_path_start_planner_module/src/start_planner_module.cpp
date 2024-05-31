@@ -1210,7 +1210,7 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
 
 bool StartPlannerModule::hasReachedFreespaceEnd() const
 {
-  const auto current_pose = planner_data_->self_odometry->pose.pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   return tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_path.end_pose) <
          parameters_->th_arrived_distance;
 }
