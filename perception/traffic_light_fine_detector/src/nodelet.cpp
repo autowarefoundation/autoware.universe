@@ -27,7 +27,7 @@ namespace fs = ::std::experimental::filesystem;
 #include <utility>
 #include <vector>
 
-namespace
+namespace traffic_light
 {
 float calWeightedIou(
   const sensor_msgs::msg::RegionOfInterest & bbox1, const tensorrt_yolox::Object & bbox2)
@@ -44,10 +44,6 @@ float calWeightedIou(
   return bbox2.score * area1 / area2;
 }
 
-}  // namespace
-
-namespace traffic_light
-{
 inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
 {
   return std::vector<float>(double_vector.begin(), double_vector.end());
@@ -225,7 +221,7 @@ float TrafficLightFineDetectorNodelet::evalMatchScore(
     float max_score = 0.0f;
     const sensor_msgs::msg::RegionOfInterest & expected_roi = roi_p.second.roi;
     for (const tensorrt_yolox::Object & detection : id2detections[tlr_id]) {
-      float score = ::calWeightedIou(expected_roi, detection);
+      float score = calWeightedIou(expected_roi, detection);
       if (score >= max_score) {
         max_score = score;
         id2bestDetection[tlr_id] = detection;

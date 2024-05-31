@@ -52,6 +52,9 @@ typedef struct Detection
 
 namespace traffic_light
 {
+float calWeightedIou(
+  const sensor_msgs::msg::RegionOfInterest & bbox1, const tensorrt_yolox::Object & bbox2);
+
 class TrafficLightFineDetectorNodelet : public rclcpp::Node
 {
   using TrafficLightRoi = tier4_perception_msgs::msg::TrafficLightRoi;
