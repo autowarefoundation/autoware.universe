@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-
   <!-- Radar Tracking and Merger parameters -->
   <arg name="object_recognition_tracking_radar_object_tracker_data_association_matrix_param_path" description="association param file for radar far object tracking"/>
   <arg name="object_recognition_tracking_radar_object_tracker_tracking_setting_param_path" description="tracking setting param file for radar far object tracking"/>
