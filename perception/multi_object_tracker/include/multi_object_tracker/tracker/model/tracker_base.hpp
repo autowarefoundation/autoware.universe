@@ -81,7 +81,7 @@ public:
     const rclcpp::Time & time) const;
 
   /*
-   *　Pure virtual function
+   * Pure virtual function
    */
 
 protected:
