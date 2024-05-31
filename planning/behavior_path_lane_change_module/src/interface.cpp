@@ -226,6 +226,8 @@ bool LaneChangeInterface::canTransitFailureState()
   log_debug_throttled(__func__);
 
   if (getPreviousModuleOutput().path.points.empty()) {
+    RCLCPP_WARN(
+      getLogger(), "Previous output path is empty. Some module might accidentally reset it.");
     return true;
   }
 
