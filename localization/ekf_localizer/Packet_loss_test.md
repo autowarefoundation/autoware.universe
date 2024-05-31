@@ -54,6 +54,7 @@ sudo apt-get install libmsgpack-dev
 
 cd ~/dora_project
 git clone https://github.com/dora-rs/autoware.universe.git
+cd autoware.universe
 git checkout feature/autoware_dora
 
 cd ~/dora_project/autoware.universe/sensing/geo_pos_cov
