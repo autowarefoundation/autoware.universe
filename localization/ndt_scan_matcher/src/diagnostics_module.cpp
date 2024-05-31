@@ -90,7 +90,8 @@ void DiagnosticsModule::publish(const rclcpp::Time & publish_time_stamp)
   diagnostics_pub_->publish(createDiagnosticsArray(publish_time_stamp));
 }
 
-diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::createDiagnosticsArray(const rclcpp::Time & publish_time_stamp) const
+diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::createDiagnosticsArray(
+  const rclcpp::Time & publish_time_stamp) const
 {
   diagnostic_msgs::msg::DiagnosticArray diagnostics_msg;
   diagnostics_msg.header.stamp = publish_time_stamp;
