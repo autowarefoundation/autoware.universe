@@ -14,7 +14,6 @@
 
 #include "image_projection_based_fusion/utils/geometry.hpp"
 
-#include <glog/logging.h>
 #include <gtest/gtest.h>
 
 TEST(objectToVertices, test_objectToVertices)
