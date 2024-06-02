@@ -213,7 +213,7 @@ for each of the nodes.
   - `sensor_msgs/msg/PointCloud2`
   - `autoware_perception_msgs/msg/DetectedObjects`
   - `autoware_perception_msgs/msg/TrackedObjects`
-  - `autoware_auto_msgs/msg/PredictedObject`
+  - `autoware_perception_msgs/msg/PredictedObject`
   - `autoware_planning_msgs/msg/Trajectory`
   - `autoware_control_msgs/msg/Control`
 

@@ -25,7 +25,7 @@ namespace motion_utils
 /**
  * @brief Convert std::vector<autoware_planning_msgs::msg::TrajectoryPoint> to
  * autoware_planning_msgs::msg::Trajectory. This function is temporarily added for porting to
- * autoware_auto_msgs. We should consider whether to remove this function after the porting is done.
+ * autoware_msgs. We should consider whether to remove this function after the porting is done.
  * @attention This function just clips
  * std::vector<autoware_planning_msgs::msg::TrajectoryPoint> up to the capacity of Trajectory.
  * Therefore, the error handling out of this function is necessary if the size of the input greater
