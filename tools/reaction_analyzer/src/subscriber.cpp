@@ -650,10 +650,9 @@ std::optional<SubscriberVariablesVariant> SubscriberBase::get_subscriber_variabl
           [this, topic_config](const Control::ConstSharedPtr & ptr) {
             this->on_control_command(topic_config.node_name, ptr);
           };
-        subscriber_variable.sub1_ =
-          std::make_unique<message_filters::Subscriber<Control>>(
-            node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<Control>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
 
         subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
 
@@ -670,10 +669,9 @@ std::optional<SubscriberVariablesVariant> SubscriberBase::get_subscriber_variabl
             this->on_control_command(topic_config.node_name, ptr);
           };
 
-        subscriber_variable.sub1_ =
-          std::make_unique<message_filters::Subscriber<Control>>(
-            node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
-            create_subscription_options(node_));
+        subscriber_variable.sub1_ = std::make_unique<message_filters::Subscriber<Control>>(
+          node_, topic_config.topic_address, rclcpp::QoS(1).get_rmw_qos_profile(),
+          create_subscription_options(node_));
 
         subscriber_variable.sub1_->registerCallback(std::bind(callback, std::placeholders::_1));
         RCLCPP_WARN(
@@ -915,8 +913,7 @@ std::optional<SubscriberVariablesVariant> SubscriberBase::get_subscriber_variabl
   }
 }
 
-std::optional<size_t> SubscriberBase::find_first_brake_idx(
-  const std::vector<Control> & cmd_array)
+std::optional<size_t> SubscriberBase::find_first_brake_idx(const std::vector<Control> & cmd_array)
 {
   if (
     cmd_array.size() <

@@ -18,8 +18,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 
-#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_internal_msgs/msg/mission_remaining_distance_time.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>

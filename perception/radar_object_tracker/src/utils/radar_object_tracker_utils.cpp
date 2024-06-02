@@ -58,8 +58,8 @@ bool isDuplicated(
 
 bool checkCloseLaneletCondition(
   const std::pair<double, lanelet::Lanelet> & lanelet,
-  const autoware_perception_msgs::msg::TrackedObject & object,
-  const double max_distance_from_lane, const double max_angle_diff_from_lane)
+  const autoware_perception_msgs::msg::TrackedObject & object, const double max_distance_from_lane,
+  const double max_angle_diff_from_lane)
 {
   if (lanelet.second.centerline().size() <= 1) {
     return false;

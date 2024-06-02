@@ -131,8 +131,7 @@ void BlindSpotModule::setRTCStatusByDecision(
 
 template <>
 void BlindSpotModule::reactRTCApprovalByDecision(
-  const Safe & decision, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason)
+  const Safe & decision, tier4_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason)
 {
   if (!isActivated()) {
     constexpr double stop_vel = 0.0;

@@ -103,7 +103,8 @@ OccupancyGrid makeCostMapMsg(size_t width, size_t height, double resolution)
   return costmap_msg;
 }
 
-LaneletMapBin make_map_bin_msg(const std::string & absolute_path, const double center_line_resolution)
+LaneletMapBin make_map_bin_msg(
+  const std::string & absolute_path, const double center_line_resolution)
 {
   const auto map = loadMap(absolute_path);
   if (!map) {

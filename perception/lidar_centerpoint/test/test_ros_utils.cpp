@@ -70,8 +70,7 @@ TEST(TestSuite, box3DToDetectedObject)
 
     EXPECT_FLOAT_EQ(obj.existence_probability, 0.5f);
     EXPECT_EQ(
-      obj.classification[0].label,
-      autoware_perception_msgs::msg::ObjectClassification::UNKNOWN);
+      obj.classification[0].label, autoware_perception_msgs::msg::ObjectClassification::UNKNOWN);
     EXPECT_FALSE(obj.kinematics.has_position_covariance);
     EXPECT_FALSE(obj.kinematics.has_twist);
     EXPECT_FALSE(obj.kinematics.has_twist_covariance);
@@ -81,14 +80,12 @@ TEST(TestSuite, box3DToDetectedObject)
 TEST(TestSuite, getSemanticType)
 {
   EXPECT_EQ(
-    centerpoint::getSemanticType("CAR"),
-    autoware_perception_msgs::msg::ObjectClassification::CAR);
+    centerpoint::getSemanticType("CAR"), autoware_perception_msgs::msg::ObjectClassification::CAR);
   EXPECT_EQ(
     centerpoint::getSemanticType("TRUCK"),
     autoware_perception_msgs::msg::ObjectClassification::TRUCK);
   EXPECT_EQ(
-    centerpoint::getSemanticType("BUS"),
-    autoware_perception_msgs::msg::ObjectClassification::BUS);
+    centerpoint::getSemanticType("BUS"), autoware_perception_msgs::msg::ObjectClassification::BUS);
   EXPECT_EQ(
     centerpoint::getSemanticType("TRAILER"),
     autoware_perception_msgs::msg::ObjectClassification::TRAILER);

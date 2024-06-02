@@ -281,8 +281,7 @@ static std::optional<size_t> insertPointIndex(
   // vector.insert(i) inserts element on the left side of v[i]
   // the velocity need to be zero order hold(from prior point)
   size_t insert_idx = closest_idx;
-  tier4_planning_msgs::msg::PathPointWithLaneId inserted_point =
-    inout_path->points.at(closest_idx);
+  tier4_planning_msgs::msg::PathPointWithLaneId inserted_point = inout_path->points.at(closest_idx);
   if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
   } else {
@@ -417,12 +416,11 @@ std::optional<OverPassJudge> BlindSpotModule::isOverPassJudge(
   return std::nullopt;
 }
 
-std::optional<autoware_perception_msgs::msg::PredictedObject>
-BlindSpotModule::isCollisionDetected(const BlindSpotPolygons & areas)
+std::optional<autoware_perception_msgs::msg::PredictedObject> BlindSpotModule::isCollisionDetected(
+  const BlindSpotPolygons & areas)
 {
   // TODO(Mamoru Sobue): only do this for target object
-  autoware_perception_msgs::msg::PredictedObjects objects =
-    *(planner_data_->predicted_objects);
+  autoware_perception_msgs::msg::PredictedObjects objects = *(planner_data_->predicted_objects);
   cutPredictPathWithDuration(&objects, planner_param_.max_future_movement_time);
 
   // check objects in blind spot areas

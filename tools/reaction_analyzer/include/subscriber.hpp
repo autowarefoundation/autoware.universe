@@ -40,6 +40,7 @@
 namespace reaction_analyzer::subscriber
 {
 using autoware_control_msgs::msg::Control;
+using autoware_internal_msgs::msg::PublishedTime;
 using autoware_perception_msgs::msg::DetectedObject;
 using autoware_perception_msgs::msg::DetectedObjects;
 using autoware_perception_msgs::msg::PredictedObject;
@@ -47,7 +48,6 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::TrackedObject;
 using autoware_perception_msgs::msg::TrackedObjects;
 using autoware_planning_msgs::msg::Trajectory;
-using autoware_internal_msgs::msg::PublishedTime;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
@@ -153,14 +153,11 @@ private:
   bool init_subscribers();
   std::optional<SubscriberVariablesVariant> get_subscriber_variable(
     const TopicConfig & topic_config);
-  std::optional<size_t> find_first_brake_idx(
-    const std::vector<Control> & cmd_array);
-  void set_control_command_to_buffer(
-    std::vector<Control> & buffer, const Control & cmd) const;
+  std::optional<size_t> find_first_brake_idx(const std::vector<Control> & cmd_array);
+  void set_control_command_to_buffer(std::vector<Control> & buffer, const Control & cmd) const;
 
   // Callbacks for modules are subscribed
-  void on_control_command(
-    const std::string & node_name, const Control::ConstSharedPtr & msg_ptr);
+  void on_control_command(const std::string & node_name, const Control::ConstSharedPtr & msg_ptr);
   void on_trajectory(const std::string & node_name, const Trajectory::ConstSharedPtr & msg_ptr);
   void on_trajectory(
     const std::string & node_name, const Trajectory::ConstSharedPtr & msg_ptr,

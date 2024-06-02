@@ -145,8 +145,7 @@ private:
   BlindSpotDecision modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
   // setSafe(), setDistance()
   void setRTCStatus(
-    const BlindSpotDecision & decision,
-    const tier4_planning_msgs::msg::PathWithLaneId & path);
+    const BlindSpotDecision & decision, const tier4_planning_msgs::msg::PathWithLaneId & path);
   template <typename Decision>
   void setRTCStatusByDecision(
     const Decision & decision, const tier4_planning_msgs::msg::PathWithLaneId & path);

@@ -46,9 +46,9 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_behavior_velocity_planner::srv::LoadPlugin;
 using autoware_behavior_velocity_planner::srv::UnloadPlugin;
+using autoware_map_msgs::msg::LaneletMapBin;
 using ::behavior_velocity_planner::TrafficSignalStamped;
 using tier4_planning_msgs::msg::VelocityLimit;
 
