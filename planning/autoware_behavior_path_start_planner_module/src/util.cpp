@@ -18,6 +18,7 @@
 #include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware_behavior_path_planner_common/utils/utils.hpp"
 
+#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -81,6 +82,25 @@ Pose getBackedPose(
   backed_pose.position.y -= std::sin(yaw_shoulder_lane) * back_distance;
 
   return backed_pose;
+}
+
+double calcLateralOffsetFromLeftBoundary(
+  const lanelet::ConstLanelets & lanelets, const geometry_msgs::msg::Pose & search_pose)
+{
+  lanelet::Lanelet closest_lanelet;
+  lanelet::utils::query::getClosestLanelet(lanelets, search_pose, &closest_lanelet);
+
+  const auto & left_boundary = closest_lanelet.leftBound();
+
+  std::vector<geometry_msgs::msg::Point> left_boundary_path;
+  left_boundary_path.reserve(left_boundary.size());
+
+  for (const auto & boundary_point : left_boundary) {
+    left_boundary_path.emplace_back(
+      tier4_autoware_utils::createPoint(boundary_point.x(), boundary_point.y(), 0.0));
+  }
+
+  return motion_utils::calcLateralOffset(left_boundary_path, search_pose.position);
 }
 
 lanelet::ConstLanelets getPullOutLanes(

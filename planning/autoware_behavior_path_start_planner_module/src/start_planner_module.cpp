@@ -1115,9 +1115,16 @@ PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
   auto path =
     planner_data_->route_handler->getCenterLinePath(pull_out_lanes, start_distance, end_distance);
 
-  // shift all path points laterally to align with the start pose
+  // Calculate the offset and shift each path point to maintain a constant distance from the left
+  // boundary of the lane, aligned with the start pose
+  const double dis_left_bound_to_start_pose =
+    start_planner_utils::calcLateralOffsetFromLeftBoundary(pull_out_lanes, start_pose);
+
   for (auto & path_point : path.points) {
-    path_point.point.pose = calcOffsetPose(path_point.point.pose, 0, arc_position_pose.distance, 0);
+    const double dis_left_bound_to_center =
+      start_planner_utils::calcLateralOffsetFromLeftBoundary(pull_out_lanes, path_point.point.pose);
+    const double shift_length = dis_left_bound_to_start_pose - dis_left_bound_to_center;
+    path_point.point.pose = calcOffsetPose(path_point.point.pose, 0, shift_length, 0);
   }
 
   return path;

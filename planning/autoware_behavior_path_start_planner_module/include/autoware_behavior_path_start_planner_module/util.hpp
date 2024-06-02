@@ -49,6 +49,8 @@ PathWithLaneId getBackwardPath(
   const Pose & current_pose, const Pose & backed_pose, const double velocity);
 lanelet::ConstLanelets getPullOutLanes(
   const std::shared_ptr<const PlannerData> & planner_data, const double backward_length);
+double calcLateralOffsetFromLeftBoundary(
+  const lanelet::ConstLanelets & lanelets, const geometry_msgs::msg::Pose & search_pose);
 Pose getBackedPose(
   const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance);
 std::optional<PathWithLaneId> extractCollisionCheckSection(
