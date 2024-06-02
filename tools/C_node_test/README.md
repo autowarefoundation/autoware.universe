@@ -1,20 +1,16 @@
 # C_node_test
 
-这是一个测试节点，对 https://github.com/dora-rs/dora/issues/502 问题进行测试
+This is a test node, testing the dora-rs/dora#502 problem
 
-node_A : 以10Hz频率发布一个长度为3的数组，数组中的数范围是0-255
+node_A: publishes an array of length 3 at a frequency of 10Hz, and the number range in the array is 0-255
 
-node_B: 以100Hz频率发布一个0-255变化的数
+node_B: publishes a number with a frequency of 0-255 at a frequency of 100Hz
 
-node_C: 接受 node_A 和 node_B发送的数据并显示
+node_C: receives and displays the data sent by node_A and node_B
 
+Tested a few times and 502 problem didnot happen for current main branch.
 
-
-**测试结论，未出现  502 问题** 
-
-
-
-## 编译方法 
+## Compile 
 
 ```
 mkdir build
@@ -23,7 +19,7 @@ cmake ..
 make
 ```
 
-## 启动数据流
+## Start Test
 
 ```
 dora start dataflow.yml --name test
