@@ -1,0 +1,7104 @@
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": 47.94332164,
+    "y": -15.49543239
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 43.75815468,
+    "y": 29.71095708
+}
+Python Operator working
+{
+    "x": 85.62908424,
+    "y": -11.26872878
+}
+Python Operator working
+{
+    "x": 33.00349199,
+    "y": -16.52862069
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 64.78241289,
+    "y": -17.69632035
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 19.95395424,
+    "y": 26.86318092
+}
+Python Operator working
+{
+    "x": 51.73774937,
+    "y": 30.16986791
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 19.95395424,
+    "y": 26.86318092
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 80.44622301,
+    "y": -18.07306975
+}
+Python Operator working
+{
+    "x": 3.49536657,
+    "y": 22.72017533
+}
+Python Operator working
+{
+    "x": 61.82436217,
+    "y": -17.19640941
+}
+Python Operator working
+{
+    "x": 85.13426537,
+    "y": -5.29113162
+}
+Python Operator working
+{
+    "x": 85.05692692,
+    "y": -4.29412753
+}
+Python Operator working
+{
+    "x": 84.9839801,
+    "y": -3.29679251
+}
+Python Operator working
+{
+    "x": 84.91542516,
+    "y": -2.29914598
+}
+Python Operator working
+{
+    "x": 84.85126328,
+    "y": -1.30120729
+}
+Python Operator working
+{
+    "x": 84.79149572,
+    "y": -0.30299578
+}
+Python Operator working
+{
+    "x": 84.73612363,
+    "y": 0.6954692
+}
+Python Operator working
+{
+    "x": 84.68514943,
+    "y": 1.69416836
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": -2.03419871,
+    "y": 13.81049194
+}
+Python Operator working
+{
+    "x": -2.05770136,
+    "y": 12.81094824
+}
+Python Operator working
+{
+    "x": -2.01549908,
+    "y": 11.81201936
+}
+Python Operator working
+{
+    "x": -1.90777451,
+    "y": 10.81801968
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 55.89985626,
+    "y": -16.24781547
+}
+Python Operator working
+{
+    "x": 85.21599264,
+    "y": -6.28778554
+}
+Python Operator working
+{
+    "x": 85.13426537,
+    "y": -5.29113162
+}
+Python Operator working
+{
+    "x": 85.05692692,
+    "y": -4.29412753
+}
+Python Operator working
+{
+    "x": 84.9839801,
+    "y": -3.29679251
+}
+Python Operator working
+{
+    "x": 84.91542516,
+    "y": -2.29914598
+}
+Python Operator working
+{
+    "x": 84.85126328,
+    "y": -1.30120729
+}
+Python Operator working
+{
+    "x": 84.79149572,
+    "y": -0.30299578
+}
+Python Operator working
+{
+    "x": 84.73612363,
+    "y": 0.6954692
+}
+Python Operator working
+{
+    "x": 84.68514943,
+    "y": 1.69416836
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 83.51883294,
+    "y": 16.64154116
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 84.85126328,
+    "y": -1.30120729
+}
+Python Operator working
+{
+    "x": 84.79149572,
+    "y": -0.30299578
+}
+Python Operator working
+{
+    "x": 84.73612363,
+    "y": 0.6954692
+}
+Python Operator working
+{
+    "x": 84.68514943,
+    "y": 1.69416836
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": 84.29819329,
+    "y": 6.67650887
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": 85.52199923,
+    "y": -12.26202762
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 33.78781307,
+    "y": 28.94522872
+}
+Python Operator working
+{
+    "x": 83.68856741,
+    "y": -15.74916059
+}
+Python Operator working
+{
+    "x": 84.91542516,
+    "y": -2.29914598
+}
+Python Operator working
+{
+    "x": 84.85126328,
+    "y": -1.30120729
+}
+Python Operator working
+{
+    "x": 84.79149572,
+    "y": -0.30299578
+}
+Python Operator working
+{
+    "x": 84.73612363,
+    "y": 0.6954692
+}
+Python Operator working
+{
+    "x": 84.68514943,
+    "y": 1.69416836
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": 84.29819329,
+    "y": 6.67650887
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 2.05508405,
+    "y": -1.20337501
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 3.09691495,
+    "y": -4.01664819
+}
+Python Operator working
+{
+    "x": 76.27887516,
+    "y": 25.79365319
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": 84.29819329,
+    "y": 6.67650887
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": 83.91393898,
+    "y": 10.65797248
+}
+Python Operator working
+{
+    "x": 83.82714963,
+    "y": 11.65419858
+}
+Python Operator working
+{
+    "x": 83.74407208,
+    "y": 12.65074109
+}
+Python Operator working
+{
+    "x": 83.66470774,
+    "y": 13.64758618
+}
+Python Operator working
+{
+    "x": 83.51883294,
+    "y": 16.64154116
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 2.05508405,
+    "y": -1.20337501
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 84.73612363,
+    "y": 0.6954692
+}
+Python Operator working
+{
+    "x": 84.68514943,
+    "y": 1.69416836
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": 84.29819329,
+    "y": 6.67650887
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": 83.91393898,
+    "y": 10.65797248
+}
+Python Operator working
+{
+    "x": 83.82714963,
+    "y": 11.65419858
+}
+Python Operator working
+{
+    "x": 41.76549644,
+    "y": 29.53976387
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 2.05508405,
+    "y": -1.20337501
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 3.09691495,
+    "y": -4.01664819
+}
+Python Operator working
+{
+    "x": 3.45073645,
+    "y": -4.95196061
+}
+Python Operator working
+{
+    "x": 3.80782305,
+    "y": -5.88603134
+}
+Python Operator working
+{
+    "x": 40.946435,
+    "y": -15.59919776
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": 84.29819329,
+    "y": 6.67650887
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": 83.91393898,
+    "y": 10.65797248
+}
+Python Operator working
+{
+    "x": 83.82714963,
+    "y": 11.65419858
+}
+Python Operator working
+{
+    "x": 83.74407208,
+    "y": 12.65074109
+}
+Python Operator working
+{
+    "x": 83.66470774,
+    "y": 13.64758618
+}
+Python Operator working
+{
+    "x": 83.5890588,
+    "y": 14.64472011
+}
+Python Operator working
+{
+    "x": 83.51712498,
+    "y": 15.64212894
+}
+Python Operator working
+{
+    "x": 38.77519061,
+    "y": 29.29884769
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 2.05508405,
+    "y": -1.20337501
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 3.09691495,
+    "y": -4.01664819
+}
+Python Operator working
+{
+    "x": 3.45073645,
+    "y": -4.95196061
+}
+Python Operator working
+{
+    "x": 3.80782305,
+    "y": -5.88603134
+}
+Python Operator working
+{
+    "x": 4.16817047,
+    "y": -6.81884897
+}
+Python Operator working
+{
+    "x": 4.53177491,
+    "y": -7.75040186
+}
+Python Operator working
+{
+    "x": 4.89880267,
+    "y": -8.68060922
+}
+Python Operator working
+{
+    "x": 5.28708289,
+    "y": -9.6021479
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": 83.91393898,
+    "y": 10.65797248
+}
+Python Operator working
+{
+    "x": 83.82714963,
+    "y": 11.65419858
+}
+Python Operator working
+{
+    "x": 83.74407208,
+    "y": 12.65074109
+}
+Python Operator working
+{
+    "x": 83.66470774,
+    "y": 13.64758618
+}
+Python Operator working
+{
+    "x": 83.5890588,
+    "y": 14.64472011
+}
+Python Operator working
+{
+    "x": 83.51712498,
+    "y": 15.64212894
+}
+Python Operator working
+{
+    "x": 83.51883294,
+    "y": 16.64154116
+}
+Python Operator working
+{
+    "x": 83.46866505,
+    "y": 17.64007653
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 83.15926687,
+    "y": 19.61433893
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": 71.30687244,
+    "y": 26.30280506
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 2.05508405,
+    "y": -1.20337501
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 3.09691495,
+    "y": -4.01664819
+}
+Python Operator working
+{
+    "x": 3.45073645,
+    "y": -4.95196061
+}
+Python Operator working
+{
+    "x": 3.80782305,
+    "y": -5.88603134
+}
+Python Operator working
+{
+    "x": 4.16817047,
+    "y": -6.81884897
+}
+Python Operator working
+{
+    "x": 4.53177491,
+    "y": -7.75040186
+}
+Python Operator working
+{
+    "x": 4.89880267,
+    "y": -8.68060922
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": 83.91393898,
+    "y": 10.65797248
+}
+Python Operator working
+{
+    "x": 83.82714963,
+    "y": 11.65419858
+}
+Python Operator working
+{
+    "x": 83.74407208,
+    "y": 12.65074109
+}
+Python Operator working
+{
+    "x": 83.66470774,
+    "y": 13.64758618
+}
+Python Operator working
+{
+    "x": 83.5890588,
+    "y": 14.64472011
+}
+Python Operator working
+{
+    "x": 83.51712498,
+    "y": 15.64212894
+}
+Python Operator working
+{
+    "x": 83.51883294,
+    "y": 16.64154116
+}
+Python Operator working
+{
+    "x": 83.46866505,
+    "y": 17.64007653
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 56.88802777,
+    "y": -16.40116723
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 3.09691495,
+    "y": -4.01664819
+}
+Python Operator working
+{
+    "x": 3.45073645,
+    "y": -4.95196061
+}
+Python Operator working
+{
+    "x": 3.80782305,
+    "y": -5.88603134
+}
+Python Operator working
+{
+    "x": 4.16817047,
+    "y": -6.81884897
+}
+Python Operator working
+{
+    "x": 4.53177491,
+    "y": -7.75040186
+}
+Python Operator working
+{
+    "x": 4.89880267,
+    "y": -8.68060922
+}
+Python Operator working
+{
+    "x": 5.28708289,
+    "y": -9.6021479
+}
+Python Operator working
+{
+    "x": 5.68244398,
+    "y": -10.52067099
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 83.74407208,
+    "y": 12.65074109
+}
+Python Operator working
+{
+    "x": 83.66470774,
+    "y": 13.64758618
+}
+Python Operator working
+{
+    "x": 83.5890588,
+    "y": 14.64472011
+}
+Python Operator working
+{
+    "x": 83.51712498,
+    "y": 15.64212894
+}
+Python Operator working
+{
+    "x": 83.51883294,
+    "y": 16.64154116
+}
+Python Operator working
+{
+    "x": 83.46866505,
+    "y": 17.64007653
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 83.15926687,
+    "y": 19.61433893
+}
+Python Operator working
+{
+    "x": 82.90155929,
+    "y": 20.58034955
+}
+Python Operator working
+{
+    "x": 82.57480351,
+    "y": 21.5251498
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 4.16817047,
+    "y": -6.81884897
+}
+Python Operator working
+{
+    "x": 4.53177491,
+    "y": -7.75040186
+}
+Python Operator working
+{
+    "x": 4.89880267,
+    "y": -8.68060922
+}
+Python Operator working
+{
+    "x": 5.28708289,
+    "y": -9.6021479
+}
+Python Operator working
+{
+    "x": 5.68244398,
+    "y": -10.52067099
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 6.91077859,
+    "y": -13.25760252
+}
+Python Operator working
+{
+    "x": 7.33422573,
+    "y": -14.16352061
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 10.50041848,
+    "y": -17.94847963
+}
+Python Operator working
+{
+    "x": 83.46866505,
+    "y": 17.64007653
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 83.15926687,
+    "y": 19.61433893
+}
+Python Operator working
+{
+    "x": 82.90155929,
+    "y": 20.58034955
+}
+Python Operator working
+{
+    "x": 82.57480351,
+    "y": 21.5251498
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 80.86889015,
+    "y": 23.9635391
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 77.25624354,
+    "y": 25.58303454
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": 3.80782305,
+    "y": -5.88603134
+}
+Python Operator working
+{
+    "x": 4.16817047,
+    "y": -6.81884897
+}
+Python Operator working
+{
+    "x": 4.53177491,
+    "y": -7.75040186
+}
+Python Operator working
+{
+    "x": 4.89880267,
+    "y": -8.68060922
+}
+Python Operator working
+{
+    "x": 5.28708289,
+    "y": -9.6021479
+}
+Python Operator working
+{
+    "x": 5.68244398,
+    "y": -10.52067099
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 6.91077859,
+    "y": -13.25760252
+}
+Python Operator working
+{
+    "x": 7.33422573,
+    "y": -14.16352061
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 5.35014139,
+    "y": 23.45974841
+}
+Python Operator working
+{
+    "x": 83.51883294,
+    "y": 16.64154116
+}
+Python Operator working
+{
+    "x": 83.46866505,
+    "y": 17.64007653
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 83.15926687,
+    "y": 19.61433893
+}
+Python Operator working
+{
+    "x": 82.90155929,
+    "y": 20.58034955
+}
+Python Operator working
+{
+    "x": 82.57480351,
+    "y": 21.5251498
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 80.86889015,
+    "y": 23.9635391
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 66.38506127,
+    "y": 27.17212629
+}
+Python Operator working
+{
+    "x": 5.68244398,
+    "y": -10.52067099
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 6.91077859,
+    "y": -13.25760252
+}
+Python Operator working
+{
+    "x": 7.33422573,
+    "y": -14.16352061
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 8.97946538,
+    "y": -16.65720213
+}
+Python Operator working
+{
+    "x": 9.70101443,
+    "y": -17.34869229
+}
+Python Operator working
+{
+    "x": 10.50041848,
+    "y": -17.94847963
+}
+Python Operator working
+{
+    "x": 11.36609519,
+    "y": -18.44787477
+}
+Python Operator working
+{
+    "x": 12.28550261,
+    "y": -18.83964217
+}
+Python Operator working
+{
+    "x": 82.57480351,
+    "y": 21.5251498
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 80.86889015,
+    "y": 23.9635391
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 77.25624354,
+    "y": 25.58303454
+}
+Python Operator working
+{
+    "x": 76.27887516,
+    "y": 25.79365319
+}
+Python Operator working
+{
+    "x": 75.28938455,
+    "y": 25.93689247
+}
+Python Operator working
+{
+    "x": 74.2925357,
+    "y": 26.01433478
+}
+Python Operator working
+{
+    "x": 73.29549117,
+    "y": 26.09095133
+}
+Python Operator working
+{
+    "x": 7.33422573,
+    "y": -14.16352061
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 8.97946538,
+    "y": -16.65720213
+}
+Python Operator working
+{
+    "x": 9.70101443,
+    "y": -17.34869229
+}
+Python Operator working
+{
+    "x": 10.50041848,
+    "y": -17.94847963
+}
+Python Operator working
+{
+    "x": 11.36609519,
+    "y": -18.44787477
+}
+Python Operator working
+{
+    "x": 12.28550261,
+    "y": -18.83964217
+}
+Python Operator working
+{
+    "x": 13.24532017,
+    "y": -19.11810568
+}
+Python Operator working
+{
+    "x": 14.23164172,
+    "y": -19.27923136
+}
+Python Operator working
+{
+    "x": 15.23017734,
+    "y": -19.32068391
+}
+Python Operator working
+{
+    "x": 16.22143955,
+    "y": -19.20914817
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 77.25624354,
+    "y": 25.58303454
+}
+Python Operator working
+{
+    "x": 76.27887516,
+    "y": 25.79365319
+}
+Python Operator working
+{
+    "x": 75.28938455,
+    "y": 25.93689247
+}
+Python Operator working
+{
+    "x": 74.2925357,
+    "y": 26.01433478
+}
+Python Operator working
+{
+    "x": 73.29549117,
+    "y": 26.09095133
+}
+Python Operator working
+{
+    "x": 72.30014235,
+    "y": 26.18712106
+}
+Python Operator working
+{
+    "x": 71.30687244,
+    "y": 26.30280506
+}
+Python Operator working
+{
+    "x": 70.31606399,
+    "y": 26.43795871
+}
+Python Operator working
+{
+    "x": 69.32809891,
+    "y": 26.59253193
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 6.91077859,
+    "y": -13.25760252
+}
+Python Operator working
+{
+    "x": 7.33422573,
+    "y": -14.16352061
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 8.97946538,
+    "y": -16.65720213
+}
+Python Operator working
+{
+    "x": 9.70101443,
+    "y": -17.34869229
+}
+Python Operator working
+{
+    "x": 10.50041848,
+    "y": -17.94847963
+}
+Python Operator working
+{
+    "x": 11.36609519,
+    "y": -18.44787477
+}
+Python Operator working
+{
+    "x": 12.28550261,
+    "y": -18.83964217
+}
+Python Operator working
+{
+    "x": 13.24532017,
+    "y": -19.11810568
+}
+Python Operator working
+{
+    "x": 14.23164172,
+    "y": -19.27923136
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 80.86889015,
+    "y": 23.9635391
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 77.25624354,
+    "y": 25.58303454
+}
+Python Operator working
+{
+    "x": 76.27887516,
+    "y": 25.79365319
+}
+Python Operator working
+{
+    "x": 75.28938455,
+    "y": 25.93689247
+}
+Python Operator working
+{
+    "x": 74.2925357,
+    "y": 26.01433478
+}
+Python Operator working
+{
+    "x": 73.29549117,
+    "y": 26.09095133
+}
+Python Operator working
+{
+    "x": 72.30014235,
+    "y": 26.18712106
+}
+Python Operator working
+{
+    "x": 71.30687244,
+    "y": 26.30280506
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 8.97946538,
+    "y": -16.65720213
+}
+Python Operator working
+{
+    "x": 9.70101443,
+    "y": -17.34869229
+}
+Python Operator working
+{
+    "x": 10.50041848,
+    "y": -17.94847963
+}
+Python Operator working
+{
+    "x": 11.36609519,
+    "y": -18.44787477
+}
+Python Operator working
+{
+    "x": 12.28550261,
+    "y": -18.83964217
+}
+Python Operator working
+{
+    "x": 13.24532017,
+    "y": -19.11810568
+}
+Python Operator working
+{
+    "x": 14.23164172,
+    "y": -19.27923136
+}
+Python Operator working
+{
+    "x": 15.23017734,
+    "y": -19.32068391
+}
+Python Operator working
+{
+    "x": 16.22143955,
+    "y": -19.20914817
+}
+Python Operator working
+{
+    "x": 17.2031665,
+    "y": -19.01885448
+}
+Python Operator working
+{
+    "x": 18.18535825,
+    "y": -18.83097452
+}
+Python Operator working
+{
+    "x": 74.2925357,
+    "y": 26.01433478
+}
+Python Operator working
+{
+    "x": 73.29549117,
+    "y": 26.09095133
+}
+Python Operator working
+{
+    "x": 72.30014235,
+    "y": 26.18712106
+}
+Python Operator working
+{
+    "x": 15.23017734,
+    "y": -19.32068391
+}
+Python Operator working
+{
+    "x": 16.22143955,
+    "y": -19.20914817
+}
+Python Operator working
+{
+    "x": 17.2031665,
+    "y": -19.01885448
+}
+Python Operator working
+{
+    "x": 18.18535825,
+    "y": -18.83097452
+}
+Python Operator working
+{
+    "x": 19.16800881,
+    "y": -18.64550925
+}
+Python Operator working
+{
+    "x": 20.15111229,
+    "y": -18.46245996
+}
+Python Operator working
+{
+    "x": 21.13466272,
+    "y": -18.2818276
+}
+Python Operator working
+{
+    "x": 22.11865418,
+    "y": -18.10361339
+}
+Python Operator working
+{
+    "x": 23.1030807,
+    "y": -17.9278183
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 25.07421363,
+    "y": -17.59000867
+}
+Python Operator working
+{
+    "x": 26.06535917,
+    "y": -17.45722867
+}
+Python Operator working
+{
+    "x": 69.32809891,
+    "y": 26.59253193
+}
+Python Operator working
+{
+    "x": 68.34335737,
+    "y": 26.76646291
+}
+Python Operator working
+{
+    "x": 67.36221881,
+    "y": 26.95968564
+}
+Python Operator working
+{
+    "x": 66.38506127,
+    "y": 27.17212629
+}
+Python Operator working
+{
+    "x": 65.43530808,
+    "y": 27.48079441
+}
+Python Operator working
+{
+    "x": 64.48722585,
+    "y": 27.79874278
+}
+Python Operator working
+{
+    "x": 63.53171909,
+    "y": 28.09362904
+}
+Python Operator working
+{
+    "x": 62.56934871,
+    "y": 28.3652801
+}
+Python Operator working
+{
+    "x": 61.60067962,
+    "y": 28.6135365
+}
+Python Operator working
+{
+    "x": 60.62628043,
+    "y": 28.8382525
+}
+Python Operator working
+{
+    "x": 59.64672314,
+    "y": 29.0392962
+}
+Python Operator working
+{
+    "x": 58.66258276,
+    "y": 29.21654958
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": 14.23164172,
+    "y": -19.27923136
+}
+Python Operator working
+{
+    "x": 15.23017734,
+    "y": -19.32068391
+}
+Python Operator working
+{
+    "x": 16.22143955,
+    "y": -19.20914817
+}
+Python Operator working
+{
+    "x": 17.2031665,
+    "y": -19.01885448
+}
+Python Operator working
+{
+    "x": 18.18535825,
+    "y": -18.83097452
+}
+Python Operator working
+{
+    "x": 19.16800881,
+    "y": -18.64550925
+}
+Python Operator working
+{
+    "x": 20.15111229,
+    "y": -18.46245996
+}
+Python Operator working
+{
+    "x": 21.13466272,
+    "y": -18.2818276
+}
+Python Operator working
+{
+    "x": 22.11865418,
+    "y": -18.10361339
+}
+Python Operator working
+{
+    "x": 23.1030807,
+    "y": -17.9278183
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 25.07421363,
+    "y": -17.59000867
+}
+Python Operator working
+{
+    "x": 70.31606399,
+    "y": 26.43795871
+}
+Python Operator working
+{
+    "x": 69.32809891,
+    "y": 26.59253193
+}
+Python Operator working
+{
+    "x": 68.34335737,
+    "y": 26.76646291
+}
+Python Operator working
+{
+    "x": 67.36221881,
+    "y": 26.95968564
+}
+Python Operator working
+{
+    "x": 66.38506127,
+    "y": 27.17212629
+}
+Python Operator working
+{
+    "x": 65.43530808,
+    "y": 27.48079441
+}
+Python Operator working
+{
+    "x": 64.48722585,
+    "y": 27.79874278
+}
+Python Operator working
+{
+    "x": 63.53171909,
+    "y": 28.09362904
+}
+Python Operator working
+{
+    "x": 62.56934871,
+    "y": 28.3652801
+}
+Python Operator working
+{
+    "x": 61.60067962,
+    "y": 28.6135365
+}
+Python Operator working
+{
+    "x": 60.62628043,
+    "y": 28.8382525
+}
+Python Operator working
+{
+    "x": 59.64672314,
+    "y": 29.0392962
+}
+Python Operator working
+{
+    "x": 19.16800881,
+    "y": -18.64550925
+}
+Python Operator working
+{
+    "x": 20.15111229,
+    "y": -18.46245996
+}
+Python Operator working
+{
+    "x": 21.13466272,
+    "y": -18.2818276
+}
+Python Operator working
+{
+    "x": 22.11865418,
+    "y": -18.10361339
+}
+Python Operator working
+{
+    "x": 23.1030807,
+    "y": -17.9278183
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 25.07421363,
+    "y": -17.59000867
+}
+Python Operator working
+{
+    "x": 26.06535917,
+    "y": -17.45722867
+}
+Python Operator working
+{
+    "x": 27.05650878,
+    "y": -17.3244791
+}
+Python Operator working
+{
+    "x": 28.04766246,
+    "y": -17.19175996
+}
+Python Operator working
+{
+    "x": 29.03882022,
+    "y": -17.05907124
+}
+Python Operator working
+{
+    "x": 30.02998206,
+    "y": -16.92641296
+}
+Python Operator working
+{
+    "x": 65.43530808,
+    "y": 27.48079441
+}
+Python Operator working
+{
+    "x": 64.48722585,
+    "y": 27.79874278
+}
+Python Operator working
+{
+    "x": 63.53171909,
+    "y": 28.09362904
+}
+Python Operator working
+{
+    "x": 62.56934871,
+    "y": 28.3652801
+}
+Python Operator working
+{
+    "x": 61.60067962,
+    "y": 28.6135365
+}
+Python Operator working
+{
+    "x": 60.62628043,
+    "y": 28.8382525
+}
+Python Operator working
+{
+    "x": 59.64672314,
+    "y": 29.0392962
+}
+Python Operator working
+{
+    "x": 58.66258276,
+    "y": 29.21654958
+}
+Python Operator working
+{
+    "x": 57.67852216,
+    "y": 29.39163857
+}
+Python Operator working
+{
+    "x": 56.69990248,
+    "y": 29.59712589
+}
+Python Operator working
+{
+    "x": 55.71543894,
+    "y": 29.77249135
+}
+Python Operator working
+{
+    "x": 54.72605867,
+    "y": 29.91757139
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 25.07421363,
+    "y": -17.59000867
+}
+Python Operator working
+{
+    "x": 26.06535917,
+    "y": -17.45722867
+}
+Python Operator working
+{
+    "x": 27.05650878,
+    "y": -17.3244791
+}
+Python Operator working
+{
+    "x": 28.04766246,
+    "y": -17.19175996
+}
+Python Operator working
+{
+    "x": 29.03882022,
+    "y": -17.05907124
+}
+Python Operator working
+{
+    "x": 30.02998206,
+    "y": -16.92641296
+}
+Python Operator working
+{
+    "x": 31.02114796,
+    "y": -16.79378511
+}
+Python Operator working
+{
+    "x": 32.01231794,
+    "y": -16.66118768
+}
+Python Operator working
+{
+    "x": 33.00349199,
+    "y": -16.52862069
+}
+Python Operator working
+{
+    "x": 33.99467017,
+    "y": -16.39608461
+}
+Python Operator working
+{
+    "x": 34.98585243,
+    "y": -16.26357902
+}
+Python Operator working
+{
+    "x": 59.64672314,
+    "y": 29.0392962
+}
+Python Operator working
+{
+    "x": 58.66258276,
+    "y": 29.21654958
+}
+Python Operator working
+{
+    "x": 57.67852216,
+    "y": 29.39163857
+}
+Python Operator working
+{
+    "x": 56.69990248,
+    "y": 29.59712589
+}
+Python Operator working
+{
+    "x": 55.71543894,
+    "y": 29.77249135
+}
+Python Operator working
+{
+    "x": 54.72605867,
+    "y": 29.91757139
+}
+Python Operator working
+{
+    "x": 53.73269289,
+    "y": 30.03222711
+}
+Python Operator working
+{
+    "x": 52.73627709,
+    "y": 30.11635244
+}
+Python Operator working
+{
+    "x": 51.73774937,
+    "y": 30.16986791
+}
+Python Operator working
+{
+    "x": 50.7380498,
+    "y": 30.19272176
+}
+Python Operator working
+{
+    "x": 49.73811968,
+    "y": 30.18489455
+}
+Python Operator working
+{
+    "x": 48.73890045,
+    "y": 30.14639183
+}
+Python Operator working
+{
+    "x": 30.02998206,
+    "y": -16.92641296
+}
+Python Operator working
+{
+    "x": 31.02114796,
+    "y": -16.79378511
+}
+Python Operator working
+{
+    "x": 32.01231794,
+    "y": -16.66118768
+}
+Python Operator working
+{
+    "x": 33.00349199,
+    "y": -16.52862069
+}
+Python Operator working
+{
+    "x": 33.99467017,
+    "y": -16.39608461
+}
+Python Operator working
+{
+    "x": 34.98585243,
+    "y": -16.26357902
+}
+Python Operator working
+{
+    "x": 35.97703875,
+    "y": -16.13110387
+}
+Python Operator working
+{
+    "x": 36.96822915,
+    "y": -15.99865915
+}
+Python Operator working
+{
+    "x": 37.9594236,
+    "y": -15.86624486
+}
+Python Operator working
+{
+    "x": 38.95173795,
+    "y": -15.74399057
+}
+Python Operator working
+{
+    "x": 39.94862289,
+    "y": -15.66520771
+}
+Python Operator working
+{
+    "x": 40.946435,
+    "y": -15.59919776
+}
+Python Operator working
+{
+    "x": 53.73269289,
+    "y": 30.03222711
+}
+Python Operator working
+{
+    "x": 52.73627709,
+    "y": 30.11635244
+}
+Python Operator working
+{
+    "x": 51.73774937,
+    "y": 30.16986791
+}
+Python Operator working
+{
+    "x": 50.7380498,
+    "y": 30.19272176
+}
+Python Operator working
+{
+    "x": 49.73811968,
+    "y": 30.18489455
+}
+Python Operator working
+{
+    "x": 48.73890045,
+    "y": 30.14639183
+}
+Python Operator working
+{
+    "x": 47.7413329,
+    "y": 30.07725072
+}
+Python Operator working
+{
+    "x": 46.74573398,
+    "y": 29.98360978
+}
+Python Operator working
+{
+    "x": 45.75006802,
+    "y": 29.89061024
+}
+Python Operator working
+{
+    "x": 44.75420672,
+    "y": 29.79972621
+}
+Python Operator working
+{
+    "x": 43.75815468,
+    "y": 29.71095708
+}
+Python Operator working
+{
+    "x": 42.76191643,
+    "y": 29.62430279
+}
+Python Operator working
+{
+    "x": 30.02998206,
+    "y": -16.92641296
+}
+Python Operator working
+{
+    "x": 31.02114796,
+    "y": -16.79378511
+}
+Python Operator working
+{
+    "x": 32.01231794,
+    "y": -16.66118768
+}
+Python Operator working
+{
+    "x": 33.00349199,
+    "y": -16.52862069
+}
+Python Operator working
+{
+    "x": 33.99467017,
+    "y": -16.39608461
+}
+Python Operator working
+{
+    "x": 34.98585243,
+    "y": -16.26357902
+}
+Python Operator working
+{
+    "x": 35.97703875,
+    "y": -16.13110387
+}
+Python Operator working
+{
+    "x": 36.96822915,
+    "y": -15.99865915
+}
+Python Operator working
+{
+    "x": 37.9594236,
+    "y": -15.86624486
+}
+Python Operator working
+{
+    "x": 38.95173795,
+    "y": -15.74399057
+}
+Python Operator working
+{
+    "x": 39.94862289,
+    "y": -15.66520771
+}
+Python Operator working
+{
+    "x": 40.946435,
+    "y": -15.59919776
+}
+Python Operator working
+{
+    "x": 53.73269289,
+    "y": 30.03222711
+}
+Python Operator working
+{
+    "x": 52.73627709,
+    "y": 30.11635244
+}
+Python Operator working
+{
+    "x": 51.73774937,
+    "y": 30.16986791
+}
+Python Operator working
+{
+    "x": 50.7380498,
+    "y": 30.19272176
+}
+Python Operator working
+{
+    "x": 49.73811968,
+    "y": 30.18489455
+}
+Python Operator working
+{
+    "x": 48.73890045,
+    "y": 30.14639183
+}
+Python Operator working
+{
+    "x": 47.7413329,
+    "y": 30.07725072
+}
+Python Operator working
+{
+    "x": 46.74573398,
+    "y": 29.98360978
+}
+Python Operator working
+{
+    "x": 45.75006802,
+    "y": 29.89061024
+}
+Python Operator working
+{
+    "x": 44.75420672,
+    "y": 29.79972621
+}
+Python Operator working
+{
+    "x": 43.75815468,
+    "y": 29.71095708
+}
+Python Operator working
+{
+    "x": 42.76191643,
+    "y": 29.62430279
+}
+Python Operator working
+{
+    "x": 34.98585243,
+    "y": -16.26357902
+}
+Python Operator working
+{
+    "x": 35.97703875,
+    "y": -16.13110387
+}
+Python Operator working
+{
+    "x": 36.96822915,
+    "y": -15.99865915
+}
+Python Operator working
+{
+    "x": 37.9594236,
+    "y": -15.86624486
+}
+Python Operator working
+{
+    "x": 38.95173795,
+    "y": -15.74399057
+}
+Python Operator working
+{
+    "x": 39.94862289,
+    "y": -15.66520771
+}
+Python Operator working
+{
+    "x": 40.946435,
+    "y": -15.59919776
+}
+Python Operator working
+{
+    "x": 41.94501069,
+    "y": -15.54597258
+}
+Python Operator working
+{
+    "x": 42.94418614,
+    "y": -15.50554073
+}
+Python Operator working
+{
+    "x": 43.94379744,
+    "y": -15.47790798
+}
+Python Operator working
+{
+    "x": 44.94368064,
+    "y": -15.46307886
+}
+Python Operator working
+{
+    "x": 45.94367177,
+    "y": -15.46105729
+}
+Python Operator working
+{
+    "x": 48.73890045,
+    "y": 30.14639183
+}
+Python Operator working
+{
+    "x": 47.7413329,
+    "y": 30.07725072
+}
+Python Operator working
+{
+    "x": 46.74573398,
+    "y": 29.98360978
+}
+Python Operator working
+{
+    "x": 45.75006802,
+    "y": 29.89061024
+}
+Python Operator working
+{
+    "x": 44.75420672,
+    "y": 29.79972621
+}
+Python Operator working
+{
+    "x": 43.75815468,
+    "y": 29.71095708
+}
+Python Operator working
+{
+    "x": 42.76191643,
+    "y": 29.62430279
+}
+Python Operator working
+{
+    "x": 41.76549644,
+    "y": 29.53976387
+}
+Python Operator working
+{
+    "x": 40.76889907,
+    "y": 29.45734236
+}
+Python Operator working
+{
+    "x": 39.77212896,
+    "y": 29.37703685
+}
+Python Operator working
+{
+    "x": 38.77519061,
+    "y": 29.29884769
+}
+Python Operator working
+{
+    "x": 37.77808845,
+    "y": 29.22277593
+}
+Python Operator working
+{
+    "x": 39.94862289,
+    "y": -15.66520771
+}
+Python Operator working
+{
+    "x": 40.946435,
+    "y": -15.59919776
+}
+Python Operator working
+{
+    "x": 41.94501069,
+    "y": -15.54597258
+}
+Python Operator working
+{
+    "x": 42.94418614,
+    "y": -15.50554073
+}
+Python Operator working
+{
+    "x": 43.94379744,
+    "y": -15.47790798
+}
+Python Operator working
+{
+    "x": 44.94368064,
+    "y": -15.46307886
+}
+Python Operator working
+{
+    "x": 45.94367177,
+    "y": -15.46105729
+}
+Python Operator working
+{
+    "x": 46.94360676,
+    "y": -15.47184253
+}
+Python Operator working
+{
+    "x": 47.94332164,
+    "y": -15.49543239
+}
+Python Operator working
+{
+    "x": 48.94265244,
+    "y": -15.53182305
+}
+Python Operator working
+{
+    "x": 49.94143517,
+    "y": -15.58101035
+}
+Python Operator working
+{
+    "x": 50.93950608,
+    "y": -15.64298437
+}
+Python Operator working
+{
+    "x": 43.75815468,
+    "y": 29.71095708
+}
+Python Operator working
+{
+    "x": 42.76191643,
+    "y": 29.62430279
+}
+Python Operator working
+{
+    "x": 41.76549644,
+    "y": 29.53976387
+}
+Python Operator working
+{
+    "x": 40.76889907,
+    "y": 29.45734236
+}
+Python Operator working
+{
+    "x": 39.77212896,
+    "y": 29.37703685
+}
+Python Operator working
+{
+    "x": 38.77519061,
+    "y": 29.29884769
+}
+Python Operator working
+{
+    "x": 37.77808845,
+    "y": 29.22277593
+}
+Python Operator working
+{
+    "x": 36.78082695,
+    "y": 29.14882244
+}
+Python Operator working
+{
+    "x": 35.783045,
+    "y": 29.08271676
+}
+Python Operator working
+{
+    "x": 34.78506865,
+    "y": 29.01920262
+}
+Python Operator working
+{
+    "x": 33.78781307,
+    "y": 28.94522872
+}
+Python Operator working
+{
+    "x": 30.80146594,
+    "y": 28.66064306
+}
+Python Operator working
+{
+    "x": 43.94379744,
+    "y": -15.47790798
+}
+Python Operator working
+{
+    "x": 44.94368064,
+    "y": -15.46307886
+}
+Python Operator working
+{
+    "x": 45.94367177,
+    "y": -15.46105729
+}
+Python Operator working
+{
+    "x": 46.94360676,
+    "y": -15.47184253
+}
+Python Operator working
+{
+    "x": 47.94332164,
+    "y": -15.49543239
+}
+Python Operator working
+{
+    "x": 48.94265244,
+    "y": -15.53182305
+}
+Python Operator working
+{
+    "x": 49.94143517,
+    "y": -15.58101035
+}
+Python Operator working
+{
+    "x": 50.93950608,
+    "y": -15.64298437
+}
+Python Operator working
+{
+    "x": 51.93670148,
+    "y": -15.71773495
+}
+Python Operator working
+{
+    "x": 52.93285779,
+    "y": -15.80525032
+}
+Python Operator working
+{
+    "x": 53.92263775,
+    "y": -15.94681379
+}
+Python Operator working
+{
+    "x": 54.91139175,
+    "y": -16.09636384
+}
+Python Operator working
+{
+    "x": 39.77212896,
+    "y": 29.37703685
+}
+Python Operator working
+{
+    "x": 38.77519061,
+    "y": 29.29884769
+}
+Python Operator working
+{
+    "x": 37.77808845,
+    "y": 29.22277593
+}
+Python Operator working
+{
+    "x": 36.78082695,
+    "y": 29.14882244
+}
+Python Operator working
+{
+    "x": 35.783045,
+    "y": 29.08271676
+}
+Python Operator working
+{
+    "x": 34.78506865,
+    "y": 29.01920262
+}
+Python Operator working
+{
+    "x": 33.78781307,
+    "y": 28.94522872
+}
+Python Operator working
+{
+    "x": 32.79138778,
+    "y": 28.86080428
+}
+Python Operator working
+{
+    "x": 31.79590228,
+    "y": 28.76593891
+}
+Python Operator working
+{
+    "x": 30.80146594,
+    "y": 28.66064306
+}
+Python Operator working
+{
+    "x": 29.80818824,
+    "y": 28.54492689
+}
+Python Operator working
+{
+    "x": 28.81617821,
+    "y": 28.41880415
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 42.94418614,
+    "y": -15.50554073
+}
+Python Operator working
+{
+    "x": 43.94379744,
+    "y": -15.47790798
+}
+Python Operator working
+{
+    "x": 44.94368064,
+    "y": -15.46307886
+}
+Python Operator working
+{
+    "x": 45.94367177,
+    "y": -15.46105729
+}
+Python Operator working
+{
+    "x": 46.94360676,
+    "y": -15.47184253
+}
+Python Operator working
+{
+    "x": 47.94332164,
+    "y": -15.49543239
+}
+Python Operator working
+{
+    "x": 48.94265244,
+    "y": -15.53182305
+}
+Python Operator working
+{
+    "x": 49.94143517,
+    "y": -15.58101035
+}
+Python Operator working
+{
+    "x": 50.93950608,
+    "y": -15.64298437
+}
+Python Operator working
+{
+    "x": 51.93670148,
+    "y": -15.71773495
+}
+Python Operator working
+{
+    "x": 52.93285779,
+    "y": -15.80525032
+}
+Python Operator working
+{
+    "x": 53.92263775,
+    "y": -15.94681379
+}
+Python Operator working
+{
+    "x": 40.76889907,
+    "y": 29.45734236
+}
+Python Operator working
+{
+    "x": 39.77212896,
+    "y": 29.37703685
+}
+Python Operator working
+{
+    "x": 38.77519061,
+    "y": 29.29884769
+}
+Python Operator working
+{
+    "x": 37.77808845,
+    "y": 29.22277593
+}
+Python Operator working
+{
+    "x": 36.78082695,
+    "y": 29.14882244
+}
+Python Operator working
+{
+    "x": 35.783045,
+    "y": 29.08271676
+}
+Python Operator working
+{
+    "x": 34.78506865,
+    "y": 29.01920262
+}
+Python Operator working
+{
+    "x": 33.78781307,
+    "y": 28.94522872
+}
+Python Operator working
+{
+    "x": 32.79138778,
+    "y": 28.86080428
+}
+Python Operator working
+{
+    "x": 31.79590228,
+    "y": 28.76593891
+}
+Python Operator working
+{
+    "x": 30.80146594,
+    "y": 28.66064306
+}
+Python Operator working
+{
+    "x": 29.80818824,
+    "y": 28.54492689
+}
+Python Operator working
+{
+    "x": 46.94360676,
+    "y": -15.47184253
+}
+Python Operator working
+{
+    "x": 47.94332164,
+    "y": -15.49543239
+}
+Python Operator working
+{
+    "x": 48.94265244,
+    "y": -15.53182305
+}
+Python Operator working
+{
+    "x": 49.94143517,
+    "y": -15.58101035
+}
+Python Operator working
+{
+    "x": 50.93950608,
+    "y": -15.64298437
+}
+Python Operator working
+{
+    "x": 51.93670148,
+    "y": -15.71773495
+}
+Python Operator working
+{
+    "x": 52.93285779,
+    "y": -15.80525032
+}
+Python Operator working
+{
+    "x": 53.92263775,
+    "y": -15.94681379
+}
+Python Operator working
+{
+    "x": 54.91139175,
+    "y": -16.09636384
+}
+Python Operator working
+{
+    "x": 55.89985626,
+    "y": -16.24781547
+}
+Python Operator working
+{
+    "x": 56.88802777,
+    "y": -16.40116723
+}
+Python Operator working
+{
+    "x": 57.87590272,
+    "y": -16.5564179
+}
+Python Operator working
+{
+    "x": 36.78082695,
+    "y": 29.14882244
+}
+Python Operator working
+{
+    "x": 35.783045,
+    "y": 29.08271676
+}
+Python Operator working
+{
+    "x": 34.78506865,
+    "y": 29.01920262
+}
+Python Operator working
+{
+    "x": 33.78781307,
+    "y": 28.94522872
+}
+Python Operator working
+{
+    "x": 32.79138778,
+    "y": 28.86080428
+}
+Python Operator working
+{
+    "x": 31.79590228,
+    "y": 28.76593891
+}
+Python Operator working
+{
+    "x": 30.80146594,
+    "y": 28.66064306
+}
+Python Operator working
+{
+    "x": 29.80818824,
+    "y": 28.54492689
+}
+Python Operator working
+{
+    "x": 28.81617821,
+    "y": 28.41880415
+}
+Python Operator working
+{
+    "x": 27.82554485,
+    "y": 28.28228906
+}
+Python Operator working
+{
+    "x": 26.83639701,
+    "y": 28.13539663
+}
+Python Operator working
+{
+    "x": 25.84884361,
+    "y": 27.97814165
+}
+Python Operator working
+{
+    "x": 50.93950608,
+    "y": -15.64298437
+}
+Python Operator working
+{
+    "x": 51.93670148,
+    "y": -15.71773495
+}
+Python Operator working
+{
+    "x": 52.93285779,
+    "y": -15.80525032
+}
+Python Operator working
+{
+    "x": 53.92263775,
+    "y": -15.94681379
+}
+Python Operator working
+{
+    "x": 54.91139175,
+    "y": -16.09636384
+}
+Python Operator working
+{
+    "x": 55.89985626,
+    "y": -16.24781547
+}
+Python Operator working
+{
+    "x": 56.88802777,
+    "y": -16.40116723
+}
+Python Operator working
+{
+    "x": 57.87590272,
+    "y": -16.5564179
+}
+Python Operator working
+{
+    "x": 58.86347712,
+    "y": -16.71356909
+}
+Python Operator working
+{
+    "x": 59.85074771,
+    "y": -16.87261776
+}
+Python Operator working
+{
+    "x": 60.83771059,
+    "y": -17.03356481
+}
+Python Operator working
+{
+    "x": 61.82436217,
+    "y": -17.19640941
+}
+Python Operator working
+{
+    "x": 31.79590228,
+    "y": 28.76593891
+}
+Python Operator working
+{
+    "x": 30.80146594,
+    "y": 28.66064306
+}
+Python Operator working
+{
+    "x": 29.80818824,
+    "y": 28.54492689
+}
+Python Operator working
+{
+    "x": 28.81617821,
+    "y": 28.41880415
+}
+Python Operator working
+{
+    "x": 27.82554485,
+    "y": 28.28228906
+}
+Python Operator working
+{
+    "x": 26.83639701,
+    "y": 28.13539663
+}
+Python Operator working
+{
+    "x": 25.84884361,
+    "y": 27.97814165
+}
+Python Operator working
+{
+    "x": 24.86288376,
+    "y": 27.81117583
+}
+Python Operator working
+{
+    "x": 23.87796446,
+    "y": 27.63817863
+}
+Python Operator working
+{
+    "x": 22.89454189,
+    "y": 27.4568665
+}
+Python Operator working
+{
+    "x": 21.91268592,
+    "y": 27.26725397
+}
+Python Operator working
+{
+    "x": 20.93246662,
+    "y": 27.06935457
+}
+Python Operator working
+{
+    "x": 55.89985626,
+    "y": -16.24781547
+}
+Python Operator working
+{
+    "x": 56.88802777,
+    "y": -16.40116723
+}
+Python Operator working
+{
+    "x": 57.87590272,
+    "y": -16.5564179
+}
+Python Operator working
+{
+    "x": 58.86347712,
+    "y": -16.71356909
+}
+Python Operator working
+{
+    "x": 59.85074771,
+    "y": -16.87261776
+}
+Python Operator working
+{
+    "x": 60.83771059,
+    "y": -17.03356481
+}
+Python Operator working
+{
+    "x": 61.82436217,
+    "y": -17.19640941
+}
+Python Operator working
+{
+    "x": 62.81069899,
+    "y": -17.36114969
+}
+Python Operator working
+{
+    "x": 63.79671696,
+    "y": -17.52778777
+}
+Python Operator working
+{
+    "x": 64.78241289,
+    "y": -17.69632035
+}
+Python Operator working
+{
+    "x": 65.76778294,
+    "y": -17.86674794
+}
+Python Operator working
+{
+    "x": 66.75282338,
+    "y": -18.03907034
+}
+Python Operator working
+{
+    "x": 26.83639701,
+    "y": 28.13539663
+}
+Python Operator working
+{
+    "x": 25.84884361,
+    "y": 27.97814165
+}
+Python Operator working
+{
+    "x": 24.86288376,
+    "y": 27.81117583
+}
+Python Operator working
+{
+    "x": 23.87796446,
+    "y": 27.63817863
+}
+Python Operator working
+{
+    "x": 22.89454189,
+    "y": 27.4568665
+}
+Python Operator working
+{
+    "x": 21.91268592,
+    "y": 27.26725397
+}
+Python Operator working
+{
+    "x": 20.93246662,
+    "y": 27.06935457
+}
+Python Operator working
+{
+    "x": 19.95395424,
+    "y": 26.86318092
+}
+Python Operator working
+{
+    "x": 18.97721842,
+    "y": 26.64874871
+}
+Python Operator working
+{
+    "x": 18.00232872,
+    "y": 26.42607378
+}
+Python Operator working
+{
+    "x": 17.02935485,
+    "y": 26.19517144
+}
+Python Operator working
+{
+    "x": 16.05836645,
+    "y": 25.95605729
+}
+Python Operator working
+{
+    "x": 60.83771059,
+    "y": -17.03356481
+}
+Python Operator working
+{
+    "x": 61.82436217,
+    "y": -17.19640941
+}
+Python Operator working
+{
+    "x": 62.81069899,
+    "y": -17.36114969
+}
+Python Operator working
+{
+    "x": 63.79671696,
+    "y": -17.52778777
+}
+Python Operator working
+{
+    "x": 64.78241289,
+    "y": -17.69632035
+}
+Python Operator working
+{
+    "x": 65.76778294,
+    "y": -17.86674794
+}
+Python Operator working
+{
+    "x": 66.75282338,
+    "y": -18.03907034
+}
+Python Operator working
+{
+    "x": 67.73790864,
+    "y": -18.21112644
+}
+Python Operator working
+{
+    "x": 68.72423043,
+    "y": -18.3759437
+}
+Python Operator working
+{
+    "x": 69.71174887,
+    "y": -18.53343255
+}
+Python Operator working
+{
+    "x": 70.70040961,
+    "y": -18.6835836
+}
+Python Operator working
+{
+    "x": 71.69015811,
+    "y": -18.82638876
+}
+Python Operator working
+{
+    "x": 21.91268592,
+    "y": 27.26725397
+}
+Python Operator working
+{
+    "x": 20.93246662,
+    "y": 27.06935457
+}
+Python Operator working
+{
+    "x": 19.95395424,
+    "y": 26.86318092
+}
+Python Operator working
+{
+    "x": 18.97721842,
+    "y": 26.64874871
+}
+Python Operator working
+{
+    "x": 18.00232872,
+    "y": 26.42607378
+}
+Python Operator working
+{
+    "x": 17.02935485,
+    "y": 26.19517144
+}
+Python Operator working
+{
+    "x": 16.05836645,
+    "y": 25.95605729
+}
+Python Operator working
+{
+    "x": 15.08838431,
+    "y": 25.71292595
+}
+Python Operator working
+{
+    "x": 14.11670778,
+    "y": 25.47661114
+}
+Python Operator working
+{
+    "x": 13.14489018,
+    "y": 25.24087712
+}
+Python Operator working
+{
+    "x": 12.17293206,
+    "y": 25.00572316
+}
+Python Operator working
+{
+    "x": 11.20083379,
+    "y": 24.77114924
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": 60.83771059,
+    "y": -17.03356481
+}
+Python Operator working
+{
+    "x": 61.82436217,
+    "y": -17.19640941
+}
+Python Operator working
+{
+    "x": 62.81069899,
+    "y": -17.36114969
+}
+Python Operator working
+{
+    "x": 63.79671696,
+    "y": -17.52778777
+}
+Python Operator working
+{
+    "x": 64.78241289,
+    "y": -17.69632035
+}
+Python Operator working
+{
+    "x": 65.76778294,
+    "y": -17.86674794
+}
+Python Operator working
+{
+    "x": 66.75282338,
+    "y": -18.03907034
+}
+Python Operator working
+{
+    "x": 67.73790864,
+    "y": -18.21112644
+}
+Python Operator working
+{
+    "x": 68.72423043,
+    "y": -18.3759437
+}
+Python Operator working
+{
+    "x": 69.71174887,
+    "y": -18.53343255
+}
+Python Operator working
+{
+    "x": 70.70040961,
+    "y": -18.6835836
+}
+Python Operator working
+{
+    "x": 71.69015811,
+    "y": -18.82638876
+}
+Python Operator working
+{
+    "x": 21.91268592,
+    "y": 27.26725397
+}
+Python Operator working
+{
+    "x": 20.93246662,
+    "y": 27.06935457
+}
+Python Operator working
+{
+    "x": 19.95395424,
+    "y": 26.86318092
+}
+Python Operator working
+{
+    "x": 18.97721842,
+    "y": 26.64874871
+}
+Python Operator working
+{
+    "x": 18.00232872,
+    "y": 26.42607378
+}
+Python Operator working
+{
+    "x": 17.02935485,
+    "y": 26.19517144
+}
+Python Operator working
+{
+    "x": 16.05836645,
+    "y": 25.95605729
+}
+Python Operator working
+{
+    "x": 15.08838431,
+    "y": 25.71292595
+}
+Python Operator working
+{
+    "x": 14.11670778,
+    "y": 25.47661114
+}
+Python Operator working
+{
+    "x": 13.14489018,
+    "y": 25.24087712
+}
+Python Operator working
+{
+    "x": 12.17293206,
+    "y": 25.00572316
+}
+Python Operator working
+{
+    "x": 11.20083379,
+    "y": 24.77114924
+}
+Python Operator working
+{
+    "x": 64.78241289,
+    "y": -17.69632035
+}
+Python Operator working
+{
+    "x": 65.76778294,
+    "y": -17.86674794
+}
+Python Operator working
+{
+    "x": 66.75282338,
+    "y": -18.03907034
+}
+Python Operator working
+{
+    "x": 67.73790864,
+    "y": -18.21112644
+}
+Python Operator working
+{
+    "x": 68.72423043,
+    "y": -18.3759437
+}
+Python Operator working
+{
+    "x": 69.71174887,
+    "y": -18.53343255
+}
+Python Operator working
+{
+    "x": 70.70040961,
+    "y": -18.6835836
+}
+Python Operator working
+{
+    "x": 71.69015811,
+    "y": -18.82638876
+}
+Python Operator working
+{
+    "x": 72.68093971,
+    "y": -18.96184067
+}
+Python Operator working
+{
+    "x": 73.67269979,
+    "y": -19.08993184
+}
+Python Operator working
+{
+    "x": 74.66538365,
+    "y": -19.21065523
+}
+Python Operator working
+{
+    "x": 75.65893658,
+    "y": -19.32400417
+}
+Python Operator working
+{
+    "x": 18.00232872,
+    "y": 26.42607378
+}
+Python Operator working
+{
+    "x": 17.02935485,
+    "y": 26.19517144
+}
+Python Operator working
+{
+    "x": 16.05836645,
+    "y": 25.95605729
+}
+Python Operator working
+{
+    "x": 15.08838431,
+    "y": 25.71292595
+}
+Python Operator working
+{
+    "x": 14.11670778,
+    "y": 25.47661114
+}
+Python Operator working
+{
+    "x": 13.14489018,
+    "y": 25.24087712
+}
+Python Operator working
+{
+    "x": 12.17293206,
+    "y": 25.00572316
+}
+Python Operator working
+{
+    "x": 11.20083379,
+    "y": 24.77114924
+}
+Python Operator working
+{
+    "x": 10.22859571,
+    "y": 24.53715546
+}
+Python Operator working
+{
+    "x": 9.25621818,
+    "y": 24.30374188
+}
+Python Operator working
+{
+    "x": 8.28370152,
+    "y": 24.07090861
+}
+Python Operator working
+{
+    "x": 7.3110461,
+    "y": 23.83865572
+}
+Python Operator working
+{
+    "x": 68.72423043,
+    "y": -18.3759437
+}
+Python Operator working
+{
+    "x": 69.71174887,
+    "y": -18.53343255
+}
+Python Operator working
+{
+    "x": 70.70040961,
+    "y": -18.6835836
+}
+Python Operator working
+{
+    "x": 71.69015811,
+    "y": -18.82638876
+}
+Python Operator working
+{
+    "x": 72.68093971,
+    "y": -18.96184067
+}
+Python Operator working
+{
+    "x": 73.67269979,
+    "y": -19.08993184
+}
+Python Operator working
+{
+    "x": 74.66538365,
+    "y": -19.21065523
+}
+Python Operator working
+{
+    "x": 75.65893658,
+    "y": -19.32400417
+}
+Python Operator working
+{
+    "x": 76.65418144,
+    "y": -19.27635252
+}
+Python Operator working
+{
+    "x": 77.63907851,
+    "y": -19.10517725
+}
+Python Operator working
+{
+    "x": 78.60457219,
+    "y": -18.84605338
+}
+Python Operator working
+{
+    "x": 79.5428256,
+    "y": -18.50108417
+}
+Python Operator working
+{
+    "x": 14.11670778,
+    "y": 25.47661114
+}
+Python Operator working
+{
+    "x": 13.14489018,
+    "y": 25.24087712
+}
+Python Operator working
+{
+    "x": 12.17293206,
+    "y": 25.00572316
+}
+Python Operator working
+{
+    "x": 11.20083379,
+    "y": 24.77114924
+}
+Python Operator working
+{
+    "x": 10.22859571,
+    "y": 24.53715546
+}
+Python Operator working
+{
+    "x": 9.25621818,
+    "y": 24.30374188
+}
+Python Operator working
+{
+    "x": 8.28370152,
+    "y": 24.07090861
+}
+Python Operator working
+{
+    "x": 7.3110461,
+    "y": 23.83865572
+}
+Python Operator working
+{
+    "x": 6.32293263,
+    "y": 23.68969145
+}
+Python Operator working
+{
+    "x": 5.35014139,
+    "y": 23.45974841
+}
+Python Operator working
+{
+    "x": 4.40458214,
+    "y": 23.13553502
+}
+Python Operator working
+{
+    "x": 3.49536657,
+    "y": 22.72017533
+}
+Python Operator working
+{
+    "x": 72.68093971,
+    "y": -18.96184067
+}
+Python Operator working
+{
+    "x": 73.67269979,
+    "y": -19.08993184
+}
+Python Operator working
+{
+    "x": 74.66538365,
+    "y": -19.21065523
+}
+Python Operator working
+{
+    "x": 75.65893658,
+    "y": -19.32400417
+}
+Python Operator working
+{
+    "x": 76.65418144,
+    "y": -19.27635252
+}
+Python Operator working
+{
+    "x": 77.63907851,
+    "y": -19.10517725
+}
+Python Operator working
+{
+    "x": 78.60457219,
+    "y": -18.84605338
+}
+Python Operator working
+{
+    "x": 79.5428256,
+    "y": -18.50108417
+}
+Python Operator working
+{
+    "x": 80.44622301,
+    "y": -18.07306975
+}
+Python Operator working
+{
+    "x": 81.30743157,
+    "y": -17.56548426
+}
+Python Operator working
+{
+    "x": 82.11946093,
+    "y": -16.98244776
+}
+Python Operator working
+{
+    "x": 82.93097855,
+    "y": -16.40044312
+}
+Python Operator working
+{
+    "x": 9.25621818,
+    "y": 24.30374188
+}
+Python Operator working
+{
+    "x": 8.28370152,
+    "y": 24.07090861
+}
+Python Operator working
+{
+    "x": 7.3110461,
+    "y": 23.83865572
+}
+Python Operator working
+{
+    "x": 6.32293263,
+    "y": 23.68969145
+}
+Python Operator working
+{
+    "x": 5.35014139,
+    "y": 23.45974841
+}
+Python Operator working
+{
+    "x": 4.40458214,
+    "y": 23.13553502
+}
+Python Operator working
+{
+    "x": 3.49536657,
+    "y": 22.72017533
+}
+Python Operator working
+{
+    "x": 2.63125595,
+    "y": 22.2176722
+}
+Python Operator working
+{
+    "x": 1.82057699,
+    "y": 21.63286783
+}
+Python Operator working
+{
+    "x": 1.07114153,
+    "y": 20.9713975
+}
+Python Operator working
+{
+    "x": 0.39017126,
+    "y": 20.23963526
+}
+Python Operator working
+{
+    "x": -0.21577188,
+    "y": 19.4446325
+}
+Python Operator working
+{
+    "x": 77.63907851,
+    "y": -19.10517725
+}
+Python Operator working
+{
+    "x": 78.60457219,
+    "y": -18.84605338
+}
+Python Operator working
+{
+    "x": 79.5428256,
+    "y": -18.50108417
+}
+Python Operator working
+{
+    "x": 80.44622301,
+    "y": -18.07306975
+}
+Python Operator working
+{
+    "x": 81.30743157,
+    "y": -17.56548426
+}
+Python Operator working
+{
+    "x": 82.11946093,
+    "y": -16.98244776
+}
+Python Operator working
+{
+    "x": 82.93097855,
+    "y": -16.40044312
+}
+Python Operator working
+{
+    "x": 83.68856741,
+    "y": -15.74916059
+}
+Python Operator working
+{
+    "x": 84.33981952,
+    "y": -14.99154559
+}
+Python Operator working
+{
+    "x": 84.86998064,
+    "y": -14.14476411
+}
+Python Operator working
+{
+    "x": 85.26703919,
+    "y": -13.22800125
+}
+Python Operator working
+{
+    "x": 85.52199923,
+    "y": -12.26202762
+}
+Python Operator working
+{
+    "x": 4.40458214,
+    "y": 23.13553502
+}
+Python Operator working
+{
+    "x": 3.49536657,
+    "y": 22.72017533
+}
+Python Operator working
+{
+    "x": 2.63125595,
+    "y": 22.2176722
+}
+Python Operator working
+{
+    "x": 1.82057699,
+    "y": 21.63286783
+}
+Python Operator working
+{
+    "x": 1.07114153,
+    "y": 20.9713975
+}
+Python Operator working
+{
+    "x": 0.39017126,
+    "y": 20.23963526
+}
+Python Operator working
+{
+    "x": -0.21577188,
+    "y": 19.4446325
+}
+Python Operator working
+{
+    "x": -0.74084891,
+    "y": 18.59404999
+}
+Python Operator working
+{
+    "x": -1.1800001,
+    "y": 17.69608411
+}
+Python Operator working
+{
+    "x": -1.52899371,
+    "y": 16.75938779
+}
+Python Operator working
+{
+    "x": -1.78446677,
+    "y": 15.79298722
+}
+Python Operator working
+{
+    "x": -1.94509143,
+    "y": 14.80633322
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": 77.63907851,
+    "y": -19.10517725
+}
+Python Operator working
+{
+    "x": 78.60457219,
+    "y": -18.84605338
+}
+Python Operator working
+{
+    "x": 79.5428256,
+    "y": -18.50108417
+}
+Python Operator working
+{
+    "x": 80.44622301,
+    "y": -18.07306975
+}
+Python Operator working
+{
+    "x": 81.30743157,
+    "y": -17.56548426
+}
+Python Operator working
+{
+    "x": 82.11946093,
+    "y": -16.98244776
+}
+Python Operator working
+{
+    "x": 82.93097855,
+    "y": -16.40044312
+}
+Python Operator working
+{
+    "x": 83.68856741,
+    "y": -15.74916059
+}
+Python Operator working
+{
+    "x": 84.33981952,
+    "y": -14.99154559
+}
+Python Operator working
+{
+    "x": 84.86998064,
+    "y": -14.14476411
+}
+Python Operator working
+{
+    "x": 85.26703919,
+    "y": -13.22800125
+}
+Python Operator working
+{
+    "x": 85.52199923,
+    "y": -12.26202762
+}
+Python Operator working
+{
+    "x": 4.40458214,
+    "y": 23.13553502
+}
+Python Operator working
+{
+    "x": 3.49536657,
+    "y": 22.72017533
+}
+Python Operator working
+{
+    "x": 2.63125595,
+    "y": 22.2176722
+}
+Python Operator working
+{
+    "x": 1.82057699,
+    "y": 21.63286783
+}
+Python Operator working
+{
+    "x": 1.07114153,
+    "y": 20.9713975
+}
+Python Operator working
+{
+    "x": 0.39017126,
+    "y": 20.23963526
+}
+Python Operator working
+{
+    "x": -0.21577188,
+    "y": 19.4446325
+}
+Python Operator working
+{
+    "x": -0.74084891,
+    "y": 18.59404999
+}
+Python Operator working
+{
+    "x": -1.1800001,
+    "y": 17.69608411
+}
+Python Operator working
+{
+    "x": -1.52899371,
+    "y": 16.75938779
+}
+Python Operator working
+{
+    "x": -1.78446677,
+    "y": 15.79298722
+}
+Python Operator working
+{
+    "x": -1.94509143,
+    "y": 14.80633322
+}
+Python Operator working
+{
+    "x": 82.93097855,
+    "y": -16.40044312
+}
+Python Operator working
+{
+    "x": 83.68856741,
+    "y": -15.74916059
+}
+Python Operator working
+{
+    "x": 84.33981952,
+    "y": -14.99154559
+}
+Python Operator working
+{
+    "x": 84.86998064,
+    "y": -14.14476411
+}
+Python Operator working
+{
+    "x": 85.26703919,
+    "y": -13.22800125
+}
+Python Operator working
+{
+    "x": 85.52199923,
+    "y": -12.26202762
+}
+Python Operator working
+{
+    "x": 85.62908424,
+    "y": -11.26872878
+}
+Python Operator working
+{
+    "x": 85.58675864,
+    "y": -10.27051311
+}
+Python Operator working
+{
+    "x": 85.48749132,
+    "y": -9.27545312
+}
+Python Operator working
+{
+    "x": 85.39260725,
+    "y": -8.2799656
+}
+Python Operator working
+{
+    "x": 85.30210716,
+    "y": -7.28406997
+}
+Python Operator working
+{
+    "x": 85.21599264,
+    "y": -6.28778554
+}
+Python Operator working
+{
+    "x": -0.21577188,
+    "y": 19.4446325
+}
+Python Operator working
+{
+    "x": -0.74084891,
+    "y": 18.59404999
+}
+Python Operator working
+{
+    "x": -1.1800001,
+    "y": 17.69608411
+}
+Python Operator working
+{
+    "x": -1.52899371,
+    "y": 16.75938779
+}
+Python Operator working
+{
+    "x": -1.78446677,
+    "y": 15.79298722
+}
+Python Operator working
+{
+    "x": -1.94509143,
+    "y": 14.80633322
+}
+Python Operator working
+{
+    "x": -2.03419871,
+    "y": 13.81049194
+}
+Python Operator working
+{
+    "x": -2.05770136,
+    "y": 12.81094824
+}
+Python Operator working
+{
+    "x": -2.01549908,
+    "y": 11.81201936
+}
+Python Operator working
+{
+    "x": -1.90777451,
+    "y": 10.81801968
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": 85.62908424,
+    "y": -11.26872878
+}
+Python Operator working
+{
+    "x": 85.58675864,
+    "y": -10.27051311
+}
+Python Operator working
+{
+    "x": 85.48749132,
+    "y": -9.27545312
+}
+Python Operator working
+{
+    "x": 85.39260725,
+    "y": -8.2799656
+}
+Python Operator working
+{
+    "x": 85.30210716,
+    "y": -7.28406997
+}
+Python Operator working
+{
+    "x": 85.21599264,
+    "y": -6.28778554
+}
+Python Operator working
+{
+    "x": 85.13426537,
+    "y": -5.29113162
+}
+Python Operator working
+{
+    "x": 85.05692692,
+    "y": -4.29412753
+}
+Python Operator working
+{
+    "x": 84.9839801,
+    "y": -3.29679251
+}
+Python Operator working
+{
+    "x": 84.91542516,
+    "y": -2.29914598
+}
+Python Operator working
+{
+    "x": 84.85126328,
+    "y": -1.30120729
+}
+Python Operator working
+{
+    "x": 84.79149572,
+    "y": -0.30299578
+}
+Python Operator working
+{
+    "x": -2.03419871,
+    "y": 13.81049194
+}
+Python Operator working
+{
+    "x": -2.05770136,
+    "y": 12.81094824
+}
+Python Operator working
+{
+    "x": -2.01549908,
+    "y": 11.81201936
+}
+Python Operator working
+{
+    "x": -1.90777451,
+    "y": 10.81801968
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 85.21599264,
+    "y": -6.28778554
+}
+Python Operator working
+{
+    "x": 85.13426537,
+    "y": -5.29113162
+}
+Python Operator working
+{
+    "x": 85.05692692,
+    "y": -4.29412753
+}
+Python Operator working
+{
+    "x": 84.9839801,
+    "y": -3.29679251
+}
+Python Operator working
+{
+    "x": 84.91542516,
+    "y": -2.29914598
+}
+Python Operator working
+{
+    "x": 84.85126328,
+    "y": -1.30120729
+}
+Python Operator working
+{
+    "x": 84.79149572,
+    "y": -0.30299578
+}
+Python Operator working
+{
+    "x": 84.73612363,
+    "y": 0.6954692
+}
+Python Operator working
+{
+    "x": 84.68514943,
+    "y": 1.69416836
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 84.85126328,
+    "y": -1.30120729
+}
+Python Operator working
+{
+    "x": 84.79149572,
+    "y": -0.30299578
+}
+Python Operator working
+{
+    "x": 84.73612363,
+    "y": 0.6954692
+}
+Python Operator working
+{
+    "x": 84.68514943,
+    "y": 1.69416836
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": 84.29819329,
+    "y": 6.67650887
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 2.05508405,
+    "y": -1.20337501
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 3.09691495,
+    "y": -4.01664819
+}
+Python Operator working
+{
+    "x": 3.45073645,
+    "y": -4.95196061
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": 84.85126328,
+    "y": -1.30120729
+}
+Python Operator working
+{
+    "x": 84.79149572,
+    "y": -0.30299578
+}
+Python Operator working
+{
+    "x": 84.73612363,
+    "y": 0.6954692
+}
+Python Operator working
+{
+    "x": 84.68514943,
+    "y": 1.69416836
+}
+Python Operator working
+{
+    "x": 84.63857286,
+    "y": 2.69308228
+}
+Python Operator working
+{
+    "x": 84.59639472,
+    "y": 3.69219157
+}
+Python Operator working
+{
+    "x": 84.51255882,
+    "y": 4.68803486
+}
+Python Operator working
+{
+    "x": 84.40352415,
+    "y": 5.68207222
+}
+Python Operator working
+{
+    "x": 84.29819329,
+    "y": 6.67650887
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": 1.71436574,
+    "y": -0.26321012
+}
+Python Operator working
+{
+    "x": 2.05508405,
+    "y": -1.20337501
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 3.09691495,
+    "y": -4.01664819
+}
+Python Operator working
+{
+    "x": 3.45073645,
+    "y": -4.95196061
+}
+Python Operator working
+{
+    "x": 84.1965677,
+    "y": 7.67133101
+}
+Python Operator working
+{
+    "x": 84.09864878,
+    "y": 8.66652482
+}
+Python Operator working
+{
+    "x": 84.00443892,
+    "y": 9.6620766
+}
+Python Operator working
+{
+    "x": 83.91393898,
+    "y": 10.65797248
+}
+Python Operator working
+{
+    "x": 83.82714963,
+    "y": 11.65419858
+}
+Python Operator working
+{
+    "x": 83.74407208,
+    "y": 12.65074109
+}
+Python Operator working
+{
+    "x": 83.66470774,
+    "y": 13.64758618
+}
+Python Operator working
+{
+    "x": 83.5890588,
+    "y": 14.64472011
+}
+Python Operator working
+{
+    "x": 83.51712498,
+    "y": 15.64212894
+}
+Python Operator working
+{
+    "x": 83.51883294,
+    "y": 16.64154116
+}
+Python Operator working
+{
+    "x": 83.46866505,
+    "y": 17.64007653
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 2.39908449,
+    "y": -2.14234395
+}
+Python Operator working
+{
+    "x": 2.74636287,
+    "y": -3.08010549
+}
+Python Operator working
+{
+    "x": 3.09691495,
+    "y": -4.01664819
+}
+Python Operator working
+{
+    "x": 3.45073645,
+    "y": -4.95196061
+}
+Python Operator working
+{
+    "x": 3.80782305,
+    "y": -5.88603134
+}
+Python Operator working
+{
+    "x": 4.16817047,
+    "y": -6.81884897
+}
+Python Operator working
+{
+    "x": 4.53177491,
+    "y": -7.75040186
+}
+Python Operator working
+{
+    "x": 4.89880267,
+    "y": -8.68060922
+}
+Python Operator working
+{
+    "x": 5.28708289,
+    "y": -9.6021479
+}
+Python Operator working
+{
+    "x": 5.68244398,
+    "y": -10.52067099
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 83.74407208,
+    "y": 12.65074109
+}
+Python Operator working
+{
+    "x": 83.66470774,
+    "y": 13.64758618
+}
+Python Operator working
+{
+    "x": 83.5890588,
+    "y": 14.64472011
+}
+Python Operator working
+{
+    "x": 83.51712498,
+    "y": 15.64212894
+}
+Python Operator working
+{
+    "x": 83.51883294,
+    "y": 16.64154116
+}
+Python Operator working
+{
+    "x": 83.46866505,
+    "y": 17.64007653
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 83.15926687,
+    "y": 19.61433893
+}
+Python Operator working
+{
+    "x": 82.90155929,
+    "y": 20.58034955
+}
+Python Operator working
+{
+    "x": 82.57480351,
+    "y": 21.5251498
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 4.16817047,
+    "y": -6.81884897
+}
+Python Operator working
+{
+    "x": 4.53177491,
+    "y": -7.75040186
+}
+Python Operator working
+{
+    "x": 4.89880267,
+    "y": -8.68060922
+}
+Python Operator working
+{
+    "x": 5.28708289,
+    "y": -9.6021479
+}
+Python Operator working
+{
+    "x": 5.68244398,
+    "y": -10.52067099
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 6.91077859,
+    "y": -13.25760252
+}
+Python Operator working
+{
+    "x": 7.33422573,
+    "y": -14.16352061
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 8.97946538,
+    "y": -16.65720213
+}
+Python Operator working
+{
+    "x": 83.46866505,
+    "y": 17.64007653
+}
+Python Operator working
+{
+    "x": 83.34861275,
+    "y": 18.63263743
+}
+Python Operator working
+{
+    "x": 83.15926687,
+    "y": 19.61433893
+}
+Python Operator working
+{
+    "x": 82.90155929,
+    "y": 20.58034955
+}
+Python Operator working
+{
+    "x": 82.57480351,
+    "y": 21.5251498
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 80.86889015,
+    "y": 23.9635391
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 77.25624354,
+    "y": 25.58303454
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 6.91077859,
+    "y": -13.25760252
+}
+Python Operator working
+{
+    "x": 7.33422573,
+    "y": -14.16352061
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 8.97946538,
+    "y": -16.65720213
+}
+Python Operator working
+{
+    "x": 9.70101443,
+    "y": -17.34869229
+}
+Python Operator working
+{
+    "x": 10.50041848,
+    "y": -17.94847963
+}
+Python Operator working
+{
+    "x": 11.36609519,
+    "y": -18.44787477
+}
+Python Operator working
+{
+    "x": 12.28550261,
+    "y": -18.83964217
+}
+Python Operator working
+{
+    "x": 13.24532017,
+    "y": -19.11810568
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 80.86889015,
+    "y": 23.9635391
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 77.25624354,
+    "y": 25.58303454
+}
+Python Operator working
+{
+    "x": 76.27887516,
+    "y": 25.79365319
+}
+Python Operator working
+{
+    "x": 75.28938455,
+    "y": 25.93689247
+}
+Python Operator working
+{
+    "x": 74.2925357,
+    "y": 26.01433478
+}
+Python Operator working
+{
+    "x": 73.29549117,
+    "y": 26.09095133
+}
+Python Operator working
+{
+    "x": 72.30014235,
+    "y": 26.18712106
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": 5.28708289,
+    "y": -9.6021479
+}
+Python Operator working
+{
+    "x": 5.68244398,
+    "y": -10.52067099
+}
+Python Operator working
+{
+    "x": 6.08486305,
+    "y": -11.43612386
+}
+Python Operator working
+{
+    "x": 6.49431614,
+    "y": -12.34845233
+}
+Python Operator working
+{
+    "x": 82.90155929,
+    "y": 20.58034955
+}
+Python Operator working
+{
+    "x": 82.57480351,
+    "y": 21.5251498
+}
+Python Operator working
+{
+    "x": 82.12778967,
+    "y": 22.41867598
+}
+Python Operator working
+{
+    "x": 81.55505683,
+    "y": 23.23732579
+}
+Python Operator working
+{
+    "x": 80.86889015,
+    "y": 23.9635391
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 77.25624354,
+    "y": 25.58303454
+}
+Python Operator working
+{
+    "x": 76.27887516,
+    "y": 25.79365319
+}
+Python Operator working
+{
+    "x": 75.28938455,
+    "y": 25.93689247
+}
+Python Operator working
+{
+    "x": 74.2925357,
+    "y": 26.01433478
+}
+Python Operator working
+{
+    "x": 7.33422573,
+    "y": -14.16352061
+}
+Python Operator working
+{
+    "x": 7.79411548,
+    "y": -15.05103212
+}
+Python Operator working
+{
+    "x": 8.34407427,
+    "y": -15.88566531
+}
+Python Operator working
+{
+    "x": 8.97946538,
+    "y": -16.65720213
+}
+Python Operator working
+{
+    "x": 9.70101443,
+    "y": -17.34869229
+}
+Python Operator working
+{
+    "x": 10.50041848,
+    "y": -17.94847963
+}
+Python Operator working
+{
+    "x": 11.36609519,
+    "y": -18.44787477
+}
+Python Operator working
+{
+    "x": 12.28550261,
+    "y": -18.83964217
+}
+Python Operator working
+{
+    "x": 13.24532017,
+    "y": -19.11810568
+}
+Python Operator working
+{
+    "x": 14.23164172,
+    "y": -19.27923136
+}
+Python Operator working
+{
+    "x": 15.23017734,
+    "y": -19.32068391
+}
+Python Operator working
+{
+    "x": 16.22143955,
+    "y": -19.20914817
+}
+Python Operator working
+{
+    "x": 80.07020285,
+    "y": 24.55833148
+}
+Python Operator working
+{
+    "x": 79.15636177,
+    "y": 24.96392193
+}
+Python Operator working
+{
+    "x": 78.21690709,
+    "y": 25.30602428
+}
+Python Operator working
+{
+    "x": 77.25624354,
+    "y": 25.58303454
+}
+Python Operator working
+{
+    "x": 76.27887516,
+    "y": 25.79365319
+}
+Python Operator working
+{
+    "x": 75.28938455,
+    "y": 25.93689247
+}
+Python Operator working
+{
+    "x": 74.2925357,
+    "y": 26.01433478
+}
+Python Operator working
+{
+    "x": 73.29549117,
+    "y": 26.09095133
+}
+Python Operator working
+{
+    "x": 72.30014235,
+    "y": 26.18712106
+}
+Python Operator working
+{
+    "x": 71.30687244,
+    "y": 26.30280506
+}
+Python Operator working
+{
+    "x": 70.31606399,
+    "y": 26.43795871
+}
+Python Operator working
+{
+    "x": 69.32809891,
+    "y": 26.59253193
+}
+Python Operator working
+{
+    "x": 9.70101443,
+    "y": -17.34869229
+}
+Python Operator working
+{
+    "x": 10.50041848,
+    "y": -17.94847963
+}
+Python Operator working
+{
+    "x": 11.36609519,
+    "y": -18.44787477
+}
+Python Operator working
+{
+    "x": 12.28550261,
+    "y": -18.83964217
+}
+Python Operator working
+{
+    "x": 13.24532017,
+    "y": -19.11810568
+}
+Python Operator working
+{
+    "x": 14.23164172,
+    "y": -19.27923136
+}
+Python Operator working
+{
+    "x": 15.23017734,
+    "y": -19.32068391
+}
+Python Operator working
+{
+    "x": 16.22143955,
+    "y": -19.20914817
+}
+Python Operator working
+{
+    "x": 17.2031665,
+    "y": -19.01885448
+}
+Python Operator working
+{
+    "x": 18.18535825,
+    "y": -18.83097452
+}
+Python Operator working
+{
+    "x": 19.16800881,
+    "y": -18.64550925
+}
+Python Operator working
+{
+    "x": 20.15111229,
+    "y": -18.46245996
+}
+Python Operator working
+{
+    "x": 76.27887516,
+    "y": 25.79365319
+}
+Python Operator working
+{
+    "x": 75.28938455,
+    "y": 25.93689247
+}
+Python Operator working
+{
+    "x": 74.2925357,
+    "y": 26.01433478
+}
+Python Operator working
+{
+    "x": 73.29549117,
+    "y": 26.09095133
+}
+Python Operator working
+{
+    "x": 72.30014235,
+    "y": 26.18712106
+}
+Python Operator working
+{
+    "x": 71.30687244,
+    "y": 26.30280506
+}
+Python Operator working
+{
+    "x": 70.31606399,
+    "y": 26.43795871
+}
+Python Operator working
+{
+    "x": 69.32809891,
+    "y": 26.59253193
+}
+Python Operator working
+{
+    "x": 68.34335737,
+    "y": 26.76646291
+}
+Python Operator working
+{
+    "x": 67.36221881,
+    "y": 26.95968564
+}
+Python Operator working
+{
+    "x": 66.38506127,
+    "y": 27.17212629
+}
+Python Operator working
+{
+    "x": 65.43530808,
+    "y": 27.48079441
+}
+Python Operator working
+{
+    "x": 13.24532017,
+    "y": -19.11810568
+}
+Python Operator working
+{
+    "x": 14.23164172,
+    "y": -19.27923136
+}
+Python Operator working
+{
+    "x": 15.23017734,
+    "y": -19.32068391
+}
+Python Operator working
+{
+    "x": 16.22143955,
+    "y": -19.20914817
+}
+Python Operator working
+{
+    "x": 17.2031665,
+    "y": -19.01885448
+}
+Python Operator working
+{
+    "x": 18.18535825,
+    "y": -18.83097452
+}
+Python Operator working
+{
+    "x": 19.16800881,
+    "y": -18.64550925
+}
+Python Operator working
+{
+    "x": 20.15111229,
+    "y": -18.46245996
+}
+Python Operator working
+{
+    "x": 21.13466272,
+    "y": -18.2818276
+}
+Python Operator working
+{
+    "x": 22.11865418,
+    "y": -18.10361339
+}
+Python Operator working
+{
+    "x": 23.1030807,
+    "y": -17.9278183
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 71.30687244,
+    "y": 26.30280506
+}
+Python Operator working
+{
+    "x": 70.31606399,
+    "y": 26.43795871
+}
+Python Operator working
+{
+    "x": 69.32809891,
+    "y": 26.59253193
+}
+Python Operator working
+{
+    "x": 68.34335737,
+    "y": 26.76646291
+}
+Python Operator working
+{
+    "x": 67.36221881,
+    "y": 26.95968564
+}
+Python Operator working
+{
+    "x": 66.38506127,
+    "y": 27.17212629
+}
+Python Operator working
+{
+    "x": 65.43530808,
+    "y": 27.48079441
+}
+Python Operator working
+{
+    "x": 64.48722585,
+    "y": 27.79874278
+}
+Python Operator working
+{
+    "x": 63.53171909,
+    "y": 28.09362904
+}
+Python Operator working
+{
+    "x": 62.56934871,
+    "y": 28.3652801
+}
+Python Operator working
+{
+    "x": 61.60067962,
+    "y": 28.6135365
+}
+Python Operator working
+{
+    "x": 60.62628043,
+    "y": 28.8382525
+}
+Python Operator working
+{
+    "x": 18.18535825,
+    "y": -18.83097452
+}
+Python Operator working
+{
+    "x": 19.16800881,
+    "y": -18.64550925
+}
+Python Operator working
+{
+    "x": 20.15111229,
+    "y": -18.46245996
+}
+Python Operator working
+{
+    "x": 21.13466272,
+    "y": -18.2818276
+}
+Python Operator working
+{
+    "x": 22.11865418,
+    "y": -18.10361339
+}
+Python Operator working
+{
+    "x": 23.1030807,
+    "y": -17.9278183
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 25.07421363,
+    "y": -17.59000867
+}
+Python Operator working
+{
+    "x": 26.06535917,
+    "y": -17.45722867
+}
+Python Operator working
+{
+    "x": 27.05650878,
+    "y": -17.3244791
+}
+Python Operator working
+{
+    "x": 28.04766246,
+    "y": -17.19175996
+}
+Python Operator working
+{
+    "x": 29.03882022,
+    "y": -17.05907124
+}
+Python Operator working
+{
+    "x": 66.38506127,
+    "y": 27.17212629
+}
+Python Operator working
+{
+    "x": 65.43530808,
+    "y": 27.48079441
+}
+Python Operator working
+{
+    "x": 64.48722585,
+    "y": 27.79874278
+}
+Python Operator working
+{
+    "x": 63.53171909,
+    "y": 28.09362904
+}
+Python Operator working
+{
+    "x": 62.56934871,
+    "y": 28.3652801
+}
+Python Operator working
+{
+    "x": 61.60067962,
+    "y": 28.6135365
+}
+Python Operator working
+{
+    "x": 60.62628043,
+    "y": 28.8382525
+}
+Python Operator working
+{
+    "x": 59.64672314,
+    "y": 29.0392962
+}
+Python Operator working
+{
+    "x": 58.66258276,
+    "y": 29.21654958
+}
+Python Operator working
+{
+    "x": 57.67852216,
+    "y": 29.39163857
+}
+Python Operator working
+{
+    "x": 56.69990248,
+    "y": 29.59712589
+}
+Python Operator working
+{
+    "x": 55.71543894,
+    "y": 29.77249135
+}
+Python Operator working
+{
+    "x": 23.1030807,
+    "y": -17.9278183
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 25.07421363,
+    "y": -17.59000867
+}
+Python Operator working
+{
+    "x": 26.06535917,
+    "y": -17.45722867
+}
+Python Operator working
+{
+    "x": 27.05650878,
+    "y": -17.3244791
+}
+Python Operator working
+{
+    "x": 28.04766246,
+    "y": -17.19175996
+}
+Python Operator working
+{
+    "x": 29.03882022,
+    "y": -17.05907124
+}
+Python Operator working
+{
+    "x": 30.02998206,
+    "y": -16.92641296
+}
+Python Operator working
+{
+    "x": 31.02114796,
+    "y": -16.79378511
+}
+Python Operator working
+{
+    "x": 32.01231794,
+    "y": -16.66118768
+}
+Python Operator working
+{
+    "x": 33.00349199,
+    "y": -16.52862069
+}
+Python Operator working
+{
+    "x": 33.99467017,
+    "y": -16.39608461
+}
+Python Operator working
+{
+    "x": 60.62628043,
+    "y": 28.8382525
+}
+Python Operator working
+{
+    "x": 59.64672314,
+    "y": 29.0392962
+}
+Python Operator working
+{
+    "x": 58.66258276,
+    "y": 29.21654958
+}
+Python Operator working
+{
+    "x": 57.67852216,
+    "y": 29.39163857
+}
+Python Operator working
+{
+    "x": 56.69990248,
+    "y": 29.59712589
+}
+Python Operator working
+{
+    "x": 55.71543894,
+    "y": 29.77249135
+}
+Python Operator working
+{
+    "x": 54.72605867,
+    "y": 29.91757139
+}
+Python Operator working
+{
+    "x": 53.73269289,
+    "y": 30.03222711
+}
+Python Operator working
+{
+    "x": 52.73627709,
+    "y": 30.11635244
+}
+Python Operator working
+{
+    "x": 51.73774937,
+    "y": 30.16986791
+}
+Python Operator working
+{
+    "x": 50.7380498,
+    "y": 30.19272176
+}
+Python Operator working
+{
+    "x": 49.73811968,
+    "y": 30.18489455
+}
+Python Operator working
+{
+    "x": 23.1030807,
+    "y": -17.9278183
+}
+Python Operator working
+{
+    "x": 24.08793636,
+    "y": -17.75444349
+}
+Python Operator working
+{
+    "x": 25.07421363,
+    "y": -17.59000867
+}
+Python Operator working
+{
+    "x": 26.06535917,
+    "y": -17.45722867
+}
+Python Operator working
+{
+    "x": 27.05650878,
+    "y": -17.3244791
+}
+Python Operator working
+{
+    "x": 28.04766246,
+    "y": -17.19175996
+}
+Python Operator working
+{
+    "x": 29.03882022,
+    "y": -17.05907124
+}
+Python Operator working
+{
+    "x": 30.02998206,
+    "y": -16.92641296
+}
+Python Operator working
+{
+    "x": 31.02114796,
+    "y": -16.79378511
+}
+Python Operator working
+{
+    "x": 32.01231794,
+    "y": -16.66118768
+}
+Python Operator working
+{
+    "x": 33.00349199,
+    "y": -16.52862069
+}
+Python Operator working
+{
+    "x": 33.99467017,
+    "y": -16.39608461
+}
+Python Operator working
+{
+    "x": 60.62628043,
+    "y": 28.8382525
+}
+Python Operator working
+{
+    "x": 59.64672314,
+    "y": 29.0392962
+}
+Python Operator working
+{
+    "x": 58.66258276,
+    "y": 29.21654958
+}
+Python Operator working
+{
+    "x": 57.67852216,
+    "y": 29.39163857
+}
+Python Operator working
+{
+    "x": 56.69990248,
+    "y": 29.59712589
+}
+Python Operator working
+{
+    "x": 55.71543894,
+    "y": 29.77249135
+}
+Python Operator working
+{
+    "x": 54.72605867,
+    "y": 29.91757139
+}
+Python Operator working
+{
+    "x": 53.73269289,
+    "y": 30.03222711
+}
+Python Operator working
+{
+    "x": 52.73627709,
+    "y": 30.11635244
+}
+Python Operator working
+{
+    "x": 51.73774937,
+    "y": 30.16986791
+}
+Python Operator working
+{
+    "x": 50.7380498,
+    "y": 30.19272176
+}
+Python Operator working
+{
+    "x": 49.73811968,
+    "y": 30.18489455
+}
+Python Operator working
+{
+    "x": 29.03882022,
+    "y": -17.05907124
+}
+Python Operator working
+{
+    "x": 30.02998206,
+    "y": -16.92641296
+}
+Python Operator working
+{
+    "x": 31.02114796,
+    "y": -16.79378511
+}
+Python Operator working
+{
+    "x": 32.01231794,
+    "y": -16.66118768
+}
+Python Operator working
+{
+    "x": 33.00349199,
+    "y": -16.52862069
+}
+Python Operator working
+{
+    "x": 33.99467017,
+    "y": -16.39608461
+}
+Python Operator working
+{
+    "x": 34.98585243,
+    "y": -16.26357902
+}
+Python Operator working
+{
+    "x": 35.97703875,
+    "y": -16.13110387
+}
+Python Operator working
+{
+    "x": 36.96822915,
+    "y": -15.99865915
+}
+Python Operator working
+{
+    "x": 37.9594236,
+    "y": -15.86624486
+}
+Python Operator working
+{
+    "x": 38.95173795,
+    "y": -15.74399057
+}
+Python Operator working
+{
+    "x": 39.94862289,
+    "y": -15.66520771
+}
+Python Operator working
+{
+    "x": 54.72605867,
+    "y": 29.91757139
+}
+Python Operator working
+{
+    "x": 53.73269289,
+    "y": 30.03222711
+}
+Python Operator working
+{
+    "x": 52.73627709,
+    "y": 30.11635244
+}
+Python Operator working
+{
+    "x": 51.73774937,
+    "y": 30.16986791
+}
+Python Operator working
+{
+    "x": 50.7380498,
+    "y": 30.19272176
+}
+Python Operator working
+{
+    "x": 49.73811968,
+    "y": 30.18489455
+}
+Python Operator working
+{
+    "x": 48.73890045,
+    "y": 30.14639183
+}
+Python Operator working
+{
+    "x": 47.7413329,
+    "y": 30.07725072
+}
+Python Operator working
+{
+    "x": 46.74573398,
+    "y": 29.98360978
+}
+Python Operator working
+{
+    "x": 45.75006802,
+    "y": 29.89061024
+}
+Python Operator working
+{
+    "x": 44.75420672,
+    "y": 29.79972621
+}
+Python Operator working
+{
+    "x": 43.75815468,
+    "y": 29.71095708
+}
+Python Operator working
+{
+    "x": 33.99467017,
+    "y": -16.39608461
+}
+Python Operator working
+{
+    "x": 34.98585243,
+    "y": -16.26357902
+}
+Python Operator working
+{
+    "x": 35.97703875,
+    "y": -16.13110387
+}
+Python Operator working
+{
+    "x": 36.96822915,
+    "y": -15.99865915
+}
+Python Operator working
+{
+    "x": 37.9594236,
+    "y": -15.86624486
+}
+Python Operator working
+{
+    "x": 38.95173795,
+    "y": -15.74399057
+}
+Python Operator working
+{
+    "x": 39.94862289,
+    "y": -15.66520771
+}
+Python Operator working
+{
+    "x": 40.946435,
+    "y": -15.59919776
+}
+Python Operator working
+{
+    "x": 41.94501069,
+    "y": -15.54597258
+}
+Python Operator working
+{
+    "x": 42.94418614,
+    "y": -15.50554073
+}
+Python Operator working
+{
+    "x": 43.94379744,
+    "y": -15.47790798
+}
+Python Operator working
+{
+    "x": 44.94368064,
+    "y": -15.46307886
+}
+Python Operator working
+{
+    "x": 49.73811968,
+    "y": 30.18489455
+}
+Python Operator working
+{
+    "x": 48.73890045,
+    "y": 30.14639183
+}
+Python Operator working
+{
+    "x": 47.7413329,
+    "y": 30.07725072
+}
+Python Operator working
+{
+    "x": 46.74573398,
+    "y": 29.98360978
+}
+Python Operator working
+{
+    "x": 45.75006802,
+    "y": 29.89061024
+}
+Python Operator working
+{
+    "x": 44.75420672,
+    "y": 29.79972621
+}
+Python Operator working
+{
+    "x": 43.75815468,
+    "y": 29.71095708
+}
+Python Operator working
+{
+    "x": 42.76191643,
+    "y": 29.62430279
+}
+Python Operator working
+{
+    "x": 41.76549644,
+    "y": 29.53976387
+}
+Python Operator working
+{
+    "x": 40.76889907,
+    "y": 29.45734236
+}
+Python Operator working
+{
+    "x": 39.77212896,
+    "y": 29.37703685
+}
+Python Operator working
+{
+    "x": 38.77519061,
+    "y": 29.29884769
+}
+Python Operator working
+{
+    "x": 38.95173795,
+    "y": -15.74399057
+}
+Python Operator working
+{
+    "x": 39.94862289,
+    "y": -15.66520771
+}
+Python Operator working
+{
+    "x": 40.946435,
+    "y": -15.59919776
+}
+Python Operator working
+{
+    "x": 41.94501069,
+    "y": -15.54597258
+}
+Python Operator working
+{
+    "x": 42.94418614,
+    "y": -15.50554073
+}
+Python Operator working
+{
+    "x": 43.94379744,
+    "y": -15.47790798
+}
+Python Operator working
+{
+    "x": 44.94368064,
+    "y": -15.46307886
+}
+Python Operator working
+{
+    "x": 45.94367177,
+    "y": -15.46105729
+}
+Python Operator working
+{
+    "x": 46.94360676,
+    "y": -15.47184253
+}
+Python Operator working
+{
+    "x": 47.94332164,
+    "y": -15.49543239
+}
+Python Operator working
+{
+    "x": 48.94265244,
+    "y": -15.53182305
+}
+Python Operator working
+{
+    "x": 49.94143517,
+    "y": -15.58101035
+}
+Python Operator working
+{
+    "x": 44.75420672,
+    "y": 29.79972621
+}
+Python Operator working
+{
+    "x": 43.75815468,
+    "y": 29.71095708
+}
+Python Operator working
+{
+    "x": 42.76191643,
+    "y": 29.62430279
+}
+Python Operator working
+{
+    "x": 41.76549644,
+    "y": 29.53976387
+}
+Python Operator working
+{
+    "x": 40.76889907,
+    "y": 29.45734236
+}
+Python Operator working
+{
+    "x": 39.77212896,
+    "y": 29.37703685
+}
+Python Operator working
+{
+    "x": 38.77519061,
+    "y": 29.29884769
+}
+Python Operator working
+{
+    "x": 37.77808845,
+    "y": 29.22277593
+}
+Python Operator working
+{
+    "x": 36.78082695,
+    "y": 29.14882244
+}
+Python Operator working
+{
+    "x": 35.783045,
+    "y": 29.08271676
+}
+Python Operator working
+{
+    "x": 34.78506865,
+    "y": 29.01920262
+}
+Python Operator working
+{
+    "x": 33.78781307,
+    "y": 28.94522872
+}
+Python Operator working
+{
+    "x": 42.94418614,
+    "y": -15.50554073
+}
+Python Operator working
+{
+    "x": 43.94379744,
+    "y": -15.47790798
+}
+Python Operator working
+{
+    "x": 44.94368064,
+    "y": -15.46307886
+}
+Python Operator working
+{
+    "x": 45.94367177,
+    "y": -15.46105729
+}
+Python Operator working
+{
+    "x": 46.94360676,
+    "y": -15.47184253
+}
+Python Operator working
+{
+    "x": 47.94332164,
+    "y": -15.49543239
+}
+Python Operator working
+{
+    "x": 48.94265244,
+    "y": -15.53182305
+}
+Python Operator working
+{
+    "x": 49.94143517,
+    "y": -15.58101035
+}
+Python Operator working
+{
+    "x": 50.93950608,
+    "y": -15.64298437
+}
+Python Operator working
+{
+    "x": 51.93670148,
+    "y": -15.71773495
+}
+Python Operator working
+{
+    "x": 52.93285779,
+    "y": -15.80525032
+}
+Python Operator working
+{
+    "x": 53.92263775,
+    "y": -15.94681379
+}
+Python Operator working
+{
+    "x": 40.76889907,
+    "y": 29.45734236
+}
+Python Operator working
+{
+    "x": 39.77212896,
+    "y": 29.37703685
+}
+Python Operator working
+{
+    "x": 38.77519061,
+    "y": 29.29884769
+}
+Python Operator working
+{
+    "x": 37.77808845,
+    "y": 29.22277593
+}
+Python Operator working
+{
+    "x": 36.78082695,
+    "y": 29.14882244
+}
+Python Operator working
+{
+    "x": 35.783045,
+    "y": 29.08271676
+}
+Python Operator working
+{
+    "x": 34.78506865,
+    "y": 29.01920262
+}
+Python Operator working
+{
+    "x": 33.78781307,
+    "y": 28.94522872
+}
+Python Operator working
+{
+    "x": 32.79138778,
+    "y": 28.86080428
+}
+Python Operator working
+{
+    "x": 31.79590228,
+    "y": 28.76593891
+}
+Python Operator working
+{
+    "x": 30.80146594,
+    "y": 28.66064306
+}
+Python Operator working
+{
+    "x": 29.80818824,
+    "y": 28.54492689
+}
+Python Operator working
+{
+    "x": 46.94360676,
+    "y": -15.47184253
+}
+Python Operator working
+{
+    "x": 47.94332164,
+    "y": -15.49543239
+}
+Python Operator working
+{
+    "x": 48.94265244,
+    "y": -15.53182305
+}
+Python Operator working
+{
+    "x": 49.94143517,
+    "y": -15.58101035
+}
+Python Operator working
+{
+    "x": 50.93950608,
+    "y": -15.64298437
+}
+Python Operator working
+{
+    "x": 51.93670148,
+    "y": -15.71773495
+}
+Python Operator working
+{
+    "x": 52.93285779,
+    "y": -15.80525032
+}
+Python Operator working
+{
+    "x": 53.92263775,
+    "y": -15.94681379
+}
+Python Operator working
+{
+    "x": 54.91139175,
+    "y": -16.09636384
+}
+Python Operator working
+{
+    "x": 55.89985626,
+    "y": -16.24781547
+}
+Python Operator working
+{
+    "x": 56.88802777,
+    "y": -16.40116723
+}
+Python Operator working
+{
+    "x": 57.87590272,
+    "y": -16.5564179
+}
+Python Operator working
+{
+    "x": 36.78082695,
+    "y": 29.14882244
+}
+Python Operator working
+{
+    "x": 35.783045,
+    "y": 29.08271676
+}
+Python Operator working
+{
+    "x": 34.78506865,
+    "y": 29.01920262
+}
+Python Operator working
+{
+    "x": 33.78781307,
+    "y": 28.94522872
+}
+Python Operator working
+{
+    "x": 32.79138778,
+    "y": 28.86080428
+}
+Python Operator working
+{
+    "x": 31.79590228,
+    "y": 28.76593891
+}
+Python Operator working
+{
+    "x": 30.80146594,
+    "y": 28.66064306
+}
+Python Operator working
+{
+    "x": 29.80818824,
+    "y": 28.54492689
+}
+Python Operator working
+{
+    "x": 28.81617821,
+    "y": 28.41880415
+}
+Python Operator working
+{
+    "x": 27.82554485,
+    "y": 28.28228906
+}
+Python Operator working
+{
+    "x": 26.83639701,
+    "y": 28.13539663
+}
+Python Operator working
+{
+    "x": 25.84884361,
+    "y": 27.97814165
+}
+Python Operator working
+{
+    "x": 50.93950608,
+    "y": -15.64298437
+}
+Python Operator working
+{
+    "x": 51.93670148,
+    "y": -15.71773495
+}
+Python Operator working
+{
+    "x": 52.93285779,
+    "y": -15.80525032
+}
+Python Operator working
+{
+    "x": 53.92263775,
+    "y": -15.94681379
+}
+Python Operator working
+{
+    "x": 54.91139175,
+    "y": -16.09636384

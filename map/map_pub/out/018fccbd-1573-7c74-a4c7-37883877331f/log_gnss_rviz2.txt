@@ -1,0 +1,17 @@
+Python Operator working
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+RuntimeError: Dora Runtime raised an error.
+
+Caused by:
+   0: main task failed
+   1: operator gnss_rviz2/op raised an error
+   2: error in Python module at /home/zxd/map/left_path_to_ros2.py
+   3: Traceback (most recent call last):
+        File "/home/zxd/map/left_path_to_ros2.py", line 125, in on_event
+          for x_i,y_i in x,y:
+
+      ValueError: too many values to unpack (expected 2)
+
+Location:
+    binaries/runtime/src/operator/python.rs:28:9

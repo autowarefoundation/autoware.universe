@@ -1,0 +1,21 @@
+nodes:
+                 
+  - id: pub_map
+    custom:
+      source: map
+      inputs:
+        tick: dora/timer/millis/500
+      outputs:
+        - refer_lane
+        - right_lane
+        - left_lane
+
+  - id: gnss_rviz2
+    operator:
+      python: script/left_path_to_ros2.py
+      inputs:
+            left_lane: pub_map/left_lane
+
+
+
+

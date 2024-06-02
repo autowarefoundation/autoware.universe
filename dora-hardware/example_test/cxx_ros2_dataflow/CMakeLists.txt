@@ -86,3 +86,15 @@ target_link_libraries(dora_node_sub_rosmsg
 )
 
 
+add_executable(dora_node_pub_map_path test/dora_node_pub_map_path.cc $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/dora-ros2-bindings.cc $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/dora-node-api.cc)
+target_link_libraries(dora_node_sub_rosmsg
+  ${EIGEN_LIBRARIES}
+  ${YAMLCPP_LIBRARIES}
+  $ENV{HOME}/dora/target/debug/libdora_node_api_cxx.a
+  m
+  rt
+  dl 
+  pthread
+  pcap
+)
+

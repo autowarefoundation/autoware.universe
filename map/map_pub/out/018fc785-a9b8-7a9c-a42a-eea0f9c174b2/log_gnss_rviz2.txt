@@ -1,0 +1,61 @@
+Python Operator working
+{
+    "x": 1.04279212,
+    "y": 1.62066158
+}
+Python Operator working
+{
+    "x": 1.37693373,
+    "y": 0.67813924
+}
+Python Operator working
+{
+    "x": -1.73499267,
+    "y": 9.83324233
+}
+Python Operator working
+{
+    "x": -1.49789841,
+    "y": 8.861941
+}
+Python Operator working
+{
+    "x": -1.19621831,
+    "y": 7.9087005
+}
+Python Operator working
+{
+    "x": -0.87231529,
+    "y": 6.96261616
+}
+Python Operator working
+{
+    "x": -0.5374446,
+    "y": 6.02035804
+}
+Python Operator working
+{
+    "x": -0.19165074000000001,
+    "y": 5.08205353
+}
+Python Operator working
+{
+    "x": 0.16502031,
+    "y": 4.14782952
+}
+Python Operator working
+{
+    "x": 0.53251904,
+    "y": 3.21781155
+}
+Python Operator working
+{
+    "x": 0.81361143,
+    "y": 2.26611393
+}
+Python Operator working
+{
+    "x": 0.90542986,
+    "y": 2.01529598
+}
+Python Operator working
