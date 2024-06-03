@@ -80,10 +80,10 @@ void PerceptionOnlineEvaluatorNode::publishMetrics()
         for (const auto & [metric, value] : arg) {
           if constexpr (std::is_same_v<T, MetricStatMap>) {
             if (value.count() > 0) {
-              metrics_msg.status.push_back(generateDiagnosticStatus(metric, value));
+              metrics_msg.status.emplace_back(generateDiagnosticStatus(metric, value));
             }
           } else if constexpr (std::is_same_v<T, MetricValueMap>) {
-            metrics_msg.status.push_back(generateDiagnosticStatus(metric, value));
+            metrics_msg.status.emplace_back(generateDiagnosticStatus(metric, value));
           }
         }
       },
