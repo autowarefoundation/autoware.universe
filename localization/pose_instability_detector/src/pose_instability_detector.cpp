@@ -21,8 +21,8 @@
 #include <tf2/LinearMath/Quaternion.h>
 
 #include <cmath>
-#include <string>
 #include <memory>
+#include <string>
 
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
 : rclcpp::Node("pose_instability_detector", options),
@@ -189,24 +189,31 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
   const std::vector<double> heading_velocity_signs = {1.0, -1.0, -1.0, 1.0};
   const std::vector<double> angular_velocity_signs = {1.0, 1.0, -1.0, -1.0};
 
-  const double nominal_variance_x = 
-    heading_velocity_maximum_ / angular_velocity_maximum_ *
-    sin(angular_velocity_maximum_ * interval_sec);
-  const double nominal_variance_y =
-    heading_velocity_maximum_ / angular_velocity_maximum_ *
-    (1 - cos(angular_velocity_maximum_ * interval_sec));
+  const double nominal_variance_x = heading_velocity_maximum_ / angular_velocity_maximum_ *
+                                    sin(angular_velocity_maximum_ * interval_sec);
+  const double nominal_variance_y = heading_velocity_maximum_ / angular_velocity_maximum_ *
+                                    (1 - cos(angular_velocity_maximum_ * interval_sec));
 
-  for(int i = 0; i < 4; i++) {
-    const double edge_heading_velocity = heading_velocity_maximum_ * (1 + heading_velocity_signs[i] * heading_velocity_scale_factor_tolerance_ * 0.01);
-    const double edge_angular_velocity = angular_velocity_maximum_ * (1 + angular_velocity_signs[i] * angular_velocity_scale_factor_tolerance_ * 0.01) + angular_velocity_signs[i] * angular_velocity_bias_tolerance_;
+  for (int i = 0; i < 4; i++) {
+    const double edge_heading_velocity =
+      heading_velocity_maximum_ *
+      (1 + heading_velocity_signs[i] * heading_velocity_scale_factor_tolerance_ * 0.01);
+    const double edge_angular_velocity =
+      angular_velocity_maximum_ *
+        (1 + angular_velocity_signs[i] * angular_velocity_scale_factor_tolerance_ * 0.01) +
+      angular_velocity_signs[i] * angular_velocity_bias_tolerance_;
 
-    const double edge_variance_x = edge_heading_velocity / edge_angular_velocity * sin(edge_angular_velocity * interval_sec);
-    const double edge_variance_y = edge_heading_velocity / edge_angular_velocity * (1 - cos(edge_angular_velocity * interval_sec));
+    const double edge_variance_x =
+      edge_heading_velocity / edge_angular_velocity * sin(edge_angular_velocity * interval_sec);
+    const double edge_variance_y = edge_heading_velocity / edge_angular_velocity *
+                                   (1 - cos(edge_angular_velocity * interval_sec));
 
     const double diff_variance_x = edge_variance_x - nominal_variance_x;
     const double diff_variance_y = edge_variance_y - nominal_variance_y;
 
-    const double lateral_difference_candidate = abs(diff_variance_x * sin(angular_velocity_maximum_ * interval_sec) - diff_variance_y * cos(angular_velocity_maximum_ * interval_sec));
+    const double lateral_difference_candidate = abs(
+      diff_variance_x * sin(angular_velocity_maximum_ * interval_sec) -
+      diff_variance_y * cos(angular_velocity_maximum_ * interval_sec));
     lateral_difference = std::max(lateral_difference, lateral_difference_candidate);
   }
 
@@ -221,15 +228,19 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
   const double yaw_difference = roll_difference;
 
   // Calculate dead reckoning angular process noise
-  const double dead_reckoning_angular_process_noise = 3 * angular_velocity_standard_deviation_ * sqrt(interval_sec);
+  const double dead_reckoning_angular_process_noise =
+    3 * angular_velocity_standard_deviation_ * sqrt(interval_sec);
 
   // Set thresholds
   threshold_diff_position_x_ = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
   threshold_diff_position_y_ = lateral_difference + pose_estimator_lateral_tolerance_;
   threshold_diff_position_z_ = vertical_difference + pose_estimator_vertical_tolerance_;
-  threshold_diff_angle_x_ = roll_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
-  threshold_diff_angle_y_ = pitch_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
-  threshold_diff_angle_z_ = yaw_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
+  threshold_diff_angle_x_ =
+    roll_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
+  threshold_diff_angle_y_ =
+    pitch_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
+  threshold_diff_angle_z_ =
+    yaw_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
 }
 
 void PoseInstabilityDetector::dead_reckon(
@@ -265,7 +276,7 @@ void PoseInstabilityDetector::dead_reckon(
     const rclcpp::Time curr_time = rclcpp::Time(sliced_twist_deque[i].header.stamp);
     const double time_diff_sec = (curr_time - prev_odometry_time).seconds();
 
-    const Twist twist = sliced_twist_deque[i-1].twist.twist;
+    const Twist twist = sliced_twist_deque[i - 1].twist.twist;
 
     // quat to rpy
     auto [ang_x, ang_y, ang_z] = quat_to_rpy(estimated_pose->orientation);

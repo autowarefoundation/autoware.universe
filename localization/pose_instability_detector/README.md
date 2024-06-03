@@ -102,5 +102,3 @@ $$
 | ------------------- | ------------------------------------- | ----------- |
 | `~/debug/diff_pose` | geometry_msgs::msg::PoseStamped       | diff_pose   |
 | `/diagnostics`      | diagnostic_msgs::msg::DiagnosticArray | Diagnostics |
-
-
