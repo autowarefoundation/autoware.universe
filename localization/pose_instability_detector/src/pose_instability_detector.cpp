@@ -23,6 +23,7 @@
 #include <cmath>
 #include <memory>
 #include <string>
+#include <algorithm>
 
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
 : rclcpp::Node("pose_instability_detector", options),
