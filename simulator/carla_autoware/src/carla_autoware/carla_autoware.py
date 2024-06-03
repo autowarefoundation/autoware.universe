@@ -110,6 +110,7 @@ class InitializeInterface(object):
         ##########################################################################################################################################################
         # TRAFFIC MANAGER
         ##########################################################################################################################################################
+        # cspell:ignore trafficmanager
         if self.use_traffic_manager:
             traffic_manager = client.get_trafficmanager()
             traffic_manager.set_synchronous_mode(True)
@@ -167,7 +168,7 @@ class InitializeInterface(object):
                 self.prev_tick_wall_time = time.time()
                 self.bridge_loop._tick_sensor(timestamp)
 
-    def _stop_loop(self, signum, frame):
+    def _stop_loop(self, sign, frame):
         self.bridge_loop._stop_loop()
 
     def _cleanup(self):

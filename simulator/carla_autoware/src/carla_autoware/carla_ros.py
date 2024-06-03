@@ -321,6 +321,7 @@ class carla_ros2_interface(object):
             dtype=numpy.uint8,
             buffer=carla_camera_data.raw_data,
         )
+        # cspell:ignore interp bgra
         img_msg = self.cv_bridge.cv2_to_imgmsg(image_data_array, encoding="bgra8")
         img_msg.header = self.get_msg_header(
             frame_id="traffic_light_left_camera/camera_link_changed"

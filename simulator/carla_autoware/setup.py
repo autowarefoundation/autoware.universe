@@ -21,7 +21,7 @@ setup(
     zip_safe=True,
     maintainer="Muhammad Raditya GIOVANNI, Maxime CLEMENT",
     maintainer_email="mradityagio@gmail.com, maxime.clement@tier4.jp",
-    description="CARLA ROS2 bridge for AUTOWARE",
+    description="CARLA ROS 2 bridge for AUTOWARE",
     license="Apache License 2.0",
     tests_require=["pytest"],
     entry_points={

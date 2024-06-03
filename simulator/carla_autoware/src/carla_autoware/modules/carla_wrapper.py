@@ -52,7 +52,7 @@ class CallBack(object):
         elif isinstance(data, carla.IMUMeasurement):
             self._parse_imu_cb(data, self._tag)
         elif isinstance(data, GenericMeasurement):
-            self._parse_pseudosensor(data, self._tag)
+            self._parse_pseudo_sensor(data, self._tag)
         else:
             logging.error("No callback method for this sensor.")
 
@@ -72,7 +72,7 @@ class CallBack(object):
         )
         self._data_provider.update_sensor(tag, array, gnss_data.frame)
 
-    def _parse_pseudosensor(self, package, tag):
+    def _parse_pseudo_sensor(self, package, tag):
         self._data_provider.update_sensor(tag, package.data, package.frame)
 
 

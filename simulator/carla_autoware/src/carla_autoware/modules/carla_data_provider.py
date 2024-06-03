@@ -278,7 +278,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
         road_id, lane_id = wp.road_id, wp.lane_id
         while True:
             wps = wp.next(waypoint_separation)
-            # The same roadid and laneid，judged to be in the same section to be tested
+            # The same road_id and lane_id，judged to be in the same section to be tested
             next_wp = None
             for p in wps:
                 if p.road_id == road_id and p.lane_id == lane_id:
@@ -356,6 +356,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
             else:
                 return road_lanes[lane - 1]
 
+    # cspell:ignore rolename
     @staticmethod
     def create_blueprint(
         model, rolename="scenario", color=None, actor_category="car", attribute_filter=None
@@ -379,6 +380,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
 
             return False
 
+        # cspell:ignore carlacola carlamotors
         _actor_blueprint_categories = {
             "car": "vehicle.tesla.model3",
             "van": "vehicle.volkswagen.t2",
@@ -746,7 +748,7 @@ class CarlaDataProvider(object):  # pylint: disable=too-many-public-methods
 
     @staticmethod
     def is_sync_mode():
-        """Return true if syncronuous mode is used."""
+        """Return true if synchronous mode is used."""
         return CarlaDataProvider._sync_flag
 
     @staticmethod
@@ -855,7 +857,7 @@ class GameTime(object):
         return GameTime._carla_time
 
     @staticmethod
-    def get_wallclocktime():
+    def get_wall_clock_time():
         """Return elapsed game time."""
         return GameTime._platform_timestamp
 
