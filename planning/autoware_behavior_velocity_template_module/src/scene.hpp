@@ -21,9 +21,11 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using tier4_planning_msgs::msg::PathWithLaneId;
+using ::behavior_velocity_planner::SceneModuleInterface;
+using ::behavior_velocity_planner::StopReason;
 
 class TemplateModule : public SceneModuleInterface
 {
@@ -64,6 +66,6 @@ public:
   motion_utils::VirtualWalls createVirtualWalls() override;
 };
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // SCENE_HPP_
