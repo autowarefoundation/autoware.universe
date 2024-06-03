@@ -22,6 +22,7 @@
 #include <autoware_motion_velocity_planner_node/srv/unload_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
+#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
@@ -63,7 +64,8 @@ private:
   rclcpp::Subscription<autoware_perception_msgs::msg::PredictedObjects>::SharedPtr
     sub_predicted_objects_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_no_ground_pointcloud_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_vehicle_odometry_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
+    sub_vehicle_odometry_{this, "~/input/vehicle_odometry"};
   rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_acceleration_;
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>::SharedPtr
@@ -77,7 +79,6 @@ private:
   void on_predicted_objects(
     const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
   void on_no_ground_pointcloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
-  void on_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void on_acceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
   void on_lanelet_map(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
   void on_traffic_signals(
@@ -118,7 +119,7 @@ private:
   std::mutex mutex_;
 
   // function
-  bool is_data_ready() const;
+  bool is_data_ready(const nav_msgs::msg::Odometry::ConstSharedPtr ego_state_ptr) const;
   void insert_stop(
     autoware_planning_msgs::msg::Trajectory & trajectory,
     const geometry_msgs::msg::Point & stop_point) const;

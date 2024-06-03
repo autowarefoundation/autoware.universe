@@ -60,8 +60,8 @@ struct PlannerData
   }
 
   // msgs from callbacks that are used for data-ready
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity;
+  geometry_msgs::msg::PoseStamped current_odometry{};
+  geometry_msgs::msg::TwistStamped current_velocity{};
   geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr current_acceleration;
   autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr predicted_objects;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;

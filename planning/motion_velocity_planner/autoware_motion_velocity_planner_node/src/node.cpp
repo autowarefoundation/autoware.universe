@@ -72,9 +72,6 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
     "~/input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&MotionVelocityPlannerNode::on_no_ground_pointcloud, this, _1),
     create_subscription_options(this));
-  sub_vehicle_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/vehicle_odometry", 1, std::bind(&MotionVelocityPlannerNode::on_odometry, this, _1),
-    create_subscription_options(this));
   sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/accel", 1, std::bind(&MotionVelocityPlannerNode::on_acceleration, this, _1),
     create_subscription_options(this));
@@ -151,7 +148,8 @@ void MotionVelocityPlannerNode::on_unload_plugin(
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool MotionVelocityPlannerNode::is_data_ready() const
+bool MotionVelocityPlannerNode::is_data_ready(
+  const nav_msgs::msg::Odometry::ConstSharedPtr ego_state_ptr) const
 {
   const auto & d = planner_data_;
   auto clock = *get_clock();
@@ -164,8 +162,7 @@ bool MotionVelocityPlannerNode::is_data_ready() const
     return true;
   };
 
-  return check_with_msg(d.current_odometry, "Waiting for current odometry") &&
-         check_with_msg(d.current_velocity, "Waiting for current velocity") &&
+  return check_with_msg(ego_state_ptr, "Waiting for current odometry") &&
          check_with_msg(d.current_acceleration, "Waiting for current acceleration") &&
          check_with_msg(d.predicted_objects, "Waiting for predicted objects") &&
          check_with_msg(d.no_ground_pointcloud, "Waiting for pointcloud") &&
@@ -214,21 +211,6 @@ void MotionVelocityPlannerNode::on_no_ground_pointcloud(
     std::lock_guard<std::mutex> lock(mutex_);
     planner_data_.no_ground_pointcloud = pc_transformed;
   }
-}
-
-void MotionVelocityPlannerNode::on_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-
-  auto current_odometry = std::make_shared<geometry_msgs::msg::PoseStamped>();
-  current_odometry->header = msg->header;
-  current_odometry->pose = msg->pose.pose;
-  planner_data_.current_odometry = current_odometry;
-
-  auto current_velocity = std::make_shared<geometry_msgs::msg::TwistStamped>();
-  current_velocity->header = msg->header;
-  current_velocity->twist = msg->twist.twist;
-  planner_data_.current_velocity = current_velocity;
 }
 
 void MotionVelocityPlannerNode::on_acceleration(
@@ -302,9 +284,14 @@ void MotionVelocityPlannerNode::on_trajectory(
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
-  if (!is_data_ready()) {
+  const auto ego_state_ptr = sub_vehicle_odometry_.takeData();
+  if (!is_data_ready(ego_state_ptr)) {
     return;
   }
+  planner_data_.current_odometry.header = ego_state_ptr->header;
+  planner_data_.current_odometry.pose = ego_state_ptr->pose.pose;
+  planner_data_.current_velocity.header = ego_state_ptr->header;
+  planner_data_.current_velocity.twist = ego_state_ptr->twist.twist;
 
   if (input_trajectory_msg->points.empty()) {
     RCLCPP_WARN(get_logger(), "Input trajectory message is empty");
@@ -367,8 +354,8 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   const autoware::motion_velocity_planner::TrajectoryPoints & trajectory_points,
   const autoware::motion_velocity_planner::PlannerData & planner_data) const
 {
-  const geometry_msgs::msg::Pose current_pose = planner_data.current_odometry->pose;
-  const double v0 = planner_data.current_velocity->twist.linear.x;
+  const geometry_msgs::msg::Pose current_pose = planner_data.current_odometry.pose;
+  const double v0 = planner_data.current_velocity.twist.linear.x;
   const double a0 = planner_data.current_acceleration->accel.accel.linear.x;
   const auto & external_v_limit = planner_data.external_velocity_limit;
   const auto & smoother = planner_data.velocity_smoother_;
