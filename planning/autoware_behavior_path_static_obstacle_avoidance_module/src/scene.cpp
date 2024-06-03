@@ -918,11 +918,11 @@ BehaviorModuleOutput StaticObstacleAvoidanceModule::plan()
   };
 
   const auto is_large_deviation = [this](const auto & path) {
-    constexpr double THRESHOLD = 1.0;
+    constexpr double threshold = 1.0;
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(path.points);
     const auto lateral_deviation =
       motion_utils::calcLateralOffset(path.points, getEgoPosition(), current_seg_idx);
-    return std::abs(lateral_deviation) > THRESHOLD;
+    return std::abs(lateral_deviation) > threshold;
   };
 
   // turn signal info
