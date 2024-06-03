@@ -35,7 +35,7 @@
 namespace autoware_velocity_smoother
 {
 VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_options)
-: Node("autoware_velocity_smoother", node_options)
+: Node("velocity_smoother", node_options)
 {
   using std::placeholders::_1;
 
