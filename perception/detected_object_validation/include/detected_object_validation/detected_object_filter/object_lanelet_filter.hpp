@@ -22,8 +22,8 @@
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <tf2_ros/buffer.h>
@@ -45,12 +45,12 @@ public:
   explicit ObjectLaneletFilterNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  void objectCallback(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr);
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr);
+  void objectCallback(const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr);
+  void mapCallback(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr);
 
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr object_pub_;
-  rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr object_sub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr object_pub_;
+  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr map_sub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr object_sub_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_{nullptr};
 
   lanelet::LaneletMapPtr lanelet_map_ptr_;
@@ -63,12 +63,11 @@ private:
 
   utils::FilterTargetLabel filter_target_;
 
-  LinearRing2d getConvexHull(const autoware_auto_perception_msgs::msg::DetectedObjects &);
+  LinearRing2d getConvexHull(const autoware_perception_msgs::msg::DetectedObjects &);
   lanelet::ConstLanelets getIntersectedLanelets(
     const LinearRing2d &, const lanelet::ConstLanelets &);
   bool isPolygonOverlapLanelets(const Polygon2d &, const lanelet::ConstLanelets &);
-  geometry_msgs::msg::Polygon setFootprint(
-    const autoware_auto_perception_msgs::msg::DetectedObject &);
+  geometry_msgs::msg::Polygon setFootprint(const autoware_perception_msgs::msg::DetectedObject &);
 
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
