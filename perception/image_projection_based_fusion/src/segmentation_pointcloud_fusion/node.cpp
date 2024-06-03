@@ -96,7 +96,6 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   output_cloud.header = input_pointcloud_msg.header;
   output_cloud.height = input_pointcloud_msg.height;
   output_cloud.point_step = input_pointcloud_msg.point_step;
-  std::cout << "point_step: " << transformed_cloud.point_step << std::endl;
   for (size_t global_offset = 0; global_offset < transformed_cloud.data.size();
        global_offset += point_step) {
     float transformed_x =
