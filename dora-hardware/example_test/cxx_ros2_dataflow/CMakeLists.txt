@@ -17,9 +17,15 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 set(CURRENT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 message(STATUS "Current dir stored in variable: ${CURRENT_DIR}")
+
+if(POLICY CMP0057)
+	cmake_policy(SET CMP0057 NEW)
+endif()
+
 find_package(PCL REQUIRED)
 find_package(Eigen3 QUIET)
 find_package(PkgConfig)
+find_package(nav_msgs REQUIRED)
 
 
 

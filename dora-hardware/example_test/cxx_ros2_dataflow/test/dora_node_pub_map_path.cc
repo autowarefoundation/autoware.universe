@@ -1,6 +1,8 @@
 #include "dora-node-api.h"
 #include "dora-ros2-bindings.h"
 
+#include <nav_msgs/msg/path.hpp>
+
 #include <iostream>
 #include <vector>
 #include <random>
