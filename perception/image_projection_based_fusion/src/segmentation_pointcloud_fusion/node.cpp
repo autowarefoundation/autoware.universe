@@ -96,6 +96,8 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   output_cloud.header = input_pointcloud_msg.header;
   output_cloud.height = input_pointcloud_msg.height;
   output_cloud.point_step = input_pointcloud_msg.point_step;
+  output_cloud.is_bigendian = input_pointcloud_msg.is_bigendian;
+  output_cloud.is_dense = input_pointcloud_msg.is_dense;
   for (size_t global_offset = 0; global_offset < transformed_cloud.data.size();
        global_offset += point_step) {
     float transformed_x =
@@ -142,8 +144,6 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
 
   output_cloud.data.resize(output_pointcloud_size);
   output_cloud.row_step = output_pointcloud_size / output_cloud.height;
-  output_cloud.is_bigendian = input_pointcloud_msg.is_bigendian;
-  output_cloud.is_dense = input_pointcloud_msg.is_dense;
   output_cloud.width = output_pointcloud_size / output_cloud.point_step / output_cloud.height;
 }
 
