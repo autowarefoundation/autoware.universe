@@ -24,8 +24,8 @@
 
 using std::placeholders::_1;
 
-Twist2Accel::Twist2Accel(const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options)
+Twist2Accel::Twist2Accel(const rclcpp::NodeOptions & node_options)
+: rclcpp::Node("twist2accel", node_options)
 {
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "input/odom", 1, std::bind(&Twist2Accel::callbackOdometry, this, _1));
@@ -35,8 +35,8 @@ Twist2Accel::Twist2Accel(const std::string & node_name, const rclcpp::NodeOption
   pub_accel_ = create_publisher<geometry_msgs::msg::AccelWithCovarianceStamped>("output/accel", 1);
 
   prev_twist_ptr_ = nullptr;
-  accel_lowpass_gain_ = declare_parameter("accel_lowpass_gain", 0.5);
-  use_odom_ = declare_parameter("use_odom", true);
+  accel_lowpass_gain_ = declare_parameter<double>("accel_lowpass_gain");
+  use_odom_ = declare_parameter<bool>("use_odom");
 
   lpf_alx_ptr_ = std::make_shared<LowpassFilter1d>(accel_lowpass_gain_);
   lpf_aly_ptr_ = std::make_shared<LowpassFilter1d>(accel_lowpass_gain_);
@@ -103,3 +103,6 @@ void Twist2Accel::estimateAccel(const geometry_msgs::msg::TwistStamped::SharedPt
   pub_accel_->publish(accel_msg);
   prev_twist_ptr_ = msg;
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(Twist2Accel)

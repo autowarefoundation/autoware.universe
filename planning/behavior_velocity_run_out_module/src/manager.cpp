@@ -18,6 +18,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace behavior_velocity_planner
 {
@@ -57,7 +58,12 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
   {
     auto & p = planner_param_.run_out;
     p.detection_method = getOrDeclareParameter<std::string>(node, ns + ".detection_method");
+    p.target_obstacle_types =
+      getOrDeclareParameter<std::vector<std::string>>(node, ns + ".target_obstacle_types");
     p.use_partition_lanelet = getOrDeclareParameter<bool>(node, ns + ".use_partition_lanelet");
+    p.use_ego_cut_line = getOrDeclareParameter<bool>(node, ns + ".use_ego_cut_line");
+    p.exclude_obstacles_already_in_path =
+      getOrDeclareParameter<bool>(node, ns + ".exclude_obstacles_already_in_path");
     p.suppress_on_crosswalk = getOrDeclareParameter<bool>(node, ns + ".suppress_on_crosswalk");
     p.specify_decel_jerk = getOrDeclareParameter<bool>(node, ns + ".specify_decel_jerk");
     p.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
@@ -66,6 +72,12 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.detection_distance = getOrDeclareParameter<double>(node, ns + ".detection_distance");
     p.detection_span = getOrDeclareParameter<double>(node, ns + ".detection_span");
     p.min_vel_ego_kmph = getOrDeclareParameter<double>(node, ns + ".min_vel_ego_kmph");
+    p.ego_cut_line_length = getOrDeclareParameter<double>(node, ns + ".ego_cut_line_length");
+    p.ego_footprint_extra_margin =
+      getOrDeclareParameter<double>(node, ns + ".ego_footprint_extra_margin");
+    p.keep_obstacle_on_path_time_threshold =
+      getOrDeclareParameter<double>(node, ns + ".keep_obstacle_on_path_time_threshold");
+    p.keep_stop_point_time = getOrDeclareParameter<double>(node, ns + ".keep_stop_point_time");
   }
 
   {
@@ -105,16 +117,14 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.enable = getOrDeclareParameter<bool>(node, ns_a + ".enable");
     p.margin = getOrDeclareParameter<double>(node, ns_a + ".margin");
     p.limit_vel_kmph = getOrDeclareParameter<double>(node, ns_a + ".limit_vel_kmph");
-  }
 
-  {
-    auto & p = planner_param_.state_param;
-    const std::string ns_s = ns + ".state";
-    p.stop_thresh = getOrDeclareParameter<double>(node, ns_s + ".stop_thresh");
-    p.stop_time_thresh = getOrDeclareParameter<double>(node, ns_s + ".stop_time_thresh");
-    p.disable_approach_dist = getOrDeclareParameter<double>(node, ns_s + ".disable_approach_dist");
-    p.keep_approach_duration =
-      getOrDeclareParameter<double>(node, ns_s + ".keep_approach_duration");
+    const std::string ns_as = ns_a + ".state";
+    p.state.stop_thresh = getOrDeclareParameter<double>(node, ns_as + ".stop_thresh");
+    p.state.stop_time_thresh = getOrDeclareParameter<double>(node, ns_as + ".stop_time_thresh");
+    p.state.disable_approach_dist =
+      getOrDeclareParameter<double>(node, ns_as + ".disable_approach_dist");
+    p.state.keep_approach_duration =
+      getOrDeclareParameter<double>(node, ns_as + ".keep_approach_duration");
   }
 
   {

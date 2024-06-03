@@ -29,14 +29,20 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <boost/geometry/algorithms/envelope.hpp>
+#include <boost/geometry/algorithms/union.hpp>
 #include <boost/geometry/index/rtree.hpp>
-#include <boost/optional.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/BoundingBox.h>
+#include <lanelet2_core/geometry/LaneletMap.h>
+#include <lanelet2_core/geometry/LineString.h>
+#include <lanelet2_core/geometry/Polygon.h>
 
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace lane_departure_checker
@@ -54,6 +60,7 @@ typedef boost::geometry::index::rtree<Segment2d, boost::geometry::index::rstar<1
 struct Param
 {
   double footprint_margin_scale;
+  double footprint_extra_margin;
   double resample_interval;
   double max_deceleration;
   double delay_time;
@@ -111,6 +118,19 @@ public:
 
   bool checkPathWillLeaveLane(
     const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path) const;
+
+  std::vector<std::pair<double, lanelet::Lanelet>> getLaneletsFromPath(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
+
+  std::optional<tier4_autoware_utils::Polygon2d> getFusedLaneletPolygonForPath(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
+
+  bool checkPathWillLeaveLane(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
+
+  PathWithLaneId cropPointsOutsideOfLanes(
+    const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
+    const size_t end_index);
 
   static bool isOutOfLane(
     const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);

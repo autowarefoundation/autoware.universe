@@ -35,8 +35,7 @@ using tier4_autoware_utils::getOrDeclareParameter;
 
 NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(),
-    getOrDeclareParameter<bool>(node, std::string(getModuleName()) + ".enable_rtc"))
+    node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
 {
   const std::string ns(getModuleName());
   auto & pp = planner_param_;
@@ -69,7 +68,8 @@ void NoStoppingAreaModuleManager::launchNewModules(
         clock_));
       generateUUID(module_id);
       updateRTCStatus(
-        getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
+        getUUID(module_id), true, State::WAITING_FOR_EXECUTION,
+        std::numeric_limits<double>::lowest(), path.header.stamp);
     }
   }
 }

@@ -48,6 +48,8 @@ public:
   void initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg) override;
   bool ready() const override;
   LaneletRoute plan(const RoutePoints & points) override;
+  void updateRoute(const PlannerPlugin::LaneletRoute & route) override;
+  void clearRoute() override;
   MarkerArray visualize(const LaneletRoute & route) const override;
   MarkerArray visualize_debug_footprint(tier4_autoware_utils::LinearRing2d goal_footprint_) const;
   vehicle_info_util::VehicleInfo vehicle_info_;
@@ -56,11 +58,6 @@ private:
   using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
   using Pose = geometry_msgs::msg::Pose;
   bool is_graph_ready_;
-  lanelet::LaneletMapPtr lanelet_map_ptr_;
-  lanelet::routing::RoutingGraphPtr routing_graph_ptr_;
-  lanelet::traffic_rules::TrafficRulesPtr traffic_rules_ptr_;
-  lanelet::ConstLanelets road_lanelets_;
-  lanelet::ConstLanelets shoulder_lanelets_;
   route_handler::RouteHandler route_handler_;
 
   DefaultPlannerParameters param_;
@@ -71,15 +68,37 @@ private:
 
   void initialize_common(rclcpp::Node * node);
   void map_callback(const HADMapBin::ConstSharedPtr msg);
-  bool check_goal_footprint(
+
+  /**
+   * @brief check if the goal_footprint is within the combined lanelet of route_lanelets plus the
+   * succeeding lanelets around the goal
+   * @attention this function will terminate when the accumulated search length from the initial
+   * current_lanelet exceeds max_longitudinal_offset_m + search_margin, so under normal assumptions
+   * (i.e. the map is composed of finite elements of practically normal sized lanelets), it is
+   * assured to terminate
+   * @param current_lanelet the start lanelet to begin recursive query
+   * @param combined_prev_lanelet initial entire route_lanelets plus the small consecutive lanelets
+   * around the goal during the query
+   * @param next_lane_length the accumulated total length from the start lanelet of the search to
+   * the lanelet of current goal query
+   */
+  bool check_goal_footprint_inside_lanes(
     const lanelet::ConstLanelet & current_lanelet,
     const lanelet::ConstLanelet & combined_prev_lanelet,
     const tier4_autoware_utils::Polygon2d & goal_footprint, double & next_lane_length,
     const double search_margin = 2.0);
+
+  /**
+   * @brief return true if (1)the goal is in parking area or (2)the goal is on the lanes and the
+   * footprint around the goal does not overlap the lanes
+   */
   bool is_goal_valid(const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets);
+
+  /**
+   * @brief project the specified goal pose onto the goal lanelet(the last preferred lanelet of
+   * route_sections) and return the z-aligned goal position
+   */
   Pose refine_goal_height(const Pose & goal, const RouteSections & route_sections);
-  void updateRoute(const PlannerPlugin::LaneletRoute & route);
-  void clearRoute();
 };
 
 }  // namespace mission_planner::lanelet2

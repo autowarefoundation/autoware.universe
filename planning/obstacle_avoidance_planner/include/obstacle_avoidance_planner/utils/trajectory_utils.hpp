@@ -129,6 +129,8 @@ ReferencePoint convertToReferencePoint(const TrajectoryPoint & traj_point);
 std::vector<ReferencePoint> convertToReferencePoints(
   const std::vector<TrajectoryPoint> & traj_points);
 
+std::vector<ReferencePoint> sanitizePoints(const std::vector<ReferencePoint> & points);
+
 void compensateLastPose(
   const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
   const double delta_dist_threshold, const double delta_yaw_threshold);
@@ -178,7 +180,7 @@ std::optional<size_t> updateFrontPointForFix(
   const double lon_offset_to_prev_front =
     motion_utils::calcSignedArcLength(points, 0, front_fix_point.pose.position);
   if (0 < lon_offset_to_prev_front) {
-    RCLCPP_WARN(
+    RCLCPP_DEBUG(
       rclcpp::get_logger("obstacle_avoidance_planner.trajectory_utils"),
       "Fixed point will not be inserted due to the error during calculation.");
     return std::nullopt;
@@ -189,7 +191,7 @@ std::optional<size_t> updateFrontPointForFix(
   // check if deviation is not too large
   constexpr double max_lat_error = 3.0;
   if (max_lat_error < dist) {
-    RCLCPP_WARN(
+    RCLCPP_DEBUG(
       rclcpp::get_logger("obstacle_avoidance_planner.trajectory_utils"),
       "New Fixed point is too far from points %f [m]", dist);
   }

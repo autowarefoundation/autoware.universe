@@ -22,7 +22,10 @@
 #include "obstacle_avoidance_planner/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
+
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -37,12 +40,12 @@ class ObstacleAvoidancePlanner : public rclcpp::Node
 public:
   explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
 
-  // NOTE: This is for the static_centerline_optimizer package which utilizes the following
+  // NOTE: This is for the static_centerline_generator package which utilizes the following
   // instance.
   std::shared_ptr<MPTOptimizer> getMPTOptimizer() const { return mpt_optimizer_ptr_; }
 
   // private:
-protected:  // for the static_centerline_optimizer package
+protected:  // for the static_centerline_generator package
   // TODO(murooka) move this node to common
   class DrivingDirectionChecker
   {
@@ -81,16 +84,14 @@ protected:  // for the static_centerline_optimizer package
   TrajectoryParam traj_param_{};
   EgoNearestParam ego_nearest_param_{};
 
-  // variables for subscribers
-  Odometry::ConstSharedPtr ego_state_ptr_;
-
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_pub_;
 
   // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
+    this, "~/input/odometry"};
 
   // debug publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;
@@ -111,8 +112,9 @@ protected:  // for the static_centerline_optimizer package
   void resetPreviousData();
 
   // main functions
-  bool isDataReady(const Path & path, rclcpp::Clock clock) const;
-  PlannerData createPlannerData(const Path & path) const;
+  bool checkInputPath(const Path & path, rclcpp::Clock clock) const;
+  PlannerData createPlannerData(
+    const Path & path, const Odometry::ConstSharedPtr ego_odom_ptr) const;
   std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> extendTrajectory(
     const std::vector<TrajectoryPoint> & traj_points,
@@ -136,6 +138,8 @@ private:
   double vehicle_stop_margin_outside_drivable_area_;
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace obstacle_avoidance_planner
 

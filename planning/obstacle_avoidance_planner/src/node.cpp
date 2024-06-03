@@ -95,8 +95,6 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   // interface subscriber
   path_sub_ = create_subscription<Path>(
     "~/input/path", 1, std::bind(&ObstacleAvoidancePlanner::onPath, this, std::placeholders::_1));
-  odom_sub_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, [this](const Odometry::ConstSharedPtr msg) { ego_state_ptr_ = msg; });
 
   // debug publisher
   debug_extended_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_traj", 1);
@@ -153,6 +151,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     std::bind(&ObstacleAvoidancePlanner::onParam, this, std::placeholders::_1));
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
@@ -206,7 +205,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
 
 void ObstacleAvoidancePlanner::initializePlanning()
 {
-  RCLCPP_INFO(get_logger(), "Initialize planning");
+  RCLCPP_DEBUG(get_logger(), "Initialize planning");
 
   mpt_optimizer_ptr_->initialize(enable_debug_info_, traj_param_);
 
@@ -223,8 +222,16 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
   time_keeper_ptr_->init();
   time_keeper_ptr_->tic(__func__);
 
-  // check if data is ready and valid
-  if (!isDataReady(*path_ptr, *get_clock())) {
+  // check if input path is valid
+  if (!checkInputPath(*path_ptr, *get_clock())) {
+    return;
+  }
+
+  // check if ego's odometry is valid
+  const auto ego_odom_ptr = ego_odom_sub_.takeData();
+  if (!ego_odom_ptr) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Waiting for ego pose and twist.");
     return;
   }
 
@@ -239,11 +246,12 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
     const auto traj_points = trajectory_utils::convertToTrajectoryPoints(path_ptr->points);
     const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
+    published_time_publisher_->publish_if_subscribed(traj_pub_, output_traj_msg.header.stamp);
     return;
   }
 
   // 1. create planner data
-  const auto planner_data = createPlannerData(*path_ptr);
+  const auto planner_data = createPlannerData(*path_ptr, ego_odom_ptr);
 
   // 2. generate optimized trajectory
   const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
@@ -271,15 +279,11 @@ void ObstacleAvoidancePlanner::onPath(const Path::ConstSharedPtr path_ptr)
   const auto output_traj_msg =
     motion_utils::convertToTrajectory(full_traj_points, path_ptr->header);
   traj_pub_->publish(output_traj_msg);
+  published_time_publisher_->publish_if_subscribed(traj_pub_, output_traj_msg.header.stamp);
 }
 
-bool ObstacleAvoidancePlanner::isDataReady(const Path & path, rclcpp::Clock clock) const
+bool ObstacleAvoidancePlanner::checkInputPath(const Path & path, rclcpp::Clock clock) const
 {
-  if (!ego_state_ptr_) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Waiting for ego pose and twist.");
-    return false;
-  }
-
   if (path.points.size() < 2) {
     RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Path points size is less than 1.");
     return false;
@@ -294,7 +298,8 @@ bool ObstacleAvoidancePlanner::isDataReady(const Path & path, rclcpp::Clock cloc
   return true;
 }
 
-PlannerData ObstacleAvoidancePlanner::createPlannerData(const Path & path) const
+PlannerData ObstacleAvoidancePlanner::createPlannerData(
+  const Path & path, const Odometry::ConstSharedPtr ego_odom_ptr) const
 {
   // create planner data
   PlannerData planner_data;
@@ -302,8 +307,8 @@ PlannerData ObstacleAvoidancePlanner::createPlannerData(const Path & path) const
   planner_data.traj_points = trajectory_utils::convertToTrajectoryPoints(path.points);
   planner_data.left_bound = path.left_bound;
   planner_data.right_bound = path.right_bound;
-  planner_data.ego_pose = ego_state_ptr_->pose.pose;
-  planner_data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
+  planner_data.ego_pose = ego_odom_ptr->pose.pose;
+  planner_data.ego_vel = ego_odom_ptr->twist.twist.linear.x;
 
   debug_data_ptr_->ego_pose = planner_data.ego_pose;
   return planner_data;

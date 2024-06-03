@@ -83,6 +83,10 @@ struct PlannerData
   std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
 
+  // This variable is used when the Autoware's behavior has to depend on whether it's simulation or
+  // not.
+  bool is_simulation = false;
+
   // velocity smoother
   std::shared_ptr<motion_velocity_smoother::SmootherBase> velocity_smoother_;
   // route handler

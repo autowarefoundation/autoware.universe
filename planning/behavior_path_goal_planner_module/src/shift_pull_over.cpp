@@ -28,11 +28,9 @@ namespace behavior_path_planner
 {
 ShiftPullOver::ShiftPullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
-  const LaneDepartureChecker & lane_departure_checker,
-  const std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map)
+  const LaneDepartureChecker & lane_departure_checker)
 : PullOverPlannerBase{node, parameters},
   lane_departure_checker_{lane_departure_checker},
-  occupancy_grid_map_{occupancy_grid_map},
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
 }
@@ -220,11 +218,6 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     shifted_path.path.points.push_back(p);
   }
 
-  // set the same z as the goal
-  for (auto & p : shifted_path.path.points) {
-    p.point.pose.position.z = goal_pose.position.z;
-  }
-
   // set lane_id and velocity to shifted_path
   for (size_t i = path_shifter.getShiftLines().front().start_idx;
        i < shifted_path.path.points.size() - 1; ++i) {
@@ -265,17 +258,39 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     road_lane_reference_path_to_shift_end.points.back().point.pose);
   pull_over_path.debug_poses.push_back(prev_module_path_terminal_pose);
 
-  // check if the parking path will leave lanes
-  const auto drivable_lanes =
-    utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
-  const auto & dp = planner_data_->drivable_area_expansion_parameters;
-  const auto expanded_lanes = utils::expandLanelets(
-    drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-    dp.drivable_area_types_to_skip);
-  const auto combined_drivable = utils::combineDrivableLanes(
-    expanded_lanes, previous_module_output_.drivable_area_info.drivable_lanes);
-  if (lane_departure_checker_.checkPathWillLeaveLane(
-        utils::transformToLanelets(combined_drivable), pull_over_path.getParkingPath())) {
+  // check if the parking path will leave drivable area and lanes
+  const bool is_in_parking_lots = std::invoke([&]() -> bool {
+    const auto & p = planner_data_->parameters;
+    const auto parking_lot_polygons =
+      lanelet::utils::query::getAllParkingLots(planner_data_->route_handler->getLaneletMapPtr());
+    const auto path_footprints = goal_planner_utils::createPathFootPrints(
+      pull_over_path.getParkingPath(), p.base_link2front, p.base_link2rear, p.vehicle_width);
+    const auto is_footprint_in_any_polygon = [&parking_lot_polygons](const auto & footprint) {
+      return std::any_of(
+        parking_lot_polygons.begin(), parking_lot_polygons.end(),
+        [&footprint](const auto & polygon) {
+          return lanelet::geometry::within(footprint, lanelet::utils::to2D(polygon).basicPolygon());
+        });
+    };
+    return std::all_of(
+      path_footprints.begin(), path_footprints.end(),
+      [&is_footprint_in_any_polygon](const auto & footprint) {
+        return is_footprint_in_any_polygon(footprint);
+      });
+  });
+  const bool is_in_lanes = std::invoke([&]() -> bool {
+    const auto drivable_lanes =
+      utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
+    const auto & dp = planner_data_->drivable_area_expansion_parameters;
+    const auto expanded_lanes = utils::expandLanelets(
+      drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
+      dp.drivable_area_types_to_skip);
+    const auto combined_drivable = utils::combineDrivableLanes(
+      expanded_lanes, previous_module_output_.drivable_area_info.drivable_lanes);
+    return !lane_departure_checker_.checkPathWillLeaveLane(
+      utils::transformToLanelets(combined_drivable), pull_over_path.getParkingPath());
+  });
+  if (!is_in_parking_lots && !is_in_lanes) {
     return {};
   }
 

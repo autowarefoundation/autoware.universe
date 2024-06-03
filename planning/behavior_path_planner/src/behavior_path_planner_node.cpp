@@ -112,6 +112,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       current_scenario_ = std::make_shared<Scenario>(*msg);
     },
     createSubscriptionOptions(this));
+  external_limit_max_velocity_subscriber_ =
+    create_subscription<tier4_planning_msgs::msg::VelocityLimit>(
+      "/planning/scenario_planning/max_velocity", 1,
+      std::bind(&BehaviorPathPlannerNode::on_external_velocity_limiter, this, _1),
+      createSubscriptionOptions(this));
 
   // route_handler
   vector_map_subscriber_ = create_subscription<HADMapBin>(
@@ -128,7 +133,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
 
     const auto & p = planner_data_->parameters;
-    planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num, p.verbose);
+    planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num);
 
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
       // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
@@ -172,6 +177,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   }
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
@@ -202,7 +208,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
   BehaviorPathPlannerParameters p{};
 
-  p.verbose = declare_parameter<bool>("verbose");
   p.max_iteration_num = declare_parameter<int>("max_iteration_num");
   p.traffic_light_signal_timeout = declare_parameter<double>("traffic_light_signal_timeout");
 
@@ -238,6 +243,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.min_acc = declare_parameter<double>("normal.min_acc");
   p.max_acc = declare_parameter<double>("normal.max_acc");
 
+  p.max_vel = declare_parameter<double>("max_vel");
   p.backward_length_buffer_for_end_of_pull_over =
     declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
   p.backward_length_buffer_for_end_of_pull_out =
@@ -254,6 +260,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_signal_search_time = declare_parameter<double>("turn_signal_search_time");
   p.turn_signal_shift_length_threshold =
     declare_parameter<double>("turn_signal_shift_length_threshold");
+  p.turn_signal_remaining_shift_length_threshold =
+    declare_parameter<double>("turn_signal_remaining_shift_length_threshold");
   p.turn_signal_on_swerving = declare_parameter<bool>("turn_signal_on_swerving");
 
   p.enable_akima_spline_first = declare_parameter<bool>("enable_akima_spline_first");
@@ -310,6 +318,10 @@ bool BehaviorPathPlannerNode::isDataReady()
     return missing("operation_mode");
   }
 
+  if (!planner_data_->occupancy_grid) {
+    return missing("occupancy_grid");
+  }
+
   return true;
 }
 
@@ -361,10 +373,8 @@ void BehaviorPathPlannerNode::run()
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
   if (route_ptr) {
     planner_data_->route_handler->setRoute(*route_ptr);
-    planner_manager_->resetRootLanelet(planner_data_);
-
     // uuid is not changed when rerouting with modified goal,
-    // in this case do not need to rest modules.
+    // in this case do not need to reset modules.
     const bool has_same_route_id =
       planner_data_->prev_route_id && route_ptr->uuid == planner_data_->prev_route_id;
     // Reset behavior tree when new route is received,
@@ -374,14 +384,13 @@ void BehaviorPathPlannerNode::run()
       planner_manager_->reset();
       planner_data_->prev_modified_goal.reset();
     }
+    planner_manager_->resetCurrentRouteLanelet(planner_data_);
   }
-
   const auto controlled_by_autoware_autonomously =
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
     planner_data_->operation_mode->is_autoware_control_enabled;
-  if (!controlled_by_autoware_autonomously) {
-    planner_manager_->resetRootLanelet(planner_data_);
-  }
+  if (!controlled_by_autoware_autonomously && !planner_manager_->hasApprovedModules())
+    planner_manager_->resetCurrentRouteLanelet(planner_data_);
 
   // run behavior planner
   const auto output = planner_manager_->run(planner_data_);
@@ -413,6 +422,7 @@ void BehaviorPathPlannerNode::run()
 
     if (!path->points.empty()) {
       path_publisher_->publish(*path);
+      published_time_publisher_->publish_if_subscribed(path_publisher_, path->header.stamp);
     } else {
       RCLCPP_ERROR_THROTTLE(
         get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
@@ -505,7 +515,7 @@ void BehaviorPathPlannerNode::publish_reroute_availability() const
 {
   // In the current behavior path planner, we might encounter unexpected behavior when rerouting
   // while modules other than lane following are active. If non-lane-following module except
-  // always-executable module is approved and running, rerouting will not be　possible.
+  // always-executable module is approved and running, rerouting will not be possible.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
   if (planner_manager_->hasNonAlwaysExecutableApprovedModules()) {
@@ -813,6 +823,19 @@ void BehaviorPathPlannerNode::onOperationMode(const OperationModeState::ConstSha
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->operation_mode = msg;
+}
+
+void BehaviorPathPlannerNode::on_external_velocity_limiter(
+  const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg)
+{
+  // Note: Using this parameter during path planning might cause unexpected deceleration or jerk.
+  // Therefore, do not use it for anything other than safety checks.
+  if (!msg) {
+    return;
+  }
+
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
+  planner_data_->external_limit_max_velocity = msg;
 }
 void BehaviorPathPlannerNode::onLateralOffset(const LateralOffset::ConstSharedPtr msg)
 {

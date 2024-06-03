@@ -138,6 +138,7 @@ private:
 
   /** \brief Output TF frame the concatenated points should be transformed to. */
   std::string output_frame_;
+  bool keep_input_frame_in_synchronized_pointcloud_;
 
   /** \brief Input point cloud topics. */
   // XmlRpc::XmlRpcValue input_topics_;
@@ -177,6 +178,8 @@ private:
   void timer_callback();
 
   void checkSyncStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  std::string replaceSyncTopicNamePostfix(
+    const std::string & original_topic_name, const std::string & postfix);
 
   /** \brief processing time publisher. **/
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;

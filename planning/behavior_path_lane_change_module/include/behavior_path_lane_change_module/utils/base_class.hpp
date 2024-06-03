@@ -15,6 +15,7 @@
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__BASE_CLASS_HPP_
 
 #include "behavior_path_lane_change_module/utils/data_structs.hpp"
+#include "behavior_path_lane_change_module/utils/debug_structs.hpp"
 #include "behavior_path_lane_change_module/utils/path.hpp"
 #include "behavior_path_lane_change_module/utils/utils.hpp"
 #include "behavior_path_planner_common/interface/scene_module_interface.hpp"
@@ -36,7 +37,6 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using data::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -66,7 +66,7 @@ public:
 
   virtual BehaviorModuleOutput generateOutput() = 0;
 
-  virtual void extendOutputDrivableArea(BehaviorModuleOutput & output) = 0;
+  virtual void extendOutputDrivableArea(BehaviorModuleOutput & output) const = 0;
 
   virtual PathWithLaneId getReferencePath() const = 0;
 
@@ -74,13 +74,13 @@ public:
 
   virtual void resetParameters() = 0;
 
-  virtual TurnSignalInfo updateOutputTurnSignal() = 0;
+  virtual TurnSignalInfo updateOutputTurnSignal() const = 0;
 
   virtual bool hasFinishedLaneChange() const = 0;
 
   virtual bool hasFinishedAbort() const = 0;
 
-  virtual bool isLaneChangeRequired() const = 0;
+  virtual bool isLaneChangeRequired() = 0;
 
   virtual bool isAbortState() const = 0;
 
@@ -88,11 +88,16 @@ public:
 
   virtual LaneChangePath getLaneChangePath() const = 0;
 
+  virtual BehaviorModuleOutput getTerminalLaneChangePath() const = 0;
+
   virtual bool isEgoOnPreparePhase() const = 0;
 
   virtual bool isRequiredStop(const bool is_object_coming_from_rear) = 0;
 
   virtual PathSafetyStatus isApprovedPathSafe() const = 0;
+
+  virtual PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
+    PathSafetyStatus approve_path_safety_status) = 0;
 
   virtual bool isNearEndOfCurrentLanes(
     const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
@@ -106,25 +111,9 @@ public:
 
   virtual bool specialExpiredCheck() const { return false; }
 
-  virtual void setPreviousModulePaths(
-    const PathWithLaneId & prev_module_reference_path, const PathWithLaneId & prev_module_path)
+  void setPreviousModuleOutput(const BehaviorModuleOutput & prev_module_output)
   {
-    if (!prev_module_reference_path.points.empty()) {
-      prev_module_reference_path_ = prev_module_reference_path;
-    }
-    if (!prev_module_path.points.empty()) {
-      prev_module_path_ = prev_module_path;
-    }
-  };
-
-  virtual void setPreviousDrivableAreaInfo(const DrivableAreaInfo & prev_drivable_area_info)
-  {
-    prev_drivable_area_info_ = prev_drivable_area_info;
-  }
-
-  virtual void setPreviousTurnSignalInfo(const TurnSignalInfo & prev_turn_signal_info)
-  {
-    prev_turn_signal_info_ = prev_turn_signal_info;
+    prev_module_output_ = prev_module_output;
   }
 
   virtual void updateSpecialData() {}
@@ -137,19 +126,7 @@ public:
 
   const LaneChangeStatus & getLaneChangeStatus() const { return status_; }
 
-  const LaneChangePaths & getDebugValidPath() const { return debug_valid_path_; }
-
-  const CollisionCheckDebugMap & getDebugData() const { return object_debug_; }
-
-  const CollisionCheckDebugMap & getAfterApprovalDebugData() const
-  {
-    return object_debug_after_approval_;
-  }
-
-  const LaneChangeTargetObjects & getDebugFilteredObjects() const
-  {
-    return debug_filtered_objects_;
-  }
+  const data::lane_change::Debug & getDebugData() const { return lane_change_debug_; }
 
   const Pose & getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
 
@@ -210,6 +187,8 @@ public:
 
   void resetStopPose() { lane_change_stop_pose_ = std::nullopt; }
 
+  virtual TurnSignalInfo get_current_turn_signal_info() = 0;
+
 protected:
   virtual lanelet::ConstLanelets getCurrentLanes() const = 0;
 
@@ -224,8 +203,6 @@ protected:
     const lanelet::ConstLanelets & target_lanelets, Direction direction,
     LaneChangePaths * candidate_paths, const utils::path_safety_checker::RSSparams rss_params,
     const bool is_stuck, const bool check_safety) const = 0;
-
-  virtual TurnSignalInfo calcTurnSignalInfo() = 0;
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
@@ -242,14 +219,12 @@ protected:
   std::shared_ptr<LaneChangeParameters> lane_change_parameters_{};
   std::shared_ptr<LaneChangePath> abort_path_{};
   std::shared_ptr<const PlannerData> planner_data_{};
-  PathWithLaneId prev_module_reference_path_{};
-  PathWithLaneId prev_module_path_{};
-  DrivableAreaInfo prev_drivable_area_info_{};
-  TurnSignalInfo prev_turn_signal_info_{};
+  BehaviorModuleOutput prev_module_output_{};
   std::optional<Pose> lane_change_stop_pose_{std::nullopt};
 
   PathWithLaneId prev_approved_path_{};
 
+  int unsafe_hysteresis_count_{0};
   bool is_abort_path_approved_{false};
   bool is_abort_approval_requested_{false};
   bool is_activated_{false};
@@ -257,12 +232,8 @@ protected:
   Direction direction_{Direction::NONE};
   LaneChangeModuleType type_{LaneChangeModuleType::NORMAL};
 
-  mutable LaneChangePaths debug_valid_path_{};
-  mutable CollisionCheckDebugMap object_debug_{};
-  mutable CollisionCheckDebugMap object_debug_after_approval_{};
-  mutable LaneChangeTargetObjects debug_filtered_objects_{};
-  mutable double object_debug_lifetime_{0.0};
   mutable StopWatch<std::chrono::milliseconds> stop_watch_;
+  mutable data::lane_change::Debug lane_change_debug_;
 
   rclcpp::Logger logger_ = utils::lane_change::getLogger(getModuleTypeStr());
   mutable rclcpp::Clock clock_{RCL_ROS_TIME};

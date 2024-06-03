@@ -33,7 +33,6 @@ using BasicPolygons = std::vector<lanelet::BasicPolygon2d>;
 using occlusion_spot_utils::PossibleCollisionInfo;
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
-using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerOrientation;
 using tier4_autoware_utils::createMarkerPosition;
@@ -118,7 +117,7 @@ MarkerArray makeDebugInfoMarkers(T & debug_data)
 {
   // add slow down markers for occlusion spot
   MarkerArray debug_markers;
-  auto & possible_collisions = debug_data.possible_collisions;
+  const auto & possible_collisions = debug_data.possible_collisions;
   size_t id = 0;
   // draw obstacle collision
   for (const auto & pc : possible_collisions) {

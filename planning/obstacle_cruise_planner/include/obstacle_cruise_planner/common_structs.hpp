@@ -55,7 +55,8 @@ struct Obstacle
 {
   Obstacle(
     const rclcpp::Time & arg_stamp, const PredictedObject & object,
-    const geometry_msgs::msg::Pose & arg_pose)
+    const geometry_msgs::msg::Pose & arg_pose, const double ego_to_obstacle_distance,
+    const double lat_dist_from_obstacle_to_traj)
   : stamp(arg_stamp),
     pose(arg_pose),
     orientation_reliable(true),
@@ -63,7 +64,9 @@ struct Obstacle
     twist_reliable(true),
     classification(object.classification.at(0)),
     uuid(tier4_autoware_utils::toHexString(object.object_id)),
-    shape(object.shape)
+    shape(object.shape),
+    ego_to_obstacle_distance(ego_to_obstacle_distance),
+    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj)
   {
     predicted_paths.clear();
     for (const auto & path : object.kinematics.predicted_paths) {
@@ -82,6 +85,8 @@ struct Obstacle
   std::string uuid;
   Shape shape;
   std::vector<PredictedPath> predicted_paths;
+  double ego_to_obstacle_distance;
+  double lat_dist_from_obstacle_to_traj;
 };
 
 struct TargetObstacleInterface
@@ -172,8 +177,8 @@ struct LongitudinalInfo
     limit_min_accel = node.declare_parameter<double>("limit.min_acc");
     limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
     limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
-    slow_down_min_accel = node.declare_parameter<double>("slow_down.min_acc");
-    slow_down_min_jerk = node.declare_parameter<double>("slow_down.min_jerk");
+    slow_down_min_accel = node.declare_parameter<double>("common.slow_down_min_acc");
+    slow_down_min_jerk = node.declare_parameter<double>("common.slow_down_min_jerk");
 
     idling_time = node.declare_parameter<double>("common.idling_time");
     min_ego_accel_for_rss = node.declare_parameter<double>("common.min_ego_accel_for_rss");
@@ -200,8 +205,9 @@ struct LongitudinalInfo
     tier4_autoware_utils::updateParam<double>(parameters, "limit.max_jerk", limit_max_jerk);
     tier4_autoware_utils::updateParam<double>(parameters, "limit.min_jerk", limit_min_jerk);
     tier4_autoware_utils::updateParam<double>(
-      parameters, "slow_down.min_accel", slow_down_min_accel);
-    tier4_autoware_utils::updateParam<double>(parameters, "slow_down.min_jerk", slow_down_min_jerk);
+      parameters, "common.slow_down_min_accel", slow_down_min_accel);
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.slow_down_min_jerk", slow_down_min_jerk);
 
     tier4_autoware_utils::updateParam<double>(parameters, "common.idling_time", idling_time);
     tier4_autoware_utils::updateParam<double>(

@@ -135,25 +135,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE lidar_centerpoint_node
   )
 
-  ## single inference node ##
-  ament_auto_add_library(single_inference_lidar_centerpoint_component SHARED
-    src/single_inference_node.cpp
-  )
-
-  target_link_libraries(single_inference_lidar_centerpoint_component
-    centerpoint_lib
-  )
-
-  rclcpp_components_register_node(single_inference_lidar_centerpoint_component
-    PLUGIN "centerpoint::SingleInferenceLidarCenterPointNode"
-    EXECUTABLE single_inference_lidar_centerpoint_node
-  )
-
-  install(PROGRAMS
-    scripts/lidar_centerpoint_visualizer.py
-    DESTINATION lib/${PROJECT_NAME}
-  )
-
   ament_export_dependencies(ament_cmake_python)
 
   ament_auto_package(
@@ -166,6 +147,64 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     TARGETS centerpoint_cuda_lib
     DESTINATION lib
   )
+
+  if(BUILD_TESTING)
+    find_package(ament_cmake_gtest REQUIRED)
+    ament_auto_add_gtest(test_detection_class_remapper
+      test/test_detection_class_remapper.cpp
+    )
+    ament_auto_add_gtest(test_ros_utils
+      test/test_ros_utils.cpp
+    )
+    ament_auto_add_gtest(test_nms
+      test/test_nms.cpp
+    )
+    ament_auto_add_gtest(test_voxel_generator
+      test/test_voxel_generator.cpp
+    )
+
+    add_executable(test_preprocess_kernel
+      test/test_preprocess_kernel.cpp
+      lib/utils.cpp
+    )
+
+    target_include_directories(test_preprocess_kernel PUBLIC
+      ${test_preprocess_kernel_SOURCE_DIR}
+    )
+
+    target_link_libraries(test_preprocess_kernel
+      centerpoint_cuda_lib
+      gtest
+      gtest_main
+    )
+
+    ament_add_test(test_preprocess_kernel
+      GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+      COMMAND "$<TARGET_FILE:test_preprocess_kernel>"
+    )
+
+    add_executable(test_postprocess_kernel
+      test/test_postprocess_kernel.cpp
+      lib/utils.cpp
+    )
+
+    target_include_directories(test_postprocess_kernel PUBLIC
+      ${test_postprocess_kernel_SOURCE_DIR}
+    )
+
+    target_link_libraries(test_postprocess_kernel
+      centerpoint_cuda_lib
+      gtest
+      gtest_main
+    )
+
+    ament_add_test(test_postprocess_kernel
+      GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+      COMMAND "$<TARGET_FILE:test_postprocess_kernel>"
+    )
+
+  endif()
+
 else()
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()

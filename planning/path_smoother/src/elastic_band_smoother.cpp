@@ -79,8 +79,6 @@ ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_option
   // interface subscriber
   path_sub_ = create_subscription<Path>(
     "~/input/path", 1, std::bind(&ElasticBandSmoother::onPath, this, std::placeholders::_1));
-  odom_sub_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, [this](const Odometry::ConstSharedPtr msg) { ego_state_ptr_ = msg; });
 
   // debug publisher
   debug_extended_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_traj", 1);
@@ -108,6 +106,7 @@ ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_option
     std::bind(&ElasticBandSmoother::onParam, this, std::placeholders::_1));
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 
 rcl_interfaces::msg::SetParametersResult ElasticBandSmoother::onParam(
@@ -136,7 +135,7 @@ rcl_interfaces::msg::SetParametersResult ElasticBandSmoother::onParam(
 
 void ElasticBandSmoother::initializePlanning()
 {
-  RCLCPP_INFO(get_logger(), "Initialize planning");
+  RCLCPP_DEBUG(get_logger(), "Initialize planning");
 
   eb_path_smoother_ptr_->initialize(false, common_param_);
   resetPreviousData();
@@ -155,7 +154,8 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   time_keeper_ptr_->tic(__func__);
 
   // check if data is ready and valid
-  if (!isDataReady(*path_ptr, *get_clock())) {
+  const auto ego_state_ptr = odom_sub_.takeData();
+  if (!isDataReady(*path_ptr, ego_state_ptr, *get_clock())) {
     return;
   }
 
@@ -171,6 +171,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
     const auto output_traj_msg = motion_utils::convertToTrajectory(traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
     path_pub_->publish(*path_ptr);
+    published_time_publisher_->publish_if_subscribed(path_pub_, path_ptr->header.stamp);
     return;
   }
 
@@ -179,7 +180,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   // 1. calculate trajectory with Elastic Band
   // 1.a check if replan (= optimization) is required
   PlannerData planner_data(
-    input_traj_points, ego_state_ptr_->pose.pose, ego_state_ptr_->twist.twist.linear.x);
+    input_traj_points, ego_state_ptr->pose.pose, ego_state_ptr->twist.twist.linear.x);
   const bool is_replan_required = [&]() {
     if (replan_checker_ptr_->isResetRequired(planner_data)) {
       // NOTE: always replan when resetting previous optimization
@@ -193,7 +194,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   replan_checker_ptr_->updateData(planner_data, is_replan_required, now());
   time_keeper_ptr_->tic(__func__);
   auto smoothed_traj_points = is_replan_required ? eb_path_smoother_ptr_->smoothTrajectory(
-                                                     input_traj_points, ego_state_ptr_->pose.pose)
+                                                     input_traj_points, ego_state_ptr->pose.pose)
                                                  : *prev_optimized_traj_points_ptr_;
   time_keeper_ptr_->toc(__func__, "    ");
 
@@ -201,7 +202,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
     std::make_shared<std::vector<TrajectoryPoint>>(smoothed_traj_points);
 
   // 2. update velocity
-  applyInputVelocity(smoothed_traj_points, input_traj_points, ego_state_ptr_->pose.pose);
+  applyInputVelocity(smoothed_traj_points, input_traj_points, ego_state_ptr->pose.pose);
 
   // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
   auto full_traj_points = extendTrajectory(input_traj_points, smoothed_traj_points);
@@ -225,11 +226,13 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   traj_pub_->publish(output_traj_msg);
   const auto output_path_msg = trajectory_utils::create_path(*path_ptr, full_traj_points);
   path_pub_->publish(output_path_msg);
+  published_time_publisher_->publish_if_subscribed(path_pub_, path_ptr->header.stamp);
 }
 
-bool ElasticBandSmoother::isDataReady(const Path & path, rclcpp::Clock clock) const
+bool ElasticBandSmoother::isDataReady(
+  const Path & path, const Odometry::ConstSharedPtr ego_state_ptr, rclcpp::Clock clock) const
 {
-  if (!ego_state_ptr_) {
+  if (!ego_state_ptr) {
     RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Waiting for ego pose and twist.");
     return false;
   }

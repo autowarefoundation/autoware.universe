@@ -34,7 +34,7 @@ class NdtLocalizationTriggerModule;
 class PoseInitializer : public rclcpp::Node
 {
 public:
-  PoseInitializer();
+  explicit PoseInitializer(const rclcpp::NodeOptions & options);
   ~PoseInitializer();
 
 private:
@@ -58,6 +58,10 @@ private:
   std::unique_ptr<NdtLocalizationTriggerModule> ndt_localization_trigger_;
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
   double stop_check_duration_;
+
+  void change_node_trigger(bool flag, bool need_spin = false);
+  void set_user_defined_initial_pose(
+    const geometry_msgs::msg::Pose initial_pose, bool need_spin = false);
   void change_state(State::Message::_state_type state);
   void on_initialize(
     const Initialize::Service::Request::SharedPtr req,

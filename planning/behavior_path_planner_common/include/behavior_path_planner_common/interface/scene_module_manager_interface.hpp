@@ -99,6 +99,16 @@ public:
     observers_.erase(itr, observers_.end());
   }
 
+  void publishRTCStatus()
+  {
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      if (ptr) {
+        ptr->removeExpiredCooperateStatus();
+        ptr->publishCooperateStatus(rclcpp::Clock(RCL_ROS_TIME).now());
+      }
+    }
+  }
+
   void publishVirtualWall() const
   {
     using tier4_autoware_utils::appendMarkerArray;
@@ -235,7 +245,6 @@ public:
     std::for_each(observers_.begin(), observers_.end(), [](const auto & observer) {
       if (!observer.expired()) {
         observer.lock()->onExit();
-        observer.lock()->publishRTCStatus();
       }
     });
 
@@ -243,7 +252,6 @@ public:
 
     if (idle_module_ptr_ != nullptr) {
       idle_module_ptr_->onExit();
-      idle_module_ptr_->publishRTCStatus();
       idle_module_ptr_.reset();
     }
 
@@ -268,7 +276,14 @@ protected:
     // init manager configuration
     {
       std::string ns = name_ + ".";
-      config_.enable_rtc = getOrDeclareParameter<bool>(*node, ns + "enable_rtc");
+      try {
+        config_.enable_rtc = getOrDeclareParameter<bool>(*node, "enable_all_modules_auto_mode")
+                               ? false
+                               : getOrDeclareParameter<bool>(*node, ns + "enable_rtc");
+      } catch (const std::exception & e) {
+        config_.enable_rtc = getOrDeclareParameter<bool>(*node, ns + "enable_rtc");
+      }
+
       config_.enable_simultaneous_execution_as_approved_module =
         getOrDeclareParameter<bool>(*node, ns + "enable_simultaneous_execution_as_approved_module");
       config_.enable_simultaneous_execution_as_candidate_module = getOrDeclareParameter<bool>(

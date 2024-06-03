@@ -1,6 +1,5 @@
 /**:
   ros__parameters:
-    verbose: false
     max_iteration_num: 100
     traffic_light_signal_timeout: 1.0
     planning_hz: 10.0
@@ -18,17 +17,13 @@
     turn_signal_minimum_search_distance: 10.0
     turn_signal_search_time: 3.0
     turn_signal_shift_length_threshold: 0.3
+    turn_signal_remaining_shift_length_threshold: 0.1
     turn_signal_on_swerving: true
 
     enable_akima_spline_first: false
     enable_cog_on_centerline: false
     input_path_interval: 2.0
     output_path_interval: 2.0
-
-    lane_following:
-      drivable_area_right_bound_offset: 0.0
-      drivable_area_left_bound_offset: 0.0
-      drivable_area_types_to_skip: [road_border]
 
     closest_lanelet:
       distance_threshold: 5.0 # [m]

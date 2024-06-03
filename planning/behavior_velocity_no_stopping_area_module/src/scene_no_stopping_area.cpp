@@ -87,12 +87,8 @@ boost::optional<LineString2d> NoStoppingAreaModule::getStopLineGeometry2d(
         const LineString2d line{{p0.x, p0.y}, {p1.x, p1.y}};
         std::vector<Point2d> collision_points;
         bg::intersection(area_poly, line, collision_points);
-        if (collision_points.empty()) {
-          continue;
-        }
-        const double yaw = tier4_autoware_utils::calcAzimuthAngle(p0, p1);
         if (!collision_points.empty()) {
-          geometry_msgs::msg::Point left_point;
+          const double yaw = tier4_autoware_utils::calcAzimuthAngle(p0, p1);
           const double w = planner_data_->vehicle_info_.vehicle_width_m;
           const double l = stop_line_margin;
           stop_line.emplace_back(
@@ -306,7 +302,6 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
 
   const int num_ignore_nearest = 1;  // Do not consider nearest lane polygon
   size_t ego_area_start_idx = closest_idx + num_ignore_nearest;
-  size_t ego_area_end_idx = ego_area_start_idx;
   // return if area size is not intentional
   if (no_stopping_area_reg_elem_.noStoppingAreas().size() != 1) {
     return ego_area;
@@ -324,20 +319,23 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
     }
     ++ego_area_start_idx;
   }
-  if (ego_area_start_idx > num_ignore_nearest) {
-    ego_area_start_idx--;
-  }
+
   if (!is_in_area) {
     return ego_area;
   }
   double dist_from_area_sum = 0.0;
   // decide end idx with extract distance
-  ego_area_end_idx = ego_area_start_idx;
+  size_t ego_area_end_idx = ego_area_start_idx;
   for (size_t i = ego_area_start_idx; i < pp.size() - 1; ++i) {
     dist_from_start_sum += tier4_autoware_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
     const auto & p = pp.at(i).point.pose.position;
     if (!bg::within(Point2d{p.x, p.y}, lanelet::utils::to2D(no_stopping_area).basicPolygon())) {
       dist_from_area_sum += tier4_autoware_utils::calcDistance2d(pp.at(i), pp.at(i - 1));
+
+      // do not take extra distance and exit as soon as p is outside no stopping area
+      // just a temporary fix
+      ego_area_end_idx = i - 1;
+      break;
     }
     if (dist_from_start_sum > extra_dist || dist_from_area_sum > margin) {
       break;
