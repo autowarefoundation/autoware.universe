@@ -2,7 +2,7 @@
 <launch>
   <!-- Lidar parameters -->
   <arg name="input/pointcloud"/>
-  <arg name="lidar_detection_model" default="transfusion" description="options: `transfusion`, `centerpoint`, `apollo`, `clustering`"/>
+  <arg name="lidar_detection_model" default="centerpoint" description="options: `transfusion`, `centerpoint`, `apollo`, `clustering`"/>
 
   <!-- Lidar detector centerpoint parameters -->
   <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint`, `centerpoint_tiny` or `centerpoint_sigma`"/>
