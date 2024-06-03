@@ -64,7 +64,7 @@ public:
 
   bool enqueuePointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-    cudaStream_t streams);
+    cudaStream_t stream);
 
   double getCurrentTimestamp() const { return current_timestamp_; }
   Eigen::Affine3f getAffineWorldToCurrent() const { return affine_world2current_; }
