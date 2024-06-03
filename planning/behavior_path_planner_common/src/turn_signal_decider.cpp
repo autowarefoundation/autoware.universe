@@ -395,7 +395,7 @@ TurnIndicatorsCommand TurnSignalDecider::resolve_turn_signal(
 TurnSignalInfo TurnSignalDecider::overwrite_turn_signal(
   const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
   const TurnSignalInfo & original_signal, const TurnSignalInfo & new_signal,
-  const double nearest_dist_threshold, const double nearest_yaw_threshold)
+  const double nearest_dist_threshold, const double nearest_yaw_threshold) const
 {
   if (original_signal.turn_signal.command == TurnIndicatorsCommand::NO_COMMAND) {
     return new_signal;
@@ -409,15 +409,16 @@ TurnSignalInfo TurnSignalDecider::overwrite_turn_signal(
     const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       path.points, input_point, nearest_dist_threshold, nearest_yaw_threshold);
     return motion_utils::calcSignedArcLength(
-      path.points, current_pose.position, current_seg_idx, input_point.position, nearest_seg_idx);
+             path.points, current_pose.position, current_seg_idx, input_point.position,
+             nearest_seg_idx) -
+           base_link2front_;
   };
 
   const auto & original_desired_end_point = original_signal.desired_end_point;
   const auto & new_desired_start_point = new_signal.desired_start_point;
 
-  const double dist_to_original_desired_end =
-    get_distance(original_desired_end_point) - base_link2front_;
-  const double dist_to_new_desired_start = get_distance(new_desired_start_point) - base_link2front_;
+  const double dist_to_original_desired_end = get_distance(original_desired_end_point);
+  const double dist_to_new_desired_start = get_distance(new_desired_start_point);
   if (dist_to_new_desired_start > dist_to_original_desired_end) {
     return original_signal;
   }
@@ -707,14 +708,14 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
 
   // If shift length is shorter than the threshold, it does not need to turn on blinkers
   if (std::fabs(relative_shift_length) < p.turn_signal_shift_length_threshold) {
-    return std::make_pair(TurnSignalInfo(getPose(p_path_start), getPose(p_path_end)), true);
+    return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), true);
   }
 
   // If the vehicle does not shift anymore, we turn off the blinker
   if (
     std::fabs(end_shift_length - current_shift_length) <
     p.turn_signal_remaining_shift_length_threshold) {
-    return std::make_pair(TurnSignalInfo(getPose(p_path_start), getPose(p_path_end)), true);
+    return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), true);
   }
 
   const auto get_command = [](const auto & shift_length) {
@@ -729,7 +730,7 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
     p.vehicle_info.max_longitudinal_offset_m;
 
   if (signal_prepare_distance < ego_front_to_shift_start) {
-    return std::make_pair(TurnSignalInfo(getPose(p_path_start), getPose(p_path_end)), false);
+    return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), false);
   }
 
   const auto blinker_start_pose = path.path.points.at(shift_line.start_idx).point.pose;
@@ -746,13 +747,13 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   turn_signal_info.turn_signal.command = get_command(relative_shift_length);
 
   if (!p.turn_signal_on_swerving) {
-    return std::make_pair(TurnSignalInfo(getPose(p_path_start), getPose(p_path_end)), false);
+    return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), false);
   }
 
   lanelet::ConstLanelet lanelet;
   const auto query_pose = (egos_lane_is_shifted) ? shift_line.end : shift_line.start;
   if (!rh->getClosestLaneletWithinRoute(query_pose, &lanelet)) {
-    return std::make_pair(TurnSignalInfo(getPose(p_path_start), getPose(p_path_end)), true);
+    return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), true);
   }
 
   const auto left_same_direction_lane = rh->getLeftLanelet(lanelet, true, true);
@@ -767,13 +768,13 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
     !is_pull_out && !existShiftSideLane(
                       start_shift_length, end_shift_length, !has_left_lane, !has_right_lane,
                       p.turn_signal_shift_length_threshold)) {
-    return std::make_pair(TurnSignalInfo(getPose(p_path_start), getPose(p_path_end)), true);
+    return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), true);
   }
 
   // Check if the ego will cross lane bounds.
   // Note that pull out requires blinkers, even if the ego does not cross lane bounds
   if (!is_pull_out && !straddleRoadBound(path, shift_line, current_lanelets, p.vehicle_info)) {
-    return std::make_pair(TurnSignalInfo(getPose(p_path_start), getPose(p_path_end)), true);
+    return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), true);
   }
 
   // If the ego has stopped and its close to completing its shift, turn off the blinkers
@@ -782,7 +783,7 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
     if (isNearEndOfShift(
           start_shift_length, end_shift_length, ego_pose.position, current_lanelets,
           p.turn_signal_shift_length_threshold)) {
-      return std::make_pair(TurnSignalInfo(getPose(p_path_start), getPose(p_path_end)), true);
+      return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), true);
     }
   }
 

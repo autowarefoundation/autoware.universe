@@ -107,7 +107,7 @@ public:
   TurnSignalInfo overwrite_turn_signal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
     const TurnSignalInfo & original_signal, const TurnSignalInfo & new_signal,
-    const double nearest_dist_threshold, const double nearest_yaw_threshold);
+    const double nearest_dist_threshold, const double nearest_yaw_threshold) const;
 
   TurnSignalInfo use_prior_turn_signal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
