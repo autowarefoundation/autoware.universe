@@ -893,18 +893,16 @@ bool RouteHandler::getClosestLaneletWithConstrainsWithinRoute(
     route_lanelets_, search_pose, closest_lanelet, dist_threshold, yaw_threshold);
 }
 
-boost::optional<lanelet::ConstLanelet> RouteHandler::getClosestRouteLaneletFromLanelet(
+bool RouteHandler::getClosestRouteLaneletFromLanelet(
   const Pose & search_pose, const lanelet::ConstLanelet & reference_lanelet,
-  const double dist_threshold, const double yaw_threshold) const
+  lanelet::ConstLanelet * closest_lanelet, const double dist_threshold,
+  const double yaw_threshold) const
 {
-  boost::optional<lanelet::ConstLanelet> closest_lanelet = {};
-
   lanelet::ConstLanelets previous_lanelets, next_lanelets, lanelet_sequence;
   if (getPreviousLaneletsWithinRoute(reference_lanelet, &previous_lanelets)) {
     lanelet_sequence = previous_lanelets;
   }
 
-  lanelet_sequence.push_back(reference_lanelet);
   const auto & ref_lanelet_neighbors = getNeighborsWithinRoute(reference_lanelet);
   lanelet_sequence.insert(
     lanelet_sequence.end(), ref_lanelet_neighbors.begin(), ref_lanelet_neighbors.end());
@@ -913,13 +911,12 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getClosestRouteLaneletFromL
     lanelet_sequence.insert(lanelet_sequence.end(), next_lanelets.begin(), next_lanelets.end());
   }
 
-  lanelet::ConstLanelet closest_lane{};
   if (lanelet::utils::query::getClosestLaneletWithConstrains(
-        lanelet_sequence, search_pose, &closest_lane, dist_threshold, yaw_threshold)) {
-    closest_lanelet = closest_lane;
+        lanelet_sequence, search_pose, closest_lanelet, dist_threshold, yaw_threshold)) {
+    return true;
   }
 
-  return closest_lanelet;
+  return false;
 }
 
 bool RouteHandler::getNextLaneletsWithinRoute(
@@ -1943,6 +1940,8 @@ lanelet::ConstLanelets RouteHandler::getMainLanelets(
   const lanelet::ConstLanelets & path_lanelets) const
 {
   auto lanelet_sequence = getLaneletSequence(path_lanelets.back());
+
+  RCLCPP_INFO_STREAM(logger_, "getMainLanelets: lanelet_sequence = " << lanelet_sequence);
 
   lanelet::ConstLanelets main_lanelets;
   while (!lanelet_sequence.empty()) {
