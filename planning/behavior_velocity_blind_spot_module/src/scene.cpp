@@ -456,8 +456,7 @@ double BlindSpotModule::computeTimeToPassStopLine(
                                 planner_data_->current_velocity->twist.linear.x);
 }
 
-std::optional<autoware_perception_msgs::msg::PredictedObject>
-BlindSpotModule::isCollisionDetected(
+std::optional<autoware_perception_msgs::msg::PredictedObject> BlindSpotModule::isCollisionDetected(
   const lanelet::ConstLanelets & blind_spot_lanelets,
   const geometry_msgs::msg::Pose & stop_line_pose, const lanelet::CompoundPolygon3d & area,
   const double ego_time_to_reach_stop_line)
