@@ -20,10 +20,10 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <string>
-#include <algorithm>
 
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
 : rclcpp::Node("pose_instability_detector", options),
