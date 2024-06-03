@@ -8,7 +8,7 @@
     <arg name="spawn_point" default="None" description="location of ego vehicle spawn (default is random), example = [0.2 , 4.1, 0.4, 0., 0., 0.]"/>
     <arg name="carla_map" default="Town01"/>
     <arg name="sync_mode" default="True"/>
-    <arg name="fixed_delta_seconds" default="0.05" description="Timestep for CARLA, FPS=1/value"/>
+    <arg name="fixed_delta_seconds" default="0.05" description="Time step for CARLA, FPS=1/value"/>
     <arg name="objects_definition_file" default="$(find-pkg-share carla_autoware)/objects.json"/>
     <arg name="use_traffic_manager" default="False"/>
     <arg name="max_real_delta_seconds" default="0.05"/>
