@@ -15,9 +15,9 @@
 // #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include "motion_utils/trajectory/conversion.hpp"
 
+#include <autoware_velocity_smoother/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <motion_velocity_smoother/trajectory_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/quaternion.hpp>
@@ -82,7 +82,7 @@ bool smoothPath(
     traj_smoothed.begin(), traj_resampled.begin(), traj_resampled.begin() + traj_resampled_closest);
 
   if (external_v_limit) {
-    motion_velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
+    autoware_velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
       traj_resampled_closest, traj_smoothed.size(), external_v_limit->max_velocity, traj_smoothed);
   }
   out_path = motion_utils::convertToPathWithLaneId<TrajectoryPoints>(traj_smoothed);
