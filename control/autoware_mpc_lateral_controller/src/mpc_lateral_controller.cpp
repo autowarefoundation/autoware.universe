@@ -257,14 +257,14 @@ trajectory_follower::LateralOutput MpcLateralController::run(
                                    input_data.current_operation_mode.mode == autoware_adapi_v1_msgs::msg::OperationModeState::STOP;
 
   const bool is_mpc_solved = m_mpc->calculateMPC(
-    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values, is_driving_manually);
+    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values);
 
   // reset previous MPC result
   // Note: When a large deviation from the trajectory occurs, the optimization stops and
   // the vehicle will return to the path by re-planning the trajectory or external operation.
   // After the recovery, the previous value of the optimization may deviate greatly from
   // the actual steer angle, and it may make the optimization result unstable.
-  if (!is_mpc_solved) {
+  if (!is_mpc_solved||is_driving_manually) {
     m_mpc->resetPrevResult(m_current_steering);
   } else {
     setSteeringToHistory(ctrl_cmd);

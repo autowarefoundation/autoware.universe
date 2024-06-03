@@ -102,10 +102,6 @@ bool MPC::calculateMPC(
   // save previous input for the mpc rate limit
   m_raw_steer_cmd_pprev = m_raw_steer_cmd_prev;
   m_raw_steer_cmd_prev = Uex(0);
-  if (is_driving_manually) { // align the MPC steering angle to the actual steering angle when the vehicle is manually controlled
-    m_raw_steer_cmd_pprev = m_raw_steer_cmd_prev;
-    m_raw_steer_cmd_prev = mpc_data.steer;
-  }
 
   /* calculate predicted trajectory */
   predicted_trajectory =
