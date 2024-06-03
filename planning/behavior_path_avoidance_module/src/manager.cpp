@@ -28,7 +28,7 @@ namespace behavior_path_planner
 {
 void AvoidanceModuleManager::init(rclcpp::Node * node)
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using autoware_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::getOrDeclareParameter;
 
   // init manager interface
@@ -41,7 +41,7 @@ void AvoidanceModuleManager::init(rclcpp::Node * node)
 
 void AvoidanceModuleManager::updateModuleParams(const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using autoware_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::updateParam;
 
   auto p = parameters_;
