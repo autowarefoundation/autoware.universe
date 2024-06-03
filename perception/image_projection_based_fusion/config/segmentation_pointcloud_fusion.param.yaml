@@ -4,7 +4,7 @@
     filter_semantic_label_target:
       [
       false, # others
-      false, # buildling
+      false, # building
       false, # wall
       false, # obstacle
       false, # traffic_light
