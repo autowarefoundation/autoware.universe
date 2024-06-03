@@ -90,6 +90,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<std::vector<double>>(node, ns + ".pass_judge.ego_pass_later_margin_y");
   cp.ego_pass_later_additional_margin =
     getOrDeclareParameter<double>(node, ns + ".pass_judge.ego_pass_later_additional_margin");
+  cp.ego_min_assumed_speed =
+    getOrDeclareParameter<double>(node, ns + ".pass_judge.ego_min_assumed_speed");
   cp.max_offset_to_crosswalk_for_yield = getOrDeclareParameter<double>(
     node, ns + ".pass_judge.no_stop_decision.max_offset_to_crosswalk_for_yield");
   cp.min_acc_for_no_stop_decision =
@@ -188,8 +190,8 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
       clock_));
     generateUUID(crosswalk_lanelet_id);
     updateRTCStatus(
-      getUUID(crosswalk_lanelet_id), true, std::numeric_limits<double>::lowest(),
-      path.header.stamp);
+      getUUID(crosswalk_lanelet_id), true, State::WAITING_FOR_EXECUTION,
+      std::numeric_limits<double>::lowest(), path.header.stamp);
   };
 
   const auto crosswalk_reg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(

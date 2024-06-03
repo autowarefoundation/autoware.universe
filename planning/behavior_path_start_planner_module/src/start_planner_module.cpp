@@ -65,6 +65,11 @@ StartPlannerModule::StartPlannerModule(
 {
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
+  lane_departure_checker::Param lane_departure_checker_params;
+  lane_departure_checker_params.footprint_extra_margin =
+    parameters->lane_departure_check_expansion_margin;
+
+  lane_departure_checker_->setParam(lane_departure_checker_params);
 
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
@@ -247,6 +252,13 @@ void StartPlannerModule::updateData()
     status_.first_engaged_and_driving_forward_time = clock_->now();
   }
 
+  constexpr double moving_velocity_threshold = 0.1;
+  const double & ego_velocity = planner_data_->self_odometry->twist.twist.linear.x;
+  if (status_.first_engaged_and_driving_forward_time && ego_velocity > moving_velocity_threshold) {
+    // Ego is engaged, and has moved
+    status_.has_departed = true;
+  }
+
   status_.backward_driving_complete = hasFinishedBackwardDriving();
   if (status_.backward_driving_complete) {
     updateStatusAfterBackwardDriving();
@@ -398,11 +410,13 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   auto get_gap_between_ego_and_lane_border =
     [&](
       geometry_msgs::msg::Pose & ego_overhang_point_as_pose,
-      const bool ego_is_merging_from_the_left) -> std::optional<double> {
+      const bool ego_is_merging_from_the_left) -> std::optional<std::pair<double, double>> {
     const auto local_vehicle_footprint = vehicle_info_.createFootprint();
     const auto vehicle_footprint =
       transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(current_pose));
     double smallest_lateral_gap_between_ego_and_border = std::numeric_limits<double>::max();
+    double corresponding_lateral_gap_with_other_lane_bound = std::numeric_limits<double>::max();
+
     for (const auto & point : vehicle_footprint) {
       geometry_msgs::msg::Pose point_pose;
       point_pose.position.x = point.x();
@@ -413,9 +427,12 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
       lanelet::utils::query::getClosestLanelet(target_lanes, point_pose, &closest_lanelet);
       lanelet::ConstLanelet closest_lanelet_const(closest_lanelet.constData());
 
-      const lanelet::ConstLineString2d current_lane_bound = (ego_is_merging_from_the_left)
-                                                              ? closest_lanelet_const.rightBound2d()
-                                                              : closest_lanelet_const.leftBound2d();
+      const auto [current_lane_bound, other_side_lane_bound] =
+        (ego_is_merging_from_the_left)
+          ? std::make_pair(
+              closest_lanelet_const.rightBound2d(), closest_lanelet_const.leftBound2d())
+          : std::make_pair(
+              closest_lanelet_const.leftBound2d(), closest_lanelet_const.rightBound2d());
       const double current_point_lateral_gap =
         calc_absolute_lateral_offset(current_lane_bound, point_pose);
       if (current_point_lateral_gap < smallest_lateral_gap_between_ego_and_border) {
@@ -423,19 +440,35 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
         ego_overhang_point_as_pose.position.x = point.x();
         ego_overhang_point_as_pose.position.y = point.y();
         ego_overhang_point_as_pose.position.z = 0.0;
+        corresponding_lateral_gap_with_other_lane_bound =
+          calc_absolute_lateral_offset(other_side_lane_bound, point_pose);
       }
     }
+
     if (smallest_lateral_gap_between_ego_and_border == std::numeric_limits<double>::max()) {
       return std::nullopt;
     }
-    return smallest_lateral_gap_between_ego_and_border;
+    return std::make_pair(
+      (smallest_lateral_gap_between_ego_and_border),
+      (corresponding_lateral_gap_with_other_lane_bound));
   };
 
   geometry_msgs::msg::Pose ego_overhang_point_as_pose;
-  const auto gap_between_ego_and_lane_border =
+  const auto gaps_with_lane_borders_pair =
     get_gap_between_ego_and_lane_border(ego_overhang_point_as_pose, ego_is_merging_from_the_left);
-  if (!gap_between_ego_and_lane_border) return false;
 
+  if (!gaps_with_lane_borders_pair.has_value()) {
+    return false;
+  }
+
+  const auto & gap_between_ego_and_lane_border = gaps_with_lane_borders_pair.value().first;
+  const auto & corresponding_lateral_gap_with_other_lane_bound =
+    gaps_with_lane_borders_pair.value().second;
+
+  // middle of the lane is crossed, no need to check for collisions anymore
+  if (gap_between_ego_and_lane_border < corresponding_lateral_gap_with_other_lane_bound) {
+    return true;
+  }
   // Get the lanelets that will be queried for target objects
   const auto relevant_lanelets = std::invoke([&]() -> std::optional<lanelet::ConstLanelets> {
     lanelet::Lanelet closest_lanelet;
@@ -485,7 +518,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough() const
   if (!closest_object_width) return false;
   // Decide if the closest object does not fit in the gap left by the ego vehicle.
   return closest_object_width.value() + parameters_->extra_width_margin_for_rear_obstacle >
-         gap_between_ego_and_lane_border.value();
+         gap_between_ego_and_lane_border;
 }
 
 bool StartPlannerModule::isCloseToOriginalStartPose() const
@@ -551,7 +584,35 @@ bool StartPlannerModule::isExecutionReady() const
 
 bool StartPlannerModule::canTransitSuccessState()
 {
-  return hasFinishedPullOut();
+  // Freespace Planner:
+  // - Can transit to success if the goal position is reached.
+  // - Cannot transit to success if the goal position is not reached.
+  if (status_.planner_type == PlannerType::FREESPACE) {
+    if (hasReachedFreespaceEnd()) {
+      RCLCPP_DEBUG(
+        getLogger(), "Transit to success: Freespace planner reached the end point of the path.");
+      return true;
+    }
+    return false;
+  }
+
+  // Other Planners:
+  // - Cannot transit to success if the vehicle is driving in reverse.
+  // - Cannot transit to success if a safe path cannot be found due to:
+  //   - Insufficient margin against static objects.
+  //   - No path found that stays within the lane.
+  //   In such cases, a stop point needs to be embedded and keep running start_planner.
+  // - Can transit to success if the end point of the pullout path is reached.
+  if (!status_.driving_forward || !status_.found_pull_out_path) {
+    return false;
+  }
+
+  if (hasReachedPullOutEnd()) {
+    RCLCPP_DEBUG(getLogger(), "Transit to success: Reached the end point of the pullout path.");
+    return true;
+  }
+
+  return false;
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
@@ -1135,7 +1196,9 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   // filter for objects located in pull out lanes and moving at a speed below the threshold
   auto [stop_objects_in_pull_out_lanes, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      stop_objects, pull_out_lanes, utils::path_safety_checker::isPolygonOverlapLanelet);
+      stop_objects, pull_out_lanes, [](const auto & obj, const auto & lane) {
+        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane);
+      });
 
   const auto path = planner_data_->route_handler->getCenterLinePath(
     pull_out_lanes, object_check_backward_distance, object_check_forward_distance);
@@ -1150,17 +1213,16 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   return stop_objects_in_pull_out_lanes;
 }
 
-bool StartPlannerModule::hasFinishedPullOut() const
+bool StartPlannerModule::hasReachedFreespaceEnd() const
 {
-  if (!status_.driving_forward || !status_.found_pull_out_path) {
-    return false;
-  }
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+  return tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_path.end_pose) <
+         parameters_->th_arrived_distance;
+}
 
+bool StartPlannerModule::hasReachedPullOutEnd() const
+{
   const auto current_pose = planner_data_->self_odometry->pose.pose;
-  if (status_.planner_type == PlannerType::FREESPACE) {
-    return tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_path.end_pose) <
-           parameters_->th_arrived_distance;
-  }
 
   // check that ego has passed pull out end point
   const double backward_path_length =
@@ -1175,9 +1237,8 @@ bool StartPlannerModule::hasFinishedPullOut() const
 
   // offset to not finish the module before engage
   constexpr double offset = 0.1;
-  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > offset;
 
-  return has_finished;
+  return arclength_current.length - arclength_pull_out_end.length > offset;
 }
 
 bool StartPlannerModule::needToPrepareBlinkerBeforeStartDrivingForward() const
@@ -1242,8 +1303,10 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
   // In Geometric pull out, the ego stops once and then steers the wheels to the opposite direction.
   // This sometimes causes the getBehaviorTurnSignalInfo method to detect the ego as stopped and
   // close to complete its shift, so it wrongly turns off the blinkers, this override helps avoid
-  // this issue.
-  const bool override_ego_stopped_check = std::invoke([&]() {
+  // this issue. Also, if the ego is not engaged (so it is stopped), the blinkers should still be
+  // activated.
+
+  const bool geometric_planner_has_not_finished_first_path = std::invoke([&]() {
     if (status_.planner_type != PlannerType::GEOMETRIC) {
       return false;
     }
@@ -1253,6 +1316,9 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
       path.points, stop_point.point.pose.position, current_pose.position));
     return distance_from_ego_to_stop_point < distance_threshold;
   });
+
+  const bool override_ego_stopped_check =
+    !status_.has_departed || geometric_planner_has_not_finished_first_path;
 
   const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
     path, shift_start_idx, shift_end_idx, current_lanes, current_shift_length,

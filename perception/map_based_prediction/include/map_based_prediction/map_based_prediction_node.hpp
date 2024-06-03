@@ -48,6 +48,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -85,6 +86,12 @@ struct ObjectData
     Maneuver::UNINITIALIZED};  // output maneuver considering previous one shot maneuvers
 };
 
+struct CrosswalkUserData
+{
+  std_msgs::msg::Header header;
+  autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
+};
+
 struct LaneletData
 {
   lanelet::Lanelet lanelet;
@@ -97,6 +104,14 @@ struct PredictedRefPath
   double speed_limit;
   PosePath path;
   Maneuver maneuver;
+};
+
+struct PredictionTimeHorizon
+{
+  // NOTE(Mamoru Sobue): motorcycle belongs to "vehicle" and bicycle to "pedestrian"
+  double vehicle;
+  double pedestrian;
+  double unknown;
 };
 
 using LaneletsData = std::vector<LaneletData>;
@@ -135,8 +150,10 @@ private:
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
 
   // Object History
-  std::unordered_map<std::string, std::deque<ObjectData>> objects_history_;
+  std::unordered_map<std::string, std::deque<ObjectData>> road_users_history;
   std::map<std::pair<std::string, lanelet::Id>, rclcpp::Time> stopped_times_against_green_;
+  std::unordered_map<std::string, std::deque<CrosswalkUserData>> crosswalk_users_history_;
+  std::unordered_map<std::string, std::string> known_matches_;
 
   // Lanelet Map Pointers
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
@@ -161,7 +178,7 @@ private:
 
   // Parameters
   bool enable_delay_compensation_;
-  double prediction_time_horizon_;
+  PredictionTimeHorizon prediction_time_horizon_;
   double lateral_control_time_horizon_;
   double prediction_time_horizon_rate_for_validate_lane_length_;
   double prediction_sampling_time_interval_;
@@ -200,6 +217,9 @@ private:
   std::vector<double> distance_set_for_no_intention_to_walk_;
   std::vector<double> timeout_set_for_no_intention_to_walk_;
 
+  bool match_lost_and_appeared_crosswalk_users_;
+  bool remember_lost_crosswalk_users_;
+
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // Member Functions
@@ -222,8 +242,7 @@ private:
 
   PredictedObject getPredictedObjectAsCrosswalkUser(const TrackedObject & object);
 
-  void removeOldObjectsHistory(
-    const double current_time, const TrackedObjects::ConstSharedPtr in_objects);
+  void removeStaleTrafficLightInfo(const TrackedObjects::ConstSharedPtr in_objects);
 
   LaneletsData getCurrentLanelets(const TrackedObject & object);
   bool checkCloseLaneletCondition(
@@ -232,13 +251,17 @@ private:
     const lanelet::Lanelet & current_lanelet, const TrackedObject & object) const;
   void updateObjectData(TrackedObject & object);
 
-  void updateObjectsHistory(
+  void updateRoadUsersHistory(
     const std_msgs::msg::Header & header, const TrackedObject & object,
     const LaneletsData & current_lanelets_data);
-
+  void updateCrosswalkUserHistory(
+    const std_msgs::msg::Header & header, const TrackedObject & object,
+    const std::string & object_id);
+  std::string tryMatchNewObjectToDisappeared(
+    const std::string & object_id, std::unordered_map<std::string, TrackedObject> & current_users);
   std::vector<PredictedRefPath> getPredictedReferencePath(
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
-    const double object_detected_time);
+    const double object_detected_time, const double time_horizon);
   Maneuver predictObjectManeuver(
     const TrackedObject & object, const LaneletData & current_lanelet_data,
     const double object_detected_time);

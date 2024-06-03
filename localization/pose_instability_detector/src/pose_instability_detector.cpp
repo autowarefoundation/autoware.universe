@@ -25,7 +25,7 @@
 #include <memory>
 
 PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & options)
-: Node("pose_instability_detector", options),
+: rclcpp::Node("pose_instability_detector", options),
   timer_period_(this->declare_parameter<double>("timer_period")),
   heading_velocity_maximum_(this->declare_parameter<double>("heading_velocity_maximum")),
   heading_velocity_scale_factor_tolerance_(
@@ -411,3 +411,6 @@ PoseInstabilityDetector::clip_out_necessary_twist(
 
   return result_deque;
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(PoseInstabilityDetector)
