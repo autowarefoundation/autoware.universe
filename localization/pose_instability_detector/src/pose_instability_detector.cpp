@@ -179,76 +179,51 @@ void PoseInstabilityDetector::callback_timer()
 
 void PoseInstabilityDetector::calculate_threshold(double interval_sec)
 {
+  // Calculate maximum longitudinal difference
   const double longitudinal_difference =
     heading_velocity_maximum_ * heading_velocity_scale_factor_tolerance_ * 0.01 * interval_sec;
 
-  const double noise_include_heading_velocity_maximum =
-    heading_velocity_maximum_ * 
-    (1 + heading_velocity_scale_factor_tolerance_ * 0.01);
-  const double noise_include_angular_velocity_maximum =
-    angular_velocity_maximum_ * 
-    (1 + angular_velocity_scale_factor_tolerance_ * 0.01) + 
-    angular_velocity_bias_tolerance_;
+  // Calculate maximum lateral and vertical difference
+  double lateral_difference = 0.0;
 
-  const double nominal_maximum_variance_x = 
+  const std::vector<double> heading_velocity_signs = {1.0, -1.0, -1.0, 1.0};
+  const std::vector<double> angular_velocity_signs = {1.0, 1.0, -1.0, -1.0};
+
+  const double nominal_variance_x = 
     heading_velocity_maximum_ / angular_velocity_maximum_ *
     sin(angular_velocity_maximum_ * interval_sec);
-  const double nominal_maximum_variance_y =
+  const double nominal_variance_y =
     heading_velocity_maximum_ / angular_velocity_maximum_ *
     (1 - cos(angular_velocity_maximum_ * interval_sec));
 
-  const double noise_included_maximum_variance_x =
-    noise_include_heading_velocity_maximum / noise_include_angular_velocity_maximum *
-    sin(noise_include_angular_velocity_maximum * interval_sec);
-  const double noise_included_maximum_variance_y =
-    noise_include_heading_velocity_maximum / noise_include_angular_velocity_maximum *
-    (1 - cos(noise_include_angular_velocity_maximum * interval_sec));
+  for(int i = 0; i < 4; i++) {
+    const double edge_heading_velocity = heading_velocity_maximum_ * (1 + heading_velocity_signs[i] * heading_velocity_scale_factor_tolerance_ * 0.01);
+    const double edge_angular_velocity = angular_velocity_maximum_ * (1 + angular_velocity_signs[i] * angular_velocity_scale_factor_tolerance_ * 0.01) + angular_velocity_signs[i] * angular_velocity_bias_tolerance_;
 
-  const double variance_difference_x =
-    std::abs(nominal_maximum_variance_x - noise_included_maximum_variance_x);
-  const double variance_difference_y =
-    std::abs(nominal_maximum_variance_y - noise_included_maximum_variance_y);
+    const double edge_variance_x = edge_heading_velocity / edge_angular_velocity * sin(edge_angular_velocity * interval_sec);
+    const double edge_variance_y = edge_heading_velocity / edge_angular_velocity * (1 - cos(edge_angular_velocity * interval_sec));
 
-  const double lateral_difference =
-    std::sqrt(
-      pow(variance_difference_x, 2) + pow(variance_difference_y, 2) -
-      pow(variance_difference_x * cos(angular_velocity_maximum_ * interval_sec) +
-            variance_difference_y * sin(angular_velocity_maximum_ * interval_sec), 2));
+    const double diff_variance_x = edge_variance_x - nominal_variance_x;
+    const double diff_variance_y = edge_variance_y - nominal_variance_y;
+
+    const double lateral_difference_candidate = abs(diff_variance_x * sin(angular_velocity_maximum_ * interval_sec) - diff_variance_y * cos(angular_velocity_maximum_ * interval_sec));
+    lateral_difference = std::max(lateral_difference, lateral_difference_candidate);
+  }
 
   const double vertical_difference = lateral_difference;
 
-  /*
-  const double lateral_difference =
-    heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) *
-    sin(
-      0.5 *
-      (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
-       angular_velocity_bias_tolerance_) *
-      interval_sec);
-  const double vertical_difference =
-    heading_velocity_maximum_ * (1 + heading_velocity_scale_factor_tolerance_ * 0.01) *
-    sin(
-      0.5 *
-      (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
-       angular_velocity_bias_tolerance_) *
-      interval_sec);
-  */
-
+  // Calculate maximum angular difference
   const double roll_difference =
     (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
      angular_velocity_bias_tolerance_) *
     interval_sec;
-  const double pitch_difference =
-    (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
-     angular_velocity_bias_tolerance_) *
-    interval_sec;
-  const double yaw_difference =
-    (angular_velocity_maximum_ * angular_velocity_scale_factor_tolerance_ * 0.01 +
-     angular_velocity_bias_tolerance_) *
-    interval_sec;
+  const double pitch_difference = roll_difference;
+  const double yaw_difference = roll_difference;
 
-  const double dead_reckoning_angular_process_noise = 3 *angular_velocity_standard_deviation_ * sqrt(interval_sec);
+  // Calculate dead reckoning angular process noise
+  const double dead_reckoning_angular_process_noise = 3 * angular_velocity_standard_deviation_ * sqrt(interval_sec);
 
+  // Set thresholds
   threshold_diff_position_x_ = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
   threshold_diff_position_y_ = lateral_difference + pose_estimator_lateral_tolerance_;
   threshold_diff_position_z_ = vertical_difference + pose_estimator_vertical_tolerance_;

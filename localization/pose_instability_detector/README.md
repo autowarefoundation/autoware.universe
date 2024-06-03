@@ -11,6 +11,8 @@ The results of this comparison are then output to the `/diagnostics` topic.
 
 ![overview](./media/pose_instability_detector_overview.png)
 
+![rqt_runtime_monitor](./media/rqt_runtime_monitor.png)
+
 If this node outputs WARN messages to `/diagnostics`, it means that the EKF output is significantly different from the integrated twist values.
 In other words, WARN outputs indicate that the vehicle has moved to a place outside the expected range based on the twist values.
 This discrepancy suggests that there may be an issue with either the estimated pose or the input twist.
@@ -64,6 +66,9 @@ $$
 ### `diff_position_y` and `diff_position_z`
 
 These thresholds examine the difference in the lateral and vertical axes between the two poses.
+The `pose_instaibility_detector` calculates the possible range where the vehicle goes, and get the maximum difference between the nominal dead reckoning pose and the maximum limit pose.
+
+![lateral_threshold_calculation](./media/lateral_threshold_calculation.png)
 
 ### `diff_orientation_roll`, `diff_orientation_pitch`, and `diff_orientation_yaw`
 
@@ -98,4 +103,4 @@ $$
 | `~/debug/diff_pose` | geometry_msgs::msg::PoseStamped       | diff_pose   |
 | `/diagnostics`      | diagnostic_msgs::msg::DiagnosticArray | Diagnostics |
 
-![rqt_runtime_monitor](./media/rqt_runtime_monitor.png)
+
