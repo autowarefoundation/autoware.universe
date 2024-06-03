@@ -14,6 +14,7 @@
 
 #include "lidar_centerpoint/preprocess/voxel_generator.hpp"
 
+#include "lidar_centerpoint/centerpoint_trt.hpp"
 #include "lidar_centerpoint/preprocess/preprocess_kernel.hpp"
 
 #include "sensor_msgs/point_cloud2_iterator.hpp"
@@ -57,6 +58,14 @@ std::size_t VoxelGenerator::generateSweepPoints(float * points_d, cudaStream_t s
       pd_ptr_->getAffineWorldToCurrent() * pc_cache_iter->affine_past2world;
     float time_lag = static_cast<float>(
       pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_cache_iter->header.stamp).seconds());
+
+    if (point_counter + sweep_num_points > CAPACITY_POINT) {
+      RCLCPP_WARN_STREAM(
+        rclcpp::get_logger("lidar_centerpoint"),
+        "Requested number of points exceeds the maximum capacity. Current points = "
+          << point_counter);
+      break;
+    }
 
     generateSweepPoints_launch(
       pc_cache_iter->points_d.get(), sweep_num_points, point_step / sizeof(float), time_lag,
