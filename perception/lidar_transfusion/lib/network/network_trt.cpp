@@ -246,7 +246,7 @@ bool NetworkTRT::loadEngine(const std::string & engine_path)
 
 bool NetworkTRT::validateNetworkIO()
 {
-  // Wheter the number of IO match the expected size
+  // Whether the number of IO match the expected size
   if (engine->getNbIOTensors() != NetworkIO::ENUM_SIZE) {
     tensorrt_common::LOG_ERROR(logger_)
       << "Invalid network IO. Expected size: " << NetworkIO::ENUM_SIZE
