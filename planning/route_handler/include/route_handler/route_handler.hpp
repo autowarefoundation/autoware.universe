@@ -1,4 +1,4 @@
-// Copyright 2021-2023 Tier IV, Inc.
+// Copyright 2021-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -288,8 +288,8 @@ public:
   void removeOverlappedCenterlineWithWaypoints(
     std::vector<PiecewiseReferencePoints> & piecewise_ref_points_vec,
     const std::vector<geometry_msgs::msg::Point> & piecewise_waypoints,
-    const lanelet::ConstLanelets & lanelet_sequence, const size_t lanelet_sequence_index,
-    const bool is_first) const;
+    const lanelet::ConstLanelets & lanelet_sequence,
+    const size_t piecewise_waypoints_lanelet_sequence_index, const bool is_waypoint_first) const;
   std::optional<lanelet::ConstLanelet> getLaneChangeTarget(
     const lanelet::ConstLanelets & lanelets, const Direction direction = Direction::NONE) const;
   std::optional<lanelet::ConstLanelet> getLaneChangeTargetExceptPreferredLane(
