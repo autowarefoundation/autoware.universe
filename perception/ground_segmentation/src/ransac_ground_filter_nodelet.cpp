@@ -102,9 +102,7 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
     unit_vec_ = Eigen::Vector3d::UnitX();
   } else if (unit_axis_ == "y") {
     unit_vec_ = Eigen::Vector3d::UnitY();
-  } else if (unit_axis_ == "z") {
-    unit_vec_ = Eigen::Vector3d::UnitZ();
-  } else {
+  } else {  // including (unit_axis_ == "z")
     unit_vec_ = Eigen::Vector3d::UnitZ();
   }
 
@@ -284,19 +282,36 @@ void RANSACGroundFilterComponent::filter(
   const Eigen::Affine3d plane_affine = getPlaneAffine(*segment_ground_cloud_ptr, plane_normal);
   pcl::PointCloud<PointType>::Ptr no_ground_cloud_ptr(new pcl::PointCloud<PointType>);
 
-  // use not downsampled pointcloud for extract pointcloud that higher than height threshold
-  for (const auto & p : current_sensor_cloud_ptr->points) {
-    const Eigen::Vector3d transformed_point =
-      plane_affine.inverse() * Eigen::Vector3d(p.x, p.y, p.z);
-    if (std::abs(transformed_point.z()) > height_threshold_) {
-      no_ground_cloud_ptr->points.push_back(p);
-    }
-  }
+  int x_offset = input->fields[pcl::getFieldIndex(*input, "x")].offset;
+  int y_offset = input->fields[pcl::getFieldIndex(*input, "y")].offset;
+  int z_offset = input->fields[pcl::getFieldIndex(*input, "z")].offset;
+  int point_step = input->point_step;
 
   sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
-  pcl::toROSMsg(*no_ground_cloud_ptr, *no_ground_cloud_msg_ptr);
   no_ground_cloud_msg_ptr->header = input->header;
+  no_ground_cloud_msg_ptr->fields = input->fields;
+  no_ground_cloud_msg_ptr->point_step = point_step;
+  size_t output_size = 0;
+  // use not downsampled pointcloud for extract pointcloud that higher than height threshold
+  for (size_t global_size = 0; global_size < input->data.size(); global_size += point_step) {
+    float x = *reinterpret_cast<float *>(input->data[global_size + x_offset]);
+    float y = *reinterpret_cast<float *>(input->data[global_size + y_offset]);
+    float z = *reinterpret_cast<float *>(input->data[global_size + z_offset]);
+    const Eigen::Vector3d transformed_point = plane_affine.inverse() * Eigen::Vector3d(x, y, z);
+    if (std::abs(transformed_point.z()) > height_threshold_) {
+      std::memcpy(
+        &no_ground_cloud_msg_ptr->data[output_size], &input->data[global_size], point_step);
+      output_size += point_step;
+    }
+  }
+  no_ground_cloud_msg_ptr->data.resize(output_size);
+  no_ground_cloud_msg_ptr->height = input->height;
+  no_ground_cloud_msg_ptr->width = output_size / point_step / input->height;
+  no_ground_cloud_msg_ptr->row_step = output_size / input->height;
+  no_ground_cloud_msg_ptr->is_dense = input->is_dense;
+  no_ground_cloud_msg_ptr->is_bigendian = input->is_bigendian;
+
   sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transformed_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
   if (!transformPointCloud(
@@ -367,9 +382,7 @@ rcl_interfaces::msg::SetParametersResult RANSACGroundFilterComponent::paramCallb
       unit_vec_ = Eigen::Vector3d::UnitX();
     } else if (unit_axis_ == "y") {
       unit_vec_ = Eigen::Vector3d::UnitY();
-    } else if (unit_axis_ == "z") {
-      unit_vec_ = Eigen::Vector3d::UnitZ();
-    } else {
+    } else {  // including (unit_axis_ == "z")
       unit_vec_ = Eigen::Vector3d::UnitZ();
     }
     RCLCPP_DEBUG(get_logger(), "Setting unit_axis to: %s.", unit_axis_.c_str());

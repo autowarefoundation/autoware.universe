@@ -62,9 +62,9 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::AVOIDANCE_BY_LC_LEFT;
   } else if (module_name == "avoidance_by_lane_change_right") {
     module.type = Module::AVOIDANCE_BY_LC_RIGHT;
-  } else if (module_name == "avoidance_left") {
+  } else if (module_name == "static_obstacle_avoidance_left") {
     module.type = Module::AVOIDANCE_LEFT;
-  } else if (module_name == "avoidance_right") {
+  } else if (module_name == "static_obstacle_avoidance_right") {
     module.type = Module::AVOIDANCE_RIGHT;
   } else if (module_name == "goal_planner") {
     module.type = Module::GOAL_PLANNER;
@@ -81,7 +81,8 @@ Module getModuleType(const std::string & module_name)
 namespace rtc_interface
 {
 RTCInterface::RTCInterface(rclcpp::Node * node, const std::string & name, const bool enable_rtc)
-: logger_{node->get_logger().get_child("RTCInterface[" + name + "]")},
+: clock_{node->get_clock()},
+  logger_{node->get_logger().get_child("RTCInterface[" + name + "]")},
   is_auto_mode_enabled_{!enable_rtc},
   is_locked_{false}
 {
@@ -152,7 +153,16 @@ std::vector<CooperateResponse> RTCInterface::validateCooperateCommands(
       registered_status_.statuses.begin(), registered_status_.statuses.end(),
       [command](auto & s) { return s.uuid == command.uuid; });
     if (itr != registered_status_.statuses.end()) {
-      response.success = true;
+      if (itr->state.type == State::WAITING_FOR_EXECUTION || itr->state.type == State::RUNNING) {
+        response.success = true;
+      } else {
+        RCLCPP_WARN_STREAM(
+          getLogger(), "[validateCooperateCommands] uuid : "
+                         << to_string(command.uuid)
+                         << " state is not WAITING_FOR_EXECUTION or RUNNING. state : "
+                         << itr->state.type << std::endl);
+        response.success = false;
+      }
     } else {
       RCLCPP_WARN_STREAM(
         getLogger(), "[validateCooperateCommands] uuid : " << to_string(command.uuid)
@@ -174,8 +184,10 @@ void RTCInterface::updateCooperateCommandStatus(const std::vector<CooperateComma
 
     // Update command if the command has been already received
     if (itr != registered_status_.statuses.end()) {
-      itr->command_status = command.command;
-      itr->auto_mode = false;
+      if (itr->state.type == State::WAITING_FOR_EXECUTION || itr->state.type == State::RUNNING) {
+        itr->command_status = command.command;
+        itr->auto_mode = false;
+      }
     }
   }
 }
@@ -201,8 +213,8 @@ void RTCInterface::onTimer()
 }
 
 void RTCInterface::updateCooperateStatus(
-  const UUID & uuid, const bool safe, const double start_distance, const double finish_distance,
-  const rclcpp::Time & stamp)
+  const UUID & uuid, const bool safe, const uint8_t state, const double start_distance,
+  const double finish_distance, const rclcpp::Time & stamp)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   // Find registered status which has same uuid
@@ -218,6 +230,7 @@ void RTCInterface::updateCooperateStatus(
     status.module = module_;
     status.safe = safe;
     status.command_status.type = Command::DEACTIVATE;
+    status.state.type = state;
     status.start_distance = start_distance;
     status.finish_distance = finish_distance;
     status.auto_mode = is_auto_mode_enabled_;
@@ -228,6 +241,7 @@ void RTCInterface::updateCooperateStatus(
   // If the registered status is found, update status
   itr->stamp = stamp;
   itr->safe = safe;
+  itr->state.type = state;
   itr->start_distance = start_distance;
   itr->finish_distance = finish_distance;
 }
@@ -263,6 +277,16 @@ void RTCInterface::removeStoredCommand(const UUID & uuid)
   }
 }
 
+void RTCInterface::removeExpiredCooperateStatus()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  const auto itr = std::remove_if(
+    registered_status_.statuses.begin(), registered_status_.statuses.end(),
+    [this](const auto & status) { return (clock_->now() - status.stamp).seconds() > 10.0; });
+
+  registered_status_.statuses.erase(itr, registered_status_.statuses.end());
+}
+
 void RTCInterface::clearCooperateStatus()
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -278,6 +302,9 @@ bool RTCInterface::isActivated(const UUID & uuid) const
     [uuid](auto & s) { return s.uuid == uuid; });
 
   if (itr != registered_status_.statuses.end()) {
+    if (itr->state.type == State::FAILED || itr->state.type == State::SUCCEEDED) {
+      return false;
+    }
     if (itr->auto_mode) {
       return itr->safe;
     } else {
