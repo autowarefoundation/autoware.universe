@@ -121,7 +121,7 @@ DiagnosticStatus PerceptionOnlineEvaluatorNode::generateDiagnosticStatus(
 }
 
 DiagnosticStatus PerceptionOnlineEvaluatorNode::generateDiagnosticStatus(
-  const std::string metric, const double value) const
+  const std::string & metric, const double value) const
 {
   DiagnosticStatus status;
 
