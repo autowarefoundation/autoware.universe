@@ -87,8 +87,7 @@ private:
   bool isSameDirectionWithLanelets(
     const lanelet::ConstLanelets & lanelets,
     const autoware_perception_msgs::msg::DetectedObject & object);
-  geometry_msgs::msg::Polygon setFootprint(
-    const autoware_perception_msgs::msg::DetectedObject &);
+  geometry_msgs::msg::Polygon setFootprint(const autoware_perception_msgs::msg::DetectedObject &);
 
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };

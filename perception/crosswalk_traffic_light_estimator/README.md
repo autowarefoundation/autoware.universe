@@ -16,8 +16,8 @@
 
 ### Output
 
-| Name                       | Type                                                | Description                                               |
-| -------------------------- | --------------------------------------------------- | --------------------------------------------------------- |
+| Name                       | Type                                                    | Description                                               |
+| -------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
 | `~/output/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | output that contains estimated pedestrian traffic signals |
 
 ## Parameters
