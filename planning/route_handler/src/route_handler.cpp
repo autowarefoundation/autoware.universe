@@ -903,9 +903,7 @@ bool RouteHandler::getClosestRouteLaneletFromLanelet(
     lanelet_sequence = previous_lanelets;
   }
 
-  const auto & ref_lanelet_neighbors = getNeighborsWithinRoute(reference_lanelet);
-  lanelet_sequence.insert(
-    lanelet_sequence.end(), ref_lanelet_neighbors.begin(), ref_lanelet_neighbors.end());
+  lanelet_sequence.push_back(reference_lanelet);
 
   if (getNextLaneletsWithinRoute(reference_lanelet, &next_lanelets)) {
     lanelet_sequence.insert(lanelet_sequence.end(), next_lanelets.begin(), next_lanelets.end());
