@@ -86,9 +86,9 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   tf2::doTransform(input_pointcloud_msg, transformed_cloud, transform_stamped);
 
   int point_step = input_pointcloud_msg.point_step;
-  int x_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg,"x")].offset;
-  int y_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg,"y")].offset;
-  int z_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg,"z")].offset;
+  int x_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "x")].offset;
+  int y_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "y")].offset;
+  int z_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "z")].offset;
   size_t output_pointcloud_size = 0;
   output_cloud.data.clear();
   output_cloud.data.resize(input_pointcloud_msg.data.size());
