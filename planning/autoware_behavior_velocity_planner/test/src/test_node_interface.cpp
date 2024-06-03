@@ -86,7 +86,7 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
     node_options, {planning_test_utils_dir + "/config/test_common.param.yaml",
                    planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
                    planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-                   velocity_smoother_dir + "/config/default_motion_velocity_smoother.param.yaml",
+                   velocity_smoother_dir + "/config/default_velocity_smoother.param.yaml",
                    velocity_smoother_dir + "/config/Analytical.param.yaml",
                    behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
                    get_behavior_velocity_module_config("blind_spot"),
