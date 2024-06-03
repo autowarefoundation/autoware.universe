@@ -1315,7 +1315,7 @@ lanelet::ConstLanelets extendNextLane(
   for (const auto & next_lane : next_lanes) {
     // skip overlapping lanes
     if (next_lane.id() == lanes.front().id()) continue;
-    
+
     // if route lane, set target and break
     if (route_handler->isRouteLanelet(next_lane)) {
       target_next_lane = next_lane;
