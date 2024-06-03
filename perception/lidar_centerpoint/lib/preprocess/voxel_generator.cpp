@@ -69,8 +69,8 @@ std::size_t VoxelGenerator::generateSweepPoints(float * points_d, cudaStream_t s
 
     generateSweepPoints_launch(
       pc_cache_iter->points_d.get(), sweep_num_points, point_step / sizeof(float), time_lag,
-      affine_past2current.matrix().data(), config_.point_feature_size_, points_d + point_counter,
-      stream);
+      affine_past2current.matrix().data(), config_.point_feature_size_,
+      points_d + config_.point_feature_size_ * point_counter, stream);
 
     point_counter += sweep_num_points;
   }
