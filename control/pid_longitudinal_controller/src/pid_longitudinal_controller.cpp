@@ -1064,6 +1064,8 @@ PidLongitudinalController::StateAfterDelay PidLongitudinalController::predictedS
 double PidLongitudinalController::applyVelocityFeedback(const ControlData & control_data)
 {
   // NOTE: Acceleration command is always positive even if the ego drives backward.
+  const double nearest_target_vel =
+    control_data.interpolated_traj.points.at(control_data.nearest_idx).longitudinal_velocity_mps;
   const double vel_sign = (control_data.shift == Shift::Forward)
                             ? 1.0
                             : (control_data.shift == Shift::Reverse ? -1.0 : 0.0);
@@ -1087,8 +1089,8 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
   const double error_vel_filtered = m_lpf_vel_error->filter(diff_vel);
 
   std::vector<double> pid_contributions(3);
-  const double pid_acc =
-    m_pid_vel.calculate(error_vel_filtered, control_data.dt, enable_integration, pid_contributions);
+  const double pid_acc = m_pid_vel.calculate(
+    diff_vel, error_vel_filtered, control_data.dt, enable_integration, pid_contributions);
 
   // Feedforward scaling:
   // This is for the coordinate conversion where feedforward is applied, from Time to Arclength.
@@ -1098,7 +1100,9 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
   constexpr double ff_scale_max = 2.0;  // for safety
   constexpr double ff_scale_min = 0.5;  // for safety
   const double ff_scale = std::clamp(
-    std::abs(current_vel) / std::max(std::abs(target_motion.vel), 0.1), ff_scale_min, ff_scale_max);
+    1.0 + (abs(nearest_target_vel - current_vel) / std::max(abs(current_vel), 0.1)), ff_scale_min,
+    ff_scale_max);
+
   const double ff_acc =
     control_data.interpolated_traj.points.at(control_data.target_idx).acceleration_mps2 * ff_scale;
 
