@@ -28,11 +28,12 @@
  * limitations under the License.
  */
 
-#include <lidar_centerpoint/cuda_utils.hpp>
-#include <lidar_centerpoint/preprocess/preprocess_kernel.hpp>
-#include <lidar_centerpoint/utils.hpp>
+#include "lidar_centerpoint/cuda_utils.hpp"
+#include "lidar_centerpoint/preprocess/preprocess_kernel.hpp"
+#include "lidar_centerpoint/utils.hpp"
 
 #include <cassert>
+
 namespace
 {
 const std::size_t MAX_POINT_IN_VOXEL_SIZE = 32;  // the same as max_point_in_voxel_size_ in config

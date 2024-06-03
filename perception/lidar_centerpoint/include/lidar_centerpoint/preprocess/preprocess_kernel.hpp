@@ -15,8 +15,8 @@
 #ifndef LIDAR_CENTERPOINT__PREPROCESS__PREPROCESS_KERNEL_HPP_
 #define LIDAR_CENTERPOINT__PREPROCESS__PREPROCESS_KERNEL_HPP_
 
-#include <cuda.h>
-#include <cuda_runtime_api.h>
+#include "cuda.h"
+#include "cuda_runtime_api.h"
 
 namespace centerpoint
 {
