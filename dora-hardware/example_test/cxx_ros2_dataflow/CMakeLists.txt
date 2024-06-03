@@ -52,6 +52,7 @@ include_directories(
   ${CURRENT_DIR}/cxx_node_rust_api
   ${CURRENT_DIR}/test
   $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/ #C++ros的头文件路径
+  ${nav_msgs_INCLUDE_DIRS}
 )
 
 add_executable(cxx_node_rust_api cxx_node_rust_api/main.cc $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/dora-ros2-bindings.cc $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/dora-node-api.cc)
@@ -93,6 +94,7 @@ target_link_libraries(dora_node_sub_rosmsg
 
 
 add_executable(dora_node_pub_map_path test/dora_node_pub_map_path.cc $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/dora-ros2-bindings.cc $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/dora-node-api.cc)
+ament_target_dependencies(dora_node_pub_map_path nav_msgs)
 target_link_libraries(dora_node_sub_rosmsg
   ${EIGEN_LIBRARIES}
   ${YAMLCPP_LIBRARIES}
@@ -102,5 +104,6 @@ target_link_libraries(dora_node_sub_rosmsg
   dl 
   pthread
   pcap
+  ${nav_msgs_LIBRARIES}
 )
 
