@@ -9,7 +9,6 @@
   <license>Apache License 2.0</license>
 
   <author email="takamasa.horibe@tier4.jp">Takamasa Horibe</author>
-  <author email="eiki.nagata.2@tier4.jp">Eiki Nagata</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
