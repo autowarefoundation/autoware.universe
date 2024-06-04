@@ -62,7 +62,7 @@ std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_obj
     bool is_past_ego_end = obj_arc_length > ego_data.longitudinal_offset_to_first_path_idx + params.ego_longitudinal_offset + o.shape.dimensions.x / 2.0;
 
     if (!params.ignore_objects_behind_ego)
-      return is_behind_object || is_near_ego || is_in_front_of_ego || is_past_ego_end;
+      return is_behind_object || (is_near_ego || (is_in_front_of_ego && is_past_ego_end));
 
     return is_in_front_of_ego || is_past_ego_end;
   };
