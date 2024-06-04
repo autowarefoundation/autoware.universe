@@ -364,8 +364,9 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   }
 
   // step2. create velocity data check if the vehicle stops or not
+  constexpr double min_moving_velocity_th{0.1};
   const double current_v = current_velocity_ptr_->longitudinal_velocity;
-  if (current_v < 0.1) {
+  if (std::abs(current_v) < min_moving_velocity_th) {
     return false;
   }
 
@@ -463,7 +464,8 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
 {
   const double & obj_v = closest_object.velocity;
   const double & t = t_response_;
-  const double rss_dist = current_v * t + (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
+  const double rss_dist = std::abs(current_v) * t +
+                          (current_v * current_v) / (2 * std::fabs(a_ego_min_)) -
                           obj_v * obj_v / (2 * std::fabs(a_obj_min_)) + longitudinal_offset_;
   if (closest_object.distance_to_object < rss_dist) {
     // collision happens
@@ -487,7 +489,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   ini_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(curr_yaw);
   path.push_back(ini_pose);
 
-  if (curr_v < 0.1) {
+  if (std::abs(curr_v) < 0.1) {
     // if current velocity is too small, assume it stops at the same point
     return path;
   }
@@ -615,11 +617,15 @@ void AEB::createObjectDataUsingPointCloudClusters(
 
   for (const auto & p : *points_belonging_to_cluster_hulls) {
     const auto obj_position = tier4_autoware_utils::createPoint(p.x, p.y, p.z);
-    const double dist_ego_to_object =
-      motion_utils::calcSignedArcLength(ego_path, current_p, obj_position) -
-      vehicle_info_.max_longitudinal_offset_m;
-    // objects behind ego are ignored
-    if (dist_ego_to_object < 0.0) continue;
+    const double obj_arc_length =
+      motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
+
+    // If the object is behind the ego, we need to use the backward long offset. The distance should
+    // be a positive number in any case
+    const bool is_object_in_front_of_ego = obj_arc_length > 0.0;
+    const double dist_ego_to_object = (is_object_in_front_of_ego)
+                                        ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
+                                        : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
 
     ObjectData obj;
     obj.stamp = stamp;
