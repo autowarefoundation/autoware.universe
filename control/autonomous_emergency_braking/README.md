@@ -16,6 +16,24 @@ This module has following assumptions.
 
 ![aeb_range](./image/range.drawio.svg)
 
+### IMU path generation: steering angle vs IMU's angular velocity
+
+Currently, the IMU-based path is generated using the angular velocity obtained by the IMU itself. It has been suggested that the steering angle could be used instead onf the angular velocity.
+
+The pros and cons of both approaches are:
+
+IMU angular velocity:
+
+- (+) Usually, it has high accuracy
+- (-)Vehicle vibration might introduce noise.
+
+Steering angle:
+
+- (+) Not so noisy
+- (-) May have a steering offset or a wrong gear ratio, and the steering angle of Autoware and the real steering may not be the same.
+
+For the moment, there are no plans to implement the steering angle on the path creation process of the AEB module.
+
 ### Limitations
 
 - AEB might not be able to react with obstacles that are close to the ground. It depends on the performance of the pre-processing methods applied to the point cloud.
@@ -107,6 +125,33 @@ After Noise filtering, it performs a geometric collision check to determine whet
 ![rigorous_filtering](./image/obstacle_filtering_2.drawio.svg)
 
 Finally, the vertex that is closest to the ego vehicle is chosen as the candidate for collision checking: Since rss distance is used to judge if a collision will happen or not, if the closest vertex to the ego is deemed to be safe, the rest of the vertices (and the points in the clusters) will also be safe.
+
+#### Obstacle velocity estimation
+
+Once the position of the closest obstacle/point is determined, the AEB modules uses the history of previously detected objects to estimate the closest object speed using the following equations:
+
+$$
+d_{t} = o_{time stamp} - prev_{time stamp}
+$$
+
+$$
+d_{pos} = norm(o_{pos} - prev_{pos})
+$$
+
+$$
+v_{norm} = d_{pos} / d_{t}
+$$
+
+Where $o_{time stamp}$ and $prev_{time stamp}$ are the timestamps of the point clouds used to detect the current closest object and the closest object of the previous point cloud frame, and $o_{pos}$ and $prev_{pos}$ are the positions of those objects, respectively.
+
+Finally, the velocity vector is compared against the ego's predicted path to get the longitudinal velocity $v_{obj}$:
+
+$$
+v_{obj} = v_{norm} * Cos(yaw_{diff}) + v_{ego}
+$$
+
+where $yaw_{diff}$ is the difference in yaw between the ego path and the displacement vector $$v_{pos} = o_{pos} - prev_{pos} $$ and $v_{ego}$ is the ego's speed, which accounts for the movement of points caused by the ego moving and not the object.
+All these equations are performed disregarding the z axis (in 2D).
 
 ### 4. Collision check with target obstacles
 

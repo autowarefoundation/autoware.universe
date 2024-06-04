@@ -31,18 +31,11 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace behavior_velocity_planner
 {
-struct BlindSpotPolygons
-{
-  std::vector<lanelet::CompoundPolygon3d> conflict_areas;
-  std::vector<lanelet::CompoundPolygon3d> detection_areas;
-  std::vector<lanelet::CompoundPolygon3d> opposite_conflict_areas;
-  std::vector<lanelet::CompoundPolygon3d> opposite_detection_areas;
-};
-
 /**
  * @brief  wrapper class of interpolated path with lane id
  */
@@ -58,42 +51,63 @@ struct InterpolatedPathInfo
   std::optional<std::pair<size_t, size_t>> lane_id_interval{std::nullopt};
 };
 
+/**
+ * @brief represent action
+ */
+struct InternalError
+{
+  const std::string error;
+};
+
+struct OverPassJudge
+{
+  const std::string report;
+};
+
+struct Unsafe
+{
+  const size_t stop_line_idx;
+  const std::optional<autoware_auto_perception_msgs::msg::PredictedObject> collision_obstacle;
+};
+
+struct Safe
+{
+  const size_t stop_line_idx;
+};
+
+using BlindSpotDecision = std::variant<InternalError, OverPassJudge, Unsafe, Safe>;
+
 class BlindSpotModule : public SceneModuleInterface
 {
 public:
-  enum class TurnDirection { LEFT = 0, RIGHT, INVALID };
+  enum class TurnDirection { LEFT, RIGHT };
 
   struct DebugData
   {
-    geometry_msgs::msg::Pose virtual_wall_pose;
-    geometry_msgs::msg::Pose stop_point_pose;
-    geometry_msgs::msg::Pose judge_point_pose;
-    std::vector<lanelet::CompoundPolygon3d> conflict_areas;
-    std::vector<lanelet::CompoundPolygon3d> detection_areas;
-    std::vector<lanelet::CompoundPolygon3d> opposite_conflict_areas;
-    std::vector<lanelet::CompoundPolygon3d> opposite_detection_areas;
+    std::optional<geometry_msgs::msg::Pose> virtual_wall_pose{std::nullopt};
+    std::optional<lanelet::CompoundPolygon3d> detection_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
   };
 
 public:
   struct PlannerParam
   {
-    bool use_pass_judge_line;  //! distance which ego can stop with max brake
-    double stop_line_margin;   //! distance from auto-generated stopline to detection_area boundary
-    double backward_length;  //! distance[m] from closest path point to the edge of beginning point
-    double ignore_width_from_center_line;  //! ignore width from center line from detection_area
-    double
-      max_future_movement_time;  //! maximum time[second] for considering future movement of object
-    double threshold_yaw_diff;   //! threshold of yaw difference between ego and target object
-    double
-      adjacent_extend_width;  //! the width of extended detection/conflict area on adjacent lane
+    bool use_pass_judge_line;
+    double stop_line_margin;
+    double backward_detection_length;
+    double ignore_width_from_center_line;
+    double adjacent_extend_width;
     double opposite_adjacent_extend_width;
+    double max_future_movement_time;
+    double ttc_min;
+    double ttc_max;
+    double ttc_ego_minimal_velocity;
   };
 
   BlindSpotModule(
-    const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const int64_t module_id, const int64_t lane_id, const TurnDirection turn_direction,
+    const std::shared_ptr<const PlannerData> planner_data, const PlannerParam & planner_param,
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
@@ -105,18 +119,40 @@ public:
   std::vector<motion_utils::VirtualWall> createVirtualWalls() override;
 
 private:
+  // (semi) const variables
   const int64_t lane_id_;
   const PlannerParam planner_param_;
-  TurnDirection turn_direction_{TurnDirection::INVALID};
-  bool is_over_pass_judge_line_{false};
+  const TurnDirection turn_direction_;
   std::optional<lanelet::ConstLanelet> sibling_straight_lanelet_{std::nullopt};
+  std::optional<lanelet::ConstLanelets> blind_spot_lanelets_{std::nullopt};
+
+  // state variables
+  bool is_over_pass_judge_line_{false};
 
   // Parameter
+
+  void initializeRTCStatus();
+  BlindSpotDecision modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
+  // setSafe(), setDistance()
+  void setRTCStatus(
+    const BlindSpotDecision & decision,
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
+  template <typename Decision>
+  void setRTCStatusByDecision(
+    const Decision & decision, const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
+  // stop/GO
+  void reactRTCApproval(
+    const BlindSpotDecision & decision, PathWithLaneId * path, StopReason * stop_reason);
+  template <typename Decision>
+  void reactRTCApprovalByDecision(
+    const Decision & decision, autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+    StopReason * stop_reason);
 
   std::optional<InterpolatedPathInfo> generateInterpolatedPathInfo(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path) const;
 
-  std::optional<lanelet::ConstLanelet> getSiblingStraightLanelet() const;
+  std::optional<lanelet::ConstLanelet> getSiblingStraightLanelet(
+    const std::shared_ptr<const PlannerData> planner_data) const;
 
   /**
    * @brief Generate a stop line and insert it into the path.
@@ -131,6 +167,14 @@ private:
     const InterpolatedPathInfo & interpolated_path_info,
     autoware_auto_planning_msgs::msg::PathWithLaneId * path) const;
 
+  std::optional<OverPassJudge> isOverPassJudge(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const geometry_msgs::msg::Pose & stop_point_pose) const;
+
+  double computeTimeToPassStopLine(
+    const lanelet::ConstLanelets & blind_spot_lanelets,
+    const geometry_msgs::msg::Pose & stop_line_pose) const;
+
   /**
    * @brief Check obstacle is in blind spot areas.
    * Condition1: Object's position is in broad blind spot area.
@@ -141,12 +185,10 @@ private:
    * @param closest_idx closest path point index from ego car in path points
    * @return true when an object is detected in blind spot
    */
-  bool checkObstacleInBlindSpot(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx, const geometry_msgs::msg::Pose & stop_line_pose);
+  std::optional<autoware_auto_perception_msgs::msg::PredictedObject> isCollisionDetected(
+    const lanelet::ConstLanelets & blind_spot_lanelets,
+    const geometry_msgs::msg::Pose & stop_line_pose, const lanelet::CompoundPolygon3d & area,
+    const double ego_time_to_reach_stop_line);
 
   /**
    * @brief Create half lanelet
@@ -160,6 +202,9 @@ private:
   lanelet::ConstLanelet generateExtendedOppositeAdjacentLanelet(
     const lanelet::ConstLanelet lanelet, const TurnDirection direction) const;
 
+  lanelet::ConstLanelets generateBlindSpotLanelets(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) const;
+
   /**
    * @brief Make blind spot areas. Narrow area is made from closest path point to stop line index.
    * Broad area is made from backward expanded point to stop line point
@@ -167,10 +212,9 @@ private:
    * @param closest_idx closest path point index from ego car in path points
    * @return Blind spot polygons
    */
-  std::optional<BlindSpotPolygons> generateBlindSpotPolygons(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  std::optional<lanelet::CompoundPolygon3d> generateBlindSpotPolygons(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
+    const lanelet::ConstLanelets & blind_spot_lanelets,
     const geometry_msgs::msg::Pose & pose) const;
 
   /**
@@ -181,22 +225,13 @@ private:
   bool isTargetObjectType(const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
-   * @brief Check if at least one of object's predicted position is in area
-   * @param object Dynamic object
-   * @param area Area defined by polygon
-   * @return True when at least one of object's predicted position is in area
-   */
-  bool isPredictedPathInArea(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const std::vector<lanelet::CompoundPolygon3d> & areas, geometry_msgs::msg::Pose ego_pose) const;
-
-  /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
    * @param objects_ptr target objects
    * @param time_thr    time threshold to cut path
    */
-  void cutPredictPathWithDuration(
-    autoware_auto_perception_msgs::msg::PredictedObjects * objects_ptr,
+  autoware_auto_perception_msgs::msg::PredictedObject cutPredictPathWithDuration(
+    const std_msgs::msg::Header & header,
+    const autoware_auto_perception_msgs::msg::PredictedObject & object,
     const double time_thr) const;
 
   StateMachine state_machine_;  //! for state

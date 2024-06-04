@@ -14,7 +14,6 @@
 
 #include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 
-#include "autoware_auto_tf2/tf2_autoware_auto_msgs.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model.hpp"
@@ -358,6 +357,7 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
 void SimplePlanningSimulator::on_timer()
 {
   if (!is_initialized_) {
+    publish_control_mode_report();
     RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 5000, "waiting initialization...");
     return;
   }

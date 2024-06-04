@@ -55,12 +55,11 @@ lanelet::ConstLanelets getPullOverLanes(
   // todo(kosuek55): automatically calculates this distance.
   const double backward_distance_with_buffer = backward_distance + 100;
 
-  lanelet::ConstLanelet target_shoulder_lane{};
-  if (route_handler::RouteHandler::getPullOverTarget(
-        route_handler.getShoulderLanelets(), goal_pose, &target_shoulder_lane)) {
+  const auto target_shoulder_lane = route_handler.getPullOverTarget(goal_pose);
+  if (target_shoulder_lane) {
     // pull over on shoulder lane
     return route_handler.getShoulderLaneletSequence(
-      target_shoulder_lane, goal_pose, backward_distance_with_buffer, forward_distance);
+      *target_shoulder_lane, goal_pose, backward_distance_with_buffer, forward_distance);
   }
 
   lanelet::ConstLanelet closest_lane{};
@@ -432,6 +431,19 @@ PathWithLaneId extendPath(
     reference_path.points, target_path_terminal_idx, extend_pose.position);
 
   return extendPath(target_path, reference_path, extend_distance);
+}
+
+std::vector<Polygon2d> createPathFootPrints(
+  const PathWithLaneId & path, const double base_to_front, const double base_to_rear,
+  const double width)
+{
+  std::vector<Polygon2d> footprints;
+  for (const auto & point : path.points) {
+    const auto & pose = point.point.pose;
+    footprints.push_back(
+      tier4_autoware_utils::toFootprint(pose, base_to_front, base_to_rear, width));
+  }
+  return footprints;
 }
 
 }  // namespace behavior_path_planner::goal_planner_utils
