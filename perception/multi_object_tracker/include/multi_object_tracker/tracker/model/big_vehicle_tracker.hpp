@@ -30,7 +30,6 @@ private:
   autoware_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
 
-private:
   struct EkfParams
   {
     double r_cov_x;
@@ -51,9 +50,7 @@ private:
   BoundingBox bounding_box_;
   Eigen::Vector2d tracking_offset_;
 
-private:
   BicycleMotionModel motion_model_;
-  const char DIM = motion_model_.DIM;
   using IDX = BicycleMotionModel::IDX;
 
 public:

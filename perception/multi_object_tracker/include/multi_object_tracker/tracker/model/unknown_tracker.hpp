@@ -30,7 +30,6 @@ private:
   autoware_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
 
-private:
   struct EkfParams
   {
     double r_cov_x;
@@ -41,9 +40,7 @@ private:
 
   double z_;
 
-private:
   CVMotionModel motion_model_;
-  const char DIM = motion_model_.DIM;
   using IDX = CVMotionModel::IDX;
 
 public:
