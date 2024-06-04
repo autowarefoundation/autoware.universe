@@ -115,7 +115,7 @@ void MapLoader<PointT>::parallel_load_setup(
   query(x, y, radius, cached_ids, pcd_to_add_, pcd_to_remove_);
 
   // Start loading right now
-  load_manager_fut_ = std::async(std::launch::async, &MapLoader<PointT>::loadManagerThread, this);
+  load_manager_future_ = std::async(std::launch::async, &MapLoader<PointT>::loadManagerThread, this);
 }
 
 template <typename PointT>
@@ -154,7 +154,7 @@ bool MapLoader<PointT>::loadManagerThread()
     // Get a free tid
     int idle_tid = get_idle_tid();
 
-    thread_futs_[idle_tid] = std::async(
+    thread_futures_[idle_tid] = std::async(
       std::launch::async, &MapLoader<PointT>::loadThread, this, std::cref(it.first),
       std::cref(it.second));
   }

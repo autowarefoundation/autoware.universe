@@ -14,10 +14,6 @@
 
 #include "ndt_scan_matcher/map_update_module.hpp"
 
-#ifndef timeDiff
-#define timeDiff(start, end) ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec)
-#endif
-
 MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
   HyperParameters::DynamicMapLoading param)
@@ -51,6 +47,7 @@ MapUpdateModule::MapUpdateModule(
   // secondary_ndt_ptr_.
   need_rebuild_ = true;
 
+  map_loader_.setThreadNum(ndt_ptr_->getNumThreads());
   meta_subscription_ = node->create_subscription<std_msgs::msg::String>(
     "/map/map_loader/metadata", 10,
     std::bind(&MapUpdateModule::meta_callback, this, std::placeholders::_1));

@@ -62,7 +62,7 @@ struct PCDMetadata
   // Utility function to quickly convert coordinate to segment index
   // Notice that the SegmentIndex is the BOUNDARY coordinate in integer of the segment
   // It is NOT the segmentation index (i.e. coordinate / resolution)
-  SegmentIndex coorToSegmentIndex(float x, float y) const;
+  SegmentIndex coordinateToSegmentIndex(float x, float y) const;
 
   void segmentIndexToBoundary(
     const SegmentIndex & sid, float & min_x, float & min_y, float & max_x, float & max_y);

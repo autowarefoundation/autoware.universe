@@ -82,19 +82,19 @@ public:
       // One more thread for the load manager
       thread_num += 1;
       thread_num_ = thread_num;
-      thread_futs_.resize(thread_num_);
+      thread_futures_.resize(thread_num_);
     }
   }
 
   // Wait for all running threads to finish
-  inline void sync()
-  {
-    if (load_manager_fut_.valid()) {
-      load_manager_fut_.wait();
+  inline void sync() {
+    if (load_manager_future_.valid())
+    {
+      load_manager_future_.wait();
     }
 
-    for (auto & tf : thread_futs_) {
-      if (tf.valid()) {
+    for(auto &tf : thread_futures_) {
+      if(tf.valid()) {
         tf.wait();
       }
     }
@@ -128,13 +128,13 @@ private:
     // Loop until an idle thread is found
     while (true) {
       // Return immediately if a thread that has not been given a job is found
-      if (!thread_futs_[tid].valid()) {
+      if(!thread_futures_[tid].valid()) {
         last_check_tid_ = tid;
         return tid;
       }
 
       // If no such thread is found, wait for the current thread to finish its job
-      if (thread_futs_[tid].wait_for(span) == std::future_status::ready) {
+      if(thread_futures_[tid].wait_for(span) == std::future_status::ready) {
         last_check_tid_ = tid;
         return tid;
       }
@@ -148,8 +148,8 @@ private:
 
   int thread_num_;
   int last_check_tid_;
-  std::vector<std::future<bool>> thread_futs_;
-  std::future<bool> load_manager_fut_;
+  std::vector<std::future<bool>> thread_futures_;
+  std::future<bool> load_manager_future_;
   std::queue<std::pair<std::string, PclCloudPtr>> output_queue_;
   std::map<std::string, std::string> pcd_to_add_;
   std::set<std::string> pcd_to_remove_;

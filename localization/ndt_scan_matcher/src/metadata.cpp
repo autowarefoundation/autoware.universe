@@ -114,7 +114,7 @@ void PCDMetadata::import(const std::string & pcd_metadata_path, const std::strin
 // Utility function to quickly convert coordinate to segment index
 // Notice that the SegmentIndex is the BOUNDARY coordinate in integer of the segment
 // It is NOT the segmentation index (i.e. coordinate / resolution)
-SegmentIndex PCDMetadata::coorToSegmentIndex(float x, float y) const
+SegmentIndex PCDMetadata::coordinateToSegmentIndex(float x, float y) const
 {
   int idx = static_cast<int>(floor((x - lower_x_) / res_x_) * res_x_);
   int idy = static_cast<int>(floor((y - lower_y_) / res_y_) * res_y_);

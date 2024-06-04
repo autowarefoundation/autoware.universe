@@ -60,21 +60,24 @@ void queryContainedSegmentIdx(
   double upper_x = center_x + radius, upper_y = center_y + radius;
 
   // Compute the boundaries of the segment indices
-  auto lb = m.coorToSegmentIndex(lower_x, lower_y);
-  auto ub = m.coorToSegmentIndex(upper_x, upper_y);
+  auto lb = m.coordinateToSegmentIndex(lower_x, lower_y);
+  auto ub = m.coordinateToSegmentIndex(upper_x, upper_y);
 
   // Loop on the candidate boundaries
-  for (float min_x = lb.x; min_x <= ub.x; min_x += m.res_x_) {
-    for (float min_y = lb.y; min_y <= ub.y; min_y += m.res_y_) {
-      pcl::PointXYZ lbox, ubox;
+  for (float min_x = lb.x; min_x <= ub.x; min_x += m.res_x_)
+  {
+    for (float min_y = lb.y; min_y <= ub.y; min_y += m.res_y_)
+    {
+      pcl::PointXYZ lower_bound, upper_bound;
 
-      lbox.x = min_x;
-      lbox.y = min_y;
-      ubox.x = min_x + m.res_x_;
-      ubox.y = min_y + m.res_y_;
+      lower_bound.x = min_x;
+      lower_bound.y = min_y;
+      upper_bound.x = min_x + m.res_x_;
+      upper_bound.y = min_y + m.res_y_;
 
-      if (cylinderAndBoxOverlapExists(center_x, center_y, radius, lbox, ubox)) {
-        map_id.push_back(m.coorToSegmentIndex(lbox.x, lbox.y));
+      if (cylinderAndBoxOverlapExists(center_x, center_y, radius, lower_bound, upper_bound))
+      {
+        map_id.push_back(m.coordinateToSegmentIndex(lower_bound.x, lower_bound.y));
       }
     }
   }
