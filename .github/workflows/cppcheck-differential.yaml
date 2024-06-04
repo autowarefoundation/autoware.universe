@@ -40,7 +40,8 @@ jobs:
         files=$(cat changed_files.txt | grep -E '\.(cpp|hpp)$' || true)
         if [ -n "$files" ]; then
           echo "Running Cppcheck on changed files: $files"
-          cppcheck --enable=all --inconclusive --check-level=exhaustive --suppressions-list=.cppcheck_suppressions --xml $files 2> cppcheck-report.xml
+          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions $files 2> cppcheck-report.txt
+          cat cppcheck-report.txt
         else
           echo "No C++ files changed."
         fi
