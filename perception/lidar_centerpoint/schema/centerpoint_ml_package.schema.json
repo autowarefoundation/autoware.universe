@@ -46,6 +46,16 @@
               "type": "integer",
               "description": "A size of encoder input feature channels.",
               "default": 9
+            },
+            "has_variance": {
+              "type": "boolean",
+              "description": "determines whether the covariance matrices for the object's position and velocity information are filled in.",
+              "default": false
+            },
+            "has_twist": {
+              "type": "boolean",
+              "description": "Indicates whether the model outputs twist value.",
+              "default": false
             }
           }
         }
@@ -58,7 +68,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/centerpoint_ml_package"
+          "$ref": "#/definitions/centerpoint_tiny_ml_package"
         }
       },
       "required": ["ros__parameters"]

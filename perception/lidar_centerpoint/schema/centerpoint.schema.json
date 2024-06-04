@@ -12,6 +12,26 @@
           "default": "fp16",
           "enum": ["fp32", "fp16"]
         },
+        "encoder_onnx_path": {
+          "type": "string",
+          "description": "A path to the ONNX file of the encoder network.",
+          "default": "~/autoware_data/lidar_centerpoint/pts_voxel_encoder_centerpoint_tiny.onnx"
+        },
+        "encoder_engine_path": {
+          "type": "string",
+          "description": "A path to the TensorRT engine file of the encoder network.",
+          "default": "~/autoware_data/lidar_centerpoint/pts_voxel_encoder_centerpoint_tiny.engine"
+        },
+        "head_onnx_path": {
+          "type": "string",
+          "description":"A path to the ONNX file of the head network.",
+          "default": "~/autoware_data/lidar_centerpoint/pts_backbone_neck_head_centerpoint_tiny.onnx"
+        },
+        "head_engine_path": {
+          "type": "string",
+          "description": "A path to the TensorRT engine file of the head network.",
+          "default": "~/autoware_data/lidar_centerpoint/pts_backbone_neck_head_centerpoint_tiny.engine"
+        },
         "post_process_params": {
           "type": "object",
           "properties": {
@@ -31,7 +51,7 @@
             },
             "circle_nms_dist_threshold": {
               "type": "number",
-              "description": "",
+              "description": "It specifies the distance threshold for performing Circle NMS. Detection boxes within this distance that overlap or are close to each other will be suppressed, keeping only the one with the highest score.",
               "default": 0.5,
               "minimum": 0.0,
               "maximum": 1.0
@@ -54,11 +74,6 @@
               "default": 0.1,
               "minimum": 0.0,
               "maximum": 1.0
-            },
-            "has_twist": {
-              "type": "boolean",
-              "description": "Indicates whether the model outputs twist value.",
-              "default": false
             }
           }
         },
