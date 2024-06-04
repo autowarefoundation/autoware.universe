@@ -135,7 +135,7 @@ NormalVehicleTracker::NormalVehicleTracker(
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
     auto pose_cov = object.kinematics.pose_with_covariance.covariance;
     double vel = 0.0;
-    double vel_cov;
+    double vel_cov = 10.0;
     const double & length = bounding_box_.length;
 
     if (object.kinematics.has_twist) {

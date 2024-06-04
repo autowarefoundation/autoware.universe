@@ -93,7 +93,8 @@ inline int getNearestCornerOrSurface(
   // (left) |  | (right)
   //         --
   //     x- (rear)
-  int xgrid, ygrid;
+  int xgrid;
+  int ygrid;
   const int labels[3][3] = {
     {BBOX_IDX::FRONT_L_CORNER, BBOX_IDX::FRONT_SURFACE, BBOX_IDX::FRONT_R_CORNER},
     {BBOX_IDX::LEFT_SURFACE, BBOX_IDX::INSIDE, BBOX_IDX::RIGHT_SURFACE},
@@ -183,9 +184,8 @@ inline void calcAnchorPointOffset(
   }
 
   // current object width and height
-  double w_n, l_n;
-  l_n = input_object.shape.dimensions.x;
-  w_n = input_object.shape.dimensions.y;
+  const double w_n = input_object.shape.dimensions.y;
+  const double l_n = input_object.shape.dimensions.x;
 
   // update offset
   const Eigen::Vector2d offset = calcOffsetVectorFromShapeChange(w_n - w, l_n - l, indx);
@@ -213,26 +213,18 @@ inline bool convertConvexHullToBoundingBox(
   }
 
   // look for bounding box boundary
-  double max_x = 0;
-  double max_y = 0;
-  double min_x = 0;
-  double min_y = 0;
-  double max_z = 0;
-  for (size_t i = 0; i < input_object.shape.footprint.points.size(); ++i) {
-    const double foot_x = input_object.shape.footprint.points.at(i).x;
-    const double foot_y = input_object.shape.footprint.points.at(i).y;
-    const double foot_z = input_object.shape.footprint.points.at(i).z;
-    max_x = std::max(max_x, foot_x);
-    max_y = std::max(max_y, foot_y);
-    min_x = std::min(min_x, foot_x);
-    min_y = std::min(min_y, foot_y);
-    max_z = std::max(max_z, foot_z);
+  float max_x = 0;
+  float max_y = 0;
+  float min_x = 0;
+  float min_y = 0;
+  float max_z = 0;
+  for (const auto & point : input_object.shape.footprint.points) {
+    max_x = std::max(max_x, point.x);
+    max_y = std::max(max_y, point.y);
+    min_x = std::min(min_x, point.x);
+    min_y = std::min(min_y, point.y);
+    max_z = std::max(max_z, point.z);
   }
-
-  // calc bounding box state
-  const double length = max_x - min_x;
-  const double width = max_y - min_y;
-  const double height = max_z;
 
   // calc new center
   const Eigen::Vector2d center{
@@ -248,10 +240,10 @@ inline bool convertConvexHullToBoundingBox(
   output_object.kinematics.pose_with_covariance.pose.position.x = new_center.x();
   output_object.kinematics.pose_with_covariance.pose.position.y = new_center.y();
 
-  output_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-  output_object.shape.dimensions.x = length;
-  output_object.shape.dimensions.y = width;
-  output_object.shape.dimensions.z = height;
+  output_object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  output_object.shape.dimensions.x = max_x - min_x;
+  output_object.shape.dimensions.y = max_y - min_y;
+  output_object.shape.dimensions.z = max_z;
 
   return true;
 }

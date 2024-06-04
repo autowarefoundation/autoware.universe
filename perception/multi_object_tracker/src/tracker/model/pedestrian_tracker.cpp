@@ -110,8 +110,8 @@ PedestrianTracker::PedestrianTracker(
     auto pose_cov = object.kinematics.pose_with_covariance.covariance;
     double vel = 0.0;
     double wz = 0.0;
-    double vel_cov;
-    double wz_cov;
+    double vel_cov = 10.0;
+    double wz_cov = 10.0;
 
     if (object.kinematics.has_twist) {
       vel = object.kinematics.twist_with_covariance.twist.linear.x;
