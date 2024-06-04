@@ -32,6 +32,8 @@ jobs:
         sudo make install
 
     - name: Run Cppcheck on all files
+      continue-on-error: true
+      id: cppcheck
       run: |
         cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --xml perception/lidar_centerpoint 2> cppcheck-report.xml
       shell: bash
@@ -51,3 +53,7 @@ jobs:
       with:
         name: latest-cppcheck-report
         path: latest-cppcheck-report.xml
+
+    - name: Fail the job if Cppcheck failed
+      if: steps.cppcheck.outcome == 'failure'
+      run: exit 1
