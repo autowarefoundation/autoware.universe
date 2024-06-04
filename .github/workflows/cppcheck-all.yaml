@@ -32,10 +32,5 @@ jobs:
 
     - name: Run Cppcheck on all files
       run: |
-        files=$(cat changed_files.txt | grep '\.cpp$\|\.hpp$' | tr '\n' ' ')
-        if [ -n "$files" ]; then
-          cppcheck --enable=all --inconclusive --check-level=exhaustive --xml . 2> cppcheck-report.xml
-        else
-          echo "No C++ files changed."
-        fi
+        cppcheck --enable=all --inconclusive --check-level=exhaustive --xml . 2> cppcheck-report.xml
       shell: bash
