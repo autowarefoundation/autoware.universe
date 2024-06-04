@@ -221,22 +221,15 @@ autoware_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpdatingO
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
     // measurement noise covariance
-    float r_cov_x;
-    float r_cov_y;
-    using Label = autoware_perception_msgs::msg::ObjectClassification;
+    float r_cov_x = static_cast<float>(ekf_params_.r_cov_x);
+    float r_cov_y = static_cast<float>(ekf_params_.r_cov_y);
     const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
-    if (label == Label::CAR) {
-      r_cov_x = ekf_params_.r_cov_x;
-      r_cov_y = ekf_params_.r_cov_y;
-    } else if (utils::isLargeVehicleLabel(label)) {
+    if (utils::isLargeVehicleLabel(label)) {
       // if label is changed, enlarge the measurement noise covariance
       constexpr float r_stddev_x = 2.0;  // [m]
       constexpr float r_stddev_y = 2.0;  // [m]
-      r_cov_x = std::pow(r_stddev_x, 2.0);
-      r_cov_y = std::pow(r_stddev_y, 2.0);
-    } else {
-      r_cov_x = ekf_params_.r_cov_x;
-      r_cov_y = ekf_params_.r_cov_y;
+      r_cov_x = r_stddev_x * r_stddev_x;
+      r_cov_y = r_stddev_y * r_stddev_y;
     }
 
     // yaw angle fix
@@ -317,7 +310,7 @@ bool NormalVehicleTracker::measureWithPose(
 bool NormalVehicleTracker::measureWithShape(
   const autoware_perception_msgs::msg::DetectedObject & object)
 {
-  if (!object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }
@@ -325,9 +318,10 @@ bool NormalVehicleTracker::measureWithShape(
   // check object size abnormality
   constexpr double size_max = 30.0;  // [m]
   constexpr double size_min = 1.0;   // [m]
-  if (object.shape.dimensions.x > size_max || object.shape.dimensions.y > size_max) {
-    return false;
-  } else if (object.shape.dimensions.x < size_min || object.shape.dimensions.y < size_min) {
+  bool isSizeValid =
+    (object.shape.dimensions.x <= size_max && object.shape.dimensions.y <= size_max &&
+     object.shape.dimensions.x >= size_min && object.shape.dimensions.y >= size_min);
+  if (!isSizeValid) {
     return false;
   }
 

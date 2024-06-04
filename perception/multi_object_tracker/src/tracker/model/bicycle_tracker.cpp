@@ -166,9 +166,9 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
-  const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/)
+autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/) const
 {
   autoware_perception_msgs::msg::DetectedObject updating_object;
 

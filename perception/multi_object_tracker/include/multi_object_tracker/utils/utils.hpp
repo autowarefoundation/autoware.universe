@@ -93,8 +93,8 @@ inline int getNearestCornerOrSurface(
   // (left) |  | (right)
   //         --
   //     x- (rear)
-  int xgrid;
-  int ygrid;
+  int xgrid = 0;
+  int ygrid = 0;
   const int labels[3][3] = {
     {BBOX_IDX::FRONT_L_CORNER, BBOX_IDX::FRONT_SURFACE, BBOX_IDX::FRONT_R_CORNER},
     {BBOX_IDX::LEFT_SURFACE, BBOX_IDX::INSIDE, BBOX_IDX::RIGHT_SURFACE},
