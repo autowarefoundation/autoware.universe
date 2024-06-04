@@ -52,7 +52,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: latest-cppcheck-report
-        path: latest-cppcheck-report.xml
+        path: cppcheck-report.xml
 
     - name: Fail the job if Cppcheck failed
       if: steps.cppcheck.outcome == 'failure'
