@@ -35,7 +35,6 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 {{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_sigma_ml_package.schema.json") }}
 {{ json_to_markdown("perception/lidar_centerpoint/schema/detection_class_remapper.schema.json") }}
 
-
 ### The `build_only` option
 
 The `lidar_centerpoint` node has `build_only` option to build the TensorRT engine file from the ONNX file.

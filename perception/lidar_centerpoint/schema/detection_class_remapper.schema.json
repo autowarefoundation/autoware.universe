@@ -1,47 +1,46 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Parameters for Detection Class Remapper Node",
-    "type": "object",
-    "definitions": {
-      "detection_class_remapper": {
-        "type": "object",
-        "properties": {
-          "allow_remapping_by_area_matrix": {
-            "type": "array",
-            "description": "A matrix that defines how to remap original classes to new classes based on area.",
-            "items": {
-              "type": "integer"
-            }
-          },
-          "min_area_matrix": {
-            "type": "array",
-            "description": "A matrix that defines the minimum area thresholds for each class.",
-            "items": {
-              "type": "number"
-            }
-          },
-          "max_area_matrix": {
-            "type": "array",
-            "description": "A matrix that defines the maximum area thresholds for each class.",
-            "items": {
-              "type": "number"
-            }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Detection Class Remapper Node",
+  "type": "object",
+  "definitions": {
+    "detection_class_remapper": {
+      "type": "object",
+      "properties": {
+        "allow_remapping_by_area_matrix": {
+          "type": "array",
+          "description": "A matrix that defines how to remap original classes to new classes based on area.",
+          "items": {
+            "type": "integer"
           }
         },
-        "required": ["allow_remapping_by_area_matrix", "min_area_matrix", "max_area_matrix"]
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/detection_class_remapper"
+        "min_area_matrix": {
+          "type": "array",
+          "description": "A matrix that defines the minimum area thresholds for each class.",
+          "items": {
+            "type": "number"
           }
         },
-        "required": ["ros__parameters"]
-      }
-    },
-    "required": ["/**"]
-  }
-  
+        "max_area_matrix": {
+          "type": "array",
+          "description": "A matrix that defines the maximum area thresholds for each class.",
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "required": ["allow_remapping_by_area_matrix", "min_area_matrix", "max_area_matrix"]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/detection_class_remapper"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}

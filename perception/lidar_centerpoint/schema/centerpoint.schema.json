@@ -24,7 +24,7 @@
         },
         "head_onnx_path": {
           "type": "string",
-          "description":"A path to the ONNX file of the head network.",
+          "description": "A path to the ONNX file of the head network.",
           "default": "~/autoware_data/lidar_centerpoint/pts_backbone_neck_head_centerpoint_tiny.onnx"
         },
         "head_engine_path": {
