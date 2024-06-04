@@ -228,38 +228,13 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec, int twist
   const double pitch_difference = roll_difference;
   const double yaw_difference = roll_difference;
 
-  // Calculate dead reckoning process noise
-  const double dead_reckoning_longitudinal_variance =
-    (twist_buffer_size - 1) * heading_velocity_variance_ * interval_sec * interval_sec;
-  const double dead_reckoning_longitudinal_process_noise =
-    3 * sqrt(dead_reckoning_longitudinal_variance);
-
-  const double dead_reckoning_lateral_variance =
-    (twist_buffer_size - 1) * interval_sec * interval_sec *
-    (heading_velocity_variance_ * angular_velocity_variance_ +
-     heading_velocity_maximum_ * heading_velocity_maximum_ * angular_velocity_variance_ +
-     angular_velocity_maximum_ * angular_velocity_maximum_ * heading_velocity_variance_);
-  const double dead_reckoning_lateral_process_noise = 3 * sqrt(dead_reckoning_lateral_variance);
-
-  const double dead_reckoning_vertical_process_noise = dead_reckoning_lateral_process_noise;
-
-  const double dead_reckoning_angular_variance =
-    (twist_buffer_size - 1) * angular_velocity_variance_ * interval_sec * interval_sec;
-  const double dead_reckoning_angular_process_noise = 3 * sqrt(dead_reckoning_angular_variance);
-
   // Set thresholds
-  threshold_diff_position_x_ = longitudinal_difference + dead_reckoning_longitudinal_process_noise +
-                               pose_estimator_longitudinal_tolerance_;
-  threshold_diff_position_y_ =
-    lateral_difference + dead_reckoning_lateral_process_noise + pose_estimator_lateral_tolerance_;
-  threshold_diff_position_z_ = vertical_difference + dead_reckoning_vertical_process_noise +
-                               pose_estimator_vertical_tolerance_;
-  threshold_diff_angle_x_ =
-    roll_difference + dead_reckoning_angular_process_noise + pose_estimator_angular_tolerance_;
-  threshold_diff_angle_y_ =
-    pitch_difference + dead_reckoning_angular_process_noise + pose_estimator_angular_tolerance_;
-  threshold_diff_angle_z_ =
-    yaw_difference + dead_reckoning_angular_process_noise + pose_estimator_angular_tolerance_;
+  threshold_diff_position_x_ = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
+  threshold_diff_position_y_ = lateral_difference + pose_estimator_lateral_tolerance_;
+  threshold_diff_position_z_ = vertical_difference + pose_estimator_vertical_tolerance_;
+  threshold_diff_angle_x_ = roll_difference + pose_estimator_angular_tolerance_;
+  threshold_diff_angle_y_ = pitch_difference + pose_estimator_angular_tolerance_;
+  threshold_diff_angle_z_ = yaw_difference + pose_estimator_angular_tolerance_;
 }
 
 void PoseInstabilityDetector::dead_reckon(

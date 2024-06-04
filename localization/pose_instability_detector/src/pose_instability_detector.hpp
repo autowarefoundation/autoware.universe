@@ -73,11 +73,9 @@ private:
   double threshold_diff_angle_z_;     // yaw
 
   const double heading_velocity_maximum_;                 // [m/s]
-  const double heading_velocity_variance_;                // [m/s]
   const double heading_velocity_scale_factor_tolerance_;  // [%]
 
   const double angular_velocity_maximum_;                 // [rad/s]
-  const double angular_velocity_variance_;                // [rad/s]
   const double angular_velocity_scale_factor_tolerance_;  // [%]
   const double angular_velocity_bias_tolerance_;          // [rad/s]
 
