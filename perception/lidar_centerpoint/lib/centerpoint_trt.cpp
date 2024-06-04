@@ -86,8 +86,6 @@ void CenterPointTRT::initPtr()
   // host
   points_.resize(CAPACITY_POINT * config_.point_feature_size_);
 
-  int hoge = 1;
-
   // device
   voxels_d_ = cuda::make_unique<float[]>(voxels_size_);
   coordinates_d_ = cuda::make_unique<int[]>(coordinates_size_);
