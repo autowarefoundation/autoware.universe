@@ -51,7 +51,9 @@ MapUpdateModule::MapUpdateModule(
   // secondary_ndt_ptr_.
   need_rebuild_ = true;
 
-  meta_subscription_ = node->create_subscription<std_msgs::msg::String>("/map/map_loader/metadata", 10, std::bind(&MapUpdateModule::meta_callback, this, std::placeholders::_1));
+  meta_subscription_ = node->create_subscription<std_msgs::msg::String>(
+    "/map/map_loader/metadata", 10,
+    std::bind(&MapUpdateModule::meta_callback, this, std::placeholders::_1));
 }
 
 void MapUpdateModule::meta_callback(const std_msgs::msg::String::SharedPtr msg)
@@ -62,8 +64,7 @@ void MapUpdateModule::meta_callback(const std_msgs::msg::String::SharedPtr msg)
   auto metadata_path = data.substr(0, delim);
   auto pcd_dir_path = data.substr(delim + 2);
 
-  if (metadata_path != metadata_path_ || pcd_dir_path != pcd_dir_path_)
-  {
+  if (metadata_path != metadata_path_ || pcd_dir_path != pcd_dir_path_) {
     map_loader_.import(metadata_path, pcd_dir_path);
     metadata_path_ = metadata_path;
     pcd_dir_path_ = pcd_dir_path;
@@ -222,27 +223,24 @@ bool MapUpdateModule::update_ndt(
 
   map_loader_.parallel_load_setup(position.x, position.y, param_.map_radius, cached_ids);
 
-  while (map_loader_.get_next_loaded_pcd(map_id, new_pcd))
-  {
+  while (map_loader_.get_next_loaded_pcd(map_id, new_pcd)) {
     ++changed_count;
     ndt.addTarget(new_pcd, map_id);
   }
 
   auto pcd_to_remove = map_loader_.get_pcd_id_to_remove();
 
-  for (auto & id : pcd_to_remove)
-  {
+  for (auto & id : pcd_to_remove) {
     ++changed_count;
     ndt.removeTarget(id);
   }
 
-  if (changed_count == 0)
-  {
-    return false; // No update
+  if (changed_count == 0) {
+    return false;  // No update
   }
 
   ndt.createVoxelKdtree();
-  
+
   const auto exe_end_time = std::chrono::system_clock::now();
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();

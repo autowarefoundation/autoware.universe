@@ -18,14 +18,14 @@ namespace loc
 {
 
 template <typename PointT>
-MapLoader<PointT>::MapLoader(std::shared_ptr<PCDMetadata> metadata)
-: metadata_(metadata)
-{}
+MapLoader<PointT>::MapLoader(std::shared_ptr<PCDMetadata> metadata) : metadata_(metadata)
+{
+}
 
 template <typename PointT>
-void MapLoader<PointT>::load(float pos_x, float pos_y, float radius, const std::vector<std::string> & cached_ids,
-                                std::map<std::string, PclCloudPtr> & pcd_to_load,
-                                std::set<std::string> & pcd_to_remove)
+void MapLoader<PointT>::load(
+  float pos_x, float pos_y, float radius, const std::vector<std::string> & cached_ids,
+  std::map<std::string, PclCloudPtr> & pcd_to_load, std::set<std::string> & pcd_to_remove)
 {
   pcd_to_load.clear();
   pcd_to_remove.clear();
@@ -35,17 +35,15 @@ void MapLoader<PointT>::load(float pos_x, float pos_y, float radius, const std::
   query(pos_x, pos_y, radius, cached_ids, pcd_to_load_and_path, pcd_to_remove);
 
   // Parallel load
-  for (auto & it : pcd_to_load_and_path)
-  {
+  for (auto & it : pcd_to_load_and_path) {
     auto & target_cloud = pcd_to_load[it.first];
 
     target_cloud.reset(new PclCloudType);
 
-    if (pcl::io::loadPCDFile(it.second, *target_cloud))
-    {
+    if (pcl::io::loadPCDFile(it.second, *target_cloud)) {
       std::cerr << "Error: Failed to load file " << it.second << std::endl;
     }
-  }  
+  }
 }
 
 template <typename PointT>
@@ -53,8 +51,7 @@ bool MapLoader<PointT>::loadThread(const std::string & map_id, const std::string
 {
   PclCloudPtr new_cloud(new PclCloudType);
 
-  if (pcl::io::loadPCDFile(path, *new_cloud))
-  {
+  if (pcl::io::loadPCDFile(path, *new_cloud)) {
     return false;
   }
 
@@ -67,11 +64,11 @@ bool MapLoader<PointT>::loadThread(const std::string & map_id, const std::string
 }
 
 template <typename PointT>
-void MapLoader<PointT>::query(float pos_x, float pos_y, float radius, const std::vector<std::string> & cached_ids,
-                              std::map<std::string, std::string> & pcd_to_add,
-                              std::set<std::string> & ids_to_remove)
+void MapLoader<PointT>::query(
+  float pos_x, float pos_y, float radius, const std::vector<std::string> & cached_ids,
+  std::map<std::string, std::string> & pcd_to_add, std::set<std::string> & ids_to_remove)
 {
-    // Create a set of should remove indices, which is originally a copy of @cached_ids
+  // Create a set of should remove indices, which is originally a copy of @cached_ids
   ids_to_remove.clear();
   ids_to_remove.insert(cached_ids.begin(), cached_ids.end());
 
@@ -81,14 +78,12 @@ void MapLoader<PointT>::query(float pos_x, float pos_y, float radius, const std:
   queryContainedSegmentIdx(pos_x, pos_y, radius, *metadata_, contained_map_id);
 
   // Look for the contained segments from the metadata of pcd
-  for (auto& seg_id : contained_map_id)
-  {
+  for (auto & seg_id : contained_map_id) {
     // If the segment is already in the cached ids, remove it from the should_remove
-    auto map_id = seg_id.to_string(); 
+    auto map_id = seg_id.to_string();
     auto it = ids_to_remove.find(map_id);
 
-    if (it != ids_to_remove.end())
-    {
+    if (it != ids_to_remove.end()) {
       ids_to_remove.erase(it);
       continue;
     }
@@ -97,21 +92,21 @@ void MapLoader<PointT>::query(float pos_x, float pos_y, float radius, const std:
     auto pcd_it = metadata_->find(seg_id);
 
     // Skip if the segment pcd does not exist
-    if (pcd_it != metadata_->end())
-    {
+    if (pcd_it != metadata_->end()) {
       pcd_to_add[map_id] = pcd_it->second;
     }
   }
 }
 
 template <typename PointT>
-int MapLoader<PointT>::load(const std::string & path, PclCloudType & cloud) 
+int MapLoader<PointT>::load(const std::string & path, PclCloudType & cloud)
 {
   return pcl::io::loadPCDFile(path, cloud);
 }
 
 template <typename PointT>
-void MapLoader<PointT>::parallel_load_setup(float x, float y, float radius, const std::vector<std::string> & cached_ids)
+void MapLoader<PointT>::parallel_load_setup(
+  float x, float y, float radius, const std::vector<std::string> & cached_ids)
 {
   // Clear any remaining garbage from the previous run
   parallel_load_clear();
@@ -127,14 +122,12 @@ template <typename PointT>
 bool MapLoader<PointT>::get_next_loaded_pcd(std::string & map_id, PclCloudPtr & loaded_pcd)
 {
   // Return false if no remaining pcd to load
-  if (pcd_to_add_.size() == loaded_counter_)
-  {
+  if (pcd_to_add_.size() == loaded_counter_) {
     return false;
   }
 
   // Wait until some pcds are loaded
-  while (output_queue_.empty())
-  {
+  while (output_queue_.empty()) {
     std::this_thread::sleep_for(std::chrono::microseconds(100));
   }
 
@@ -157,12 +150,13 @@ bool MapLoader<PointT>::get_next_loaded_pcd(std::string & map_id, PclCloudPtr & 
 template <typename PointT>
 bool MapLoader<PointT>::loadManagerThread()
 {
-  for (auto & it : pcd_to_add_)
-  {
+  for (auto & it : pcd_to_add_) {
     // Get a free tid
     int idle_tid = get_idle_tid();
 
-    thread_futs_[idle_tid] = std::async(std::launch::async, &MapLoader<PointT>::loadThread, this, std::cref(it.first), std::cref(it.second));
+    thread_futs_[idle_tid] = std::async(
+      std::launch::async, &MapLoader<PointT>::loadThread, this, std::cref(it.first),
+      std::cref(it.second));
   }
 
   return true;
@@ -182,4 +176,4 @@ void MapLoader<PointT>::parallel_load_clear()
 template class MapLoader<pcl::PointXYZ>;
 template class MapLoader<pcl::PointXYZI>;
 
-}
+}  // namespace loc

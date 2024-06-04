@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ndt_scan_matcher/utils.hpp>
 #include <ndt_scan_matcher/metadata.hpp>
+#include <ndt_scan_matcher/utils.hpp>
 
 #include <fmt/format.h>
 
+#include <fstream>
 #include <map>
 #include <string>
 #include <vector>
-#include <fstream>
 
 namespace loc
 {
-    
+
 bool cylinderAndBoxOverlapExists(
   const double center_x, const double center_y, const double radius,
   const pcl::PointXYZ box_min_point, const pcl::PointXYZ box_max_point)
@@ -52,7 +52,9 @@ bool cylinderAndBoxOverlapExists(
 }
 
 // Return the indices of the segments contained in a specified area
-void queryContainedSegmentIdx(float center_x, float center_y, float radius, const PCDMetadata& m, std::list<SegmentIndex>& map_id)
+void queryContainedSegmentIdx(
+  float center_x, float center_y, float radius, const PCDMetadata & m,
+  std::list<SegmentIndex> & map_id)
 {
   double lower_x = center_x - radius, lower_y = center_y - radius;
   double upper_x = center_x + radius, upper_y = center_y + radius;
@@ -62,10 +64,8 @@ void queryContainedSegmentIdx(float center_x, float center_y, float radius, cons
   auto ub = m.coorToSegmentIndex(upper_x, upper_y);
 
   // Loop on the candidate boundaries
-  for (float min_x = lb.x; min_x <= ub.x; min_x += m.res_x_)
-  {
-    for (float min_y = lb.y; min_y <= ub.y; min_y += m.res_y_)
-    {
+  for (float min_x = lb.x; min_x <= ub.x; min_x += m.res_x_) {
+    for (float min_y = lb.y; min_y <= ub.y; min_y += m.res_y_) {
       pcl::PointXYZ lbox, ubox;
 
       lbox.x = min_x;
@@ -73,12 +73,11 @@ void queryContainedSegmentIdx(float center_x, float center_y, float radius, cons
       ubox.x = min_x + m.res_x_;
       ubox.y = min_y + m.res_y_;
 
-      if (cylinderAndBoxOverlapExists(center_x, center_y, radius, lbox, ubox))
-      {
+      if (cylinderAndBoxOverlapExists(center_x, center_y, radius, lbox, ubox)) {
         map_id.push_back(m.coorToSegmentIndex(lbox.x, lbox.y));
       }
     }
   }
 }
 
-}
+}  // namespace loc

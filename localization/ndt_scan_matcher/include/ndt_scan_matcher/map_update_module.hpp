@@ -20,6 +20,7 @@
 #include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 
+#include <ndt_scan_matcher/map_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/transform/transforms.hpp>
@@ -27,8 +28,8 @@
 #include <autoware_map_msgs/srv/get_differential_point_cloud_map.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
@@ -40,8 +41,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-
-#include <ndt_scan_matcher/map_loader.hpp>
 
 class MapUpdateModule
 {

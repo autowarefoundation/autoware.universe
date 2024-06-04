@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOC_UTILS_HPP_
-#define LOC_UTILS_HPP_
+#ifndef NDT_SCAN_MATCHER__UTILS_HPP_
+#define NDT_SCAN_MATCHER__UTILS_HPP_
+
+#include <ndt_scan_matcher/metadata.hpp>
 
 #include <pcl/common/common.h>
 #include <yaml-cpp/yaml.h>
@@ -22,8 +24,6 @@
 #include <string>
 #include <vector>
 
-#include <ndt_scan_matcher/metadata.hpp>
-
 namespace loc
 {
 
@@ -31,7 +31,9 @@ bool cylinderAndBoxOverlapExists(
   const double center_x, const double center_y, const double radius,
   const pcl::PointXYZ position_min, const pcl::PointXYZ position_max);
 
-void queryContainedSegmentIdx(float center_x, float center_y, float radius, const PCDMetadata& m, std::list<SegmentIndex>& map_id);
-}
+void queryContainedSegmentIdx(
+  float center_x, float center_y, float radius, const PCDMetadata & m,
+  std::list<SegmentIndex> & map_id);
+}  // namespace loc
 
-#endif  // LOC_UTILS_HPP_
+#endif  // NDT_SCAN_MATCHER__UTILS_HPP_
