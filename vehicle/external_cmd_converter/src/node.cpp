@@ -99,7 +99,7 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
 
   // take data from subscribers
   current_velocity_ptr_ = velocity_sub_.takeData();
-  current_shift_cmd_    = shift_cmd_sub_.takeData();
+  current_shift_cmd_ = shift_cmd_sub_.takeData();
 
   // Wait for input data
   if (!current_velocity_ptr_ || !acc_map_initialized_) {
@@ -108,7 +108,8 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
 
   // Calculate reference velocity and acceleration
   const double sign = getShiftVelocitySign(*current_shift_cmd_);
-  const double ref_acceleration = calculateAcc(*cmd_ptr, std::fabs(current_velocity_ptr_->twist.twist.linear.x));
+  const double ref_acceleration =
+    calculateAcc(*cmd_ptr, std::fabs(current_velocity_ptr_->twist.twist.linear.x));
 
   if (ref_acceleration > 0.0 && sign == 0.0) {
     RCLCPP_WARN_THROTTLE(
@@ -117,7 +118,8 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
       ref_acceleration, current_shift_cmd_->command);
   }
 
-  double ref_velocity = current_velocity_ptr_->twist.twist.linear.x + ref_acceleration * ref_vel_gain_ * sign;
+  double ref_velocity =
+    current_velocity_ptr_->twist.twist.linear.x + ref_acceleration * ref_vel_gain_ * sign;
   if (current_shift_cmd_->command == GearCommand::REVERSE) {
     ref_velocity = std::min(0.0, ref_velocity);
   } else if (

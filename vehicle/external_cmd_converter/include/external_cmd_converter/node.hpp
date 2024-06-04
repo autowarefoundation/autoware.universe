@@ -15,6 +15,8 @@
 #ifndef EXTERNAL_CMD_CONVERTER__NODE_HPP_
 #define EXTERNAL_CMD_CONVERTER__NODE_HPP_
 
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
+
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <raw_vehicle_cmd_converter/accel_map.hpp>
 #include <raw_vehicle_cmd_converter/brake_map.hpp>
@@ -26,7 +28,7 @@
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_external_api_msgs/msg/control_command_stamped.hpp>
 #include <tier4_external_api_msgs/msg/heartbeat.hpp>
-#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
+
 #include <memory>
 #include <string>
 
@@ -60,18 +62,16 @@ private:
     sub_emergency_stop_heartbeat_;
 
   // Polling Subscriber
-  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> velocity_sub_{
-    this, "in/odometry"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> velocity_sub_{this, "in/odometry"};
   tier4_autoware_utils::InterProcessPollingSubscriber<GearCommand> shift_cmd_sub_{
     this, "in/shift_cmd"};
   tier4_autoware_utils::InterProcessPollingSubscriber<GateMode> gate_mode_sub_{
     this, "in/current_gate_mode"};
 
-
   void onExternalCmd(const ExternalControlCommand::ConstSharedPtr cmd_ptr);
   void onEmergencyStopHeartbeat(const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
 
-  Odometry::ConstSharedPtr current_velocity_ptr_{nullptr}; // [m/s]
+  Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};  // [m/s]
   GearCommand::ConstSharedPtr current_shift_cmd_{nullptr};
   tier4_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_{nullptr};
 
