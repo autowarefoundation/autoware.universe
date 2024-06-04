@@ -14,14 +14,19 @@
 #ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DATA_STRUCTS_HPP_
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DATA_STRUCTS_HPP_
 
+#include "behavior_path_planner_common/parameters.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "route_handler/route_handler.hpp"
 
 #include <interpolation/linear_interpolation.hpp>
+
+#include "nav_msgs/msg/odometry.hpp"
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/Polygon.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -189,13 +194,6 @@ struct LaneChangeInfo
   double terminal_lane_changing_velocity{0.0};
 };
 
-struct LaneChangeTargetObjectIndices
-{
-  std::vector<size_t> current_lane{};
-  std::vector<size_t> target_lane{};
-  std::vector<size_t> other_lane{};
-};
-
 struct LaneChangeLanesFilteredObjects
 {
   utils::path_safety_checker::ExtendedPredictedObjects current_lane{};
@@ -212,10 +210,23 @@ enum class LaneChangeModuleType {
 
 namespace behavior_path_planner::data::lane_change
 {
+using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::Twist;
+using nav_msgs::msg::Odometry;
+using route_handler::Direction;
+using route_handler::RouteHandler;
+
 struct PathSafetyStatus
 {
   bool is_safe{true};
   bool is_object_coming_from_rear{false};
+};
+
+struct Lanes
+{
+  lanelet::ConstLanelets current;
+  lanelet::ConstLanelets target;
+  std::vector<lanelet::ConstLanelets> preceeding_target;
 };
 
 struct LanesPolygon
@@ -224,6 +235,37 @@ struct LanesPolygon
   std::optional<lanelet::BasicPolygon2d> target;
   std::vector<lanelet::BasicPolygon2d> target_backward;
 };
+
+struct CommonData
+{
+  std::shared_ptr<RouteHandler> route_handler;
+  Odometry::ConstSharedPtr self_odometry;
+  std::shared_ptr<BehaviorPathPlannerParameters> bpp_params;
+  std::shared_ptr<LaneChangeParameters> lc_params;
+  Lanes lanes;
+  Direction direction;
+
+  [[nodiscard]] Pose get_ego_pose() const { return self_odometry->pose.pose; }
+
+  [[nodiscard]] Twist get_ego_twist() const { return self_odometry->twist.twist; }
+
+  [[nodiscard]] double get_ego_speed(bool use_norm = false) const
+  {
+    if (!use_norm) {
+      return get_ego_twist().linear.x;
+    }
+
+    const auto x = get_ego_twist().linear.x;
+    const auto y = get_ego_twist().linear.y;
+    return std::hypot(x, y);
+  }
+};
+
+using RouteHandlerPtr = std::shared_ptr<RouteHandler>;
+using BppParamPtr = std::shared_ptr<BehaviorPathPlannerParameters>;
+using LCParamPtr = std::shared_ptr<LaneChangeParameters>;
+using CommonDataPtr = std::shared_ptr<CommonData>;
+using LanesPtr = std::shared_ptr<Lanes>;
 }  // namespace behavior_path_planner::data::lane_change
 
 #endif  // BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DATA_STRUCTS_HPP_

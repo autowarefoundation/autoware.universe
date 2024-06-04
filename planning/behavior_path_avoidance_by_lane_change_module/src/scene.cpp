@@ -15,6 +15,7 @@
 #include "behavior_path_avoidance_by_lane_change_module/scene.hpp"
 
 #include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
+#include "behavior_path_lane_change_module/utils/calculation.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
@@ -277,8 +278,8 @@ double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
     return std::numeric_limits<double>::infinity();
   }
 
-  return utils::lane_change::calcMinimumLaneChangeLength(
-    getRouteHandler(), current_lanes.back(), *lane_change_parameters_, direction_);
+  return utils::lane_change::calculation::calc_min_lane_change_length(
+    common_data_, current_lanes, direction_);
 }
 
 double AvoidanceByLaneChange::calcLateralOffset() const

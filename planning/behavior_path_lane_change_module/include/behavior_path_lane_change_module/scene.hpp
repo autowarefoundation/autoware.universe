@@ -115,9 +115,7 @@ protected:
     const lanelet::ConstLanelets & current_lanes,
     const lanelet::ConstLanelets & target_lanes) const;
 
-  std::vector<double> calcPrepareDuration(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  std::vector<double> calcPrepareDuration() const;
 
   ExtendedPredictedObjects getTargetObjects(
     const LaneChangeLanesFilteredObjects & predicted_objects,
