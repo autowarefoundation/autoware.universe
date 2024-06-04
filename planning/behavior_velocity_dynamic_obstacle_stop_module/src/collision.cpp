@@ -66,28 +66,21 @@ std::optional<geometry_msgs::msg::Point> find_closest_collision_point(
 std::vector<Collision> find_collisions(
   const EgoData & ego_data,
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
-  const tier4_autoware_utils::MultiPolygon2d & object_forward_footprints,
+  const std::vector<tier4_autoware_utils::MultiPolygon2d> & object_forward_footprints,
   const PlannerParam & params)
 {
   std::vector<Collision> collisions;
   std::optional<geometry_msgs::msg::Point> collision;
-  for (auto object_idx = 0UL; object_idx < objects.size(); ++object_idx) {
-    const auto & object_pose = objects[object_idx].kinematics.initial_pose_with_covariance.pose;
-    if (!params.ignore_objects_behind_ego) {
-      tier4_autoware_utils::MultiPolygon2d object_footprint;
-      for (const auto & polygon : object_forward_footprints) {
-        object_footprint.push_back(polygon);
-        collision = find_closest_collision_point(ego_data, object_pose, polygon, params);
+  for (const auto & object : objects) {
+    tier4_autoware_utils::MultiPolygon2d object_footprint;
+    for (const auto & polygon : object_forward_footprints) {
+      collision = find_closest_collision_point(ego_data, object, polygon, params);
+      if (collision) {
+        Collision c;
+        c.object_uuid = tier4_autoware_utils::toHexString(object.object_id);
+        c.point = *collision;
+        collisions.push_back(c);
       }
-    } else {
-      const auto & object_footprint = object_forward_footprints[object_idx];
-      collision = find_closest_collision_point(ego_data, object_pose, object_footprint, params);
-    }
-    if (collision) {
-      Collision c;
-      c.object_uuid = tier4_autoware_utils::toHexString(objects[object_idx].object_id);
-      c.point = *collision;
-      collisions.push_back(c);
     }
   }
   return collisions;
