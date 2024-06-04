@@ -39,6 +39,7 @@ selfAssignment
 shadowArgument
 shadowFunction
 shadowVariable
+stlFindInsert
 syntaxError
 uninitMemberVar
 unknownMacro
