@@ -29,14 +29,8 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
   pub_cmd_ = create_publisher<AckermannControlCommand>("out/control_cmd", rclcpp::QoS{1});
   pub_current_cmd_ =
     create_publisher<ExternalControlCommand>("out/latest_external_control_cmd", rclcpp::QoS{1});
-  sub_velocity_ = create_subscription<Odometry>(
-    "in/odometry", 1, std::bind(&ExternalCmdConverterNode::onVelocity, this, _1));
   sub_control_cmd_ = create_subscription<ExternalControlCommand>(
     "in/external_control_cmd", 1, std::bind(&ExternalCmdConverterNode::onExternalCmd, this, _1));
-  sub_shift_cmd_ = create_subscription<GearCommand>(
-    "in/shift_cmd", 1, std::bind(&ExternalCmdConverterNode::onGearCommand, this, _1));
-  sub_gate_mode_ = create_subscription<tier4_control_msgs::msg::GateMode>(
-    "in/current_gate_mode", 1, std::bind(&ExternalCmdConverterNode::onGateMode, this, _1));
   sub_emergency_stop_heartbeat_ = create_subscription<tier4_external_api_msgs::msg::Heartbeat>(
     "in/emergency_stop", 1,
     std::bind(&ExternalCmdConverterNode::onEmergencyStopHeartbeat, this, _1));
@@ -84,16 +78,6 @@ void ExternalCmdConverterNode::onTimer()
   updater_.force_update();
 }
 
-void ExternalCmdConverterNode::onVelocity(const Odometry::ConstSharedPtr msg)
-{
-  current_velocity_ptr_ = std::make_shared<double>(msg->twist.twist.linear.x);
-}
-
-void ExternalCmdConverterNode::onGearCommand(const GearCommand::ConstSharedPtr msg)
-{
-  current_shift_cmd_ = msg;
-}
-
 void ExternalCmdConverterNode::onEmergencyStopHeartbeat(
   [[maybe_unused]] const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg)
 {
@@ -113,6 +97,10 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
   // Save received time for rate check
   latest_cmd_received_time_ = std::make_shared<rclcpp::Time>(this->now());
 
+  // take data from subscribers
+  current_velocity_ptr_ = velocity_sub_.takeData();
+  current_shift_cmd_    = shift_cmd_sub_.takeData();
+
   // Wait for input data
   if (!current_velocity_ptr_ || !acc_map_initialized_) {
     return;
@@ -120,7 +108,7 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
 
   // Calculate reference velocity and acceleration
   const double sign = getShiftVelocitySign(*current_shift_cmd_);
-  const double ref_acceleration = calculateAcc(*cmd_ptr, std::fabs(*current_velocity_ptr_));
+  const double ref_acceleration = calculateAcc(*cmd_ptr, std::fabs(current_velocity_ptr_->twist.twist.linear.x));
 
   if (ref_acceleration > 0.0 && sign == 0.0) {
     RCLCPP_WARN_THROTTLE(
@@ -129,7 +117,7 @@ void ExternalCmdConverterNode::onExternalCmd(const ExternalControlCommand::Const
       ref_acceleration, current_shift_cmd_->command);
   }
 
-  double ref_velocity = *current_velocity_ptr_ + ref_acceleration * ref_vel_gain_ * sign;
+  double ref_velocity = current_velocity_ptr_->twist.twist.linear.x + ref_acceleration * ref_vel_gain_ * sign;
   if (current_shift_cmd_->command == GearCommand::REVERSE) {
     ref_velocity = std::min(0.0, ref_velocity);
   } else if (
@@ -186,7 +174,6 @@ double ExternalCmdConverterNode::getShiftVelocitySign(const GearCommand & cmd)
 void ExternalCmdConverterNode::checkTopicStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   using diagnostic_msgs::msg::DiagnosticStatus;
-
   DiagnosticStatus status;
   if (!checkEmergencyStopTopicTimeout()) {
     status.level = DiagnosticStatus::ERROR;
@@ -200,12 +187,6 @@ void ExternalCmdConverterNode::checkTopicStatus(diagnostic_updater::DiagnosticSt
   }
 
   stat.summary(status.level, status.message);
-}
-
-void ExternalCmdConverterNode::onGateMode(
-  const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
-{
-  current_gate_mode_ = msg;
 }
 
 bool ExternalCmdConverterNode::checkEmergencyStopTopicTimeout()
@@ -228,6 +209,8 @@ bool ExternalCmdConverterNode::checkEmergencyStopTopicTimeout()
 
 bool ExternalCmdConverterNode::checkRemoteTopicRate()
 {
+  current_gate_mode_ = gate_mode_sub_.takeData();
+
   if (!current_gate_mode_) {
     return true;
   }

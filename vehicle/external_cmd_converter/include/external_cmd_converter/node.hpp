@@ -26,7 +26,7 @@
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_external_api_msgs/msg/control_command_stamped.hpp>
 #include <tier4_external_api_msgs/msg/heartbeat.hpp>
-
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include <memory>
 #include <string>
 
@@ -39,7 +39,7 @@ using Odometry = nav_msgs::msg::Odometry;
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
 using ControlCommandStamped = autoware_auto_control_msgs::msg::AckermannControlCommand;
-using Odometry = nav_msgs::msg::Odometry;
+using GateMode = tier4_control_msgs::msg::GateMode;
 
 class ExternalCmdConverterNode : public rclcpp::Node
 {
@@ -53,25 +53,30 @@ private:
     pub_current_cmd_;
 
   // Subscriber
-  rclcpp::Subscription<Odometry>::SharedPtr sub_velocity_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
     sub_control_cmd_;
-  rclcpp::Subscription<GearCommand>::SharedPtr sub_shift_cmd_;
   rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::Heartbeat>::SharedPtr
     sub_emergency_stop_heartbeat_;
 
-  void onVelocity(const Odometry::ConstSharedPtr msg);
+  // Polling Subscriber
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> velocity_sub_{
+    this, "in/odometry"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<GearCommand> shift_cmd_sub_{
+    this, "in/shift_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<GateMode> gate_mode_sub_{
+    this, "in/current_gate_mode"};
+
+
   void onExternalCmd(const ExternalControlCommand::ConstSharedPtr cmd_ptr);
-  void onGearCommand(const GearCommand::ConstSharedPtr msg);
-  void onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onEmergencyStopHeartbeat(const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
 
-  std::shared_ptr<double> current_velocity_ptr_;  // [m/s]
+  Odometry::ConstSharedPtr current_velocity_ptr_{nullptr}; // [m/s]
+  GearCommand::ConstSharedPtr current_shift_cmd_{nullptr};
+  tier4_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_{nullptr};
+
   std::shared_ptr<rclcpp::Time> latest_emergency_stop_heartbeat_received_time_;
   std::shared_ptr<rclcpp::Time> latest_cmd_received_time_;
-  GearCommand::ConstSharedPtr current_shift_cmd_;
-  tier4_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_;
 
   // Timer
   void onTimer();
