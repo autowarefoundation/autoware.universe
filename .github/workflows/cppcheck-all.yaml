@@ -19,6 +19,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential cmake git libpcre3-dev
 
+    # cppcheck from apt does not yet support --check-level args, and thus install from source
     - name: Install Cppcheck from source
       run: |
         mkdir /tmp/cppcheck

@@ -16,6 +16,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y build-essential cmake git libpcre3-dev
 
+    # cppcheck from apt does not yet support --check-level args, and thus install from source
     - name: Install Cppcheck from source
       run: |
         mkdir /tmp/cppcheck
@@ -42,7 +43,8 @@ jobs:
         files=$(cat changed_files.txt | grep -E '\.(cpp|hpp)$' || true)
         if [ -n "$files" ]; then
           echo "Running Cppcheck on changed files: $files"
-          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions $files 2> cppcheck-report.txt
+          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 $files 2> cppcheck-report.txt
+          # cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions $files 2> cppcheck-report.txt
           cat cppcheck-report.txt
         else
           echo "No C++ files changed."
