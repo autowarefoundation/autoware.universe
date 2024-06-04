@@ -86,25 +86,33 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
 
   const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
 
-  tier4_autoware_utils::MultiPolygon2d obstacle_forward_footprints;
-  tier4_autoware_utils::MultiPolygon2d obstacle_predicted_footprints;
+  std::vector<tier4_autoware_utils::MultiPolygon2d> obstacle_forward_footprints;
+  std::vector<tier4_autoware_utils::MultiPolygon2d> obstacle_predicted_footprints;
   std::vector<Collision> collisions;
   double footprints_duration_us;
   if (params_.use_predicted_path) {
     stopwatch.tic("footprints");
-    obstacle_predicted_footprints = create_object_footprints(dynamic_obstacles, params_);
+    obstacle_predicted_footprints.push_back(create_object_footprints(dynamic_obstacles, params_));
     footprints_duration_us = stopwatch.toc("footprints");
     stopwatch.tic("collisions");
     collisions =
       find_collisions(ego_data, dynamic_obstacles, obstacle_predicted_footprints, params_);
-    debug_data_.obstacle_footprints = obstacle_predicted_footprints;
+    for (const auto & footprint : obstacle_predicted_footprints) {
+      for (const auto & fp : footprint) {
+        debug_data_.obstacle_footprints.push_back(fp);
+      }
+    }
   } else {
     stopwatch.tic("footprints");
-    obstacle_forward_footprints = make_forward_footprints(dynamic_obstacles, params_, hysteresis);
+    obstacle_forward_footprints.push_back(make_forward_footprints(dynamic_obstacles, params_, hysteresis));
     footprints_duration_us = stopwatch.toc("footprints");
     stopwatch.tic("collisions");
     collisions = find_collisions(ego_data, dynamic_obstacles, obstacle_forward_footprints, params_);
-    debug_data_.obstacle_footprints = obstacle_forward_footprints;
+    for (const auto & footprint : obstacle_forward_footprints) {
+      for (const auto & fp : footprint) {
+        debug_data_.obstacle_footprints.push_back(fp);
+      }
+    }
   }
   update_object_map(object_map_, collisions, clock_->now(), ego_data.path.points, params_);
   std::optional<geometry_msgs::msg::Point> earliest_collision =
