@@ -535,8 +535,7 @@ void AccelBrakeMapCalibrator::takeActuationCommand(
   callbackActuation(header, accel, brake);
 }
 
-void AccelBrakeMapCalibrator::takeActuationStatus(
-  const ActuationStatusStamped::ConstSharedPtr msg)
+void AccelBrakeMapCalibrator::takeActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg)
 {
   const auto header = msg->header;
   const auto accel = msg->status.accel_status;
