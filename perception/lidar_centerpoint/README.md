@@ -342,7 +342,7 @@ Example:
 
 ## Acknowledgment: deepen.ai's 3D Annotation Tools Contribution
 
-Special thanks to deepen.ai for providing their 3D Annotation tools, which have been instrumental in creating our sample dataset.
+Special thanks to [Deepen AI](https://www.deepen.ai/) for providing their 3D Annotation tools, which have been instrumental in creating our sample dataset.
 
 ## Legal Notice
 
