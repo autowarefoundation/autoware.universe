@@ -366,12 +366,10 @@ PoseInstabilityDetector::clip_out_necessary_twist(
     TwistWithCovarianceStamped twist = *start_it;
     result_deque.clear();
 
-    twist.header.stamp.sec = static_cast<int32_t>(start_time.seconds());
-    twist.header.stamp.nanosec = static_cast<uint32_t>(start_time.nanoseconds() % 1000000000);
+    twist.header.stamp = start_time;
     result_deque.push_back(twist);
 
-    twist.header.stamp.sec = static_cast<int32_t>(end_time.seconds());
-    twist.header.stamp.nanosec = static_cast<uint32_t>(end_time.nanoseconds() % 1000000000);
+    twist.header.stamp = end_time;
     result_deque.push_back(twist);
 
     return result_deque;
@@ -381,8 +379,7 @@ PoseInstabilityDetector::clip_out_necessary_twist(
   // result_deque
   if (rclcpp::Time(result_deque.front().header.stamp) > start_time) {
     TwistWithCovarianceStamped start_twist = *start_it;
-    start_twist.header.stamp.sec = static_cast<int32_t>(start_time.seconds());
-    start_twist.header.stamp.nanosec = static_cast<uint32_t>(start_time.nanoseconds() % 1000000000);
+    start_twist.header.stamp = start_time;
     result_deque.push_front(start_twist);
   } else {
     // If the first element is earlier than start_time, interpolate the first element
@@ -401,17 +398,14 @@ PoseInstabilityDetector::clip_out_necessary_twist(
     result_deque[0].twist.twist.angular.z =
       twist1.angular.z * ratio + twist0.angular.z * (1 - ratio);
 
-    result_deque[0].header.stamp.sec = static_cast<int32_t>(start_time.seconds());
-    result_deque[0].header.stamp.nanosec =
-      static_cast<uint32_t>(start_time.nanoseconds() % 1000000000);
+    result_deque[0].header.stamp = start_time;
   }
 
   // If the last element is earlier than end_time, add the last element to the back of the
   // result_deque
   if (rclcpp::Time(result_deque.back().header.stamp) < end_time) {
     TwistWithCovarianceStamped end_twist = *end_it;
-    end_twist.header.stamp.sec = static_cast<int32_t>(end_time.seconds());
-    end_twist.header.stamp.nanosec = static_cast<uint32_t>(end_time.nanoseconds() % 1000000000);
+    end_twist.header.stamp = end_time;
     result_deque.push_back(end_twist);
   } else {
     // If the last element is later than end_time, interpolate the last element
@@ -433,10 +427,7 @@ PoseInstabilityDetector::clip_out_necessary_twist(
     result_deque[result_deque.size() - 1].twist.twist.angular.z =
       twist1.angular.z * ratio + twist0.angular.z * (1 - ratio);
 
-    result_deque[result_deque.size() - 1].header.stamp.sec =
-      static_cast<int32_t>(end_time.seconds());
-    result_deque[result_deque.size() - 1].header.stamp.nanosec =
-      static_cast<uint32_t>(end_time.nanoseconds() % 1000000000);
+    result_deque[result_deque.size() - 1].header.stamp = end_time;
   }
 
   return result_deque;
