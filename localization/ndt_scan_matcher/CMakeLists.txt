@@ -30,10 +30,14 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/map_update_module.cpp
   src/ndt_scan_matcher_core.cpp
   src/particle.cpp
+  # For debug
+  src/map_loader.cpp
+  src/metadata.cpp
+  src/utils.cpp
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
-target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES})
+target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES} yaml-cpp)
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "NDTScanMatcher"

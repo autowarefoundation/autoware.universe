@@ -14,6 +14,10 @@
 
 #include "ndt_scan_matcher/map_update_module.hpp"
 
+#ifndef timeDiff
+#define timeDiff(start, end) ((end.tv_sec - start.tv_sec) * 1000000 + end.tv_usec - start.tv_usec)
+#endif
+
 MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
   HyperParameters::DynamicMapLoading param)
@@ -46,6 +50,24 @@ MapUpdateModule::MapUpdateModule(
   // and ndt_ptr_ is only locked when swapping its pointer with
   // secondary_ndt_ptr_.
   need_rebuild_ = true;
+
+  meta_subscription_ = node->create_subscription<std_msgs::msg::String>("/map/map_loader/metadata", 10, std::bind(&MapUpdateModule::meta_callback, this, std::placeholders::_1));
+}
+
+void MapUpdateModule::meta_callback(const std_msgs::msg::String::SharedPtr msg)
+{
+  // Parse the message
+  auto data = msg->data;
+  size_t delim = data.find("::");
+  auto metadata_path = data.substr(0, delim);
+  auto pcd_dir_path = data.substr(delim + 2);
+
+  if (metadata_path != metadata_path_ || pcd_dir_path != pcd_dir_path_)
+  {
+    map_loader_.import(metadata_path, pcd_dir_path);
+    metadata_path_ = metadata_path;
+    pcd_dir_path_ = pcd_dir_path;
+  }
 }
 
 void MapUpdateModule::callback_timer(
@@ -193,72 +215,36 @@ bool MapUpdateModule::update_ndt(
 {
   diagnostics_ptr->addKeyValue("maps_size_before", ndt.getCurrentMapIDs().size());
 
-  auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialPointCloudMap::Request>();
-
-  request->area.center_x = static_cast<float>(position.x);
-  request->area.center_y = static_cast<float>(position.y);
-  request->area.radius = static_cast<float>(param_.map_radius);
-  request->cached_ids = ndt.getCurrentMapIDs();
-
-  while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-    diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
-
-    std::stringstream message;
-    message << "Waiting for pcd loader service. Check the pointcloud_map_loader.";
-    diagnostics_ptr->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-    return false;
-  }
-
-  // send a request to map_loader
-  auto result{pcd_loader_client_->async_send_request(
-    request,
-    [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
-
-  std::future_status status = result.wait_for(std::chrono::seconds(0));
-  while (status != std::future_status::ready) {
-    // check is_succeed_call_pcd_loader
-    if (!rclcpp::ok()) {
-      diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
-
-      std::stringstream message;
-      message << "pcd_loader service is not working.";
-      diagnostics_ptr->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-      return false;  // No update
-    }
-    status = result.wait_for(std::chrono::seconds(1));
-  }
-  diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
-
-  auto & maps_to_add = result.get()->new_pointcloud_with_ids;
-  auto & map_ids_to_remove = result.get()->ids_to_remove;
-
-  diagnostics_ptr->addKeyValue("maps_to_add_size", maps_to_add.size());
-  diagnostics_ptr->addKeyValue("maps_to_remove_size", map_ids_to_remove.size());
-
-  if (maps_to_add.empty() && map_ids_to_remove.empty()) {
-    return false;  // No update
-  }
-
   const auto exe_start_time = std::chrono::system_clock::now();
-  // Perform heavy processing outside of the lock scope
 
-  // Add pcd
-  for (auto & map : maps_to_add) {
-    auto cloud = pcl::make_shared<pcl::PointCloud<PointTarget>>();
+  auto cached_ids = ndt.getCurrentMapIDs();
+  std::string map_id;
+  TargetCloudPtr new_pcd;
+  int changed_count = 0;  // To track if there are any changes in the currently loaded map
 
-    pcl::fromROSMsg(map.pointcloud, *cloud);
-    ndt.addTarget(cloud, map.cell_id);
+  map_loader_.parallel_load_setup(position.x, position.y, param_.map_radius, cached_ids);
+
+  while (map_loader_.get_next_loaded_pcd(map_id, new_pcd))
+  {
+    ++changed_count;
+    ndt.addTarget(new_pcd, map_id);
   }
 
-  // Remove pcd
-  for (const std::string & map_id_to_remove : map_ids_to_remove) {
-    ndt.removeTarget(map_id_to_remove);
+  auto pcd_to_remove = map_loader_.get_pcd_id_to_remove();
+
+  for (auto & id : pcd_to_remove)
+  {
+    ++changed_count;
+    ndt.removeTarget(id);
+  }
+
+  if (changed_count == 0)
+  {
+    return false; // No update
   }
 
   ndt.createVoxelKdtree();
-
+  
   const auto exe_end_time = std::chrono::system_clock::now();
   const auto duration_micro_sec =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count();
@@ -266,6 +252,7 @@ bool MapUpdateModule::update_ndt(
   diagnostics_ptr->addKeyValue("map_update_execution_time", exe_time);
   diagnostics_ptr->addKeyValue("maps_size_after", ndt.getCurrentMapIDs().size());
   diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
+
   return true;  // Updated
 }
 

@@ -21,6 +21,7 @@
 #include "selected_map_loader_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
@@ -44,6 +45,8 @@ private:
   std::unique_ptr<PartialMapLoaderModule> partial_map_loader_;
   std::unique_ptr<DifferentialMapLoaderModule> differential_map_loader_;
   std::unique_ptr<SelectedMapLoaderModule> selected_map_loader_;
+
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr base_dir_publisher_;
 
   std::vector<std::string> getPcdPaths(
     const std::vector<std::string> & pcd_paths_or_directory) const;

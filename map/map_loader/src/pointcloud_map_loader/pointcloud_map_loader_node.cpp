@@ -47,8 +47,8 @@ bool isPcdFile(const std::string & p)
 PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("pointcloud_map_loader", options)
 {
-  const auto pcd_paths =
-    getPcdPaths(declare_parameter<std::vector<std::string>>("pcd_paths_or_directory"));
+  auto pcd_paths_or_directory = declare_parameter<std::vector<std::string>>("pcd_paths_or_directory");
+  const auto pcd_paths = getPcdPaths(pcd_paths_or_directory);
   std::string pcd_metadata_path = declare_parameter<std::string>("pcd_metadata_path");
   bool enable_whole_load = declare_parameter<bool>("enable_whole_load");
   bool enable_downsample_whole_load = declare_parameter<bool>("enable_downsampled_whole_load");
@@ -83,6 +83,21 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   if (enable_selected_load) {
     selected_map_loader_ = std::make_unique<SelectedMapLoaderModule>(this, pcd_metadata_dict);
   }
+
+  // Publish the path to the base directory of the PCDs
+  // Copied from pointcloud_map_loader module
+  rclcpp::QoS durable_qos{1};
+
+  durable_qos.transient_local();
+  base_dir_publisher_ = 
+    this->create_publisher<std_msgs::msg::String>("/map/map_loader/metadata", durable_qos);
+
+  // Fuse both metadata path and pcd path to a single string, separated by "::"
+  std_msgs::msg::String meta_msg;
+
+  meta_msg.data = pcd_metadata_path + "::" + pcd_paths_or_directory[0];
+
+  base_dir_publisher_->publish(meta_msg);
 }
 
 std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(

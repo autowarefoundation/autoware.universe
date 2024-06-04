@@ -28,6 +28,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <fmt/format.h>
 #include <multigrid_pclomp/multigrid_ndt_omp.h>
@@ -40,10 +41,16 @@
 #include <thread>
 #include <vector>
 
+#include <ndt_scan_matcher/map_loader.hpp>
+
 class MapUpdateModule
 {
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
+  using TargetCloudType = pcl::PointCloud<PointTarget>;
+  using SourceCloudType = pcl::PointCloud<PointSource>;
+  using TargetCloudPtr = typename TargetCloudType::Ptr;
+  using SourceCloudPtr = typename SourceCloudType::Ptr;
   using NdtType = pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
   using NdtPtrType = std::shared_ptr<NdtType>;
 
@@ -59,6 +66,8 @@ private:
     const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position,
     std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
 
+  void meta_callback(const std_msgs::msg::String::SharedPtr msg);
+
   [[nodiscard]] bool should_update_map(
     const geometry_msgs::msg::Point & position,
     std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
@@ -67,6 +76,10 @@ private:
     std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
   // Update the specified NDT
   bool update_ndt(
+    const geometry_msgs::msg::Point & position, NdtType & ndt,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+
+  bool update_ndt_old(
     const geometry_msgs::msg::Point & position, NdtType & ndt,
     std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
   void publish_partial_pcd_map();
@@ -88,6 +101,11 @@ private:
   // Indicate if there is a prefetch thread waiting for being collected
   NdtPtrType secondary_ndt_ptr_;
   bool need_rebuild_;
+
+  // Direct map loader
+  loc::MapLoader<PointTarget> map_loader_;
+  std::string metadata_path_, pcd_dir_path_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr meta_subscription_;
 };
 
 #endif  // NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
