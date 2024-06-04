@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "shift_decider/shift_decider.hpp"
+#include "motion_utils/vehicle/vehicle_state_checker.hpp"
 
 #include <rclcpp/timer.hpp>
 
@@ -25,7 +26,7 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
 : Node("shift_decider", node_options)
 {
   using std::placeholders::_1;
-
+  vehicle_stop_checker_ = std::make_unique<motion_utils::VehicleStopChecker>(this);
   static constexpr std::size_t queue_size = 1;
   rclcpp::QoS durable_qos(queue_size);
   durable_qos.transient_local();
@@ -75,13 +76,16 @@ void ShiftDecider::updateCurrentShiftCmd()
   using autoware_auto_system_msgs::msg::AutowareState;
   using autoware_auto_vehicle_msgs::msg::GearCommand;
 
+  const auto stopped = vehicle_stop_checker_->isVehicleStopped(0.0);
   shift_cmd_.stamp = now();
   static constexpr double vel_threshold = 0.01;  // to prevent chattering
   if (autoware_state_->state == AutowareState::DRIVING) {
-    if (control_cmd_->longitudinal.speed > vel_threshold) {
-      shift_cmd_.command = GearCommand::DRIVE;
-    } else if (control_cmd_->longitudinal.speed < -vel_threshold) {
-      shift_cmd_.command = GearCommand::REVERSE;
+    if (stopped) {
+      if (control_cmd_->longitudinal.speed > vel_threshold) {
+        shift_cmd_.command = GearCommand::DRIVE;
+      } else if (control_cmd_->longitudinal.speed < -vel_threshold) {
+        shift_cmd_.command = GearCommand::REVERSE;
+      } 
     } else {
       shift_cmd_.command = prev_shift_command;
     }

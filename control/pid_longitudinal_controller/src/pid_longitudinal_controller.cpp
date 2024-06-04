@@ -17,7 +17,7 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/normalization.hpp"
-
+#include "motion_utils/vehicle/vehicle_state_checker.hpp"
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -31,7 +31,8 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
 : node_parameters_(node.get_node_parameters_interface()),
   clock_(node.get_clock()),
   logger_(node.get_logger().get_child("longitudinal_controller")),
-  diagnostic_updater_(&node)
+  diagnostic_updater_(&node),   
+  vehicle_stop_checker_(std::make_unique<motion_utils::VehicleStopChecker>(&node))
 {
   using std::placeholders::_1;
 
@@ -891,12 +892,16 @@ enum PidLongitudinalController::Shift PidLongitudinalController::getCurrentShift
   const double target_vel =
     control_data.interpolated_traj.points.at(control_data.target_idx).longitudinal_velocity_mps;
 
-  if (target_vel > epsilon) {
-    return Shift::Forward;
-  } else if (target_vel < -epsilon) {
-    return Shift::Reverse;
-  }
+  const auto stopped = vehicle_stop_checker_->isVehicleStopped(0.0);
 
+  if (stopped) {
+    if (target_vel > epsilon) {
+      return Shift::Forward;
+    } else if (target_vel < -epsilon) {
+      return Shift::Reverse;
+    }
+  }
+  
   return m_prev_shift;
 }
 
@@ -1063,15 +1068,7 @@ PidLongitudinalController::StateAfterDelay PidLongitudinalController::predictedS
 
 double PidLongitudinalController::applyVelocityFeedback(const ControlData & control_data)
 {
-  // NOTE: Acceleration command is always positive even if the ego drives backward.
-  const double vel_sign = (control_data.shift == Shift::Forward)
-                            ? 1.0
-                            : (control_data.shift == Shift::Reverse ? -1.0 : 0.0);
-  const double current_vel = control_data.current_motion.vel;
-  const auto target_motion = Motion{
-    control_data.interpolated_traj.points.at(control_data.target_idx).longitudinal_velocity_mps,
-    control_data.interpolated_traj.points.at(control_data.target_idx).acceleration_mps2};
-  const double diff_vel = (target_motion.vel - current_vel) * vel_sign;
+  const double diff_vel = target_motion.vel - current_vel;
   const bool is_under_control = m_current_operation_mode.is_autoware_control_enabled &&
                                 m_current_operation_mode.mode == OperationModeState::AUTONOMOUS;
 
@@ -1102,7 +1099,9 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
   const double ff_acc =
     control_data.interpolated_traj.points.at(control_data.target_idx).acceleration_mps2 * ff_scale;
 
-  const double feedback_acc = ff_acc + pid_acc;
+  // NOTE: Acceleration command is always positive even if the ego drives backward.
+  const double vel_sign = (shift == Shift::Forward) ? 1.0 : (shift == Shift::Reverse ? -1.0 : 0.0);
+  const double feedback_acc = (ff_acc + pid_acc) * vel_sign;
 
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_PID_APPLIED, feedback_acc);
   m_debug_values.setValues(DebugValues::TYPE::ERROR_VEL_FILTERED, error_vel_filtered);
