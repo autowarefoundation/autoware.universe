@@ -208,9 +208,9 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   using std::placeholders::_2;
   using std::placeholders::_3;
 
-  velocity_sub_ = create_subscription<VelocityReport>(
-    "~/input/velocity", queue_size,
-    std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
+  // velocity_sub_ = create_subscription<VelocityReport>(
+    // "~/input/velocity", queue_size,
+    // std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
   // steer_sub_ = create_subscription<SteeringReport>(
   //   "~/input/steer", queue_size, std::bind(&AccelBrakeMapCalibrator::callbackSteer, this, _1));
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
@@ -300,6 +300,7 @@ void AccelBrakeMapCalibrator::timerCallback()
 
   // take steer_ptr_ data
   steer_ptr_ = steer_sub_.takeData();
+  takeVelocity(velocity_sub_.takeData());
 
   // data check
   if (
@@ -461,7 +462,7 @@ void AccelBrakeMapCalibrator::timerCallbackOutputCSV()
   }
 }
 
-void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstSharedPtr msg)
+void AccelBrakeMapCalibrator::takeVelocity(const VelocityReport::ConstSharedPtr msg)
 {
   // convert velocity-report to twist-stamped
   auto twist_msg = std::make_shared<TwistStamped>();
