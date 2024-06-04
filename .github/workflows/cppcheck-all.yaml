@@ -30,7 +30,7 @@ jobs:
         make -j $(nproc)
         sudo make install
 
-    - name: Run Cppcheck on changed files
+    - name: Run Cppcheck on all files
       run: |
         files=$(cat changed_files.txt | grep '\.cpp$\|\.hpp$' | tr '\n' ' ')
         if [ -n "$files" ]; then
