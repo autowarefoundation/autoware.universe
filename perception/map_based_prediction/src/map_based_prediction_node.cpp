@@ -911,12 +911,7 @@ PredictedObject MapBasedPredictionNode::convertToPredictedObject(
 {
   PredictedObject predicted_object;
   predicted_object.kinematics = convertToPredictedKinematics(tracked_object.kinematics);
-  autoware_perception_msgs::msg::ObjectClassification classification;
-  for (size_t i = 0; i < tracked_object.classification.size(); i++) {
-    classification.label = tracked_object.classification[i].label;
-    classification.probability = tracked_object.classification[i].probability;
-    predicted_object.classification.push_back(classification);
-  }
+  predicted_object.classification = tracked_object.classification;
   predicted_object.object_id = tracked_object.object_id;
   predicted_object.shape.type = tracked_object.shape.type;
   predicted_object.shape.footprint = tracked_object.shape.footprint;
