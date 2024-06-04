@@ -141,7 +141,9 @@ protected:
     const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
     const bool check_safety = true) const override;
 
-  TurnSignalInfo calcTurnSignalInfo() override;
+  std::optional<LaneChangePath> calcTerminalLaneChangePath(
+    const lanelet::ConstLanelets & current_lanes,
+    const lanelet::ConstLanelets & target_lanes) const;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 
