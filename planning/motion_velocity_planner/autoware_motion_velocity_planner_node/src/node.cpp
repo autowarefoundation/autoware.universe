@@ -214,8 +214,6 @@ void MotionVelocityPlannerNode::on_lanelet_map(
 void MotionVelocityPlannerNode::process_traffic_signals(
   const autoware_perception_msgs::msg::TrafficLightGroupArray::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
-
   // clear previous observation
   planner_data_.traffic_light_id_map_raw_.clear();
   const auto traffic_light_id_map_last_observed_old =
