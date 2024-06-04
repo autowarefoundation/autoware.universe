@@ -1,0 +1,34 @@
+name: cppcheck
+
+on:
+  pull_request:
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Cppcheck
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cppcheck
+
+    - name: Get changed files
+      id: changed-files
+      run: |
+        git fetch origin ${{ github.base_ref }} --depth=1
+        git diff --name-only FETCH_HEAD ${{ github.sha }} > changed_files.txt
+        cat changed_files.txt
+
+    - name: Run Cppcheck on changed files
+      run: |
+        files=$(cat changed_files.txt | grep '\.cpp$\|\.h$' | tr '\n' ' ')
+        if [ -n "$files" ]; then
+          cppcheck --enable=warning,style,performance --error-exitcode=1 --xml $files 2> cppcheck-report.xml
+        else
+          echo "No C++ files changed."
+        fi
+      shell: bash
