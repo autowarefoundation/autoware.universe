@@ -1,0 +1,41 @@
+name: cppcheck
+
+on:
+  pull_request:
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Cppcheck
+      run: sudo apt-get install -y cppcheck
+
+    - name: Run Cppcheck
+      run: cppcheck --enable=warning,style,performance --error-exitcode=1 .
+
+    - name: Upload Cppcheck Report
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: cppcheck-report
+        path: cppcheck-report.xml
+
+    - name: Post results as comment
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'cppcheck-report.xml';
+          const report = fs.readFileSync(path, { encoding: 'utf8' });
+          const comment = `Cppcheck Analysis:\n\n\`\`\`xml\n${report}\n\`\`\``;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
