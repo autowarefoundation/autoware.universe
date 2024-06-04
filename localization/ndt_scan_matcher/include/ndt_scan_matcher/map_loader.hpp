@@ -87,14 +87,14 @@ public:
   }
 
   // Wait for all running threads to finish
-  inline void sync() {
-    if (load_manager_future_.valid())
-    {
+  inline void sync()
+  {
+    if (load_manager_future_.valid()) {
       load_manager_future_.wait();
     }
 
-    for(auto &tf : thread_futures_) {
-      if(tf.valid()) {
+    for (auto & tf : thread_futures_) {
+      if (tf.valid()) {
         tf.wait();
       }
     }
@@ -128,13 +128,13 @@ private:
     // Loop until an idle thread is found
     while (true) {
       // Return immediately if a thread that has not been given a job is found
-      if(!thread_futures_[tid].valid()) {
+      if (!thread_futures_[tid].valid()) {
         last_check_tid_ = tid;
         return tid;
       }
 
       // If no such thread is found, wait for the current thread to finish its job
-      if(thread_futures_[tid].wait_for(span) == std::future_status::ready) {
+      if (thread_futures_[tid].wait_for(span) == std::future_status::ready) {
         last_check_tid_ = tid;
         return tid;
       }

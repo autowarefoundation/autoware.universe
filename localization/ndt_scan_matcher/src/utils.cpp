@@ -64,10 +64,8 @@ void queryContainedSegmentIdx(
   auto ub = m.coordinateToSegmentIndex(upper_x, upper_y);
 
   // Loop on the candidate boundaries
-  for (float min_x = lb.x; min_x <= ub.x; min_x += m.res_x_)
-  {
-    for (float min_y = lb.y; min_y <= ub.y; min_y += m.res_y_)
-    {
+  for (float min_x = lb.x; min_x <= ub.x; min_x += m.res_x_) {
+    for (float min_y = lb.y; min_y <= ub.y; min_y += m.res_y_) {
       pcl::PointXYZ lower_bound, upper_bound;
 
       lower_bound.x = min_x;
@@ -75,8 +73,7 @@ void queryContainedSegmentIdx(
       upper_bound.x = min_x + m.res_x_;
       upper_bound.y = min_y + m.res_y_;
 
-      if (cylinderAndBoxOverlapExists(center_x, center_y, radius, lower_bound, upper_bound))
-      {
+      if (cylinderAndBoxOverlapExists(center_x, center_y, radius, lower_bound, upper_bound)) {
         map_id.push_back(m.coordinateToSegmentIndex(lower_bound.x, lower_bound.y));
       }
     }

@@ -115,7 +115,8 @@ void MapLoader<PointT>::parallel_load_setup(
   query(x, y, radius, cached_ids, pcd_to_add_, pcd_to_remove_);
 
   // Start loading right now
-  load_manager_future_ = std::async(std::launch::async, &MapLoader<PointT>::loadManagerThread, this);
+  load_manager_future_ =
+    std::async(std::launch::async, &MapLoader<PointT>::loadManagerThread, this);
 }
 
 template <typename PointT>
