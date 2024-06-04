@@ -26,36 +26,43 @@
 
 namespace behavior_velocity_planner::dynamic_obstacle_stop
 {
-
 std::optional<geometry_msgs::msg::Point> find_closest_collision_point(
-  const EgoData & ego_data, const geometry_msgs::msg::Pose & object_pose,
-  const tier4_autoware_utils::Polygon2d & object_footprint, const PlannerParam & params)
+  const EgoData & ego_data, const autoware_auto_perception_msgs::msg::PredictedObject & object,
+  const tier4_autoware_utils::MultiPolygon2d & object_footprints, const PlannerParam & params)
 {
   std::optional<geometry_msgs::msg::Point> closest_collision_point;
   auto closest_dist = std::numeric_limits<double>::max();
   std::vector<BoxIndexPair> rough_collisions;
-  ego_data.rtree.query(
-    boost::geometry::index::intersects(object_footprint), std::back_inserter(rough_collisions));
-  for (const auto & rough_collision : rough_collisions) {
-    const auto path_idx = rough_collision.second;
-    const auto & ego_footprint = ego_data.path_footprints[path_idx];
-    const auto & ego_pose = ego_data.path.points[path_idx].point.pose;
-    const auto angle_diff = tier4_autoware_utils::normalizeRadian(
-      tf2::getYaw(ego_pose.orientation) - tf2::getYaw(object_pose.orientation));
-    if (
-      (!params.ignore_objects_behind_ego &&
-       std::abs(angle_diff) < params.yaw_threshold_behind_object) ||
-      std::abs(angle_diff) > params.yaw_threshold) {
-      tier4_autoware_utils::MultiPoint2d collision_points;
-      boost::geometry::intersection(
-        object_footprint.outer(), ego_footprint.outer(), collision_points);
-      for (const auto & coll_p : collision_points) {
-        auto p = geometry_msgs::msg::Point().set__x(coll_p.x()).set__y(coll_p.y());
-        const auto dist_to_ego =
-          motion_utils::calcSignedArcLength(ego_data.path.points, ego_data.pose.position, p);
-        if (dist_to_ego < closest_dist) {
-          closest_dist = dist_to_ego;
-          closest_collision_point = p;
+  for (const auto & object_footprint : object_footprints) {
+    ego_data.rtree.query(
+      boost::geometry::index::intersects(object_footprint), std::back_inserter(rough_collisions));
+    for (const auto & rough_collision : rough_collisions) {
+      const auto path_idx = rough_collision.second;
+      const auto & ego_footprint = ego_data.path_footprints[path_idx];
+      const auto & ego_pose = ego_data.path.points[path_idx].point.pose;
+      const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
+      const auto angle_diff = tier4_autoware_utils::normalizeRadian(
+        tf2::getYaw(ego_pose.orientation) - tf2::getYaw(object_pose.orientation));
+      if (
+        (!params.ignore_objects_behind_ego &&
+         std::abs(angle_diff) < params.yaw_threshold_behind_object) ||
+        std::abs(angle_diff) > params.yaw_threshold) {
+        tier4_autoware_utils::MultiPoint2d collision_points;
+        boost::geometry::intersection(object_footprints, ego_footprint.outer(), collision_points);
+        for (const auto & coll_p : collision_points) {
+          auto p = geometry_msgs::msg::Point().set__x(coll_p.x()).set__y(coll_p.y());
+          const auto dist_ego_to_coll =
+            motion_utils::calcSignedArcLength(ego_data.path.points, ego_pose.position, p);
+          const auto dist_obj_to_coll =
+            motion_utils::calcSignedArcLength(ego_data.path.points, object_pose.position, p);
+          const auto tta_cp_npc =
+            abs(dist_obj_to_coll) / object.kinematics.initial_twist_with_covariance.twist.linear.x;
+          const auto tta_cp_ego =
+            dist_ego_to_coll / ego_data.path.points[path_idx].point.longitudinal_velocity_mps;
+          if (abs(dist_ego_to_coll) < closest_dist && std::abs(tta_cp_npc - tta_cp_ego) < params.time_horizon) {
+            closest_dist = dist_ego_to_coll;
+            closest_collision_point = p;
+          }
         }
       }
     }
