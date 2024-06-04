@@ -79,7 +79,7 @@ $$
 \tau_y = l + 3\sqrt{N\left(\sigma_v^2\sigma_\theta^2 + v_{\rm max}^2\sigma_\theta^2 + \omega_{\rm max}^2 \sigma_v^2 \right)\left(\Delta t\right)^2} + \epsilon_y
 $$
 
-- $\tau_y \cdots$ Threshold for the difference in the lateral axis [m]
+- $\tau_y \cdots$ Threshold for the difference in the lateral axis [m] (See the appendix how this is calculated)
 - $l \cdots$ Maximum lateral distance described in the image above [m]
 - $\sigma_v^2 \cdots$ Variance of the heading velocity [m/s]
 - $\sigma_\theta^2 \cdots$ Variance of the heading angle [rad]
@@ -140,10 +140,29 @@ On calculating the maximum lateral distance $l$, the `pose_instability_detector`
 Given a heading velocity $v$ and $\omega$, the 2D theoritical variation seen from the previous pose is calculated as follows:
 
 $$
+\begin{align*}
 \left[
     \begin{matrix}
-    x\\
-    y
+    \Delta x\\
+    \Delta y
     \end{matrix}
 \right]
+&=
+\left[
+    \begin{matrix}
+    \int_{0}^{\Delta t} v \cos(\omega t) dt\\
+    \int_{0}^{\Delta t} v \sin(\omega t) dt
+    \end{matrix}
+\right]
+\\
+&=
+\left[
+    \begin{matrix}
+    \frac{v}{\omega} \sin(\omega \Delta t)\\
+    \frac{v}{\omega} \left(1 - \cos(\omega \Delta t)\right)
+    \end{matrix}
+\right]
+\end{align*}
 $$
+
+We calculate this variation for each corner and get the maximum value of the lateral distance $l$ by comparing the distance between the nominal dead reckoning pose and the corner poses.
