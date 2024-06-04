@@ -59,7 +59,9 @@ std::optional<geometry_msgs::msg::Point> find_closest_collision_point(
             abs(dist_obj_to_coll) / object.kinematics.initial_twist_with_covariance.twist.linear.x;
           const auto tta_cp_ego =
             dist_ego_to_coll / ego_data.path.points[path_idx].point.longitudinal_velocity_mps;
-          if (abs(dist_ego_to_coll) < closest_dist && std::abs(tta_cp_npc - tta_cp_ego) < params.time_horizon) {
+          if (
+            abs(dist_ego_to_coll) < closest_dist &&
+            std::abs(tta_cp_npc - tta_cp_ego) < params.time_horizon) {
             closest_dist = dist_ego_to_coll;
             closest_collision_point = p;
           }

@@ -104,7 +104,8 @@ bool DynamicObstacleStopModule::modifyPathVelocity(PathWithLaneId * path, StopRe
     }
   } else {
     stopwatch.tic("footprints");
-    obstacle_forward_footprints.push_back(make_forward_footprints(dynamic_obstacles, params_, hysteresis));
+    obstacle_forward_footprints.push_back(
+      make_forward_footprints(dynamic_obstacles, params_, hysteresis));
     footprints_duration_us = stopwatch.toc("footprints");
     stopwatch.tic("collisions");
     collisions = find_collisions(ego_data, dynamic_obstacles, obstacle_forward_footprints, params_);
