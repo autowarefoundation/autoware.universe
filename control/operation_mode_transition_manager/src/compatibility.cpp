@@ -31,7 +31,8 @@ Compatibility::Compatibility(rclcpp::Node * node) : node_(node)
     "/control/external_cmd_selector/current_selector_mode", 1,
     std::bind(&Compatibility::on_selector_mode, this, std::placeholders::_1));
 
-  pub_autoware_engage_ = node->create_publisher<AutowareEngage>("/autoware/engage", 1);
+  pub_autoware_engage_ =
+    node->create_publisher<AutowareEngage>("/autoware/engage", rclcpp::QoS(1).transient_local());
   pub_gate_mode_ = node->create_publisher<GateMode>("/control/gate_mode_cmd", 1);
   cli_selector_mode_ =
     node->create_client<SelectorModeSrv>("/control/external_cmd_selector/select_external_command");

@@ -90,7 +90,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   gate_mode_sub_ = create_subscription<GateMode>(
     "input/gate_mode", 1, std::bind(&VehicleCmdGate::onGateMode, this, _1));
   engage_sub_ = create_subscription<EngageMsg>(
-    "input/engage", 1, std::bind(&VehicleCmdGate::onEngage, this, _1));
+    "input/engage", rclcpp::QoS(1).transient_local(),
+    std::bind(&VehicleCmdGate::onEngage, this, _1));
   kinematics_sub_ = create_subscription<Odometry>(
     "/localization/kinematic_state", 1,
     [this](Odometry::SharedPtr msg) { current_kinematics_ = *msg; });
