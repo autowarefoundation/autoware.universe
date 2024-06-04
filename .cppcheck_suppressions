@@ -43,6 +43,7 @@ stlFindInsert
 syntaxError
 uninitMemberVar
 unknownMacro
+unmatchedSuppression
 unpreciseMathCall
 unreadVariable
 unsignedLessThanZero
