@@ -1,5 +1,5 @@
 //
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2024 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -108,15 +108,14 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr map_error_ratio_pub_;
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
 
-  // rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
-  // rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
-  rclcpp::Subscription<ActuationStatusStamped>::SharedPtr actuation_status_sub_;
-  rclcpp::Subscription<ActuationCommandStamped>::SharedPtr actuation_cmd_sub_;
-
   tier4_autoware_utils::InterProcessPollingSubscriber<VelocityReport> velocity_sub_{
     this, "~/input/velocity"};
   tier4_autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{
     this, "~/input/steer"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<ActuationStatusStamped> actuation_status_sub_{
+    this, "~/input/actuation_status"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<ActuationCommandStamped> actuation_cmd_sub_{
+    this, "~/input/actuation_cmd"};
 
   // Service
   rclcpp::Service<UpdateAccelBrakeMap>::SharedPtr update_map_dir_server_;
@@ -252,8 +251,8 @@ private:
   void updateTotalMapOffset(const double measured_acc, const double map_acc);
   void callbackActuation(
     const std_msgs::msg::Header header, const double accel, const double brake);
-  void callbackActuationCommand(const ActuationCommandStamped::ConstSharedPtr msg);
-  void callbackActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg);
+  void takeActuationCommand(const ActuationCommandStamped::ConstSharedPtr msg);
+  void takeActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg);
   void takeVelocity(const VelocityReport::ConstSharedPtr msg);
   // void callbackSteer(const SteeringReport::ConstSharedPtr msg);
   bool callbackUpdateMapService(

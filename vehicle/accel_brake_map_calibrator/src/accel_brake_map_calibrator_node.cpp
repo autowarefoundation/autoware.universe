@@ -1,5 +1,5 @@
 //
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2024 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -208,22 +208,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   using std::placeholders::_2;
   using std::placeholders::_3;
 
-  // velocity_sub_ = create_subscription<VelocityReport>(
-    // "~/input/velocity", queue_size,
-    // std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
-  // steer_sub_ = create_subscription<SteeringReport>(
-  //   "~/input/steer", queue_size, std::bind(&AccelBrakeMapCalibrator::callbackSteer, this, _1));
-  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
-    actuation_status_sub_ = create_subscription<ActuationStatusStamped>(
-      "~/input/actuation_status", queue_size,
-      std::bind(&AccelBrakeMapCalibrator::callbackActuationStatus, this, _1));
-  }
-  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
-    actuation_cmd_sub_ = create_subscription<ActuationCommandStamped>(
-      "~/input/actuation_cmd", queue_size,
-      std::bind(&AccelBrakeMapCalibrator::callbackActuationCommand, this, _1));
-  }
-
   // Service
   update_map_dir_server_ = create_service<UpdateAccelBrakeMap>(
     "~/input/update_map_dir",
@@ -298,9 +282,15 @@ void AccelBrakeMapCalibrator::timerCallback()
 
   /* valid check */
 
-  // take steer_ptr_ data
+  // take data from subscribers
   steer_ptr_ = steer_sub_.takeData();
   takeVelocity(velocity_sub_.takeData());
+  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
+    takeActuationStatus(actuation_status_sub_.takeData());
+  }
+  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
+    takeActuationCommand(actuation_cmd_sub_.takeData());
+  }
 
   // data check
   if (
@@ -500,12 +490,6 @@ void AccelBrakeMapCalibrator::takeVelocity(const VelocityReport::ConstSharedPtr 
   pushDataToVec(twist_msg, twist_vec_max_size_, &twist_vec_);
 }
 
-// void AccelBrakeMapCalibrator::callbackSteer(const SteeringReport::ConstSharedPtr msg)
-// {
-//   debug_values_.data.at(CURRENT_STEER) = msg->steering_tire_angle;
-//   steer_ptr_ = msg;
-// }
-
 void AccelBrakeMapCalibrator::callbackActuation(
   const std_msgs::msg::Header header, const double accel, const double brake)
 {
@@ -542,7 +526,7 @@ void AccelBrakeMapCalibrator::callbackActuation(
     getNearestTimeDataFromVec(brake_pedal_ptr_, pedal_to_accel_delay_, brake_pedal_vec_);
 }
 
-void AccelBrakeMapCalibrator::callbackActuationCommand(
+void AccelBrakeMapCalibrator::takeActuationCommand(
   const ActuationCommandStamped::ConstSharedPtr msg)
 {
   const auto header = msg->header;
@@ -551,7 +535,7 @@ void AccelBrakeMapCalibrator::callbackActuationCommand(
   callbackActuation(header, accel, brake);
 }
 
-void AccelBrakeMapCalibrator::callbackActuationStatus(
+void AccelBrakeMapCalibrator::takeActuationStatus(
   const ActuationStatusStamped::ConstSharedPtr msg)
 {
   const auto header = msg->header;
