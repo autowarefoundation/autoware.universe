@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  cppcheck:
+  cppcheck-differential:
     runs-on: ubuntu-latest
 
     steps:
