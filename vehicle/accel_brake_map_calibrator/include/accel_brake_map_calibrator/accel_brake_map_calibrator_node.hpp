@@ -44,6 +44,7 @@
 #include "tier4_vehicle_msgs/msg/actuation_command_stamped.hpp"
 #include "tier4_vehicle_msgs/msg/actuation_status_stamped.hpp"
 #include "tier4_vehicle_msgs/srv/update_accel_brake_map.hpp"
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <fstream>
@@ -108,9 +109,11 @@ private:
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
 
   rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
-  rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
+  // rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
   rclcpp::Subscription<ActuationStatusStamped>::SharedPtr actuation_status_sub_;
   rclcpp::Subscription<ActuationCommandStamped>::SharedPtr actuation_cmd_sub_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{
+    this, "~/input/steer"};
 
   // Service
   rclcpp::Service<UpdateAccelBrakeMap>::SharedPtr update_map_dir_server_;
@@ -249,7 +252,7 @@ private:
   void callbackActuationCommand(const ActuationCommandStamped::ConstSharedPtr msg);
   void callbackActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg);
   void callbackVelocity(const VelocityReport::ConstSharedPtr msg);
-  void callbackSteer(const SteeringReport::ConstSharedPtr msg);
+  // void callbackSteer(const SteeringReport::ConstSharedPtr msg);
   bool callbackUpdateMapService(
     const std::shared_ptr<rmw_request_id_t> request_header,
     UpdateAccelBrakeMap::Request::SharedPtr req, UpdateAccelBrakeMap::Response::SharedPtr res);

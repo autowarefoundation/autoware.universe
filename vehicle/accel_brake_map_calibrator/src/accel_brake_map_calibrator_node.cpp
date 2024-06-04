@@ -211,8 +211,8 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   velocity_sub_ = create_subscription<VelocityReport>(
     "~/input/velocity", queue_size,
     std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
-  steer_sub_ = create_subscription<SteeringReport>(
-    "~/input/steer", queue_size, std::bind(&AccelBrakeMapCalibrator::callbackSteer, this, _1));
+  // steer_sub_ = create_subscription<SteeringReport>(
+  //   "~/input/steer", queue_size, std::bind(&AccelBrakeMapCalibrator::callbackSteer, this, _1));
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
     actuation_status_sub_ = create_subscription<ActuationStatusStamped>(
       "~/input/actuation_status", queue_size,
@@ -297,6 +297,9 @@ void AccelBrakeMapCalibrator::timerCallback()
                               << "update_fail_count_: " << update_fail_count_ << "\n");
 
   /* valid check */
+
+  // take steer_ptr_ data
+  steer_ptr_ = steer_sub_.takeData();
 
   // data check
   if (
@@ -496,11 +499,11 @@ void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstShared
   pushDataToVec(twist_msg, twist_vec_max_size_, &twist_vec_);
 }
 
-void AccelBrakeMapCalibrator::callbackSteer(const SteeringReport::ConstSharedPtr msg)
-{
-  debug_values_.data.at(CURRENT_STEER) = msg->steering_tire_angle;
-  steer_ptr_ = msg;
-}
+// void AccelBrakeMapCalibrator::callbackSteer(const SteeringReport::ConstSharedPtr msg)
+// {
+//   debug_values_.data.at(CURRENT_STEER) = msg->steering_tire_angle;
+//   steer_ptr_ = msg;
+// }
 
 void AccelBrakeMapCalibrator::callbackActuation(
   const std_msgs::msg::Header header, const double accel, const double brake)
