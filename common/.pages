@@ -6,11 +6,6 @@ nav:
   - 'Common Libraries':
     - 'autoware_auto_common':
       - 'comparisons': common/autoware_auto_common/design/comparisons
-    - 'autoware_auto_geometry':
-      - 'interval': common/autoware_auto_geometry/design/interval
-      - 'polygon intersection 2d': common/autoware_auto_geometry/design/polygon_intersection_2d-design
-      - 'spatial hash': common/autoware_auto_geometry/design/spatial-hash-design
-    - 'autoware_auto_tf2': common/autoware_auto_tf2/design/autoware-auto-tf2-design
     - 'autoware_point_types': common/autoware_point_types
     - 'Cuda Utils': common/cuda_utils
     - 'Geography Utils': common/geography_utils
@@ -35,7 +30,7 @@ nav:
       - 'Introduction': common/tvm_utility
       - 'YOLOv2 Tiny Example': common/tvm_utility/tvm-utility-yolo-v2-tiny-tests
   - 'RVIZ2 Plugins':
-    - 'autoware_auto_perception_rviz_plugin': common/autoware_auto_perception_rviz_plugin
+    - 'autoware_perception_rviz_plugin': common/autoware_perception_rviz_plugin
     - 'autoware_overlay_rviz_plugin': common/autoware_overlay_rviz_plugin/autoware_overlay_rviz_plugin
     - 'autoware_mission_details_overlay_rviz_plugin': common/autoware_overlay_rviz_plugin/autoware_mission_details_overlay_rviz_plugin
     - 'bag_time_manager_rviz_plugin': common/bag_time_manager_rviz_plugin
