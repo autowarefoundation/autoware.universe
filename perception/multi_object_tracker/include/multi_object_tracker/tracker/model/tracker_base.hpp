@@ -54,7 +54,7 @@ public:
     const rclcpp::Time & time,
     const std::vector<autoware_perception_msgs::msg::ObjectClassification> & classification,
     const size_t & channel_size);
-  virtual ~Tracker() {}
+  virtual ~Tracker() = default;
 
   void initializeExistenceProbabilities(
     const uint & channel_index, const float & existence_probability);

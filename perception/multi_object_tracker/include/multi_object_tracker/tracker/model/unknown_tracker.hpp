@@ -60,8 +60,7 @@ public:
   bool measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object);
   bool getTrackedObject(
     const rclcpp::Time & time,
-    autoware_perception_msgs::msg::TrackedObject & object) const override;
-  virtual ~UnknownTracker() {}
+    autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__TRACKER__MODEL__UNKNOWN_TRACKER_HPP_
