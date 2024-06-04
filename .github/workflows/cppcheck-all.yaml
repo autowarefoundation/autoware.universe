@@ -34,3 +34,13 @@ jobs:
       run: |
         cppcheck --enable=all --inconclusive --check-level=exhaustive --xml . 2> cppcheck-report.xml
       shell: bash
+
+    - name: Count errors by error ID and severity
+      run: |
+        #!/bin/bash
+        temp_file=$(mktemp)
+        grep -oP '(?<=id=")[^"]+" severity="[^"]+' cppcheck-report.xml | sed 's/" severity="/,/g' > "$temp_file"
+        echo "Error counts by error ID and severity:"
+        sort "$temp_file" | uniq -c
+        rm "$temp_file"
+      shell: bash
