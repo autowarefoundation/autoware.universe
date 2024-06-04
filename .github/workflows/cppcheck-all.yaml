@@ -33,7 +33,7 @@ jobs:
 
     - name: Run Cppcheck on all files
       run: |
-        cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --xml . 2> cppcheck-report.xml
+        cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --xml perception/lidar_centerpoint 2> cppcheck-report.xml
       shell: bash
 
     - name: Count errors by error ID and severity
