@@ -82,7 +82,7 @@ $$
 - $\tau_y \cdots$ Threshold for the difference in the lateral axis [m]
 - $l \cdots$ Maximum lateral distance describved in the image above [m]
 - $\sigma_v^2 \cdots$ Variance of the heading velocity [m/s]
-- $\sigma_theta^2 \cdots$ Variance of the heading angle [rad]
+- $\sigma_\theta^2 \cdots$ Variance of the heading angle [rad]
 - $v_{\rm max} \cdots$ Maximum heading velocity [m/s]
 - $\omega_{\rm max} \cdots$ Maximum angular velocity [rad/s]
 - $\Delta t \cdots$ Time interval [s]
@@ -93,6 +93,7 @@ Note that `pose_instability_detector` sets the threshold for the vertical axis a
 ### `diff_angle_x`, `diff_angle_y`, and `diff_angle_z`
 
 These thresholds examine the difference in the roll, pitch, and yaw angles between the two poses.
+This threshold is a sum of "maximum angular error due to velocity scale factor error and bias error", "process error in dead reckoning", and "pose estimation error"
 
 $$
 \tau_\phi = \tau_\theta = \tau_\psi = \left(\omega_{\rm max}\frac{\beta_\omega}{100} + b \right) \Delta t + 3\sqrt{N\sigma_\omega^2\left(\Delta t\right)^2} + \epsilon_\psi
