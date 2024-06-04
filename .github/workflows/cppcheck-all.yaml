@@ -21,8 +21,9 @@ jobs:
 
     - name: Install Cppcheck from source
       run: |
-        git clone https://github.com/danmar/cppcheck.git
-        cd cppcheck
+        mkdir /tmp/cppcheck
+        git clone https://github.com/danmar/cppcheck.git /tmp/cppcheck
+        cd /tmp/cppcheck
         git checkout 2.14.1
         mkdir build
         cd build
