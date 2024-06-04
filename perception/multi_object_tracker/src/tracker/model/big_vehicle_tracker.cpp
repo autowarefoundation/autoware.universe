@@ -316,10 +316,10 @@ bool BigVehicleTracker::measureWithShape(
   // check object size abnormality
   constexpr double size_max = 40.0;  // [m]
   constexpr double size_min = 1.0;   // [m]
-  bool isSizeValid =
+  bool is_size_valid =
     (object.shape.dimensions.x <= size_max && object.shape.dimensions.y <= size_max &&
      object.shape.dimensions.x >= size_min && object.shape.dimensions.y >= size_min);
-  if (!isSizeValid) {
+  if (!is_size_valid) {
     return false;
   }
 
