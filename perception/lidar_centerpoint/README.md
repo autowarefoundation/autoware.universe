@@ -340,6 +340,10 @@ Example:
 [v1-encoder-centerpoint-tiny]: https://awf.ml.dev.web.auto/perception/models/centerpoint/v1/pts_voxel_encoder_centerpoint_tiny.onnx
 [v1-head-centerpoint-tiny]: https://awf.ml.dev.web.auto/perception/models/centerpoint/v1/pts_backbone_neck_head_centerpoint_tiny.onnx
 
+## Acknowledgment: deepen.ai's 3D Annotation Tools Contribution
+
+Special thanks to deepen.ai for providing their 3D Annotation tools, which have been instrumental in creating our sample dataset.
+
 ## Legal Notice
 
 _The nuScenes dataset is released publicly for non-commercial use under the Creative
