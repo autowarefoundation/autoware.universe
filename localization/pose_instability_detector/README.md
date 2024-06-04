@@ -129,16 +129,16 @@ $$
 
 On calculating the maximum lateral distance $l$, the `pose_instability_detector` node will estimate the following poses.
 
-| Pose | heading velocity $v$ | angular velocity $\omega$ |
-| ---- | --------------------- | ------------------------- |
-| Nominal dead reckoning pose | $v_{\rm max}$ | $\omega_{\rm max}$ |
-| Dead reckoning pose of corner A| $\left(1+\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1+\frac{\beta_\omega}{100}\right) \omega_{\rm max} + b$ |
-| Dead reckoning pose of corner B| $\left(1-\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1+\frac{\beta_\omega}{100}\right) \omega_{\rm max} + b$ |
-| Dead reckoning pose of corner C| $\left(1-\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1-\frac{\beta_\omega}{100}\right) \omega_{\rm max} - b$ |
-| Dead reckoning pose of corner D| $\left(1+\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1-\frac{\beta_\omega}{100}\right) \omega_{\rm max} - b$ |
-
+| Pose                            | heading velocity $v$                             | angular velocity $\omega$                                      |
+| ------------------------------- | ------------------------------------------------ | -------------------------------------------------------------- |
+| Nominal dead reckoning pose     | $v_{\rm max}$                                    | $\omega_{\rm max}$                                             |
+| Dead reckoning pose of corner A | $\left(1+\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1+\frac{\beta_\omega}{100}\right) \omega_{\rm max} + b$ |
+| Dead reckoning pose of corner B | $\left(1-\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1+\frac{\beta_\omega}{100}\right) \omega_{\rm max} + b$ |
+| Dead reckoning pose of corner C | $\left(1-\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1-\frac{\beta_\omega}{100}\right) \omega_{\rm max} - b$ |
+| Dead reckoning pose of corner D | $\left(1+\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1-\frac{\beta_\omega}{100}\right) \omega_{\rm max} - b$ |
 
 Given a heading velocity $v$ and $\omega$, the 2D theoritical variation seen from the previous pose is calculated as follows:
+
 $$
 \left[
     \begin{matrix}
