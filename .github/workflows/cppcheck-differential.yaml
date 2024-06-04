@@ -1,4 +1,4 @@
-name: cppcheck
+name: cppcheck-differential
 
 on:
   pull_request:
@@ -27,11 +27,18 @@ jobs:
         make -j $(nproc)
         sudo make install
 
+    - name: Get changed files
+      id: changed-files
+      run: |
+        git fetch origin ${{ github.base_ref }} --depth=1
+        git diff --name-only FETCH_HEAD ${{ github.sha }} > changed_files.txt
+        cat changed_files.txt
+
     - name: Run Cppcheck on changed files
       run: |
         files=$(cat changed_files.txt | grep '\.cpp$\|\.h$' | tr '\n' ' ')
         if [ -n "$files" ]; then
-          cppcheck --enable=warning,style,performance --error-exitcode=1 --xml . 2> cppcheck-report.xml
+          cppcheck --enable=warning,style,performance --error-exitcode=1 --xml $files 2> cppcheck-report.xml
         else
           echo "No C++ files changed."
         fi
