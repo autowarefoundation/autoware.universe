@@ -46,14 +46,16 @@ void to_cgal_polygon(const lanelet::BasicPolygon2d & polygon_in, PolygonCgal & p
 
 void remove_polygon_cgal_from_cloud(
   const sensor_msgs::msg::PointCloud2 & cloud_in, const PolygonCgal & polyline_polygon,
-  sensor_msgs::msg::PointCloud2 & cloud_out)
+  sensor_msgs::msg::PointCloud2 & cloud_out, const std::optional<float> & max_z)
 {
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
 
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(cloud_in, "x"), iter_y(cloud_in, "y"),
        iter_z(cloud_in, "z");
        iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
-    // check if the point is inside the polygon
+    if (max_z && *iter_z > *max_z) {
+      continue;
+    }
     if (
       CGAL::bounded_side_2(
         polyline_polygon.begin(), polyline_polygon.end(), PointCgal(*iter_x, *iter_y), K()) ==
@@ -72,13 +74,15 @@ void remove_polygon_cgal_from_cloud(
 
 void remove_polygon_cgal_from_cloud(
   const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const PolygonCgal & polyline_polygon,
-  pcl::PointCloud<pcl::PointXYZ> & cloud_out)
+  pcl::PointCloud<pcl::PointXYZ> & cloud_out, const std::optional<float> & max_z)
 {
   cloud_out.clear();
   cloud_out.header = cloud_in.header;
 
   for (const auto & p : cloud_in) {
-    // check if the point is inside the polygon
+    if (max_z && p.z > *max_z) {
+      continue;
+    }
     if (
       CGAL::bounded_side_2(
         polyline_polygon.begin(), polyline_polygon.end(), PointCgal(p.x, p.y), K()) ==
@@ -90,7 +94,8 @@ void remove_polygon_cgal_from_cloud(
 
 void remove_polygon_cgal_from_cloud(
   const sensor_msgs::msg::PointCloud2 & cloud_in,
-  const std::vector<PolygonCgal> & polyline_polygons, sensor_msgs::msg::PointCloud2 & cloud_out)
+  const std::vector<PolygonCgal> & polyline_polygons, sensor_msgs::msg::PointCloud2 & cloud_out,
+  const std::optional<float> & max_z)
 {
   if (polyline_polygons.empty()) {
     cloud_out = cloud_in;
@@ -101,7 +106,9 @@ void remove_polygon_cgal_from_cloud(
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(cloud_in, "x"), iter_y(cloud_in, "y"),
        iter_z(cloud_in, "z");
        iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
-    // if the point is inside the polygon, skip inserting and check the next point
+    if (max_z && *iter_z > *max_z) {
+      continue;
+    }
     pcl::PointXYZ p(*iter_x, *iter_y, *iter_z);
     if (point_within_cgal_polys(p, polyline_polygons)) {
       continue;
@@ -115,7 +122,8 @@ void remove_polygon_cgal_from_cloud(
 
 void remove_polygon_cgal_from_cloud(
   const pcl::PointCloud<pcl::PointXYZ> & cloud_in,
-  const std::vector<PolygonCgal> & polyline_polygons, pcl::PointCloud<pcl::PointXYZ> & cloud_out)
+  const std::vector<PolygonCgal> & polyline_polygons, pcl::PointCloud<pcl::PointXYZ> & cloud_out,
+  const std::optional<float> & max_z)
 {
   if (polyline_polygons.empty()) {
     cloud_out = cloud_in;
@@ -124,7 +132,9 @@ void remove_polygon_cgal_from_cloud(
 
   pcl::PointCloud<pcl::PointXYZ> filtered_cloud;
   for (const auto & p : cloud_in) {
-    // if the point is inside the polygon, skip inserting and check the next point
+    if (max_z && p.z > *max_z) {
+      continue;
+    }
     if (point_within_cgal_polys(p, polyline_polygons)) {
       continue;
     }
