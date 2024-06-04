@@ -191,13 +191,24 @@ void MrmHandler::publishGearCmd()
   GearCommand msg;
 
   msg.stamp = this->now();
-  if (param_.use_parking_after_stopped && isStopped()) {
-    msg.command = GearCommand::PARK;
-  } else {
-    msg.command = GearCommand::DRIVE;
+
+  if (isStopped()) {
+    if (param_.use_parking_after_stopped) {
+      msg.command = GearCommand::PARK;
+      pub_gear_cmd_->publish(msg);
+    }
+    return;
   }
 
+  if (isDrivingBackwards()) {
+    msg.command = GearCommand::REVERSE;
+    pub_gear_cmd_->publish(msg);
+    return;
+  }
+
+  msg.command = GearCommand::DRIVE;
   pub_gear_cmd_->publish(msg);
+  return;
 }
 
 void MrmHandler::publishMrmState()
@@ -578,11 +589,13 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type MrmHandler::getCurrentMrmB
 bool MrmHandler::isStopped()
 {
   constexpr auto th_stopped_velocity = 0.001;
-  if (odom_->twist.twist.linear.x < th_stopped_velocity) {
-    return true;
-  }
+  return std::abs((odom_->twist.twist.linear.x < th_stopped_velocity) < th_stopped_velocity);
+}
 
-  return false;
+bool MrmHandler::isDrivingBackwards()
+{
+  constexpr auto th_moving_backwards = -0.001;
+  return odom_->twist.twist.linear.x < th_moving_backwards;
 }
 
 bool MrmHandler::isEmergency() const

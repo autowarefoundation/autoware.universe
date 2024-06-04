@@ -135,6 +135,7 @@ private:
   void operateMrm();
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
+  bool isDrivingBackwards();
   bool isEmergency();
 };
 

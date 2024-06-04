@@ -153,6 +153,7 @@ private:
   void handleFailedRequest();
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
+  bool isDrivingBackwards();
   bool isEmergency() const;
   bool isArrivedAtGoal();
 };

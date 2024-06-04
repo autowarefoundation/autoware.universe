@@ -164,12 +164,24 @@ void EmergencyHandler::publishControlCommands()
   {
     GearCommand msg;
     msg.stamp = stamp;
-    if (param_.use_parking_after_stopped && isStopped()) {
-      msg.command = GearCommand::PARK;
-    } else {
-      msg.command = GearCommand::DRIVE;
+
+    if (isStopped()) {
+      if (param_.use_parking_after_stopped) {
+        msg.command = GearCommand::PARK;
+        pub_gear_cmd_->publish(msg);
+      }
+      return;
     }
+
+    if (isDrivingBackwards()) {
+      msg.command = GearCommand::REVERSE;
+      pub_gear_cmd_->publish(msg);
+      return;
+    }
+
+    msg.command = GearCommand::DRIVE;
     pub_gear_cmd_->publish(msg);
+    return;
   }
 }
 
@@ -451,11 +463,13 @@ bool EmergencyHandler::isEmergency()
 bool EmergencyHandler::isStopped()
 {
   constexpr auto th_stopped_velocity = 0.001;
-  if (odom_->twist.twist.linear.x < th_stopped_velocity) {
-    return true;
-  }
+  return (std::abs(odom_->twist.twist.linear.x) < th_stopped_velocity);
+}
 
-  return false;
+bool EmergencyHandler::isDrivingBackwards()
+{
+  constexpr auto th_moving_backwards = -0.001;
+  return odom_->twist.twist.linear.x < th_moving_backwards;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
