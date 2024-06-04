@@ -193,11 +193,15 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
 
 void NDTScanMatcher::callback_timer()
 {
+  const rclcpp::Time ros_time_now = this->now();
+
   diagnostics_map_update_->clear();
+
+  diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", ros_time_now.nanoseconds());
 
   map_update_module_->callback_timer(is_activated_, latest_ekf_position_, diagnostics_map_update_);
 
-  diagnostics_map_update_->publish();
+  diagnostics_map_update_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::callback_initial_pose(
@@ -207,14 +211,15 @@ void NDTScanMatcher::callback_initial_pose(
 
   callback_initial_pose_main(initial_pose_msg_ptr);
 
-  diagnostics_initial_pose_->publish();
+  diagnostics_initial_pose_->publish(initial_pose_msg_ptr->header.stamp);
 }
 
 void NDTScanMatcher::callback_initial_pose_main(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
   diagnostics_initial_pose_->addKeyValue(
-    "topic_time_stamp", static_cast<rclcpp::Time>(initial_pose_msg_ptr->header.stamp).seconds());
+    "topic_time_stamp",
+    static_cast<rclcpp::Time>(initial_pose_msg_ptr->header.stamp).nanoseconds());
 
   // check is_activated
   diagnostics_initial_pose_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
@@ -255,11 +260,11 @@ void NDTScanMatcher::callback_regularization_pose(
   diagnostics_regularization_pose_->clear();
 
   diagnostics_regularization_pose_->addKeyValue(
-    "topic_time_stamp", static_cast<rclcpp::Time>(pose_conv_msg_ptr->header.stamp).seconds());
+    "topic_time_stamp", static_cast<rclcpp::Time>(pose_conv_msg_ptr->header.stamp).nanoseconds());
 
   regularization_pose_buffer_->push_back(pose_conv_msg_ptr);
 
-  diagnostics_regularization_pose_->publish();
+  diagnostics_regularization_pose_->publish(pose_conv_msg_ptr->header.stamp);
 }
 
 void NDTScanMatcher::callback_sensor_points(
@@ -275,16 +280,17 @@ void NDTScanMatcher::callback_sensor_points(
   // check skipping_publish_num
   static size_t skipping_publish_num = 0;
   const size_t error_skipping_publish_num = 5;
-  skipping_publish_num = is_succeed_scan_matching ? 0 : (skipping_publish_num + 1);
+  skipping_publish_num =
+    ((is_succeed_scan_matching || !is_activated_) ? 0 : (skipping_publish_num + 1));
   diagnostics_scan_points_->addKeyValue("skipping_publish_num", skipping_publish_num);
   if (skipping_publish_num >= error_skipping_publish_num) {
     std::stringstream message;
     message << "skipping_publish_num exceed limit (" << skipping_publish_num << " times).";
     diagnostics_scan_points_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  diagnostics_scan_points_->publish();
+  diagnostics_scan_points_->publish(sensor_points_msg_in_sensor_frame->header.stamp);
 }
 
 bool NDTScanMatcher::callback_sensor_points_main(
@@ -294,7 +300,7 @@ bool NDTScanMatcher::callback_sensor_points_main(
 
   // check topic_time_stamp
   const rclcpp::Time sensor_ros_time = sensor_points_msg_in_sensor_frame->header.stamp;
-  diagnostics_scan_points_->addKeyValue("topic_time_stamp", sensor_ros_time.seconds());
+  diagnostics_scan_points_->addKeyValue("topic_time_stamp", sensor_ros_time.nanoseconds());
 
   // check sensor_points_size
   const size_t sensor_points_size = sensor_points_msg_in_sensor_frame->width;
@@ -464,17 +470,14 @@ bool NDTScanMatcher::callback_sensor_points_main(
   diagnostics_scan_points_->addKeyValue("transform_probability", ndt_result.transform_probability);
   diagnostics_scan_points_->addKeyValue(
     "nearest_voxel_transformation_likelihood", ndt_result.nearest_voxel_transformation_likelihood);
-  std::string score_name = "";
   double score = 0.0;
   double score_threshold = 0.0;
   if (param_.score_estimation.converged_param_type == ConvergedParamType::TRANSFORM_PROBABILITY) {
-    score_name = "Transform Probability";
     score = ndt_result.transform_probability;
     score_threshold = param_.score_estimation.converged_param_transform_probability;
   } else if (
     param_.score_estimation.converged_param_type ==
     ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
-    score_name = "Nearest Voxel Transformation Likelihood";
     score = ndt_result.nearest_voxel_transformation_likelihood;
     score_threshold =
       param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood;
@@ -868,8 +871,10 @@ void NDTScanMatcher::service_trigger_node(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
+  const rclcpp::Time ros_time_now = this->now();
+
   diagnostics_trigger_node_->clear();
-  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", this->now().seconds());
+  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", ros_time_now.nanoseconds());
 
   is_activated_ = req->data;
   if (is_activated_) {
@@ -879,14 +884,18 @@ void NDTScanMatcher::service_trigger_node(
 
   diagnostics_trigger_node_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
   diagnostics_trigger_node_->addKeyValue("is_succeed_service", res->success);
-  diagnostics_trigger_node_->publish();
+  diagnostics_trigger_node_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::service_ndt_align(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
+  const rclcpp::Time ros_time_now = this->now();
+
   diagnostics_ndt_align_->clear();
+
+  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", ros_time_now.nanoseconds());
 
   service_ndt_align_main(req, res);
 
@@ -900,15 +909,13 @@ void NDTScanMatcher::service_ndt_align(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  diagnostics_ndt_align_->publish();
+  diagnostics_ndt_align_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::service_ndt_align_main(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
-  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", this->now().seconds());
-
   // get TF from pose_frame to map_frame
   const std::string & target_frame = param_.frame.map_frame;
   const std::string & source_frame = req->pose_with_covariance.header.frame_id;
@@ -1072,3 +1079,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
 
   return result_pose_with_cov_msg;
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)

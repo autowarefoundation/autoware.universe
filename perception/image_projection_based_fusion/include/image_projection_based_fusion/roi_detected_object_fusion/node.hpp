@@ -20,7 +20,7 @@
 
 #include <image_projection_based_fusion/utils/utils.hpp>
 
-#include "autoware_auto_perception_msgs/msg/object_classification.hpp"
+#include "autoware_perception_msgs/msg/object_classification.hpp"
 
 #include <map>
 #include <memory>

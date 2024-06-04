@@ -56,6 +56,7 @@ public:
     const UUID & uuid, const bool safe, const uint8_t state, const double start_distance,
     const double finish_distance, const rclcpp::Time & stamp);
   void removeCooperateStatus(const UUID & uuid);
+  void removeExpiredCooperateStatus();
   void clearCooperateStatus();
   bool isActivated(const UUID & uuid) const;
   bool isRegistered(const UUID & uuid) const;
@@ -83,6 +84,7 @@ private:
   rclcpp::Service<AutoMode>::SharedPtr srv_auto_mode_;
   rclcpp::CallbackGroup::SharedPtr callback_group_;
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
 
   Module module_;
