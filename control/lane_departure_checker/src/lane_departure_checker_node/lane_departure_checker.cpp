@@ -104,6 +104,10 @@ Output LaneDepartureChecker::update(const Input & input)
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
+  output.deviation_longitudinal_vel = calcLongitudinalDeviationDerivatives(
+    *input.predicted_trajectory, param_.ego_nearest_dist_threshold,
+    param_.ego_nearest_yaw_threshold, input);
+
   output.trajectory_deviation = calcTrajectoryDeviation(
     *input.reference_trajectory, input.current_odom->pose.pose, param_.ego_nearest_dist_threshold,
     param_.ego_nearest_yaw_threshold);
@@ -163,6 +167,23 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
   std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
   lanelet::ConstLanelets candidate_lanelets = getCandidateLanelets(lanelets, vehicle_footprints);
   return willLeaveLane(candidate_lanelets, vehicle_footprints);
+}
+
+double LaneDepartureChecker::calcLongitudinalDeviationDerivatives(
+  const Trajectory & trajectory, const double dist_threshold, const double yaw_threshold,
+  const Input & input)
+{
+  const geometry_msgs::msg::Pose & pose = input.current_odom->pose.pose;
+  const auto nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    trajectory.points, pose, dist_threshold, yaw_threshold);
+  double deviation_longitudinal_vel;
+  const auto & ref_point = trajectory.points.at(nearest_idx);
+
+  const auto current_vel = input.current_odom->twist.twist.linear.x;
+  const double ref_vel = ref_point.longitudinal_velocity_mps;
+  deviation_longitudinal_vel = current_vel - ref_vel;
+
+  return deviation_longitudinal_vel;
 }
 
 PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
