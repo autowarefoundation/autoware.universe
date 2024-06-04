@@ -1,0 +1,38 @@
+name: cppcheck
+
+on:
+  pull_request:
+
+jobs:
+  cppcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake git libpcre3-dev
+
+    - name: Install Cppcheck from source
+      run: |
+        git clone https://github.com/danmar/cppcheck.git
+        cd cppcheck
+        git checkout 2.14.1
+        mkdir build
+        cd build
+        cmake ..
+        make -j $(nproc)
+        sudo make install
+
+    - name: Run Cppcheck on changed files
+      run: |
+        files=$(cat changed_files.txt | grep '\.cpp$\|\.h$' | tr '\n' ' ')
+        if [ -n "$files" ]; then
+          cppcheck --enable=warning,style,performance --error-exitcode=1 --xml . 2> cppcheck-report.xml
+        else
+          echo "No C++ files changed."
+        fi
+      shell: bash
