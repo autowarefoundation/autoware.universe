@@ -33,5 +33,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
+    <include>include</include>
   </export>
 </package>

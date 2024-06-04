@@ -69,7 +69,7 @@ $$
 ### `diff_position_y` and `diff_position_z`
 
 These thresholds examine the difference in the lateral and vertical axes between the two poses, and check whether the vehicle goes beyond the expected error.
-The `pose_instaibility_detector` calculates the possible range where the vehicle goes, and get the maximum difference between the nominal dead reckoning pose and the maximum limit pose.
+The `pose_instability_detector` calculates the possible range where the vehicle goes, and get the maximum difference between the nominal dead reckoning pose and the maximum limit pose.
 
 ![lateral_threshold_calculation](./media/lateral_threshold_calculation.png)
 
@@ -80,7 +80,7 @@ $$
 $$
 
 - $\tau_y \cdots$ Threshold for the difference in the lateral axis [m]
-- $l \cdots$ Maximum lateral distance describved in the image above [m]
+- $l \cdots$ Maximum lateral distance described in the image above [m]
 - $\sigma_v^2 \cdots$ Variance of the heading velocity [m/s]
 - $\sigma_\theta^2 \cdots$ Variance of the heading angle [rad]
 - $v_{\rm max} \cdots$ Maximum heading velocity [m/s]
@@ -124,3 +124,26 @@ $$
 | ------------------- | ------------------------------------- | ----------- |
 | `~/debug/diff_pose` | geometry_msgs::msg::PoseStamped       | diff_pose   |
 | `/diagnostics`      | diagnostic_msgs::msg::DiagnosticArray | Diagnostics |
+
+## Appendix
+
+On calculating the maximum lateral distance $l$, the `pose_instability_detector` node will estimate the following poses.
+
+| Pose | heading velocity $v$ | angular velocity $\omega$ |
+| ---- | --------------------- | ------------------------- |
+| Nominal dead reckoning pose | $v_{\rm max}$ | $\omega_{\rm max}$ |
+| Dead reckoning pose of corner A| $\left(1+\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1+\frac{\beta_\omega}{100}\right) \omega_{\rm max} + b$ |
+| Dead reckoning pose of corner B| $\left(1-\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1+\frac{\beta_\omega}{100}\right) \omega_{\rm max} + b$ |
+| Dead reckoning pose of corner C| $\left(1-\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1-\frac{\beta_\omega}{100}\right) \omega_{\rm max} - b$ |
+| Dead reckoning pose of corner D| $\left(1+\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1-\frac{\beta_\omega}{100}\right) \omega_{\rm max} - b$ |
+
+
+Given a heading velocity $v$ and $\omega$, the 2D theoritical variation seen from the previous pose is calculated as follows:
+$$
+\left[
+    \begin{matrix}
+    x\\
+    y
+    \end{matrix}
+\right]
+$$

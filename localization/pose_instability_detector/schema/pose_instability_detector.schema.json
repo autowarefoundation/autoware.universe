@@ -82,9 +82,10 @@
       "required": [
         "timer_period",
         "heading_velocity_maximum",
+        "heading_velocity_variance",
         "heading_velocity_scale_factor_tolerance",
         "angular_velocity_maximum",
-        "angular_velocity_standard_deviation",
+        "angular_velocity_variance",
         "angular_velocity_scale_factor_tolerance",
         "angular_velocity_bias_tolerance",
         "pose_estimator_longitudinal_tolerance",

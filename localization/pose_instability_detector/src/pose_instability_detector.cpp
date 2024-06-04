@@ -47,7 +47,7 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
   pose_estimator_angular_tolerance_(
     this->declare_parameter<double>("pose_estimator_angular_tolerance"))
 {
-  // Define subscibers, publishers and a timer.
+  // Define subscribers, publishers and a timer.
   odometry_sub_ = this->create_subscription<Odometry>(
     "~/input/odometry", 10,
     std::bind(&PoseInstabilityDetector::callback_odometry, this, std::placeholders::_1));
@@ -273,23 +273,14 @@ void PoseInstabilityDetector::dead_reckon(
   estimated_pose->position = initial_pose->pose.position;
   estimated_pose->orientation = initial_pose->pose.orientation;
 
-  // define lambda function to convert quaternion to rpy
-  auto quat_to_rpy = [](const Quaternion & quat) {
-    tf2::Quaternion tf2_quat(quat.x, quat.y, quat.z, quat.w);
-    tf2::Matrix3x3 mat(tf2_quat);
-    double roll{};
-    double pitch{};
-    double yaw{};
-    mat.getRPY(roll, pitch, yaw);
-    return std::make_tuple(roll, pitch, yaw);
-  };
-
   // cut out necessary twist data
   std::deque<TwistWithCovarianceStamped> sliced_twist_deque =
     clip_out_necessary_twist(twist_deque, start_time, end_time);
 
   // dead reckoning
   rclcpp::Time prev_odometry_time = rclcpp::Time(sliced_twist_deque.front().header.stamp);
+  tf2::Quaternion prev_orientation;
+  tf2::fromMsg(estimated_pose->orientation, prev_orientation);
 
   for (size_t i = 1; i < sliced_twist_deque.size(); ++i) {
     const rclcpp::Time curr_time = rclcpp::Time(sliced_twist_deque[i].header.stamp);
@@ -297,14 +288,18 @@ void PoseInstabilityDetector::dead_reckon(
 
     const Twist twist = sliced_twist_deque[i - 1].twist.twist;
 
-    // quat to rpy
-    auto [ang_x, ang_y, ang_z] = quat_to_rpy(estimated_pose->orientation);
+    // variation of orientation (rpy update)
+    tf2::Quaternion delta_orientation;
+    delta_orientation.setRPY(
+      twist.angular.x * time_diff_sec, twist.angular.y * time_diff_sec,
+      twist.angular.z * time_diff_sec);
+
+    tf2::Quaternion curr_orientation;
+    curr_orientation = prev_orientation * delta_orientation;
+    curr_orientation.normalize();
 
     // average quaternion of two frames
-    tf2::Quaternion average_quat;
-    average_quat.setRPY(
-      ang_x + 0.5 * twist.angular.x * time_diff_sec, ang_y + 0.5 * twist.angular.y * time_diff_sec,
-      ang_z + 0.5 * twist.angular.z * time_diff_sec);
+    tf2::Quaternion average_quat = prev_orientation.slerp(curr_orientation, 0.5);
 
     // Convert twist to world frame (take average of two frames)
     tf2::Vector3 linear_velocity(twist.linear.x, twist.linear.y, twist.linear.z);
@@ -315,20 +310,14 @@ void PoseInstabilityDetector::dead_reckon(
     estimated_pose->position.y += linear_velocity.y() * time_diff_sec;
     estimated_pose->position.z += linear_velocity.z() * time_diff_sec;
 
-    // rpy update
-    ang_x += twist.angular.x * time_diff_sec;
-    ang_y += twist.angular.y * time_diff_sec;
-    ang_z += twist.angular.z * time_diff_sec;
-    tf2::Quaternion quat;
-    quat.setRPY(ang_x, ang_y, ang_z);
-    estimated_pose->orientation.x = quat.x();
-    estimated_pose->orientation.y = quat.y();
-    estimated_pose->orientation.z = quat.z();
-    estimated_pose->orientation.w = quat.w();
-
     // update previous variables
     prev_odometry_time = curr_time;
+    prev_orientation = curr_orientation;
   }
+  estimated_pose->orientation.x = prev_orientation.x();
+  estimated_pose->orientation.y = prev_orientation.y();
+  estimated_pose->orientation.z = prev_orientation.z();
+  estimated_pose->orientation.w = prev_orientation.w();
 }
 
 std::deque<PoseInstabilityDetector::TwistWithCovarianceStamped>
