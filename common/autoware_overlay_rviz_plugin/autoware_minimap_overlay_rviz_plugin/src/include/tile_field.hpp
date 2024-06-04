@@ -27,10 +27,10 @@ public:
   std::pair<int, int> getTileOffsets(double lat, double lon);
   std::pair<double, double> latLonToTile(double lat, double lon, int zoom);
 
-  int long2tilex(double lon, int z);
-  int lat2tiley(double lat, int z);
-  double tilex2long(int x, int z);
-  double tiley2lat(int y, int z);
+  int long_to_tile_x(double lon, int z);
+  int lat_to_tile_y(double lat, int z);
+  double tile_x_to_long(int x, int z);
+  double tile_y_to_lat(int y, int z);
 
 Q_SIGNALS:
   void tilesUpdated();

@@ -37,6 +37,7 @@ VehicleMapDisplay::VehicleMapDisplay() : rviz_common::Display(), overlay_(nullpt
 
   property_zoom_->setMin(15);
   property_zoom_->setMax(19);
+  property_zoom_->setShouldBeSaved(true);
 
   property_latitude_ = new rviz_common::properties::FloatProperty(
     "Latitude", 0.0, "Latitude of the center position", this, SLOT(updateLatitude()));
@@ -219,8 +220,8 @@ void VehicleMapDisplay::updateZoomLevel()
 void VehicleMapDisplay::updateLatitude()
 {
   latitude_ = property_latitude_->getFloat();
-  int new_center_x_tile = tile_field_->long2tilex(longitude_, zoom_);
-  int new_center_y_tile = tile_field_->lat2tiley(latitude_, zoom_);
+  int new_center_x_tile = tile_field_->long_to_tile_x(longitude_, zoom_);
+  int new_center_y_tile = tile_field_->lat_to_tile_y(latitude_, zoom_);
   center_x_tile_ = new_center_x_tile;
   center_y_tile_ = new_center_y_tile;
   tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
@@ -230,8 +231,8 @@ void VehicleMapDisplay::updateLatitude()
 void VehicleMapDisplay::updateLongitude()
 {
   longitude_ = property_longitude_->getFloat();
-  int new_center_x_tile = tile_field_->long2tilex(longitude_, zoom_);
-  int new_center_y_tile = tile_field_->lat2tiley(latitude_, zoom_);
+  int new_center_x_tile = tile_field_->long_to_tile_x(longitude_, zoom_);
+  int new_center_y_tile = tile_field_->lat_to_tile_y(latitude_, zoom_);
   center_x_tile_ = new_center_x_tile;
   center_y_tile_ = new_center_y_tile;
   tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
@@ -256,8 +257,8 @@ void VehicleMapDisplay::navSatFixCallback(const sensor_msgs::msg::NavSatFix::Sha
   property_longitude_->setFloat(longitude_);
   property_latitude_->setFloat(latitude_);
 
-  int new_center_x_tile = tile_field_->long2tilex(longitude_, zoom_);
-  int new_center_y_tile = tile_field_->lat2tiley(latitude_, zoom_);
+  int new_center_x_tile = tile_field_->long_to_tile_x(longitude_, zoom_);
+  int new_center_y_tile = tile_field_->lat_to_tile_y(latitude_, zoom_);
 
   center_x_tile_ = new_center_x_tile;
   center_y_tile_ = new_center_y_tile;

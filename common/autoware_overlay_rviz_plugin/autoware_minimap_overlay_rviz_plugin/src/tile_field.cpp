@@ -94,8 +94,8 @@ QImage TileField::getTileFieldImage()
 
       auto tile_key = QString("%1/%2/%3.png").arg(zoom_).arg(x_tile).arg(y_tile).toStdString();
 
-      float lon = tilex2long(x_tile, zoom_);
-      float lat = tiley2lat(y_tile, zoom_);
+      float lon = tile_x_to_long(x_tile, zoom_);
+      float lat = tile_y_to_lat(y_tile, zoom_);
 
       auto tile_it = tiles_.find(tile_key);
       if (tile_it != tiles_.end() && !tile_it->second->getImage().isNull()) {
@@ -118,23 +118,23 @@ void TileField::onTileFetched()
   Q_EMIT tilesUpdated();
 }
 
-int TileField::long2tilex(double lon, int z)
+int TileField::long_to_tile_x(double lon, int z)
 {
   return (int)(floor((lon + 180.0) / 360.0 * (1 << z)));
 }
 
-int TileField::lat2tiley(double lat, int z)
+int TileField::lat_to_tile_y(double lat, int z)
 {
-  double latrad = lat * M_PI / 180.0;
-  return (int)(floor((1.0 - asinh(tan(latrad)) / M_PI) / 2.0 * (1 << z)));
+  double lat_radius = lat * M_PI / 180.0;
+  return (int)(floor((1.0 - asinh(tan(lat_radius)) / M_PI) / 2.0 * (1 << z)));
 }
 
-double TileField::tilex2long(int x, int z)
+double TileField::tile_x_to_long(int x, int z)
 {
   return x / (double)(1 << z) * 360.0 - 180;
 }
 
-double TileField::tiley2lat(int y, int z)
+double TileField::tile_y_to_lat(int y, int z)
 {
   double n = M_PI - 2.0 * M_PI * y / (double)(1 << z);
   return 180.0 / M_PI * atan(0.5 * (exp(n) - exp(-n)));
