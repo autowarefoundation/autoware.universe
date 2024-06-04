@@ -43,9 +43,9 @@
 namespace autoware::motion_velocity_planner
 {
 using autoware_map_msgs::msg::LaneletMapBin;
-using autoware_planning_msgs::msg::Trajectory;
 using autoware_motion_velocity_planner_node::srv::LoadPlugin;
 using autoware_motion_velocity_planner_node::srv::UnloadPlugin;
+using autoware_planning_msgs::msg::Trajectory;
 using TrajectoryPoints = std::vector<autoware_planning_msgs::msg::TrajectoryPoint>;
 
 class MotionVelocityPlannerNode : public rclcpp::Node

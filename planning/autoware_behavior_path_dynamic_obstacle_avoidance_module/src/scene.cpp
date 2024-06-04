@@ -1121,8 +1121,8 @@ DynamicObstacleAvoidanceModule::DecisionWithReason DynamicObstacleAvoidanceModul
 }
 
 [[maybe_unused]] bool DynamicObstacleAvoidanceModule::willObjectBeOutsideEgoChangingPath(
-  const geometry_msgs::msg::Pose & obj_pose,
-  const autoware_perception_msgs::msg::Shape & obj_shape, const double obj_vel) const
+  const geometry_msgs::msg::Pose & obj_pose, const autoware_perception_msgs::msg::Shape & obj_shape,
+  const double obj_vel) const
 {
   if (!ref_path_before_lane_change_ || obj_vel < 0.0) {
     return false;
