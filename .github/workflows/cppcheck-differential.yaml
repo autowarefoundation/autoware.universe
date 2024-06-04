@@ -36,6 +36,8 @@ jobs:
         cat changed_files.txt
 
     - name: Run Cppcheck on changed files
+      continue-on-error: true
+      id: cppcheck
       run: |
         files=$(cat changed_files.txt | grep -E '\.(cpp|hpp)$' || true)
         if [ -n "$files" ]; then
@@ -46,3 +48,13 @@ jobs:
           echo "No C++ files changed."
         fi
       shell: bash
+
+    - name: Upload Cppcheck report
+      uses: actions/upload-artifact@v2
+      with:
+        name: cppcheck-report
+        path: cppcheck-report.txt
+
+    - name: Fail the job if Cppcheck failed
+      if: steps.cppcheck.outcome == 'failure'
+      run: exit 1
