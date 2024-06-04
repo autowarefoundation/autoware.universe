@@ -18,6 +18,12 @@
           "minimum": 0.0,
           "description": "The maximum of heading velocity (m/s)."
         },
+        "heading_velocity_variance": {
+          "type": "number",
+          "default": 0.04,
+          "minimum": 0.0,
+          "description": "The variance of heading velocity (m/s)."
+        },
         "heading_velocity_scale_factor_tolerance": {
           "type": "number",
           "default": 3.0,
@@ -30,11 +36,11 @@
           "minimum": 0.0,
           "description": "The maximum of angular velocity (rad/s)."
         },
-        "angular_velocity_standard_deviation": {
+        "angular_velocity_variance": {
           "type": "number",
-          "default": 0.00175,
+          "default": 0.01,
           "minimum": 0.0,
-          "description": "The standard deviation of angular velocity (rad/s)."
+          "description": "The variance of angular velocity (rad^2/s^2)."
         },
         "angular_velocity_scale_factor_tolerance": {
           "type": "number",
@@ -68,7 +74,7 @@
         },
         "pose_estimator_angular_tolerance": {
           "type": "number",
-          "default": 0.00631,
+          "default": 0.0175,
           "minimum": 0.0,
           "description": "The tolerance of roll angle of pose estimator (rad)."
         }

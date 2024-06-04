@@ -29,11 +29,12 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
 : rclcpp::Node("pose_instability_detector", options),
   timer_period_(this->declare_parameter<double>("timer_period")),
   heading_velocity_maximum_(this->declare_parameter<double>("heading_velocity_maximum")),
+  heading_velocity_variance_(this->declare_parameter<double>("heading_velocity_variance")),
   heading_velocity_scale_factor_tolerance_(
     this->declare_parameter<double>("heading_velocity_scale_factor_tolerance")),
   angular_velocity_maximum_(this->declare_parameter<double>("angular_velocity_maximum")),
-  angular_velocity_standard_deviation_(
-    this->declare_parameter<double>("angular_velocity_standard_deviation")),
+  angular_velocity_variance_(
+    this->declare_parameter<double>("angular_velocity_variance")),
   angular_velocity_scale_factor_tolerance_(
     this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
   angular_velocity_bias_tolerance_(
@@ -138,7 +139,7 @@ void PoseInstabilityDetector::callback_timer()
   diff_pose_pub_->publish(diff_pose);
 
   // publish diagnostics
-  calculate_threshold((latest_odometry_time - prev_odometry_time).seconds());
+  calculate_threshold((latest_odometry_time - prev_odometry_time).seconds(), twist_buffer_.size());
 
   const std::vector<double> thresholds = {threshold_diff_position_x_, threshold_diff_position_y_,
                                           threshold_diff_position_z_, threshold_diff_angle_x_,
@@ -178,7 +179,7 @@ void PoseInstabilityDetector::callback_timer()
   prev_odometry_ = latest_odometry_;
 }
 
-void PoseInstabilityDetector::calculate_threshold(double interval_sec)
+void PoseInstabilityDetector::calculate_threshold(double interval_sec, int twist_buffer_size)
 {
   // Calculate maximum longitudinal difference
   const double longitudinal_difference =
@@ -190,9 +191,9 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
   const std::vector<double> heading_velocity_signs = {1.0, -1.0, -1.0, 1.0};
   const std::vector<double> angular_velocity_signs = {1.0, 1.0, -1.0, -1.0};
 
-  const double nominal_variance_x = heading_velocity_maximum_ / angular_velocity_maximum_ *
+  const double nominal_variation_x = heading_velocity_maximum_ / angular_velocity_maximum_ *
                                     sin(angular_velocity_maximum_ * interval_sec);
-  const double nominal_variance_y = heading_velocity_maximum_ / angular_velocity_maximum_ *
+  const double nominal_variation_y = heading_velocity_maximum_ / angular_velocity_maximum_ *
                                     (1 - cos(angular_velocity_maximum_ * interval_sec));
 
   for (int i = 0; i < 4; i++) {
@@ -204,17 +205,17 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
         (1 + angular_velocity_signs[i] * angular_velocity_scale_factor_tolerance_ * 0.01) +
       angular_velocity_signs[i] * angular_velocity_bias_tolerance_;
 
-    const double edge_variance_x =
+    const double edge_variation_x =
       edge_heading_velocity / edge_angular_velocity * sin(edge_angular_velocity * interval_sec);
-    const double edge_variance_y = edge_heading_velocity / edge_angular_velocity *
+    const double edge_variation_y = edge_heading_velocity / edge_angular_velocity *
                                    (1 - cos(edge_angular_velocity * interval_sec));
 
-    const double diff_variance_x = edge_variance_x - nominal_variance_x;
-    const double diff_variance_y = edge_variance_y - nominal_variance_y;
+    const double diff_variation_x = edge_variation_x - nominal_variation_x;
+    const double diff_variation_y = edge_variation_y - nominal_variation_y;
 
     const double lateral_difference_candidate = abs(
-      diff_variance_x * sin(angular_velocity_maximum_ * interval_sec) -
-      diff_variance_y * cos(angular_velocity_maximum_ * interval_sec));
+      diff_variation_x * sin(angular_velocity_maximum_ * interval_sec) -
+      diff_variation_y * cos(angular_velocity_maximum_ * interval_sec));
     lateral_difference = std::max(lateral_difference, lateral_difference_candidate);
   }
 
@@ -228,20 +229,37 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
   const double pitch_difference = roll_difference;
   const double yaw_difference = roll_difference;
 
-  // Calculate dead reckoning angular process noise
-  const double dead_reckoning_angular_process_noise =
-    3 * angular_velocity_standard_deviation_ * sqrt(interval_sec);
+  // Calculate dead reckoning process noise
+  const double dead_reckoning_longitudinal_variance =
+    (twist_buffer_size - 1) * heading_velocity_variance_ * interval_sec * interval_sec;
+  const double dead_reckoning_longitudinal_process_noise = 3 * sqrt(dead_reckoning_longitudinal_variance);
+
+  const double dead_reckoning_lateral_variance =
+    (twist_buffer_size - 1) * interval_sec * interval_sec * 
+    (heading_velocity_variance_ * angular_velocity_variance_ +
+     heading_velocity_maximum_ * heading_velocity_maximum_ * angular_velocity_variance_ +
+     angular_velocity_maximum_ * angular_velocity_maximum_ * heading_velocity_variance_);
+  const double dead_reckoning_lateral_process_noise = 3 * sqrt(dead_reckoning_lateral_variance);
+
+  const double dead_reckoning_vertical_process_noise = dead_reckoning_lateral_process_noise;
+
+  const double dead_reckoning_angular_variance =
+    (twist_buffer_size - 1) * angular_velocity_variance_ * interval_sec * interval_sec;
+  const double dead_reckoning_angular_process_noise = 3 * sqrt(dead_reckoning_angular_variance);
 
   // Set thresholds
-  threshold_diff_position_x_ = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
-  threshold_diff_position_y_ = lateral_difference + pose_estimator_lateral_tolerance_;
-  threshold_diff_position_z_ = vertical_difference + pose_estimator_vertical_tolerance_;
+  threshold_diff_position_x_ = 
+    longitudinal_difference + dead_reckoning_longitudinal_process_noise + pose_estimator_longitudinal_tolerance_;
+  threshold_diff_position_y_ = 
+    lateral_difference + dead_reckoning_lateral_process_noise + pose_estimator_lateral_tolerance_;
+  threshold_diff_position_z_ = 
+    vertical_difference + dead_reckoning_vertical_process_noise + pose_estimator_vertical_tolerance_;
   threshold_diff_angle_x_ =
-    roll_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
+    roll_difference + dead_reckoning_angular_process_noise + pose_estimator_angular_tolerance_;
   threshold_diff_angle_y_ =
-    pitch_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
+    pitch_difference + dead_reckoning_angular_process_noise + pose_estimator_angular_tolerance_;
   threshold_diff_angle_z_ =
-    yaw_difference + pose_estimator_angular_tolerance_ + dead_reckoning_angular_process_noise;
+    yaw_difference + dead_reckoning_angular_process_noise + pose_estimator_angular_tolerance_;
 }
 
 void PoseInstabilityDetector::dead_reckon(

@@ -45,7 +45,7 @@ private:
   void callback_twist(TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr);
   void callback_timer();
 
-  void calculate_threshold(double interval_sec);
+  void calculate_threshold(double interval_sec, int twist_buffer_size);
   void dead_reckon(
     PoseStamped::SharedPtr & initial_pose, const rclcpp::Time & end_time,
     const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);
@@ -73,10 +73,11 @@ private:
   double threshold_diff_angle_z_;     // yaw
 
   const double heading_velocity_maximum_;                 // [m/s]
+  const double heading_velocity_variance_;                // [m/s]
   const double heading_velocity_scale_factor_tolerance_;  // [%]
 
   const double angular_velocity_maximum_;                 // [rad/s]
-  const double angular_velocity_standard_deviation_;      // [rad/s]
+  const double angular_velocity_variance_;                // [rad/s]
   const double angular_velocity_scale_factor_tolerance_;  // [%]
   const double angular_velocity_bias_tolerance_;          // [rad/s]
 

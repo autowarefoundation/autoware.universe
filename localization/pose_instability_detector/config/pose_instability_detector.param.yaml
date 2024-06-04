@@ -3,10 +3,11 @@
     timer_period: 0.5                             # [sec]
 
     heading_velocity_maximum: 16.667              # [m/s]
+    heading_velocity_variance: 0.04               # [m/s]
     heading_velocity_scale_factor_tolerance: 3.0  # [%]
 
     angular_velocity_maximum: 0.523               # [rad/s]
-    angular_velocity_standard_deviation: 0.00175  # [rad/s]
+    angular_velocity_variance: 0.01                # [rad/s]
     angular_velocity_scale_factor_tolerance: 0.2  # [%]
     angular_velocity_bias_tolerance: 0.00698      # [rad/s]
 
