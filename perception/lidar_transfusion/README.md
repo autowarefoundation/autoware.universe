@@ -32,28 +32,13 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ## Parameters
 
-### Core Parameters
+### TransFusion
 
-| Name                             | Type         | Default Value | Description                                                                                        |
-| -------------------------------- | ------------ | ------------- | -------------------------------------------------------------------------------------------------- |
-| `class_names`                    | list[string] | -             | Class names for 3D object detection.                                                               |
-| `trt_precision`                  | string       | `fp16`        | TensorRT inference precision: `fp32` or `fp16`.                                                    |
-| `voxels_num`                     | list[int]    | -             | Voxels input dimension [min, opt, max]. It propagates to points and coordinates dimension as well. |
-| `pointcloud_range`               | list[double] | -             | Pointcloud range to process [-x, -y, -z, x, y, z].                                                 |
-| `voxel_size`                     | list[double] | -             | Voxel size [x, y, z].                                                                              |
-| `onnx_path`                      | string       | `""`          | Path to ONNX file.                                                                                 |
-| `engine_path`                    | string       | `""`          | Path to TensorRT Engine file.                                                                      |
-| `densification_num_past_frames`  | int          | `1`           | The number of past frames to fuse with the current frame.                                          |
-| `densification_world_frame_id`   | string       | `map`         | The world frame id to fuse multi-frame pointcloud.                                                 |
-| `circle_nms_dist_threshold`      | float        | `0.5`         | Distance threshold for circle-based Non Maximum Suppression.                                       |
-| `iou_nms_target_class_names`     | list[string] | -             | Target classes for IoU-based Non Maximum Suppression.                                              |
-| `iou_nms_search_distance_2d`     | double       | -             | If two objects are farther than the value, NMS isn't applied.                                      |
-| `iou_nms_threshold`              | double       | -             | IoU threshold for the IoU-based Non Maximum Suppression.                                           |
-| `yaw_norm_threshold`             | list[double] | -             | Yaw angle normalization thresholds. Disparity below threshold suppress class confidence to 0.0.    |
-| `score_threshold`                | float        | `0.2`         | Detected objects with score less than threshold are ignored.                                       |
-| `allow_remapping_by_area_matrix` | list[bool]   | -             | Whether remapping by area matrix is allowed.                                                       |
-| `min_area_matrix`                | list[double] | -             | Minimum area values for remapping by area matrix.                                                  |
-| `max_area_matrix`                | list[double] | -             | Maximum area values for remapping by area matrix.                                                  |
+{{ json_to_markdown("perception/lidar_transfusion/schema/transfusion.schema.json") }}
+
+### Detection class remapper
+
+{{ json_to_markdown("perception/lidar_transfusion/schema/detection_class_remapper.schema.json") }}
 
 ### The `build_only` option
 
@@ -78,7 +63,7 @@ ros2 launch lidar_transfusion lidar_transfusion.launch.xml log_level:=debug
 
 You can download the onnx format of trained models by clicking on the links below.
 
-- Transfusion: [transfusion.onnx](https://awf.ml.dev.web.auto/perception/models/transfusion/v1/transfusion.onnx)
+- TransFusion: [transfusion.onnx](https://awf.ml.dev.web.auto/perception/models/transfusion/v1/transfusion.onnx)
 
 The model was trained in TIER IV's internal database (~11k lidar frames) for 20 epochs.
 
