@@ -191,25 +191,22 @@ autoware_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpdatingO
 {
   autoware_perception_msgs::msg::DetectedObject updating_object = object;
 
-  // current (predicted) state
-  const double tracked_x = motion_model_.getStateElement(IDX::X);
-  const double tracked_y = motion_model_.getStateElement(IDX::Y);
-  const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
-
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
-  autoware_perception_msgs::msg::DetectedObject bbox_object;
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  autoware_auto_perception_msgs::msg::DetectedObject bbox_object = object;
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
         "NormalVehicleTracker::getUpdatingObject: Failed to convert convex hull to bounding box.");
       bbox_object = object;
     }
-
-  } else {
-    bbox_object = object;
   }
+
+  // current (predicted) state
+  const double tracked_x = motion_model_.getStateElement(IDX::X);
+  const double tracked_y = motion_model_.getStateElement(IDX::Y);
+  const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
 
   // get offset measurement
   const int nearest_corner_index = utils::getNearestCornerOrSurface(

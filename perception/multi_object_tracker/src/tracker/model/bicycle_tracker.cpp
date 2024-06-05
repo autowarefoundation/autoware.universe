@@ -170,7 +170,7 @@ autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingOb
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/) const
 {
-  autoware_perception_msgs::msg::DetectedObject updating_object;
+  autoware_auto_perception_msgs::msg::DetectedObject updating_object = object;
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
@@ -178,8 +178,6 @@ autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingOb
     if (!utils::convertConvexHullToBoundingBox(object, updating_object)) {
       updating_object = object;
     }
-  } else {
-    updating_object = object;
   }
 
   // UNCERTAINTY MODEL
@@ -230,8 +228,7 @@ bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::Detect
 
 bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object)
 {
-  autoware_perception_msgs::msg::DetectedObject bbox_object;
-  if (!object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }
@@ -240,21 +237,21 @@ bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::Detec
   constexpr double size_max = 30.0;  // [m]
   constexpr double size_min = 0.1;   // [m]
   if (
-    bbox_object.shape.dimensions.x > size_max || bbox_object.shape.dimensions.y > size_max ||
-    bbox_object.shape.dimensions.z > size_max) {
+    object.shape.dimensions.x > size_max || object.shape.dimensions.y > size_max ||
+    object.shape.dimensions.z > size_max) {
     return false;
   } else if (
-    bbox_object.shape.dimensions.x < size_min || bbox_object.shape.dimensions.y < size_min ||
-    bbox_object.shape.dimensions.z < size_min) {
+    object.shape.dimensions.x < size_min || object.shape.dimensions.y < size_min ||
+    object.shape.dimensions.z < size_min) {
     return false;
   }
 
   // update object size
   constexpr double gain = 0.1;
   constexpr double gain_inv = 1.0 - gain;
-  bounding_box_.length = gain_inv * bounding_box_.length + gain * bbox_object.shape.dimensions.x;
-  bounding_box_.width = gain_inv * bounding_box_.width + gain * bbox_object.shape.dimensions.y;
-  bounding_box_.height = gain_inv * bounding_box_.height + gain * bbox_object.shape.dimensions.z;
+  bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
+  bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
+  bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
 
   // set maximum and minimum size
   constexpr double max_size = 5.0;
