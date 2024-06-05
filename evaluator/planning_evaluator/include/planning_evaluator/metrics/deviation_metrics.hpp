@@ -38,12 +38,28 @@ using geometry_msgs::msg::Pose;
 Stat<double> calcLateralDeviation(const Trajectory & ref, const Trajectory & traj);
 
 /**
+ * @brief calculate lateral deviation of the given trajectory from the reference trajectory
+ * @param [in] ref reference trajectory
+ * @param [in] point input point
+ * @return calculated statistics
+ */
+Stat<double> calcLateralDeviation(const Trajectory & traj, const Point & point);
+
+/**
  * @brief calculate yaw deviation of the given trajectory from the reference trajectory
  * @param [in] ref reference trajectory
  * @param [in] traj input trajectory
  * @return calculated statistics
  */
 Stat<double> calcYawDeviation(const Trajectory & ref, const Trajectory & traj);
+
+/**
+ * @brief calculate yaw deviation of the given trajectory from the reference trajectory
+ * @param [in] traj input trajectory
+ * @param [in] pose input pose
+ * @return calculated statistics
+ */
+Stat<double> calcYawDeviation(const Trajectory & traj, const Pose & pose);
 
 /**
  * @brief calculate velocity deviation of the given trajectory from the reference trajectory

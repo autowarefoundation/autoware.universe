@@ -22,6 +22,8 @@
       - modified_goal_longitudinal_deviation
       - modified_goal_lateral_deviation
       - modified_goal_yaw_deviation
+      - ego_pose_lateral_deviation
+      - ego_pose_yaw_deviation
 
     trajectory:
       min_point_dist_m: 0.1 # [m] minimum distance between two successive points to use for angle calculation

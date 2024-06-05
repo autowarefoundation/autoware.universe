@@ -44,6 +44,20 @@ Stat<double> calcLateralDeviation(const Trajectory & ref, const Trajectory & tra
   return stat;
 }
 
+Stat<double> calcLateralDeviation(const Trajectory & traj, const Point & point)
+{
+  Stat<double> stat;
+
+  if (traj.points.empty()) {
+    return stat;
+  }
+
+  const size_t nearest_index = motion_utils::findNearestIndex(traj.points, point);
+  stat.add(
+    std::abs(tier4_autoware_utils::calcLateralDeviation(traj.points[nearest_index].pose, point)));
+  return stat;
+}
+
 Stat<double> calcYawDeviation(const Trajectory & ref, const Trajectory & traj)
 {
   Stat<double> stat;
@@ -59,6 +73,19 @@ Stat<double> calcYawDeviation(const Trajectory & ref, const Trajectory & traj)
     const size_t nearest_index = motion_utils::findNearestIndex(ref.points, p.pose.position);
     stat.add(tier4_autoware_utils::calcYawDeviation(ref.points[nearest_index].pose, p.pose));
   }
+  return stat;
+}
+
+Stat<double> calcYawDeviation(const Trajectory & traj, const Pose & pose)
+{
+  Stat<double> stat;
+
+  if (traj.points.empty()) {
+    return stat;
+  }
+
+  const size_t nearest_index = motion_utils::findNearestIndex(traj.points, pose.position);
+  stat.add(std::abs(tier4_autoware_utils::calcYawDeviation(traj.points[nearest_index].pose, pose)));
   return stat;
 }
 

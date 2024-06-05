@@ -69,6 +69,10 @@ std::optional<Stat<double>> MetricsCalculator::calculate(
       return metrics::calcDistanceToObstacle(dynamic_objects_, traj);
     case Metric::obstacle_ttc:
       return metrics::calcTimeToCollision(dynamic_objects_, traj, parameters.obstacle.dist_thr_m);
+    case Metric::ego_pose_lateral_deviation:
+      return metrics::calcLateralDeviation(traj, ego_pose_.position);
+    case Metric::ego_pose_yaw_deviation:
+      return metrics::calcYawDeviation(traj, ego_pose_);
     default:
       return {};
   }
