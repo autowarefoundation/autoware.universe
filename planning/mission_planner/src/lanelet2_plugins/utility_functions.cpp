@@ -69,11 +69,8 @@ lanelet::ConstLanelet combine_lanelets_with_shoulder(
     if (left_shared_shoulder) {
       // if exist, add left bound of SHOULDER lanelet to lefts
       add_bound(left_shared_shoulder->leftBound(), lefts);
-    } else if (
+    } else {
       // if not exist, add left bound of lanelet to lefts
-      // if the **left** of this lanelet does not match any of the **right** bounds of `lanelets`,
-      // then its left bound constitutes the left boundary of the entire merged lanelet
-      std::count(right_bound_ids.begin(), right_bound_ids.end(), llt.leftBound().id()) < 1) {
       add_bound(llt.leftBound(), lefts);
     }
 
@@ -82,11 +79,8 @@ lanelet::ConstLanelet combine_lanelets_with_shoulder(
     if (right_shared_shoulder) {
       // if exist, add right bound of SHOULDER lanelet to rights
       add_bound(right_shared_shoulder->rightBound(), rights);
-    } else if (
+    } else {
       // if not exist, add right bound of lanelet to rights
-      // if the **right** of this lanelet does not match any of the **left** bounds of `lanelets`,
-      // then its right bound constitutes the right boundary of the entire merged lanelet
-      std::count(left_bound_ids.begin(), left_bound_ids.end(), llt.rightBound().id()) < 1) {
       add_bound(llt.rightBound(), rights);
     }
   }
