@@ -313,15 +313,12 @@ inline void convertConvexHullToBoundingBox(
 
   // look for bounding box boundary
   for (size_t i = 0; i < input_object.shape.footprint.points.size(); ++i) {
-    Eigen::Vector2d vertex{
-      input_object.shape.footprint.points.at(i).x, input_object.shape.footprint.points.at(i).y};
-
-    const Eigen::Vector2d local_vertex = R_inv * (vertex - center);
-    max_x = std::max(max_x, local_vertex.x());
-    max_y = std::max(max_y, local_vertex.y());
-    min_x = std::min(min_x, local_vertex.x());
-    min_y = std::min(min_y, local_vertex.y());
-
+    const double foot_x = input_object.shape.footprint.points.at(i).x;
+    const double foot_y = input_object.shape.footprint.points.at(i).y;
+    max_x = std::max(max_x, foot_x);
+    max_y = std::max(max_y, foot_y);
+    min_x = std::min(min_x, foot_x);
+    min_y = std::min(min_y, foot_y);
     max_z = std::max(max_z, static_cast<double>(input_object.shape.footprint.points.at(i).z));
   }
 
