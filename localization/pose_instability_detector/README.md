@@ -79,11 +79,11 @@ $$
 \tau_y = l + \epsilon_y
 $$
 
-| Symbol        | Description                                                                                     | Unit |
-| ------------- | ----------------------------------------------------------------------------------------------- | ---- |
-| $\tau_y$      | Threshold for the difference in the lateral axis                                                | $m$  |
-| $l$           | Maximum lateral distance described in the image above (See the appendix how this is calculated) | $m$  |
-| $\epsilon_y$  | Pose estimator (e. g. ndt_scan_matcher) error tolerance in the lateral axis                     | $m$  |
+| Symbol       | Description                                                                                     | Unit |
+| ------------ | ----------------------------------------------------------------------------------------------- | ---- |
+| $\tau_y$     | Threshold for the difference in the lateral axis                                                | $m$  |
+| $l$          | Maximum lateral distance described in the image above (See the appendix how this is calculated) | $m$  |
+| $\epsilon_y$ | Pose estimator (e. g. ndt_scan_matcher) error tolerance in the lateral axis                     | $m$  |
 
 Note that `pose_instability_detector` sets the threshold for the vertical axis as the same as the lateral axis. Only the pose estimator error tolerance is different.
 
