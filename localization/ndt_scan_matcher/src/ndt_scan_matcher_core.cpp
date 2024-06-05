@@ -457,7 +457,8 @@ bool NDTScanMatcher::callback_sensor_points_main(
   // check local_optimal_solution_oscillation_num
   constexpr int oscillation_num_threshold = 10;
   const int oscillation_num = count_oscillation(transformation_msg_array);
-  diagnostics_scan_points_->add_key_value("local_optimal_solution_oscillation_num", oscillation_num);
+  diagnostics_scan_points_->add_key_value(
+    "local_optimal_solution_oscillation_num", oscillation_num);
   const bool is_local_optimal_solution_oscillation = (oscillation_num > oscillation_num_threshold);
   if (is_local_optimal_solution_oscillation) {
     std::stringstream message;
@@ -467,7 +468,8 @@ bool NDTScanMatcher::callback_sensor_points_main(
   }
 
   // check score
-  diagnostics_scan_points_->add_key_value("transform_probability", ndt_result.transform_probability);
+  diagnostics_scan_points_->add_key_value(
+    "transform_probability", ndt_result.transform_probability);
   diagnostics_scan_points_->add_key_value(
     "nearest_voxel_transformation_likelihood", ndt_result.nearest_voxel_transformation_likelihood);
   double score = 0.0;
