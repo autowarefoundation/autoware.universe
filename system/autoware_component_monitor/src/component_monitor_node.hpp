@@ -46,6 +46,7 @@ private:
   void get_cpu_usage();
   void get_mem_usage();
   static float to_float(const std::string & str);
+  // cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
   static uint32_t to_uint32(const std::string & str);
   static uint64_t mib_to_kib(uint64_t mebibytes);
   static uint64_t gib_to_kib(uint64_t gibibytes);

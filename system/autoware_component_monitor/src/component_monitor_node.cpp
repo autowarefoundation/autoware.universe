@@ -40,7 +40,7 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
   } catch (std::exception & e) {
     RCLCPP_ERROR(get_logger(), "%s", e.what());
   } catch (...) {
-    RCLCPP_ERROR(get_logger(), "An unknown error occured.");
+    RCLCPP_ERROR(get_logger(), "An unknown error occurred.");
   }
 }
 
@@ -192,7 +192,7 @@ uint32_t ComponentMonitor::to_uint32(const std::string & str)
   return std::strtoul(str.c_str(), nullptr, 10);
 }
 
-// cspell:ignore mebibytes,gibibytes,tebibytes,pebibytes,exbibytes
+// cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
 uint64_t ComponentMonitor::mib_to_kib(uint64_t mebibytes)
 {
   return mebibytes * 1024;
