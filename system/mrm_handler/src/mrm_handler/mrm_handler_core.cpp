@@ -29,8 +29,11 @@ MrmHandler::MrmHandler() : Node("mrm_handler")
     declare_parameter<double>("timeout_cancel_mrm_behavior", 0.01);
   param_.use_emergency_holding = declare_parameter<bool>("use_emergency_holding", false);
   param_.timeout_emergency_recovery = declare_parameter<double>("timeout_emergency_recovery", 5.0);
+  param_.is_mrm_recoverable = declare_parameter<bool>("is_mrm_recoverable", true);
   param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped", false);
   param_.use_pull_over = declare_parameter<bool>("use_pull_over", false);
+  param_.use_pull_over_after_stopped =
+    declare_parameter<bool>("use_pull_over_after_stopped", false);
   param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop", false);
   param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency", true);
 
@@ -459,6 +462,7 @@ void MrmHandler::updateMrmState()
     // NORMAL
     if (is_vehicle_auto_mode && is_operation_mode_auto_mode && is_emergency) {
       transitionTo(MrmState::MRM_OPERATING);
+      if (!param_.is_mrm_recoverable) is_mrm_holding_ = true;
       return;
     }
   } else {
@@ -545,7 +549,7 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type MrmHandler::getCurrentMrmB
       return MrmState::EMERGENCY_STOP;
     }
     if (isStopped() && operation_mode_availability_->pull_over) {
-      if (param_.use_pull_over) {
+      if (param_.use_pull_over && param_.use_pull_over_after_stopped) {
         return MrmState::PULL_OVER;
       }
     }
@@ -564,7 +568,7 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type MrmHandler::getCurrentMrmB
       return MrmState::EMERGENCY_STOP;
     }
     if (isStopped() && operation_mode_availability_->pull_over) {
-      if (param_.use_pull_over) {
+      if (param_.use_pull_over && param_.use_pull_over_after_stopped) {
         return MrmState::PULL_OVER;
       }
     }
@@ -590,7 +594,7 @@ bool MrmHandler::isStopped()
 bool MrmHandler::isEmergency() const
 {
   return !operation_mode_availability_->autonomous || is_emergency_holding_ ||
-         is_operation_mode_availability_timeout;
+         is_operation_mode_availability_timeout || is_mrm_holding_;
 }
 
 bool MrmHandler::isArrivedAtGoal()

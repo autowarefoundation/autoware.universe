@@ -8,8 +8,10 @@
     timeout_cancel_mrm_behavior: 0.01
     use_emergency_holding: false
     timeout_emergency_recovery: 5.0
+    is_mrm_recoverable: true
     use_parking_after_stopped: false
     use_pull_over: false
+    use_pull_over_after_stopped: false
     use_comfortable_stop: false
 
     # setting whether to turn hazard lamp on for each situation

@@ -51,8 +51,10 @@ struct Param
   double timeout_cancel_mrm_behavior;
   bool use_emergency_holding;
   double timeout_emergency_recovery;
+  bool is_mrm_recoverable;
   bool use_parking_after_stopped;
   bool use_pull_over;
+  bool use_pull_over_after_stopped;
   bool use_comfortable_stop;
   HazardLampPolicy turning_hazard_on{};
 };
@@ -149,6 +151,7 @@ private:
 
   // Algorithm
   bool is_emergency_holding_ = false;
+  bool is_mrm_holding_ = false;
   void transitionTo(const int new_state);
   void updateMrmState();
   void operateMrm();
