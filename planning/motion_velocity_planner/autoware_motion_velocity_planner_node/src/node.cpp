@@ -63,34 +63,9 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   sub_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "~/input/trajectory", 1, std::bind(&MotionVelocityPlannerNode::on_trajectory, this, _1),
     create_subscription_options(this));
-  sub_predicted_objects_ =
-    this->create_subscription<autoware_perception_msgs::msg::PredictedObjects>(
-      "~/input/dynamic_objects", 1,
-      std::bind(&MotionVelocityPlannerNode::on_predicted_objects, this, _1),
-      create_subscription_options(this));
-  sub_no_ground_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "~/input/no_ground_pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&MotionVelocityPlannerNode::on_no_ground_pointcloud, this, _1),
-    create_subscription_options(this));
-  sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
-    "~/input/accel", 1, std::bind(&MotionVelocityPlannerNode::on_acceleration, this, _1),
-    create_subscription_options(this));
   sub_lanelet_map_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "~/input/vector_map", rclcpp::QoS(10).transient_local(),
     std::bind(&MotionVelocityPlannerNode::on_lanelet_map, this, _1),
-    create_subscription_options(this));
-  sub_traffic_signals_ =
-    this->create_subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>(
-      "~/input/traffic_signals", 1,
-      std::bind(&MotionVelocityPlannerNode::on_traffic_signals, this, _1),
-      create_subscription_options(this));
-  sub_virtual_traffic_light_states_ =
-    this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
-      "~/input/virtual_traffic_light_states", 1,
-      std::bind(&MotionVelocityPlannerNode::on_virtual_traffic_light_states, this, _1),
-      create_subscription_options(this));
-  sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-    "~/input/occupancy_grid", 1, std::bind(&MotionVelocityPlannerNode::on_occupancy_grid, this, _1),
     create_subscription_options(this));
 
   srv_load_plugin_ = create_service<LoadPlugin>(
@@ -148,45 +123,59 @@ void MotionVelocityPlannerNode::on_unload_plugin(
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool MotionVelocityPlannerNode::is_data_ready(
-  const nav_msgs::msg::Odometry::ConstSharedPtr ego_state_ptr) const
+bool MotionVelocityPlannerNode::update_planner_data()
 {
-  const auto & d = planner_data_;
   auto clock = *get_clock();
-  const auto check_with_msg = [&](const auto ptr, const auto & msg) {
+  auto is_ready = true;
+  const auto check_with_log = [&](const auto ptr, const auto & log) {
     constexpr auto throttle_duration = 3000;  // [ms]
     if (!ptr) {
-      RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, msg);
+      RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, log);
       return false;
+      is_ready = false;
     }
     return true;
   };
 
-  return check_with_msg(ego_state_ptr, "Waiting for current odometry") &&
-         check_with_msg(d.current_acceleration, "Waiting for current acceleration") &&
-         check_with_msg(d.predicted_objects, "Waiting for predicted objects") &&
-         check_with_msg(d.no_ground_pointcloud, "Waiting for pointcloud") &&
-         check_with_msg(map_ptr_, "Waiting for the map") &&
-         check_with_msg(
-           d.velocity_smoother_, "Waiting for the initialization of the velocity smoother") &&
-         check_with_msg(d.occupancy_grid, "Waiting for the occupancy grid");
+  const auto ego_state_ptr = sub_vehicle_odometry_.takeData();
+  if (check_with_log(ego_state_ptr, "Waiting for current odometry"))
+    planner_data_.current_odometry = *ego_state_ptr;
+
+  const auto ego_accel_ptr = sub_acceleration_.takeData();
+  if (check_with_log(ego_accel_ptr, "Waiting for current acceleration"))
+    planner_data_.current_acceleration = *ego_accel_ptr;
+
+  const auto predicted_objects_ptr = sub_predicted_objects_.takeData();
+  if (check_with_log(predicted_objects_ptr, "Waiting for predicted objects"))
+    planner_data_.predicted_objects = *predicted_objects_ptr;
+
+  const auto no_ground_pointcloud_ptr = sub_no_ground_pointcloud_.takeData();
+  if (check_with_log(no_ground_pointcloud_ptr, "Waiting for pointcloud")) {
+    const auto no_ground_pointcloud = process_no_ground_pointcloud(no_ground_pointcloud_ptr);
+    if (no_ground_pointcloud) planner_data_.no_ground_pointcloud = *no_ground_pointcloud;
+  }
+
+  const auto occupancy_grid_ptr = sub_occupancy_grid_.takeData();
+  if (check_with_log(occupancy_grid_ptr, "Waiting for the occupancy grid"))
+    planner_data_.occupancy_grid = *occupancy_grid_ptr;
+
+  // here we use bitwise operator to not short-circuit the logging messages
+  is_ready &= check_with_log(map_ptr_, "Waiting for the map");
+  is_ready &= check_with_log(
+    planner_data_.velocity_smoother_, "Waiting for the initialization of the velocity smoother");
+
+  // optional data
+  const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
+  if (traffic_signals_ptr) process_traffic_signals(traffic_signals_ptr);
+  const auto virtual_traffic_light_states_ptr = sub_virtual_traffic_light_states_.takeData();
+  if (virtual_traffic_light_states_ptr)
+    planner_data_.virtual_traffic_light_states = *virtual_traffic_light_states_ptr;
+
+  return is_ready;
 }
 
-void MotionVelocityPlannerNode::on_occupancy_grid(
-  const nav_msgs::msg::OccupancyGrid::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.occupancy_grid = msg;
-}
-
-void MotionVelocityPlannerNode::on_predicted_objects(
-  const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.predicted_objects = msg;
-}
-
-void MotionVelocityPlannerNode::on_no_ground_pointcloud(
+std::optional<pcl::PointCloud<pcl::PointXYZ>>
+MotionVelocityPlannerNode::process_no_ground_pointcloud(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   geometry_msgs::msg::TransformStamped transform;
@@ -195,7 +184,7 @@ void MotionVelocityPlannerNode::on_no_ground_pointcloud(
       "map", msg->header.frame_id, msg->header.stamp, rclcpp::Duration::from_seconds(0.1));
   } catch (tf2::TransformException & e) {
     RCLCPP_WARN(get_logger(), "no transform found for no_ground_pointcloud: %s", e.what());
-    return;
+    return {};
   }
 
   pcl::PointCloud<pcl::PointXYZ> pc;
@@ -203,21 +192,8 @@ void MotionVelocityPlannerNode::on_no_ground_pointcloud(
 
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
-  if (!pc.empty()) {
-    tier4_autoware_utils::transformPointCloud(pc, *pc_transformed, affine);
-  }
-
-  {
-    std::lock_guard<std::mutex> lock(mutex_);
-    planner_data_.no_ground_pointcloud = pc_transformed;
-  }
-}
-
-void MotionVelocityPlannerNode::on_acceleration(
-  const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.current_acceleration = msg;
+  if (!pc.empty()) tier4_autoware_utils::transformPointCloud(pc, *pc_transformed, affine);
+  return *pc_transformed;
 }
 
 void MotionVelocityPlannerNode::set_velocity_smoother_params()
@@ -235,7 +211,7 @@ void MotionVelocityPlannerNode::on_lanelet_map(
   has_received_map_ = true;
 }
 
-void MotionVelocityPlannerNode::on_traffic_signals(
+void MotionVelocityPlannerNode::process_traffic_signals(
   const autoware_perception_msgs::msg::TrafficLightGroupArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -272,26 +248,14 @@ void MotionVelocityPlannerNode::on_traffic_signals(
   }
 }
 
-void MotionVelocityPlannerNode::on_virtual_traffic_light_states(
-  const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.virtual_traffic_light_states = msg;
-}
-
 void MotionVelocityPlannerNode::on_trajectory(
   const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr input_trajectory_msg)
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
-  const auto ego_state_ptr = sub_vehicle_odometry_.takeData();
-  if (!is_data_ready(ego_state_ptr)) {
+  if (!update_planner_data()) {
     return;
   }
-  planner_data_.current_odometry.header = ego_state_ptr->header;
-  planner_data_.current_odometry.pose = ego_state_ptr->pose.pose;
-  planner_data_.current_velocity.header = ego_state_ptr->header;
-  planner_data_.current_velocity.twist = ego_state_ptr->twist.twist;
 
   if (input_trajectory_msg->points.empty()) {
     RCLCPP_WARN(get_logger(), "Input trajectory message is empty");
@@ -354,9 +318,9 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   const autoware::motion_velocity_planner::TrajectoryPoints & trajectory_points,
   const autoware::motion_velocity_planner::PlannerData & planner_data) const
 {
-  const geometry_msgs::msg::Pose current_pose = planner_data.current_odometry.pose;
-  const double v0 = planner_data.current_velocity.twist.linear.x;
-  const double a0 = planner_data.current_acceleration->accel.accel.linear.x;
+  const geometry_msgs::msg::Pose current_pose = planner_data.current_odometry.pose.pose;
+  const double v0 = planner_data.current_odometry.twist.twist.linear.x;
+  const double a0 = planner_data.current_acceleration.accel.accel.linear.x;
   const auto & external_v_limit = planner_data.external_velocity_limit;
   const auto & smoother = planner_data.velocity_smoother_;
 
