@@ -17,9 +17,7 @@
           "default": "10.0"
         }
       },
-      "required": ["timeout_sec",
-                   "required_distance"
-      ],
+      "required": ["timeout_sec", "required_distance"],
       "additionalProperties": false
     }
   }

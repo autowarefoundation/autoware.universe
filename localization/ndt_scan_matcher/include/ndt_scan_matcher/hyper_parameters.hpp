@@ -99,8 +99,7 @@ public:
     frame.ndt_base_frame = node->declare_parameter<std::string>("frame.ndt_base_frame");
     frame.map_frame = node->declare_parameter<std::string>("frame.map_frame");
 
-    sensor_points.timeout_sec =
-      node->declare_parameter<double>("sensor_points.timeout_sec");
+    sensor_points.timeout_sec = node->declare_parameter<double>("sensor_points.timeout_sec");
     sensor_points.required_distance =
       node->declare_parameter<double>("sensor_points.required_distance");
 
