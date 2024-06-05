@@ -40,6 +40,7 @@ struct HyperParameters
 
   struct SensorPoints
   {
+    double timeout_sec;
     double required_distance;
   } sensor_points;
 
@@ -54,7 +55,6 @@ struct HyperParameters
 
   struct Validation
   {
-    double lidar_topic_timeout_sec;
     double initial_pose_timeout_sec;
     double initial_pose_distance_tolerance_m;
     double critical_upper_bound_exe_time_ms;
@@ -97,6 +97,8 @@ public:
     frame.ndt_base_frame = node->declare_parameter<std::string>("frame.ndt_base_frame");
     frame.map_frame = node->declare_parameter<std::string>("frame.map_frame");
 
+    sensor_points.timeout_sec =
+      node->declare_parameter<double>("sensor_points.timeout_sec");
     sensor_points.required_distance =
       node->declare_parameter<double>("sensor_points.required_distance");
 
@@ -115,8 +117,6 @@ public:
     initial_pose_estimation.n_startup_trials =
       node->declare_parameter<int64_t>("initial_pose_estimation.n_startup_trials");
 
-    validation.lidar_topic_timeout_sec =
-      node->declare_parameter<double>("validation.lidar_topic_timeout_sec");
     validation.initial_pose_timeout_sec =
       node->declare_parameter<double>("validation.initial_pose_timeout_sec");
     validation.initial_pose_distance_tolerance_m =

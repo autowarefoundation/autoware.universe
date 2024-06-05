@@ -5,12 +5,6 @@
     "validation": {
       "type": "object",
       "properties": {
-        "lidar_topic_timeout_sec": {
-          "type": "number",
-          "description": "Tolerance of timestamp difference between current time and sensor pointcloud. [sec]",
-          "default": 1.0,
-          "minimum": 0.0
-        },
         "initial_pose_timeout_sec": {
           "type": "number",
           "description": "Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]",
@@ -31,7 +25,6 @@
         }
       },
       "required": [
-        "lidar_topic_timeout_sec",
         "initial_pose_timeout_sec",
         "initial_pose_distance_tolerance_m",
         "critical_upper_bound_exe_time_ms"

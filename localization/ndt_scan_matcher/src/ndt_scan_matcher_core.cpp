@@ -318,11 +318,11 @@ bool NDTScanMatcher::callback_sensor_points_main(
     (this->now() - sensor_points_msg_in_sensor_frame->header.stamp).seconds();
   diagnostics_scan_points_->addKeyValue(
     "sensor_points_delay_time_sec", sensor_points_delay_time_sec);
-  if (sensor_points_delay_time_sec > param_.validation.lidar_topic_timeout_sec) {
+  if (sensor_points_delay_time_sec > param_.sensor_points.timeout_sec) {
     std::stringstream message;
     message << "sensor points is experiencing latency."
             << "The delay time is " << sensor_points_delay_time_sec << "[sec] "
-            << "(the tolerance is " << param_.validation.lidar_topic_timeout_sec << "[sec]).";
+            << "(the tolerance is " << param_.sensor_points.timeout_sec << "[sec]).";
     diagnostics_scan_points_->updateLevelAndMessage(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
 

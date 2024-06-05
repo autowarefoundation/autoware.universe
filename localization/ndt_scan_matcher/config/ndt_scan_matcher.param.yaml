@@ -12,6 +12,9 @@
 
 
     sensor_points:
+      # Tolerance of timestamp difference between current time and sensor pointcloud. [sec]
+      timeout_sec: 1.0
+
       # Required distance of input sensor points. [m]
       # If the max distance of input sensor points is lower than this value, the scan matching will not be performed.
       required_distance: 10.0
@@ -52,9 +55,6 @@
 
 
     validation:
-      # Tolerance of timestamp difference between current time and sensor pointcloud. [sec]
-      lidar_topic_timeout_sec: 1.0
-
       # Tolerance of timestamp difference between initial_pose and sensor pointcloud. [sec]
       initial_pose_timeout_sec: 1.0
 
