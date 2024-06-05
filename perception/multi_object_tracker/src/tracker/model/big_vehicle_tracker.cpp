@@ -220,7 +220,7 @@ autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObje
     float r_cov_x = static_cast<float>(ekf_params_.r_cov_x);
     float r_cov_y = static_cast<float>(ekf_params_.r_cov_y);
     const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
-    if (label == autoware_auto_perception_msgs::msg::ObjectClassification::CAR) {
+    if (label == autoware_perception_msgs::msg::ObjectClassification::CAR) {
       // if label is changed, enlarge the measurement noise covariance
       constexpr float r_stddev_x = 2.0;  // [m]
       constexpr float r_stddev_y = 2.0;  // [m]
@@ -306,7 +306,7 @@ bool BigVehicleTracker::measureWithPose(
 bool BigVehicleTracker::measureWithShape(
   const autoware_perception_msgs::msg::DetectedObject & object)
 {
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }

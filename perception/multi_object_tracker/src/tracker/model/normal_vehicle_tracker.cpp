@@ -193,8 +193,8 @@ autoware_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpdatingO
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
-  autoware_auto_perception_msgs::msg::DetectedObject bbox_object = object;
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  autoware_perception_msgs::msg::DetectedObject bbox_object = object;
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
@@ -307,7 +307,7 @@ bool NormalVehicleTracker::measureWithPose(
 bool NormalVehicleTracker::measureWithShape(
   const autoware_perception_msgs::msg::DetectedObject & object)
 {
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }
