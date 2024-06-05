@@ -48,10 +48,10 @@ Or, you can include `component_monitor.launch.xml` in you launch file with the c
 The package uses the `top` command under the hood. `top -b -n 1 -p PID` command is tried to run at 10 Hz to get
 the system usage of the process.
 
-* `-b` activates the batch mode. By default, `top` doesn't exit and prints to stdout periodically. Batch mode allows
+- `-b` activates the batch mode. By default, `top` doesn't exit and prints to stdout periodically. Batch mode allows
   exiting the program.
-* `-n` number of times should `top` prints the system usage in batch mode.
-* `-p` specifies the PID of the process to monitor.
+- `-n` number of times should `top` prints the system usage in batch mode.
+- `-p` specifies the PID of the process to monitor.
 
 Here is a sample output:
 
