@@ -43,7 +43,6 @@ using raw_vehicle_cmd_converter::BrakeMap;
 using ControlCommandStamped = autoware_auto_control_msgs::msg::AckermannControlCommand;
 using GateMode = tier4_control_msgs::msg::GateMode;
 
-
 class ExternalCmdConverterNode : public rclcpp::Node
 {
 public:
