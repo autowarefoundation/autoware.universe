@@ -23,6 +23,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
 
 #include <Eigen/Dense>
@@ -44,7 +45,6 @@
 #include "tier4_vehicle_msgs/msg/actuation_command_stamped.hpp"
 #include "tier4_vehicle_msgs/msg/actuation_status_stamped.hpp"
 #include "tier4_vehicle_msgs/srv/update_accel_brake_map.hpp"
-#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <fstream>
@@ -250,8 +250,7 @@ private:
     const double map_acc);
   void updateTotalMapOffset(const double measured_acc, const double map_acc);
 
-  void takeActuation(
-    const std_msgs::msg::Header header, const double accel, const double brake);
+  void takeActuation(const std_msgs::msg::Header header, const double accel, const double brake);
   void takeActuationCommand(const ActuationCommandStamped::ConstSharedPtr msg);
   void takeActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg);
   void takeVelocity(const VelocityReport::ConstSharedPtr msg);

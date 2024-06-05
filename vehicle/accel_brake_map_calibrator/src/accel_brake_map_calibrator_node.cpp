@@ -280,7 +280,6 @@ void AccelBrakeMapCalibrator::timerCallback()
                               << "\n\t"
                               << "update_fail_count_: " << update_fail_count_ << "\n");
 
-
   // take data from subscribers
 
   // take actuation data
@@ -549,8 +548,7 @@ void AccelBrakeMapCalibrator::takeActuationCommand(
   takeActuation(header, accel, brake);
 }
 
-void AccelBrakeMapCalibrator::takeActuationStatus(
-  const ActuationStatusStamped::ConstSharedPtr msg)
+void AccelBrakeMapCalibrator::takeActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg)
 {
   const auto header = msg->header;
   const auto accel = msg->status.accel_status;
