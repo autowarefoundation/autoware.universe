@@ -29,7 +29,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "autoware_map_msgs/srv/get_differential_lanelet2_map.hpp"
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_meta_data.hpp>
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
 
@@ -42,11 +42,11 @@
 #include <map>
 #include <string>
 
+using GetDifferentialLanelet2Map = autoware_map_msgs::srv::GetDifferentialLanelet2Map;
+using autoware_map_msgs::msg::LaneletMapBin;
+
 class Lanelet2DifferentialLoaderModule
 {
-  using GetDifferentialLanelet2Map = autoware_map_msgs::srv::GetDifferentialLanelet2Map;
-  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
-
 public:
   explicit Lanelet2DifferentialLoaderModule(
     rclcpp::Node * node,
@@ -57,7 +57,7 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
 
-  rclcpp::Publisher<HADMapBin>::SharedPtr pub_whole_map_bin_;
+  rclcpp::Publisher<LaneletMapBin>::SharedPtr pub_whole_map_bin_;
 
   std::map<std::string, Lanelet2FileMetaData> lanelet2_file_metadata_dict_;
 
@@ -77,7 +77,7 @@ private:
     GetDifferentialLanelet2Map::Request::SharedPtr req,
     GetDifferentialLanelet2Map::Response::SharedPtr res);
 
-  autoware_auto_mapping_msgs::msg::HADMapBin loadWholeMap();
+  LaneletMapBin loadWholeMap();
 
   bool differentialLanelet2Load(
     GetDifferentialLanelet2Map::Request::SharedPtr & request,

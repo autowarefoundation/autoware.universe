@@ -21,7 +21,6 @@
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_auto_mapping_msgs/msg/had_map_bin.hpp"
 #include "autoware_map_msgs/msg/lanelet_map_meta_data.hpp"
 #include "autoware_map_msgs/srv/get_differential_lanelet2_map.hpp"
 #include <geometry_msgs/msg/point.hpp>
@@ -58,11 +57,7 @@ private:
   void updateMap(const geometry_msgs::msg::Point & pose);
   bool should_update_map() const;
 
-  static void convertLaneletMapBinToHADMapBin(
-    const autoware_map_msgs::msg::LaneletMapBin & lanelet_map_bin,
-    autoware_auto_mapping_msgs::msg::HADMapBin & had_map_bin);
-
-  rclcpp::Publisher<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr dynamic_map_pub_;
+  rclcpp::Publisher<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr dynamic_map_pub_;
 
   rclcpp::Client<autoware_map_msgs::srv::GetDifferentialLanelet2Map>::SharedPtr map_loader_client_;
 
