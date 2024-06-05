@@ -1,0 +1,328 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Parameters for Obstacle Avoidance Planner",
+    "type": "object",
+    "definitions": {
+      "INSERT_ROS_NODE_NAME": {
+        "type": "object",
+        "properties": {
+          "option.enable_skip_optimization": {
+            "type": "boolean",
+            "description": "skip elastic band and model predictive trajectory",
+            "default": "false"
+          },
+          "option.enable_reset_prev_optimization": {
+            "type": "boolean",
+            "description": "If true, optimization has no fix constraint to the previous result",
+            "default": "false"
+          },
+          "option.enable_outside_drivable_area_stop": {
+            "type": "boolean",
+            "description": "stop if the ego's trajectory footprint is outside the drivable area",
+            "default": "true"
+          },
+          "option.use_footprint_polygon_for_outside_drivable_area_check": {
+            "type": "boolean",
+            "description": "If false, only the footprint's corner points are considered",
+            "default": "false"
+          },
+          "option.debug.enable_pub_debug_marker": {
+            "type": "boolean",
+            "description": "publish debug marker",
+            "default": "true"
+          },
+          "option.debug.enable_pub_extra_debug_marker": {
+            "type": "boolean",
+            "description": "publish extra debug marker",
+            "default": "false"
+          },
+          "option.debug.enable_debug_info": {
+            "type": "boolean",
+            "description": "enable debug information",
+            "default": "false"
+          },
+          "option.debug.enable_calculation_time_info": {
+            "type": "boolean",
+            "description": "enable calculation time information",
+            "default": "false"
+          },
+          "common.output_delta_arc_length": {
+            "type": "number",
+            "description": "delta arc length for output trajectory [m]",
+            "default": "0.5"
+          },
+          "common.output_backward_traj_length": {
+            "type": "number",
+            "description": "backward length for backward trajectory from base_link [m]",
+            "default": "5.0"
+          },
+          "common.vehicle_stop_margin_outside_drivable_area": {
+            "type": "number",
+            "description": "vehicle stop margin to let the vehicle stop before the calculated stop point if it is calculated outside the drivable area [m]",
+            "default": "0.0"
+          },
+          "replan.max_path_shape_around_ego_lat_dist": {
+            "type": "number",
+            "description": "threshold of path shape change around ego [m]",
+            "default": "2.0"
+          },
+          "replan.max_path_shape_forward_lon_dist": {
+            "type": "number",
+            "description": "forward point to check lateral distance difference [m]",
+            "default": "100.0"
+          },
+          "replan.max_path_shape_forward_lat_dist": {
+            "type": "number",
+            "description": "threshold of path shape change around forward point [m]",
+            "default": "0.1"
+          },
+          "replan.max_ego_moving_dist": {
+            "type": "number",
+            "description": "threshold of ego's moving distance for replan [m]",
+            "default": "5.0"
+          },
+          "replan.max_goal_moving_dist": {
+            "type": "number",
+            "description": "threshold of goal's moving distance for replan [m]",
+            "default": "15.0"
+          },
+          "replan.max_delta_time_sec": {
+            "type": "number",
+            "description": "threshold of delta time for replan [second]",
+            "default": "1.0"
+          },
+          "mpt.option.steer_limit_constraint": {
+            "type": "boolean",
+            "description": "if true, will add steer limit constraint to constraint matrix A_rows",
+            "default": "false"
+          },
+          "mpt.option.visualize_sampling_num": {
+            "type": "number",
+            "description": "visualize sampling number",
+            "default": "1.0"
+          },
+          "mpt.option.enable_manual_warm_start": {
+            "type": "boolean",
+            "description": "if enable manual warm start, initial solution will be different",
+            "default": "false"
+          },
+          "mpt.option.enable_warm_start": {
+            "type": "boolean",
+            "description": "enable warm start",
+            "default": "true"
+          },
+          "mpt.option.enable_optimization_validation": {
+            "type": "boolean",
+            "description": "validate optimization result",
+            "default": "false"
+          },
+          "mpt.common.num_points": {
+            "type": "number",
+            "description": "number of points for optimization [-]",
+            "default": "100"
+          },
+          "mpt.common.delta_arc_length": {
+            "type": "number",
+            "description": "delta arc length for optimization [m]",
+            "default": "1.0"
+          },
+          "mpt.clearance.hard_clearance_from_road": {
+            "type": "number",
+            "description": "clearance from road boundary[m]",
+            "default": "0.0"
+          },
+          "mpt.clearance.soft_clearance_from_road": {
+            "type": "number",
+            "description": "clearance from road boundary[m]",
+            "default": "0.1"
+          },
+          "mpt.weight.soft_collision_free_weight": {
+            "type": "number",
+            "description": "soft weight for lateral error around the middle point",
+            "default": "1000.0"
+          },
+          "mpt.weight.lat_error_weight": {
+            "type": "number",
+            "description": "weight for lateral error",
+            "default": "1.0"
+          },
+          "mpt.weight.yaw_error_weight": {
+            "type": "number",
+            "description": "weight for yaw error",
+            "default": "0.0"
+          },
+          "mpt.weight.yaw_error_rate_weight": {
+            "type": "number",
+            "description": "weight for yaw error rate",
+            "default": "0.0"
+          },
+          "mpt.weight.steer_input_weight": {
+            "type": "number",
+            "description": "weight for steering input",
+            "default": "1.0"
+          },
+          "mpt.weight.steer_rate_weight": {
+            "type": "number",
+            "description": "weight for steering rate",
+            "default": "1.0"
+          },
+          "mpt.weight.terminal_lat_error_weight": {
+            "type": "number",
+            "description": "weight for lateral error at terminal point",
+            "default": "100.0"
+          },
+          "mpt.weight.terminal_yaw_error_weight": {
+            "type": "number",
+            "description": "weight for yaw error at terminal point",
+            "default": "100.0"
+          },
+          "mpt.weight.goal_lat_error_weight": {
+            "type": "number",
+            "description": "weight for lateral error at path end point",
+            "default": "1000.0"
+          },
+          "mpt.weight.goal_yaw_error_weight": {
+            "type": "number",
+            "description": "weight for yaw error at path end point",
+            "default": "1000.0"
+          },
+          "mpt.avoidance.max_bound_fixing_time": {
+            "type": "number",
+            "description": "[s]",
+            "default": "1.0"
+          },
+          "mpt.avoidance.max_longitudinal_margin_for_bound_violation": {
+            "type": "number",
+            "description": "[m]",
+            "default": "1.0"
+          },
+          "mpt.avoidance.max_avoidance_cost": {
+            "type": "number",
+            "description": "[m]",
+            "default": "0.5"
+          },
+          "mpt.avoidance.avoidance_cost_margin": {
+            "type": "number",
+            "description": "[m]",
+            "default": "0.0"
+          },
+          "mpt.avoidance.avoidance_cost_band_length": {
+            "type": "number",
+            "description": "[m]",
+            "default": "5.0"
+          },
+          "mpt.avoidance.avoidance_cost_decrease_rate": {
+            "type": "number",
+            "description": "decreased cost per point interval",
+            "default": "0.05"
+          },
+          "mpt.avoidance.min_drivable_width": {
+            "type": "number",
+            "description": "[m] The vehicle width and this parameter is guaranteed to keep for collision free constraint.",
+            "default": "0.2"
+          },
+          "mpt.avoidance.weight.lat_error_weight": {
+            "type": "number",
+            "description": "weight for lateral error",
+            "default": "0.0"
+          },
+          "mpt.avoidance.weight.yaw_error_weight": {
+            "type": "number",
+            "description": "weight for yaw error",
+            "default": "10.0"
+          },
+          "mpt.avoidance.weight.steer_input_weight": {
+            "type": "number",
+            "description": "weight for yaw error",
+            "default": "100.0"
+          },
+          "mpt.collision_free_constraints.option.l_inf_norm": {
+            "type": "boolean",
+            "description": "if ture, Number Of Slack Variables will be set to 1",
+            "default": "true"
+          },
+          "mpt.collision_free_constraints.option.soft_constraint": {
+            "type": "boolean",
+            "description": "if ture, will consider vehicle_circle_longitudinal_offsets",
+            "default": "true"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.method": {
+            "type": "string",
+            "description": "how to represent footprint as circles",
+            "default": "fitting_uniform_circle"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_calculation": {
+            "type": "number",
+            "description": "number for calculation",
+            "default": "3"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.bicycle_model.front_radius_ratio": {
+            "type": "number",
+            "description": "front radius ratio",
+            "default": "1.0"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.bicycle_model.rear_radius_ratio": {
+            "type": "number",
+            "description": "rear radius ratio",
+            "default": "1.0"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.uniform_circle.num": {
+            "type": "number",
+            "description": "num",
+            "default": "3"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio": {
+            "type": "number",
+            "description": "radius ratio",
+            "default": "1.0"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.fitting_uniform_circle.num": {
+            "type": "number",
+            "description": "num",
+            "default": "3"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.validation.max_lat_error": {
+            "type": "number",
+            "description": "max lat error [m]",
+            "default": "5.0"
+          },
+          "mpt.collision_free_constraints.vehicle_circles.validation.max_yaw_error": {
+            "type": "number",
+            "description": "max yaw error [rad]",
+            "default": "1.046"
+          }
+          
+
+        },
+        "required": ["common.output_delta_arc_length", "commom.output_backward_traj_length", "commom.vehicle_stop_margin_outside_drivable_area",
+        "replan.max_path_shape_around_ego_lat_dist", "replan.max_path_shape_forward_lon_dist", "replan.max_path_shape_forward_lat_dist",
+        "replan.max_ego_moving_dist", "replan.max_goal_moving_dist", "replan.max_delta_time_sec",
+        "mpt.common.num_points", "mpt.common.delta_arc_length", "mpt.kinematics.optimization_center_offset",
+        "mpt.clearance.hard_clearance_from_road", "mpt.clearance.soft_clearance_from_road", "mpt.weight.soft_collision_free_weight",
+        "mpt.weight.lat_error_weight", "mpt.weight.yaw_error_weight", "mpt.weight.yaw_error_rate_weight",
+        "mpt.weight.steer_input_weight", "mpt.weight.steer_rate_weight", "mpt.weight.terminal_lat_error_weight",
+        "mpt.weight.terminal_yaw_error_weight", "mpt.weight.goal_lat_error_weight", "mpt.weight.goal_yaw_error_weight",
+        "mpt.avoidance.max_bound_fixing_time", "mpt.avoidance.max_longitudinal_margin_for_bound_violation", "mpt.avoidance.max_avoidance_cost",
+        "mpt.avoidance.avoidance_cost_margin", "mpt.avoidance.avoidance_cost_band_length", "mpt.avoidance.avoidance_cost_decrease_rate",
+        "mpt.avoidance.min_drivable_width", "mpt.avoidance.weight.lat_error_weight", "mpt.avoidance.weight.yaw_error_weight",
+        "mpt.avoidance.weight.steer_input_weight", "mpt.collision_free_constraints.vehicle_circles.method", "mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_calculation",
+        "mpt.collision_free_constraints.vehi.bicycle_model.front_radius_ratio", "mpt.collision_free_constraints.vehicle_circles.rear_radius_ratio", "mpt.collision_free_constraints.vehicle_circles.uniform_circle.num",
+        "mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio", "mpt.collision_free_constraints.vehicle_circles.fitting_uniform_circle.num", "mpt.validation.max_lat_error", "mpt.validation.max_yaw_error"],
+        "additionalProperties": false
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "$ref": "#/definitions/obstacle_avodiance_planner"
+          }
+        },
+        "required": ["ros__parameters"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["/**"],
+    "additionalProperties": false
+  }

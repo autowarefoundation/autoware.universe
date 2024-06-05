@@ -184,6 +184,10 @@ Although it has a cons to converge to the local minima, it can get a good soluti
 
 ## How to Tune Parameters
 
+### Parameters
+
+{{ json_to_markdown("planning/obstacle_avoidance_planner/schema/obstacle_avodiance_planner.schema.json") }}
+
 ### Drivability in narrow roads
 
 - modify `mpt.clearance.soft_clearance_from_road`
