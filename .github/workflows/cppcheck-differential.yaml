@@ -49,7 +49,7 @@ jobs:
           touch cppcheck-report.txt
         fi
       shell: bash
-    
+
     - name: Show cppcheck-report result
       run: |
         cat cppcheck-report.txt
