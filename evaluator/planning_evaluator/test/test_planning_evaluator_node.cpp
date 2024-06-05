@@ -111,6 +111,21 @@ protected:
       p.pose.position.y = point.second;
       t.points.push_back(p);
     }
+
+    // insert yaw orientation
+    for (size_t i = 0; i < t.points.size() - 1; i++) {
+      const auto & p1 = t.points[i].pose.position;
+      const auto & p2 = t.points[i + 1].pose.position;
+      const double yaw = std::atan2(p2.y - p1.y, p2.x - p1.x);
+      tf2::Quaternion q;
+      q.setRPY(0.0, 0.0, yaw);
+      t.points[i].pose.orientation.x = q.x();
+      t.points[i].pose.orientation.y = q.y();
+      t.points[i].pose.orientation.z = q.z();
+      t.points[i].pose.orientation.w = q.w();
+    }
+    t.points.back().pose.orientation = t.points[t.points.size() - 2].pose.orientation;
+
     return t;
   }
 
@@ -465,4 +480,57 @@ TEST_F(EvalTest, TestModifiedGoalYawDeviation)
   EXPECT_NEAR(publishModifiedGoalAndGetMetric(0.0, 0.0, M_PI_2), M_PI_2, epsilon);
   EXPECT_NEAR(publishModifiedGoalAndGetMetric(1.0, 1.0, -M_PI_2), M_PI_2, epsilon);
   EXPECT_NEAR(publishModifiedGoalAndGetMetric(1.0, 1.0, -M_PI_4), M_PI_4, epsilon);
+}
+
+TEST_F(EvalTest, TestEgoPoseLateralDeviation)
+{
+  setTargetMetric(planning_diagnostics::Metric::ego_pose_lateral_deviation);
+  {
+    publishEgoPose(1.0, 2.0, 0.0);
+    Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}});
+    EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 2.0);
+  }
+
+  {
+    publishEgoPose(1.0, -2.0, 0.0);
+    Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}});
+    EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 2.0);
+  }
+
+  {
+    publishEgoPose(1.0, -2.0, 0.5);
+    Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}});
+    EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 2.0);
+  }
+}
+
+TEST_F(EvalTest, TestEgoPoseYawlDeviation)
+{
+  {
+    setTargetMetric(planning_diagnostics::Metric::ego_pose_yaw_deviation);
+    publishEgoPose(1.0, 3.0, 0.5);
+    Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}});
+    EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.5);
+  }
+
+  {
+    setTargetMetric(planning_diagnostics::Metric::ego_pose_yaw_deviation);
+    publishEgoPose(1.0, 3.0, -0.5);
+    Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 0.0}, {2.0, 0.0}});
+    EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.5);
+  }
+
+  {
+    setTargetMetric(planning_diagnostics::Metric::ego_pose_yaw_deviation);
+    publishEgoPose(1.0, 1.0, 0.5);
+    Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 1.0}, {2.0, 2.0}});
+    EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), M_PI_4 - 0.5);
+  }
+
+  {
+    setTargetMetric(planning_diagnostics::Metric::ego_pose_yaw_deviation);
+    publishEgoPose(1.0, 1.0, -0.5);
+    Trajectory t = makeTrajectory({{0.0, 0.0}, {1.0, 1.0}, {2.0, 2.0}});
+    EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), M_PI_4 + 0.5);
+  }
 }
