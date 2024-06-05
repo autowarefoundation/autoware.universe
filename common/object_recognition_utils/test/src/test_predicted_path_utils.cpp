@@ -174,7 +174,7 @@ TEST(predicted_path_utils, resamplePredictedPath_by_vector)
     }
   }
 
-  // Resample the path with morethan 100 points
+  // Resample the path with more than 100 points
   {
     std::vector<double> resampling_vec(101);
     for (size_t i = 0; i < 101; ++i) {
