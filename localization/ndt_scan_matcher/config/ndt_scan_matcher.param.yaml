@@ -61,6 +61,9 @@
       # Tolerance of distance difference between two initial poses used for linear interpolation. [m]
       initial_pose_distance_tolerance_m: 10.0
 
+      # Tolerance of distance difference from initial pose to result pose. [m]
+      initial_to_result_distance_tolerance_m: 3.0
+
       # The execution time which means probably NDT cannot matches scans properly. [ms]
       critical_upper_bound_exe_time_ms: 100.0
 

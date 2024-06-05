@@ -521,8 +521,7 @@ bool NDTScanMatcher::callback_sensor_points_main(
   const auto distance_initial_to_result = static_cast<double>(
     norm(interpolation_result.interpolated_pose.pose.pose.position, result_pose_msg.position));
   diagnostics_scan_points_->addKeyValue("distance_initial_to_result", distance_initial_to_result);
-  const double warn_distance_initial_to_result = 3.0;
-  if (distance_initial_to_result > warn_distance_initial_to_result) {
+  if (distance_initial_to_result > param_.validation.initial_to_result_distance_tolerance_m) {
     std::stringstream message;
     message << "distance_initial_to_result is too large (" << distance_initial_to_result
             << " [m]).";
