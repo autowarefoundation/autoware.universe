@@ -138,7 +138,8 @@ void GyroOdometerNode::concatGyroAndOdometer()
   }
 
   // check timeout
-  const double vehicle_twist_dt = std::abs((this->now() - latest_vehicle_twist_ros_time_).seconds());
+  const double vehicle_twist_dt =
+    std::abs((this->now() - latest_vehicle_twist_ros_time_).seconds());
   const double imu_dt = std::abs((this->now() - latest_imu_ros_time_).seconds());
   diagnostics_->addKeyValue("vehicle_twist_time_stamp_dt", vehicle_twist_dt);
   diagnostics_->addKeyValue("imu_time_stamp_dt", imu_dt);
