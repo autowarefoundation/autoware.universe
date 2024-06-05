@@ -463,8 +463,8 @@ void MrmHandler::updateMrmState()
     case MrmState::NORMAL:
       if (is_auto_mode) {
         transitionTo(MrmState::MRM_OPERATING);
-        return;
       }
+      return;
 
     case MrmState::MRM_OPERATING:
       if (!isStopped()) return;
