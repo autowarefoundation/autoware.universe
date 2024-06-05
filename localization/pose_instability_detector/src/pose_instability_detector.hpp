@@ -45,7 +45,7 @@ private:
   void callback_twist(TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr);
   void callback_timer();
 
-  void calculate_threshold(double interval_sec, int twist_buffer_size);
+  void calculate_threshold(double interval_sec);
   void dead_reckon(
     PoseStamped::SharedPtr & initial_pose, const rclcpp::Time & end_time,
     const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);

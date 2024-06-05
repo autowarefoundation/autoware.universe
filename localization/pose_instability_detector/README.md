@@ -52,19 +52,19 @@ There are six thresholds (x, y, z, roll, pitch, and yaw) to determine whether th
 ### `diff_position_x`
 
 This threshold examines the difference in the longitudinal axis between the two poses, and check whether the vehicle goes beyond the expected error.
-This threshold is a sum of "maximum longitudinal error due to velocity scale factor error", "process error in dead reckoning", and "pose estimation error".
+This threshold is a sum of "maximum longitudinal error due to velocity scale factor error" and "pose estimation error tolerance".
 
 $$
-\tau_x = v_{\rm max}\frac{\beta_v}{100} \Delta t + 3\sqrt{N\sigma_v^2\left(\Delta t\right)^2} + \epsilon_x
+\tau_x = v_{\rm max}\frac{\beta_v}{100} \Delta t + \epsilon_x\\
 $$
 
-- $\tau_x \cdots$ Threshold for the difference in the longitudinal axis [m]
-- $v_{\rm max} \cdots$ Maximum velocity [m/s]
-- $\beta_v \cdots$ Scale factor tolerance for the maximum velocity [%]
-- $\Delta t \cdots$ Time interval [s]
-- $N \cdots$ Number of integration steps in the dead reckoning
-- $\sigma_v^2 \cdots$ Variance of the heading velocity [m/s]
-- $\epsilon_x \cdots$ Pose estimator (e. g. ndt_scan_matcher) error tolerance in the longitudinal axis [m]
+| Symbol        | Description                                                                      | Unit  |
+| ------------- | -------------------------------------------------------------------------------- | ----- |
+| $\tau_x$      | Threshold for the difference in the longitudinal axis                            | $m$   |
+| $v_{\rm max}$ | Maximum velocity                                                                 | $m/s$ |
+| $\beta_v$     | Scale factor tolerance for the maximum velocity                                  | $\%$  |
+| $\Delta t$    | Time interval                                                                    | $s$   |
+| $\epsilon_x$  | Pose estimator (e. g. ndt_scan_matcher) error tolerance in the longitudinal axis | $m$   |
 
 ### `diff_position_y` and `diff_position_z`
 
@@ -73,39 +73,39 @@ The `pose_instability_detector` calculates the possible range where the vehicle 
 
 ![lateral_threshold_calculation](./media/lateral_threshold_calculation.png)
 
-Addition to this, the `pose_instability_detector` node considers the processing noise of the dead reckoning and the pose estimation error to determine the threshold.
+Addition to this, the `pose_instability_detector` node considers the pose estimation error tolerance to determine the threshold.
 
 $$
-\tau_y = l + 3\sqrt{N\left(\sigma_v^2\sigma_\theta^2 + v_{\rm max}^2\sigma_\theta^2 + \omega_{\rm max}^2 \sigma_v^2 \right)\left(\Delta t\right)^2} + \epsilon_y
+\tau_y = l + \epsilon_y
 $$
 
-- $\tau_y \cdots$ Threshold for the difference in the lateral axis [m] (See the appendix how this is calculated)
-- $l \cdots$ Maximum lateral distance described in the image above [m]
-- $\sigma_v^2 \cdots$ Variance of the heading velocity [m/s]
-- $\sigma_\theta^2 \cdots$ Variance of the heading angle [rad]
-- $v_{\rm max} \cdots$ Maximum heading velocity [m/s]
-- $\omega_{\rm max} \cdots$ Maximum angular velocity [rad/s]
-- $\Delta t \cdots$ Time interval [s]
-- $\epsilon_y \cdots$ Pose estimator (e. g. ndt_scan_matcher) error tolerance in the lateral axis [m]
+| Symbol        | Description                                                                                     | Unit |
+| ------------- | ----------------------------------------------------------------------------------------------- | ---- |
+| $\tau_y$      | Threshold for the difference in the lateral axis                                                | $m$  |
+| $l$           | Maximum lateral distance described in the image above (See the appendix how this is calculated) | $m$  |
+| $\epsilon_y$  | Pose estimator (e. g. ndt_scan_matcher) error tolerance in the lateral axis                     | $m$  |
 
 Note that `pose_instability_detector` sets the threshold for the vertical axis as the same as the lateral axis. Only the pose estimator error tolerance is different.
 
 ### `diff_angle_x`, `diff_angle_y`, and `diff_angle_z`
 
 These thresholds examine the difference in the roll, pitch, and yaw angles between the two poses.
-This threshold is a sum of "maximum angular error due to velocity scale factor error and bias error", "process error in dead reckoning", and "pose estimation error"
+This threshold is a sum of "maximum angular error due to velocity scale factor error and bias error" and "pose estimation error tolerance".
 
 $$
-\tau_\phi = \tau_\theta = \tau_\psi = \left(\omega_{\rm max}\frac{\beta_\omega}{100} + b \right) \Delta t + 3\sqrt{N\sigma_\omega^2\left(\Delta t\right)^2} + \epsilon_\psi
+\tau_\phi = \tau_\theta = \tau_\psi = \left(\omega_{\rm max}\frac{\beta_\omega}{100} + b \right) \Delta t + \epsilon_\psi
 $$
 
-- $\tau_\phi, \tau_\theta, \tau_\psi \cdots$ Threshold for the difference in the roll, pitch, and yaw angles
-- $\omega_{\rm max} \cdots$ Maximum angular velocity [rad/s]
-- $\beta_\omega \cdots$ Scale factor tolerance for the maximum angular velocity [%]
-- $b \cdots$ Bias tolerance of the angular velocity [rad/s]
-- $\Delta t \cdots$ Time interval [s]
-- $\sigma_\omega^2 \cdots$ Variance of the angular velocity [rad/s]
-- $\epsilon_\psi \cdots$ Pose estimator (e. g. ndt_scan_matcher) angular error tolerance [rad]
+| Symbol             | Description                                                              | Unit          |
+| ------------------ | ------------------------------------------------------------------------ | ------------- |
+| $\tau_\phi$        | Threshold for the difference in the roll angle                           | ${\rm rad}$   |
+| $\tau_\theta$      | Threshold for the difference in the pitch angle                          | ${\rm rad}$   |
+| $\tau_\psi$        | Threshold for the difference in the yaw angle                            | ${\rm rad}$   |
+| $\omega_{\rm max}$ | Maximum angular velocity                                                 | ${\rm rad}/s$ |
+| $\beta_\omega$     | Scale factor tolerance for the maximum angular velocity                  | $\%$          |
+| $b$                | Bias tolerance of the angular velocity                                   | ${\rm rad}/s$ |
+| $\Delta t$         | Time interval                                                            | $s$           |
+| $\epsilon_\psi$    | Pose estimator (e. g. ndt_scan_matcher) error tolerance in the yaw angle | ${\rm rad}$   |
 
 ## Parameters
 

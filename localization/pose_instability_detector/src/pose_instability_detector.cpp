@@ -29,11 +29,9 @@ PoseInstabilityDetector::PoseInstabilityDetector(const rclcpp::NodeOptions & opt
 : rclcpp::Node("pose_instability_detector", options),
   timer_period_(this->declare_parameter<double>("timer_period")),
   heading_velocity_maximum_(this->declare_parameter<double>("heading_velocity_maximum")),
-  heading_velocity_variance_(this->declare_parameter<double>("heading_velocity_variance")),
   heading_velocity_scale_factor_tolerance_(
     this->declare_parameter<double>("heading_velocity_scale_factor_tolerance")),
   angular_velocity_maximum_(this->declare_parameter<double>("angular_velocity_maximum")),
-  angular_velocity_variance_(this->declare_parameter<double>("angular_velocity_variance")),
   angular_velocity_scale_factor_tolerance_(
     this->declare_parameter<double>("angular_velocity_scale_factor_tolerance")),
   angular_velocity_bias_tolerance_(
@@ -138,7 +136,7 @@ void PoseInstabilityDetector::callback_timer()
   diff_pose_pub_->publish(diff_pose);
 
   // publish diagnostics
-  calculate_threshold((latest_odometry_time - prev_odometry_time).seconds(), twist_buffer_.size());
+  calculate_threshold((latest_odometry_time - prev_odometry_time).seconds());
 
   const std::vector<double> thresholds = {threshold_diff_position_x_, threshold_diff_position_y_,
                                           threshold_diff_position_z_, threshold_diff_angle_x_,
@@ -178,7 +176,7 @@ void PoseInstabilityDetector::callback_timer()
   prev_odometry_ = latest_odometry_;
 }
 
-void PoseInstabilityDetector::calculate_threshold(double interval_sec, int twist_buffer_size)
+void PoseInstabilityDetector::calculate_threshold(double interval_sec)
 {
   // Calculate maximum longitudinal difference
   const double longitudinal_difference =
