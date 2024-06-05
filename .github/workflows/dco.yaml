@@ -18,4 +18,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip3 install -U dco-check
-          dco-check --verbose --exclude-pattern '66853113+pre-commit-ci[bot]@users.noreply.github.com'
+          dco-check --verbose --exclude-pattern '66853113+pre-commit-ci\[bot\]@users\.noreply\.github\.com'
