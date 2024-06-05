@@ -16,7 +16,7 @@
 
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <boost/geometry.hpp>
@@ -80,7 +80,7 @@ tier4_autoware_utils::Polygon2d create_footprint(
 }
 
 tier4_autoware_utils::MultiPolygon2d create_object_footprints(
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
+  const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects,
   const PlannerParam & params)
 {
   tier4_autoware_utils::MultiPolygon2d footprints;

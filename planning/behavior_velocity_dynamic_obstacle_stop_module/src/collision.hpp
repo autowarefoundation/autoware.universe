@@ -28,7 +28,7 @@ namespace behavior_velocity_planner::dynamic_obstacle_stop
 /// @param [in] object_footprint footprint of the object used for finding a collision
 /// @return the collision point closest to ego (if any)
 std::optional<geometry_msgs::msg::Point> find_closest_collision_point(
-  const EgoData & ego_data, const autoware_auto_perception_msgs::msg::PredictedObject & object,
+  const EgoData & ego_data, const autoware_perception_msgs::msg::PredictedObject & object,
   const tier4_autoware_utils::MultiPolygon2d & object_footprints, const PlannerParam & params);
 
 /// @brief find the earliest collision along the ego path
@@ -38,7 +38,7 @@ std::optional<geometry_msgs::msg::Point> find_closest_collision_point(
 /// @return the point of earliest collision along the ego path
 std::vector<Collision> find_collisions(
   const EgoData & ego_data,
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
+  const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects,
   const std::vector<tier4_autoware_utils::MultiPolygon2d> & object_forward_footprints,
   const PlannerParam & params);
 
