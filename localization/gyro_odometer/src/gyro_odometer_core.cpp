@@ -88,7 +88,7 @@ void GyroOdometerNode::callbackVehicleTwist(
     "topic_time_stamp", static_cast<rclcpp::Time>(vehicle_twist_ptr->header.stamp).nanoseconds());
 
   vehicle_twist_arrived_ = true;
-  latest_vehicle_twist_rostime_ = vehicle_twist_ptr->header.stamp;
+  latest_vehicle_twist_ros_time_ = vehicle_twist_ptr->header.stamp;
   vehicle_twist_queue_.push_back(*vehicle_twist_ptr);
   concatGyroAndOdometer();
 
@@ -102,7 +102,7 @@ void GyroOdometerNode::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr i
     "topic_time_stamp", static_cast<rclcpp::Time>(imu_msg_ptr->header.stamp).nanoseconds());
 
   imu_arrived_ = true;
-  latest_imu_rostime_ = imu_msg_ptr->header.stamp;
+  latest_imu_ros_time_ = imu_msg_ptr->header.stamp;
   gyro_queue_.push_back(*imu_msg_ptr);
   concatGyroAndOdometer();
 
@@ -138,8 +138,8 @@ void GyroOdometerNode::concatGyroAndOdometer()
   }
 
   // check timeout
-  const double vehicle_twist_dt = std::abs((this->now() - latest_vehicle_twist_rostime_).seconds());
-  const double imu_dt = std::abs((this->now() - latest_imu_rostime_).seconds());
+  const double vehicle_twist_dt = std::abs((this->now() - latest_vehicle_twist_ros_time_).seconds());
+  const double imu_dt = std::abs((this->now() - latest_imu_ros_time_).seconds());
   diagnostics_->addKeyValue("vehicle_twist_time_stamp_dt", vehicle_twist_dt);
   diagnostics_->addKeyValue("imu_time_stamp_dt", imu_dt);
   if (vehicle_twist_dt > message_timeout_sec_) {

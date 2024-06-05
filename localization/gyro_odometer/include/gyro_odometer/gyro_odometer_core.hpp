@@ -76,8 +76,8 @@ private:
 
   bool vehicle_twist_arrived_;
   bool imu_arrived_;
-  rclcpp::Time latest_vehicle_twist_rostime_;
-  rclcpp::Time latest_imu_rostime_;
+  rclcpp::Time latest_vehicle_twist_ros_time_;
+  rclcpp::Time latest_imu_ros_time_;
   std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> vehicle_twist_queue_;
   std::deque<sensor_msgs::msg::Imu> gyro_queue_;
 
