@@ -38,7 +38,7 @@ public:
   explicit ComponentMonitor(const rclcpp::NodeOptions & node_options);
 
 private:
-  void timer_callback();
+  void monitor();
   void publish();
   void get_stats();
   std::stringstream run_command(const std::string & cmd) const;
@@ -53,7 +53,6 @@ private:
   static uint64_t pib_to_kib(uint64_t pebibytes);
   static uint64_t eib_to_kib(uint64_t exbibytes);
 
-  rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<autoware_internal_msgs::msg::SystemUsage>::SharedPtr usage_pub_;
 
   pid_t pid_;

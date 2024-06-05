@@ -19,8 +19,6 @@ namespace autoware::component_monitor
 ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
 : Node("component_monitor", node_options)
 {
-  timer_ = create_wall_timer(
-    std::chrono::milliseconds(100), std::bind(&ComponentMonitor::timer_callback, this));
   usage_pub_ = create_publisher<autoware_internal_msgs::msg::SystemUsage>(
     "component_system_usage", rclcpp::SensorDataQoS());
 
@@ -32,9 +30,21 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
 
   pid_ = getpid();
   usage_msg_.pid = pid_;
+
+  rclcpp::Rate loop_rate{10.0};
+  try {
+    while (rclcpp::ok()) {
+      monitor();
+      loop_rate.sleep();
+    }
+  } catch (std::exception & e) {
+    RCLCPP_ERROR(get_logger(), "%s", e.what());
+  } catch (...) {
+    RCLCPP_ERROR(get_logger(), "An unknown error occured.");
+  }
 }
 
-void ComponentMonitor::timer_callback()
+void ComponentMonitor::monitor()
 {
   if (usage_pub_->get_subscription_count() == 0) return;
 
@@ -182,7 +192,7 @@ uint32_t ComponentMonitor::to_uint32(const std::string & str)
   return std::strtoul(str.c_str(), nullptr, 10);
 }
 
-// cspell: ignore mebibytes,gibibytes,tebibytes,pebibytes,exbibytes
+// cspell:ignore mebibytes,gibibytes,tebibytes,pebibytes,exbibytes
 uint64_t ComponentMonitor::mib_to_kib(uint64_t mebibytes)
 {
   return mebibytes * 1024;
