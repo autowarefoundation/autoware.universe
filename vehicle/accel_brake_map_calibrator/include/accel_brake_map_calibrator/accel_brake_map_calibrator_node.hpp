@@ -108,7 +108,7 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr map_error_ratio_pub_;
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
 
-  rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
+  // rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
 
   tier4_autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{
     this, "~/input/steer"};
@@ -116,6 +116,9 @@ private:
     this, "~/input/actuation_status"};
   tier4_autoware_utils::InterProcessPollingSubscriber<ActuationCommandStamped> actuation_cmd_sub_{
     this, "~/input/actuation_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<VelocityReport> velocity_sub_{
+    this, "~/input/velocity"};
+  
 
   // Service
   rclcpp::Service<UpdateAccelBrakeMap>::SharedPtr update_map_dir_server_;
