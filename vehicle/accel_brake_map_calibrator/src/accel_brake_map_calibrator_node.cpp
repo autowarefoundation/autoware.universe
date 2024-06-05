@@ -211,11 +211,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   velocity_sub_ = create_subscription<VelocityReport>(
     "~/input/velocity", queue_size,
     std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
-  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
-    actuation_cmd_sub_ = create_subscription<ActuationCommandStamped>(
-      "~/input/actuation_cmd", queue_size,
-      std::bind(&AccelBrakeMapCalibrator::callbackActuationCommand, this, _1));
-  }
 
   // Service
   update_map_dir_server_ = create_service<UpdateAccelBrakeMap>(
@@ -295,9 +290,14 @@ void AccelBrakeMapCalibrator::timerCallback()
   steer_ptr_ = steer_sub_.takeData();
 
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
-    ActuationStatusStamped::ConstSharedPtr actuation_ptr = actuation_status_sub_.takeData();
-    if (!actuation_ptr) return;
-    callbackActuationStatus(actuation_ptr);
+    ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
+    if (!actuation_status_ptr) return;
+    callbackActuationStatus(actuation_status_ptr);
+  }
+  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
+    ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
+    if (!actuation_cmd_ptr) return;
+    callbackActuationCommand(actuation_cmd_ptr);
   }
 
   // data check
