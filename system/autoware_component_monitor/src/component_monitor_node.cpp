@@ -66,7 +66,7 @@ void ComponentMonitor::monitor(const pid_t & pid) const
 /**
  * @brief Get system usage of the component.
  *
- * @details The output of top -b -d 0.1 -n 1 -p PID` is like below:
+ * @details The output of top -b -n 1 -p PID` is like below:
  *
  * top - 15:32:33 up  4:34,  1 user,  load average: 3,11, 4,51, 3,67
  * Tasks:   1 total,   0 running,   1 sleeping,   0 stopped,   0 zombie
@@ -82,7 +82,7 @@ void ComponentMonitor::monitor(const pid_t & pid) const
  */
 field_t ComponentMonitor::get_stats(const pid_t & pid) const
 {
-  std::string cmd{"top -b -d 0.1 -n 1 -p "};
+  std::string cmd{"top -b -n 1 -p "};
   cmd += std::to_string(pid);
 
   auto std_out = run_command(cmd);
