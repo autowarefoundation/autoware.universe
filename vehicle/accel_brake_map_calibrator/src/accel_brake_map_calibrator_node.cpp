@@ -311,6 +311,8 @@ void AccelBrakeMapCalibrator::timerCallback()
     return;
   }
 
+  debug_values_.data.at(CURRENT_STEER) = steer_ptr_->steering_tire_angle;
+
   // data check 2
   if (
     isTimeout(twist_ptr_->header.stamp, timeout_sec_) ||

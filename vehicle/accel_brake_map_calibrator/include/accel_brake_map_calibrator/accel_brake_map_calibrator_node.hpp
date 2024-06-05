@@ -109,9 +109,7 @@ private:
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
 
   rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
-  // rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
-  // rclcpp::Subscription<ActuationStatusStamped>::SharedPtr actuation_status_sub_;
-  // rclcpp::Subscription<ActuationCommandStamped>::SharedPtr actuation_cmd_sub_;
+
   tier4_autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{
     this, "~/input/steer"};
   tier4_autoware_utils::InterProcessPollingSubscriber<ActuationStatusStamped> actuation_status_sub_{
