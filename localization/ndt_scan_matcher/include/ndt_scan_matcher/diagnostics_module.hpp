@@ -34,7 +34,7 @@ public:
   void publish(const rclcpp::Time & publish_time_stamp);
 
 private:
-  diagnostic_msgs::msg::DiagnosticArray create_diagnostics_array(
+  [[nodiscard]] diagnostic_msgs::msg::DiagnosticArray create_diagnostics_array(
     const rclcpp::Time & publish_time_stamp) const;
 
   rclcpp::Clock::SharedPtr clock_;
