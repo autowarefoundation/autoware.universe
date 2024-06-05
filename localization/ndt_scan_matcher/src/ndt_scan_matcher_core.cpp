@@ -636,7 +636,7 @@ void NDTScanMatcher::transform_sensor_measurement(
   geometry_msgs::msg::TransformStamped transform;
   try {
     transform = tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
-  } catch (tf2::TransformException & ex) {
+  } catch (const tf2::TransformException & ex) {
     throw;
   }
 
