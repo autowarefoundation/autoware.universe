@@ -65,7 +65,7 @@ DynamicLaneletProviderNode::DynamicLaneletProviderNode(const rclcpp::NodeOptions
     this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-  dynamic_map_pub_ = this->create_publisher<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  dynamic_map_pub_ = this->create_publisher<autoware_map_msgs::msg::LaneletMapBin>(
     "output/lanelet2_map", rclcpp::QoS{1}.transient_local());
 
   map_loader_client_ = this->create_client<autoware_map_msgs::srv::GetDifferentialLanelet2Map>(
@@ -173,9 +173,7 @@ void DynamicLaneletProviderNode::updateMap(const geometry_msgs::msg::Point & pos
     status = result.wait_for(std::chrono::seconds(1));
   }
 
-  autoware_auto_mapping_msgs::msg::HADMapBin had_map_bin;
-  convertLaneletMapBinToHADMapBin(result.get()->differential_map, had_map_bin);
-  dynamic_map_pub_->publish(had_map_bin);
+  dynamic_map_pub_->publish(result.get()->differential_map);
 }
 
 void DynamicLaneletProviderNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr & msg)
@@ -191,16 +189,6 @@ bool DynamicLaneletProviderNode::should_update_map() const
 
   double distance = norm_xy(current_position_.value(), last_update_position_.value());
   return distance > dynamic_map_loading_update_distance_;
-}
-
-void DynamicLaneletProviderNode::convertLaneletMapBinToHADMapBin(
-  const autoware_map_msgs::msg::LaneletMapBin & lanelet_map_bin,
-  autoware_auto_mapping_msgs::msg::HADMapBin & had_map_bin)
-{
-  had_map_bin.header = lanelet_map_bin.header;
-  had_map_bin.data = lanelet_map_bin.data;
-  had_map_bin.map_version = lanelet_map_bin.version_map;
-  had_map_bin.format_version = lanelet_map_bin.version_map_format;
 }
 
 }  // namespace dynamic_lanelet_provider

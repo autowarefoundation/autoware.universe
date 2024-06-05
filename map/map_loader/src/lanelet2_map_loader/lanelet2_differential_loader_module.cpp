@@ -27,7 +27,7 @@ Lanelet2DifferentialLoaderModule::Lanelet2DifferentialLoaderModule(
   center_line_resolution_(center_line_resolution)
 {
   pub_whole_map_bin_ =
-    node->create_publisher<HADMapBin>("output/lanelet2_map", rclcpp::QoS{1}.transient_local());
+    node->create_publisher<LaneletMapBin>("output/lanelet2_map", rclcpp::QoS{1}.transient_local());
 
   const auto metadata_adaptor = component_interface_utils::NodeAdaptor(node);
   metadata_adaptor.init_pub(pub_lanelet_map_meta_data_);
@@ -71,7 +71,7 @@ bool Lanelet2DifferentialLoaderModule::onServiceGetDifferentialLanelet2Map(
   return true;
 }
 
-autoware_auto_mapping_msgs::msg::HADMapBin Lanelet2DifferentialLoaderModule::loadWholeMap()
+LaneletMapBin Lanelet2DifferentialLoaderModule::loadWholeMap()
 {
   std::vector<std::string> lanelet2_paths;
   for (const auto & file : lanelet2_file_metadata_dict_) {
