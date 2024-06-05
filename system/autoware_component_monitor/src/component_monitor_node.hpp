@@ -29,6 +29,9 @@
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
+using msg_t = autoware_internal_msgs::msg::SystemUsage;
+using field_t = std::vector<std::string>;
+
 namespace autoware::component_monitor
 {
 
@@ -38,13 +41,12 @@ public:
   explicit ComponentMonitor(const rclcpp::NodeOptions & node_options);
 
 private:
-  void monitor();
-  void publish();
-  void get_stats();
+  void monitor(const pid_t & pid) const;
+  field_t get_stats(const pid_t & pid) const;
   std::stringstream run_command(const std::string & cmd) const;
-  static std::vector<std::string> get_fields(std::stringstream & std_out);
-  void get_cpu_usage();
-  void get_mem_usage();
+  static field_t get_fields(std::stringstream & std_out);
+  static float get_cpu_usage(const field_t & fields);
+  static std::pair<uint64_t, float> get_mem_usage(field_t & fields);
   static float to_float(const std::string & str);
   // cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
   static uint32_t to_uint32(const std::string & str);
@@ -54,11 +56,7 @@ private:
   static uint64_t pib_to_kib(uint64_t pebibytes);
   static uint64_t eib_to_kib(uint64_t exbibytes);
 
-  rclcpp::Publisher<autoware_internal_msgs::msg::SystemUsage>::SharedPtr usage_pub_;
-
-  pid_t pid_;
-  std::vector<std::string> fields_{};
-  autoware_internal_msgs::msg::SystemUsage usage_msg_{};
+  rclcpp::Publisher<msg_t>::SharedPtr usage_pub_;
 };
 
 }  // namespace autoware::component_monitor

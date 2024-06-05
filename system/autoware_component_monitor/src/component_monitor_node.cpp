@@ -19,8 +19,7 @@ namespace autoware::component_monitor
 ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
 : Node("component_monitor", node_options)
 {
-  usage_pub_ = create_publisher<autoware_internal_msgs::msg::SystemUsage>(
-    "component_system_usage", rclcpp::SensorDataQoS());
+  usage_pub_ = create_publisher<msg_t>("component_system_usage", rclcpp::SensorDataQoS());
 
   const auto p = bp::search_path("top");
   if (p.empty()) {
@@ -28,13 +27,12 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
     rclcpp::shutdown();
   }
 
-  pid_ = getpid();
-  usage_msg_.pid = pid_;
+  const auto pid = getpid();
 
   rclcpp::Rate loop_rate{10.0};
   try {
     while (rclcpp::ok()) {
-      monitor();
+      monitor(pid);
       loop_rate.sleep();
     }
   } catch (std::exception & e) {
@@ -44,23 +42,25 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
   }
 }
 
-void ComponentMonitor::monitor()
+void ComponentMonitor::monitor(const pid_t & pid) const
 {
   if (usage_pub_->get_subscription_count() == 0) return;
 
-  get_stats();
-  get_cpu_usage();
-  get_mem_usage();
-  publish();
-}
+  msg_t usage_msg{};
 
-void ComponentMonitor::publish()
-{
+  auto fields = get_stats(pid);
+  usage_msg.cpu_usage_rate = get_cpu_usage(fields);
+
+  const auto [mem_kib, mem_rate] = get_mem_usage(fields);
+  usage_msg.mem_usage_kib = mem_kib;
+  usage_msg.mem_usage_rate = mem_rate;
+
   std_msgs::msg::Header header;
   header.stamp = now();
   header.frame_id = "component_monitor";
-  usage_msg_.header = header;
-  usage_pub_->publish(usage_msg_);
+  usage_msg.header = header;
+  usage_msg.pid = pid;
+  usage_pub_->publish(usage_msg);
 }
 
 /**
@@ -80,13 +80,13 @@ void ComponentMonitor::publish()
  * We get 5th, 8th, and 9th fields, which are RES, %CPU, and %MEM, respectively.
  *
  */
-void ComponentMonitor::get_stats()
+field_t ComponentMonitor::get_stats(const pid_t & pid) const
 {
   std::string cmd{"top -b -d 0.1 -n 1 -p "};
-  cmd += std::to_string(pid_);
+  cmd += std::to_string(pid);
 
   auto std_out = run_command(cmd);
-  fields_ = get_fields(std_out);
+  return get_fields(std_out);
 }
 
 std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
@@ -123,9 +123,9 @@ std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
   return os;
 }
 
-std::vector<std::string> ComponentMonitor::get_fields(std::stringstream & std_out)
+field_t ComponentMonitor::get_fields(std::stringstream & std_out)
 {
-  std::vector<std::string> lines;
+  field_t lines;
   std::string line;
   while (std::getline(std_out, line)) {
     lines.push_back(line);
@@ -133,7 +133,7 @@ std::vector<std::string> ComponentMonitor::get_fields(std::stringstream & std_ou
 
   std::istringstream last_line(lines.back());
   std::string word;
-  std::vector<std::string> words;
+  field_t words;
   while (last_line >> word) {
     words.push_back(word);
   }
@@ -141,16 +141,16 @@ std::vector<std::string> ComponentMonitor::get_fields(std::stringstream & std_ou
   return words;
 }
 
-void ComponentMonitor::get_cpu_usage()
+float ComponentMonitor::get_cpu_usage(const field_t & fields)
 {
-  const auto & cpu_rate = fields_[8];
-  usage_msg_.cpu_usage_rate = to_float(cpu_rate);
+  const auto & cpu_rate = fields[8];
+  return to_float(cpu_rate);
 }
 
-void ComponentMonitor::get_mem_usage()
+std::pair<uint64_t, float> ComponentMonitor::get_mem_usage(field_t & fields)
 {
-  auto & mem_usage = fields_[5];
-  const auto & mem_usage_rate = fields_[9];
+  auto & mem_usage = fields[5];
+  const auto & mem_usage_rate = fields[9];
 
   uint64_t mem_usage_kib{};
   switch (mem_usage.back()) {
@@ -178,8 +178,7 @@ void ComponentMonitor::get_mem_usage()
       mem_usage_kib = to_uint32(mem_usage);
   }
 
-  usage_msg_.mem_usage_kib = mem_usage_kib;
-  usage_msg_.mem_usage_rate = to_float(mem_usage_rate);
+  return std::pair<uint64_t, float>{mem_usage_kib, to_float(mem_usage_rate)};
 }
 
 float ComponentMonitor::to_float(const std::string & str)
