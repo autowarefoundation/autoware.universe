@@ -67,9 +67,9 @@ nav:
       - 'About Motion Velocity Planner': planning/autoware_motion_velocity_planner_node/
       - 'Available Modules':
         - 'Out of Lane': planning/autoware_motion_velocity_planner_out_of_lane_module/
-    - 'Motion Velocity Smoother':
-      - 'About Motion Velocity Smoother': planning/motion_velocity_smoother
-      - 'About Motion Velocity Smoother (Japanese)': planning/motion_velocity_smoother/README.ja
+    - 'Velocity Smoother':
+      - 'About Velocity Smoother': planning/autoware_velocity_smoother
+      - 'About Velocity Smoother (Japanese)': planning/autoware_velocity_smoother/README.ja
   - 'Scenario Selector': planning/scenario_selector
   - 'Static Centerline Generator': planning/autoware_static_centerline_generator
   - 'API and Library':
@@ -79,6 +79,7 @@ nav:
     - 'Route Handler': planning/route_handler
     - 'RTC Interface': planning/rtc_interface
   - 'Additional Tools':
+    - 'Remaining Distance Time Calculator': planning/autoware_remaining_distance_time_calculator
     - 'RTC Replayer': planning/rtc_replayer
     - 'Planning Debug Tools':
       - 'About Planning Debug Tools': https://github.com/autowarefoundation/autoware_tools/tree/main/planning/planning_debug_tools
