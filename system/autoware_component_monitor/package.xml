@@ -3,7 +3,7 @@
 <package format="3">
   <name>autoware_component_monitor</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>A ROS 2 package to monitor system usage of component containers.</description>
   <maintainer email="memin@leodrive.ai">Mehmet Emin BAŞOĞLU</maintainer>
   <license>Apache-2.0</license>
 
