@@ -131,8 +131,8 @@ bool MotionVelocityPlannerNode::update_planner_data()
     constexpr auto throttle_duration = 3000;  // [ms]
     if (!ptr) {
       RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, log);
-      return false;
       is_ready = false;
+      return false;
     }
     return true;
   };
