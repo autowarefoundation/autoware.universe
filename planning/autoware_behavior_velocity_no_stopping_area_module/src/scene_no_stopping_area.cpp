@@ -254,7 +254,7 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
 
   // if the detected stop point is near goal, it's ignored.
   const double close_to_goal_distance = 1.0;
- 
+
   // stuck points by stop line
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
     const auto p0 = path.points.at(i).point.pose.position;
@@ -265,7 +265,8 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
       continue;
     }
     // judge if stop point p0 is near goal, by its distance to the path end.
-    const double dist_to_path_end = motion_utils::calcSignedArcLength(path.points, i, path.points.size() - 1);
+    const double dist_to_path_end =
+      motion_utils::calcSignedArcLength(path.points, i, path.points.size() - 1);
     if (dist_to_path_end < close_to_goal_distance) {
       // exit with false, cause position is near goal.
       return false;
