@@ -164,22 +164,15 @@ void EmergencyHandler::publishControlCommands()
   {
     GearCommand msg;
     msg.stamp = stamp;
+    const auto command = [&]() {
+      // If stopped and use_parking is not true, send the last gear command
+      if (isStopped())
+        return (param_.use_parking_after_stopped) ? GearCommand::PARK : last_gear_command_;
+      return (isDrivingBackwards()) ? GearCommand::REVERSE : GearCommand::DRIVE;
+    }();
 
-    if (isStopped()) {
-      if (param_.use_parking_after_stopped) {
-        msg.command = GearCommand::PARK;
-        pub_gear_cmd_->publish(msg);
-      }
-      return;
-    }
-
-    if (isDrivingBackwards()) {
-      msg.command = GearCommand::REVERSE;
-      pub_gear_cmd_->publish(msg);
-      return;
-    }
-
-    msg.command = GearCommand::DRIVE;
+    msg.command = command;
+    last_gear_command_ = msg.command;
     pub_gear_cmd_->publish(msg);
     return;
   }
