@@ -26,16 +26,17 @@ namespace
 float updateProbability(
   const float & prior, const float & true_positive, const float & false_positive)
 {
-  constexpr float maximum_probability = 0.999;
-  constexpr float minimum_probability = 0.100;
+  constexpr float max_updated_probability = 0.999;
+  constexpr float min_updated_probability = 0.100;
   const float probability =
     (prior * true_positive) / (prior * true_positive + (1 - prior) * false_positive);
-  return std::max(std::min(probability, maximum_probability), minimum_probability);
+  return std::max(std::min(probability, max_updated_probability), min_updated_probability);
 }
 float decayProbability(const float & prior, const float & delta_time)
 {
+  constexpr float minimum_probability = 0.001;
   constexpr float decay_rate = log(0.5) / 0.3;  // half-life (50% decay) of 0.3s
-  return prior * std::exp(decay_rate * delta_time);
+  return std::max(prior * std::exp(decay_rate * delta_time), minimum_probability);
 }
 }  // namespace
 
@@ -55,7 +56,7 @@ Tracker::Tracker(
   std::generate(uuid_.uuid.begin(), uuid_.uuid.end(), bit_eng);
 
   // Initialize existence probabilities
-  existence_probabilities_.resize(channel_size, 0.0);
+  existence_probabilities_.resize(channel_size, 0.001);
 }
 
 void Tracker::initializeExistenceProbabilities(
@@ -68,7 +69,10 @@ void Tracker::initializeExistenceProbabilities(
   existence_probabilities_[channel_index] = initial_existence_probability;
 
   // total existence probability
-  total_existence_probability_ = existence_probability;
+  constexpr float max_probability = 0.999;
+  constexpr float min_probability = 0.100;
+  total_existence_probability_ =
+    std::max(std::min(existence_probability, max_probability), min_probability);
 }
 
 bool Tracker::updateWithMeasurement(
@@ -87,10 +91,11 @@ bool Tracker::updateWithMeasurement(
     constexpr float probability_true_detection = 0.9;
     constexpr float probability_false_detection = 0.2;
 
-    // update measured channel probability
+    // update measured channel probability without decay
     existence_probabilities_[channel_index] = updateProbability(
       existence_probabilities_[channel_index], probability_true_detection,
       probability_false_detection);
+
     // decay other channel probabilities
     for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
       if (i == channel_index) {
