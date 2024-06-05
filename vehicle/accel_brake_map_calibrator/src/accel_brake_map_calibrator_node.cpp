@@ -208,10 +208,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   using std::placeholders::_2;
   using std::placeholders::_3;
 
-  // velocity_sub_ = create_subscription<VelocityReport>(
-  //   "~/input/velocity", queue_size,
-  //   std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
-
   // Service
   update_map_dir_server_ = create_service<UpdateAccelBrakeMap>(
     "~/input/update_map_dir",
@@ -284,26 +280,30 @@ void AccelBrakeMapCalibrator::timerCallback()
                               << "\n\t"
                               << "update_fail_count_: " << update_fail_count_ << "\n");
 
-  /* valid check */
 
   // take data from subscribers
+
+  // take actuation data
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
     ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
     if (!actuation_status_ptr) return;
-    callbackActuationStatus(actuation_status_ptr);
+    takeActuationStatus(actuation_status_ptr);
   }
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
     ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
     if (!actuation_cmd_ptr) return;
-    callbackActuationCommand(actuation_cmd_ptr);
+    takeActuationCommand(actuation_cmd_ptr);
   }
 
+  // take velocity data
   VelocityReport::ConstSharedPtr velocity_ptr = velocity_sub_.takeData();
   if (!velocity_ptr) return;
-  callbackVelocity(velocity_ptr);
+  takeVelocity(velocity_ptr);
 
+  // take steer data
   steer_ptr_ = steer_sub_.takeData();
 
+  /* valid check */
   // data check
   if (
     !twist_ptr_ || !steer_ptr_ || !accel_pedal_ptr_ || !brake_pedal_ptr_ ||
@@ -466,7 +466,7 @@ void AccelBrakeMapCalibrator::timerCallbackOutputCSV()
   }
 }
 
-void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstSharedPtr msg)
+void AccelBrakeMapCalibrator::takeVelocity(const VelocityReport::ConstSharedPtr msg)
 {
   // convert velocity-report to twist-stamped
   auto twist_msg = std::make_shared<TwistStamped>();
@@ -504,7 +504,7 @@ void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstShared
   pushDataToVec(twist_msg, twist_vec_max_size_, &twist_vec_);
 }
 
-void AccelBrakeMapCalibrator::callbackActuation(
+void AccelBrakeMapCalibrator::takeActuation(
   const std_msgs::msg::Header header, const double accel, const double brake)
 {
   // get accel data
@@ -540,22 +540,22 @@ void AccelBrakeMapCalibrator::callbackActuation(
     getNearestTimeDataFromVec(brake_pedal_ptr_, pedal_to_accel_delay_, brake_pedal_vec_);
 }
 
-void AccelBrakeMapCalibrator::callbackActuationCommand(
+void AccelBrakeMapCalibrator::takeActuationCommand(
   const ActuationCommandStamped::ConstSharedPtr msg)
 {
   const auto header = msg->header;
   const auto accel = msg->actuation.accel_cmd;
   const auto brake = msg->actuation.brake_cmd;
-  callbackActuation(header, accel, brake);
+  takeActuation(header, accel, brake);
 }
 
-void AccelBrakeMapCalibrator::callbackActuationStatus(
+void AccelBrakeMapCalibrator::takeActuationStatus(
   const ActuationStatusStamped::ConstSharedPtr msg)
 {
   const auto header = msg->header;
   const auto accel = msg->status.accel_status;
   const auto brake = msg->status.brake_status;
-  callbackActuation(header, accel, brake);
+  takeActuation(header, accel, brake);
 }
 
 bool AccelBrakeMapCalibrator::callbackUpdateMapService(

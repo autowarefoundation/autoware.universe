@@ -108,8 +108,6 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr map_error_ratio_pub_;
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
 
-  // rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
-
   tier4_autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{
     this, "~/input/steer"};
   tier4_autoware_utils::InterProcessPollingSubscriber<ActuationStatusStamped> actuation_status_sub_{
@@ -118,7 +116,6 @@ private:
     this, "~/input/actuation_cmd"};
   tier4_autoware_utils::InterProcessPollingSubscriber<VelocityReport> velocity_sub_{
     this, "~/input/velocity"};
-  
 
   // Service
   rclcpp::Service<UpdateAccelBrakeMap>::SharedPtr update_map_dir_server_;
@@ -252,12 +249,13 @@ private:
     const int brake_pedal_index, const int brake_vel_index, const double measured_acc,
     const double map_acc);
   void updateTotalMapOffset(const double measured_acc, const double map_acc);
-  void callbackActuation(
+
+  void takeActuation(
     const std_msgs::msg::Header header, const double accel, const double brake);
-  void callbackActuationCommand(const ActuationCommandStamped::ConstSharedPtr msg);
-  void callbackActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg);
-  void callbackVelocity(const VelocityReport::ConstSharedPtr msg);
-  // void callbackSteer(const SteeringReport::ConstSharedPtr msg);
+  void takeActuationCommand(const ActuationCommandStamped::ConstSharedPtr msg);
+  void takeActuationStatus(const ActuationStatusStamped::ConstSharedPtr msg);
+  void takeVelocity(const VelocityReport::ConstSharedPtr msg);
+
   bool callbackUpdateMapService(
     const std::shared_ptr<rmw_request_id_t> request_header,
     UpdateAccelBrakeMap::Request::SharedPtr req, UpdateAccelBrakeMap::Response::SharedPtr res);
