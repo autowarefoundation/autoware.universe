@@ -251,6 +251,10 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const Polygon2d & poly)
 {
   const double stop_vel = std::numeric_limits<float>::min();
+
+  // if the detected stop point is near goal, it's ignored.
+  const double close_to_goal_distance = 1.0;
+ 
   // stuck points by stop line
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
     const auto p0 = path.points.at(i).point.pose.position;
@@ -260,6 +264,13 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
     if (v0 > stop_vel && v1 > stop_vel) {
       continue;
     }
+    // judge if stop point p0 is near goal, by its distance to the path end.
+    const double dist_to_path_end = motion_utils::calcSignedArcLength(path.points, i, path.points.size() - 1);
+    if (dist_to_path_end < close_to_goal_distance) {
+      // exit with false, cause position is near goal.
+      return false;
+    }
+
     const LineString2d line{{p0.x, p0.y}, {p1.x, p1.y}};
     std::vector<Point2d> collision_points;
     bg::intersection(poly, line, collision_points);
