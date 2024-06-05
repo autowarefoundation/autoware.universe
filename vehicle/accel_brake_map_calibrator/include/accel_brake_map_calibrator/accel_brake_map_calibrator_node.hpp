@@ -110,10 +110,12 @@ private:
 
   rclcpp::Subscription<VelocityReport>::SharedPtr velocity_sub_;
   // rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
-  rclcpp::Subscription<ActuationStatusStamped>::SharedPtr actuation_status_sub_;
+  // rclcpp::Subscription<ActuationStatusStamped>::SharedPtr actuation_status_sub_;
   rclcpp::Subscription<ActuationCommandStamped>::SharedPtr actuation_cmd_sub_;
   tier4_autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{
     this, "~/input/steer"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<ActuationStatusStamped> actuation_status_sub_{
+    this, "~/input/actuation_status"};
 
   // Service
   rclcpp::Service<UpdateAccelBrakeMap>::SharedPtr update_map_dir_server_;

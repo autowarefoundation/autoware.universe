@@ -211,11 +211,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   velocity_sub_ = create_subscription<VelocityReport>(
     "~/input/velocity", queue_size,
     std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
-  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
-    actuation_status_sub_ = create_subscription<ActuationStatusStamped>(
-      "~/input/actuation_status", queue_size,
-      std::bind(&AccelBrakeMapCalibrator::callbackActuationStatus, this, _1));
-  }
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
     actuation_cmd_sub_ = create_subscription<ActuationCommandStamped>(
       "~/input/actuation_cmd", queue_size,
@@ -298,6 +293,12 @@ void AccelBrakeMapCalibrator::timerCallback()
 
   // take steer_ptr_ data
   steer_ptr_ = steer_sub_.takeData();
+
+  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
+    ActuationStatusStamped::ConstSharedPtr actuation_ptr = actuation_status_sub_.takeData();
+    if (!actuation_ptr) return;
+    callbackActuationStatus(actuation_ptr);
+  }
 
   // data check
   if (
