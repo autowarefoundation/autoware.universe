@@ -1,5 +1,5 @@
 //
-// Copyright 2020 Tier IV, Inc. All rights reserved.
+// Copyright 2024 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -211,8 +211,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   velocity_sub_ = create_subscription<VelocityReport>(
     "~/input/velocity", queue_size,
     std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
-  steer_sub_ = create_subscription<SteeringReport>(
-    "~/input/steer", queue_size, std::bind(&AccelBrakeMapCalibrator::callbackSteer, this, _1));
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
     actuation_status_sub_ = create_subscription<ActuationStatusStamped>(
       "~/input/actuation_status", queue_size,
@@ -297,6 +295,9 @@ void AccelBrakeMapCalibrator::timerCallback()
                               << "update_fail_count_: " << update_fail_count_ << "\n");
 
   /* valid check */
+
+  // take steer_ptr_ data
+  steer_ptr_ = steer_sub_.takeData();
 
   // data check
   if (
@@ -494,12 +495,6 @@ void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstShared
   debug_values_.data.at(CURRENT_SPEED) = twist_msg->twist.linear.x;
   twist_ptr_ = twist_msg;
   pushDataToVec(twist_msg, twist_vec_max_size_, &twist_vec_);
-}
-
-void AccelBrakeMapCalibrator::callbackSteer(const SteeringReport::ConstSharedPtr msg)
-{
-  debug_values_.data.at(CURRENT_STEER) = msg->steering_tire_angle;
-  steer_ptr_ = msg;
 }
 
 void AccelBrakeMapCalibrator::callbackActuation(
