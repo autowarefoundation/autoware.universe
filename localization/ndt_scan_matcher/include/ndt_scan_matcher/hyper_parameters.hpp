@@ -58,6 +58,7 @@ struct HyperParameters
     double initial_pose_timeout_sec;
     double initial_pose_distance_tolerance_m;
     double critical_upper_bound_exe_time_ms;
+    int skipping_publish_num;
   } validation;
 
   struct ScoreEstimation
@@ -123,6 +124,8 @@ public:
       node->declare_parameter<double>("validation.initial_pose_distance_tolerance_m");
     validation.critical_upper_bound_exe_time_ms =
       node->declare_parameter<double>("validation.critical_upper_bound_exe_time_ms");
+    validation.skipping_publish_num =
+      node->declare_parameter<int>("validation.skipping_publish_num");
 
     const int64_t converged_param_type_tmp =
       node->declare_parameter<int64_t>("score_estimation.converged_param_type");

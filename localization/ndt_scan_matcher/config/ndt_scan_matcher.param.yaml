@@ -64,6 +64,9 @@
       # The execution time which means probably NDT cannot matches scans properly. [ms]
       critical_upper_bound_exe_time_ms: 100.0
 
+      # Tolerance for the number of times rejected estimation results consecutively
+      skipping_publish_num: 5
+
 
     score_estimation:
       # Converged param type
