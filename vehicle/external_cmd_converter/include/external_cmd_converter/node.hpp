@@ -35,13 +35,12 @@
 namespace external_cmd_converter
 {
 using GearCommand = autoware_vehicle_msgs::msg::GearCommand;
-using Control = autoware_control_msgs::msg::Control;
+using autoware_control_msgs::msg::Control;
 using ExternalControlCommand = tier4_external_api_msgs::msg::ControlCommandStamped;
-using Odometry = nav_msgs::msg::Odometry;
+using nav_msgs::msg::Odometry;
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
-using ControlCommandStamped = autoware_auto_control_msgs::msg::AckermannControlCommand;
-using GateMode = tier4_control_msgs::msg::GateMode;
+using tier4_control_msgs::msg::GateMode;
 
 class ExternalCmdConverterNode : public rclcpp::Node
 {
@@ -73,7 +72,7 @@ private:
 
   Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};  // [m/s]
   GearCommand::ConstSharedPtr current_shift_cmd_{nullptr};
-  tier4_control_msgs::msg::GateMode::ConstSharedPtr current_gate_mode_{nullptr};
+  GateMode::ConstSharedPtr current_gate_mode_{nullptr};
 
   std::shared_ptr<rclcpp::Time> latest_emergency_stop_heartbeat_received_time_;
   std::shared_ptr<rclcpp::Time> latest_cmd_received_time_;
