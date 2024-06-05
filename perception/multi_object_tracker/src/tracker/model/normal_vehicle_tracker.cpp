@@ -43,7 +43,7 @@
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 NormalVehicleTracker::NormalVehicleTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
