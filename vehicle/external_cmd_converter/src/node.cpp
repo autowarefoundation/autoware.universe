@@ -159,7 +159,7 @@ double ExternalCmdConverterNode::calculate_acc(const ExternalControlCommand & cm
   return ref_acceleration;
 }
 
-static double ExternalCmdConverterNode::get_shift_velocity_sign(const GearCommand & cmd)
+double ExternalCmdConverterNode::get_shift_velocity_sign(const GearCommand & cmd)
 {
   if (cmd.command == GearCommand::DRIVE) {
     return 1.0;
