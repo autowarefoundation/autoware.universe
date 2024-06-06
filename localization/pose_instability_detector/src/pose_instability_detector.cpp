@@ -136,7 +136,8 @@ void PoseInstabilityDetector::callback_timer()
   diff_pose_pub_->publish(diff_pose);
 
   // publish diagnostics
-  ThresholdValues threshold_values = calculate_threshold((latest_odometry_time - prev_odometry_time).seconds());
+  ThresholdValues threshold_values =
+    calculate_threshold((latest_odometry_time - prev_odometry_time).seconds());
 
   const std::vector<double> thresholds = {threshold_values.position_x, threshold_values.position_y,
                                           threshold_values.position_z, threshold_values.angle_x,
@@ -176,7 +177,8 @@ void PoseInstabilityDetector::callback_timer()
   prev_odometry_ = latest_odometry_;
 }
 
-PoseInstabilityDetector::ThresholdValues PoseInstabilityDetector::calculate_threshold(double interval_sec)
+PoseInstabilityDetector::ThresholdValues PoseInstabilityDetector::calculate_threshold(
+  double interval_sec)
 {
   // Calculate maximum longitudinal difference
   const double longitudinal_difference =
@@ -323,7 +325,7 @@ PoseInstabilityDetector::clip_out_necessary_twist(
   // get iterator to the element that is right before start_time (if it does not exist, start_it =
   // twist_buffer.begin())
   auto start_it = twist_buffer.begin();
-  
+
   for (auto it = twist_buffer.begin(); it != twist_buffer.end(); ++it) {
     if (rclcpp::Time(it->header.stamp) > start_time) {
       break;

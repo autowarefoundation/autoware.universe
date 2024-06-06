@@ -23,8 +23,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <deque>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 class PoseInstabilityDetector : public rclcpp::Node
 {
@@ -39,7 +39,8 @@ class PoseInstabilityDetector : public rclcpp::Node
   using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 
 public:
-  struct ThresholdValues {
+  struct ThresholdValues
+  {
     double position_x;
     double position_y;
     double position_z;
@@ -47,7 +48,7 @@ public:
     double angle_y;
     double angle_z;
   };
-  
+
   explicit PoseInstabilityDetector(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
   ThresholdValues calculate_threshold(double interval_sec);
   void dead_reckon(
