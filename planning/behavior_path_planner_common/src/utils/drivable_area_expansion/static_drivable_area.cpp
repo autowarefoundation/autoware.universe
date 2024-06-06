@@ -1550,10 +1550,6 @@ std::vector<geometry_msgs::msg::Point> postProcess(
     }
   }
 
-  if (!is_driving_forward) {
-    std::reverse(tmp_bound.begin(), tmp_bound.end());
-  }
-
   const auto start_idx = [&]() {
     const size_t current_seg_idx = planner_data->findEgoSegmentIndex(path.points);
     const auto cropped_path_points = motion_utils::cropPoints(
@@ -1586,14 +1582,18 @@ std::vector<geometry_msgs::msg::Point> postProcess(
       calcLongitudinalOffsetGoalPoint(tmp_bound, goal_pose, goal_start_idx, vehicle_length);
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(goal_point).orientation(goal_pose.orientation);
-    const size_t goal_idx = std::max(
-      goal_start_idx, findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2));
-
+    const size_t goal_nearest_idx =
+      findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2);
+    const size_t goal_idx = ((goal_start_idx - start_idx) * (goal_start_idx - start_idx) >
+                             (goal_nearest_idx - start_idx) * (goal_nearest_idx - start_idx))
+                              ? goal_start_idx
+                              : goal_nearest_idx;
     return std::make_pair(goal_idx, goal_point);
   }();
 
   // Insert middle points
-  for (size_t i = start_idx + 1; i <= goal_idx; ++i) {
+  size_t step = (start_idx < goal_idx) ? 1 : -1;
+  for (size_t i = start_idx + step; i != goal_idx + step; i += step) {
     const auto & next_point = tmp_bound.at(i);
     const double dist = tier4_autoware_utils::calcDistance2d(processed_bound.back(), next_point);
     if (dist > overlap_threshold) {
