@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
 #include <limits>
@@ -109,4 +109,4 @@ WalkwayModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
   autoware::behavior_velocity_planner::WalkwayModulePlugin,
-  ::behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::PluginInterface)
