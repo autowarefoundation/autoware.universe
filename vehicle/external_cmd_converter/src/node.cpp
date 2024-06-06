@@ -135,7 +135,8 @@ void ExternalCmdConverterNode::on_external_cmd(const ExternalControlCommand::Con
   autoware_control_msgs::msg::Control output;
   output.stamp = cmd_ptr->stamp;
   output.lateral.steering_tire_angle = static_cast<float>(cmd_ptr->control.steering_angle);
-  output.lateral.steering_tire_rotation_rate = static_cast<float>(cmd_ptr->control.steering_angle_velocity);
+  output.lateral.steering_tire_rotation_rate =
+    static_cast<float>(cmd_ptr->control.steering_angle_velocity);
   output.longitudinal.velocity = static_cast<float>(ref_velocity);
   output.longitudinal.acceleration = static_cast<float>(ref_acceleration);
 
@@ -173,7 +174,8 @@ double ExternalCmdConverterNode::get_shift_velocity_sign(const GearCommand & cmd
   return 0.0;
 }
 
-void ExternalCmdConverterNode::check_topic_status(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void ExternalCmdConverterNode::check_topic_status(
+  diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   using diagnostic_msgs::msg::DiagnosticStatus;
   DiagnosticStatus status;
