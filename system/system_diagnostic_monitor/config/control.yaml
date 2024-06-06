@@ -39,7 +39,7 @@ units:
 
   - path: /autoware/control/emergency_braking
     type: diag
-    node: autonomous_emergency_braking
+    node: autoware_autonomous_emergency_braking
     name: aeb_emergency_stop
 
   - path: /autoware/control/performance_monitoring/lane_departure

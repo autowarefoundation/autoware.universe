@@ -45,7 +45,7 @@ DiagnosticStatus controlEvaluatorNode::generateDiagnosticStatus(const bool is_em
 {
   DiagnosticStatus status;
   status.level = status.OK;
-  status.name = "autonomous_emergency_braking";
+  status.name = "autoware_autonomous_emergency_braking";
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = "decision";
   key_value.value = (is_emergency_brake) ? "stop" : "none";
@@ -66,7 +66,8 @@ void controlEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr d
   const auto start = now();
   const auto aeb_status =
     std::find_if(diag_msg->status.begin(), diag_msg->status.end(), [](const auto & status) {
-      const bool aeb_found = status.name.find("autonomous_emergency_braking") != std::string::npos;
+      const bool aeb_found =
+        status.name.find("autoware_autonomous_emergency_braking") != std::string::npos;
       return aeb_found;
     });
 

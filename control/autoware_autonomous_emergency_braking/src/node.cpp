@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autonomous_emergency_braking/node.hpp"
+#include "autoware_autonomous_emergency_braking/node.hpp"
 
 #include <pcl_ros/transforms.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
@@ -44,7 +44,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-namespace autoware::motion::control::autonomous_emergency_braking
+namespace autoware::motion::control::autoware_autonomous_emergency_braking
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
 namespace bg = boost::geometry;
@@ -113,7 +113,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   }
   // Diagnostics
   {
-    updater_.setHardwareID("autonomous_emergency_braking");
+    updater_.setHardwareID("autoware_autonomous_emergency_braking");
     updater_.add("aeb_emergency_stop", this, &AEB::onCheckCollision);
   }
   // parameter
@@ -736,7 +736,8 @@ void AEB::addCollisionMarker(const ObjectData & data, MarkerArray & debug_marker
   debug_markers.markers.push_back(point_marker);
 }
 
-}  // namespace autoware::motion::control::autonomous_emergency_braking
+}  // namespace autoware::motion::control::autoware_autonomous_emergency_braking
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::motion::control::autonomous_emergency_braking::AEB)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::motion::control::autoware_autonomous_emergency_braking::AEB)

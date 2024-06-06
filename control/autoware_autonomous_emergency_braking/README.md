@@ -2,7 +2,7 @@
 
 ## Purpose / Role
 
-`autonomous_emergency_braking` is a module that prevents collisions with obstacles on the predicted path created by a control module or sensor values estimated from the control module.
+`autoware_autonomous_emergency_braking` is a module that prevents collisions with obstacles on the predicted path created by a control module or sensor values estimated from the control module.
 
 ### Assumptions
 

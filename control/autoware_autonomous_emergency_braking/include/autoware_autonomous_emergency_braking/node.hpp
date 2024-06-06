@@ -49,7 +49,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-namespace autoware::motion::control::autonomous_emergency_braking
+namespace autoware::motion::control::autoware_autonomous_emergency_braking
 {
 
 using autoware_planning_msgs::msg::Trajectory;
@@ -338,6 +338,6 @@ public:
   // Parameter callback
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 };
-}  // namespace autoware::motion::control::autonomous_emergency_braking
+}  // namespace autoware::motion::control::autoware_autonomous_emergency_braking
 
 #endif  // AUTOWARE_AUTONOMOUS_EMERGENCY_BRAKING__NODE_HPP_

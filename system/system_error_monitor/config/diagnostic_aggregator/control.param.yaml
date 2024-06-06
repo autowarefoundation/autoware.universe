@@ -4,9 +4,9 @@
       type: diagnostic_aggregator/AnalyzerGroup
       path: control
       analyzers:
-        autonomous_emergency_braking:
+        autoware_autonomous_emergency_braking:
           type: diagnostic_aggregator/AnalyzerGroup
-          path: autonomous_emergency_braking
+          path: autoware_autonomous_emergency_braking
           analyzers:
             performance_monitoring:
               type: diagnostic_aggregator/AnalyzerGroup
