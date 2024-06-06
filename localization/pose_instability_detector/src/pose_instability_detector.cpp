@@ -136,11 +136,11 @@ void PoseInstabilityDetector::callback_timer()
   diff_pose_pub_->publish(diff_pose);
 
   // publish diagnostics
-  calculate_threshold((latest_odometry_time - prev_odometry_time).seconds());
+  ThresholdValues threshold_values = calculate_threshold((latest_odometry_time - prev_odometry_time).seconds());
 
-  const std::vector<double> thresholds = {threshold_diff_position_x_, threshold_diff_position_y_,
-                                          threshold_diff_position_z_, threshold_diff_angle_x_,
-                                          threshold_diff_angle_y_,    threshold_diff_angle_z_};
+  const std::vector<double> thresholds = {threshold_values.position_x, threshold_values.position_y,
+                                          threshold_values.position_z, threshold_values.angle_x,
+                                          threshold_values.angle_y,    threshold_values.angle_z};
 
   const std::vector<std::string> labels = {"diff_position_x", "diff_position_y", "diff_position_z",
                                            "diff_angle_x",    "diff_angle_y",    "diff_angle_z"};
@@ -176,7 +176,7 @@ void PoseInstabilityDetector::callback_timer()
   prev_odometry_ = latest_odometry_;
 }
 
-void PoseInstabilityDetector::calculate_threshold(double interval_sec)
+PoseInstabilityDetector::ThresholdValues PoseInstabilityDetector::calculate_threshold(double interval_sec)
 {
   // Calculate maximum longitudinal difference
   const double longitudinal_difference =
@@ -227,12 +227,15 @@ void PoseInstabilityDetector::calculate_threshold(double interval_sec)
   const double yaw_difference = roll_difference;
 
   // Set thresholds
-  threshold_diff_position_x_ = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
-  threshold_diff_position_y_ = lateral_difference + pose_estimator_lateral_tolerance_;
-  threshold_diff_position_z_ = vertical_difference + pose_estimator_vertical_tolerance_;
-  threshold_diff_angle_x_ = roll_difference + pose_estimator_angular_tolerance_;
-  threshold_diff_angle_y_ = pitch_difference + pose_estimator_angular_tolerance_;
-  threshold_diff_angle_z_ = yaw_difference + pose_estimator_angular_tolerance_;
+  ThresholdValues result_values;
+  result_values.position_x = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
+  result_values.position_y = lateral_difference + pose_estimator_lateral_tolerance_;
+  result_values.position_z = vertical_difference + pose_estimator_vertical_tolerance_;
+  result_values.angle_x = roll_difference + pose_estimator_angular_tolerance_;
+  result_values.angle_y = pitch_difference + pose_estimator_angular_tolerance_;
+  result_values.angle_z = yaw_difference + pose_estimator_angular_tolerance_;
+
+  return result_values;
 }
 
 void PoseInstabilityDetector::dead_reckon(
@@ -302,9 +305,25 @@ PoseInstabilityDetector::clip_out_necessary_twist(
   const std::deque<TwistWithCovarianceStamped> & twist_buffer, const rclcpp::Time & start_time,
   const rclcpp::Time & end_time)
 {
+  // If there is only one element in the twist_buffer, return a deque that has the same twist
+  // from the start till the end
+  if (twist_buffer.size() == 1) {
+    TwistWithCovarianceStamped twist = twist_buffer.front();
+    std::deque<TwistWithCovarianceStamped> simple_twist_deque;
+
+    twist.header.stamp = start_time;
+    simple_twist_deque.push_back(twist);
+
+    twist.header.stamp = end_time;
+    simple_twist_deque.push_back(twist);
+
+    return simple_twist_deque;
+  }
+
   // get iterator to the element that is right before start_time (if it does not exist, start_it =
   // twist_buffer.begin())
   auto start_it = twist_buffer.begin();
+  
   for (auto it = twist_buffer.begin(); it != twist_buffer.end(); ++it) {
     if (rclcpp::Time(it->header.stamp) > start_time) {
       break;
@@ -325,21 +344,6 @@ PoseInstabilityDetector::clip_out_necessary_twist(
 
   // Create result deque
   std::deque<TwistWithCovarianceStamped> result_deque(start_it, end_it);
-
-  // If the result deque has only one element, return a deque that starts and ends with the same
-  // element
-  if (result_deque.size() == 1) {
-    TwistWithCovarianceStamped twist = *start_it;
-    result_deque.clear();
-
-    twist.header.stamp = start_time;
-    result_deque.push_back(twist);
-
-    twist.header.stamp = end_time;
-    result_deque.push_back(twist);
-
-    return result_deque;
-  }
 
   // If the first element is later than start_time, add the first element to the front of the
   // result_deque
@@ -395,7 +399,6 @@ PoseInstabilityDetector::clip_out_necessary_twist(
 
     result_deque[result_deque.size() - 1].header.stamp = end_time;
   }
-
   return result_deque;
 }
 

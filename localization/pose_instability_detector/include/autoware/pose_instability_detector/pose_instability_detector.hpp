@@ -24,6 +24,7 @@
 
 #include <deque>
 #include <vector>
+#include <tuple>
 
 class PoseInstabilityDetector : public rclcpp::Node
 {
@@ -38,17 +39,26 @@ class PoseInstabilityDetector : public rclcpp::Node
   using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 
 public:
+  struct ThresholdValues {
+    double position_x;
+    double position_y;
+    double position_z;
+    double angle_x;
+    double angle_y;
+    double angle_z;
+  };
+  
   explicit PoseInstabilityDetector(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  ThresholdValues calculate_threshold(double interval_sec);
+  void dead_reckon(
+    PoseStamped::SharedPtr & initial_pose, const rclcpp::Time & end_time,
+    const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);
 
 private:
   void callback_odometry(Odometry::ConstSharedPtr odometry_msg_ptr);
   void callback_twist(TwistWithCovarianceStamped::ConstSharedPtr twist_msg_ptr);
   void callback_timer();
 
-  void calculate_threshold(double interval_sec);
-  void dead_reckon(
-    PoseStamped::SharedPtr & initial_pose, const rclcpp::Time & end_time,
-    const std::deque<TwistWithCovarianceStamped> & twist_deque, Pose::SharedPtr & estimated_pose);
   std::deque<TwistWithCovarianceStamped> clip_out_necessary_twist(
     const std::deque<TwistWithCovarianceStamped> & twist_buffer, const rclcpp::Time & start_time,
     const rclcpp::Time & end_time);
@@ -65,12 +75,7 @@ private:
   // parameters
   const double timer_period_;  // [sec]
 
-  double threshold_diff_position_x_;  // longitudinal
-  double threshold_diff_position_y_;  // lateral
-  double threshold_diff_position_z_;  // vertical
-  double threshold_diff_angle_x_;     // roll
-  double threshold_diff_angle_y_;     // pitch
-  double threshold_diff_angle_z_;     // yaw
+  ThresholdValues threshold_values_;
 
   const double heading_velocity_maximum_;                 // [m/s]
   const double heading_velocity_scale_factor_tolerance_;  // [%]
