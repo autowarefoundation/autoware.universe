@@ -22,15 +22,15 @@ Once the acceleration map is crafted, it should be loaded when the RawVehicleCmd
 
 ### Auto-Calibration Tool
 
-For ease of calibration and adjustments to the lookup table, an auto-calibration tool is available. More information and instructions for this tool can be found [here](https://github.com/autowarefoundation/autoware.universe/blob/main/vehicle/accel_brake_map_calibrator/accel_brake_map_calibrator/README.md).
+For ease of calibration and adjustments to the lookup table, an auto-calibration tool is available. More information and instructions for this tool can be found [here](https://github.com/autowarefoundation/autoware.universe/blob/main/vehicle/accel_brake_map_calibrator/README.md).
 
 ## Input topics
 
-| Name                  | Type                                  | Description                                                                                                        |
-| --------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `~/input/control_cmd` | autoware_control_msgs::msg::Control   | target `velocity/acceleration/steering_angle/steering_angle_velocity` is necessary to calculate actuation command. |
-| `~/input/steering"`   | autoware_vehicle_msgs::SteeringReport | current status of steering used for steering feed back control                                                     |
-| `~/input/twist`       | navigation_msgs::Odometry             | twist topic in odometry is used.                                                                                   |
+| Name                  | Type                                       | Description                                                                                                        |
+| --------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `~/input/control_cmd` | autoware_control_msgs::msg::Control        | target `velocity/acceleration/steering_angle/steering_angle_velocity` is necessary to calculate actuation command. |
+| `~/input/steering"`   | autoware_vehicle_msgs::msg::SteeringReport | current status of steering used for steering feed back control                                                     |
+| `~/input/odometry`    | navigation_msgs::Odometry                  | twist topic in odometry is used.                                                                                   |
 
 ## Output topics
 
