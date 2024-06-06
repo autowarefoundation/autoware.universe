@@ -254,7 +254,7 @@ void EKFLocalizer::timer_tf_callback()
     return;
   }
 
-  if (params_.pose_frame_id == "") {
+  if (params_.pose_frame_id.empty()) {
     return;
   }
 
