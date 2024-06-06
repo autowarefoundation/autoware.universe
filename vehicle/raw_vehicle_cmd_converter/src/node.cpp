@@ -202,11 +202,17 @@ double RawVehicleCommandConverterNode::calculateBrakeMap(
 
 void RawVehicleCommandConverterNode::processSteering(const Steering::ConstSharedPtr msg)
 {
+  if (!msg) {
+    return;
+  }
   current_steer_ptr_ = std::make_unique<double>(msg->steering_tire_angle);
 }
 
 void RawVehicleCommandConverterNode::processVelocity(const Odometry::ConstSharedPtr msg)
 {
+  if (!msg) {
+    return;
+  }
   current_twist_ptr_ = std::make_unique<TwistStamped>();
   current_twist_ptr_->header = msg->header;
   current_twist_ptr_->twist = msg->twist.twist;
@@ -216,10 +222,8 @@ void RawVehicleCommandConverterNode::onControlCmd(const Control::ConstSharedPtr 
 {
   const auto velocity_msg = sub_velocity_.takeData();
   const auto steering_msg = sub_steering_.takeData();
-  if (velocity_msg && steering_msg) {
-    processVelocity(velocity_msg);
-    processSteering(steering_msg);
-  }
+  processVelocity(velocity_msg);
+  processSteering(steering_msg);
   control_cmd_ptr_ = msg;
   publishActuationCmd();
 }
