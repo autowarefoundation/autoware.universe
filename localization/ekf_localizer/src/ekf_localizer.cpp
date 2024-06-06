@@ -121,7 +121,7 @@ void EKFLocalizer::update_predict_frequency(const rclcpp::Time & current_time)
         ekf_dt_ = 10.0;
         RCLCPP_WARN(
           get_logger(), "Large ekf_dt_ detected!! (%f sec) Capped to 10.0 seconds", ekf_dt_);
-      } else if (ekf_dt_ > params_.pose_smoothing_steps / params_.ekf_rate) {
+      } else if (ekf_dt_ > static_cast<double>(params_.pose_smoothing_steps) / params_.ekf_rate) {
         RCLCPP_WARN(
           get_logger(), "EKF period may be too slow to finish pose smoothing!! (%f sec) ", ekf_dt_);
       }

@@ -50,7 +50,7 @@ EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters & p
   P(IDX::VX, IDX::VX) = 1000.0;  // for vx
   P(IDX::WZ, IDX::WZ) = 50.0;    // for wz
 
-  kalman_filter_.init(X, P, params_.extend_state_step);
+  kalman_filter_.init(X, P, static_cast<int>(params_.extend_state_step));
 }
 
 void EKFModule::initialize(
