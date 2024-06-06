@@ -18,6 +18,8 @@
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
+#include <type_traits>
+
 namespace lidar_transfusion
 {
 
@@ -89,8 +91,12 @@ std::size_t VoxelGenerator::generateSweepPoints(
       break;
     }
     auto shift = point_counter * config_.num_point_feature_size_;
+
     auto affine_past2current =
       pd_ptr_->getAffineWorldToCurrent() * pc_cache_iter->affine_past2world;
+    static_assert(std::is_same<decltype(affine_past2current.matrix()), Eigen::Matrix4f &>::value);
+    static_assert(!Eigen::Matrix4f::IsRowMajor, "matrices should be col-major.");
+
     float time_lag = static_cast<float>(
       pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_cache_iter->header.stamp).seconds());
 
