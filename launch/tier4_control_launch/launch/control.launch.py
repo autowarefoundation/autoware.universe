@@ -141,7 +141,7 @@ def launch_setup(context, *args, **kwargs):
     autoware_autonomous_emergency_braking = ComposableNode(
         package="autoware_autonomous_emergency_braking",
         plugin="autoware::motion::control::autoware_autonomous_emergency_braking::AEB",
-        name="autoware_autonomous_emergency_braking",
+        name="autonomous_emergency_braking",
         remappings=[
             ("~/input/pointcloud", "/perception/obstacle_segmentation/pointcloud"),
             ("~/input/velocity", "/vehicle/status/velocity_status"),
