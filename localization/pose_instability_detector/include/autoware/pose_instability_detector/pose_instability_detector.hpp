@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POSE_INSTABILITY_DETECTOR_HPP_
-#define POSE_INSTABILITY_DETECTOR_HPP_
+#ifndef AUTOWARE__POSE_INSTABILITY_DETECTOR__POSE_INSTABILITY_DETECTOR_HPP_
+#define AUTOWARE__POSE_INSTABILITY_DETECTOR__POSE_INSTABILITY_DETECTOR_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -90,4 +90,4 @@ private:
   std::deque<TwistWithCovarianceStamped> twist_buffer_;
 };
 
-#endif  // POSE_INSTABILITY_DETECTOR_HPP_
+#endif  // AUTOWARE__POSE_INSTABILITY_DETECTOR__POSE_INSTABILITY_DETECTOR_HPP_

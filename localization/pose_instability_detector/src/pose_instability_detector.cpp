@@ -271,7 +271,6 @@ void PoseInstabilityDetector::dead_reckon(
       delta_orientation.setValue(0.0, 0.0, 0.0, 1.0);
     }
 
-
     tf2::Quaternion curr_orientation;
     curr_orientation = prev_orientation * delta_orientation;
     curr_orientation.normalize();
