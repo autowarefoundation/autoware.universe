@@ -4,8 +4,6 @@ project(pose_instability_detector)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-include_directories(src)
-
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/pose_instability_detector.cpp
 )
@@ -23,14 +21,6 @@ if(BUILD_TESTING)
     src/pose_instability_detector.cpp
   )
 endif()
-
-install(
-  DIRECTORY src/
-  DESTINATION include/pose_instability_detector
-  FILES_MATCHING PATTERN "*.hpp"
-)
-
-ament_export_include_directories(include)
 
 ament_auto_package(
   INSTALL_TO_SHARE

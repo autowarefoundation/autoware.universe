@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../src/pose_instability_detector.hpp"
+#include "autoware/pose_instability_detector/pose_instability_detector.hpp"
 #include "test_message_helper_node.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
