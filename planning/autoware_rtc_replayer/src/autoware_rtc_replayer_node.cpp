@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-namespace rtc_replayer
+namespace autoware::rtc_replayer
 {
 
 std::string getModuleStatus(const uint8_t module_status)
@@ -124,7 +124,7 @@ void RTCReplayerNode::onCooperateStatus(const CooperateStatusArray::ConstSharedP
   }
 }
 
-}  // namespace rtc_replayer
+}  // namespace autoware::rtc_replayer
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(rtc_replayer::RTCReplayerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::rtc_replayer::RTCReplayerNode)

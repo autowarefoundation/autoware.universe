@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace rtc_replayer
+namespace autoware::rtc_replayer
 {
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -54,6 +54,6 @@ private:
   std::map<std::string, uint8_t> prev_cmd_status_;
 };
 
-}  // namespace rtc_replayer
+}  // namespace autoware::rtc_replayer
 
 #endif  // RTC_REPLAYER__RTC_REPLAYER_NODE_HPP_

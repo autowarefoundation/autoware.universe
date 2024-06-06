@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(rtc_replayer)
+project(autoware_rtc_replayer)
 
 ### Compile options
 if(NOT CMAKE_CXX_STANDARD)
@@ -17,7 +17,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "rtc_replayer::RTCReplayerNode"
+  PLUGIN "autoware::rtc_replayer::RTCReplayerNode"
   EXECUTABLE ${PROJECT_NAME}_node
 )
 

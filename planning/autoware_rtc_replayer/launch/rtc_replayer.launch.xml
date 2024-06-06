@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="autoware_rtc_replayer" exec="rtc_replayer_node" name="rtc_replayer" output="screen"/>
+</launch>
