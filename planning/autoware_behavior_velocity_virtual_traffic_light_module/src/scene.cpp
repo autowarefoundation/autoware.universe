@@ -23,8 +23,13 @@
 #include <string>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
+using ::behavior_velocity_planner::PlanningBehavior;
+using ::behavior_velocity_planner::SceneModuleInterface;
+using ::behavior_velocity_planner::VelocityFactor;
+namespace arc_lane_utils = ::behavior_velocity_planner::arc_lane_utils;
+namespace planning_utils = ::behavior_velocity_planner::planning_utils;
 namespace
 {
 using tier4_autoware_utils::calcDistance2d;
@@ -145,7 +150,7 @@ std::optional<SegmentIndexWithPoint> findLastCollisionBeforeEndLine(
   return {};
 }
 
-void insertStopVelocityFromStart(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
+void insertStopVelocityFromStart(tier4_planning_msgs::msg::PathWithLaneId * path)
 {
   for (auto & p : path->points) {
     p.point.longitudinal_velocity_mps = 0.0;
@@ -154,7 +159,7 @@ void insertStopVelocityFromStart(autoware_auto_planning_msgs::msg::PathWithLaneI
 
 std::optional<size_t> insertStopVelocityAtCollision(
   const SegmentIndexWithPoint & collision, const double offset,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path)
+  tier4_planning_msgs::msg::PathWithLaneId * path)
 {
   const auto collision_offset =
     motion_utils::calcLongitudinalOffsetToSegment(path->points, collision.index, collision.point);
@@ -523,7 +528,7 @@ bool VirtualTrafficLightModule::hasRightOfWay(
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  tier4_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason, const size_t end_line_idx)
 {
   const auto collision =
@@ -586,7 +591,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+  tier4_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason, const size_t end_line_idx)
 {
   const auto collision =
@@ -618,4 +623,4 @@ void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
   module_data_.stop_head_pose_at_end_line =
     calcHeadPose(stop_pose, planner_data_->vehicle_info_.max_longitudinal_offset_m);
 }
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner

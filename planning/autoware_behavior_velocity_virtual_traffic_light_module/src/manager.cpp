@@ -24,10 +24,11 @@
 #include <unordered_map>
 #include <utility>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using lanelet::autoware::VirtualTrafficLight;
 using tier4_autoware_utils::getOrDeclareParameter;
+namespace planning_utils = ::behavior_velocity_planner::planning_utils;
 
 VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
@@ -49,7 +50,7 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
 }
 
 void VirtualTrafficLightModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
@@ -67,7 +68,7 @@ void VirtualTrafficLightModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 VirtualTrafficLightModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto id_set = planning_utils::getLaneletIdSetOnPath<VirtualTrafficLight>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
@@ -76,9 +77,9 @@ VirtualTrafficLightModuleManager::getModuleExpiredFunction(
     return id_set.count(scene_module->getModuleId()) == 0;
   };
 }
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::VirtualTrafficLightModulePlugin,
+  autoware::behavior_velocity_planner::VirtualTrafficLightModulePlugin,
   behavior_velocity_planner::PluginInterface)
