@@ -30,7 +30,7 @@ namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
 using msg_t = autoware_internal_msgs::msg::SystemUsage;
-using field_t = std::vector<std::string>;
+using fields_t = std::vector<std::vector<std::string>>;
 
 namespace autoware::component_monitor
 {
@@ -42,19 +42,19 @@ public:
 
 private:
   void monitor(const pid_t & pid) const;
-  field_t get_stats(const pid_t & pid) const;
+  fields_t get_stats(const pid_t & pid) const;
   std::stringstream run_command(const std::string & cmd) const;
-  static field_t get_fields(std::stringstream & std_out);
-  static float get_cpu_usage(const field_t & fields);
-  static std::pair<uint64_t, float> get_mem_usage(field_t & fields);
+  static fields_t get_fields(std::stringstream & std_out);
+  static float get_cpu_percentage(const fields_t & fields);
+  static std::pair<uint64_t, float> get_mem_usage(fields_t & fields);
   static float to_float(const std::string & str);
   // cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
   static uint32_t to_uint32(const std::string & str);
-  static uint64_t mib_to_kib(uint64_t mebibytes);
-  static uint64_t gib_to_kib(uint64_t gibibytes);
-  static uint64_t tib_to_kib(uint64_t tebibytes);
-  static uint64_t pib_to_kib(uint64_t pebibytes);
-  static uint64_t eib_to_kib(uint64_t exbibytes);
+  static uint64_t mib_to_bytes(uint64_t mebibytes);
+  static uint64_t gib_to_bytes(uint64_t gibibytes);
+  static uint64_t tib_to_bytes(uint64_t tebibytes);
+  static uint64_t pib_to_bytes(uint64_t pebibytes);
+  static uint64_t eib_to_bytes(uint64_t exbibytes);
 
   rclcpp::Publisher<msg_t>::SharedPtr usage_pub_;
 };

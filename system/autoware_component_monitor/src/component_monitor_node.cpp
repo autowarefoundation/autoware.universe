@@ -49,11 +49,11 @@ void ComponentMonitor::monitor(const pid_t & pid) const
   msg_t usage_msg{};
 
   auto fields = get_stats(pid);
-  usage_msg.cpu_usage_rate = get_cpu_usage(fields);
+  usage_msg.cpu_usage_percentage = get_cpu_percentage(fields);
 
   const auto [mem_kib, mem_rate] = get_mem_usage(fields);
-  usage_msg.mem_usage_kib = mem_kib;
-  usage_msg.mem_usage_rate = mem_rate;
+  usage_msg.used_memory_bytes = mem_kib;
+  usage_msg.memory_usage_percentage = mem_rate;
 
   std_msgs::msg::Header header;
   header.stamp = now();
@@ -80,15 +80,21 @@ void ComponentMonitor::monitor(const pid_t & pid) const
  * We get 5th, 8th, and 9th fields, which are RES, %CPU, and %MEM, respectively.
  *
  */
-field_t ComponentMonitor::get_stats(const pid_t & pid) const
+fields_t ComponentMonitor::get_stats(const pid_t & pid) const
 {
-  std::string cmd{"top -b -n 1 -p "};
-  cmd += std::to_string(pid);
+  std::string top_cmd{"top -b -n 1 -p "};
+  top_cmd += std::to_string(pid);
 
-  auto std_out = run_command(cmd);
+  auto std_out = run_command(top_cmd);
   return get_fields(std_out);
 }
 
+/**
+ * @brief Run a terminal command and return the standard output.
+ *
+ * @param cmd The terminal command to run
+ * @return  The standard output of the command
+ */
 std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
 {
   int out_fd[2];
@@ -123,62 +129,70 @@ std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
   return os;
 }
 
-field_t ComponentMonitor::get_fields(std::stringstream & std_out)
+/**
+ * @brief Get fields from the standard output.
+ *
+ * @param std_out The standard output
+ * @return The fields of the output
+ */
+fields_t ComponentMonitor::get_fields(std::stringstream & std_out)
 {
-  field_t lines;
+  fields_t fields;
   std::string line;
+
   while (std::getline(std_out, line)) {
-    lines.push_back(line);
+    std::istringstream iss{line};
+    std::string word;
+    std::vector<std::string> words;
+
+    while (iss >> word) {
+      words.push_back(word);
+    }
+
+    fields.push_back(words);
   }
 
-  std::istringstream last_line(lines.back());
-  std::string word;
-  field_t words;
-  while (last_line >> word) {
-    words.push_back(word);
-  }
-
-  return words;
+  return fields;
 }
 
-float ComponentMonitor::get_cpu_usage(const field_t & fields)
+float ComponentMonitor::get_cpu_percentage(const fields_t & fields)
 {
-  const auto & cpu_rate = fields[8];
-  return to_float(cpu_rate);
+  const auto & cpu_percentage = fields.back()[8];
+  return to_float(cpu_percentage);
 }
 
-std::pair<uint64_t, float> ComponentMonitor::get_mem_usage(field_t & fields)
+std::pair<uint64_t, float> ComponentMonitor::get_mem_usage(fields_t & fields)
 {
-  auto & mem_usage = fields[5];
-  const auto & mem_usage_rate = fields[9];
+  auto & mem_usage = fields.back()[5];
+  const auto & memory_usage_percentage = fields.back()[9];
 
-  uint64_t mem_usage_kib{};
+  uint64_t used_memory_bytes{};
   switch (mem_usage.back()) {
     case 'm':
       mem_usage.pop_back();
-      mem_usage_kib = mib_to_kib(to_uint32(mem_usage));
+      used_memory_bytes = mib_to_bytes(to_uint32(mem_usage));
       break;
     case 'g':
       mem_usage.pop_back();
-      mem_usage_kib = gib_to_kib(to_uint32(mem_usage));
+      used_memory_bytes = gib_to_bytes(to_uint32(mem_usage));
       break;
     case 't':
       mem_usage.pop_back();
-      mem_usage_kib = tib_to_kib(to_uint32(mem_usage));
+      used_memory_bytes = tib_to_bytes(to_uint32(mem_usage));
       break;
     case 'p':
       mem_usage.pop_back();
-      mem_usage_kib = pib_to_kib(to_uint32(mem_usage));
+      used_memory_bytes = pib_to_bytes(to_uint32(mem_usage));
       break;
     case 'e':
       mem_usage.pop_back();
-      mem_usage_kib = eib_to_kib(to_uint32(mem_usage));
+      used_memory_bytes = eib_to_bytes(to_uint32(mem_usage));
       break;
     default:
-      mem_usage_kib = to_uint32(mem_usage);
+      used_memory_bytes = to_uint32(mem_usage);
   }
 
-  return std::pair<uint64_t, float>{mem_usage_kib, to_float(mem_usage_rate)};
+  return std::pair<uint64_t, float>{used_memory_bytes, to_float(memory_usage_percentage)};
 }
 
 float ComponentMonitor::to_float(const std::string & str)
@@ -192,29 +206,29 @@ uint32_t ComponentMonitor::to_uint32(const std::string & str)
 }
 
 // cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
-uint64_t ComponentMonitor::mib_to_kib(uint64_t mebibytes)
+uint64_t ComponentMonitor::mib_to_bytes(const uint64_t mebibytes)
 {
-  return mebibytes * 1024;
+  return mebibytes * 1024 * 1024;
 }
 
-uint64_t ComponentMonitor::gib_to_kib(uint64_t gibibytes)
+uint64_t ComponentMonitor::gib_to_bytes(const uint64_t gibibytes)
 {
-  return gibibytes * 1024 * 1024;
+  return gibibytes * 1024 * 1024 * 1024;
 }
 
-uint64_t ComponentMonitor::tib_to_kib(uint64_t tebibytes)
+uint64_t ComponentMonitor::tib_to_bytes(const uint64_t tebibytes)
 {
-  return tebibytes * 1024ULL * 1024ULL * 1024ULL;
+  return tebibytes * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
 }
 
-uint64_t ComponentMonitor::pib_to_kib(uint64_t pebibytes)
+uint64_t ComponentMonitor::pib_to_bytes(const uint64_t pebibytes)
 {
-  return pebibytes * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+  return pebibytes * 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
 }
 
-uint64_t ComponentMonitor::eib_to_kib(uint64_t exbibytes)
+uint64_t ComponentMonitor::eib_to_bytes(const uint64_t exbibytes)
 {
-  return exbibytes * 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+  return exbibytes * 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
 }
 
 }  // namespace autoware::component_monitor
