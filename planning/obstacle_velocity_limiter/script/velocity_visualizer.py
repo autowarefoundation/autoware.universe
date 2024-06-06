@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from autoware_auto_planning_msgs.msg import Trajectory
+from autoware_planning_msgs.msg import Trajectory
 import matplotlib.pyplot as plt
 from nav_msgs.msg import Odometry
 import numpy as np
@@ -31,7 +31,7 @@ class TrajectoryVisualizer(Node):
 
         self.sub_original_traj = self.create_subscription(
             Trajectory,
-            "/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory",
+            "/planning/scenario_planning/lane_driving/motion_planning/path_optimizer/trajectory",
             self.plotOriginalTrajectory,
             1,
         )
