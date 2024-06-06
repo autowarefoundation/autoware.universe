@@ -262,6 +262,7 @@ bool AccelBrakeMapCalibrator::get_current_pitch_from_tf(double * pitch)
 }
 
 bool AccelBrakeMapCalibrator::fetch_data()
+
 {
   // take data from subscribers
   // take actuation data
@@ -271,6 +272,7 @@ bool AccelBrakeMapCalibrator::fetch_data()
     take_actuation_status(actuation_status_ptr);
   } else if (actuation_cmd_ptr) {
     take_actuation_command(actuation_cmd_ptr);
+
   } else {
     return false;
   }
