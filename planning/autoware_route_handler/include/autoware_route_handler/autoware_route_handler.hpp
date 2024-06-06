@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROUTE_HANDLER__ROUTE_HANDLER_HPP_
-#define ROUTE_HANDLER__ROUTE_HANDLER_HPP_
+#ifndef AUTOWARE_ROUTE_HANDLER__AUTOWARE_ROUTE_HANDLER_HPP_
+#define AUTOWARE_ROUTE_HANDLER__AUTOWARE_ROUTE_HANDLER_HPP_
 
 #include <rclcpp/logger.hpp>
 
@@ -398,4 +398,4 @@ public:
   }
 };  // class RoutingCostDrivable
 }  // namespace route_handler
-#endif  // ROUTE_HANDLER__ROUTE_HANDLER_HPP_
+#endif  // AUTOWARE_ROUTE_HANDLER__AUTOWARE_ROUTE_HANDLER_HPP_
