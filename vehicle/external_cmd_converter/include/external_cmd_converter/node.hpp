@@ -67,8 +67,8 @@ private:
   tier4_autoware_utils::InterProcessPollingSubscriber<GateMode> gate_mode_sub_{
     this, "in/current_gate_mode"};
 
-  void onExternalCmd(const ExternalControlCommand::ConstSharedPtr cmd_ptr);
-  void onEmergencyStopHeartbeat(const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
+  void on_external_cmd(const ExternalControlCommand::ConstSharedPtr cmd_ptr);
+  void on_emergency_stop_heartbeat(const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
 
   Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};  // [m/s]
   GearCommand::ConstSharedPtr current_shift_cmd_{nullptr};
@@ -78,7 +78,7 @@ private:
   std::shared_ptr<rclcpp::Time> latest_cmd_received_time_;
 
   // Timer
-  void onTimer();
+  void on_timer();
   rclcpp::TimerBase::SharedPtr rate_check_timer_;
 
   // Parameter
@@ -90,18 +90,18 @@ private:
   // Diagnostics
   diagnostic_updater::Updater updater_{this};
 
-  void checkTopicStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  void checkEmergencyStop(diagnostic_updater::DiagnosticStatusWrapper & stat);
-  bool checkEmergencyStopTopicTimeout();
-  bool checkRemoteTopicRate();
+  void check_topic_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void check_emergency_stop(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  bool check_emergency_stop_topic_timeout();
+  bool check_remote_topic_rate();
 
   // Algorithm
   AccelMap accel_map_;
   BrakeMap brake_map_;
   bool acc_map_initialized_;
 
-  double calculateAcc(const ExternalControlCommand & cmd, const double vel);
-  double getShiftVelocitySign(const GearCommand & cmd);
+  double calculate_acc(const ExternalControlCommand & cmd, const double vel);
+  double get_shift_velocity_sign(const GearCommand & cmd);
 };
 
 }  // namespace external_cmd_converter
