@@ -66,8 +66,7 @@ void controlEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr d
   const auto start = now();
   const auto aeb_status =
     std::find_if(diag_msg->status.begin(), diag_msg->status.end(), [](const auto & status) {
-      const bool aeb_found =
-        status.name.find("autoware_autonomous_emergency_braking") != std::string::npos;
+      const bool aeb_found = status.name.find("autonomous_emergency_braking") != std::string::npos;
       return aeb_found;
     });
 
