@@ -124,6 +124,10 @@
   />
   <arg name="input/radar" default="/sensing/radar/detected_objects"/>
 
+  <!-- Object merger method: whether to enable multi-channel tracker merger -->
+  <arg name="detection_enabled_channels" default="['detected_objects']" description="list of detection input channel"/>
+  <arg name="use_multi_channel_tracker_merger" default="true" description="if it is true, replace the multi step merger to multi-channel tracker merger."/>
+
   <!-- Downsample pointcloud for perception usage -->
   <arg name="downsample_perception_common_pointcloud" default="false"/>
   <arg name="common_downsample_voxel_size_x" default="0.05"/>
@@ -255,7 +259,10 @@
           <arg name="object_recognition_tracking_radar_object_tracker_node_param_path" value="$(var object_recognition_tracking_radar_object_tracker_node_param_path)"/>
           <arg name="object_recognition_tracking_object_merger_data_association_matrix_param_path" value="$(var object_recognition_tracking_object_merger_data_association_matrix_param_path)"/>
           <arg name="object_recognition_tracking_object_merger_node_param_path" value="$(var object_recognition_tracking_object_merger_node_param_path)"/>
+          <arg name="detection_enabled_channels" value="$(var detection_enabled_channels)"/>
+          <arg name="use_multi_channel_tracker_merger" value="$(var use_multi_channel_tracker_merger)"/>
           <arg name="use_radar_tracking_fusion" value="$(var use_radar_tracking_fusion)"/>
+          <arg name="use_detection_by_tracker" value="$(var use_detection_by_tracker)"/>
         </include>
       </group>
 
