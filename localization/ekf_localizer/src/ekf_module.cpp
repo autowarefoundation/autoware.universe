@@ -30,9 +30,7 @@
 #include <tf2/utils.h>
 
 // clang-format off
-#define DEBUG_PRINT_MAT(X) {\
-  if (params_.show_debug_info) {std::cout << #X << ": " << X << std::endl;}\
-}
+#define DEBUG_PRINT_MAT(X) {if (params_.show_debug_info) {std::cout << #X << ": " << X << std::endl;}} // NOLINT
 // clang-format on
 
 EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters & params)

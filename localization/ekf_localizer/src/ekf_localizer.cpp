@@ -34,8 +34,8 @@
 #include <utility>
 
 // clang-format off
-#define PRINT_MAT(X) std::cout << #X << ":\n" << X << std::endl << std::endl
-#define DEBUG_INFO(...) {if (params_.show_debug_info) {RCLCPP_INFO(__VA_ARGS__);}}
+#define PRINT_MAT(X) std::cout << #X << ":\n" << X << std::endl << std::endl // NOLINT
+#define DEBUG_INFO(...) {if (params_.show_debug_info) {RCLCPP_INFO(__VA_ARGS__);}} // NOLINT
 // clang-format on
 
 using std::placeholders::_1;
