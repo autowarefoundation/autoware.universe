@@ -51,9 +51,13 @@ void ComponentMonitor::monitor(const pid_t & pid) const
   auto fields = get_stats(pid);
   usage_msg.cpu_usage_percentage = get_cpu_percentage(fields);
 
-  const auto [mem_kib, mem_rate] = get_mem_usage(fields);
-  usage_msg.used_memory_bytes = mem_kib;
-  usage_msg.memory_usage_percentage = mem_rate;
+  const auto [total_mem_bytes, free_mem_bytes] = get_system_memory(fields);
+  usage_msg.total_memory_bytes = total_mem_bytes;
+  usage_msg.free_memory_bytes = free_mem_bytes;
+
+  const auto [used_mem_bytes, mem_usage_percentage] = get_process_memory(fields);
+  usage_msg.used_memory_bytes = used_mem_bytes;
+  usage_msg.memory_usage_percentage = mem_usage_percentage;
 
   std_msgs::msg::Header header;
   header.stamp = now();
@@ -82,7 +86,7 @@ void ComponentMonitor::monitor(const pid_t & pid) const
  */
 fields_t ComponentMonitor::get_stats(const pid_t & pid) const
 {
-  std::string top_cmd{"top -b -n 1 -p "};
+  std::string top_cmd{"top -b -n 1 -E k -p "};
   top_cmd += std::to_string(pid);
 
   auto std_out = run_command(top_cmd);
@@ -155,14 +159,42 @@ fields_t ComponentMonitor::get_fields(std::stringstream & std_out)
   return fields;
 }
 
+/**
+ * @brief Get the CPU usage percentage.
+ *
+ * @param fields The fields of the standard output from the terminal command
+ * @return The CPU usage percentage
+ */
 float ComponentMonitor::get_cpu_percentage(const fields_t & fields)
 {
   const auto & cpu_percentage = fields.back()[8];
   return to_float(cpu_percentage);
 }
 
-std::pair<uint64_t, float> ComponentMonitor::get_mem_usage(fields_t & fields)
+/**
+ * @brief Get the system memory usage.
+ *
+ * @param fields The fields of the standard output from the terminal command
+ * @return The total physical memory and free physical memory
+ */
+std::pair<uint64_t, uint64_t> ComponentMonitor::get_system_memory(const fields_t & fields)
 {
+  // System wide memory usage
+  const auto total_memory_bytes = kib_to_bytes(to_uint64(fields[3][3]));
+  const auto free_memory_bytes = kib_to_bytes(to_uint64(fields[3][5]));
+
+  return std::pair{total_memory_bytes, free_memory_bytes};
+}
+
+/**
+ * @brief Get the process memory usage.
+ *
+ * @param fields The fields of the standard output from the terminal command
+ * @return The used memory by the process and the memory usage percentage
+ */
+std::pair<uint64_t, float> ComponentMonitor::get_process_memory(fields_t & fields)
+{
+  // Process specific memory usage
   auto & mem_usage = fields.back()[5];
   const auto & memory_usage_percentage = fields.back()[9];
 
@@ -170,29 +202,29 @@ std::pair<uint64_t, float> ComponentMonitor::get_mem_usage(fields_t & fields)
   switch (mem_usage.back()) {
     case 'm':
       mem_usage.pop_back();
-      used_memory_bytes = mib_to_bytes(to_uint32(mem_usage));
+      used_memory_bytes = mib_to_bytes(to_uint64(mem_usage));
       break;
     case 'g':
       mem_usage.pop_back();
-      used_memory_bytes = gib_to_bytes(to_uint32(mem_usage));
+      used_memory_bytes = gib_to_bytes(to_uint64(mem_usage));
       break;
     case 't':
       mem_usage.pop_back();
-      used_memory_bytes = tib_to_bytes(to_uint32(mem_usage));
+      used_memory_bytes = tib_to_bytes(to_uint64(mem_usage));
       break;
     case 'p':
       mem_usage.pop_back();
-      used_memory_bytes = pib_to_bytes(to_uint32(mem_usage));
+      used_memory_bytes = pib_to_bytes(to_uint64(mem_usage));
       break;
     case 'e':
       mem_usage.pop_back();
-      used_memory_bytes = eib_to_bytes(to_uint32(mem_usage));
+      used_memory_bytes = eib_to_bytes(to_uint64(mem_usage));
       break;
     default:
-      used_memory_bytes = to_uint32(mem_usage);
+      used_memory_bytes = to_uint64(mem_usage);
   }
 
-  return std::pair<uint64_t, float>{used_memory_bytes, to_float(memory_usage_percentage)};
+  return std::pair{used_memory_bytes, to_float(memory_usage_percentage)};
 }
 
 float ComponentMonitor::to_float(const std::string & str)
@@ -200,12 +232,18 @@ float ComponentMonitor::to_float(const std::string & str)
   return std::strtof(str.c_str(), nullptr);
 }
 
-uint32_t ComponentMonitor::to_uint32(const std::string & str)
+uint64_t ComponentMonitor::to_uint64(const std::string & str)
 {
   return std::strtoul(str.c_str(), nullptr, 10);
 }
 
 // cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
+
+uint64_t ComponentMonitor::kib_to_bytes(const uint64_t kibibytes)
+{
+  return kibibytes * 1024;
+}
+
 uint64_t ComponentMonitor::mib_to_bytes(const uint64_t mebibytes)
 {
   return mebibytes * 1024 * 1024;

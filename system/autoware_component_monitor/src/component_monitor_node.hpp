@@ -46,10 +46,12 @@ private:
   std::stringstream run_command(const std::string & cmd) const;
   static fields_t get_fields(std::stringstream & std_out);
   static float get_cpu_percentage(const fields_t & fields);
-  static std::pair<uint64_t, float> get_mem_usage(fields_t & fields);
+  static std::pair<uint64_t, uint64_t> get_system_memory(const fields_t & fields);
+  static std::pair<uint64_t, float> get_process_memory(fields_t & fields);
   static float to_float(const std::string & str);
   // cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
-  static uint32_t to_uint32(const std::string & str);
+  static uint64_t to_uint64(const std::string & str);
+  static uint64_t kib_to_bytes(uint64_t kibibytes);
   static uint64_t mib_to_bytes(uint64_t mebibytes);
   static uint64_t gib_to_bytes(uint64_t gibibytes);
   static uint64_t tib_to_bytes(uint64_t tebibytes);
