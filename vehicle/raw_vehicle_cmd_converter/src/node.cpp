@@ -78,10 +78,6 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("~/output/actuation_cmd", 1);
   sub_control_cmd_ = create_subscription<Control>(
     "~/input/control_cmd", 1, std::bind(&RawVehicleCommandConverterNode::onControlCmd, this, _1));
-  sub_velocity_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, std::bind(&RawVehicleCommandConverterNode::onVelocity, this, _1));
-  sub_steering_ = create_subscription<Steering>(
-    "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
     "/vehicle/raw_vehicle_cmd_converter/debug/steer_pid", 1);
 
@@ -204,13 +200,19 @@ double RawVehicleCommandConverterNode::calculateBrakeMap(
   return desired_brake_cmd;
 }
 
-void RawVehicleCommandConverterNode::onSteering(const Steering::ConstSharedPtr msg)
+void RawVehicleCommandConverterNode::processSteering(const Steering::ConstSharedPtr msg)
 {
+  if (!msg) {
+    return;
+  }
   current_steer_ptr_ = std::make_unique<double>(msg->steering_tire_angle);
 }
 
-void RawVehicleCommandConverterNode::onVelocity(const Odometry::ConstSharedPtr msg)
+void RawVehicleCommandConverterNode::processOdometry(const Odometry::ConstSharedPtr msg)
 {
+  if (!msg) {
+    return;
+  }
   current_twist_ptr_ = std::make_unique<TwistStamped>();
   current_twist_ptr_->header = msg->header;
   current_twist_ptr_->twist = msg->twist.twist;
@@ -218,6 +220,10 @@ void RawVehicleCommandConverterNode::onVelocity(const Odometry::ConstSharedPtr m
 
 void RawVehicleCommandConverterNode::onControlCmd(const Control::ConstSharedPtr msg)
 {
+  const auto odometry_msg = sub_odometry_.takeData();
+  const auto steering_msg = sub_steering_.takeData();
+  processOdometry(odometry_msg);
+  processSteering(steering_msg);
   control_cmd_ptr_ = msg;
   publishActuationCmd();
 }
