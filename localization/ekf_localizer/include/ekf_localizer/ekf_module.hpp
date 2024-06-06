@@ -52,7 +52,7 @@ private:
   using Twist = geometry_msgs::msg::TwistStamped;
 
 public:
-  EKFModule(std::shared_ptr<Warning> warning, const HyperParameters params);
+  EKFModule(std::shared_ptr<Warning> warning, const HyperParameters & params);
 
   void initialize(
     const PoseWithCovariance & initial_pose,

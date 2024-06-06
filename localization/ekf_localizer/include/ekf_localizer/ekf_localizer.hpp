@@ -59,14 +59,14 @@ public:
     dev_ = 1e9;
     proc_dev_x_c_ = 0.0;
   };
-  void init(const double init_obs, const double obs_dev, const rclcpp::Time time)
+  void init(const double init_obs, const double obs_dev, const rclcpp::Time & time)
   {
     x_ = init_obs;
     dev_ = obs_dev;
     latest_time_ = time;
     initialized_ = true;
   };
-  void update(const double obs, const double obs_dev, const rclcpp::Time time)
+  void update(const double obs, const double obs_dev, const rclcpp::Time & time)
   {
     if (!initialized_) {
       init(obs, obs_dev, time);

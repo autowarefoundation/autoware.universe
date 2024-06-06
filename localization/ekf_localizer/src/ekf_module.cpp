@@ -35,7 +35,7 @@
 }
 // clang-format on
 
-EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters params)
+EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters & params)
 : warning_(std::move(warning)),
   dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
   accumulated_delay_times_(params.extend_state_step, 1.0E15),

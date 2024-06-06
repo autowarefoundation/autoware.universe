@@ -179,17 +179,16 @@ void EKFLocalizer::timer_callback()
     stop_watch_.tic();
 
     // save the initial size because the queue size can change in the loop
-    const auto t_curr = current_time;
     const size_t n = pose_queue_.size();
     for (size_t i = 0; i < n; ++i) {
       const auto pose = pose_queue_.pop_increment_age();
-      bool is_updated = ekf_module_->measurement_update_pose(*pose, t_curr, pose_diag_info_);
+      bool is_updated = ekf_module_->measurement_update_pose(*pose, current_time, pose_diag_info_);
       if (is_updated) {
         pose_is_updated = true;
 
         // Update Simple 1D filter with considering change of z value due to measurement pose delay
         const double delay_time =
-          (t_curr - pose->header.stamp).seconds() + params_.pose_additional_delay;
+          (current_time - pose->header.stamp).seconds() + params_.pose_additional_delay;
         const auto pose_with_z_delay =
           ekf_module_->compensate_pose_with_z_delay(*pose, delay_time);
         update_simple_1d_filters(pose_with_z_delay, params_.pose_smoothing_steps);
@@ -216,11 +215,11 @@ void EKFLocalizer::timer_callback()
     stop_watch_.tic();
 
     // save the initial size because the queue size can change in the loop
-    const auto t_curr = current_time;
     const size_t n = twist_queue_.size();
     for (size_t i = 0; i < n; ++i) {
       const auto twist = twist_queue_.pop_increment_age();
-      bool is_updated = ekf_module_->measurement_update_twist(*twist, t_curr, twist_diag_info_);
+      bool is_updated =
+        ekf_module_->measurement_update_twist(*twist, current_time, twist_diag_info_);
       if (is_updated) {
         twist_is_updated = true;
       }
