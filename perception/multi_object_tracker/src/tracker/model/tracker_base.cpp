@@ -35,7 +35,7 @@ float updateProbability(
 float decayProbability(const float & prior, const float & delta_time)
 {
   constexpr float minimum_probability = 0.001;
-  constexpr float decay_rate = log(0.5) / 0.3;  // half-life (50% decay) of 0.3s
+  const float decay_rate = log(0.5f) / 0.3f;  // half-life (50% decay) of 0.3s
   return std::max(prior * std::exp(decay_rate * delta_time), minimum_probability);
 }
 }  // namespace
@@ -57,6 +57,7 @@ Tracker::Tracker(
 
   // Initialize existence probabilities
   existence_probabilities_.resize(channel_size, 0.001);
+  total_existence_probability_ = 0.001;
 }
 
 void Tracker::initializeExistenceProbabilities(
@@ -86,7 +87,7 @@ bool Tracker::updateWithMeasurement(
     ++total_measurement_count_;
 
     // existence probability on each channel
-    const double delta_time =
+    const float delta_time =
       std::abs((measurement_time - last_update_with_measurement_time_).seconds());
     constexpr float probability_true_detection = 0.9;
     constexpr float probability_false_detection = 0.2;
@@ -98,10 +99,9 @@ bool Tracker::updateWithMeasurement(
 
     // decay other channel probabilities
     for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
-      if (i == channel_index) {
-        continue;
+      if (i != channel_index) {
+        existence_probabilities_[i] = decayProbability(existence_probabilities_[i], delta_time);
       }
-      existence_probabilities_[i] = decayProbability(existence_probabilities_[i], delta_time);
     }
 
     // update total existence probability
@@ -124,9 +124,9 @@ bool Tracker::updateWithoutMeasurement(const rclcpp::Time & now)
   ++total_no_measurement_count_;
   {
     // decay existence probability
-    double const delta_time = (now - last_update_with_measurement_time_).seconds();
-    for (size_t i = 0; i < existence_probabilities_.size(); ++i) {
-      existence_probabilities_[i] = decayProbability(existence_probabilities_[i], delta_time);
+    float const delta_time = (now - last_update_with_measurement_time_).seconds();
+    for (float & existence_probability : existence_probabilities_) {
+      existence_probability = decayProbability(existence_probability, delta_time);
     }
     total_existence_probability_ = decayProbability(total_existence_probability_, delta_time);
   }
@@ -147,18 +147,18 @@ void Tracker::updateClassification(
   // Parameters
   // if the remove_threshold is too high (compare to the gain), the classification will be removed
   // immediately
-  const double gain = 0.05;
-  constexpr double remove_threshold = 0.001;
+  const float gain = 0.05;
+  constexpr float remove_threshold = 0.001;
 
   // Normalization function
   auto normalizeProbabilities =
     [](std::vector<autoware_perception_msgs::msg::ObjectClassification> & classification) {
-      double sum = 0.0;
-      for (const auto & class_ : classification) {
-        sum += class_.probability;
+      float sum = 0.0;
+      for (const auto & a_class : classification) {
+        sum += a_class.probability;
       }
-      for (auto & class_ : classification) {
-        class_.probability /= sum;
+      for (auto & a_class : classification) {
+        a_class.probability /= sum;
       }
     };
 
@@ -188,7 +188,7 @@ void Tracker::updateClassification(
   classification_.erase(
     std::remove_if(
       classification_.begin(), classification_.end(),
-      [remove_threshold](const auto & class_) { return class_.probability < remove_threshold; }),
+      [remove_threshold](const auto & a_class) { return a_class.probability < remove_threshold; }),
     classification_.end());
 
   // Normalize tracking classification
