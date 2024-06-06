@@ -19,14 +19,14 @@
 
 #include <Eigen/Eigen>
 
-#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
+#include <autoware_perception_msgs/msg/detected_object.hpp>
 
 #include <string>
 #include <vector>
 
 namespace lidar_transfusion
 {
-using autoware_auto_perception_msgs::msg::DetectedObject;
+using autoware_perception_msgs::msg::DetectedObject;
 
 enum class NMS_TYPE {
   IoU_BEV
