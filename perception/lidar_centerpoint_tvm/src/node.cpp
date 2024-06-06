@@ -42,8 +42,8 @@ LidarCenterPointTVMNode::LidarCenterPointTVMNode(const rclcpp::NodeOptions & nod
 {
   const float score_threshold =
     static_cast<float>(this->declare_parameter<double>("post_process_params.score_threshold"));
-  const float circle_nms_dist_threshold =
-    static_cast<float>(this->declare_parameter<double>("post_process_params.circle_nms_dist_threshold"));
+  const float circle_nms_dist_threshold = static_cast<float>(
+    this->declare_parameter<double>("post_process_params.circle_nms_dist_threshold"));
   const float yaw_norm_threshold =
     static_cast<float>(this->declare_parameter<double>("post_process_params.yaw_norm_threshold"));
   const std::string densification_world_frame_id =
@@ -54,7 +54,6 @@ LidarCenterPointTVMNode::LidarCenterPointTVMNode(const rclcpp::NodeOptions & nod
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter<bool>("rename_car_to_truck_and_bus");
   has_twist_ = this->declare_parameter<bool>("has_twist");
-
 
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);

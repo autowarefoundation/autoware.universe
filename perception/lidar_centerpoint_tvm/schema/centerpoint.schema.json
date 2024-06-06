@@ -1,129 +1,128 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Parameters for Lidar Centerpoint TVM Node",
-    "type": "object",
-    "definitions": {
-      "centerpoint": {
-        "type": "object",
-        "properties": {
-          "class_names": {
-            "type": "array",
-            "description": "List of class names for object detection.",
-            "items": {
-              "type": "string"
-            },
-            "default": ["CAR", "PEDESTRIAN", "BICYCLE"]
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Lidar Centerpoint TVM Node",
+  "type": "object",
+  "definitions": {
+    "centerpoint": {
+      "type": "object",
+      "properties": {
+        "class_names": {
+          "type": "array",
+          "description": "List of class names for object detection.",
+          "items": {
+            "type": "string"
           },
-          "rename_car_to_truck_and_bus": {
-            "type": "boolean",
-            "description": "Flag to rename car detections to truck and bus.",
-            "default": true
-          },
-          "point_feature_size": {
-            "type": "integer",
-            "description": "The size of the point features.",
-            "default": 4
-          },
-          "max_voxel_size": {
-            "type": "integer",
-            "description": "The maximum number of voxels.",
-            "default": 40000
-          },
-          "point_cloud_range": {
-            "type": "array",
-            "description": "The range of the point cloud.",
-            "items": {
-              "type": "number"
-            },
-            "default": [-89.6, -89.6, -3.0, 89.6, 89.6, 5.0]
-          },
-          "voxel_size": {
-            "type": "array",
-            "description": "The size of the voxels.",
-            "items": {
-              "type": "number"
-            },
-            "default": [0.32, 0.32, 8.0]
-          },
-          "downsample_factor": {
-            "type": "integer",
-            "description": "The factor by which to downsample the point cloud.",
-            "default": 1
-          },
-          "encoder_in_feature_size": {
-            "type": "integer",
-            "description": "The size of the input features for the encoder.",
-            "default": 9
-          },
-          "has_twist": {
-            "type": "boolean",
-            "description": "Flag to indicate if the twist (velocity) is included.",
-            "default": false
-          },
-          "post_process_params": {
-            "type": "object",
-            "properties": {
-              "circle_nms_dist_threshold": {
-                "type": "number",
-                "description": "The distance threshold for circle NMS.",
-                "default": 1.5
-              },
-              "score_threshold": {
-                "type": "number",
-                "description": "Detected objects with score less than threshold are ignored.",
-                "default": 0.35
-              },
-              "yaw_norm_threshold": {
-                "type": "number",
-                "description": "The threshold for yaw normalization.",
-                "default": 0.0
-              }
-            },
-            "required": ["circle_nms_dist_threshold", "score_threshold", "yaw_norm_threshold"]
-          },
-          "densification_params": {
-            "type": "object",
-            "properties": {
-              "world_frame_id": {
-                "type": "string",
-                "description": "The world frame id to fuse multi-frame pointcloud.",
-                "default": "map"
-              },
-              "num_past_frames": {
-                "type": "integer",
-                "description": "The number of past frames to fuse with the current frame.",
-                "default": 1
-              }
-            },
-            "required": ["world_frame_id", "num_past_frames"]
-          }
+          "default": ["CAR", "PEDESTRIAN", "BICYCLE"]
         },
-        "required": [
-          "class_names",
-          "rename_car_to_truck_and_bus",
-          "point_feature_size",
-          "max_voxel_size",
-          "point_cloud_range",
-          "voxel_size",
-          "downsample_factor",
-          "encoder_in_feature_size",
-          "has_twist",
-          "post_process_params",
-          "densification_params"
-        ]
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/centerpoint"
-          }
+        "rename_car_to_truck_and_bus": {
+          "type": "boolean",
+          "description": "Flag to rename car detections to truck and bus.",
+          "default": true
         },
-        "required": ["ros__parameters"]
-      }
-    },
-    "required": ["/**"]
-  }
-  
+        "point_feature_size": {
+          "type": "integer",
+          "description": "The size of the point features.",
+          "default": 4
+        },
+        "max_voxel_size": {
+          "type": "integer",
+          "description": "The maximum number of voxels.",
+          "default": 40000
+        },
+        "point_cloud_range": {
+          "type": "array",
+          "description": "The range of the point cloud.",
+          "items": {
+            "type": "number"
+          },
+          "default": [-89.6, -89.6, -3.0, 89.6, 89.6, 5.0]
+        },
+        "voxel_size": {
+          "type": "array",
+          "description": "The size of the voxels.",
+          "items": {
+            "type": "number"
+          },
+          "default": [0.32, 0.32, 8.0]
+        },
+        "downsample_factor": {
+          "type": "integer",
+          "description": "The factor by which to downsample the point cloud.",
+          "default": 1
+        },
+        "encoder_in_feature_size": {
+          "type": "integer",
+          "description": "The size of the input features for the encoder.",
+          "default": 9
+        },
+        "has_twist": {
+          "type": "boolean",
+          "description": "Flag to indicate if the twist (velocity) is included.",
+          "default": false
+        },
+        "post_process_params": {
+          "type": "object",
+          "properties": {
+            "circle_nms_dist_threshold": {
+              "type": "number",
+              "description": "The distance threshold for circle NMS.",
+              "default": 1.5
+            },
+            "score_threshold": {
+              "type": "number",
+              "description": "Detected objects with score less than threshold are ignored.",
+              "default": 0.35
+            },
+            "yaw_norm_threshold": {
+              "type": "number",
+              "description": "The threshold for yaw normalization.",
+              "default": 0.0
+            }
+          },
+          "required": ["circle_nms_dist_threshold", "score_threshold", "yaw_norm_threshold"]
+        },
+        "densification_params": {
+          "type": "object",
+          "properties": {
+            "world_frame_id": {
+              "type": "string",
+              "description": "The world frame id to fuse multi-frame pointcloud.",
+              "default": "map"
+            },
+            "num_past_frames": {
+              "type": "integer",
+              "description": "The number of past frames to fuse with the current frame.",
+              "default": 1
+            }
+          },
+          "required": ["world_frame_id", "num_past_frames"]
+        }
+      },
+      "required": [
+        "class_names",
+        "rename_car_to_truck_and_bus",
+        "point_feature_size",
+        "max_voxel_size",
+        "point_cloud_range",
+        "voxel_size",
+        "downsample_factor",
+        "encoder_in_feature_size",
+        "has_twist",
+        "post_process_params",
+        "densification_params"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/centerpoint"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}

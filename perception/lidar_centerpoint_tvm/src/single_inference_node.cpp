@@ -47,8 +47,8 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
 {
   const float score_threshold =
     static_cast<float>(this->declare_parameter<double>("post_process_params.score_threshold"));
-  const float circle_nms_dist_threshold =
-    static_cast<float>(this->declare_parameter<double>("post_process_params.circle_nms_dist_threshold"));
+  const float circle_nms_dist_threshold = static_cast<float>(
+    this->declare_parameter<double>("post_process_params.circle_nms_dist_threshold"));
   const float yaw_norm_threshold =
     static_cast<float>(this->declare_parameter<double>("post_process_params.yaw_norm_threshold"));
   const std::string densification_world_frame_id =
