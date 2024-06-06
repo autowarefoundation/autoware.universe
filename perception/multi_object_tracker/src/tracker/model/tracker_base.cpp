@@ -42,7 +42,7 @@ float decayProbability(const float & prior, const float & delta_time)
 
 Tracker::Tracker(
   const rclcpp::Time & time,
-  const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification,
+  const std::vector<autoware_perception_msgs::msg::ObjectClassification> & classification,
   const size_t & channel_size)
 : classification_(classification),
   no_measurement_count_(0),
@@ -77,7 +77,7 @@ void Tracker::initializeExistenceProbabilities(
 }
 
 bool Tracker::updateWithMeasurement(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const autoware_perception_msgs::msg::DetectedObject & object,
   const rclcpp::Time & measurement_time, const geometry_msgs::msg::Transform & self_transform,
   const uint & channel_index)
 {
@@ -135,7 +135,7 @@ bool Tracker::updateWithoutMeasurement(const rclcpp::Time & now)
 }
 
 void Tracker::updateClassification(
-  const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification)
+  const std::vector<autoware_perception_msgs::msg::ObjectClassification> & classification)
 {
   // classification algorithm:
   // 0. Normalize the input classification
@@ -152,17 +152,10 @@ void Tracker::updateClassification(
 
   // Normalization function
   auto normalizeProbabilities =
-<<<<<<< HEAD
     [](std::vector<autoware_perception_msgs::msg::ObjectClassification> & classification) {
       float sum = 0.0;
       for (const auto & a_class : classification) {
         sum += a_class.probability;
-=======
-    [](std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification) {
-      double sum = 0.0;
-      for (const auto & class_ : classification) {
-        sum += class_.probability;
->>>>>>> edd0a93be1 (Refractored the parameters, build the schema file, updated the readme file.)
       }
       for (auto & a_class : classification) {
         a_class.probability /= sum;
@@ -205,7 +198,7 @@ void Tracker::updateClassification(
 geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
   const rclcpp::Time & time) const
 {
-  autoware_auto_perception_msgs::msg::TrackedObject object;
+  autoware_perception_msgs::msg::TrackedObject object;
   getTrackedObject(time, object);
   return object.kinematics.pose_with_covariance;
 }

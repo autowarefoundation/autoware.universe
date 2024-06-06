@@ -10,7 +10,6 @@ This multi object tracker consists of data association and EKF.
 
 ![multi_object_tracker_overview](image/multi_object_tracker_overview.svg)
 
-
 ### Data association
 
 The data association performs maximum score matching, called min cost max flow problem.
@@ -58,9 +57,9 @@ Multiple inputs are pre-defined in the input channel parameters (described below
 
 ### Output
 
-| Name       | Type                                                 | Description     |
-| ---------- | ---------------------------------------------------- | --------------- |
-| `~/output` | `autoware_auto_perception_msgs::msg::TrackedObjects` | tracked objects |
+| Name       | Type                                            | Description     |
+| ---------- | ----------------------------------------------- | --------------- |
+| `~/output` | `autoware_perception_msgs::msg::TrackedObjects` | tracked objects |
 
 ## Parameters
 
