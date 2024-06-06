@@ -15,13 +15,13 @@
 #ifndef BEHAVIOR_PATH_START_PLANNER_MODULE__GEOMETRIC_PULL_OUT_HPP_
 #define BEHAVIOR_PATH_START_PLANNER_MODULE__GEOMETRIC_PULL_OUT_HPP_
 
-#include "behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
+#include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 #include "behavior_path_start_planner_module/pull_out_path.hpp"
 #include "behavior_path_start_planner_module/pull_out_planner_base.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 

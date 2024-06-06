@@ -15,12 +15,12 @@
 #ifndef BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_MODULE_HPP_
 #define BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_MODULE_HPP_
 
-#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "behavior_path_planner_common/marker_utils/utils.hpp"
-#include "behavior_path_planner_common/utils/drivable_area_expansion/drivable_area_expansion.hpp"
-#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner_common/utils/path_utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
 #include "behavior_path_sampling_planner_module/util.hpp"
 #include "bezier_sampler/bezier_sampling.hpp"
@@ -41,8 +41,8 @@
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 #include "tier4_planning_msgs/msg/lateral_offset.hpp"
+#include "tier4_planning_msgs/msg/path_with_lane_id.hpp"
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/within.hpp>
@@ -58,7 +58,7 @@
 #include <vector>
 namespace behavior_path_planner
 {
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 struct SamplingPlannerData
 {
   // input

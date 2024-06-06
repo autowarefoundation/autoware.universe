@@ -15,20 +15,20 @@
 #ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
 
+#include "autoware_behavior_path_planner_common/parameters.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "behavior_path_lane_change_module/utils/path.hpp"
-#include "behavior_path_planner_common/parameters.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 #include "rclcpp/logger.hpp"
 
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/Forward.h>
 
@@ -38,10 +38,9 @@
 
 namespace behavior_path_planner::utils::lane_change
 {
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_perception_msgs::msg::PredictedPath;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedPath;
 using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
@@ -54,6 +53,7 @@ using geometry_msgs::msg::Twist;
 using path_safety_checker::CollisionCheckDebugMap;
 using route_handler::Direction;
 using tier4_autoware_utils::Polygon2d;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 double calcLaneChangeResampleInterval(
   const double lane_changing_length, const double lane_changing_velocity);

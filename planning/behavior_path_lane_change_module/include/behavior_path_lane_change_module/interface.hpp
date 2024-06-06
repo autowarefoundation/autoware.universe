@@ -15,19 +15,19 @@
 #ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
 
+#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware_behavior_path_planner_common/turn_signal_decider.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "behavior_path_lane_change_module/scene.hpp"
 #include "behavior_path_lane_change_module/utils/base_class.hpp"
 #include "behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "behavior_path_lane_change_module/utils/path.hpp"
-#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "behavior_path_planner_common/turn_signal_decider.hpp"
-#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <tf2/utils.h>
 
@@ -37,11 +37,11 @@
 
 namespace behavior_path_planner
 {
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using objects_of_interest_marker_interface::ColorName;
 using objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 class LaneChangeInterface : public SceneModuleInterface
 {

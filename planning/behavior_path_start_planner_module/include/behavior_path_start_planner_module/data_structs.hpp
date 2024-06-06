@@ -16,8 +16,8 @@
 #ifndef BEHAVIOR_PATH_START_PLANNER_MODULE__DATA_STRUCTS_HPP_
 #define BEHAVIOR_PATH_START_PLANNER_MODULE__DATA_STRUCTS_HPP_
 
-#include "behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <freespace_planning_algorithms/abstract_algorithm.hpp>
 #include <freespace_planning_algorithms/astar_search.hpp>
@@ -29,7 +29,7 @@
 namespace behavior_path_planner
 {
 
-using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedObjects;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
