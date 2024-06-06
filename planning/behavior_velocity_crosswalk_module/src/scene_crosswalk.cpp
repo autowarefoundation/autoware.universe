@@ -16,7 +16,6 @@
 
 #include "occluded_crosswalk.hpp"
 
-#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
@@ -675,7 +674,7 @@ std::optional<double> CrosswalkModule::findEgoPassageDirectionAlongPath(
 }
 
 std::optional<double> CrosswalkModule::findObjectPassageDirectionAlongVehicleLane(
-  const autoware_auto_perception_msgs::msg::PredictedPath & path) const
+  const autoware_perception_msgs::msg::PredictedPath & path) const
 {
   using tier4_autoware_utils::Segment2d;
 
@@ -1128,8 +1127,7 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
     }
 
     for (const auto & element : lights) {
-      if (
-        element.color == TrafficSignalElement::RED && element.shape == TrafficSignalElement::CIRCLE)
+      if (element.color == TrafficLightElement::RED && element.shape == TrafficLightElement::CIRCLE)
         return true;
     }
   }

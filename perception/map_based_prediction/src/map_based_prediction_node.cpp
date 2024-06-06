@@ -25,7 +25,7 @@
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
@@ -766,7 +766,10 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     google::InstallFailureSignalHandler();
   }
   enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
-  prediction_time_horizon_ = declare_parameter<double>("prediction_time_horizon");
+  prediction_time_horizon_.vehicle = declare_parameter<double>("prediction_time_horizon.vehicle");
+  prediction_time_horizon_.pedestrian =
+    declare_parameter<double>("prediction_time_horizon.pedestrian");
+  prediction_time_horizon_.unknown = declare_parameter<double>("prediction_time_horizon.unknown");
   lateral_control_time_horizon_ =
     declare_parameter<double>("lateral_control_time_horizon");  // [s] for lateral control point
   prediction_sampling_time_interval_ = declare_parameter<double>("prediction_sampling_delta_time");
@@ -840,8 +843,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     "crosswalk_with_signal.timeout_set_for_no_intention_to_walk");
 
   path_generator_ = std::make_shared<PathGenerator>(
-    prediction_time_horizon_, lateral_control_time_horizon_, prediction_sampling_time_interval_,
-    min_crosswalk_user_velocity_);
+    prediction_sampling_time_interval_, min_crosswalk_user_velocity_);
 
   path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
   path_generator_->setAccelerationHalfLife(acceleration_exponential_half_life_);
@@ -849,10 +851,10 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "~/input/objects", 1,
     std::bind(&MapBasedPredictionNode::objectsCallback, this, std::placeholders::_1));
-  sub_map_ = this->create_subscription<HADMapBin>(
+  sub_map_ = this->create_subscription<LaneletMapBin>(
     "/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MapBasedPredictionNode::mapCallback, this, std::placeholders::_1));
-  sub_traffic_signals_ = this->create_subscription<TrafficSignalArray>(
+  sub_traffic_signals_ = this->create_subscription<TrafficLightGroupArray>(
     "/traffic_signals", 1,
     std::bind(&MapBasedPredictionNode::trafficSignalsCallback, this, std::placeholders::_1));
 
@@ -911,13 +913,15 @@ PredictedObject MapBasedPredictionNode::convertToPredictedObject(
   predicted_object.kinematics = convertToPredictedKinematics(tracked_object.kinematics);
   predicted_object.classification = tracked_object.classification;
   predicted_object.object_id = tracked_object.object_id;
-  predicted_object.shape = tracked_object.shape;
+  predicted_object.shape.type = tracked_object.shape.type;
+  predicted_object.shape.footprint = tracked_object.shape.footprint;
+  predicted_object.shape.dimensions = tracked_object.shape.dimensions;
   predicted_object.existence_probability = tracked_object.existence_probability;
 
   return predicted_object;
 }
 
-void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
+void MapBasedPredictionNode::mapCallback(const LaneletMapBin::ConstSharedPtr msg)
 {
   RCLCPP_DEBUG(get_logger(), "[Map Based Prediction]: Start loading lanelet");
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
@@ -932,11 +936,12 @@ void MapBasedPredictionNode::mapCallback(const HADMapBin::ConstSharedPtr msg)
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
 }
 
-void MapBasedPredictionNode::trafficSignalsCallback(const TrafficSignalArray::ConstSharedPtr msg)
+void MapBasedPredictionNode::trafficSignalsCallback(
+  const TrafficLightGroupArray::ConstSharedPtr msg)
 {
   traffic_signal_id_map_.clear();
-  for (const auto & signal : msg->signals) {
-    traffic_signal_id_map_[signal.traffic_signal_id] = signal;
+  for (const auto & signal : msg->traffic_light_groups) {
+    traffic_signal_id_map_[signal.traffic_light_group_id] = signal;
   }
 }
 
@@ -1050,8 +1055,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         // For off lane obstacles
         if (current_lanelets.empty()) {
-          PredictedPath predicted_path =
-            path_generator_->generatePathForOffLaneVehicle(transformed_object);
+          PredictedPath predicted_path = path_generator_->generatePathForOffLaneVehicle(
+            transformed_object, prediction_time_horizon_.vehicle);
           predicted_path.confidence = 1.0;
           if (predicted_path.path.empty()) break;
 
@@ -1066,8 +1071,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           transformed_object.kinematics.twist_with_covariance.twist.linear.x,
           transformed_object.kinematics.twist_with_covariance.twist.linear.y);
         if (std::fabs(abs_obj_speed) < min_velocity_for_map_based_prediction_) {
-          PredictedPath predicted_path =
-            path_generator_->generatePathForLowSpeedVehicle(transformed_object);
+          PredictedPath predicted_path = path_generator_->generatePathForLowSpeedVehicle(
+            transformed_object, prediction_time_horizon_.vehicle);
           predicted_path.confidence = 1.0;
           if (predicted_path.path.empty()) break;
 
@@ -1079,13 +1084,14 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         // Get Predicted Reference Path for Each Maneuver and current lanelets
         // return: <probability, paths>
-        const auto ref_paths =
-          getPredictedReferencePath(transformed_object, current_lanelets, objects_detected_time);
+        const auto ref_paths = getPredictedReferencePath(
+          transformed_object, current_lanelets, objects_detected_time,
+          prediction_time_horizon_.vehicle);
 
         // If predicted reference path is empty, assume this object is out of the lane
         if (ref_paths.empty()) {
-          PredictedPath predicted_path =
-            path_generator_->generatePathForLowSpeedVehicle(transformed_object);
+          PredictedPath predicted_path = path_generator_->generatePathForLowSpeedVehicle(
+            transformed_object, prediction_time_horizon_.vehicle);
           predicted_path.confidence = 1.0;
           if (predicted_path.path.empty()) break;
 
@@ -1110,7 +1116,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
         TrackedObject yaw_fixed_transformed_object = transformed_object;
         if (
           transformed_object.kinematics.orientation_availability ==
-          autoware_auto_perception_msgs::msg::TrackedObjectKinematics::UNAVAILABLE) {
+          autoware_perception_msgs::msg::TrackedObjectKinematics::UNAVAILABLE) {
           replaceObjectYawWithLaneletsYaw(current_lanelets, yaw_fixed_transformed_object);
         }
         // Generate Predicted Path
@@ -1120,7 +1126,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
         for (const auto & ref_path : ref_paths) {
           PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
-            yaw_fixed_transformed_object, ref_path.path, ref_path.speed_limit);
+            yaw_fixed_transformed_object, ref_path.path, prediction_time_horizon_.vehicle,
+            lateral_control_time_horizon_, ref_path.speed_limit);
           if (predicted_path.path.empty()) continue;
 
           if (!check_lateral_acceleration_constraints_) {
@@ -1183,8 +1190,8 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
       }
       default: {
         auto predicted_unknown_object = convertToPredictedObject(transformed_object);
-        PredictedPath predicted_path =
-          path_generator_->generatePathForNonVehicleObject(transformed_object);
+        PredictedPath predicted_path = path_generator_->generatePathForNonVehicleObject(
+          transformed_object, prediction_time_horizon_.unknown);
         predicted_path.confidence = 1.0;
 
         predicted_unknown_object.kinematics.predicted_paths.push_back(predicted_path);
@@ -1337,7 +1344,8 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 {
   auto predicted_object = convertToPredictedObject(object);
   {
-    PredictedPath predicted_path = path_generator_->generatePathForNonVehicleObject(object);
+    PredictedPath predicted_path =
+      path_generator_->generatePathForNonVehicleObject(object, prediction_time_horizon_.pedestrian);
     predicted_path.confidence = 1.0;
 
     predicted_object.kinematics.predicted_paths.push_back(predicted_path);
@@ -1388,7 +1396,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
       if (hasPotentialToReach(
             object, edge_points.front_center_point, edge_points.front_right_point,
-            edge_points.front_left_point, prediction_time_horizon_ * 2.0,
+            edge_points.front_left_point, prediction_time_horizon_.pedestrian * 2.0,
             min_crosswalk_user_velocity_, max_crosswalk_user_delta_yaw_threshold_for_lanelet_)) {
         PredictedPath predicted_path =
           path_generator_->generatePathToTargetPoint(object, edge_points.front_center_point);
@@ -1398,7 +1406,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
       if (hasPotentialToReach(
             object, edge_points.back_center_point, edge_points.back_right_point,
-            edge_points.back_left_point, prediction_time_horizon_ * 2.0,
+            edge_points.back_left_point, prediction_time_horizon_.pedestrian * 2.0,
             min_crosswalk_user_velocity_, max_crosswalk_user_delta_yaw_threshold_for_lanelet_)) {
         PredictedPath predicted_path =
           path_generator_->generatePathToTargetPoint(object, edge_points.back_center_point);
@@ -1422,27 +1430,27 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
     const auto reachable_first = hasPotentialToReach(
       object, edge_points.front_center_point, edge_points.front_right_point,
-      edge_points.front_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
-      max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
+      edge_points.front_left_point, prediction_time_horizon_.pedestrian,
+      min_crosswalk_user_velocity_, max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
     const auto reachable_second = hasPotentialToReach(
       object, edge_points.back_center_point, edge_points.back_right_point,
-      edge_points.back_left_point, prediction_time_horizon_, min_crosswalk_user_velocity_,
-      max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
+      edge_points.back_left_point, prediction_time_horizon_.pedestrian,
+      min_crosswalk_user_velocity_, max_crosswalk_user_delta_yaw_threshold_for_lanelet_);
 
     if (!reachable_first && !reachable_second) {
       continue;
     }
 
     const auto reachable_crosswalk = isReachableCrosswalkEdgePoints(
-      object, crosswalk, edge_points, lanelet_map_ptr_, prediction_time_horizon_,
+      object, crosswalk, edge_points, lanelet_map_ptr_, prediction_time_horizon_.pedestrian,
       min_crosswalk_user_velocity_);
 
     if (!reachable_crosswalk) {
       continue;
     }
 
-    PredictedPath predicted_path =
-      path_generator_->generatePathForCrosswalkUser(object, reachable_crosswalk.get());
+    PredictedPath predicted_path = path_generator_->generatePathForCrosswalkUser(
+      object, reachable_crosswalk.get(), prediction_time_horizon_.pedestrian);
     predicted_path.confidence = 1.0;
 
     if (predicted_path.path.empty()) {
@@ -1468,7 +1476,7 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
 {
   if (
     object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
+    autoware_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
     return;
   }
 
@@ -1489,7 +1497,7 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   if (abs_object_speed < min_abs_speed) return;
 
   switch (object.kinematics.orientation_availability) {
-    case autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN: {
+    case autoware_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN: {
       const auto original_yaw =
         tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
       // flip the angle
@@ -1518,7 +1526,7 @@ void MapBasedPredictionNode::removeStaleTrafficLightInfo(
   for (auto it = stopped_times_against_green_.begin(); it != stopped_times_against_green_.end();) {
     const bool isDisappeared = std::none_of(
       in_objects->objects.begin(), in_objects->objects.end(),
-      [&it](autoware_auto_perception_msgs::msg::TrackedObject obj) {
+      [&it](autoware_perception_msgs::msg::TrackedObject obj) {
         return tier4_autoware_utils::toHexString(obj.object_id) == it->first.first;
       });
     if (isDisappeared) {
@@ -1740,7 +1748,7 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
 
 std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   const TrackedObject & object, const LaneletsData & current_lanelets_data,
-  const double object_detected_time)
+  const double object_detected_time, const double time_horizon)
 {
   const double obj_vel = std::hypot(
     object.kinematics.twist_with_covariance.twist.linear.x,
@@ -1752,7 +1760,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
                                object.kinematics.acceleration_with_covariance.accel.linear.x,
                                object.kinematics.acceleration_with_covariance.accel.linear.y)
                            : 0.0;
-  const double t_h = prediction_time_horizon_;
+  const double t_h = time_horizon;
   const double λ = std::log(2) / acceleration_exponential_half_life_;
 
   auto get_search_distance_with_decaying_acc = [&]() -> double {
@@ -2409,7 +2417,7 @@ std::optional<lanelet::Id> MapBasedPredictionNode::getTrafficSignalId(
   return traffic_light_reg_elems.front()->id();
 }
 
-std::optional<TrafficSignalElement> MapBasedPredictionNode::getTrafficSignalElement(
+std::optional<TrafficLightElement> MapBasedPredictionNode::getTrafficSignalElement(
   const lanelet::Id & id)
 {
   if (traffic_signal_id_map_.count(id) != 0) {
@@ -2430,12 +2438,12 @@ bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSignal(
 {
   const auto signal_color = [&] {
     const auto elem_opt = getTrafficSignalElement(signal_id);
-    return elem_opt ? elem_opt.value().color : TrafficSignalElement::UNKNOWN;
+    return elem_opt ? elem_opt.value().color : TrafficLightElement::UNKNOWN;
   }();
 
   const auto key = std::make_pair(tier4_autoware_utils::toHexString(object.object_id), signal_id);
   if (
-    signal_color == TrafficSignalElement::GREEN &&
+    signal_color == TrafficLightElement::GREEN &&
     tier4_autoware_utils::calcNorm(object.kinematics.twist_with_covariance.twist.linear) <
       threshold_velocity_assumed_as_stopping_) {
     stopped_times_against_green_.try_emplace(key, this->get_clock()->now());
@@ -2480,7 +2488,7 @@ bool MapBasedPredictionNode::calcIntentionToCrossWithTrafficSignal(
     // If the pedestrian disappears, another function erases the old data.
   }
 
-  if (signal_color == TrafficSignalElement::RED) {
+  if (signal_color == TrafficLightElement::RED) {
     return false;
   }
 
