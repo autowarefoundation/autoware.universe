@@ -135,7 +135,7 @@ private:
     const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const;
   std::array<double, 36> estimate_covariance(
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
-    const rclcpp::Time & sensor_ros_time);
+    const rclcpp::Time & sensor_ros_time, std::array<double, 36> & ndt_covariance);
 
   void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
