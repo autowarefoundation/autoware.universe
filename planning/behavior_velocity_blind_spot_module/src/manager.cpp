@@ -36,21 +36,23 @@ BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
   planner_param_.use_pass_judge_line =
     getOrDeclareParameter<bool>(node, ns + ".use_pass_judge_line");
   planner_param_.stop_line_margin = getOrDeclareParameter<double>(node, ns + ".stop_line_margin");
-  planner_param_.backward_length = getOrDeclareParameter<double>(node, ns + ".backward_length");
+  planner_param_.backward_detection_length =
+    getOrDeclareParameter<double>(node, ns + ".backward_detection_length");
   planner_param_.ignore_width_from_center_line =
     getOrDeclareParameter<double>(node, ns + ".ignore_width_from_center_line");
-  planner_param_.max_future_movement_time =
-    getOrDeclareParameter<double>(node, ns + ".max_future_movement_time");
-  planner_param_.threshold_yaw_diff =
-    getOrDeclareParameter<double>(node, ns + ".threshold_yaw_diff");
   planner_param_.adjacent_extend_width =
     getOrDeclareParameter<double>(node, ns + ".adjacent_extend_width");
   planner_param_.opposite_adjacent_extend_width =
     getOrDeclareParameter<double>(node, ns + ".opposite_adjacent_extend_width");
+  planner_param_.max_future_movement_time =
+    getOrDeclareParameter<double>(node, ns + ".max_future_movement_time");
+  planner_param_.ttc_min = getOrDeclareParameter<double>(node, ns + ".ttc_min");
+  planner_param_.ttc_max = getOrDeclareParameter<double>(node, ns + ".ttc_max");
+  planner_param_.ttc_ego_minimal_velocity =
+    getOrDeclareParameter<double>(node, ns + ".ttc_ego_minimal_velocity");
 }
 
-void BlindSpotModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+void BlindSpotModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & ll : planning_utils::getLaneletsOnPath(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
@@ -63,14 +65,17 @@ void BlindSpotModuleManager::launchNewModules(
     }
 
     // Is turning lane?
-    const std::string turn_direction = ll.attributeOr("turn_direction", "else");
-    if (turn_direction != "left" && turn_direction != "right") {
+    const std::string turn_direction_str = ll.attributeOr("turn_direction", "else");
+    if (turn_direction_str != "left" && turn_direction_str != "right") {
       continue;
     }
+    const auto turn_direction = turn_direction_str == "left"
+                                  ? BlindSpotModule::TurnDirection::LEFT
+                                  : BlindSpotModule::TurnDirection::RIGHT;
 
     registerModule(std::make_shared<BlindSpotModule>(
-      module_id, lane_id, planner_data_, planner_param_, logger_.get_child("blind_spot_module"),
-      clock_));
+      module_id, lane_id, turn_direction, planner_data_, planner_param_,
+      logger_.get_child("blind_spot_module"), clock_));
     generateUUID(module_id);
     updateRTCStatus(
       getUUID(module_id), true, State::WAITING_FOR_EXECUTION, std::numeric_limits<double>::lowest(),
@@ -80,7 +85,7 @@ void BlindSpotModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 BlindSpotModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);

@@ -29,7 +29,7 @@
 namespace behavior_path_planner
 {
 
-using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedObjects;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
@@ -71,6 +71,7 @@ struct StartPlannerParameters
   behavior_path_planner::utils::path_safety_checker::ObjectTypesToCheck
     object_types_to_check_for_path_generation{};
   double center_line_path_interval{0.0};
+  double lane_departure_check_expansion_margin{0.0};
 
   // shift pull out
   bool enable_shift_pull_out{false};

@@ -42,12 +42,12 @@ class PoseEstimatorArbiter : public rclcpp::Node
   using Image = sensor_msgs::msg::Image;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
-  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using HADMapBin = autoware_map_msgs::msg::LaneletMapBin;
   using InitializationState = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
   using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 
 public:
-  PoseEstimatorArbiter();
+  explicit PoseEstimatorArbiter(const rclcpp::NodeOptions & options);
 
 private:
   // Set of running pose estimators specified by ros param `pose_sources`
