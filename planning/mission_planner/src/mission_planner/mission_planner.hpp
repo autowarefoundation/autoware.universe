@@ -20,7 +20,7 @@
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/autoware_route_handler.hpp>
 #include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 
 #include <autoware_adapi_v1_msgs/srv/set_route.hpp>

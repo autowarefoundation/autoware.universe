@@ -16,7 +16,7 @@
 #define REMAINING_DISTANCE_TIME_CALCULATOR_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/autoware_route_handler.hpp>
 
 #include <autoware_internal_msgs/msg/mission_remaining_distance_time.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>

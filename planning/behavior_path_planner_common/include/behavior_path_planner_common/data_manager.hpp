@@ -24,7 +24,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp/clock.hpp>
 #include <rclcpp/rclcpp/time.hpp>
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/autoware_route_handler.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>

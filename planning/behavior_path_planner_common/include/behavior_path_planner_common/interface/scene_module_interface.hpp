@@ -28,7 +28,7 @@
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/autoware_route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>

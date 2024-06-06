@@ -26,7 +26,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logging.hpp>
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/autoware_route_handler.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 

@@ -18,7 +18,7 @@
 #include "types.hpp"
 
 #include <rclcpp/logger.hpp>
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/autoware_route_handler.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 

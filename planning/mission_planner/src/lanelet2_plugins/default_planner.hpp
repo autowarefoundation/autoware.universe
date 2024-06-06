@@ -17,7 +17,7 @@
 
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/autoware_route_handler.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>

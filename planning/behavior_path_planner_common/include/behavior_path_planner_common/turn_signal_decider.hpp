@@ -20,7 +20,7 @@
 #include <behavior_path_planner_common/parameters.hpp>
 #include <behavior_path_planner_common/utils/path_shifter/path_shifter.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/autoware_route_handler.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
