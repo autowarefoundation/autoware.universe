@@ -406,9 +406,6 @@ void BehaviorPathPlannerNode::run()
   if (map_ptr) {
     planner_data_->route_handler->setMap(
       *map_ptr, planner_data_->parameters.enable_differential_map_loading);
-    if (planner_data_->parameters.enable_differential_map_loading) {
-      planner_manager_->resetRootLanelet(planner_data_);
-    }
   }
 
   std::unique_lock<std::mutex> lk_manager(mutex_manager_);  // for planner_manager_
@@ -418,7 +415,6 @@ void BehaviorPathPlannerNode::run()
   if (route_ptr) {
     planner_data_->route_handler->setRoute(
       *route_ptr, planner_data_->parameters.enable_differential_map_loading);
-    planner_manager_->resetRootLanelet(planner_data_);
     // uuid is not changed when rerouting with modified goal,
     // in this case do not need to reset modules.
     const bool has_same_route_id =
