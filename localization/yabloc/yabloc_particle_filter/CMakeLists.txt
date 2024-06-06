@@ -11,9 +11,6 @@ find_package(PCL REQUIRED)
 # Sophus
 find_package(Sophus REQUIRED)
 
-# glog
-find_package(glog REQUIRED)
-
 # GeographicLib
 find_package(PkgConfig)
 find_path(GeographicLib_INCLUDE_DIR GeographicLib/Config.h
@@ -100,24 +97,35 @@ rclcpp_components_register_node(particle_visualize
 )
 
 # GNSS corrector
-set(TARGET gnss_particle_corrector_node)
-ament_auto_add_executable(${TARGET}
-  src/gnss_corrector/gnss_corrector_node.cpp
-  src/gnss_corrector/gnss_corrector_core.cpp)
+set(TARGET gnss_particle_corrector)
+ament_auto_add_library(${TARGET}
+  src/common/particle_visualize_node.cpp
+  src/gnss_corrector/gnss_corrector_core.cpp
+)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} PUBLIC SYSTEM ${GeographicLib_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(${TARGET} Sophus::Sophus)
+rclcpp_components_register_node(${TARGET}
+  PLUGIN "yabloc::modularized_particle_filter::GnssParticleCorrector"
+  EXECUTABLE yabloc_gnss_particle_corrector_node
+  EXECUTOR SingleThreadedExecutor
+)
+
 
 # Camera corrector
 set(TARGET camera_particle_corrector_node)
-ament_auto_add_executable(${TARGET}
-  src/camera_corrector/camera_particle_corrector_node.cpp
+ament_auto_add_library(${TARGET}
   src/camera_corrector/filter_line_segments.cpp
   src/camera_corrector/logit.cpp
   src/camera_corrector/camera_particle_corrector_core.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-target_link_libraries(${TARGET} Sophus::Sophus ${PCL_LIBRARIES} glog::glog)
+target_link_libraries(${TARGET} Sophus::Sophus ${PCL_LIBRARIES})
+rclcpp_components_register_node(${TARGET}
+  PLUGIN "yabloc::modularized_particle_filter::CameraParticleCorrector"
+  EXECUTABLE yabloc_camera_particle_corrector_node
+  EXECUTOR SingleThreadedExecutor
+)
 
 # ===================================================
 # TEST
