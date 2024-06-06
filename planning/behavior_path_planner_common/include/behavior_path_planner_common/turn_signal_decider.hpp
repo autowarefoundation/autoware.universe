@@ -24,10 +24,10 @@
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/geometry/algorithms/intersects.hpp>
 
@@ -42,13 +42,13 @@
 
 namespace behavior_path_planner
 {
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
-using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
 using route_handler::RouteHandler;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 const std::map<std::string, uint8_t> g_signal_map = {
   {"left", TurnIndicatorsCommand::ENABLE_LEFT},
@@ -62,6 +62,17 @@ struct TurnSignalInfo
   {
     turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
     hazard_signal.command = HazardLightsCommand::NO_COMMAND;
+  }
+
+  TurnSignalInfo(const Pose & start, const Pose & end)
+  {
+    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
+    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
+
+    desired_start_point = start;
+    desired_end_point = end;
+    required_start_point = start;
+    required_end_point = end;
   }
 
   // desired turn signal
@@ -92,6 +103,11 @@ public:
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
     const TurnSignalInfo & intersection_signal_info, const TurnSignalInfo & behavior_signal_info,
     const double nearest_dist_threshold, const double nearest_yaw_threshold);
+
+  TurnSignalInfo overwrite_turn_signal(
+    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+    const TurnSignalInfo & original_signal, const TurnSignalInfo & new_signal,
+    const double nearest_dist_threshold, const double nearest_yaw_threshold) const;
 
   TurnSignalInfo use_prior_turn_signal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,

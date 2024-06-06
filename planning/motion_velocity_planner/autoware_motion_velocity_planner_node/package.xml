@@ -17,17 +17,17 @@
 
   <build_depend>rosidl_default_generators</build_depend>
 
-  <depend>autoware_auto_mapping_msgs</depend>
-  <depend>autoware_auto_perception_msgs</depend>
-  <depend>autoware_auto_planning_msgs</depend>
+  <depend>autoware_map_msgs</depend>
   <depend>autoware_motion_velocity_planner_common</depend>
+  <depend>autoware_perception_msgs</depend>
+  <depend>autoware_planning_msgs</depend>
+  <depend>autoware_velocity_smoother</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>motion_utils</depend>
-  <depend>motion_velocity_smoother</depend>
   <depend>pcl_conversions</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
