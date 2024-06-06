@@ -31,7 +31,7 @@
 #include <memory>
 #include <string>
 
-namespace surround_obstacle_checker
+namespace autoware::surround_obstacle_checker
 {
 
 using autoware_adapi_v1_msgs::msg::PlanningBehavior;
@@ -98,5 +98,5 @@ private:
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;
   rclcpp::Clock::SharedPtr clock_;
 };
-}  // namespace surround_obstacle_checker
+}  // namespace autoware::surround_obstacle_checker
 #endif  // AUTOWARE_SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
