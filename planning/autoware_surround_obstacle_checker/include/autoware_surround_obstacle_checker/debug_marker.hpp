@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
-#define SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
+#ifndef AUTOWARE_SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
+#define AUTOWARE_SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -99,4 +99,4 @@ private:
   rclcpp::Clock::SharedPtr clock_;
 };
 }  // namespace surround_obstacle_checker
-#endif  // SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_
+#endif  // AUTOWARE_SURROUND_OBSTACLE_CHECKER__DEBUG_MARKER_HPP_

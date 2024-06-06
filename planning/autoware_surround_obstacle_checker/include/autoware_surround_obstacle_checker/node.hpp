@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SURROUND_OBSTACLE_CHECKER__NODE_HPP_
-#define SURROUND_OBSTACLE_CHECKER__NODE_HPP_
+#ifndef AUTOWARE_SURROUND_OBSTACLE_CHECKER__NODE_HPP_
+#define AUTOWARE_SURROUND_OBSTACLE_CHECKER__NODE_HPP_
 
 #include "surround_obstacle_checker/debug_marker.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
@@ -151,4 +151,4 @@ private:
 };
 }  // namespace surround_obstacle_checker
 
-#endif  // SURROUND_OBSTACLE_CHECKER__NODE_HPP_
+#endif  // AUTOWARE_SURROUND_OBSTACLE_CHECKER__NODE_HPP_
