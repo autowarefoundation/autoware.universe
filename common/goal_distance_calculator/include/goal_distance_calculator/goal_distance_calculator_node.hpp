@@ -44,7 +44,6 @@ public:
 
 private:
   // Subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_initial_pose_;
   tier4_autoware_utils::SelfPoseListener self_pose_listener_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr sub_route_;
 
