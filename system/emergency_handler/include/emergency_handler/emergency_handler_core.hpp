@@ -58,11 +58,11 @@ public:
   explicit EmergencyHandler(const rclcpp::NodeOptions & options);
 
 private:
-  // Subscribers with Callback
+  // Subscribers with callback
   rclcpp::Subscription<autoware_system_msgs::msg::HazardStatusStamped>::SharedPtr
     sub_hazard_status_stamped_;
   rclcpp::Subscription<autoware_control_msgs::msg::Control>::SharedPtr sub_prev_control_command_;
-  // Subscribers without Callback
+  // Subscribers without callback
   tier4_autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odom_{
     this, "~/input/odometry"};
   tier4_autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport>
