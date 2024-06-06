@@ -46,18 +46,18 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
 : Node("lidar_center_point_tvm", node_options), tf_buffer_(this->get_clock())
 {
   const float score_threshold =
-    static_cast<float>(this->declare_parameter<double>("score_threshold", 0.35));
+    static_cast<float>(this->declare_parameter<double>("post_process_params.score_threshold"));
   const float circle_nms_dist_threshold =
-    static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold", 1.5));
+    static_cast<float>(this->declare_parameter<double>("post_process_params.circle_nms_dist_threshold"));
   const float yaw_norm_threshold =
-    static_cast<float>(this->declare_parameter<double>("yaw_norm_threshold", 0.0));
+    static_cast<float>(this->declare_parameter<double>("post_process_params.yaw_norm_threshold"));
   const std::string densification_world_frame_id =
-    this->declare_parameter("densification_world_frame_id", "map");
-  const int densification_num_past_frames =
-    this->declare_parameter("densification_num_past_frames", 0);
+    this->declare_parameter<std::string>("densification_params.world_frame_id");
+  const int32_t densification_num_past_frames =
+    this->declare_parameter<int>("densification_params.num_past_frames");
 
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
-  has_twist_ = this->declare_parameter("has_twist", false);
+  has_twist_ = this->declare_parameter<bool>("has_twist");
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
   const std::size_t max_voxel_size =

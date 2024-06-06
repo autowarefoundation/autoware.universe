@@ -8,3 +8,12 @@
     voxel_size: [0.32, 0.32, 8.0]
     downsample_factor: 1
     encoder_in_feature_size: 9
+    has_twist: false
+    post_process_params:
+      # post-process params
+      circle_nms_dist_threshold: 1.5
+      score_threshold: 0.35
+      yaw_norm_threshold: 0.0
+    densification_params:
+      world_frame_id: map
+      num_past_frames: 1
