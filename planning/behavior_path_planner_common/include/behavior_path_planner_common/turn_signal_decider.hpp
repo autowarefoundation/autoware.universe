@@ -24,10 +24,10 @@
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/geometry/algorithms/intersects.hpp>
 
@@ -42,13 +42,13 @@
 
 namespace behavior_path_planner
 {
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
-using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
 using route_handler::RouteHandler;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 const std::map<std::string, uint8_t> g_signal_map = {
   {"left", TurnIndicatorsCommand::ENABLE_LEFT},
@@ -62,6 +62,17 @@ struct TurnSignalInfo
   {
     turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
     hazard_signal.command = HazardLightsCommand::NO_COMMAND;
+  }
+
+  TurnSignalInfo(const Pose & start, const Pose & end)
+  {
+    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
+    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
+
+    desired_start_point = start;
+    desired_end_point = end;
+    required_start_point = start;
+    required_end_point = end;
   }
 
   // desired turn signal
@@ -92,6 +103,11 @@ public:
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
     const TurnSignalInfo & intersection_signal_info, const TurnSignalInfo & behavior_signal_info,
     const double nearest_dist_threshold, const double nearest_yaw_threshold);
+
+  TurnSignalInfo overwrite_turn_signal(
+    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+    const TurnSignalInfo & original_signal, const TurnSignalInfo & new_signal,
+    const double nearest_dist_threshold, const double nearest_yaw_threshold) const;
 
   TurnSignalInfo use_prior_turn_signal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
@@ -228,23 +244,23 @@ private:
     using tier4_autoware_utils::transformVector;
 
     const auto footprint = vehicle_info.createFootprint();
+    const auto start_itr = std::next(path.path.points.begin(), shift_line.start_idx);
+    const auto end_itr = std::next(path.path.points.begin(), shift_line.end_idx);
 
-    for (const auto & lane : lanes) {
-      for (size_t i = shift_line.start_idx; i < shift_line.end_idx; ++i) {
-        const auto transform = pose2transform(path.path.points.at(i).point.pose);
-        const auto shifted_vehicle_footprint = transformVector(footprint, transform);
+    return std::any_of(start_itr, end_itr, [&footprint, &lanes](const auto & point) {
+      const auto transform = pose2transform(point.point.pose);
+      const auto shifted_vehicle_footprint = transformVector(footprint, transform);
 
-        if (intersects(lane.leftBound2d().basicLineString(), shifted_vehicle_footprint)) {
-          return true;
-        }
+      auto check_for_vehicle_and_bound_intersection =
+        [&shifted_vehicle_footprint](const auto & lane) {
+          const auto & left_bound = lane.leftBound2d().basicLineString();
+          const auto & right_bound = lane.rightBound2d().basicLineString();
+          return intersects(left_bound, shifted_vehicle_footprint) ||
+                 intersects(right_bound, shifted_vehicle_footprint);
+        };
 
-        if (intersects(lane.rightBound2d().basicLineString(), shifted_vehicle_footprint)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+      return std::any_of(lanes.begin(), lanes.end(), check_for_vehicle_and_bound_intersection);
+    });
   };
 
   inline bool isNearEndOfShift(

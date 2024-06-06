@@ -52,7 +52,7 @@ NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
 }
 
 void NoStoppingAreaModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & m : planning_utils::getRegElemMapOnPath<NoStoppingArea>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
@@ -68,14 +68,15 @@ void NoStoppingAreaModuleManager::launchNewModules(
         clock_));
       generateUUID(module_id);
       updateRTCStatus(
-        getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
+        getUUID(module_id), true, State::WAITING_FOR_EXECUTION,
+        std::numeric_limits<double>::lowest(), path.header.stamp);
     }
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 NoStoppingAreaModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto no_stopping_area_id_set = planning_utils::getRegElemIdSetOnPath<NoStoppingArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);

@@ -14,6 +14,8 @@
 
 #include "mrm_emergency_stop_operator/mrm_emergency_stop_operator_core.hpp"
 
+#include <tier4_autoware_utils/ros/update_param.hpp>
+
 namespace mrm_emergency_stop_operator
 {
 
@@ -26,7 +28,7 @@ MrmEmergencyStopOperator::MrmEmergencyStopOperator(const rclcpp::NodeOptions & n
   params_.target_jerk = declare_parameter<double>("target_jerk", -1.5);
 
   // Subscriber
-  sub_control_cmd_ = create_subscription<AckermannControlCommand>(
+  sub_control_cmd_ = create_subscription<Control>(
     "~/input/control/control_cmd", 1,
     std::bind(&MrmEmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
 
@@ -38,8 +40,7 @@ MrmEmergencyStopOperator::MrmEmergencyStopOperator(const rclcpp::NodeOptions & n
 
   // Publisher
   pub_status_ = create_publisher<MrmBehaviorStatus>("~/output/mrm/emergency_stop/status", 1);
-  pub_control_cmd_ =
-    create_publisher<AckermannControlCommand>("~/output/mrm/emergency_stop/control_cmd", 1);
+  pub_control_cmd_ = create_publisher<Control>("~/output/mrm/emergency_stop/control_cmd", 1);
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
@@ -49,9 +50,26 @@ MrmEmergencyStopOperator::MrmEmergencyStopOperator(const rclcpp::NodeOptions & n
   // Initialize
   status_.state = MrmBehaviorStatus::AVAILABLE;
   is_prev_control_cmd_subscribed_ = false;
+
+  // Parameter Callback
+  set_param_res_ = add_on_set_parameters_callback(
+    std::bind(&MrmEmergencyStopOperator::onParameter, this, std::placeholders::_1));
 }
 
-void MrmEmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSharedPtr msg)
+rcl_interfaces::msg::SetParametersResult MrmEmergencyStopOperator::onParameter(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+  updateParam<double>(parameters, "target_acceleration", params_.target_acceleration);
+  updateParam<double>(parameters, "target_jerk", params_.target_jerk);
+
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+  return result;
+}
+
+void MrmEmergencyStopOperator::onControlCommand(Control::ConstSharedPtr msg)
 {
   if (status_.state != MrmBehaviorStatus::OPERATING) {
     prev_control_cmd_ = *msg;
@@ -78,7 +96,7 @@ void MrmEmergencyStopOperator::publishStatus() const
   pub_status_->publish(status);
 }
 
-void MrmEmergencyStopOperator::publishControlCommand(const AckermannControlCommand & command) const
+void MrmEmergencyStopOperator::publishControlCommand(const Control & command) const
 {
   pub_control_cmd_->publish(command);
 }
@@ -95,15 +113,14 @@ void MrmEmergencyStopOperator::onTimer()
   publishStatus();
 }
 
-AckermannControlCommand MrmEmergencyStopOperator::calcTargetAcceleration(
-  const AckermannControlCommand & prev_control_cmd) const
+Control MrmEmergencyStopOperator::calcTargetAcceleration(const Control & prev_control_cmd) const
 {
-  auto control_cmd = AckermannControlCommand();
+  auto control_cmd = Control();
 
   if (!is_prev_control_cmd_subscribed_) {
     control_cmd.stamp = this->now();
     control_cmd.longitudinal.stamp = this->now();
-    control_cmd.longitudinal.speed = 0.0;
+    control_cmd.longitudinal.velocity = 0.0;
     control_cmd.longitudinal.acceleration = static_cast<float>(params_.target_acceleration);
     control_cmd.longitudinal.jerk = 0.0;
     control_cmd.lateral.stamp = this->now();
@@ -117,8 +134,8 @@ AckermannControlCommand MrmEmergencyStopOperator::calcTargetAcceleration(
 
   control_cmd.stamp = this->now();
   control_cmd.longitudinal.stamp = this->now();
-  control_cmd.longitudinal.speed = static_cast<float>(std::max(
-    prev_control_cmd.longitudinal.speed + prev_control_cmd.longitudinal.acceleration * dt, 0.0));
+  control_cmd.longitudinal.velocity = static_cast<float>(std::max(
+    prev_control_cmd.longitudinal.velocity + prev_control_cmd.longitudinal.acceleration * dt, 0.0));
   control_cmd.longitudinal.acceleration = static_cast<float>(std::max(
     prev_control_cmd.longitudinal.acceleration + params_.target_jerk * dt,
     params_.target_acceleration));

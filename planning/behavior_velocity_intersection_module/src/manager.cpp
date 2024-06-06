@@ -297,12 +297,12 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 
   decision_state_pub_ =
     node.create_publisher<std_msgs::msg::String>("~/debug/intersection/decision_state", 1);
-  tl_observation_pub_ = node.create_publisher<autoware_perception_msgs::msg::TrafficSignal>(
+  tl_observation_pub_ = node.create_publisher<autoware_perception_msgs::msg::TrafficLightGroup>(
     "~/debug/intersection_traffic_signal", 1);
 }
 
 void IntersectionModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto routing_graph = planner_data_->route_handler_->getRoutingGraphPtr();
   const auto lanelet_map = planner_data_->route_handler_->getLaneletMapPtr();
@@ -345,10 +345,10 @@ void IntersectionModuleManager::launchNewModules(
     const UUID uuid = getUUID(new_module->getModuleId());
     const auto occlusion_uuid = new_module->getOcclusionUUID();
     rtc_interface_.updateCooperateStatus(
-      uuid, true, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(),
-      clock_->now());
+      uuid, true, State::RUNNING, std::numeric_limits<double>::lowest(),
+      std::numeric_limits<double>::lowest(), clock_->now());
     occlusion_rtc_interface_.updateCooperateStatus(
-      occlusion_uuid, true, std::numeric_limits<double>::lowest(),
+      occlusion_uuid, true, State::RUNNING, std::numeric_limits<double>::lowest(),
       std::numeric_limits<double>::lowest(), clock_->now());
     registerModule(std::move(new_module));
   }
@@ -356,7 +356,7 @@ void IntersectionModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 IntersectionModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
@@ -404,12 +404,13 @@ void IntersectionModuleManager::sendRTC(const Time & stamp)
     const UUID uuid = getUUID(scene_module->getModuleId());
     const bool safety =
       scene_module->isSafe() && (!intersection_module->isOcclusionFirstStopRequired());
-    updateRTCStatus(uuid, safety, scene_module->getDistance(), stamp);
+    updateRTCStatus(uuid, safety, State::RUNNING, scene_module->getDistance(), stamp);
     const auto occlusion_uuid = intersection_module->getOcclusionUUID();
     const auto occlusion_distance = intersection_module->getOcclusionDistance();
     const auto occlusion_safety = intersection_module->getOcclusionSafety();
     occlusion_rtc_interface_.updateCooperateStatus(
-      occlusion_uuid, occlusion_safety, occlusion_distance, occlusion_distance, stamp);
+      occlusion_uuid, occlusion_safety, State::RUNNING, occlusion_distance, occlusion_distance,
+      stamp);
 
     // ==========================================================================================
     // module debug data
@@ -445,7 +446,7 @@ void IntersectionModuleManager::setActivation()
 }
 
 void IntersectionModuleManager::deleteExpiredModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
@@ -482,7 +483,7 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
 }
 
 void MergeFromPrivateModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto routing_graph = planner_data_->route_handler_->getRoutingGraphPtr();
   const auto lanelet_map = planner_data_->route_handler_->getLaneletMapPtr();
@@ -549,7 +550,7 @@ void MergeFromPrivateModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 MergeFromPrivateModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);

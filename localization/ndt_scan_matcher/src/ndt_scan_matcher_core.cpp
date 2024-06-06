@@ -22,8 +22,6 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/transform/transforms.hpp>
 
-#include <boost/math/special_functions/erf.hpp>
-
 #include <pcl_conversions/pcl_conversions.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -195,11 +193,15 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
 
 void NDTScanMatcher::callback_timer()
 {
+  const rclcpp::Time ros_time_now = this->now();
+
   diagnostics_map_update_->clear();
+
+  diagnostics_map_update_->addKeyValue("timer_callback_time_stamp", ros_time_now.nanoseconds());
 
   map_update_module_->callback_timer(is_activated_, latest_ekf_position_, diagnostics_map_update_);
 
-  diagnostics_map_update_->publish();
+  diagnostics_map_update_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::callback_initial_pose(
@@ -209,14 +211,15 @@ void NDTScanMatcher::callback_initial_pose(
 
   callback_initial_pose_main(initial_pose_msg_ptr);
 
-  diagnostics_initial_pose_->publish();
+  diagnostics_initial_pose_->publish(initial_pose_msg_ptr->header.stamp);
 }
 
 void NDTScanMatcher::callback_initial_pose_main(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
   diagnostics_initial_pose_->addKeyValue(
-    "topic_time_stamp", static_cast<rclcpp::Time>(initial_pose_msg_ptr->header.stamp).seconds());
+    "topic_time_stamp",
+    static_cast<rclcpp::Time>(initial_pose_msg_ptr->header.stamp).nanoseconds());
 
   // check is_activated
   diagnostics_initial_pose_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
@@ -257,11 +260,11 @@ void NDTScanMatcher::callback_regularization_pose(
   diagnostics_regularization_pose_->clear();
 
   diagnostics_regularization_pose_->addKeyValue(
-    "topic_time_stamp", static_cast<rclcpp::Time>(pose_conv_msg_ptr->header.stamp).seconds());
+    "topic_time_stamp", static_cast<rclcpp::Time>(pose_conv_msg_ptr->header.stamp).nanoseconds());
 
   regularization_pose_buffer_->push_back(pose_conv_msg_ptr);
 
-  diagnostics_regularization_pose_->publish();
+  diagnostics_regularization_pose_->publish(pose_conv_msg_ptr->header.stamp);
 }
 
 void NDTScanMatcher::callback_sensor_points(
@@ -277,16 +280,17 @@ void NDTScanMatcher::callback_sensor_points(
   // check skipping_publish_num
   static size_t skipping_publish_num = 0;
   const size_t error_skipping_publish_num = 5;
-  skipping_publish_num = is_succeed_scan_matching ? 0 : (skipping_publish_num + 1);
+  skipping_publish_num =
+    ((is_succeed_scan_matching || !is_activated_) ? 0 : (skipping_publish_num + 1));
   diagnostics_scan_points_->addKeyValue("skipping_publish_num", skipping_publish_num);
   if (skipping_publish_num >= error_skipping_publish_num) {
     std::stringstream message;
     message << "skipping_publish_num exceed limit (" << skipping_publish_num << " times).";
     diagnostics_scan_points_->updateLevelAndMessage(
-      diagnostic_msgs::msg::DiagnosticStatus::ERROR, message.str());
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  diagnostics_scan_points_->publish();
+  diagnostics_scan_points_->publish(sensor_points_msg_in_sensor_frame->header.stamp);
 }
 
 bool NDTScanMatcher::callback_sensor_points_main(
@@ -296,7 +300,7 @@ bool NDTScanMatcher::callback_sensor_points_main(
 
   // check topic_time_stamp
   const rclcpp::Time sensor_ros_time = sensor_points_msg_in_sensor_frame->header.stamp;
-  diagnostics_scan_points_->addKeyValue("topic_time_stamp", sensor_ros_time.seconds());
+  diagnostics_scan_points_->addKeyValue("topic_time_stamp", sensor_ros_time.nanoseconds());
 
   // check sensor_points_size
   const size_t sensor_points_size = sensor_points_msg_in_sensor_frame->width;
@@ -466,17 +470,14 @@ bool NDTScanMatcher::callback_sensor_points_main(
   diagnostics_scan_points_->addKeyValue("transform_probability", ndt_result.transform_probability);
   diagnostics_scan_points_->addKeyValue(
     "nearest_voxel_transformation_likelihood", ndt_result.nearest_voxel_transformation_likelihood);
-  std::string score_name = "";
   double score = 0.0;
   double score_threshold = 0.0;
   if (param_.score_estimation.converged_param_type == ConvergedParamType::TRANSFORM_PROBABILITY) {
-    score_name = "Transform Probability";
     score = ndt_result.transform_probability;
     score_threshold = param_.score_estimation.converged_param_transform_probability;
   } else if (
     param_.score_estimation.converged_param_type ==
     ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
-    score_name = "Nearest Voxel Transformation Likelihood";
     score = ndt_result.nearest_voxel_transformation_likelihood;
     score_threshold =
       param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood;
@@ -870,8 +871,10 @@ void NDTScanMatcher::service_trigger_node(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
+  const rclcpp::Time ros_time_now = this->now();
+
   diagnostics_trigger_node_->clear();
-  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", this->now().seconds());
+  diagnostics_trigger_node_->addKeyValue("service_call_time_stamp", ros_time_now.nanoseconds());
 
   is_activated_ = req->data;
   if (is_activated_) {
@@ -881,14 +884,18 @@ void NDTScanMatcher::service_trigger_node(
 
   diagnostics_trigger_node_->addKeyValue("is_activated", static_cast<bool>(is_activated_));
   diagnostics_trigger_node_->addKeyValue("is_succeed_service", res->success);
-  diagnostics_trigger_node_->publish();
+  diagnostics_trigger_node_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::service_ndt_align(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
+  const rclcpp::Time ros_time_now = this->now();
+
   diagnostics_ndt_align_->clear();
+
+  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", ros_time_now.nanoseconds());
 
   service_ndt_align_main(req, res);
 
@@ -902,15 +909,13 @@ void NDTScanMatcher::service_ndt_align(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
-  diagnostics_ndt_align_->publish();
+  diagnostics_ndt_align_->publish(ros_time_now);
 }
 
 void NDTScanMatcher::service_ndt_align_main(
   const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
   tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res)
 {
-  diagnostics_ndt_align_->addKeyValue("service_call_time_stamp", this->now().seconds());
-
   // get TF from pose_frame to map_frame
   const std::string & target_frame = param_.frame.map_frame;
   const std::string & source_frame = req->pose_with_covariance.header.frame_id;
@@ -988,34 +993,20 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   const double stddev_roll = std::sqrt(covariance(3, 3));
   const double stddev_pitch = std::sqrt(covariance(4, 4));
 
-  // Let phi be the cumulative distribution function of the standard normal distribution.
-  // It has the following relationship with the error function (erf).
-  //   phi(x) = 1/2 (1 + erf(x / sqrt(2)))
-  // so, 2 * phi(x) - 1 = erf(x / sqrt(2)).
-  // The range taken by 2 * phi(x) - 1 is [-1, 1], so it can be used as a uniform distribution in
-  // TPE. Let u = 2 * phi(x) - 1, then x = sqrt(2) * erf_inv(u). Computationally, it is not a good
-  // to give erf_inv -1 and 1, so it is rounded off at (-1 + eps, 1 - eps).
-  const double sqrt2 = std::sqrt(2);
-  auto uniform_to_normal = [&sqrt2](const double uniform) {
-    assert(-1.0 <= uniform && uniform <= 1.0);
-    constexpr double epsilon = 1.0e-6;
-    const double clamped = std::clamp(uniform, -1.0 + epsilon, 1.0 - epsilon);
-    return boost::math::erf_inv(clamped) * sqrt2;
+  // Since only yaw is uniformly sampled, we define the mean and standard deviation for the others.
+  const std::vector<double> sample_mean{
+    initial_pose_with_cov.pose.pose.position.x,  // trans_x
+    initial_pose_with_cov.pose.pose.position.y,  // trans_y
+    initial_pose_with_cov.pose.pose.position.z,  // trans_z
+    base_rpy.x,                                  // angle_x
+    base_rpy.y                                   // angle_y
   };
-
-  auto normal_to_uniform = [&sqrt2](const double normal) {
-    return boost::math::erf(normal / sqrt2);
-  };
+  const std::vector<double> sample_stddev{stddev_x, stddev_y, stddev_z, stddev_roll, stddev_pitch};
 
   // Optimizing (x, y, z, roll, pitch, yaw) 6 dimensions.
-  // The last dimension (yaw) is a loop variable.
-  // Although roll and pitch are also angles, they are considered non-looping variables that follow
-  // a normal distribution with a small standard deviation. This assumes that the initial pose of
-  // the ego vehicle is aligned with the ground to some extent about roll and pitch.
-  const std::vector<bool> is_loop_variable = {false, false, false, false, false, true};
   TreeStructuredParzenEstimator tpe(
     TreeStructuredParzenEstimator::Direction::MAXIMIZE,
-    param_.initial_pose_estimation.n_startup_trials, is_loop_variable);
+    param_.initial_pose_estimation.n_startup_trials, sample_mean, sample_stddev);
 
   std::vector<Particle> particle_array;
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
@@ -1029,16 +1020,13 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
     const TreeStructuredParzenEstimator::Input input = tpe.get_next_input();
 
     geometry_msgs::msg::Pose initial_pose;
-    initial_pose.position.x =
-      initial_pose_with_cov.pose.pose.position.x + uniform_to_normal(input[0]) * stddev_x;
-    initial_pose.position.y =
-      initial_pose_with_cov.pose.pose.position.y + uniform_to_normal(input[1]) * stddev_y;
-    initial_pose.position.z =
-      initial_pose_with_cov.pose.pose.position.z + uniform_to_normal(input[2]) * stddev_z;
+    initial_pose.position.x = input[0];
+    initial_pose.position.y = input[1];
+    initial_pose.position.z = input[2];
     geometry_msgs::msg::Vector3 init_rpy;
-    init_rpy.x = base_rpy.x + uniform_to_normal(input[3]) * stddev_roll;
-    init_rpy.y = base_rpy.y + uniform_to_normal(input[4]) * stddev_pitch;
-    init_rpy.z = base_rpy.z + input[5] * M_PI;
+    init_rpy.x = input[3];
+    init_rpy.y = input[4];
+    init_rpy.z = input[5];
     tf2::Quaternion tf_quaternion;
     tf_quaternion.setRPY(init_rpy.x, init_rpy.y, init_rpy.z);
     initial_pose.orientation = tf2::toMsg(tf_quaternion);
@@ -1061,22 +1049,13 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
     const geometry_msgs::msg::Pose pose = matrix4f_to_pose(ndt_result.pose);
     const geometry_msgs::msg::Vector3 rpy = get_rpy(pose);
 
-    const double diff_x = pose.position.x - initial_pose_with_cov.pose.pose.position.x;
-    const double diff_y = pose.position.y - initial_pose_with_cov.pose.pose.position.y;
-    const double diff_z = pose.position.z - initial_pose_with_cov.pose.pose.position.z;
-    const double diff_roll = rpy.x - base_rpy.x;
-    const double diff_pitch = rpy.y - base_rpy.y;
-    const double diff_yaw = rpy.z - base_rpy.z;
-
-    // Only yaw is a loop_variable, so only simple normalization is performed.
-    // All other variables are converted from normal distribution to uniform distribution.
-    TreeStructuredParzenEstimator::Input result(is_loop_variable.size());
-    result[0] = normal_to_uniform(diff_x / stddev_x);
-    result[1] = normal_to_uniform(diff_y / stddev_y);
-    result[2] = normal_to_uniform(diff_z / stddev_z);
-    result[3] = normal_to_uniform(diff_roll / stddev_roll);
-    result[4] = normal_to_uniform(diff_pitch / stddev_pitch);
-    result[5] = diff_yaw / M_PI;
+    TreeStructuredParzenEstimator::Input result(6);
+    result[0] = pose.position.x;
+    result[1] = pose.position.y;
+    result[2] = pose.position.z;
+    result[3] = rpy.x;
+    result[4] = rpy.y;
+    result[5] = rpy.z;
     tpe.add_trial(TreeStructuredParzenEstimator::Trial{result, ndt_result.transform_probability});
 
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
@@ -1100,3 +1079,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
 
   return result_pose_with_cov_msg;
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)

@@ -1,7 +1,10 @@
 /**:
   ros__parameters:
     enable_delay_compensation: true
-    prediction_time_horizon: 10.0 #[s]
+    prediction_time_horizon:
+      vehicle: 15.0 #[s]
+      pedestrian: 10.0 #[s]
+      unknown: 10.0 #[s]
     lateral_control_time_horizon: 5.0 #[s]
     prediction_sampling_delta_time: 0.5 #[s]
     min_velocity_for_map_based_prediction: 1.39 #[m/s]
@@ -27,6 +30,9 @@
       timeout_set_for_no_intention_to_walk: [1.0, 0.0] # [s] values of map
     # parameter for shoulder lane prediction
     prediction_time_horizon_rate_for_validate_shoulder_lane_length: 0.8
+    use_crosswalk_user_history:
+      match_lost_and_appeared_users: false
+      remember_lost_users: false
 
     # parameters for lc prediction
     lane_change_detection:

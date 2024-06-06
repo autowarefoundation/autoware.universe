@@ -65,6 +65,11 @@ StartPlannerModule::StartPlannerModule(
 {
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
+  lane_departure_checker::Param lane_departure_checker_params;
+  lane_departure_checker_params.footprint_extra_margin =
+    parameters->lane_departure_check_expansion_margin;
+
+  lane_departure_checker_->setParam(lane_departure_checker_params);
 
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
@@ -245,6 +250,13 @@ void StartPlannerModule::updateData()
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
     status_.driving_forward && !status_.first_engaged_and_driving_forward_time) {
     status_.first_engaged_and_driving_forward_time = clock_->now();
+  }
+
+  constexpr double moving_velocity_threshold = 0.1;
+  const double & ego_velocity = planner_data_->self_odometry->twist.twist.linear.x;
+  if (status_.first_engaged_and_driving_forward_time && ego_velocity > moving_velocity_threshold) {
+    // Ego is engaged, and has moved
+    status_.has_departed = true;
   }
 
   status_.backward_driving_complete = hasFinishedBackwardDriving();
@@ -572,7 +584,35 @@ bool StartPlannerModule::isExecutionReady() const
 
 bool StartPlannerModule::canTransitSuccessState()
 {
-  return hasFinishedPullOut();
+  // Freespace Planner:
+  // - Can transit to success if the goal position is reached.
+  // - Cannot transit to success if the goal position is not reached.
+  if (status_.planner_type == PlannerType::FREESPACE) {
+    if (hasReachedFreespaceEnd()) {
+      RCLCPP_DEBUG(
+        getLogger(), "Transit to success: Freespace planner reached the end point of the path.");
+      return true;
+    }
+    return false;
+  }
+
+  // Other Planners:
+  // - Cannot transit to success if the vehicle is driving in reverse.
+  // - Cannot transit to success if a safe path cannot be found due to:
+  //   - Insufficient margin against static objects.
+  //   - No path found that stays within the lane.
+  //   In such cases, a stop point needs to be embedded and keep running start_planner.
+  // - Can transit to success if the end point of the pullout path is reached.
+  if (!status_.driving_forward || !status_.found_pull_out_path) {
+    return false;
+  }
+
+  if (hasReachedPullOutEnd()) {
+    RCLCPP_DEBUG(getLogger(), "Transit to success: Reached the end point of the pullout path.");
+    return true;
+  }
+
+  return false;
 }
 
 BehaviorModuleOutput StartPlannerModule::plan()
@@ -1173,17 +1213,16 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   return stop_objects_in_pull_out_lanes;
 }
 
-bool StartPlannerModule::hasFinishedPullOut() const
+bool StartPlannerModule::hasReachedFreespaceEnd() const
 {
-  if (!status_.driving_forward || !status_.found_pull_out_path) {
-    return false;
-  }
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
+  return tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_path.end_pose) <
+         parameters_->th_arrived_distance;
+}
 
+bool StartPlannerModule::hasReachedPullOutEnd() const
+{
   const auto current_pose = planner_data_->self_odometry->pose.pose;
-  if (status_.planner_type == PlannerType::FREESPACE) {
-    return tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_path.end_pose) <
-           parameters_->th_arrived_distance;
-  }
 
   // check that ego has passed pull out end point
   const double backward_path_length =
@@ -1198,9 +1237,8 @@ bool StartPlannerModule::hasFinishedPullOut() const
 
   // offset to not finish the module before engage
   constexpr double offset = 0.1;
-  const bool has_finished = arclength_current.length - arclength_pull_out_end.length > offset;
 
-  return has_finished;
+  return arclength_current.length - arclength_pull_out_end.length > offset;
 }
 
 bool StartPlannerModule::needToPrepareBlinkerBeforeStartDrivingForward() const
@@ -1265,8 +1303,10 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
   // In Geometric pull out, the ego stops once and then steers the wheels to the opposite direction.
   // This sometimes causes the getBehaviorTurnSignalInfo method to detect the ego as stopped and
   // close to complete its shift, so it wrongly turns off the blinkers, this override helps avoid
-  // this issue.
-  const bool override_ego_stopped_check = std::invoke([&]() {
+  // this issue. Also, if the ego is not engaged (so it is stopped), the blinkers should still be
+  // activated.
+
+  const bool geometric_planner_has_not_finished_first_path = std::invoke([&]() {
     if (status_.planner_type != PlannerType::GEOMETRIC) {
       return false;
     }
@@ -1276,6 +1316,9 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
       path.points, stop_point.point.pose.position, current_pose.position));
     return distance_from_ego_to_stop_point < distance_threshold;
   });
+
+  const bool override_ego_stopped_check =
+    !status_.has_departed || geometric_planner_has_not_finished_first_path;
 
   const auto [new_signal, is_ignore] = planner_data_->getBehaviorTurnSignalInfo(
     path, shift_start_idx, shift_end_idx, current_lanes, current_shift_length,

@@ -15,8 +15,8 @@
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <planning_test_utils/planning_interface_test_manager.hpp>
-#include <planning_test_utils/planning_interface_test_manager_utils.hpp>
+#include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
+#include <planning_test_utils/planning_test_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -67,8 +67,9 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
      behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
      behavior_path_planner_dir + "/config/scene_module_manager.param.yaml",
      behavior_path_lane_change_module_dir + "/config/lane_change.param.yaml",
-     ament_index_cpp::get_package_share_directory("behavior_path_avoidance_module") +
-       "/config/avoidance.param.yaml",
+     ament_index_cpp::get_package_share_directory(
+       "autoware_behavior_path_static_obstacle_avoidance_module") +
+       "/config/static_obstacle_avoidance.param.yaml",
      ament_index_cpp::get_package_share_directory("behavior_path_avoidance_by_lane_change_module") +
        "/config/avoidance_by_lane_change.param.yaml"});
 

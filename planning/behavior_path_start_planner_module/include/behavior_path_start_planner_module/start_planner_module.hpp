@@ -31,7 +31,7 @@
 #include <vehicle_info_util/vehicle_info.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <tf2/utils.h>
@@ -74,6 +74,8 @@ struct PullOutStatus
   //! record the first time when ego started forward-driving (maybe after backward driving
   //! completion) in AUTONOMOUS operation mode
   std::optional<rclcpp::Time> first_engaged_and_driving_forward_time{std::nullopt};
+  // record if the ego has departed from the start point
+  bool has_departed{false};
 
   PullOutStatus() {}
 };
@@ -304,7 +306,8 @@ private:
     const double velocity_threshold, const double object_check_backward_distance,
     const double object_check_forward_distance) const;
   bool needToPrepareBlinkerBeforeStartDrivingForward() const;
-  bool hasFinishedPullOut() const;
+  bool hasReachedFreespaceEnd() const;
+  bool hasReachedPullOutEnd() const;
   bool hasFinishedBackwardDriving() const;
   bool hasCollisionWithDynamicObjects() const;
   bool isStopped();

@@ -20,16 +20,17 @@
 #include <memory>
 
 // Autoware
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
 
 // ROS 2 core
 #include <rclcpp/rclcpp.hpp>
 
+#include <vector>
 namespace mrm_emergency_stop_operator
 {
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_control_msgs::msg::Control;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
 using tier4_system_msgs::srv::OperateMrm;
 
@@ -48,11 +49,15 @@ public:
 private:
   // Parameters
   Parameters params_;
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
+
+  rcl_interfaces::msg::SetParametersResult onParameter(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   // Subscriber
-  rclcpp::Subscription<AckermannControlCommand>::SharedPtr sub_control_cmd_;
+  rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;
 
-  void onControlCommand(AckermannControlCommand::ConstSharedPtr msg);
+  void onControlCommand(Control::ConstSharedPtr msg);
 
   // Server
   rclcpp::Service<OperateMrm>::SharedPtr service_operation_;
@@ -62,10 +67,10 @@ private:
 
   // Publisher
   rclcpp::Publisher<MrmBehaviorStatus>::SharedPtr pub_status_;
-  rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_control_cmd_;
+  rclcpp::Publisher<Control>::SharedPtr pub_control_cmd_;
 
   void publishStatus() const;
-  void publishControlCommand(const AckermannControlCommand & command) const;
+  void publishControlCommand(const Control & command) const;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
@@ -74,12 +79,11 @@ private:
 
   // States
   MrmBehaviorStatus status_;
-  AckermannControlCommand prev_control_cmd_;
+  Control prev_control_cmd_;
   bool is_prev_control_cmd_subscribed_;
 
   // Algorithm
-  AckermannControlCommand calcTargetAcceleration(
-    const AckermannControlCommand & prev_control_cmd) const;
+  Control calcTargetAcceleration(const Control & prev_control_cmd) const;
 };
 
 }  // namespace mrm_emergency_stop_operator
