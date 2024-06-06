@@ -14,7 +14,7 @@
   <arg name="map_projection_loader_param_path"/>
 
   <!-- Dynamic lanelet loading -->
-  <arg name="enable_differential_map_loading" default="false"/>
+  <arg name="enable_differential_map_loading"/>
 
   <!-- whether use intra-process -->
   <arg name="use_intra_process" default="false"/>
