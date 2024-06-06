@@ -35,17 +35,17 @@
  *
  */
 
-#ifndef MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_
-#define MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_
+#ifndef AUTOWARE_MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_
+#define AUTOWARE_MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_
 
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
+#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/LU>
 
 #include <string>
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 
 /**
@@ -100,5 +100,5 @@ public:
 private:
   double m_steer_lim;  //!< @brief steering angle limit [rad]
 };
-}  // namespace autoware::motion::control::mpc_lateral_controller
-#endif  // MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+#endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_

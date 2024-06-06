@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_OSQP_HPP_
-#define MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_OSQP_HPP_
+#ifndef AUTOWARE_MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_OSQP_HPP_
+#define AUTOWARE_MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_OSQP_HPP_
 
-#include "mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
+#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 
 /// Solver for QP problems using the OSQP library
@@ -61,5 +61,5 @@ private:
   autoware::common::osqp::OSQPInterface osqpsolver_;
   rclcpp::Logger logger_;
 };
-}  // namespace autoware::motion::control::mpc_lateral_controller
-#endif  // MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_OSQP_HPP_
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+#endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_OSQP_HPP_

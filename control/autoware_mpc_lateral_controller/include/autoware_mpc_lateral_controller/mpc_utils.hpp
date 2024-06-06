@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_
-#define MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_
+#ifndef AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_
+#define AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
@@ -26,7 +26,7 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #endif
 
-#include "mpc_lateral_controller/mpc_trajectory.hpp"
+#include "autoware_mpc_lateral_controller/mpc_trajectory.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
@@ -38,7 +38,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 namespace MPCUtils
 {
@@ -229,5 +229,5 @@ void update_param(
 }
 
 }  // namespace MPCUtils
-}  // namespace autoware::motion::control::mpc_lateral_controller
-#endif  // MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+#endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_

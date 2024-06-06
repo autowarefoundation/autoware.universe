@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_
-#define MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_
+#ifndef AUTOWARE_MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_
+#define AUTOWARE_MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 using autoware_control_msgs::msg::Lateral;
 
@@ -79,6 +79,6 @@ private:
   void setPrevResult(const double & steering);
 };
 
-}  // namespace autoware::motion::control::mpc_lateral_controller
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
 
-#endif  // MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_
+#endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__STEERING_PREDICTOR_HPP_

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
-#define MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
+#ifndef AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
+#define AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
 
-#include "mpc_lateral_controller/mpc.hpp"
-#include "mpc_lateral_controller/mpc_trajectory.hpp"
-#include "mpc_lateral_controller/mpc_utils.hpp"
-#include "mpc_lateral_controller/steering_offset/steering_offset.hpp"
+#include "autoware_mpc_lateral_controller/mpc.hpp"
+#include "autoware_mpc_lateral_controller/mpc_trajectory.hpp"
+#include "autoware_mpc_lateral_controller/mpc_utils.hpp"
+#include "autoware_mpc_lateral_controller/steering_offset/steering_offset.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "trajectory_follower_base/lateral_controller_base.hpp"
 
@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
@@ -279,6 +279,6 @@ private:
     RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, args...);
   }
 };
-}  // namespace autoware::motion::control::mpc_lateral_controller
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
 
-#endif  // MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
+#endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_

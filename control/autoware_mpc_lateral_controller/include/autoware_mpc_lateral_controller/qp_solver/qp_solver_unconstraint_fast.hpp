@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
-#define MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
+#ifndef AUTOWARE_MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
+#define AUTOWARE_MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
 
-#include "mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
+#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 
 /**
@@ -61,5 +61,5 @@ public:
 
 private:
 };
-}  // namespace autoware::motion::control::mpc_lateral_controller
-#endif  // MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+#endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_UNCONSTRAINT_FAST_HPP_

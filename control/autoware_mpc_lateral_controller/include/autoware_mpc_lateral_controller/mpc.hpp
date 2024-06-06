@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MPC_LATERAL_CONTROLLER__MPC_HPP_
-#define MPC_LATERAL_CONTROLLER__MPC_HPP_
+#ifndef AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_HPP_
+#define AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_HPP_
 
-#include "mpc_lateral_controller/lowpass_filter.hpp"
-#include "mpc_lateral_controller/mpc_trajectory.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
-#include "mpc_lateral_controller/steering_predictor.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
+#include "autoware_mpc_lateral_controller/lowpass_filter.hpp"
+#include "autoware_mpc_lateral_controller/mpc_trajectory.hpp"
+#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
+#include "autoware_mpc_lateral_controller/steering_predictor.hpp"
+#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/lateral.hpp"
@@ -35,7 +35,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 
 using autoware_control_msgs::msg::Lateral;
@@ -523,6 +523,6 @@ public:
    */
   inline void setClock(rclcpp::Clock::SharedPtr clock) { m_clock = clock; }
 };  // class MPC
-}  // namespace autoware::motion::control::mpc_lateral_controller
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
 
-#endif  // MPC_LATERAL_CONTROLLER__MPC_HPP_
+#endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_HPP_
