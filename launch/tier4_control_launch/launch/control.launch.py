@@ -159,7 +159,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     autoware_autonomous_emergency_braking_loader = LoadComposableNodes(
-        condition=IfCondition(LaunchConfiguration("enable_autoware_autonomous_emergency_braking")),
+        condition=IfCondition(LaunchConfiguration("enable_autonomous_emergency_braking")),
         composable_node_descriptions=[autoware_autonomous_emergency_braking],
         target_container="/control/control_container",
     )
@@ -472,7 +472,7 @@ def generate_launch_description():
     add_launch_arg("aeb_param_path")
     add_launch_arg("predicted_path_checker_param_path")
     add_launch_arg("enable_predicted_path_checker")
-    add_launch_arg("enable_autoware_autonomous_emergency_braking")
+    add_launch_arg("enable_autonomous_emergency_braking")
     add_launch_arg("check_external_emergency_heartbeat")
 
     # component
