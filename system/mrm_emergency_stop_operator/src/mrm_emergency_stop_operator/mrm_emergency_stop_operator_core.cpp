@@ -115,9 +115,7 @@ void MrmEmergencyStopOperator::onTimer()
 
 Control MrmEmergencyStopOperator::compensateControlCommand(const Control & prev_control_cmd) const
 {
-  auto control_cmd = Control();
-
-  control_cmd = prev_control_cmd;
+  auto control_cmd = prev_control_cmd;
   const auto dt = (this->now() - prev_control_cmd.stamp).seconds();
 
   control_cmd.stamp = this->now();
