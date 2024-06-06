@@ -68,7 +68,8 @@ private:
     this, "in/current_gate_mode"};
 
   void on_external_cmd(const ExternalControlCommand::ConstSharedPtr cmd_ptr);
-  void on_emergency_stop_heartbeat(const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
+  void on_emergency_stop_heartbeat(
+    const tier4_external_api_msgs::msg::Heartbeat::ConstSharedPtr msg);
 
   Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};  // [m/s]
   GearCommand::ConstSharedPtr current_shift_cmd_{nullptr};
