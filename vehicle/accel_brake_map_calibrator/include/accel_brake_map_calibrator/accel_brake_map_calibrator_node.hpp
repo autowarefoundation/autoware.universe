@@ -56,7 +56,6 @@
 
 namespace accel_brake_map_calibrator
 {
-
 using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_vehicle_msgs::msg::VelocityReport;
 using geometry_msgs::msg::TwistStamped;
@@ -122,8 +121,8 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr timer_output_csv_;
-  void initTimer(double period_s);
-  void initOutputCSVTimer(double period_s);
+  void init_timer(double period_s);
+  void init_output_csv_timer(double period_s);
 
   TwistStamped::ConstSharedPtr twist_ptr_;
   std::vector<std::shared_ptr<TwistStamped>> twist_vec_;
@@ -250,7 +249,7 @@ private:
     const double map_acc);
   void update_total_map_offset(const double measured_acc, const double map_acc);
 
-  void take_actuation(const std_msgs::msg::Header header, const double accel, const double brake);
+  void take_actuation(const std_msgs::msg::Header & header, const double accel, const double brake);
   void take_actuation_command(const ActuationCommandStamped::ConstSharedPtr msg);
   void take_actuation_status(const ActuationStatusStamped::ConstSharedPtr msg);
   void take_velocity(const VelocityReport::ConstSharedPtr msg);
@@ -260,28 +259,28 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     UpdateAccelBrakeMap::Request::SharedPtr req, UpdateAccelBrakeMap::Response::SharedPtr res);
   bool get_acc_from_map(const double velocity, const double pedal);
-  double lowpass(const double original, const double current, const double gain = 0.8);
-  double get_pedal_speed(
+  static double lowpass(const double original, const double current, const double gain = 0.8);
+  static double get_pedal_speed(
     const DataStampedPtr & prev_pedal, const DataStampedPtr & current_pedal,
     const double prev_pedal_speed);
   double get_accel(
     const TwistStamped::ConstSharedPtr & prev_twist,
-    const TwistStamped::ConstSharedPtr & current_twist);
+    const TwistStamped::ConstSharedPtr & current_twist) const;
   double get_jerk();
   bool index_value_search(
-    const std::vector<double> value_index, const double value, const double value_thresh,
-    int * searched_index);
-  int nearest_value_search(const std::vector<double> value_index, const double value);
+    const std::vector<double> & value_index, const double value, const double value_thresh,
+    int * searched_index) const;
+  static int nearest_value_search(const std::vector<double> & value_index, const double value);
   int nearest_pedal_search();
   int nearest_vel_search();
   void take_consistency_of_accel_map();
   void take_consistency_of_brake_map();
   bool update_accel_brake_map();
-  void publish_float32(const std::string publish_type, const double val);
+  void publish_float32(const std::string & publish_type, const double val);
   void publish_update_suggest_flag();
-  double get_pitch_compensated_acceleration();
+  double get_pitch_compensated_acceleration() const;
   void execute_evaluation();
-  double calculate_estimated_acc(
+  static double calculate_estimated_acc(
     const double throttle, const double brake, const double vel, AccelMap & accel_map,
     BrakeMap & brake_map);
   double calculate_accel_squared_error(
@@ -290,21 +289,21 @@ private:
   double calculate_accel_error_l1_norm(
     const double throttle, const double brake, const double vel, AccelMap & accel_map,
     BrakeMap & brake_map);
-  std::vector<double> get_map_column_from_unified_index(
+  static std::vector<double> get_map_column_from_unified_index(
     const Map & accel_map_value, const Map & brake_map_value, const std::size_t index);
   double get_pedal_value_from_unified_index(const std::size_t index);
-  int get_unifiedIndex_from_accel_brake_index(const bool accel_map, const std::size_t index);
-  void push_data_to_que(
+  int get_unified_index_from_accel_brake_index(const bool accel_map, const std::size_t index);
+  static void push_data_to_que(
     const TwistStamped::ConstSharedPtr & data, const std::size_t max_size,
     std::queue<TwistStamped::ConstSharedPtr> * que);
   template <class T>
   void push_data_to_vec(const T data, const std::size_t max_size, std::vector<T> * vec);
   template <class T>
-  T get_nearest_time_data_from_vec(
+  static T get_nearest_time_data_from_vec(
     const T base_data, const double back_time, const std::vector<T> & vec);
   DataStampedPtr get_nearest_time_data_from_vec(
     DataStampedPtr base_data, const double back_time, const std::vector<DataStampedPtr> & vec);
-  double get_average(const std::vector<double> & vec);
+  static double get_average(const std::vector<double> & vec);
   double get_standard_deviation(const std::vector<double> & vec);
   bool is_timeout(const builtin_interfaces::msg::Time & stamp, const double timeout_sec);
   bool is_timeout(const DataStampedPtr & data_stamped, const double timeout_sec);
@@ -320,8 +319,8 @@ private:
   Eigen::MatrixXd accel_data_num_;
   Eigen::MatrixXd brake_data_num_;
 
-  OccupancyGrid getOccMsg(
-    const std::string frame_id, const double height, const double width, const double resolution,
+  OccupancyGrid get_occ_msg(
+    const std::string & frame_id, const double height, const double width, const double resolution,
     const std::vector<int8_t> & map_value);
 
   /* Diag*/
@@ -329,15 +328,15 @@ private:
 
   /* Debug */
   void publish_map(
-    const Map accel_map_value, const Map brake_map_value, const std::string publish_type);
+    const Map & accel_map_value, const Map & brake_map_value, const std::string & publish_type);
   void publish_offset_cov_map(const Map accel_map_value, const Map brake_map_value);
   void publish_count_map();
   void publish_index();
   bool write_map_to_csv(
     std::vector<double> vel_index, std::vector<double> pedal_index, Map value_map,
     std::string filename);
-  void add_index_to_csv(std::ofstream * csv_file);
-  void add_log_to_csv(
+  static void add_index_to_csv(std::ofstream * csv_file);
+  static void add_log_to_csv(
     std::ofstream * csv_file, const double & timestamp, const double velocity, const double accel,
     const double pitched_accel, const double accel_pedal, const double brake_pedal,
     const double accel_pedal_speed, const double brake_pedal_speed, const double pitch,
