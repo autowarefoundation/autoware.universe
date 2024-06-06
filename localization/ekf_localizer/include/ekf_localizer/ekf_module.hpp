@@ -34,24 +34,13 @@
 
 struct EKFDiagnosticInfo
 {
-  EKFDiagnosticInfo()
-  : no_update_count(0),
-    queue_size(0),
-    is_passed_delay_gate(true),
-    delay_time(0),
-    delay_time_threshold(0),
-    is_passed_mahalanobis_gate(true),
-    mahalanobis_distance(0)
-  {
-  }
-
-  size_t no_update_count;
-  size_t queue_size;
-  bool is_passed_delay_gate;
-  double delay_time;
-  double delay_time_threshold;
-  bool is_passed_mahalanobis_gate;
-  double mahalanobis_distance;
+  size_t no_update_count{0};
+  size_t queue_size{0};
+  bool is_passed_delay_gate{true};
+  double delay_time{0.0};
+  double delay_time_threshold{0.0};
+  bool is_passed_mahalanobis_gate{true};
+  double mahalanobis_distance{0.0};
 };
 
 class EKFModule

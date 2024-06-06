@@ -49,7 +49,7 @@ TEST(Measurement, pose_measurement_covariance)
 
   {
     // Make sure that other elements are not changed
-    std::array<double, 36> covariance;
+    std::array<double, 36> covariance{};
     covariance.fill(0);
     const Eigen::Matrix3d M = pose_measurement_covariance(covariance, 2.);
     EXPECT_EQ(M.norm(), 0);
@@ -73,7 +73,7 @@ TEST(Measurement, twist_measurement_covariance)
 
   {
     // Make sure that other elements are not changed
-    std::array<double, 36> covariance;
+    std::array<double, 36> covariance{};
     covariance.fill(0);
     const Eigen::Matrix2d M = twist_measurement_covariance(covariance, 2.);
     EXPECT_EQ(M.norm(), 0);

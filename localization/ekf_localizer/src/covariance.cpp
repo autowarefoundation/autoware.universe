@@ -21,7 +21,7 @@ using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 std::array<double, 36> ekf_covariance_to_pose_message_covariance(const Matrix6d & P)
 {
-  std::array<double, 36> covariance;
+  std::array<double, 36> covariance{};
   covariance.fill(0.);
 
   covariance[COV_IDX::X_X] = P(IDX::X, IDX::X);
@@ -39,7 +39,7 @@ std::array<double, 36> ekf_covariance_to_pose_message_covariance(const Matrix6d 
 
 std::array<double, 36> ekf_covariance_to_twist_message_covariance(const Matrix6d & P)
 {
-  std::array<double, 36> covariance;
+  std::array<double, 36> covariance{};
   covariance.fill(0.);
 
   covariance[COV_IDX::X_X] = P(IDX::VX, IDX::VX);
