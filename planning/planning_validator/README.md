@@ -2,7 +2,7 @@
 
 The `autoware_planning_validator` is a module that checks the validity of a trajectory before it is published. The status of the validation can be viewed in the `/diagnostics` and `/validation_status` topics. When an invalid trajectory is detected, the `autoware_planning_validator` will process the trajectory following the selected option: "0. publish the trajectory as it is", "1. stop publishing the trajectory", "2. publish the last validated trajectory".
 
-![autoware_planning_validator](./image/autoware_planning_validator.drawio.svg)
+![autoware_planning_validator](./image/planning_validator.drawio.svg)
 
 ## Supported features
 
