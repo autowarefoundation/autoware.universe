@@ -14,14 +14,14 @@
 
 #include "behavior_path_goal_planner_module/goal_planner_module.hpp"
 
+#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware_behavior_path_planner_common/utils/parking_departure/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "behavior_path_goal_planner_module/util.hpp"
-#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner_common/utils/parking_departure/utils.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
-#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner_common/utils/path_utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
@@ -1092,7 +1092,7 @@ void GoalPlannerModule::setTurnSignalInfo(BehaviorModuleOutput & output)
   const auto original_signal = getPreviousModuleOutput().turn_signal_info;
   const auto new_signal = calcTurnSignalInfo();
   const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
-  output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+  output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
     planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
