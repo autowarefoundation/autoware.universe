@@ -41,29 +41,18 @@ Pose2Twist::Pose2Twist(const rclcpp::NodeOptions & options) : rclcpp::Node("pose
     "pose", queue_size, std::bind(&Pose2Twist::callback_pose, this, _1));
 }
 
-double calc_diff_for_radian(const double lhs_rad, const double rhs_rad)
+tf2::Quaternion get_quaternion(const geometry_msgs::msg::PoseStamped::SharedPtr & pose_stamped_ptr)
 {
-  double diff_rad = lhs_rad - rhs_rad;
-  if (diff_rad > M_PI) {
-    diff_rad = diff_rad - 2 * M_PI;
-  } else if (diff_rad < -M_PI) {
-    diff_rad = diff_rad + 2 * M_PI;
-  }
-  return diff_rad;
+  const auto & orientation = pose_stamped_ptr->pose.orientation;
+  return tf2::Quaternion{orientation.x, orientation.y, orientation.z, orientation.w};
 }
 
-// x: roll, y: pitch, z: yaw
-geometry_msgs::msg::Vector3 get_rpy(const geometry_msgs::msg::Pose & pose)
+geometry_msgs::msg::Vector3 rotation_vector_from_quaternion(
+  const tf2::Quaternion & q1, const tf2::Quaternion & q2)
 {
-  geometry_msgs::msg::Vector3 rpy;
-  tf2::Quaternion q(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
-  tf2::Matrix3x3(q).getRPY(rpy.x, rpy.y, rpy.z);
-  return rpy;
-}
-
-geometry_msgs::msg::Vector3 get_rpy(geometry_msgs::msg::PoseStamped::SharedPtr pose)
-{
-  return get_rpy(pose->pose);
+  const tf2::Quaternion diff_quaternion = q1.inverse() * q2;
+  const tf2::Vector3 axis = diff_quaternion.getAxis() * diff_quaternion.getAngle();
+  return geometry_msgs::msg::Vector3{}.set__x(axis.x()).set__y(axis.y()).set__z(axis.z());
 }
 
 geometry_msgs::msg::TwistStamped calc_twist(
@@ -79,18 +68,16 @@ geometry_msgs::msg::TwistStamped calc_twist(
     return twist;
   }
 
-  const auto pose_a_rpy = get_rpy(pose_a);
-  const auto pose_b_rpy = get_rpy(pose_b);
+  const auto pose_a_quaternion = get_quaternion(pose_a);
+  const auto pose_b_quaternion = get_quaternion(pose_b);
 
   geometry_msgs::msg::Vector3 diff_xyz;
-  geometry_msgs::msg::Vector3 diff_rpy;
+  const geometry_msgs::msg::Vector3 diff_rpy =
+    rotation_vector_from_quaternion(pose_a_quaternion, pose_b_quaternion);
 
   diff_xyz.x = pose_b->pose.position.x - pose_a->pose.position.x;
   diff_xyz.y = pose_b->pose.position.y - pose_a->pose.position.y;
   diff_xyz.z = pose_b->pose.position.z - pose_a->pose.position.z;
-  diff_rpy.x = calc_diff_for_radian(pose_b_rpy.x, pose_a_rpy.x);
-  diff_rpy.y = calc_diff_for_radian(pose_b_rpy.y, pose_a_rpy.y);
-  diff_rpy.z = calc_diff_for_radian(pose_b_rpy.z, pose_a_rpy.z);
 
   geometry_msgs::msg::TwistStamped twist;
   twist.header = pose_b->header;
