@@ -19,6 +19,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
@@ -45,11 +46,11 @@ public:
 private:
   // Subscriber
   tier4_autoware_utils::SelfPoseListener self_pose_listener_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr sub_route_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute> sub_route_{
+    this, "/planning/mission_planning/route"};
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
-  autoware_planning_msgs::msg::LaneletRoute::SharedPtr route_;
 
   // Callback
   void onRoute(const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr & msg);

@@ -33,12 +33,6 @@ GoalDistanceCalculatorNode::GoalDistanceCalculatorNode(const rclcpp::NodeOptions
   self_pose_listener_(this),
   debug_publisher_(this, "goal_distance_calculator")
 {
-  using std::placeholders::_1;
-
-  static constexpr std::size_t queue_size = 1;
-  rclcpp::QoS durable_qos(queue_size);
-  durable_qos.transient_local();
-
   // Node Parameter
   node_param_.update_rate = declare_parameter<double>("update_rate");
   node_param_.oneshot = declare_parameter<bool>("oneshot");
@@ -46,11 +40,6 @@ GoalDistanceCalculatorNode::GoalDistanceCalculatorNode(const rclcpp::NodeOptions
   // Core
   goal_distance_calculator_ = std::make_unique<GoalDistanceCalculator>();
   goal_distance_calculator_->setParam(param_);
-
-  // Subscriber
-  sub_route_ = create_subscription<autoware_planning_msgs::msg::LaneletRoute>(
-    "/planning/mission_planning/route", queue_size,
-    [&](const autoware_planning_msgs::msg::LaneletRoute::SharedPtr msg_ptr) { route_ = msg_ptr; });
 
   // Wait for first self pose
   self_pose_listener_.waitForFirstPose();
@@ -70,7 +59,7 @@ bool GoalDistanceCalculatorNode::isDataReady()
     return false;
   }
 
-  if (!route_) {
+  if (!sub_route_.takeData()) {
     RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "waiting for route msg...");
     return false;
   }
@@ -102,7 +91,7 @@ void GoalDistanceCalculatorNode::onTimer()
   }
 
   input_.current_pose = current_pose_;
-  input_.route = route_;
+  input_.route = sub_route_.takeData();
 
   output_ = goal_distance_calculator_->update(input_);
 
