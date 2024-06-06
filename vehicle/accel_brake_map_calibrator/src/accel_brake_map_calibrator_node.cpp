@@ -261,18 +261,17 @@ bool AccelBrakeMapCalibrator::getCurrentPitchFromTF(double * pitch)
   return true;
 }
 
-bool AccelBrakeMapCalibrator::fetchData() {
-   // take data from subscribers
+bool AccelBrakeMapCalibrator::fetchData()
+{
+  // take data from subscribers
   // take actuation data
   ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
   ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
   if (actuation_status_ptr) {
     takeActuationStatus(actuation_status_ptr);
-  }
-  else if (actuation_cmd_ptr) {
+  } else if (actuation_cmd_ptr) {
     takeActuationCommand(actuation_cmd_ptr);
-  }
-  else {
+  } else {
     return false;
   }
 
