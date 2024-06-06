@@ -75,19 +75,9 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
       min_ret_i_steer, max_ret_d_steer, min_ret_d_steer);
     steer_pid_.setInitialized();
   }
-  rclcpp::CallbackGroup::SharedPtr callback_group =
-    this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
-  auto subscription_options = rclcpp::SubscriptionOptions();
-  subscription_options.callback_group = callback_group;
   pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("~/output/actuation_cmd", 1);
   sub_control_cmd_ = create_subscription<Control>(
     "~/input/control_cmd", 1, std::bind(&RawVehicleCommandConverterNode::onControlCmd, this, _1));
-  sub_velocity_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, std::bind(&RawVehicleCommandConverterNode::onVelocity, this, _1),
-    subscription_options);
-  sub_steering_ = create_subscription<Steering>(
-    "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1),
-    subscription_options);
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
     "/vehicle/raw_vehicle_cmd_converter/debug/steer_pid", 1);
 
@@ -210,12 +200,12 @@ double RawVehicleCommandConverterNode::calculateBrakeMap(
   return desired_brake_cmd;
 }
 
-void RawVehicleCommandConverterNode::onSteering(const Steering::ConstSharedPtr msg)
+void RawVehicleCommandConverterNode::processSteering(const Steering::ConstSharedPtr msg)
 {
   current_steer_ptr_ = std::make_unique<double>(msg->steering_tire_angle);
 }
 
-void RawVehicleCommandConverterNode::onVelocity(const Odometry::ConstSharedPtr msg)
+void RawVehicleCommandConverterNode::processVelocity(const Odometry::ConstSharedPtr msg)
 {
   current_twist_ptr_ = std::make_unique<TwistStamped>();
   current_twist_ptr_->header = msg->header;
@@ -224,22 +214,13 @@ void RawVehicleCommandConverterNode::onVelocity(const Odometry::ConstSharedPtr m
 
 void RawVehicleCommandConverterNode::onControlCmd(const Control::ConstSharedPtr msg)
 {
-  control_cmd_ptr_ = msg;
-  Odometry::SharedPtr velocity_msg_;
-  Odometry velocity_msg;
-  rclcpp::MessageInfo velocity_info;
-  Steering::SharedPtr steering_msg_;
-  Steering steering_msg;
-  rclcpp::MessageInfo steering_info;
-
-  if (
-    sub_velocity_->take(velocity_msg, velocity_info) &&
-    sub_steering_->take(steering_msg, steering_info)) {
-    velocity_msg_ = std::make_shared<Odometry>(velocity_msg);
-    steering_msg_ = std::make_shared<Steering>(steering_msg);
-    onVelocity(velocity_msg_);
-    onSteering(steering_msg_);
+  const auto velocity_msg = sub_velocity_.takeData();
+  const auto steering_msg = sub_steering_.takeData();
+  if (velocity_msg && steering_msg) {
+    processVelocity(velocity_msg);
+    processSteering(steering_msg);
   }
+  control_cmd_ptr_ = msg;
   publishActuationCmd();
 }
 }  // namespace raw_vehicle_cmd_converter
