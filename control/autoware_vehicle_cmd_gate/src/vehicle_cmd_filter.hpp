@@ -16,16 +16,16 @@
 #define VEHICLE_CMD_FILTER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
+#include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>
 
 #include <vector>
 
-namespace vehicle_cmd_gate
+namespace autoware::vehicle_cmd_gate
 {
 using autoware_control_msgs::msg::Control;
-using vehicle_cmd_gate::msg::IsFilterActivated;
+using autoware_vehicle_cmd_gate::msg::IsFilterActivated;
 using LimitArray = std::vector<double>;
 
 struct VehicleCmdFilterParam
@@ -98,6 +98,6 @@ private:
   double getSteerRateLim() const;
   double getSteerDiffLim() const;
 };
-}  // namespace vehicle_cmd_gate
+}  // namespace autoware::vehicle_cmd_gate
 
 #endif  // VEHICLE_CMD_FILTER_HPP_

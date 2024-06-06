@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VEHICLE_CMD_GATE_HPP_
-#define VEHICLE_CMD_GATE_HPP_
+#ifndef AUTOWARE_VEHICLE_CMD_GATE_HPP_
+#define AUTOWARE_VEHICLE_CMD_GATE_HPP_
 
 #include "adapi_pause_interface.hpp"
 #include "moderate_stop_interface.hpp"
@@ -24,7 +24,7 @@
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
-#include <vehicle_cmd_gate/msg/is_filter_activated.hpp>
+#include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
@@ -51,7 +51,7 @@
 #include <memory>
 #include <vector>
 
-namespace vehicle_cmd_gate
+namespace autoware::vehicle_cmd_gate
 {
 
 using autoware_adapi_v1_msgs::msg::MrmState;
@@ -71,7 +71,7 @@ using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
-using vehicle_cmd_gate::msg::IsFilterActivated;
+using autoware_vehicle_cmd_gate::msg::IsFilterActivated;
 using visualization_msgs::msg::MarkerArray;
 
 using diagnostic_msgs::msg::DiagnosticStatus;
@@ -257,5 +257,5 @@ private:
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 
-}  // namespace vehicle_cmd_gate
-#endif  // VEHICLE_CMD_GATE_HPP_
+}  // namespace autoware::vehicle_cmd_gate
+#endif  // AUTOWARE_VEHICLE_CMD_GATE_HPP_
