@@ -219,7 +219,7 @@ bool EKFModule::measurement_update_pose(
 
   delay_time = std::max(delay_time, 0.0);
 
-  const int delay_step = static_cast<int>(find_closest_delay_time_index(delay_time));
+  const size_t delay_step = find_closest_delay_time_index(delay_time);
 
   pose_diag_info.delay_time = std::max(delay_time, pose_diag_info.delay_time);
   pose_diag_info.delay_time_threshold = accumulated_delay_times_.back();
@@ -233,8 +233,8 @@ bool EKFModule::measurement_update_pose(
   }
 
   /* Since the kalman filter cannot handle the rotation angle directly,
-    offset the yaw angle so that the difference from the yaw angle that ekf holds internally is less
-    than 2 pi. */
+    offset the yaw angle so that the difference from the yaw angle that ekf holds internally
+    is less than 2 pi. */
   double yaw = tf2::getYaw(pose.pose.pose.orientation);
   const double ekf_yaw = kalman_filter_.getXelement(delay_step * dim_x_ + IDX::YAW);
   const double yaw_error = normalize_yaw(yaw - ekf_yaw);  // normalize the error not to exceed 2 pi
@@ -315,7 +315,7 @@ bool EKFModule::measurement_update_twist(
   }
   delay_time = std::max(delay_time, 0.0);
 
-  const int delay_step = static_cast<int>(find_closest_delay_time_index(delay_time));
+  const size_t delay_step = find_closest_delay_time_index(delay_time);
 
   twist_diag_info.delay_time = std::max(delay_time, twist_diag_info.delay_time);
   twist_diag_info.delay_time_threshold = accumulated_delay_times_.back();

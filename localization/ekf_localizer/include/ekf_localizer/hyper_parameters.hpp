@@ -35,11 +35,13 @@ public:
     pose_additional_delay(
       node->declare_parameter<double>("pose_measurement.pose_additional_delay")),
     pose_gate_dist(node->declare_parameter<double>("pose_measurement.pose_gate_dist")),
-    pose_smoothing_steps(node->declare_parameter<int>("pose_measurement.pose_smoothing_steps")),
+    pose_smoothing_steps(
+      node->declare_parameter<int>("pose_measurement.pose_smoothing_steps")),
     twist_additional_delay(
       node->declare_parameter<double>("twist_measurement.twist_additional_delay")),
     twist_gate_dist(node->declare_parameter<double>("twist_measurement.twist_gate_dist")),
-    twist_smoothing_steps(node->declare_parameter<int>("twist_measurement.twist_smoothing_steps")),
+    twist_smoothing_steps(
+      node->declare_parameter<int>("twist_measurement.twist_smoothing_steps")),
     proc_stddev_vx_c(node->declare_parameter<double>("process_noise.proc_stddev_vx_c")),
     proc_stddev_wz_c(node->declare_parameter<double>("process_noise.proc_stddev_wz_c")),
     proc_stddev_yaw_c(node->declare_parameter<double>("process_noise.proc_stddev_yaw_c")),
@@ -68,14 +70,14 @@ public:
   const double tf_rate_;
   const bool publish_tf_;
   const bool enable_yaw_bias_estimation;
-  const int extend_state_step;
+  const size_t extend_state_step;
   const std::string pose_frame_id;
   const double pose_additional_delay;
   const double pose_gate_dist;
-  const int pose_smoothing_steps;
+  const size_t pose_smoothing_steps;
   const double twist_additional_delay;
   const double twist_gate_dist;
-  const int twist_smoothing_steps;
+  const size_t twist_smoothing_steps;
   const double proc_stddev_vx_c;   //!< @brief  vx process noise
   const double proc_stddev_wz_c;   //!< @brief  wz process noise
   const double proc_stddev_yaw_c;  //!< @brief  yaw process noise
