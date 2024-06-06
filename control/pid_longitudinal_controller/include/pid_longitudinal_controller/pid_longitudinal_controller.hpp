@@ -26,7 +26,7 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
-#include "trajectory_follower_base/longitudinal_controller_base.hpp"
+#include "autoware_trajectory_follower_base/longitudinal_controller_base.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <Eigen/Core>

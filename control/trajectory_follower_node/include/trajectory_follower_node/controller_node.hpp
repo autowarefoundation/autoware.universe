@@ -21,8 +21,8 @@
 #include "tf2_ros/transform_listener.h"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
-#include "trajectory_follower_base/lateral_controller_base.hpp"
-#include "trajectory_follower_base/longitudinal_controller_base.hpp"
+#include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
+#include "autoware_trajectory_follower_base/longitudinal_controller_base.hpp"
 #include "trajectory_follower_node/visibility_control.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 

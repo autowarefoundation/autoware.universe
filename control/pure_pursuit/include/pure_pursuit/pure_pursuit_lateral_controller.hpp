@@ -35,7 +35,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
-#include "trajectory_follower_base/lateral_controller_base.hpp"
+#include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
 
 #include <motion_utils/resample/resample.hpp>
 #include <motion_utils/trajectory/conversion.hpp>
