@@ -20,13 +20,14 @@
 #include <string>
 
 // Autoware
+#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
+
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
 

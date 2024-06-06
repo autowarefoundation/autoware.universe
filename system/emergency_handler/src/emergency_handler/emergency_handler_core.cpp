@@ -247,8 +247,7 @@ bool EmergencyHandler::isDataReady()
     return false;
   }
 
-  if (
-    param_.use_comfortable_stop && !isComfortableStopStatusAvailable()) {
+  if (param_.use_comfortable_stop && !isComfortableStopStatusAvailable()) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for mrm comfortable stop to become available...");
@@ -403,7 +402,7 @@ bool EmergencyHandler::isAutonomous()
 {
   using autoware_vehicle_msgs::msg::ControlModeReport;
   auto mode = sub_control_mode_.takeData();
-  if(mode == nullptr) return false;
+  if (mode == nullptr) return false;
   return mode->mode == ControlModeReport::AUTONOMOUS;
 }
 
@@ -416,7 +415,7 @@ bool EmergencyHandler::isEmergency()
 bool EmergencyHandler::isStopped()
 {
   auto odom = sub_odom_.takeData();
-  if(odom == nullptr) return false;
+  if (odom == nullptr) return false;
   constexpr auto th_stopped_velocity = 0.001;
   return (odom->twist.twist.linear.x < th_stopped_velocity);
 }
@@ -424,14 +423,14 @@ bool EmergencyHandler::isStopped()
 bool EmergencyHandler::isComfortableStopStatusAvailable()
 {
   auto status = sub_mrm_comfortable_stop_status_.takeData();
-  if(status == nullptr) return false;
+  if (status == nullptr) return false;
   return status->state != tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE;
 }
 
 bool EmergencyHandler::isEmergencyStopStatusAvailable()
 {
   auto status = sub_mrm_emergency_stop_status_.takeData();
-  if(status == nullptr) return false;
+  if (status == nullptr) return false;
   return status->state != tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE;
 }
 
