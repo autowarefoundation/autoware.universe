@@ -1,5 +1,5 @@
 //
-// Copyright 2024 Tier IV, Inc. All rights reserved.
+// Copyright 2020 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@
 
 #include "autoware_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_vehicle_msgs/msg/velocity_report.hpp"
+
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -59,6 +60,7 @@ namespace accel_brake_map_calibrator
 
 using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_vehicle_msgs::msg::VelocityReport;
+
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using raw_vehicle_cmd_converter::AccelMap;

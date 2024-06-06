@@ -1,5 +1,5 @@
 //
-// Copyright 202 Tier IV, Inc. All rights reserved.
+// Copyright 2020 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -261,6 +261,8 @@ bool AccelBrakeMapCalibrator::getCurrentPitchFromTF(double * pitch)
   return true;
 }
 
+
+
 void AccelBrakeMapCalibrator::timerCallback()
 {
   update_count_++;
@@ -283,15 +285,16 @@ void AccelBrakeMapCalibrator::timerCallback()
   // take data from subscribers
 
   // take actuation data
-  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
-    ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
-    if (!actuation_status_ptr) return;
+  ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
+  ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
+  if (actuation_status_ptr) {
     takeActuationStatus(actuation_status_ptr);
   }
-  if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::COMMAND) {
-    ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
-    if (!actuation_cmd_ptr) return;
+  else if (actuation_cmd_ptr) {
     takeActuationCommand(actuation_cmd_ptr);
+  }
+  else {
+    return;
   }
 
   // take velocity data
