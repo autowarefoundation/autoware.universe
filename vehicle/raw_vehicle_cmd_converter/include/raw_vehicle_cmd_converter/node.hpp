@@ -78,7 +78,7 @@ public:
   //!< @brief subscriber for vehicle command
   rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;
   // polling subscribers
-  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> sub_velocity_{
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> sub_odometry_{
     this, "~/input/odometry"};
 
   tier4_autoware_utils::InterProcessPollingSubscriber<Steering> sub_steering_{
@@ -114,7 +114,7 @@ public:
   double calculateSteer(const double vel, const double steering, const double steer_rate);
   void processSteering(const Steering::ConstSharedPtr msg);
   void onControlCmd(const Control::ConstSharedPtr msg);
-  void processVelocity(const Odometry::ConstSharedPtr msg);
+  void processOdometry(const Odometry::ConstSharedPtr msg);
   void publishActuationCmd();
   // for debugging
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_pub_steer_pid_;

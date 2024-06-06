@@ -208,7 +208,7 @@ void RawVehicleCommandConverterNode::processSteering(const Steering::ConstShared
   current_steer_ptr_ = std::make_unique<double>(msg->steering_tire_angle);
 }
 
-void RawVehicleCommandConverterNode::processVelocity(const Odometry::ConstSharedPtr msg)
+void RawVehicleCommandConverterNode::processOdometry(const Odometry::ConstSharedPtr msg)
 {
   if (!msg) {
     return;
@@ -220,9 +220,9 @@ void RawVehicleCommandConverterNode::processVelocity(const Odometry::ConstShared
 
 void RawVehicleCommandConverterNode::onControlCmd(const Control::ConstSharedPtr msg)
 {
-  const auto velocity_msg = sub_velocity_.takeData();
+  const auto odometry_msg = sub_odometry_.takeData();
   const auto steering_msg = sub_steering_.takeData();
-  processVelocity(velocity_msg);
+  processOdometry(odometry_msg);
   processSteering(steering_msg);
   control_cmd_ptr_ = msg;
   publishActuationCmd();
