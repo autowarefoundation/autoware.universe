@@ -137,7 +137,7 @@ On calculating the maximum lateral distance $l$, the `pose_instability_detector`
 | Dead reckoning pose of corner C | $\left(1-\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1-\frac{\beta_\omega}{100}\right) \omega_{\rm max} - b$ |
 | Dead reckoning pose of corner D | $\left(1+\frac{\beta_v}{100}\right) v_{\rm max}$ | $\left(1-\frac{\beta_\omega}{100}\right) \omega_{\rm max} - b$ |
 
-Given a heading velocity $v$ and $\omega$, the 2D theoritical variation seen from the previous pose is calculated as follows:
+Given a heading velocity $v$ and $\omega$, the 2D theoretical variation seen from the previous pose is calculated as follows:
 
 $$
 \begin{align*}
