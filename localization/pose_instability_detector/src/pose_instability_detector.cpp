@@ -263,9 +263,14 @@ void PoseInstabilityDetector::dead_reckon(
 
     // variation of orientation (rpy update)
     tf2::Quaternion delta_orientation;
-    delta_orientation.setRPY(
-      twist.angular.x * time_diff_sec, twist.angular.y * time_diff_sec,
-      twist.angular.z * time_diff_sec);
+    tf2::Vector3 rotation_axis(twist.angular.x, twist.angular.y, twist.angular.z);
+    if (rotation_axis.length() > 0.0) {
+      delta_orientation.setRotation(
+        rotation_axis.normalized(), rotation_axis.length() * time_diff_sec);
+    } else {
+      delta_orientation.setValue(0.0, 0.0, 0.0, 1.0);
+    }
+
 
     tf2::Quaternion curr_orientation;
     curr_orientation = prev_orientation * delta_orientation;
