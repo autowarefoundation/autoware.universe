@@ -1,8 +1,7 @@
 ### Automatically generated from package.xml ###
 common/autoware_ad_api_specs/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp
 common/autoware_auto_common/** opensource@apex.ai satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
-common/autoware_auto_perception_rviz_plugin/** opensource@apex.ai satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp taiki.tanaka@tier4.jp takeshi.miura@tier4.jp yoshi.ri@tier4.jp
-common/autoware_auto_tf2/** jit.ray.c@gmail.com satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
+common/autoware_perception_rviz_plugin/** opensource@apex.ai satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp taiki.tanaka@tier4.jp takeshi.miura@tier4.jp yoshi.ri@tier4.jp
 common/autoware_overlay_rviz_plugin/autoware_mission_details_overlay_rviz_plugin/** ahmed.ebrahim@leodrive.ai
 common/autoware_overlay_rviz_plugin/autoware_overlay_rviz_plugin/** khalil@leodrive.ai
 common/autoware_point_types/** taichi.higashide@tier4.jp
@@ -147,6 +146,8 @@ perception/traffic_light_occlusion_predictor/** shunsuke.miura@tier4.jp tao.zhon
 perception/traffic_light_visualization/** tao.zhong@tier4.jp yukihiro.saito@tier4.jp
 planning/autoware_behavior_path_external_request_lane_change_module/** fumiya.watanabe@tier4.jp kosuke.takeuchi@tier4.jp shumpei.wakabayashi@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp zulfaqar.azmi@tier4.jp
 planning/autoware_behavior_velocity_planner/** kosuke.takeuchi@tier4.jp kyoichi.sugahara@tier4.jp makoto.kurihara@tier4.jp mamoru.sobue@tier4.jp maxime.clement@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp taiki.tanaka@tier4.jp takayuki.murooka@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp
+planning/autoware_behavior_velocity_template_module/** daniel.sanchez@tier4.jp
+planning/autoware_behavior_velocity_virtual_traffic_light_module/** kosuke.takeuchi@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 planning/autoware_planning_test_manager/** kyoichi.sugahara@tier4.jp takamasa.horibe@tier4.jp
 planning/autoware_remaining_distance_time_calculator/** ahmed.ebrahim@leodrive.ai
 planning/autoware_static_centerline_generator/** kosuke.takeuchi@tier4.jp takayuki.murooka@tier4.jp
@@ -173,9 +174,7 @@ planning/behavior_velocity_planner_common/** fumiya.watanabe@tier4.jp isamu.taka
 planning/behavior_velocity_run_out_module/** kosuke.takeuchi@tier4.jp makoto.kurihara@tier4.jp shumpei.wakabayashi@tier4.jp takayuki.murooka@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp
 planning/behavior_velocity_speed_bump_module/** mdogru@leodrive.ai shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 planning/behavior_velocity_stop_line_module/** fumiya.watanabe@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp zhe.shen@tier4.jp
-planning/behavior_velocity_template_module/** daniel.sanchez@tier4.jp
 planning/behavior_velocity_traffic_light_module/** mamoru.sobue@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
-planning/behavior_velocity_virtual_traffic_light_module/** kosuke.takeuchi@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 planning/behavior_velocity_walkway_module/** satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp takayuki.murooka@tier4.jp tomoya.kimura@tier4.jp
 planning/costmap_generator/** kosuke.takeuchi@tier4.jp takamasa.horibe@tier4.jp takayuki.murooka@tier4.jp
 planning/external_velocity_limit_selector/** satoshi.ota@tier4.jp shinnosuke.hirakawa@tier4.jp shumpei.wakabayashi@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp
@@ -218,7 +217,6 @@ simulator/fault_injection/** keisuke.shima@tier4.jp
 simulator/learning_based_vehicle_model/** maxime.clement@tier4.jp nagy.tomas@tier4.jp
 simulator/simple_planning_simulator/** mamoru.sobue@tier4.jp maxime.clement@tier4.jp takamasa.horibe@tier4.jp temkei.kem@tier4.jp tomoya.kimura@tier4.jp zulfaqar.azmi@tier4.jp
 simulator/vehicle_door_simulator/** isamu.takagi@tier4.jp
-system/autoware_auto_msgs_adapter/** isamu.takagi@tier4.jp mfc@leodrive.ai
 system/bluetooth_monitor/** fumihito.ito@tier4.jp
 system/component_state_monitor/** isamu.takagi@tier4.jp
 system/default_ad_api/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp yukihiro.saito@tier4.jp
