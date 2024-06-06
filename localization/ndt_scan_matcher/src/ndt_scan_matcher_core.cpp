@@ -133,6 +133,10 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   multi_ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("multi_ndt_pose", 10);
   multi_initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseArray>("multi_initial_pose", 10);
+  ndt_dev_x_pub_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("/ndt_dev_x", 5);
+  ndt_dev_y_pub_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("/ndt_dev_y", 5);
   exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
   transform_probability_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("transform_probability", 10);
@@ -807,6 +811,11 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     ndt_covariance[1 + 6 * 1] = cov_by_la_adjust(1, 1);
     ndt_covariance[1 + 6 * 0] = cov_by_la_adjust(1, 0);
     ndt_covariance[0 + 6 * 1] = cov_by_la_adjust(0, 1);
+    const Eigen::Matrix2d cov_by_la_rotated = pclomp::rotate_covariance_to_base_link(cov_by_la_adjust, ndt_result.pose);
+    ndt_dev_x_pub_->publish(
+      make_float32_stamped(sensor_ros_time, std::sqrt(cov_by_la_rotated(0,0))));
+    ndt_dev_y_pub_->publish(
+      make_float32_stamped(sensor_ros_time, std::sqrt(cov_by_la_rotated(1,1))));
   }
   else if (param_.covariance.covariance_estimation.covariance_estimation_type == CovarianceEstimationType::MULTI_NDT){
     const std::vector<Eigen::Matrix4f> poses_to_search = 
@@ -817,7 +826,11 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     ndt_covariance[1 + 6 * 1] = cov_by_mndt(1, 1);
     ndt_covariance[1 + 6 * 0] = cov_by_mndt(1, 0);
     ndt_covariance[0 + 6 * 1] = cov_by_mndt(0, 1);
-
+    const Eigen::Matrix2d cov_by_mndt_rotated = pclomp::rotate_covariance_to_base_link(cov_by_mndt, ndt_result.pose);
+    ndt_dev_x_pub_->publish(
+      make_float32_stamped(sensor_ros_time, std::sqrt(cov_by_mndt_rotated(0,0))));
+    ndt_dev_y_pub_->publish(
+      make_float32_stamped(sensor_ros_time, std::sqrt(cov_by_mndt_rotated(1,1))));
     for (const auto & sub_initial_pose_matrix :poses_to_search) {
       auto sub_output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
       ndt_ptr_->align(*sub_output_cloud, sub_initial_pose_matrix);
@@ -837,6 +850,11 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     ndt_covariance[1 + 6 * 1] = cov_by_mndt_score(1, 1);
     ndt_covariance[1 + 6 * 0] = cov_by_mndt_score(1, 0);
     ndt_covariance[0 + 6 * 1] = cov_by_mndt_score(0, 1);
+    const Eigen::Matrix2d cov_by_mndt_score_rotated = pclomp::rotate_covariance_to_base_link(cov_by_mndt_score, ndt_result.pose);
+    ndt_dev_x_pub_->publish(
+      make_float32_stamped(sensor_ros_time, std::sqrt(cov_by_mndt_score_rotated(0,0))));
+    ndt_dev_y_pub_->publish(
+      make_float32_stamped(sensor_ros_time, std::sqrt(cov_by_mndt_score_rotated(1,1))));
 
     for (const auto & sub_initial_pose_matrix :poses_to_search) {
       multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(sub_initial_pose_matrix));

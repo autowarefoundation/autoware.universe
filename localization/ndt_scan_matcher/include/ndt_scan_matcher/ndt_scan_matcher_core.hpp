@@ -154,6 +154,8 @@ private:
     initial_pose_with_covariance_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr multi_ndt_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr multi_initial_pose_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr ndt_dev_x_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr ndt_dev_y_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr
