@@ -15,8 +15,8 @@
 #ifndef AUTOWARE_BEHAVIOR_PATH_AVOIDANCE_BY_LANE_CHANGE_MODULE__MANAGER_HPP_
 #define AUTOWARE_BEHAVIOR_PATH_AVOIDANCE_BY_LANE_CHANGE_MODULE__MANAGER_HPP_
 
-#include "behavior_path_avoidance_by_lane_change_module/data_structs.hpp"
-#include "behavior_path_avoidance_by_lane_change_module/interface.hpp"
+#include "autoware_behavior_path_avoidance_by_lane_change_module/data_structs.hpp"
+#include "autoware_behavior_path_avoidance_by_lane_change_module/interface.hpp"
 #include "behavior_path_lane_change_module/manager.hpp"
 
 #include <rclcpp/rclcpp.hpp>
