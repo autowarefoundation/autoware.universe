@@ -39,8 +39,8 @@ using tier4_autoware_utils::Point2d;
 
 namespace
 {
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using geometry_msgs::msg::Point;
 
@@ -261,7 +261,8 @@ std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
   const PathWithLaneId & path) const
 {
   // Create vehicle footprint in base_link coordinate
-  const auto local_vehicle_footprint = vehicle_info_ptr_->createFootprint();
+  const auto local_vehicle_footprint =
+    vehicle_info_ptr_->createFootprint(param_.footprint_extra_margin);
 
   // Create vehicle footprint on each Path point
   std::vector<LinearRing2d> vehicle_footprints;

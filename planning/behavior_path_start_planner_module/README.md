@@ -91,36 +91,66 @@ The `StartPlannerModule` is designed to initiate its execution based on specific
 
 ### **End Conditions**
 
-The `StartPlannerModule` terminates if the pull out / freespace maneuver has been completed. The `canTransitSuccessState` function assesses these conditions to decide if the module should terminate its execution.
+The `StartPlannerModule` terminates when specific conditions are met, depending on the type of planner being used. The `canTransitSuccessState` function determines whether the module should transition to the success state based on the following criteria:
+
+#### When the Freespace Planner is active
+
+- If the end point of the freespace path is reached, the module transitions to the success state.
+
+#### When any other type of planner is active
+
+The transition to the success state is determined by the following conditions:
+
+- If a reverse path is being generated or the search for a pull out path fails:
+  - The module does not transition to the success state.
+- If the end point of the pull out path's shift section is reached:
+  - The module transitions to the success state.
+
+The flowchart below illustrates the decision-making process in the `canTransitSuccessState` function:
 
 ```plantuml
 @startuml
+@startuml
+skinparam ActivityBackgroundColor #white
+skinparam ActivityBorderColor #black
+skinparam ActivityBorderThickness 1
+skinparam ActivityArrowColor #black
+skinparam ActivityArrowThickness 1
+skinparam ActivityStartColor #black
+skinparam ActivityEndColor #black
+skinparam ActivityDiamondBackgroundColor #white
+skinparam ActivityDiamondBorderColor #black
+skinparam ActivityDiamondFontColor #black
+partition canTransitSuccessState() {
 start
-:Start hasFinishedPullOut();
-
-if (status_.driving_forward && status_.found_pull_out_path) then (yes)
-
-  if (status_.planner_type == FREESPACE) then (yes)
-    :Calculate distance\nto pull_out_path.end_pose;
-    if (distance < th_arrived_distance) then (yes)
-      :return true;\n(Terminate module);
-    else (no)
-      :return false;\n(Continue running);
-    endif
-  else (no)
-    :Calculate arclength for\ncurrent_pose and pull_out_path.end_pose;
-    if (arclength_current - arclength_pull_out_end > offset) then (yes)
-      :return true;\n(Terminate module);
-    else (no)
-      :return false;\n(Continue running);
-    endif
-  endif
-
-else (no)
-  :return false;\n(Continue running);
-endif
-
+if (planner type is FREESPACE?) then (yes)
+if (Has reached freespace end?) then (yes)
+#FF006C:true;
 stop
+else (no)
+:false;
+stop
+endif
+else (no)
+if (driving is forward?) then (yes)
+if (pull out path is found?) then (yes)
+if (Has reached pull out end?) then (yes)
+#FF006C:true;
+stop
+else (no)
+:false;
+stop
+endif
+else (no)
+:false;
+stop
+endif
+else (no)
+:false;
+stop
+endif
+endif
+}
 @enduml
 ```
 
@@ -464,14 +494,15 @@ See also [[1]](https://www.sciencedirect.com/science/article/pii/S14746670153474
 
 #### parameters for geometric pull out
 
-| Name                        | Unit  | Type   | Description                                                                                                                                               | Default value |
-| :-------------------------- | :---- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_geometric_pull_out   | [-]   | bool   | flag whether to enable geometric pull out                                                                                                                 | true          |
-| divide_pull_out_path        | [-]   | bool   | flag whether to divide arc paths. The path is assumed to be divided because the curvature is not continuous. But it requires a stop during the departure. | false         |
-| geometric_pull_out_velocity | [m/s] | double | velocity of geometric pull out                                                                                                                            | 1.0           |
-| arc_path_interval           | [m]   | double | path points interval of arc paths of geometric pull out                                                                                                   | 1.0           |
-| lane_departure_margin       | [m]   | double | margin of deviation to lane right                                                                                                                         | 0.2           |
-| pull_out_max_steer_angle    | [rad] | double | maximum steer angle for path generation                                                                                                                   | 0.26          |
+| Name                                  | Unit  | Type   | Description                                                                                                                                               | Default value |
+| :------------------------------------ | :---- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| enable_geometric_pull_out             | [-]   | bool   | flag whether to enable geometric pull out                                                                                                                 | true          |
+| divide_pull_out_path                  | [-]   | bool   | flag whether to divide arc paths. The path is assumed to be divided because the curvature is not continuous. But it requires a stop during the departure. | false         |
+| geometric_pull_out_velocity           | [m/s] | double | velocity of geometric pull out                                                                                                                            | 1.0           |
+| arc_path_interval                     | [m]   | double | path points interval of arc paths of geometric pull out                                                                                                   | 1.0           |
+| lane_departure_margin                 | [m]   | double | margin of deviation to lane right                                                                                                                         | 0.2           |
+| lane_departure_check_expansion_margin | [m]   | double | margin to expand the ego vehicle footprint when doing lane departure checks                                                                               | 0.0           |
+| pull_out_max_steer_angle              | [rad] | double | maximum steer angle for path generation                                                                                                                   | 0.26          |
 
 ## **backward pull out start point search**
 
