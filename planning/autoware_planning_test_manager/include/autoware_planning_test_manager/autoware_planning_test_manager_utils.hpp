@@ -29,7 +29,7 @@ namespace autoware_planning_test_manager::utils
 using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
-using route_handler::RouteHandler;
+using autoware::route_handler::RouteHandler;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 
 Pose createPoseFromLaneID(const lanelet::Id & lane_id)

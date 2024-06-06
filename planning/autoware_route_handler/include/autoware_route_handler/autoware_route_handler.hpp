@@ -35,7 +35,7 @@
 #include <optional>
 #include <vector>
 
-namespace route_handler
+namespace autoware::route_handler
 {
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
@@ -397,5 +397,5 @@ public:
     return lanelet::routing::RoutingCostDistance::getCostLaneChange(trafficRules, from, to);
   }
 };  // class RoutingCostDrivable
-}  // namespace route_handler
+}  // namespace autoware::route_handler
 #endif  // AUTOWARE_ROUTE_HANDLER__AUTOWARE_ROUTE_HANDLER_HPP_

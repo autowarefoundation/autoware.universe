@@ -185,7 +185,7 @@ struct DecisionInputs
   OverlapRanges ranges{};
   EgoData ego_data;
   autoware_perception_msgs::msg::PredictedObjects objects{};
-  std::shared_ptr<route_handler::RouteHandler> route_handler{};
+  std::shared_ptr<autoware::route_handler::RouteHandler> route_handler{};
   lanelet::ConstLanelets lanelets{};
 };
 

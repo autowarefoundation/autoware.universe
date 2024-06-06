@@ -131,7 +131,7 @@ std::string toString(const geometry_msgs::msg::Pose & pose)
 
 }  // namespace
 
-namespace route_handler
+namespace autoware::route_handler
 {
 RouteHandler::RouteHandler(const LaneletMapBin & map_msg)
 {
@@ -1922,4 +1922,4 @@ std::optional<lanelet::routing::LaneletPath> RouteHandler::findDrivableLanePath(
   if (route) return route->shortestPath();
   return {};
 }
-}  // namespace route_handler
+}  // namespace autoware::route_handler

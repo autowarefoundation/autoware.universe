@@ -60,7 +60,7 @@ namespace behavior_path_planner::utils::lane_change
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Pose;
-using route_handler::RouteHandler;
+using autoware::route_handler::RouteHandler;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;

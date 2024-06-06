@@ -36,7 +36,7 @@ namespace behavior_path_planner
 {
 
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
-using route_handler::Direction;
+using autoware::route_handler::Direction;
 
 enum class ObjectInfo {
   NONE = 0,

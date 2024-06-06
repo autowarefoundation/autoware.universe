@@ -41,7 +41,7 @@ using autoware_perception_msgs::msg::PredictedPath;
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using route_handler::RouteHandler;
+using autoware::route_handler::RouteHandler;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 PathWithLaneId getBackwardPath(

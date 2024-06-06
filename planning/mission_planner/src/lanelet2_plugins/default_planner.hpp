@@ -58,7 +58,7 @@ private:
   using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
   using Pose = geometry_msgs::msg::Pose;
   bool is_graph_ready_;
-  route_handler::RouteHandler route_handler_;
+  autoware::route_handler::RouteHandler route_handler_;
 
   DefaultPlannerParameters param_;
 

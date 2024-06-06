@@ -140,7 +140,7 @@ private:
   OccupancyGrid::ConstSharedPtr occupancy_grid_;
   Scenario::ConstSharedPtr scenario_;
   Odometry::ConstSharedPtr odom_;
-  std::shared_ptr<route_handler::RouteHandler> route_handler_;
+  std::shared_ptr<autoware::route_handler::RouteHandler> route_handler_;
 
   std::deque<Odometry::ConstSharedPtr> odom_buffer_;
 

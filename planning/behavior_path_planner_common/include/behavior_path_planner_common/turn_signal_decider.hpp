@@ -47,7 +47,7 @@ using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
-using route_handler::RouteHandler;
+using autoware::route_handler::RouteHandler;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 const std::map<std::string, uint8_t> g_signal_map = {

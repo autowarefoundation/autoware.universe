@@ -51,7 +51,7 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using path_safety_checker::CollisionCheckDebugMap;
-using route_handler::Direction;
+using autoware::route_handler::Direction;
 using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::PathWithLaneId;
 

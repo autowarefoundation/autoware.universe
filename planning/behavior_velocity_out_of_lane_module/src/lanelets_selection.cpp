@@ -26,7 +26,7 @@ namespace behavior_velocity_planner::out_of_lane
 {
 
 lanelet::ConstLanelets consecutive_lanelets(
-  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelet & lanelet)
+  const RouteHandler & route_handler, const lanelet::ConstLanelet & lanelet)
 {
   lanelet::ConstLanelets consecutives = route_handler.getRoutingGraphPtr()->following(lanelet);
   const auto previous = route_handler.getRoutingGraphPtr()->previous(lanelet);
@@ -35,7 +35,7 @@ lanelet::ConstLanelets consecutive_lanelets(
 }
 
 lanelet::ConstLanelets get_missing_lane_change_lanelets(
-  lanelet::ConstLanelets & path_lanelets, const route_handler::RouteHandler & route_handler)
+  lanelet::ConstLanelets & path_lanelets, const RouteHandler & route_handler)
 {
   lanelet::ConstLanelets missing_lane_change_lanelets;
   const auto & routing_graph = *route_handler.getRoutingGraphPtr();
@@ -61,7 +61,7 @@ lanelet::ConstLanelets get_missing_lane_change_lanelets(
 }
 
 lanelet::ConstLanelets calculate_path_lanelets(
-  const EgoData & ego_data, const route_handler::RouteHandler & route_handler)
+  const EgoData & ego_data, const RouteHandler & route_handler)
 {
   const auto lanelet_map_ptr = route_handler.getLaneletMapPtr();
   lanelet::ConstLanelets path_lanelets;
@@ -80,7 +80,7 @@ lanelet::ConstLanelets calculate_path_lanelets(
 
 void add_lane_changeable_lanelets(
   lanelet::ConstLanelets & lanelets_to_ignore, const lanelet::ConstLanelets & path_lanelets,
-  const route_handler::RouteHandler & route_handler)
+  const RouteHandler & route_handler)
 {
   for (const auto & path_lanelet : path_lanelets)
     for (const auto & ll : route_handler.getLaneChangeableNeighbors(path_lanelet))
@@ -89,7 +89,7 @@ void add_lane_changeable_lanelets(
 
 lanelet::ConstLanelets calculate_ignored_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & path_lanelets,
-  const route_handler::RouteHandler & route_handler, const PlannerParam & params)
+  const RouteHandler & route_handler, const PlannerParam & params)
 {
   lanelet::ConstLanelets ignored_lanelets;
   // ignore lanelets directly behind ego
@@ -110,7 +110,7 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
 lanelet::ConstLanelets calculate_other_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & path_lanelets,
   const lanelet::ConstLanelets & ignored_lanelets,
-  const route_handler::RouteHandler & route_handler, const PlannerParam & params)
+  const RouteHandler & route_handler, const PlannerParam & params)
 {
   lanelet::ConstLanelets other_lanelets;
   const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);

@@ -34,7 +34,7 @@
 
 #include <memory>
 #include <string>
-namespace route_handler::test
+namespace autoware::route_handler::test
 {
 
 using autoware_map_msgs::msg::LaneletMapBin;
@@ -68,6 +68,6 @@ public:
 
   std::shared_ptr<RouteHandler> route_handler_;
 };
-}  // namespace route_handler::test
+}  // namespace autoware::route_handler::test
 
 #endif  // TEST_AUTOWARE_ROUTE_HANDLER_HPP_

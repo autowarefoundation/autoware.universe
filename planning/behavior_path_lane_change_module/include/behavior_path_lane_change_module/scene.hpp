@@ -33,7 +33,7 @@ using data::lane_change::LanesPolygon;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using route_handler::Direction;
+using autoware::route_handler::Direction;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using utils::path_safety_checker::ExtendedPredictedObjects;
 

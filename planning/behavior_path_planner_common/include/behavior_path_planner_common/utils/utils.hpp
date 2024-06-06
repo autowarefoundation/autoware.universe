@@ -49,7 +49,7 @@ using autoware_perception_msgs::msg::PredictedPath;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Vector3;
-using route_handler::RouteHandler;
+using autoware::route_handler::RouteHandler;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
@@ -327,7 +327,7 @@ lanelet::ConstLanelets calcLaneAroundPose(
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
 lanelet::ConstLanelets getLaneletsFromPath(
-  const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
+  const PathWithLaneId & path, const std::shared_ptr<RouteHandler> & route_handler);
 
 std::string convertToSnakeCase(const std::string & input_str);
 

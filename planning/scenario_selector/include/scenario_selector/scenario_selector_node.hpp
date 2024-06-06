@@ -89,7 +89,7 @@ private:
   std::shared_ptr<lanelet::LaneletMap> lanelet_map_ptr_;
   std::shared_ptr<lanelet::routing::RoutingGraph> routing_graph_ptr_;
   std::shared_ptr<lanelet::traffic_rules::TrafficRules> traffic_rules_ptr_;
-  std::shared_ptr<route_handler::RouteHandler> route_handler_;
+  std::shared_ptr<autoware::route_handler::RouteHandler> route_handler_;
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // Parameters

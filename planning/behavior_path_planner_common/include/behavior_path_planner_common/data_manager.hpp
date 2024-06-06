@@ -61,7 +61,7 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using route_handler::RouteHandler;
+using autoware::route_handler::RouteHandler;
 using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using PlanResult = PathWithLaneId::SharedPtr;

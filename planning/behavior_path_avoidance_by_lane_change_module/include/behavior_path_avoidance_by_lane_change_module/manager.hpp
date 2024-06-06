@@ -28,14 +28,14 @@
 
 namespace behavior_path_planner
 {
-using route_handler::Direction;
+using autoware::route_handler::Direction;
 
 class AvoidanceByLaneChangeModuleManager : public LaneChangeModuleManager
 {
 public:
   AvoidanceByLaneChangeModuleManager()
   : LaneChangeModuleManager(
-      "avoidance_by_lane_change", route_handler::Direction::NONE,
+      "avoidance_by_lane_change", Direction::NONE,
       LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE)
   {
   }

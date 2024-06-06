@@ -27,7 +27,7 @@
 
 namespace behavior_path_planner
 {
-using route_handler::Direction;
+using autoware::route_handler::Direction;
 
 class LaneChangeModuleManager : public SceneModuleManagerInterface
 {
@@ -59,7 +59,7 @@ class LaneChangeRightModuleManager : public LaneChangeModuleManager
 public:
   LaneChangeRightModuleManager()
   : LaneChangeModuleManager(
-      "lane_change_right", route_handler::Direction::RIGHT, LaneChangeModuleType::NORMAL)
+      "lane_change_right", Direction::RIGHT, LaneChangeModuleType::NORMAL)
   {
   }
 };
@@ -69,7 +69,7 @@ class LaneChangeLeftModuleManager : public LaneChangeModuleManager
 public:
   LaneChangeLeftModuleManager()
   : LaneChangeModuleManager(
-      "lane_change_left", route_handler::Direction::LEFT, LaneChangeModuleType::NORMAL)
+      "lane_change_left", Direction::LEFT, LaneChangeModuleType::NORMAL)
   {
   }
 };
