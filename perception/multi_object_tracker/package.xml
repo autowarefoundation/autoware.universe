@@ -13,8 +13,12 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
+<<<<<<< HEAD
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_universe_utils</depend>
+=======
+  <depend>autoware_auto_perception_msgs</depend>
+>>>>>>> edd0a93be1 (Refractored the parameters, build the schema file, updated the readme file.)
   <depend>diagnostic_updater</depend>
   <depend>eigen</depend>
   <depend>glog</depend>

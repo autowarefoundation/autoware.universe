@@ -40,10 +40,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using Label = autoware_perception_msgs::msg::ObjectClassification;
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 BicycleTracker::BicycleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
@@ -65,7 +65,7 @@ BicycleTracker::BicycleTracker(
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
 
   // OBJECT SHAPE MODEL
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
@@ -126,10 +126,17 @@ BicycleTracker::BicycleTracker(
       constexpr double p0_stddev_x = 0.8;  // in object coordinate [m]
       constexpr double p0_stddev_y = 0.5;  // in object coordinate [m]
       constexpr double p0_stddev_yaw =
+<<<<<<< HEAD
         autoware::universe_utils::deg2rad(25);  // in map coordinate [rad]
       constexpr double p0_cov_x = p0_stddev_x * p0_stddev_x;
       constexpr double p0_cov_y = p0_stddev_y * p0_stddev_y;
       constexpr double p0_cov_yaw = p0_stddev_yaw * p0_stddev_yaw;
+=======
+        tier4_autoware_utils::deg2rad(25);  // in map coordinate [rad]
+      constexpr double p0_cov_x = std::pow(p0_stddev_x, 2.0);
+      constexpr double p0_cov_y = std::pow(p0_stddev_y, 2.0);
+      constexpr double p0_cov_yaw = std::pow(p0_stddev_yaw, 2.0);
+>>>>>>> edd0a93be1 (Refractored the parameters, build the schema file, updated the readme file.)
 
       const double cos_yaw = std::cos(yaw);
       const double sin_yaw = std::sin(yaw);
@@ -166,15 +173,15 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
-  const autoware_perception_msgs::msg::DetectedObject & object,
+autoware_auto_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 {
-  autoware_perception_msgs::msg::DetectedObject updating_object;
+  autoware_auto_perception_msgs::msg::DetectedObject updating_object;
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     if (!utils::convertConvexHullToBoundingBox(object, updating_object)) {
       updating_object = object;
     }
@@ -196,7 +203,8 @@ autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
   return updating_object;
 }
 
-bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
+bool BicycleTracker::measureWithPose(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
   // get measurement yaw angle to update
   const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
@@ -227,10 +235,11 @@ bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::Detect
   return is_updated;
 }
 
-bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object)
+bool BicycleTracker::measureWithShape(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  autoware_perception_msgs::msg::DetectedObject bbox_object;
-  if (!object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
+  if (!object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }
@@ -269,7 +278,7 @@ bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::Detec
 }
 
 bool BicycleTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
@@ -292,7 +301,7 @@ bool BicycleTracker::measure(
   }
 
   // update object
-  const autoware_perception_msgs::msg::DetectedObject updating_object =
+  const autoware_auto_perception_msgs::msg::DetectedObject updating_object =
     getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
@@ -301,7 +310,7 @@ bool BicycleTracker::measure(
 }
 
 bool BicycleTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
