@@ -13,20 +13,20 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "mpc_lateral_controller/lowpass_filter.hpp"
+#include "autoware_mpc_lateral_controller/lowpass_filter.hpp"
 
 #include <vector>
 
 TEST(TestLowpassFilter, MoveAverageFilter)
 {
   namespace MoveAverageFilter =
-    autoware::motion::control::mpc_lateral_controller::MoveAverageFilter;
+    autoware::motion::control::autoware_mpc_lateral_controller::MoveAverageFilter;
 
   {  // Fail case: window size higher than the vector size
     const int window_size = 5;
     std::vector<double> vec = {1.0, 2.0, 3.0, 4.0};
     EXPECT_FALSE(MoveAverageFilter::filt_vector(window_size, vec));
-  }  // namespace autoware::motion::control::mpc_lateral_controller::MoveAverageFilter;
+  }  // namespace autoware::motion::control::autoware_mpc_lateral_controller::MoveAverageFilter;
   {
     const int window_size = 0;
     const std::vector<double> original_vec = {1.0, 3.0, 4.0, 6.0};
@@ -88,7 +88,7 @@ TEST(TestLowpassFilter, MoveAverageFilter)
 }
 TEST(TestLowpassFilter, Butterworth2dFilter)
 {
-  using autoware::motion::control::mpc_lateral_controller::Butterworth2dFilter;
+  using autoware::motion::control::autoware_mpc_lateral_controller::Butterworth2dFilter;
   const double dt = 1.0;
   const double cutoff_hz = 1.0;
   Butterworth2dFilter filter(dt, cutoff_hz);
@@ -117,7 +117,7 @@ TEST(TestLowpassFilter, Butterworth2dFilter)
 // Comparison of the coefficients
 TEST(TestLowpassFilter, Butterworth2dFilterCoeffs)
 {
-  using autoware::motion::control::mpc_lateral_controller::Butterworth2dFilter;
+  using autoware::motion::control::autoware_mpc_lateral_controller::Butterworth2dFilter;
 
   // Case 1:
   // cutoff_frequency = 1.0 [Hz], sampling_time = 0.033

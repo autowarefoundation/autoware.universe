@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "mpc_lateral_controller/mpc_trajectory.hpp"
-#include "mpc_lateral_controller/mpc_utils.hpp"
+#include "autoware_mpc_lateral_controller/mpc_trajectory.hpp"
+#include "autoware_mpc_lateral_controller/mpc_utils.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
@@ -24,7 +24,7 @@
 
 namespace
 {
-namespace MPCUtils = autoware::motion::control::mpc_lateral_controller::MPCUtils;
+namespace MPCUtils = autoware::motion::control::autoware_mpc_lateral_controller::MPCUtils;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 

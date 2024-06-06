@@ -13,12 +13,12 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
-#include "mpc_lateral_controller/mpc.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_unconstraint_fast.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
+#include "autoware_mpc_lateral_controller/mpc.hpp"
+#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
+#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_unconstraint_fast.hpp"
+#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
+#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/lateral.hpp"
@@ -38,7 +38,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 
 using autoware_control_msgs::msg::Lateral;
@@ -156,7 +156,7 @@ protected:
     pose_zero.position.y = 0.0;
   }
 
-  void initializeMPC(mpc_lateral_controller::MPC & mpc)
+  void initializeMPC(autoware_mpc_lateral_controller::MPC & mpc)
   {
     mpc.m_param = param;
     mpc.m_admissible_position_error = admissible_position_error;
@@ -453,4 +453,4 @@ TEST_F(MPCTest, FailureCases)
   EXPECT_FALSE(mpc->calculateMPC(
     neutral_steer, makeOdometry(pose_far, default_velocity + 10.0), ctrl_cmd, pred_traj, diag));
 }
-}  // namespace autoware::motion::control::mpc_lateral_controller
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
