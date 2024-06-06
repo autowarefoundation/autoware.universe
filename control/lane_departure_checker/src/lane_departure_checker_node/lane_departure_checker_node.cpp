@@ -166,8 +166,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
     add_on_set_parameters_callback(std::bind(&LaneDepartureCheckerNode::onParameter, this, _1));
 
   // Core
-  lane_departure_checker_ = std::make_unique<LaneDepartureChecker>();
-  lane_departure_checker_->setParam(param_, vehicle_info);
+  autoware_lane_departure_checker_ = std::make_unique<LaneDepartureChecker>();
+  autoware_lane_departure_checker_->setParam(param_, vehicle_info);
 
   // Subscriber
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
@@ -351,7 +351,7 @@ void LaneDepartureCheckerNode::onTimer()
   input_.boundary_types_to_detect = node_param_.boundary_types_to_detect;
   processing_time_map["Node: setInputData"] = stop_watch.toc(true);
 
-  output_ = lane_departure_checker_->update(input_);
+  output_ = autoware_lane_departure_checker_->update(input_);
   processing_time_map["Node: update"] = stop_watch.toc(true);
 
   updater_.force_update();
@@ -410,8 +410,8 @@ rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
     update_param(parameters, "delay_time", param_.delay_time);
     update_param(parameters, "min_braking_distance", param_.min_braking_distance);
 
-    if (lane_departure_checker_) {
-      lane_departure_checker_->setParam(param_);
+    if (autoware_lane_departure_checker_) {
+      autoware_lane_departure_checker_->setParam(param_);
     }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
