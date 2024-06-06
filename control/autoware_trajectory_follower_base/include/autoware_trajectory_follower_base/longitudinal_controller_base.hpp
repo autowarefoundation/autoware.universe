@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
-#define TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
+#ifndef AUTOWARE_TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
+#define AUTOWARE_TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-#include "trajectory_follower_base/input_data.hpp"
-#include "trajectory_follower_base/sync_data.hpp"
+#include "autoware_trajectory_follower_base/input_data.hpp"
+#include "autoware_trajectory_follower_base/sync_data.hpp"
 
 #include "autoware_control_msgs/msg/longitudinal.hpp"
 
@@ -46,4 +46,4 @@ protected:
 
 }  // namespace autoware::motion::control::trajectory_follower
 
-#endif  // TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
+#endif  // AUTOWARE_TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
