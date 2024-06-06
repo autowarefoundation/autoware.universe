@@ -31,7 +31,7 @@
 
 namespace autoware::control_validator
 {
-using autoware::control_validator::msg::ControlValidatorStatus;
+using autoware_control_validator::msg::ControlValidatorStatus;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using diagnostic_updater::DiagnosticStatusWrapper;

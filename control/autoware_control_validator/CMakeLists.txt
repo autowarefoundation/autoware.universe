@@ -16,7 +16,7 @@ ament_auto_add_library(autoware_control_validator_component SHARED
 )
 target_link_libraries(autoware_control_validator_component autoware_control_validator_helpers)
 rclcpp_components_register_node(autoware_control_validator_component
-  PLUGIN "autoware_control_validator::ControlValidator"
+  PLUGIN "autoware::control_validator::ControlValidator"
   EXECUTABLE autoware_control_validator_node
 )
 
