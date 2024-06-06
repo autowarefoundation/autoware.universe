@@ -282,17 +282,17 @@
           >
             <div style="box-sizing: border-box; font-size: 0; text-align: center; ">
               <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: all; white-space: normal; word-wrap: normal; ">
-                shift_decider
+                autoware_shift_decider
                 <br/>
                 <br/>
                 <div style="text-align: left">
-                  <span>package: shift_decider</span>
+                  <span>package: autoware_shift_decider</span>
                 </div>
               </div>
             </div>
           </div>
         </foreignObject>
-        <text x="360" y="939" fill="#000000" font-family="Helvetica" font-size="12px" text-anchor="middle">shift_decider...</text>
+        <text x="360" y="939" fill="#000000" font-family="Helvetica" font-size="12px" text-anchor="middle">autoware_shift_decider...</text>
       </switch>
     </g>
     <rect x="550" y="490" width="240" height="110" fill="#e1d5e7" stroke="#9673a6" pointer-events="all"/>
