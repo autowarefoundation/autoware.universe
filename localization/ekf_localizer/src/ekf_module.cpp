@@ -162,7 +162,7 @@ size_t EKFModule::find_closest_delay_time_index(double target_value) const
 
   // Return the index of the closer element.
   return is_closer_to_prev ? std::distance(accumulated_delay_times_.begin(), prev)
-                            : std::distance(accumulated_delay_times_.begin(), lower);
+                           : std::distance(accumulated_delay_times_.begin(), lower);
 }
 
 void EKFModule::accumulate_delay_time(const double dt)
@@ -225,8 +225,8 @@ bool EKFModule::measurement_update_pose(
     pose_diag_info.is_passed_delay_gate = false;
     warning_->warn_throttle(
       pose_delay_step_warning_message(
-        pose_diag_info.delay_time, pose_diag_info.delay_time_threshold
-      ), 2000);
+        pose_diag_info.delay_time, pose_diag_info.delay_time_threshold),
+      2000);
     return false;
   }
 

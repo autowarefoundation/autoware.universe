@@ -189,13 +189,12 @@ void EKFLocalizer::timer_callback()
         // Update Simple 1D filter with considering change of z value due to measurement pose delay
         const double delay_time =
           (current_time - pose->header.stamp).seconds() + params_.pose_additional_delay;
-        const auto pose_with_z_delay =
-          ekf_module_->compensate_pose_with_z_delay(*pose, delay_time);
+        const auto pose_with_z_delay = ekf_module_->compensate_pose_with_z_delay(*pose, delay_time);
         update_simple_1d_filters(pose_with_z_delay, params_.pose_smoothing_steps);
       }
     }
-    DEBUG_INFO(get_logger(), "[EKF] measurement_update_pose calc time = %f [ms]",
-      stop_watch_.toc());
+    DEBUG_INFO(
+      get_logger(), "[EKF] measurement_update_pose calc time = %f [ms]", stop_watch_.toc());
     DEBUG_INFO(get_logger(), "------------------------- end Pose -------------------------\n");
   }
   pose_diag_info_.no_update_count = pose_is_updated ? 0 : (pose_diag_info_.no_update_count + 1);
@@ -224,8 +223,8 @@ void EKFLocalizer::timer_callback()
         twist_is_updated = true;
       }
     }
-    DEBUG_INFO(get_logger(), "[EKF] measurement_update_twist calc time = %f [ms]",
-      stop_watch_.toc());
+    DEBUG_INFO(
+      get_logger(), "[EKF] measurement_update_twist calc time = %f [ms]", stop_watch_.toc());
     DEBUG_INFO(get_logger(), "------------------------- end Twist -------------------------\n");
   }
   twist_diag_info_.no_update_count = twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
@@ -412,8 +411,7 @@ void EKFLocalizer::publish_diagnostics(const rclcpp::Time & current_time)
     diag_status_array.push_back(check_measurement_updated(
       "twist", twist_diag_info_.no_update_count, params_.twist_no_update_count_threshold_warn,
       params_.twist_no_update_count_threshold_error));
-    diag_status_array.push_back(
-      check_measurement_queue_size("twist", twist_diag_info_.queue_size));
+    diag_status_array.push_back(check_measurement_queue_size("twist", twist_diag_info_.queue_size));
     diag_status_array.push_back(check_measurement_delay_gate(
       "twist", twist_diag_info_.is_passed_delay_gate, twist_diag_info_.delay_time,
       twist_diag_info_.delay_time_threshold));

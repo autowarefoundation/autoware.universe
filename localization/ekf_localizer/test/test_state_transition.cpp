@@ -17,6 +17,7 @@
 #include "ekf_localizer/state_transition.hpp"
 
 #include <gtest/gtest.h>
+
 #include <cmath>
 
 TEST(StateTransition, normalize_yaw)

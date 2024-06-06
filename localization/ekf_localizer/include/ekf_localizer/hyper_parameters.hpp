@@ -35,13 +35,11 @@ public:
     pose_additional_delay(
       node->declare_parameter<double>("pose_measurement.pose_additional_delay")),
     pose_gate_dist(node->declare_parameter<double>("pose_measurement.pose_gate_dist")),
-    pose_smoothing_steps(
-      node->declare_parameter<int>("pose_measurement.pose_smoothing_steps")),
+    pose_smoothing_steps(node->declare_parameter<int>("pose_measurement.pose_smoothing_steps")),
     twist_additional_delay(
       node->declare_parameter<double>("twist_measurement.twist_additional_delay")),
     twist_gate_dist(node->declare_parameter<double>("twist_measurement.twist_gate_dist")),
-    twist_smoothing_steps(
-      node->declare_parameter<int>("twist_measurement.twist_smoothing_steps")),
+    twist_smoothing_steps(node->declare_parameter<int>("twist_measurement.twist_smoothing_steps")),
     proc_stddev_vx_c(node->declare_parameter<double>("process_noise.proc_stddev_vx_c")),
     proc_stddev_wz_c(node->declare_parameter<double>("process_noise.proc_stddev_wz_c")),
     proc_stddev_yaw_c(node->declare_parameter<double>("process_noise.proc_stddev_yaw_c")),

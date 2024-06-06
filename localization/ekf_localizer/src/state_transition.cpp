@@ -48,7 +48,7 @@ Vector6d predict_next_state(const Vector6d & X_curr, const double dt)
   Vector6d x_next;
   x_next(IDX::X) = x + vx * std::cos(yaw + yaw_bias) * dt;  // dx = v * cos(yaw)
   x_next(IDX::Y) = y + vx * std::sin(yaw + yaw_bias) * dt;  // dy = v * sin(yaw)
-  x_next(IDX::YAW) = normalize_yaw(yaw + wz * dt);           // dyaw = omega + omega_bias
+  x_next(IDX::YAW) = normalize_yaw(yaw + wz * dt);          // dyaw = omega + omega_bias
   x_next(IDX::YAWB) = yaw_bias;
   x_next(IDX::VX) = vx;
   x_next(IDX::WZ) = wz;
