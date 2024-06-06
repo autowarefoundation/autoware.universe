@@ -24,9 +24,9 @@ class AgedObjectQueue
 public:
   explicit AgedObjectQueue(const int max_age) : max_age_(max_age) {}
 
-  bool empty() const { return this->size() == 0; }
+  [[nodiscard]] bool empty() const { return this->size() == 0; }
 
-  size_t size() const { return objects_.size(); }
+  [[nodiscard]] size_t size() const { return objects_.size(); }
 
   Object back() const { return objects_.back(); }
 

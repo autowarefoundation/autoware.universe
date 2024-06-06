@@ -69,15 +69,16 @@ public:
     const PoseWithCovariance & initial_pose,
     const geometry_msgs::msg::TransformStamped & transform);
 
-  geometry_msgs::msg::PoseStamped get_current_pose(
+  [[nodiscard]] geometry_msgs::msg::PoseStamped get_current_pose(
     const rclcpp::Time & current_time, const double z, const double roll, const double pitch,
     bool get_biased_yaw) const;
-  geometry_msgs::msg::TwistStamped get_current_twist(const rclcpp::Time & current_time) const;
-  double get_yaw_bias() const;
-  std::array<double, 36> get_current_pose_covariance() const;
-  std::array<double, 36> get_current_twist_covariance() const;
+  [[nodiscard]] geometry_msgs::msg::TwistStamped get_current_twist(
+    const rclcpp::Time & current_time) const;
+  [[nodiscard]] double get_yaw_bias() const;
+  [[nodiscard]] std::array<double, 36> get_current_pose_covariance() const;
+  [[nodiscard]] std::array<double, 36> get_current_twist_covariance() const;
 
-  size_t find_closest_delay_time_index(double target_value) const;
+  [[nodiscard]] size_t find_closest_delay_time_index(double target_value) const;
   void accumulate_delay_time(const double dt);
 
   void predict_with_delay(const double dt);
