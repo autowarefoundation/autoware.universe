@@ -31,18 +31,16 @@ EmergencyHandler::EmergencyHandler(const rclcpp::NodeOptions & options)
   using std::placeholders::_1;
 
   // Subscriber
-  sub_hazard_status_stamped_ =
-    create_subscription<autoware_auto_system_msgs::msg::HazardStatusStamped>(
-      "~/input/hazard_status", rclcpp::QoS{1},
-      std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
-  sub_prev_control_command_ =
-    create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
-      "~/input/prev_control_command", rclcpp::QoS{1},
-      std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
+  sub_hazard_status_stamped_ = create_subscription<autoware_system_msgs::msg::HazardStatusStamped>(
+    "~/input/hazard_status", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onHazardStatusStamped, this, _1));
+  sub_prev_control_command_ = create_subscription<autoware_control_msgs::msg::Control>(
+    "~/input/prev_control_command", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onPrevControlCommand, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onOdometry, this, _1));
   // subscribe control mode
-  sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+  sub_control_mode_ = create_subscription<autoware_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
   sub_mrm_comfortable_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
@@ -52,12 +50,12 @@ EmergencyHandler::EmergencyHandler(const rclcpp::NodeOptions & options)
     std::bind(&EmergencyHandler::onMrmEmergencyStopStatus, this, _1));
 
   // Publisher
-  pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
+  pub_control_command_ = create_publisher<autoware_control_msgs::msg::Control>(
     "~/output/control_command", rclcpp::QoS{1});
-  pub_hazard_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
+  pub_hazard_cmd_ = create_publisher<autoware_vehicle_msgs::msg::HazardLightsCommand>(
     "~/output/hazard", rclcpp::QoS{1});
   pub_gear_cmd_ =
-    create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
+    create_publisher<autoware_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_mrm_state_ =
     create_publisher<autoware_adapi_v1_msgs::msg::MrmState>("~/output/mrm/state", rclcpp::QoS{1});
 
@@ -75,9 +73,9 @@ EmergencyHandler::EmergencyHandler(const rclcpp::NodeOptions & options)
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
-  control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
-  prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
-    new autoware_auto_control_msgs::msg::AckermannControlCommand);
+  control_mode_ = std::make_shared<const autoware_vehicle_msgs::msg::ControlModeReport>();
+  prev_control_command_ =
+    autoware_control_msgs::msg::Control::ConstSharedPtr(new autoware_control_msgs::msg::Control);
   mrm_comfortable_stop_status_ =
     std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
@@ -93,19 +91,18 @@ EmergencyHandler::EmergencyHandler(const rclcpp::NodeOptions & options)
 }
 
 void EmergencyHandler::onHazardStatusStamped(
-  const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg)
+  const autoware_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg)
 {
   hazard_status_stamped_ = msg;
   stamp_hazard_status_ = this->now();
 }
 
 void EmergencyHandler::onPrevControlCommand(
-  const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg)
+  const autoware_control_msgs::msg::Control::ConstSharedPtr msg)
 {
-  auto control_command = new autoware_auto_control_msgs::msg::AckermannControlCommand(*msg);
+  auto control_command = new autoware_control_msgs::msg::Control(*msg);
   control_command->stamp = msg->stamp;
-  prev_control_command_ =
-    autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(control_command);
+  prev_control_command_ = autoware_control_msgs::msg::Control::ConstSharedPtr(control_command);
 }
 
 void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
@@ -114,7 +111,7 @@ void EmergencyHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr 
 }
 
 void EmergencyHandler::onControlMode(
-  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
+  const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
   control_mode_ = msg;
 }
@@ -131,9 +128,9 @@ void EmergencyHandler::onMrmEmergencyStopStatus(
   mrm_emergency_stop_status_ = msg;
 }
 
-autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
+autoware_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
 {
-  using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+  using autoware_vehicle_msgs::msg::HazardLightsCommand;
   HazardLightsCommand msg;
 
   // Check emergency
@@ -155,7 +152,7 @@ autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHaz
 
 void EmergencyHandler::publishControlCommands()
 {
-  using autoware_auto_vehicle_msgs::msg::GearCommand;
+  using autoware_vehicle_msgs::msg::GearCommand;
 
   // Create timestamp
   const auto stamp = this->now();
@@ -167,12 +164,17 @@ void EmergencyHandler::publishControlCommands()
   {
     GearCommand msg;
     msg.stamp = stamp;
-    if (param_.use_parking_after_stopped && isStopped()) {
-      msg.command = GearCommand::PARK;
-    } else {
-      msg.command = GearCommand::DRIVE;
-    }
+    const auto command = [&]() {
+      // If stopped and use_parking is not true, send the last gear command
+      if (isStopped())
+        return (param_.use_parking_after_stopped) ? GearCommand::PARK : last_gear_command_;
+      return (isDrivingBackwards()) ? GearCommand::REVERSE : GearCommand::DRIVE;
+    }();
+
+    msg.command = command;
+    last_gear_command_ = msg.command;
     pub_gear_cmd_->publish(msg);
+    return;
   }
 }
 
@@ -373,7 +375,7 @@ void EmergencyHandler::transitionTo(const int new_state)
 void EmergencyHandler::updateMrmState()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
-  using autoware_auto_vehicle_msgs::msg::ControlModeReport;
+  using autoware_vehicle_msgs::msg::ControlModeReport;
 
   // Check emergency
   const bool is_emergency = isEmergency();
@@ -416,7 +418,7 @@ void EmergencyHandler::updateMrmState()
 autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurrentMrmBehavior()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
-  using autoware_auto_system_msgs::msg::HazardStatus;
+  using autoware_system_msgs::msg::HazardStatus;
 
   // Get hazard level
   auto level = hazard_status_stamped_->status.level;
@@ -454,11 +456,13 @@ bool EmergencyHandler::isEmergency()
 bool EmergencyHandler::isStopped()
 {
   constexpr auto th_stopped_velocity = 0.001;
-  if (odom_->twist.twist.linear.x < th_stopped_velocity) {
-    return true;
-  }
+  return (std::abs(odom_->twist.twist.linear.x) < th_stopped_velocity);
+}
 
-  return false;
+bool EmergencyHandler::isDrivingBackwards()
+{
+  constexpr auto th_moving_backwards = -0.001;
+  return odom_->twist.twist.linear.x < th_moving_backwards;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

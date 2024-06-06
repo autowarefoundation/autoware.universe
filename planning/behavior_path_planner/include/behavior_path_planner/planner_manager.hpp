@@ -15,16 +15,16 @@
 #ifndef BEHAVIOR_PATH_PLANNER__PLANNER_MANAGER_HPP_
 #define BEHAVIOR_PATH_PLANNER__PLANNER_MANAGER_HPP_
 
-#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
-#include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware_behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
+#include "autoware_behavior_path_planner_common/interface/scene_module_visitor.hpp"
 #include "tier4_autoware_utils/ros/debug_publisher.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
@@ -39,8 +39,8 @@
 namespace behavior_path_planner
 {
 
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using tier4_autoware_utils::StopWatch;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_planning_msgs::msg::StopReasonArray;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;

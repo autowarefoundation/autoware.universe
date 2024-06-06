@@ -40,7 +40,7 @@ MrmHandler::MrmHandler(const rclcpp::NodeOptions & options) : Node("mrm_handler"
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", rclcpp::QoS{1}, std::bind(&MrmHandler::onOdometry, this, _1));
   // subscribe control mode
-  sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
+  sub_control_mode_ = create_subscription<autoware_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&MrmHandler::onControlMode, this, _1));
   sub_operation_mode_availability_ =
     create_subscription<tier4_system_msgs::msg::OperationModeAvailability>(
@@ -60,10 +60,10 @@ MrmHandler::MrmHandler(const rclcpp::NodeOptions & options) : Node("mrm_handler"
     std::bind(&MrmHandler::onOperationModeState, this, _1));
 
   // Publisher
-  pub_hazard_cmd_ = create_publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>(
+  pub_hazard_cmd_ = create_publisher<autoware_vehicle_msgs::msg::HazardLightsCommand>(
     "~/output/hazard", rclcpp::QoS{1});
   pub_gear_cmd_ =
-    create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
+    create_publisher<autoware_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_mrm_state_ =
     create_publisher<autoware_adapi_v1_msgs::msg::MrmState>("~/output/mrm/state", rclcpp::QoS{1});
 
@@ -85,7 +85,7 @@ MrmHandler::MrmHandler(const rclcpp::NodeOptions & options) : Node("mrm_handler"
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
-  control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
+  control_mode_ = std::make_shared<const autoware_vehicle_msgs::msg::ControlModeReport>();
   mrm_pull_over_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_comfortable_stop_status_ =
     std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
@@ -108,7 +108,7 @@ void MrmHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 }
 
 void MrmHandler::onControlMode(
-  const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
+  const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg)
 {
   control_mode_ = msg;
 }
@@ -167,7 +167,7 @@ void MrmHandler::onOperationModeState(
 
 void MrmHandler::publishHazardCmd()
 {
-  using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+  using autoware_vehicle_msgs::msg::HazardLightsCommand;
   HazardLightsCommand msg;
 
   msg.stamp = this->now();
@@ -187,17 +187,21 @@ void MrmHandler::publishHazardCmd()
 
 void MrmHandler::publishGearCmd()
 {
-  using autoware_auto_vehicle_msgs::msg::GearCommand;
+  using autoware_vehicle_msgs::msg::GearCommand;
   GearCommand msg;
 
   msg.stamp = this->now();
-  if (param_.use_parking_after_stopped && isStopped()) {
-    msg.command = GearCommand::PARK;
-  } else {
-    msg.command = GearCommand::DRIVE;
-  }
+  const auto command = [&]() {
+    // If stopped and use_parking is not true, send the last gear command
+    if (isStopped())
+      return (param_.use_parking_after_stopped) ? GearCommand::PARK : last_gear_command_;
+    return (isDrivingBackwards()) ? GearCommand::REVERSE : GearCommand::DRIVE;
+  }();
 
+  msg.command = command;
+  last_gear_command_ = msg.command;
   pub_gear_cmd_->publish(msg);
+  return;
 }
 
 void MrmHandler::publishMrmState()
@@ -444,53 +448,53 @@ void MrmHandler::transitionTo(const int new_state)
 void MrmHandler::updateMrmState()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
-  using autoware_auto_vehicle_msgs::msg::ControlModeReport;
+  using autoware_vehicle_msgs::msg::ControlModeReport;
 
   // Check emergency
   const bool is_emergency = isEmergency();
+
+  // Send recovery events if is not an emergency
+  if (!is_emergency) {
+    if (mrm_state_.state != MrmState::NORMAL) transitionTo(MrmState::NORMAL);
+    return;
+  }
 
   // Get mode
   const bool is_auto_mode = control_mode_->mode == ControlModeReport::AUTONOMOUS;
 
   // State Machine
-  if (mrm_state_.state == MrmState::NORMAL) {
-    // NORMAL
-    if (is_auto_mode && is_emergency) {
-      transitionTo(MrmState::MRM_OPERATING);
-      return;
-    }
-  } else {
-    // Emergency
-    // Send recovery events if "not emergency"
-    if (!is_emergency) {
-      transitionTo(MrmState::NORMAL);
-      return;
-    }
-
-    if (mrm_state_.state == MrmState::MRM_OPERATING) {
-      // TODO(TetsuKawa): Check MRC is accomplished
-      if (mrm_state_.behavior == MrmState::PULL_OVER) {
-        if (isStopped() && isArrivedAtGoal()) {
-          transitionTo(MrmState::MRM_SUCCEEDED);
-          return;
-        }
-      } else {
-        if (isStopped()) {
-          transitionTo(MrmState::MRM_SUCCEEDED);
-          return;
-        }
-      }
-    } else if (mrm_state_.state == MrmState::MRM_SUCCEEDED) {
-      const auto current_mrm_behavior = getCurrentMrmBehavior();
-      if (current_mrm_behavior != mrm_state_.behavior) {
+  switch (mrm_state_.state) {
+    case MrmState::NORMAL:
+      if (is_auto_mode) {
         transitionTo(MrmState::MRM_OPERATING);
       }
-    } else if (mrm_state_.state == MrmState::MRM_FAILED) {
+      return;
+
+    case MrmState::MRM_OPERATING:
+      if (!isStopped()) return;
+      if (mrm_state_.behavior != MrmState::PULL_OVER) {
+        transitionTo(MrmState::MRM_SUCCEEDED);
+        return;
+      }
+      if (isArrivedAtGoal()) {
+        transitionTo(MrmState::MRM_SUCCEEDED);
+      }
+      return;
+
+    case MrmState::MRM_SUCCEEDED:
+      if (mrm_state_.behavior != getCurrentMrmBehavior()) {
+        transitionTo(MrmState::MRM_OPERATING);
+      }
+      return;
+    case MrmState::MRM_FAILED:
       // Do nothing(only checking common recovery events)
-    } else {
+      return;
+
+    default: {
       const auto msg = "invalid state: " + std::to_string(mrm_state_.state);
       throw std::runtime_error(msg);
     }
+      return;
   }
 }
 
@@ -578,11 +582,13 @@ autoware_adapi_v1_msgs::msg::MrmState::_behavior_type MrmHandler::getCurrentMrmB
 bool MrmHandler::isStopped()
 {
   constexpr auto th_stopped_velocity = 0.001;
-  if (odom_->twist.twist.linear.x < th_stopped_velocity) {
-    return true;
-  }
+  return std::abs((odom_->twist.twist.linear.x < th_stopped_velocity) < th_stopped_velocity);
+}
 
-  return false;
+bool MrmHandler::isDrivingBackwards()
+{
+  constexpr auto th_moving_backwards = -0.001;
+  return odom_->twist.twist.linear.x < th_moving_backwards;
 }
 
 bool MrmHandler::isEmergency() const
