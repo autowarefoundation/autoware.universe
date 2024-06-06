@@ -30,7 +30,7 @@ nav:
         - 'No Stopping Area': planning/behavior_velocity_no_stopping_area_module
         - 'Occlusion Spot': planning/behavior_velocity_occlusion_spot_module
         - 'Out of Lane': planning/behavior_velocity_out_of_lane_module
-        - 'Run Out': planning/behavior_velocity_run_out_module
+        - 'Run Out': planning/autoware_behavior_velocity_run_out_module
         - 'Speed Bump': planning/behavior_velocity_speed_bump_module
         - 'Stop Line': planning/behavior_velocity_stop_line_module
         - 'Traffic Light': planning/behavior_velocity_traffic_light_module
@@ -74,7 +74,7 @@ nav:
   - 'Static Centerline Generator': planning/autoware_static_centerline_generator
   - 'API and Library':
     - 'Costmap Generator': planning/costmap_generator
-    - 'External Velocity Limit Selector': planning/external_velocity_limit_selector
+    - 'External Velocity Limit Selector': planning/autoware_external_velocity_limit_selector
     - 'Objects of Interest Marker Interface': planning/objects_of_interest_marker_interface
     - 'Route Handler': planning/route_handler
     - 'RTC Interface': planning/rtc_interface
@@ -86,5 +86,5 @@ nav:
       - 'Stop Reason Visualizer': https://github.com/autowarefoundation/autoware_tools/blob/main/planning/planning_debug_tools/doc-stop-reason-visualizer.md
     - 'Planning Test Utils': planning/planning_test_utils
     - 'Planning Test Manager': planning/autoware_planning_test_manager
-    - 'Planning Topic Converter': planning/planning_topic_converter
+    - 'Planning Topic Converter': planning/autoware_planning_topic_converter
     - 'Planning Validator': planning/planning_validator
