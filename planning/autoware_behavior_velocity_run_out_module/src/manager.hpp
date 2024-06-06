@@ -25,9 +25,9 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using ::behavior_velocity_planner::PluginWrapper;
-using ::behavior_velocity_planner::SceneModuleInterface;
-using ::behavior_velocity_planner::SceneModuleManagerInterface;
+using autoware::behavior_velocity_planner::PluginWrapper;
+using autoware::behavior_velocity_planner::SceneModuleInterface;
+using autoware::behavior_velocity_planner::SceneModuleManagerInterface;
 class RunOutModuleManager : public SceneModuleManagerInterface
 {
 public:

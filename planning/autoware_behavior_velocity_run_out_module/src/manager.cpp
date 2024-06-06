@@ -22,7 +22,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using ::behavior_velocity_planner::SceneModuleManagerInterface;
+using autoware::behavior_velocity_planner::SceneModuleManagerInterface;
 using tier4_autoware_utils::getOrDeclareParameter;
 RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())

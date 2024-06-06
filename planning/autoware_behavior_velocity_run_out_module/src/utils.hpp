@@ -34,12 +34,12 @@ namespace autoware::behavior_velocity_planner
 namespace run_out_utils
 {
 namespace bg = boost::geometry;
+using autoware::behavior_velocity_planner::PlannerData;
+using autoware::behavior_velocity_planner::Polygons2d;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::PathPoint;
-using ::behavior_velocity_planner::PlannerData;
-using ::behavior_velocity_planner::Polygons2d;
 using tier4_autoware_utils::Box2d;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
