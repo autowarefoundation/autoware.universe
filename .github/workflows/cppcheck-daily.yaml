@@ -1,4 +1,4 @@
-name: cppcheck-monitor
+name: cppcheck-daily
 
 on:
   schedule:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  cppcheck-monitor:
+  cppcheck-daily:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,6 +33,7 @@ jobs:
 
       - name: Run Cppcheck on all files
         continue-on-error: true
+        id: cppcheck
         run: |
           cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --xml . 2> cppcheck-report.xml
         shell: bash
@@ -52,3 +53,7 @@ jobs:
         with:
           name: cppcheck-report
           path: cppcheck-report.xml
+
+      - name: Fail the job if Cppcheck failed
+        if: steps.cppcheck.outcome == 'failure'
+        run: exit 1
