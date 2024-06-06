@@ -18,7 +18,7 @@ ament_auto_add_library(${AEB_NODE} SHARED
 )
 
 rclcpp_components_register_node(${AEB_NODE}
-  PLUGIN "autoware::motion::control::autoware_autonomous_emergency_braking::AEB"
+  PLUGIN "autoware::motion::control::autonomous_emergency_braking::AEB"
   EXECUTABLE ${PROJECT_NAME}
 )
 

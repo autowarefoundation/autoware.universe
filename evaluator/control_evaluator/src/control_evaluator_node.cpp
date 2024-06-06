@@ -45,7 +45,7 @@ DiagnosticStatus controlEvaluatorNode::generateDiagnosticStatus(const bool is_em
 {
   DiagnosticStatus status;
   status.level = status.OK;
-  status.name = "autoware_autonomous_emergency_braking";
+  status.name = "autonomous_emergency_braking";
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = "decision";
   key_value.value = (is_emergency_brake) ? "stop" : "none";

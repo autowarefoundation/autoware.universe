@@ -138,9 +138,9 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # autonomous emergency braking
-    autoware_autonomous_emergency_braking = ComposableNode(
+    autonomous_emergency_braking = ComposableNode(
         package="autoware_autonomous_emergency_braking",
-        plugin="autoware::motion::control::autoware_autonomous_emergency_braking::AEB",
+        plugin="autoware::motion::control::autonomous_emergency_braking::AEB",
         name="autonomous_emergency_braking",
         remappings=[
             ("~/input/pointcloud", "/perception/obstacle_segmentation/pointcloud"),
@@ -158,9 +158,9 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
-    autoware_autonomous_emergency_braking_loader = LoadComposableNodes(
+    autonomous_emergency_braking_loader = LoadComposableNodes(
         condition=IfCondition(LaunchConfiguration("enable_autonomous_emergency_braking")),
-        composable_node_descriptions=[autoware_autonomous_emergency_braking],
+        composable_node_descriptions=[autonomous_emergency_braking],
         target_container="/control/control_container",
     )
 
@@ -405,7 +405,7 @@ def launch_setup(context, *args, **kwargs):
             external_cmd_selector_loader,
             external_cmd_converter_loader,
             obstacle_collision_checker_loader,
-            autoware_autonomous_emergency_braking_loader,
+            autonomous_emergency_braking_loader,
             predicted_path_checker_loader,
             control_evaluator_loader,
         ]
