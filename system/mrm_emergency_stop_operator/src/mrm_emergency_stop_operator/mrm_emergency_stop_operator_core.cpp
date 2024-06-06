@@ -27,11 +27,6 @@ MrmEmergencyStopOperator::MrmEmergencyStopOperator(const rclcpp::NodeOptions & n
   params_.target_acceleration = declare_parameter<double>("target_acceleration", -2.5);
   params_.target_jerk = declare_parameter<double>("target_jerk", -1.5);
 
-  // Subscriber
-  sub_control_cmd_ = create_subscription<Control>(
-    "~/input/control/control_cmd", 1,
-    std::bind(&MrmEmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
-
   // Server
   service_operation_ = create_service<OperateMrm>(
     "~/input/mrm/emergency_stop/operate", std::bind(
@@ -49,7 +44,6 @@ MrmEmergencyStopOperator::MrmEmergencyStopOperator(const rclcpp::NodeOptions & n
 
   // Initialize
   status_.state = MrmBehaviorStatus::AVAILABLE;
-  is_prev_control_cmd_subscribed_ = false;
 
   // Parameter Callback
   set_param_res_ = add_on_set_parameters_callback(
@@ -69,12 +63,19 @@ rcl_interfaces::msg::SetParametersResult MrmEmergencyStopOperator::onParameter(
   return result;
 }
 
-void MrmEmergencyStopOperator::onControlCommand(Control::ConstSharedPtr msg)
+Control MrmEmergencyStopOperator::subscribeControlCommand()
 {
-  if (status_.state != MrmBehaviorStatus::OPERATING) {
-    prev_control_cmd_ = *msg;
-    is_prev_control_cmd_subscribed_ = true;
+  auto control_cmd = sub_control_cmd_.takeData();
+  if (control_cmd == nullptr) {
+    auto stop_cmd = Control();
+    stop_cmd.stamp = this->now();
+    stop_cmd.longitudinal.stamp = this->now();
+    stop_cmd.longitudinal.velocity = 0.0;
+    stop_cmd.longitudinal.acceleration = 0.0;
+    stop_cmd.longitudinal.jerk = 0.0;
+    return stop_cmd;
   }
+  return *control_cmd;
 }
 
 void MrmEmergencyStopOperator::operateEmergencyStop(
@@ -103,31 +104,18 @@ void MrmEmergencyStopOperator::publishControlCommand(const Control & command) co
 
 void MrmEmergencyStopOperator::onTimer()
 {
-  if (status_.state == MrmBehaviorStatus::OPERATING) {
-    auto control_cmd = calcTargetAcceleration(prev_control_cmd_);
-    publishControlCommand(control_cmd);
-    prev_control_cmd_ = control_cmd;
-  } else {
-    publishControlCommand(prev_control_cmd_);
-  }
+  auto control_cmd = status_.state == MrmBehaviorStatus::OPERATING
+                       ? compensateControlCommand(prev_control_cmd_)
+                       : subscribeControlCommand();
+  publishControlCommand(control_cmd);
+  prev_control_cmd_ = control_cmd;
+
   publishStatus();
 }
 
-Control MrmEmergencyStopOperator::calcTargetAcceleration(const Control & prev_control_cmd) const
+Control MrmEmergencyStopOperator::compensateControlCommand(const Control & prev_control_cmd) const
 {
   auto control_cmd = Control();
-
-  if (!is_prev_control_cmd_subscribed_) {
-    control_cmd.stamp = this->now();
-    control_cmd.longitudinal.stamp = this->now();
-    control_cmd.longitudinal.velocity = 0.0;
-    control_cmd.longitudinal.acceleration = static_cast<float>(params_.target_acceleration);
-    control_cmd.longitudinal.jerk = 0.0;
-    control_cmd.lateral.stamp = this->now();
-    control_cmd.lateral.steering_tire_angle = 0.0;
-    control_cmd.lateral.steering_tire_rotation_rate = 0.0;
-    return control_cmd;
-  }
 
   control_cmd = prev_control_cmd;
   const auto dt = (this->now() - prev_control_cmd.stamp).seconds();
@@ -147,7 +135,6 @@ Control MrmEmergencyStopOperator::calcTargetAcceleration(const Control & prev_co
 
   return control_cmd;
 }
-
 }  // namespace mrm_emergency_stop_operator
 
 #include <rclcpp_components/register_node_macro.hpp>

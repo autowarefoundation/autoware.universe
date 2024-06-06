@@ -20,6 +20,8 @@
 #include <memory>
 
 // Autoware
+#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
+
 #include <autoware_control_msgs/msg/control.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
@@ -54,10 +56,11 @@ private:
   rcl_interfaces::msg::SetParametersResult onParameter(
     const std::vector<rclcpp::Parameter> & parameters);
 
-  // Subscriber
-  rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;
+  // Subscriber without callback
+  tier4_autoware_utils::InterProcessPollingSubscriber<Control> sub_control_cmd_{
+    this, "~/input/control/control_cmd"};
 
-  void onControlCommand(Control::ConstSharedPtr msg);
+  Control subscribeControlCommand();
 
   // Server
   rclcpp::Service<OperateMrm>::SharedPtr service_operation_;
@@ -80,10 +83,9 @@ private:
   // States
   MrmBehaviorStatus status_;
   Control prev_control_cmd_;
-  bool is_prev_control_cmd_subscribed_;
 
   // Algorithm
-  Control calcTargetAcceleration(const Control & prev_control_cmd) const;
+  Control compensateControlCommand(const Control & prev_control_cmd) const;
 };
 
 }  // namespace mrm_emergency_stop_operator
