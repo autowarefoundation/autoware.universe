@@ -484,7 +484,6 @@ void EKFLocalizer::service_trigger_node(
     is_activated_ = false;
   }
   res->success = true;
-  return;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

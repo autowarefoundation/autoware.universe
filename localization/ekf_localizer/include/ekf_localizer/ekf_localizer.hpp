@@ -58,7 +58,6 @@ public:
     x_ = 0;
     dev_ = 1e9;
     proc_dev_x_c_ = 0.0;
-    return;
   };
   void init(const double init_obs, const double obs_dev, const rclcpp::Time time)
   {
@@ -66,7 +65,6 @@ public:
     dev_ = obs_dev;
     latest_time_ = time;
     initialized_ = true;
-    return;
   };
   void update(const double obs, const double obs_dev, const rclcpp::Time time)
   {
@@ -86,7 +84,6 @@ public:
     dev_ = (1 - kalman_gain) * dev_;
 
     latest_time_ = time;
-    return;
   };
   void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
   [[nodiscard]] double get_x() const { return x_; }
