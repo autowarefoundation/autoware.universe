@@ -261,7 +261,42 @@ bool AccelBrakeMapCalibrator::getCurrentPitchFromTF(double * pitch)
   return true;
 }
 
+bool AccelBrakeMapCalibrator::fetchData() {
+   // take data from subscribers
+  // take actuation data
+  ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
+  ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
+  if (actuation_status_ptr) {
+    takeActuationStatus(actuation_status_ptr);
+  }
+  else if (actuation_cmd_ptr) {
+    takeActuationCommand(actuation_cmd_ptr);
+  }
+  else {
+    return false;
+  }
 
+  // take velocity data
+  VelocityReport::ConstSharedPtr velocity_ptr = velocity_sub_.takeData();
+  if (!velocity_ptr) return false;
+  takeVelocity(velocity_ptr);
+
+  // take steer data
+  steer_ptr_ = steer_sub_.takeData();
+
+  /* valid check */
+  // data check
+  if (
+    !twist_ptr_ || !steer_ptr_ || !accel_pedal_ptr_ || !brake_pedal_ptr_ ||
+    !delayed_accel_pedal_ptr_ || !delayed_brake_pedal_ptr_) {
+    // lack of data
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 5000, "lack of topics (twist, steer, accel, brake)");
+    lack_of_data_count_++;
+    return false;
+  }
+  return true;
+}
 
 void AccelBrakeMapCalibrator::timerCallback()
 {
@@ -282,40 +317,8 @@ void AccelBrakeMapCalibrator::timerCallback()
                               << "\n\t"
                               << "update_fail_count_: " << update_fail_count_ << "\n");
 
-  // take data from subscribers
-
-  // take actuation data
-  ActuationStatusStamped::ConstSharedPtr actuation_status_ptr = actuation_status_sub_.takeData();
-  ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
-  if (actuation_status_ptr) {
-    takeActuationStatus(actuation_status_ptr);
-  }
-  else if (actuation_cmd_ptr) {
-    takeActuationCommand(actuation_cmd_ptr);
-  }
-  else {
-    return;
-  }
-
-  // take velocity data
-  VelocityReport::ConstSharedPtr velocity_ptr = velocity_sub_.takeData();
-  if (!velocity_ptr) return;
-  takeVelocity(velocity_ptr);
-
-  // take steer data
-  steer_ptr_ = steer_sub_.takeData();
-
-  /* valid check */
-  // data check
-  if (
-    !twist_ptr_ || !steer_ptr_ || !accel_pedal_ptr_ || !brake_pedal_ptr_ ||
-    !delayed_accel_pedal_ptr_ || !delayed_brake_pedal_ptr_) {
-    // lack of data
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 5000, "lack of topics (twist, steer, accel, brake)");
-    lack_of_data_count_++;
-    return;
-  }
+  // if cannot get data, return this callback
+  if (!fetchData()) return;
 
   debug_values_.data.at(CURRENT_STEER) = steer_ptr_->steering_tire_angle;
 
