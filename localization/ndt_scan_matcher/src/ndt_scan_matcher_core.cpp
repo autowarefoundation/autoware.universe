@@ -791,20 +791,24 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
   }
 
+  geometry_msgs::msg::PoseArray multi_ndt_result_msg;
+  geometry_msgs::msg::PoseArray multi_initial_pose_msg;
+  multi_ndt_result_msg.header.stamp = sensor_ros_time;
+  multi_initial_pose_msg.header.stamp = sensor_ros_time;
+  multi_ndt_result_msg.header.frame_id = param_.frame.map_frame;
+  multi_initial_pose_msg.header.frame_id = param_.frame.map_frame;
+  multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(ndt_result.pose));
+  multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(initial_pose_matrix));
+
   if (param_.covariance.covariance_estimation.covariance_estimation_type == CovarianceEstimationType::LAPLACE_APPROXIMATION){
-    std::cerr << "laplace" << std::endl;
-    // std::array<double, 36> estimated_covariance_laplace = param_.covariance.output_pose_covariance;
     Eigen::Matrix2d cov_by_la = pclomp::estimate_xy_covariance_by_Laplace_approximation(ndt_result.hessian);
     const Eigen::Matrix2d cov_by_la_adjust = pclomp::adjust_diagonal_covariance(cov_by_la, ndt_result.pose, 0.0225, 0.0225);
     ndt_covariance[0 + 6 * 0] = cov_by_la_adjust(0, 0);
     ndt_covariance[1 + 6 * 1] = cov_by_la_adjust(1, 1);
     ndt_covariance[1 + 6 * 0] = cov_by_la_adjust(1, 0);
     ndt_covariance[0 + 6 * 1] = cov_by_la_adjust(0, 1);
-    //publish_covariance_estimation(cov_by_la_adjust, ndt_result.pose, ndt_covariance, sensor_ros_time);
-    // ndt_covariance = estimated_covariance_laplace;
   }
   else if (param_.covariance.covariance_estimation.covariance_estimation_type == CovarianceEstimationType::MULTI_NDT){
-    std::cerr << "multi_ndt" << std::endl;
     const std::vector<Eigen::Matrix4f> poses_to_search = 
       pclomp::propose_poses_to_search(ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x, param_.covariance.covariance_estimation.initial_pose_offset_model_y);
     const pclomp::ResultOfMultiNdtCovarianceEstimation  result_of_multi_ndt_covariance_estimation = estimate_xy_covariance_by_multi_ndt(ndt_result, ndt_ptr_, poses_to_search);
@@ -813,9 +817,18 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     ndt_covariance[1 + 6 * 1] = cov_by_mndt(1, 1);
     ndt_covariance[1 + 6 * 0] = cov_by_mndt(1, 0);
     ndt_covariance[0 + 6 * 1] = cov_by_mndt(0, 1);
+
+    for (const auto & sub_initial_pose_matrix :poses_to_search) {
+      auto sub_output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
+      ndt_ptr_->align(*sub_output_cloud, sub_initial_pose_matrix);
+      const Eigen::Matrix4f sub_ndt_result = ndt_ptr_->getResult().pose;
+      multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(sub_ndt_result));
+      multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(sub_initial_pose_matrix));
+    }
+    multi_ndt_pose_pub_->publish(multi_ndt_result_msg);
+    multi_initial_pose_pub_->publish(multi_initial_pose_msg);
   }
   else if (param_.covariance.covariance_estimation.covariance_estimation_type == CovarianceEstimationType::MULTI_NDT_SCORE){
-    std::cerr << "multi_ndt_score" << std::endl;
     const double temperature = 0.1;
     const std::vector<Eigen::Matrix4f> poses_to_search = pclomp::propose_poses_to_search(ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x, param_.covariance.covariance_estimation.initial_pose_offset_model_y);
     const pclomp::ResultOfMultiNdtCovarianceEstimation result_of_multi_ndt_score_covariance_estimation = estimate_xy_covariance_by_multi_ndt_score(ndt_result, ndt_ptr_, poses_to_search, temperature);
@@ -824,19 +837,12 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     ndt_covariance[1 + 6 * 1] = cov_by_mndt_score(1, 1);
     ndt_covariance[1 + 6 * 0] = cov_by_mndt_score(1, 0);
     ndt_covariance[0 + 6 * 1] = cov_by_mndt_score(0, 1);
-  }
 
-  geometry_msgs::msg::PoseArray multi_ndt_result_msg;
-  geometry_msgs::msg::PoseArray multi_initial_pose_msg;
-  multi_ndt_result_msg.header.stamp = sensor_ros_time;
-  multi_ndt_result_msg.header.frame_id = param_.frame.map_frame;
-  multi_initial_pose_msg.header.stamp = sensor_ros_time;
-  multi_initial_pose_msg.header.frame_id = param_.frame.map_frame;
-  multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(ndt_result.pose));
-  multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(initial_pose_matrix));
-
-  multi_ndt_pose_pub_->publish(multi_ndt_result_msg);
-  multi_initial_pose_pub_->publish(multi_initial_pose_msg);
+    for (const auto & sub_initial_pose_matrix :poses_to_search) {
+      multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(sub_initial_pose_matrix));
+    }
+    multi_initial_pose_pub_->publish(multi_initial_pose_msg);
+  }   
 
   return ndt_covariance;
 }
