@@ -16,7 +16,7 @@ ament_auto_add_library(autoware_lane_departure_checker SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware_lane_departure_checker::LaneDepartureCheckerNode"
+  PLUGIN "autoware::lane_departure_checker::LaneDepartureCheckerNode"
   EXECUTABLE lane_departure_checker_node
 )
 
