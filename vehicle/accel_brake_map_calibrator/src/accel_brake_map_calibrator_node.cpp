@@ -261,8 +261,6 @@ bool AccelBrakeMapCalibrator::getCurrentPitchFromTF(double * pitch)
   return true;
 }
 
-
-
 void AccelBrakeMapCalibrator::timerCallback()
 {
   update_count_++;
@@ -289,11 +287,9 @@ void AccelBrakeMapCalibrator::timerCallback()
   ActuationCommandStamped::ConstSharedPtr actuation_cmd_ptr = actuation_cmd_sub_.takeData();
   if (actuation_status_ptr) {
     takeActuationStatus(actuation_status_ptr);
-  }
-  else if (actuation_cmd_ptr) {
+  } else if (actuation_cmd_ptr) {
     takeActuationCommand(actuation_cmd_ptr);
-  }
-  else {
+  } else {
     return;
   }
 
