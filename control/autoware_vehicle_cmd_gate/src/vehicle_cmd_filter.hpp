@@ -15,8 +15,8 @@
 #ifndef VEHICLE_CMD_FILTER_HPP_
 #define VEHICLE_CMD_FILTER_HPP_
 
-#include <rclcpp/rclcpp.hpp>
 #include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>
 

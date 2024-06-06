@@ -24,8 +24,8 @@
 #define ASSERT_LT_NEAR(x, y) ASSERT_LT(x, y + THRESHOLD)
 #define ASSERT_GT_NEAR(x, y) ASSERT_GT(x, y - THRESHOLD)
 
-using autoware_control_msgs::msg::Control;
 using autoware::vehicle_cmd_gate::LimitArray;
+using autoware_control_msgs::msg::Control;
 
 constexpr double NOMINAL_INTERVAL = 1.0;
 

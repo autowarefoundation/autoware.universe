@@ -20,11 +20,11 @@
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "vehicle_cmd_filter.hpp"
 
+#include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
-#include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
@@ -58,6 +58,7 @@ using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_control_msgs::msg::Control;
 using autoware_control_msgs::msg::Longitudinal;
+using autoware_vehicle_cmd_gate::msg::IsFilterActivated;
 using autoware_vehicle_msgs::msg::GearCommand;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_vehicle_msgs::msg::SteeringReport;
@@ -71,7 +72,6 @@ using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
-using autoware_vehicle_cmd_gate::msg::IsFilterActivated;
 using visualization_msgs::msg::MarkerArray;
 
 using diagnostic_msgs::msg::DiagnosticStatus;
