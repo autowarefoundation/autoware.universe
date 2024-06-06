@@ -301,16 +301,16 @@ bool EKFLocalizer::get_transform_from_tf(
  * callback_initial_pose
  */
 void EKFLocalizer::callback_initial_pose(
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr initialpose)
+  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
 {
   geometry_msgs::msg::TransformStamped transform;
-  if (!get_transform_from_tf(params_.pose_frame_id, initialpose->header.frame_id, transform)) {
+  if (!get_transform_from_tf(params_.pose_frame_id, msg->header.frame_id, transform)) {
     RCLCPP_ERROR(
       get_logger(), "[EKF] TF transform failed. parent = %s, child = %s",
-      params_.pose_frame_id.c_str(), initialpose->header.frame_id.c_str());
+      params_.pose_frame_id.c_str(), msg->header.frame_id.c_str());
   }
-  ekf_module_->initialize(*initialpose, transform);
-  init_simple_1d_filters(*initialpose);
+  ekf_module_->initialize(*msg, transform);
+  init_simple_1d_filters(*msg);
 }
 
 /*
