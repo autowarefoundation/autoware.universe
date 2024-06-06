@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner_common/marker_utils/colors.hpp"
-#include "behavior_path_planner_common/marker_utils/utils.hpp"
-#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "autoware_behavior_path_planner_common/marker_utils/colors.hpp"
+#include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <behavior_path_lane_change_module/utils/markers.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <visualization_msgs/msg/detail/marker__struct.hpp>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
 
