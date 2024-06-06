@@ -40,6 +40,7 @@
   <depend>autoware_behavior_path_planner_common</depend>
   <depend>autoware_frenet_planner</depend>
   <depend>autoware_path_sampler</depend>
+  <depend>autoware_lane_departure_checker</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>autoware_planning_test_manager</depend>
@@ -48,7 +49,6 @@
   <depend>freespace_planning_algorithms</depend>
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
-  <depend>lane_departure_checker</depend>
   <depend>lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>libopencv-dev</depend>

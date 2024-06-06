@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
-#define LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
+#ifndef AUTOWARE_LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
+#define AUTOWARE_LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
 
-#include "lane_departure_checker/lane_departure_checker.hpp"
+#include "autoware_lane_departure_checker/lane_departure_checker.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -40,7 +40,7 @@
 #include <string>
 #include <vector>
 
-namespace lane_departure_checker
+namespace autoware::lane_departure_checker
 {
 using autoware_map_msgs::msg::LaneletMapBin;
 
@@ -117,7 +117,7 @@ private:
   // Core
   Input input_{};
   Output output_{};
-  std::unique_ptr<LaneDepartureChecker> lane_departure_checker_;
+  std::unique_ptr<LaneDepartureChecker> autoware_lane_departure_checker_;
 
   // Diagnostic Updater
   diagnostic_updater::Updater updater_{this};
@@ -149,6 +149,6 @@ private:
 
   lanelet::Lanelets getRightOppositeLanelets(const lanelet::ConstLanelet & lanelet);
 };
-}  // namespace lane_departure_checker
+}  // namespace autoware::lane_departure_checker
 
-#endif  // LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
+#endif  // AUTOWARE_LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
