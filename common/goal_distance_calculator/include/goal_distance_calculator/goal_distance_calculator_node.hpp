@@ -46,8 +46,8 @@ public:
 private:
   // Subscriber
   tier4_autoware_utils::SelfPoseListener self_pose_listener_;
-  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute> sub_route_{
-    this, "/planning/mission_planning/route"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute>
+    sub_route_{this, "/planning/mission_planning/route"};
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
