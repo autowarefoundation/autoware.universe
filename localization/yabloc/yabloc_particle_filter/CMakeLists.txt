@@ -90,8 +90,13 @@ rclcpp_components_register_node(predictor
 )
 
 # Visualizer
-ament_auto_add_executable(particle_visualize
+ament_auto_add_library(particle_visualize
   src/common/particle_visualize_node.cpp
+)
+rclcpp_components_register_node(particle_visualize
+  PLUGIN "yabloc::modularized_particle_filter::ParticleVisualize"
+  EXECUTABLE yabloc_particle_visualize_node
+  EXECUTOR SingleThreadedExecutor
 )
 
 # GNSS corrector
