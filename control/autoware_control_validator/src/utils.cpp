@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-namespace control_validator
+namespace autoware::control_validator
 {
 
 void shiftPose(Pose & pose, double longitudinal)
@@ -162,4 +162,4 @@ double calcMaxLateralDistance(
   return max_dist;
 }
 
-}  // namespace control_validator
+}  // namespace autoware::control_validator

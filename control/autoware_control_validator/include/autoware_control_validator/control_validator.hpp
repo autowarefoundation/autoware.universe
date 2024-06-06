@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
-#define CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
+#ifndef AUTOWARE_CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
+#define AUTOWARE_CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
 
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "control_validator/debug_marker.hpp"
@@ -29,7 +29,7 @@
 #include <memory>
 #include <string>
 
-namespace control_validator
+namespace autoware::control_validator
 {
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
@@ -94,6 +94,6 @@ private:
 
   std::shared_ptr<ControlValidatorDebugMarkerPublisher> debug_pose_publisher_;
 };
-}  // namespace control_validator
+}  // namespace autoware::control_validator
 
-#endif  // CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
+#endif  // AUTOWARE_CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
