@@ -83,10 +83,11 @@ target_link_libraries(ll2_cost_map ${PCL_LIBRARIES})
 # ===================================================
 # Executables
 # Predictor
-ament_auto_add_executable(predictor_node
-  src/prediction/predictor_node.cpp
+rclcpp_components_register_node(predictor
+  PLUGIN "yabloc::modularized_particle_filter::Predictor"
+  EXECUTABLE yabloc_predictor_node
+  EXECUTOR SingleThreadedExecutor
 )
-target_link_libraries(predictor_node predictor)
 
 # Visualizer
 ament_auto_add_executable(particle_visualize
