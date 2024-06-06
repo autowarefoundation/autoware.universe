@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_START_PLANNER_MODULE__UTIL_HPP_
-#define BEHAVIOR_PATH_START_PLANNER_MODULE__UTIL_HPP_
+#ifndef AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__UTIL_HPP_
+#define AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__UTIL_HPP_
 
 #include "autoware_behavior_path_planner_common/data_manager.hpp"
 #include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
@@ -55,4 +55,4 @@ std::optional<PathWithLaneId> extractCollisionCheckSection(
   const PullOutPath & path, const double collision_check_distance_from_end);
 }  // namespace behavior_path_planner::start_planner_utils
 
-#endif  // BEHAVIOR_PATH_START_PLANNER_MODULE__UTIL_HPP_
+#endif  // AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__UTIL_HPP_
