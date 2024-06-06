@@ -15,13 +15,13 @@
 // #include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include "motion_utils/trajectory/conversion.hpp"
 
+#include <autoware_velocity_smoother/trajectory_utils.hpp>
 #include <behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <motion_velocity_smoother/trajectory_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
+#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 #include <tf2/utils.h>
 
@@ -35,10 +35,10 @@
 
 namespace behavior_velocity_planner
 {
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using geometry_msgs::msg::Quaternion;
 using TrajectoryPointWithIdx = std::pair<TrajectoryPoint, size_t>;
@@ -55,8 +55,7 @@ bool smoothPath(
   const auto & smoother = planner_data->velocity_smoother_;
 
   auto trajectory =
-    motion_utils::convertToTrajectoryPoints<autoware_auto_planning_msgs::msg::PathWithLaneId>(
-      in_path);
+    motion_utils::convertToTrajectoryPoints<tier4_planning_msgs::msg::PathWithLaneId>(in_path);
   const auto traj_lateral_acc_filtered = smoother->applyLateralAccelerationFilter(trajectory);
 
   const auto traj_steering_rate_limited =
@@ -83,7 +82,7 @@ bool smoothPath(
     traj_smoothed.begin(), traj_resampled.begin(), traj_resampled.begin() + traj_resampled_closest);
 
   if (external_v_limit) {
-    motion_velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
+    autoware_velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
       traj_resampled_closest, traj_smoothed.size(), external_v_limit->max_velocity, traj_smoothed);
   }
   out_path = motion_utils::convertToPathWithLaneId<TrajectoryPoints>(traj_smoothed);
