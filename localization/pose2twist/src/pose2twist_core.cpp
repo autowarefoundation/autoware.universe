@@ -121,12 +121,12 @@ void Pose2Twist::callback_pose(geometry_msgs::msg::PoseStamped::SharedPtr pose_m
 
   tier4_debug_msgs::msg::Float32Stamped linear_x_msg;
   linear_x_msg.stamp = this->now();
-  linear_x_msg.data = twist_msg.twist.linear.x;
+  linear_x_msg.data = static_cast<float>(twist_msg.twist.linear.x);
   linear_x_pub_->publish(linear_x_msg);
 
   tier4_debug_msgs::msg::Float32Stamped angular_z_msg;
   angular_z_msg.stamp = this->now();
-  angular_z_msg.data = twist_msg.twist.angular.z;
+  angular_z_msg.data = static_cast<float>(twist_msg.twist.angular.z);
   angular_z_pub_->publish(angular_z_msg);
 }
 
