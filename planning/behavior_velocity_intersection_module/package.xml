@@ -20,6 +20,7 @@
 
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
+  <depend>autoware_route_handler</depend>
   <depend>behavior_velocity_planner_common</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
@@ -31,7 +32,6 @@
   <depend>nav_msgs</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>route_handler</depend>
   <depend>rtc_interface</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tier4_autoware_utils</depend>

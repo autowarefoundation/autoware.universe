@@ -45,6 +45,7 @@
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
+  <depend>autoware_route_handler</depend>
   <depend>freespace_planning_algorithms</depend>
   <depend>geometry_msgs</depend>
   <depend>interpolation</depend>
@@ -55,7 +56,6 @@
   <depend>object_recognition_utils</depend>
   <depend>objects_of_interest_marker_interface</depend>
   <depend>rclcpp</depend>
-  <depend>route_handler</depend>
   <depend>rtc_interface</depend>
   <depend>tf2</depend>
   <depend>tier4_autoware_utils</depend>
