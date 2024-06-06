@@ -25,7 +25,6 @@ class Pose2Twist : public rclcpp::Node
 {
 public:
   explicit Pose2Twist(const rclcpp::NodeOptions & options);
-  ~Pose2Twist() override = default;
 
 private:
   void callback_pose(geometry_msgs::msg::PoseStamped::SharedPtr pose_msg_ptr);
