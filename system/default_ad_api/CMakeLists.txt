@@ -5,6 +5,7 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/diagnostics.cpp
   src/fail_safe.cpp
   src/heartbeat.cpp
   src/interface.cpp
@@ -17,12 +18,14 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/vehicle.cpp
   src/vehicle_info.cpp
   src/vehicle_door.cpp
+  src/utils/localization_conversion.cpp
   src/utils/route_conversion.cpp
   src/compatibility/autoware_state.cpp
 )
 
 rclcpp_components_register_nodes(${PROJECT_NAME}
   "default_ad_api::AutowareStateNode"
+  "default_ad_api::DiagnosticsNode"
   "default_ad_api::FailSafeNode"
   "default_ad_api::HeartbeatNode"
   "default_ad_api::InterfaceNode"

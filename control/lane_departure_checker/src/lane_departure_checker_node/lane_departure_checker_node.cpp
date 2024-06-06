@@ -150,6 +150,7 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
 
   // Core Parameter
   param_.footprint_margin_scale = declare_parameter<double>("footprint_margin_scale");
+  param_.footprint_extra_margin = declare_parameter<double>("footprint_extra_margin");
   param_.resample_interval = declare_parameter<double>("resample_interval");
   param_.max_deceleration = declare_parameter<double>("max_deceleration");
   param_.delay_time = declare_parameter<double>("delay_time");
@@ -171,7 +172,7 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   // Subscriber
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", 1, std::bind(&LaneDepartureCheckerNode::onOdometry, this, _1));
-  sub_lanelet_map_bin_ = this->create_subscription<HADMapBin>(
+  sub_lanelet_map_bin_ = this->create_subscription<LaneletMapBin>(
     "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local(),
     std::bind(&LaneDepartureCheckerNode::onLaneletMapBin, this, _1));
   sub_route_ = this->create_subscription<LaneletRoute>(
@@ -205,7 +206,7 @@ void LaneDepartureCheckerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSh
   current_odom_ = msg;
 }
 
-void LaneDepartureCheckerNode::onLaneletMapBin(const HADMapBin::ConstSharedPtr msg)
+void LaneDepartureCheckerNode::onLaneletMapBin(const LaneletMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_, &traffic_rules_, &routing_graph_);
@@ -403,6 +404,7 @@ rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
 
     // Core
     update_param(parameters, "footprint_margin_scale", param_.footprint_margin_scale);
+    update_param(parameters, "footprint_extra_margin", param_.footprint_extra_margin);
     update_param(parameters, "resample_interval", param_.resample_interval);
     update_param(parameters, "max_deceleration", param_.max_deceleration);
     update_param(parameters, "delay_time", param_.delay_time);
