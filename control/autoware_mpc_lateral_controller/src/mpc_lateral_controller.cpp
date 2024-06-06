@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mpc_lateral_controller/mpc_lateral_controller.hpp"
+#include "autoware_mpc_lateral_controller/mpc_lateral_controller.hpp"
 
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
-#include "mpc_lateral_controller/qp_solver/qp_solver_unconstraint_fast.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
-#include "mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
+#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
+#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_unconstraint_fast.hpp"
+#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
+#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/create_timer_ros.h"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::mpc_lateral_controller
+namespace autoware::motion::control::autoware_mpc_lateral_controller
 {
 
 MpcLateralController::MpcLateralController(rclcpp::Node & node)
@@ -641,4 +641,4 @@ bool MpcLateralController::isValidTrajectory(const Trajectory & traj) const
   return true;
 }
 
-}  // namespace autoware::motion::control::mpc_lateral_controller
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mpc_lateral_controller/mpc_trajectory.hpp"
+#include "autoware_mpc_lateral_controller/mpc_trajectory.hpp"
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
@@ -98,4 +98,4 @@ size_t MPCTrajectory::size() const
     return 0;
   }
 }
-}  // namespace autoware::motion::control::mpc_lateral_controller
+}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
