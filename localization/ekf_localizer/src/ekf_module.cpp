@@ -76,7 +76,7 @@ void EKFModule::initialize(
   p(IDX::VX, IDX::VX) = 0.01;
   p(IDX::WZ, IDX::WZ) = 0.01;
 
-  kalman_filter_.init(x, p, params_.extend_state_step);
+  kalman_filter_.init(x, p, static_cast<int>(params_.extend_state_step));
 }
 
 geometry_msgs::msg::PoseStamped EKFModule::get_current_pose(
@@ -272,7 +272,7 @@ bool EKFModule::measurement_update_pose(
   const Eigen::Matrix3d r =
     pose_measurement_covariance(pose.pose.covariance, params_.pose_smoothing_steps);
 
-  kalman_filter_.updateWithDelay(y, c, r, delay_step);
+  kalman_filter_.updateWithDelay(y, c, r, static_cast<int>(delay_step));
 
   // debug
   const Eigen::MatrixXd x_result = kalman_filter_.getLatestX();
@@ -359,7 +359,7 @@ bool EKFModule::measurement_update_twist(
   const Eigen::Matrix2d r =
     twist_measurement_covariance(twist.twist.covariance, params_.twist_smoothing_steps);
 
-  kalman_filter_.updateWithDelay(y, c, r, delay_step);
+  kalman_filter_.updateWithDelay(y, c, r, static_cast<int>(delay_step));
 
   // debug
   const Eigen::MatrixXd x_result = kalman_filter_.getLatestX();
