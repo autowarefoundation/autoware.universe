@@ -30,7 +30,7 @@ TEST(EKFCovarianceToPoseMessageCovariance, SmokeTest)
     P(2, 1) = 8.;
     P(2, 2) = 9.;
 
-    std::array<double, 36> covariance = ekfCovarianceToPoseMessageCovariance(P);
+    std::array<double, 36> covariance = ekf_covariance_to_pose_message_covariance(P);
     EXPECT_EQ(covariance[0], 1.);
     EXPECT_EQ(covariance[1], 2.);
     EXPECT_EQ(covariance[5], 3.);
@@ -45,7 +45,7 @@ TEST(EKFCovarianceToPoseMessageCovariance, SmokeTest)
   // ensure other elements are zero
   {
     Matrix6d P = Matrix6d::Zero();
-    std::array<double, 36> covariance = ekfCovarianceToPoseMessageCovariance(P);
+    std::array<double, 36> covariance = ekf_covariance_to_pose_message_covariance(P);
     for (double e : covariance) {
       EXPECT_EQ(e, 0.);
     }
@@ -61,7 +61,7 @@ TEST(EKFCovarianceToTwistMessageCovariance, SmokeTest)
     P(5, 4) = 3.;
     P(5, 5) = 4.;
 
-    std::array<double, 36> covariance = ekfCovarianceToTwistMessageCovariance(P);
+    std::array<double, 36> covariance = ekf_covariance_to_twist_message_covariance(P);
     EXPECT_EQ(covariance[0], 1.);
     EXPECT_EQ(covariance[5], 2.);
     EXPECT_EQ(covariance[30], 3.);
@@ -71,7 +71,7 @@ TEST(EKFCovarianceToTwistMessageCovariance, SmokeTest)
   // ensure other elements are zero
   {
     Matrix6d P = Matrix6d::Zero();
-    std::array<double, 36> covariance = ekfCovarianceToTwistMessageCovariance(P);
+    std::array<double, 36> covariance = ekf_covariance_to_twist_message_covariance(P);
     for (double e : covariance) {
       EXPECT_EQ(e, 0.);
     }

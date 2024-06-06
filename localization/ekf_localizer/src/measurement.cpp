@@ -17,7 +17,7 @@
 #include "ekf_localizer/state_index.hpp"
 #include "tier4_autoware_utils/ros/msg_covariance.hpp"
 
-Eigen::Matrix<double, 3, 6> poseMeasurementMatrix()
+Eigen::Matrix<double, 3, 6> pose_measurement_matrix()
 {
   Eigen::Matrix<double, 3, 6> C = Eigen::Matrix<double, 3, 6>::Zero();
   C(0, IDX::X) = 1.0;    // for pos x
@@ -26,7 +26,7 @@ Eigen::Matrix<double, 3, 6> poseMeasurementMatrix()
   return C;
 }
 
-Eigen::Matrix<double, 2, 6> twistMeasurementMatrix()
+Eigen::Matrix<double, 2, 6> twist_measurement_matrix()
 {
   Eigen::Matrix<double, 2, 6> C = Eigen::Matrix<double, 2, 6>::Zero();
   C(0, IDX::VX) = 1.0;  // for vx
@@ -34,7 +34,7 @@ Eigen::Matrix<double, 2, 6> twistMeasurementMatrix()
   return C;
 }
 
-Eigen::Matrix3d poseMeasurementCovariance(
+Eigen::Matrix3d pose_measurement_covariance(
   const std::array<double, 36ul> & covariance, const size_t smoothing_step)
 {
   Eigen::Matrix3d R;
@@ -45,7 +45,7 @@ Eigen::Matrix3d poseMeasurementCovariance(
   return R * static_cast<double>(smoothing_step);
 }
 
-Eigen::Matrix2d twistMeasurementCovariance(
+Eigen::Matrix2d twist_measurement_covariance(
   const std::array<double, 36ul> & covariance, const size_t smoothing_step)
 {
   Eigen::Matrix2d R;

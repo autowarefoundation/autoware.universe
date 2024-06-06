@@ -69,25 +69,25 @@ public:
     const PoseWithCovariance & initial_pose,
     const geometry_msgs::msg::TransformStamped & transform);
 
-  geometry_msgs::msg::PoseStamped getCurrentPose(
+  geometry_msgs::msg::PoseStamped get_current_pose(
     const rclcpp::Time & current_time, const double z, const double roll, const double pitch,
     bool get_biased_yaw) const;
-  geometry_msgs::msg::TwistStamped getCurrentTwist(const rclcpp::Time & current_time) const;
-  double getYawBias() const;
-  std::array<double, 36> getCurrentPoseCovariance() const;
-  std::array<double, 36> getCurrentTwistCovariance() const;
+  geometry_msgs::msg::TwistStamped get_current_twist(const rclcpp::Time & current_time) const;
+  double get_yaw_bias() const;
+  std::array<double, 36> get_current_pose_covariance() const;
+  std::array<double, 36> get_current_twist_covariance() const;
 
   size_t find_closest_delay_time_index(double target_value) const;
   void accumulate_delay_time(const double dt);
 
-  void predictWithDelay(const double dt);
-  bool measurementUpdatePose(
+  void predict_with_delay(const double dt);
+  bool measurement_update_pose(
     const PoseWithCovariance & pose, const rclcpp::Time & t_curr,
     EKFDiagnosticInfo & pose_diag_info);
-  bool measurementUpdateTwist(
+  bool measurement_update_twist(
     const TwistWithCovariance & twist, const rclcpp::Time & t_curr,
     EKFDiagnosticInfo & twist_diag_info);
-  geometry_msgs::msg::PoseWithCovarianceStamped compensatePoseWithZDelay(
+  geometry_msgs::msg::PoseWithCovarianceStamped compensate_pose_with_z_delay(
     const PoseWithCovariance & pose, const double delay_time);
 
 private:
