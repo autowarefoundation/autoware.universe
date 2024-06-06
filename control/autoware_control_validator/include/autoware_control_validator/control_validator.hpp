@@ -15,9 +15,9 @@
 #ifndef AUTOWARE_CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
 #define AUTOWARE_CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
 
-#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
-#include "control_validator/debug_marker.hpp"
-#include "control_validator/msg/control_validator_status.hpp"
+#include "autoware_control_validator/debug_marker.hpp"
+#include "autoware_control_validator/msg/control_validator_status.hpp"
+#include "autoware_vehicle_info_util/vehicle_info_util.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -31,9 +31,9 @@
 
 namespace autoware::control_validator
 {
+using autoware::control_validator::msg::ControlValidatorStatus;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using control_validator::msg::ControlValidatorStatus;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using nav_msgs::msg::Odometry;
