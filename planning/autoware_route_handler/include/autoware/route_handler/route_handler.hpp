@@ -72,7 +72,7 @@ public:
   explicit RouteHandler(const LaneletMapBin & map_msg);
 
   // non-const methods
-  void setMap(const HADMapBin & map_msg, const bool & is_enable_differential_lanelet = false);
+  void setMap(const LaneletMapBin & map_msg, const bool & is_enable_differential_lanelet = false);
   void setRoute(
     const LaneletRoute & route_msg, const bool & is_enable_differential_lanelet = false);
   void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
