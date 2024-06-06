@@ -530,7 +530,6 @@ bool isEgoOutOfRoute(
       goal_lane = *goalLaneletIt;
       is_failed_getting_lanelet = false;
     }
-    is_failed_getting_lanelet = !route_handler->getGoalLanelet(&goal_lane);
   }
 
   if (is_failed_getting_lanelet) {
