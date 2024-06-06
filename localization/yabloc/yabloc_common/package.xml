@@ -28,8 +28,8 @@
   <depend>signal_processing</depend>
   <depend>sophus</depend>
   <depend>std_msgs</depend>
-  <depend>tier4_autoware_utils</depend>
   <depend>tf2_ros</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
