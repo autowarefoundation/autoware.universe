@@ -45,25 +45,26 @@ Or, you can include `component_monitor.launch.xml` in you launch file with the c
 
 ## How does monitoring works
 
-The package uses the `top` command under the hood. `top -b -n 1 -p PID` command is tried to run at 10 Hz to get
+The package uses the `top` command under the hood. `top -b -n 1 -E k -p PID` command is tried to run at 10 Hz to get
 the system usage of the process.
 
 - `-b` activates the batch mode. By default, `top` doesn't exit and prints to stdout periodically. Batch mode allows
   exiting the program.
 - `-n` number of times should `top` prints the system usage in batch mode.
 - `-p` specifies the PID of the process to monitor.
+- `-E k` changes the memory unit in the summary section to KiB.
 
 Here is a sample output:
 
 ```text
-top - 16:41:52 up  6:19,  1 user,  load average: 1,25, 2,06, 2,57
+top - 13:57:26 up  3:14,  1 user,  load average: 1,09, 1,10, 1,04
 Tasks:   1 total,   0 running,   1 sleeping,   0 stopped,   0 zombie
-%Cpu(s):  6,4 us,  4,3 sy,  0,0 ni, 89,4 id,  0,0 wa,  0,0 hi,  0,0 si,  0,0 st
-MiB Mem :  63996,3 total,   4007,9 free,  31087,8 used,  28900,6 buff/cache
-MiB Swap:  38147,0 total,  38129,2 free,     17,8 used.  30132,2 avail Mem
+%Cpu(s):  0,0 us,  0,8 sy,  0,0 ni, 99,2 id,  0,0 wa,  0,0 hi,  0,0 si,  0,0 st
+KiB Mem : 65532208 total, 35117428 free, 17669824 used, 12744956 buff/cache
+KiB Swap: 39062524 total, 39062524 free,        0 used. 45520816 avail Mem
 
     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
-   2795 meb       20   0 2645556   1,1g  40440 S  20,0   1,8  33:13.16 awesome
+   3352 meb       20   0 2905940   1,2g  39292 S   0,0   2,0  23:24.01 awesome
 ```
 
 We get 5th, 8th, and 9th fields from the last line, which are RES, %CPU, and %MEM, respectively.

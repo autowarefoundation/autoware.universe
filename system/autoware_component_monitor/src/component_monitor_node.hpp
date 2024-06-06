@@ -16,7 +16,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "autoware_internal_msgs/msg/system_usage.hpp"
+#include "autoware_internal_msgs/msg/resource_usage_report.hpp"
 #include "std_msgs/msg/header.hpp"
 
 #include "boost/filesystem.hpp"
@@ -29,7 +29,7 @@
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
-using msg_t = autoware_internal_msgs::msg::SystemUsage;
+using msg_t = autoware_internal_msgs::msg::ResourceUsageReport;
 using fields_t = std::vector<std::vector<std::string>>;
 
 namespace autoware::component_monitor
