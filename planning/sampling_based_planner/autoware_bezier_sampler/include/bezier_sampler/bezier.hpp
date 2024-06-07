@@ -19,7 +19,7 @@
 
 #include <vector>
 
-namespace bezier_sampler
+namespace autoware::bezier_sampler
 {
 
 // Coefficients for matrix calculation of the quintic Bézier curve.
@@ -70,6 +70,6 @@ public:
   /// @brief calculate the curvature for the given parameter t
   [[nodiscard]] double curvature(const double t) const;
 };
-}  // namespace bezier_sampler
+}  // namespace autoware::bezier_sampler
 
 #endif  // BEZIER_SAMPLER__BEZIER_HPP_

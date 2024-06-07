@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <bezier_sampler/bezier.hpp>
+#include <autoware_bezier_sampler/bezier.hpp>
 
 #include <iostream>
 
-namespace bezier_sampler
+namespace autoware::bezier_sampler
 {
 Bezier::Bezier(Eigen::Matrix<double, 6, 2> control_points)
 : control_points_(std::move(control_points))
@@ -117,4 +117,4 @@ double Bezier::heading(const double t) const
   return std::atan2(vel.y(), vel.x());
 }
 
-}  // namespace bezier_sampler
+}  // namespace autoware::bezier_sampler

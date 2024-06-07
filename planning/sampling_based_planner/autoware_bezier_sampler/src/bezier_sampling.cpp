@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <bezier_sampler/bezier_sampling.hpp>
+#include <autoware_bezier_sampler/bezier_sampling.hpp>
 
-namespace bezier_sampler
+namespace autoware::bezier_sampler
 {
 std::vector<Bezier> sample(
   const sampler_common::State & initial, const sampler_common::State & final,
@@ -75,4 +75,4 @@ Bezier generate(
                           (1.0 / 20.0) * final_acceleration.transpose();
   return Bezier(control_points);
 }
-}  // namespace bezier_sampler
+}  // namespace autoware::bezier_sampler

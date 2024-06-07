@@ -15,14 +15,14 @@
 #ifndef BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
 #define BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
 
-#include <bezier_sampler/bezier.hpp>
+#include <autoware_bezier_sampler/bezier.hpp>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 #include <sampler_common/structures.hpp>
 
 #include <vector>
 
-namespace bezier_sampler
+namespace autoware::bezier_sampler
 {
 struct SamplingParameters
 {
@@ -45,6 +45,6 @@ Bezier generate(
   const Eigen::Vector2d & initial_pose, const Eigen::Vector2d & final_pose,
   const Eigen::Vector2d & initial_velocity, const Eigen::Vector2d & initial_acceleration,
   const Eigen::Vector2d & final_velocity, const Eigen::Vector2d & final_acceleration);
-}  // namespace bezier_sampler
+}  // namespace autoware::bezier_sampler
 
 #endif  // BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_

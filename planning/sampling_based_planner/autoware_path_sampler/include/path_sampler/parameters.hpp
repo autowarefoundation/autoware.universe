@@ -15,7 +15,7 @@
 #ifndef PATH_SAMPLER__PARAMETERS_HPP_
 #define PATH_SAMPLER__PARAMETERS_HPP_
 
-#include "bezier_sampler/bezier_sampling.hpp"
+#include "autoware_bezier_sampler/bezier_sampling.hpp"
 #include "sampler_common/structures.hpp"
 
 #include <vector>
@@ -37,7 +37,7 @@ struct Parameters
       std::vector<double> target_lateral_velocities{};
       std::vector<double> target_lateral_accelerations{};
     } frenet;
-    bezier_sampler::SamplingParameters bezier{};
+    autoware::bezier_sampler::SamplingParameters bezier{};
   } sampling;
 
   struct

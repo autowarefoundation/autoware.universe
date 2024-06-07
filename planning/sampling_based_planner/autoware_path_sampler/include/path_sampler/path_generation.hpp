@@ -15,7 +15,7 @@
 #ifndef PATH_SAMPLER__PATH_GENERATION_HPP_
 #define PATH_SAMPLER__PATH_GENERATION_HPP_
 
-#include "bezier_sampler/bezier_sampling.hpp"
+#include "autoware_bezier_sampler/bezier_sampling.hpp"
 #include "frenet_planner/structures.hpp"
 #include "path_sampler/parameters.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"

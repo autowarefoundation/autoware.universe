@@ -16,7 +16,7 @@
 
 #include "sampler_common/structures.hpp"
 
-#include <bezier_sampler/bezier_sampling.hpp>
+#include <autoware_bezier_sampler/bezier_sampling.hpp>
 #include <frenet_planner/frenet_planner.hpp>
 #include <path_sampler/prepare_inputs.hpp>
 
@@ -69,7 +69,7 @@ std::vector<sampler_common::Path> generateBezierPaths(
     target_state.curvature = path_spline.curvature(target_s);
     target_state.heading = path_spline.yaw(target_s);
     const auto bezier_samples =
-      bezier_sampler::sample(initial_state, target_state, params.sampling.bezier);
+      autoware::bezier_sampler::sample(initial_state, target_state, params.sampling.bezier);
 
     const auto step = std::min(0.1, params.sampling.resolution / target_length);
     for (const auto & bezier : bezier_samples) {
