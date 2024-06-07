@@ -1065,7 +1065,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
     param_.score_estimation.converged_param_nearest_voxel_transformation_likelihood)
     RCLCPP_WARN_STREAM(
       this->get_logger(),
-      "Initial Pose Estimation is Unstabled. Score is " << best_particle_ptr->score);
+      "Initial Pose Estimation is Unstable. Score is " << best_particle_ptr->score);
 
   geometry_msgs::msg::PoseWithCovarianceStamped result_pose_with_cov_msg;
   result_pose_with_cov_msg.header.stamp = initial_pose_with_cov.header.stamp;
