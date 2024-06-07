@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_VEHICLE_CMD_GATE_HPP_
-#define AUTOWARE_VEHICLE_CMD_GATE_HPP_
+#ifndef VEHICLE_CMD_GATE_HPP_
+#define VEHICLE_CMD_GATE_HPP_
 
 #include "adapi_pause_interface.hpp"
 #include "moderate_stop_interface.hpp"
@@ -258,4 +258,4 @@ private:
 };
 
 }  // namespace autoware::vehicle_cmd_gate
-#endif  // AUTOWARE_VEHICLE_CMD_GATE_HPP_
+#endif  // VEHICLE_CMD_GATE_HPP_
