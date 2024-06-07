@@ -51,7 +51,7 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("lane_departure_checker_param_path").perform(context), "r") as f:
         lane_departure_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("control_validator_param_path").perform(context), "r") as f:
-        autoware_control_validator_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+        control_validator_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
         LaunchConfiguration("operation_mode_transition_manager_param_path").perform(context), "r"
     ) as f:
@@ -385,10 +385,10 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # control validator checker
-    autoware_control_validator_component = ComposableNode(
+    control_validator_component = ComposableNode(
         package="autoware_control_validator",
         plugin="autoware::control_validator::ControlValidator",
-        name="autoware_control_validator",
+        name="control_validator",
         remappings=[
             ("~/input/kinematics", "/localization/kinematic_state"),
             ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
@@ -398,7 +398,7 @@ def launch_setup(context, *args, **kwargs):
             ),
             ("~/output/validation_status", "~/validation_status"),
         ],
-        parameters=[autoware_control_validator_param],
+        parameters=[control_validator_param],
     )
 
     group = GroupAction(
@@ -414,16 +414,16 @@ def launch_setup(context, *args, **kwargs):
         ]
     )
 
-    autoware_control_validator_group = GroupAction(
+    control_validator_group = GroupAction(
         [
             PushRosNamespace("control"),
             ComposableNodeContainer(
-                name="autoware_control_validator_container",
+                name="control_validator_container",
                 namespace="",
                 package="rclcpp_components",
                 executable=LaunchConfiguration("container_executable"),
                 composable_node_descriptions=[
-                    autoware_control_validator_component,
+                    control_validator_component,
                     ComposableNode(
                         package="glog_component",
                         plugin="GlogComponent",
@@ -440,9 +440,9 @@ def launch_setup(context, *args, **kwargs):
         name="pympc_trajectory_follower",
     )
     if trajectory_follower_mode == "trajectory_follower_node":
-        return [group, autoware_control_validator_group]
+        return [group, control_validator_group]
     elif trajectory_follower_mode == "smart_mpc_trajectory_follower":
-        return [group, autoware_control_validator_group, smart_mpc_trajectory_follower]
+        return [group, control_validator_group, smart_mpc_trajectory_follower]
 
 
 def generate_launch_description():
