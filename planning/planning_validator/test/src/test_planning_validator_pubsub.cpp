@@ -469,8 +469,7 @@ TEST(PlanningValidator, DiagCheckLongitudinalDistanceDeviation)
 
 TEST(PlanningValidator, DiagCheckForwardTrajectoryLength)
 {
-  const auto diag_name =
-    "planning_validator: trajectory_validation_forward_trajectory_length";
+  const auto diag_name = "planning_validator: trajectory_validation_forward_trajectory_length";
   constexpr auto trajectory_v = 10.0;
   constexpr size_t trajectory_size = 10;
   constexpr auto ego_v = 10.0;
