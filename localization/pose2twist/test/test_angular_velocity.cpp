@@ -21,7 +21,7 @@ constexpr double ACCEPTABLE_ERROR = 1e-3;
 
 TEST(AngularVelocityFromQuaternion, CheckMultiplicationOrder)
 {
-  // If we define q2 as the rotation obntained by applying dq after applying q1, then q2 = q1 * dq .
+  // If we define q2 as the rotation obtained by applying dq after applying q1, then q2 = q1 * dq .
   //
   // IT IS NOT q2 = dq * q1 .
   //

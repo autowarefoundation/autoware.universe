@@ -44,7 +44,7 @@ tf2::Quaternion get_quaternion(const geometry_msgs::msg::PoseStamped::SharedPtr 
 geometry_msgs::msg::Vector3 compute_relative_rotation_vector(
   const tf2::Quaternion & q1, const tf2::Quaternion & q2)
 {
-  // If we define q2 as the rotation obntained by applying dq after applying q1,
+  // If we define q2 as the rotation obtained by applying dq after applying q1,
   // then q2 = q1 * dq .
   // Therefore, dq = q1.inverse() * q2 .
   const tf2::Quaternion diff_quaternion = q1.inverse() * q2;
