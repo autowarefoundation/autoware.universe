@@ -34,7 +34,6 @@ using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
 using visualization_msgs::msg::Marker;
-namespace planning_utils = ::behavior_velocity_planner::planning_utils;
 
 namespace
 {

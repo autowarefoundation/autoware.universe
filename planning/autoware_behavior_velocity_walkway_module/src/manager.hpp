@@ -33,9 +33,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using ::behavior_velocity_planner::PluginWrapper;
-using ::behavior_velocity_planner::SceneModuleInterface;
-using ::behavior_velocity_planner::SceneModuleManagerInterface;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 class WalkwayModuleManager : public SceneModuleManagerInterface

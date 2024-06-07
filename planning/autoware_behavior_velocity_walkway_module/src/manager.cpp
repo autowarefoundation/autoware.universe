@@ -26,12 +26,8 @@
 namespace autoware::behavior_velocity_planner
 {
 
-using ::behavior_velocity_planner::SceneModuleManagerInterface;
 using lanelet::autoware::Crosswalk;
 using tier4_autoware_utils::getOrDeclareParameter;
-namespace planning_utils = ::behavior_velocity_planner::planning_utils;
-using ::behavior_velocity_planner::getCrosswalkIdSetOnPath;
-using ::behavior_velocity_planner::getCrosswalksOnPath;
 
 WalkwayModuleManager::WalkwayModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())

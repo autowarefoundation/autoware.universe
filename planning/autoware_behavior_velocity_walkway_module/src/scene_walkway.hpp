@@ -33,11 +33,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using ::behavior_velocity_planner::DebugData;
-using ::behavior_velocity_planner::PathWithLaneId;
-using ::behavior_velocity_planner::SceneModuleInterface;
-using ::behavior_velocity_planner::StopReason;
-
 class WalkwayModule : public SceneModuleInterface
 {
 public:
