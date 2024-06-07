@@ -14,7 +14,7 @@ nav:
         - 'Dynamic Obstacle Avoidance': planning/autoware_behavior_path_dynamic_obstacle_avoidance_module
         - 'Goal Planner': planning/behavior_path_goal_planner_module
         - 'Lane Change': planning/behavior_path_lane_change_module
-        - 'Side Shift': planning/behavior_path_side_shift_module
+        - 'Side Shift': planning/autoware_behavior_path_side_shift_module
         - 'Start Planner': planning/behavior_path_start_planner_module
         - 'Static Obstacle Avoidance': planning/autoware_behavior_path_static_obstacle_avoidance_module
   - 'Behavior Velocity Planner':
@@ -25,7 +25,7 @@ nav:
         - 'Crosswalk': planning/behavior_velocity_crosswalk_module
         - 'Detection Area': planning/behavior_velocity_detection_area_module
         - 'Dynamic Obstacle Stop': planning/behavior_velocity_dynamic_obstacle_stop_module
-        - 'Intersection': planning/behavior_velocity_intersection_module
+        - 'Intersection': planning/autoware_behavior_velocity_intersection_module
         - 'No Drivable Lane': planning/behavior_velocity_no_drivable_lane_module
         - 'No Stopping Area': planning/behavior_velocity_no_stopping_area_module
         - 'Occlusion Spot': planning/behavior_velocity_occlusion_spot_module
@@ -56,13 +56,13 @@ nav:
       - 'About Path Smoother': planning/path_smoother
       - 'Elastic Band': planning/path_smoother/docs/eb
     - 'Sampling Based Planner':
-      - 'Path Sample': planning/sampling_based_planner/path_sampler
-      - 'Common library': planning/sampling_based_planner/sampler_common
-      - 'Frenet Planner': planning/sampling_based_planner/frenet_planner
-      - 'Bezier Sampler': planning/sampling_based_planner/bezier_sampler
+      - 'Path Sample': planning/sampling_based_planner/autoware_path_sampler
+      - 'Common library': planning/sampling_based_planner/autoware_sampler_common
+      - 'Frenet Planner': planning/sampling_based_planner/autoware_frenet_planner
+      - 'Bezier Sampler': planning/sampling_based_planner/autoware_bezier_sampler
     - 'Surround Obstacle Checker':
-      - 'About Surround Obstacle Checker': planning/surround_obstacle_checker
-      - 'About Surround Obstacle Checker (Japanese)': planning/surround_obstacle_checker/surround_obstacle_checker-design.ja
+      - 'About Surround Obstacle Checker': planning/autoware_surround_obstacle_checker
+      - 'About Surround Obstacle Checker (Japanese)': planning/autoware_surround_obstacle_checker/surround_obstacle_checker-design.ja
     - 'Motion Velocity Planner':
       - 'About Motion Velocity Planner': planning/autoware_motion_velocity_planner_node/
       - 'Available Modules':
