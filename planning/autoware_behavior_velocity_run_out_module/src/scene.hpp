@@ -39,11 +39,6 @@ using tier4_debug_msgs::msg::Float32Stamped;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
-using autoware::behavior_velocity_planner::PathWithLaneId;
-using autoware::behavior_velocity_planner::PlannerData;
-using autoware::behavior_velocity_planner::Polygon2d;
-using autoware::behavior_velocity_planner::SceneModuleInterface;
-using autoware::behavior_velocity_planner::StopReason;
 
 class RunOutModule : public SceneModuleInterface
 {

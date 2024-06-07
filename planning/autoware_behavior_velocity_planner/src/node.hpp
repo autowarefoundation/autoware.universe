@@ -46,7 +46,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware::behavior_velocity_planner::TrafficSignalStamped;
 using autoware_behavior_velocity_planner::srv::LoadPlugin;
 using autoware_behavior_velocity_planner::srv::UnloadPlugin;
 using autoware_map_msgs::msg::LaneletMapBin;

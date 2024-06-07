@@ -25,11 +25,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware::behavior_velocity_planner::PlanningBehavior;
-using autoware::behavior_velocity_planner::SceneModuleInterface;
-using autoware::behavior_velocity_planner::VelocityFactor;
-namespace arc_lane_utils = autoware::behavior_velocity_planner::arc_lane_utils;
-namespace planning_utils = autoware::behavior_velocity_planner::planning_utils;
 namespace
 {
 using tier4_autoware_utils::calcDistance2d;

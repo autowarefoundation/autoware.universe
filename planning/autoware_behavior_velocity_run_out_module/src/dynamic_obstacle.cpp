@@ -32,8 +32,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware::behavior_velocity_planner::Point2d;
-using autoware::behavior_velocity_planner::splineInterpolate;
 namespace
 {
 // create quaternion facing to the nearest trajectory point

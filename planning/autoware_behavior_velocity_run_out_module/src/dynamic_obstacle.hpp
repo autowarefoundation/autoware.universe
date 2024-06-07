@@ -44,7 +44,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware::behavior_velocity_planner::PlannerData;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
@@ -56,7 +55,6 @@ using run_out_utils::PredictedPath;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using PathPointsWithLaneId = std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>;
-using autoware::behavior_velocity_planner::Polygons2d;
 
 /**
  * @brief base class for creating dynamic obstacles from multiple types of input

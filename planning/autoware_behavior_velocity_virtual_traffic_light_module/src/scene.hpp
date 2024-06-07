@@ -32,10 +32,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware::behavior_velocity_planner::PathWithLaneId;
-using autoware::behavior_velocity_planner::Pose;
-using autoware::behavior_velocity_planner::SceneModuleInterface;
-using autoware::behavior_velocity_planner::StopReason;
 class VirtualTrafficLightModule : public SceneModuleInterface
 {
 public:
