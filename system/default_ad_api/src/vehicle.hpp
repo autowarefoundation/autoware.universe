@@ -15,6 +15,8 @@
 #ifndef VEHICLE_HPP_
 #define VEHICLE_HPP_
 
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
+
 #include <autoware_ad_api_specs/vehicle.hpp>
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_specs/map.hpp>
@@ -28,6 +30,7 @@
 #include <unordered_map>
 
 // This file should be included after messages.
+#include "utils/interface_subscriber.hpp"
 #include "utils/types.hpp"
 
 namespace default_ad_api
@@ -42,15 +45,31 @@ private:
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   Pub<autoware_ad_api::vehicle::VehicleKinematics> pub_kinematics_;
   Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
-  Sub<localization_interface::KinematicState> sub_kinematic_state_;
-  Sub<localization_interface::Acceleration> sub_acceleration_;
-  Sub<vehicle_interface::SteeringStatus> sub_steering_;
-  Sub<vehicle_interface::GearStatus> sub_gear_state_;
-  Sub<vehicle_interface::TurnIndicatorStatus> sub_turn_indicator_;
-  Sub<vehicle_interface::HazardLightStatus> sub_hazard_light_;
-  Sub<vehicle_interface::EnergyStatus> sub_energy_level_;
-  Sub<map_interface::MapProjectorInfo> sub_map_projector_info_;
   rclcpp::TimerBase::SharedPtr timer_;
+
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>>
+    kinematic_state_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    geometry_msgs::msg::AccelWithCovarianceStamped>>
+    acceleration_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    autoware_auto_vehicle_msgs::msg::SteeringReport>>
+    steering_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    autoware_auto_vehicle_msgs::msg::GearReport>>
+    gear_state_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    autoware_auto_vehicle_msgs::msg::TurnIndicatorsReport>>
+    turn_indicator_info_sub_;
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<tier4_map_msgs::msg::MapProjectorInfo>>
+    map_projector_info_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    autoware_auto_vehicle_msgs::msg::HazardLightsReport>>
+    hazard_light_sub_;
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<tier4_vehicle_msgs::msg::BatteryStatus>>
+    energy_level_sub_;
 
   localization_interface::KinematicState::Message::ConstSharedPtr kinematic_state_msgs_;
   localization_interface::Acceleration::Message::ConstSharedPtr acceleration_msgs_;

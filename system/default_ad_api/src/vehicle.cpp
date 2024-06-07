@@ -14,6 +14,8 @@
 
 #include "vehicle.hpp"
 
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
+
 #include <geography_utils/height.hpp>
 #include <geography_utils/projection.hpp>
 
@@ -62,17 +64,20 @@ std::unordered_map<uint8_t, uint8_t> hazard_light_type_ = {
 VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", options)
 {
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
-  group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
   adaptor.init_pub(pub_kinematics_);
   adaptor.init_pub(pub_status_);
-  adaptor.init_sub(sub_kinematic_state_, this, &VehicleNode::kinematic_state);
-  adaptor.init_sub(sub_acceleration_, this, &VehicleNode::acceleration_status);
-  adaptor.init_sub(sub_steering_, this, &VehicleNode::steering_status);
-  adaptor.init_sub(sub_gear_state_, this, &VehicleNode::gear_status);
-  adaptor.init_sub(sub_turn_indicator_, this, &VehicleNode::turn_indicator_status);
-  adaptor.init_sub(sub_map_projector_info_, this, &VehicleNode::map_projector_info);
-  adaptor.init_sub(sub_hazard_light_, this, &VehicleNode::hazard_light_status);
-  adaptor.init_sub(sub_energy_level_, this, &VehicleNode::energy_status);
+
+  kinematic_state_sub_ = create_polling_subscriber<localization_interface::KinematicState>(this);
+  acceleration_sub_ = create_polling_subscriber<localization_interface::Acceleration>(this);
+  steering_sub_ = create_polling_subscriber<vehicle_interface::SteeringStatus>(this);
+  gear_state_sub_ = create_polling_subscriber<vehicle_interface::GearStatus>(this);
+  turn_indicator_info_sub_ =
+    create_polling_subscriber<vehicle_interface::TurnIndicatorStatus>(this);
+  map_projector_info_sub_ = create_polling_subscriber<map_interface::MapProjectorInfo>(this);
+  hazard_light_sub_ = create_polling_subscriber<vehicle_interface::HazardLightStatus>(this);
+  energy_level_sub_ = create_polling_subscriber<vehicle_interface::EnergyStatus>(this);
+
 
   const auto rate = rclcpp::Rate(10);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -134,6 +139,10 @@ void VehicleNode::map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_
 
 void VehicleNode::publish_kinematics()
 {
+  kinematic_state_msgs_ = kinematic_state_sub_->takeData();
+  acceleration_msgs_ = acceleration_sub_->takeData();
+  map_projector_info_ = map_projector_info_sub_->takeData();
+
   if (!kinematic_state_msgs_ || !acceleration_msgs_ || !map_projector_info_) return;
 
   autoware_ad_api::vehicle::VehicleKinematics::Message vehicle_kinematics;
@@ -165,6 +174,12 @@ void VehicleNode::publish_kinematics()
 
 void VehicleNode::publish_status()
 {
+  steering_status_msgs_ = steering_sub_->takeData();
+  gear_status_msgs_ = gear_state_sub_->takeData();
+  turn_indicator_status_msgs_ = turn_indicator_info_sub_->takeData();
+  hazard_light_status_msgs_ = hazard_light_sub_->takeData();
+  energy_status_msgs_ = energy_level_sub_->takeData();
+
   if (
     !steering_status_msgs_ || !gear_status_msgs_ || !turn_indicator_status_msgs_ ||
     !hazard_light_status_msgs_ || !energy_status_msgs_)
