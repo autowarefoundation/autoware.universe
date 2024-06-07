@@ -213,7 +213,6 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     std::bind(&AccelBrakeMapCalibrator::callbackVelocity, this, _1));
   steer_sub_ = create_subscription<SteeringReport>(
     "~/input/steer", queue_size, std::bind(&AccelBrakeMapCalibrator::callbackSteer, this, _1));
-  std::cerr << "call bake set" << std::endl;
   if (accel_brake_value_source_ == ACCEL_BRAKE_SOURCE::STATUS) {
     actuation_status_sub_ = create_subscription<ActuationStatusStamped>(
       "~/input/actuation_status", queue_size,
@@ -304,13 +303,7 @@ void AccelBrakeMapCalibrator::timerCallback()
     !delayed_accel_pedal_ptr_ || !delayed_brake_pedal_ptr_) {
     // lack of data
     RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 1000, "lack of topics (twist, steer, accel, brake)");
-    std::cerr << "!twist_ptr_" << !twist_ptr_ << std::endl;
-    std::cerr << "!steer_ptr_" << !steer_ptr_ << std::endl;
-    std::cerr << "!accel_pedal_ptr_" << !accel_pedal_ptr_ << std::endl;
-    std::cerr << "!brake_pedal_ptr_" << !brake_pedal_ptr_ << std::endl;
-    std::cerr << "!delayed_accel_pedal_ptr_" << !delayed_accel_pedal_ptr_ << std::endl;
-    std::cerr << "!delayed_brake_pedal_ptr_" << !delayed_brake_pedal_ptr_ << std::endl;
+      get_logger(), *get_clock(), 5000, "lack of topics (twist, steer, accel, brake)");
 
     lack_of_data_count_++;
     return;
@@ -505,7 +498,6 @@ void AccelBrakeMapCalibrator::callbackVelocity(const VelocityReport::ConstShared
 
 void AccelBrakeMapCalibrator::callbackSteer(const SteeringReport::ConstSharedPtr msg)
 {
-  std::cerr << "AccelBrakeMapCalibrator::callbackSteer" << std::endl;
   debug_values_.data.at(CURRENT_STEER) = msg->steering_tire_angle;
   steer_ptr_ = msg;
 }
@@ -549,7 +541,6 @@ void AccelBrakeMapCalibrator::callbackActuation(
 void AccelBrakeMapCalibrator::callbackActuationCommand(
   const ActuationCommandStamped::ConstSharedPtr msg)
 {
-  std::cerr << "AccelBrakeMapCalibrator::callbackActuationCommand" << std::endl;
   const auto header = msg->header;
   const auto accel = msg->actuation.accel_cmd;
   const auto brake = msg->actuation.brake_cmd;
@@ -559,7 +550,6 @@ void AccelBrakeMapCalibrator::callbackActuationCommand(
 void AccelBrakeMapCalibrator::callbackActuationStatus(
   const ActuationStatusStamped::ConstSharedPtr msg)
 {
-  std::cerr << "AccelBrakeMapCalibrator::callbackActuationStatus" << std::endl;
   const auto header = msg->header;
   const auto accel = msg->status.accel_status;
   const auto brake = msg->status.brake_status;
