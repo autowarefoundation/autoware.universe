@@ -35,7 +35,8 @@ class PcdMapTFGeneratorNode : public rclcpp::Node
 public:
   using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
   explicit PcdMapTFGeneratorNode(const rclcpp::NodeOptions & options)
-  : Node("pcd_map_tf_generator", options), map_frame_(declare_parameter<std::string>("map_frame")),
+  : Node("pcd_map_tf_generator", options),
+    map_frame_(declare_parameter<std::string>("map_frame")),
     viewer_frame_(declare_parameter<std::string>("viewer_frame"))
   {
     sub_ = create_subscription<sensor_msgs::msg::PointCloud2>(
