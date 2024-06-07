@@ -17,15 +17,15 @@ with open("autoware_smart_mpc_trajectory_follower/package_path.json", "w") as f:
     json.dump(package_path, f)
 build_cpp_command = "g++ -Ofast -Wall -shared -std=c++11 -fPIC $(python3 -m pybind11 --includes) "
 build_cpp_command += "autoware_smart_mpc_trajectory_follower/scripts/proxima_calc.cpp "
-build_cpp_command += (
-    "-o autoware_smart_mpc_trajectory_follower/scripts/proxima_calc$(python3-config --extension-suffix) "
-)
+build_cpp_command += "-o autoware_smart_mpc_trajectory_follower/scripts/proxima_calc$(python3-config --extension-suffix) "
 build_cpp_command += "-lrt -I/usr/include/eigen3"
 os.system(build_cpp_command)
 
 so_path = (
     "scripts/"
-    + glob.glob("autoware_smart_mpc_trajectory_follower/scripts/proxima_calc.*.so")[0].split("/")[-1]
+    + glob.glob("autoware_smart_mpc_trajectory_follower/scripts/proxima_calc.*.so")[0].split("/")[
+        -1
+    ]
 )
 setup(
     name="smart_mpc_trajectory_follower",

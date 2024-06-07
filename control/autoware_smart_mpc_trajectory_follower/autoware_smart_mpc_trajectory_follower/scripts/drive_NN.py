@@ -13,9 +13,9 @@
 # limitations under the License.
 
 
-import numpy as np
 from autoware_smart_mpc_trajectory_follower.scripts import drive_functions
 from autoware_smart_mpc_trajectory_follower.scripts import proxima_calc
+import numpy as np
 import torch
 from torch import nn
 

@@ -31,7 +31,9 @@ package_path_json = str(Path(__file__).parent.parent) + "/package_path.json"
 with open(package_path_json, "r") as file:
     package_path = json.load(file)
 
-mpc_param_path = package_path["path"] + "/autoware_smart_mpc_trajectory_follower/param/mpc_param.yaml"
+mpc_param_path = (
+    package_path["path"] + "/autoware_smart_mpc_trajectory_follower/param/mpc_param.yaml"
+)
 with open(mpc_param_path, "r") as yml:
     mpc_param = yaml.safe_load(yml)
 
