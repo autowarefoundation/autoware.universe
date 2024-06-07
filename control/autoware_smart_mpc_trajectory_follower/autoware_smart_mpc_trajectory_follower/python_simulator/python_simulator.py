@@ -24,8 +24,8 @@ import numpy as np
 import pandas as pd
 import scipy.interpolate
 import simplejson as json
-from smart_mpc_trajectory_follower.scripts import drive_controller
-from smart_mpc_trajectory_follower.scripts import drive_functions
+from autoware_smart_mpc_trajectory_follower.scripts import drive_controller
+from autoware_smart_mpc_trajectory_follower.scripts import drive_functions
 
 print("\n\n### import python_simulator.py ###")
 

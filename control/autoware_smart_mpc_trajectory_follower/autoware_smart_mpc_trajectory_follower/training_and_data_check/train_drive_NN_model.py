@@ -19,9 +19,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import linear_model
 from sklearn.preprocessing import PolynomialFeatures
-from smart_mpc_trajectory_follower.scripts import drive_NN
-from smart_mpc_trajectory_follower.scripts import drive_functions
-from smart_mpc_trajectory_follower.training_and_data_check import add_training_data_from_csv
+from autoware_smart_mpc_trajectory_follower.scripts import drive_NN
+from autoware_smart_mpc_trajectory_follower.scripts import drive_functions
+from autoware_smart_mpc_trajectory_follower.training_and_data_check import add_training_data_from_csv
 import torch
 from torch import nn
 from torch.utils.data import DataLoader

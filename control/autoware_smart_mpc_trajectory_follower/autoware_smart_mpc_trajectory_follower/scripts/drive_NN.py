@@ -14,8 +14,8 @@
 
 
 import numpy as np
-from smart_mpc_trajectory_follower.scripts import drive_functions
-from smart_mpc_trajectory_follower.scripts import proxima_calc
+from autoware_smart_mpc_trajectory_follower.scripts import drive_functions
+from autoware_smart_mpc_trajectory_follower.scripts import proxima_calc
 import torch
 from torch import nn
 
