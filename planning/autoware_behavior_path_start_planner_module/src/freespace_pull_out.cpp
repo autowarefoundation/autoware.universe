@@ -24,7 +24,7 @@
 #include <memory>
 #include <vector>
 
-namespace autoware::behavior_path_planner
+namespace behavior_path_planner
 {
 FreespacePullOut::FreespacePullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
@@ -114,4 +114,4 @@ std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const
 
   return pull_out_path;
 }
-}  // namespace autoware::behavior_path_planner
+}  // namespace behavior_path_planner

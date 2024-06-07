@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::behavior_path_planner
+namespace behavior_path_planner
 {
 using tier4_planning_msgs::msg::PathWithLaneId;
 struct PullOutPath
@@ -33,5 +33,5 @@ struct PullOutPath
   Pose start_pose{};
   Pose end_pose{};
 };
-}  // namespace autoware::behavior_path_planner
+}  // namespace behavior_path_planner
 #endif  // AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__PULL_OUT_PATH_HPP_

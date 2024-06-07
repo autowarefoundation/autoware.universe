@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::behavior_path_planner
+namespace behavior_path_planner
 {
 void StartPlannerModuleManager::init(rclcpp::Node * node)
 {
@@ -795,7 +795,7 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() cons
 
   return std::all_of(observers_.begin(), observers_.end(), checker);
 }
-}  // namespace autoware::behavior_path_planner
+}  // namespace behavior_path_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(

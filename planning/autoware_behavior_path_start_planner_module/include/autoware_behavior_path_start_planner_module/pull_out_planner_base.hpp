@@ -26,7 +26,7 @@
 
 #include <memory>
 
-namespace autoware::behavior_path_planner
+namespace behavior_path_planner
 {
 using geometry_msgs::msg::Pose;
 using tier4_autoware_utils::LinearRing2d;
@@ -100,6 +100,6 @@ protected:
   StartPlannerParameters parameters_;
   double collision_check_margin_;
 };
-}  // namespace autoware::behavior_path_planner
+}  // namespace behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__PULL_OUT_PLANNER_BASE_HPP_

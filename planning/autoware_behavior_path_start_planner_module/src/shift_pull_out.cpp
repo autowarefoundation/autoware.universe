@@ -31,7 +31,7 @@ using lanelet::utils::getArcCoordinates;
 using motion_utils::findNearestIndex;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
-namespace autoware::behavior_path_planner
+namespace behavior_path_planner
 {
 using start_planner_utils::getPullOutLanes;
 
@@ -416,4 +416,4 @@ double ShiftPullOut::calcBeforeShiftedArcLength(
   return before_arc_length;
 }
 
-}  // namespace autoware::behavior_path_planner
+}  // namespace behavior_path_planner

@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::behavior_path_planner
+namespace behavior_path_planner
 {
 
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -132,6 +132,6 @@ struct StartPlannerParameters
   bool print_debug_info{false};
 };
 
-}  // namespace autoware::behavior_path_planner
+}  // namespace behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__DATA_STRUCTS_HPP_
