@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <autoware_frenet_planner/polynomials.hpp>
 #include <eigen3/Eigen/Eigen>
-#include <frenet_planner/polynomials.hpp>
 
-namespace frenet_planner
+namespace autoware::frenet_planner
 {
 // @brief Create a polynomial connecting the given initial and target configuration over the given
 // duration
@@ -72,4 +72,4 @@ double Polynomial::jerk(const double t) const
   const double t2 = t * t;
   return 60 * a_ * t2 + 24 * b_ * t + 6 * c_;
 }
-}  // namespace frenet_planner
+}  // namespace autoware::frenet_planner

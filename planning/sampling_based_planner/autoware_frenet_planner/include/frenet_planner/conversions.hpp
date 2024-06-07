@@ -15,13 +15,13 @@
 #ifndef FRENET_PLANNER__CONVERSIONS_HPP_
 #define FRENET_PLANNER__CONVERSIONS_HPP_
 
-#include "frenet_planner/polynomials.hpp"
+#include "autoware_frenet_planner/polynomials.hpp"
 
 #include <sampler_common/structures.hpp>
 
 #include <vector>
 
-namespace frenet_planner
+namespace autoware::frenet_planner
 {
 
 /// @brief calculate the lengths and yaws vectors of the given trajectory
@@ -44,6 +44,6 @@ inline void calculateLengthsAndYaws(Trajectory & trajectory)
   const auto last_yaw = trajectory.yaws.empty() ? 0.0 : trajectory.yaws.back();
   trajectory.yaws.push_back(last_yaw);
 }
-}  // namespace frenet_planner
+}  // namespace autoware::frenet_planner
 
 #endif  // FRENET_PLANNER__CONVERSIONS_HPP_

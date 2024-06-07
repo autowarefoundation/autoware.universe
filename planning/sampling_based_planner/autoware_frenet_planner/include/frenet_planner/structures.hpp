@@ -15,14 +15,14 @@
 #ifndef FRENET_PLANNER__STRUCTURES_HPP_
 #define FRENET_PLANNER__STRUCTURES_HPP_
 
-#include "frenet_planner/polynomials.hpp"
+#include "autoware_frenet_planner/polynomials.hpp"
 
 #include <sampler_common/structures.hpp>
 
 #include <optional>
 #include <vector>
 
-namespace frenet_planner
+namespace autoware::frenet_planner
 {
 
 struct FrenetState
@@ -151,6 +151,6 @@ struct SamplingParameters
   std::vector<SamplingParameter> parameters;
   double resolution;
 };
-}  // namespace frenet_planner
+}  // namespace autoware::frenet_planner
 
 #endif  // FRENET_PLANNER__STRUCTURES_HPP_

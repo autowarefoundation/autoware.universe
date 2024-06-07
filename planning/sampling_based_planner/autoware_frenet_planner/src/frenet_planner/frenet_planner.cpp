@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "frenet_planner/frenet_planner.hpp"
+#include "autoware_frenet_planner/frenet_planner.hpp"
 
 #include <autoware_auto_common/helper_functions/angle_utils.hpp>
+#include <autoware_frenet_planner/conversions.hpp>
+#include <autoware_frenet_planner/polynomials.hpp>
+#include <autoware_frenet_planner/structures.hpp>
 #include <eigen3/Eigen/Eigen>
-#include <frenet_planner/conversions.hpp>
-#include <frenet_planner/polynomials.hpp>
-#include <frenet_planner/structures.hpp>
 #include <sampler_common/structures.hpp>
 #include <sampler_common/transform/spline_transform.hpp>
 
@@ -31,7 +31,7 @@
 #include <cmath>
 #include <iostream>
 
-namespace frenet_planner
+namespace autoware::frenet_planner
 {
 std::vector<Trajectory> generateTrajectories(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
@@ -240,4 +240,4 @@ void calculateCartesian(
   }
 }
 
-}  // namespace frenet_planner
+}  // namespace autoware::frenet_planner

@@ -17,8 +17,8 @@
 #include "sampler_common/structures.hpp"
 
 #include <autoware_bezier_sampler/bezier_sampling.hpp>
+#include <autoware_frenet_planner/frenet_planner.hpp>
 #include <autoware_path_sampler/prepare_inputs.hpp>
-#include <frenet_planner/frenet_planner.hpp>
 
 #include <autoware_planning_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -93,14 +93,14 @@ std::vector<sampler_common::Path> generateBezierPaths(
   return bezier_paths;
 }
 
-std::vector<frenet_planner::Path> generateFrenetPaths(
+std::vector<autoware::frenet_planner::Path> generateFrenetPaths(
   const sampler_common::State & initial_state, const double base_length,
   const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
   const auto sampling_parameters =
     prepareSamplingParameters(initial_state, base_length, path_spline, params);
 
-  frenet_planner::FrenetState initial_frenet_state;
+  autoware::frenet_planner::FrenetState initial_frenet_state;
   initial_frenet_state.position = path_spline.frenet(initial_state.pose);
   const auto s = initial_frenet_state.position.s;
   const auto d = initial_frenet_state.position.d;
@@ -121,6 +121,7 @@ std::vector<frenet_planner::Path> generateFrenetPaths(
       ((1 - path_curvature * d) / (cos_yaw * cos_yaw)) *
         (initial_state.curvature * ((1 - path_curvature * d) / cos_yaw) - path_curvature);
   }
-  return frenet_planner::generatePaths(path_spline, initial_frenet_state, sampling_parameters);
+  return autoware::frenet_planner::generatePaths(
+    path_spline, initial_frenet_state, sampling_parameters);
 }
 }  // namespace autoware::path_sampler

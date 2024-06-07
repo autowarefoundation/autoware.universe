@@ -14,8 +14,8 @@
 
 #include "autoware_path_sampler/prepare_inputs.hpp"
 
+#include "autoware_frenet_planner/structures.hpp"
 #include "autoware_path_sampler/utils/geometry_utils.hpp"
-#include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
@@ -52,7 +52,7 @@ void prepareConstraints(
   constraints.drivable_polygons = {drivable_area_polygon};
 }
 
-frenet_planner::SamplingParameters prepareSamplingParameters(
+autoware::frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::State & initial_state, const double base_length,
   const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
@@ -87,10 +87,10 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   } else {
     target_lateral_positions = params.sampling.target_lateral_positions;
   }
-  frenet_planner::SamplingParameters sampling_parameters;
+  autoware::frenet_planner::SamplingParameters sampling_parameters;
   sampling_parameters.resolution = params.sampling.resolution;
   const auto max_s = path_spline.lastS();
-  frenet_planner::SamplingParameter p;
+  autoware::frenet_planner::SamplingParameter p;
   for (const auto target_length : params.sampling.target_lengths) {
     p.target_state.position.s = std::min(
       max_s, path_spline.frenet(initial_state.pose).s + std::max(0.0, target_length - base_length));

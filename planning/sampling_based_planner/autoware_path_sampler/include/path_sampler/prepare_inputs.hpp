@@ -15,9 +15,9 @@
 #ifndef PATH_SAMPLER__PREPARE_INPUTS_HPP_
 #define PATH_SAMPLER__PREPARE_INPUTS_HPP_
 
+#include "autoware_frenet_planner/structures.hpp"
 #include "autoware_path_sampler/parameters.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
-#include "frenet_planner/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -43,7 +43,7 @@ void prepareConstraints(
   const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound);
 /// @brief prepare sampling parameters to generate Frenet paths
-frenet_planner::SamplingParameters prepareSamplingParameters(
+autoware::frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::State & initial_state, const double base_length,
   const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
 /// @brief prepare the 2D spline representation of the given Path message

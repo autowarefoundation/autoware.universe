@@ -15,7 +15,7 @@
 #ifndef FRENET_PLANNER__POLYNOMIALS_HPP_
 #define FRENET_PLANNER__POLYNOMIALS_HPP_
 
-namespace frenet_planner
+namespace autoware::frenet_planner
 {
 class Polynomial
 {
@@ -50,6 +50,6 @@ public:
   /// @brief Get the jerk at the given time
   [[nodiscard]] double jerk(const double t) const;
 };
-}  // namespace frenet_planner
+}  // namespace autoware::frenet_planner
 
 #endif  // FRENET_PLANNER__POLYNOMIALS_HPP_
