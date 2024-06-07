@@ -23,6 +23,7 @@
 #include "tier4_autoware_utils/ros/update_param.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <optional>
