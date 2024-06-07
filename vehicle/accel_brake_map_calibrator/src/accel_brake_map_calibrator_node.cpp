@@ -1486,8 +1486,7 @@ void AccelBrakeMapCalibrator::publish_count_map()
       "Invalid map. The number of velocity index of accel map and brake map is different.");
     return;
   }
-  const double h = static_cast<double>(accel_map_value_.size() + brake_map_value_.size() - 1);
-  1;  // pedal (accel_map_value(0) and brake_map_value(0) is same.)
+  const double h = static_cast<double>(accel_map_value_.size() + brake_map_value_.size() - 1);// pedal (accel_map_value(0) and brake_map_value(0) is same.)
 
   const double w = static_cast<double>(accel_map_value_.at(0).size());  // velocity
   const int8_t max_occ_value = 100;
