@@ -50,7 +50,7 @@ using tier4_autoware_utils::calcOffsetPose;
 #define DEBUG_PRINT(...) \
   RCLCPP_DEBUG_EXPRESSION(getLogger(), parameters_->print_debug_info, __VA_ARGS__)
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 StartPlannerModule::StartPlannerModule(
   const std::string & name, rclcpp::Node & node,
@@ -1831,4 +1831,4 @@ void StartPlannerModule::StartPlannerData::update(
   main_thread_pull_out_status = pull_out_status_;
   is_stopped = is_stopped_;
 }
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
