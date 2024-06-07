@@ -19,10 +19,10 @@
 
 #include <memory>
 
-GnssModule::GnssModule(rclcpp::Node * node) 
-  : fitter_(node)
-  , clock_(node->get_clock())
-  , timeout_(node->declare_parameter<double>("gnss_pose_timeout"))
+GnssModule::GnssModule(rclcpp::Node * node)
+: fitter_(node),
+  clock_(node->get_clock()),
+  timeout_(node->declare_parameter<double>("gnss_pose_timeout"))
 {
   sub_gnss_pose_ = node->create_subscription<PoseWithCovarianceStamped>(
     "gnss_pose_cov", 1, std::bind(&GnssModule::on_pose, this, std::placeholders::_1));

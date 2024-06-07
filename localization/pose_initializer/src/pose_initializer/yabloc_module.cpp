@@ -24,8 +24,7 @@ using Initialize = localization_interface::Initialize;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
 YabLocModule::YabLocModule(rclcpp::Node * node)
-  : logger_(node->get_logger())
-  , cli_align_(node->create_client<RequestPoseAlignment>("yabloc_align"))
+: logger_(node->get_logger()), cli_align_(node->create_client<RequestPoseAlignment>("yabloc_align"))
 {
 }
 
