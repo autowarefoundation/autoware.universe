@@ -1,15 +1,15 @@
 cmake_minimum_required(VERSION 3.14)
-project(external_cmd_converter)
+project(autoware_external_cmd_converter)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_library(external_cmd_converter SHARED
+ament_auto_add_library(autoware_external_cmd_converter SHARED
   src/node.cpp
 )
 
-rclcpp_components_register_node(external_cmd_converter
-  PLUGIN "external_cmd_converter::ExternalCmdConverterNode"
+rclcpp_components_register_node(autoware_external_cmd_converter
+  PLUGIN "autoware_external_cmd_converter::ExternalCmdConverterNode"
   EXECUTABLE external_cmd_converter_node
 )
 
