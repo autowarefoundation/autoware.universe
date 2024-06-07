@@ -612,13 +612,17 @@ void AEB::createObjectDataUsingPointCloudClusters(
   }
 
   // select points inside the ego footprint path
-  const auto current_p = tier4_autoware_utils::createPoint(
-    ego_path[0].position.x, ego_path[0].position.y, ego_path[0].position.z);
+  const auto current_p = [&]() {
+    const auto & first_point_of_path = ego_path.front();
+    const auto & p = first_point_of_path.position;
+    return tier4_autoware_utils::createPoint(p.x, p.y, p.z);
+  }();
 
   for (const auto & p : *points_belonging_to_cluster_hulls) {
     const auto obj_position = tier4_autoware_utils::createPoint(p.x, p.y, p.z);
     const double obj_arc_length =
       motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
+    if (std::isnan(obj_arc_length)) continue;
 
     // If the object is behind the ego, we need to use the backward long offset. The distance should
     // be a positive number in any case
@@ -631,7 +635,7 @@ void AEB::createObjectDataUsingPointCloudClusters(
     obj.stamp = stamp;
     obj.position = obj_position;
     obj.velocity = 0.0;
-    obj.distance_to_object = dist_ego_to_object;
+    obj.distance_to_object = std::abs(dist_ego_to_object);
 
     const Point2d obj_point(p.x, p.y);
     for (const auto & ego_poly : ego_polys) {
