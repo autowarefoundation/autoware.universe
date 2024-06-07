@@ -799,5 +799,5 @@ bool StartPlannerModuleManager::isSimultaneousExecutableAsCandidateModule() cons
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_path_planner::StartPlannerModuleManager,
-  behavior_path_planner::SceneModuleManagerInterface)
+  autoware::behavior_path_planner::StartPlannerModuleManager,
+  ::behavior_path_planner::SceneModuleManagerInterface)
