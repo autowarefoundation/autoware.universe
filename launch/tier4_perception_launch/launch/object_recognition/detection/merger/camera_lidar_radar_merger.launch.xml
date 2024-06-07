@@ -107,18 +107,12 @@
   </group>
 
   <!-- Validator -->
-  <group if="$(eval &quot;'$(var objects_validation_method)'=='obstacle_pointcloud'&quot;)">
-    <include file="$(find-pkg-share detected_object_validation)/launch/obstacle_pointcloud_based_validator.launch.xml" if="$(var use_validator)">
-      <arg name="input/detected_objects" value="$(var validator/input/objects)"/>
+  <group>
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/filter/object_validator.launch.xml">
       <arg name="input/obstacle_pointcloud" value="$(var validator/input/obstacle_pointcloud)"/>
+      <arg name="input/objects" value="$(var validator/input/objects)"/>
       <arg name="output/objects" value="$(var validator/output/objects)"/>
-      <arg name="obstacle_pointcloud_based_validator_param_path" value="$(var object_recognition_detection_obstacle_pointcloud_based_validator_param_path)"/>
-    </include>
-  </group>
-  <group if="$(eval &quot;'$(var objects_validation_method)'=='occupancy_grid'&quot;)">
-    <include file="$(find-pkg-share detected_object_validation)/launch/occupancy_grid_based_validator.launch.xml" if="$(var use_validator)">
-      <arg name="input/detected_objects" value="$(var validator/input/objects)"/>
-      <arg name="output/objects" value="$(var validator/output/objects)"/>
+      <arg name="objects_validation_method" value="$(var objects_validation_method)"/>
     </include>
   </group>
 
@@ -147,18 +141,11 @@
   </group>
 
   <!-- Filter -->
-  <group if="$(eval &quot;'$(var objects_filter_method)'=='lanelet_filter'&quot;)">
-    <include file="$(find-pkg-share detected_object_validation)/launch/object_lanelet_filter.launch.xml" if="$(var use_object_filter)">
-      <arg name="input/object" value="$(var filter/input/objects)"/>
-      <arg name="output/object" value="$(var filter/output/objects)"/>
-      <arg name="filtering_range_param" value="$(var object_recognition_detection_object_lanelet_filter_param_path)"/>
-    </include>
-  </group>
-  <group if="$(eval &quot;'$(var objects_filter_method)'=='position_filter'&quot;)">
-    <include file="$(find-pkg-share detected_object_validation)/launch/object_position_filter.launch.xml" if="$(var use_object_filter)">
-      <arg name="input/object" value="$(var filter/input/objects)"/>
-      <arg name="output/object" value="$(var filter/output/objects)"/>
-      <arg name="filtering_range_param" value="$(var object_recognition_detection_object_position_filter_param_path)"/>
+  <group>
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/filter/object_filter.launch.xml" if="$(var use_object_filter)">
+      <arg name="objects_filter_method" value="$(var objects_filter_method)"/>
+      <arg name="input/objects" value="$(var filter/input/objects)"/>
+      <arg name="output/objects" value="$(var filter/output/objects)"/>
     </include>
   </group>
 
