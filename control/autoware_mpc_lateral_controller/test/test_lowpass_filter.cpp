@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "gtest/gtest.h"
 #include "autoware_mpc_lateral_controller/lowpass_filter.hpp"
+#include "gtest/gtest.h"
 
 #include <vector>
 
