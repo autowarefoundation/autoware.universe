@@ -41,6 +41,8 @@ struct AstarParam
   // base configs
   bool only_behind_solutions;  // solutions should be behind the goal
   bool use_back;               // backward search
+  bool use_curve_weight;       // use curve weight
+  bool use_complete_astar;     // use complete astar or one exploring only new nodes
 
   // search configs
   double distance_heuristic_weight;  // obstacle threshold on grid [0,255]
@@ -120,6 +122,8 @@ public:
       AstarParam{
         node.declare_parameter<bool>("astar.only_behind_solutions"),
         node.declare_parameter<bool>("astar.use_back"),
+        node.declare_parameter<bool>("astar.use_curve_weight"),
+        node.declare_parameter<bool>("astar.use_complete_astar"),
         node.declare_parameter<double>("astar.distance_heuristic_weight")})
   {
   }
