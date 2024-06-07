@@ -9,7 +9,7 @@ ament_auto_add_library(autoware_external_cmd_converter SHARED
 )
 
 rclcpp_components_register_node(autoware_external_cmd_converter
-  PLUGIN "autoware_external_cmd_converter::ExternalCmdConverterNode"
+  PLUGIN "autoware::external_cmd_converter::ExternalCmdConverterNode"
   EXECUTABLE external_cmd_converter_node
 )
 

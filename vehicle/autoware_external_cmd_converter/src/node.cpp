@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 
-namespace autoware_external_cmd_converter
+namespace autoware::external_cmd_converter
 {
 ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & node_options)
 : Node("external_cmd_converter", node_options)
@@ -226,7 +226,7 @@ bool ExternalCmdConverterNode::check_remote_topic_rate()
 
   return true;
 }
-}  // namespace autoware_external_cmd_converter
+}  // namespace autoware::external_cmd_converter
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware_external_cmd_converter::ExternalCmdConverterNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::external_cmd_converter::ExternalCmdConverterNode)

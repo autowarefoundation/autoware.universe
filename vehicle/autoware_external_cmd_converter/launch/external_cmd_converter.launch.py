@@ -106,7 +106,7 @@ def generate_launch_description():
 
     component = ComposableNode(
         package="autoware_external_cmd_converter",
-        plugin="autoware_external_cmd_converter::ExternalCmdConverterNode",
+        plugin="autoware::external_cmd_converter::ExternalCmdConverterNode",
         name="external_cmd_converter",
         remappings=[
             _create_mapping_tuple("in/external_control_cmd"),

@@ -32,7 +32,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware_external_cmd_converter
+namespace autoware::external_cmd_converter
 {
 using GearCommand = autoware_vehicle_msgs::msg::GearCommand;
 using autoware_control_msgs::msg::Control;
