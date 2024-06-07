@@ -20,7 +20,7 @@
 #include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/parameters.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
-#include <autoware_route_handler/autoware_route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <lanelet2_extension/regulatory_elements/Forward.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp/clock.hpp>

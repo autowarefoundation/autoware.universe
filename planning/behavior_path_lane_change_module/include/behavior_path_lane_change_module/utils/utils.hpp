@@ -22,7 +22,7 @@
 #include "behavior_path_lane_change_module/utils/path.hpp"
 #include "rclcpp/logger.hpp"
 
-#include <autoware_route_handler/autoware_route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>

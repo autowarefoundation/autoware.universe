@@ -15,7 +15,7 @@
 #ifndef LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
 #define LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
 
-#include <autoware_route_handler/autoware_route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>

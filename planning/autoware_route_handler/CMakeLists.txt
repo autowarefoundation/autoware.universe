@@ -4,16 +4,16 @@ project(autoware_route_handler)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_library(autoware_route_handler SHARED
-  src/autoware_route_handler.cpp
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/route_handler.cpp
 )
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_autoware_route_handler
-    test/test_autoware_route_handler.cpp)
+    test/test_route_handler.cpp)
 
   target_link_libraries(test_autoware_route_handler
-    autoware_route_handler
+    ${PROJECT_NAME}
   )
 
 endif()

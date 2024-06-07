@@ -15,7 +15,7 @@
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
-#include <autoware_route_handler/autoware_route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose.hpp>

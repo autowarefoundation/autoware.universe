@@ -19,7 +19,7 @@
 
 #include <autoware_behavior_path_planner_common/parameters.hpp>
 #include <autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp>
-#include <autoware_route_handler/autoware_route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>

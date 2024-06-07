@@ -22,7 +22,7 @@
 
 #include <autoware_behavior_path_planner_common/interface/steering_factor_interface.hpp>
 #include <autoware_behavior_path_planner_common/turn_signal_decider.hpp>
-#include <autoware_route_handler/autoware_route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <magic_enum.hpp>
 #include <motion_utils/marker/marker_helper.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>

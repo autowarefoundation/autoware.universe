@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TEST_AUTOWARE_ROUTE_HANDLER_HPP_
-#define TEST_AUTOWARE_ROUTE_HANDLER_HPP_
+#ifndef TEST_ROUTE_HANDLER_HPP_
+#define TEST_ROUTE_HANDLER_HPP_
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "gtest/gtest.h"
 #include "planning_test_utils/mock_data_parser.hpp"
 #include "planning_test_utils/planning_test_utils.hpp"
 
-#include <autoware_route_handler/autoware_route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <lanelet2_extension/projection/mgrs_projector.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -70,4 +70,4 @@ public:
 };
 }  // namespace autoware::route_handler::test
 
-#endif  // TEST_AUTOWARE_ROUTE_HANDLER_HPP_
+#endif  // TEST_ROUTE_HANDLER_HPP_
