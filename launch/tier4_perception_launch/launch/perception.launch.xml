@@ -90,7 +90,7 @@
   <arg name="use_perception_online_evaluator" default="false" description="use perception online evaluator"/>
 
   <!-- Traffic light recognition parameters -->
-  <arg name="use_traffic_light_recognition" default="true"/>
+  <arg name="use_traffic_light_recognition" default="false"/>
   <arg name="traffic_light_recognition/enable_fine_detection" default="true"/>
   <arg name="traffic_light_recognition/fusion_only" default="false"/>
   <arg name="traffic_light_image_number" default="1" description="choose traffic light image raw number(1-2)"/>

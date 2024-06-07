@@ -240,6 +240,12 @@
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
     </include>
+    <!-- DetectionByTracker -->
+    <group if="$(var use_detection_by_tracker)">
+      <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/tracker_based_detector.launch.xml">
+        <arg name="detection_by_tracker_param_path" value="$(var object_recognition_detection_detection_by_tracker_param)"/>
+      </include>
+    </group>
     <!-- Lidar object merger -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/merger/lidar_merger.launch.xml">
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
