@@ -1524,10 +1524,9 @@ void AccelBrakeMapCalibrator::publish_count_map()
           const double std_dev = get_standard_deviation(data_vec);
           const double max_std_dev = 0.2;
           const double min_std_dev = 0.0;
-
-          int8_t int_std_dev = static_cast<int8_t>(std_dev);
-          std_map.at(static_cast<std::vector<int8_t>::size_type>(i * w + j)) =
-            std::max(std::min(max_occ_value, int_std_dev), static_cast<int8_t>(0));
+          int8_t int_std_dev = static_cast<uint8_t>(
+            max_occ_value * ((std_dev - min_std_dev) / (max_std_dev - min_std_dev)));
+          std_map.at(i * w + j) = std::max(std::min(max_occ_value, int_std_dev), (int8_t)0);
         }
       }
     }
@@ -1555,8 +1554,7 @@ void AccelBrakeMapCalibrator::publish_count_map()
 void AccelBrakeMapCalibrator::publish_index()
 {
   MarkerArray markers;
-  const double h = static_cast<double>(accel_map_value_.size()) + brake_map_value_.size() -
-                   1;  // pedal (accel_map_value(0) and brake_map_value(0) is same.)
+  const double h = static_cast<double>(accel_map_value_.size()) + brake_map_value_.size() - 1;  // pedal (accel_map_value(0) and brake_map_value(0) is same.)
   const double w = static_cast<double>(accel_map_value_.at(0).size());  // velocity
 
   visualization_msgs::msg::Marker marker;
