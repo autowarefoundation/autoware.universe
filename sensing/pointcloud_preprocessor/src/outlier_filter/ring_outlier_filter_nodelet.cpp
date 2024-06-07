@@ -366,7 +366,7 @@ void RingOutlierFilterComponent::setUpPointCloudFormat(
 float RingOutlierFilterComponent::calculateVisibilityScore(
   const sensor_msgs::msg::PointCloud2 & input)
 {
-  pcl::PointCloud<PointXYZIRADRT>::Ptr input_cloud(new pcl::PointCloud<PointXYZIRADRT>);
+  pcl::PointCloud<InputPointType>::Ptr input_cloud(new pcl::PointCloud<InputPointType>);
   pcl::fromROSMsg(input, *input_cloud);
 
   const uint32_t vertical_bins = vertical_bins_;
@@ -377,19 +377,19 @@ float RingOutlierFilterComponent::calculateVisibilityScore(
   const uint32_t horizontal_resolution =
     static_cast<uint32_t>((max_azimuth - min_azimuth) / horizontal_bins);
 
-  std::vector<pcl::PointCloud<PointXYZIRADRT>> ring_point_clouds(vertical_bins);
+  std::vector<pcl::PointCloud<InputPointType>> ring_point_clouds(vertical_bins);
   cv::Mat frequency_image(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
 
   // Split points into rings
   for (const auto & point : input_cloud->points) {
-    ring_point_clouds.at(point.ring).push_back(point);
+    ring_point_clouds.at(point.channel).push_back(point);
   }
 
   // Calculate frequency for each bin in each ring
   for (const auto & ring_points : ring_point_clouds) {
     if (ring_points.empty()) continue;
 
-    const uint ring_id = ring_points.front().ring;
+    const uint ring_id = ring_points.front().channel;
     std::vector<int> frequency_in_ring(horizontal_bins, 0);
 
     for (const auto & point : ring_points.points) {
