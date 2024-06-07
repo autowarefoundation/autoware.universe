@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "trajectory_follower_node/controller_node.hpp"
+#include "autoware_trajectory_follower_node/controller_node.hpp"
 
 #include "mpc_lateral_controller/mpc_lateral_controller.hpp"
 #include "pid_longitudinal_controller/pid_longitudinal_controller.hpp"
