@@ -15,6 +15,7 @@
 #ifndef AUTOWARE_TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
 #define AUTOWARE_TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
 
+#include "autoware_trajectory_follower_node/visibility_control.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
@@ -23,7 +24,6 @@
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "trajectory_follower_base/lateral_controller_base.hpp"
 #include "trajectory_follower_base/longitudinal_controller_base.hpp"
-#include "autoware_trajectory_follower_node/visibility_control.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <Eigen/Core>
