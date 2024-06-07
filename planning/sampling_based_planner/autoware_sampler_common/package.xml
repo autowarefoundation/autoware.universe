@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>sampler_common</name>
+  <name>autoware_sampler_common</name>
   <version>0.0.1</version>
   <description>Common classes and functions for sampling based planners</description>
   <author email="maxime.clement@tier4.jp">Maxime CLEMENT</author>

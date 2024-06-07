@@ -15,15 +15,15 @@
 #ifndef SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
 #define SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
 
-#include "sampler_common/structures.hpp"
+#include "autoware_sampler_common/structures.hpp"
 
-namespace sampler_common::constraints
+namespace autoware::sampler_common::constraints
 {
 /// @brief Calculate the footprint of the given path
 /// @param path sequence of pose used to build the footprint
 /// @param constraints input constraint object containing vehicle footprint offsets
 /// @return the polygon footprint of the path
 MultiPoint2d buildFootprintPoints(const Path & path, const Constraints & constraints);
-}  // namespace sampler_common::constraints
+}  // namespace autoware::sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_

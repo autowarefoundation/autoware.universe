@@ -15,10 +15,10 @@
 #ifndef SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_
 #define SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_
 
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "autoware_sampler_common/structures.hpp"
+#include "autoware_sampler_common/transform/spline_transform.hpp"
 
-namespace sampler_common::constraints
+namespace autoware::sampler_common::constraints
 {
 /// @brief calculate the curvature cost of the given path
 void calculateCurvatureCost(Path & path, const Constraints & constraints);
@@ -30,6 +30,6 @@ void calculateLateralDeviationCost(
 /// @brief calculate the overall cost of the given path
 void calculateCost(
   Path & path, const Constraints & constraints, const transform::Spline2D & reference);
-}  // namespace sampler_common::constraints
+}  // namespace autoware::sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_

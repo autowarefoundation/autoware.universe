@@ -17,7 +17,7 @@
 namespace autoware::bezier_sampler
 {
 std::vector<Bezier> sample(
-  const sampler_common::State & initial, const sampler_common::State & final,
+  const autoware::sampler_common::State & initial, const autoware::sampler_common::State & final,
   const SamplingParameters & params)
 {
   std::vector<Bezier> curves;

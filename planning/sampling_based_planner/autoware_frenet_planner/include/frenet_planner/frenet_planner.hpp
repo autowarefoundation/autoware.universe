@@ -16,8 +16,8 @@
 #define FRENET_PLANNER__FRENET_PLANNER_HPP_
 
 #include "autoware_frenet_planner/structures.hpp"
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "autoware_sampler_common/structures.hpp"
+#include "autoware_sampler_common/transform/spline_transform.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <optional>
@@ -28,18 +28,18 @@ namespace autoware::frenet_planner
 /// @brief generate trajectories relative to the reference for the given initial state and sampling
 /// parameters
 std::vector<Trajectory> generateTrajectories(
-  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters);
+  const autoware::sampler_common::transform::Spline2D & reference_spline,
+  const FrenetState & initial_state, const SamplingParameters & sampling_parameters);
 /// @brief generate trajectories relative to the reference for the given initial state and sampling
 /// parameters
 std::vector<Trajectory> generateLowVelocityTrajectories(
-  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters);
+  const autoware::sampler_common::transform::Spline2D & reference_spline,
+  const FrenetState & initial_state, const SamplingParameters & sampling_parameters);
 /// @brief generate paths relative to the reference for the given initial state and sampling
 /// parameters
 std::vector<Path> generatePaths(
-  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters);
+  const autoware::sampler_common::transform::Spline2D & reference_spline,
+  const FrenetState & initial_state, const SamplingParameters & sampling_parameters);
 /// @brief generate a candidate path
 /// @details one polynomial for lateral motion (d) is calculated over the longitudinal displacement
 /// (s): d(s).
@@ -58,10 +58,11 @@ Trajectory generateLowVelocityCandidate(
   const FrenetState & initial_state, const FrenetState & target_state, const double duration,
   const double time_resolution);
 /// @brief calculate the cartesian frame of the given path
-void calculateCartesian(const sampler_common::transform::Spline2D & reference, Path & path);
+void calculateCartesian(
+  const autoware::sampler_common::transform::Spline2D & reference, Path & path);
 /// @brief calculate the cartesian frame of the given trajectory
 void calculateCartesian(
-  const sampler_common::transform::Spline2D & reference, Trajectory & trajectory);
+  const autoware::sampler_common::transform::Spline2D & reference, Trajectory & trajectory);
 
 }  // namespace autoware::frenet_planner
 

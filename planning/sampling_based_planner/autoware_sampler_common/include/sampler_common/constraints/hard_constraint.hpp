@@ -15,10 +15,10 @@
 #ifndef SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_
 #define SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_
 
-#include "sampler_common/structures.hpp"
+#include "autoware_sampler_common/structures.hpp"
 
 #include <vector>
-namespace sampler_common::constraints
+namespace autoware::sampler_common::constraints
 {
 /// @brief Check if the path satisfies the hard constraints
 MultiPoint2d checkHardConstraints(Path & path, const Constraints & constraints);
@@ -27,6 +27,6 @@ bool has_collision(
   const double min_distance = 0.0);
 bool satisfyMinMax(const std::vector<double> & values, const double min, const double max);
 
-}  // namespace sampler_common::constraints
+}  // namespace autoware::sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_

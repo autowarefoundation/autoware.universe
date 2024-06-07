@@ -17,12 +17,12 @@
 
 #include "autoware_path_sampler/common_structs.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
+#include "autoware_sampler_common/structures.hpp"
 #include "eigen3/Eigen/Core"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "sampler_common/structures.hpp"
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -95,7 +95,8 @@ std::vector<TrajectoryPoint> convertToTrajectoryPoints(const std::vector<T> & po
   return traj_points;
 }
 
-inline std::vector<TrajectoryPoint> convertToTrajectoryPoints(const sampler_common::Path & path)
+inline std::vector<TrajectoryPoint> convertToTrajectoryPoints(
+  const autoware::sampler_common::Path & path)
 {
   std::vector<TrajectoryPoint> traj_points;
   for (auto i = 0UL; i < path.points.size(); ++i) {

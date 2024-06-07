@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-namespace sampler_common
+namespace autoware::sampler_common
 {
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::MultiPoint2d;
@@ -367,6 +367,6 @@ struct ReusableTrajectory
   Configuration planning_configuration;  // planning configuration at the end of the trajectory
 };
 
-}  // namespace sampler_common
+}  // namespace autoware::sampler_common
 
 #endif  // SAMPLER_COMMON__STRUCTURES_HPP_

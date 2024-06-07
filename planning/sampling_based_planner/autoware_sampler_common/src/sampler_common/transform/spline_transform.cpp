@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sampler_common/transform/spline_transform.hpp>
+#include <autoware_sampler_common/transform/spline_transform.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits>
 
-namespace sampler_common::transform
+namespace autoware::sampler_common::transform
 {
 Spline::Spline(const std::vector<double> & base_index, const std::vector<double> & base_value)
 {
@@ -312,4 +312,4 @@ double Spline2D::yaw(const double s) const
   return std::atan2(y_vel, x_vel);
 }
 
-}  // namespace sampler_common::transform
+}  // namespace autoware::sampler_common::transform

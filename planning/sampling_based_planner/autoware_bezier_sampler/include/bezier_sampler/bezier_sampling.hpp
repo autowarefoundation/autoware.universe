@@ -16,9 +16,9 @@
 #define BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
 
 #include <autoware_bezier_sampler/bezier.hpp>
+#include <autoware_sampler_common/structures.hpp>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
-#include <sampler_common/structures.hpp>
 
 #include <vector>
 
@@ -38,7 +38,7 @@ struct SamplingParameters
 /// @details from Section IV of A. Artuñedoet al.: Real-Time Motion Planning Approach for Automated
 /// Driving in Urban Environments
 std::vector<Bezier> sample(
-  const sampler_common::State & initial, const sampler_common::State & final,
+  const autoware::sampler_common::State & initial, const autoware::sampler_common::State & final,
   const SamplingParameters & params);
 /// @brief generate a Bezier curve for the given states, velocities, and accelerations
 Bezier generate(

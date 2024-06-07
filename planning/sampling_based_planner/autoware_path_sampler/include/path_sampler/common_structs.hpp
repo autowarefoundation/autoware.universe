@@ -16,8 +16,8 @@
 #define PATH_SAMPLER__COMMON_STRUCTS_HPP_
 
 #include "autoware_path_sampler/type_alias.hpp"
+#include "autoware_sampler_common/structures.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "sampler_common/structures.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
@@ -87,7 +87,7 @@ struct TimeKeeper
 
 struct DebugData
 {
-  std::vector<sampler_common::Path> sampled_candidates{};
+  std::vector<autoware::sampler_common::Path> sampled_candidates{};
   size_t previous_sampled_candidates_nb = 0UL;
   std::vector<tier4_autoware_utils::Polygon2d> obstacles{};
   std::vector<tier4_autoware_utils::MultiPoint2d> footprints{};

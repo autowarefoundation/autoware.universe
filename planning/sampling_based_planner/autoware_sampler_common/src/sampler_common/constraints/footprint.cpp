@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sampler_common/constraints/footprint.hpp"
+#include "autoware_sampler_common/constraints/footprint.hpp"
 
-#include "sampler_common/structures.hpp"
+#include "autoware_sampler_common/structures.hpp"
 
 #include <eigen3/Eigen/Core>
 
@@ -25,7 +25,7 @@
 #include <cmath>
 #include <vector>
 
-namespace sampler_common::constraints
+namespace autoware::sampler_common::constraints
 {
 
 namespace
@@ -50,4 +50,4 @@ MultiPoint2d buildFootprintPoints(const Path & path, const Constraints & constra
   }
   return footprint;
 }
-}  // namespace sampler_common::constraints
+}  // namespace autoware::sampler_common::constraints

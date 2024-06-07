@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sampler_common/structures.hpp>
+#include <autoware_sampler_common/structures.hpp>
 
 #include <gtest/gtest.h>
 
 TEST(Path, extendPath)
 {
-  using sampler_common::Path;
+  using autoware::sampler_common::Path;
   Path traj1;
   Path traj2;
   Path traj3 = traj1.extend(traj2);
@@ -43,7 +43,7 @@ TEST(Path, extendPath)
 TEST(Trajectory, resample)
 {
   constexpr auto eps = 1e-6;
-  using sampler_common::Trajectory;
+  using autoware::sampler_common::Trajectory;
 
   Trajectory t;
   t.reserve(2);
@@ -103,7 +103,7 @@ TEST(Trajectory, resample)
 TEST(Trajectory, resampleTime)
 {
   constexpr auto eps = 1e-6;
-  using sampler_common::Trajectory;
+  using autoware::sampler_common::Trajectory;
 
   Trajectory t;
   t.reserve(2);

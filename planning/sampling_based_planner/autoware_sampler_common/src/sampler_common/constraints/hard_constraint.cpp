@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sampler_common/constraints/hard_constraint.hpp"
+#include "autoware_sampler_common/constraints/hard_constraint.hpp"
 
-#include "sampler_common/constraints/footprint.hpp"
+#include "autoware_sampler_common/constraints/footprint.hpp"
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 
 #include <vector>
 
-namespace sampler_common::constraints
+namespace autoware::sampler_common::constraints
 {
 bool satisfyMinMax(const std::vector<double> & values, const double min, const double max)
 {
@@ -56,4 +56,4 @@ MultiPoint2d checkHardConstraints(Path & path, const Constraints & constraints)
   }
   return footprint;
 }
-}  // namespace sampler_common::constraints
+}  // namespace autoware::sampler_common::constraints

@@ -16,13 +16,13 @@
 #define PATH_SAMPLER__PARAMETERS_HPP_
 
 #include "autoware_bezier_sampler/bezier_sampling.hpp"
-#include "sampler_common/structures.hpp"
+#include "autoware_sampler_common/structures.hpp"
 
 #include <vector>
 
 struct Parameters
 {
-  sampler_common::Constraints constraints;
+  autoware::sampler_common::Constraints constraints;
   struct
   {
     bool enable_frenet{};

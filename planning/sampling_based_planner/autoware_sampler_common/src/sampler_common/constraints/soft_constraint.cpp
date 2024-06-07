@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sampler_common/constraints/soft_constraint.hpp"
+#include "autoware_sampler_common/constraints/soft_constraint.hpp"
 
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "autoware_sampler_common/structures.hpp"
+#include "autoware_sampler_common/transform/spline_transform.hpp"
 
 #include <numeric>
 
-namespace sampler_common::constraints
+namespace autoware::sampler_common::constraints
 {
 void calculateCurvatureCost(Path & path, const Constraints & constraints)
 {
@@ -51,4 +51,4 @@ void calculateCost(
   calculateLengthCost(path, constraints);
   calculateLateralDeviationCost(path, constraints, reference);
 }
-}  // namespace sampler_common::constraints
+}  // namespace autoware::sampler_common::constraints

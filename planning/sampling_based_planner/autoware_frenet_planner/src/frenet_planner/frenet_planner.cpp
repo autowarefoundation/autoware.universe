@@ -18,9 +18,9 @@
 #include <autoware_frenet_planner/conversions.hpp>
 #include <autoware_frenet_planner/polynomials.hpp>
 #include <autoware_frenet_planner/structures.hpp>
+#include <autoware_sampler_common/structures.hpp>
+#include <autoware_sampler_common/transform/spline_transform.hpp>
 #include <eigen3/Eigen/Eigen>
-#include <sampler_common/structures.hpp>
-#include <sampler_common/transform/spline_transform.hpp>
 
 #include "autoware_planning_msgs/msg/path.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -34,8 +34,8 @@
 namespace autoware::frenet_planner
 {
 std::vector<Trajectory> generateTrajectories(
-  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters)
+  const autoware::sampler_common::transform::Spline2D & reference_spline,
+  const FrenetState & initial_state, const SamplingParameters & sampling_parameters)
 {
   std::vector<Trajectory> trajectories;
   trajectories.reserve(sampling_parameters.parameters.size());
@@ -54,8 +54,8 @@ std::vector<Trajectory> generateTrajectories(
 }
 
 std::vector<Trajectory> generateLowVelocityTrajectories(
-  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters)
+  const autoware::sampler_common::transform::Spline2D & reference_spline,
+  const FrenetState & initial_state, const SamplingParameters & sampling_parameters)
 {
   std::vector<Trajectory> trajectories;
   trajectories.reserve(sampling_parameters.parameters.size());
@@ -73,8 +73,8 @@ std::vector<Trajectory> generateLowVelocityTrajectories(
 }
 
 std::vector<Path> generatePaths(
-  const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters)
+  const autoware::sampler_common::transform::Spline2D & reference_spline,
+  const FrenetState & initial_state, const SamplingParameters & sampling_parameters)
 {
   std::vector<Path> candidates;
   candidates.reserve(sampling_parameters.parameters.size());
@@ -148,7 +148,8 @@ Path generateCandidate(
   return path;
 }
 
-void calculateCartesian(const sampler_common::transform::Spline2D & reference, Path & path)
+void calculateCartesian(
+  const autoware::sampler_common::transform::Spline2D & reference, Path & path)
 {
   if (!path.frenet_points.empty()) {
     path.points.reserve(path.frenet_points.size());
@@ -191,7 +192,7 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
   }
 }
 void calculateCartesian(
-  const sampler_common::transform::Spline2D & reference, Trajectory & trajectory)
+  const autoware::sampler_common::transform::Spline2D & reference, Trajectory & trajectory)
 {
   if (!trajectory.frenet_points.empty()) {
     trajectory.points.reserve(trajectory.frenet_points.size());

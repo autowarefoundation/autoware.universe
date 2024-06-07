@@ -15,13 +15,13 @@
 #ifndef SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
 #define SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
 
-#include "sampler_common/structures.hpp"
+#include "autoware_sampler_common/structures.hpp"
 
 #include <vector>
 
-namespace sampler_common::transform
+namespace autoware::sampler_common::transform
 {
-using sampler_common::FrenetPoint;
+using autoware::sampler_common::FrenetPoint;
 
 class Spline
 {
@@ -80,6 +80,6 @@ private:
   static std::vector<double> arcLength(
     const std::vector<double> & x, const std::vector<double> & y);
 };
-}  // namespace sampler_common::transform
+}  // namespace autoware::sampler_common::transform
 
 #endif  // SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_

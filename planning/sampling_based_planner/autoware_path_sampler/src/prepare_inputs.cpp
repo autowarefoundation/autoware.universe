@@ -16,8 +16,8 @@
 
 #include "autoware_frenet_planner/structures.hpp"
 #include "autoware_path_sampler/utils/geometry_utils.hpp"
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "autoware_sampler_common/structures.hpp"
+#include "autoware_sampler_common/transform/spline_transform.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <eigen3/unsupported/Eigen/Splines>
@@ -33,18 +33,18 @@ namespace autoware::path_sampler
 {
 
 void prepareConstraints(
-  sampler_common::Constraints & constraints, const PredictedObjects & predicted_objects,
+  autoware::sampler_common::Constraints & constraints, const PredictedObjects & predicted_objects,
   const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound)
 {
-  constraints.obstacle_polygons = sampler_common::MultiPolygon2d();
+  constraints.obstacle_polygons = autoware::sampler_common::MultiPolygon2d();
   for (const auto & o : predicted_objects.objects)
     if (o.kinematics.initial_twist_with_covariance.twist.linear.x < 0.5)  // TODO(Maxime): param
       constraints.obstacle_polygons.push_back(tier4_autoware_utils::toPolygon2d(o));
   constraints.dynamic_obstacles = {};  // TODO(Maxime): not implemented
 
   // TODO(Maxime): directly use lines instead of polygon
-  sampler_common::Polygon2d drivable_area_polygon;
+  autoware::sampler_common::Polygon2d drivable_area_polygon;
   for (const auto & p : right_bound) drivable_area_polygon.outer().emplace_back(p.x, p.y);
   for (auto it = left_bound.rbegin(); it != left_bound.rend(); ++it)
     drivable_area_polygon.outer().emplace_back(it->x, it->y);
@@ -53,8 +53,8 @@ void prepareConstraints(
 }
 
 autoware::frenet_planner::SamplingParameters prepareSamplingParameters(
-  const sampler_common::State & initial_state, const double base_length,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
+  const autoware::sampler_common::State & initial_state, const double base_length,
+  const autoware::sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
   // calculate target lateral positions
   std::vector<double> target_lateral_positions;
@@ -109,7 +109,7 @@ autoware::frenet_planner::SamplingParameters prepareSamplingParameters(
   return sampling_parameters;
 }
 
-sampler_common::transform::Spline2D preparePathSpline(
+autoware::sampler_common::transform::Spline2D preparePathSpline(
   const std::vector<TrajectoryPoint> & path, const bool smooth_path)
 {
   std::vector<double> x;

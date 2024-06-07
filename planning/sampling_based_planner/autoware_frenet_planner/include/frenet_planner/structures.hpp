@@ -17,7 +17,7 @@
 
 #include "autoware_frenet_planner/polynomials.hpp"
 
-#include <sampler_common/structures.hpp>
+#include <autoware_sampler_common/structures.hpp>
 
 #include <optional>
 #include <vector>
@@ -27,37 +27,39 @@ namespace autoware::frenet_planner
 
 struct FrenetState
 {
-  sampler_common::FrenetPoint position = {0, 0};
+  autoware::sampler_common::FrenetPoint position = {0, 0};
   double lateral_velocity{};
   double longitudinal_velocity{};
   double lateral_acceleration{};
   double longitudinal_acceleration{};
 };
 
-struct Path : sampler_common::Path
+struct Path : autoware::sampler_common::Path
 {
-  std::vector<sampler_common::FrenetPoint> frenet_points{};
+  std::vector<autoware::sampler_common::FrenetPoint> frenet_points{};
   std::optional<Polynomial> lateral_polynomial{};
 
   Path() = default;
-  explicit Path(const sampler_common::Path & path) : sampler_common::Path(path) {}
+  explicit Path(const autoware::sampler_common::Path & path) : autoware::sampler_common::Path(path)
+  {
+  }
 
   void clear() override
   {
-    sampler_common::Path::clear();
+    autoware::sampler_common::Path::clear();
     frenet_points.clear();
     lateral_polynomial.reset();
   }
 
   void reserve(const size_t size) override
   {
-    sampler_common::Path::reserve(size);
+    autoware::sampler_common::Path::reserve(size);
     frenet_points.reserve(size);
   }
 
   [[nodiscard]] Path extend(const Path & path) const
   {
-    Path extended_traj(sampler_common::Path::extend(path));
+    Path extended_traj(autoware::sampler_common::Path::extend(path));
     extended_traj.frenet_points.insert(
       extended_traj.frenet_points.end(), frenet_points.begin(), frenet_points.end());
     extended_traj.frenet_points.insert(
@@ -69,7 +71,7 @@ struct Path : sampler_common::Path
 
   [[nodiscard]] Path * subset(const size_t from_idx, const size_t to_idx) const override
   {
-    auto * subpath = new Path(*sampler_common::Path::subset(from_idx, to_idx));
+    auto * subpath = new Path(*autoware::sampler_common::Path::subset(from_idx, to_idx));
     assert(to_idx >= from_idx);
     subpath->reserve(to_idx - from_idx);
 
@@ -87,19 +89,22 @@ struct SamplingParameter
   FrenetState target_state;
 };
 
-struct Trajectory : sampler_common::Trajectory
+struct Trajectory : autoware::sampler_common::Trajectory
 {
-  std::vector<sampler_common::FrenetPoint> frenet_points{};
+  std::vector<autoware::sampler_common::FrenetPoint> frenet_points{};
   std::optional<Polynomial> lateral_polynomial{};
   std::optional<Polynomial> longitudinal_polynomial{};
   SamplingParameter sampling_parameter;
 
   Trajectory() = default;
-  explicit Trajectory(const sampler_common::Trajectory & traj) : sampler_common::Trajectory(traj) {}
+  explicit Trajectory(const autoware::sampler_common::Trajectory & traj)
+  : autoware::sampler_common::Trajectory(traj)
+  {
+  }
 
   void clear() override
   {
-    sampler_common::Trajectory::clear();
+    autoware::sampler_common::Trajectory::clear();
     frenet_points.clear();
     lateral_polynomial.reset();
     longitudinal_polynomial.reset();
@@ -107,13 +112,13 @@ struct Trajectory : sampler_common::Trajectory
 
   void reserve(const size_t size) override
   {
-    sampler_common::Trajectory::reserve(size);
+    autoware::sampler_common::Trajectory::reserve(size);
     frenet_points.reserve(size);
   }
 
   [[nodiscard]] Trajectory extend(const Trajectory & traj) const
   {
-    Trajectory extended_traj(sampler_common::Trajectory::extend(traj));
+    Trajectory extended_traj(autoware::sampler_common::Trajectory::extend(traj));
     extended_traj.frenet_points.insert(
       extended_traj.frenet_points.end(), frenet_points.begin(), frenet_points.end());
     extended_traj.frenet_points.insert(
@@ -126,7 +131,8 @@ struct Trajectory : sampler_common::Trajectory
 
   [[nodiscard]] Trajectory * subset(const size_t from_idx, const size_t to_idx) const override
   {
-    auto * sub_trajectory = new Trajectory(*sampler_common::Trajectory::subset(from_idx, to_idx));
+    auto * sub_trajectory =
+      new Trajectory(*autoware::sampler_common::Trajectory::subset(from_idx, to_idx));
     assert(to_idx >= from_idx);
     sub_trajectory->reserve(to_idx - from_idx);
 

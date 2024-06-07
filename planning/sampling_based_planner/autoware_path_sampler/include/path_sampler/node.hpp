@@ -18,11 +18,11 @@
 #include "autoware_path_sampler/common_structs.hpp"
 #include "autoware_path_sampler/parameters.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
+#include "autoware_sampler_common/transform/spline_transform.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include <sampler_common/structures.hpp>
+#include <autoware_sampler_common/structures.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -54,7 +54,7 @@ protected:  // for the static_centerline_generator package
   PredictedObjects::SharedPtr in_objects_ptr_ = std::make_shared<PredictedObjects>();
 
   // variables for previous information
-  std::optional<sampler_common::Path> prev_path_;
+  std::optional<autoware::sampler_common::Path> prev_path_;
 
   // interface publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
@@ -86,8 +86,9 @@ protected:  // for the static_centerline_generator package
     const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<TrajectoryPoint> & optimized_points) const;
   void resetPreviousData();
-  sampler_common::State getPlanningState(
-    sampler_common::State & state, const sampler_common::transform::Spline2D & path_spline) const;
+  autoware::sampler_common::State getPlanningState(
+    autoware::sampler_common::State & state,
+    const autoware::sampler_common::transform::Spline2D & path_spline) const;
 
   // sub-functions of generateTrajectory
   void copyZ(
@@ -95,9 +96,10 @@ protected:  // for the static_centerline_generator package
   void copyVelocity(
     const std::vector<TrajectoryPoint> & from_traj, std::vector<TrajectoryPoint> & to_traj,
     const geometry_msgs::msg::Pose & ego_pose);
-  sampler_common::Path generatePath(const PlannerData & planner_data);
-  std::vector<sampler_common::Path> generateCandidatesFromPreviousPath(
-    const PlannerData & planner_data, const sampler_common::transform::Spline2D & path_spline);
+  autoware::sampler_common::Path generatePath(const PlannerData & planner_data);
+  std::vector<autoware::sampler_common::Path> generateCandidatesFromPreviousPath(
+    const PlannerData & planner_data,
+    const autoware::sampler_common::transform::Spline2D & path_spline);
   std::vector<TrajectoryPoint> generateTrajectoryPoints(const PlannerData & planner_data);
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
   void publishDebugMarker(const std::vector<TrajectoryPoint> & traj_points) const;

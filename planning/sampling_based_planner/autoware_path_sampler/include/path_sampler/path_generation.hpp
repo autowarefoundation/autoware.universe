@@ -18,9 +18,9 @@
 #include "autoware_bezier_sampler/bezier_sampling.hpp"
 #include "autoware_frenet_planner/structures.hpp"
 #include "autoware_path_sampler/parameters.hpp"
-#include "sampler_common/constraints/hard_constraint.hpp"
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
+#include "autoware_sampler_common/constraints/hard_constraint.hpp"
+#include "autoware_sampler_common/structures.hpp"
+#include "autoware_sampler_common/transform/spline_transform.hpp"
 
 #include <autoware_planning_msgs/msg/path.hpp>
 
@@ -36,17 +36,17 @@ namespace autoware::path_sampler
  * @param [in] params parameters
  * @return candidate paths
  */
-std::vector<sampler_common::Path> generateCandidatePaths(
-  const sampler_common::State & initial_state,
-  const sampler_common::transform::Spline2D & path_spline, const double base_length,
+std::vector<autoware::sampler_common::Path> generateCandidatePaths(
+  const autoware::sampler_common::State & initial_state,
+  const autoware::sampler_common::transform::Spline2D & path_spline, const double base_length,
   const Parameters & params);
 
-std::vector<sampler_common::Path> generateBezierPaths(
-  const sampler_common::State & initial_state, const double base_length,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
+std::vector<autoware::sampler_common::Path> generateBezierPaths(
+  const autoware::sampler_common::State & initial_state, const double base_length,
+  const autoware::sampler_common::transform::Spline2D & path_spline, const Parameters & params);
 std::vector<autoware::frenet_planner::Path> generateFrenetPaths(
-  const sampler_common::State & initial_state, const double base_length,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
+  const autoware::sampler_common::State & initial_state, const double base_length,
+  const autoware::sampler_common::transform::Spline2D & path_spline, const Parameters & params);
 }  // namespace autoware::path_sampler
 
 #endif  // PATH_SAMPLER__PATH_GENERATION_HPP_

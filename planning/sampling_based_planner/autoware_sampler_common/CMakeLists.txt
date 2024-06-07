@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(sampler_common)
+project(autoware_sampler_common)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -8,7 +8,7 @@ find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
 
-ament_auto_add_library(sampler_common SHARED
+ament_auto_add_library(autoware_sampler_common SHARED
   DIRECTORY src/
 )
 
@@ -22,7 +22,7 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_sampler_common
-    sampler_common
+    autoware_sampler_common
   )
 endif()
 

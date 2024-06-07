@@ -18,12 +18,12 @@
 #include "autoware_path_sampler/prepare_inputs.hpp"
 #include "autoware_path_sampler/utils/geometry_utils.hpp"
 #include "autoware_path_sampler/utils/trajectory_utils.hpp"
+#include "autoware_sampler_common/constraints/hard_constraint.hpp"
+#include "autoware_sampler_common/constraints/soft_constraint.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "rclcpp/time.hpp"
-#include "sampler_common/constraints/hard_constraint.hpp"
-#include "sampler_common/constraints/soft_constraint.hpp"
 
 #include <boost/geometry/algorithms/distance.hpp>
 
@@ -220,8 +220,9 @@ void PathSampler::objectsCallback(const PredictedObjects::SharedPtr msg)
   in_objects_ptr_ = msg;
 }
 
-sampler_common::State PathSampler::getPlanningState(
-  sampler_common::State & state, const sampler_common::transform::Spline2D & path_spline) const
+autoware::sampler_common::State PathSampler::getPlanningState(
+  autoware::sampler_common::State & state,
+  const autoware::sampler_common::transform::Spline2D & path_spline) const
 {
   state.frenet = path_spline.frenet(state.pose);
   if (params_.preprocessing.force_zero_deviation) {
@@ -390,13 +391,14 @@ std::vector<TrajectoryPoint> PathSampler::generateTrajectory(const PlannerData &
   return generated_traj_points;
 }
 
-std::vector<sampler_common::Path> PathSampler::generateCandidatesFromPreviousPath(
-  const PlannerData & planner_data, const sampler_common::transform::Spline2D & path_spline)
+std::vector<autoware::sampler_common::Path> PathSampler::generateCandidatesFromPreviousPath(
+  const PlannerData & planner_data,
+  const autoware::sampler_common::transform::Spline2D & path_spline)
 {
-  std::vector<sampler_common::Path> candidates;
+  std::vector<autoware::sampler_common::Path> candidates;
   if (!prev_path_ || prev_path_->points.size() < 2) return candidates;
   // Update previous path
-  sampler_common::State current_state;
+  autoware::sampler_common::State current_state;
   current_state.pose = {planner_data.ego_pose.position.x, planner_data.ego_pose.position.y};
   current_state.heading = tf2::getYaw(planner_data.ego_pose.orientation);
   const auto closest_iter = std::min_element(
@@ -419,7 +421,7 @@ std::vector<sampler_common::Path> PathSampler::generateCandidatesFromPreviousPat
     const auto reuse_step = prev_path_length / params_.sampling.previous_path_reuse_points_nb;
     for (double reuse_length = reuse_step; reuse_length <= prev_path_length;
          reuse_length += reuse_step) {
-      sampler_common::State reuse_state;
+      autoware::sampler_common::State reuse_state;
       size_t reuse_idx = 0;
       for (reuse_idx = 0; reuse_idx + 1 < prev_path_->lengths.size() &&
                           prev_path_->lengths[reuse_idx] < reuse_length;
@@ -438,13 +440,13 @@ std::vector<sampler_common::Path> PathSampler::generateCandidatesFromPreviousPat
   return candidates;
 }
 
-sampler_common::Path PathSampler::generatePath(const PlannerData & planner_data)
+autoware::sampler_common::Path PathSampler::generatePath(const PlannerData & planner_data)
 {
   time_keeper_ptr_->tic(__func__);
-  sampler_common::Path generated_path{};
+  autoware::sampler_common::Path generated_path{};
 
   if (prev_path_ && prev_path_->points.size() > 1) {
-    sampler_common::constraints::checkHardConstraints(*prev_path_, params_.constraints);
+    autoware::sampler_common::constraints::checkHardConstraints(*prev_path_, params_.constraints);
     if (prev_path_->constraint_results.isValid()) {
       const auto prev_path_spline =
         preparePathSpline(trajectory_utils::convertToTrajectoryPoints(*prev_path_), false);
@@ -460,7 +462,7 @@ sampler_common::Path PathSampler::generatePath(const PlannerData & planner_data)
   }
   const auto path_spline =
     preparePathSpline(planner_data.traj_points, params_.preprocessing.smooth_reference);
-  sampler_common::State current_state;
+  autoware::sampler_common::State current_state;
   current_state.pose = {planner_data.ego_pose.position.x, planner_data.ego_pose.position.y};
   current_state.heading = tf2::getYaw(planner_data.ego_pose.orientation);
 
@@ -476,9 +478,9 @@ sampler_common::Path PathSampler::generatePath(const PlannerData & planner_data)
   debug_data_.footprints.clear();
   for (auto & path : candidate_paths) {
     const auto footprint =
-      sampler_common::constraints::checkHardConstraints(path, params_.constraints);
+      autoware::sampler_common::constraints::checkHardConstraints(path, params_.constraints);
     debug_data_.footprints.push_back(footprint);
-    sampler_common::constraints::calculateCost(path, params_.constraints, path_spline);
+    autoware::sampler_common::constraints::calculateCost(path, params_.constraints, path_spline);
   }
   const auto best_path_idx = [](const auto & paths) {
     auto min_cost = std::numeric_limits<double>::max();

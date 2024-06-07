@@ -14,7 +14,7 @@
 
 #include "autoware_path_sampler/path_generation.hpp"
 
-#include "sampler_common/structures.hpp"
+#include "autoware_sampler_common/structures.hpp"
 
 #include <autoware_bezier_sampler/bezier_sampling.hpp>
 #include <autoware_frenet_planner/frenet_planner.hpp>
@@ -31,12 +31,12 @@
 
 namespace autoware::path_sampler
 {
-std::vector<sampler_common::Path> generateCandidatePaths(
-  const sampler_common::State & initial_state,
-  const sampler_common::transform::Spline2D & path_spline, const double base_length,
+std::vector<autoware::sampler_common::Path> generateCandidatePaths(
+  const autoware::sampler_common::State & initial_state,
+  const autoware::sampler_common::transform::Spline2D & path_spline, const double base_length,
   const Parameters & params)
 {
-  std::vector<sampler_common::Path> paths;
+  std::vector<autoware::sampler_common::Path> paths;
   const auto move_to_paths = [&](auto & paths_to_move) {
     paths.insert(
       paths.end(), std::make_move_iterator(paths_to_move.begin()),
@@ -53,18 +53,18 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   }
   return paths;
 }
-std::vector<sampler_common::Path> generateBezierPaths(
-  const sampler_common::State & initial_state, const double base_length,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
+std::vector<autoware::sampler_common::Path> generateBezierPaths(
+  const autoware::sampler_common::State & initial_state, const double base_length,
+  const autoware::sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
   const auto initial_s = path_spline.frenet(initial_state.pose).s;
   const auto max_s = path_spline.lastS();
-  std::vector<sampler_common::Path> bezier_paths;
+  std::vector<autoware::sampler_common::Path> bezier_paths;
   for (const auto target_length : params.sampling.target_lengths) {
     if (target_length <= base_length) continue;
     const auto target_s = std::min(max_s, initial_s + target_length - base_length);
     if (target_s >= max_s) break;
-    sampler_common::State target_state{};
+    autoware::sampler_common::State target_state{};
     target_state.pose = path_spline.cartesian({target_s, 0});
     target_state.curvature = path_spline.curvature(target_s);
     target_state.heading = path_spline.yaw(target_s);
@@ -73,7 +73,7 @@ std::vector<sampler_common::Path> generateBezierPaths(
 
     const auto step = std::min(0.1, params.sampling.resolution / target_length);
     for (const auto & bezier : bezier_samples) {
-      sampler_common::Path path;
+      autoware::sampler_common::Path path;
       path.lengths.push_back(0.0);
       for (double t = 0.0; t <= 1.0; t += step) {
         const auto x_y = bezier.valueM(t);
@@ -94,8 +94,8 @@ std::vector<sampler_common::Path> generateBezierPaths(
 }
 
 std::vector<autoware::frenet_planner::Path> generateFrenetPaths(
-  const sampler_common::State & initial_state, const double base_length,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
+  const autoware::sampler_common::State & initial_state, const double base_length,
+  const autoware::sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
   const auto sampling_parameters =
     prepareSamplingParameters(initial_state, base_length, path_spline, params);

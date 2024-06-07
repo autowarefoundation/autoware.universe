@@ -15,13 +15,13 @@
 #ifndef SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINTS_HPP_
 #define SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINTS_HPP_
 
-#include "sampler_common/structures.hpp"
+#include "autoware_sampler_common/structures.hpp"
 
 #include <boost/geometry/algorithms/within.hpp>
 
 #include <vector>
 
-namespace sampler_common::constraints
+namespace autoware::sampler_common::constraints
 {
 struct MapConstraints
 {
@@ -55,6 +55,6 @@ struct MapConstraints
   MultiPolygon2d drivable_polygons;
   std::vector<double> polygon_costs;
 };
-}  // namespace sampler_common::constraints
+}  // namespace autoware::sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__MAP_CONSTRAINTS_HPP_

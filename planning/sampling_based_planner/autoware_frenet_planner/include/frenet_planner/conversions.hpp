@@ -17,7 +17,7 @@
 
 #include "autoware_frenet_planner/polynomials.hpp"
 
-#include <sampler_common/structures.hpp>
+#include <autoware_sampler_common/structures.hpp>
 
 #include <vector>
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <sampler_common/transform/spline_transform.hpp>
+#include <autoware_sampler_common/transform/spline_transform.hpp>
 
 #include <gtest/gtest.h>
 
@@ -24,13 +24,13 @@ constexpr auto TOL = 1E-6;  // 1µm tolerance
 
 TEST(splineTransform, makeSpline2D)
 {
-  sampler_common::transform::Spline2D spline1({0.0, 1.0, 2.0}, {0.0, 1.0, 2.0});
-  sampler_common::transform::Spline2D spline2({-10.0, 5.0, -2.0}, {99.0, 3.0, -20.0});
+  autoware::sampler_common::transform::Spline2D spline1({0.0, 1.0, 2.0}, {0.0, 1.0, 2.0});
+  autoware::sampler_common::transform::Spline2D spline2({-10.0, 5.0, -2.0}, {99.0, 3.0, -20.0});
 }
 
 TEST(splineTransform, toFrenet)
 {
-  sampler_common::transform::Spline2D spline({0.0, 1.0, 2.0}, {0.0, 0.0, 0.0});
+  autoware::sampler_common::transform::Spline2D spline({0.0, 1.0, 2.0}, {0.0, 0.0, 0.0});
   auto frenet = spline.frenet({0.0, 0.0});
   EXPECT_NEAR(frenet.s, 0.0, TOL);
   EXPECT_NEAR(frenet.d, 0.0, TOL);
@@ -56,7 +56,7 @@ TEST(splineTransform, toFrenet)
   EXPECT_NEAR(frenet.s, 1.0, TOL);
   EXPECT_NEAR(frenet.d, -1.0, TOL);
   // EDGE CASE 90 deg angle
-  sampler_common::transform::Spline2D spline2({0.0, 1.0, 2.0}, {0.0, 1.0, 0.0});
+  autoware::sampler_common::transform::Spline2D spline2({0.0, 1.0, 2.0}, {0.0, 1.0, 0.0});
   frenet = spline2.frenet({1.0, 2.0});
   EXPECT_NEAR(frenet.s, 1.0, TOL);
   EXPECT_NEAR(frenet.d, 1.0, TOL);
@@ -64,7 +64,7 @@ TEST(splineTransform, toFrenet)
 
 TEST(splineTransform, toCartesian)
 {
-  sampler_common::transform::Spline2D spline({0.0, 1.0, 2.0}, {0.0, 0.0, 0.0});
+  autoware::sampler_common::transform::Spline2D spline({0.0, 1.0, 2.0}, {0.0, 0.0, 0.0});
   auto cart = spline.cartesian({1.0, 0.0});
   EXPECT_NEAR(cart.x(), 1.0, TOL);
   EXPECT_NEAR(cart.y(), 0.0, TOL);
@@ -85,7 +85,7 @@ TEST(splineTransform, benchFrenet)
     auto y = 0.0;
     std::generate(xs.begin(), xs.end(), [&]() { return ++x; });
     std::generate(ys.begin(), ys.end(), [&]() { return ++y; });
-    sampler_common::transform::Spline2D spline(xs, ys);
+    autoware::sampler_common::transform::Spline2D spline(xs, ys);
     auto points_distribution = std::uniform_real_distribution(0.0, static_cast<double>(size));
     constexpr auto nb_iter = 1e3;
     for (auto iter = 0; iter < nb_iter; ++iter) {
