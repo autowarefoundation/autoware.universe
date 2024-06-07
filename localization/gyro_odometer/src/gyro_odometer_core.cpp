@@ -82,8 +82,7 @@ void GyroOdometerNode::callback_vehicle_twist(
   diagnostics_->clear();
   diagnostics_->add_key_value(
     "topic_time_stamp",
-    static_cast<rclcpp::Time>(vehicle_twist_msg_ptr->header.stamp).nanoseconds()
-  );
+    static_cast<rclcpp::Time>(vehicle_twist_msg_ptr->header.stamp).nanoseconds());
 
   vehicle_twist_arrived_ = true;
   latest_vehicle_twist_ros_time_ = vehicle_twist_msg_ptr->header.stamp;
