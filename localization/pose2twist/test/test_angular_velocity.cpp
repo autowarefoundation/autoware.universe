@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 
 // 1e-3 radian = 0.057 degrees
-constexpr double ACCEPTABLE_ERROR = 1e-3;
+constexpr double acceptable_error = 1e-3;
 
 TEST(AngularVelocityFromQuaternion, CheckMultiplicationOrder)
 {
@@ -54,9 +54,9 @@ TEST(AngularVelocityFromQuaternion, CheckMultiplicationOrder)
   //
   //
   //
-  EXPECT_NEAR(initially_rotated_vector.x(), -2., ACCEPTABLE_ERROR);
-  EXPECT_NEAR(initially_rotated_vector.y(), 1., ACCEPTABLE_ERROR);
-  EXPECT_NEAR(initially_rotated_vector.z(), 3., ACCEPTABLE_ERROR);
+  EXPECT_NEAR(initially_rotated_vector.x(), -2., acceptable_error);
+  EXPECT_NEAR(initially_rotated_vector.y(), 1., acceptable_error);
+  EXPECT_NEAR(initially_rotated_vector.z(), 3., acceptable_error);
 
   tf2::Quaternion dq;
   dq.setRPY(0., M_PI / 2., 0.);  // pitch = 90 degrees
@@ -72,17 +72,17 @@ TEST(AngularVelocityFromQuaternion, CheckMultiplicationOrder)
   //         |
   //         v
   //
-  EXPECT_NEAR(finally_rotated_vector.x(), -2., ACCEPTABLE_ERROR);
-  EXPECT_NEAR(finally_rotated_vector.y(), 3., ACCEPTABLE_ERROR);
-  EXPECT_NEAR(finally_rotated_vector.z(), -1., ACCEPTABLE_ERROR);
+  EXPECT_NEAR(finally_rotated_vector.x(), -2., acceptable_error);
+  EXPECT_NEAR(finally_rotated_vector.y(), 3., acceptable_error);
+  EXPECT_NEAR(finally_rotated_vector.z(), -1., acceptable_error);
 
   // Failure case
   {
     const tf2::Vector3 false_rotated_vector = tf2::quatRotate(dq * q1, target_vector);
 
-    EXPECT_FALSE(std::abs(false_rotated_vector.x() - (-2)) < ACCEPTABLE_ERROR);
-    EXPECT_FALSE(std::abs(false_rotated_vector.y() - (3)) < ACCEPTABLE_ERROR);
-    EXPECT_FALSE(std::abs(false_rotated_vector.z() - (-1)) < ACCEPTABLE_ERROR);
+    EXPECT_FALSE(std::abs(false_rotated_vector.x() - (-2)) < acceptable_error);
+    EXPECT_FALSE(std::abs(false_rotated_vector.y() - (3)) < acceptable_error);
+    EXPECT_FALSE(std::abs(false_rotated_vector.z() - (-1)) < acceptable_error);
   }
 }
 
@@ -104,9 +104,9 @@ TEST(AngularVelocityFromQuaternion, CheckNumericalValidity)
     const geometry_msgs::msg::Vector3 rotation_vector =
       compute_relative_rotation_vector(initial_q, final_q);
 
-    EXPECT_NEAR(rotation_vector.x, expected_axis.x() * expected_angle, ACCEPTABLE_ERROR);
-    EXPECT_NEAR(rotation_vector.y, expected_axis.y() * expected_angle, ACCEPTABLE_ERROR);
-    EXPECT_NEAR(rotation_vector.z, expected_axis.z() * expected_angle, ACCEPTABLE_ERROR);
+    EXPECT_NEAR(rotation_vector.x, expected_axis.x() * expected_angle, acceptable_error);
+    EXPECT_NEAR(rotation_vector.y, expected_axis.y() * expected_angle, acceptable_error);
+    EXPECT_NEAR(rotation_vector.z, expected_axis.z() * expected_angle, acceptable_error);
   };
 
   test(tf2::Vector3(1.0, 0.0, 0.0).normalized(), 0.1);   // 0.1 radian =  5.7 degrees
