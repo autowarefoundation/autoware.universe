@@ -15,8 +15,8 @@
 #ifndef LANELET2_PLUGINS__UTILITY_FUNCTIONS_HPP_
 #define LANELET2_PLUGINS__UTILITY_FUNCTIONS_HPP_
 
-#include <rclcpp/rclcpp.hpp>
 #include <autoware_route_handler/autoware_route_handler.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
@@ -54,7 +54,8 @@ void insert_marker_array(
  * @param route_handler route handler to query the lanelet map
  */
 lanelet::ConstLanelet combine_lanelets_with_shoulder(
-  const lanelet::ConstLanelets & lanelets, const autoware::route_handler::RouteHandler & route_handler);
+  const lanelet::ConstLanelets & lanelets,
+  const autoware::route_handler::RouteHandler & route_handler);
 
 std::vector<geometry_msgs::msg::Point> convertCenterlineToPoints(const lanelet::Lanelet & lanelet);
 geometry_msgs::msg::Pose convertBasicPoint3dToPose(

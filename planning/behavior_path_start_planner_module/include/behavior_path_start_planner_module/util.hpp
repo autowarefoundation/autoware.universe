@@ -36,12 +36,12 @@
 
 namespace behavior_path_planner::start_planner_utils
 {
+using autoware::route_handler::RouteHandler;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using autoware::route_handler::RouteHandler;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 PathWithLaneId getBackwardPath(

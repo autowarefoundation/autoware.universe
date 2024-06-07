@@ -35,8 +35,7 @@ class AvoidanceByLaneChangeModuleManager : public LaneChangeModuleManager
 public:
   AvoidanceByLaneChangeModuleManager()
   : LaneChangeModuleManager(
-      "avoidance_by_lane_change", Direction::NONE,
-      LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE)
+      "avoidance_by_lane_change", Direction::NONE, LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE)
   {
   }
 

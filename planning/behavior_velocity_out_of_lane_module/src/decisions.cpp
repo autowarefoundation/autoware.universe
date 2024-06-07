@@ -62,8 +62,8 @@ bool object_is_incoming(
 
 std::optional<std::pair<double, double>> object_time_to_range(
   const autoware_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
-  const std::shared_ptr<autoware::route_handler::RouteHandler> route_handler, const double dist_buffer,
-  const rclcpp::Logger & logger)
+  const std::shared_ptr<autoware::route_handler::RouteHandler> route_handler,
+  const double dist_buffer, const rclcpp::Logger & logger)
 {
   // skip the dynamic object if it is not in a lane preceding the overlapped lane
   // lane changes are intentionally not considered

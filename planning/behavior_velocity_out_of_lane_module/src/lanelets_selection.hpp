@@ -68,8 +68,8 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
 /// @return lanelets to check for overlaps
 lanelet::ConstLanelets calculate_other_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & path_lanelets,
-  const lanelet::ConstLanelets & ignored_lanelets,
-  const RouteHandler & route_handler, const PlannerParam & params);
+  const lanelet::ConstLanelets & ignored_lanelets, const RouteHandler & route_handler,
+  const PlannerParam & params);
 }  // namespace behavior_velocity_planner::out_of_lane
 
 #endif  // LANELETS_SELECTION_HPP_

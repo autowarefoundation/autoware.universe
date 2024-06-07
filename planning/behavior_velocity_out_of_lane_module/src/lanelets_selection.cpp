@@ -109,8 +109,8 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
 
 lanelet::ConstLanelets calculate_other_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & path_lanelets,
-  const lanelet::ConstLanelets & ignored_lanelets,
-  const RouteHandler & route_handler, const PlannerParam & params)
+  const lanelet::ConstLanelets & ignored_lanelets, const RouteHandler & route_handler,
+  const PlannerParam & params)
 {
   lanelet::ConstLanelets other_lanelets;
   const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
