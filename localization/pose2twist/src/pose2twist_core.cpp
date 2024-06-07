@@ -69,7 +69,7 @@ geometry_msgs::msg::TwistStamped calc_twist(
   const auto pose_b_quaternion = get_quaternion(pose_b);
 
   geometry_msgs::msg::Vector3 diff_xyz;
-  const geometry_msgs::msg::Vector3 diff_rpy =
+  const geometry_msgs::msg::Vector3 relative_rotation_vector =
     compute_relative_rotation_vector(pose_a_quaternion, pose_b_quaternion);
 
   diff_xyz.x = pose_b->pose.position.x - pose_a->pose.position.x;
@@ -83,9 +83,9 @@ geometry_msgs::msg::TwistStamped calc_twist(
     dt;
   twist.twist.linear.y = 0;
   twist.twist.linear.z = 0;
-  twist.twist.angular.x = diff_rpy.x / dt;
-  twist.twist.angular.y = diff_rpy.y / dt;
-  twist.twist.angular.z = diff_rpy.z / dt;
+  twist.twist.angular.x = relative_rotation_vector.x / dt;
+  twist.twist.angular.y = relative_rotation_vector.y / dt;
+  twist.twist.angular.z = relative_rotation_vector.z / dt;
 
   return twist;
 }
