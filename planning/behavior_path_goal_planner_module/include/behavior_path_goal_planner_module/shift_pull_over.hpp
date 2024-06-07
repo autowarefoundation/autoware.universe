@@ -26,7 +26,7 @@
 
 namespace behavior_path_planner
 {
-using autoware_lane_departure_checker::LaneDepartureChecker;
+using autoware::lane_departure_checker::LaneDepartureChecker;
 
 class ShiftPullOver : public PullOverPlannerBase
 {
