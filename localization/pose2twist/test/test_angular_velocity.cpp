@@ -16,26 +16,100 @@
 
 #include <gtest/gtest.h>
 
+// 1e-3 radian = 0.057 degrees
+constexpr double ACCEPTABLE_ERROR = 1e-3;
+
+TEST(AngularVelocityFromQuaternion, CheckMultiplicationOrder)
+{
+  // If we define q2 as the rotation obntained by applying dq after applying q1, then q2 = q1 * dq .
+  //
+  // IT IS NOT q2 = dq * q1 .
+  //
+  // This test checks that the multiplication order is correct.
+
+  const tf2::Vector3 target_vector(1, 2, 3);
+  // initial state
+  // Now, car is facing to the +x direction
+  //         z
+  //         ^     y
+  //         |    ^
+  //         |   /
+  //         |  /
+  //        car -> x
+  //
+  //
+  //
+
+  tf2::Quaternion q1;
+  q1.setRPY(0., 0., M_PI / 2.);  // yaw = 90 degrees
+  const tf2::Vector3 initially_rotated_vector = tf2::quatRotate(q1, target_vector);
+  // after applying q1
+  // Now, car is facing to the +y direction
+  //         z
+  //         ^
+  //         |    y
+  //         |  ^
+  //         | /
+  //     <--car    x
+  //
+  //
+  //
+  EXPECT_NEAR(initially_rotated_vector.x(), -2., ACCEPTABLE_ERROR);
+  EXPECT_NEAR(initially_rotated_vector.y(), 1., ACCEPTABLE_ERROR);
+  EXPECT_NEAR(initially_rotated_vector.z(), 3., ACCEPTABLE_ERROR);
+
+  tf2::Quaternion dq;
+  dq.setRPY(0., M_PI / 2., 0.);  // pitch = 90 degrees
+  const tf2::Vector3 finally_rotated_vector = tf2::quatRotate(q1 * dq, target_vector);
+  // after applying dq
+  // Now, car is facing to the -z direction
+  //         z     y
+  //              ^
+  //             /
+  //            /
+  //           /
+  //     <--car    x
+  //         |
+  //         v
+  //
+  EXPECT_NEAR(finally_rotated_vector.x(), -2., ACCEPTABLE_ERROR);
+  EXPECT_NEAR(finally_rotated_vector.y(), 3., ACCEPTABLE_ERROR);
+  EXPECT_NEAR(finally_rotated_vector.z(), -1., ACCEPTABLE_ERROR);
+
+  // Failure case
+  {
+    const tf2::Vector3 false_rotated_vector = tf2::quatRotate(dq * q1, target_vector);
+
+    EXPECT_FALSE(std::abs(false_rotated_vector.x() - (-2)) < ACCEPTABLE_ERROR);
+    EXPECT_FALSE(std::abs(false_rotated_vector.y() - (3)) < ACCEPTABLE_ERROR);
+    EXPECT_FALSE(std::abs(false_rotated_vector.z() - (-1)) < ACCEPTABLE_ERROR);
+  }
+}
+
 TEST(AngularVelocityFromQuaternion, CheckNumericalValidity)
 {
-  tf2::Quaternion initial_q;
-  initial_q.setRPY(0.2, 0.3, 0.4);
+  auto test = [](const tf2::Vector3 & expected_axis, const double expected_angle) -> void {
+    tf2::Quaternion expected_q;
+    expected_q.setRotation(expected_axis, expected_angle);
 
-  const tf2::Vector3 expected_axis = tf2::Vector3(0.1, 0.2, 0.3).normalized();
-  const double expected_angle = 0.1;  // 0.1 radian = 5.7 degrees
+    // Create a random initial quaternion
+    tf2::Quaternion initial_q;
+    initial_q.setRPY(0.2, 0.3, 0.4);
 
-  tf2::Quaternion expected_q;
-  expected_q.setRotation(expected_axis, expected_angle);
+    // Calculate the final quaternion by rotating the initial quaternion by the expected
+    // quaternion
+    const tf2::Quaternion final_q = initial_q * expected_q;
 
-  const tf2::Quaternion final_q = initial_q * expected_q;
+    // Calculate the relative rotation between the initial and final quaternion
+    const geometry_msgs::msg::Vector3 rotation_vector =
+      compute_relative_rotation_vector(initial_q, final_q);
 
-  const geometry_msgs::msg::Vector3 rotation_vector =
-    rotation_vector_from_quaternion(initial_q, final_q);
+    EXPECT_NEAR(rotation_vector.x, expected_axis.x() * expected_angle, ACCEPTABLE_ERROR);
+    EXPECT_NEAR(rotation_vector.y, expected_axis.y() * expected_angle, ACCEPTABLE_ERROR);
+    EXPECT_NEAR(rotation_vector.z, expected_axis.z() * expected_angle, ACCEPTABLE_ERROR);
+  };
 
-  // 1e-3 radian = 0.057 degrees
-  constexpr double ACCEPTABLE_ERROR = 1e-3;
-
-  EXPECT_NEAR(rotation_vector.x, expected_axis.x() * expected_angle, ACCEPTABLE_ERROR);
-  EXPECT_NEAR(rotation_vector.y, expected_axis.y() * expected_angle, ACCEPTABLE_ERROR);
-  EXPECT_NEAR(rotation_vector.z, expected_axis.z() * expected_angle, ACCEPTABLE_ERROR);
+  test(tf2::Vector3(1.0, 0.0, 0.0).normalized(), 0.1);   // 0.1 radian =  5.7 degrees
+  test(tf2::Vector3(1.0, 1.0, 0.0).normalized(), -0.2);  // 0.2 radian = 11.4 degrees
+  test(tf2::Vector3(1.0, 2.0, 3.0).normalized(), 0.3);   // 0.3 radian = 17.2 degrees
 }

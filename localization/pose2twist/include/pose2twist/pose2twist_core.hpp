@@ -27,8 +27,10 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-geometry_msgs::msg::Vector3 rotation_vector_from_quaternion(
+// Compute the relative rotation of q2 from q1 as a rotation vector
+geometry_msgs::msg::Vector3 compute_relative_rotation_vector(
   const tf2::Quaternion & q1, const tf2::Quaternion & q2);
+
 class Pose2Twist : public rclcpp::Node
 {
 public:

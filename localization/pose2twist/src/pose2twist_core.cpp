@@ -41,9 +41,12 @@ tf2::Quaternion get_quaternion(const geometry_msgs::msg::PoseStamped::SharedPtr 
   return tf2::Quaternion{orientation.x, orientation.y, orientation.z, orientation.w};
 }
 
-geometry_msgs::msg::Vector3 rotation_vector_from_quaternion(
+geometry_msgs::msg::Vector3 compute_relative_rotation_vector(
   const tf2::Quaternion & q1, const tf2::Quaternion & q2)
 {
+  // If we define q2 as the rotation obntained by applying dq after applying q1,
+  // then q2 = q1 * dq .
+  // Therefore, dq = q1.inverse() * q2 .
   const tf2::Quaternion diff_quaternion = q1.inverse() * q2;
   const tf2::Vector3 axis = diff_quaternion.getAxis() * diff_quaternion.getAngle();
   return geometry_msgs::msg::Vector3{}.set__x(axis.x()).set__y(axis.y()).set__z(axis.z());
@@ -67,7 +70,7 @@ geometry_msgs::msg::TwistStamped calc_twist(
 
   geometry_msgs::msg::Vector3 diff_xyz;
   const geometry_msgs::msg::Vector3 diff_rpy =
-    rotation_vector_from_quaternion(pose_a_quaternion, pose_b_quaternion);
+    compute_relative_rotation_vector(pose_a_quaternion, pose_b_quaternion);
 
   diff_xyz.x = pose_b->pose.position.x - pose_a->pose.position.x;
   diff_xyz.y = pose_b->pose.position.y - pose_a->pose.position.y;
