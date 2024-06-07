@@ -62,9 +62,9 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::AVOIDANCE_BY_LC_LEFT;
   } else if (module_name == "avoidance_by_lane_change_right") {
     module.type = Module::AVOIDANCE_BY_LC_RIGHT;
-  } else if (module_name == "avoidance_left") {
+  } else if (module_name == "static_obstacle_avoidance_left") {
     module.type = Module::AVOIDANCE_LEFT;
-  } else if (module_name == "avoidance_right") {
+  } else if (module_name == "static_obstacle_avoidance_right") {
     module.type = Module::AVOIDANCE_RIGHT;
   } else if (module_name == "goal_planner") {
     module.type = Module::GOAL_PLANNER;
@@ -153,7 +153,16 @@ std::vector<CooperateResponse> RTCInterface::validateCooperateCommands(
       registered_status_.statuses.begin(), registered_status_.statuses.end(),
       [command](auto & s) { return s.uuid == command.uuid; });
     if (itr != registered_status_.statuses.end()) {
-      response.success = true;
+      if (itr->state.type == State::WAITING_FOR_EXECUTION || itr->state.type == State::RUNNING) {
+        response.success = true;
+      } else {
+        RCLCPP_WARN_STREAM(
+          getLogger(), "[validateCooperateCommands] uuid : "
+                         << to_string(command.uuid)
+                         << " state is not WAITING_FOR_EXECUTION or RUNNING. state : "
+                         << itr->state.type << std::endl);
+        response.success = false;
+      }
     } else {
       RCLCPP_WARN_STREAM(
         getLogger(), "[validateCooperateCommands] uuid : " << to_string(command.uuid)
@@ -175,8 +184,10 @@ void RTCInterface::updateCooperateCommandStatus(const std::vector<CooperateComma
 
     // Update command if the command has been already received
     if (itr != registered_status_.statuses.end()) {
-      itr->command_status = command.command;
-      itr->auto_mode = false;
+      if (itr->state.type == State::WAITING_FOR_EXECUTION || itr->state.type == State::RUNNING) {
+        itr->command_status = command.command;
+        itr->auto_mode = false;
+      }
     }
   }
 }
@@ -219,7 +230,7 @@ void RTCInterface::updateCooperateStatus(
     status.module = module_;
     status.safe = safe;
     status.command_status.type = Command::DEACTIVATE;
-    status.state.type = State::WAITING_FOR_EXECUTION;
+    status.state.type = state;
     status.start_distance = start_distance;
     status.finish_distance = finish_distance;
     status.auto_mode = is_auto_mode_enabled_;
@@ -291,6 +302,9 @@ bool RTCInterface::isActivated(const UUID & uuid) const
     [uuid](auto & s) { return s.uuid == uuid; });
 
   if (itr != registered_status_.statuses.end()) {
+    if (itr->state.type == State::FAILED || itr->state.type == State::SUCCEEDED) {
+      return false;
+    }
     if (itr->auto_mode) {
       return itr->safe;
     } else {

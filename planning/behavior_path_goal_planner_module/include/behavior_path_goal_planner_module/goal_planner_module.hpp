@@ -15,18 +15,18 @@
 #ifndef BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 #define BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 
+#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware_behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
+#include "autoware_behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
+#include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
 #include "behavior_path_goal_planner_module/freespace_pull_over.hpp"
 #include "behavior_path_goal_planner_module/geometric_pull_over.hpp"
 #include "behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "behavior_path_goal_planner_module/goal_searcher.hpp"
 #include "behavior_path_goal_planner_module/shift_pull_over.hpp"
-#include "behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
-#include "behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
-#include "behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <freespace_planning_algorithms/astar_search.hpp>
 #include <freespace_planning_algorithms/rrtstar.hpp>
@@ -34,8 +34,8 @@
 #include <motion_utils/distance/distance.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/Forward.h>
 
@@ -50,7 +50,7 @@
 
 namespace behavior_path_planner
 {
-using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using geometry_msgs::msg::PoseArray;
 using lane_departure_checker::LaneDepartureChecker;
 using nav_msgs::msg::OccupancyGrid;

@@ -14,8 +14,8 @@
 
 #include "behavior_path_avoidance_by_lane_change_module/manager.hpp"
 
+#include "autoware_behavior_path_static_obstacle_avoidance_module/parameter_helper.hpp"
 #include "behavior_path_avoidance_by_lane_change_module/data_structs.hpp"
-#include "behavior_path_avoidance_module/parameter_helper.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
@@ -30,7 +30,7 @@ namespace behavior_path_planner
 
 void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using autoware_perception_msgs::msg::ObjectClassification;
   using tier4_autoware_utils::getOrDeclareParameter;
 
   // init manager interface
