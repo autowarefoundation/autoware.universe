@@ -117,6 +117,6 @@ private:
   std::shared_ptr<DebugPublisher> pub_processing_time_;
 };
 
-}  // napespace autoware::crosswalk_traffic_light_estimator
+}  // namespace autoware::crosswalk_traffic_light_estimator
 
 #endif  // AUTOWARE_CROSSWALK_TRAFFIC_LIGHT_ESTIMATOR__NODE_HPP_
