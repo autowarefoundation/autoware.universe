@@ -41,6 +41,7 @@
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "std_srvs/srv/set_bool.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
@@ -63,6 +64,7 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
+using std_srvs::srv::SetBool;
 using tier4_debug_msgs::msg::Float32Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
@@ -91,6 +93,8 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
+  rclcpp::Service<SetBool>::SharedPtr srv_force_acceleration_;
+  rclcpp::Service<SetBool>::SharedPtr srv_slow_driving_;
 
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
   AccelWithCovarianceStamped::ConstSharedPtr current_acceleration_ptr_;
@@ -128,6 +132,15 @@ private:
     NORMAL = 3,
   };
 
+  struct ForceAccelerationParam
+  {
+    double max_acceleration;
+    double max_jerk;
+    double max_lateral_acceleration;
+    double engage_velocity;
+    double engage_acceleration;
+  };
+
   struct Param
   {
     bool enable_lateral_acc_limit;
@@ -153,6 +166,8 @@ private:
     AlgorithmType algorithm_type;  // Option : JerkFiltered, Linf, L2
 
     bool plan_from_ego_speed_on_manual_mode = true;
+
+    ForceAccelerationParam force_acceleration_param;
   } node_param_{};
 
   struct ExternalVelocityLimit
@@ -242,6 +257,11 @@ private:
 
   // parameter handling
   void initCommonParam();
+  void onForceAcceleration(
+    const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
+  bool force_acceleration_mode_;
+  void onSlowDriving(
+    const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
 
   // debug
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
