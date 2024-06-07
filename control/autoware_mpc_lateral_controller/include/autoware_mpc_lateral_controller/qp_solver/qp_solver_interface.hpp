@@ -17,7 +17,7 @@
 
 #include <Eigen/Core>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 /// Interface for solvers of Quadratic Programming (QP) problems
@@ -50,5 +50,5 @@ public:
   virtual double getRunTime() const { return 0.0; }
   virtual double getObjVal() const { return 0.0; }
 };
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__QP_SOLVER__QP_SOLVER_INTERFACE_HPP_

@@ -38,7 +38,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 namespace MPCUtils
 {
@@ -229,5 +229,5 @@ void update_param(
 }
 
 }  // namespace MPCUtils
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_UTILS_HPP_

@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 DynamicsBicycleModel::DynamicsBicycleModel(
   const double wheelbase, const double mass_fl, const double mass_fr, const double mass_rl,
@@ -130,4 +130,4 @@ MPCTrajectory DynamicsBicycleModel::calculatePredictedTrajectoryInFrenetCoordina
   }
   return mpc_predicted_trajectory;
 }
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller

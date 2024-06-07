@@ -45,7 +45,7 @@
 
 #include <string>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 /**
@@ -100,5 +100,5 @@ public:
 private:
   double m_steer_lim;  //!< @brief steering angle limit [rad]
 };
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_NO_DELAY_HPP_

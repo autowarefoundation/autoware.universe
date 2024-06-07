@@ -24,7 +24,7 @@
 
 namespace
 {
-namespace MPCUtils = autoware::motion::control::autoware_mpc_lateral_controller::MPCUtils;
+namespace MPCUtils = autoware::motion::control::mpc_lateral_controller::MPCUtils;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 

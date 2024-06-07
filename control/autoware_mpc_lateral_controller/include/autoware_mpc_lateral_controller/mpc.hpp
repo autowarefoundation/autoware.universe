@@ -35,7 +35,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 using autoware_control_msgs::msg::Lateral;
@@ -523,6 +523,6 @@ public:
    */
   inline void setClock(rclcpp::Clock::SharedPtr clock) { m_clock = clock; }
 };  // class MPC
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller
 
 #endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_HPP_

@@ -98,4 +98,4 @@ size_t MPCTrajectory::size() const
     return 0;
   }
 }
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller

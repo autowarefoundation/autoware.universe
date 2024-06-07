@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
@@ -279,6 +279,6 @@ private:
     RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, args...);
   }
 };
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller
 
 #endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_

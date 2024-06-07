@@ -54,7 +54,7 @@
 
 #include <string>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 /**
@@ -121,5 +121,5 @@ private:
   double m_cf;    //!< @brief front cornering power [N/rad]
   double m_cr;    //!< @brief rear cornering power [N/rad]
 };
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller
 #endif  // AUTOWARE_MPC_LATERAL_CONTROLLER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_DYNAMICS_HPP_

@@ -16,7 +16,7 @@
 
 #include <cmath>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 KinematicsBicycleModelNoDelay::KinematicsBicycleModelNoDelay(
   const double wheelbase, const double steer_lim)
@@ -137,4 +137,4 @@ MPCTrajectory KinematicsBicycleModelNoDelay::calculatePredictedTrajectoryInFrene
   }
   return mpc_predicted_trajectory;
 }
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller

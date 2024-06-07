@@ -14,7 +14,7 @@
 
 #include "autoware_mpc_lateral_controller/steering_predictor.hpp"
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 SteeringPredictor::SteeringPredictor(const double steer_tau, const double steer_delay)
@@ -107,4 +107,4 @@ void SteeringPredictor::setPrevResult(const double & steering)
   m_steer_prediction_prev = steering;
 }
 
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller

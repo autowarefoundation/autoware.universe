@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 namespace
 {
@@ -485,4 +485,4 @@ MPCTrajectory clipTrajectoryByLength(const MPCTrajectory & trajectory, const dou
 }
 
 }  // namespace MPCUtils
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller

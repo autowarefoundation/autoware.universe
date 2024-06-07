@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::autoware_mpc_lateral_controller
+namespace autoware::motion::control::mpc_lateral_controller
 {
 
 MpcLateralController::MpcLateralController(rclcpp::Node & node)
@@ -641,4 +641,4 @@ bool MpcLateralController::isValidTrajectory(const Trajectory & traj) const
   return true;
 }
 
-}  // namespace autoware::motion::control::autoware_mpc_lateral_controller
+}  // namespace autoware::motion::control::mpc_lateral_controller
