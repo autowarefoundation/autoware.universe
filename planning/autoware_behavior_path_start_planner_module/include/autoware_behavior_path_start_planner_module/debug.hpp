@@ -15,7 +15,7 @@
 #ifndef AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__DEBUG_HPP_
 #define AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__DEBUG_HPP_
 
-#include "behavior_path_start_planner_module/data_structs.hpp"
+#include "autoware_behavior_path_start_planner_module/data_structs.hpp"
 
 #include <string>
 #include <vector>

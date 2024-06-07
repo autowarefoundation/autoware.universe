@@ -19,7 +19,7 @@
 #include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware_behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
-#include "behavior_path_start_planner_module/pull_out_path.hpp"
+#include "autoware_behavior_path_start_planner_module/pull_out_path.hpp"
 
 #include <route_handler/route_handler.hpp>
 

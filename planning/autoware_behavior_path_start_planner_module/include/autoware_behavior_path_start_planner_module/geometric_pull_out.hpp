@@ -16,8 +16,8 @@
 #define AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__GEOMETRIC_PULL_OUT_HPP_
 
 #include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
-#include "behavior_path_start_planner_module/pull_out_path.hpp"
-#include "behavior_path_start_planner_module/pull_out_planner_base.hpp"
+#include "autoware_behavior_path_start_planner_module/pull_out_path.hpp"
+#include "autoware_behavior_path_start_planner_module/pull_out_planner_base.hpp"
 
 #include <lane_departure_checker/lane_departure_checker.hpp>
 
