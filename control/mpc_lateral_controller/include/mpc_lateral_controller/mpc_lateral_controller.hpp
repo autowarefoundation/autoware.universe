@@ -15,12 +15,12 @@
 #ifndef MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
 #define MPC_LATERAL_CONTROLLER__MPC_LATERAL_CONTROLLER_HPP_
 
+#include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
 #include "mpc_lateral_controller/mpc.hpp"
 #include "mpc_lateral_controller/mpc_trajectory.hpp"
 #include "mpc_lateral_controller/mpc_utils.hpp"
 #include "mpc_lateral_controller/steering_offset/steering_offset.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
 
 #include "autoware_control_msgs/msg/lateral.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"

@@ -15,9 +15,9 @@
 #ifndef AUTOWARE_TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
 #define AUTOWARE_TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
 
-#include "rclcpp/rclcpp.hpp"
 #include "autoware_trajectory_follower_base/input_data.hpp"
 #include "autoware_trajectory_follower_base/sync_data.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/longitudinal.hpp"
 
