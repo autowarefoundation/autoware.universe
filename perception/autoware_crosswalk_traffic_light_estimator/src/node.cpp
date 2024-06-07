@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-namespace traffic_light
+namespace autoware::crosswalk_traffic_light_estimator
 {
 namespace
 {
@@ -538,8 +538,8 @@ void CrosswalkTrafficLightEstimatorNode::removeDuplicateIds(TrafficSignalArray &
     signals.end());
 }
 
-}  // namespace traffic_light
+}  // namespace autoware::crosswalk_traffic_light_estimator
 
 #include <rclcpp_components/register_node_macro.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::CrosswalkTrafficLightEstimatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::crosswalk_traffic_light_estimator::CrosswalkTrafficLightEstimatorNode)
