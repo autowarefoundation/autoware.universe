@@ -44,11 +44,12 @@
 
 namespace tensorrt_yolox
 {
+// cspell: ignore Semseg
 using LabelMap = std::map<int, std::string>;
 using Label = tier4_perception_msgs::msg::Semantic;
 class TrtYoloXNode : public rclcpp::Node
 {
-  struct RoiOverlaySegmenLabel
+  struct RoiOverlaySemsegLabel
   {
     bool UNKNOWN;
     bool CAR;
@@ -65,7 +66,7 @@ class TrtYoloXNode : public rclcpp::Node
              (label == Label::ANIMAL && ANIMAL) || (label == Label::MOTORBIKE && MOTORCYCLE) ||
              (label == Label::BICYCLE && BICYCLE) || (label == Label::PEDESTRIAN && PEDESTRIAN);
     };
-  };  // struct RoiOverlaySegmenLabel
+  };  // struct RoiOverlaySemsegLabel
 
 public:
   explicit TrtYoloXNode(const rclcpp::NodeOptions & node_options);
@@ -103,7 +104,7 @@ private:
     {"BICYCLE", 8},     // bicycle
     {"MOTORBIKE", 8},   // motorcycle
   };
-  RoiOverlaySegmenLabel roi_overlay_segment_labels_;
+  RoiOverlaySemsegLabel roi_overlay_segment_labels_;
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
 };

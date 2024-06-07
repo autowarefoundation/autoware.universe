@@ -1,3 +1,4 @@
+# cspell: ignore semseg
 /**:
   ros__parameters:
     # refine segmentation mask by overlay roi class
