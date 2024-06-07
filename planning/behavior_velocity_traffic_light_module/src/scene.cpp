@@ -75,7 +75,7 @@ std::optional<Point2d> findNearestCollisionPoint(
 }
 
 bool createTargetPoint(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const LineString2d & stop_line,
+  const tier4_planning_msgs::msg::PathWithLaneId & input, const LineString2d & stop_line,
   const double offset, size_t & target_point_idx, Eigen::Vector2d & target_point)
 {
   if (input.points.size() < 2) {
@@ -140,7 +140,7 @@ bool createTargetPoint(
 }
 
 bool calcStopPointAndInsertIndex(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
+  const tier4_planning_msgs::msg::PathWithLaneId & input_path,
   const lanelet::ConstLineString3d & lanelet_stop_lines, const double & offset,
   const double & stop_line_extend_length, Eigen::Vector2d & stop_line_point,
   size_t & stop_line_point_idx)
@@ -162,11 +162,10 @@ bool calcStopPointAndInsertIndex(
 }  // namespace
 
 TrafficLightModule::TrafficLightModule(
-  const int64_t module_id, const int64_t lane_id,
-  const lanelet::TrafficLight & traffic_light_reg_elem, lanelet::ConstLanelet lane,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const int64_t lane_id, const lanelet::TrafficLight & traffic_light_reg_elem,
+  lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+: SceneModuleInterface(lane_id, logger, clock),
   lane_id_(lane_id),
   traffic_light_reg_elem_(traffic_light_reg_elem),
   lane_(lane),
@@ -365,7 +364,7 @@ bool TrafficLightModule::findValidTrafficSignal(TrafficSignalStamped & valid_tra
 {
   // get traffic signal associated with the regulatory element id
   const auto traffic_signal_stamped_opt = planner_data_->getTrafficSignal(
-    traffic_light_reg_elem_.id(), true /* traffic light module keeps last observation */);
+    traffic_light_reg_elem_.id(), false /* traffic light module does not keep last observation */);
   if (!traffic_signal_stamped_opt) {
     RCLCPP_WARN_STREAM_ONCE(
       logger_, "the traffic signal data associated with regulatory element id "
@@ -395,12 +394,11 @@ bool TrafficLightModule::isTrafficSignalTimedOut() const
   return false;
 }
 
-autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
-  const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+tier4_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
+  const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
+  const Eigen::Vector2d & target_point, tier4_planning_msgs::msg::StopReason * stop_reason)
 {
-  autoware_auto_planning_msgs::msg::PathWithLaneId modified_path;
+  tier4_planning_msgs::msg::PathWithLaneId modified_path;
   modified_path = input;
 
   // Create stop pose

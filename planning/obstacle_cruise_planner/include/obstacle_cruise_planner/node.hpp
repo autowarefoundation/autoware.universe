@@ -60,7 +60,7 @@ private:
     const std::vector<TrajectoryPoint> & traj_points) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
-    const Odometry & odometry, const PredictedObjects & objecrts,
+    const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
   std::vector<TrajectoryPoint> decimateTrajectoryPoints(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points) const;
@@ -200,6 +200,7 @@ private:
     double prediction_resampling_time_horizon;
     // max lateral margin
     double max_lat_margin_for_stop;
+    double max_lat_margin_for_stop_against_unknown;
     double max_lat_margin_for_cruise;
     double max_lat_margin_for_slow_down;
     double lat_hysteresis_margin_for_slow_down;

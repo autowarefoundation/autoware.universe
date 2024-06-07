@@ -20,11 +20,12 @@
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <autoware_auto_system_msgs/msg/autoware_state.hpp>
-#include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_system_msgs/msg/autoware_state.hpp>
+#include <autoware_vehicle_msgs/msg/velocity_report.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
@@ -51,9 +52,9 @@
 namespace autoware::motion::control::autonomous_emergency_braking
 {
 
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_system_msgs::msg::AutowareState;
-using autoware_auto_vehicle_msgs::msg::VelocityReport;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_system_msgs::msg::AutowareState;
+using autoware_vehicle_msgs::msg::VelocityReport;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::Imu;
 using sensor_msgs::msg::PointCloud2;
@@ -224,18 +225,28 @@ private:
   rclcpp::Clock::SharedPtr clock_;
 };
 
+static rclcpp::SensorDataQoS SingleDepthSensorQoS()
+{
+  rclcpp::SensorDataQoS qos;
+  qos.get_rmw_qos_profile().depth = 1;
+  return qos;
+}
+
 class AEB : public rclcpp::Node
 {
 public:
   explicit AEB(const rclcpp::NodeOptions & node_options);
 
   // subscriber
-  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_;
-  rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;
-  rclcpp::Subscription<Imu>::SharedPtr sub_imu_;
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;
-  rclcpp::Subscription<AutowareState>::SharedPtr sub_autoware_state_;
-
+  tier4_autoware_utils::InterProcessPollingSubscriber<PointCloud2> sub_point_cloud_{
+    this, "~/input/pointcloud", SingleDepthSensorQoS()};
+  tier4_autoware_utils::InterProcessPollingSubscriber<VelocityReport> sub_velocity_{
+    this, "~/input/velocity"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Imu> sub_imu_{this, "~/input/imu"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_traj_{
+    this, "~/input/predicted_trajectory"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<AutowareState> sub_autoware_state_{
+    this, "/autoware/state"};
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_ego_path_publisher_;  // debug
@@ -245,15 +256,12 @@ public:
 
   // callback
   void onPointCloud(const PointCloud2::ConstSharedPtr input_msg);
-  void onVelocity(const VelocityReport::ConstSharedPtr input_msg);
   void onImu(const Imu::ConstSharedPtr input_msg);
   void onTimer();
-  void onPredictedTrajectory(const Trajectory::ConstSharedPtr input_msg);
-  void onAutowareState(const AutowareState::ConstSharedPtr input_msg);
   rcl_interfaces::msg::SetParametersResult onParameter(
     const std::vector<rclcpp::Parameter> & parameters);
 
-  bool isDataReady();
+  bool fetchLatestData();
 
   // main function
   void onCheckCollision(DiagnosticStatusWrapper & stat);

@@ -17,12 +17,13 @@
 
 #include "surround_obstacle_checker/debug_marker.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <diagnostic_msgs/msg/key_value.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -45,8 +46,8 @@
 namespace surround_obstacle_checker
 {
 
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_perception_msgs::msg::Shape;
+using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::Shape;
 using motion_utils::VehicleStopChecker;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
@@ -110,9 +111,12 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   // publisher and subscriber
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_pointcloud_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr sub_dynamic_objects_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odometry_{
+    this, "~/input/odometry"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
+    sub_pointcloud_{this, "~/input/pointcloud"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<PredictedObjects> sub_dynamic_objects_{
+    this, "~/input/objects"};
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;

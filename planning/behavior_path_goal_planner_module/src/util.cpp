@@ -14,8 +14,8 @@
 
 #include "behavior_path_goal_planner_module/util.hpp"
 
-#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -431,6 +431,19 @@ PathWithLaneId extendPath(
     reference_path.points, target_path_terminal_idx, extend_pose.position);
 
   return extendPath(target_path, reference_path, extend_distance);
+}
+
+std::vector<Polygon2d> createPathFootPrints(
+  const PathWithLaneId & path, const double base_to_front, const double base_to_rear,
+  const double width)
+{
+  std::vector<Polygon2d> footprints;
+  for (const auto & point : path.points) {
+    const auto & pose = point.point.pose;
+    footprints.push_back(
+      tier4_autoware_utils::toFootprint(pose, base_to_front, base_to_rear, width));
+  }
+  return footprints;
 }
 
 }  // namespace behavior_path_planner::goal_planner_utils

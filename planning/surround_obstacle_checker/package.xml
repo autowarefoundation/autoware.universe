@@ -5,6 +5,7 @@
   <version>0.1.0</version>
   <description>The surround_obstacle_checker package</description>
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
+  <maintainer email="go.sakayori@tier4.jp">Go Sakayori</maintainer>
   <license>Apache License 2.0</license>
 
   <author email="satoshi.ota@tier4.jp">Satoshi Ota</author>
@@ -14,9 +15,8 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_adapi_v1_msgs</depend>
-  <depend>autoware_auto_perception_msgs</depend>
-  <depend>autoware_auto_planning_msgs</depend>
-  <depend>autoware_auto_tf2</depend>
+  <depend>autoware_perception_msgs</depend>
+  <depend>autoware_planning_msgs</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>libpcl-all-dev</depend>
