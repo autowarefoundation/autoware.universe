@@ -1553,7 +1553,8 @@ void AccelBrakeMapCalibrator::publish_count_map()
 void AccelBrakeMapCalibrator::publish_index()
 {
   MarkerArray markers;
-  const double h = static_cast<double>(accel_map_value_.size()) + brake_map_value_.size() - 1;  // pedal (accel_map_value(0) and brake_map_value(0) is same.)
+  const double h = static_cast<double>(accel_map_value_.size()) + brake_map_value_.size() -
+                   1;  // pedal (accel_map_value(0) and brake_map_value(0) is same.)
   const double w = static_cast<double>(accel_map_value_.at(0).size());  // velocity
 
   visualization_msgs::msg::Marker marker;
