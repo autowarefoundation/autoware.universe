@@ -237,7 +237,7 @@ void MpcLateralController::setStatus(
   if (m_is_mpc_solved) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "MPC succeeded.");
   } else {
-    const std::string & error_msg = "The MPC solver failed. Call MRM to stop the car.";
+    const std::string error_msg = "The MPC solver failed. Call MRM to stop the car.";
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, error_msg);
   }
 }
