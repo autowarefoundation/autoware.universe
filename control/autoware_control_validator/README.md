@@ -1,8 +1,8 @@
 # Control Validator
 
-The `autoware_control_validator` is a module that checks the validity of the output of the control component. The status of the validation can be viewed in the `/diagnostics` topic.
+The `control_validator` is a module that checks the validity of the output of the control component. The status of the validation can be viewed in the `/diagnostics` topic.
 
-![autoware_control_validator](./image/autoware_control_validator.drawio.svg)
+![control_validator](./image/control_validator.drawio.svg)
 
 ## Supported features
 
@@ -18,7 +18,7 @@ Other features are to be implemented.
 
 ### Inputs
 
-The `autoware_control_validator` takes in the following inputs:
+The `control_validator` takes in the following inputs:
 
 | Name                           | Type                              | Description                                                                    |
 | ------------------------------ | --------------------------------- | ------------------------------------------------------------------------------ |
@@ -30,14 +30,14 @@ The `autoware_control_validator` takes in the following inputs:
 
 It outputs the following:
 
-| Name                         | Type                                              | Description                                                               |
-| ---------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |
-| `~/output/validation_status` | autoware_control_validator/ControlValidatorStatus | validator status to inform the reason why the trajectory is valid/invalid |
-| `/diagnostics`               | diagnostic_msgs/DiagnosticStatus                  | diagnostics to report errors                                              |
+| Name                         | Type                                     | Description                                                               |
+| ---------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
+| `~/output/validation_status` | control_validator/ControlValidatorStatus | validator status to inform the reason why the trajectory is valid/invalid |
+| `/diagnostics`               | diagnostic_msgs/DiagnosticStatus         | diagnostics to report errors                                              |
 
 ## Parameters
 
-The following parameters can be set for the `autoware_control_validator`:
+The following parameters can be set for the `control_validator`:
 
 ### System parameters
 

@@ -16,7 +16,7 @@
           xmlns="http://www.w3.org/1999/xhtml"
           style="display: inline-block; font-size: 12px; font-family: Helvetica; color: rgb(0, 0, 0); line-height: 1.2; vertical-align: top; width: 89px; white-space: nowrap; overflow-wrap: normal; text-align: center;"
         >
-          <div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">autoware_autoware_autoware_control_validator</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;text-align:inherit;text-decoration:inherit;white-space:normal;">control_validator</div>
         </div>
       </foreignObject>
     </g>
