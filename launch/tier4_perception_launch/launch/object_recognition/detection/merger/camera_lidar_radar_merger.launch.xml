@@ -28,7 +28,6 @@
   <arg name="input/radar_far/objects" default="radar/noise_filtered_objects"/>
   <arg name="input/detection_by_tracker/objects" default="detection_by_tracker/objects"/>
   <arg name="output/objects" default="objects"/>
-  <let name="output/objects" value="near_objects" unless="$(var use_radar_tracking_fusion)"/>
 
   <!-- internal interfaces -->
   <let name="radar_objects_fusion/input/objects" value="$(var input/lidar_ml/objects)"/>
