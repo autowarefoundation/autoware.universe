@@ -4,8 +4,8 @@
   <arg name="objects_filter_method" default="lanelet_filter"/>
 
   <!-- external interfaces -->
-  <arg name="input/objects" default="$(var lidar_detection_model)/roi_fusion/objects"/>
-  <arg name="output/objects" default="$(var lidar_detection_model)/roi_fusion_filtered/objects"/>
+  <arg name="input/objects" default="clustering/camera_lidar_fusion/objects"/>
+  <arg name="output/objects" default="clustering/camera_lidar_fusion/filtered/objects"/>
 
   <!-- internal interfaces -->
   <let name="filter/input/objects" value="$(var input/objects)"/>
