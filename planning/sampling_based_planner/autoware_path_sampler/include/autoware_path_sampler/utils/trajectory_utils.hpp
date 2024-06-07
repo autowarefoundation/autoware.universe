@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
-#define PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
+#ifndef AUTOWARE_PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
+#define AUTOWARE_PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
 
 #include "autoware_path_sampler/common_structs.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
@@ -195,4 +195,4 @@ void insertStopPoint(
   const size_t stop_seg_idx);
 }  // namespace trajectory_utils
 }  // namespace autoware::path_sampler
-#endif  // PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
+#endif  // AUTOWARE_PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_

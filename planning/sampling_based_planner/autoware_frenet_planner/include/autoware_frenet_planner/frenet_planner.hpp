@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRENET_PLANNER__FRENET_PLANNER_HPP_
-#define FRENET_PLANNER__FRENET_PLANNER_HPP_
+#ifndef AUTOWARE_FRENET_PLANNER__FRENET_PLANNER_HPP_
+#define AUTOWARE_FRENET_PLANNER__FRENET_PLANNER_HPP_
 
 #include "autoware_frenet_planner/structures.hpp"
 #include "autoware_sampler_common/structures.hpp"
@@ -66,4 +66,4 @@ void calculateCartesian(
 
 }  // namespace autoware::frenet_planner
 
-#endif  // FRENET_PLANNER__FRENET_PLANNER_HPP_
+#endif  // AUTOWARE_FRENET_PLANNER__FRENET_PLANNER_HPP_

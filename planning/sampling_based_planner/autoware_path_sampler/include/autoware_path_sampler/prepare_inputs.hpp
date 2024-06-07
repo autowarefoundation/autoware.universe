@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SAMPLER__PREPARE_INPUTS_HPP_
-#define PATH_SAMPLER__PREPARE_INPUTS_HPP_
+#ifndef AUTOWARE_PATH_SAMPLER__PREPARE_INPUTS_HPP_
+#define AUTOWARE_PATH_SAMPLER__PREPARE_INPUTS_HPP_
 
 #include "autoware_frenet_planner/structures.hpp"
 #include "autoware_path_sampler/parameters.hpp"
@@ -51,4 +51,4 @@ autoware::sampler_common::transform::Spline2D preparePathSpline(
   const std::vector<TrajectoryPoint> & path_msg, const bool smooth_path);
 }  // namespace autoware::path_sampler
 
-#endif  // PATH_SAMPLER__PREPARE_INPUTS_HPP_
+#endif  // AUTOWARE_PATH_SAMPLER__PREPARE_INPUTS_HPP_

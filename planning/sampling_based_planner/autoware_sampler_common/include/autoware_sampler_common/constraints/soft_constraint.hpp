@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_
-#define SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_
+#ifndef AUTOWARE_SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_
+#define AUTOWARE_SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_
 
 #include "autoware_sampler_common/structures.hpp"
 #include "autoware_sampler_common/transform/spline_transform.hpp"
@@ -32,4 +32,4 @@ void calculateCost(
   Path & path, const Constraints & constraints, const transform::Spline2D & reference);
 }  // namespace autoware::sampler_common::constraints
 
-#endif  // SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_
+#endif  // AUTOWARE_SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_

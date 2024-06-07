@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
-#define SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
+#ifndef AUTOWARE_SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
+#define AUTOWARE_SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
 
 #include "autoware_sampler_common/structures.hpp"
 
@@ -26,4 +26,4 @@ namespace autoware::sampler_common::constraints
 MultiPoint2d buildFootprintPoints(const Path & path, const Constraints & constraints);
 }  // namespace autoware::sampler_common::constraints
 
-#endif  // SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
+#endif  // AUTOWARE_SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_

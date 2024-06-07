@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
-#define BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
+#ifndef AUTOWARE_BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
+#define AUTOWARE_BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
 
 #include <autoware_bezier_sampler/bezier.hpp>
 #include <autoware_sampler_common/structures.hpp>
@@ -47,4 +47,4 @@ Bezier generate(
   const Eigen::Vector2d & final_velocity, const Eigen::Vector2d & final_acceleration);
 }  // namespace autoware::bezier_sampler
 
-#endif  // BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_
+#endif  // AUTOWARE_BEZIER_SAMPLER__BEZIER_SAMPLING_HPP_

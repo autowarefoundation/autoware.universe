@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__STRUCTURES_HPP_
-#define SAMPLER_COMMON__STRUCTURES_HPP_
+#ifndef AUTOWARE_SAMPLER_COMMON__STRUCTURES_HPP_
+#define AUTOWARE_SAMPLER_COMMON__STRUCTURES_HPP_
 
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 
@@ -369,4 +369,4 @@ struct ReusableTrajectory
 
 }  // namespace autoware::sampler_common
 
-#endif  // SAMPLER_COMMON__STRUCTURES_HPP_
+#endif  // AUTOWARE_SAMPLER_COMMON__STRUCTURES_HPP_

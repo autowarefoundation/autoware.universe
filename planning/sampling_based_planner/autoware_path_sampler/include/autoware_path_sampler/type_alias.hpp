@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SAMPLER__TYPE_ALIAS_HPP_
-#define PATH_SAMPLER__TYPE_ALIAS_HPP_
+#ifndef AUTOWARE_PATH_SAMPLER__TYPE_ALIAS_HPP_
+#define AUTOWARE_PATH_SAMPLER__TYPE_ALIAS_HPP_
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/path.hpp"
@@ -48,4 +48,4 @@ using visualization_msgs::msg::MarkerArray;
 using tier4_debug_msgs::msg::StringStamped;
 }  // namespace autoware::path_sampler
 
-#endif  // PATH_SAMPLER__TYPE_ALIAS_HPP_
+#endif  // AUTOWARE_PATH_SAMPLER__TYPE_ALIAS_HPP_

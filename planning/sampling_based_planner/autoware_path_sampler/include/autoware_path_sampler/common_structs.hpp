@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SAMPLER__COMMON_STRUCTS_HPP_
-#define PATH_SAMPLER__COMMON_STRUCTS_HPP_
+#ifndef AUTOWARE_PATH_SAMPLER__COMMON_STRUCTS_HPP_
+#define AUTOWARE_PATH_SAMPLER__COMMON_STRUCTS_HPP_
 
 #include "autoware_path_sampler/type_alias.hpp"
 #include "autoware_sampler_common/structures.hpp"
@@ -133,4 +133,4 @@ struct EgoNearestParam
 };
 }  // namespace autoware::path_sampler
 
-#endif  // PATH_SAMPLER__COMMON_STRUCTS_HPP_
+#endif  // AUTOWARE_PATH_SAMPLER__COMMON_STRUCTS_HPP_

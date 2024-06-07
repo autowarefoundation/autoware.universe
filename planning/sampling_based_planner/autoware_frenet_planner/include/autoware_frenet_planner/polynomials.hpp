@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FRENET_PLANNER__POLYNOMIALS_HPP_
-#define FRENET_PLANNER__POLYNOMIALS_HPP_
+#ifndef AUTOWARE_FRENET_PLANNER__POLYNOMIALS_HPP_
+#define AUTOWARE_FRENET_PLANNER__POLYNOMIALS_HPP_
 
 namespace autoware::frenet_planner
 {
@@ -52,4 +52,4 @@ public:
 };
 }  // namespace autoware::frenet_planner
 
-#endif  // FRENET_PLANNER__POLYNOMIALS_HPP_
+#endif  // AUTOWARE_FRENET_PLANNER__POLYNOMIALS_HPP_

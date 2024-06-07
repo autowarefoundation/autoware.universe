@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PATH_SAMPLER__PATH_GENERATION_HPP_
-#define PATH_SAMPLER__PATH_GENERATION_HPP_
+#ifndef AUTOWARE_PATH_SAMPLER__PATH_GENERATION_HPP_
+#define AUTOWARE_PATH_SAMPLER__PATH_GENERATION_HPP_
 
 #include "autoware_bezier_sampler/bezier_sampling.hpp"
 #include "autoware_frenet_planner/structures.hpp"
@@ -49,4 +49,4 @@ std::vector<autoware::frenet_planner::Path> generateFrenetPaths(
   const autoware::sampler_common::transform::Spline2D & path_spline, const Parameters & params);
 }  // namespace autoware::path_sampler
 
-#endif  // PATH_SAMPLER__PATH_GENERATION_HPP_
+#endif  // AUTOWARE_PATH_SAMPLER__PATH_GENERATION_HPP_

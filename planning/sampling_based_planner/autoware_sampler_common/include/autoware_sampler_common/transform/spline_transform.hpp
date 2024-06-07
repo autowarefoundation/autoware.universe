@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
-#define SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
+#ifndef AUTOWARE_SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
+#define AUTOWARE_SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
 
 #include "autoware_sampler_common/structures.hpp"
 
@@ -82,4 +82,4 @@ private:
 };
 }  // namespace autoware::sampler_common::transform
 
-#endif  // SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_
+#endif  // AUTOWARE_SAMPLER_COMMON__TRANSFORM__SPLINE_TRANSFORM_HPP_

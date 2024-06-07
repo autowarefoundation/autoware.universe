@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEZIER_SAMPLER__BEZIER_HPP_
-#define BEZIER_SAMPLER__BEZIER_HPP_
+#ifndef AUTOWARE_BEZIER_SAMPLER__BEZIER_HPP_
+#define AUTOWARE_BEZIER_SAMPLER__BEZIER_HPP_
 
 #include <eigen3/Eigen/Core>
 
@@ -72,4 +72,4 @@ public:
 };
 }  // namespace autoware::bezier_sampler
 
-#endif  // BEZIER_SAMPLER__BEZIER_HPP_
+#endif  // AUTOWARE_BEZIER_SAMPLER__BEZIER_HPP_
