@@ -23,8 +23,8 @@
 std::mt19937_64 TreeStructuredParzenEstimator::engine(std::random_device{}());
 
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
-  const Direction direction, const int64_t n_startup_trials,
-  std::vector<double> & sample_mean, std::vector<double> & sample_stddev)
+  const Direction direction, const int64_t n_startup_trials, std::vector<double> & sample_mean,
+  std::vector<double> & sample_stddev)
 : above_num_(0),
   direction_(direction),
   n_startup_trials_(n_startup_trials),
@@ -56,11 +56,9 @@ void TreeStructuredParzenEstimator::add_trial(const Trial & trial)
   std::sort(trials_.begin(), trials_.end(), [this](const Trial & lhs, const Trial & rhs) {
     return (direction_ == Direction::MAXIMIZE ? lhs.score > rhs.score : lhs.score < rhs.score);
   });
-  above_num_ =
-    std::min({
-      static_cast<int64_t>(10),
-      static_cast<int64_t>(static_cast<double>(trials_.size()) * max_good_rate)
-    });
+  above_num_ = std::min(
+    {static_cast<int64_t>(10),
+     static_cast<int64_t>(static_cast<double>(trials_.size()) * max_good_rate)});
 }
 
 TreeStructuredParzenEstimator::Input TreeStructuredParzenEstimator::get_next_input() const
@@ -132,9 +130,9 @@ double TreeStructuredParzenEstimator::compute_log_likelihood_ratio(const Input &
 
   auto log_sum_exp = [](const std::vector<double> & log_vec) {
     const double max = *std::max_element(log_vec.begin(), log_vec.end());
-    double sum = std::accumulate(log_vec.begin(), log_vec.end(), 0.0,
-      [max](double total, double log_v) {return total + std::exp(log_v - max);}
-    );
+    double sum = std::accumulate(
+      log_vec.begin(), log_vec.end(), 0.0,
+      [max](double total, double log_v) { return total + std::exp(log_v - max); });
     return max + std::log(sum);
   };
 

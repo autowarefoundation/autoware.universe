@@ -56,9 +56,9 @@ TEST(TreeStructuredParzenEstimatorTest, TPE_is_better_than_random_search_on_sphe
     const double sum = std::accumulate(scores.begin(), scores.end(), 0.0);
     const double mean = sum / static_cast<double>(scores.size());
     mean_scores.push_back(mean);
-    double sq_sum = std::accumulate(scores.begin(), scores.end(), 0.0,
-      [mean](double total, double score) {return total + (score - mean) * (score - mean);}
-    );
+    double sq_sum = std::accumulate(
+      scores.begin(), scores.end(), 0.0,
+      [mean](double total, double score) { return total + (score - mean) * (score - mean); });
     const double stddev = std::sqrt(sq_sum / static_cast<double>(scores.size()));
 
     std::cout << method << ", mean = " << mean << ", stddev = " << stddev << std::endl;

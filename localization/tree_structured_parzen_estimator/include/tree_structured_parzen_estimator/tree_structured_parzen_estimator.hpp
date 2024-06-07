@@ -56,8 +56,8 @@ public:
 
   TreeStructuredParzenEstimator() = delete;
   TreeStructuredParzenEstimator(
-    const Direction direction, const int64_t n_startup_trials,
-    std::vector<double> & sample_mean, std::vector<double> & sample_stddev);
+    const Direction direction, const int64_t n_startup_trials, std::vector<double> & sample_mean,
+    std::vector<double> & sample_stddev);
   void add_trial(const Trial & trial);
   [[nodiscard]] Input get_next_input() const;
 
@@ -69,8 +69,7 @@ private:
 
   [[nodiscard]] double compute_log_likelihood_ratio(const Input & input) const;
   [[nodiscard]] static double log_gaussian_pdf(
-    const Input & input, const Input & mu, const Input & sigma
-  ) ;
+    const Input & input, const Input & mu, const Input & sigma);
 
   std::vector<Trial> trials_;
   int64_t above_num_;
