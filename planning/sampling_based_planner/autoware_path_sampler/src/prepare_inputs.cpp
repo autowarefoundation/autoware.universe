@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "path_sampler/prepare_inputs.hpp"
+#include "autoware_path_sampler/prepare_inputs.hpp"
 
+#include "autoware_path_sampler/utils/geometry_utils.hpp"
 #include "frenet_planner/structures.hpp"
-#include "path_sampler/utils/geometry_utils.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
@@ -29,7 +29,7 @@
 #include <memory>
 #include <vector>
 
-namespace path_sampler
+namespace autoware::path_sampler
 {
 
 void prepareConstraints(
@@ -151,4 +151,4 @@ sampler_common::transform::Spline2D preparePathSpline(
   }
   return {x, y};
 }
-}  // namespace path_sampler
+}  // namespace autoware::path_sampler

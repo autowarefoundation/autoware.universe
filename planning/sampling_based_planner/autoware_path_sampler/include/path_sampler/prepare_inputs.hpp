@@ -15,9 +15,9 @@
 #ifndef PATH_SAMPLER__PREPARE_INPUTS_HPP_
 #define PATH_SAMPLER__PREPARE_INPUTS_HPP_
 
+#include "autoware_path_sampler/parameters.hpp"
+#include "autoware_path_sampler/type_alias.hpp"
 #include "frenet_planner/structures.hpp"
-#include "path_sampler/parameters.hpp"
-#include "path_sampler/type_alias.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-namespace path_sampler
+namespace autoware::path_sampler
 {
 /// @brief prepare constraints
 void prepareConstraints(
@@ -49,6 +49,6 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
 /// @brief prepare the 2D spline representation of the given Path message
 sampler_common::transform::Spline2D preparePathSpline(
   const std::vector<TrajectoryPoint> & path_msg, const bool smooth_path);
-}  // namespace path_sampler
+}  // namespace autoware::path_sampler
 
 #endif  // PATH_SAMPLER__PREPARE_INPUTS_HPP_

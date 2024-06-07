@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "path_sampler/path_generation.hpp"
+#include "autoware_path_sampler/path_generation.hpp"
 
 #include "sampler_common/structures.hpp"
 
 #include <autoware_bezier_sampler/bezier_sampling.hpp>
+#include <autoware_path_sampler/prepare_inputs.hpp>
 #include <frenet_planner/frenet_planner.hpp>
-#include <path_sampler/prepare_inputs.hpp>
 
 #include <autoware_planning_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
@@ -29,7 +29,7 @@
 #include <numeric>
 #include <vector>
 
-namespace path_sampler
+namespace autoware::path_sampler
 {
 std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state,
@@ -123,4 +123,4 @@ std::vector<frenet_planner::Path> generateFrenetPaths(
   }
   return frenet_planner::generatePaths(path_spline, initial_frenet_state, sampling_parameters);
 }
-}  // namespace path_sampler
+}  // namespace autoware::path_sampler

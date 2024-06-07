@@ -15,7 +15,7 @@
 #ifndef PATH_SAMPLER__COMMON_STRUCTS_HPP_
 #define PATH_SAMPLER__COMMON_STRUCTS_HPP_
 
-#include "path_sampler/type_alias.hpp"
+#include "autoware_path_sampler/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sampler_common/structures.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
@@ -28,7 +28,7 @@
 #include <string>
 #include <vector>
 
-namespace path_sampler
+namespace autoware::path_sampler
 {
 struct PlannerData
 {
@@ -61,7 +61,7 @@ struct TimeKeeper
     latest_stream.str("");
 
     if (enable_calculation_time_info) {
-      RCLCPP_INFO_STREAM(rclcpp::get_logger("path_sampler.time"), msg);
+      RCLCPP_INFO_STREAM(rclcpp::get_logger("autoware_path_sampler.time"), msg);
     }
   }
 
@@ -131,6 +131,6 @@ struct EgoNearestParam
   double dist_threshold{0.0};
   double yaw_threshold{0.0};
 };
-}  // namespace path_sampler
+}  // namespace autoware::path_sampler
 
 #endif  // PATH_SAMPLER__COMMON_STRUCTS_HPP_

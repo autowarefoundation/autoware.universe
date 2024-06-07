@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "path_sampler/node.hpp"
+#include "autoware_path_sampler/node.hpp"
 
+#include "autoware_path_sampler/path_generation.hpp"
+#include "autoware_path_sampler/prepare_inputs.hpp"
+#include "autoware_path_sampler/utils/geometry_utils.hpp"
+#include "autoware_path_sampler/utils/trajectory_utils.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
-#include "path_sampler/path_generation.hpp"
-#include "path_sampler/prepare_inputs.hpp"
-#include "path_sampler/utils/geometry_utils.hpp"
-#include "path_sampler/utils/trajectory_utils.hpp"
 #include "rclcpp/time.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/constraints/soft_constraint.hpp"
@@ -30,7 +30,7 @@
 #include <chrono>
 #include <limits>
 
-namespace path_sampler
+namespace autoware::path_sampler
 {
 namespace
 {
@@ -59,7 +59,7 @@ bool hasZeroVelocity(const TrajectoryPoint & traj_point)
 }  // namespace
 
 PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
-: Node("path_sampler", node_options),
+: Node("autoware_path_sampler", node_options),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo()),
   time_keeper_ptr_(std::make_shared<TimeKeeper>())
 {
@@ -701,7 +701,7 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
   time_keeper_ptr_->toc(__func__, "  ");
   return resampled_traj_points;
 }
-}  // namespace path_sampler
+}  // namespace autoware::path_sampler
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(path_sampler::PathSampler)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::path_sampler::PathSampler)

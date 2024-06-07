@@ -15,13 +15,13 @@
 #ifndef PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
 #define PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_
 
+#include "autoware_path_sampler/common_structs.hpp"
+#include "autoware_path_sampler/type_alias.hpp"
 #include "eigen3/Eigen/Core"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "path_sampler/common_structs.hpp"
-#include "path_sampler/type_alias.hpp"
 #include "sampler_common/structures.hpp"
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-namespace path_sampler
+namespace autoware::path_sampler
 {
 namespace trajectory_utils
 {
@@ -160,7 +160,7 @@ std::optional<size_t> updateFrontPointForFix(
     motion_utils::calcSignedArcLength(points, 0, front_fix_point.pose.position);
   if (0 < lon_offset_to_prev_front) {
     RCLCPP_WARN(
-      rclcpp::get_logger("path_sampler.trajectory_utils"),
+      rclcpp::get_logger("autoware_path_sampler.trajectory_utils"),
       "Fixed point will not be inserted due to the error during calculation.");
     return std::nullopt;
   }
@@ -171,7 +171,7 @@ std::optional<size_t> updateFrontPointForFix(
   constexpr double max_lat_error = 3.0;
   if (max_lat_error < dist) {
     RCLCPP_WARN(
-      rclcpp::get_logger("path_sampler.trajectory_utils"),
+      rclcpp::get_logger("autoware_path_sampler.trajectory_utils"),
       "New Fixed point is too far from points %f [m]", dist);
   }
 
@@ -193,5 +193,5 @@ void insertStopPoint(
   std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & input_stop_pose,
   const size_t stop_seg_idx);
 }  // namespace trajectory_utils
-}  // namespace path_sampler
+}  // namespace autoware::path_sampler
 #endif  // PATH_SAMPLER__UTILS__TRAJECTORY_UTILS_HPP_

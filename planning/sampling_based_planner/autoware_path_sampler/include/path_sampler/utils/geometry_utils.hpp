@@ -15,13 +15,13 @@
 #ifndef PATH_SAMPLER__UTILS__GEOMETRY_UTILS_HPP_
 #define PATH_SAMPLER__UTILS__GEOMETRY_UTILS_HPP_
 
+#include "autoware_path_sampler/common_structs.hpp"
+#include "autoware_path_sampler/type_alias.hpp"
 #include "eigen3/Eigen/Core"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "path_sampler/common_structs.hpp"
-#include "path_sampler/type_alias.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
@@ -35,7 +35,7 @@
 #include <string>
 #include <vector>
 
-namespace path_sampler
+namespace autoware::path_sampler
 {
 namespace geometry_utils
 {
@@ -52,5 +52,5 @@ bool isSamePoint(const T1 & t1, const T2 & t2)
   return true;
 }
 }  // namespace geometry_utils
-}  // namespace path_sampler
+}  // namespace autoware::path_sampler
 #endif  // PATH_SAMPLER__UTILS__GEOMETRY_UTILS_HPP_

@@ -15,9 +15,9 @@
 #ifndef PATH_SAMPLER__NODE_HPP_
 #define PATH_SAMPLER__NODE_HPP_
 
-#include "path_sampler/common_structs.hpp"
-#include "path_sampler/parameters.hpp"
-#include "path_sampler/type_alias.hpp"
+#include "autoware_path_sampler/common_structs.hpp"
+#include "autoware_path_sampler/parameters.hpp"
+#include "autoware_path_sampler/type_alias.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace path_sampler
+namespace autoware::path_sampler
 {
 class PathSampler : public rclcpp::Node
 {
@@ -102,6 +102,6 @@ protected:  // for the static_centerline_generator package
   void publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const;
   void publishDebugMarker(const std::vector<TrajectoryPoint> & traj_points) const;
 };
-}  // namespace path_sampler
+}  // namespace autoware::path_sampler
 
 #endif  // PATH_SAMPLER__NODE_HPP_
