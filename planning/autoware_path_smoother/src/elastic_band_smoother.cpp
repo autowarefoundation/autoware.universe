@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "path_smoother/elastic_band_smoother.hpp"
+#include "autoware_path_smoother/elastic_band_smoother.hpp"
 
+#include "autoware_path_smoother/utils/geometry_utils.hpp"
+#include "autoware_path_smoother/utils/trajectory_utils.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
-#include "path_smoother/utils/geometry_utils.hpp"
-#include "path_smoother/utils/trajectory_utils.hpp"
 #include "rclcpp/time.hpp"
 
 #include <chrono>
 #include <limits>
 
-namespace path_smoother
+namespace autoware::path_smoother
 {
 namespace
 {
@@ -70,7 +70,7 @@ bool hasZeroVelocity(const TrajectoryPoint & traj_point)
 }  // namespace
 
 ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_options)
-: Node("path_smoother", node_options), time_keeper_ptr_(std::make_shared<TimeKeeper>())
+: Node("autoware_path_smoother", node_options), time_keeper_ptr_(std::make_shared<TimeKeeper>())
 {
   // interface publisher
   traj_pub_ = create_publisher<Trajectory>("~/output/traj", 1);
@@ -94,7 +94,7 @@ ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_option
     common_param_ = CommonParam(this);
   }
 
-  eb_path_smoother_ptr_ = std::make_shared<EBPathSmoother>(
+  eb_autoware_path_smoother_ptr_ = std::make_shared<EBPathSmoother>(
     this, enable_debug_info_, ego_nearest_param_, common_param_, time_keeper_ptr_);
   replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
 
@@ -121,7 +121,7 @@ rcl_interfaces::msg::SetParametersResult ElasticBandSmoother::onParam(
   common_param_.onParam(parameters);
 
   // parameters for core algorithms
-  eb_path_smoother_ptr_->onParam(parameters);
+  eb_autoware_path_smoother_ptr_->onParam(parameters);
   replan_checker_ptr_->onParam(parameters);
 
   // reset planners
@@ -137,13 +137,13 @@ void ElasticBandSmoother::initializePlanning()
 {
   RCLCPP_DEBUG(get_logger(), "Initialize planning");
 
-  eb_path_smoother_ptr_->initialize(false, common_param_);
+  eb_autoware_path_smoother_ptr_->initialize(false, common_param_);
   resetPreviousData();
 }
 
 void ElasticBandSmoother::resetPreviousData()
 {
-  eb_path_smoother_ptr_->resetPreviousData();
+  eb_autoware_path_smoother_ptr_->resetPreviousData();
 
   prev_optimized_traj_points_ptr_ = nullptr;
 }
@@ -193,7 +193,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   }();
   replan_checker_ptr_->updateData(planner_data, is_replan_required, now());
   time_keeper_ptr_->tic(__func__);
-  auto smoothed_traj_points = is_replan_required ? eb_path_smoother_ptr_->smoothTrajectory(
+  auto smoothed_traj_points = is_replan_required ? eb_autoware_path_smoother_ptr_->smoothTrajectory(
                                                      input_traj_points, ego_state_ptr->pose.pose)
                                                  : *prev_optimized_traj_points_ptr_;
   time_keeper_ptr_->toc(__func__, "    ");
@@ -384,7 +384,7 @@ std::vector<TrajectoryPoint> ElasticBandSmoother::extendTrajectory(
   time_keeper_ptr_->toc(__func__, "  ");
   return resampled_traj_points;
 }
-}  // namespace path_smoother
+}  // namespace autoware::path_smoother
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(path_smoother::ElasticBandSmoother)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::path_smoother::ElasticBandSmoother)
