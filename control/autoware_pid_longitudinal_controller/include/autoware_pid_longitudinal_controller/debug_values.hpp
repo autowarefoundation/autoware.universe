@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_
-#define PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_
+#ifndef AUTOWARE_PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_
+#define AUTOWARE_PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_
 
 #include <array>
 
@@ -92,4 +92,4 @@ private:
 };
 }  // namespace autoware::motion::control::pid_longitudinal_controller
 
-#endif  // PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_
+#endif  // AUTOWARE_PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_
