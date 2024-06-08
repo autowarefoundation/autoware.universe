@@ -127,7 +127,7 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
   }();
 
   // create an instance of elastic band and model predictive trajectory.
-  const auto eb_autoware_path_smoother_ptr =
+  const auto eb_path_smoother_ptr =
     autoware::path_smoother::ElasticBandSmoother(create_node_options()).getElasticBandSmoother();
   const auto mpt_optimizer_ptr =
     autoware::path_optimizer::PathOptimizer(create_node_options()).getMPTOptimizer();
@@ -154,7 +154,7 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
 
     // smooth trajectory by elastic band in the autoware_path_smoother package
     const auto smoothed_traj_points =
-      eb_autoware_path_smoother_ptr->smoothTrajectory(raw_traj_points, virtual_ego_pose);
+      eb_path_smoother_ptr->smoothTrajectory(raw_traj_points, virtual_ego_pose);
 
     // road collision avoidance by model predictive trajectory in the autoware_path_optimizer
     // package
