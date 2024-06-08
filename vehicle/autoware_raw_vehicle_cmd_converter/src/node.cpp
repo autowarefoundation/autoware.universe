@@ -83,7 +83,7 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   sub_steering_ = create_subscription<Steering>(
     "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
-    "/vehicle/autoware_raw_vehicle_cmd_converter/debug/steer_pid", 1);
+    "/vehicle/raw_vehicle_cmd_converter/debug/steer_pid", 1);
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }

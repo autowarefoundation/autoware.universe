@@ -36,8 +36,8 @@ using GearCommand = autoware_vehicle_msgs::msg::GearCommand;
 using Control = autoware_control_msgs::msg::Control;
 using ExternalControlCommand = tier4_external_api_msgs::msg::ControlCommandStamped;
 using Odometry = nav_msgs::msg::Odometry;
-using autoware_raw_vehicle_cmd_converter::AccelMap;
-using autoware_raw_vehicle_cmd_converter::BrakeMap;
+using autoware::raw_vehicle_cmd_converter::AccelMap;
+using autoware::raw_vehicle_cmd_converter::BrakeMap;
 using Odometry = nav_msgs::msg::Odometry;
 
 class ExternalCmdConverterNode : public rclcpp::Node

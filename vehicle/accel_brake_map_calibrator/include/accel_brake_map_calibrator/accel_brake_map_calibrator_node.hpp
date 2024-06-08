@@ -56,8 +56,8 @@
 namespace accel_brake_map_calibrator
 {
 
-using autoware_raw_vehicle_cmd_converter::AccelMap;
-using autoware_raw_vehicle_cmd_converter::BrakeMap;
+using autoware::raw_vehicle_cmd_converter::AccelMap;
+using autoware::raw_vehicle_cmd_converter::BrakeMap;
 using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_vehicle_msgs::msg::VelocityReport;
 using geometry_msgs::msg::TwistStamped;
