@@ -29,7 +29,7 @@
 #include <optional>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 /// @brief check if the gridmap is occluded at the given index
 /// @param [in] grid_map input grid map
@@ -40,7 +40,7 @@ namespace behavior_velocity_planner
 /// @return true if the index is occluded
 bool is_occluded(
   const grid_map::GridMap & grid_map, const int min_nb_of_cells, const grid_map::Index idx,
-  const behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
+  const autoware::behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
 
 /// @brief interpolate a point beyond the end of the given segment
 /// @param [in] segment input segment
@@ -61,8 +61,8 @@ bool is_crosswalk_occluded(
   const lanelet::ConstLanelet & crosswalk_lanelet,
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
   const geometry_msgs::msg::Point & path_intersection, const double detection_range,
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & dynamic_objects,
-  const behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
+  const std::vector<autoware_perception_msgs::msg::PredictedObject> & dynamic_objects,
+  const autoware::behavior_velocity_planner::CrosswalkModule::PlannerParam & params);
 
 /// @brief calculate the distance away from the crosswalk that should be checked for occlusions
 /// @param occluded_objects_velocity assumed velocity of the objects coming out of occlusions
@@ -78,8 +78,8 @@ double calculate_detection_range(
 /// @param skip_pedestrians if true, pedestrians are not selected regardless of their velocities
 /// @param inflate_size [m] size by which the shape of the selected objects are inflated
 /// @return selected and inflated objects
-std::vector<autoware_auto_perception_msgs::msg::PredictedObject> select_and_inflate_objects(
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
+std::vector<autoware_perception_msgs::msg::PredictedObject> select_and_inflate_objects(
+  const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects,
   const double velocity_threshold, const bool skip_pedestrians, const double inflate_size);
 
 /// @brief clear occlusions behind the given objects
@@ -88,7 +88,7 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> select_and_infl
 /// @param objects objects
 void clear_occlusions_behind_objects(
   grid_map::GridMap & grid_map,
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects);
-}  // namespace behavior_velocity_planner
+  const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects);
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // OCCLUDED_CROSSWALK_HPP_

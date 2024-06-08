@@ -20,7 +20,7 @@
 
 #include <algorithm>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using tier4_autoware_utils::getOrDeclareParameter;
 
@@ -50,7 +50,7 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
 }
 
 void DynamicObstacleStopModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) return;
   // general
@@ -62,15 +62,15 @@ void DynamicObstacleStopModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 DynamicObstacleStopModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   return [path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return false;
   };
 }
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::DynamicObstacleStopModulePlugin,
-  behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::DynamicObstacleStopModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

@@ -14,14 +14,14 @@
 
 #include "behavior_path_lane_change_module/utils/utils.hpp"
 
+#include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/parameters.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "behavior_path_lane_change_module/utils/path.hpp"
-#include "behavior_path_planner_common/marker_utils/utils.hpp"
-#include "behavior_path_planner_common/parameters.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
-#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
-#include "behavior_path_planner_common/utils/path_utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
@@ -57,17 +57,17 @@
 
 namespace behavior_path_planner::utils::lane_change
 {
-using autoware_auto_perception_msgs::msg::ObjectClassification;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_perception_msgs::msg::ObjectClassification;
+using autoware_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Pose;
 using route_handler::RouteHandler;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using lanelet::ArcCoordinates;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
 
 rclcpp::Logger get_logger()
 {

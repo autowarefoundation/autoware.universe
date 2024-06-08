@@ -14,8 +14,8 @@
 
 #include "autoware_behavior_path_static_obstacle_avoidance_module/debug.hpp"
 
-#include "behavior_path_planner_common/marker_utils/utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
@@ -44,7 +44,7 @@ MarkerArray createObjectsCubeMarkerArray(
   const ObjectDataArray & objects, std::string && ns, const Vector3 & scale,
   const ColorRGBA & color)
 {
-  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using autoware_perception_msgs::msg::ObjectClassification;
 
   MarkerArray msg;
 

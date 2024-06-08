@@ -16,8 +16,8 @@
 
 #include "risk_predictive_braking.hpp"
 
-#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <interpolation/spline_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
@@ -33,7 +33,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 namespace occlusion_spot_utils
@@ -94,8 +94,8 @@ bool buildDetectionAreaPolygon(
 }
 
 void calcSlowDownPointsForPossibleCollision(
-  const int closest_idx, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const double offset, std::vector<PossibleCollisionInfo> & possible_collisions)
+  const int closest_idx, const tier4_planning_msgs::msg::PathWithLaneId & path, const double offset,
+  std::vector<PossibleCollisionInfo> & possible_collisions)
 {
   if (possible_collisions.empty()) {
     return;
@@ -485,4 +485,4 @@ std::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionSpo
 }
 
 }  // namespace occlusion_spot_utils
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner

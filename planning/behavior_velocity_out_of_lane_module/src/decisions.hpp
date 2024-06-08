@@ -20,7 +20,7 @@
 #include <rclcpp/logger.hpp>
 #include <route_handler/route_handler.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 
@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner::out_of_lane
+namespace autoware::behavior_velocity_planner::out_of_lane
 {
 /// @brief calculate the distance along the ego path between ego and some target path index
 /// @param [in] ego_data data related to the ego vehicle
@@ -53,7 +53,7 @@ double time_along_path(const EgoData & ego_data, const size_t target_idx);
 /// @return an optional pair (time at enter [s], time at exit [s]). If the dynamic object drives in
 /// the opposite direction, time at enter > time at exit
 std::optional<std::pair<double, double>> object_time_to_range(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
+  const autoware_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
   const std::shared_ptr<route_handler::RouteHandler> route_handler, const double dist_buffer,
   const rclcpp::Logger & logger);
 /// @brief use the lanelet map to estimate the times when an object will reach the enter and exit
@@ -67,7 +67,7 @@ std::optional<std::pair<double, double>> object_time_to_range(
 /// @return an optional pair (time at enter [s], time at exit [s]). If the dynamic object drives in
 /// the opposite direction, time at enter > time at exit.
 std::optional<std::pair<double, double>> object_time_to_range(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
+  const autoware_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
   const DecisionInputs & inputs, const rclcpp::Logger & logger);
 /// @brief decide whether an object is coming in the range at the same time as ego
 /// @details the condition depends on the mode (threshold, intervals, ttc)
@@ -110,6 +110,6 @@ std::optional<Slowdown> calculate_decision(
 /// @return return the calculated decisions to slowdown or stop
 std::vector<Slowdown> calculate_decisions(
   const DecisionInputs & inputs, const PlannerParam & params, const rclcpp::Logger & logger);
-}  // namespace behavior_velocity_planner::out_of_lane
+}  // namespace autoware::behavior_velocity_planner::out_of_lane
 
 #endif  // DECISIONS_HPP_

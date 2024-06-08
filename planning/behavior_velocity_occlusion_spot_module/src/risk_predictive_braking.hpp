@@ -17,12 +17,12 @@
 
 #include "occlusion_spot_utils.hpp"
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <algorithm>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 namespace occlusion_spot_utils
 {
@@ -38,6 +38,6 @@ void applySafeVelocityConsideringPossibleCollision(
 SafeMotion calculateSafeMotion(const Velocity & v, const double ttv);
 
 }  // namespace occlusion_spot_utils
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // RISK_PREDICTIVE_BRAKING_HPP_

@@ -18,19 +18,19 @@
 #include "object_stop_decision.hpp"
 #include "types.hpp"
 
-#include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_point_with_lane_id.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
-namespace behavior_velocity_planner::dynamic_obstacle_stop
+namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop
 {
 class DynamicObstacleStopModule : public SceneModuleInterface
 {
@@ -57,6 +57,6 @@ protected:
   // Debug
   mutable DebugData debug_data_;
 };
-}  // namespace behavior_velocity_planner::dynamic_obstacle_stop
+}  // namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop
 
 #endif  // SCENE_DYNAMIC_OBSTACLE_STOP_HPP_

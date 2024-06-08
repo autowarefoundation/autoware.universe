@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lane_departure_checker/lane_departure_checker_node.hpp"
+#include "autoware_lane_departure_checker/lane_departure_checker_node.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -120,7 +120,7 @@ void update_param(
 
 }  // namespace
 
-namespace lane_departure_checker
+namespace autoware::lane_departure_checker
 {
 LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & options)
 : Node("lane_departure_checker_node", options)
@@ -172,7 +172,7 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   // Subscriber
   sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/odometry", 1, std::bind(&LaneDepartureCheckerNode::onOdometry, this, _1));
-  sub_lanelet_map_bin_ = this->create_subscription<HADMapBin>(
+  sub_lanelet_map_bin_ = this->create_subscription<LaneletMapBin>(
     "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local(),
     std::bind(&LaneDepartureCheckerNode::onLaneletMapBin, this, _1));
   sub_route_ = this->create_subscription<LaneletRoute>(
@@ -206,7 +206,7 @@ void LaneDepartureCheckerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSh
   current_odom_ = msg;
 }
 
-void LaneDepartureCheckerNode::onLaneletMapBin(const HADMapBin::ConstSharedPtr msg)
+void LaneDepartureCheckerNode::onLaneletMapBin(const LaneletMapBin::ConstSharedPtr msg)
 {
   lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_, &traffic_rules_, &routing_graph_);
@@ -759,7 +759,7 @@ lanelet::Lanelets LaneDepartureCheckerNode::getRightOppositeLanelets(
   return opposite_lanelets;
 }
 
-}  // namespace lane_departure_checker
+}  // namespace autoware::lane_departure_checker
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(lane_departure_checker::LaneDepartureCheckerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::lane_departure_checker::LaneDepartureCheckerNode)

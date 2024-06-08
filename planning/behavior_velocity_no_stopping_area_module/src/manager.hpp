@@ -17,17 +17,17 @@
 
 #include "scene_no_stopping_area.hpp"
 
-#include <behavior_velocity_planner_common/plugin_interface.hpp>
-#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
-#include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/plugin_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/plugin_wrapper.hpp>
+#include <autoware_behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <functional>
 #include <memory>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 class NoStoppingAreaModuleManager : public SceneModuleManagerInterfaceWithRTC
 {
@@ -39,16 +39,16 @@ public:
 private:
   NoStoppingAreaModule::PlannerParam planner_param_;
 
-  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+    const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
 class NoStoppingAreaModulePlugin : public PluginWrapper<NoStoppingAreaModuleManager>
 {
 };
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // MANAGER_HPP_

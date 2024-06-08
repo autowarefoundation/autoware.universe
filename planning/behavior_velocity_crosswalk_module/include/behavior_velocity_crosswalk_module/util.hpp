@@ -33,16 +33,16 @@
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <behavior_velocity_planner_common/planner_data.hpp>
+#include <autoware_behavior_velocity_planner_common/planner_data.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/stop_factor.hpp>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_planning_msgs::msg::StopFactor;
 
 enum class CollisionState { YIELD, EGO_PASS_FIRST, EGO_PASS_LATER, IGNORE };
@@ -87,14 +87,12 @@ struct DebugData
 
 std::vector<std::pair<int64_t, lanelet::ConstLanelet>> getCrosswalksOnPath(
   const geometry_msgs::msg::Pose & current_pose,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map,
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
 
 std::set<int64_t> getCrosswalkIdSetOnPath(
   const geometry_msgs::msg::Pose & current_pose,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map,
+  const tier4_planning_msgs::msg::PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
 
 bool checkRegulatoryElementExistence(const lanelet::LaneletMapPtr & lanelet_map_ptr);
@@ -110,6 +108,6 @@ std::vector<geometry_msgs::msg::Point> getLinestringIntersects(
 std::optional<lanelet::ConstLineString3d> getStopLineFromMap(
   const lanelet::Id lane_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const std::string & attribute_name);
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // BEHAVIOR_VELOCITY_CROSSWALK_MODULE__UTIL_HPP_

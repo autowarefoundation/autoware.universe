@@ -14,8 +14,8 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 
 BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
@@ -52,8 +52,7 @@ BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".ttc_ego_minimal_velocity");
 }
 
-void BlindSpotModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+void BlindSpotModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & ll : planning_utils::getLaneletsOnPath(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
@@ -86,7 +85,7 @@ void BlindSpotModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 BlindSpotModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
@@ -96,8 +95,9 @@ BlindSpotModuleManager::getModuleExpiredFunction(
   };
 }
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::BlindSpotModulePlugin, behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::BlindSpotModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

@@ -17,12 +17,12 @@
 
 #include "scene.hpp"
 
-#include <behavior_velocity_planner_common/plugin_interface.hpp>
-#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
-#include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/plugin_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/plugin_wrapper.hpp>
+#include <autoware_behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <functional>
 #include <memory>
@@ -30,7 +30,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
 
@@ -45,23 +45,23 @@ private:
   StopLineModule::PlannerParam planner_param_;
 
   std::vector<StopLineWithLaneId> getStopLinesWithLaneIdOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const tier4_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::LaneletMapPtr lanelet_map);
 
   std::set<int64_t> getStopLineIdSetOnPath(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+    const tier4_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::LaneletMapPtr lanelet_map);
 
-  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+  void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+    const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
 class StopLineModulePlugin : public PluginWrapper<StopLineModuleManager>
 {
 };
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // MANAGER_HPP_

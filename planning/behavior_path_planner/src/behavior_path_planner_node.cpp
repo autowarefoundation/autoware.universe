@@ -14,9 +14,9 @@
 
 #include "behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "behavior_path_planner_common/marker_utils/utils.hpp"
-#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 
 #include <tier4_autoware_utils/ros/update_param.hpp>
@@ -96,7 +96,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/costmap", 1, std::bind(&BehaviorPathPlannerNode::onCostMap, this, _1),
     createSubscriptionOptions(this));
   traffic_signals_subscriber_ =
-    this->create_subscription<autoware_perception_msgs::msg::TrafficSignalArray>(
+    this->create_subscription<autoware_perception_msgs::msg::TrafficLightGroupArray>(
       "~/input/traffic_signals", 1, std::bind(&BehaviorPathPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
   lateral_offset_subscriber_ = this->create_subscription<LateralOffset>(
@@ -119,7 +119,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       createSubscriptionOptions(this));
 
   // route_handler
-  vector_map_subscriber_ = create_subscription<HADMapBin>(
+  vector_map_subscriber_ = create_subscription<LaneletMapBin>(
     "~/input/vector_map", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onMap, this, _1),
     createSubscriptionOptions(this));
   route_subscriber_ = create_subscription<LaneletRoute>(
@@ -229,7 +229,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   // size of a drivable area.
   //       The drivable area has to cover not the base link but the vehicle itself. Therefore
   //       rear_overhang must be added to backward_path_length. In addition, because of the
-  //       calculation of the drivable area in the obstacle_avoidance_planner package, the drivable
+  //       calculation of the drivable area in the autoware_path_optimizer package, the drivable
   //       area has to be a little longer than the backward_path_length parameter by adding
   //       min_backward_offset.
   constexpr double min_backward_offset = 1.0;
@@ -339,7 +339,7 @@ void BehaviorPathPlannerNode::run()
   }
 
   // check for map update
-  HADMapBin::ConstSharedPtr map_ptr{nullptr};
+  LaneletMapBin::ConstSharedPtr map_ptr{nullptr};
   {
     std::lock_guard<std::mutex> lk_map(mutex_map_);  // for has_received_map_ and map_ptr_
     if (has_received_map_) {
@@ -711,8 +711,8 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = motion_utils::convertToPath<autoware_auto_planning_msgs::msg::PathWithLaneId>(
-    *path_candidate_ptr);
+  output =
+    motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(*path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();
   output.header.stamp = this->now();
@@ -790,19 +790,19 @@ void BehaviorPathPlannerNode::onCostMap(const OccupancyGrid::ConstSharedPtr msg)
   const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->costmap = msg;
 }
-void BehaviorPathPlannerNode::onTrafficSignals(const TrafficSignalArray::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onTrafficSignals(const TrafficLightGroupArray::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
 
   planner_data_->traffic_light_id_map.clear();
-  for (const auto & signal : msg->signals) {
+  for (const auto & signal : msg->traffic_light_groups) {
     TrafficSignalStamped traffic_signal;
     traffic_signal.stamp = msg->stamp;
     traffic_signal.signal = signal;
-    planner_data_->traffic_light_id_map[signal.traffic_signal_id] = traffic_signal;
+    planner_data_->traffic_light_id_map[signal.traffic_light_group_id] = traffic_signal;
   }
 }
-void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onMap(const LaneletMapBin::ConstSharedPtr msg)
 {
   const std::lock_guard<std::mutex> lock(mutex_map_);
   map_ptr_ = msg;

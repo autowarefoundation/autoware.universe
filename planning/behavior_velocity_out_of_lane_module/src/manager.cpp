@@ -16,7 +16,7 @@
 
 #include "scene_out_of_lane.hpp"
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using tier4_autoware_utils::getOrDeclareParameter;
 
@@ -82,8 +82,7 @@ OutOfLaneModuleManager::OutOfLaneModuleManager(rclcpp::Node & node)
   pp.right_offset = vehicle_info.min_lateral_offset_m;
 }
 
-void OutOfLaneModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+void OutOfLaneModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) return;
   // general
@@ -95,14 +94,15 @@ void OutOfLaneModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 OutOfLaneModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   return [path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return false;
   };
 }
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::OutOfLaneModulePlugin, behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::OutOfLaneModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

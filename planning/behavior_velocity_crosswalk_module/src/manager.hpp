@@ -17,14 +17,14 @@
 
 #include "scene_crosswalk.hpp"
 
-#include <behavior_velocity_planner_common/plugin_interface.hpp>
-#include <behavior_velocity_planner_common/plugin_wrapper.hpp>
-#include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/plugin_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/plugin_wrapper.hpp>
+#include <autoware_behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_api_msgs/msg/crosswalk_status.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <functional>
 #include <memory>
@@ -32,10 +32,10 @@
 #include <set>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 class CrosswalkModuleManager : public SceneModuleManagerInterfaceWithRTC
 {
@@ -56,6 +56,6 @@ private:
 class CrosswalkModulePlugin : public PluginWrapper<CrosswalkModuleManager>
 {
 };
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // MANAGER_HPP_

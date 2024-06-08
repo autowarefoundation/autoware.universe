@@ -29,7 +29,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
-namespace behavior_velocity_planner::out_of_lane
+namespace autoware::behavior_velocity_planner::out_of_lane
 {
 double distance_along_path(const EgoData & ego_data, const size_t target_idx)
 {
@@ -61,7 +61,7 @@ bool object_is_incoming(
 }
 
 std::optional<std::pair<double, double>> object_time_to_range(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
+  const autoware_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
   const std::shared_ptr<route_handler::RouteHandler> route_handler, const double dist_buffer,
   const rclcpp::Logger & logger)
 {
@@ -155,7 +155,7 @@ std::optional<std::pair<double, double>> object_time_to_range(
 }
 
 std::optional<std::pair<double, double>> object_time_to_range(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
+  const autoware_perception_msgs::msg::PredictedObject & object, const OverlapRange & range,
   const DecisionInputs & inputs, const rclcpp::Logger & logger)
 {
   const auto & p = object.kinematics.initial_pose_with_covariance.pose.position;
@@ -380,4 +380,4 @@ std::vector<Slowdown> calculate_decisions(
   return decisions;
 }
 
-}  // namespace behavior_velocity_planner::out_of_lane
+}  // namespace autoware::behavior_velocity_planner::out_of_lane

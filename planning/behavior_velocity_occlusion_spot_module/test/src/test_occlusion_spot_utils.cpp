@@ -16,24 +16,25 @@
 #include "occlusion_spot_utils.hpp"
 #include "utils.hpp"
 
-#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/vector3.hpp"
 
 using Point = geometry_msgs::msg::Point;
 using Vector3 = geometry_msgs::msg::Vector3;
-using DynamicObjects = autoware_auto_perception_msgs::msg::PredictedObjects;
-using DynamicObject = autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using DynamicObjects = autoware_perception_msgs::msg::PredictedObjects;
+using DynamicObject = autoware_perception_msgs::msg::PredictedObject;
+using autoware_planning_msgs::msg::Path;
+using autoware_planning_msgs::msg::PathPoint;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 TEST(calcSlowDownPointsForPossibleCollision, TooManyPossibleCollisions)
 {
-  using behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision;
-  using behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo;
+  using autoware::behavior_velocity_planner::occlusion_spot_utils::
+    calcSlowDownPointsForPossibleCollision;
+  using autoware::behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo;
   using std::chrono::duration;
   using std::chrono::duration_cast;
   using std::chrono::high_resolution_clock;
@@ -41,8 +42,7 @@ TEST(calcSlowDownPointsForPossibleCollision, TooManyPossibleCollisions)
   std::vector<PossibleCollisionInfo> possible_collisions;
   size_t num = 2000;
   // make a path with 2000 points from x=0 to x=4
-  autoware_auto_planning_msgs::msg::PathWithLaneId path =
-    test::generatePath(0.0, 3.0, 4.0, 3.0, num);
+  tier4_planning_msgs::msg::PathWithLaneId path = test::generatePath(0.0, 3.0, 4.0, 3.0, num);
   // make 2000 possible collision from x=0 to x=10
   test::generatePossibleCollisions(possible_collisions, 0.0, 3.0, 4.0, 3.0, num);
 
@@ -66,8 +66,9 @@ TEST(calcSlowDownPointsForPossibleCollision, TooManyPossibleCollisions)
 
 TEST(calcSlowDownPointsForPossibleCollision, ConsiderSignedOffset)
 {
-  using behavior_velocity_planner::occlusion_spot_utils::calcSlowDownPointsForPossibleCollision;
-  using behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo;
+  using autoware::behavior_velocity_planner::occlusion_spot_utils::
+    calcSlowDownPointsForPossibleCollision;
+  using autoware::behavior_velocity_planner::occlusion_spot_utils::PossibleCollisionInfo;
   using std::chrono::duration;
   using std::chrono::duration_cast;
   using std::chrono::high_resolution_clock;
