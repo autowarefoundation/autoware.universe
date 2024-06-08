@@ -44,14 +44,14 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
     std::make_shared<autoware::path_smoother::ElasticBandSmoother>(node_options);
 
   // publish necessary topics from test_manager
-  test_manager->publishOdometry(test_target_node, "autoware_path_smoother/input/odometry");
+  test_manager->publishOdometry(test_target_node, "path_smoother/input/odometry");
 
   // set subscriber with topic name
-  test_manager->setTrajectorySubscriber("autoware_path_smoother/output/traj");
-  test_manager->setPathSubscriber("autoware_path_smoother/output/path");
+  test_manager->setTrajectorySubscriber("path_smoother/output/traj");
+  test_manager->setPathSubscriber("path_smoother/output/path");
 
   // set input topic name (this topic is changed to test node)
-  test_manager->setPathInputTopicName("autoware_path_smoother/input/path");
+  test_manager->setPathInputTopicName("path_smoother/input/path");
 
   // test with normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPath(test_target_node));

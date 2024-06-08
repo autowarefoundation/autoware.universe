@@ -94,7 +94,7 @@ ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_option
     common_param_ = CommonParam(this);
   }
 
-  eb_autoware_path_smoother_ptr_ = std::make_shared<EBPathSmoother>(
+  eb_path_smoother_ptr_ = std::make_shared<EBPathSmoother>(
     this, enable_debug_info_, ego_nearest_param_, common_param_, time_keeper_ptr_);
   replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
 
@@ -121,7 +121,7 @@ rcl_interfaces::msg::SetParametersResult ElasticBandSmoother::onParam(
   common_param_.onParam(parameters);
 
   // parameters for core algorithms
-  eb_autoware_path_smoother_ptr_->onParam(parameters);
+  eb_path_smoother_ptr_->onParam(parameters);
   replan_checker_ptr_->onParam(parameters);
 
   // reset planners
@@ -137,13 +137,13 @@ void ElasticBandSmoother::initializePlanning()
 {
   RCLCPP_DEBUG(get_logger(), "Initialize planning");
 
-  eb_autoware_path_smoother_ptr_->initialize(false, common_param_);
+  eb_path_smoother_ptr_->initialize(false, common_param_);
   resetPreviousData();
 }
 
 void ElasticBandSmoother::resetPreviousData()
 {
-  eb_autoware_path_smoother_ptr_->resetPreviousData();
+  eb_path_smoother_ptr_->resetPreviousData();
 
   prev_optimized_traj_points_ptr_ = nullptr;
 }
@@ -193,7 +193,7 @@ void ElasticBandSmoother::onPath(const Path::ConstSharedPtr path_ptr)
   }();
   replan_checker_ptr_->updateData(planner_data, is_replan_required, now());
   time_keeper_ptr_->tic(__func__);
-  auto smoothed_traj_points = is_replan_required ? eb_autoware_path_smoother_ptr_->smoothTrajectory(
+  auto smoothed_traj_points = is_replan_required ? eb_path_smoother_ptr_->smoothTrajectory(
                                                      input_traj_points, ego_state_ptr->pose.pose)
                                                  : *prev_optimized_traj_points_ptr_;
   time_keeper_ptr_->toc(__func__, "    ");

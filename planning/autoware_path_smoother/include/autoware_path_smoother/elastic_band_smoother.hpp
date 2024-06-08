@@ -41,10 +41,7 @@ public:
 
   // NOTE: This is for the static_centerline_generator package which utilizes the following
   // instance.
-  std::shared_ptr<EBPathSmoother> getElasticBandSmoother() const
-  {
-    return eb_autoware_path_smoother_ptr_;
-  }
+  std::shared_ptr<EBPathSmoother> getElasticBandSmoother() const { return eb_path_smoother_ptr_; }
 
 private:
   class DrivingDirectionChecker
@@ -69,7 +66,7 @@ private:
   bool enable_debug_info_;
 
   // algorithms
-  std::shared_ptr<EBPathSmoother> eb_autoware_path_smoother_ptr_{nullptr};
+  std::shared_ptr<EBPathSmoother> eb_path_smoother_ptr_{nullptr};
   std::shared_ptr<ReplanChecker> replan_checker_ptr_{nullptr};
 
   // parameters
