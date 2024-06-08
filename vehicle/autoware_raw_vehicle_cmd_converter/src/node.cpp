@@ -12,18 +12,18 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include "raw_vehicle_cmd_converter/node.hpp"
+#include "autoware_raw_vehicle_cmd_converter/node.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-namespace raw_vehicle_cmd_converter
+namespace autoware::raw_vehicle_cmd_converter
 {
 RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   const rclcpp::NodeOptions & node_options)
-: Node("raw_vehicle_cmd_converter_node", node_options)
+: Node("autoware_raw_vehicle_cmd_converter_node", node_options)
 {
   using std::placeholders::_1;
   /* parameters for accel/brake map */
@@ -83,7 +83,7 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   sub_steering_ = create_subscription<Steering>(
     "~/input/steering", 1, std::bind(&RawVehicleCommandConverterNode::onSteering, this, _1));
   debug_pub_steer_pid_ = create_publisher<Float32MultiArrayStamped>(
-    "/vehicle/raw_vehicle_cmd_converter/debug/steer_pid", 1);
+    "/vehicle/autoware_raw_vehicle_cmd_converter/debug/steer_pid", 1);
 
   logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
 }
@@ -221,7 +221,7 @@ void RawVehicleCommandConverterNode::onControlCmd(const Control::ConstSharedPtr 
   control_cmd_ptr_ = msg;
   publishActuationCmd();
 }
-}  // namespace raw_vehicle_cmd_converter
+}  // namespace autoware::raw_vehicle_cmd_converter
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(raw_vehicle_cmd_converter::RawVehicleCommandConverterNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::raw_vehicle_cmd_converter::RawVehicleCommandConverterNode)

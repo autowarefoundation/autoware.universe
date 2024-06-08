@@ -12,14 +12,14 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef RAW_VEHICLE_CMD_CONVERTER__PID_HPP_
-#define RAW_VEHICLE_CMD_CONVERTER__PID_HPP_
+#ifndef AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__PID_HPP_
+#define AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__PID_HPP_
 
 #include <algorithm>
 #include <iostream>
 #include <vector>
 
-namespace raw_vehicle_cmd_converter
+namespace autoware::raw_vehicle_cmd_converter
 {
 class PIDController
 {
@@ -60,6 +60,6 @@ private:
   double invalid_integration_decay_{0.0};
   double is_initialized_{false};
 };
-}  // namespace raw_vehicle_cmd_converter
+}  // namespace autoware::raw_vehicle_cmd_converter
 
-#endif  // RAW_VEHICLE_CMD_CONVERTER__PID_HPP_
+#endif  // AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__PID_HPP_

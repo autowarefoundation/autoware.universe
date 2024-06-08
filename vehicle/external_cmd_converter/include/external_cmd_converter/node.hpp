@@ -15,9 +15,9 @@
 #ifndef EXTERNAL_CMD_CONVERTER__NODE_HPP_
 #define EXTERNAL_CMD_CONVERTER__NODE_HPP_
 
+#include <autoware_raw_vehicle_cmd_converter/accel_map.hpp>
+#include <autoware_raw_vehicle_cmd_converter/brake_map.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <raw_vehicle_cmd_converter/accel_map.hpp>
-#include <raw_vehicle_cmd_converter/brake_map.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>
@@ -36,8 +36,8 @@ using GearCommand = autoware_vehicle_msgs::msg::GearCommand;
 using Control = autoware_control_msgs::msg::Control;
 using ExternalControlCommand = tier4_external_api_msgs::msg::ControlCommandStamped;
 using Odometry = nav_msgs::msg::Odometry;
-using raw_vehicle_cmd_converter::AccelMap;
-using raw_vehicle_cmd_converter::BrakeMap;
+using autoware_raw_vehicle_cmd_converter::AccelMap;
+using autoware_raw_vehicle_cmd_converter::BrakeMap;
 using Odometry = nav_msgs::msg::Odometry;
 
 class ExternalCmdConverterNode : public rclcpp::Node
