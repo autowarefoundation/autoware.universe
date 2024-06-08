@@ -16,6 +16,7 @@
 #define AUTOWARE_PID_LONGITUDINAL_CONTROLLER__DEBUG_VALUES_HPP_
 
 #include <array>
+#include <cstddef>
 
 namespace autoware::motion::control::pid_longitudinal_controller
 {
