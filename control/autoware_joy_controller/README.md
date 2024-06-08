@@ -10,13 +10,13 @@
 
 ```bash
 # With default config (ds4)
-ros2 launch autoware_joy_controller autoware_joy_controller.launch.xml
+ros2 launch autoware_joy_controller joy_controller.launch.xml
 
 # Default config but select from the existing parameter files
-ros2 launch autoware_joy_controller autoware_joy_controller_param_selection.launch.xml joy_type:=ds4 # or g29, p65, xbox
+ros2 launch autoware_joy_controller joy_controller_param_selection.launch.xml joy_type:=ds4 # or g29, p65, xbox
 
 # Override the param file
-ros2 launch autoware_joy_controller autoware_joy_controller.launch.xml config_file:=/path/to/your/param.yaml
+ros2 launch autoware_joy_controller joy_controller.launch.xml config_file:=/path/to/your/param.yaml
 ```
 
 ## Input / Output
