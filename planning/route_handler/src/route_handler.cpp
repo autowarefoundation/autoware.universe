@@ -1596,30 +1596,45 @@ PathWithLaneId RouteHandler::getCenterLinePath(
       const auto ref_points_by_waypoints = convertWaypointsToReferencePoints(piecewise_waypoints);
 
       // update reference points by waypoints
-      if (
-        piecewise_waypoints_itr != waypoints.begin() &&
-        piecewise_waypoints_itr != waypoints.end() - 1) {
+      const bool is_first_waypoint_contained = piecewise_waypoints_itr == waypoints.begin();
+      const bool is_last_waypoint_contained = piecewise_waypoints_itr == waypoints.end() - 1;
+      if (is_first_waypoint_contained || is_last_waypoint_contained) {
+        // If piecewise_waypoints_itr is the end (first or last) of piecewise_waypoints
+
+        const auto original_piecewise_ref_points =
+          piecewise_ref_points_vec.at(piecewise_waypoints_lanelet_sequence_index);
+
+        // define current_piecewise_ref_points, and initialize it with waypoints
+        auto & current_piecewise_ref_points =
+          piecewise_ref_points_vec.at(piecewise_waypoints_lanelet_sequence_index);
+        current_piecewise_ref_points = ref_points_by_waypoints;
+        if (is_first_waypoint_contained) {
+          // add original reference points to current reference points, and remove reference points
+          // overlapped with waypoints
+          current_piecewise_ref_points.insert(
+            current_piecewise_ref_points.begin(), original_piecewise_ref_points.begin(),
+            original_piecewise_ref_points.end());
+          const bool is_removing_direction_forward = false;
+          removeOverlappedCenterlineWithWaypoints(
+            piecewise_ref_points_vec, piecewise_waypoints, lanelet_sequence,
+            piecewise_waypoints_lanelet_sequence_index, is_removing_direction_forward);
+        }
+        if (is_last_waypoint_contained) {
+          // add original reference points to current reference points, and remove reference points
+          // overlapped with waypoints
+          current_piecewise_ref_points.insert(
+            current_piecewise_ref_points.end(), original_piecewise_ref_points.begin(),
+            original_piecewise_ref_points.end());
+          const bool is_removing_direction_forward = true;
+          removeOverlappedCenterlineWithWaypoints(
+            piecewise_ref_points_vec, piecewise_waypoints, lanelet_sequence,
+            piecewise_waypoints_lanelet_sequence_index, is_removing_direction_forward);
+        }
+      } else {
         // If piecewise_waypoints_itr is not the end (first or last) of piecewise_waypoints,
         // remove all the reference points and add waypoints.
         piecewise_ref_points_vec.at(piecewise_waypoints_lanelet_sequence_index) =
           ref_points_by_waypoints;
-      } else {
-        // If piecewise_waypoints_itr is the end (first or last) of piecewise_waypoints
-        const bool is_waypoint_first = piecewise_waypoints_itr == waypoints.begin();
-
-        // concatenate waypoints and reference points by centerline
-        // NOTE: They may overlap longitudinally.
-        auto & current_piecewise_ref_points =
-          piecewise_ref_points_vec.at(piecewise_waypoints_lanelet_sequence_index);
-        current_piecewise_ref_points.insert(
-          is_waypoint_first ? current_piecewise_ref_points.end()
-                            : current_piecewise_ref_points.begin(),
-          ref_points_by_waypoints.begin(), ref_points_by_waypoints.end());
-
-        // remove overlapped ref points which overlap waypoints
-        removeOverlappedCenterlineWithWaypoints(
-          piecewise_ref_points_vec, piecewise_waypoints, lanelet_sequence,
-          piecewise_waypoints_lanelet_sequence_index, is_waypoint_first);
       }
     }
   }
@@ -1717,7 +1732,8 @@ void RouteHandler::removeOverlappedCenterlineWithWaypoints(
   std::vector<PiecewiseReferencePoints> & piecewise_ref_points_vec,
   const std::vector<geometry_msgs::msg::Point> & piecewise_waypoints,
   const lanelet::ConstLanelets & lanelet_sequence,
-  const size_t piecewise_waypoints_lanelet_sequence_index, const bool is_waypoint_first) const
+  const size_t piecewise_waypoints_lanelet_sequence_index,
+  const bool is_removing_direction_forward) const
 {
   const double waypoints_interpolation_arc_margin_ratio = 5.0;
 
@@ -1754,25 +1770,31 @@ void RouteHandler::removeOverlappedCenterlineWithWaypoints(
            ref_point_unsigned_index < target_piecewise_ref_points.size();
            ++ref_point_unsigned_index) {
         const size_t ref_point_index =
-          is_waypoint_first ? target_piecewise_ref_points.size() - 1 - ref_point_unsigned_index
-                            : ref_point_unsigned_index;
+          is_removing_direction_forward
+            ? ref_point_unsigned_index
+            : target_piecewise_ref_points.size() - 1 - ref_point_unsigned_index;
         const auto & ref_point = target_piecewise_ref_points.at(ref_point_index);
 
         // skip waypoints
         if (ref_point.is_waypoint) {
+          if (
+            target_lanelet_sequence_index ==
+            static_cast<int>(piecewise_waypoints_lanelet_sequence_index)) {
+            overlapped_ref_points_indices.clear();
+          }
           continue;
         }
 
         const double ref_point_arc_length =
-          (is_waypoint_first ? -target_lanelet_arc_length : 0) +
+          (is_removing_direction_forward ? 0 : -target_lanelet_arc_length) +
           calcArcCoordinates(lanelet_sequence.at(target_lanelet_sequence_index), ref_point.point)
             .length;
-        if (is_waypoint_first) {
-          if (offset_arc_length + ref_point_arc_length < front_arc_length_threshold) {
+        if (is_removing_direction_forward) {
+          if (back_arc_length_threshold < offset_arc_length + ref_point_arc_length) {
             return true;
           }
         } else {
-          if (back_arc_length_threshold < offset_arc_length + ref_point_arc_length) {
+          if (offset_arc_length + ref_point_arc_length < front_arc_length_threshold) {
             return true;
           }
         }
@@ -1790,8 +1812,8 @@ void RouteHandler::removeOverlappedCenterlineWithWaypoints(
       break;
     }
 
-    target_lanelet_sequence_index += is_waypoint_first ? -1 : 1;
-    offset_arc_length = (is_waypoint_first ? -1 : 1) * target_lanelet_arc_length;
+    target_lanelet_sequence_index += is_removing_direction_forward ? 1 : -1;
+    offset_arc_length = (is_removing_direction_forward ? 1 : -1) * target_lanelet_arc_length;
   }
 }
 

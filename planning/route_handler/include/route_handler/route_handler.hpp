@@ -289,7 +289,8 @@ public:
     std::vector<PiecewiseReferencePoints> & piecewise_ref_points_vec,
     const std::vector<geometry_msgs::msg::Point> & piecewise_waypoints,
     const lanelet::ConstLanelets & lanelet_sequence,
-    const size_t piecewise_waypoints_lanelet_sequence_index, const bool is_waypoint_first) const;
+    const size_t piecewise_waypoints_lanelet_sequence_index,
+    const bool is_removing_direction_forward) const;
   std::optional<lanelet::ConstLanelet> getLaneChangeTarget(
     const lanelet::ConstLanelets & lanelets, const Direction direction = Direction::NONE) const;
   std::optional<lanelet::ConstLanelet> getLaneChangeTargetExceptPreferredLane(
