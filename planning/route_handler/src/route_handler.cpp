@@ -1735,7 +1735,7 @@ void RouteHandler::removeOverlappedCenterlineWithWaypoints(
   const size_t piecewise_waypoints_lanelet_sequence_index,
   const bool is_removing_direction_forward) const
 {
-  const double waypoints_interpolation_arc_margin_ratio = 5.0;
+  const double waypoints_interpolation_arc_margin_ratio = 10.0;
 
   // calculate arc length threshold
   const double front_arc_length_threshold = [&]() {
