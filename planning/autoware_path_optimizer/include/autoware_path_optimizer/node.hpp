@@ -40,12 +40,12 @@ class PathOptimizer : public rclcpp::Node
 public:
   explicit PathOptimizer(const rclcpp::NodeOptions & node_options);
 
-  // NOTE: This is for the static_centerline_generator package which utilizes the following
+  // NOTE: This is for the static_waypoints_generator package which utilizes the following
   // instance.
   std::shared_ptr<MPTOptimizer> getMPTOptimizer() const { return mpt_optimizer_ptr_; }
 
   // private:
-protected:  // for the static_centerline_generator package
+protected:  // for the static_waypoints_generator package
   // TODO(murooka) move this node to common
   class DrivingDirectionChecker
   {

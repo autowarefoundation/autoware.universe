@@ -70,7 +70,7 @@ nav:
       - 'About Velocity Smoother': planning/autoware_velocity_smoother
       - 'About Velocity Smoother (Japanese)': planning/autoware_velocity_smoother/README.ja
   - 'Scenario Selector': planning/scenario_selector
-  - 'Static Centerline Generator': planning/autoware_static_centerline_generator
+  - 'Static Centerline Generator': planning/autoware_static_waypoints_generator
   - 'API and Library':
     - 'Costmap Generator': planning/costmap_generator
     - 'External Velocity Limit Selector': planning/autoware_external_velocity_limit_selector
