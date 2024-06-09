@@ -21,9 +21,10 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
+  <depend>autoware_behavior_path_planner_common</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_rtc_interface</depend>
   <depend>behavior_path_planner</depend>
-  <depend>behavior_path_planner_common</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>magic_enum</depend>
@@ -32,7 +33,6 @@
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>route_handler</depend>
-  <depend>rtc_interface</depend>
   <depend>sensor_msgs</depend>
   <depend>signal_processing</depend>
   <depend>tf2</depend>

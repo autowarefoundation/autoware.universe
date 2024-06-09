@@ -102,8 +102,8 @@ def launch_setup(context, *args, **kwargs):
 
     # lane departure checker
     lane_departure_component = ComposableNode(
-        package="lane_departure_checker",
-        plugin="lane_departure_checker::LaneDepartureCheckerNode",
+        package="autoware_lane_departure_checker",
+        plugin="autoware::lane_departure_checker::LaneDepartureCheckerNode",
         name="lane_departure_checker_node",
         namespace="trajectory_follower",
         remappings=[
@@ -139,7 +139,7 @@ def launch_setup(context, *args, **kwargs):
 
     # autonomous emergency braking
     autonomous_emergency_braking = ComposableNode(
-        package="autonomous_emergency_braking",
+        package="autoware_autonomous_emergency_braking",
         plugin="autoware::motion::control::autonomous_emergency_braking::AEB",
         name="autonomous_emergency_braking",
         remappings=[
@@ -432,7 +432,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     smart_mpc_trajectory_follower = Node(
-        package="smart_mpc_trajectory_follower",
+        package="autoware_smart_mpc_trajectory_follower",
         executable="pympc_trajectory_follower.py",
         name="pympc_trajectory_follower",
     )
