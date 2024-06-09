@@ -253,7 +253,7 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
   const double stop_vel = std::numeric_limits<float>::min();
 
   // if the detected stop point is near goal, it's ignored.
-  const double close_to_goal_distance = 1.0;
+  static constexpr double close_to_goal_distance = 1.0;
 
   // stuck points by stop line
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
