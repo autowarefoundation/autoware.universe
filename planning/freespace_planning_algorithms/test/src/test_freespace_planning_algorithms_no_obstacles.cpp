@@ -1,4 +1,4 @@
-// Copyright 2021 TIER IV, Inc. All rights reserved.
+// Copyright 2024 TIER IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,13 +39,14 @@ const double length_lexus = 5.5;
 const double width_lexus = 2.75;
 const fpa::VehicleShape vehicle_shape = fpa::VehicleShape(length_lexus, width_lexus, 1.5);
 const double pi = 3.1415926;
-const std::array<double, 3> start_pose{5.5, 4., pi * 0.5};
-const std::array<double, 3> goal_pose1{8.0, 26.3, pi * 1.5};   // easiest
-const std::array<double, 3> goal_pose2{15.0, 11.6, pi * 0.5};  // second easiest
-const std::array<double, 3> goal_pose3{18.4, 26.3, pi * 1.5};  // third easiest
-const std::array<double, 3> goal_pose4{25.0, 26.3, pi * 1.5};  // most difficult
-const std::array<std::array<double, 3>, 4> goal_poses{
-  goal_pose1, goal_pose2, goal_pose3, goal_pose4};
+const std::array<double, 3> start_pose1{8., 7., pi * 0.5};
+const std::array<double, 3> start_pose2{9., 12., pi * 0.25};
+const std::array<double, 3> start_pose3{13.3, 9., pi * 0.5};
+const std::array<double, 3> start_pose4{25.0, 16., -pi * 0.25};
+const std::array<double, 3> start_pose5{20.5, 8.5, 0.0};
+const std::array<double, 3> goal_pose{18.0, 10.5, pi * 0.5};
+const std::array<std::array<double, 3>, 5> start_poses{
+  start_pose1, start_pose2, start_pose3, start_pose4, start_pose5};
 
 geometry_msgs::msg::Pose create_pose_msg(std::array<double, 3> pose3d)
 {
@@ -82,6 +83,50 @@ nav_msgs::msg::OccupancyGrid construct_cost_map(
     costmap_msg.data.push_back(0.0);
   }
 
+  for (size_t i = 0; i < height; ++i) {
+    for (size_t j = 0; j < width; ++j) {
+      const double x = j * resolution;
+      const double y = i * resolution;
+
+      // road
+      if (5.4 < x && x < 5.4 + 4.5 && 0.0 < y && y < 0.0 + 19.4) {
+        costmap_msg.data[i * width + j] = 40.0;
+      }
+
+      if (9.0 < x && x < 40.0 && 15.4 < y && y < 15.4 + 4.0) {
+        costmap_msg.data[i * width + j] = 40.0;
+      }
+
+      double width_p = 3.0;
+      double height_p = 6.0;
+
+      // parking 1 (16,9)
+      if (16.0 < x && x < 16.0 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+
+      // parking 2
+      if (19.3 < x && x < 19.3 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+
+      // parking 3
+      if (22.6 < x && x < 22.6 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+
+      // parking 4
+      if (25.9 < x && x < 25.9 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+
+      // parking 5
+      if (29.2 < x && x < 29.2 + width_p && 9.0 < y && y < 9.0 + height_p) {
+        costmap_msg.data[i * width + j] = 50.0;
+      }
+    }
+  }
+
   for (size_t i = 0; i < n_padding; ++i) {
     // fill left
     for (size_t j = width * i; j <= width * (i + 1); ++j) {
@@ -101,37 +146,6 @@ nav_msgs::msg::OccupancyGrid construct_cost_map(
     }
     for (size_t j = (i + 1) * width - n_padding; j <= (i + 1) * width; ++j) {
       costmap_msg.data[j] = 100.0;
-    }
-  }
-
-  for (size_t i = 0; i < height; ++i) {
-    for (size_t j = 0; j < width; ++j) {
-      const double x = j * resolution;
-      const double y = i * resolution;
-      // wall
-      if (8.0 < x && x < 28.0 && 9.0 < y && y < 9.5) {
-        costmap_msg.data[i * width + j] = 100.0;
-      }
-
-      // car1
-      if (10.0 < x && x < 10.0 + width_lexus && 22.0 < y && y < 22.0 + length_lexus) {
-        costmap_msg.data[i * width + j] = 100.0;
-      }
-
-      // car2
-      if (13.5 < x && x < 13.5 + width_lexus && 22.0 < y && y < 22.0 + length_lexus) {
-        costmap_msg.data[i * width + j] = 100.0;
-      }
-
-      // car3
-      if (20.0 < x && x < 20.0 + width_lexus && 22.0 < y && y < 22.0 + length_lexus) {
-        costmap_msg.data[i * width + j] = 100.0;
-      }
-
-      // car4
-      if (10.0 < x && x < 10.0 + width_lexus && 10.0 < y && y < 10.0 + length_lexus) {
-        costmap_msg.data[i * width + j] = 100.0;
-      }
     }
   }
 
@@ -173,11 +187,11 @@ fpa::PlannerCommonParam get_default_planner_params()
   const double maximum_turning_radius = 9.0;
   const int turning_radius_size = 1;
 
+  // Transitions every 2.5 deg
   const int theta_size = 144;
 
-  // Setting weight to 1.0 to fairly compare all algorithms
-  const double curve_weight = 1.0;
-  const double reverse_weight = 1.0;
+  const double curve_weight = 1.5;
+  const double reverse_weight = 2.0;
 
   const double lateral_goal_range = 0.5;
   const double longitudinal_goal_range = 2.0;
@@ -198,23 +212,30 @@ fpa::PlannerCommonParam get_default_planner_params()
     obstacle_threshold};
 }
 
-std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi)
+std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi, bool cw)
 {
   auto planner_common_param = get_default_planner_params();
-  if (use_multi) {
-    planner_common_param.maximum_turning_radius = 14.0;
-    planner_common_param.turning_radius_size = 3;
-  }
 
   // configure astar param
   const bool only_behind_solutions = false;
   const bool use_back = true;
-  const bool use_curve_weight = true;
-  const bool use_complete_astar = true;
+  const bool use_curve_weight = false;
+  const bool use_complete_astar = false;
   const double distance_heuristic_weight = 1.0;
-  const auto astar_param = fpa::AstarParam{
+  auto astar_param = fpa::AstarParam{
     only_behind_solutions, use_back, use_curve_weight, use_complete_astar,
     distance_heuristic_weight};
+
+  if (use_multi) {
+    planner_common_param.minimum_turning_radius = 5.0;
+    planner_common_param.maximum_turning_radius = 9.0;
+    planner_common_param.turning_radius_size = 3;
+    // if multi-curvature and using curve weight
+    if (cw) {
+      astar_param.use_curve_weight = true;
+    }
+    astar_param.use_complete_astar = true;
+  }
 
   auto algo = std::make_unique<fpa::AstarSearch>(planner_common_param, vehicle_shape, astar_param);
   return algo;
@@ -236,6 +257,7 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_rrtstar(bool informed,
 enum AlgorithmType {
   ASTAR_SINGLE,
   ASTAR_MULTI,
+  ASTAR_MULTI_NOCW,
   RRTSTAR_FASTEST,
   RRTSTAR_UPDATE,
   RRTSTAR_INFORMED_UPDATE,
@@ -244,6 +266,7 @@ enum AlgorithmType {
 std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
   {{ASTAR_SINGLE, "fpalgos-astar_single"},
    {ASTAR_MULTI, "fpalgos-astar_multi"},
+   {ASTAR_MULTI_NOCW, "fpalgos-astar_multi_nocw"},
    {RRTSTAR_FASTEST, "fpalgos-rrtstar_fastest"},
    {RRTSTAR_UPDATE, "fpalgos-rrtstar_update"},
    {RRTSTAR_INFORMED_UPDATE, "fpalgos-rrtstar_informed_update"}});
@@ -252,9 +275,11 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
 {
   std::unique_ptr<fpa::AbstractPlanningAlgorithm> algo;
   if (algo_type == AlgorithmType::ASTAR_SINGLE) {
-    algo = configure_astar(true);
+    algo = configure_astar(false, false);
   } else if (algo_type == AlgorithmType::ASTAR_MULTI) {
-    algo = configure_astar(false);
+    algo = configure_astar(true, true);
+  } else if (algo_type == AlgorithmType::ASTAR_MULTI_NOCW) {
+    algo = configure_astar(true, false);
   } else if (algo_type == AlgorithmType::RRTSTAR_FASTEST) {
     algo = configure_rrtstar(false, false);
   } else if (algo_type == AlgorithmType::RRTSTAR_UPDATE) {
@@ -266,12 +291,12 @@ bool test_algorithm(enum AlgorithmType algo_type, bool dump_rosbag = false)
   }
 
   // All algorithms have the same interface.
-  const auto costmap_msg = construct_cost_map(150, 150, 0.2, 10);
+  const auto costmap_msg = construct_cost_map(200, 120, 0.2, 10);
   bool success_all = true;  // if any local test below fails, overwrite this function
 
   rclcpp::Clock clock{RCL_SYSTEM_TIME};
-  for (size_t i = 0; i < goal_poses.size(); ++i) {
-    const auto goal_pose = goal_poses.at(i);
+  for (size_t i = 0; i < start_poses.size(); ++i) {
+    const auto start_pose = start_poses.at(i);
 
     algo->setMap(costmap_msg);
     double msec;
@@ -364,6 +389,11 @@ TEST(AstarSearchTestSuite, SingleCurvature)
 TEST(AstarSearchTestSuite, MultiCurvature)
 {
   EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_MULTI));
+}
+
+TEST(AstarSearchTestSuite, MultiCurvaturenocw)
+{
+  EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_MULTI_NOCW));
 }
 
 TEST(RRTStarTestSuite, Fastest)
