@@ -26,6 +26,7 @@
 #include <vector>
 
 // This file should be included after messages.
+#include "../utils/interface_subscriber.hpp"
 #include "../utils/types.hpp"
 
 namespace default_ad_api
@@ -40,9 +41,15 @@ private:
   using ModeChangeAvailable = tier4_system_msgs::msg::ModeChangeAvailable;
   rclcpp::TimerBase::SharedPtr timer_;
   // emergency
-  Sub<autoware_ad_api::localization::InitializationState> sub_localization_;
-  Sub<autoware_ad_api::routing::RouteState> sub_routing_;
-  Sub<autoware_ad_api::operation_mode::OperationModeState> sub_operation_mode_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    autoware_ad_api::localization::InitializationState::Message>>
+    localization_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    autoware_ad_api::routing::RouteState::Message>>
+    routing_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    autoware_ad_api::operation_mode::OperationModeState::Message>>
+    operation_mode_sub_;
 
   using AutowareState = autoware_system_msgs::msg::AutowareState;
   using LocalizationState = autoware_ad_api::localization::InitializationState::Message;
