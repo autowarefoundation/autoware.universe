@@ -73,17 +73,17 @@ void AutowareStateNode::on_timer()
 {
   auto localization_msg = localization_sub_->takeData();
   if (localization_msg) {
-    localization_state_ = *localization_sub_->takeData();
+    localization_state_ = *localization_msg;
   }
 
   auto routing_msg = routing_sub_->takeData();
   if (routing_msg) {
-    routing_state_ = *routing_sub_->takeData();
+    routing_state_ = *routing_msg;
   }
 
   auto operation_mode_msg = operation_mode_sub_->takeData();
   if (operation_mode_msg) {
-    operation_mode_state_ = *operation_mode_sub_->takeData();
+    operation_mode_state_ = *operation_mode_msg;
   }
 
   const auto convert_state = [this]() {

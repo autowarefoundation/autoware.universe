@@ -118,7 +118,7 @@ void PlanningNode::on_timer()
 
   auto trajectory_msg = trajectory_sub_->takeData();
   if (trajectory_msg) {
-    trajectory_ = trajectory_sub_->takeData();
+    trajectory_ = trajectory_msg;
   }
 
   auto kinematic_state_msg = kinematic_state_sub_->takeData();
