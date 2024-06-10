@@ -164,7 +164,7 @@ planning/autoware_planning_topic_converter/** kosuke.takeuchi@tier4.jp satoshi.o
 planning/autoware_remaining_distance_time_calculator/** ahmed.ebrahim@leodrive.ai
 planning/autoware_static_centerline_generator/** kosuke.takeuchi@tier4.jp takayuki.murooka@tier4.jp
 planning/autoware_velocity_smoother/** fumiya.watanabe@tier4.jp makoto.kurihara@tier4.jp satoshi.ota@tier4.jp takamasa.horibe@tier4.jp
-planning/behavior_path_goal_planner_module/** daniel.sanchez@tier4.jp kosuke.takeuchi@tier4.jp kyoichi.sugahara@tier4.jp mamoru.sobue@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp
+planning/autoware_behavior_path_goal_planner_module/** daniel.sanchez@tier4.jp kosuke.takeuchi@tier4.jp kyoichi.sugahara@tier4.jp mamoru.sobue@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp
 planning/autoware_behavior_path_lane_change_module/** fumiya.watanabe@tier4.jp kosuke.takeuchi@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp zulfaqar.azmi@tier4.jp
 planning/behavior_path_planner/** fumiya.watanabe@tier4.jp go.sakayori@tier4.jp kosuke.takeuchi@tier4.jp kyoichi.sugahara@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp takamasa.horibe@tier4.jp takayuki.murooka@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp zulfaqar.azmi@tier4.jp
 planning/behavior_path_sampling_planner_module/** daniel.sanchez@tier4.jp maxime.clement@tier4.jp
@@ -244,9 +244,8 @@ system/system_monitor/** fumihito.ito@tier4.jp tetsuhiro.kawaguchi@tier4.jp
 system/topic_state_monitor/** ryohsuke.mitsudome@tier4.jp
 system/velodyne_monitor/** fumihito.ito@tier4.jp
 tools/reaction_analyzer/** berkay@leodrive.ai
-vehicle/accel_brake_map_calibrator/** taiki.tanaka@tier4.jp takeshi.miura@tier4.jp tomoya.kimura@tier4.jp
+vehicle/autoware_accel_brake_map_calibrator/** taiki.tanaka@tier4.jp takeshi.miura@tier4.jp tomoya.kimura@tier4.jp
 vehicle/autoware_external_cmd_converter/** takamasa.horibe@tier4.jp
-vehicle/autoware_steer_offset_estimator/** taiki.tanaka@tier4.jp
 vehicle/autoware_raw_vehicle_cmd_converter/** makoto.kurihara@tier4.jp taiki.tanaka@tier4.jp takamasa.horibe@tier4.jp
 vehicle/autoware_steer_offset_estimator/** taiki.tanaka@tier4.jp
 vehicle/autoware_vehicle_info_utils/** shumpei.wakabayashi@tier4.jp taiki.tanaka@tier4.jp tomoya.kimura@tier4.jp
