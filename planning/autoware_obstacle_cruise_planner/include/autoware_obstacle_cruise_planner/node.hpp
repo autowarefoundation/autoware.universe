@@ -278,6 +278,6 @@ private:
 
   std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
-}  // namespace motion_planning
+}  // namespace autoware::motion_planning
 
 #endif  // AUTOWARE_OBSTACLE_CRUISE_PLANNER__NODE_HPP_

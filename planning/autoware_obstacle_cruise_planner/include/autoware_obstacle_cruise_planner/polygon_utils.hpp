@@ -15,9 +15,9 @@
 #ifndef AUTOWARE_OBSTACLE_CRUISE_PLANNER__POLYGON_UTILS_HPP_
 #define AUTOWARE_OBSTACLE_CRUISE_PLANNER__POLYGON_UTILS_HPP_
 
-#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "autoware_obstacle_cruise_planner/common_structs.hpp"
 #include "autoware_obstacle_cruise_planner/type_alias.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 
 #include <boost/geometry.hpp>
