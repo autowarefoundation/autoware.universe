@@ -17,7 +17,7 @@
 
 #include "autoware_control_validator/debug_marker.hpp"
 #include "autoware_control_validator/msg/control_validator_status.hpp"
-#include "autoware_vehicle_info_util/vehicle_info_util.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
