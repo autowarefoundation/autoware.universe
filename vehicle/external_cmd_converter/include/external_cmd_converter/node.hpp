@@ -40,8 +40,6 @@ using ExternalControlCommand = tier4_external_api_msgs::msg::ControlCommandStamp
 using autoware::raw_vehicle_cmd_converter::AccelMap;
 using autoware::raw_vehicle_cmd_converter::BrakeMap;
 using nav_msgs::msg::Odometry;
-using raw_vehicle_cmd_converter::AccelMap;
-using raw_vehicle_cmd_converter::BrakeMap;
 using tier4_control_msgs::msg::GateMode;
 
 class ExternalCmdConverterNode : public rclcpp::Node
