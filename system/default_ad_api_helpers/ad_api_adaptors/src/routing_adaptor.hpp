@@ -61,8 +61,6 @@ private:
   void on_timer();
   void set_route_from_goal(
     const PoseStamped::ConstSharedPtr pose, const bool allow_goal_modification);
-  void on_rough_goal(const PoseStamped::ConstSharedPtr pose);
-  void on_waypoint(const PoseStamped::ConstSharedPtr pose);
   void on_reroute(const PoseStamped::ConstSharedPtr pose);
 };
 
