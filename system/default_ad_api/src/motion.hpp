@@ -23,6 +23,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 // This file should be included after messages.
+#include "utils/interface_subscriber.hpp"
 #include "utils/types.hpp"
 
 namespace default_ad_api
@@ -42,6 +43,12 @@ private:
   Cli<control_interface::SetPause> cli_set_pause_;
   Sub<control_interface::IsPaused> sub_is_paused_;
   Sub<control_interface::IsStartRequested> sub_is_start_requested_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    control_interface::IsPaused::Message>>
+    is_paused_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    control_interface::IsStartRequested::Message>>
+    is_start_requested_sub_;
 
   enum class State { Unknown, Pausing, Paused, Starting, Resuming, Resumed, Moving };
   State state_;

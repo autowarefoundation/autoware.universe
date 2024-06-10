@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "motion.hpp"
+#include "utils/interface_subscriber.hpp"
 
 #include <memory>
 #include <unordered_map>
@@ -34,6 +35,9 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
   adaptor.init_cli(cli_set_pause_, group_cli_);
   adaptor.init_sub(sub_is_paused_, this, &MotionNode::on_is_paused);
   adaptor.init_sub(sub_is_start_requested_, this, &MotionNode::on_is_start_requested);
+
+  is_paused_sub_ = create_polling_subscriber<control_interface::IsPaused>(this);
+  is_start_requested_sub_ = create_polling_subscriber<control_interface::IsStartRequested>(this);
 
   rclcpp::Rate rate(10);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
