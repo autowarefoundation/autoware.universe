@@ -15,10 +15,10 @@
 #ifndef EXTERNAL_CMD_CONVERTER__NODE_HPP_
 #define EXTERNAL_CMD_CONVERTER__NODE_HPP_
 
-#include <autoware_raw_vehicle_cmd_converter/accel_map.hpp>
-#include <autoware_raw_vehicle_cmd_converter/brake_map.hpp>
 #include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 
+#include <autoware_raw_vehicle_cmd_converter/accel_map.hpp>
+#include <autoware_raw_vehicle_cmd_converter/brake_map.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
