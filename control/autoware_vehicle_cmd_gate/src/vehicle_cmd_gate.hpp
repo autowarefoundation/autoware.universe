@@ -119,12 +119,18 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
   // Subscription
   rclcpp::Subscription<Heartbeat>::SharedPtr external_emergency_stop_heartbeat_sub_;
-  tier4_autoware_utils::InterProcessPollingSubscriber<GateMode> gate_mode_sub_{this, "input/gate_mode"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<OperationModeState> operation_mode_sub_{this, "input/operation_mode", rclcpp::QoS(1).transient_local()};
-  tier4_autoware_utils::InterProcessPollingSubscriber<MrmState> mrm_state_sub_{this, "input/mrm_state"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> kinematics_sub_{this, "/localization/kinematic_state"};             // for filter
-  tier4_autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{this, "input/acceleration"};  // for filter
-  tier4_autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{this, "input/steering"};            // for filter
+  tier4_autoware_utils::InterProcessPollingSubscriber<GateMode> gate_mode_sub_{
+    this, "input/gate_mode"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<OperationModeState> operation_mode_sub_{
+    this, "input/operation_mode", rclcpp::QoS(1).transient_local()};
+  tier4_autoware_utils::InterProcessPollingSubscriber<MrmState> mrm_state_sub_{
+    this, "input/mrm_state"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> kinematics_sub_{
+    this, "/localization/kinematic_state"};  // for filter
+  tier4_autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
+    this, "input/acceleration"};  // for filter
+  tier4_autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{
+    this, "input/steering"};  // for filter
 
   void onGateMode();
   void onExternalEmergencyStopHeartbeat(Heartbeat::ConstSharedPtr msg);
@@ -154,25 +160,36 @@ private:
 
   // Subscriber for auto
   Commands auto_commands_;
-  tier4_autoware_utils::InterProcessPollingSubscriber<Control> auto_control_cmd_sub_{this, "input/auto/control_cmd"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<TurnIndicatorsCommand> auto_turn_indicator_cmd_sub_{this, "input/auto/turn_indicators_cmd"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand> auto_hazard_light_cmd_sub_{this, "input/auto/hazard_lights_cmd"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<GearCommand> auto_gear_cmd_sub_{this, "input/auto/gear_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Control> auto_control_cmd_sub_{
+    this, "input/auto/control_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<TurnIndicatorsCommand>
+    auto_turn_indicator_cmd_sub_{this, "input/auto/turn_indicators_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand>
+    auto_hazard_light_cmd_sub_{this, "input/auto/hazard_lights_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<GearCommand> auto_gear_cmd_sub_{
+    this, "input/auto/gear_cmd"};
   void onAutoCtrlCmd();
 
   // Subscription for external
   Commands remote_commands_;
-  tier4_autoware_utils::InterProcessPollingSubscriber<Control> remote_control_cmd_sub_{this, "input/external/control_cmd"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<TurnIndicatorsCommand> remote_turn_indicator_cmd_sub_{this, "input/external/turn_indicators_cmd"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand> remote_hazard_light_cmd_sub_{this, "input/external/hazard_lights_cmd"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<GearCommand> remote_gear_cmd_sub_{this, "input/external/gear_cmd"}; 
+  tier4_autoware_utils::InterProcessPollingSubscriber<Control> remote_control_cmd_sub_{
+    this, "input/external/control_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<TurnIndicatorsCommand>
+    remote_turn_indicator_cmd_sub_{this, "input/external/turn_indicators_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand>
+    remote_hazard_light_cmd_sub_{this, "input/external/hazard_lights_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<GearCommand> remote_gear_cmd_sub_{
+    this, "input/external/gear_cmd"};
   void onRemoteCtrlCmd();
 
   // Subscription for emergency
   Commands emergency_commands_;
-  tier4_autoware_utils::InterProcessPollingSubscriber<Control> emergency_control_cmd_sub_{this, "input/emergency/control_cmd"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand> emergency_hazard_light_cmd_sub_{this,"input/emergency/hazard_lights_cmd"}; 
-  tier4_autoware_utils::InterProcessPollingSubscriber<GearCommand> emergency_gear_cmd_sub_{this, "input/emergency/gear_cmd"}; 
+  tier4_autoware_utils::InterProcessPollingSubscriber<Control> emergency_control_cmd_sub_{
+    this, "input/emergency/control_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand>
+    emergency_hazard_light_cmd_sub_{this, "input/emergency/hazard_lights_cmd"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<GearCommand> emergency_gear_cmd_sub_{
+    this, "input/emergency/gear_cmd"};
   void onEmergencyCtrlCmd();
 
   // Parameter

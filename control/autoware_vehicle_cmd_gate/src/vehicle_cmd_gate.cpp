@@ -294,8 +294,7 @@ bool VehicleCmdGate::isDataReady()
 void VehicleCmdGate::onAutoCtrlCmd()
 {
   const auto msg = auto_control_cmd_sub_.takeData();
-  if(msg)
-    auto_commands_.control = *msg;
+  if (msg) auto_commands_.control = *msg;
 
   if (current_gate_mode_.data == GateMode::AUTO) {
     publishControlCommands(auto_commands_);
@@ -306,8 +305,7 @@ void VehicleCmdGate::onAutoCtrlCmd()
 void VehicleCmdGate::onRemoteCtrlCmd()
 {
   const auto msg = remote_control_cmd_sub_.takeData();
-  if(msg)
-    remote_commands_.control = *msg;
+  if (msg) remote_commands_.control = *msg;
 
   if (current_gate_mode_.data == GateMode::EXTERNAL) {
     publishControlCommands(remote_commands_);
@@ -318,8 +316,7 @@ void VehicleCmdGate::onRemoteCtrlCmd()
 void VehicleCmdGate::onEmergencyCtrlCmd()
 {
   const auto msg = emergency_control_cmd_sub_.takeData();
-  if(msg)
-    emergency_commands_.control = *msg;
+  if (msg) emergency_commands_.control = *msg;
 
   if (use_emergency_handling_ && is_system_emergency_) {
     publishControlCommands(emergency_commands_);
@@ -331,63 +328,55 @@ void VehicleCmdGate::onTimer()
   onGateMode();
 
   const auto msg_kinematics = kinematics_sub_.takeData();
-  if(msg_kinematics)
-    current_kinematics_ = *msg_kinematics;
-  
+  if (msg_kinematics) current_kinematics_ = *msg_kinematics;
+
   const auto msg_acceleration = acc_sub_.takeData();
-  if(msg_acceleration)
-    current_acceleration_ = msg_acceleration->accel.accel.linear.x;
-    
+  if (msg_acceleration) current_acceleration_ = msg_acceleration->accel.accel.linear.x;
+
   const auto msg_steer = steer_sub_.takeData();
-  if(msg_steer)
-    current_steer_ = msg_steer->steering_tire_angle;
-  
+  if (msg_steer) current_steer_ = msg_steer->steering_tire_angle;
+
   const auto msg_operation_mode = operation_mode_sub_.takeData();
-  if(msg_operation_mode)
-    current_operation_mode_ = *msg_operation_mode;
-  
+  if (msg_operation_mode) current_operation_mode_ = *msg_operation_mode;
+
   onMrmState();
 
   // Subscriber for auto
   onAutoCtrlCmd();
 
   const auto msg_auto_command_turn_indicator = auto_turn_indicator_cmd_sub_.takeData();
-  if(msg_auto_command_turn_indicator)
+  if (msg_auto_command_turn_indicator)
     auto_commands_.turn_indicator = *msg_auto_command_turn_indicator;
 
   const auto msg_auto_command_hazard_light = auto_hazard_light_cmd_sub_.takeData();
-  if(msg_auto_command_hazard_light)
-    auto_commands_.hazard_light = *msg_auto_command_hazard_light;
+  if (msg_auto_command_hazard_light) auto_commands_.hazard_light = *msg_auto_command_hazard_light;
 
   const auto msg_auto_command_gear = auto_gear_cmd_sub_.takeData();
-  if(msg_auto_command_gear)
-    auto_commands_.gear = *msg_auto_command_gear;
+  if (msg_auto_command_gear) auto_commands_.gear = *msg_auto_command_gear;
 
   // Subscribe for external
   onRemoteCtrlCmd();
-  
+
   const auto msg_remote_command_turn_indicator = remote_turn_indicator_cmd_sub_.takeData();
-  if(msg_remote_command_turn_indicator)
+  if (msg_remote_command_turn_indicator)
     remote_commands_.turn_indicator = *msg_remote_command_turn_indicator;
-  
+
   const auto msg_remote_command_hazard_light = remote_hazard_light_cmd_sub_.takeData();
-  if(msg_remote_command_hazard_light)
+  if (msg_remote_command_hazard_light)
     remote_commands_.hazard_light = *msg_remote_command_hazard_light;
 
   const auto msg_remote_command_gear = remote_gear_cmd_sub_.takeData();
-  if(msg_remote_command_gear)
-    remote_commands_.gear = *msg_remote_command_gear;
+  if (msg_remote_command_gear) remote_commands_.gear = *msg_remote_command_gear;
 
   // Subscribe for emergency
   onEmergencyCtrlCmd();
-  
+
   const auto msg_emergency_command_hazard_light = emergency_hazard_light_cmd_sub_.takeData();
-  if(msg_emergency_command_hazard_light)
+  if (msg_emergency_command_hazard_light)
     emergency_commands_.hazard_light = *msg_emergency_command_hazard_light;
-  
+
   const auto msg_emergency_command_gear = emergency_gear_cmd_sub_.takeData();
-  if(msg_emergency_command_gear)
-    emergency_commands_.gear = *msg_emergency_command_gear;
+  if (msg_emergency_command_gear) emergency_commands_.gear = *msg_emergency_command_gear;
 
   onEngage();
 
@@ -719,8 +708,7 @@ void VehicleCmdGate::onExternalEmergencyStopHeartbeat(
 void VehicleCmdGate::onGateMode()
 {
   const auto msg = gate_mode_sub_.takeData();
-  if(!msg)
-    return;
+  if (!msg) return;
 
   const auto prev_gate_mode = current_gate_mode_;
 
@@ -734,8 +722,7 @@ void VehicleCmdGate::onGateMode()
 void VehicleCmdGate::onEngage()
 {
   const auto msg = engage_sub_.takeData();
-  if(msg)
-    is_engaged_ = msg->engage;
+  if (msg) is_engaged_ = msg->engage;
 }
 
 void VehicleCmdGate::onEngageService(
@@ -748,8 +735,7 @@ void VehicleCmdGate::onEngageService(
 void VehicleCmdGate::onMrmState()
 {
   const auto msg = mrm_state_sub_.takeData();
-  if(!msg)
-    return;
+  if (!msg) return;
 
   is_system_emergency_ =
     (msg->state == MrmState::MRM_OPERATING || msg->state == MrmState::MRM_SUCCEEDED ||
