@@ -15,14 +15,14 @@
 #ifndef SCENE_HPP_
 #define SCENE_HPP_
 
-#include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <nlohmann/json.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logger.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
-#include <vehicle_info_util/vehicle_info.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -32,10 +32,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using ::behavior_velocity_planner::PathWithLaneId;
-using ::behavior_velocity_planner::Pose;
-using ::behavior_velocity_planner::SceneModuleInterface;
-using ::behavior_velocity_planner::StopReason;
 class VirtualTrafficLightModule : public SceneModuleInterface
 {
 public:

@@ -21,25 +21,25 @@
 #include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware_behavior_path_planner_common/utils/utils.hpp"
+#include "autoware_bezier_sampler/bezier_sampling.hpp"
+#include "autoware_frenet_planner/frenet_planner.hpp"
+#include "autoware_sampler_common/constraints/footprint.hpp"
+#include "autoware_sampler_common/constraints/hard_constraint.hpp"
+#include "autoware_sampler_common/constraints/soft_constraint.hpp"
+#include "autoware_sampler_common/structures.hpp"
+#include "autoware_sampler_common/transform/spline_transform.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
 #include "behavior_path_sampling_planner_module/util.hpp"
-#include "bezier_sampler/bezier_sampling.hpp"
-#include "frenet_planner/frenet_planner.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "sampler_common/constraints/footprint.hpp"
-#include "sampler_common/constraints/hard_constraint.hpp"
-#include "sampler_common/constraints/soft_constraint.hpp"
-#include "sampler_common/structures.hpp"
-#include "sampler_common/transform/spline_transform.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "tier4_autoware_utils/math/constants.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "tier4_planning_msgs/msg/lateral_offset.hpp"
 #include "tier4_planning_msgs/msg/path_with_lane_id.hpp"
@@ -73,7 +73,7 @@ struct SamplingPlannerData
 
 struct SamplingPlannerDebugData
 {
-  std::vector<sampler_common::Path> sampled_candidates{};
+  std::vector<autoware::sampler_common::Path> sampled_candidates{};
   size_t previous_sampled_candidates_nb = 0UL;
   std::vector<tier4_autoware_utils::Polygon2d> obstacles{};
   std::vector<tier4_autoware_utils::MultiPoint2d> footprints{};
@@ -231,25 +231,25 @@ private:
   void updateDebugMarkers();
 
   void prepareConstraints(
-    sampler_common::Constraints & constraints,
+    autoware::sampler_common::Constraints & constraints,
     const PredictedObjects::ConstSharedPtr & predicted_objects,
     const std::vector<geometry_msgs::msg::Point> & left_bound,
     const std::vector<geometry_msgs::msg::Point> & right_bound) const;
 
-  frenet_planner::SamplingParameters prepareSamplingParameters(
-    const sampler_common::State & initial_state,
-    const sampler_common::transform::Spline2D & path_spline,
+  autoware::frenet_planner::SamplingParameters prepareSamplingParameters(
+    const autoware::sampler_common::State & initial_state,
+    const autoware::sampler_common::transform::Spline2D & path_spline,
     const SamplingPlannerInternalParameters & internal_params_);
 
   PathWithLaneId convertFrenetPathToPathWithLaneID(
-    const frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
+    const autoware::frenet_planner::Path frenet_path, const lanelet::ConstLanelets & lanelets,
     const double path_z);
 
   // member
   // std::shared_ptr<SamplingPlannerParameters> params_;
   std::shared_ptr<SamplingPlannerInternalParameters> internal_params_;
-  vehicle_info_util::VehicleInfo vehicle_info_{};
-  std::optional<frenet_planner::Path> prev_sampling_path_ = std::nullopt;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_{};
+  std::optional<autoware::frenet_planner::Path> prev_sampling_path_ = std::nullopt;
   // move to utils
 
   void extendOutputDrivableArea(
