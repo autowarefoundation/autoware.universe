@@ -105,7 +105,7 @@ public:
       topic_name, qos,
       [node]([[maybe_unused]] const typename T::ConstSharedPtr msg) { assert(false); },
       noexec_subscription_options);
-    if (qos.get_rmw_qos_profile().depth != N) {
+    if (qos.get_rmw_qos_profile().depth < N) {
       throw std::invalid_argument(
         "InterProcessPollingSubscriber will be used with depth == " + std::to_string(N) +
         ", which may cause inefficient serialization while updateLatestData()");
