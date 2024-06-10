@@ -43,7 +43,8 @@ bool compare_pose(
 }
 
 class TestSmartPoseBuffer : public ::testing::Test
-{};
+{
+};
 
 TEST_F(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
 {
