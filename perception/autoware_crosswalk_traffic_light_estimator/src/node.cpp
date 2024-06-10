@@ -542,4 +542,5 @@ void CrosswalkTrafficLightEstimatorNode::removeDuplicateIds(TrafficSignalArray &
 
 #include <rclcpp_components/register_node_macro.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::crosswalk_traffic_light_estimator::CrosswalkTrafficLightEstimatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::crosswalk_traffic_light_estimator::CrosswalkTrafficLightEstimatorNode)
