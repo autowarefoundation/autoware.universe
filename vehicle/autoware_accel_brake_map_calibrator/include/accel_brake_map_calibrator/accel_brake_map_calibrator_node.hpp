@@ -14,8 +14,8 @@
 // limitations under the License.
 //
 
-#ifndef AUTOWARE_ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
-#define AUTOWARE_ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
+#ifndef ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
+#define ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
 
 #include "autoware_raw_vehicle_cmd_converter/accel_map.hpp"
 #include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
@@ -378,4 +378,4 @@ public:
 
 }  // namespace autoware::accel_brake_map_calibrator
 
-#endif  // AUTOWARE_ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
+#endif  // ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
