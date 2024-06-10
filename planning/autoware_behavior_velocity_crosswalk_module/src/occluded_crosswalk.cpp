@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "occluded_crosswalk.hpp"
+#include "autoware_occluded_crosswalk.hpp"
 
 #include "autoware_behavior_velocity_crosswalk_module/util.hpp"
 
