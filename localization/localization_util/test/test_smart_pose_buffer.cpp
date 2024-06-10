@@ -43,12 +43,7 @@ bool compare_pose(
 }
 
 class TestSmartPoseBuffer : public ::testing::Test
-{
-protected:
-  void SetUp() override {}
-
-  void TearDown() override {}
-};
+{};
 
 TEST_F(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
 {
