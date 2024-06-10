@@ -25,7 +25,7 @@
                     route msg in yaml format
                     <br/>
                   </b>
-                  (to simulate /planning/mission_planner/route topic)
+                  (to simulate /planning/autoware_mission_planner/route topic)
                 </div>
               </div>
             </div>
