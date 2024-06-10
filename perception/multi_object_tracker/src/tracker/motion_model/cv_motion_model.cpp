@@ -35,7 +35,7 @@
 // Constant Velocity (CV) motion model
 using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
-CVMotionModel::CVMotionModel() : MotionModel(), logger_(rclcpp::get_logger("CVMotionModel"))
+CVMotionModel::CVMotionModel() : logger_(rclcpp::get_logger("CVMotionModel"))
 {
   // Initialize motion parameters
   setDefaultParams();

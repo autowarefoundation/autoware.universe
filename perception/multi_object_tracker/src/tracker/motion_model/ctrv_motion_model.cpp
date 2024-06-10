@@ -33,7 +33,7 @@
 // Constant Turn Rate and constant Velocity (CTRV) motion model
 using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
-CTRVMotionModel::CTRVMotionModel() : MotionModel(), logger_(rclcpp::get_logger("CTRVMotionModel"))
+CTRVMotionModel::CTRVMotionModel() : logger_(rclcpp::get_logger("CTRVMotionModel"))
 {
   // Initialize motion parameters
   setDefaultParams();

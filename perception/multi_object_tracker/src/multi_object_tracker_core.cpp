@@ -207,7 +207,7 @@ void MultiObjectTracker::onTrigger()
 {
   const rclcpp::Time current_time = this->now();
   // get objects from the input manager and run process
-  std::vector<std::pair<uint, DetectedObjects>> objects_list;
+  ObjectsList objects_list;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
 

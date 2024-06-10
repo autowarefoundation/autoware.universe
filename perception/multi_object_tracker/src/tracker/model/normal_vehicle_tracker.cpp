@@ -218,8 +218,8 @@ autoware_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpdatingO
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
     // measurement noise covariance
-    float r_cov_x = static_cast<float>(ekf_params_.r_cov_x);
-    float r_cov_y = static_cast<float>(ekf_params_.r_cov_y);
+    auto r_cov_x = static_cast<float>(ekf_params_.r_cov_x);
+    auto r_cov_y = static_cast<float>(ekf_params_.r_cov_y);
     const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
     if (utils::isLargeVehicleLabel(label)) {
       // if label is changed, enlarge the measurement noise covariance

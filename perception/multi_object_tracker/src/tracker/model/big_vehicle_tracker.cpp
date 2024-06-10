@@ -192,7 +192,7 @@ autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObje
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
-  autoware_perception_msgs::msg::DetectedObject bbox_object;
+  autoware_perception_msgs::msg::DetectedObject bbox_object = object;
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
@@ -217,8 +217,8 @@ autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObje
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
     // measurement noise covariance
-    float r_cov_x = static_cast<float>(ekf_params_.r_cov_x);
-    float r_cov_y = static_cast<float>(ekf_params_.r_cov_y);
+    auto r_cov_x = static_cast<float>(ekf_params_.r_cov_x);
+    auto r_cov_y = static_cast<float>(ekf_params_.r_cov_y);
     const uint8_t label = object_recognition_utils::getHighestProbLabel(object.classification);
     if (label == autoware_perception_msgs::msg::ObjectClassification::CAR) {
       // if label is changed, enlarge the measurement noise covariance

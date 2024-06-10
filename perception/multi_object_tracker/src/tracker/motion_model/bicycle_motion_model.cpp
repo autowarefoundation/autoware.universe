@@ -34,8 +34,7 @@
 // CTRV : Constant Turn Rate and constant Velocity
 using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
-BicycleMotionModel::BicycleMotionModel()
-: MotionModel(), logger_(rclcpp::get_logger("BicycleMotionModel"))
+BicycleMotionModel::BicycleMotionModel() : logger_(rclcpp::get_logger("BicycleMotionModel"))
 {
   // Initialize motion parameters
   setDefaultParams();
