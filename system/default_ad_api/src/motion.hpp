@@ -22,6 +22,8 @@
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
+
 // This file should be included after messages.
 #include "utils/interface_subscriber.hpp"
 #include "utils/types.hpp"

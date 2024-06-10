@@ -27,6 +27,7 @@
 #include <autoware_adapi_v1_msgs/msg/hazard_lights.hpp>
 #include <autoware_adapi_v1_msgs/msg/turn_indicators.hpp>
 
+#include <memory>
 #include <unordered_map>
 
 // This file should be included after messages.

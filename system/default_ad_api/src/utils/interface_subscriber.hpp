@@ -20,6 +20,8 @@
 #include <rclcpp/qos.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
+
 namespace default_ad_api
 {
 template <typename InterfaceSpec>

@@ -23,6 +23,7 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <tier4_system_msgs/msg/mode_change_available.hpp>
 
+#include <memory>
 #include <vector>
 
 // This file should be included after messages.

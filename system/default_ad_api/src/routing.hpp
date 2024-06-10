@@ -21,6 +21,8 @@
 #include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
+
 // This file should be included after messages.
 #include "utils/interface_subscriber.hpp"
 #include "utils/types.hpp"
