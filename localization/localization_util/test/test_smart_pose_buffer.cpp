@@ -42,11 +42,7 @@ bool compare_pose(
          pose_a.pose.pose.orientation.w == pose_b.pose.pose.orientation.w;
 }
 
-class TestSmartPoseBuffer : public ::testing::Test
-{
-};
-
-TEST_F(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
+TEST(TestSmartPoseBuffer, interpolate_pose)  // NOLINT
 {
   rclcpp::Logger logger = rclcpp::get_logger("test_logger");
   const double pose_timeout_sec = 10.0;
