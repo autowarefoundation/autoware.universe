@@ -233,6 +233,12 @@ bool LaneChangeInterface::canTransitFailureState()
   updateDebugMarker();
   log_debug_throttled(__func__);
 
+  if (getPreviousModuleOutput().path.points.empty()) {
+    RCLCPP_WARN(
+      getLogger(), "Previous output path is empty. Some module might accidentally reset it.");
+    return true;
+  }
+
   if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has on going.");
     return false;
