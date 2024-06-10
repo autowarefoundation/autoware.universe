@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef EXTERNAL_CMD_CONVERTER__NODE_HPP_
-#define EXTERNAL_CMD_CONVERTER__NODE_HPP_
+#ifndef AUTOWARE_EXTERNAL_CMD_CONVERTER__NODE_HPP_
+#define AUTOWARE_EXTERNAL_CMD_CONVERTER__NODE_HPP_
 
 #include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 
@@ -106,4 +106,4 @@ private:
 
 }  // namespace autoware::external_cmd_converter
 
-#endif  // EXTERNAL_CMD_CONVERTER__NODE_HPP_
+#endif  // AUTOWARE_EXTERNAL_CMD_CONVERTER__NODE_HPP_
