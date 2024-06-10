@@ -275,7 +275,7 @@ In the `common` namespace, the following parameters are defined.
 ### Visualization of Time-To-Collision
 
 ```sh
-ros2 run behavior_velocity_crosswalk_module time_to_collision_plotter.py
+ros2 run autoware_behavior_velocity_crosswalk_module time_to_collision_plotter.py
 ```
 
 enables you to visualize the following figure of the ego and pedestrian's time to collision.
