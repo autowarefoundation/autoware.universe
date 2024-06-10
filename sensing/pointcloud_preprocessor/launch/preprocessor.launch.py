@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import LogInfo
@@ -20,9 +23,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-import os
 import yaml
-from ament_index_python.packages import get_package_share_directory
 
 
 def launch_setup(context, *args, **kwargs):
@@ -39,7 +40,6 @@ def launch_setup(context, *args, **kwargs):
     shared_filter_file = os.path.join(
         get_package_share_directory("pointcloud_preprocessor"), "config/filter_param_file.yaml"
     )
-
 
     if not is_separate_concatenate_node_and_time_sync_node:
         sync_and_concat_component = ComposableNode(
@@ -58,7 +58,7 @@ def launch_setup(context, *args, **kwargs):
                     "publish_synchronized_pointcloud": False,
                     "input_twist_topic_type": "twist",
                 },
-                shared_filter_file
+                shared_filter_file,
             ],
         )
         concat_components = [sync_and_concat_component]
@@ -77,7 +77,7 @@ def launch_setup(context, *args, **kwargs):
                     "output_frame": LaunchConfiguration("tf_output_frame"),
                     "approximate_sync": True,
                 },
-                shared_filter_file
+                shared_filter_file,
             ],
         )
 
@@ -92,7 +92,7 @@ def launch_setup(context, *args, **kwargs):
                     "output_frame": LaunchConfiguration("tf_output_frame"),
                     "approximate_sync": True,
                 },
-                shared_filter_file
+                shared_filter_file,
             ],
         )
         concat_components = [time_sync_component, concat_component]
@@ -129,7 +129,7 @@ def launch_setup(context, *args, **kwargs):
                 "max_z": 3.0,
                 "negative": False,
             },
-            shared_filter_file
+            shared_filter_file,
         ],
     )
 

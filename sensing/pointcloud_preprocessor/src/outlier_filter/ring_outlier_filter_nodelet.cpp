@@ -44,14 +44,11 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
   // set initial parameters
   {
     distance_ratio_ = declare_parameter<double>("distance_ratio");
-    object_length_threshold_ =
-      declare_parameter<double>("object_length_threshold");
+    object_length_threshold_ = declare_parameter<double>("object_length_threshold");
     num_points_threshold_ = declare_parameter<int>("num_points_threshold");
     max_rings_num_ = declare_parameter<uint16_t>("max_rings_num");
-    max_points_num_per_ring_ =
-      declare_parameter<int>("max_points_num_per_ring");
-    publish_outlier_pointcloud_ =
-      declare_parameter<bool>("publish_outlier_pointcloud");
+    max_points_num_per_ring_ = declare_parameter<int>("max_points_num_per_ring");
+    publish_outlier_pointcloud_ = declare_parameter<bool>("publish_outlier_pointcloud");
 
     min_azimuth_deg_ = declare_parameter<float>("min_azimuth_deg");
     max_azimuth_deg_ = declare_parameter<float>("max_azimuth_deg");

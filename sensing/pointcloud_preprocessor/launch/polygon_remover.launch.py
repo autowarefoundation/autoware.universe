@@ -45,7 +45,7 @@ def generate_launch_description():
                 "polygon_vertices": polygon_remover_param["polygon_vertices"],
                 "will_visualize": polygon_remover_param["will_visualize"],
             },
-            shared_filter_file
+            shared_filter_file,
         ],
     )
 

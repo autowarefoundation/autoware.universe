@@ -49,18 +49,13 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     max_distance_ = declare_parameter<float>("max_distance");
     vertical_bins_ = declare_parameter<int>("vertical_bins");
     max_azimuth_diff_ = declare_parameter<float>("max_azimuth_diff");
-    weak_first_distance_ratio_ =
-      declare_parameter<double>("weak_first_distance_ratio");
-    general_distance_ratio_ =
-      declare_parameter<double>("general_distance_ratio");
+    weak_first_distance_ratio_ = declare_parameter<double>("weak_first_distance_ratio");
+    general_distance_ratio_ = declare_parameter<double>("general_distance_ratio");
 
-    weak_first_local_noise_threshold_ =
-      declare_parameter<int>("weak_first_local_noise_threshold");
+    weak_first_local_noise_threshold_ = declare_parameter<int>("weak_first_local_noise_threshold");
     roi_mode_ = declare_parameter<std::string>("roi_mode");
-    visibility_error_threshold_ =
-      declare_parameter<float>("visibility_error_threshold");
-    visibility_warn_threshold_ =
-      declare_parameter<float>("visibility_warn_threshold");
+    visibility_error_threshold_ = declare_parameter<float>("visibility_error_threshold");
+    visibility_warn_threshold_ = declare_parameter<float>("visibility_warn_threshold");
   }
   updater_.setHardwareID("dual_return_outlier_filter");
   updater_.add(

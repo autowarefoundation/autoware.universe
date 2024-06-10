@@ -24,8 +24,7 @@ PointcloudAccumulatorComponent::PointcloudAccumulatorComponent(const rclcpp::Nod
   // set initial parameters
   {
     accumulation_time_sec_ = declare_parameter<double>("accumulation_time_sec");
-    pointcloud_buffer_.set_capacity(
-      declare_parameter<int>("pointcloud_buffer_size"));
+    pointcloud_buffer_.set_capacity(declare_parameter<int>("pointcloud_buffer_size"));
   }
 
   using std::placeholders::_1;
