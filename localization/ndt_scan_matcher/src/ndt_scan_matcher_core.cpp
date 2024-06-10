@@ -1026,7 +1026,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   const double stddev_pitch = std::sqrt(covariance(4, 4));
 
   // Since only yaw is uniformly sampled, we define the mean and standard deviation for the others.
-  std::vector<double> sample_mean{
+  const std::vector<double> sample_mean{
     initial_pose_with_cov.pose.pose.position.x,  // trans_x
     initial_pose_with_cov.pose.pose.position.y,  // trans_y
     initial_pose_with_cov.pose.pose.position.z,  // trans_z
