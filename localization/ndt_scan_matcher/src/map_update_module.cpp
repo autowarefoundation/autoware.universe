@@ -213,20 +213,25 @@ bool MapUpdateModule::update_ndt(
     request,
     [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture) {})};
 
-  std::future_status status = result.wait_for(std::chrono::seconds(0));
-  while (status != std::future_status::ready) {
-    // check is_succeed_call_pcd_loader
-    if (!rclcpp::ok()) {
-      diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
+  // Wait for maximum 10 milliseconds
+  std::chrono::milliseconds timeout(10);
+  std::future_status status = result.wait_for(timeout);
 
-      std::stringstream message;
-      message << "pcd_loader service is not working.";
-      diagnostics_ptr->updateLevelAndMessage(
-        diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
-      return false;  // No update
-    }
-    status = result.wait_for(std::chrono::seconds(1));
+  if (status == std::future_status::timeout) {
+    RCLCPP_WARN_STREAM_THROTTLE(logger_, *clock_, 1000, "Waited for incoming PCDs for too long!");
   }
+
+  if (status != std::future_status::ready) {
+    diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", false);
+
+    std::stringstream message;
+    message << "pcd_loader service is not working.";
+    diagnostics_ptr->updateLevelAndMessage(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+
+    return false;
+  }
+
   diagnostics_ptr->addKeyValue("is_succeed_call_pcd_loader", true);
 
   auto & maps_to_add = result.get()->new_pointcloud_with_ids;
