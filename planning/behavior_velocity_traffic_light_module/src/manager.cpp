@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
 #include <tf2/utils.h>
@@ -24,7 +24,7 @@
 #include <set>
 #include <string>
 #include <utility>
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using lanelet::TrafficLight;
 using tier4_autoware_utils::getOrDeclareParameter;
@@ -41,17 +41,16 @@ TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
   planner_param_.enable_pass_judge = getOrDeclareParameter<bool>(node, ns + ".enable_pass_judge");
   planner_param_.yellow_lamp_period =
     getOrDeclareParameter<double>(node, ns + ".yellow_lamp_period");
-  pub_tl_state_ = node.create_publisher<autoware_perception_msgs::msg::TrafficSignal>(
+  pub_tl_state_ = node.create_publisher<autoware_perception_msgs::msg::TrafficLightGroup>(
     "~/output/traffic_signal", 1);
 }
 
-void TrafficLightModuleManager::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path)
+void TrafficLightModuleManager::modifyPathVelocity(tier4_planning_msgs::msg::PathWithLaneId * path)
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
 
-  autoware_perception_msgs::msg::TrafficSignal tl_state;
+  autoware_perception_msgs::msg::TrafficLightGroup tl_state;
 
   autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factor_array;
   velocity_factor_array.header.frame_id = "map";
@@ -110,7 +109,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
 }
 
 void TrafficLightModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & traffic_light_reg_elem : planning_utils::getRegElemMapOnPath<TrafficLight>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
@@ -140,7 +139,7 @@ void TrafficLightModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 TrafficLightModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lanelet_id_set = planning_utils::getLaneletIdSetOnPath<TrafficLight>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
@@ -189,8 +188,9 @@ bool TrafficLightModuleManager::hasSameTrafficLight(
   return false;
 }
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::TrafficLightModulePlugin, behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::TrafficLightModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

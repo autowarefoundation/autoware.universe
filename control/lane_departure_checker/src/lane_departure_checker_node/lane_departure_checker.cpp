@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lane_departure_checker/lane_departure_checker.hpp"
+#include "autoware_lane_departure_checker/lane_departure_checker.hpp"
 
-#include "lane_departure_checker/util/create_vehicle_footprint.hpp"
+#include "autoware_lane_departure_checker/util/create_vehicle_footprint.hpp"
 
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -39,8 +39,8 @@ using tier4_autoware_utils::Point2d;
 
 namespace
 {
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using geometry_msgs::msg::Point;
 
@@ -96,7 +96,7 @@ lanelet::ConstLanelets getCandidateLanelets(
 
 }  // namespace
 
-namespace lane_departure_checker
+namespace autoware::lane_departure_checker
 {
 Output LaneDepartureChecker::update(const Input & input)
 {
@@ -261,7 +261,8 @@ std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
   const PathWithLaneId & path) const
 {
   // Create vehicle footprint in base_link coordinate
-  const auto local_vehicle_footprint = vehicle_info_ptr_->createFootprint();
+  const auto local_vehicle_footprint =
+    vehicle_info_ptr_->createFootprint(param_.footprint_extra_margin);
 
   // Create vehicle footprint on each Path point
   std::vector<LinearRing2d> vehicle_footprints;
@@ -459,4 +460,4 @@ bool LaneDepartureChecker::willCrossBoundary(
   return false;
 }
 
-}  // namespace lane_departure_checker
+}  // namespace autoware::lane_departure_checker

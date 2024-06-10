@@ -77,8 +77,8 @@ lanelet::BasicPoint2d convert_to_lanelet_point(const geometry_msgs::msg::Point &
 }
 
 LinearRing2d create_vehicle_footprint(
-  const geometry_msgs::msg::Pose & pose, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double margin = 0.0)
+  const geometry_msgs::msg::Pose & pose,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const double margin = 0.0)
 {
   const auto & i = vehicle_info;
 
@@ -105,7 +105,8 @@ LinearRing2d create_vehicle_footprint(
 }
 
 geometry_msgs::msg::Pose get_text_pose(
-  const geometry_msgs::msg::Pose & pose, const vehicle_info_util::VehicleInfo & vehicle_info)
+  const geometry_msgs::msg::Pose & pose,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
 {
   const auto & i = vehicle_info;
 
@@ -173,7 +174,7 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
 {
   // publishers
   pub_map_bin_ =
-    create_publisher<HADMapBin>("lanelet2_map_topic", utils::create_transient_local_qos());
+    create_publisher<LaneletMapBin>("lanelet2_map_topic", utils::create_transient_local_qos());
   pub_whole_centerline_ =
     create_publisher<Trajectory>("output_whole_centerline", utils::create_transient_local_qos());
   pub_centerline_ =
@@ -238,7 +239,7 @@ StaticCenterlineGeneratorNode::StaticCenterlineGeneratorNode(
     rmw_qos_profile_services_default, callback_group_);
 
   // vehicle info
-  vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
 
   centerline_source_ = [&]() {
     const auto centerline_source_param = declare_parameter<std::string>("centerline_source");
@@ -357,7 +358,7 @@ void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_
     std::filesystem::copy_options::overwrite_existing);
 
   // load map by the map_loader package
-  map_bin_ptr_ = [&]() -> HADMapBin::ConstSharedPtr {
+  map_bin_ptr_ = [&]() -> LaneletMapBin::ConstSharedPtr {
     // load map
     map_projector_info_ =
       std::make_unique<MapProjectorInfo>(load_info_from_lanelet2_map(lanelet2_input_file_path));
@@ -379,7 +380,7 @@ void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_
     const auto map_bin_msg =
       Lanelet2MapLoaderNode::create_map_bin_msg(map_ptr, lanelet2_input_file_path, now());
 
-    return std::make_shared<HADMapBin>(map_bin_msg);
+    return std::make_shared<LaneletMapBin>(map_bin_msg);
   }();
 
   // check if map_bin_ptr_ is not null pointer

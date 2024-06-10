@@ -19,8 +19,8 @@
 #include <perception_online_evaluator/perception_online_evaluator_node.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/object_classification.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -35,11 +35,11 @@
 #include <vector>
 
 using EvalNode = perception_diagnostics::PerceptionOnlineEvaluatorNode;
-using PredictedObjects = autoware_auto_perception_msgs::msg::PredictedObjects;
-using PredictedObject = autoware_auto_perception_msgs::msg::PredictedObject;
+using PredictedObjects = autoware_perception_msgs::msg::PredictedObjects;
+using PredictedObject = autoware_perception_msgs::msg::PredictedObject;
 using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 using MarkerArray = visualization_msgs::msg::MarkerArray;
-using ObjectClassification = autoware_auto_perception_msgs::msg::ObjectClassification;
+using ObjectClassification = autoware_perception_msgs::msg::ObjectClassification;
 using nav_msgs::msg::Odometry;
 using TFMessage = tf2_msgs::msg::TFMessage;
 
@@ -141,7 +141,19 @@ protected:
       [=](const DiagnosticArray::ConstSharedPtr msg) {
         const auto it = std::find_if(msg->status.begin(), msg->status.end(), is_target_metric);
         if (it != msg->status.end()) {
-          metric_value_ = boost::lexical_cast<double>(it->values[2].value);
+          const auto mean_it = std::find_if(
+            it->values.begin(), it->values.end(),
+            [](const auto & key_value) { return key_value.key == "mean"; });
+          if (mean_it != it->values.end()) {
+            metric_value_ = boost::lexical_cast<double>(mean_it->value);
+          } else {
+            const auto metric_value_it = std::find_if(
+              it->values.begin(), it->values.end(),
+              [](const auto & key_value) { return key_value.key == "metric_value"; });
+            if (metric_value_it != it->values.end()) {
+              metric_value_ = boost::lexical_cast<double>(metric_value_it->value);
+            }
+          }
           metric_updated_ = true;
         }
       });
@@ -172,7 +184,7 @@ protected:
     object.kinematics.initial_twist_with_covariance.twist.linear.y = 0.0;
     object.kinematics.initial_twist_with_covariance.twist.linear.z = 0.0;
 
-    autoware_auto_perception_msgs::msg::PredictedPath path;
+    autoware_perception_msgs::msg::PredictedPath path;
     for (size_t i = 0; i < predicted_path.size(); ++i) {
       geometry_msgs::msg::Pose pose;
       pose.position.x = predicted_path[i].first;

@@ -21,16 +21,16 @@
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <motion_utils/trajectory/conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/accel_stamped.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
@@ -77,9 +77,10 @@ using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using std_msgs::msg::Header;
 
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware::vehicle_info_utils::VehicleInfo;
+using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_autoware_utils::StopWatch;
@@ -90,11 +91,10 @@ using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
-using vehicle_info_util::VehicleInfo;
 
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObject;
 struct ObstacleWithDetectionTime
 {
   explicit ObstacleWithDetectionTime(const rclcpp::Time & t, pcl::PointXYZ & p)

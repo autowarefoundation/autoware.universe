@@ -15,12 +15,12 @@
 #ifndef LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
 #define LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
 
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <mission_planner/mission_planner_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
@@ -45,14 +45,14 @@ class DefaultPlanner : public mission_planner::PlannerPlugin
 {
 public:
   void initialize(rclcpp::Node * node) override;
-  void initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg) override;
+  void initialize(rclcpp::Node * node, const LaneletMapBin::ConstSharedPtr msg) override;
   bool ready() const override;
   LaneletRoute plan(const RoutePoints & points) override;
   void updateRoute(const PlannerPlugin::LaneletRoute & route) override;
   void clearRoute() override;
   MarkerArray visualize(const LaneletRoute & route) const override;
   MarkerArray visualize_debug_footprint(tier4_autoware_utils::LinearRing2d goal_footprint_) const;
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
 private:
   using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
@@ -63,11 +63,11 @@ private:
   DefaultPlannerParameters param_;
 
   rclcpp::Node * node_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr map_subscriber_;
+  rclcpp::Subscription<LaneletMapBin>::SharedPtr map_subscriber_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_goal_footprint_marker_;
 
   void initialize_common(rclcpp::Node * node);
-  void map_callback(const HADMapBin::ConstSharedPtr msg);
+  void map_callback(const LaneletMapBin::ConstSharedPtr msg);
 
   /**
    * @brief check if the goal_footprint is within the combined lanelet of route_lanelets plus the

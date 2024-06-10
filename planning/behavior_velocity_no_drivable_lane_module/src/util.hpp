@@ -15,7 +15,7 @@
 #ifndef UTIL_HPP_
 #define UTIL_HPP_
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
@@ -28,13 +28,13 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 
 namespace bg = boost::geometry;
 
-using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 // the status of intersection between path and no drivable lane polygon
 struct PathWithNoDrivableLanePolygonIntersection
@@ -51,6 +51,6 @@ PathWithNoDrivableLanePolygonIntersection getPathIntersectionWithNoDrivableLaneP
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // UTIL_HPP_

@@ -16,15 +16,16 @@
 #define BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 
 #include "behavior_path_goal_planner_module/goal_searcher_base.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
-#include <lane_departure_checker/lane_departure_checker.hpp>
+#include <autoware_lane_departure_checker/lane_departure_checker.hpp>
 
 #include "visualization_msgs/msg/detail/marker_array__struct.hpp"
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/Forward.h>
 
@@ -34,13 +35,14 @@
 
 namespace behavior_path_planner::goal_planner_utils
 {
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_perception_msgs::msg::PredictedPath;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedPath;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
+using tier4_planning_msgs::msg::PathWithLaneId;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+using Polygon2d = tier4_autoware_utils::Polygon2d;
 
 lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
@@ -56,8 +58,9 @@ lanelet::ConstLanelets generateExpandedPullOverLanes(
 
 lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
   const lanelet::ConstLanelets & pull_over_lanes, const bool left_side,
-  const geometry_msgs::msg::Pose ego_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double outer_road_offset, const double inner_road_offset);
+  const geometry_msgs::msg::Pose ego_pose,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const double outer_road_offset,
+  const double inner_road_offset);
 PredictedObjects extractObjectsInExpandedPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
   const double forward_distance, double bound_offset, const PredictedObjects & objects);
@@ -84,6 +87,10 @@ PathWithLaneId extendPath(
 PathWithLaneId extendPath(
   const PathWithLaneId & prev_module_path, const PathWithLaneId & reference_path,
   const Pose & extend_pose);
+
+std::vector<Polygon2d> createPathFootPrints(
+  const PathWithLaneId & path, const double base_to_front, const double base_to_rear,
+  const double width);
 
 // debug
 MarkerArray createPullOverAreaMarkerArray(

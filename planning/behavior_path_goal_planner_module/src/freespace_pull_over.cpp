@@ -14,11 +14,11 @@
 
 #include "behavior_path_goal_planner_module/freespace_pull_over.hpp"
 
+#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware_behavior_path_planner_common/utils/parking_departure/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "behavior_path_goal_planner_module/util.hpp"
-#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner_common/utils/parking_departure/utils.hpp"
-#include "behavior_path_planner_common/utils/path_utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <memory>
 #include <vector>
@@ -27,12 +27,12 @@ namespace behavior_path_planner
 {
 FreespacePullOver::FreespacePullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters,
-  const vehicle_info_util::VehicleInfo & vehicle_info)
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
 : PullOverPlannerBase{node, parameters},
   velocity_{parameters.freespace_parking_velocity},
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
-  freespace_planning_algorithms::VehicleShape vehicle_shape(
+  autoware::freespace_planning_algorithms::VehicleShape vehicle_shape(
     vehicle_info, parameters.vehicle_shape_margin);
   if (parameters.freespace_parking_algorithm == "astar") {
     use_back_ = parameters.astar_parameters.use_back;

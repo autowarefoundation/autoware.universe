@@ -17,7 +17,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "autoware_auto_perception_msgs/msg/detected_objects.hpp"
+#include "autoware_perception_msgs/msg/detected_objects.hpp"
 
 #include <deque>
 #include <functional>
@@ -28,7 +28,7 @@
 
 namespace multi_object_tracker
 {
-using DetectedObjects = autoware_auto_perception_msgs::msg::DetectedObjects;
+using DetectedObjects = autoware_perception_msgs::msg::DetectedObjects;
 using ObjectsList = std::vector<std::pair<uint, DetectedObjects>>;
 
 struct InputChannel
@@ -52,7 +52,7 @@ public:
     func_trigger_ = func_trigger;
   }
 
-  void onMessage(const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
+  void onMessage(const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg);
   void updateTimingStatus(const rclcpp::Time & now, const rclcpp::Time & objects_time);
 
   bool isTimeInitialized() const { return initial_count_ > 0; }
@@ -117,17 +117,13 @@ class InputManager
 {
 public:
   explicit InputManager(rclcpp::Node & node);
-
   void init(const std::vector<InputChannel> & input_channels);
-  void setTriggerFunction(std::function<void()> func_trigger) { func_trigger_ = func_trigger; }
 
+  void setTriggerFunction(std::function<void()> func_trigger) { func_trigger_ = func_trigger; }
   void onTrigger(const uint & index) const;
 
-  void getObjectTimeInterval(
-    const rclcpp::Time & now, rclcpp::Time & object_latest_time,
-    rclcpp::Time & object_oldest_time) const;
-  void optimizeTimings();
   bool getObjects(const rclcpp::Time & now, ObjectsList & objects_list);
+
   bool isChannelSpawnEnabled(const uint & index) const
   {
     return input_streams_[index]->isSpawnEnabled();
@@ -138,7 +134,7 @@ private:
   std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array_{};
 
   bool is_initialized_{false};
-  rclcpp::Time latest_object_time_;
+  rclcpp::Time latest_exported_object_time_;
 
   size_t input_size_;
   std::vector<std::shared_ptr<InputStream>> input_streams_;
@@ -151,6 +147,12 @@ private:
   double target_stream_interval_std_{0.02};  // [s]
   double target_latency_{0.2};               // [s]
   double target_latency_band_{1.0};          // [s]
+
+private:
+  void getObjectTimeInterval(
+    const rclcpp::Time & now, rclcpp::Time & object_latest_time,
+    rclcpp::Time & object_oldest_time) const;
+  void optimizeTimings();
 };
 
 }  // namespace multi_object_tracker

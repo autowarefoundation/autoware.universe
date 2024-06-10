@@ -15,6 +15,7 @@
 #ifndef PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
 #define PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
 
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <motion_utils/trajectory/conversion.hpp>
 #include <motion_utils/trajectory/interpolation.hpp>
 #include <predicted_path_checker/debug_marker.hpp>
@@ -23,7 +24,6 @@
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/ros/transform_listener.hpp>
-#include <vehicle_info_util/vehicle_info.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -42,11 +42,11 @@
 
 namespace autoware::motion::control::predicted_path_checker
 {
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 using tier4_autoware_utils::Point2d;
@@ -120,7 +120,7 @@ private:
   // Variables
   std::shared_ptr<PredictedPathCheckerDebugNode> debug_ptr_;
   rclcpp::Node * node_;
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
   std::vector<PredictedObjectWithDetectionTime> predicted_object_history_{};
 };
 }  // namespace autoware::motion::control::predicted_path_checker

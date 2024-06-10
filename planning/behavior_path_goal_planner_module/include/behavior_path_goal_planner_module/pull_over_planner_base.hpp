@@ -15,19 +15,19 @@
 #ifndef BEHAVIOR_PATH_GOAL_PLANNER_MODULE__PULL_OVER_PLANNER_BASE_HPP_
 #define BEHAVIOR_PATH_GOAL_PLANNER_MODULE__PULL_OVER_PLANNER_BASE_HPP_
 
+#include "autoware_behavior_path_planner_common/data_manager.hpp"
 #include "behavior_path_goal_planner_module/goal_planner_parameters.hpp"
-#include "behavior_path_planner_common/data_manager.hpp"
 
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 #include <utility>
 #include <vector>
 
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using tier4_autoware_utils::LinearRing2d;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace behavior_path_planner
 {
@@ -112,7 +112,7 @@ class PullOverPlannerBase
 public:
   PullOverPlannerBase(rclcpp::Node & node, const GoalPlannerParameters & parameters)
   {
-    vehicle_info_ = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+    vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
     vehicle_footprint_ = vehicle_info_.createFootprint();
     parameters_ = parameters;
   }
@@ -133,7 +133,7 @@ public:
 
 protected:
   std::shared_ptr<const PlannerData> planner_data_;
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
   LinearRing2d vehicle_footprint_;
   GoalPlannerParameters parameters_;
 

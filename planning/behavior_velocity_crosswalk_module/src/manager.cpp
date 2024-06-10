@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
 #include <algorithm>
@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 
 using lanelet::autoware::Crosswalk;
@@ -143,19 +143,17 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns + ".occlusion.ignore_behind_predicted_objects");
 
   cp.occlusion_ignore_velocity_thresholds.resize(
-    autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN + 1,
+    autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN + 1,
     getOrDeclareParameter<double>(node, ns + ".occlusion.ignore_velocity_thresholds.default"));
   const auto get_label = [](const std::string & s) {
-    if (s == "CAR") return autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
-    if (s == "TRUCK") return autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK;
-    if (s == "BUS") return autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
-    if (s == "TRAILER") return autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER;
-    if (s == "MOTORCYCLE")
-      return autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
-    if (s == "BICYCLE") return autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
-    if (s == "PEDESTRIAN")
-      return autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
-    return autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    if (s == "CAR") return autoware_perception_msgs::msg::ObjectClassification::CAR;
+    if (s == "TRUCK") return autoware_perception_msgs::msg::ObjectClassification::TRUCK;
+    if (s == "BUS") return autoware_perception_msgs::msg::ObjectClassification::BUS;
+    if (s == "TRAILER") return autoware_perception_msgs::msg::ObjectClassification::TRAILER;
+    if (s == "MOTORCYCLE") return autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
+    if (s == "BICYCLE") return autoware_perception_msgs::msg::ObjectClassification::BICYCLE;
+    if (s == "PEDESTRIAN") return autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+    return autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
   };
   const auto custom_labels = getOrDeclareParameter<std::vector<std::string>>(
     node, ns + ".occlusion.ignore_velocity_thresholds.custom_labels");
@@ -231,8 +229,9 @@ CrosswalkModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
     return crosswalk_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::CrosswalkModulePlugin, behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::CrosswalkModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

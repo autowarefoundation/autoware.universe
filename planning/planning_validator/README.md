@@ -1,8 +1,8 @@
 # Planning Validator
 
-The `planning_validator` is a module that checks the validity of a trajectory before it is published. The status of the validation can be viewed in the `/diagnostics` and `/validation_status` topics. When an invalid trajectory is detected, the `planning_validator` will process the trajectory following the selected option: "0. publish the trajectory as it is", "1. stop publishing the trajectory", "2. publish the last validated trajectory".
+The `autoware_planning_validator` is a module that checks the validity of a trajectory before it is published. The status of the validation can be viewed in the `/diagnostics` and `/validation_status` topics. When an invalid trajectory is detected, the `autoware_planning_validator` will process the trajectory following the selected option: "0. publish the trajectory as it is", "1. stop publishing the trajectory", "2. publish the last validated trajectory".
 
-![planning_validator](./image/planning_validator.drawio.svg)
+![autoware_planning_validator](./image/planning_validator.drawio.svg)
 
 ## Supported features
 
@@ -29,12 +29,12 @@ The following features are to be implemented.
 
 ### Inputs
 
-The `planning_validator` takes in the following inputs:
+The `autoware_planning_validator` takes in the following inputs:
 
-| Name                 | Type                                   | Description                                    |
-| -------------------- | -------------------------------------- | ---------------------------------------------- |
-| `~/input/kinematics` | nav_msgs/Odometry                      | ego pose and twist                             |
-| `~/input/trajectory` | autoware_auto_planning_msgs/Trajectory | target trajectory to be validated in this node |
+| Name                 | Type                              | Description                                    |
+| -------------------- | --------------------------------- | ---------------------------------------------- |
+| `~/input/kinematics` | nav_msgs/Odometry                 | ego pose and twist                             |
+| `~/input/trajectory` | autoware_planning_msgs/Trajectory | target trajectory to be validated in this node |
 
 ### Outputs
 
@@ -42,13 +42,13 @@ It outputs the following:
 
 | Name                         | Type                                       | Description                                                               |
 | ---------------------------- | ------------------------------------------ | ------------------------------------------------------------------------- |
-| `~/output/trajectory`        | autoware_auto_planning_msgs/Trajectory     | validated trajectory                                                      |
+| `~/output/trajectory`        | autoware_planning_msgs/Trajectory          | validated trajectory                                                      |
 | `~/output/validation_status` | planning_validator/PlanningValidatorStatus | validator status to inform the reason why the trajectory is valid/invalid |
 | `/diagnostics`               | diagnostic_msgs/DiagnosticStatus           | diagnostics to report errors                                              |
 
 ## Parameters
 
-The following parameters can be set for the `planning_validator`:
+The following parameters can be set for the `autoware_planning_validator`:
 
 ### System parameters
 

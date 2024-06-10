@@ -63,12 +63,12 @@ def generate_test_description():
                 "config/behavior_velocity_planner.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("path_smoother"),
+                get_package_share_directory("autoware_path_smoother"),
                 "config/elastic_band_smoother.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("obstacle_avoidance_planner"),
-                "config/obstacle_avoidance_planner.param.yaml",
+                get_package_share_directory("autoware_path_optimizer"),
+                "config/path_optimizer.param.yaml",
             ),
             os.path.join(
                 get_package_share_directory("map_loader"),
