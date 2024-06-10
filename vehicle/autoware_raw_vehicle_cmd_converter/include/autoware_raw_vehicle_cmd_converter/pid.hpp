@@ -42,17 +42,17 @@ public:
 
 private:
   // parameters
-  double kp_;
-  double ki_;
-  double kd_;
-  double max_ret_p_;
-  double min_ret_p_;
-  double max_ret_i_;
-  double min_ret_i_;
-  double max_ret_d_;
-  double min_ret_d_;
-  double max_ret_;
-  double min_ret_;
+  double kp_{};
+  double ki_{};
+  double kd_{};
+  double max_ret_p_{};
+  double min_ret_p_{};
+  double max_ret_i_{};
+  double min_ret_i_{};
+  double max_ret_d_{};
+  double min_ret_d_{};
+  double max_ret_{};
+  double min_ret_{};
   // states
   double error_integral_{0.0};
   double prev_error_{0.0};
