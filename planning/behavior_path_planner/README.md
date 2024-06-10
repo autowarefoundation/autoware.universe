@@ -33,8 +33,8 @@ Behavior Path Planner has following scene modules
 | Lane Change                | this module is performed when it is necessary and a collision check with other vehicles is cleared.                                                                        | [LINK](../behavior_path_lane_change_module/README.md)                         |
 | External Lane Change       | WIP                                                                                                                                                                        | LINK                                                                          |
 | Goal Planner               | this module is performed when ego-vehicle is in the road lane and goal is in the shoulder lane. ego-vehicle will stop at the goal.                                         | [LINK](../behavior_path_goal_planner_module/README.md)                        |
-| Start Planner              | this module is performed when ego-vehicle is stationary and footprint of ego-vehicle is included in shoulder lane. This module ends when ego-vehicle merges into the road. | [LINK](../behavior_path_start_planner_module/README.md)                       |
-| Side Shift                 | (for remote control) shift the path to left or right according to an external instruction.                                                                                 | [LINK](../behavior_path_side_shift_module/README.md)                          |
+| Start Planner              | this module is performed when ego-vehicle is stationary and footprint of ego-vehicle is included in shoulder lane. This module ends when ego-vehicle merges into the road. | [LINK](../autoware_behavior_path_start_planner_module/README.md)              |
+| Side Shift                 | (for remote control) shift the path to left or right according to an external instruction.                                                                                 | [LINK](../autoware_behavior_path_side_shift_module/README.md)                 |
 
 !!! Note
 
@@ -168,7 +168,7 @@ The shifted path generation logic enables the behavior path planner to dynamical
 
 !!! note
 
-    If you're a math lover, refer to [Path Generation Design](../behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md) for the nitty-gritty.
+    If you're a math lover, refer to [Path Generation Design](../autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md) for the nitty-gritty.
 
 ## Collision Assessment / Safety check
 
@@ -185,7 +185,7 @@ However, the module does have a limitation concerning the yaw angle of each poin
 
 !!! note
 
-    For further reading on the collision assessment  method, please refer to [Safety check utils](../behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
+    For further reading on the collision assessment  method, please refer to [Safety check utils](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
 
 ## Generating Drivable Area
 
@@ -208,7 +208,7 @@ Static drivable area expansion operates under assumptions about the correct arra
 
 !!! note
 
-    Further details can is provided in [Drivable Area Design](../behavior_path_planner_common/docs/behavior_path_planner_drivable_area_design.md).
+    Further details can is provided in [Drivable Area Design](../autoware_behavior_path_planner_common/docs/behavior_path_planner_drivable_area_design.md).
 
 ### Dynamic Drivable Area Logic
 
@@ -228,7 +228,7 @@ The `TurnIndicatorsCommand` message structure has a command field that can take 
 
 !!! note
 
-    For more in-depth information, refer to [Turn Signal Design](../behavior_path_planner_common/docs/behavior_path_planner_turn_signal_design.md) document.
+    For more in-depth information, refer to [Turn Signal Design](../autoware_behavior_path_planner_common/docs/behavior_path_planner_turn_signal_design.md) document.
 
 ## Rerouting
 
