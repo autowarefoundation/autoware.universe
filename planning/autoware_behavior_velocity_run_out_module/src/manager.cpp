@@ -22,14 +22,13 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using ::behavior_velocity_planner::SceneModuleManagerInterface;
 using tier4_autoware_utils::getOrDeclareParameter;
 RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   // Vehicle Parameters
   {
-    const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+    const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
     auto & p = planner_param_.vehicle_param;
     p.base_to_front = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
     p.base_to_rear = vehicle_info.rear_overhang_m;
@@ -203,4 +202,4 @@ void RunOutModuleManager::setDynamicObstacleCreator(
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
   autoware::behavior_velocity_planner::RunOutModulePlugin,
-  behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::PluginInterface)
