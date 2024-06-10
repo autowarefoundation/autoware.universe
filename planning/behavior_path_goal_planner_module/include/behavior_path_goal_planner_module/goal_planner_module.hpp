@@ -28,9 +28,9 @@
 #include "behavior_path_goal_planner_module/goal_searcher.hpp"
 #include "behavior_path_goal_planner_module/shift_pull_over.hpp"
 
-#include <freespace_planning_algorithms/astar_search.hpp>
-#include <freespace_planning_algorithms/rrtstar.hpp>
-#include <lane_departure_checker/lane_departure_checker.hpp>
+#include <autoware_freespace_planning_algorithms/astar_search.hpp>
+#include <autoware_freespace_planning_algorithms/rrtstar.hpp>
+#include <autoware_lane_departure_checker/lane_departure_checker.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
@@ -50,19 +50,19 @@
 
 namespace behavior_path_planner
 {
+using autoware::lane_departure_checker::LaneDepartureChecker;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using geometry_msgs::msg::PoseArray;
-using lane_departure_checker::LaneDepartureChecker;
 using nav_msgs::msg::OccupancyGrid;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-using freespace_planning_algorithms::AbstractPlanningAlgorithm;
-using freespace_planning_algorithms::AstarParam;
-using freespace_planning_algorithms::AstarSearch;
-using freespace_planning_algorithms::PlannerCommonParam;
-using freespace_planning_algorithms::RRTStar;
-using freespace_planning_algorithms::RRTStarParam;
+using autoware::freespace_planning_algorithms::AbstractPlanningAlgorithm;
+using autoware::freespace_planning_algorithms::AstarParam;
+using autoware::freespace_planning_algorithms::AstarSearch;
+using autoware::freespace_planning_algorithms::PlannerCommonParam;
+using autoware::freespace_planning_algorithms::RRTStar;
+using autoware::freespace_planning_algorithms::RRTStarParam;
 
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
