@@ -250,5 +250,4 @@ vehicle/autoware_raw_vehicle_cmd_converter/** makoto.kurihara@tier4.jp taiki.tan
 vehicle/autoware_steer_offset_estimator/** taiki.tanaka@tier4.jp
 vehicle/autoware_vehicle_info_utils/** shumpei.wakabayashi@tier4.jp taiki.tanaka@tier4.jp tomoya.kimura@tier4.jp
 
-
 ### Copied from .github/CODEOWNERS-manual ###
