@@ -118,46 +118,45 @@ void PlanningNode::on_timer()
 
   auto trajectory_msg = trajectory_sub_->takeData();
   if (trajectory_msg) {
+    auto trajectory_msg = trajectory_sub_->takeData();
+    if (trajectory_msg) {
+      trajectory_ = trajectory_sub_->takeData();
+    }
 
-  auto trajectory_msg = trajectory_sub_->takeData();
-  if (trajectory_msg) {
-    trajectory_ = trajectory_sub_->takeData();
-  }
+    auto kinematic_state_msg = kinematic_state_sub_->takeData();
+    if (kinematic_state_msg) {
+      kinematic_state_ = msg;
 
-  auto kinematic_state_msg = kinematic_state_sub_->takeData();
-  if (kinematic_state_msg) {
-    kinematic_state_ = msg;
+      geometry_msgs::msg::TwistStamped twist;
+      twist.header = msg->header;
+      twist.twist = msg->twist.twist;
+      stop_checker_->addTwist(twist);
+    }
 
-    geometry_msgs::msg::TwistStamped twist;
-    twist.header = msg->header;
-    twist.twist = msg->twist.twist;
-    stop_checker_->addTwist(twist);
-  }
-
-  // Set the distance if it is nan.
-  if (trajectory_ && kinematic_state_) {
-    for (auto & factor : velocity.factors) {
-      if (std::isnan(factor.distance)) {
-        const auto & curr_point = kinematic_state_->pose.pose.position;
-        const auto & stop_point = factor.pose.position;
-        const auto & points = trajectory_->points;
-        factor.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
+    // Set the distance if it is nan.
+    if (trajectory_ && kinematic_state_) {
+      for (auto & factor : velocity.factors) {
+        if (std::isnan(factor.distance)) {
+          const auto & curr_point = kinematic_state_->pose.pose.position;
+          const auto & stop_point = factor.pose.position;
+          const auto & points = trajectory_->points;
+          factor.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
+        }
       }
     }
-  }
 
-  // Set the status if it is unknown.
-  const auto is_vehicle_stopped = stop_checker_->isVehicleStopped(stop_duration_);
-  for (auto & factor : velocity.factors) {
-    if ((factor.status == VelocityFactor::UNKNOWN) && (!std::isnan(factor.distance))) {
-      const auto is_stopped = is_vehicle_stopped && (factor.distance < stop_distance_);
-      factor.status = is_stopped ? VelocityFactor::STOPPED : VelocityFactor::APPROACHING;
+    // Set the status if it is unknown.
+    const auto is_vehicle_stopped = stop_checker_->isVehicleStopped(stop_duration_);
+    for (auto & factor : velocity.factors) {
+      if ((factor.status == VelocityFactor::UNKNOWN) && (!std::isnan(factor.distance))) {
+        const auto is_stopped = is_vehicle_stopped && (factor.distance < stop_distance_);
+        factor.status = is_stopped ? VelocityFactor::STOPPED : VelocityFactor::APPROACHING;
+      }
     }
-  }
 
-  pub_velocity_factors_->publish(velocity);
-  pub_steering_factors_->publish(steering);
-}
+    pub_velocity_factors_->publish(velocity);
+    pub_steering_factors_->publish(steering);
+  }
 
 }  // namespace default_ad_api
 
