@@ -1,0 +1,103 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "blockage_diag",
+    "type": "object",
+    "definitions": {
+      "blockage_diag": {
+        "type": "object",
+        "properties": {
+          "blockage_ratio_threshold": {
+            "type": "number",
+            "description": "blockage ration threshold",
+            "default": "0.1"
+          },
+          "blockage_count_threshold": {
+            "type": "number",
+            "description": "blockage count threshold",
+            "default": "50"
+          },
+          "blockage_buffering_frames": {
+            "type": "number",
+            "description": "blockage buffering frames",
+            "default": "2"
+          },
+          "blockage_buffering_interval": {
+            "type": "number",
+            "description": "blockage buffering interval",
+            "default": "1"
+          },
+          "enable_dust_diag": {
+            "type": "boolean",
+            "description": "enable dust diag",
+            "default": "false"
+          },
+          "publish_debug_image": {
+            "type": "boolean",
+            "description": "eanble debug",
+            "default": "false"
+          },
+          "dust_ratio_threshold": {
+            "type": "number",
+            "description": "dust ration threshold",
+            "default": "0.2"
+          },
+          "dust_count_threshold": {
+            "type": "number",
+            "description": "dust count threshold",
+            "default": "10"
+          },
+          "dust_kernel_size": {
+            "type": "number",
+            "description": "dust kernel size",
+            "default": "2"
+          },
+          "dust_buffering_frames": {
+            "type": "number",
+            "description": "dust buffering frames",
+            "default": "10"
+          },
+          "dust_buffering_interval": {
+            "type": "number",
+            "description": "dust buffering interval",
+            "default": "1"
+          },
+          "max_distance_range": {
+            "type": "number",
+            "description": "max distance range",
+            "default": "200.0"
+          },
+          "horizontal_resolution": {
+            "type": "number",
+            "description": "horizontal resolution",
+            "default": "INSERT_DEFAULT"
+          },
+          "blockage_kernel": {
+            "type": "number",
+            "description": "blockage kernel",
+            "default": "10"
+          }
+        },
+        "required": ["blockage_ratio_threshold", "blockage_count_threshold",
+        "blockage_buffering_frames", "blockage_buffering_interval",
+        "enable_dust_diag", "publish_debug_image", "dust_ratio_threshold",
+        "dust_count_threshold", "dust_kernel_size", "dust_buffering_frames",
+        "dust_buffering_interval", "max_distance_range", 
+        "horizontal_resolution", "blockage_kernel"],
+        "additionalProperties": false
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "$ref": "#/definitions/blockage_diag"
+          }
+        },
+        "required": ["ros__parameters"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["/**"],
+    "additionalProperties": false
+  }

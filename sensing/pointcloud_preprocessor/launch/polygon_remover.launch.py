@@ -29,6 +29,10 @@ def generate_launch_description():
         get_package_share_directory("autoware_vehicle_info_utils"), "config/polygon_remover.yaml"
     )
 
+    shared_filter_file = os.path.join(
+        get_package_share_directory("pointcloude_preprocessor"), "config/filter_param_file.yaml"
+    )
+
     with open(param_file, "r") as f:
         polygon_remover_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
@@ -40,7 +44,8 @@ def generate_launch_description():
             {
                 "polygon_vertices": polygon_remover_param["polygon_vertices"],
                 "will_visualize": polygon_remover_param["will_visualize"],
-            }
+            },
+            shared_filter_file
         ],
     )
 

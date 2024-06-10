@@ -73,13 +73,13 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
   // set initial parameters
   {
     auto & p = param_;
-    p.min_x = static_cast<float>(declare_parameter("min_x", -1.0));
-    p.min_y = static_cast<float>(declare_parameter("min_y", -1.0));
-    p.min_z = static_cast<float>(declare_parameter("min_z", -1.0));
-    p.max_x = static_cast<float>(declare_parameter("max_x", 1.0));
-    p.max_y = static_cast<float>(declare_parameter("max_y", 1.0));
-    p.max_z = static_cast<float>(declare_parameter("max_z", 1.0));
-    p.negative = static_cast<bool>(declare_parameter("negative", false));
+    p.min_x = declare_parameter<float>("min_x");
+    p.min_y = declare_parameter<float>("min_y");
+    p.min_z = declare_parameter<float>("min_z");
+    p.max_x = declare_parameter<float>("max_x");
+    p.max_y = declare_parameter<float>("max_y");
+    p.max_z = declare_parameter<float>("max_z");
+    p.negative = declare_parameter<bool>("negative");
     if (tf_input_frame_.empty()) {
       throw std::invalid_argument("Crop box requires non-empty input_frame");
     }
