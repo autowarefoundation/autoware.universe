@@ -325,6 +325,9 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     shift_line.end = *shift_end_pose_ptr;
     shift_line.end_shift_length = shift_length;
     path_shifter.addShiftLine(shift_line);
+    // Setting 0.0 for initial velocity causes discontinuous curvature around shift start pose.
+    // Although the direct cause is not entirely clear, setting the initial velocity to 1.0 resolved
+    // the issue, so this change will be applied for now.
     path_shifter.setVelocity(1.0);  // initial velocity is 1.0
     path_shifter.setLongitudinalAcceleration(longitudinal_acc);
     path_shifter.setLateralAccelerationLimit(lateral_acc);
