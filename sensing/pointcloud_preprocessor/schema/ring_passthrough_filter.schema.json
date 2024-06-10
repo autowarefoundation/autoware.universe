@@ -1,91 +1,101 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "ring_outlier_filter",
-    "type": "object",
-    "definitions": {
-      "ring_outlier_filter": {
-        "type": "object",
-        "properties": {
-          "distance_ratio": {
-            "type": "number",
-            "description": "distance ratio",
-            "default": "1.03"
-          },
-          "object_length_threshold": {
-            "type": "number",
-            "description": "object length threshold",
-            "default": "0.1"
-          },
-          "num_points_threshold": {
-            "type": "number",
-            "description": "number points threshold",
-            "default": "4"
-          },
-          "max_rings_num": {
-            "type": "number",
-            "description": "max rings number",
-            "default": "128"
-          },
-          "max_points_num_per_ring": {
-            "type": "number",
-            "description": "maximum points number per ring",
-            "default": "4000"
-          },
-          "publish_outlier_pointcloud": {
-            "type": "boolean",
-            "description": "enable publish outlier pointcloud",
-            "default": "false"
-          },
-          "min_azimuth_deg": {
-            "type": "number",
-            "description": "minimu azimuth degree",
-            "default": "0.0"
-          },
-          "max_azimuth_deg": {
-            "type": "number",
-            "description": "maximum azimuth degree",
-            "default": "360.0"
-          },
-          "max_distance": {
-            "type": "number",
-            "description": "maximum distance",
-            "default": "12.0"
-          },
-          "vertical_bins": {
-            "type": "number",
-            "description": "vertical bins",
-            "default": "128"
-          },
-          "horizontal_bins": {
-            "type": "number",
-            "description": "horizontal bins",
-            "default": "36"
-          },
-          "noise_threshold": {
-            "type": "number",
-            "description": "noise threshold",
-            "default": "2"
-          }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ring_outlier_filter",
+  "type": "object",
+  "definitions": {
+    "ring_outlier_filter": {
+      "type": "object",
+      "properties": {
+        "distance_ratio": {
+          "type": "number",
+          "description": "distance ratio",
+          "default": "1.03"
         },
-        "required": ["distance_ratio", "object_length_threshold", 
-        "num_points_threshold", "max_rings_num", "max_points_num_per_ring",
-        "publish_outlier_pointcloud", "min_azimuth_deg", "max_azimuth_deg", 
-        "max_distance", "vertical_bins", "horizontal_bins", "noise_threshold"],
-        "additionalProperties": false
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/ring_outlier_filter"
-          }
+        "object_length_threshold": {
+          "type": "number",
+          "description": "object length threshold",
+          "default": "0.1"
         },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
-      }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
-  }
+        "num_points_threshold": {
+          "type": "number",
+          "description": "number points threshold",
+          "default": "4"
+        },
+        "max_rings_num": {
+          "type": "number",
+          "description": "max rings number",
+          "default": "128"
+        },
+        "max_points_num_per_ring": {
+          "type": "number",
+          "description": "maximum points number per ring",
+          "default": "4000"
+        },
+        "publish_outlier_pointcloud": {
+          "type": "boolean",
+          "description": "enable publish outlier pointcloud",
+          "default": "false"
+        },
+        "min_azimuth_deg": {
+          "type": "number",
+          "description": "minimu azimuth degree",
+          "default": "0.0"
+        },
+        "max_azimuth_deg": {
+          "type": "number",
+          "description": "maximum azimuth degree",
+          "default": "360.0"
+        },
+        "max_distance": {
+          "type": "number",
+          "description": "maximum distance",
+          "default": "12.0"
+        },
+        "vertical_bins": {
+          "type": "number",
+          "description": "vertical bins",
+          "default": "128"
+        },
+        "horizontal_bins": {
+          "type": "number",
+          "description": "horizontal bins",
+          "default": "36"
+        },
+        "noise_threshold": {
+          "type": "number",
+          "description": "noise threshold",
+          "default": "2"
+        }
+      },
+      "required": [
+        "distance_ratio",
+        "object_length_threshold",
+        "num_points_threshold",
+        "max_rings_num",
+        "max_points_num_per_ring",
+        "publish_outlier_pointcloud",
+        "min_azimuth_deg",
+        "max_azimuth_deg",
+        "max_distance",
+        "vertical_bins",
+        "horizontal_bins",
+        "noise_threshold"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/ring_outlier_filter"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}

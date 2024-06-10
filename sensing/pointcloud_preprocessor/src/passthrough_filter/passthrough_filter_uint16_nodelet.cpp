@@ -33,11 +33,9 @@ PassThroughFilterUInt16Component::PassThroughFilterUInt16Component(
     int filter_max = declare_parameter<int>("filter_limit_max");
     impl_.setFilterLimits(filter_min, filter_max);
 
-    impl_.setFilterFieldName(
-      declare_parameter<std::string>("filter_field_name"));
+    impl_.setFilterFieldName(declare_parameter<std::string>("filter_field_name"));
     impl_.setKeepOrganized(declare_parameter<bool>("keep_organized"));
-    impl_.setFilterLimitsNegative(
-      declare_parameter<bool>("filter_limit_negative"));
+    impl_.setFilterLimitsNegative(declare_parameter<bool>("filter_limit_negative"));
   }
 
   using std::placeholders::_1;

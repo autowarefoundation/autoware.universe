@@ -67,8 +67,7 @@ VectorMapInsideAreaFilterComponent::VectorMapInsideAreaFilterComponent(
   const rclcpp::NodeOptions & node_options)
 : Filter("VectorMapInsideAreaFilter", node_options)
 {
-  polygon_type_ =
-    declare_parameter<std::string>("polygon_type");
+  polygon_type_ = declare_parameter<std::string>("polygon_type");
 
   using std::placeholders::_1;
   // Set subscriber

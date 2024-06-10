@@ -1,117 +1,131 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "dual_return_outlier_filter",
-    "type": "object",
-    "definitions": {
-      "dual_return_outlier_filter": {
-        "type": "object",
-        "properties": {
-          "x_max": {
-            "type": "number",
-            "description": "max distance on x",
-            "default": "18.0"
-          },
-          "x_min": {
-            "type": "number",
-            "description": "min distance on x",
-            "default": "-12.0"
-          },
-          "y_max": {
-            "type": "number",
-            "description": "max distance on y",
-            "default": "2.0"
-          },
-          "y_min": {
-            "type": "number",
-            "description": "min distance on y",
-            "default": "-2.0"
-          },
-          "z_max": {
-            "type": "number",
-            "description": "max distance on z",
-            "default": "10.0"
-          },
-          "z_min": {
-            "type": "number",
-            "description": "min distance on z",
-            "default": "0.0"
-          },
-          "min_azimuth_deg": {
-            "type": "number",
-            "description": "minium azimuth degree",
-            "default": "135.0"
-          },
-          "max_azimuth_deg": {
-            "type": "number",
-            "description": "maximum azimuth degree",
-            "default": "225.0"
-          },
-          "max_distance": {
-            "type": "number",
-            "description": "maximum distance",
-            "default": "12.0"
-          },
-          "vertical_bins": {
-            "type": "number",
-            "description": "vertical bins",
-            "default": "128"
-          },
-          "max_azimuth_diff": {
-            "type": "number",
-            "description": "max azimuth diff",
-            "default": "50"
-          },
-          "weak_first_distance_ratio": {
-            "type": "number",
-            "description": "weak first distance ratio",
-            "default": "1.004"
-          },
-          "general_distance_ratio": {
-            "type": "number",
-            "description": "general distance ratio",
-            "default": "1.03"
-          },
-          "weak_first_local_noise_threshold": {
-            "type": "number",
-            "description": "weak first local noise threshold",
-            "default": "2"
-          },
-          "roi_mode": {
-            "type": "string",
-            "description": "roi mode",
-            "default": "Fixed_xyz_ROI"
-          },
-          "visibility_error_threshold": {
-            "type": "number",
-            "description": "visibility error threshold",
-            "default": "0.5"
-          },
-          "visibility_warn_threshold": {
-            "type": "number",
-            "description": "visibility warn threshold",
-            "default": "0.7"
-          }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "dual_return_outlier_filter",
+  "type": "object",
+  "definitions": {
+    "dual_return_outlier_filter": {
+      "type": "object",
+      "properties": {
+        "x_max": {
+          "type": "number",
+          "description": "max distance on x",
+          "default": "18.0"
         },
-        "required": ["x_max", "x_min", "y_max", "y_min", "z_max", 
-        "z_min", "min_azimuth_deg", "max_azimuth_deg", "max_distance",
-        "vertical_bins", "max_azimuth_diff", "weak_first_distance_ratio",
-        "general_distance_ratio", "weak_first_local_noise_threshold", 
-        "roi_mode", "visibility_error_threshold", "visibility_warn_threshold"],
-        "additionalProperties": false
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/dual_return_outlier_filter"
-          }
+        "x_min": {
+          "type": "number",
+          "description": "min distance on x",
+          "default": "-12.0"
         },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
-      }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
-  }
+        "y_max": {
+          "type": "number",
+          "description": "max distance on y",
+          "default": "2.0"
+        },
+        "y_min": {
+          "type": "number",
+          "description": "min distance on y",
+          "default": "-2.0"
+        },
+        "z_max": {
+          "type": "number",
+          "description": "max distance on z",
+          "default": "10.0"
+        },
+        "z_min": {
+          "type": "number",
+          "description": "min distance on z",
+          "default": "0.0"
+        },
+        "min_azimuth_deg": {
+          "type": "number",
+          "description": "minium azimuth degree",
+          "default": "135.0"
+        },
+        "max_azimuth_deg": {
+          "type": "number",
+          "description": "maximum azimuth degree",
+          "default": "225.0"
+        },
+        "max_distance": {
+          "type": "number",
+          "description": "maximum distance",
+          "default": "12.0"
+        },
+        "vertical_bins": {
+          "type": "number",
+          "description": "vertical bins",
+          "default": "128"
+        },
+        "max_azimuth_diff": {
+          "type": "number",
+          "description": "max azimuth diff",
+          "default": "50"
+        },
+        "weak_first_distance_ratio": {
+          "type": "number",
+          "description": "weak first distance ratio",
+          "default": "1.004"
+        },
+        "general_distance_ratio": {
+          "type": "number",
+          "description": "general distance ratio",
+          "default": "1.03"
+        },
+        "weak_first_local_noise_threshold": {
+          "type": "number",
+          "description": "weak first local noise threshold",
+          "default": "2"
+        },
+        "roi_mode": {
+          "type": "string",
+          "description": "roi mode",
+          "default": "Fixed_xyz_ROI"
+        },
+        "visibility_error_threshold": {
+          "type": "number",
+          "description": "visibility error threshold",
+          "default": "0.5"
+        },
+        "visibility_warn_threshold": {
+          "type": "number",
+          "description": "visibility warn threshold",
+          "default": "0.7"
+        }
+      },
+      "required": [
+        "x_max",
+        "x_min",
+        "y_max",
+        "y_min",
+        "z_max",
+        "z_min",
+        "min_azimuth_deg",
+        "max_azimuth_deg",
+        "max_distance",
+        "vertical_bins",
+        "max_azimuth_diff",
+        "weak_first_distance_ratio",
+        "general_distance_ratio",
+        "weak_first_local_noise_threshold",
+        "roi_mode",
+        "visibility_error_threshold",
+        "visibility_warn_threshold"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/dual_return_outlier_filter"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
