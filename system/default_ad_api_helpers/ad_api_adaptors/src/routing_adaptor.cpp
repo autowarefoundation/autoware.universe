@@ -45,13 +45,13 @@ RoutingAdaptor::RoutingAdaptor(const rclcpp::NodeOptions & options)
 void RoutingAdaptor::on_timer()
 {
   const rclcpp::Time current_time = this->get_clock()->now();
-  const rclcpp::Time last_time = current_time - rclcpp::Duration::from_seconds(0.2);
   auto fixed_goal_msg = sub_fixed_goal_.takeData();
   auto rough_goal_msg = sub_rough_goal_.takeData();
   auto waypoint_msg = sub_waypoint_.takeData();
   if (
-    fixed_goal_msg && rough_goal_msg && rclcpp::Time(fixed_goal_msg->header.stamp) > last_time &&
-    rclcpp::Time(rough_goal_msg->header.stamp) > last_time) {
+    fixed_goal_msg && rough_goal_msg &&
+    rclcpp::Time(fixed_goal_msg->header.stamp) > previous_timer_time_ &&
+    rclcpp::Time(rough_goal_msg->header.stamp) > previous_timer_time_) {
     if (rclcpp::Time(fixed_goal_msg->header.stamp) > rclcpp::Time(rough_goal_msg->header.stamp)) {
       request_timing_control_ = 1;
       set_route_from_goal(fixed_goal_msg, false);
@@ -59,21 +59,23 @@ void RoutingAdaptor::on_timer()
       request_timing_control_ = 1;
       set_route_from_goal(rough_goal_msg, true);
     }
-  } else if (fixed_goal_msg && rclcpp::Time(fixed_goal_msg->header.stamp) > last_time) {
+  } else if (fixed_goal_msg && rclcpp::Time(fixed_goal_msg->header.stamp) > previous_timer_time_) {
     request_timing_control_ = 1;
     set_route_from_goal(fixed_goal_msg, false);
-  } else if (rough_goal_msg && rclcpp::Time(rough_goal_msg->header.stamp) > last_time) {
+  } else if (rough_goal_msg && rclcpp::Time(rough_goal_msg->header.stamp) > previous_timer_time_) {
     request_timing_control_ = 1;
     set_route_from_goal(rough_goal_msg, true);
   }
-  if (waypoint_msg && rclcpp::Time(waypoint_msg->header.stamp) > last_time) {
+  if (waypoint_msg && rclcpp::Time(waypoint_msg->header.stamp) > previous_timer_time_) {
     if (route_->header.frame_id != waypoint_msg->header.frame_id) {
       RCLCPP_ERROR_STREAM(get_logger(), "The waypoint frame does not match the goal.");
+      previous_timer_time_ = current_time;
       return;
     }
     request_timing_control_ = 1;
     route_->waypoints.push_back(waypoint_msg->pose);
   }
+  previous_timer_time_ = current_time;
 
   // Wait a moment to combine consecutive goals and checkpoints into a single request.
   // This value is rate dependent and set the wait time for merging.

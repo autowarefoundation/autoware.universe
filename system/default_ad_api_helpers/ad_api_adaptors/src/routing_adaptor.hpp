@@ -51,6 +51,7 @@ private:
   tier4_autoware_utils::InterProcessPollingSubscriber<PoseStamped> sub_waypoint_{
     this, "~/input/waypoint"};
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Time previous_timer_time_ = rclcpp::Time(0);
 
   bool calling_service_ = false;
   int request_timing_control_ = 0;
