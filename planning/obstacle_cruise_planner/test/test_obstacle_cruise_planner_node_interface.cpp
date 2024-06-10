@@ -51,7 +51,6 @@ std::shared_ptr<ObstacleCruisePlannerNode> generateNode()
     {"--ros-args", "--params-file", planning_test_utils_dir + "/config/test_common.param.yaml",
      "--params-file", planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
      "--params-file", planning_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-     "--params-file", obstacle_cruise_planner_dir + "/config/default_common.param.yaml",
      "--params-file", obstacle_cruise_planner_dir + "/config/obstacle_cruise_planner.param.yaml"});
 
   return std::make_shared<motion_planning::ObstacleCruisePlannerNode>(node_options);
