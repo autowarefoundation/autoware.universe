@@ -154,6 +154,7 @@ void PlanningNode::on_timer()
     pub_velocity_factors_->publish(velocity);
     pub_steering_factors_->publish(steering);
   }
+}
 
 }  // namespace default_ad_api
 
