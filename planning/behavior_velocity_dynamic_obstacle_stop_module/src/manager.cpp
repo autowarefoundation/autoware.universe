@@ -31,18 +31,27 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   auto & pp = planner_param_;
 
   pp.extra_object_width = getOrDeclareParameter<double>(node, ns + ".extra_object_width");
+  pp.extra_object_footprint_width =
+    getOrDeclareParameter<double>(node, ns + ".extra_object_footprint_width");
   pp.minimum_object_velocity = getOrDeclareParameter<double>(node, ns + ".minimum_object_velocity");
   pp.stop_distance_buffer = getOrDeclareParameter<double>(node, ns + ".stop_distance_buffer");
   pp.time_horizon = getOrDeclareParameter<double>(node, ns + ".time_horizon");
+  pp.yaw_threshold = getOrDeclareParameter<double>(node, ns + ".yaw_threshold");
+  pp.yaw_threshold_behind_object =
+    getOrDeclareParameter<double>(node, ns + ".yaw_threshold_behind_object");
   pp.hysteresis = getOrDeclareParameter<double>(node, ns + ".hysteresis");
   pp.add_duration_buffer = getOrDeclareParameter<double>(node, ns + ".add_stop_duration_buffer");
   pp.remove_duration_buffer =
     getOrDeclareParameter<double>(node, ns + ".remove_stop_duration_buffer");
   pp.minimum_object_distance_from_ego_path =
     getOrDeclareParameter<double>(node, ns + ".minimum_object_distance_from_ego_path");
+  pp.behind_object_distance_threshold =
+    getOrDeclareParameter<double>(node, ns + ".behind_object_distance_threshold");
   pp.ignore_unavoidable_collisions =
     getOrDeclareParameter<bool>(node, ns + ".ignore_unavoidable_collisions");
-
+  pp.ignore_objects_behind_ego =
+    getOrDeclareParameter<bool>(node, ns + ".ignore_objects_behind_ego");
+  pp.use_predicted_path = getOrDeclareParameter<bool>(node, ns + ".use_predicted_path");
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
   pp.ego_lateral_offset =
     std::max(std::abs(vehicle_info.min_lateral_offset_m), vehicle_info.max_lateral_offset_m);

@@ -19,6 +19,8 @@
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
+
 #include <vector>
 
 namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop
@@ -40,6 +42,13 @@ tier4_autoware_utils::MultiPolygon2d make_forward_footprints(
 tier4_autoware_utils::Polygon2d make_forward_footprint(
   const autoware_perception_msgs::msg::PredictedObject & obstacle, const PlannerParam & params,
   const double hysteresis);
+tier4_autoware_utils::MultiPolygon2d create_object_footprints(
+  const std::vector<autoware_perception_msgs::msg::PredictedObject> & objects,
+  const PlannerParam & params);
+tier4_autoware_utils::Polygon2d translate_polygon(
+  const tier4_autoware_utils::Polygon2d & polygon, const double x, const double y);
+tier4_autoware_utils::Polygon2d create_footprint(
+  const geometry_msgs::msg::Pose & pose, const tier4_autoware_utils::Polygon2d & base_footprint);
 /// @brief project a footprint to the given pose
 /// @param [in] base_footprint footprint to project
 /// @param [in] pose projection pose

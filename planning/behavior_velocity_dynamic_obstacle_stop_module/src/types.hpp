@@ -38,16 +38,22 @@ using Rtree = boost::geometry::index::rtree<BoxIndexPair, boost::geometry::index
 struct PlannerParam
 {
   double extra_object_width;
+  double extra_object_footprint_width;
   double minimum_object_velocity;
   double stop_distance_buffer;
   double time_horizon;
+  double yaw_threshold;
+  double yaw_threshold_behind_object;
   double hysteresis;
   double add_duration_buffer;
   double remove_duration_buffer;
   double ego_longitudinal_offset;
   double ego_lateral_offset;
   double minimum_object_distance_from_ego_path;
+  double behind_object_distance_threshold;
   bool ignore_unavoidable_collisions;
+  bool ignore_objects_behind_ego;
+  bool use_predicted_path;
 };
 
 struct EgoData
