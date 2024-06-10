@@ -93,50 +93,6 @@ uint8_t VehicleNode::mapping(
   }
 }
 
-void VehicleNode::kinematic_state(
-  const localization_interface::KinematicState::Message::ConstSharedPtr msg_ptr)
-{
-  kinematic_state_msgs_ = msg_ptr;
-}
-
-void VehicleNode::acceleration_status(
-  const localization_interface::Acceleration::Message::ConstSharedPtr msg_ptr)
-{
-  acceleration_msgs_ = msg_ptr;
-}
-
-void VehicleNode::steering_status(
-  const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr)
-{
-  steering_status_msgs_ = msg_ptr;
-}
-
-void VehicleNode::gear_status(const GearReport::ConstSharedPtr msg_ptr)
-{
-  gear_status_msgs_ = msg_ptr;
-}
-
-void VehicleNode::turn_indicator_status(const TurnIndicatorsReport::ConstSharedPtr msg_ptr)
-{
-  turn_indicator_status_msgs_ = msg_ptr;
-}
-
-void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr msg_ptr)
-{
-  hazard_light_status_msgs_ = msg_ptr;
-}
-
-void VehicleNode::energy_status(
-  const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr)
-{
-  energy_status_msgs_ = msg_ptr;
-}
-
-void VehicleNode::map_projector_info(const MapProjectorInfo::ConstSharedPtr msg_ptr)
-{
-  map_projector_info_ = msg_ptr;
-}
-
 void VehicleNode::publish_kinematics()
 {
   kinematic_state_msgs_ = kinematic_state_sub_->takeData();
