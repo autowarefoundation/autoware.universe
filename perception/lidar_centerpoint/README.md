@@ -29,6 +29,7 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 ## Parameters
 
 ### Core Parameters
+
 {{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_ml_package.schema.json") }}
 {{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_sigma_ml_package.schema.json") }}
 {{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_tiny_ml_package.schema.json") }}
