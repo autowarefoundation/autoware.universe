@@ -67,9 +67,7 @@ private:
   State::Message state_;
 
   void change_stop_mode();
-  void on_operation_mode(const OperationModeState::Message::ConstSharedPtr msg);
   void on_state(const State::Message::ConstSharedPtr msg);
-  void on_route(const Route::Message::ConstSharedPtr msg);
   void on_clear_route(
     const autoware_ad_api::routing::ClearRoute::Service::Request::SharedPtr req,
     const autoware_ad_api::routing::ClearRoute::Service::Response::SharedPtr res);

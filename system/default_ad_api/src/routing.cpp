@@ -84,19 +84,17 @@ void RoutingNode::change_stop_mode()
   }
 }
 
-void RoutingNode::on_operation_mode(const OperationModeState::Message::ConstSharedPtr msg)
-{
-  is_auto_mode_ = msg->mode == OperationModeState::Message::AUTONOMOUS;
-}
-
 void RoutingNode::on_state(const State::Message::ConstSharedPtr msg)
 {
   auto operation_mode_msg = operation_mode_sub_->takeData();
-  if (operation_mode_msg)
+  if (operation_mode_msg) {
     is_auto_mode_ = operation_mode_msg->mode == OperationModeState::Message::AUTONOMOUS;
+  }
 
   auto route_msg = route_sub_->takeData();
-  if (route_msg) pub_route_->publish(conversion::create_empty_route(route_msg->header.stamp));
+  if (route_msg) {
+    pub_route_->publish(conversion::convert_route(*route_msg));
+  }
 
   // TODO(Takagi, Isamu): Add adapi initializing state.
   // Represent initializing state by not publishing the topic for now.
@@ -116,11 +114,6 @@ void RoutingNode::on_state(const State::Message::ConstSharedPtr msg)
   if (msg->state == State::Message::UNSET) {
     pub_route_->publish(conversion::create_empty_route(msg->stamp));
   }
-}
-
-void RoutingNode::on_route(const Route::Message::ConstSharedPtr msg)
-{
-  pub_route_->publish(conversion::convert_route(*msg));
 }
 
 void RoutingNode::on_clear_route(
