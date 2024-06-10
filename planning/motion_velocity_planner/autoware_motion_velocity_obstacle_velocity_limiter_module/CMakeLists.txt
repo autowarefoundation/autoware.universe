@@ -22,6 +22,8 @@ get_target_property(lanelet2_core_INCLUDE_DIR
   lanelet2_core::lanelet2_core INTERFACE_INCLUDE_DIRECTORIES
 )
 
+pluginlib_export_plugin_description_file(autoware_motion_velocity_planner_node plugins.xml)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()

@@ -26,6 +26,7 @@
   <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>pcl_ros</depend>
+  <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2_eigen</depend>
