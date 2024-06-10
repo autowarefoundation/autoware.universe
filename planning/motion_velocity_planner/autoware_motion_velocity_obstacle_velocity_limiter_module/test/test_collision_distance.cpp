@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/distance.hpp"
-#include "obstacle_velocity_limiter/obstacles.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "../src/distance.hpp"
+#include "../src/obstacles.hpp"
+#include "../src/types.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
@@ -36,19 +36,20 @@ const auto point_in_polygon = [](const auto x, const auto y, const auto & polygo
 
 TEST(TestCollisionDistance, distanceToClosestCollisionParticleModel)
 {
-  using obstacle_velocity_limiter::CollisionChecker;
-  using obstacle_velocity_limiter::distanceToClosestCollision;
-  using obstacle_velocity_limiter::linestring_t;
-  using obstacle_velocity_limiter::polygon_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::CollisionChecker;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::distanceToClosestCollision;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::linestring_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::polygon_t;
 
-  obstacle_velocity_limiter::ProjectionParameters params;
-  params.model = obstacle_velocity_limiter::ProjectionParameters::PARTICLE;
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::ProjectionParameters params;
+  params.model =
+    autoware::motion_velocity_planner::obstacle_velocity_limiter::ProjectionParameters::PARTICLE;
   params.heading = 0.0;
   linestring_t vector = {{0.0, 0.0}, {5.0, 0.0}};
   polygon_t footprint;
   footprint.outer() = {{0.0, 1.0}, {5.0, 1.0}, {5.0, -1.0}, {0.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
-  obstacle_velocity_limiter::Obstacles obstacles;
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::Obstacles obstacles;
 
   std::optional<double> result =
     distanceToClosestCollision(vector, footprint, CollisionChecker(obstacles, 0lu, 0lu), params);
@@ -154,19 +155,20 @@ TEST(TestCollisionDistance, distanceToClosestCollisionParticleModel)
 
 TEST(TestCollisionDistance, distanceToClosestCollisionApproximation)
 {
-  using obstacle_velocity_limiter::CollisionChecker;
-  using obstacle_velocity_limiter::distanceToClosestCollision;
-  using obstacle_velocity_limiter::linestring_t;
-  using obstacle_velocity_limiter::polygon_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::CollisionChecker;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::distanceToClosestCollision;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::linestring_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::polygon_t;
 
-  obstacle_velocity_limiter::ProjectionParameters params;
-  params.distance_method = obstacle_velocity_limiter::ProjectionParameters::APPROXIMATION;
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::ProjectionParameters params;
+  params.distance_method = autoware::motion_velocity_planner::obstacle_velocity_limiter::
+    ProjectionParameters::APPROXIMATION;
   params.heading = 0.0;
   linestring_t vector = {{0.0, 0.0}, {5.0, 0.0}};
   polygon_t footprint;
   footprint.outer() = {{0.0, 1.0}, {5.0, 1.0}, {5.0, -1.0}, {0.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
-  obstacle_velocity_limiter::Obstacles obstacles;
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::Obstacles obstacles;
 
   auto EPS = 1e-2;
 
@@ -256,19 +258,20 @@ TEST(TestCollisionDistance, distanceToClosestCollisionApproximation)
 
 TEST(TestCollisionDistance, distanceToClosestCollisionBicycleModel)
 {
-  using obstacle_velocity_limiter::CollisionChecker;
-  using obstacle_velocity_limiter::distanceToClosestCollision;
-  using obstacle_velocity_limiter::linestring_t;
-  using obstacle_velocity_limiter::polygon_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::CollisionChecker;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::distanceToClosestCollision;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::linestring_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::polygon_t;
 
-  obstacle_velocity_limiter::ProjectionParameters params;
-  params.model = obstacle_velocity_limiter::ProjectionParameters::BICYCLE;
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::ProjectionParameters params;
+  params.model =
+    autoware::motion_velocity_planner::obstacle_velocity_limiter::ProjectionParameters::BICYCLE;
   params.heading = 0.0;
   linestring_t vector = {{0.0, 0.0}, {5.0, 0.0}};
   polygon_t footprint;
   footprint.outer() = {{0.0, 1.0}, {5.0, 1.0}, {5.0, -1.0}, {0.0, -1.0}};
   boost::geometry::correct(footprint);  // avoid bugs with malformed polygon
-  obstacle_velocity_limiter::Obstacles obstacles;
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::Obstacles obstacles;
 
   auto EPS = 1e-2;
 
@@ -362,8 +365,8 @@ TEST(TestCollisionDistance, distanceToClosestCollisionBicycleModel)
 
 TEST(TestCollisionDistance, arcDistance)
 {
-  using obstacle_velocity_limiter::arcDistance;
-  using obstacle_velocity_limiter::point_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::arcDistance;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::point_t;
 
   auto EPS = 1e-2;
 
@@ -384,9 +387,9 @@ TEST(TestCollisionDistance, arcDistance)
 
 TEST(TestCollisionDistance, createObjPolygons)
 {
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::createObjectPolygons;
   using autoware_perception_msgs::msg::PredictedObject;
   using autoware_perception_msgs::msg::PredictedObjects;
-  using obstacle_velocity_limiter::createObjectPolygons;
 
   PredictedObjects objects;
 

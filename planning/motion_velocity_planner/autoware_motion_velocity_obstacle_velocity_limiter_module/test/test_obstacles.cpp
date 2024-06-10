@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/obstacles.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "../src/obstacles.hpp"
+#include "../src/types.hpp"
 
 #include <boost/geometry/io/wkt/write.hpp>
 
@@ -22,11 +22,11 @@
 TEST(TestObstacles, ObstacleTreePoints)
 {
   /*
-  using obstacle_velocity_limiter::point_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::point_t;
   const std::vector<point_t> points = {point_t(0, 0), point_t(2, 2), point_t(10, -5)};
-  obstacle_velocity_limiter::ObstacleTree tree(points);
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::ObstacleTree tree(points);
 
-  obstacle_velocity_limiter::polygon_t query;
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::polygon_t query;
   query.outer() = {{-1, -1}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
   auto result = tree.intersections(query);
   ASSERT_EQ(result.size(), 1lu);
@@ -46,17 +46,17 @@ TEST(TestObstacles, ObstacleTreePoints)
 TEST(TestObstacles, ObstacleTreeLines)
 {
   /*
-  using obstacle_velocity_limiter::point_t;
-  using obstacle_velocity_limiter::linestring_t;
-  const obstacle_velocity_limiter::multi_linestring_t lines = {
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::point_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::linestring_t;
+  const autoware::motion_velocity_planner::obstacle_velocity_limiter::multi_linestring_t lines = {
       {point_t{-0.5, -0.5}, point_t{0.5,0.5}},
       {point_t{0, 0}, point_t{1,1}},
       {point_t(2, 2), point_t(-2, 2)},
       {point_t{-3,-3}, point_t{-1,-1}, point_t{5, -5}}
   };
-  obstacle_velocity_limiter::ObstacleTree tree(lines);
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::ObstacleTree tree(lines);
 
-  obstacle_velocity_limiter::polygon_t query;
+  autoware::motion_velocity_planner::obstacle_velocity_limiter::polygon_t query;
   query.outer() = {{-1, -1}, {-1, 1}, {1, 1}, {1, -1}, {-1, -1}};
   auto result = tree.intersections(query);
   EXPECT_EQ(result.size(), 4lu);

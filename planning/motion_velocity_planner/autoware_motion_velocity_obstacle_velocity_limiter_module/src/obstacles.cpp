@@ -26,7 +26,7 @@
 
 #include <algorithm>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 polygon_t createObjectPolygon(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & dimensions,
@@ -91,4 +91,4 @@ void addSensorObstacles(
     obstacles.points = extractObstacles(pcd);
   }
 }
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

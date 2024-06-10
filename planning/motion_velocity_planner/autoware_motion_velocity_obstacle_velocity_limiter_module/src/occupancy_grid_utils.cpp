@@ -22,7 +22,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 void maskPolygons(grid_map::GridMap & grid_map, const ObstacleMasks & obstacle_masks)
 {
@@ -89,4 +89,4 @@ multi_linestring_t extractObstacles(
   }
   return obstacles;
 }
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

@@ -23,7 +23,7 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::Trajectory;
@@ -46,5 +46,5 @@ struct ObstacleMasks
   multi_polygon_t negative_masks;  // discard obstacles inside of these polygons
 };
 
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 #endif  // TYPES_HPP_

@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/obstacles.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "../src/obstacles.hpp"
+#include "../src/types.hpp"
 
 #include <chrono>
 #include <random>
 
-using obstacle_velocity_limiter::CollisionChecker;
-using obstacle_velocity_limiter::linestring_t;
-using obstacle_velocity_limiter::Obstacles;
-using obstacle_velocity_limiter::point_t;
-using obstacle_velocity_limiter::polygon_t;
+using autoware::motion_velocity_planner::obstacle_velocity_limiter::CollisionChecker;
+using autoware::motion_velocity_planner::obstacle_velocity_limiter::linestring_t;
+using autoware::motion_velocity_planner::obstacle_velocity_limiter::Obstacles;
+using autoware::motion_velocity_planner::obstacle_velocity_limiter::point_t;
+using autoware::motion_velocity_planner::obstacle_velocity_limiter::polygon_t;
 
 point_t random_point()
 {

@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 namespace bg = boost::geometry;
 
@@ -68,4 +68,4 @@ double arcDistance(const point_t & origin, const double heading, const point_t &
     std::acos((2 * squared_radius - (origin - target).squaredNorm()) / (2 * squared_radius));
   return std::sqrt(squared_radius) * angle;
 }
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

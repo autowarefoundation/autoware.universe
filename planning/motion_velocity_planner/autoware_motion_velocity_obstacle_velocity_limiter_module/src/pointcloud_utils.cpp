@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr transformPointCloud(
@@ -97,4 +97,4 @@ multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointclo
   return obstacles;
 }
 
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

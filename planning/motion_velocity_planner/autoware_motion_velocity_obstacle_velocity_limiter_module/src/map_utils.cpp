@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 multi_linestring_t extractStaticObstacles(
   const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags)
@@ -49,4 +49,4 @@ bool isObstacle(const lanelet::ConstLineString3d & ls, const std::vector<std::st
   const auto type = ls.attributeOr(lanelet::AttributeName::Type, no_type);
   return (type != no_type && std::find(tags.begin(), tags.end(), type) != tags.end());
 }
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 struct ObstacleParameters
@@ -239,5 +239,5 @@ struct PreprocessingParameters
   }
 };
 
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 #endif  // PARAMETERS_HPP_

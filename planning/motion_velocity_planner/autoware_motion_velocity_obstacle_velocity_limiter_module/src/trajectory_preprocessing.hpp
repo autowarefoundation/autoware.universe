@@ -17,7 +17,7 @@
 
 #include "types.hpp"
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 /// @brief calculate trajectory index that is ahead of the given index by the given distance
 /// @param[in] trajectory trajectory
@@ -61,6 +61,6 @@ void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base);
 Trajectory copyDownsampledVelocity(
   const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx,
   const int factor);
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 
 #endif  // TRAJECTORY_PREPROCESSING_HPP_

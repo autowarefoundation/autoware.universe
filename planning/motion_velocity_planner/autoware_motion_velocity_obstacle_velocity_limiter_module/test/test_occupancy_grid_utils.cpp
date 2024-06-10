@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/occupancy_grid_utils.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "../src/occupancy_grid_utils.hpp"
+#include "../src/types.hpp"
 
 #include <boost/geometry/algorithms/correct.hpp>
 
@@ -21,8 +21,8 @@
 
 TEST(TestOccupancyGridUtils, extractObstacleLines)
 {
-  using obstacle_velocity_limiter::multi_polygon_t;
-  using obstacle_velocity_limiter::polygon_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::multi_polygon_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::polygon_t;
   constexpr int8_t occupied_thr = 10;
   nav_msgs::msg::OccupancyGrid occupancy_grid;
   occupancy_grid.info.height = 5;
@@ -38,13 +38,15 @@ TEST(TestOccupancyGridUtils, extractObstacleLines)
                                       const nav_msgs::msg::OccupancyGrid & occupancy_grid,
                                       const multi_polygon_t & negative_masks,
                                       const polygon_t & positive_mask, const double thr) {
-    obstacle_velocity_limiter::ObstacleMasks masks;
+    autoware::motion_velocity_planner::obstacle_velocity_limiter::ObstacleMasks masks;
     masks.negative_masks = negative_masks;
     masks.positive_mask = positive_mask;
-    auto grid_map = obstacle_velocity_limiter::convertToGridMap(occupancy_grid);
-    obstacle_velocity_limiter::threshold(grid_map, thr);
-    obstacle_velocity_limiter::maskPolygons(grid_map, masks);
-    return obstacle_velocity_limiter::extractObstacles(grid_map, occupancy_grid);
+    auto grid_map = autoware::motion_velocity_planner::obstacle_velocity_limiter::convertToGridMap(
+      occupancy_grid);
+    autoware::motion_velocity_planner::obstacle_velocity_limiter::threshold(grid_map, thr);
+    autoware::motion_velocity_planner::obstacle_velocity_limiter::maskPolygons(grid_map, masks);
+    return autoware::motion_velocity_planner::obstacle_velocity_limiter::extractObstacles(
+      grid_map, occupancy_grid);
   };
   auto obstacles = extractObstacles(occupancy_grid, {}, full_mask, occupied_thr);
   EXPECT_TRUE(obstacles.empty());

@@ -22,7 +22,7 @@
 
 #include <vector>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 /// @brief generate a segment to where ego would reach with constant velocity and heading
 /// @param [in] origin origin of the segment
@@ -74,6 +74,6 @@ polygon_t generateFootprint(const multi_linestring_t & lines, const double later
 polygon_t generateFootprint(
   const linestring_t & left, const linestring_t & middle, const linestring_t & right,
   const double lateral_offset);
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 
 #endif  // FORWARD_PROJECTION_HPP_

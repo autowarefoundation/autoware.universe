@@ -35,7 +35,7 @@
 #include <utility>
 #include <vector>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 struct Obstacles
@@ -184,5 +184,5 @@ void addSensorObstacles(
 /// @param[in] masks masks used to discard some obstacles
 /// @return obstacles that are inside the positive mask and outside of the negative masks
 Obstacles filterObstacles(const Obstacles & obstacles, const ObstacleMasks & masks);
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 #endif  // OBSTACLES_HPP_

@@ -24,7 +24,7 @@
 
 #include <algorithm>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 Float calculateSafeVelocity(
@@ -144,4 +144,4 @@ void limitVelocity(
     }
   }
 }
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

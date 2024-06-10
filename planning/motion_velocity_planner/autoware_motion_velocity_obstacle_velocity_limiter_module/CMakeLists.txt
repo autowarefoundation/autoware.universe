@@ -7,12 +7,12 @@ autoware_package()
 find_package(PCL REQUIRED COMPONENTS common)
 find_package(pcl_conversions REQUIRED)
 
-ament_auto_add_library(obstacle_velocity_limiter_node SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   DIRECTORY src
 )
 
-ament_target_dependencies(obstacle_velocity_limiter_node PCL)
-target_include_directories(obstacle_velocity_limiter_node
+ament_target_dependencies(${PROJECT_NAME} PCL)
+target_include_directories(${PROJECT_NAME}
   SYSTEM PUBLIC
     "${PCL_INCLUDE_DIRS}"
 )
@@ -20,11 +20,6 @@ target_include_directories(obstacle_velocity_limiter_node
 # Disable warnings due to external dependencies
 get_target_property(lanelet2_core_INCLUDE_DIR
   lanelet2_core::lanelet2_core INTERFACE_INCLUDE_DIRECTORIES
-)
-
-rclcpp_components_register_node(obstacle_velocity_limiter_node
-  PLUGIN "obstacle_velocity_limiter::ObstacleVelocityLimiterNode"
-  EXECUTABLE obstacle_velocity_limiter
 )
 
 if(BUILD_TESTING)
@@ -35,10 +30,9 @@ if(BUILD_TESTING)
     test/test_obstacles.cpp
     test/test_collision_distance.cpp
     test/test_occupancy_grid_utils.cpp
-    test/test_${PROJECT_NAME}_node_interface.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
-    obstacle_velocity_limiter_node
+    ${PROJECT_NAME}
   )
 endif()
 
@@ -46,7 +40,7 @@ add_executable(collision_benchmark
   benchmarks/collision_checker_benchmark.cpp
 )
 target_link_libraries(collision_benchmark
-  obstacle_velocity_limiter_node
+  ${PROJECT_NAME}
 )
 
 ament_auto_package(

@@ -22,7 +22,7 @@
 
 #include <algorithm>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 size_t calculateStartIndex(
@@ -98,4 +98,4 @@ Trajectory copyDownsampledVelocity(
   }
   return trajectory;
 }
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

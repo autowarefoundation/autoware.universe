@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 /// @brief make the visualization Marker of the given linestring
 /// @param[in] ls linestring to turn into a marker
@@ -47,5 +47,5 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const std::vector<polygon_t> & adjusted_footprints, const ObstacleMasks & obstacle_masks,
   const Float marker_z);
 
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 #endif  // DEBUG_HPP_

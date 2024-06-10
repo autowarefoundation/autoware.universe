@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 /// @brief return the pointcloud msg transformed and converted to PCL format
@@ -49,6 +49,6 @@ void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const Obst
 /// @return extracted obstacles
 multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
 
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 
 #endif  // POINTCLOUD_UTILS_HPP_

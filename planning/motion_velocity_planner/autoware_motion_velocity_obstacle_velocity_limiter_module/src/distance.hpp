@@ -24,7 +24,7 @@
 #include <optional>
 #include <vector>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 /// @brief calculate the closest distance to a collision
 /// @param [in] projection forward projection line
@@ -43,6 +43,6 @@ std::optional<double> distanceToClosestCollision(
 /// @return distance from origin to target along a circle
 double arcDistance(const point_t & origin, const double heading, const point_t & target);
 
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 
 #endif  // DISTANCE_HPP_

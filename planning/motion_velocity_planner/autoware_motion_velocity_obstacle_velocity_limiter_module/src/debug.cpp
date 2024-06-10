@@ -21,7 +21,7 @@
 
 #include <algorithm>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, const Float z)
 {
@@ -184,4 +184,4 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   return debug_markers;
 }
 
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/forward_projection.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "../src/forward_projection.hpp"
+#include "../src/types.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <geometry_msgs/msg/point.hpp>
@@ -30,9 +30,9 @@ constexpr auto EPS_APPROX = 1e-3;
 
 TEST(TestForwardProjection, forwardSimulatedSegment)
 {
-  using obstacle_velocity_limiter::forwardSimulatedSegment;
-  using obstacle_velocity_limiter::ProjectionParameters;
-  using obstacle_velocity_limiter::segment_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::forwardSimulatedSegment;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::ProjectionParameters;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::segment_t;
 
   geometry_msgs::msg::Point point;
   point.x = 0.0;
@@ -106,9 +106,9 @@ const auto point_in_polygon = [](const auto x, const auto y, const auto & polygo
 
 TEST(TestForwardProjection, generateFootprint)
 {
-  using obstacle_velocity_limiter::generateFootprint;
-  using obstacle_velocity_limiter::linestring_t;
-  using obstacle_velocity_limiter::segment_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::generateFootprint;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::linestring_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::segment_t;
 
   auto footprint = generateFootprint(linestring_t{{0.0, 0.0}, {1.0, 0.0}}, 1.0);
   EXPECT_TRUE(point_in_polygon(0.0, 1.0, footprint));
@@ -146,9 +146,9 @@ TEST(TestForwardProjection, generateFootprint)
 
 TEST(TestForwardProjection, generateFootprintMultiLinestrings)
 {
-  using obstacle_velocity_limiter::generateFootprint;
-  using obstacle_velocity_limiter::linestring_t;
-  using obstacle_velocity_limiter::multi_linestring_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::generateFootprint;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::linestring_t;
+  using autoware::motion_velocity_planner::obstacle_velocity_limiter::multi_linestring_t;
 
   auto footprint = generateFootprint(
     multi_linestring_t{

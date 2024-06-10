@@ -22,7 +22,7 @@
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 /// @brief mask gridmap cells that are inside the given polygons
@@ -43,6 +43,6 @@ grid_map::GridMap convertToGridMap(const OccupancyGrid & occupancy_grid);
 /// @return extracted obstacle linestrings
 multi_linestring_t extractObstacles(
   const grid_map::GridMap & grid_map, const OccupancyGrid & occupancy_grid);
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 
 #endif  // OCCUPANCY_GRID_UTILS_HPP_

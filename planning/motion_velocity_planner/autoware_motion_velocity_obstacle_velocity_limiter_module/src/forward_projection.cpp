@@ -24,7 +24,7 @@
 #include <boost/geometry/strategies/cartesian/buffer_point_circle.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 segment_t forwardSimulatedSegment(
@@ -130,4 +130,4 @@ polygon_t generateFootprint(
   footprint.outer().push_back(footprint.outer().front());  // close the polygon
   return footprint;
 }
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace obstacle_velocity_limiter
+namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 /// @brief Extract static obstacles from the lanelet map
@@ -37,6 +37,6 @@ multi_linestring_t extractStaticObstacles(
 /// @param[in] tags obstacle tags
 /// @return true if the linestring is an obstacle
 bool isObstacle(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & tags);
-}  // namespace obstacle_velocity_limiter
+}  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 
 #endif  // MAP_UTILS_HPP_
