@@ -26,12 +26,12 @@ ExternalCmdConverterNode::ExternalCmdConverterNode(const rclcpp::NodeOptions & n
 {
   using std::placeholders::_1;
 
-  pub_cmd_ = create_publisher<Control>("out/control_cmd", rclcpp::QoS{1});
-  pub_current_cmd_ =
+  cmd_pub_ = create_publisher<Control>("out/control_cmd", rclcpp::QoS{1});
+  current_cmd_pub_ =
     create_publisher<ExternalControlCommand>("out/latest_external_control_cmd", rclcpp::QoS{1});
-  sub_control_cmd_ = create_subscription<ExternalControlCommand>(
+  control_cmd_sub_ = create_subscription<ExternalControlCommand>(
     "in/external_control_cmd", 1, std::bind(&ExternalCmdConverterNode::on_external_cmd, this, _1));
-  sub_emergency_stop_heartbeat_ = create_subscription<tier4_external_api_msgs::msg::Heartbeat>(
+  emergency_stop_heartbeat_sub_ = create_subscription<tier4_external_api_msgs::msg::Heartbeat>(
     "in/emergency_stop", 1,
     std::bind(&ExternalCmdConverterNode::on_emergency_stop_heartbeat, this, _1));
 
@@ -91,7 +91,7 @@ void ExternalCmdConverterNode::on_external_cmd(const ExternalControlCommand::Con
   {
     auto current_cmd = *cmd_ptr;
     current_cmd.stamp = this->now();
-    pub_current_cmd_->publish(current_cmd);
+    current_cmd_pub_->publish(current_cmd);
   }
 
   // Save received time for rate check
@@ -102,7 +102,7 @@ void ExternalCmdConverterNode::on_external_cmd(const ExternalControlCommand::Con
   current_shift_cmd_ = shift_cmd_sub_.takeData();
 
   // Wait for input data
-  if (!current_velocity_ptr_ || !acc_map_initialized_) {
+  if (!current_velocity_ptr_ || !acc_map_initialized_ || !current_shift_cmd_) {
     return;
   }
 
@@ -140,7 +140,7 @@ void ExternalCmdConverterNode::on_external_cmd(const ExternalControlCommand::Con
   output.longitudinal.velocity = static_cast<float>(ref_velocity);
   output.longitudinal.acceleration = static_cast<float>(ref_acceleration);
 
-  pub_cmd_->publish(output);
+  cmd_pub_->publish(output);
 }
 
 double ExternalCmdConverterNode::calculate_acc(const ExternalControlCommand & cmd, const double vel)

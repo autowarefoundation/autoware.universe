@@ -49,16 +49,15 @@ public:
 
 private:
   // Publisher
-  rclcpp::Publisher<Control>::SharedPtr pub_cmd_;
+  rclcpp::Publisher<Control>::SharedPtr cmd_pub_;
   rclcpp::Publisher<tier4_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
-    pub_current_cmd_;
+    current_cmd_pub_;
 
   // Subscriber
   rclcpp::Subscription<tier4_external_api_msgs::msg::ControlCommandStamped>::SharedPtr
-    sub_control_cmd_;
-  rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;
+    control_cmd_sub_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::Heartbeat>::SharedPtr
-    sub_emergency_stop_heartbeat_;
+    emergency_stop_heartbeat_sub_;
 
   // Polling Subscriber
   tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> velocity_sub_{this, "in/odometry"};
