@@ -6,6 +6,7 @@
   <arg name="vertical_bins" default="40"/>
   <arg name="is_channel_order_top2down" default="true"/>
   <arg name="blockage_diagnostics_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/blockage_diagnostics_param_file.yaml"/>
+  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="blockage_diag_node" name="blockage_diag">
     <remap from="input" to="$(var input_topic_name)"/>
     <remap from="output" to="$(var output_topic_name)"/>
@@ -14,5 +15,6 @@
     <param name="vertical_bins" value="$(var vertical_bins)"/>
     <param name="is_channel_order_top2down" value="$(var is_channel_order_top2down)"/>
     <param from="$(var blockage_diagnostics_param_file)"/>
+    <param from="$(var filter_param_file)"/>
   </node>
 </launch>

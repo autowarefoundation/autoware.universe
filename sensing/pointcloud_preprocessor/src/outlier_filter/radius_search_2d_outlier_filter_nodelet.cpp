@@ -28,8 +28,8 @@ RadiusSearch2DOutlierFilterComponent::RadiusSearch2DOutlierFilterComponent(
 {
   // set initial parameters
   {
-    min_neighbors_ = static_cast<size_t>(declare_parameter("min_neighbors", 5));
-    search_radius_ = static_cast<double>(declare_parameter("search_radius", 0.2));
+    min_neighbors_ = declare_parameter<int>("min_neighbors");
+    search_radius_ = declare_parameter<double>("search_radius");
   }
 
   kd_tree_ = pcl::make_shared<pcl::search::KdTree<pcl::PointXY>>(false);

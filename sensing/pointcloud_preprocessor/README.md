@@ -45,14 +45,23 @@ Detail description of each filter's algorithm is in the following links.
 
 ### Node Parameters
 
-| Name               | Type   | Default Value | Description                           |
-| ------------------ | ------ | ------------- | ------------------------------------- |
-| `input_frame`      | string | " "           | input frame id                        |
-| `output_frame`     | string | " "           | output frame id                       |
-| `max_queue_size`   | int    | 5             | max queue size of input/output topics |
-| `use_indices`      | bool   | false         | flag to use pointcloud indices        |
-| `latched_indices`  | bool   | false         | flag to latch pointcloud indices      |
-| `approximate_sync` | bool   | false         | flag to use approximate sync option   |
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/filter.schema.json") }}
+
+### blockage_diag
+
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/blockage_diag.schema.json") }}
+
+### dual_return_outlier_filter
+
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/dual_return_outlier_filter.schema.json") }}
+
+### random_downsample_filter
+
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/random_downsample_filter.schema.json") }}
+
+### ring_passthrough_filter
+
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/ring_passthrough_filter.schema.json") }}
 
 ## Assumptions / Known limits
 

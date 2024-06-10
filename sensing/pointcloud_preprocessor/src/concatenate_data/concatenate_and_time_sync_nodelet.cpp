@@ -71,7 +71,7 @@ namespace pointcloud_preprocessor
 PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchronizerComponent(
   const rclcpp::NodeOptions & node_options)
 : Node("point_cloud_concatenator_component", node_options),
-  input_twist_topic_type_(declare_parameter<std::string>("input_twist_topic_type", "twist"))
+  input_twist_topic_type_(declare_parameter<std::string>("input_twist_topic_type"))
 {
   // initialize debug tool
   {
@@ -85,12 +85,12 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Set parameters
   {
-    output_frame_ = static_cast<std::string>(declare_parameter("output_frame", ""));
+    output_frame_ = declare_parameter<std::string>("output_frame");
     if (output_frame_.empty()) {
       RCLCPP_ERROR(get_logger(), "Need an 'output_frame' parameter to be set before continuing!");
       return;
     }
-    declare_parameter("input_topics", std::vector<std::string>());
+    declare_parameter<std::vector<std::string>>("input_topics");
     input_topics_ = get_parameter("input_topics").as_string_array();
     if (input_topics_.empty()) {
       RCLCPP_ERROR(get_logger(), "Need a 'input_topics' parameter to be set before continuing!");
@@ -102,21 +102,21 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
 
     // Optional parameters
-    maximum_queue_size_ = static_cast<int>(declare_parameter("max_queue_size", 5));
-    timeout_sec_ = static_cast<double>(declare_parameter("timeout_sec", 0.1));
+    maximum_queue_size_ = declare_parameter<int>("max_queue_size");
+    timeout_sec_ = declare_parameter<double>("timeout_sec");
 
-    input_offset_ = declare_parameter("input_offset", std::vector<double>{});
+    input_offset_ = declare_parameter<std::vector<double>>("input_offset");
     if (!input_offset_.empty() && input_topics_.size() != input_offset_.size()) {
       RCLCPP_ERROR(get_logger(), "The number of topics does not match the number of offsets.");
       return;
     }
 
     // Check if publish synchronized pointcloud
-    publish_synchronized_pointcloud_ = declare_parameter("publish_synchronized_pointcloud", true);
+    publish_synchronized_pointcloud_ = declare_parameter<bool>("publish_synchronized_pointcloud");
     keep_input_frame_in_synchronized_pointcloud_ =
-      declare_parameter("keep_input_frame_in_synchronized_pointcloud", true);
+      declare_parameter<bool>("keep_input_frame_in_synchronized_pointcloud");
     synchronized_pointcloud_postfix_ =
-      declare_parameter("synchronized_pointcloud_postfix", "pointcloud");
+      declare_parameter<bool>("synchronized_pointcloud_postfix");
   }
 
   // Initialize not_subscribed_topic_names_

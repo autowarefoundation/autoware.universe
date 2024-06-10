@@ -37,8 +37,8 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   }
 
   // Parameter
-  time_stamp_field_name_ = declare_parameter("time_stamp_field_name", "time_stamp");
-  use_imu_ = declare_parameter("use_imu", true);
+  time_stamp_field_name_ = declare_parameter<std::string>("time_stamp_field_name");
+  use_imu_ = declare_parameter<bool>("use_imu");
 
   // Publisher
   undistorted_points_pub_ =

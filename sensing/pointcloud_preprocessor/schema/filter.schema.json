@@ -1,0 +1,59 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "filter",
+    "type": "object",
+    "definitions": {
+      "filter": {
+        "type": "object",
+        "properties": {
+          "input_frame": {
+            "type": "string",
+            "description": "input frame",
+            "default": ""
+          },
+          "output_frame": {
+            "type": "string",
+            "description": "output frame",
+            "default": ""
+          },
+          "max_queue_size": {
+            "type": "number",
+            "description": "max queue size of input",
+            "default": 5
+          },
+          "use_indices": {
+            "type": "boolean",
+            "description": "flag to use pointcloud",
+            "default": false
+          },
+          "latched_indices": {
+            "type": "boolean",
+            "description": "flag to latch pointcloud",
+            "default": false
+          },
+          "approximate_sync": {
+            "type": "boolean",
+            "description": "flag to use approximate sync",
+            "default": false
+          }
+        },
+        "required": ["input_frame", "output_frame", "max_queue_size", 
+        "use_indices", "latched_indices", "approximate_sync"],
+        "additionalProperties": false
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "$ref": "#/definitions/filter"
+          }
+        },
+        "required": ["ros__parameters"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["/**"],
+    "additionalProperties": false
+  }

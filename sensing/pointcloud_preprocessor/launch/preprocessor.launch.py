@@ -20,6 +20,9 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+import os
+import yaml
+from ament_index_python.packages import get_package_share_directory
 
 
 def launch_setup(context, *args, **kwargs):
@@ -32,6 +35,11 @@ def launch_setup(context, *args, **kwargs):
     is_separate_concatenate_node_and_time_sync_node = (
         separate_concatenate_node_and_time_sync_node.lower() == "true"
     )
+
+    shared_filter_file = os.path.join(
+        get_package_share_directory("pointcloud_preprocessor"), "config/filter_param_file.yaml"
+    )
+
 
     if not is_separate_concatenate_node_and_time_sync_node:
         sync_and_concat_component = ComposableNode(
@@ -49,7 +57,8 @@ def launch_setup(context, *args, **kwargs):
                     "approximate_sync": True,
                     "publish_synchronized_pointcloud": False,
                     "input_twist_topic_type": "twist",
-                }
+                },
+                shared_filter_file
             ],
         )
         concat_components = [sync_and_concat_component]
@@ -67,7 +76,8 @@ def launch_setup(context, *args, **kwargs):
                     "input_topics": LaunchConfiguration("input_points_raw_list"),
                     "output_frame": LaunchConfiguration("tf_output_frame"),
                     "approximate_sync": True,
-                }
+                },
+                shared_filter_file
             ],
         )
 
@@ -81,7 +91,8 @@ def launch_setup(context, *args, **kwargs):
                     "input_topics": LaunchConfiguration("input_points_raw_list"),
                     "output_frame": LaunchConfiguration("tf_output_frame"),
                     "approximate_sync": True,
-                }
+                },
+                shared_filter_file
             ],
         )
         concat_components = [time_sync_component, concat_component]
@@ -117,7 +128,8 @@ def launch_setup(context, *args, **kwargs):
                 "min_z": -2.0,
                 "max_z": 3.0,
                 "negative": False,
-            }
+            },
+            shared_filter_file
         ],
     )
 
