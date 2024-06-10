@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__POINTCLOUD_UTILS_HPP_
-#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__POINTCLOUD_UTILS_HPP_
+#ifndef POINTCLOUD_UTILS_HPP_
+#define POINTCLOUD_UTILS_HPP_
 
-#include "obstacle_velocity_limiter/obstacles.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "obstacles.hpp"
 #include "tier4_autoware_utils/ros/transform_listener.hpp"
+#include "types.hpp"
 
 #include <geometry_msgs/msg/transform.hpp>
 
@@ -51,4 +51,4 @@ multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointclo
 
 }  // namespace obstacle_velocity_limiter
 
-#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__POINTCLOUD_UTILS_HPP_
+#endif  // POINTCLOUD_UTILS_HPP_

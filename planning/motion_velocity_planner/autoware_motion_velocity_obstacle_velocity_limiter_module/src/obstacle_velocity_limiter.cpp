@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/obstacle_velocity_limiter.hpp"
+#include "obstacle_velocity_limiter.hpp"
 
-#include "obstacle_velocity_limiter/distance.hpp"
-#include "obstacle_velocity_limiter/forward_projection.hpp"
+#include "distance.hpp"
+#include "forward_projection.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
+
+#include <algorithm>
 
 namespace obstacle_velocity_limiter
 {

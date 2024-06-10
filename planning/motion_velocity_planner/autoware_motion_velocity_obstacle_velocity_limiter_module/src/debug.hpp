@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DEBUG_HPP_
-#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DEBUG_HPP_
+#ifndef DEBUG_HPP_
+#define DEBUG_HPP_
 
-#include "obstacle_velocity_limiter/obstacles.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "obstacles.hpp"
+#include "types.hpp"
 
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -48,4 +48,4 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const Float marker_z);
 
 }  // namespace obstacle_velocity_limiter
-#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DEBUG_HPP_
+#endif  // DEBUG_HPP_

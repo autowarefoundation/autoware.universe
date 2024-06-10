@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/obstacles.hpp"
-
-#include <obstacle_velocity_limiter/distance.hpp>
+#include "distance.hpp"
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/detail/distance/interface.hpp>

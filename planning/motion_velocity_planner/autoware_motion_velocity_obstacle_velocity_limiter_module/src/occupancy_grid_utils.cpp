@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/occupancy_grid_utils.hpp"
-
-#include "obstacle_velocity_limiter/types.hpp"
+#include "occupancy_grid_utils.hpp"
 
 #include <grid_map_core/Polygon.hpp>
 #include <grid_map_core/iterators/GridMapIterator.hpp>

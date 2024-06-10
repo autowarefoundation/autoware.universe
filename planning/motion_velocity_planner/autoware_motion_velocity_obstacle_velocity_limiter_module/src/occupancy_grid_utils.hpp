@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__OCCUPANCY_GRID_UTILS_HPP_
-#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__OCCUPANCY_GRID_UTILS_HPP_
+#ifndef OCCUPANCY_GRID_UTILS_HPP_
+#define OCCUPANCY_GRID_UTILS_HPP_
 
-#include "obstacle_velocity_limiter/obstacles.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "obstacles.hpp"
+#include "types.hpp"
 
 #include <grid_map_core/GridMap.hpp>
 
@@ -45,4 +45,4 @@ multi_linestring_t extractObstacles(
   const grid_map::GridMap & grid_map, const OccupancyGrid & occupancy_grid);
 }  // namespace obstacle_velocity_limiter
 
-#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__OCCUPANCY_GRID_UTILS_HPP_
+#endif  // OCCUPANCY_GRID_UTILS_HPP_

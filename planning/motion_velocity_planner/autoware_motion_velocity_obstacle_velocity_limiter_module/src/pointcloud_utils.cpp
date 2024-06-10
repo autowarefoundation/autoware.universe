@@ -12,21 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/pointcloud_utils.hpp"
-
-#include "obstacle_velocity_limiter/types.hpp"
+#include "pointcloud_utils.hpp"
 
 #include <pcl_ros/transforms.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <pcl/Vertices.h>
 #include <pcl/filters/crop_hull.h>
 #include <pcl_conversions/pcl_conversions.h>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
-#include <tf2_eigen/tf2_eigen.hpp>
-#endif
 
+#include <utility>
 #include <vector>
 
 namespace obstacle_velocity_limiter

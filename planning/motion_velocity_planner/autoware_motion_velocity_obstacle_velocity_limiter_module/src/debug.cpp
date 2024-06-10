@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/debug.hpp"
+#include "debug.hpp"
 
-#include "obstacle_velocity_limiter/parameters.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "parameters.hpp"
+#include "types.hpp"
 
 #include <visualization_msgs/msg/marker_array.hpp>
+
+#include <algorithm>
 
 namespace obstacle_velocity_limiter
 {

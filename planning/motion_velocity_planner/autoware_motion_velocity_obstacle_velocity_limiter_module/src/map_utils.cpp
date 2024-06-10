@@ -13,10 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/map_utils.hpp"
+#include "map_utils.hpp"
 
 #include "lanelet2_core/primitives/LineString.h"
-#include "obstacle_velocity_limiter/types.hpp"
 
 #include <boost/geometry.hpp>
 

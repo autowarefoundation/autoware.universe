@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__TYPES_HPP_
-#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__TYPES_HPP_
+#ifndef TYPES_HPP_
+#define TYPES_HPP_
 
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 
@@ -47,4 +47,4 @@ struct ObstacleMasks
 };
 
 }  // namespace obstacle_velocity_limiter
-#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__TYPES_HPP_
+#endif  // TYPES_HPP_

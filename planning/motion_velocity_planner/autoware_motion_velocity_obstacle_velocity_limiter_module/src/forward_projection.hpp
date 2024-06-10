@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__FORWARD_PROJECTION_HPP_
-#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__FORWARD_PROJECTION_HPP_
+#ifndef FORWARD_PROJECTION_HPP_
+#define FORWARD_PROJECTION_HPP_
 
-#include "obstacle_velocity_limiter/parameters.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "parameters.hpp"
+#include "types.hpp"
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
@@ -76,4 +76,4 @@ polygon_t generateFootprint(
   const double lateral_offset);
 }  // namespace obstacle_velocity_limiter
 
-#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__FORWARD_PROJECTION_HPP_
+#endif  // FORWARD_PROJECTION_HPP_

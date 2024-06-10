@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/types.hpp"
-
-#include <obstacle_velocity_limiter/forward_projection.hpp>
+#include "forward_projection.hpp"
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/buffer.hpp>
@@ -25,13 +23,6 @@
 #include <boost/geometry/strategies/cartesian/buffer_join_miter.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_point_circle.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
-#include <tf2/utils.h>
 
 namespace obstacle_velocity_limiter
 {

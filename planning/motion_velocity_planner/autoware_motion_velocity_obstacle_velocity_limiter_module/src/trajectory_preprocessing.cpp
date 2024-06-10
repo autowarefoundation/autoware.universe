@@ -12,16 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/trajectory_preprocessing.hpp"
+#include "trajectory_preprocessing.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-#include <tf2/utils.h>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
+
+#include <tf2/utils.h>
+
+#include <algorithm>
 
 namespace obstacle_velocity_limiter
 {

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DISTANCE_HPP_
-#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DISTANCE_HPP_
+#ifndef DISTANCE_HPP_
+#define DISTANCE_HPP_
 
-#include "obstacle_velocity_limiter/obstacles.hpp"
-#include "obstacle_velocity_limiter/parameters.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "obstacles.hpp"
+#include "parameters.hpp"
+#include "types.hpp"
 
 #include <geometry_msgs/msg/vector3.hpp>
 
@@ -45,4 +45,4 @@ double arcDistance(const point_t & origin, const double heading, const point_t &
 
 }  // namespace obstacle_velocity_limiter
 
-#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DISTANCE_HPP_
+#endif  // DISTANCE_HPP_

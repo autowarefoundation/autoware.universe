@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/obstacles.hpp"
+#include "obstacles.hpp"
 
-#include "obstacle_velocity_limiter/occupancy_grid_utils.hpp"
-#include "obstacle_velocity_limiter/pointcloud_utils.hpp"
+#include "occupancy_grid_utils.hpp"
+#include "pointcloud_utils.hpp"
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/geometry.hpp>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
 #include <tf2/utils.h>
+
+#include <algorithm>
 
 namespace obstacle_velocity_limiter
 {

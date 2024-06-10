@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_velocity_limiter/obstacle_velocity_limiter_node.hpp"
+#include "obstacle_velocity_limiter_node.hpp"
 
-#include "obstacle_velocity_limiter/debug.hpp"
-#include "obstacle_velocity_limiter/forward_projection.hpp"
-#include "obstacle_velocity_limiter/map_utils.hpp"
-#include "obstacle_velocity_limiter/obstacle_velocity_limiter.hpp"
-#include "obstacle_velocity_limiter/parameters.hpp"
-#include "obstacle_velocity_limiter/trajectory_preprocessing.hpp"
-#include "obstacle_velocity_limiter/types.hpp"
+#include "debug.hpp"
+#include "forward_projection.hpp"
+#include "map_utils.hpp"
+#include "obstacle_velocity_limiter.hpp"
+#include "parameters.hpp"
+#include "trajectory_preprocessing.hpp"
 
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>

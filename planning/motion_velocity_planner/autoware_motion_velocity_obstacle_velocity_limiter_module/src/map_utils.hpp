@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__MAP_UTILS_HPP_
-#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__MAP_UTILS_HPP_
+#ifndef MAP_UTILS_HPP_
+#define MAP_UTILS_HPP_
 
-#include "obstacle_velocity_limiter/types.hpp"
+#include "types.hpp"
 
 #include <lanelet2_core/LaneletMap.h>
 
@@ -39,4 +39,4 @@ multi_linestring_t extractStaticObstacles(
 bool isObstacle(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & tags);
 }  // namespace obstacle_velocity_limiter
 
-#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__MAP_UTILS_HPP_
+#endif  // MAP_UTILS_HPP_
