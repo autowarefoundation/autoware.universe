@@ -272,7 +272,10 @@ def launch_setup(context, *args, **kwargs):
     # external cmd selector
     external_cmd_selector_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_selector"), "/launch/external_cmd_selector.launch.py"]
+            [
+                FindPackageShare("autoware_external_cmd_selector"),
+                "/launch/external_cmd_selector.launch.py",
+            ]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
@@ -383,8 +386,8 @@ def launch_setup(context, *args, **kwargs):
 
     # control validator checker
     control_validator_component = ComposableNode(
-        package="control_validator",
-        plugin="control_validator::ControlValidator",
+        package="autoware_control_validator",
+        plugin="autoware::control_validator::ControlValidator",
         name="control_validator",
         remappings=[
             ("~/input/kinematics", "/localization/kinematic_state"),
