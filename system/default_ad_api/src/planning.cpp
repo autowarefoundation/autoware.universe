@@ -110,21 +110,6 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
 }
 
-void PlanningNode::on_trajectory(const Trajectory::ConstSharedPtr msg)
-{
-  trajectory_ = msg;
-}
-
-void PlanningNode::on_kinematic_state(const KinematicState::ConstSharedPtr msg)
-{
-  kinematic_state_ = msg;
-
-  geometry_msgs::msg::TwistStamped twist;
-  twist.header = msg->header;
-  twist.twist = msg->twist.twist;
-  stop_checker_->addTwist(twist);
-}
-
 void PlanningNode::on_timer()
 {
   using autoware_adapi_v1_msgs::msg::VelocityFactor;
@@ -133,12 +118,20 @@ void PlanningNode::on_timer()
 
   auto trajectory_msg = trajectory_sub_->takeData();
   if (trajectory_msg) {
+
+  auto trajectory_msg = trajectory_sub_->takeData();
+  if (trajectory_msg) {
     trajectory_ = trajectory_sub_->takeData();
   }
 
   auto kinematic_state_msg = kinematic_state_sub_->takeData();
   if (kinematic_state_msg) {
-    on_kinematic_state(kinematic_state_sub_->takeData());
+    kinematic_state_ = msg;
+
+    geometry_msgs::msg::TwistStamped twist;
+    twist.header = msg->header;
+    twist.twist = msg->twist.twist;
+    stop_checker_->addTwist(twist);
   }
 
   // Set the distance if it is nan.
