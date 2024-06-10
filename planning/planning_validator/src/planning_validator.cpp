@@ -32,9 +32,6 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
 {
   using std::placeholders::_1;
 
-  sub_kinematics_ = create_subscription<Odometry>(
-    "~/input/kinematics", 1,
-    [this](const Odometry::ConstSharedPtr msg) { current_kinematics_ = msg; });
   sub_traj_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&PlanningValidator::onTrajectory, this, _1));
 
@@ -92,7 +89,7 @@ void PlanningValidator::setupParameters()
   }
 
   try {
-    vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+    vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
   } catch (...) {
     RCLCPP_ERROR(get_logger(), "failed to get vehicle info. use default value.");
     vehicle_info_.front_overhang_m = 0.5;
@@ -194,6 +191,9 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
   stop_watch_.tic(__func__);
 
   current_trajectory_ = msg;
+
+  // receive data
+  current_kinematics_ = sub_kinematics_.takeData();
 
   if (!isDataReady()) return;
 

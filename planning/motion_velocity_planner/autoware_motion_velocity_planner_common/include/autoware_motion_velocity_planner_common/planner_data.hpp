@@ -15,18 +15,17 @@
 #ifndef AUTOWARE_MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
 #define AUTOWARE_MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
 
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <autoware_velocity_smoother/smoother/smoother_base.hpp>
 #include <route_handler/route_handler.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/header.hpp>
 #include <tier4_api_msgs/msg/crosswalk_status.hpp>
@@ -55,17 +54,16 @@ struct TrafficSignalStamped
 struct PlannerData
 {
   explicit PlannerData(rclcpp::Node & node)
-  : vehicle_info_(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo())
+  : vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo())
   {
   }
 
   // msgs from callbacks that are used for data-ready
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity;
-  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr current_acceleration;
-  autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr predicted_objects;
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
-  nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid;
+  nav_msgs::msg::Odometry current_odometry{};
+  geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration{};
+  autoware_perception_msgs::msg::PredictedObjects predicted_objects{};
+  pcl::PointCloud<pcl::PointXYZ> no_ground_pointcloud{};
+  nav_msgs::msg::OccupancyGrid occupancy_grid{};
   std::shared_ptr<route_handler::RouteHandler> route_handler;
 
   // nearest search
@@ -78,12 +76,12 @@ struct PlannerData
   std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_raw_;
   std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_last_observed_;
   std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
-  tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states;
+  tier4_v2x_msgs::msg::VirtualTrafficLightStateArray virtual_traffic_light_states;
 
   // velocity smoother
   std::shared_ptr<autoware::velocity_smoother::SmootherBase> velocity_smoother_{};
   // parameters
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
   /**
    *@fn

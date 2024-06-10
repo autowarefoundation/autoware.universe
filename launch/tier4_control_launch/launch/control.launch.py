@@ -194,8 +194,8 @@ def launch_setup(context, *args, **kwargs):
 
     # vehicle cmd gate
     vehicle_cmd_gate_component = ComposableNode(
-        package="vehicle_cmd_gate",
-        plugin="vehicle_cmd_gate::VehicleCmdGate",
+        package="autoware_vehicle_cmd_gate",
+        plugin="autoware::vehicle_cmd_gate::VehicleCmdGate",
         name="vehicle_cmd_gate",
         remappings=[
             ("input/steering", "/vehicle/status/steering_status"),
@@ -272,7 +272,10 @@ def launch_setup(context, *args, **kwargs):
     # external cmd selector
     external_cmd_selector_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_selector"), "/launch/external_cmd_selector.launch.py"]
+            [
+                FindPackageShare("autoware_external_cmd_selector"),
+                "/launch/external_cmd_selector.launch.py",
+            ]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
