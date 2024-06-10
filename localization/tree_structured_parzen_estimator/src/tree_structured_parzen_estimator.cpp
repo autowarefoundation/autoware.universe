@@ -23,14 +23,14 @@
 std::mt19937_64 TreeStructuredParzenEstimator::engine(std::random_device{}());
 
 TreeStructuredParzenEstimator::TreeStructuredParzenEstimator(
-  const Direction direction, const int64_t n_startup_trials, std::vector<double> & sample_mean,
-  std::vector<double> & sample_stddev)
+  const Direction direction, const int64_t n_startup_trials, std::vector<double> sample_mean,
+  std::vector<double> sample_stddev)
 : above_num_(0),
   direction_(direction),
   n_startup_trials_(n_startup_trials),
   input_dimension_(INDEX_NUM),
-  sample_mean_(sample_mean),
-  sample_stddev_(sample_stddev)
+  sample_mean_(std::move(sample_mean)),
+  sample_stddev_(std::move(sample_stddev))
 {
   if (sample_mean_.size() != ANGLE_Z) {
     std::cerr << "sample_mean size is invalid" << std::endl;

@@ -56,8 +56,8 @@ public:
 
   TreeStructuredParzenEstimator() = delete;
   TreeStructuredParzenEstimator(
-    const Direction direction, const int64_t n_startup_trials, std::vector<double> & sample_mean,
-    std::vector<double> & sample_stddev);
+    const Direction direction, const int64_t n_startup_trials, std::vector<double> sample_mean,
+    std::vector<double> sample_stddev);
   void add_trial(const Trial & trial);
   [[nodiscard]] Input get_next_input() const;
 
