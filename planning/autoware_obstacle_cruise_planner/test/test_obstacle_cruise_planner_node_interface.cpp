@@ -22,7 +22,7 @@
 
 #include <vector>
 
-using motion_planning::ObstacleCruisePlannerNode;
+using autoware::motion_planning::ObstacleCruisePlannerNode;
 using planning_test_utils::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
@@ -54,7 +54,7 @@ std::shared_ptr<ObstacleCruisePlannerNode> generateNode()
      "--params-file", obstacle_cruise_planner_dir + "/config/default_common.param.yaml",
      "--params-file", obstacle_cruise_planner_dir + "/config/obstacle_cruise_planner.param.yaml"});
 
-  return std::make_shared<motion_planning::ObstacleCruisePlannerNode>(node_options);
+  return std::make_shared<autoware::motion_planning::ObstacleCruisePlannerNode>(node_options);
 }
 
 void publishMandatoryTopics(

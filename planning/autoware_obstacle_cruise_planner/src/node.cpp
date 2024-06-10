@@ -215,7 +215,7 @@ bool isLowerConsideringHysteresis(
 }
 }  // namespace
 
-namespace motion_planning
+namespace autoware::motion_planning
 {
 ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationParam(
   rclcpp::Node & node)
@@ -1643,7 +1643,7 @@ void ObstacleCruisePlannerNode::publishCalculationTime(const double calculation_
   calculation_time_msg.data = calculation_time;
   debug_calculation_time_pub_->publish(calculation_time_msg);
 }
-}  // namespace motion_planning
+}  // namespace autoware::motion_planning
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(motion_planning::ObstacleCruisePlannerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::motion_planning::ObstacleCruisePlannerNode)

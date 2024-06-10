@@ -36,7 +36,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace motion_planning
+namespace autoware::motion_planning
 {
 class ObstacleCruisePlannerNode : public rclcpp::Node
 {
