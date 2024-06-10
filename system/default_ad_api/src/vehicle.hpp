@@ -47,16 +47,17 @@ private:
   Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<localization_interface::KinematicState::Message>>
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    localization_interface::KinematicState::Message>>
     kinematic_state_sub_;
   std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
     localization_interface::Acceleration::Message>>
     acceleration_sub_;
-  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
-    vehicle_interface::SteeringStatus::Message>>
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<vehicle_interface::SteeringStatus::Message>>
     steering_sub_;
-  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
-    vehicle_interface::GearStatus::Message>>
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<vehicle_interface::GearStatus::Message>>
     gear_state_sub_;
   std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
     vehicle_interface::TurnIndicatorStatus::Message>>

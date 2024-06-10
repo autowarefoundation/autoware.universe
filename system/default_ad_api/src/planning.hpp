@@ -42,13 +42,13 @@ private:
   Pub<autoware_ad_api::planning::VelocityFactors> pub_velocity_factors_;
   Pub<autoware_ad_api::planning::SteeringFactors> pub_steering_factors_;
 
-  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
-    planning_interface::Trajectory::Message>>
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<planning_interface::Trajectory::Message>>
     trajectory_sub_;
   std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
     localization_interface::KinematicState::Message>>
     kinematic_state_sub_;
-  
+
   std::vector<rclcpp::Subscription<VelocityFactorArray>::SharedPtr> sub_velocity_factors_;
   std::vector<rclcpp::Subscription<SteeringFactorArray>::SharedPtr> sub_steering_factors_;
   std::vector<VelocityFactorArray::ConstSharedPtr> velocity_factors_;

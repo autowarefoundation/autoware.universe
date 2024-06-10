@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware_state.hpp"
+
 #include "../utils/interface_subscriber.hpp"
 
 #include <string>
@@ -43,10 +44,12 @@ AutowareStateNode::AutowareStateNode(const rclcpp::NodeOptions & options)
     std::bind(&AutowareStateNode::on_shutdown, this, std::placeholders::_1, std::placeholders::_2));
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
-  
-  localization_sub_ = create_polling_subscriber<autoware_ad_api::localization::InitializationState>(this);
+
+  localization_sub_ =
+    create_polling_subscriber<autoware_ad_api::localization::InitializationState>(this);
   routing_sub_ = create_polling_subscriber<autoware_ad_api::routing::RouteState>(this);
-  operation_mode_sub_ = create_polling_subscriber<autoware_ad_api::operation_mode::OperationModeState>(this);
+  operation_mode_sub_ =
+    create_polling_subscriber<autoware_ad_api::operation_mode::OperationModeState>(this);
 
   const auto rate = rclcpp::Rate(declare_parameter<double>("update_rate"));
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -69,17 +72,17 @@ void AutowareStateNode::on_shutdown(
 void AutowareStateNode::on_timer()
 {
   auto localization_msg = localization_sub_->takeData();
-  if(localization_msg) {
+  if (localization_msg) {
     localization_state_ = *localization_sub_->takeData();
   }
-  
+
   auto routing_msg = routing_sub_->takeData();
-  if(routing_msg) {
+  if (routing_msg) {
     routing_state_ = *routing_sub_->takeData();
   }
 
   auto operation_mode_msg = operation_mode_sub_->takeData();
-  if(operation_mode_msg) {
+  if (operation_mode_msg) {
     operation_mode_state_ = *operation_mode_sub_->takeData();
   }
 

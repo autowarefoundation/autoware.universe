@@ -56,13 +56,13 @@ private:
 
   // std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<planning_interface::RouteState::Message>>
   //   state_sub_;
-  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
-    planning_interface::LaneletRoute::Message>>
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<planning_interface::LaneletRoute::Message>>
     route_sub_;
   std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
     system_interface::OperationModeState::Message>>
     operation_mode_sub_;
-  
+
   bool is_auto_mode_;
   State::Message state_;
 

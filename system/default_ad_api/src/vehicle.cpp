@@ -78,7 +78,6 @@ VehicleNode::VehicleNode(const rclcpp::NodeOptions & options) : Node("vehicle", 
   hazard_light_sub_ = create_polling_subscriber<vehicle_interface::HazardLightStatus>(this);
   energy_level_sub_ = create_polling_subscriber<vehicle_interface::EnergyStatus>(this);
 
-
   const auto rate = rclcpp::Rate(10);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
 }

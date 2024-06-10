@@ -43,8 +43,8 @@ private:
   Cli<control_interface::SetPause> cli_set_pause_;
   Sub<control_interface::IsPaused> sub_is_paused_;
   Sub<control_interface::IsStartRequested> sub_is_start_requested_;
-  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
-    control_interface::IsPaused::Message>>
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<control_interface::IsPaused::Message>>
     is_paused_sub_;
   std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
     control_interface::IsStartRequested::Message>>
