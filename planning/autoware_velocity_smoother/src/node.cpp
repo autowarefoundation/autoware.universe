@@ -20,7 +20,7 @@
 #include "motion_utils/marker/marker_helper.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 
-#include <vehicle_info_util/vehicle_info_util.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -32,7 +32,7 @@
 #include <vector>
 
 // clang-format on
-namespace autoware_velocity_smoother
+namespace autoware::velocity_smoother
 {
 VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_options)
 : Node("velocity_smoother", node_options)
@@ -40,7 +40,7 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
   using std::placeholders::_1;
 
   // set common params
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
   wheelbase_ = vehicle_info.wheel_base_m;
   base_link2front_ = vehicle_info.max_longitudinal_offset_m;
   initCommonParam();
@@ -58,19 +58,6 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
   pub_over_stop_velocity_ = create_publisher<StopSpeedExceeded>("~/stop_speed_exceeded", 1);
   sub_current_trajectory_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&VelocitySmootherNode::onCurrentTrajectory, this, _1));
-  sub_current_odometry_ = create_subscription<Odometry>(
-    "/localization/kinematic_state", 1,
-    std::bind(&VelocitySmootherNode::onCurrentOdometry, this, _1));
-  sub_external_velocity_limit_ = create_subscription<VelocityLimit>(
-    "~/input/external_velocity_limit_mps", 1,
-    std::bind(&VelocitySmootherNode::onExternalVelocityLimit, this, _1));
-  sub_current_acceleration_ = create_subscription<AccelWithCovarianceStamped>(
-    "~/input/acceleration", 1, [this](const AccelWithCovarianceStamped::ConstSharedPtr msg) {
-      current_acceleration_ptr_ = msg;
-    });
-  sub_operation_mode_ = create_subscription<OperationModeState>(
-    "~/input/operation_mode_state", 1,
-    [this](const OperationModeState::ConstSharedPtr msg) { operation_mode_ = *msg; });
 
   // parameter update
   set_param_res_ =
@@ -319,16 +306,6 @@ void VelocitySmootherNode::publishTrajectory(const TrajectoryPoints & trajectory
     pub_trajectory_, publishing_trajectory.header.stamp);
 }
 
-void VelocitySmootherNode::onCurrentOdometry(const Odometry::ConstSharedPtr msg)
-{
-  current_odometry_ptr_ = msg;
-}
-
-void VelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
-{
-  external_velocity_limit_ptr_ = msg;
-}
-
 void VelocitySmootherNode::calcExternalVelocityLimit()
 {
   if (!external_velocity_limit_ptr_) {
@@ -440,6 +417,15 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   stop_watch_.tic();
 
   base_traj_raw_ptr_ = msg;
+
+  // receive data
+  current_odometry_ptr_ = sub_current_odometry_.takeData();
+  current_acceleration_ptr_ = sub_current_acceleration_.takeData();
+  external_velocity_limit_ptr_ = sub_external_velocity_limit_.takeData();
+  const auto operation_mode_ptr = sub_operation_mode_.takeData();
+  if (operation_mode_ptr) {
+    operation_mode_ = *operation_mode_ptr;
+  }
 
   // guard
   if (!checkData()) {
@@ -1099,7 +1085,7 @@ TrajectoryPoint VelocitySmootherNode::calcProjectedTrajectoryPointFromEgo(
   return calcProjectedTrajectoryPoint(trajectory, current_odometry_ptr_->pose.pose);
 }
 
-}  // namespace autoware_velocity_smoother
+}  // namespace autoware::velocity_smoother
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware_velocity_smoother::VelocitySmootherNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::velocity_smoother::VelocitySmootherNode)

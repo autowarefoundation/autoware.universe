@@ -36,7 +36,7 @@
 #include <stack>
 #include <vector>
 
-namespace autoware_path_optimizer
+namespace autoware::path_optimizer
 {
 namespace bg = boost::geometry;
 using tier4_autoware_utils::LinearRing2d;
@@ -120,7 +120,7 @@ namespace geometry_utils
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound,
-  const vehicle_info_util::VehicleInfo & vehicle_info,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const bool use_footprint_polygon_for_outside_drivable_area_check)
 {
   if (left_bound.empty() || right_bound.empty()) {
@@ -207,4 +207,4 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
   return false;
 }
 }  // namespace geometry_utils
-}  // namespace autoware_path_optimizer
+}  // namespace autoware::path_optimizer

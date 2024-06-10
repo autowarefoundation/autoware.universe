@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "planning_validator/planning_validator.hpp"
+#include "autoware_planning_validator/planning_validator.hpp"
 
-#include "planning_validator/utils.hpp"
+#include "autoware_planning_validator/utils.hpp"
 
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
@@ -23,7 +23,7 @@
 #include <string>
 #include <utility>
 
-namespace planning_validator
+namespace autoware::planning_validator
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
 
@@ -32,9 +32,6 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
 {
   using std::placeholders::_1;
 
-  sub_kinematics_ = create_subscription<Odometry>(
-    "~/input/kinematics", 1,
-    [this](const Odometry::ConstSharedPtr msg) { current_kinematics_ = msg; });
   sub_traj_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&PlanningValidator::onTrajectory, this, _1));
 
@@ -92,7 +89,7 @@ void PlanningValidator::setupParameters()
   }
 
   try {
-    vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+    vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
   } catch (...) {
     RCLCPP_ERROR(get_logger(), "failed to get vehicle info. use default value.");
     vehicle_info_.front_overhang_m = 0.5;
@@ -194,6 +191,9 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
   stop_watch_.tic(__func__);
 
   current_trajectory_ = msg;
+
+  // receive data
+  current_kinematics_ = sub_kinematics_.takeData();
 
   if (!isDataReady()) return;
 
@@ -584,7 +584,7 @@ void PlanningValidator::displayStatus()
   warn(s.is_valid_forward_trajectory_length, "planning trajectory forward length is not enough!!");
 }
 
-}  // namespace planning_validator
+}  // namespace autoware::planning_validator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(planning_validator::PlanningValidator)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::planning_validator::PlanningValidator)

@@ -16,20 +16,20 @@
 
 #include "autoware_path_optimizer/common_structs.hpp"
 #include "autoware_path_optimizer/type_alias.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "rclcpp/clock.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace autoware_path_optimizer
+namespace autoware::path_optimizer
 {
 MarkerArray getDebugMarker(
   const DebugData & debug_data,
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & optimized_points,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const bool publish_extra_marker);
-}  // namespace autoware_path_optimizer
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const bool publish_extra_marker);
+}  // namespace autoware::path_optimizer
 #endif  // AUTOWARE_PATH_OPTIMIZER__DEBUG_MARKER_HPP_

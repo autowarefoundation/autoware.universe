@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using lanelet::autoware::NoStoppingArea;
 using tier4_autoware_utils::getOrDeclareParameter;
@@ -39,7 +39,7 @@ NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
 {
   const std::string ns(getModuleName());
   auto & pp = planner_param_;
-  const auto & vi = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+  const auto & vi = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   pp.state_clear_time = getOrDeclareParameter<double>(node, ns + ".state_clear_time");
   pp.stuck_vehicle_vel_thr = getOrDeclareParameter<double>(node, ns + ".stuck_vehicle_vel_thr");
   pp.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
@@ -86,8 +86,9 @@ NoStoppingAreaModuleManager::getModuleExpiredFunction(
   };
 }
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::NoStoppingAreaModulePlugin, behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::NoStoppingAreaModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

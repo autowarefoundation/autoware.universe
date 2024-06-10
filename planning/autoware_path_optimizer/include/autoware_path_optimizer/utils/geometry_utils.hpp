@@ -17,11 +17,11 @@
 
 #include "autoware_path_optimizer/common_structs.hpp"
 #include "autoware_path_optimizer/type_alias.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <Eigen/Core>
 
@@ -39,13 +39,13 @@
 namespace tier4_autoware_utils
 {
 template <>
-geometry_msgs::msg::Point getPoint(const autoware_path_optimizer::ReferencePoint & p);
+geometry_msgs::msg::Point getPoint(const autoware::path_optimizer::ReferencePoint & p);
 
 template <>
-geometry_msgs::msg::Pose getPose(const autoware_path_optimizer::ReferencePoint & p);
+geometry_msgs::msg::Pose getPose(const autoware::path_optimizer::ReferencePoint & p);
 }  // namespace tier4_autoware_utils
 
-namespace autoware_path_optimizer
+namespace autoware::path_optimizer
 {
 namespace geometry_utils
 {
@@ -65,8 +65,8 @@ bool isSamePoint(const T1 & t1, const T2 & t2)
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const geometry_msgs::msg::Pose & pose, const std::vector<geometry_msgs::msg::Point> & left_bound,
   const std::vector<geometry_msgs::msg::Point> & right_bound,
-  const vehicle_info_util::VehicleInfo & vehicle_info,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const bool use_footprint_polygon_for_outside_drivable_area_check);
 }  // namespace geometry_utils
-}  // namespace autoware_path_optimizer
+}  // namespace autoware::path_optimizer
 #endif  // AUTOWARE_PATH_OPTIMIZER__UTILS__GEOMETRY_UTILS_HPP_

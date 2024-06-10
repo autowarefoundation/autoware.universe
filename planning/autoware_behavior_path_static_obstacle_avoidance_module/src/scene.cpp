@@ -14,15 +14,15 @@
 
 #include "autoware_behavior_path_static_obstacle_avoidance_module/scene.hpp"
 
+#include "autoware_behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/traffic_light_utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/debug.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
-#include "behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
-#include "behavior_path_planner_common/utils/path_utils.hpp"
-#include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -867,10 +867,12 @@ BehaviorModuleOutput StaticObstacleAvoidanceModule::plan()
 
   if (data.state == AvoidanceState::SUCCEEDED) {
     removeRegisteredShiftLines(State::SUCCEEDED);
+    return getPreviousModuleOutput();
   }
 
   if (data.state == AvoidanceState::CANCEL) {
     removeRegisteredShiftLines(State::FAILED);
+    return getPreviousModuleOutput();
   }
 
   if (data.yield_required) {
@@ -915,10 +917,20 @@ BehaviorModuleOutput StaticObstacleAvoidanceModule::plan()
     ignore_signal_ = is_ignore ? std::make_optional(uuid) : std::nullopt;
   };
 
+  const auto is_large_deviation = [this](const auto & path) {
+    constexpr double threshold = 1.0;
+    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(path.points);
+    const auto lateral_deviation =
+      motion_utils::calcLateralOffset(path.points, getEgoPosition(), current_seg_idx);
+    return std::abs(lateral_deviation) > threshold;
+  };
+
   // turn signal info
   if (path_shifter_.getShiftLines().empty()) {
     output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   } else if (is_ignore_signal(path_shifter_.getShiftLines().front().id)) {
+    output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+  } else if (is_large_deviation(spline_shift_path.path)) {
     output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
   } else {
     const auto original_signal = getPreviousModuleOutput().turn_signal_info;
@@ -930,7 +942,7 @@ BehaviorModuleOutput StaticObstacleAvoidanceModule::plan()
       helper_->getEgoShift(), is_driving_forward, egos_lane_is_shifted);
 
     const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
-    output.turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
+    output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
       spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
       planner_data_->parameters.ego_nearest_dist_threshold,
       planner_data_->parameters.ego_nearest_yaw_threshold);
@@ -1196,32 +1208,45 @@ bool StaticObstacleAvoidanceModule::isValidShiftLine(
     }
   }
 
+  const auto is_return_shift =
+    [](const double start_shift_length, const double end_shift_length, const double threshold) {
+      return std::abs(start_shift_length) > threshold && std::abs(end_shift_length) < threshold;
+    };
+
   // check if the vehicle is in road. (yaw angle is not considered)
   {
     const auto minimum_distance = 0.5 * planner_data_->parameters.vehicle_width +
                                   parameters_->hard_drivable_bound_margin -
                                   parameters_->max_deviation_from_lane;
 
-    const size_t start_idx = shift_lines.front().start_idx;
-    const size_t end_idx = shift_lines.back().end_idx;
+    for (const auto & shift_line : shift_lines) {
+      const size_t start_idx = shift_line.start_idx;
+      const size_t end_idx = shift_line.end_idx;
 
-    const auto path = shifter_for_validate.getReferencePath();
-    const auto left_bound = lanelet::utils::to2D(toLineString3d(avoid_data_.left_bound));
-    const auto right_bound = lanelet::utils::to2D(toLineString3d(avoid_data_.right_bound));
-    for (size_t i = start_idx; i <= end_idx; ++i) {
-      const auto p = getPoint(path.points.at(i));
-      lanelet::BasicPoint2d basic_point{p.x, p.y};
+      if (is_return_shift(
+            shift_line.start_shift_length, shift_line.end_shift_length,
+            parameters_->lateral_small_shift_threshold)) {
+        continue;
+      }
 
-      const auto shift_length = proposed_shift_path.shift_length.at(i);
-      const auto THRESHOLD = minimum_distance + std::abs(shift_length);
+      const auto path = shifter_for_validate.getReferencePath();
+      const auto left_bound = lanelet::utils::to2D(toLineString3d(avoid_data_.left_bound));
+      const auto right_bound = lanelet::utils::to2D(toLineString3d(avoid_data_.right_bound));
+      for (size_t i = start_idx; i <= end_idx; ++i) {
+        const auto p = getPoint(path.points.at(i));
+        lanelet::BasicPoint2d basic_point{p.x, p.y};
 
-      if (
-        boost::geometry::distance(basic_point, (shift_length > 0.0 ? left_bound : right_bound)) <
-        THRESHOLD) {
-        RCLCPP_DEBUG_THROTTLE(
-          getLogger(), *clock_, 1000,
-          "following latest new shift line may cause deviation from drivable area.");
-        return false;
+        const auto shift_length = proposed_shift_path.shift_length.at(i);
+        const auto THRESHOLD = minimum_distance + std::abs(shift_length);
+
+        if (
+          boost::geometry::distance(basic_point, (shift_length > 0.0 ? left_bound : right_bound)) <
+          THRESHOLD) {
+          RCLCPP_DEBUG_THROTTLE(
+            getLogger(), *clock_, 1000,
+            "following latest new shift line may cause deviation from drivable area.");
+          return false;
+        }
       }
     }
   }

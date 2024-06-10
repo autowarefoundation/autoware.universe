@@ -15,11 +15,11 @@
 #ifndef BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
 #define BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
 
+#include "autoware_behavior_path_planner_common/parameters.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "behavior_path_lane_change_module/utils/path.hpp"
-#include "behavior_path_planner_common/parameters.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 #include "rclcpp/logger.hpp"
 
 #include <route_handler/route_handler.hpp>
@@ -241,7 +241,7 @@ rclcpp::Logger getLogger(const std::string & type);
  * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
  */
 Polygon2d getEgoCurrentFootprint(
-  const Pose & ego_pose, const vehicle_info_util::VehicleInfo & ego_info);
+  const Pose & ego_pose, const autoware::vehicle_info_utils::VehicleInfo & ego_info);
 
 /**
  * @brief Checks if the given polygon is within an intersection area.
@@ -304,7 +304,7 @@ namespace behavior_path_planner::utils::lane_change::debug
 geometry_msgs::msg::Point32 create_point32(const geometry_msgs::msg::Pose & pose);
 
 geometry_msgs::msg::Polygon createExecutionArea(
-  const vehicle_info_util::VehicleInfo & vehicle_info, const Pose & pose,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Pose & pose,
   double additional_lon_offset, double additional_lat_offset);
 }  // namespace behavior_path_planner::utils::lane_change::debug
 

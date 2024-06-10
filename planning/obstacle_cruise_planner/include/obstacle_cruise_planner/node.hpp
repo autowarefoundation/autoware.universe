@@ -53,7 +53,7 @@ private:
   // main functions
   std::vector<Polygon2d> createOneStepPolygons(
     const std::vector<TrajectoryPoint> & traj_points,
-    const vehicle_info_util::VehicleInfo & vehicle_info,
+    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
     const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
   std::vector<Obstacle> convertToObstacles(
     const Odometry & odometry, const PredictedObjects & objects,
@@ -272,8 +272,7 @@ private:
   bool is_driving_forward_{true};
   bool enable_slow_down_planning_{false};
 
-  // previous closest obstacle
-  std::shared_ptr<StopObstacle> prev_closest_stop_obstacle_ptr_{nullptr};
+  std::vector<StopObstacle> prev_closest_stop_obstacles_{};
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
 
