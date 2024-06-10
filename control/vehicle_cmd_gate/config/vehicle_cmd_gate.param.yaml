@@ -15,22 +15,22 @@
     stopped_state_entry_duration_time: 0.1
     stop_check_duration: 1.0
     nominal:
-      vel_lim: 25.0
-      reference_speed_points: [20.0, 30.0]
-      steer_lim: [1.0, 0.8]
-      steer_rate_lim: [1.0, 0.8]
-      lon_acc_lim: [5.0, 4.0]
-      lon_jerk_lim: [5.0, 4.0]
-      lat_acc_lim: [5.0, 4.0]
-      lat_jerk_lim: [7.0, 6.0]
-      actual_steer_diff_lim: [1.0, 0.8]
+      vel_lim: 50.0
+      reference_speed_points: [0.00,  2.78,  5.56,  8.33, 11.11,  13.89,  16.67,  19.44,  22.22,  25.00,   27.78,   30.56,   33.33] # 0, 10, 20, ... in km/h
+      steer_lim:              [1.00,  1.00, 0.478, 0.226, 0.129, 0.0828, 0.0575, 0.0362, 0.0212, 0.0132, 0.00870, 0.00595, 0.00420] # convert lateral acceleration limit into steering limit with a specific wheelbase
+      steer_rate_lim:         [2.00,  2.00, 0.648, 0.288, 0.162,  0.104,  0.072, 0.0529, 0.0405, 0.0320,  0.0259,  0.0214,  0.0180] # convert lateral jerk limit into steering limit with a specific wheelbase
+      lon_acc_lim:            [ 5.0,   5.0,   5.0,   5.0,   5.0,    5.0,    5.0,    5.0,    5.0,    5.0,     5.0,     5.0,     5.0] # No discussion
+      lon_jerk_lim:           [ 5.0,   5.0,   5.0,   5.0,   5.0,    5.0,    5.0,    5.0,    5.0,    5.0,     5.0,     5.0,     5.0] # No discussion
+      lat_acc_lim:            [ 2.0,   4.0,   4.0,   4.0,   4.0,    4.0,    4.0,   3.43,   2.62,   2.07,    1.68,    1.39,    1.17] # a_lat_lim = (36/v)^2
+      lat_jerk_lim:           [ 5.0,   5.0,   5.0,   5.0,   5.0,    5.0,    5.0,    5.0,    5.0,    5.0,     5.0,     5.0,     5.0] # based on UN-Regulation No.79
+      actual_steer_diff_lim:  [ 0.5,   0.5,   0.5,   0.5,   0.5,    0.5,    0.5,    0.5,    0.5,    0.5,     0.5,     0.5,     0.5] # No discussion
     on_transition:
       vel_lim: 50.0
-      reference_speed_points: [20.0, 30.0]
-      steer_lim: [1.0, 0.8]
-      steer_rate_lim: [1.0, 0.8]
-      lon_acc_lim: [1.0, 0.9]
-      lon_jerk_lim: [0.5, 0.4]
-      lat_acc_lim: [2.0, 1.8]
-      lat_jerk_lim: [7.0, 6.0]
-      actual_steer_diff_lim: [1.0, 0.8]
+      reference_speed_points: [0.00,  2.78,  5.56,  8.33, 11.11,  13.89,  16.67,  19.44,  22.22,  25.00,   27.78,   30.56,   33.33] # 0, 10, 20, ... in km/h
+      steer_lim:              [1.00,  1.00, 0.478, 0.226, 0.129, 0.0828, 0.0575, 0.0362, 0.0212, 0.0132, 0.00870, 0.00595, 0.00420] # same as nominal
+      steer_rate_lim:         [2.00,  2.00, 0.648, 0.288, 0.162,  0.104,  0.072, 0.0529, 0.0405, 0.0320,  0.0259,  0.0214,  0.0180] # same as nominal
+      lon_acc_lim:            [ 1.0,   1.0,   1.0,   1.0,   1.0,    1.0,    1.0,    1.0,    1.0,    1.0,     1.0,     1.0,     1.0] # smaller value to achieve smooth transition
+      lon_jerk_lim:           [ 0.5,   0.5,   0.5,   0.5,   0.5,    0.5,    0.5,    0.5,    0.5,    0.5,     0.5,     0.5,     0.5] # smaller value to achieve smooth transition
+      lat_acc_lim:            [ 2.0,   2.0,   2.0,   2.0,   2.0,    2.0,    2.0,    2.0,    2.0,    1.8,    1.68,    1.39,    1.17] # smaller value to achieve smooth transition
+      lat_jerk_lim:           [ 5.0,   5.0,   5.0,   5.0,   5.0,    5.0,    5.0,    5.0,    5.0,    5.0,     5.0,     5.0,     5.0] # same as nominal
+      actual_steer_diff_lim:  [ 0.5,   0.5,   0.5,   0.5,   0.5,    0.5,    0.5,    0.5,    0.5,    0.5,     0.5,     0.5,     0.5] # same as nominal
