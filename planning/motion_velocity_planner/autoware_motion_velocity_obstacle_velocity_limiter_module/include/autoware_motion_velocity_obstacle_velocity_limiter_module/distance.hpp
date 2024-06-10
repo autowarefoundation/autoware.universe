@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_VELOCITY_LIMITER__DISTANCE_HPP_
-#define OBSTACLE_VELOCITY_LIMITER__DISTANCE_HPP_
+#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DISTANCE_HPP_
+#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DISTANCE_HPP_
 
 #include "obstacle_velocity_limiter/obstacles.hpp"
 #include "obstacle_velocity_limiter/parameters.hpp"
@@ -45,4 +45,4 @@ double arcDistance(const point_t & origin, const double heading, const point_t &
 
 }  // namespace obstacle_velocity_limiter
 
-#endif  // OBSTACLE_VELOCITY_LIMITER__DISTANCE_HPP_
+#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__DISTANCE_HPP_

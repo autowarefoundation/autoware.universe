@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_VELOCITY_LIMITER__OBSTACLES_HPP_
-#define OBSTACLE_VELOCITY_LIMITER__OBSTACLES_HPP_
+#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__OBSTACLES_HPP_
+#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__OBSTACLES_HPP_
 
 #include "obstacle_velocity_limiter/parameters.hpp"
 #include "obstacle_velocity_limiter/types.hpp"
@@ -185,4 +185,4 @@ void addSensorObstacles(
 /// @return obstacles that are inside the positive mask and outside of the negative masks
 Obstacles filterObstacles(const Obstacles & obstacles, const ObstacleMasks & masks);
 }  // namespace obstacle_velocity_limiter
-#endif  // OBSTACLE_VELOCITY_LIMITER__OBSTACLES_HPP_
+#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__OBSTACLES_HPP_

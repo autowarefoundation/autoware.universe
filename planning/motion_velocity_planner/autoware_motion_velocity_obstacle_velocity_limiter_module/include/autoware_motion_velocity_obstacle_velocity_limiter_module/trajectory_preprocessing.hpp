@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OBSTACLE_VELOCITY_LIMITER__TRAJECTORY_PREPROCESSING_HPP_
-#define OBSTACLE_VELOCITY_LIMITER__TRAJECTORY_PREPROCESSING_HPP_
+#ifndef AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__TRAJECTORY_PREPROCESSING_HPP_
+#define AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__TRAJECTORY_PREPROCESSING_HPP_
 
 #include "obstacle_velocity_limiter/types.hpp"
 
@@ -63,4 +63,4 @@ Trajectory copyDownsampledVelocity(
   const int factor);
 }  // namespace obstacle_velocity_limiter
 
-#endif  // OBSTACLE_VELOCITY_LIMITER__TRAJECTORY_PREPROCESSING_HPP_
+#endif  // AUTOWARE_MOTION_VELOCITY_OBSTACLE_VELOCITY_LIMITER_MODULE__TRAJECTORY_PREPROCESSING_HPP_
