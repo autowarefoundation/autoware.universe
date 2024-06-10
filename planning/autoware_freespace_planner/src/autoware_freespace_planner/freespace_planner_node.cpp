@@ -28,7 +28,7 @@
  * limitations under the License.
  */
 
-#include "freespace_planner/freespace_planner_node.hpp"
+#include "autoware_freespace_planner/freespace_planner_node.hpp"
 
 #include "autoware_freespace_planning_algorithms/abstract_algorithm.hpp"
 
@@ -217,7 +217,7 @@ bool isStopped(
 
 }  // namespace
 
-namespace freespace_planner
+namespace autoware::freespace_planner
 {
 FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("freespace_planner", node_options)
@@ -241,7 +241,8 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
 
   // set vehicle_info
   {
-    const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+    const auto vehicle_info =
+      autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
     vehicle_shape_.length = vehicle_info.vehicle_length_m;
     vehicle_shape_.width = vehicle_info.vehicle_width_m;
     vehicle_shape_.base2back = vehicle_info.rear_overhang_m;
@@ -582,7 +583,7 @@ void FreespacePlannerNode::initializePlanningAlgorithm()
   }
   RCLCPP_INFO_STREAM(get_logger(), "initialize planning algorithm: " << algo_name);
 }
-}  // namespace freespace_planner
+}  // namespace autoware::freespace_planner
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(freespace_planner::FreespacePlannerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::freespace_planner::FreespacePlannerNode)
