@@ -58,7 +58,8 @@ private:
   RouteState::Message::_state_type state_;
 
   void on_timer();
-  void on_fixed_goal(const PoseStamped::ConstSharedPtr pose);
+  void set_route_from_goal(
+    const PoseStamped::ConstSharedPtr pose, const bool allow_goal_modification);
   void on_rough_goal(const PoseStamped::ConstSharedPtr pose);
   void on_waypoint(const PoseStamped::ConstSharedPtr pose);
   void on_reroute(const PoseStamped::ConstSharedPtr pose);

@@ -54,29 +54,17 @@ void RoutingAdaptor::on_timer()
     rclcpp::Time(rough_goal_msg->header.stamp) > last_time) {
     if (rclcpp::Time(fixed_goal_msg->header.stamp) > rclcpp::Time(rough_goal_msg->header.stamp)) {
       request_timing_control_ = 1;
-      route_->header = fixed_goal_msg->header;
-      route_->goal = fixed_goal_msg->pose;
-      route_->waypoints.clear();
-      route_->option.allow_goal_modification = false;
+      set_route_from_goal(fixed_goal_msg, false);
     } else {
       request_timing_control_ = 1;
-      route_->header = rough_goal_msg->header;
-      route_->goal = rough_goal_msg->pose;
-      route_->waypoints.clear();
-      route_->option.allow_goal_modification = true;
+      set_route_from_goal(rough_goal_msg, true);
     }
   } else if (fixed_goal_msg && rclcpp::Time(fixed_goal_msg->header.stamp) > last_time) {
     request_timing_control_ = 1;
-    route_->header = fixed_goal_msg->header;
-    route_->goal = fixed_goal_msg->pose;
-    route_->waypoints.clear();
-    route_->option.allow_goal_modification = false;
+    set_route_from_goal(fixed_goal_msg, false);
   } else if (rough_goal_msg && rclcpp::Time(rough_goal_msg->header.stamp) > last_time) {
     request_timing_control_ = 1;
-    route_->header = rough_goal_msg->header;
-    route_->goal = rough_goal_msg->pose;
-    route_->waypoints.clear();
-    route_->option.allow_goal_modification = true;
+    set_route_from_goal(rough_goal_msg, true);
   }
   if (waypoint_msg && rclcpp::Time(waypoint_msg->header.stamp) > last_time) {
     if (route_->header.frame_id != waypoint_msg->header.frame_id) {
@@ -108,6 +96,15 @@ void RoutingAdaptor::on_timer()
       cli_route_->async_send_request(route_, [this](auto) { calling_service_ = false; });
     }
   }
+}
+
+void RoutingAdaptor::set_route_from_goal(
+  const PoseStamped::ConstSharedPtr msg, const bool allow_goal_modification)
+{
+  route_->header = msg->header;
+  route_->goal = msg->pose;
+  route_->waypoints.clear();
+  route_->option.allow_goal_modification = allow_goal_modification;
 }
 
 void RoutingAdaptor::on_reroute(const PoseStamped::ConstSharedPtr pose)
