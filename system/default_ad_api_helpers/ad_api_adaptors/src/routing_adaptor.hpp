@@ -18,6 +18,7 @@
 #include <autoware_ad_api_specs/routing.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
@@ -41,10 +42,14 @@ private:
   component_interface_utils::Client<SetRoutePoints>::SharedPtr cli_route_;
   component_interface_utils::Client<ClearRoute>::SharedPtr cli_clear_;
   component_interface_utils::Subscription<RouteState>::SharedPtr sub_state_;
-  rclcpp::Subscription<PoseStamped>::SharedPtr sub_fixed_goal_;
-  rclcpp::Subscription<PoseStamped>::SharedPtr sub_rough_goal_;
-  rclcpp::Subscription<PoseStamped>::SharedPtr sub_waypoint_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_reroute_;
+  // Subscriber without callback
+  tier4_autoware_utils::InterProcessPollingSubscriber<PoseStamped> sub_fixed_goal_{
+    this, "~/input/fixed_goal"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<PoseStamped> sub_rough_goal_{
+    this, "~/input/rough_goal"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<PoseStamped> sub_waypoint_{
+    this, "~/input/waypoint"};
   rclcpp::TimerBase::SharedPtr timer_;
 
   bool calling_service_ = false;

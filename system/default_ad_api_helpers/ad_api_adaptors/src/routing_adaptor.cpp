@@ -24,14 +24,8 @@ RoutingAdaptor::RoutingAdaptor(const rclcpp::NodeOptions & options)
 {
   using std::placeholders::_1;
 
-  sub_fixed_goal_ = create_subscription<PoseStamped>(
-    "~/input/fixed_goal", 3, std::bind(&RoutingAdaptor::on_fixed_goal, this, _1));
-  sub_rough_goal_ = create_subscription<PoseStamped>(
-    "~/input/rough_goal", 3, std::bind(&RoutingAdaptor::on_rough_goal, this, _1));
   sub_reroute_ = create_subscription<PoseStamped>(
     "~/input/reroute", 3, std::bind(&RoutingAdaptor::on_reroute, this, _1));
-  sub_waypoint_ = create_subscription<PoseStamped>(
-    "~/input/waypoint", 10, std::bind(&RoutingAdaptor::on_waypoint, this, _1));
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_cli(cli_reroute_);
@@ -50,6 +44,30 @@ RoutingAdaptor::RoutingAdaptor(const rclcpp::NodeOptions & options)
 
 void RoutingAdaptor::on_timer()
 {
+  const rclcpp::Time current_time = this->get_clock()->now();
+  const rclcpp::Time last_time = current_time - rclcpp::Duration::from_seconds(0.2);
+  auto fixed_goal_msg = sub_fixed_goal_.takeData();
+  auto rough_goal_msg = sub_rough_goal_.takeData();
+  auto waypoint_msg = sub_waypoint_.takeData();
+  if (
+    fixed_goal_msg && rough_goal_msg && rclcpp::Time(fixed_goal_msg->header.stamp) > last_time &&
+    rclcpp::Time(rough_goal_msg->header.stamp) > last_time) {
+    if (rclcpp::Time(fixed_goal_msg->header.stamp) > rclcpp::Time(rough_goal_msg->header.stamp)) {
+      on_fixed_goal(fixed_goal_msg);
+    } else {
+      on_rough_goal(rough_goal_msg);
+    }
+  } else if (fixed_goal_msg && rclcpp::Time(fixed_goal_msg->header.stamp) > last_time) {
+    RCLCPP_ERROR_STREAM(get_logger(), "get fixed_goal_msg  ");
+    on_fixed_goal(fixed_goal_msg);
+  } else if (rough_goal_msg && rclcpp::Time(rough_goal_msg->header.stamp) > last_time) {
+    RCLCPP_ERROR_STREAM(get_logger(), "get rough_goal_msg  ");
+    on_rough_goal(rough_goal_msg);
+  }
+  if (waypoint_msg && rclcpp::Time(waypoint_msg->header.stamp) > last_time) {
+    on_waypoint(waypoint_msg);
+  }
+
   // Wait a moment to combine consecutive goals and checkpoints into a single request.
   // This value is rate dependent and set the wait time for merging.
   constexpr int delay_count = 3;  // 0.4 seconds (rate * (value - 1))
