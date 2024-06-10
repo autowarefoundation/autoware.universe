@@ -53,19 +53,38 @@ void RoutingAdaptor::on_timer()
     fixed_goal_msg && rough_goal_msg && rclcpp::Time(fixed_goal_msg->header.stamp) > last_time &&
     rclcpp::Time(rough_goal_msg->header.stamp) > last_time) {
     if (rclcpp::Time(fixed_goal_msg->header.stamp) > rclcpp::Time(rough_goal_msg->header.stamp)) {
-      on_fixed_goal(fixed_goal_msg);
+      request_timing_control_ = 1;
+      route_->header = fixed_goal_msg->header;
+      route_->goal = fixed_goal_msg->pose;
+      route_->waypoints.clear();
+      route_->option.allow_goal_modification = false;
     } else {
-      on_rough_goal(rough_goal_msg);
+      request_timing_control_ = 1;
+      route_->header = rough_goal_msg->header;
+      route_->goal = rough_goal_msg->pose;
+      route_->waypoints.clear();
+      route_->option.allow_goal_modification = true;
     }
   } else if (fixed_goal_msg && rclcpp::Time(fixed_goal_msg->header.stamp) > last_time) {
-    RCLCPP_ERROR_STREAM(get_logger(), "get fixed_goal_msg  ");
-    on_fixed_goal(fixed_goal_msg);
+    request_timing_control_ = 1;
+    route_->header = fixed_goal_msg->header;
+    route_->goal = fixed_goal_msg->pose;
+    route_->waypoints.clear();
+    route_->option.allow_goal_modification = false;
   } else if (rough_goal_msg && rclcpp::Time(rough_goal_msg->header.stamp) > last_time) {
-    RCLCPP_ERROR_STREAM(get_logger(), "get rough_goal_msg  ");
-    on_rough_goal(rough_goal_msg);
+    request_timing_control_ = 1;
+    route_->header = rough_goal_msg->header;
+    route_->goal = rough_goal_msg->pose;
+    route_->waypoints.clear();
+    route_->option.allow_goal_modification = true;
   }
   if (waypoint_msg && rclcpp::Time(waypoint_msg->header.stamp) > last_time) {
-    on_waypoint(waypoint_msg);
+    if (route_->header.frame_id != waypoint_msg->header.frame_id) {
+      RCLCPP_ERROR_STREAM(get_logger(), "The waypoint frame does not match the goal.");
+      return;
+    }
+    request_timing_control_ = 1;
+    route_->waypoints.push_back(waypoint_msg->pose);
   }
 
   // Wait a moment to combine consecutive goals and checkpoints into a single request.
@@ -89,34 +108,6 @@ void RoutingAdaptor::on_timer()
       cli_route_->async_send_request(route_, [this](auto) { calling_service_ = false; });
     }
   }
-}
-
-void RoutingAdaptor::on_fixed_goal(const PoseStamped::ConstSharedPtr pose)
-{
-  request_timing_control_ = 1;
-  route_->header = pose->header;
-  route_->goal = pose->pose;
-  route_->waypoints.clear();
-  route_->option.allow_goal_modification = false;
-}
-
-void RoutingAdaptor::on_rough_goal(const PoseStamped::ConstSharedPtr pose)
-{
-  request_timing_control_ = 1;
-  route_->header = pose->header;
-  route_->goal = pose->pose;
-  route_->waypoints.clear();
-  route_->option.allow_goal_modification = true;
-}
-
-void RoutingAdaptor::on_waypoint(const PoseStamped::ConstSharedPtr pose)
-{
-  if (route_->header.frame_id != pose->header.frame_id) {
-    RCLCPP_ERROR_STREAM(get_logger(), "The waypoint frame does not match the goal.");
-    return;
-  }
-  request_timing_control_ = 1;
-  route_->waypoints.push_back(pose->pose);
 }
 
 void RoutingAdaptor::on_reroute(const PoseStamped::ConstSharedPtr pose)
