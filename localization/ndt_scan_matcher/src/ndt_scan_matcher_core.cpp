@@ -521,12 +521,12 @@ bool NDTScanMatcher::callback_sensor_points_main(
     message << "transform_probability_array size is not equal to iteration_num + 1."
             << " transform_probability_array size: " << tp_array.size()
             << ", iteration_num: " << ndt_result.iteration_num;
-    diagnostics_scan_points_->updateLevelAndMessage(
+    diagnostics_scan_points_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   } else {
     const float diff = tp_array.back() - tp_array.front();
-    diagnostics_scan_points_->addKeyValue("transform_probability_diff", diff);
-    diagnostics_scan_points_->addKeyValue("transform_probability_before", tp_array.front());
+    diagnostics_scan_points_->add_key_value("transform_probability_diff", diff);
+    diagnostics_scan_points_->add_key_value("transform_probability_before", tp_array.front());
   }
   const std::vector<float> & nvtl_array = ndt_result.nearest_voxel_transformation_likelihood_array;
   if (static_cast<int>(nvtl_array.size()) != ndt_result.iteration_num + 1) {
@@ -536,12 +536,12 @@ bool NDTScanMatcher::callback_sensor_points_main(
       << "nearest_voxel_transformation_likelihood_array size is not equal to iteration_num + 1."
       << " nearest_voxel_transformation_likelihood_array size: " << nvtl_array.size()
       << ", iteration_num: " << ndt_result.iteration_num;
-    diagnostics_scan_points_->updateLevelAndMessage(
+    diagnostics_scan_points_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   } else {
     const float diff = nvtl_array.back() - nvtl_array.front();
-    diagnostics_scan_points_->addKeyValue("nearest_voxel_transformation_likelihood_diff", diff);
-    diagnostics_scan_points_->addKeyValue(
+    diagnostics_scan_points_->add_key_value("nearest_voxel_transformation_likelihood_diff", diff);
+    diagnostics_scan_points_->add_key_value(
       "nearest_voxel_transformation_likelihood_before", nvtl_array.front());
   }
 
