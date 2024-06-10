@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+#include "utils/interface_subscriber.hpp"
 #include "planning.hpp"
 
 #include <motion_utils/trajectory/trajectory.hpp>
@@ -101,8 +101,9 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(pub_velocity_factors_);
   adaptor.init_pub(pub_steering_factors_);
-  adaptor.init_sub(sub_kinematic_state_, this, &PlanningNode::on_kinematic_state);
-  adaptor.init_sub(sub_trajectory_, this, &PlanningNode::on_trajectory);
+
+  trajectory_sub_ = create_polling_subscriber<planning_interface::Trajectory>(this);
+  kinematic_state_sub_ = create_polling_subscriber<localization_interface::KinematicState>(this);
 
   const auto rate = rclcpp::Rate(5);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -128,6 +129,16 @@ void PlanningNode::on_timer()
   using autoware_adapi_v1_msgs::msg::VelocityFactor;
   auto velocity = merge_factors<VelocityFactorArray>(now(), velocity_factors_);
   auto steering = merge_factors<SteeringFactorArray>(now(), steering_factors_);
+  
+  auto trajectory_msg = trajectory_sub_ ->takeData();
+  if(trajectory_msg) {
+    trajectory_ = trajectory_sub_->takeData();
+  }
+
+  auto kinematic_state_msg = kinematic_state_sub_->takeData();
+  if(kinematic_state_msg) {
+    on_kinematic_state(kinematic_state_sub_->takeData());
+  }
 
   // Set the distance if it is nan.
   if (trajectory_ && kinematic_state_) {
