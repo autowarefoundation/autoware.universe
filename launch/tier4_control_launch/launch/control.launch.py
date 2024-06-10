@@ -333,7 +333,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # set container to run all required components in the same process
-    if trajectory_follower_mode == "autoware_trajectory_follower_node":
+    if trajectory_follower_mode == "trajectory_follower_node":
         container = ComposableNodeContainer(
             name="control_container",
             namespace="",
@@ -365,7 +365,7 @@ def launch_setup(context, *args, **kwargs):
         )
     else:
         raise Exception(
-            f"The argument trajectory_follower_mode must be either autoware_trajectory_follower_node or smart_mpc_trajectory_follower, but {trajectory_follower_mode} was given."
+            f"The argument trajectory_follower_mode must be either trajectory_follower_node or smart_mpc_trajectory_follower, but {trajectory_follower_mode} was given."
         )
 
     # control evaluator
@@ -439,7 +439,7 @@ def launch_setup(context, *args, **kwargs):
         executable="pympc_trajectory_follower.py",
         name="pympc_trajectory_follower",
     )
-    if trajectory_follower_mode == "autoware_trajectory_follower_node":
+    if trajectory_follower_mode == "trajectory_follower_node":
         return [group, control_validator_group]
     elif trajectory_follower_mode == "smart_mpc_trajectory_follower":
         return [group, control_validator_group, smart_mpc_trajectory_follower]
@@ -483,8 +483,8 @@ def generate_launch_description():
     add_launch_arg("use_multithread", "true", "use multithread")
     add_launch_arg(
         "trajectory_follower_mode",
-        "autoware_trajectory_follower_node",
-        "Options for which trajectory_follower to use. Options: `autoware_trajectory_follower_node`, `smart_mpc_trajectory_follower`",
+        "trajectory_follower_node",
+        "Options for which trajectory_follower to use. Options: `trajectory_follower_node`, `smart_mpc_trajectory_follower`",
     )
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
