@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "service_utils.hpp"
+#include "component_interface_utils/service_utils.hpp"
 
 #include <string>
 
-namespace service_utils
+namespace component_interface_utils
 {
 
 ServiceException ServiceUnready(const std::string & message)
@@ -29,4 +29,4 @@ ServiceException TransformError(const std::string & message)
   return ServiceException(ResponseStatus::TRANSFORM_ERROR, message, false);
 };
 
-}  // namespace service_utils
+}  // namespace component_interface_utils

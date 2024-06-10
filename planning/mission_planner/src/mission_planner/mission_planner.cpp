@@ -14,8 +14,7 @@
 
 #include "mission_planner.hpp"
 
-#include "service_utils.hpp"
-
+#include <component_interface_utils/service_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/route_checker.hpp>
@@ -69,13 +68,14 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   sub_modified_goal_ = create_subscription<PoseWithUuidStamped>(
     "~/input/modified_goal", durable_qos, std::bind(&MissionPlanner::on_modified_goal, this, _1));
   srv_clear_route = create_service<ClearRoute>(
-    "~/clear_route", service_utils::handle_exception(&MissionPlanner::on_clear_route, this));
+    "~/clear_route",
+    component_interface_utils::handle_exception(&MissionPlanner::on_clear_route, this));
   srv_set_lanelet_route = create_service<SetLaneletRoute>(
     "~/set_lanelet_route",
-    service_utils::handle_exception(&MissionPlanner::on_set_lanelet_route, this));
+    component_interface_utils::handle_exception(&MissionPlanner::on_set_lanelet_route, this));
   srv_set_waypoint_route = create_service<SetWaypointRoute>(
     "~/set_waypoint_route",
-    service_utils::handle_exception(&MissionPlanner::on_set_waypoint_route, this));
+    component_interface_utils::handle_exception(&MissionPlanner::on_set_waypoint_route, this));
   pub_route_ = create_publisher<LaneletRoute>("~/route", durable_qos);
   pub_state_ = create_publisher<RouteState>("~/state", durable_qos);
 
@@ -157,7 +157,7 @@ Pose MissionPlanner::transform_pose(const Pose & pose, const Header & header)
     tf2::doTransform(pose, result, transform);
     return result;
   } catch (tf2::TransformException & error) {
-    throw service_utils::TransformError(error.what());
+    throw component_interface_utils::TransformError(error.what());
   }
 }
 
@@ -222,19 +222,19 @@ void MissionPlanner::on_set_lanelet_route(
   const auto is_reroute = state_.state == RouteState::SET;
 
   if (state_.state != RouteState::UNSET && state_.state != RouteState::SET) {
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "The route cannot be set in the current state.");
   }
   if (!planner_->ready()) {
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
   if (!odometry_) {
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
   if (is_reroute && !reroute_availability_->availability) {
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
   }
 
@@ -244,14 +244,14 @@ void MissionPlanner::on_set_lanelet_route(
   if (route.segments.empty()) {
     cancel_route();
     change_state(is_reroute ? RouteState::SET : RouteState::UNSET);
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
   }
 
   if (is_reroute && !check_reroute_safety(*current_route_, route)) {
     cancel_route();
     change_state(RouteState::SET);
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_REROUTE_FAILED, "New route is not safe. Reroute failed.");
   }
 
@@ -270,19 +270,19 @@ void MissionPlanner::on_set_waypoint_route(
   const auto is_reroute = state_.state == RouteState::SET;
 
   if (state_.state != RouteState::UNSET && state_.state != RouteState::SET) {
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "The route cannot be set in the current state.");
   }
   if (!planner_->ready()) {
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
   if (!odometry_) {
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
   if (is_reroute && !reroute_availability_->availability) {
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "Cannot reroute as the planner is not in lane following.");
   }
 
@@ -292,14 +292,14 @@ void MissionPlanner::on_set_waypoint_route(
   if (route.segments.empty()) {
     cancel_route();
     change_state(is_reroute ? RouteState::SET : RouteState::UNSET);
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
   }
 
   if (is_reroute && !check_reroute_safety(*current_route_, route)) {
     cancel_route();
     change_state(RouteState::SET);
-    throw service_utils::ServiceException(
+    throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_REROUTE_FAILED, "New route is not safe. Reroute failed.");
   }
 

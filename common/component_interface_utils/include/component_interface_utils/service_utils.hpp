@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER__SERVICE_UTILS_HPP_
-#define MISSION_PLANNER__SERVICE_UTILS_HPP_
+#ifndef COMPONENT_INTERFACE_UTILS__SERVICE_UTILS_HPP_
+#define COMPONENT_INTERFACE_UTILS__SERVICE_UTILS_HPP_
 
 #include <autoware_common_msgs/msg/response_status.hpp>
 
 #include <stdexcept>
 #include <string>
 
-namespace service_utils
+namespace component_interface_utils
 {
 
 using ResponseStatus = autoware_common_msgs::msg::ResponseStatus;
@@ -75,6 +75,6 @@ ResponseStatus sync_call(T & client, Req req)
   return future.get()->status;
 }
 
-}  // namespace service_utils
+}  // namespace component_interface_utils
 
-#endif  // MISSION_PLANNER__SERVICE_UTILS_HPP_
+#endif  // COMPONENT_INTERFACE_UTILS__SERVICE_UTILS_HPP_
