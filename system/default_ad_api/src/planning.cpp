@@ -118,19 +118,16 @@ void PlanningNode::on_timer()
 
   auto trajectory_msg = trajectory_sub_->takeData();
   if (trajectory_msg) {
-
-  auto trajectory_msg = trajectory_sub_->takeData();
-  if (trajectory_msg) {
     trajectory_ = trajectory_sub_->takeData();
   }
 
   auto kinematic_state_msg = kinematic_state_sub_->takeData();
   if (kinematic_state_msg) {
-    kinematic_state_ = msg;
+    kinematic_state_ = kinematic_state_msg;
 
     geometry_msgs::msg::TwistStamped twist;
-    twist.header = msg->header;
-    twist.twist = msg->twist.twist;
+    twist.header = kinematic_state_msg->header;
+    twist.twist = kinematic_state_msg->twist.twist;
     stop_checker_->addTwist(twist);
   }
 
