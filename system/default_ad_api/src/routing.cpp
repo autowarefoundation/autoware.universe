@@ -14,6 +14,7 @@
 
 #include "routing.hpp"
 
+#include "utils/interface_subscriber.hpp"
 #include "utils/route_conversion.hpp"
 
 #include <memory>
@@ -55,7 +56,6 @@ RoutingNode::RoutingNode(const rclcpp::NodeOptions & options) : Node("routing", 
   adaptor.init_pub(pub_state_);
   adaptor.init_pub(pub_route_);
   adaptor.init_sub(sub_state_, this, &RoutingNode::on_state);
-  adaptor.init_sub(sub_route_, this, &RoutingNode::on_route);
   adaptor.init_cli(cli_clear_route_, group_cli_);
   adaptor.init_cli(cli_set_waypoint_route_, group_cli_);
   adaptor.init_cli(cli_set_lanelet_route_, group_cli_);
@@ -64,10 +64,12 @@ RoutingNode::RoutingNode(const rclcpp::NodeOptions & options) : Node("routing", 
   adaptor.init_srv(srv_set_route_points_, this, &RoutingNode::on_set_route_points);
   adaptor.init_srv(srv_change_route_, this, &RoutingNode::on_change_route);
   adaptor.init_srv(srv_change_route_points_, this, &RoutingNode::on_change_route_points);
-
+  
+  route_sub_ = create_polling_subscriber<planning_interface::LaneletRoute>(this);
+  operation_mode_sub_ = create_polling_subscriber<system_interface::OperationModeState>(this);
+  
   adaptor.init_cli(cli_operation_mode_, group_cli_);
-  adaptor.init_sub(sub_operation_mode_, this, &RoutingNode::on_operation_mode);
-
+  
   is_auto_mode_ = false;
   state_.state = State::Message::UNKNOWN;
 }
@@ -89,6 +91,12 @@ void RoutingNode::on_operation_mode(const OperationModeState::Message::ConstShar
 
 void RoutingNode::on_state(const State::Message::ConstSharedPtr msg)
 {
+  auto operation_mode_msg = operation_mode_sub_->takeData();
+  if (operation_mode_msg) is_auto_mode_ = operation_mode_msg->mode == OperationModeState::Message::AUTONOMOUS;
+
+  auto route_msg = route_sub_->takeData();
+  if (route_msg) pub_route_->publish(conversion::create_empty_route(route_msg->header.stamp));
+  
   // TODO(Takagi, Isamu): Add adapi initializing state.
   // Represent initializing state by not publishing the topic for now.
   if (msg->state == State::Message::INITIALIZING) {
@@ -106,7 +114,7 @@ void RoutingNode::on_state(const State::Message::ConstSharedPtr msg)
   // TODO(Takagi, Isamu): Remove when the mission planner supports an empty route.
   if (msg->state == State::Message::UNSET) {
     pub_route_->publish(conversion::create_empty_route(msg->stamp));
-  }
+  } 
 }
 
 void RoutingNode::on_route(const Route::Message::ConstSharedPtr msg)
