@@ -18,7 +18,7 @@
 #include "behavior_path_goal_planner_module/goal_searcher_base.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
-#include <lane_departure_checker/lane_departure_checker.hpp>
+#include <autoware_lane_departure_checker/lane_departure_checker.hpp>
 
 #include "visualization_msgs/msg/detail/marker_array__struct.hpp"
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -58,8 +58,9 @@ lanelet::ConstLanelets generateExpandedPullOverLanes(
 
 lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
   const lanelet::ConstLanelets & pull_over_lanes, const bool left_side,
-  const geometry_msgs::msg::Pose ego_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const double outer_road_offset, const double inner_road_offset);
+  const geometry_msgs::msg::Pose ego_pose,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const double outer_road_offset,
+  const double inner_road_offset);
 PredictedObjects extractObjectsInExpandedPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
   const double forward_distance, double bound_offset, const PredictedObjects & objects);
