@@ -27,9 +27,9 @@
 #include "autoware_behavior_path_start_planner_module/pull_out_path.hpp"
 #include "autoware_behavior_path_start_planner_module/shift_pull_out.hpp"
 
-#include <lane_departure_checker/lane_departure_checker.hpp>
-#include <vehicle_info_util/vehicle_info.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
+#include <autoware_lane_departure_checker/lane_departure_checker.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -46,13 +46,13 @@
 
 namespace behavior_path_planner
 {
+using autoware::lane_departure_checker::LaneDepartureChecker;
 using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
 using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
 using behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
 using geometry_msgs::msg::PoseArray;
-using lane_departure_checker::LaneDepartureChecker;
 using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
 
 struct PullOutStatus
@@ -255,7 +255,7 @@ private:
   mutable std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
   mutable std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
   mutable std::shared_ptr<SafetyCheckParams> safety_check_params_;
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> start_planners_;
   PullOutStatus status_;
