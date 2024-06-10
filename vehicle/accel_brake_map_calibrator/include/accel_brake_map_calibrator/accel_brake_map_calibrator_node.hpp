@@ -235,7 +235,7 @@ private:
   std::ofstream output_log_;
 
   bool get_current_pitch_from_tf(double * pitch);
-  void timer_callback();
+  void fetch_data();
   void timer_callback_output_csv();
   void execute_update(
     const bool accel_mode, const int accel_pedal_index, const int accel_vel_index,

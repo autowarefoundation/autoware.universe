@@ -49,8 +49,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   max_data_count_ = static_cast<int>(declare_parameter<int>("max_data_count", 200));
   pedal_accel_graph_output_ = declare_parameter<bool>("pedal_accel_graph_output", false);
   progress_file_output_ = declare_parameter<bool>("progress_file_output", false);
-  precision_ = static_cast<int>(declare_parameter<int>("precision", 3));
-  const auto get_pitch_method_str = declare_parameter("get_pitch_method", std::string("tf"));
+  precision_ = static_cast<int>(declare_parameter("precision", 3));  const auto get_pitch_method_str = declare_parameter("get_pitch_method", std::string("tf"));
   if (get_pitch_method_str == std::string("tf")) {
     get_pitch_method_ = GET_PITCH_METHOD::TF;
   } else if (get_pitch_method_str == std::string("none")) {
@@ -234,7 +233,7 @@ void AccelBrakeMapCalibrator::init_timer(double period_s)
   const auto period_ns =
     std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(period_s));
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&AccelBrakeMapCalibrator::timer_callback, this));
+    this, get_clock(), period_ns, std::bind(&AccelBrakeMapCalibrator::fetch_data, this));
 }
 
 bool AccelBrakeMapCalibrator::get_current_pitch_from_tf(double * pitch)
@@ -299,7 +298,7 @@ bool AccelBrakeMapCalibrator::fetch_data()
   return true;
 }
 
-void AccelBrakeMapCalibrator::timer_callback()
+void AccelBrakeMapCalibrator::fetch_data()
 {
   update_count_++;
 
