@@ -2,7 +2,7 @@
   <arg name="interface_input_topic" default="/planning/scenario_planning/lane_driving/behavior_planning/path"/>
   <arg name="interface_output_topic" default="/planning/scenario_planning/lane_driving/trajectory"/>
 
-  <arg name="launch_motion_out_of_lane_module" default="true"/>
+  <arg name="launch_out_of_lane_module" default="true"/>
   <!-- <arg name="launch_dynamic_obstacle_stop_module" default="true"/> -->
   <arg name="launch_module_list_end" default="&quot;&quot;]"/>
 
@@ -11,7 +11,7 @@
   <let
     name="motion_velocity_planner_launch_modules"
     value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + 'autoware::motion_velocity_planner::OutOfLaneModule, '&quot;)"
-    if="$(var launch_motion_out_of_lane_module)"
+    if="$(var launch_out_of_lane_module)"
   />
   <!-- <let -->
   <!--   name="motion_velocity_planner_launch_modules" -->
@@ -28,7 +28,7 @@
   <group>
     <group if="$(eval &quot;'$(var motion_path_smoother_type)' == 'elastic_band'&quot;)">
       <load_composable_node target="/planning/scenario_planning/lane_driving/motion_planning/motion_planning_container">
-        <composable_node pkg="path_smoother" plugin="path_smoother::ElasticBandSmoother" name="elastic_band_smoother" namespace="">
+        <composable_node pkg="autoware_path_smoother" plugin="autoware::path_smoother::ElasticBandSmoother" name="elastic_band_smoother" namespace="">
           <!-- topic remap -->
           <remap from="~/input/path" to="$(var interface_input_topic)"/>
           <remap from="~/input/odometry" to="/localization/kinematic_state"/>
@@ -146,7 +146,7 @@
     <load_composable_node target="/planning/scenario_planning/lane_driving/motion_planning/motion_planning_container">
       <composable_node pkg="obstacle_velocity_limiter" plugin="obstacle_velocity_limiter::ObstacleVelocityLimiterNode" name="obstacle_velocity_limiter" namespace="">
         <!-- topic remap -->
-        <remap from="~/input/trajectory" to="path_optimizer/trajectory"/>
+        <remap from="~/input/trajectory" to="motion_velocity_planner/trajectory"/>
         <remap from="~/input/odometry" to="/localization/kinematic_state"/>
         <remap from="~/input/dynamic_obstacles" to="/perception/object_recognition/objects"/>
         <remap from="~/input/occupancy_grid" to="/perception/occupancy_grid_map/map"/>
