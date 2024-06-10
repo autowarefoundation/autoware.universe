@@ -31,7 +31,7 @@ class TensorRTWrapper
 public:
   explicit TensorRTWrapper(const CenterPointConfig & config);
 
-  ~TensorRTWrapper();
+  virtual ~TensorRTWrapper();
 
   bool init(
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision);
