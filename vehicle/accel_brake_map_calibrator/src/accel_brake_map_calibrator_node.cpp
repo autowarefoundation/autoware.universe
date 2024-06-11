@@ -50,6 +50,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   pedal_accel_graph_output_ = declare_parameter<bool>("pedal_accel_graph_output", false);
   progress_file_output_ = declare_parameter<bool>("progress_file_output", false);
   precision_ = static_cast<int>(declare_parameter("precision", 3));  const auto get_pitch_method_str = declare_parameter("get_pitch_method", std::string("tf"));
+  const auto get_pitch_method_str = declare_parameter("get_pitch_method", std::string("tf"));
   if (get_pitch_method_str == std::string("tf")) {
     get_pitch_method_ = GET_PITCH_METHOD::TF;
   } else if (get_pitch_method_str == std::string("none")) {
