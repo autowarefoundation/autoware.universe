@@ -49,7 +49,6 @@ private:
   Srv<autoware_ad_api::routing::ChangeRoute> srv_change_route_;
   Srv<autoware_ad_api::routing::ClearRoute> srv_clear_route_;
   Sub<planning_interface::RouteState> sub_state_;
-  // Sub<planning_interface::LaneletRoute> sub_route_;
   Cli<planning_interface::SetWaypointRoute> cli_set_waypoint_route_;
   Cli<planning_interface::SetLaneletRoute> cli_set_lanelet_route_;
   Cli<planning_interface::ClearRoute> cli_clear_route_;
