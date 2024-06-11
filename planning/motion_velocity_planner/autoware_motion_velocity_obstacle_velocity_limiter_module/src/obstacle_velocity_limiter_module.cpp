@@ -27,6 +27,7 @@
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
+#include <tier4_autoware_utils/ros/update_param.hpp>
 
 #include <boost/geometry.hpp>
 
@@ -63,69 +64,71 @@ void ObstacleVelocityLimiterModule::init(rclcpp::Node & node, const std::string 
 void ObstacleVelocityLimiterModule::update_parameters(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-  (void)parameters;
-  // TODO(Maxime): use updateParam
-  // for (const auto & parameter : parameters) {
-  //   if (parameter.get_name() == "distance_buffer") {
-  //     distance_buffer_ = static_cast<double>(parameter.as_double());
-  //     projection_params_.extra_length = vehicle_front_offset_ + distance_buffer_;
-  //     // Preprocessing parameters
-  //   } else if (parameter.get_name() == PreprocessingParameters::START_DIST_PARAM) {
-  //     preprocessing_params_.start_distance = static_cast<double>(parameter.as_double());
-  //   } else if (parameter.get_name() == PreprocessingParameters::DOWNSAMPLING_PARAM) {
-  //     preprocessing_params_.updateDownsampleFactor(parameter.as_int());
-  //   } else if (parameter.get_name() == PreprocessingParameters::CALC_STEER_PARAM) {
-  //     preprocessing_params_.calculate_steering_angles = parameter.as_bool();
-  //   } else if (parameter.get_name() == PreprocessingParameters::MAX_LENGTH_PARAM) {
-  //     preprocessing_params_.max_length = static_cast<double>(parameter.as_double());
-  //   } else if (parameter.get_name() == PreprocessingParameters::MAX_DURATION_PARAM) {
-  //     preprocessing_params_.max_duration = static_cast<double>(parameter.as_double());
-  //     // Velocity parameters
-  //   } else if (parameter.get_name() == VelocityParameters::MIN_VEL_PARAM) {
-  //     velocity_params_.min_velocity = static_cast<double>(parameter.as_double());
-  //   } else if (parameter.get_name() == VelocityParameters::MAX_DECEL_PARAM) {
-  //     velocity_params_.max_deceleration = static_cast<double>(parameter.as_double());
-  //     // Obstacle parameters
-  //   } else if (parameter.get_name() == ProjectionParameters::DURATION_PARAM) {
-  //     const auto min_ttc = static_cast<double>(parameter.as_double());
-  //     if (min_ttc > 0.0)
-  //       projection_params_.duration = min_ttc;
-  //   } else if (parameter.get_name() == ObstacleParameters::DYN_SOURCE_PARAM) {
-  //     obstacle_params_.updateType(*this, parameter.as_string());
-  //   } else if (parameter.get_name() == ObstacleParameters::OCC_GRID_THRESH_PARAM) {
-  //     obstacle_params_.occupancy_grid_threshold = static_cast<int8_t>(parameter.as_int());
-  //   } else if (parameter.get_name() == ObstacleParameters::BUFFER_PARAM) {
-  //     obstacle_params_.dynamic_obstacles_buffer = static_cast<double>(parameter.as_double());
-  //   } else if (parameter.get_name() == ObstacleParameters::MIN_VEL_PARAM) {
-  //     obstacle_params_.dynamic_obstacles_min_vel = static_cast<double>(parameter.as_double());
-  //   } else if (parameter.get_name() == ObstacleParameters::MAP_TAGS_PARAM) {
-  //     obstacle_params_.static_map_tags = parameter.as_string_array();
-  //     if (lanelet_map_ptr_)
-  //       static_map_obstacles_ =
-  //         extractStaticObstacles(*lanelet_map_ptr_, obstacle_params_.static_map_tags);
-  //   } else if (parameter.get_name() == ObstacleParameters::FILTERING_PARAM) {
-  //     obstacle_params_.filter_envelope = parameter.as_bool();
-  //   } else if (parameter.get_name() == ObstacleParameters::IGNORE_ON_PATH_PARAM) {
-  //     obstacle_params_.ignore_on_path = parameter.as_bool();
-  //   } else if (parameter.get_name() == ObstacleParameters::IGNORE_DIST_PARAM) {
-  //     obstacle_params_.ignore_extra_distance = static_cast<double>(parameter.as_double());
-  //   } else if (parameter.get_name() == ObstacleParameters::RTREE_POINTS_PARAM) {
-  //     obstacle_params_.updateRtreeMinPoints(*this, static_cast<int>(parameter.as_int()));
-  //   } else if (parameter.get_name() == ObstacleParameters::RTREE_SEGMENTS_PARAM) {
-  //     obstacle_params_.updateRtreeMinSegments(*this, static_cast<int>(parameter.as_int()));
-  //     // Projection parameters
-  //   } else if (parameter.get_name() == ProjectionParameters::MODEL_PARAM) {
-  //     projection_params_.updateModel(*this, parameter.as_string());
-  //   } else if (parameter.get_name() == ProjectionParameters::NB_POINTS_PARAM) {
-  //     projection_params_.updateNbPoints(*this, static_cast<int>(parameter.as_int()));
-  //   } else if (parameter.get_name() == ProjectionParameters::STEER_OFFSET_PARAM) {
-  //     projection_params_.steering_angle_offset = parameter.as_double();
-  //   } else if (parameter.get_name() == ProjectionParameters::DISTANCE_METHOD_PARAM) {
-  //     projection_params_.updateDistanceMethod(*this, parameter.as_string());
-  //   } else {
-  //     RCLCPP_WARN(logger_, "Unknown parameter %s", parameter.get_name().c_str());
-  //   }
-  // }
+  using obstacle_velocity_limiter::ObstacleParameters;
+  using obstacle_velocity_limiter::PreprocessingParameters;
+  using obstacle_velocity_limiter::ProjectionParameters;
+  using obstacle_velocity_limiter::VelocityParameters;
+  for (const auto & parameter : parameters) {
+    if (parameter.get_name() == "distance_buffer") {
+      distance_buffer_ = static_cast<double>(parameter.as_double());
+      projection_params_.extra_length = vehicle_front_offset_ + distance_buffer_;
+      // Preprocessing parameters
+    } else if (parameter.get_name() == PreprocessingParameters::START_DIST_PARAM) {
+      preprocessing_params_.start_distance = static_cast<double>(parameter.as_double());
+    } else if (parameter.get_name() == PreprocessingParameters::DOWNSAMPLING_PARAM) {
+      preprocessing_params_.updateDownsampleFactor(parameter.as_int());
+    } else if (parameter.get_name() == PreprocessingParameters::CALC_STEER_PARAM) {
+      preprocessing_params_.calculate_steering_angles = parameter.as_bool();
+    } else if (parameter.get_name() == PreprocessingParameters::MAX_LENGTH_PARAM) {
+      preprocessing_params_.max_length = static_cast<double>(parameter.as_double());
+    } else if (parameter.get_name() == PreprocessingParameters::MAX_DURATION_PARAM) {
+      preprocessing_params_.max_duration = static_cast<double>(parameter.as_double());
+      // Velocity parameters
+    } else if (parameter.get_name() == VelocityParameters::MIN_VEL_PARAM) {
+      velocity_params_.min_velocity = static_cast<double>(parameter.as_double());
+    } else if (parameter.get_name() == VelocityParameters::MAX_DECEL_PARAM) {
+      velocity_params_.max_deceleration = static_cast<double>(parameter.as_double());
+      // Obstacle parameters
+    } else if (parameter.get_name() == ProjectionParameters::DURATION_PARAM) {
+      const auto min_ttc = static_cast<double>(parameter.as_double());
+      if (min_ttc > 0.0) projection_params_.duration = min_ttc;
+    } else if (parameter.get_name() == ObstacleParameters::DYN_SOURCE_PARAM) {
+      obstacle_params_.updateType(logger_, parameter.as_string());
+    } else if (parameter.get_name() == ObstacleParameters::OCC_GRID_THRESH_PARAM) {
+      obstacle_params_.occupancy_grid_threshold = static_cast<int8_t>(parameter.as_int());
+    } else if (parameter.get_name() == ObstacleParameters::BUFFER_PARAM) {
+      obstacle_params_.dynamic_obstacles_buffer = static_cast<double>(parameter.as_double());
+    } else if (parameter.get_name() == ObstacleParameters::MIN_VEL_PARAM) {
+      obstacle_params_.dynamic_obstacles_min_vel = static_cast<double>(parameter.as_double());
+    } else if (parameter.get_name() == ObstacleParameters::MAP_TAGS_PARAM) {
+      // TODO(Maxime): implement in the node
+      // obstacle_params_.static_map_tags = parameter.as_string_array();
+      // if (lanelet_map_ptr_)
+      //   static_map_obstacles_ =
+      //     extractStaticObstacles(*lanelet_map_ptr_, obstacle_params_.static_map_tags);
+    } else if (parameter.get_name() == ObstacleParameters::FILTERING_PARAM) {
+      obstacle_params_.filter_envelope = parameter.as_bool();
+    } else if (parameter.get_name() == ObstacleParameters::IGNORE_ON_PATH_PARAM) {
+      obstacle_params_.ignore_on_path = parameter.as_bool();
+    } else if (parameter.get_name() == ObstacleParameters::IGNORE_DIST_PARAM) {
+      obstacle_params_.ignore_extra_distance = static_cast<double>(parameter.as_double());
+    } else if (parameter.get_name() == ObstacleParameters::RTREE_POINTS_PARAM) {
+      obstacle_params_.updateRtreeMinPoints(logger_, static_cast<int>(parameter.as_int()));
+    } else if (parameter.get_name() == ObstacleParameters::RTREE_SEGMENTS_PARAM) {
+      obstacle_params_.updateRtreeMinSegments(logger_, static_cast<int>(parameter.as_int()));
+      // Projection parameters
+    } else if (parameter.get_name() == ProjectionParameters::MODEL_PARAM) {
+      projection_params_.updateModel(logger_, parameter.as_string());
+    } else if (parameter.get_name() == ProjectionParameters::NB_POINTS_PARAM) {
+      projection_params_.updateNbPoints(logger_, static_cast<int>(parameter.as_int()));
+    } else if (parameter.get_name() == ProjectionParameters::STEER_OFFSET_PARAM) {
+      projection_params_.steering_angle_offset = parameter.as_double();
+    } else if (parameter.get_name() == ProjectionParameters::DISTANCE_METHOD_PARAM) {
+      projection_params_.updateDistanceMethod(logger_, parameter.as_string());
+    } else {
+      RCLCPP_WARN(logger_, "Unknown parameter %s", parameter.get_name().c_str());
+    }
+  }
 }
 
 VelocityPlanningResult ObstacleVelocityLimiterModule::plan(

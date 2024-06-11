@@ -17,6 +17,7 @@
 
 #include "types.hpp"
 
+#include <rclcpp/logger.hpp>
 #include <rclcpp/node.hpp>
 
 #include <tf2/utils.h>
@@ -54,7 +55,7 @@ struct ObstacleParameters
   ObstacleParameters() = default;
   explicit ObstacleParameters(rclcpp::Node & node)
   {
-    updateType(node, node.declare_parameter<std::string>(DYN_SOURCE_PARAM));
+    updateType(node.get_logger(), node.declare_parameter<std::string>(DYN_SOURCE_PARAM));
     occupancy_grid_threshold =
       static_cast<int8_t>(node.declare_parameter<int>(OCC_GRID_THRESH_PARAM));
     dynamic_obstacles_buffer = static_cast<Float>(node.declare_parameter<Float>(BUFFER_PARAM));
@@ -63,12 +64,13 @@ struct ObstacleParameters
     filter_envelope = node.declare_parameter<bool>(FILTERING_PARAM);
     ignore_on_path = node.declare_parameter<bool>(IGNORE_ON_PATH_PARAM);
     ignore_extra_distance = static_cast<Float>(node.declare_parameter<Float>(IGNORE_DIST_PARAM));
-    updateRtreeMinPoints(node, static_cast<int>(node.declare_parameter<int>(RTREE_POINTS_PARAM)));
+    updateRtreeMinPoints(
+      node.get_logger(), static_cast<int>(node.declare_parameter<int>(RTREE_POINTS_PARAM)));
     updateRtreeMinSegments(
-      node, static_cast<int>(node.declare_parameter<int>(RTREE_SEGMENTS_PARAM)));
+      node.get_logger(), static_cast<int>(node.declare_parameter<int>(RTREE_SEGMENTS_PARAM)));
   }
 
-  bool updateType(rclcpp::Node & node, const std::string & type)
+  bool updateType(const rclcpp::Logger & logger, const std::string & type)
   {
     if (type == "pointcloud") {
       dynamic_source = POINTCLOUD;
@@ -79,29 +81,27 @@ struct ObstacleParameters
     } else {
       dynamic_source = STATIC_ONLY;
       RCLCPP_WARN(
-        node.get_logger(), "Unknown '%s' value: '%s'. Using default 'static_only'.",
-        DYN_SOURCE_PARAM, type.c_str());
+        logger, "Unknown '%s' value: '%s'. Using default 'static_only'.", DYN_SOURCE_PARAM,
+        type.c_str());
       return false;
     }
     return true;
   }
 
-  bool updateRtreeMinPoints(rclcpp::Node & node, const int & size)
+  bool updateRtreeMinPoints(const rclcpp::Logger & logger, const int & size)
   {
     if (size < 0) {
-      RCLCPP_WARN(
-        node.get_logger(), "Min points for the Rtree must be positive. %d was given.", size);
+      RCLCPP_WARN(logger, "Min points for the Rtree must be positive. %d was given.", size);
       return false;
     }
     rtree_min_segments = static_cast<size_t>(size);
     return true;
   }
 
-  bool updateRtreeMinSegments(rclcpp::Node & node, const int & size)
+  bool updateRtreeMinSegments(const rclcpp::Logger & logger, const int & size)
   {
     if (size < 0) {
-      RCLCPP_WARN(
-        node.get_logger(), "Min segments for the Rtree must be positive. %d was given.", size);
+      RCLCPP_WARN(logger, "Min segments for the Rtree must be positive. %d was given.", size);
       return false;
     }
     rtree_min_segments = static_cast<size_t>(size);
@@ -132,14 +132,15 @@ struct ProjectionParameters
   ProjectionParameters() = default;
   explicit ProjectionParameters(rclcpp::Node & node)
   {
-    updateModel(node, node.declare_parameter<std::string>(MODEL_PARAM));
-    updateDistanceMethod(node, node.declare_parameter<std::string>(DISTANCE_METHOD_PARAM));
-    updateNbPoints(node, node.declare_parameter<int>(NB_POINTS_PARAM));
+    const auto & logger = node.get_logger();
+    updateModel(logger, node.declare_parameter<std::string>(MODEL_PARAM));
+    updateDistanceMethod(logger, node.declare_parameter<std::string>(DISTANCE_METHOD_PARAM));
+    updateNbPoints(logger, node.declare_parameter<int>(NB_POINTS_PARAM));
     steering_angle_offset = node.declare_parameter<double>(STEER_OFFSET_PARAM);
     duration = node.declare_parameter<double>(DURATION_PARAM);
   }
 
-  bool updateModel(rclcpp::Node & node, const std::string & model_str)
+  bool updateModel(const rclcpp::Logger & logger, const std::string & model_str)
   {
     if (model_str == "particle") {
       model = PARTICLE;
@@ -147,14 +148,13 @@ struct ProjectionParameters
       model = BICYCLE;
     } else {
       RCLCPP_WARN(
-        node.get_logger(), "Unknown projection model: '%s'. Using default PARTICLE model.",
-        model_str.c_str());
+        logger, "Unknown projection model: '%s'. Using default PARTICLE model.", model_str.c_str());
       return false;
     }
     return true;
   }
 
-  bool updateDistanceMethod(rclcpp::Node & node, const std::string & method_str)
+  bool updateDistanceMethod(const rclcpp::Logger & logger, const std::string & method_str)
   {
     if (method_str == "exact") {
       distance_method = EXACT;
@@ -162,18 +162,18 @@ struct ProjectionParameters
       distance_method = APPROXIMATION;
     } else {
       RCLCPP_WARN(
-        node.get_logger(), "Unknown distance calculation method: '%s'. Using default EXACT method.",
+        logger, "Unknown distance calculation method: '%s'. Using default EXACT method.",
         method_str.c_str());
       return false;
     }
     return true;
   }
 
-  bool updateNbPoints(rclcpp::Node & node, const int nb_points)
+  bool updateNbPoints(const rclcpp::Logger & logger, const int nb_points)
   {
     if (nb_points < 2) {
       RCLCPP_WARN(
-        node.get_logger(), "Cannot use less than 2 points per projection. Using value %d instead.",
+        logger, "Cannot use less than 2 points per projection. Using value %d instead.",
         points_per_projection);
       return false;
     }
