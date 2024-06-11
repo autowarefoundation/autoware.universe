@@ -23,7 +23,7 @@
 #include <vector>
 
 using autoware::behavior_path_planner::BehaviorPathPlannerNode;
-using planning_test_utils::PlanningInterfaceTestManager;
+using autoware::planning_test_manager::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {

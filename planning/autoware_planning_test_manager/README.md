@@ -29,7 +29,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   rclcpp::init(0, nullptr);
 
   // instantiate test_manager with PlanningInterfaceTestManager type
-  auto test_manager = std::make_shared<planning_test_utils::PlanningInterfaceTestManager>();
+  auto test_manager = std::make_shared<autoware::planning_test_manager::PlanningInterfaceTestManager>();
 
   // get package directories for necessary configuration files
   const auto planning_test_utils_dir =

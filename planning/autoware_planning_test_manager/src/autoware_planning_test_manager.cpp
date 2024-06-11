@@ -19,7 +19,7 @@
 #include <planning_test_utils/planning_test_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
-namespace planning_test_utils
+namespace autoware::planning_test_manager
 {
 
 PlanningInterfaceTestManager::PlanningInterfaceTestManager()
@@ -455,4 +455,4 @@ int PlanningInterfaceTestManager::getReceivedTopicNum()
   return count_;
 }
 
-}  // namespace planning_test_utils
+}  // namespace autoware::planning_test_manager

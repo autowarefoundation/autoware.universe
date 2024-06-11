@@ -24,7 +24,7 @@
 #include <vector>
 namespace autoware::scenario_selector
 {
-using planning_test_utils::PlanningInterfaceTestManager;
+using autoware::planning_test_manager::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {

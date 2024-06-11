@@ -23,7 +23,7 @@
 #include <vector>
 
 using autoware::motion_velocity_planner::MotionVelocityPlannerNode;
-using planning_test_utils::PlanningInterfaceTestManager;
+using autoware::planning_test_manager::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {

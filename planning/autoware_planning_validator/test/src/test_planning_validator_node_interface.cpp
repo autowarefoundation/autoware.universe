@@ -22,12 +22,13 @@
 
 #include <vector>
 
+using autoware::planning_test_manager::PlanningInterfaceTestManager;
 using autoware::planning_validator::PlanningValidator;
-using planning_test_utils::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
-  auto test_manager = std::make_shared<planning_test_utils::PlanningInterfaceTestManager>();
+  auto test_manager =
+    std::make_shared<autoware::planning_test_manager::PlanningInterfaceTestManager>();
 
   // set subscriber with topic name: planning_validator → test_node_
   test_manager->setTrajectorySubscriber("planning_validator/output/trajectory");

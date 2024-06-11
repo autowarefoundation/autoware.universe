@@ -24,7 +24,7 @@
 #include <vector>
 
 using autoware::behavior_velocity_planner::BehaviorVelocityPlannerNode;
-using planning_test_utils::PlanningInterfaceTestManager;
+using autoware::planning_test_manager::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {

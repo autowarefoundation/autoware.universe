@@ -22,8 +22,8 @@
 
 #include <vector>
 
+using autoware::planning_test_manager::PlanningInterfaceTestManager;
 using autoware::velocity_smoother::VelocitySmootherNode;
-using planning_test_utils::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
