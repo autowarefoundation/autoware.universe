@@ -22,7 +22,7 @@ nav:
     - 'Template for Custom Module': planning/autoware_behavior_velocity_template_module
     - 'Available Module':
         - 'Blind Spot': planning/autoware_behavior_velocity_blind_spot_module
-        - 'Crosswalk': planning/behavior_velocity_crosswalk_module
+        - 'Crosswalk': planning/autoware_behavior_velocity_crosswalk_module
         - 'Detection Area': planning/behavior_velocity_detection_area_module
         - 'Dynamic Obstacle Stop': planning/behavior_velocity_dynamic_obstacle_stop_module
         - 'Intersection': planning/autoware_behavior_velocity_intersection_module
@@ -47,8 +47,8 @@ nav:
       - 'Model Predictive Trajectory (MPT)': planning/autoware_path_optimizer/docs/mpt
       - 'How to Debug': planning/autoware_path_optimizer/docs/debug
     - 'Obstacle Cruise Planner':
-      - 'About Obstacle Cruise': planning/obstacle_cruise_planner
-      - 'How to Debug': planning/obstacle_cruise_planner/docs/debug
+      - 'About Obstacle Cruise': planning/autoware_obstacle_cruise_planner
+      - 'How to Debug': planning/autoware_obstacle_cruise_planner/docs/debug
     - 'Obstacle Stop Planner': planning/obstacle_stop_planner
     - 'Obstacle Velocity Limiter': planning/obstacle_velocity_limiter
     - 'Path Smoother':
@@ -75,7 +75,7 @@ nav:
     - 'Costmap Generator': planning/costmap_generator
     - 'External Velocity Limit Selector': planning/autoware_external_velocity_limit_selector
     - 'Objects of Interest Marker Interface': planning/autoware_objects_of_interest_marker_interface
-    - 'Route Handler': planning/route_handler
+    - 'Route Handler': planning/autoware_route_handler
     - 'RTC Interface': planning/autoware_rtc_interface
   - 'Additional Tools':
     - 'Remaining Distance Time Calculator': planning/autoware_remaining_distance_time_calculator
