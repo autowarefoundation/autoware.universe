@@ -21,12 +21,12 @@
 #include "parameters.hpp"
 #include "trajectory_preprocessing.hpp"
 
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <boost/geometry.hpp>
 
@@ -51,7 +51,7 @@ void ObstacleVelocityLimiterModule::init(rclcpp::Node & node, const std::string 
   virtual_wall_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
 
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+  const auto vehicle_info = vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   vehicle_lateral_offset_ = static_cast<double>(vehicle_info.max_lateral_offset_m);
   vehicle_front_offset_ = static_cast<double>(vehicle_info.max_longitudinal_offset_m);
   distance_buffer_ = node.declare_parameter<double>("distance_buffer");
