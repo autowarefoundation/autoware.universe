@@ -21,10 +21,14 @@
 #include "autoware_behavior_path_start_planner_module/pull_out_path.hpp"
 #include "autoware_behavior_path_start_planner_module/util.hpp"
 
+#include <magic_enum.hpp>
+
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace autoware::behavior_path_planner
 {
@@ -38,6 +42,27 @@ enum class PlannerType {
   GEOMETRIC = 2,
   STOP = 3,
   FREESPACE = 4,
+};
+
+struct PlannerDebugData
+{
+public:
+  PlannerType planner_type;
+  std::vector<std::string> conditions_evaluation;
+  double required_margin{0.0};
+  double backward_distance{0.0};
+  auto str() const
+  {
+    std::stringstream ss;
+    ss << "Planner type: " << magic_enum::enum_name(planner_type) << "\n";
+    ss << "Required margin: " << required_margin << "\n";
+    ss << "Backward distance: " << backward_distance << "\n";
+    ss << "Condition evaluation:\n";
+    for (const auto & result : conditions_evaluation) {
+      ss << result << "\n";
+    }
+    return ss.str();
+  };
 };
 
 class PullOutPlannerBase
@@ -61,7 +86,8 @@ public:
     collision_check_margin_ = collision_check_margin;
   };
   virtual PlannerType getPlannerType() const = 0;
-  virtual std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) = 0;
+  virtual std::optional<PullOutPath> plan(
+    const Pose & start_pose, const Pose & goal_pose, PlannerDebugData & planner_debug_data) = 0;
 
 protected:
   bool isPullOutPathCollided(
