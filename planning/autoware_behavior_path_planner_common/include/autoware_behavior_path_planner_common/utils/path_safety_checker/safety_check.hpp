@@ -28,19 +28,19 @@
 
 #include <vector>
 
-namespace behavior_path_planner::utils::path_safety_checker
+namespace autoware::behavior_path_planner::utils::path_safety_checker
 {
 
+using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedPath;
 using autoware_perception_msgs::msg::Shape;
-using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using tier4_autoware_utils::calcYawDeviation;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
-using vehicle_info_util::VehicleInfo;
 
 bool isTargetObjectOncoming(
   const geometry_msgs::msg::Pose & vehicle_pose, const geometry_msgs::msg::Pose & object_pose,
@@ -48,13 +48,13 @@ bool isTargetObjectOncoming(
 
 bool isTargetObjectFront(
   const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
-  const vehicle_info_util::VehicleInfo & vehicle_info);
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 bool isTargetObjectFront(
   const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon);
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon);
 
 Polygon2d createExtendedPolygon(
-  const Pose & base_link_pose, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const Pose & base_link_pose, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const double lon_length, const double lat_margin, const bool is_stopped_obj,
   CollisionCheckDebug & debug);
 Polygon2d createExtendedPolygon(
@@ -155,6 +155,6 @@ bool checkSafetyWithIntegralPredictedPolygon(
 CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);
 void updateCollisionCheckDebugMap(
   CollisionCheckDebugMap & debug_map, CollisionCheckDebugPair & object_debug, bool is_safe);
-}  // namespace behavior_path_planner::utils::path_safety_checker
+}  // namespace autoware::behavior_path_planner::utils::path_safety_checker
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SAFETY_CHECKER__SAFETY_CHECK_HPP_

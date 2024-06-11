@@ -25,7 +25,7 @@
 #include <chrono>
 #include <limits>
 
-namespace autoware_path_optimizer
+namespace autoware::path_optimizer
 {
 namespace
 {
@@ -84,7 +84,7 @@ std::vector<double> calcSegmentLengthVector(const std::vector<TrajectoryPoint> &
 
 PathOptimizer::PathOptimizer(const rclcpp::NodeOptions & node_options)
 : Node("path_optimizer", node_options),
-  vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo()),
+  vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo()),
   debug_data_ptr_(std::make_shared<DebugData>()),
   time_keeper_ptr_(std::make_shared<TimeKeeper>())
 {
@@ -666,7 +666,7 @@ void PathOptimizer::publishDebugData(const Header & header) const
 
   time_keeper_ptr_->toc(__func__, "  ");
 }
-}  // namespace autoware_path_optimizer
+}  // namespace autoware::path_optimizer
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware_path_optimizer::PathOptimizer)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::path_optimizer::PathOptimizer)

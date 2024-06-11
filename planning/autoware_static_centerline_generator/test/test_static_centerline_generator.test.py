@@ -46,7 +46,7 @@ def generate_test_description():
             {"start_lanelet_id": 215},
             {"end_lanelet_id": 216},
             os.path.join(
-                get_package_share_directory("mission_planner"),
+                get_package_share_directory("autoware_mission_planner"),
                 "config",
                 "mission_planner.param.yaml",
             ),
@@ -63,7 +63,7 @@ def generate_test_description():
                 "config/behavior_velocity_planner.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("path_smoother"),
+                get_package_share_directory("autoware_path_smoother"),
                 "config/elastic_band_smoother.param.yaml",
             ),
             os.path.join(
