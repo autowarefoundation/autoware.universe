@@ -22,7 +22,7 @@ This module executes avoidance over lanes, and the decision requires the lane st
 
 ## Inner-workings / Algorithms
 
-This module mainly has two parts, target filtering part and path generation part. At first, all objects are filtered by several conditions. In this step, this module checks avoidance feasibility and necessity as well. After that, this module generates avoidance path outline, whom we call **shift line**, based on filtered objects. The shift lines are set into [path shifter](../autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md)), which is a library for path generation, to create smooth shift path. Additionally, this module has feature to check non-target objects so that the ego can avoid target object safely. This feature receives generated avoidance path and surround objects and judges current situation. Lastly, this module update current ego behavior.
+This module mainly has two parts, target filtering part and path generation part. At first, all objects are filtered by several conditions. In this step, this module checks avoidance feasibility and necessity as well. After that, this module generates avoidance path outline, whom we call **shift line**, based on filtered objects. The shift lines are set into [path shifter](../autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design.md), which is a library for path generation, to create smooth shift path. Additionally, this module has feature to check non-target objects so that the ego can avoid target object safely. This feature receives generated avoidance path and surround objects and judges current situation. Lastly, this module update current ego behavior.
 
 ```plantuml
 @startuml
@@ -354,7 +354,7 @@ Not only the length from the centerline, but also the length from the road shoul
 
 $$
 L_{d} = \frac{W_{lane} - W_{obj}}{2}, \\
-ratio =  \frac{l_{a}}{L_{d}}
+ratio =  \frac{L_{a}}{L_{d}}
 $$
 
 - $L_{d}$ : shiftable length.
@@ -683,7 +683,7 @@ cancel:
 
 If above parameter is `true`, this module reverts avoidance path when following conditions are met.
 
-- all targe objects have gone.
+- all target objects have gone.
 - the ego vehicle hasn't initiated avoidance maneuver yet.
 
 ![fig](./images/cancel/cancel.png)
@@ -820,7 +820,7 @@ This module pay attention not only avoidance target objects but also non-target 
 
 ### Yield maneuver
 
-Additionally, this module basically inserts stop point in front of avoidance target during yielding maneuver in order to keep enough distance to avoid the target after it is safe situation. If the sift side lane is congested, the ego stops the point and waits.
+Additionally, this module basically inserts stop point in front of avoidance target during yielding maneuver in order to keep enough distance to avoid the target after it is safe situation. If the shift side lane is congested, the ego stops the point and waits.
 
 This feature can be enable by setting following parameter to `true`.
 
