@@ -141,19 +141,19 @@ void PlanningNode::on_timer()
         factor.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
       }
     }
-
-    // Set the status if it is unknown.
-    const auto is_vehicle_stopped = stop_checker_->isVehicleStopped(stop_duration_);
-    for (auto & factor : velocity.factors) {
-      if ((factor.status == VelocityFactor::UNKNOWN) && (!std::isnan(factor.distance))) {
-        const auto is_stopped = is_vehicle_stopped && (factor.distance < stop_distance_);
-        factor.status = is_stopped ? VelocityFactor::STOPPED : VelocityFactor::APPROACHING;
-      }
-    }
-
-    pub_velocity_factors_->publish(velocity);
-    pub_steering_factors_->publish(steering);
   }
+
+  // Set the status if it is unknown.
+  const auto is_vehicle_stopped = stop_checker_->isVehicleStopped(stop_duration_);
+  for (auto & factor : velocity.factors) {
+    if ((factor.status == VelocityFactor::UNKNOWN) && (!std::isnan(factor.distance))) {
+      const auto is_stopped = is_vehicle_stopped && (factor.distance < stop_distance_);
+      factor.status = is_stopped ? VelocityFactor::STOPPED : VelocityFactor::APPROACHING;
+    }
+  }
+
+  pub_velocity_factors_->publish(velocity);
+  pub_steering_factors_->publish(steering);
 }
 
 }  // namespace default_ad_api
