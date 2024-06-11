@@ -843,11 +843,19 @@ void StartPlannerModule::planWithPriority(
 
   auto get_accumulated_debug_stream = [](const std::vector<PlannerDebugData> & debug_data_vector) {
     std::stringstream ss;
-    ss << "-----------------------\n";
-    std::for_each(
-      debug_data_vector.begin(), debug_data_vector.end(),
-      [&ss](const auto & debug_data) { ss << debug_data.str(); });
-    ss << "-----------------------\n";
+    ss << std::fixed << std::setprecision(1);
+    ss << std::left << std::setw(20) << "| Planner type " << std::setw(20) << "| Required margin "
+       << std::setw(20) << "| Backward distance " << std::setw(25) << "| Condition evaluation |"
+       << "\n";
+    for (const auto & debug_data : debug_data_vector) {
+      for (const auto & result : debug_data.conditions_evaluation) {
+        ss << std::setw(23) << magic_enum::enum_name(debug_data.planner_type) << std::setw(23)
+           << (std::to_string(debug_data.required_margin) + "[m]") << std::setw(23)
+           << (std::to_string(debug_data.backward_distance) + "[m]") << std::setw(25) << result
+           << "\n";
+      }
+    }
+    ss << std::setw(40);
     return ss;
   };
 
@@ -864,7 +872,7 @@ void StartPlannerModule::planWithPriority(
         debug_data_.margin_for_start_pose_candidate = collision_check_margin;
         if (parameters_->print_debug_info) {
           const auto ss = get_accumulated_debug_stream(debug_data_vector);
-          DEBUG_PRINT("Pull out path search results:\n%s", ss.str().c_str());
+          DEBUG_PRINT("\nPull out path search results:\n%s", ss.str().c_str());
         }
         return;
       }
@@ -873,7 +881,7 @@ void StartPlannerModule::planWithPriority(
 
   if (parameters_->print_debug_info) {
     const auto ss = get_accumulated_debug_stream(debug_data_vector);
-    DEBUG_PRINT("Pull out path search results:\n%s", ss.str().c_str());
+    DEBUG_PRINT("\nPull out path search results:\n%s", ss.str().c_str());
   }
   updateStatusIfNoSafePathFound();
 }
@@ -1515,7 +1523,7 @@ std::optional<PullOutStatus> StartPlannerModule::planFreespacePath(
     freespace_planner_->setPlannerData(planner_data);
     PlannerDebugData debug_data{freespace_planner_->getPlannerType(), {}, 0.0, 0.0};
     auto freespace_path = freespace_planner_->plan(current_pose, end_pose, debug_data);
-    DEBUG_PRINT("Freespace Pull out path search results\n%s", debug_data.str().c_str());
+    DEBUG_PRINT("\nFreespace Pull out path search results\n%s", debug_data.str().c_str());
     if (!freespace_path) {
       continue;
     }

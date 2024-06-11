@@ -54,15 +54,17 @@ public:
   auto str() const
   {
     std::stringstream ss;
-    ss << "Planner type: " << magic_enum::enum_name(planner_type) << "\n";
-    ss << "Required margin: " << required_margin << "[m]\n";
-    ss << "Backward distance: " << backward_distance << "[m]\n";
-    ss << "Condition evaluation:\n";
+    ss << std::left << std::setw(20) << "| Planner type " << std::setw(20) << "| Required margin "
+       << std::setw(20) << "| Backward distance " << std::setw(25) << "| Condition evaluation |"
+       << "\n";
     for (const auto & result : conditions_evaluation) {
-      ss << result << "\n";
+      ss << std::setw(23) << magic_enum::enum_name(planner_type) << std::setw(23)
+         << (std::to_string(required_margin) + "[m]") << std::setw(23)
+         << (std::to_string(backward_distance) + "[m]") << std::setw(25) << result << "\n";
     }
+    ss << std::setw(40);
     return ss.str();
-  };
+  }
 };
 
 class PullOutPlannerBase
