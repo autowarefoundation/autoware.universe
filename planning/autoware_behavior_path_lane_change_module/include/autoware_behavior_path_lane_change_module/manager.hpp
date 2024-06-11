@@ -17,7 +17,7 @@
 
 #include "autoware_behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware_behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
-#include "route_handler/route_handler.hpp"
+#include "autoware_route_handler/route_handler.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -25,9 +25,9 @@
 #include <string>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
-using route_handler::Direction;
+using autoware::route_handler::Direction;
 
 class LaneChangeModuleManager : public SceneModuleManagerInterface
 {
@@ -58,8 +58,7 @@ class LaneChangeRightModuleManager : public LaneChangeModuleManager
 {
 public:
   LaneChangeRightModuleManager()
-  : LaneChangeModuleManager(
-      "lane_change_right", route_handler::Direction::RIGHT, LaneChangeModuleType::NORMAL)
+  : LaneChangeModuleManager("lane_change_right", Direction::RIGHT, LaneChangeModuleType::NORMAL)
   {
   }
 };
@@ -68,11 +67,10 @@ class LaneChangeLeftModuleManager : public LaneChangeModuleManager
 {
 public:
   LaneChangeLeftModuleManager()
-  : LaneChangeModuleManager(
-      "lane_change_left", route_handler::Direction::LEFT, LaneChangeModuleType::NORMAL)
+  : LaneChangeModuleManager("lane_change_left", Direction::LEFT, LaneChangeModuleType::NORMAL)
   {
   }
 };
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__MANAGER_HPP_

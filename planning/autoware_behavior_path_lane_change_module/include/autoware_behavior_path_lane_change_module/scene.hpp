@@ -21,19 +21,20 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
-using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
-using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
-using behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
-using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityAndPolygonStamped;
-using behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
-using behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
+using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
+using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
+using autoware::behavior_path_planner::utils::path_safety_checker::
+  PoseWithVelocityAndPolygonStamped;
+using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
+using autoware::route_handler::Direction;
 using data::lane_change::LanesPolygon;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using route_handler::Direction;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using utils::path_safety_checker::ExtendedPredictedObjects;
 
@@ -204,5 +205,5 @@ protected:
 
   double stop_time_{0.0};
 };
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 #endif  // AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_

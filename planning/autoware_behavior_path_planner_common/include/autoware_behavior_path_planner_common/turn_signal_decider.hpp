@@ -19,8 +19,8 @@
 
 #include <autoware_behavior_path_planner_common/parameters.hpp>
 #include <autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
-#include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -40,14 +40,14 @@
 #include <string>
 #include <utility>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
+using autoware::route_handler::RouteHandler;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
-using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 const std::map<std::string, uint8_t> g_signal_map = {
@@ -296,6 +296,6 @@ private:
   mutable double intersection_distance_ = std::numeric_limits<double>::max();
   mutable Pose intersection_pose_point_ = Pose();
 };
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_PLANNER_COMMON__TURN_SIGNAL_DECIDER_HPP_

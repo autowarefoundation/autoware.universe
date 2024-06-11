@@ -69,7 +69,7 @@ double calcInterpolatedVelocity(
 }
 }  // namespace
 
-namespace behavior_path_planner::utils
+namespace autoware::behavior_path_planner::utils
 {
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::Shape;
@@ -1607,7 +1607,7 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 }
 
 lanelet::ConstLanelets getLaneletsFromPath(
-  const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler)
+  const PathWithLaneId & path, const std::shared_ptr<RouteHandler> & route_handler)
 {
   std::vector<int64_t> unique_lanelet_ids;
   for (const auto & p : path.points) {
@@ -1653,4 +1653,4 @@ bool checkOriginalGoalIsInShoulder(const std::shared_ptr<RouteHandler> & route_h
   const Pose & goal_pose = route_handler->getOriginalGoalPose();
   return !route_handler->getShoulderLaneletsAtPose(goal_pose).empty();
 }
-}  // namespace behavior_path_planner::utils
+}  // namespace autoware::behavior_path_planner::utils
