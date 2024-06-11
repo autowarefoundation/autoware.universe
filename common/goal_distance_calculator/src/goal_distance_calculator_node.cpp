@@ -59,7 +59,7 @@ bool GoalDistanceCalculatorNode::isDataReady()
     return false;
   }
 
-  if (!sub_route_.takeData()) {
+  if (route_) {
     RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "waiting for route msg...");
     return false;
   }
@@ -81,6 +81,7 @@ bool GoalDistanceCalculatorNode::isDataTimeout()
 void GoalDistanceCalculatorNode::onTimer()
 {
   current_pose_ = self_pose_listener_.getCurrentPose();
+  route_ = sub_route_.takeData();
 
   if (!isDataReady()) {
     return;
@@ -91,7 +92,7 @@ void GoalDistanceCalculatorNode::onTimer()
   }
 
   input_.current_pose = current_pose_;
-  input_.route = sub_route_.takeData();
+  input_.route = route_;
 
   output_ = goal_distance_calculator_->update(input_);
 

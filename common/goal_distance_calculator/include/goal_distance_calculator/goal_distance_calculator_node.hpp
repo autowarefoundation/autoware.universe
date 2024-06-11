@@ -51,6 +51,7 @@ private:
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
+  autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route_;
 
   // Publisher
   tier4_autoware_utils::DebugPublisher debug_publisher_;
