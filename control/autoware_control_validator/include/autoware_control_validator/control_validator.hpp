@@ -73,7 +73,6 @@ private:
     this, "~/input/kinematics"};
   tier4_autoware_utils::InterProcessPollingSubscriber<Trajectory> sub_reference_traj_{
     this, "~/input/reference_trajectory"};
-
   rclcpp::Publisher<ControlValidatorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
