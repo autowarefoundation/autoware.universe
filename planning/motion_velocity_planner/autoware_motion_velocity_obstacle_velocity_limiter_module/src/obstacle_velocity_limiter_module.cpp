@@ -101,11 +101,7 @@ void ObstacleVelocityLimiterModule::update_parameters(
     } else if (parameter.get_name() == ObstacleParameters::MIN_VEL_PARAM) {
       obstacle_params_.dynamic_obstacles_min_vel = static_cast<double>(parameter.as_double());
     } else if (parameter.get_name() == ObstacleParameters::MAP_TAGS_PARAM) {
-      // TODO(Maxime): implement in the node
-      // obstacle_params_.static_map_tags = parameter.as_string_array();
-      // if (lanelet_map_ptr_)
-      //   static_map_obstacles_ =
-      //     extractStaticObstacles(*lanelet_map_ptr_, obstacle_params_.static_map_tags);
+      obstacle_params_.static_map_tags = parameter.as_string_array();
     } else if (parameter.get_name() == ObstacleParameters::FILTERING_PARAM) {
       obstacle_params_.filter_envelope = parameter.as_bool();
     } else if (parameter.get_name() == ObstacleParameters::IGNORE_ON_PATH_PARAM) {
@@ -168,7 +164,9 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   const auto footprint_polygons = obstacle_velocity_limiter::createFootprintPolygons(
     projected_linestrings, vehicle_lateral_offset_);
   obstacle_velocity_limiter::Obstacles obstacles;
-  // obstacles.lines = planner_data->static_map_obstacles; TODO(Maxime)
+  obstacles.lines = obstacle_velocity_limiter::extractStaticObstacles(
+    *planner_data->route_handler->getLaneletMapPtr(), obstacle_params_.static_map_tags,
+    footprint_polygons);
   if (
     obstacle_params_.dynamic_source != obstacle_velocity_limiter::ObstacleParameters::STATIC_ONLY) {
     if (obstacle_params_.filter_envelope)

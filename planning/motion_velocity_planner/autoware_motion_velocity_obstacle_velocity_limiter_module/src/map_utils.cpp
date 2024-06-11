@@ -20,18 +20,26 @@
 #include <boost/geometry.hpp>
 
 #include <lanelet2_core/Attribute.h>
+#include <lanelet2_core/geometry/LaneletMap.h>
 
 #include <algorithm>
 
 namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 multi_linestring_t extractStaticObstacles(
-  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags)
+  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags,
+  const std::vector<polygon_t> & search_areas)
 {
   multi_linestring_t lines;
   linestring_t line;
   linestring_t simplified_line;
-  for (const auto & ls : lanelet_map.lineStringLayer) {
+  lanelet::BoundingBox2d search_bbox;
+  for (const auto & search_area : search_areas)
+    for (const auto & p : search_area.outer()) search_bbox.extend(p);
+
+  if (search_bbox.isEmpty()) return {};
+  const auto candidates = lanelet_map.lineStringLayer.search(search_bbox);
+  for (const auto & ls : candidates) {
     if (isObstacle(ls, tags)) {
       line.clear();
       simplified_line.clear();

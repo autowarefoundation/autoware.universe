@@ -28,9 +28,11 @@ namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 /// @brief Extract static obstacles from the lanelet map
 /// @param[in] lanelet_map lanelet map
 /// @param[in] tags tags to identify obstacle linestrings
+/// @param[in] search_areas areas to search for tagged linestrings
 /// @return the extracted obstacles
 multi_linestring_t extractStaticObstacles(
-  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags);
+  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags,
+  const std::vector<polygon_t> & search_areas);
 
 /// @brief Determine if the given linestring is an obstacle
 /// @param[in] ls linestring to check
