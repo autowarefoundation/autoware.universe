@@ -16,7 +16,7 @@
 
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager_utils.hpp>
-#include <planning_test_utils/planning_test_utils.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
 namespace autoware::planning_test_manager

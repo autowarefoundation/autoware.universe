@@ -16,7 +16,7 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
-#include <planning_test_utils/planning_test_utils.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -38,15 +38,15 @@ std::shared_ptr<ObstacleVelocityLimiterNode> generateNode()
 {
   auto node_options = rclcpp::NodeOptions{};
 
-  const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto autoware_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("autoware_test_utils");
 
   const auto obstacle_velocity_limiter_dir =
     ament_index_cpp::get_package_share_directory("obstacle_velocity_limiter");
 
   node_options.arguments(
     {"--ros-args", "--params-file",
-     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
+     autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
      obstacle_velocity_limiter_dir + "/config/default_obstacle_velocity_limiter.param.yaml"});
 
   return std::make_shared<obstacle_velocity_limiter::ObstacleVelocityLimiterNode>(node_options);

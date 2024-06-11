@@ -16,7 +16,7 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
-#include <planning_test_utils/planning_test_utils.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -44,13 +44,13 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 std::shared_ptr<PlanningValidator> generateNode()
 {
   auto node_options = rclcpp::NodeOptions{};
-  const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto autoware_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("autoware_test_utils");
   const auto planning_validator_dir =
     ament_index_cpp::get_package_share_directory("autoware_planning_validator");
   node_options.arguments(
     {"--ros-args", "--params-file",
-     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
+     autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
      planning_validator_dir + "/config/planning_validator.param.yaml"});
   return std::make_shared<PlanningValidator>(node_options);
 }

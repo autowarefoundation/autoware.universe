@@ -16,7 +16,7 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
-#include <planning_test_utils/planning_test_utils.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -31,14 +31,14 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 
   auto node_options = rclcpp::NodeOptions{};
 
-  const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto autoware_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("autoware_test_utils");
   const auto path_smoothing_dir =
     ament_index_cpp::get_package_share_directory("autoware_path_smoother");
 
   node_options.arguments(
-    {"--ros-args", "--params-file", planning_test_utils_dir + "/config/test_common.param.yaml",
-     "--params-file", planning_test_utils_dir + "/config/test_nearest_search.param.yaml",
+    {"--ros-args", "--params-file", autoware_test_utils_dir + "/config/test_common.param.yaml",
+     "--params-file", autoware_test_utils_dir + "/config/test_nearest_search.param.yaml",
      "--params-file", path_smoothing_dir + "/config/elastic_band_smoother.param.yaml"});
 
   auto test_target_node =

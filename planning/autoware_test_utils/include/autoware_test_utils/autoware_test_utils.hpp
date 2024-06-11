@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_TEST_UTILS__PLANNING_TEST_UTILS_HPP_
-#define PLANNING_TEST_UTILS__PLANNING_TEST_UTILS_HPP_
+#ifndef AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
+#define AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -191,7 +191,7 @@ LaneletMapBin make_map_bin_msg(
  * @brief Creates a LaneletMapBin message using a predefined Lanelet2 map file.
  *
  * This function loads a lanelet2_map.osm from the test_map folder in the
- * planning_test_utils package, overwrites the centerline with a resolution of 5.0,
+ * autoware_test_utils package, overwrites the centerline with a resolution of 5.0,
  * and converts the map to a LaneletMapBin message.
  *
  * @return A LaneletMapBin message containing the map data.
@@ -299,7 +299,7 @@ void updateNodeOptions(
  * @brief Loads a PathWithLaneId message from a YAML file.
  *
  * This function loads a PathWithLaneId message from a YAML file located in the
- * planning_test_utils package.
+ * autoware_test_utils package.
  *
  * @return A PathWithLaneId message containing the loaded data.
  */
@@ -479,4 +479,4 @@ void publishToTargetNode(
 
 }  // namespace test_utils
 
-#endif  // PLANNING_TEST_UTILS__PLANNING_TEST_UTILS_HPP_
+#endif  // AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
