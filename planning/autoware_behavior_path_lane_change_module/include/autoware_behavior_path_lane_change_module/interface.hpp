@@ -59,8 +59,6 @@ public:
   LaneChangeInterface & operator=(LaneChangeInterface &&) = delete;
   ~LaneChangeInterface() override = default;
 
-  void processOnEntry() override;
-
   void processOnExit() override;
 
   bool isExecutionRequested() const override;
