@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "autoware_test_utils/autoware_test_utils.hpp"
-namespace test_utils
+namespace autoware::test_utils
 {
 
 geometry_msgs::msg::Pose createPose(
@@ -147,7 +147,7 @@ Odometry makeInitialPose(const double shift)
   const auto shift_y = shift * std::cos(yaw);
   const std::array<double, 4> start_pose{
     3722.16015625 + shift_x, 73723.515625 + shift_y, 0.233112560494183, yaw};
-  current_odometry.pose.pose = test_utils::createPose(start_pose);
+  current_odometry.pose.pose = autoware::test_utils::createPose(start_pose);
   current_odometry.header.frame_id = "map";
   return current_odometry;
 }
@@ -311,4 +311,4 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   return path_msg;
 }
 
-}  // namespace test_utils
+}  // namespace autoware::test_utils

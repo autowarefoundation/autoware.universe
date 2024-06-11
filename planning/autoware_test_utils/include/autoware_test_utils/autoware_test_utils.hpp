@@ -54,7 +54,7 @@
 #include <utility>
 #include <vector>
 
-namespace test_utils
+namespace autoware::test_utils
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_map_msgs::msg::LaneletMapBin;
@@ -468,15 +468,15 @@ void publishToTargetNode(
     throw std::runtime_error(std::string("Topic name for ") + typeid(data).name() + " is empty");
   }
 
-  test_utils::setPublisher<T>(test_node, topic_name, publisher);
+  autoware::test_utils::setPublisher<T>(test_node, topic_name, publisher);
   publisher->publish(data);
 
   if (target_node->count_subscribers(topic_name) == 0) {
     throw std::runtime_error("No subscriber for " + topic_name);
   }
-  test_utils::spinSomeNodes(test_node, target_node, repeat_count);
+  autoware::test_utils::spinSomeNodes(test_node, target_node, repeat_count);
 }
 
-}  // namespace test_utils
+}  // namespace autoware::test_utils
 
 #endif  // AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_

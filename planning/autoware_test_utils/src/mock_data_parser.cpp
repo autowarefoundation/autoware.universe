@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace test_utils
+namespace autoware::test_utils
 {
 Pose parse_pose(const YAML::Node & node)
 {
@@ -89,4 +89,4 @@ LaneletRoute parse_lanelet_route_file(const std::string & filename)
   }
   return lanelet_route;
 }
-}  // namespace test_utils
+}  // namespace autoware::test_utils

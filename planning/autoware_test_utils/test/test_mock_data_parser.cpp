@@ -18,7 +18,7 @@
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "autoware_test_utils/mock_data_parser.hpp"
 
-namespace test_utils
+namespace autoware::test_utils
 {
 // Example YAML structure as a string for testing
 const char g_complete_yaml[] = R"(
@@ -132,4 +132,4 @@ TEST(ParseFunction, CompleteFromFilename)
   EXPECT_EQ(segment1.primitives[3].id, 88);
   EXPECT_EQ(segment1.primitives[3].primitive_type, "lane");
 }
-}  // namespace test_utils
+}  // namespace autoware::test_utils

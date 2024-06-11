@@ -55,7 +55,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
   params.emplace_back("launch_modules", module_names);
   node_options.parameter_overrides(params);
 
-  test_utils::updateNodeOptions(
+  autoware::test_utils::updateNodeOptions(
     node_options, {autoware_test_utils_dir + "/config/test_common.param.yaml",
                    autoware_test_utils_dir + "/config/test_nearest_search.param.yaml",
                    autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml",
