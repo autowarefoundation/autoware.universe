@@ -116,11 +116,12 @@ std::vector<multi_linestring_t> createProjectedLines(
   return projections;
 }
 
-void limitVelocity(
+std::vector<autoware::motion_velocity_planner::SlowdownInterval> calculate_slowdown_intervals(
   TrajectoryPoints & trajectory, const CollisionChecker & collision_checker,
   const std::vector<multi_linestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
 {
+  std::vector<autoware::motion_velocity_planner::SlowdownInterval> slowdown_intervals;
   double time = 0.0;
   for (size_t i = 0; i < trajectory.size(); ++i) {
     auto & trajectory_point = trajectory[i];
@@ -138,13 +139,17 @@ void limitVelocity(
     if (dist_to_collision) {
       const auto min_feasible_velocity =
         velocity_params.current_ego_velocity - velocity_params.max_deceleration * time;
-      trajectory_point.longitudinal_velocity_mps = std::max(
-        min_feasible_velocity,
-        calculateSafeVelocity(
-          trajectory_point,
-          static_cast<double>(*dist_to_collision - projection_params.extra_length),
-          static_cast<double>(projection_params.duration), velocity_params.min_velocity));
+
+      slowdown_intervals.emplace_back(
+        trajectory_point.pose.position, trajectory_point.pose.position,
+        std::max(
+          min_feasible_velocity,
+          calculateSafeVelocity(
+            trajectory_point,
+            static_cast<double>(*dist_to_collision - projection_params.extra_length),
+            static_cast<double>(projection_params.duration), velocity_params.min_velocity)));
     }
   }
+  return slowdown_intervals;
 }
 }  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

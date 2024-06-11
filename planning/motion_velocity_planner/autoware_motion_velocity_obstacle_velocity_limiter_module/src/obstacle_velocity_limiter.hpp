@@ -19,6 +19,8 @@
 #include "parameters.hpp"
 #include "types.hpp"
 
+#include <autoware_motion_velocity_planner_common/velocity_planning_result.hpp>
+
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
@@ -108,14 +110,15 @@ polygon_t createEnvelopePolygon(const std::vector<polygon_t> & footprints);
 std::vector<multi_linestring_t> createProjectedLines(
   const TrajectoryPoints & trajectory, ProjectionParameters & params);
 
-/// @brief limit the velocity of the given trajectory
+/// @brief calculate slowdown intervals on the given trajectory
 /// @param[in] trajectory input trajectory
 /// @param[in] collision_checker object used to retrieve collision points
 /// @param[in] projections forward projection lines at each trajectory point
 /// @param[in] footprints footprint of the forward projection at each trajectory point
 /// @param[in] projection_params projection parameters
 /// @param[in] velocity_params velocity parameters
-void limitVelocity(
+/// @return slowdown intervals
+std::vector<autoware::motion_velocity_planner::SlowdownInterval> calculate_slowdown_intervals(
   TrajectoryPoints & trajectory, const CollisionChecker & collision_checker,
   const std::vector<multi_linestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params);

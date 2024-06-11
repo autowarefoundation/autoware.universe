@@ -178,7 +178,7 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
       obstacles, planner_data->occupancy_grid, planner_data->no_ground_pointcloud, obstacle_masks,
       obstacle_params_);
   }
-  obstacle_velocity_limiter::limitVelocity(
+  result.slowdown_intervals = obstacle_velocity_limiter::calculate_slowdown_intervals(
     downsampled_traj_points,
     obstacle_velocity_limiter::CollisionChecker(
       obstacles, obstacle_params_.rtree_min_points, obstacle_params_.rtree_min_segments),
@@ -187,6 +187,15 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
     downsampled_traj_points, original_traj_points, start_idx,
     preprocessing_params_.downsample_factor);
 
+  if (!result.slowdown_intervals.empty()) {
+    motion_utils::VirtualWall wall;
+    wall.longitudinal_offset = vehicle_front_offset_;
+    wall.pose.position = result.slowdown_intervals.front().from;
+    wall.style = motion_utils::VirtualWallType::slowdown;
+    wall.text = ns_;
+    virtual_wall_marker_creator.add_virtual_wall(wall);
+    virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
+  }
   if (debug_publisher_->get_subscription_count() > 0) {
     const auto safe_projected_linestrings =
       obstacle_velocity_limiter::createProjectedLines(downsampled_traj_points, projection_params_);
