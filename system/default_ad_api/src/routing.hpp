@@ -53,10 +53,6 @@ private:
   Cli<planning_interface::SetLaneletRoute> cli_set_lanelet_route_;
   Cli<planning_interface::ClearRoute> cli_clear_route_;
   Cli<system_interface::ChangeOperationMode> cli_operation_mode_;
-  // Sub<system_interface::OperationModeState> sub_operation_mode_;
-
-  // std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<planning_interface::RouteState::Message>>
-  //   state_sub_;
   std::shared_ptr<
     tier4_autoware_utils::InterProcessPollingSubscriber<planning_interface::LaneletRoute::Message>>
     route_sub_;
