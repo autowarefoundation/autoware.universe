@@ -1,10 +1,10 @@
 # autoware_component_monitor
 
-## Running
-
 The `autoware_component_monitor` package allows monitoring system usage of component containers.
-The composable node inside the package is attached to a component container, and it published CPU and memory usage of
+The composable node inside the package is attached to a component container, and it publishes CPU and memory usage of
 the container.
+
+## Running
 
 To attach the node into a component container, you can load the composable node directly in your launch file:
 
@@ -25,7 +25,7 @@ To attach the node into a component container, you can load the composable node 
 </launch>
 ```
 
-Or, you can include `component_monitor.launch.xml` in you launch file with the container name:
+Or, you can include `component_monitor.launch.xml` in your launch file with the container name:
 
 ```xml
 
