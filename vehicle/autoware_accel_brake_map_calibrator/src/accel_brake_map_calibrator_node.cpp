@@ -1707,4 +1707,4 @@ void AccelBrakeMapCalibrator::add_log_to_csv(
             << ", " << new_accel_mse << "," << rmse_rate << std::endl;
 }
 
-}  // autoware::namespace accel_brake_map_calibrator
+}  // namespace autoware::accel_brake_map_calibrator
