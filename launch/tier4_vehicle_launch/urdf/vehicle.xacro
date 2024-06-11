@@ -8,6 +8,5 @@
   <xacro:include filename="$(find ${vehicle_model_property}_description)/urdf/vehicle.xacro"/>
 
   <!-- sensors -->
-  <xacro:property name="sensor_model_property" value="$(arg sensor_model)"/>
-  <xacro:include filename="$(find ${sensor_model_property}_description)/urdf/sensors.xacro"/>
+  <xacro:include filename="$(find-pkg-share individual_params)/config/$(var vehicle_id)/urdf/sensors.xacro"/>
 </robot>
