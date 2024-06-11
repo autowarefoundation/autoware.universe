@@ -58,7 +58,7 @@ def launch_setup(context, *args, **kwargs):
                     "publish_synchronized_pointcloud": False,
                     "input_twist_topic_type": "twist",
                 },
-                shared_filter_file
+                shared_filter_file,
             ],
         )
         concat_components = [sync_and_concat_component]
@@ -77,7 +77,7 @@ def launch_setup(context, *args, **kwargs):
                     "output_frame": LaunchConfiguration("tf_output_frame"),
                     "approximate_sync": True,
                 },
-                shared_filter_file
+                shared_filter_file,
             ],
         )
 
@@ -92,7 +92,7 @@ def launch_setup(context, *args, **kwargs):
                     "output_frame": LaunchConfiguration("tf_output_frame"),
                     "approximate_sync": True,
                 },
-                shared_filter_file
+                shared_filter_file,
             ],
         )
         concat_components = [time_sync_component, concat_component]
@@ -129,7 +129,7 @@ def launch_setup(context, *args, **kwargs):
                 "max_z": 3.0,
                 "negative": False,
             },
-            shared_filter_file
+            shared_filter_file,
         ],
     )
 
