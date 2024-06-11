@@ -86,14 +86,13 @@ public:
    * @param[in] max_workspace_size maximum workspace for building TensorRT engine
    */
   TrtYoloX(
-    const std::string & model_path, const std::string & precision,
-    const std::string & color_map_path, const int num_class = 8, const float score_threshold = 0.3,
-    const float nms_threshold = 0.7,
+    const std::string & model_path, const std::string & precision, const int num_class = 8,
+    const float score_threshold = 0.3, const float nms_threshold = 0.7,
     const tensorrt_common::BuildConfig build_config = tensorrt_common::BuildConfig(),
     const bool use_gpu_preprocess = false, std::string calibration_image_list_file = std::string(),
     const double norm_factor = 1.0, [[maybe_unused]] const std::string & cache_dir = "",
     const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
-    const size_t max_workspace_size = (1 << 30));
+    const size_t max_workspace_size = (1 << 30), const std::string & color_map_path = "");
   /**
    * @brief Deconstruct TrtYoloX
    */

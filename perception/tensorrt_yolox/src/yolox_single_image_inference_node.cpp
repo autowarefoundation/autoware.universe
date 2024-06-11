@@ -43,11 +43,8 @@ public:
     p.replace_extension("");
     const auto output_image_path =
       declare_parameter("output_image_path", p.string() + "_detect" + ext);
-    std::string color_map_path = declare_parameter("color_map_path", "");
-    // seg_cmap_ = get_seg_colormap(color_map_path);
 
-    auto trt_yolox =
-      std::make_unique<tensorrt_yolox::TrtYoloX>(model_path, precision, color_map_path);
+    auto trt_yolox = std::make_unique<tensorrt_yolox::TrtYoloX>(model_path, precision);
     auto image = cv::imread(image_path);
     tensorrt_yolox::ObjectArrays objects;
     std::vector<cv::Mat> masks;

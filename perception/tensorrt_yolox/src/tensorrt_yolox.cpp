@@ -155,12 +155,11 @@ std::vector<tensorrt_yolox::Colormap> get_seg_colormap(const std::string & filen
 namespace tensorrt_yolox
 {
 TrtYoloX::TrtYoloX(
-  const std::string & model_path, const std::string & precision, const std::string & color_map_path,
-  const int num_class, const float score_threshold, const float nms_threshold,
-  tensorrt_common::BuildConfig build_config, const bool use_gpu_preprocess,
-  std::string calibration_image_list_path, const double norm_factor,
+  const std::string & model_path, const std::string & precision, const int num_class,
+  const float score_threshold, const float nms_threshold, tensorrt_common::BuildConfig build_config,
+  const bool use_gpu_preprocess, std::string calibration_image_list_path, const double norm_factor,
   [[maybe_unused]] const std::string & cache_dir, const tensorrt_common::BatchConfig & batch_config,
-  const size_t max_workspace_size)
+  const size_t max_workspace_size, const std::string & color_map_path)
 {
   src_width_ = -1;
   src_height_ = -1;

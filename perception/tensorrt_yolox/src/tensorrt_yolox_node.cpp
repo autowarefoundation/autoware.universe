@@ -124,9 +124,15 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
     calibration_algorithm, dla_core_id, quantize_first_layer, quantize_last_layer,
     profile_per_layer, clip_value);
 
+  const double norm_factor = 1.0;
+  const std::string cache_dir = "";
+  const tensorrt_common::BatchConfig batch_config{1, 1, 1};
+  const size_t max_workspace_size = (1 << 30);
+
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
-    model_path, precision, color_map_path, label_map_.size(), score_threshold, nms_threshold,
-    build_config, preprocess_on_gpu, calibration_image_list_path);
+    model_path, precision, label_map_.size(), score_threshold, nms_threshold, build_config,
+    preprocess_on_gpu, calibration_image_list_path, norm_factor, cache_dir, batch_config,
+    max_workspace_size, color_map_path);
 
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
