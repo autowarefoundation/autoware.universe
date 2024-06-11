@@ -27,27 +27,9 @@
 namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
-pcl::PointCloud<pcl::PointXYZ>::Ptr transformPointCloud(
-  const PointCloud & pointcloud_msg, tier4_autoware_utils::TransformListener & transform_listener,
-  const std::string & target_frame)
+void filterPointCloud(PointCloud::Ptr pointcloud, const ObstacleMasks & masks)
 {
-  const auto & header = pointcloud_msg.header;
-  const auto transform = transform_listener.getTransform(
-    target_frame, header.frame_id, header.stamp, rclcpp::Duration::from_nanoseconds(0));
-  const Eigen::Matrix4f transform_matrix =
-    tf2::transformToEigen(transform->transform).matrix().cast<float>();
-
-  PointCloud transformed_msg;
-  pcl_ros::transformPointCloud(transform_matrix, pointcloud_msg, transformed_msg);
-  pcl::PointCloud<pcl::PointXYZ> transformed_pointcloud;
-  pcl::fromROSMsg(transformed_msg, transformed_pointcloud);
-  return pcl::PointCloud<pcl::PointXYZ>::Ptr(
-    new pcl::PointCloud<pcl::PointXYZ>(std::move(transformed_pointcloud)));
-}
-
-void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const ObstacleMasks & masks)
-{
-  pcl::PointCloud<pcl::PointXYZ>::Ptr polygon_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  PointCloud::Ptr polygon_cloud_ptr(new PointCloud);
   if (!masks.positive_mask.outer().empty()) {
     for (const auto & p : masks.positive_mask.outer())
       polygon_cloud_ptr->push_back(pcl::PointXYZ(p.x(), p.y(), 0));
@@ -63,7 +45,7 @@ void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const Obst
     crop.filter(*pointcloud);
   }
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr mask_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  PointCloud::Ptr mask_cloud_ptr(new PointCloud);
   std::vector<pcl::Vertices> masks_idx(masks.negative_masks.size());
   size_t start_idx = 0;
   for (size_t i = 0; i < masks.negative_masks.size(); ++i) {
@@ -85,13 +67,13 @@ void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const Obst
   crop_masks.filter(*pointcloud);
 }
 
-multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr)
+multipoint_t extractObstacles(const PointCloud & pointcloud)
 {
   multipoint_t obstacles;
-  if (pointcloud_ptr->empty()) return obstacles;
-  obstacles.reserve(pointcloud_ptr->size());
+  if (pointcloud.empty()) return obstacles;
+  obstacles.reserve(pointcloud.size());
 
-  for (const auto & point : *pointcloud_ptr) {
+  for (const auto & point : pointcloud) {
     obstacles.push_back({point_t{point.x, point.y}});
   }
   return obstacles;

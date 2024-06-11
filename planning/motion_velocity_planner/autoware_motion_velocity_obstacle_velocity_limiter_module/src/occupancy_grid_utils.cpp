@@ -49,7 +49,7 @@ void maskPolygons(grid_map::GridMap & grid_map, const ObstacleMasks & obstacle_m
       layer((*iterator)(0), (*iterator)(1)) = 0.0;
 }
 
-void threshold(grid_map::GridMap & grid_map, const float threshold)
+void threshold(grid_map::GridMap & grid_map, const double threshold)
 {
   for (grid_map::GridMapIterator iter(grid_map); !iter.isPastEnd(); ++iter) {
     auto & val = grid_map.at("layer", *iter);

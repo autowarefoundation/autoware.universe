@@ -27,24 +27,24 @@
 namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
-Float calculateSafeVelocity(
-  const TrajectoryPoint & trajectory_point, const Float dist_to_collision, const Float time_buffer,
-  const Float min_adjusted_velocity)
+double calculateSafeVelocity(
+  const TrajectoryPoint & trajectory_point, const double dist_to_collision,
+  const double time_buffer, const double min_adjusted_velocity)
 {
   return std::min(
-    trajectory_point.longitudinal_velocity_mps,
-    std::max(min_adjusted_velocity, static_cast<Float>(dist_to_collision / time_buffer)));
+    static_cast<double>(trajectory_point.longitudinal_velocity_mps),
+    std::max(min_adjusted_velocity, dist_to_collision / time_buffer));
 }
 
 multi_polygon_t createPolygonMasks(
-  const autoware_perception_msgs::msg::PredictedObjects & dynamic_obstacles, const Float buffer,
-  const Float min_vel)
+  const autoware_perception_msgs::msg::PredictedObjects & dynamic_obstacles, const double buffer,
+  const double min_vel)
 {
   return createObjectPolygons(dynamic_obstacles, buffer, min_vel);
 }
 
 std::vector<polygon_t> createFootprintPolygons(
-  const std::vector<multi_linestring_t> & projected_linestrings, const Float lateral_offset)
+  const std::vector<multi_linestring_t> & projected_linestrings, const double lateral_offset)
 {
   std::vector<polygon_t> footprints;
   footprints.reserve(projected_linestrings.size());
@@ -54,24 +54,26 @@ std::vector<polygon_t> createFootprintPolygons(
   return footprints;
 }
 
-polygon_t createTrajectoryFootprint(const Trajectory & trajectory, const Float lateral_offset)
+polygon_t createTrajectoryFootprint(
+  const TrajectoryPoints & trajectory, const double lateral_offset)
 {
   linestring_t ls;
-  ls.reserve(trajectory.points.size());
-  for (const auto & p : trajectory.points) ls.emplace_back(p.pose.position.x, p.pose.position.y);
+  ls.reserve(trajectory.size());
+  for (const auto & p : trajectory) ls.emplace_back(p.pose.position.x, p.pose.position.y);
   return generateFootprint(ls, lateral_offset);
 }
 
 polygon_t createEnvelopePolygon(
-  const Trajectory & trajectory, const size_t start_idx, ProjectionParameters & projection_params)
+  const TrajectoryPoints & trajectory, const size_t start_idx,
+  ProjectionParameters & projection_params)
 {
   polygon_t envelope_polygon;
-  const auto trajectory_size = trajectory.points.size() - start_idx;
+  const auto trajectory_size = trajectory.size() - start_idx;
   if (trajectory_size < 2) return envelope_polygon;
 
   envelope_polygon.outer().resize(trajectory_size * 2 + 1);
   for (size_t i = 0; i < trajectory_size; ++i) {
-    const auto & point = trajectory.points[i + start_idx];
+    const auto & point = trajectory[i + start_idx];
     projection_params.update(point);
     const auto forward_simulated_vector =
       forwardSimulatedSegment(point.pose.position, projection_params);
@@ -98,11 +100,11 @@ polygon_t createEnvelopePolygon(const std::vector<polygon_t> & footprints)
 }
 
 std::vector<multi_linestring_t> createProjectedLines(
-  const Trajectory & trajectory, ProjectionParameters & params)
+  const TrajectoryPoints & trajectory, ProjectionParameters & params)
 {
   std::vector<multi_linestring_t> projections;
-  projections.reserve(trajectory.points.size());
-  for (const auto & point : trajectory.points) {
+  projections.reserve(trajectory.size());
+  for (const auto & point : trajectory) {
     params.update(point);
     if (params.model == ProjectionParameters::PARTICLE) {
       const auto projection = forwardSimulatedSegment(point.pose.position, params);
@@ -115,16 +117,16 @@ std::vector<multi_linestring_t> createProjectedLines(
 }
 
 void limitVelocity(
-  Trajectory & trajectory, const CollisionChecker & collision_checker,
+  TrajectoryPoints & trajectory, const CollisionChecker & collision_checker,
   const std::vector<multi_linestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
 {
-  Float time = 0.0;
-  for (size_t i = 0; i < trajectory.points.size(); ++i) {
-    auto & trajectory_point = trajectory.points[i];
+  double time = 0.0;
+  for (size_t i = 0; i < trajectory.size(); ++i) {
+    auto & trajectory_point = trajectory[i];
     if (i > 0) {
-      const auto & prev_point = trajectory.points[i - 1];
-      time += static_cast<Float>(
+      const auto & prev_point = trajectory[i - 1];
+      time += static_cast<double>(
         tier4_autoware_utils::calcDistance2d(prev_point, trajectory_point) /
         prev_point.longitudinal_velocity_mps);
     }
@@ -139,8 +141,9 @@ void limitVelocity(
       trajectory_point.longitudinal_velocity_mps = std::max(
         min_feasible_velocity,
         calculateSafeVelocity(
-          trajectory_point, static_cast<Float>(*dist_to_collision - projection_params.extra_length),
-          static_cast<Float>(projection_params.duration), velocity_params.min_velocity));
+          trajectory_point,
+          static_cast<double>(*dist_to_collision - projection_params.extra_length),
+          static_cast<double>(projection_params.duration), velocity_params.min_velocity));
     }
   }
 }

@@ -23,7 +23,7 @@
 
 namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
-visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, const Float z)
+visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, const double z)
 {
   visualization_msgs::msg::Marker marker;
   marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -40,7 +40,7 @@ visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, co
   return marker;
 }
 
-visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, const Float z)
+visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, const double z)
 {
   visualization_msgs::msg::Marker marker;
   marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
@@ -62,7 +62,7 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const std::vector<multi_linestring_t> & adjusted_projections,
   const std::vector<polygon_t> & original_footprints,
   const std::vector<polygon_t> & adjusted_footprints, const ObstacleMasks & obstacle_masks,
-  const Float marker_z)
+  const double marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
   auto original_projections_id_offset = 0;

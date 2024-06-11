@@ -33,7 +33,7 @@ void maskPolygons(grid_map::GridMap & grid_map, const ObstacleMasks & masks);
 /// @brief apply a threshold to the grid map
 /// @param[in, out] grid_map the grid map to modify
 /// @param[in] threshold cells above this value are set to the max value, the other are set to 0
-void threshold(grid_map::GridMap & grid_map, const float threshold);
+void threshold(grid_map::GridMap & grid_map, const double threshold);
 
 grid_map::GridMap convertToGridMap(const OccupancyGrid & occupancy_grid);
 

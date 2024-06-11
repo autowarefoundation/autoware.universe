@@ -25,7 +25,7 @@ namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 /// @param[in] start_distance desired distance ahead of the ego_idx
 /// @return trajectory index ahead of ego_idx by the start_distance
 size_t calculateStartIndex(
-  const Trajectory & trajectory, const size_t ego_idx, const Float start_distance);
+  const TrajectoryPoints & trajectory, const size_t ego_idx, const double start_distance);
 
 /// @brief calculate trajectory index that is ahead of the given index by the given distance
 /// @param[in] trajectory trajectory
@@ -34,8 +34,8 @@ size_t calculateStartIndex(
 /// @param[in] max_duration maximum duration from start_idx to the returned index
 /// @return trajectory index ahead of the start_idx by at most the given length and duration
 size_t calculateEndIndex(
-  const Trajectory & trajectory, const size_t start_idx, const Float max_length,
-  const Float max_duration);
+  const TrajectoryPoints & trajectory, const size_t start_idx, const double max_length,
+  const double max_duration);
 
 /// @brief downsample a trajectory, reducing its number of points by the given factor
 /// @param[in] trajectory input trajectory
@@ -43,14 +43,15 @@ size_t calculateEndIndex(
 /// @param[in] end_idx ending index of the input trajectory
 /// @param[in] factor factor used for downsampling
 /// @return downsampled trajectory
-Trajectory downsampleTrajectory(
-  const Trajectory & trajectory, const size_t start_idx, const size_t end_idx, const int factor);
+TrajectoryPoints downsampleTrajectory(
+  const TrajectoryPoints & trajectory, const size_t start_idx, const size_t end_idx,
+  const int factor);
 
 /// @brief recalculate the steering angle of the trajectory
 /// @details uses the change in headings for calculation
 /// @param[inout] trajectory input trajectory
 /// @param[in] wheel_base wheel base of the vehicle
-void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base);
+void calculateSteeringAngles(TrajectoryPoints & trajectory, const double wheel_base);
 
 /// @brief copy the velocity profile of a downsampled trajectory to the original trajectory
 /// @param[in] downsampled_trajectory downsampled trajectory
@@ -58,8 +59,8 @@ void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base);
 /// @param[in] start_idx starting index of the downsampled trajectory relative to the input
 /// @param[in] factor downsampling factor
 /// @return input trajectory with the velocity profile of the downsampled trajectory
-Trajectory copyDownsampledVelocity(
-  const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx,
+TrajectoryPoints copyDownsampledVelocity(
+  const TrajectoryPoints & downsampled_traj, TrajectoryPoints trajectory, const size_t start_idx,
   const int factor);
 }  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 

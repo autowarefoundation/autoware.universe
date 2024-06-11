@@ -21,17 +21,20 @@
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+#include <vector>
 
 namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 using autoware_perception_msgs::msg::PredictedObjects;
-using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using nav_msgs::msg::OccupancyGrid;
-using PointCloud = sensor_msgs::msg::PointCloud2;
-using Float = decltype(TrajectoryPoint::longitudinal_velocity_mps);
+using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using point_t = tier4_autoware_utils::Point2d;
 using multipoint_t = tier4_autoware_utils::MultiPoint2d;
 using polygon_t = tier4_autoware_utils::Polygon2d;

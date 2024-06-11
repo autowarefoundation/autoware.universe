@@ -176,13 +176,6 @@ multi_polygon_t createObjectPolygons(
 /// @param[in] obstacle_params obstacle parameters
 void addSensorObstacles(
   Obstacles & obstacles, const OccupancyGrid & occupancy_grid, const PointCloud & pointcloud,
-  const ObstacleMasks & masks, tier4_autoware_utils::TransformListener & transform_listener,
-  const std::string & target_frame, const ObstacleParameters & obstacle_params);
-
-/// @brief filter obstacles with the given negative and positive masks
-/// @param[in] obstacles obstacles to filter
-/// @param[in] masks masks used to discard some obstacles
-/// @return obstacles that are inside the positive mask and outside of the negative masks
-Obstacles filterObstacles(const Obstacles & obstacles, const ObstacleMasks & masks);
+  const ObstacleMasks & masks, const ObstacleParameters & obstacle_params);
 }  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 #endif  // OBSTACLES_HPP_

@@ -43,12 +43,12 @@ struct ObstacleParameters
 
   enum { POINTCLOUD, OCCUPANCY_GRID, STATIC_ONLY } dynamic_source = OCCUPANCY_GRID;
   int8_t occupancy_grid_threshold{};
-  Float dynamic_obstacles_buffer{};
-  Float dynamic_obstacles_min_vel{};
+  double dynamic_obstacles_buffer{};
+  double dynamic_obstacles_min_vel{};
   std::vector<std::string> static_map_tags{};
   bool filter_envelope;
   bool ignore_on_path;
-  Float ignore_extra_distance;
+  double ignore_extra_distance;
   size_t rtree_min_points{};
   size_t rtree_min_segments{};
 
@@ -58,12 +58,12 @@ struct ObstacleParameters
     updateType(node.get_logger(), node.declare_parameter<std::string>(DYN_SOURCE_PARAM));
     occupancy_grid_threshold =
       static_cast<int8_t>(node.declare_parameter<int>(OCC_GRID_THRESH_PARAM));
-    dynamic_obstacles_buffer = static_cast<Float>(node.declare_parameter<Float>(BUFFER_PARAM));
-    dynamic_obstacles_min_vel = static_cast<Float>(node.declare_parameter<Float>(MIN_VEL_PARAM));
+    dynamic_obstacles_buffer = static_cast<double>(node.declare_parameter<double>(BUFFER_PARAM));
+    dynamic_obstacles_min_vel = static_cast<double>(node.declare_parameter<double>(MIN_VEL_PARAM));
     static_map_tags = node.declare_parameter<std::vector<std::string>>(MAP_TAGS_PARAM);
     filter_envelope = node.declare_parameter<bool>(FILTERING_PARAM);
     ignore_on_path = node.declare_parameter<bool>(IGNORE_ON_PATH_PARAM);
-    ignore_extra_distance = static_cast<Float>(node.declare_parameter<Float>(IGNORE_DIST_PARAM));
+    ignore_extra_distance = static_cast<double>(node.declare_parameter<double>(IGNORE_DIST_PARAM));
     updateRtreeMinPoints(
       node.get_logger(), static_cast<int>(node.declare_parameter<int>(RTREE_POINTS_PARAM)));
     updateRtreeMinSegments(
@@ -194,15 +194,15 @@ struct VelocityParameters
   static constexpr auto MIN_VEL_PARAM = "min_adjusted_velocity";
   static constexpr auto MAX_DECEL_PARAM = "max_deceleration";
 
-  Float min_velocity{};
-  Float max_deceleration{};
-  Float current_ego_velocity{};
+  double min_velocity{};
+  double max_deceleration{};
+  double current_ego_velocity{};
 
   VelocityParameters() = default;
   explicit VelocityParameters(rclcpp::Node & node)
   {
-    min_velocity = static_cast<Float>(node.declare_parameter<double>(MIN_VEL_PARAM));
-    max_deceleration = static_cast<Float>(node.declare_parameter<double>(MAX_DECEL_PARAM));
+    min_velocity = static_cast<double>(node.declare_parameter<double>(MIN_VEL_PARAM));
+    max_deceleration = static_cast<double>(node.declare_parameter<double>(MAX_DECEL_PARAM));
   }
 };
 
@@ -215,19 +215,19 @@ struct PreprocessingParameters
   static constexpr auto MAX_DURATION_PARAM = "trajectory_preprocessing.max_duration";
 
   int downsample_factor{};
-  Float start_distance{};
+  double start_distance{};
   bool calculate_steering_angles{};
-  Float max_length{};
-  Float max_duration{};
+  double max_length{};
+  double max_duration{};
 
   PreprocessingParameters() = default;
   explicit PreprocessingParameters(rclcpp::Node & node)
   {
     downsample_factor = node.declare_parameter<int>(DOWNSAMPLING_PARAM);
-    start_distance = static_cast<Float>(node.declare_parameter<double>(START_DIST_PARAM));
+    start_distance = static_cast<double>(node.declare_parameter<double>(START_DIST_PARAM));
     calculate_steering_angles = node.declare_parameter<bool>(CALC_STEER_PARAM);
-    max_length = node.declare_parameter<Float>(MAX_LENGTH_PARAM);
-    max_duration = node.declare_parameter<Float>(MAX_DURATION_PARAM);
+    max_length = node.declare_parameter<double>(MAX_LENGTH_PARAM);
+    max_duration = node.declare_parameter<double>(MAX_DURATION_PARAM);
   }
   bool updateDownsampleFactor(const int new_downsample_factor)
   {

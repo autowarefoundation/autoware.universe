@@ -30,7 +30,7 @@ namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 /// @param[in] ls linestring to turn into a marker
 /// @param[in] z z-value to use in the marker
 /// @return marker representing the linestring
-visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, const Float z);
+visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, const double z);
 
 /// @brief make debug marker array
 /// @param[in] obstacles obstacles
@@ -45,7 +45,7 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const std::vector<multi_linestring_t> & adjusted_projections,
   const std::vector<polygon_t> & original_footprints,
   const std::vector<polygon_t> & adjusted_footprints, const ObstacleMasks & obstacle_masks,
-  const Float marker_z);
+  const double marker_z);
 
 }  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 #endif  // DEBUG_HPP_

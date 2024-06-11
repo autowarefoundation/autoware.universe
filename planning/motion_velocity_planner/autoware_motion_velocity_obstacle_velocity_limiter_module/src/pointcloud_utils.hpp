@@ -21,33 +21,21 @@
 
 #include <geometry_msgs/msg/transform.hpp>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-
 #include <string>
 #include <vector>
 
 namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
-/// @brief return the pointcloud msg transformed and converted to PCL format
-/// @param[in] pointcloud_msg pointcloud to transform
-/// @param[in] transform_listener used to retrieve the latest transform
-/// @param[in] target_frame frame of the returned pointcloud
-/// @return PCL pointcloud
-pcl::PointCloud<pcl::PointXYZ>::Ptr transformPointCloud(
-  const PointCloud & pointcloud_msg, tier4_autoware_utils::TransformListener & transform_listener,
-  const std::string & target_frame);
-
 /// @brief filter the pointcloud to keep only relevant points
 /// @param[in,out] pointcloud to filter
 /// @param[in] masks obstacle masks used to filter the pointcloud
-void filterPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud, const ObstacleMasks & masks);
+void filterPointCloud(PointCloud::Ptr pointcloud, const ObstacleMasks & masks);
 
 /// @brief extract obstacles from the given pointcloud
 /// @param[in] pointcloud input pointcloud
 /// @return extracted obstacles
-multipoint_t extractObstacles(const pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud);
+multipoint_t extractObstacles(const PointCloud & pointcloud);
 
 }  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 

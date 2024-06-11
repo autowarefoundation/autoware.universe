@@ -76,8 +76,7 @@ multi_polygon_t createObjectPolygons(
 
 void addSensorObstacles(
   Obstacles & obstacles, const OccupancyGrid & occupancy_grid, const PointCloud & pointcloud,
-  const ObstacleMasks & masks, tier4_autoware_utils::TransformListener & transform_listener,
-  const std::string & target_frame, const ObstacleParameters & obstacle_params)
+  const ObstacleMasks & masks, const ObstacleParameters & obstacle_params)
 {
   if (obstacle_params.dynamic_source == ObstacleParameters::OCCUPANCY_GRID) {
     auto grid_map = convertToGridMap(occupancy_grid);
@@ -86,9 +85,8 @@ void addSensorObstacles(
     const auto obstacle_lines = extractObstacles(grid_map, occupancy_grid);
     obstacles.lines.insert(obstacles.lines.end(), obstacle_lines.begin(), obstacle_lines.end());
   } else if (obstacle_params.dynamic_source == ObstacleParameters::POINTCLOUD) {
-    auto pcd = transformPointCloud(pointcloud, transform_listener, target_frame);
-    filterPointCloud(pcd, masks);
-    obstacles.points = extractObstacles(pcd);
+    filterPointCloud(pointcloud.makeShared(), masks);
+    obstacles.points = extractObstacles(pointcloud);
   }
 }
 }  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

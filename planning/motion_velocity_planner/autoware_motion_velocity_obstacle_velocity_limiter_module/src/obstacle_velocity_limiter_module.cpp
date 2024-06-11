@@ -136,8 +136,6 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   const std::shared_ptr<const PlannerData> planner_data)
 {
   VelocityPlanningResult result;
-  // if (!validInputs()) return result;
-  // const auto t_start = std::chrono::system_clock::now();
   const auto ego_idx =
     motion_utils::findNearestIndex(ego_trajectory_points, planner_data->current_odometry.pose.pose);
   if (!ego_idx) {
@@ -147,69 +145,60 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
     return result;
   }
   auto original_traj_points = ego_trajectory_points;
-  // if (preprocessing_params_.calculate_steering_angles)
-  //   calculateSteeringAngles(original_traj, projection_params_.wheel_base);
-  // velocity_params_.current_ego_velocity = current_odometry_ptr_->twist.twist.linear.x;
-  // const auto start_idx =
-  //   calculateStartIndex(original_traj, *ego_idx, preprocessing_params_.start_distance);
-  // const auto end_idx = calculateEndIndex(
-  //   original_traj, start_idx, preprocessing_params_.max_length,
-  //   preprocessing_params_.max_duration);
-  // Trajectory downsampled_traj = downsampleTrajectory(
-  //   original_traj, start_idx, end_idx, preprocessing_params_.downsample_factor);
-  // ObstacleMasks obstacle_masks;
-  // obstacle_masks.negative_masks = createPolygonMasks(
-  //   *dynamic_obstacles_ptr_, obstacle_params_.dynamic_obstacles_buffer,
-  //   obstacle_params_.dynamic_obstacles_min_vel);
-  // if (obstacle_params_.ignore_on_path)
-  //   obstacle_masks.negative_masks.push_back(createTrajectoryFootprint(
-  //     *msg, vehicle_lateral_offset_ + obstacle_params_.ignore_extra_distance));
-  // const auto projected_linestrings = createProjectedLines(downsampled_traj, projection_params_);
-  // const auto footprint_polygons =
-  //   createFootprintPolygons(projected_linestrings, vehicle_lateral_offset_);
-  // Obstacles obstacles;
-  // obstacles.lines = static_map_obstacles_;
-  // if (obstacle_params_.dynamic_source != ObstacleParameters::STATIC_ONLY) {
-  //   if (obstacle_params_.filter_envelope)
-  //     obstacle_masks.positive_mask = createEnvelopePolygon(footprint_polygons);
-  //   addSensorObstacles(
-  //     obstacles, *occupancy_grid_ptr_, *pointcloud_ptr_, obstacle_masks, transform_listener_,
-  //     original_traj.header.frame_id, obstacle_params_);
-  // }
-  // limitVelocity(
-  //   downsampled_traj,
-  //   CollisionChecker(
-  //     obstacles, obstacle_params_.rtree_min_points, obstacle_params_.rtree_min_segments),
-  //   projected_linestrings, footprint_polygons, projection_params_, velocity_params_);
-  // auto safe_trajectory = copyDownsampledVelocity(
-  //   downsampled_traj, original_traj, start_idx, preprocessing_params_.downsample_factor);
+  if (preprocessing_params_.calculate_steering_angles)
+    obstacle_velocity_limiter::calculateSteeringAngles(
+      original_traj_points, projection_params_.wheel_base);
+  velocity_params_.current_ego_velocity = planner_data->current_odometry.twist.twist.linear.x;
+  const auto start_idx = obstacle_velocity_limiter::calculateStartIndex(
+    original_traj_points, *ego_idx, preprocessing_params_.start_distance);
+  const auto end_idx = obstacle_velocity_limiter::calculateEndIndex(
+    original_traj_points, start_idx, preprocessing_params_.max_length,
+    preprocessing_params_.max_duration);
+  auto downsampled_traj_points = obstacle_velocity_limiter::downsampleTrajectory(
+    original_traj_points, start_idx, end_idx, preprocessing_params_.downsample_factor);
+  obstacle_velocity_limiter::ObstacleMasks obstacle_masks;
+  obstacle_masks.negative_masks = obstacle_velocity_limiter::createPolygonMasks(
+    planner_data->predicted_objects, obstacle_params_.dynamic_obstacles_buffer,
+    obstacle_params_.dynamic_obstacles_min_vel);
+  if (obstacle_params_.ignore_on_path)
+    obstacle_masks.negative_masks.push_back(obstacle_velocity_limiter::createTrajectoryFootprint(
+      original_traj_points, vehicle_lateral_offset_ + obstacle_params_.ignore_extra_distance));
+  const auto projected_linestrings =
+    obstacle_velocity_limiter::createProjectedLines(downsampled_traj_points, projection_params_);
+  const auto footprint_polygons = obstacle_velocity_limiter::createFootprintPolygons(
+    projected_linestrings, vehicle_lateral_offset_);
+  obstacle_velocity_limiter::Obstacles obstacles;
+  // obstacles.lines = planner_data->static_map_obstacles; TODO(Maxime)
+  if (
+    obstacle_params_.dynamic_source != obstacle_velocity_limiter::ObstacleParameters::STATIC_ONLY) {
+    if (obstacle_params_.filter_envelope)
+      obstacle_masks.positive_mask =
+        obstacle_velocity_limiter::createEnvelopePolygon(footprint_polygons);
+    obstacle_velocity_limiter::addSensorObstacles(
+      obstacles, planner_data->occupancy_grid, planner_data->no_ground_pointcloud, obstacle_masks,
+      obstacle_params_);
+  }
+  obstacle_velocity_limiter::limitVelocity(
+    downsampled_traj_points,
+    obstacle_velocity_limiter::CollisionChecker(
+      obstacles, obstacle_params_.rtree_min_points, obstacle_params_.rtree_min_segments),
+    projected_linestrings, footprint_polygons, projection_params_, velocity_params_);
+  auto safe_trajectory = obstacle_velocity_limiter::copyDownsampledVelocity(
+    downsampled_traj_points, original_traj_points, start_idx,
+    preprocessing_params_.downsample_factor);
 
-  // if (debug_publisher_->get_subscription_count() > 0) {
-  //   const auto safe_projected_linestrings =
-  //     createProjectedLines(downsampled_traj, projection_params_);
-  //   const auto safe_footprint_polygons =
-  //     createFootprintPolygons(safe_projected_linestrings, vehicle_lateral_offset_);
-  //   debug_publisher_->publish(makeDebugMarkers(
-  //     obstacles, projected_linestrings, safe_projected_linestrings, footprint_polygons,
-  //     safe_footprint_polygons, obstacle_masks, occupancy_grid_ptr_->info.origin.position.z));
-  // }
+  if (debug_publisher_->get_subscription_count() > 0) {
+    const auto safe_projected_linestrings =
+      obstacle_velocity_limiter::createProjectedLines(downsampled_traj_points, projection_params_);
+    const auto safe_footprint_polygons = obstacle_velocity_limiter::createFootprintPolygons(
+      safe_projected_linestrings, vehicle_lateral_offset_);
+    debug_publisher_->publish(makeDebugMarkers(
+      obstacles, projected_linestrings, safe_projected_linestrings, footprint_polygons,
+      safe_footprint_polygons, obstacle_masks,
+      planner_data->current_odometry.pose.pose.position.z));
+  }
   return result;
 }
-
-// bool ObstacleVelocityLimiterModule::validInputs()
-// {
-//   constexpr auto one_sec = rcutils_duration_value_t(1000);
-//   if (!occupancy_grid_ptr_)
-//     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Occupancy grid not yet received");
-//   if (!dynamic_obstacles_ptr_)
-//     RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), one_sec, "Dynamic obstacles not yet
-//     received");
-//   if (!current_odometry_ptr_)
-//     RCLCPP_WARN_THROTTLE(
-//       get_logger(), *get_clock(), one_sec, "Current ego velocity not yet received");
-
-//   return occupancy_grid_ptr_ && dynamic_obstacles_ptr_ && current_odometry_ptr_;
-// }
 }  // namespace autoware::motion_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>

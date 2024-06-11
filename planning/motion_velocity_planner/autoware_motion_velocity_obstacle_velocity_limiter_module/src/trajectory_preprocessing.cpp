@@ -26,56 +26,54 @@ namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
 
 size_t calculateStartIndex(
-  const Trajectory & trajectory, const size_t ego_idx, const Float start_distance)
+  const TrajectoryPoints & trajectory, const size_t ego_idx, const double start_distance)
 {
   auto dist = 0.0;
   auto idx = ego_idx;
-  while (idx + 1 < trajectory.points.size() && dist < start_distance) {
-    dist +=
-      tier4_autoware_utils::calcDistance2d(trajectory.points[idx], trajectory.points[idx + 1]);
+  while (idx + 1 < trajectory.size() && dist < start_distance) {
+    dist += tier4_autoware_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
     ++idx;
   }
   return idx;
 }
 
 size_t calculateEndIndex(
-  const Trajectory & trajectory, const size_t start_idx, const Float max_length,
-  const Float max_duration)
+  const TrajectoryPoints & trajectory, const size_t start_idx, const double max_length,
+  const double max_duration)
 {
   auto length = 0.0;
   auto duration = 0.0;
   auto idx = start_idx;
-  while (idx + 1 < trajectory.points.size() && length < max_length && duration < max_duration) {
+  while (idx + 1 < trajectory.size() && length < max_length && duration < max_duration) {
     const auto length_d =
-      tier4_autoware_utils::calcDistance2d(trajectory.points[idx], trajectory.points[idx + 1]);
+      tier4_autoware_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
     length += length_d;
-    if (trajectory.points[idx].longitudinal_velocity_mps > 0.0)
-      duration += length_d / trajectory.points[idx].longitudinal_velocity_mps;
+    if (trajectory[idx].longitudinal_velocity_mps > 0.0)
+      duration += length_d / trajectory[idx].longitudinal_velocity_mps;
     ++idx;
   }
   return idx;
 }
 
-Trajectory downsampleTrajectory(
-  const Trajectory & trajectory, const size_t start_idx, const size_t end_idx, const int factor)
+TrajectoryPoints downsampleTrajectory(
+  const TrajectoryPoints & trajectory, const size_t start_idx, const size_t end_idx,
+  const int factor)
 {
   if (factor < 1) return trajectory;
-  Trajectory downsampled_traj;
-  downsampled_traj.header = trajectory.header;
-  downsampled_traj.points.reserve((end_idx - start_idx) / factor);
-  for (size_t i = start_idx; i <= end_idx; i += factor)
-    downsampled_traj.points.push_back(trajectory.points[i]);
+  TrajectoryPoints downsampled_traj;
+  downsampled_traj.reserve((end_idx - start_idx) / factor);
+  for (size_t i = start_idx; i <= end_idx; i += factor) downsampled_traj.push_back(trajectory[i]);
   return downsampled_traj;
 }
 
-void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base)
+void calculateSteeringAngles(TrajectoryPoints & trajectory, const double wheel_base)
 {
   auto t = 0.0;
-  auto prev_point = trajectory.points.front();
+  auto prev_point = trajectory.front();
   auto prev_heading = tf2::getYaw(prev_point.pose.orientation);
-  for (auto i = 1ul; i < trajectory.points.size(); ++i) {
-    const auto & prev_point = trajectory.points[i - 1];
-    auto & point = trajectory.points[i];
+  for (auto i = 1ul; i < trajectory.size(); ++i) {
+    const auto & prev_point = trajectory[i - 1];
+    auto & point = trajectory[i];
     const auto dt = tier4_autoware_utils::calcDistance2d(prev_point, point) /
                     prev_point.longitudinal_velocity_mps;
     t += dt;
@@ -87,14 +85,14 @@ void calculateSteeringAngles(Trajectory & trajectory, const Float wheel_base)
   }
 }
 
-Trajectory copyDownsampledVelocity(
-  const Trajectory & downsampled_traj, Trajectory trajectory, const size_t start_idx,
+TrajectoryPoints copyDownsampledVelocity(
+  const TrajectoryPoints & downsampled_traj, TrajectoryPoints trajectory, const size_t start_idx,
   const int factor)
 {
-  const auto size = std::min(downsampled_traj.points.size(), trajectory.points.size());
+  const auto size = std::min(downsampled_traj.size(), trajectory.size());
   for (size_t i = 0; i < size; ++i) {
-    trajectory.points[start_idx + i * factor].longitudinal_velocity_mps =
-      downsampled_traj.points[i].longitudinal_velocity_mps;
+    trajectory[start_idx + i * factor].longitudinal_velocity_mps =
+      downsampled_traj[i].longitudinal_velocity_mps;
   }
   return trajectory;
 }
