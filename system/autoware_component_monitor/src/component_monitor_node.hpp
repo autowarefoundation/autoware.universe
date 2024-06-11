@@ -49,7 +49,7 @@ private:
   static std::pair<uint64_t, uint64_t> get_system_memory(const fields_t & fields);
   static std::pair<uint64_t, float> get_process_memory(fields_t & fields);
   static float to_float(const std::string & str);
-  // cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
+  // cSpell:ignore kibibytes, mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
   static uint64_t to_uint64(const std::string & str);
   static uint64_t kib_to_bytes(uint64_t kibibytes);
   static uint64_t mib_to_bytes(uint64_t mebibytes);

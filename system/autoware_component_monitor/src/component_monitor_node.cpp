@@ -237,7 +237,7 @@ uint64_t ComponentMonitor::to_uint64(const std::string & str)
   return std::strtoul(str.c_str(), nullptr, 10);
 }
 
-// cSpell:ignore mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
+// cSpell:ignore kibibytes, mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
 
 uint64_t ComponentMonitor::kib_to_bytes(const uint64_t kibibytes)
 {
