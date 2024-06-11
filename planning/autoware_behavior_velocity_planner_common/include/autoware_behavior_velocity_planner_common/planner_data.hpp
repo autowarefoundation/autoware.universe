@@ -15,11 +15,11 @@
 #ifndef AUTOWARE_BEHAVIOR_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
 #define AUTOWARE_BEHAVIOR_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
 
-#include "route_handler/route_handler.hpp"
+#include "autoware_route_handler/route_handler.hpp"
 
 #include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <autoware_velocity_smoother/smoother/smoother_base.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -51,7 +51,7 @@ class BehaviorVelocityPlannerNode;
 struct PlannerData
 {
   explicit PlannerData(rclcpp::Node & node)
-  : vehicle_info_(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo())
+  : vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo())
   {
     max_stop_acceleration_threshold = node.declare_parameter<double>(
       "max_accel");  // TODO(someone): read min_acc in velocity_controller.param.yaml?
@@ -90,9 +90,9 @@ struct PlannerData
   // velocity smoother
   std::shared_ptr<autoware::velocity_smoother::SmootherBase> velocity_smoother_;
   // route handler
-  std::shared_ptr<route_handler::RouteHandler> route_handler_;
+  std::shared_ptr<autoware::route_handler::RouteHandler> route_handler_;
   // parameters
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
   // additional parameters
   double max_stop_acceleration_threshold;

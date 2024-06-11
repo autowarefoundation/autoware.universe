@@ -19,8 +19,8 @@
 
 #include <autoware_behavior_path_planner_common/parameters.hpp>
 #include <autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
-#include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -42,12 +42,12 @@
 
 namespace behavior_path_planner
 {
+using autoware::route_handler::RouteHandler;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
-using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 const std::map<std::string, uint8_t> g_signal_map = {
@@ -237,7 +237,7 @@ private:
 
   inline bool straddleRoadBound(
     const ShiftedPath & path, const ShiftLine & shift_line, const lanelet::ConstLanelets & lanes,
-    const vehicle_info_util::VehicleInfo & vehicle_info) const
+    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info) const
   {
     using boost::geometry::intersects;
     using tier4_autoware_utils::pose2transform;
