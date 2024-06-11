@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_
-#define AUTOWARE_OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_
+#ifndef AUTOWARE_OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_  // NOLINT
+#define AUTOWARE_OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_  // NOLINT
 
 #include "autoware_obstacle_cruise_planner/optimization_based_planner/s_boundary.hpp"
 #include "autoware_obstacle_cruise_planner/optimization_based_planner/velocity_optimizer.hpp"
@@ -117,5 +117,6 @@ private:
   double engage_exit_ratio_;
   double stop_dist_to_prohibit_engage_;
 };
-
-#endif  // AUTOWARE_OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_
+// clang-format off
+#endif  // AUTOWARE_OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_  // NOLINT
+// clang-format on
