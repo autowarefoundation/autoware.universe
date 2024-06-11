@@ -93,15 +93,19 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
       throw std::invalid_argument(
         "allow_unsupported_version is false, so stop loading lanelet map");
     }
-  } else if (const int map_major_ver = static_cast<int>(format_version[0] - '0');
-             map_major_ver > static_cast<int>(version)) {
-    RCLCPP_WARN(
-      get_logger(),
-      "format_version(%d) of the provided map(%s) is larger than the supported version(%d)",
-      map_major_ver, lanelet2_filename.c_str(), static_cast<int>(version));
-    if (!allow_unsupported_version) {
-      throw std::invalid_argument(
-        "allow_unsupported_version is false, so stop loading lanelet map");
+  } else if (const auto map_major_ver_opt = lanelet::io_handlers::parseMajorVersion(format_version);
+             map_major_ver_opt.has_value()) {
+    const auto map_major_ver = map_major_ver_opt.value();
+    if (map_major_ver > static_cast<uint64_t>(lanelet::autoware::version)) {
+      RCLCPP_WARN(
+        get_logger(),
+        "format_version(%ld) of the provided map(%s) is larger than the supported version(%ld)",
+        map_major_ver, lanelet2_filename.c_str(),
+        static_cast<uint64_t>(lanelet::autoware::version));
+      if (!allow_unsupported_version) {
+        throw std::invalid_argument(
+          "allow_unsupported_version is false, so stop loading lanelet map");
+      }
     }
   }
   RCLCPP_INFO(get_logger(), "Loaded map format_version: %s", format_version.c_str());
