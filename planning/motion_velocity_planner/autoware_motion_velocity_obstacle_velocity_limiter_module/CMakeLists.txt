@@ -3,26 +3,11 @@ project(autoware_motion_velocity_obstacle_velocity_limiter_module)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
-
-find_package(PCL REQUIRED COMPONENTS common)
-find_package(pcl_conversions REQUIRED)
+pluginlib_export_plugin_description_file(autoware_motion_velocity_planner_node plugins.xml)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   DIRECTORY src
 )
-
-ament_target_dependencies(${PROJECT_NAME} PCL)
-target_include_directories(${PROJECT_NAME}
-  SYSTEM PUBLIC
-    "${PCL_INCLUDE_DIRS}"
-)
-
-# Disable warnings due to external dependencies
-get_target_property(lanelet2_core_INCLUDE_DIR
-  lanelet2_core::lanelet2_core INTERFACE_INCLUDE_DIRECTORIES
-)
-
-pluginlib_export_plugin_description_file(autoware_motion_velocity_planner_node plugins.xml)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -47,7 +32,5 @@ target_link_libraries(collision_benchmark
 
 ament_auto_package(
   INSTALL_TO_SHARE
-    launch
     config
-    script
 )

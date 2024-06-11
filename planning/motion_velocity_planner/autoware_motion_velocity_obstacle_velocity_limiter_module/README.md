@@ -142,27 +142,6 @@ Parameters `trajectory_preprocessing.max_length` and `trajectory_preprocessing.m
 To reduce computation cost at the cost of precision, the trajectory can be downsampled using parameter `trajectory_preprocessing.downsample_factor`.
 For example a value of `1` means all trajectory points will be evaluated while a value of `10` means only 1/10th of the points will be evaluated.
 
-## Inputs / Outputs
-
-### Inputs
-
-| Name                          | Type                                        | Description                                        |
-| ----------------------------- | ------------------------------------------- | -------------------------------------------------- |
-| `~/input/trajectory`          | `autoware_planning_msgs/Trajectory`         | Reference trajectory                               |
-| `~/input/occupancy_grid`      | `nav_msgs/OccupancyGrid`                    | Occupancy grid with obstacle information           |
-| `~/input/obstacle_pointcloud` | `sensor_msgs/PointCloud2`                   | Pointcloud containing only obstacle points         |
-| `~/input/dynamic_obstacles`   | `autoware_perception_msgs/PredictedObjects` | Dynamic objects                                    |
-| `~/input/odometry`            | `nav_msgs/Odometry`                         | Odometry used to retrieve the current ego velocity |
-| `~/input/map`                 | `autoware_map_msgs/LaneletMapBin`           | Vector map used to retrieve static obstacles       |
-
-### Outputs
-
-| Name                            | Type                                | Description                                              |
-| ------------------------------- | ----------------------------------- | -------------------------------------------------------- |
-| `~/output/trajectory`           | `autoware_planning_msgs/Trajectory` | Trajectory with adjusted velocities                      |
-| `~/output/debug_markers`        | `visualization_msgs/MarkerArray`    | Debug markers (envelopes, obstacle polygons)             |
-| `~/output/runtime_microseconds` | `tier4_debug_msgs/Float64`          | Time taken to calculate the trajectory (in microseconds) |
-
 ## Parameters
 
 | Name                                                | Type        | Description                                                                                                                             |

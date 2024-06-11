@@ -208,3 +208,8 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
 //   return occupancy_grid_ptr_ && dynamic_obstacles_ptr_ && current_odometry_ptr_;
 // }
 }  // namespace autoware::motion_velocity_planner
+
+#include <pluginlib/class_list_macros.hpp>
+PLUGINLIB_EXPORT_CLASS(
+  autoware::motion_velocity_planner::ObstacleVelocityLimiterModule,
+  autoware::motion_velocity_planner::PluginModuleInterface)
