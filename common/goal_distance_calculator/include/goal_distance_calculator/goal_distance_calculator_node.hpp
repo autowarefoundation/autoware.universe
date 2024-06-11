@@ -49,17 +49,14 @@ private:
   tier4_autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute>
     sub_route_{this, "/planning/mission_planning/route"};
 
-  // Data Buffer
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
-
   // Publisher
   tier4_autoware_utils::DebugPublisher debug_publisher_;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
 
-  bool isDataReady();
-  bool isDataTimeout();
+  bool tryGetCurrentPose(geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose);
+  bool tryGetRoute(autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route);
   void onTimer();
 
   // Parameter
@@ -67,8 +64,6 @@ private:
   Param param_;
 
   // Core
-  Input input_;
-  Output output_;
   std::unique_ptr<GoalDistanceCalculator> goal_distance_calculator_;
 };
 }  // namespace goal_distance_calculator
