@@ -200,30 +200,18 @@ double RawVehicleCommandConverterNode::calculateBrakeMap(
   return desired_brake_cmd;
 }
 
-void RawVehicleCommandConverterNode::processSteering(const Steering::ConstSharedPtr msg)
-{
-  if (!msg) {
-    return;
-  }
-  current_steer_ptr_ = std::make_unique<double>(msg->steering_tire_angle);
-}
-
-void RawVehicleCommandConverterNode::processOdometry(const Odometry::ConstSharedPtr msg)
-{
-  if (!msg) {
-    return;
-  }
-  current_twist_ptr_ = std::make_unique<TwistStamped>();
-  current_twist_ptr_->header = msg->header;
-  current_twist_ptr_->twist = msg->twist.twist;
-}
-
 void RawVehicleCommandConverterNode::onControlCmd(const Control::ConstSharedPtr msg)
 {
   const auto odometry_msg = sub_odometry_.takeData();
   const auto steering_msg = sub_steering_.takeData();
-  processOdometry(odometry_msg);
-  processSteering(steering_msg);
+  if (steering_msg) {
+    current_steer_ptr_ = std::make_unique<double>(steering_msg->steering_tire_angle);
+  }
+  if (odometry_msg) {
+    current_twist_ptr_ = std::make_unique<TwistStamped>();
+    current_twist_ptr_->header = odometry_msg->header;
+    current_twist_ptr_->twist = odometry_msg->twist.twist;
+  }
   control_cmd_ptr_ = msg;
   publishActuationCmd();
 }

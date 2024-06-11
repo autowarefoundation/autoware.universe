@@ -111,9 +111,7 @@ public:
     const double current_velocity, const double desired_acc, bool & accel_cmd_is_zero);
   double calculateBrakeMap(const double current_velocity, const double desired_acc);
   double calculateSteer(const double vel, const double steering, const double steer_rate);
-  void processSteering(const Steering::ConstSharedPtr msg);
   void onControlCmd(const Control::ConstSharedPtr msg);
-  void processOdometry(const Odometry::ConstSharedPtr msg);
   void publishActuationCmd();
   // for debugging
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_pub_steer_pid_;
