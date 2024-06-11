@@ -80,11 +80,6 @@
               "default": 0.1,
               "minimum": 0.0,
               "maximum": 1.0
-            },
-            "has_twist": {
-              "type": "boolean",
-              "description": "Indicates whether the model outputs twist value.",
-              "default": false
             }
           },
           "required": [
@@ -93,8 +88,7 @@
             "circle_nms_dist_threshold",
             "iou_nms_target_class_names",
             "iou_nms_search_distance_2d",
-            "iou_nms_threshold",
-            "has_twist"
+            "iou_nms_threshold"
           ]
         },
         "densification_params": {
