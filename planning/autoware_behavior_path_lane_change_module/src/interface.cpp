@@ -120,8 +120,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     const auto path =
       assignToCandidate(module_type_->getLaneChangePath(), module_type_->getEgoPosition());
     updateRTCStatus(
-      path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
-      State::RUNNING);
+      path.start_distance_to_path_change, path.finish_distance_to_path_change,
+      post_process_safety_status_.is_safe, State::RUNNING);
   }
 
   return output;
@@ -146,7 +146,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 
   if (!module_type_->isValidPath()) {
     updateRTCStatus(
-      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), false,
       State::FAILED);
     path_candidate_ = std::make_shared<PathWithLaneId>();
     return out;
