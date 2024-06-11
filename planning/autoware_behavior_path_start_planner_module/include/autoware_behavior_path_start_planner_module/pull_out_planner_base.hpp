@@ -55,8 +55,8 @@ public:
   {
     std::stringstream ss;
     ss << "Planner type: " << magic_enum::enum_name(planner_type) << "\n";
-    ss << "Required margin: " << required_margin << "\n";
-    ss << "Backward distance: " << backward_distance << "\n";
+    ss << "Required margin: " << required_margin << "[m]\n";
+    ss << "Backward distance: " << backward_distance << "[m]\n";
     ss << "Condition evaluation:\n";
     for (const auto & result : conditions_evaluation) {
       ss << result << "\n";
