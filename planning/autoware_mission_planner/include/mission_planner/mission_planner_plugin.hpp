@@ -34,6 +34,7 @@ public:
   using LaneletRoute = autoware_planning_msgs::msg::LaneletRoute;
   using LaneletMapBin = autoware_map_msgs::msg::LaneletMapBin;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
+  using Pose = geometry_msgs::msg::Pose;
 
   virtual ~PlannerPlugin() = default;
   virtual void initialize(rclcpp::Node * node) = 0;
