@@ -28,7 +28,7 @@ namespace landmark_manager
 {
 
 void LandmarkManager::parse_landmarks(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr & msg,
+  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr & msg,
   const std::string & target_subtype)
 {
   std::vector<lanelet::Polygon3d> landmarks =
@@ -50,7 +50,7 @@ void LandmarkManager::parse_landmarks(
     const auto & v2 = vertices[2];
     const auto & v3 = vertices[3];
     const double volume = (v1 - v0).cross(v2 - v0).dot(v3 - v0) / 6.0;
-    const double volume_threshold = 1e-5;
+    const double volume_threshold = 1e-3;
     if (volume > volume_threshold) {
       continue;
     }

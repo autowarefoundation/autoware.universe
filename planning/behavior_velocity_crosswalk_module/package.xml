@@ -21,11 +21,11 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
-  <depend>autoware_auto_perception_msgs</depend>
-  <depend>autoware_auto_planning_msgs</depend>
-  <depend>autoware_auto_tf2</depend>
+  <depend>autoware_behavior_velocity_planner_common</depend>
   <depend>autoware_perception_msgs</depend>
-  <depend>behavior_velocity_planner_common</depend>
+  <depend>autoware_planning_msgs</depend>
+  <depend>autoware_route_handler</depend>
+  <depend>autoware_vehicle_info_utils</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>grid_map_core</depend>
@@ -39,12 +39,10 @@
   <depend>pcl_conversions</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>route_handler</depend>
   <depend>sensor_msgs</depend>
   <depend>tier4_api_msgs</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
-  <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

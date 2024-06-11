@@ -29,12 +29,7 @@ using tier4_autoware_utils::calcYawDeviation;
 SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & options)
 : Node("simple_trajectory_follower", options)
 {
-  pub_cmd_ = create_publisher<AckermannControlCommand>("output/control_cmd", 1);
-
-  sub_kinematics_ = create_subscription<Odometry>(
-    "input/kinematics", 1, [this](const Odometry::SharedPtr msg) { odometry_ = msg; });
-  sub_trajectory_ = create_subscription<Trajectory>(
-    "input/trajectory", 1, [this](const Trajectory::SharedPtr msg) { trajectory_ = msg; });
+  pub_cmd_ = create_publisher<Control>("output/control_cmd", 1);
 
   use_external_target_vel_ = declare_parameter<bool>("use_external_target_vel");
   external_target_vel_ = declare_parameter<float>("external_target_vel");
@@ -47,18 +42,19 @@ SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & o
 
 void SimpleTrajectoryFollower::onTimer()
 {
-  if (!checkData()) {
+  if (!processData()) {
     RCLCPP_INFO(get_logger(), "data not ready");
     return;
   }
 
   updateClosest();
 
-  AckermannControlCommand cmd;
+  Control cmd;
   cmd.stamp = cmd.lateral.stamp = cmd.longitudinal.stamp = get_clock()->now();
   cmd.lateral.steering_tire_angle = static_cast<float>(calcSteerCmd());
-  cmd.longitudinal.speed = use_external_target_vel_ ? static_cast<float>(external_target_vel_)
-                                                    : closest_traj_point_.longitudinal_velocity_mps;
+  cmd.longitudinal.velocity = use_external_target_vel_
+                                ? static_cast<float>(external_target_vel_)
+                                : closest_traj_point_.longitudinal_velocity_mps;
   cmd.longitudinal.acceleration = static_cast<float>(calcAccCmd());
   pub_cmd_->publish(cmd);
 }
@@ -109,9 +105,18 @@ double SimpleTrajectoryFollower::calcAccCmd()
   return acc;
 }
 
-bool SimpleTrajectoryFollower::checkData()
+bool SimpleTrajectoryFollower::processData()
 {
-  return (trajectory_ && odometry_);
+  bool is_ready = true;
+  const auto & getData = [](auto & dest, auto & sub) {
+    const auto temp = sub.takeData();
+    if (!temp) return false;
+    dest = temp;
+    return true;
+  };
+  is_ready &= getData(odometry_, sub_kinematics_);
+  is_ready &= getData(trajectory_, sub_trajectory_);
+  return is_ready;
 }
 
 }  // namespace simple_trajectory_follower

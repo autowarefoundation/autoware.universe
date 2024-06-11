@@ -15,11 +15,13 @@
 #ifndef TRAJECTORY_FOLLOWER_NODE__SIMPLE_TRAJECTORY_FOLLOWER_HPP_
 #define TRAJECTORY_FOLLOWER_NODE__SIMPLE_TRAJECTORY_FOLLOWER_HPP_
 
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
+#include <autoware_control_msgs/msg/control.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -28,9 +30,9 @@
 
 namespace simple_trajectory_follower
 {
-using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using autoware_control_msgs::msg::Control;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
@@ -42,20 +44,22 @@ public:
   ~SimpleTrajectoryFollower() = default;
 
 private:
-  rclcpp::Subscription<Odometry>::SharedPtr sub_kinematics_;
-  rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
-  rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_cmd_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> sub_kinematics_{
+    this, "~/input/kinematics"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<Trajectory> sub_trajectory_{
+    this, "~/input/trajectory"};
+  rclcpp::Publisher<Control>::SharedPtr pub_cmd_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  Trajectory::SharedPtr trajectory_;
-  Odometry::SharedPtr odometry_;
+  Trajectory::ConstSharedPtr trajectory_;
+  Odometry::ConstSharedPtr odometry_;
   TrajectoryPoint closest_traj_point_;
   bool use_external_target_vel_;
   double external_target_vel_;
   double lateral_deviation_;
 
   void onTimer();
-  bool checkData();
+  bool processData();
   void updateClosest();
   double calcSteerCmd();
   double calcAccCmd();

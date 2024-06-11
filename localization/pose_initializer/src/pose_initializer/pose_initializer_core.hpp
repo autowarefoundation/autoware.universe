@@ -34,8 +34,7 @@ class NdtLocalizationTriggerModule;
 class PoseInitializer : public rclcpp::Node
 {
 public:
-  PoseInitializer();
-  ~PoseInitializer();
+  explicit PoseInitializer(const rclcpp::NodeOptions & options);
 
 private:
   using ServiceException = component_interface_utils::ServiceException;
@@ -48,8 +47,8 @@ private:
   component_interface_utils::Publisher<State>::SharedPtr pub_state_;
   component_interface_utils::Service<Initialize>::SharedPtr srv_initialize_;
   State::Message state_;
-  std::array<double, 36> output_pose_covariance_;
-  std::array<double, 36> gnss_particle_covariance_;
+  std::array<double, 36> output_pose_covariance_{};
+  std::array<double, 36> gnss_particle_covariance_{};
   std::unique_ptr<GnssModule> gnss_;
   std::unique_ptr<NdtModule> ndt_;
   std::unique_ptr<YabLocModule> yabloc_;
@@ -60,7 +59,8 @@ private:
   double stop_check_duration_;
 
   void change_node_trigger(bool flag, bool need_spin = false);
-  void set_user_defined_initial_pose(const geometry_msgs::msg::Pose initial_pose);
+  void set_user_defined_initial_pose(
+    const geometry_msgs::msg::Pose initial_pose, bool need_spin = false);
   void change_state(State::Message::_state_type state);
   void on_initialize(
     const Initialize::Service::Request::SharedPtr req,

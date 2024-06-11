@@ -41,7 +41,7 @@ void DiagnosticsModule::clear()
   diagnostics_status_msg_.message = "";
 }
 
-void DiagnosticsModule::addKeyValue(const diagnostic_msgs::msg::KeyValue & key_value_msg)
+void DiagnosticsModule::add_key_value(const diagnostic_msgs::msg::KeyValue & key_value_msg)
 {
   auto it = std::find_if(
     std::begin(diagnostics_status_msg_.values), std::end(diagnostics_status_msg_.values),
@@ -55,24 +55,24 @@ void DiagnosticsModule::addKeyValue(const diagnostic_msgs::msg::KeyValue & key_v
 }
 
 template <>
-void DiagnosticsModule::addKeyValue(const std::string & key, const std::string & value)
+void DiagnosticsModule::add_key_value(const std::string & key, const std::string & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
   key_value.value = value;
-  addKeyValue(key_value);
+  add_key_value(key_value);
 }
 
 template <>
-void DiagnosticsModule::addKeyValue(const std::string & key, const bool & value)
+void DiagnosticsModule::add_key_value(const std::string & key, const bool & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
   key_value.value = value ? "True" : "False";
-  addKeyValue(key_value);
+  add_key_value(key_value);
 }
 
-void DiagnosticsModule::updateLevelAndMessage(const int8_t level, const std::string & message)
+void DiagnosticsModule::update_level_and_message(const int8_t level, const std::string & message)
 {
   if ((level > diagnostic_msgs::msg::DiagnosticStatus::OK)) {
     if (!diagnostics_status_msg_.message.empty()) {
@@ -85,15 +85,16 @@ void DiagnosticsModule::updateLevelAndMessage(const int8_t level, const std::str
   }
 }
 
-void DiagnosticsModule::publish()
+void DiagnosticsModule::publish(const rclcpp::Time & publish_time_stamp)
 {
-  diagnostics_pub_->publish(createDiagnosticsArray());
+  diagnostics_pub_->publish(create_diagnostics_array(publish_time_stamp));
 }
 
-diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::createDiagnosticsArray() const
+diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::create_diagnostics_array(
+  const rclcpp::Time & publish_time_stamp) const
 {
   diagnostic_msgs::msg::DiagnosticArray diagnostics_msg;
-  diagnostics_msg.header.stamp = clock_->now();
+  diagnostics_msg.header.stamp = publish_time_stamp;
   diagnostics_msg.status.push_back(diagnostics_status_msg_);
 
   if (diagnostics_msg.status.at(0).level == diagnostic_msgs::msg::DiagnosticStatus::OK) {

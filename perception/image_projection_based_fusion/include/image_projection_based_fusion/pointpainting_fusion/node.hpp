@@ -31,7 +31,7 @@
 
 namespace image_projection_based_fusion
 {
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 inline bool isInsideBbox(
   float proj_x, float proj_y, sensor_msgs::msg::RegionOfInterest roi, float zc)

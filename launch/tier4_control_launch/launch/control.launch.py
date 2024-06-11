@@ -102,8 +102,8 @@ def launch_setup(context, *args, **kwargs):
 
     # lane departure checker
     lane_departure_component = ComposableNode(
-        package="lane_departure_checker",
-        plugin="lane_departure_checker::LaneDepartureCheckerNode",
+        package="autoware_lane_departure_checker",
+        plugin="autoware::lane_departure_checker::LaneDepartureCheckerNode",
         name="lane_departure_checker_node",
         namespace="trajectory_follower",
         remappings=[
@@ -139,7 +139,7 @@ def launch_setup(context, *args, **kwargs):
 
     # autonomous emergency braking
     autonomous_emergency_braking = ComposableNode(
-        package="autonomous_emergency_braking",
+        package="autoware_autonomous_emergency_braking",
         plugin="autoware::motion::control::autonomous_emergency_braking::AEB",
         name="autonomous_emergency_braking",
         remappings=[
@@ -194,8 +194,8 @@ def launch_setup(context, *args, **kwargs):
 
     # vehicle cmd gate
     vehicle_cmd_gate_component = ComposableNode(
-        package="vehicle_cmd_gate",
-        plugin="vehicle_cmd_gate::VehicleCmdGate",
+        package="autoware_vehicle_cmd_gate",
+        plugin="autoware::vehicle_cmd_gate::VehicleCmdGate",
         name="vehicle_cmd_gate",
         remappings=[
             ("input/steering", "/vehicle/status/steering_status"),
@@ -272,7 +272,10 @@ def launch_setup(context, *args, **kwargs):
     # external cmd selector
     external_cmd_selector_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_selector"), "/launch/external_cmd_selector.launch.py"]
+            [
+                FindPackageShare("autoware_external_cmd_selector"),
+                "/launch/external_cmd_selector.launch.py",
+            ]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
@@ -287,7 +290,10 @@ def launch_setup(context, *args, **kwargs):
     # external cmd converter
     external_cmd_converter_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_converter"), "/launch/external_cmd_converter.launch.py"]
+            [
+                FindPackageShare("autoware_external_cmd_converter"),
+                "/launch/external_cmd_converter.launch.py",
+            ]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
@@ -383,8 +389,8 @@ def launch_setup(context, *args, **kwargs):
 
     # control validator checker
     control_validator_component = ComposableNode(
-        package="control_validator",
-        plugin="control_validator::ControlValidator",
+        package="autoware_control_validator",
+        plugin="autoware::control_validator::ControlValidator",
         name="control_validator",
         remappings=[
             ("~/input/kinematics", "/localization/kinematic_state"),
@@ -432,7 +438,7 @@ def launch_setup(context, *args, **kwargs):
     )
 
     smart_mpc_trajectory_follower = Node(
-        package="smart_mpc_trajectory_follower",
+        package="autoware_smart_mpc_trajectory_follower",
         executable="pympc_trajectory_follower.py",
         name="pympc_trajectory_follower",
     )
