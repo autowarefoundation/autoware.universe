@@ -34,7 +34,7 @@
 #include "pure_pursuit/util/planning_utils.hpp"
 #include "pure_pursuit/util/tf_utils.hpp"
 
-#include <vehicle_info_util/vehicle_info_util.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -59,7 +59,7 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
   pure_pursuit_ = std::make_unique<PurePursuit>();
 
   // Vehicle Parameters
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
   param_.wheel_base = vehicle_info.wheel_base_m;
 
   // Node Parameters
@@ -70,13 +70,6 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
   param_.min_lookahead_distance = this->declare_parameter<double>("min_lookahead_distance");
   param_.reverse_min_lookahead_distance =
     this->declare_parameter<double>("reverse_min_lookahead_distance");
-
-  // Subscribers
-  using std::placeholders::_1;
-  sub_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
-    "input/reference_trajectory", 1, std::bind(&PurePursuitNode::onTrajectory, this, _1));
-  sub_current_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "input/current_odometry", 1, std::bind(&PurePursuitNode::onCurrentOdometry, this, _1));
 
   // Publishers
   pub_ctrl_cmd_ =
@@ -118,21 +111,12 @@ bool PurePursuitNode::isDataReady()
   return true;
 }
 
-void PurePursuitNode::onCurrentOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
-{
-  current_odometry_ = msg;
-}
-
-void PurePursuitNode::onTrajectory(
-  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
-{
-  trajectory_ = msg;
-}
-
 void PurePursuitNode::onTimer()
 {
   current_pose_ = self_pose_listener_.getCurrentPose();
 
+  current_odometry_ = sub_current_odometry_.takeData();
+  trajectory_ = sub_trajectory_.takeData();
   if (!isDataReady()) {
     return;
   }

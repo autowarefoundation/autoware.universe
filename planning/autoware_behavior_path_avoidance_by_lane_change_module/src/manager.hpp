@@ -15,7 +15,7 @@
 #ifndef MANAGER_HPP_
 #define MANAGER_HPP_
 
-#include "behavior_path_lane_change_module/manager.hpp"
+#include "autoware_behavior_path_lane_change_module/manager.hpp"
 #include "data_structs.hpp"
 #include "interface.hpp"
 
@@ -31,14 +31,13 @@ namespace autoware::behavior_path_planner
 using ::behavior_path_planner::LaneChangeModuleManager;
 using ::behavior_path_planner::LaneChangeModuleType;
 using ::behavior_path_planner::SceneModuleInterface;
-using ::route_handler::Direction;
 
 class AvoidanceByLaneChangeModuleManager : public LaneChangeModuleManager
 {
 public:
   AvoidanceByLaneChangeModuleManager()
   : LaneChangeModuleManager(
-      "avoidance_by_lane_change", route_handler::Direction::NONE,
+      "avoidance_by_lane_change", autoware::route_handler::Direction::NONE,
       LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE)
   {
   }

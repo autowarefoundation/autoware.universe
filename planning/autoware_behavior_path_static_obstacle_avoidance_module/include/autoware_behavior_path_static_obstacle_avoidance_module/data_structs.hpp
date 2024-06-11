@@ -35,8 +35,8 @@
 namespace behavior_path_planner
 {
 
+using autoware::route_handler::Direction;
 using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
-using route_handler::Direction;
 
 enum class ObjectInfo {
   NONE = 0,
@@ -59,6 +59,7 @@ enum class ObjectInfo {
   // unavoidable reasons
   NEED_DECELERATION,
   SAME_DIRECTION_SHIFT,
+  LIMIT_DRIVABLE_SPACE_TEMPORARY,
   INSUFFICIENT_DRIVABLE_SPACE,
   INSUFFICIENT_LONGITUDINAL_DISTANCE,
   INVALID_SHIFT_LINE,
@@ -545,6 +546,8 @@ struct AvoidancePlanningData
 
   // nearest object that should be avoid
   std::optional<ObjectData> stop_target_object{std::nullopt};
+
+  std::optional<lanelet::ConstLanelet> red_signal_lane{std::nullopt};
 
   // new shift point
   AvoidLineArray new_shift_line{};

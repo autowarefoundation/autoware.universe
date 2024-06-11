@@ -69,7 +69,7 @@ def launch_setup(context, *args, **kwargs):
     trajectory_follower_mode = LaunchConfiguration("trajectory_follower_mode").perform(context)
 
     controller_component = ComposableNode(
-        package="trajectory_follower_node",
+        package="autoware_trajectory_follower_node",
         plugin="autoware::motion::control::trajectory_follower_node::Controller",
         name="controller_node_exe",
         namespace="trajectory_follower",
@@ -122,9 +122,9 @@ def launch_setup(context, *args, **kwargs):
 
     # shift decider
     shift_decider_component = ComposableNode(
-        package="shift_decider",
-        plugin="ShiftDecider",
-        name="shift_decider",
+        package="autoware_shift_decider",
+        plugin="autoware::shift_decider::ShiftDecider",
+        name="autoware_shift_decider",
         remappings=[
             ("input/control_cmd", "/control/trajectory_follower/control_cmd"),
             ("input/state", "/autoware/state"),
@@ -194,8 +194,8 @@ def launch_setup(context, *args, **kwargs):
 
     # vehicle cmd gate
     vehicle_cmd_gate_component = ComposableNode(
-        package="vehicle_cmd_gate",
-        plugin="vehicle_cmd_gate::VehicleCmdGate",
+        package="autoware_vehicle_cmd_gate",
+        plugin="autoware::vehicle_cmd_gate::VehicleCmdGate",
         name="vehicle_cmd_gate",
         remappings=[
             ("input/steering", "/vehicle/status/steering_status"),
@@ -272,7 +272,10 @@ def launch_setup(context, *args, **kwargs):
     # external cmd selector
     external_cmd_selector_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_selector"), "/launch/external_cmd_selector.launch.py"]
+            [
+                FindPackageShare("autoware_external_cmd_selector"),
+                "/launch/external_cmd_selector.launch.py",
+            ]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
@@ -287,7 +290,10 @@ def launch_setup(context, *args, **kwargs):
     # external cmd converter
     external_cmd_converter_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_converter"), "/launch/external_cmd_converter.launch.py"]
+            [
+                FindPackageShare("autoware_external_cmd_converter"),
+                "/launch/external_cmd_converter.launch.py",
+            ]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
@@ -383,8 +389,8 @@ def launch_setup(context, *args, **kwargs):
 
     # control validator checker
     control_validator_component = ComposableNode(
-        package="control_validator",
-        plugin="control_validator::ControlValidator",
+        package="autoware_control_validator",
+        plugin="autoware::control_validator::ControlValidator",
         name="control_validator",
         remappings=[
             ("~/input/kinematics", "/localization/kinematic_state"),
