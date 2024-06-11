@@ -60,7 +60,7 @@ std::shared_ptr<MotionVelocityPlannerNode> generateNode()
 
   std::vector<std::string> module_names;
   module_names.emplace_back("autoware::motion_velocity_planner::OutOfLaneModule");
-  module_names.emplace_back("autoware::motion_velocity_planner::ObstacleVelocityLimiter");
+  module_names.emplace_back("autoware::motion_velocity_planner::ObstacleVelocityLimiterModule");
 
   std::vector<rclcpp::Parameter> params;
   params.emplace_back("launch_modules", module_names);
