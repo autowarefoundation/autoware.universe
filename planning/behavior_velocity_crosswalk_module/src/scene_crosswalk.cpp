@@ -16,8 +16,8 @@
 
 #include "occluded_crosswalk.hpp"
 
-#include <behavior_velocity_planner_common/utilization/path_utilization.hpp>
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <motion_utils/resample/resample.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
@@ -38,7 +38,7 @@
 #include <tuple>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 using motion_utils::calcArcLength;
@@ -1207,7 +1207,7 @@ geometry_msgs::msg::Polygon CrosswalkModule::createObjectPolygon(
 }
 
 geometry_msgs::msg::Polygon CrosswalkModule::createVehiclePolygon(
-  const vehicle_info_util::VehicleInfo & vehicle_info)
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
 {
   const auto & i = vehicle_info;
   const auto & front_m = i.max_longitudinal_offset_m;
@@ -1281,4 +1281,4 @@ void CrosswalkModule::planStop(
     ego_path.points, planner_data_->current_odometry->pose, stop_factor->stop_pose,
     VelocityFactor::UNKNOWN);
 }
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner

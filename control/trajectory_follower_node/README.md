@@ -6,13 +6,13 @@ Generate control commands to follow a given Trajectory.
 
 ## Design
 
-This is a node of the functionalities implemented in the controller class derived from [trajectory_follower_base](../trajectory_follower_base/README.md#trajectory-follower) package. It has instances of those functionalities, gives them input data to perform calculations, and publishes control commands.
+This is a node of the functionalities implemented in the controller class derived from [autoware_trajectory_follower_base](../autoware_trajectory_follower_base/README.md#trajectory-follower) package. It has instances of those functionalities, gives them input data to perform calculations, and publishes control commands.
 
 By default, the controller instance with the `Controller` class as follows is used.
 
 ```plantuml
 @startuml
-package trajectory_follower_base {
+package autoware_trajectory_follower_base {
 abstract class LateralControllerBase {
 longitudinal_sync_data_
 
@@ -45,7 +45,7 @@ struct LateralSyncData {
 }
 }
 
-package mpc_lateral_controller {
+package autoware_mpc_lateral_controller {
 class MPCLateralController {
 isReady(InputData) override
 run(InputData) override

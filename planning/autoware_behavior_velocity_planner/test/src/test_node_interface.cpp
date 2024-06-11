@@ -68,21 +68,20 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
   };
 
   std::vector<std::string> module_names;
-  module_names.emplace_back("behavior_velocity_planner::CrosswalkModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::WalkwayModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::TrafficLightModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::IntersectionModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::MergeFromPrivateModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::BlindSpotModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::DetectionAreaModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::CrosswalkModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::WalkwayModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::TrafficLightModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::IntersectionModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::MergeFromPrivateModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::BlindSpotModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::DetectionAreaModulePlugin");
   module_names.emplace_back("autoware::behavior_velocity_planner::VirtualTrafficLightModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::NoStoppingAreaModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::StopLineModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::OcclusionSpotModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::NoStoppingAreaModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::StopLineModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::OcclusionSpotModulePlugin");
   module_names.emplace_back("autoware::behavior_velocity_planner::RunOutModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::SpeedBumpModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::OutOfLaneModulePlugin");
-  module_names.emplace_back("behavior_velocity_planner::NoDrivableLaneModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::SpeedBumpModulePlugin");
+  module_names.emplace_back("autoware::behavior_velocity_planner::NoDrivableLaneModulePlugin");
 
   std::vector<rclcpp::Parameter> params;
   params.emplace_back("launch_modules", module_names);
@@ -96,19 +95,18 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
                    velocity_smoother_dir + "/config/default_velocity_smoother.param.yaml",
                    velocity_smoother_dir + "/config/Analytical.param.yaml",
                    behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
-                   get_behavior_velocity_module_config_no_prefix("blind_spot"),
+                   get_behavior_velocity_module_config("blind_spot"),
                    get_behavior_velocity_module_config_no_prefix("crosswalk"),
-                   get_behavior_velocity_module_config_no_prefix("walkway"),
+                   get_behavior_velocity_module_config("walkway"),
                    get_behavior_velocity_module_config_no_prefix("detection_area"),
-                   get_behavior_velocity_module_config_no_prefix("intersection"),
+                   get_behavior_velocity_module_config("intersection"),
                    get_behavior_velocity_module_config_no_prefix("no_stopping_area"),
-                   get_behavior_velocity_module_config_no_prefix("occlusion_spot"),
+                   get_behavior_velocity_module_config("occlusion_spot"),
                    get_behavior_velocity_module_config("run_out"),
                    get_behavior_velocity_module_config_no_prefix("speed_bump"),
-                   get_behavior_velocity_module_config_no_prefix("stop_line"),
-                   get_behavior_velocity_module_config_no_prefix("traffic_light"),
+                   get_behavior_velocity_module_config("stop_line"),
+                   get_behavior_velocity_module_config("traffic_light"),
                    get_behavior_velocity_module_config("virtual_traffic_light"),
-                   get_behavior_velocity_module_config_no_prefix("out_of_lane"),
                    get_behavior_velocity_module_config_no_prefix("no_drivable_lane")});
 
   // TODO(Takagi, Isamu): set launch_modules
