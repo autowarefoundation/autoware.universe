@@ -15,10 +15,10 @@
 #ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__HELPER_HPP_
 #define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__HELPER_HPP_
 
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -354,6 +354,11 @@ public:
 
     // can avoid it after deceleration.
     if (object.info == ObjectInfo::NEED_DECELERATION) {
+      return false;
+    }
+
+    // can avoid it after relax drivable space limitation.
+    if (object.info == ObjectInfo::LIMIT_DRIVABLE_SPACE_TEMPORARY) {
       return false;
     }
 
