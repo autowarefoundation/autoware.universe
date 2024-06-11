@@ -119,7 +119,8 @@ std::vector<multi_linestring_t> createProjectedLines(
 std::vector<autoware::motion_velocity_planner::SlowdownInterval> calculate_slowdown_intervals(
   TrajectoryPoints & trajectory, const CollisionChecker & collision_checker,
   const std::vector<multi_linestring_t> & projections, const std::vector<polygon_t> & footprints,
-  ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
+  ProjectionParameters & projection_params, const VelocityParameters & velocity_params,
+  motion_utils::VirtualWalls & virtual_walls)
 {
   std::vector<autoware::motion_velocity_planner::SlowdownInterval> slowdown_intervals;
   double time = 0.0;
@@ -148,6 +149,10 @@ std::vector<autoware::motion_velocity_planner::SlowdownInterval> calculate_slowd
             trajectory_point,
             static_cast<double>(*dist_to_collision - projection_params.extra_length),
             static_cast<double>(projection_params.duration), velocity_params.min_velocity)));
+
+      motion_utils::VirtualWall wall;
+      wall.pose = trajectory_point.pose;
+      virtual_walls.push_back(wall);
     }
   }
   return slowdown_intervals;
