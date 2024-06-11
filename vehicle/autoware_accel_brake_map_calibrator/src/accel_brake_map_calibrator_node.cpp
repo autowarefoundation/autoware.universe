@@ -46,7 +46,7 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   max_accel_ = declare_parameter<double>("max_accel", 5.0);
   min_accel_ = declare_parameter<double>("min_accel", -5.0);
   pedal_to_accel_delay_ = declare_parameter<double>("pedal_to_accel_delay", 0.3);
-  max_data_count_ = static_cast<int>(declare_parameter<int>("max_data_count", 200));
+  max_data_count_ = static_cast<int>(declare_parameter("max_data_count", 200));
   pedal_accel_graph_output_ = declare_parameter<bool>("pedal_accel_graph_output", false);
   progress_file_output_ = declare_parameter<bool>("progress_file_output", false);
   precision_ = static_cast<int>(declare_parameter("precision", 3));
