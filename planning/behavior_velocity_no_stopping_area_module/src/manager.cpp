@@ -68,8 +68,7 @@ void NoStoppingAreaModuleManager::launchNewModules(
         clock_));
       generateUUID(module_id);
       updateRTCStatus(
-        getUUID(module_id), true, State::WAITING_FOR_EXECUTION,
-        std::numeric_limits<double>::lowest(), path.header.stamp);
+        getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
     }
   }
 }
