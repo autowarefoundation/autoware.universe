@@ -1,33 +1,34 @@
 <?xml version="1.0"?>
 <launch>
   <!-- Interface parameters -->
-  <arg name="mode" default="lidar" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
+  <arg name="mode" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
   <arg name="use_detection_by_tracker"/>
+  <arg name="objects_validation_method"/>
 
   <!-- Lidar parameters -->
   <arg name="input/pointcloud"/>
-  <arg name="lidar_detection_model" default="centerpoint" description="options: `transfusion`, `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
-  <arg name="use_object_filter" default="true" description="use object filter"/>
-  <arg name="pointcloud_container_name" default="pointcloud_container"/>
+  <arg name="lidar_detection_model" description="options: `transfusion`, `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="use_object_filter" description="use object filter"/>
+  <arg name="pointcloud_container_name"/>
 
   <!-- Camera parameters -->
-  <arg name="image_raw0" default="/image_raw" description="image raw topic name"/>
-  <arg name="camera_info0" default="/camera_info" description="camera info topic name"/>
-  <arg name="image_raw1" default=""/>
-  <arg name="camera_info1" default=""/>
-  <arg name="image_raw2" default=""/>
-  <arg name="camera_info2" default=""/>
-  <arg name="image_raw3" default=""/>
-  <arg name="camera_info3" default=""/>
-  <arg name="image_raw4" default=""/>
-  <arg name="camera_info4" default=""/>
-  <arg name="image_raw5" default=""/>
-  <arg name="camera_info5" default=""/>
-  <arg name="image_raw6" default=""/>
-  <arg name="camera_info6" default=""/>
-  <arg name="image_raw7" default=""/>
-  <arg name="camera_info7" default=""/>
-  <arg name="image_number" default="1" description="choose image raw number(1-8)"/>
+  <arg name="image_raw0"/>
+  <arg name="camera_info0"/>
+  <arg name="image_raw1"/>
+  <arg name="camera_info1"/>
+  <arg name="image_raw2"/>
+  <arg name="camera_info2"/>
+  <arg name="image_raw3"/>
+  <arg name="camera_info3"/>
+  <arg name="image_raw4"/>
+  <arg name="camera_info4"/>
+  <arg name="image_raw5"/>
+  <arg name="camera_info5"/>
+  <arg name="image_raw6"/>
+  <arg name="camera_info6"/>
+  <arg name="image_raw7"/>
+  <arg name="camera_info7"/>
+  <arg name="image_number"/>
 
   <!-- Radar parameters -->
   <arg name="input/radar" default="/sensing/radar/detected_objects"/>

@@ -8,8 +8,8 @@
   <arg name="radar_object_clustering_param_path" default="$(find-pkg-share radar_object_clustering)/config/radar_object_clustering.param.yaml"/>
 
   <!-- External interfaces -->
-  <arg name="input/radar" default="/sensing/radar/detected_objects"/>
-  <arg name="output/objects" default="far_objects"/>
+  <arg name="input/radar"/>
+  <arg name="output/objects"/>
 
   <!-- Radar filter pipeline -->
   <include file="$(find-pkg-share radar_crossing_objects_noise_filter)/launch/radar_crossing_objects_noise_filter.launch.xml">
