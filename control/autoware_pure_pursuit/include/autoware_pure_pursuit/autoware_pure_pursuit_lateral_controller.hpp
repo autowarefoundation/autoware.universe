@@ -30,9 +30,9 @@
 #ifndef AUTOWARE_PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_HPP_
 #define AUTOWARE_PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_HPP_
 
-#include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
 #include "autoware_pure_pursuit/autoware_pure_pursuit.hpp"
 #include "autoware_pure_pursuit/autoware_pure_pursuit_viz.hpp"
+#include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
