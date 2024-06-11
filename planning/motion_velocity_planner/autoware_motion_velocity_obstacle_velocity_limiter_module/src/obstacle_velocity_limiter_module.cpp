@@ -28,6 +28,7 @@
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/ros/update_param.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <boost/geometry.hpp>
 
@@ -39,7 +40,7 @@ namespace autoware::motion_velocity_planner
 void ObstacleVelocityLimiterModule::init(rclcpp::Node & node, const std::string & module_name)
 {
   module_name_ = module_name;
-  logger_ = node.get_logger();
+  logger_ = node.get_logger().get_child("obstacle_velocity_limiter");
   clock_ = node.get_clock();
   preprocessing_params_ = obstacle_velocity_limiter::PreprocessingParameters(node);
   projection_params_ = obstacle_velocity_limiter::ProjectionParameters(node);
@@ -131,7 +132,10 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
+  tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
+  stopwatch.tic();
   VelocityPlanningResult result;
+  stopwatch.tic("preprocessing");
   const auto ego_idx =
     motion_utils::findNearestIndex(ego_trajectory_points, planner_data->current_odometry.pose.pose);
   if (!ego_idx) {
@@ -153,6 +157,8 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   auto downsampled_traj_points = obstacle_velocity_limiter::downsampleTrajectory(
     original_traj_points, start_idx, end_idx, preprocessing_params_.downsample_factor);
   obstacle_velocity_limiter::ObstacleMasks obstacle_masks;
+  const auto preprocessing_us = stopwatch.toc("preprocessing");
+  stopwatch.tic("obstacles");
   obstacle_masks.negative_masks = obstacle_velocity_limiter::createPolygonMasks(
     planner_data->predicted_objects, obstacle_params_.dynamic_obstacles_buffer,
     obstacle_params_.dynamic_obstacles_min_vel);
@@ -176,12 +182,15 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
       obstacles, planner_data->occupancy_grid, planner_data->no_ground_pointcloud, obstacle_masks,
       obstacle_params_);
   }
+  const auto obstacles_us = stopwatch.toc("obstacles");
   motion_utils::VirtualWalls virtual_walls;
+  stopwatch.tic("slowdowns");
   result.slowdown_intervals = obstacle_velocity_limiter::calculate_slowdown_intervals(
     downsampled_traj_points,
     obstacle_velocity_limiter::CollisionChecker(
       obstacles, obstacle_params_.rtree_min_points, obstacle_params_.rtree_min_segments),
     projected_linestrings, footprint_polygons, projection_params_, velocity_params_, virtual_walls);
+  const auto slowdowns_us = stopwatch.toc("slowdowns");
 
   for (auto & wall : virtual_walls) {
     wall.longitudinal_offset = vehicle_front_offset_;
@@ -191,6 +200,14 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   virtual_wall_marker_creator.add_virtual_walls(virtual_walls);
   virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
 
+  const auto total_us = stopwatch.toc();
+  RCLCPP_DEBUG(
+    logger_,
+    "Total runtime: %2.2fus\n"
+    "\tpreprocessing = %2.0fus\n"
+    "\tobstacles = %2.0fus\n"
+    "\tslowdowns = %2.0fus\n",
+    total_us, preprocessing_us, obstacles_us, slowdowns_us);
   if (debug_publisher_->get_subscription_count() > 0) {
     const auto safe_projected_linestrings =
       obstacle_velocity_limiter::createProjectedLines(downsampled_traj_points, projection_params_);
