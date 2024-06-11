@@ -43,7 +43,6 @@ public:
   explicit VehicleNode(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::CallbackGroup::SharedPtr group_cli_;
   Pub<autoware_ad_api::vehicle::VehicleKinematics> pub_kinematics_;
   Pub<autoware_ad_api::vehicle::VehicleStatus> pub_status_;
   rclcpp::TimerBase::SharedPtr timer_;
