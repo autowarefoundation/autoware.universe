@@ -287,7 +287,7 @@ def generate_twist_msgs(pointcloud_timestamp):
         twist_msg.twist.twist.angular.z = 0.02 + i * 0.01
 
         twist_msgs.append(twist_msg)
-        # make sure the twist stamp is not identical to any point stamp
+        # make sure the twist stamp is not identical to any point stamp, and imu stamp
         twist_stamp = add_ms_to_stamp(twist_stamp, 24)
 
     return twist_msgs
@@ -310,8 +310,8 @@ def generate_imu_msgs(pointcloud_timestamp):
         imu_msg.angular_velocity.z = 0.05 + i * 0.005
 
         imu_msgs.append(imu_msg)
-        # make sure the twist stamp is not identical to any point stamp
-        imu_stamp = add_ms_to_stamp(imu_stamp, 29)
+        # make sure the imu stamp is not identical to any point stamp, and twist stamp
+        imu_stamp = add_ms_to_stamp(imu_stamp, 27)
 
     return imu_msgs
 
@@ -409,8 +409,8 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         """
         Test abnormal situation: when twist messages are empty.
 
-        input: undistored pointcloud, empty twist, imu.
-        output: undistored pointcloud
+        input: distored pointcloud, empty twist, imu.
+        output: distored pointcloud
         """
         # wait for the node to be ready
         time.sleep(3)
@@ -463,7 +463,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         """
         Test abnormal situation: when imu messages are empty.
 
-        input: undistored pointcloud, twist, empty imu.
+        input: distored pointcloud, twist, empty imu.
         output: undistored pointcloud
         """
         # wait for the node to be ready
