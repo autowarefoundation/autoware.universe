@@ -855,8 +855,8 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       center_points.push_back(getVehicleCenterFromBase(traj_point.pose, vehicle_info_).position);
     }
 
+    // 3. convert clusters to obstacles
     for (const auto & cluster_indices : clusters) {
-      // 3. filter clusters
       pcl::IndicesConstPtr cluster_indices_ptr =
         pcl::make_shared<pcl::Indices>(cluster_indices.indices);
       PointCloud::Ptr cluster_points_ptr(new PointCloud);
@@ -865,61 +865,59 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       extract.setIndices(cluster_indices_ptr);
       extract.filter(*cluster_points_ptr);
 
-      std::optional<double> ego_to_obstacle_distance = std::nullopt;
-      pcl::PointXYZ front_obstacle_point;
-      pcl::PointXYZ back_obstacle_point;
-      double min_obstacle_distance = std::numeric_limits<double>::max();
-      std::optional<pcl::index_t> closest_obstacle_point_index = std::nullopt;
       pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
       kdtree.setInputCloud(cluster_points_ptr);
+
+      const auto max_lat_margin =
+        std::max(p.max_lat_margin_for_stop, p.max_lat_margin_for_slow_down);
+      double lat_dist_from_obstacle_to_traj = std::numeric_limits<double>::max();
+      std::optional<double> ego_to_obstacle_distance = std::nullopt;
+      std::optional<geometry_msgs::msg::Point> stop_collision_point = std::nullopt;
+      std::optional<geometry_msgs::msg::Point> slow_down_front_collision_point = std::nullopt;
+      std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point = std::nullopt;
 
       for (const auto & center_point : center_points) {
         pcl::PointXYZ point(center_point.x, center_point.y, 0.0);
         pcl::Indices index(1);
         std::vector<float> sqr_distance(1);
         if (kdtree.nearestKSearch(point, 1, index, sqr_distance) > 0) {
+          const auto nearest_obstacle_point =
+            toGeomPoint(cluster_points_ptr->points[index.front()]);
+          const auto current_lat_dist_from_obstacle_to_traj =
+            motion_utils::calcLateralOffset(traj_points, nearest_obstacle_point) -
+            vehicle_info_.vehicle_width_m;
+
+          if (current_lat_dist_from_obstacle_to_traj < max_lat_margin) {
           if (!ego_to_obstacle_distance) {
-            // Check if the obstacle is in front of the ego.
-            const auto ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
-            ego_to_obstacle_distance = calcDistanceToFrontVehicle(
-              traj_points, ego_idx, toGeomPoint(cluster_points_ptr->points[index.front()]));
-            if (!ego_to_obstacle_distance) {
-              RCLCPP_INFO_EXPRESSION(
-                get_logger(), enable_debug_info_,
-                "Ignore obstacle since it is not front obstacle.");
-              break;
+              const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
+              ego_to_obstacle_distance =
+                calcDistanceToFrontVehicle(traj_points, ego_idx, nearest_obstacle_point);
             }
-            front_obstacle_point = cluster_points_ptr->points[index.front()];
+            if (current_lat_dist_from_obstacle_to_traj < p.max_lat_margin_for_stop) {
+              if (!stop_collision_point) {
+                stop_collision_point = nearest_obstacle_point;
+              }
+            }
+            if (current_lat_dist_from_obstacle_to_traj < p.max_lat_margin_for_slow_down) {
+              if (!slow_down_front_collision_point) {
+                slow_down_front_collision_point = nearest_obstacle_point;
+              } else {
+                slow_down_back_collision_point = nearest_obstacle_point;
+              }
+            }
+            lat_dist_from_obstacle_to_traj =
+              std::min(lat_dist_from_obstacle_to_traj, current_lat_dist_from_obstacle_to_traj);
           } else {
-            back_obstacle_point = cluster_points_ptr->points[index.front()];
-          }
-          const auto min_distance = std::sqrt(sqr_distance.front());
-          if (min_distance < p.pointcloud_search_radius && min_distance < min_obstacle_distance) {
-            min_obstacle_distance = min_distance;
-            closest_obstacle_point_index = index.front();
-          }
-        }
-      }
-
-      if (closest_obstacle_point_index) {
-        const auto closest_obstacle_point =
-          toGeomPoint(cluster_points_ptr->points[*closest_obstacle_point_index]);
-
-        // 4. Check if lateral distance is smaller than the threshold
-        const auto lat_dist_from_obstacle_to_traj =
-          motion_utils::calcLateralOffset(traj_points, closest_obstacle_point);
-        const auto max_lat_margin =
-          std::max(p.max_lat_margin_for_stop, p.max_lat_margin_for_slow_down);
-        if (max_lat_margin < lat_dist_from_obstacle_to_traj) {
-          RCLCPP_INFO_EXPRESSION(
-            get_logger(), enable_debug_info_,
-            "Ignore obstacle since it is too far from the trajectory.");
           continue;
+          }
         }
 
+        if (ego_to_obstacle_distance) {
         target_obstacles.emplace_back(
-          pointcloud.header.stamp, cluster_points_ptr, front_obstacle_point, back_obstacle_point,
-          *ego_to_obstacle_distance, lat_dist_from_obstacle_to_traj);
+            pointcloud.header.stamp, stop_collision_point, slow_down_front_collision_point,
+            slow_down_back_collision_point, *ego_to_obstacle_distance,
+            lat_dist_from_obstacle_to_traj);
+        }
       }
     }
   }
@@ -994,7 +992,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   std::vector<SlowDownObstacle> slow_down_obstacles;
   slow_down_condition_counter_.resetCurrentUuids();
   for (const auto & obstacle : obstacles) {
-    const auto obstacle_poly = obstacle.toPolygon();
+    const auto obstacle_poly = tier4_autoware_utils::toPolygon2d(obstacle.pose, obstacle.shape);
 
     // Calculate distance between trajectory and obstacle first
     double precise_lat_dist = std::numeric_limits<double>::max();
@@ -1077,14 +1075,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   std::vector<SlowDownObstacle> slow_down_obstacles;
   slow_down_condition_counter_.resetCurrentUuids();
   for (const auto & obstacle : obstacles) {
-    const auto obstacle_poly = obstacle.toPolygon();
-
-    // Calculate distance between trajectory and obstacle first
-    double precise_lat_dist = std::numeric_limits<double>::max();
-    for (const auto & traj_poly : decimated_traj_polys) {
-      const double current_precise_lat_dist = bg::distance(traj_poly, obstacle_poly);
-      precise_lat_dist = std::min(precise_lat_dist, current_precise_lat_dist);
-    }
+    const double precise_lat_dist = obstacle.lat_dist_from_obstacle_to_traj;
 
     // Filter obstacles for stop and slow down
     const auto stop_obstacle = createStopObstacle(
@@ -1480,7 +1471,17 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
     return std::nullopt;
   }
 
-  if (!p.use_pointcloud) {
+  std::optional<std::pair<geometry_msgs::msg::Point, double>> collision_point = std::nullopt;
+  if (use_pointcloud_) {
+    if (obstacle.stop_collision_point) {
+      const auto dist_to_collide_on_traj =
+        motion_utils::calcSignedArcLength(traj_points, 0, obstacle.stop_collision_point.value());
+      collision_point =
+        std::make_pair(obstacle.stop_collision_point.value(), dist_to_collide_on_traj);
+    }
+  } else {
+    const auto & object_id = obstacle.uuid.substr(0, 4);
+
     // check obstacle velocity
     // NOTE: If precise_lat_dist is 0, always plan stop
     constexpr double epsilon = 1e-6;
@@ -1531,16 +1532,16 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
           object_id.c_str());
         debug_data_ptr_->intentionally_ignored_obstacles.push_back(obstacle);
         return std::nullopt;
-      }
     }
   }
 
   // calculate collision points with trajectory with lateral stop margin
-  const auto traj_polys_with_lat_margin =
-    createOneStepPolygons(traj_points, vehicle_info_, odometry.pose.pose, max_lat_margin_for_stop);
+    const auto traj_polys_with_lat_margin = createOneStepPolygons(
+      traj_points, vehicle_info_, odometry.pose.pose, max_lat_margin_for_stop);
 
-  const auto collision_point = polygon_utils::getCollisionPoint(
+    collision_point = polygon_utils::getCollisionPoint(
     traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);
+  }
   if (!collision_point) {
     return std::nullopt;
   }
@@ -1574,9 +1575,16 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
     return std::nullopt;
   }
 
-  if (p.use_pointcloud) {
-    if (p.max_lat_margin_for_slow_down < precise_lat_dist) {
-      return std::nullopt;
+  std::optional<geometry_msgs::msg::Point> front_collision_point = std::nullopt;
+  std::optional<geometry_msgs::msg::Point> back_collision_point = std::nullopt;
+  if (use_pointcloud_) {
+    if (obstacle.slow_down_front_collision_point) {
+      front_collision_point = obstacle.slow_down_front_collision_point;
+      if (obstacle.slow_down_back_collision_point) {
+        back_collision_point = obstacle.slow_down_back_collision_point;
+      } else {
+        back_collision_point = front_collision_point;
+      }
     }
   } else {
     const bool is_prev_obstacle_slow_down =
@@ -1616,10 +1624,9 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
         "[SlowDown] Ignore obstacle (%s) since it's far from trajectory. (%f [m])",
         object_id.c_str(), precise_lat_dist);
       return std::nullopt;
-    }
   }
 
-  const auto obstacle_poly = obstacle.toPolygon();
+    const auto obstacle_poly = tier4_autoware_utils::toPolygon2d(obstacle.pose, obstacle.shape);
 
   // calculate collision points with trajectory with lateral stop margin
   // NOTE: For additional margin, hysteresis is not divided by two.
@@ -1658,7 +1665,6 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
 
   // calculate front collision point
   double front_min_dist = std::numeric_limits<double>::max();
-  geometry_msgs::msg::Point front_collision_point;
   for (const auto & collision_poly : front_collision_polygons) {
     for (const auto & collision_point : collision_poly.outer()) {
       const auto collision_geom_point = toGeomPoint(collision_point);
@@ -1673,7 +1679,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
 
   // calculate back collision point
   double back_max_dist = -std::numeric_limits<double>::max();
-  geometry_msgs::msg::Point back_collision_point = front_collision_point;
+    back_collision_point = front_collision_point;
   for (const auto & collision_poly : back_collision_polygons) {
     for (const auto & collision_point : collision_poly.outer()) {
       const auto collision_geom_point = toGeomPoint(collision_point);
@@ -1684,6 +1690,10 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
         back_collision_point = collision_geom_point;
       }
     }
+    }
+  }
+  if (!front_collision_point || !back_collision_point) {
+    return std::nullopt;
   }
 
   const auto [tangent_vel, normal_vel] = [&]() {
@@ -1692,9 +1702,9 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
     }
     return projectObstacleVelocityToTrajectory(traj_points, obstacle);
   }();
-  return SlowDownObstacle{obstacle.uuid,    obstacle.stamp,        obstacle.classification,
-                          obstacle.pose,    tangent_vel,           normal_vel,
-                          precise_lat_dist, front_collision_point, back_collision_point};
+  return SlowDownObstacle{
+    obstacle.uuid, obstacle.stamp,   obstacle.classification, obstacle.pose,        tangent_vel,
+    normal_vel,    precise_lat_dist, *front_collision_point,  *back_collision_point};
 }
 
 void ObstacleCruisePlannerNode::checkConsistency(
