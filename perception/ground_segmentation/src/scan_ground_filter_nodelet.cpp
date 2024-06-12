@@ -14,10 +14,10 @@
 
 #include "ground_segmentation/scan_ground_filter_nodelet.hpp"
 
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <memory>
 #include <string>
@@ -25,12 +25,12 @@
 
 namespace ground_segmentation
 {
+using autoware::vehicle_info_utils::VehicleInfoUtils;
 using pointcloud_preprocessor::get_param;
 using tier4_autoware_utils::calcDistance3d;
 using tier4_autoware_utils::deg2rad;
 using tier4_autoware_utils::normalizeDegree;
 using tier4_autoware_utils::normalizeRadian;
-using vehicle_info_util::VehicleInfoUtil;
 
 ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("ScanGroundFilter", options)
@@ -59,7 +59,7 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     use_recheck_ground_cluster_ = declare_parameter<bool>("use_recheck_ground_cluster");
     use_lowest_point_ = declare_parameter<bool>("use_lowest_point");
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);
-    vehicle_info_ = VehicleInfoUtil(*this).getVehicleInfo();
+    vehicle_info_ = VehicleInfoUtils(*this).getVehicleInfo();
 
     grid_mode_switch_grid_id_ =
       grid_mode_switch_radius_ / grid_size_m_;  // changing the mode of grid division
@@ -349,13 +349,12 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
 
     // check the first point in ray
     auto * p = &in_radial_ordered_clouds[i][0];
-    auto * prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
 
     bool initialized_first_gnd_grid = false;
     bool prev_list_init = false;
     pcl::PointXYZ p_orig_point, prev_p_orig_point;
     for (auto & point : in_radial_ordered_clouds[i]) {
-      prev_p = p;
+      auto * prev_p = p;  // for checking the distance to prev point
       prev_p_orig_point = p_orig_point;
       p = &point;
       get_point_from_global_offset(in_cloud, p_orig_point, in_cloud->point_step * p->orig_index);
@@ -469,7 +468,6 @@ void ScanGroundFilterComponent::classifyPointCloud(
     float prev_gnd_slope = 0.0f;
     float points_distance = 0.0f;
     PointsCentroid ground_cluster, non_ground_cluster;
-    float local_slope = 0.0f;
     PointLabel prev_point_label = PointLabel::INIT;
     pcl::PointXYZ prev_gnd_point(0, 0, 0), p_orig_point, prev_p_orig_point;
     // loop through each point in the radial div
@@ -524,7 +522,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
       if (calculate_slope) {
         // far from the previous point
-        local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
+        auto local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
         if (local_slope - prev_gnd_slope > local_slope_max_angle) {
           // the point is outside of the local slope threshold
           p->point_state = PointLabel::NON_GROUND;

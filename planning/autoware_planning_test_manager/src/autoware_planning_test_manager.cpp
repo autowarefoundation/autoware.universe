@@ -15,7 +15,9 @@
 #include "motion_utils/trajectory/conversion.hpp"
 
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
+#include <autoware_planning_test_manager/autoware_planning_test_manager_utils.hpp>
 #include <planning_test_utils/planning_test_utils.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 namespace planning_test_utils
 {
@@ -115,7 +117,7 @@ void PlanningInterfaceTestManager::publishInitialPose(
   if (module_name == ModuleName::START_PLANNER) {
     test_utils::publishToTargetNode(
       test_node_, target_node, topic_name, initial_pose_pub_,
-      test_utils::makeInitialPoseFromLaneId(10291));
+      autoware_planning_test_manager::utils::makeInitialPoseFromLaneId(10291));
   } else {
     test_utils::publishToTargetNode(
       test_node_, target_node, topic_name, initial_pose_pub_, test_utils::makeInitialPose(shift));
@@ -169,7 +171,7 @@ void PlanningInterfaceTestManager::publishTrafficSignals(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
   test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, traffic_signals_pub_, TrafficSignalArray{});
+    test_node_, target_node, topic_name, traffic_signals_pub_, TrafficLightGroupArray{});
 }
 
 void PlanningInterfaceTestManager::publishVirtualTrafficLightState(
@@ -256,7 +258,7 @@ void PlanningInterfaceTestManager::publishBehaviorNominalRoute(
   if (module_name == ModuleName::START_PLANNER) {
     test_utils::publishToTargetNode(
       test_node_, target_node, topic_name, behavior_normal_route_pub_,
-      test_utils::makeBehaviorRouteFromLaneId(10291, 10333), 5);
+      autoware_planning_test_manager::utils::makeBehaviorRouteFromLaneId(10291, 10333), 5);
   } else {
     test_utils::publishToTargetNode(
       test_node_, target_node, topic_name, behavior_normal_route_pub_,
@@ -291,7 +293,7 @@ void PlanningInterfaceTestManager::publishNominalPath(
 {
   test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, normal_path_pub_,
-    motion_utils::convertToPath<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+    motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
       test_utils::loadPathWithLaneIdInYaml()),
     5);
 }

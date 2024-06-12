@@ -38,7 +38,7 @@ PredictedPathCheckerNode::PredictedPathCheckerNode(const rclcpp::NodeOptions & n
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.init_cli(cli_set_stop_, group_cli_);
   adaptor.init_sub(sub_stop_state_, this, &PredictedPathCheckerNode::onIsStopped);
-  vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
 
   // Node Parameter
   node_param_.update_rate = declare_parameter("update_rate", 10.0);
@@ -72,10 +72,10 @@ PredictedPathCheckerNode::PredictedPathCheckerNode(const rclcpp::NodeOptions & n
   sub_dynamic_objects_ = create_subscription<PredictedObjects>(
     "~/input/objects", rclcpp::SensorDataQoS(),
     std::bind(&PredictedPathCheckerNode::onDynamicObjects, this, _1));
-  sub_reference_trajectory_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+  sub_reference_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "~/input/reference_trajectory", 1,
     std::bind(&PredictedPathCheckerNode::onReferenceTrajectory, this, _1));
-  sub_predicted_trajectory_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+  sub_predicted_trajectory_ = create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "~/input/predicted_trajectory", 1,
     std::bind(&PredictedPathCheckerNode::onPredictedTrajectory, this, _1));
   sub_odom_ = create_subscription<nav_msgs::msg::Odometry>(
@@ -109,13 +109,13 @@ void PredictedPathCheckerNode::onDynamicObjects(const PredictedObjects::ConstSha
 }
 
 void PredictedPathCheckerNode::onReferenceTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
+  const autoware_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
   reference_trajectory_ = msg;
 }
 
 void PredictedPathCheckerNode::onPredictedTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
+  const autoware_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
   predicted_trajectory_ = msg;
 }

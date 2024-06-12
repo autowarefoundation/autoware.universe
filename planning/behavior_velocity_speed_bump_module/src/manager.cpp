@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/regulatory_elements/speed_bump.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using lanelet::autoware::SpeedBump;
 using tier4_autoware_utils::getOrDeclareParameter;
@@ -53,8 +53,7 @@ SpeedBumpModuleManager::SpeedBumpModuleManager(rclcpp::Node & node)
     static_cast<float>(getOrDeclareParameter<double>(node, ns + ".max_speed"));
 }
 
-void SpeedBumpModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+void SpeedBumpModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & speed_bump_with_lane_id : planning_utils::getRegElemMapOnPath<SpeedBump>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
@@ -71,7 +70,7 @@ void SpeedBumpModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 SpeedBumpModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto speed_bump_id_set = planning_utils::getRegElemIdSetOnPath<SpeedBump>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
@@ -81,8 +80,9 @@ SpeedBumpModuleManager::getModuleExpiredFunction(
   };
 }
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::SpeedBumpModulePlugin, behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::SpeedBumpModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

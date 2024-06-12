@@ -20,7 +20,7 @@
 
 #include <algorithm>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using tier4_autoware_utils::getOrDeclareParameter;
 
@@ -43,14 +43,14 @@ DynamicObstacleStopModuleManager::DynamicObstacleStopModuleManager(rclcpp::Node 
   pp.ignore_unavoidable_collisions =
     getOrDeclareParameter<bool>(node, ns + ".ignore_unavoidable_collisions");
 
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   pp.ego_lateral_offset =
     std::max(std::abs(vehicle_info.min_lateral_offset_m), vehicle_info.max_lateral_offset_m);
   pp.ego_longitudinal_offset = vehicle_info.max_longitudinal_offset_m;
 }
 
 void DynamicObstacleStopModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) return;
   // general
@@ -62,15 +62,15 @@ void DynamicObstacleStopModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 DynamicObstacleStopModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   return [path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return false;
   };
 }
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::DynamicObstacleStopModulePlugin,
-  behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::DynamicObstacleStopModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

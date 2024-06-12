@@ -18,16 +18,15 @@
 #include "autoware_static_centerline_generator/srv/load_map.hpp"
 #include "autoware_static_centerline_generator/srv/plan_path.hpp"
 #include "autoware_static_centerline_generator/srv/plan_route.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "centerline_source/optimization_trajectory_based_centerline.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "type_alias.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-
-#include <geography_utils/lanelet2_projector.hpp>
 
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/int32.hpp"
+#include "tier4_map_msgs/msg/map_projector_info.hpp"
 
 #include <memory>
 #include <string>
@@ -39,6 +38,7 @@ namespace autoware::static_centerline_generator
 using autoware_static_centerline_generator::srv::LoadMap;
 using autoware_static_centerline_generator::srv::PlanPath;
 using autoware_static_centerline_generator::srv::PlanRoute;
+using tier4_map_msgs::msg::MapProjectorInfo;
 
 struct CenterlineWithRoute
 {
@@ -66,6 +66,8 @@ private:
 
   // plan centerline
   CenterlineWithRoute generate_centerline_with_route();
+  std::vector<lanelet::Id> get_route_lane_ids_from_points(
+    const std::vector<TrajectoryPoint> & points);
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
 
@@ -78,9 +80,9 @@ private:
     const CenterlineWithRoute & centerline_with_route);
 
   lanelet::LaneletMapPtr original_map_ptr_{nullptr};
-  HADMapBin::ConstSharedPtr map_bin_ptr_{nullptr};
+  LaneletMapBin::ConstSharedPtr map_bin_ptr_{nullptr};
   std::shared_ptr<RouteHandler> route_handler_ptr_{nullptr};
-  std::unique_ptr<lanelet::Projector> map_projector_{nullptr};
+  std::unique_ptr<MapProjectorInfo> map_projector_info_{nullptr};
 
   std::pair<int, int> traj_range_indices_{0, 0};
   std::optional<CenterlineWithRoute> centerline_with_route_{std::nullopt};
@@ -93,7 +95,7 @@ private:
   OptimizationTrajectoryBasedCenterline optimization_trajectory_based_centerline_;
 
   // publisher
-  rclcpp::Publisher<HADMapBin>::SharedPtr pub_map_bin_{nullptr};
+  rclcpp::Publisher<LaneletMapBin>::SharedPtr pub_map_bin_{nullptr};
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_unsafe_footprints_{nullptr};
   rclcpp::Publisher<Trajectory>::SharedPtr pub_whole_centerline_{nullptr};
   rclcpp::Publisher<Trajectory>::SharedPtr pub_centerline_{nullptr};
@@ -113,7 +115,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_;
 
   // vehicle info
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 };
 }  // namespace autoware::static_centerline_generator
 #endif  // STATIC_CENTERLINE_GENERATOR_NODE_HPP_
