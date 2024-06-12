@@ -25,8 +25,8 @@
 
 #include <rclcpp/time.hpp>
 
-#include "autoware_auto_perception_msgs/msg/object_classification.hpp"
-#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
+#include "autoware_perception_msgs/msg/object_classification.hpp"
+#include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
@@ -41,8 +41,8 @@
 
 namespace perception_diagnostics
 {
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using metrics::DetectionCounter;
@@ -96,7 +96,7 @@ public:
    * @param [in] metric Metric enum value
    * @return map of string describing the requested metric and the calculated value
    */
-  std::optional<MetricStatMap> calculate(const Metric & metric) const;
+  std::optional<MetricsMap> calculate(const Metric & metric) const;
 
   /**
    * @brief set the dynamic objects used to calculate obstacle metrics
@@ -143,7 +143,7 @@ private:
   PredictedPathDeviationMetrics calcPredictedPathDeviationMetrics(
     const PredictedObjects & objects, const double time_horizon) const;
   MetricStatMap calcYawRateMetrics(const ClassObjectsMap & class_objects_map) const;
-  MetricStatMap calcObjectsCountMetrics() const;
+  MetricValueMap calcObjectsCountMetrics() const;
 
   bool hasPassedTime(const rclcpp::Time stamp) const;
   bool hasPassedTime(const std::string uuid, const rclcpp::Time stamp) const;

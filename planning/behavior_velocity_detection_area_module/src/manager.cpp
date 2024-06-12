@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
 
@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 using lanelet::autoware::DetectionArea;
 using tier4_autoware_utils::getOrDeclareParameter;
@@ -51,7 +51,7 @@ DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
 }
 
 void DetectionAreaModuleManager::launchNewModules(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & detection_area_with_lane_id :
        planning_utils::getRegElemMapOnPath<DetectionArea>(
@@ -74,7 +74,7 @@ void DetectionAreaModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 DetectionAreaModuleManager::getModuleExpiredFunction(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+  const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto detection_area_id_set = planning_utils::getRegElemIdSetOnPath<DetectionArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
@@ -84,8 +84,9 @@ DetectionAreaModuleManager::getModuleExpiredFunction(
   };
 }
 
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  behavior_velocity_planner::DetectionAreaModulePlugin, behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::DetectionAreaModulePlugin,
+  autoware::behavior_velocity_planner::PluginInterface)

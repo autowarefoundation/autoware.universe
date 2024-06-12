@@ -22,9 +22,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
-#include <autoware_auto_perception_msgs/msg/shape.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
+#include <autoware_perception_msgs/msg/detected_object.hpp>
+#include <autoware_perception_msgs/msg/shape.hpp>
+#include <autoware_perception_msgs/msg/tracked_object.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/transform.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
@@ -97,7 +97,7 @@ enum BBOX_IDX {
  */
 inline bool isLargeVehicleLabel(const uint8_t label)
 {
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  using Label = autoware_perception_msgs::msg::ObjectClassification;
   return label == Label::BUS || label == Label::TRUCK || label == Label::TRAILER;
 }
 
@@ -163,11 +163,11 @@ inline int getNearestCornerOrSurface(
  * @return nearest corner or surface index
  */
 inline int getNearestCornerOrSurfaceFromObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const double & yaw,
+  const autoware_perception_msgs::msg::DetectedObject & object, const double & yaw,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // only work for BBOX shape
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     return BBOX_IDX::INVALID;
   }
 
@@ -263,9 +263,8 @@ inline Eigen::Vector2d recoverFromTrackingPoint(
  */
 inline void calcAnchorPointOffset(
   const double w, const double l, const int indx,
-  const autoware_auto_perception_msgs::msg::DetectedObject & input_object, const double & yaw,
-  autoware_auto_perception_msgs::msg::DetectedObject & offset_object,
-  Eigen::Vector2d & tracking_offset)
+  const autoware_perception_msgs::msg::DetectedObject & input_object, const double & yaw,
+  autoware_perception_msgs::msg::DetectedObject & offset_object, Eigen::Vector2d & tracking_offset)
 {
   // copy value
   offset_object = input_object;
@@ -281,7 +280,7 @@ inline void calcAnchorPointOffset(
 
   // update offset
   const Eigen::Vector2d offset = calcOffsetVectorFromShapeChange(w_n - w, l_n - l, indx);
-  tracking_offset += offset;
+  tracking_offset = offset;
 
   // offset input object
   const Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw).toRotationMatrix();
@@ -295,40 +294,43 @@ inline void calcAnchorPointOffset(
  * @param input_object: input convex hull objects
  * @param output_object: output bounding box objects
  */
-inline void convertConvexHullToBoundingBox(
-  const autoware_auto_perception_msgs::msg::DetectedObject & input_object,
-  autoware_auto_perception_msgs::msg::DetectedObject & output_object)
+inline bool convertConvexHullToBoundingBox(
+  const autoware_perception_msgs::msg::DetectedObject & input_object,
+  autoware_perception_msgs::msg::DetectedObject & output_object)
 {
-  const Eigen::Vector2d center{
-    input_object.kinematics.pose_with_covariance.pose.position.x,
-    input_object.kinematics.pose_with_covariance.pose.position.y};
-  const auto yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
-  const Eigen::Matrix2d R_inv = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
+  // check footprint size
+  if (input_object.shape.footprint.points.size() < 3) {
+    return false;
+  }
 
+  // look for bounding box boundary
   double max_x = 0;
   double max_y = 0;
   double min_x = 0;
   double min_y = 0;
   double max_z = 0;
-
-  // look for bounding box boundary
   for (size_t i = 0; i < input_object.shape.footprint.points.size(); ++i) {
-    Eigen::Vector2d vertex{
-      input_object.shape.footprint.points.at(i).x, input_object.shape.footprint.points.at(i).y};
-
-    const Eigen::Vector2d local_vertex = R_inv * (vertex - center);
-    max_x = std::max(max_x, local_vertex.x());
-    max_y = std::max(max_y, local_vertex.y());
-    min_x = std::min(min_x, local_vertex.x());
-    min_y = std::min(min_y, local_vertex.y());
-
-    max_z = std::max(max_z, static_cast<double>(input_object.shape.footprint.points.at(i).z));
+    const double foot_x = input_object.shape.footprint.points.at(i).x;
+    const double foot_y = input_object.shape.footprint.points.at(i).y;
+    const double foot_z = input_object.shape.footprint.points.at(i).z;
+    max_x = std::max(max_x, foot_x);
+    max_y = std::max(max_y, foot_y);
+    min_x = std::min(min_x, foot_x);
+    min_y = std::min(min_y, foot_y);
+    max_z = std::max(max_z, foot_z);
   }
 
   // calc bounding box state
   const double length = max_x - min_x;
   const double width = max_y - min_y;
   const double height = max_z;
+
+  // calc new center
+  const Eigen::Vector2d center{
+    input_object.kinematics.pose_with_covariance.pose.position.x,
+    input_object.kinematics.pose_with_covariance.pose.position.y};
+  const auto yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
+  const Eigen::Matrix2d R_inv = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
   const Eigen::Vector2d new_local_center{(max_x + min_x) / 2.0, (max_y + min_y) / 2.0};
   const Eigen::Vector2d new_center = center + R_inv.transpose() * new_local_center;
 
@@ -337,14 +339,16 @@ inline void convertConvexHullToBoundingBox(
   output_object.kinematics.pose_with_covariance.pose.position.x = new_center.x();
   output_object.kinematics.pose_with_covariance.pose.position.y = new_center.y();
 
-  output_object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  output_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   output_object.shape.dimensions.x = length;
   output_object.shape.dimensions.y = width;
   output_object.shape.dimensions.z = height;
+
+  return true;
 }
 
 inline bool getMeasurementYaw(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const double & predicted_yaw,
+  const autoware_perception_msgs::msg::DetectedObject & object, const double & predicted_yaw,
   double & measurement_yaw)
 {
   measurement_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
@@ -353,7 +357,7 @@ inline bool getMeasurementYaw(
   double limiting_delta_yaw = M_PI_2;
   if (
     object.kinematics.orientation_availability ==
-    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
+    autoware_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
     limiting_delta_yaw = M_PI;
   }
   // limiting delta yaw, even the availability is unknown
@@ -366,7 +370,7 @@ inline bool getMeasurementYaw(
   }
   // return false if the orientation is unknown
   return object.kinematics.orientation_availability !=
-         autoware_auto_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
+         autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
 }
 
 }  // namespace utils
