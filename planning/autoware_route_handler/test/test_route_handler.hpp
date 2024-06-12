@@ -44,8 +44,7 @@ class TestRouteHandler : public ::testing::Test
 public:
   TestRouteHandler()
   {
-    autoware_test_utils_dir =
-      ament_index_cpp::get_package_share_directory("autoware_test_utils");
+    autoware_test_utils_dir = ament_index_cpp::get_package_share_directory("autoware_test_utils");
     set_route_handler("/test_map/2km_test.osm");
     set_test_route("/test_route/lane_change_test_route.yaml");
   }
