@@ -25,6 +25,7 @@
 #include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
+#include <tier4_autoware_utils/ros/update_param.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <algorithm>
@@ -50,7 +51,6 @@ void DynamicObstacleStopModule::init(rclcpp::Node & node, const std::string & mo
 
   using tier4_autoware_utils::getOrDeclareParameter;
   auto & p = params_;
-
   p.extra_object_width = getOrDeclareParameter<double>(node, ns_ + ".extra_object_width");
   p.minimum_object_velocity = getOrDeclareParameter<double>(node, ns_ + ".minimum_object_velocity");
   p.stop_distance_buffer = getOrDeclareParameter<double>(node, ns_ + ".stop_distance_buffer");
@@ -70,10 +70,21 @@ void DynamicObstacleStopModule::init(rclcpp::Node & node, const std::string & mo
   p.ego_longitudinal_offset = vehicle_info.max_longitudinal_offset_m;
 }
 
-void update_parameters(const std::vector<rclcpp::Parameter> & parameters)
+void DynamicObstacleStopModule::update_parameters(const std::vector<rclcpp::Parameter> & parameters)
 {
-  (void)parameters;
-  // TODO(Maxime)
+  using tier4_autoware_utils::updateParam;
+  auto & p = params_;
+  updateParam(parameters, ns_ + ".extra_object_width", p.extra_object_width);
+  updateParam(parameters, ns_ + ".minimum_object_velocity", p.minimum_object_velocity);
+  updateParam(parameters, ns_ + ".stop_distance_buffer", p.stop_distance_buffer);
+  updateParam(parameters, ns_ + ".time_horizon", p.time_horizon);
+  updateParam(parameters, ns_ + ".hysteresis", p.hysteresis);
+  updateParam(parameters, ns_ + ".add_stop_duration_buffer", p.add_duration_buffer);
+  updateParam(parameters, ns_ + ".remove_stop_duration_buffer", p.remove_duration_buffer);
+  updateParam(
+    parameters, ns_ + ".minimum_object_distance_from_ego_path",
+    p.minimum_object_distance_from_ego_path);
+  updateParam(parameters, ns_ + ".ignore_unavoidable_collisions", p.ignore_unavoidable_collisions);
 }
 
 VelocityPlanningResult DynamicObstacleStopModule::plan(
