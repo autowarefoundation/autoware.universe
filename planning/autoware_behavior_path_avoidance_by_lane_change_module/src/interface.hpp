@@ -15,7 +15,7 @@
 #ifndef INTERFACE_HPP_
 #define INTERFACE_HPP_
 
-#include "behavior_path_lane_change_module/interface.hpp"
+#include "autoware_behavior_path_lane_change_module/interface.hpp"
 #include "data_structs.hpp"
 #include "scene.hpp"
 
@@ -27,9 +27,9 @@
 
 namespace autoware::behavior_path_planner
 {
-using ::behavior_path_planner::LaneChangeInterface;
-using ::behavior_path_planner::ObjectsOfInterestMarkerInterface;
-using ::behavior_path_planner::RTCInterface;
+using autoware::behavior_path_planner::LaneChangeInterface;
+using autoware::behavior_path_planner::ObjectsOfInterestMarkerInterface;
+using autoware::behavior_path_planner::RTCInterface;
 
 class AvoidanceByLaneChangeInterface : public LaneChangeInterface
 {
