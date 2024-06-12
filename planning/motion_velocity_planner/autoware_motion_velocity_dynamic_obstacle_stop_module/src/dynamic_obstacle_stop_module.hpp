@@ -40,8 +40,8 @@ public:
   std::string get_module_name() const override { return module_name_; }
 
 private:
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray();
-  motion_utils::VirtualWalls createVirtualWalls();
+  visualization_msgs::msg::MarkerArray create_debug_marker_array();
+  void create_virtual_walls();
 
   inline static const std::string ns_ = "dynamic_obstacle_stop";
   std::string module_name_;
