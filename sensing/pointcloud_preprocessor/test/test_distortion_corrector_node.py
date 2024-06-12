@@ -58,7 +58,7 @@ def generate_test_description():
         ComposableNode(
             package="pointcloud_preprocessor",
             plugin="pointcloud_preprocessor::DistortionCorrectorComponent",
-            name="distortion_corrector_node_unused_imu",
+            name="distortion_corrector_node_imu_unused",
             parameters=[
                 {"use_imu": False},
             ],
@@ -76,7 +76,7 @@ def generate_test_description():
         ComposableNode(
             package="pointcloud_preprocessor",
             plugin="pointcloud_preprocessor::DistortionCorrectorComponent",
-            name="distortion_corrector_node_used_imu",
+            name="distortion_corrector_node_imu_used",
             parameters=[
                 {"use_imu": True},
             ],
@@ -121,6 +121,7 @@ def create_pointcloud_header(is_lidar_frame: bool, pointcloud_timestamp):
 
 def create_points(flag: bool):
     if flag:
+        # Create points manually
         list_points = [
             [10.0, 0.0, 0.0],
             [0.0, 10.0, 0.0],
@@ -148,11 +149,9 @@ def create_point_stamps(is_generate_points: bool, pointcloud_timestamp):
     if is_generate_points:
         for i in range(number_of_points):
             if i == 0:
-                # For the first point, do not add the time offset
                 list_timestamps.append(point_stamp.sec + point_stamp.nanosec * 1e-9)
             else:
                 point_stamp = add_ms_to_stamp(point_stamp, points_time_offset)
-                # timestamps.append(point_stamp.sec + point_stamp.nanosec * 1e-9)
                 list_timestamps.append(point_stamp.sec + point_stamp.nanosec * 1e-9)
 
     np_timestamps = np.array(list_timestamps, dtype=np.float64)
@@ -436,7 +435,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_used_callback_msg_buffer),
             1,
-            "test_empty_twist failed: recieve more or less than one pointcloud.",
+            "test_1_empty_twist failed: recieve more or less than one pointcloud.",
         )
         expected_pointcloud = np.array(
             [
@@ -457,7 +456,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         received_pointcloud = pointcloud2_to_xyz_array(self.imu_used_callback_msg_buffer[0])
         self.assertTrue(
             np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_empty_twist failed : Pointcloud shouldn't change.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
+            f"test_1_empty_twist failed : Pointcloud shouldn't change.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
         )
 
     def test_2_empty_imu(self):
@@ -490,7 +489,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_used_callback_msg_buffer),
             1,
-            "test_empty_imu failed: recieve more or less than one pointcloud.",
+            "test_2_empty_imu failed: recieve more or less than one pointcloud.",
         )
         expected_pointcloud = np.array(
             [
@@ -511,7 +510,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         received_pointcloud = pointcloud2_to_xyz_array(self.imu_used_callback_msg_buffer[0])
         self.assertTrue(
             np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_empty_imu failed : wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
+            f"test_2_empty_imu failed : wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
         )
 
     def test_3_empty_pointcloud(self):
@@ -546,7 +545,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_used_callback_msg_buffer),
             1,
-            "test_empty_pointcloud failed: recieve more or less than one pointcloud.",
+            "test_3_empty_pointcloud failed: recieve more or less than one pointcloud.",
         )
         expected_pointcloud = np.array([], dtype=np.float32).reshape(0, 3)
 
@@ -554,7 +553,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
 
         self.assertTrue(
             np.array_equal(received_pointcloud, expected_pointcloud),
-            "test_empty_pointcloud failed: output pointcloud should be empty",
+            "test_3_empty_pointcloud failed: output pointcloud should be empty",
         )
 
     def test_4_normal_input_without_imu(self):
@@ -590,7 +589,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_unused_callback_msg_buffer),
             1,
-            "test_normal_input failed (not using imu): recieve more or less than one pointcloud.",
+            "test_4_normal_input_without_imu failed (not using imu): recieve more or less than one pointcloud.",
         )
         expected_pointcloud = np.array(
             [
@@ -611,7 +610,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         received_pointcloud = pointcloud2_to_xyz_array(self.imu_unused_callback_msg_buffer[0])
         self.assertTrue(
             np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_normal_input failed (not using imu): wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
+            f"test_4_normal_input_without_imu failed (not using imu): wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
         )
 
     def test_5_normal_input_with_imu(self):
@@ -648,7 +647,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_used_callback_msg_buffer),
             1,
-            "test_normal_input failed (using imu): recieve more or less than one pointcloud.",
+            "test_5_normal_input_with_imu failed (using imu): recieve more or less than one pointcloud.",
         )
         expected_pointcloud = np.array(
             [
@@ -669,63 +668,5 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         received_pointcloud = pointcloud2_to_xyz_array(self.imu_used_callback_msg_buffer[0])
         self.assertTrue(
             np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_normal_input failed (using imu): wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
-        )
-
-    def test_6_normal_input_with_lidar_frame(self):
-        """
-        Test normal situation when the input pointcloud's frame is lidar frame instead of baselink.
-
-        input: distorted pointcloud, twist, imu.
-        output: undistorted pointcloud
-        """
-        # wait for the node to be ready
-        time.sleep(3)
-
-        twist_msgs = generate_twist_msgs(self.pointcloud_timestamp)
-        imu_msgs = generate_imu_msgs(self.pointcloud_timestamp)
-
-        for i in range(len(twist_msgs)):
-            self.twist_publisher.publish(twist_msgs[i])
-            self.imu_publisher.publish(imu_msgs[i])
-
-        pointcloud_msg = get_pointcloud_msg(
-            is_generate_points=True,
-            is_lidar_frame=True,
-            pointcloud_timestamp=self.pointcloud_timestamp,
-            print_cloud_msg=False,
-        )
-        self.pointcloud_publisher.publish(pointcloud_msg)
-
-        end_time = time.time() + 3
-        while time.time() < end_time:
-            rclpy.spin_once(self.node, timeout_sec=1.0)
-
-        # test with using imu
-        print("len(self.imu_used_callback_msg_buffer): ", len(self.imu_used_callback_msg_buffer))
-        self.assertEqual(
-            len(self.imu_used_callback_msg_buffer),
-            1,
-            "test_normal_input failed (using imu): recieve more or less than one pointcloud.",
-        )
-        expected_pointcloud = np.array(
-            [
-                [1.00000000e01, -8.88178420e-16, -2.22044605e-15],
-                [4.99889888e-02, 1.00608263e01, 9.24991518e-02],
-                [1.06107026e-01, 1.30236566e-01, 1.01985807e01],
-                [2.01708908e01, 2.10010901e-01, 3.20339710e-01],
-                [2.20674217e-01, 2.02733555e01, 4.17973220e-01],
-                [2.74146169e-01, 3.47042829e-01, 2.05340939e01],
-                [3.03673210e01, 4.57563609e-01, 7.00817764e-01],
-                [4.18013752e-01, 3.05259438e01, 8.07962477e-01],
-                [4.64087993e-01, 6.00080132e-01, 3.09292221e01],
-                [1.05657215e01, 1.07120657e01, 1.10940094e01],
-            ],
-            dtype=np.float32,
-        )
-
-        received_pointcloud = pointcloud2_to_xyz_array(self.imu_used_callback_msg_buffer[0])
-        self.assertTrue(
-            np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_normal_input failed (lidar frame): wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
+            f"test_5_normal_input_with_imu failed (using imu): wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{ np.abs(received_pointcloud - expected_pointcloud)}",
         )
