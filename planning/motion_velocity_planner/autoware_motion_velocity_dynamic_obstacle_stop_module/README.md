@@ -10,7 +10,7 @@ The _immediate_ path of an object is the area that the object would traverse dur
 
 ### Activation Timing
 
-This module is activated if the launch parameter `launch_dynamic_obstacle_stop_module` is set to true in the behavior planning launch file.
+This module is activated if the launch parameter `launch_dynamic_obstacle_stop_module` is set to true in the motion planning launch file.
 
 ### Inner-workings / Algorithms
 
