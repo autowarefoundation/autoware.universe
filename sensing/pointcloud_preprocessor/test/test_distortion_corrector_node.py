@@ -409,8 +409,8 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         """
         Test abnormal situation: when twist messages are empty.
 
-        input: distored pointcloud, empty twist, imu.
-        output: distored pointcloud
+        input: distorted pointcloud, empty twist, imu.
+        output: distorted pointcloud
         """
         # wait for the node to be ready
         time.sleep(3)
@@ -435,7 +435,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_used_callback_msg_buffer),
             1,
-            "test_1_empty_twist failed: recieve more or less than one pointcloud.",
+            "test_1_empty_twist failed: receive more or less than one pointcloud.",
         )
         expected_pointcloud = np.array(
             [
@@ -463,8 +463,8 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         """
         Test abnormal situation: when imu messages are empty.
 
-        input: distored pointcloud, twist, empty imu.
-        output: undistored pointcloud
+        input: distorted pointcloud, twist, empty imu.
+        output: undistorted pointcloud
         """
         # wait for the node to be ready
         time.sleep(3)
@@ -489,7 +489,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_used_callback_msg_buffer),
             1,
-            "test_2_empty_imu failed: recieve more or less than one pointcloud.",
+            "test_2_empty_imu failed: receive more or less than one pointcloud.",
         )
         expected_pointcloud = np.array(
             [
@@ -545,7 +545,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_used_callback_msg_buffer),
             1,
-            "test_3_empty_pointcloud failed: recieve more or less than one pointcloud.",
+            "test_3_empty_pointcloud failed: receive more or less than one pointcloud.",
         )
         expected_pointcloud = np.array([], dtype=np.float32).reshape(0, 3)
 
@@ -585,11 +585,11 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         while time.time() < end_time:
             rclpy.spin_once(self.node, timeout_sec=1.0)
 
-        # test withuout using imu
+        # test without using imu
         self.assertEqual(
             len(self.imu_unused_callback_msg_buffer),
             1,
-            "test_4_normal_input_without_imu failed (not using imu): recieve more or less than one pointcloud.",
+            "test_4_normal_input_without_imu failed (not using imu): receive more or less than one pointcloud.",
         )
         expected_pointcloud = np.array(
             [
@@ -647,7 +647,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         self.assertEqual(
             len(self.imu_used_callback_msg_buffer),
             1,
-            "test_5_normal_input_with_imu failed (using imu): recieve more or less than one pointcloud.",
+            "test_5_normal_input_with_imu failed (using imu): receive more or less than one pointcloud.",
         )
         expected_pointcloud = np.array(
             [
