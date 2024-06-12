@@ -18,10 +18,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <memory>
-#include <optional>
 #include <stdexcept>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 namespace tier4_autoware_utils
@@ -205,10 +203,10 @@ public:
 
   /**
    * @brief Take and return the latest data from DDS queue if such data existed, otherwise return
-   * nullopt instead.
-   * @return Optional const shared pointer to the taken data
+   * nullptr instead.
+   * @return Const shared pointer to the taken data, or nullopt if no data existed
    */
-  std::optional<typename T::ConstSharedPtr> takeData()
+  typename T::ConstSharedPtr takeData()
   {
     auto new_data = std::make_shared<T>();
     rclcpp::MessageInfo message_info;
@@ -217,7 +215,7 @@ public:
       data_ = new_data;
       return data_;
     } else {
-      return std::nullopt;
+      return nullptr;
     }
   }
 };
