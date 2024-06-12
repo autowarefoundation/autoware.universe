@@ -27,6 +27,9 @@ namespace fs = ::std::experimental::filesystem;
 #include <utility>
 #include <vector>
 
+namespace autoware::traffic_light
+{
+
 namespace
 {
 float calWeightedIou(
@@ -46,8 +49,6 @@ float calWeightedIou(
 
 }  // namespace
 
-namespace traffic_light
-{
 inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
 {
   return std::vector<float>(double_vector.begin(), double_vector.end());
@@ -354,7 +355,7 @@ bool TrafficLightFineDetectorNodelet::readLabelFile(
   return tlr_label_id_.size() != 0;
 }
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::TrafficLightFineDetectorNodelet)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightFineDetectorNodelet)
