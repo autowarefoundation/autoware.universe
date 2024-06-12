@@ -120,8 +120,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     const auto path =
       assignToCandidate(module_type_->getLaneChangePath(), module_type_->getEgoPosition());
     updateRTCStatus(
-      path.start_distance_to_path_change, path.finish_distance_to_path_change,
-      post_process_safety_status_.is_safe, State::RUNNING);
+      path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
+      State::RUNNING);
   }
 
   return output;
