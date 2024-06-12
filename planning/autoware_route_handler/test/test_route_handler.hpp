@@ -62,7 +62,8 @@ public:
 
   void set_lane_change_test_route()
   {
-    const auto route_handler_dir = ament_index_cpp::get_package_share_directory("route_handler");
+    const auto route_handler_dir =
+      ament_index_cpp::get_package_share_directory("autoware_route_handler");
     const auto rh_test_route = route_handler_dir + "/test_route/lane_change_test_route.yaml";
     route_handler_->setRoute(autoware::test_utils::parse_lanelet_route_file(rh_test_route));
   }
