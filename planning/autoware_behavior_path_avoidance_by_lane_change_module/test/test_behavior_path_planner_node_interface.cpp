@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/behavior_path_planner_node.hpp"
+#include "autoware_behavior_path_planner/behavior_path_planner_node.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
@@ -23,7 +23,7 @@
 #include <cmath>
 #include <vector>
 
-using ::behavior_path_planner::BehaviorPathPlannerNode;
+using autoware::behavior_path_planner::BehaviorPathPlannerNode;
 using planning_test_utils::PlanningInterfaceTestManager;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
@@ -47,7 +47,7 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode()
   const auto planning_test_utils_dir =
     ament_index_cpp::get_package_share_directory("planning_test_utils");
   const auto behavior_path_planner_dir =
-    ament_index_cpp::get_package_share_directory("behavior_path_planner");
+    ament_index_cpp::get_package_share_directory("autoware_behavior_path_planner");
   const auto behavior_path_lane_change_module_dir =
     ament_index_cpp::get_package_share_directory("autoware_behavior_path_lane_change_module");
 
