@@ -15,49 +15,159 @@
 #ifndef POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 #define POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_HPP_
 
-#include "pointcloud_preprocessor/distortion_corrector/undistorter.hpp"
-
+#include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
+#include <sophus/se3.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
+#include <tf2/convert.h>
+#include <tf2/transform_datatypes.h>
+
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/buffer_interface.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <deque>
 #include <memory>
 #include <string>
 
 namespace pointcloud_preprocessor
 {
-using rcl_interfaces::msg::SetParametersResult;
-using sensor_msgs::msg::PointCloud2;
 
-class DistortionCorrectorComponent : public rclcpp::Node
+class DistortionCorrectorBase
 {
 public:
-  explicit DistortionCorrectorComponent(const rclcpp::NodeOptions & options);
+  virtual void processTwistMessage(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) = 0;
+  virtual void processIMUMessage(
+    const std::string & base_link_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) = 0;
+  virtual void setPointCloudTransform(
+    const std::string & base_link_frame, const std::string & lidar_frame) = 0;
+  virtual void initialize() = 0;
+  virtual void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
+};
 
+template <class Derived>
+class DistortionCorrector : public DistortionCorrectorBase
+{
+public:
+  bool is_pointcloud_transform_needed_{false};
+  bool is_pointcloud_transform_exist_{false};
+  bool is_imu_transform_exist_{false};
+  rclcpp::Node * node_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
+  std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
+  std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
+
+  explicit DistortionCorrector(rclcpp::Node * node)
+  : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
+  {
+  }
+  void processTwistMessage(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
+
+  void processIMUMessage(
+    const std::string & base_link_frame,
+    const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
+  void getIMUTransformation(
+    const std::string & base_link_frame, const std::string & imu_frame,
+    geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
+  void storeIMUToQueue(
+    const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg,
+    geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
+
+  bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
+  void getIteratorOfTwistAndIMU(
+    bool use_imu, double first_point_time_stamp_sec,
+    std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
+  void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) override;
+  void warnIfTimestampsTooLate(
+    bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_is_too_late);
+
+  virtual void initialize() = 0;
+  void undistortPoint(
+    sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
+    sensor_msgs::PointCloud2Iterator<float> & it_z,
+    std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
+    bool & is_twist_valid, bool & is_imu_valid)
+  {
+    static_cast<Derived *>(this)->undistortPointImplementation(
+      it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
+  };
+
+  virtual void setPointCloudTransform(
+    const std::string & base_link_frame, const std::string & lidar_frame) = 0;
+};
+
+class DistortionCorrector2D : public DistortionCorrector<DistortionCorrector2D>
+{
 private:
-  rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_sub_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_points_pub_;
+  // defined outside of for loop for performance reasons.
+  tf2::Quaternion baselink_quat_;
+  tf2::Transform baselink_tf_odom_;
+  tf2::Vector3 point_tf_;
+  tf2::Vector3 undistorted_point_tf_;
+  float theta_;
+  float x_;
+  float y_;
 
-  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
-  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
+  // TF
+  tf2::Transform tf2_lidar_to_base_link_;
+  tf2::Transform tf2_base_link_to_lidar_;
 
-  std::string base_link_frame_ = "base_link";
-  bool use_imu_;
-  bool use_3d_distortion_correction_;
+public:
+  explicit DistortionCorrector2D(rclcpp::Node * node) : DistortionCorrector(node) {}
+  void initialize() override;
+  void undistortPointImplementation(
+    sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
+    sensor_msgs::PointCloud2Iterator<float> & it_z,
+    std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
+    bool & is_twist_valid, bool & is_imu_valid);
 
-  std::unique_ptr<UndistorterBase> undistorter_;
+  void setPointCloudTransform(
+    const std::string & base_link_frame, const std::string & lidar_frame) override;
+};
 
-  void onPointCloud(PointCloud2::UniquePtr points_msg);
-  void onTwistWithCovarianceStamped(
-    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
-  void onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
+class DistortionCorrector3D : public DistortionCorrector<DistortionCorrector3D>
+{
+private:
+  // defined outside of for loop for performance reasons.
+  Eigen::Vector4f point_eigen_;
+  Eigen::Vector4f undistorted_point_eigen_;
+  Eigen::Matrix4f transformation_matrix_;
+  Eigen::Matrix4f prev_transformation_matrix_;
+
+  // TF
+  Eigen::Matrix4f eigen_lidar_to_base_link_;
+  Eigen::Matrix4f eigen_base_link_to_lidar_;
+
+public:
+  explicit DistortionCorrector3D(rclcpp::Node * node) : DistortionCorrector(node) {}
+  void initialize() override;
+  void undistortPointImplementation(
+    sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
+    sensor_msgs::PointCloud2Iterator<float> & it_z,
+    std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
+    bool & is_twist_valid, bool & is_imu_valid);
+  void setPointCloudTransform(
+    const std::string & base_link_frame, const std::string & lidar_frame) override;
 };
 
 }  // namespace pointcloud_preprocessor
