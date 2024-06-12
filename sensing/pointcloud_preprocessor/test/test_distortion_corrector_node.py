@@ -456,7 +456,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         received_pointcloud = pointcloud2_to_xyz_array(self.imu_used_callback_msg_buffer[0])
         self.assertTrue(
             np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_1_empty_twist failed: Pointcloud shouldn't change.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{np.abs(received_pointcloud - expected_pointcloud)}",
+            f"test_1_empty_twist failed: Pointcloud shouldn't change.\nExpected: \n{expected_pointcloud}\nReceived: \n{received_pointcloud}\nDifference: \n{np.abs(received_pointcloud - expected_pointcloud)}",
         )
 
     def test_2_empty_imu(self):
@@ -510,7 +510,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         received_pointcloud = pointcloud2_to_xyz_array(self.imu_used_callback_msg_buffer[0])
         self.assertTrue(
             np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_2_empty_imu failed: wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{np.abs(received_pointcloud - expected_pointcloud)}",
+            f"test_2_empty_imu failed: wrong undistorted pointcloud.\nExpected: \n{expected_pointcloud}\nReceived: \n{received_pointcloud}\nDifference: \n{np.abs(received_pointcloud - expected_pointcloud)}",
         )
 
     def test_3_empty_pointcloud(self):
@@ -610,7 +610,7 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         received_pointcloud = pointcloud2_to_xyz_array(self.imu_unused_callback_msg_buffer[0])
         self.assertTrue(
             np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_4_normal_input_without_imu failed (not using imu): wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{np.abs(received_pointcloud - expected_pointcloud)}",
+            f"test_4_normal_input_without_imu failed (not using imu): wrong undistorted pointcloud.\nExpected: \n{expected_pointcloud}\nReceived: \n{received_pointcloud}\nDifference: \n{np.abs(received_pointcloud - expected_pointcloud)}",
         )
 
     def test_5_normal_input_with_imu(self):
@@ -668,5 +668,5 @@ class TestDistortionCorrectionNode(unittest.TestCase):
         received_pointcloud = pointcloud2_to_xyz_array(self.imu_used_callback_msg_buffer[0])
         self.assertTrue(
             np.allclose(received_pointcloud, expected_pointcloud, atol=1e-05),
-            f"test_5_normal_input_with_imu failed (using imu): wrong undistorted pointcloud.\nExpected:\n{expected_pointcloud}\nReceived:\n{received_pointcloud}\nDifference:\n{np.abs(received_pointcloud - expected_pointcloud)}",
+            f"test_5_normal_input_with_imu failed (using imu): wrong undistorted pointcloud.\nExpected: \n{expected_pointcloud}\nReceived: \n{received_pointcloud}\nDifference: \n{np.abs(received_pointcloud - expected_pointcloud)}",
         )
