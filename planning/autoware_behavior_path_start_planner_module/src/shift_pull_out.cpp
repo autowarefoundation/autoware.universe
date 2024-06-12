@@ -31,7 +31,7 @@ using lanelet::utils::getArcCoordinates;
 using motion_utils::findNearestIndex;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using start_planner_utils::getPullOutLanes;
 
@@ -42,7 +42,8 @@ ShiftPullOut::ShiftPullOut(
 {
 }
 
-std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pose & goal_pose)
+std::optional<PullOutPath> ShiftPullOut::plan(
+  const Pose & start_pose, const Pose & goal_pose, PlannerDebugData & planner_debug_data)
 {
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;
@@ -55,6 +56,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
   // find candidate paths
   auto pull_out_paths = calcPullOutPaths(*route_handler, road_lanes, start_pose, goal_pose);
   if (pull_out_paths.empty()) {
+    planner_debug_data.conditions_evaluation.emplace_back("no path found");
     return std::nullopt;
   }
 
@@ -83,7 +85,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
         return parameters_.check_shift_path_lane_departure;
 
       PathWithLaneId path_with_only_first_pose{};
-      path_with_only_first_pose.points.push_back(path_shift_start_to_end.points.at(0));
+      path_with_only_first_pose.points.push_back(path_shift_start_to_end.points.front());
       return !lane_departure_checker_->checkPathWillLeaveLane(
         lanelet_map_ptr, path_with_only_first_pose);
     });
@@ -96,6 +98,7 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
     if (
       is_lane_departure_check_required &&
       lane_departure_checker_->checkPathWillLeaveLane(lanelet_map_ptr, path_shift_start_to_end)) {
+      planner_debug_data.conditions_evaluation.emplace_back("lane departure");
       continue;
     }
 
@@ -110,7 +113,10 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
 
     const auto cropped_path = lane_departure_checker_->cropPointsOutsideOfLanes(
       lanelet_map_ptr, shift_path, start_segment_idx);
-    if (cropped_path.points.empty()) continue;
+    if (cropped_path.points.empty()) {
+      planner_debug_data.conditions_evaluation.emplace_back("cropped path is empty");
+      continue;
+    }
 
     // check that the path is not cropped in excess and there is not excessive longitudinal
     // deviation between the first 2 points
@@ -130,14 +136,19 @@ std::optional<PullOutPath> ShiftPullOut::plan(const Pose & start_pose, const Pos
       return std::abs(long_offset_to_closest_point - long_offset_to_next_point) < max_long_offset;
     };
 
-    if (!validate_cropped_path(cropped_path)) continue;
+    if (!validate_cropped_path(cropped_path)) {
+      planner_debug_data.conditions_evaluation.emplace_back("cropped path is invalid");
+      continue;
+    }
     shift_path.points = cropped_path.points;
     shift_path.header = planner_data_->route_handler->getRouteHeader();
 
     if (isPullOutPathCollided(pull_out_path, parameters_.shift_collision_check_distance_from_end)) {
+      planner_debug_data.conditions_evaluation.emplace_back("collision");
       continue;
     }
 
+    planner_debug_data.conditions_evaluation.emplace_back("success");
     return pull_out_path;
   }
 
@@ -225,8 +236,9 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   // generate road lane reference path
   const auto arc_position_start = getArcCoordinates(road_lanes, start_pose);
   const double s_start = std::max(arc_position_start.length - backward_path_length, 0.0);
-  const auto path_end_info = behavior_path_planner::utils::parking_departure::calcEndArcLength(
-    s_start, forward_path_length, road_lanes, goal_pose);
+  const auto path_end_info =
+    autoware::behavior_path_planner::utils::parking_departure::calcEndArcLength(
+      s_start, forward_path_length, road_lanes, goal_pose);
   const double s_end = path_end_info.first;
   const bool path_terminal_is_goal = path_end_info.second;
 
@@ -324,7 +336,14 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     shift_line.end = *shift_end_pose_ptr;
     shift_line.end_shift_length = shift_length;
     path_shifter.addShiftLine(shift_line);
-    path_shifter.setVelocity(0.0);  // initial velocity is 0
+    // In the current path generation logic:
+    // - Considering the maximum curvature of the path results in a smaller shift distance.
+    // - Setting the allowable maximum lateral acceleration to a value smaller than the one
+    // calculated by the constant lateral jerk trajectory generation.
+    // - Setting the initial velocity to a very small value, such as 0.0.
+    // These conditions cause the curvature around the shift start pose to become larger than
+    // expected. To address this issue, an initial velocity 1.0 is provided.
+    path_shifter.setVelocity(1.0);
     path_shifter.setLongitudinalAcceleration(longitudinal_acc);
     path_shifter.setLateralAccelerationLimit(lateral_acc);
 
@@ -416,4 +435,4 @@ double ShiftPullOut::calcBeforeShiftedArcLength(
   return before_arc_length;
 }
 
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
