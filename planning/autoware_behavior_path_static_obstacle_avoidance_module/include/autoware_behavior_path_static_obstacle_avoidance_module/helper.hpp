@@ -15,10 +15,10 @@
 #ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__HELPER_HPP_
 #define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__HELPER_HPP_
 
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -26,11 +26,11 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner::helper::static_obstacle_avoidance
+namespace autoware::behavior_path_planner::helper::static_obstacle_avoidance
 {
 
-using behavior_path_planner::PathShifter;
-using behavior_path_planner::PlannerData;
+using autoware::behavior_path_planner::PathShifter;
+using autoware::behavior_path_planner::PlannerData;
 
 class AvoidanceHelper
 {
@@ -357,6 +357,11 @@ public:
       return false;
     }
 
+    // can avoid it after relax drivable space limitation.
+    if (object.info == ObjectInfo::LIMIT_DRIVABLE_SPACE_TEMPORARY) {
+      return false;
+    }
+
     return true;
   }
 
@@ -513,6 +518,6 @@ private:
 
   std::optional<std::pair<Pose, double>> max_v_point_;
 };
-}  // namespace behavior_path_planner::helper::static_obstacle_avoidance
+}  // namespace autoware::behavior_path_planner::helper::static_obstacle_avoidance
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__HELPER_HPP_
