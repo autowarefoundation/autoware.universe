@@ -20,8 +20,11 @@
 #include <optional>
 #include <string>
 #include <variant>
+#include <vector>
 
 // Autoware
+#include <tier4_autoware_utils/ros/update_param.hpp>
+
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
@@ -118,6 +121,11 @@ private:
 
   autoware_adapi_v1_msgs::msg::MrmState mrm_state_;
   void publishMrmState();
+
+  // parameter callback
+  rcl_interfaces::msg::SetParametersResult onParam(
+    const std::vector<rclcpp::Parameter> & parameters);
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   // Clients
   rclcpp::CallbackGroup::SharedPtr client_mrm_pull_over_group_;

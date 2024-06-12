@@ -103,6 +103,9 @@ MrmHandler::MrmHandler() : Node("mrm_handler")
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), update_period_ns, std::bind(&MrmHandler::onTimer, this));
+
+  // set parameter callback
+  set_param_res_ = this->add_on_set_parameters_callback(std::bind(&MrmHandler::onParam, this, _1));
 }
 
 void MrmHandler::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
@@ -166,6 +169,19 @@ void MrmHandler::onOperationModeState(
   const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg)
 {
   operation_mode_state_ = msg;
+}
+
+rcl_interfaces::msg::SetParametersResult MrmHandler::onParam(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+  updateParam<bool>(parameters, "is_mrm_recoverable", param_.is_mrm_recoverable);
+  if (param_.is_mrm_recoverable) is_mrm_holding_ = false;
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  return result;
 }
 
 void MrmHandler::publishHazardCmd()
