@@ -911,13 +911,13 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
             continue;
           }
         }
+      }
 
-        if (ego_to_obstacle_distance) {
-          target_obstacles.emplace_back(
-            pointcloud.header.stamp, stop_collision_point, slow_down_front_collision_point,
-            slow_down_back_collision_point, *ego_to_obstacle_distance,
-            lat_dist_from_obstacle_to_traj);
-        }
+      if (ego_to_obstacle_distance) {
+        target_obstacles.emplace_back(
+          pointcloud.header.stamp, stop_collision_point, slow_down_front_collision_point,
+          slow_down_back_collision_point, *ego_to_obstacle_distance,
+          lat_dist_from_obstacle_to_traj);
       }
     }
   }
@@ -1711,8 +1711,6 @@ void ObstacleCruisePlannerNode::checkConsistency(
   const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
   std::vector<StopObstacle> & stop_obstacles)
 {
-  const auto & p = behavior_determination_param_;
-
   if (use_pointcloud_) {
     return;
   }
