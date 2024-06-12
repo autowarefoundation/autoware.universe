@@ -258,7 +258,6 @@ ObstacleCruisePlannerNode::BehaviorDeterminationParam::BehaviorDeterminationPara
 {  // behavior determination
   decimate_trajectory_step_length =
     node.declare_parameter<double>("behavior_determination.decimate_trajectory_step_length");
-  use_pointcloud = node.declare_parameter<bool>("behavior_determination.use_pointcloud");
   pointcloud_search_radius =
     node.declare_parameter<double>("behavior_determination.pointcloud_search_radius");
   pointcloud_voxel_grid_x =
@@ -332,8 +331,6 @@ void ObstacleCruisePlannerNode::BehaviorDeterminationParam::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.decimate_trajectory_step_length",
     decimate_trajectory_step_length);
-  tier4_autoware_utils::updateParam<bool>(
-    parameters, "behavior_determination.use_pointcloud", use_pointcloud);
   tier4_autoware_utils::updateParam<double>(
     parameters, "behavior_determination.pointcloud_search_radius", pointcloud_search_radius);
   tier4_autoware_utils::updateParam<double>(
@@ -462,6 +459,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
 
   enable_debug_info_ = declare_parameter<bool>("common.enable_debug_info");
   enable_calculation_time_info_ = declare_parameter<bool>("common.enable_calculation_time_info");
+  use_pointcloud_ = declare_parameter<bool>("common.use_pointcloud");
   enable_slow_down_planning_ = declare_parameter<bool>("common.enable_slow_down_planning");
 
   behavior_determination_param_ = BehaviorDeterminationParam(*this);
@@ -537,6 +535,8 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
 
+  tier4_autoware_utils::updateParam<bool>(parameters, "common.use_pointcloud", use_pointcloud_);
+
   tier4_autoware_utils::updateParam<bool>(
     parameters, "common.stop_on_curve.enable_approaching", enable_approaching_on_curve_);
   tier4_autoware_utils::updateParam<double>(
@@ -564,13 +564,12 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
 
 void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
-  const auto & p = behavior_determination_param_;
   const auto ego_odom_ptr = ego_odom_sub_.takeData();
   const auto objects_ptr = objects_sub_.takeData();
   const auto pointcloud_ptr = pointcloud_sub_.takeData();
   const auto acc_ptr = acc_sub_.takeData();
   if (
-    !ego_odom_ptr || (!p.use_pointcloud && !objects_ptr) || (p.use_pointcloud && !pointcloud_ptr) ||
+    !ego_odom_ptr || (!use_pointcloud_ && !objects_ptr) || (use_pointcloud_ && !pointcloud_ptr) ||
     !acc_ptr) {
     return;
   }
@@ -595,7 +594,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   //    (2) in front of ego
   //    (3) not too far from trajectory
   const auto target_obstacles = [&]() {
-    if (p.use_pointcloud) {
+    if (use_pointcloud_) {
       return convertToObstacles(ego_odom, *pointcloud_ptr, traj_points, msg->header);
     } else {
       return convertToObstacles(ego_odom, *objects_ptr, traj_points);
@@ -604,7 +603,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   //  2. Determine ego's behavior against each obstacle from stop, cruise and slow down.
   const auto & [stop_obstacles, cruise_obstacles, slow_down_obstacles] = [&]() {
-    if (p.use_pointcloud) {
+    if (use_pointcloud_) {
       return determineEgoBehaviorAgainstObstacles(
         ego_odom, *pointcloud_ptr, traj_points, target_obstacles);
     } else {
@@ -1145,8 +1144,13 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
   const Obstacle & obstacle, const double precise_lat_dist)
 {
-  const auto & object_id = obstacle.uuid.substr(0, 4);
   const auto & p = behavior_determination_param_;
+
+  if (use_pointcloud_) {
+    return std::nullopt;
+  }
+
+  const auto & object_id = obstacle.uuid.substr(0, 4);
 
   // NOTE: When driving backward, Stop will be planned instead of cruise.
   //       When the obstacle is crossing the ego's trajectory, cruise can be ignored.
@@ -1188,10 +1192,15 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
 std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstacle(
   const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points)
 {
+  const auto & p = behavior_determination_param_;
+
+  if (use_pointcloud_) {
+    return std::nullopt;
+  }
+
   if (traj_points.empty()) return std::nullopt;
   // check label
   const auto & object_id = obstacle.uuid.substr(0, 4);
-  const auto & p = behavior_determination_param_;
 
   if (!isOutsideCruiseObstacle(obstacle.classification.label)) {
     RCLCPP_INFO_EXPRESSION(
@@ -1457,8 +1466,8 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
 
   // NOTE: consider all target obstacles when driving backward
   if (
-    (!p.use_pointcloud && !isStopObstacle(obstacle.classification.label)) ||
-    (p.use_pointcloud && !use_pointcloud_for_stop_)) {
+    (!use_pointcloud_ && !isStopObstacle(obstacle.classification.label)) ||
+    (use_pointcloud_ && !use_pointcloud_for_stop_)) {
     return std::nullopt;
   }
 
@@ -1537,7 +1546,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
   }
 
   const auto [tangent_vel, normal_vel] = [&]() {
-    if (p.use_pointcloud) {
+    if (use_pointcloud_) {
       return std::make_pair<double, double>(0., 0.);
     }
     return projectObstacleVelocityToTrajectory(traj_points, obstacle);
@@ -1554,14 +1563,14 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   const auto & object_id = obstacle.uuid.substr(0, 4);
   const auto & p = behavior_determination_param_;
 
-  if (!p.use_pointcloud) {
+  if (!use_pointcloud_) {
     slow_down_condition_counter_.addCurrentUuid(obstacle.uuid);
   }
 
   if (
     !enable_slow_down_planning_ ||
-    (!p.use_pointcloud && !isSlowDownObstacle(obstacle.classification.label)) ||
-    (p.use_pointcloud && !use_pointcloud_for_slow_down_)) {
+    (!use_pointcloud_ && !isSlowDownObstacle(obstacle.classification.label)) ||
+    (use_pointcloud_ && !use_pointcloud_for_slow_down_)) {
     return std::nullopt;
   }
 
@@ -1678,7 +1687,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
   }
 
   const auto [tangent_vel, normal_vel] = [&]() {
-    if (p.use_pointcloud) {
+    if (use_pointcloud_) {
       return std::make_pair<double, double>(0., 0.);
     }
     return projectObstacleVelocityToTrajectory(traj_points, obstacle);
@@ -1692,6 +1701,12 @@ void ObstacleCruisePlannerNode::checkConsistency(
   const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
   std::vector<StopObstacle> & stop_obstacles)
 {
+  const auto & p = behavior_determination_param_;
+
+  if (use_pointcloud_) {
+    return;
+  }
+
   for (const auto & prev_closest_stop_obstacle : prev_closest_stop_obstacles_) {
     const auto predicted_object_itr = std::find_if(
       predicted_objects.objects.begin(), predicted_objects.objects.end(),

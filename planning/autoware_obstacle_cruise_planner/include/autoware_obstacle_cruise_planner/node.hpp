@@ -127,6 +127,8 @@ private:
 
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
+  bool use_pointcloud_{false};
+  bool enable_slow_down_planning_{false};
   double min_behavior_stop_margin_;
   bool enable_approaching_on_curve_;
   double additional_safe_distance_margin_on_curve_;
@@ -200,7 +202,6 @@ private:
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
     double decimate_trajectory_step_length;
-    bool use_pointcloud{false};
     double pointcloud_search_radius;
     double pointcloud_voxel_grid_x;
     double pointcloud_voxel_grid_y;
@@ -296,7 +297,6 @@ private:
   EgoNearestParam ego_nearest_param_;
 
   bool is_driving_forward_{true};
-  bool enable_slow_down_planning_{false};
 
   std::vector<StopObstacle> prev_closest_stop_obstacles_{};
 
