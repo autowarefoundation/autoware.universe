@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner::utils
+namespace autoware::behavior_path_planner::utils
 {
 /**
  * @brief calc path arclength on each points from start point to end point.
@@ -330,8 +330,8 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
 }
 
 PathWithLaneId convertWayPointsToPathWithLaneId(
-  const freespace_planning_algorithms::PlannerWaypoints & waypoints, const double velocity,
-  const lanelet::ConstLanelets & lanelets)
+  const autoware::freespace_planning_algorithms::PlannerWaypoints & waypoints,
+  const double velocity, const lanelet::ConstLanelets & lanelets)
 {
   PathWithLaneId path;
   path.header = waypoints.header;
@@ -684,4 +684,4 @@ BehaviorModuleOutput createGoalAroundPath(const std::shared_ptr<const PlannerDat
   return output;
 }
 
-}  // namespace behavior_path_planner::utils
+}  // namespace autoware::behavior_path_planner::utils
