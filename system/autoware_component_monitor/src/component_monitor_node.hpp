@@ -29,11 +29,11 @@
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
 
-using msg_t = autoware_internal_msgs::msg::ResourceUsageReport;
-using fields_t = std::vector<std::vector<std::string>>;
-
 namespace autoware::component_monitor
 {
+
+using msg_t = autoware_internal_msgs::msg::ResourceUsageReport;
+using fields_t = std::vector<std::vector<std::string>>;
 
 class ComponentMonitor : public rclcpp::Node
 {
