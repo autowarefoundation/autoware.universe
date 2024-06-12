@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "autoware_crosswalk_traffic_light_estimator/node.hpp"
+#include "crosswalk_traffic_light_estimator/node.hpp"
 
 #include <lanelet2_extension/regulatory_elements/Forward.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::crosswalk_traffic_light_estimator
+namespace traffic_light
 {
 namespace
 {
@@ -538,9 +538,8 @@ void CrosswalkTrafficLightEstimatorNode::removeDuplicateIds(TrafficSignalArray &
     signals.end());
 }
 
-}  // namespace autoware::crosswalk_traffic_light_estimator
+}  // namespace traffic_light
 
 #include <rclcpp_components/register_node_macro.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(
-  autoware::crosswalk_traffic_light_estimator::CrosswalkTrafficLightEstimatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::CrosswalkTrafficLightEstimatorNode)
