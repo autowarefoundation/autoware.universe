@@ -21,8 +21,6 @@
 #include "autoware_behavior_path_start_planner_module/pull_out_path.hpp"
 #include "autoware_behavior_path_start_planner_module/util.hpp"
 
-#include <magic_enum.hpp>
-
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -35,37 +33,6 @@ namespace autoware::behavior_path_planner
 using geometry_msgs::msg::Pose;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_planning_msgs::msg::PathWithLaneId;
-
-enum class PlannerType {
-  NONE = 0,
-  SHIFT = 1,
-  GEOMETRIC = 2,
-  STOP = 3,
-  FREESPACE = 4,
-};
-
-struct PlannerDebugData
-{
-public:
-  PlannerType planner_type;
-  std::vector<std::string> conditions_evaluation;
-  double required_margin{0.0};
-  double backward_distance{0.0};
-  auto str() const
-  {
-    std::stringstream ss;
-    ss << std::left << std::setw(20) << "| Planner type " << std::setw(20) << "| Required margin "
-       << std::setw(20) << "| Backward distance " << std::setw(25) << "| Condition evaluation |"
-       << "\n";
-    for (const auto & result : conditions_evaluation) {
-      ss << std::setw(23) << magic_enum::enum_name(planner_type) << std::setw(23)
-         << (std::to_string(required_margin) + "[m]") << std::setw(23)
-         << (std::to_string(backward_distance) + "[m]") << std::setw(25) << result << "\n";
-    }
-    ss << std::setw(40);
-    return ss.str();
-  }
-};
 
 class PullOutPlannerBase
 {

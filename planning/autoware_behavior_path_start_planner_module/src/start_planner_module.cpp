@@ -1523,7 +1523,9 @@ std::optional<PullOutStatus> StartPlannerModule::planFreespacePath(
     freespace_planner_->setPlannerData(planner_data);
     PlannerDebugData debug_data{freespace_planner_->getPlannerType(), {}, 0.0, 0.0};
     auto freespace_path = freespace_planner_->plan(current_pose, end_pose, debug_data);
-    DEBUG_PRINT("\nFreespace Pull out path search results\n%s", debug_data.str().c_str());
+    DEBUG_PRINT(
+      "\nFreespace Pull out path search results\n%s%s", debug_data.header_str().c_str(),
+      debug_data.str().c_str());
     if (!freespace_path) {
       continue;
     }
