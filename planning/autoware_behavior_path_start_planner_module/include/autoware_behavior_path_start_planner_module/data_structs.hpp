@@ -54,14 +54,21 @@ public:
   std::vector<std::string> conditions_evaluation;
   double required_margin{0.0};
   double backward_distance{0.0};
-  auto str() const
+
+  auto header_str() const
   {
     std::stringstream ss;
     ss << std::left << std::setw(20) << "| Planner type " << std::setw(20) << "| Required margin "
        << std::setw(20) << "| Backward distance " << std::setw(25) << "| Condition evaluation |"
        << "\n";
+    return ss.str();
+  }
+
+  auto str() const
+  {
+    std::stringstream ss;
     for (const auto & result : conditions_evaluation) {
-      ss << std::setw(23) << magic_enum::enum_name(planner_type) << std::setw(23)
+      ss << std::left << std::setw(23) << magic_enum::enum_name(planner_type) << std::setw(23)
          << (std::to_string(required_margin) + "[m]") << std::setw(23)
          << (std::to_string(backward_distance) + "[m]") << std::setw(25) << result << "\n";
     }
