@@ -15,18 +15,18 @@
 #ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
 #define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
 
+#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/helper.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
-#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <memory>
 
-namespace behavior_path_planner::utils::static_obstacle_avoidance
+namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 {
 
-using behavior_path_planner::PathShifter;
-using behavior_path_planner::helper::static_obstacle_avoidance::AvoidanceHelper;
+using autoware::behavior_path_planner::PathShifter;
+using autoware::behavior_path_planner::helper::static_obstacle_avoidance::AvoidanceHelper;
 
 class ShiftLineGenerator
 {
@@ -242,6 +242,6 @@ private:
   double base_offset_{0.0};
 };
 
-}  // namespace behavior_path_planner::utils::static_obstacle_avoidance
+}  // namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_

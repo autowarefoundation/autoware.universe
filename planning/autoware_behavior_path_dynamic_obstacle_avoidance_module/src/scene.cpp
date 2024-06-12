@@ -14,8 +14,8 @@
 
 #include "autoware_behavior_path_dynamic_obstacle_avoidance_module/scene.hpp"
 
-#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
@@ -37,7 +37,7 @@
 #include <string>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 namespace
 {
@@ -1861,4 +1861,4 @@ DynamicObstacleAvoidanceModule::calcEgoPathReservePoly(const PathWithLaneId & eg
   return {left_avoid_poly, right_avoid_poly};
 }
 
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
