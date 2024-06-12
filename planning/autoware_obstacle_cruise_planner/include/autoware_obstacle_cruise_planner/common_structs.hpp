@@ -58,15 +58,15 @@ struct Obstacle
     const geometry_msgs::msg::Pose & arg_pose, const double ego_to_obstacle_distance,
     const double lat_dist_from_obstacle_to_traj)
   : stamp(arg_stamp),
+    ego_to_obstacle_distance(ego_to_obstacle_distance),
+    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
     pose(arg_pose),
     orientation_reliable(true),
     twist(object.kinematics.initial_twist_with_covariance.twist),
     twist_reliable(true),
     classification(object.classification.at(0)),
     uuid(tier4_autoware_utils::toHexString(object.object_id)),
-    shape(object.shape),
-    ego_to_obstacle_distance(ego_to_obstacle_distance),
-    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj)
+    shape(object.shape)
   {
     predicted_paths.clear();
     for (const auto & path : object.kinematics.predicted_paths) {
