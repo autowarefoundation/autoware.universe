@@ -489,7 +489,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     suppress_sudden_obstacle_stop_ =
       declare_parameter<bool>("common.suppress_sudden_obstacle_stop");
     planner_ptr_->setParam(
-      enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_,
+      enable_debug_info_, enable_calculation_time_info_, use_pointcloud_, min_behavior_stop_margin_,
       enable_approaching_on_curve_, additional_safe_distance_margin_on_curve_,
       min_safe_distance_margin_on_curve_, suppress_sudden_obstacle_stop_);
   }
@@ -547,7 +547,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
     min_safe_distance_margin_on_curve_);
 
   planner_ptr_->setParam(
-    enable_debug_info_, enable_calculation_time_info_, min_behavior_stop_margin_,
+    enable_debug_info_, enable_calculation_time_info_, use_pointcloud_, min_behavior_stop_margin_,
     enable_approaching_on_curve_, additional_safe_distance_margin_on_curve_,
     min_safe_distance_margin_on_curve_, suppress_sudden_obstacle_stop_);
 
@@ -888,7 +888,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
             vehicle_info_.vehicle_width_m;
 
           if (current_lat_dist_from_obstacle_to_traj < max_lat_margin) {
-          if (!ego_to_obstacle_distance) {
+            if (!ego_to_obstacle_distance) {
               const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
               ego_to_obstacle_distance =
                 calcDistanceToFrontVehicle(traj_points, ego_idx, nearest_obstacle_point);
@@ -908,12 +908,12 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
             lat_dist_from_obstacle_to_traj =
               std::min(lat_dist_from_obstacle_to_traj, current_lat_dist_from_obstacle_to_traj);
           } else {
-          continue;
+            continue;
           }
         }
 
         if (ego_to_obstacle_distance) {
-        target_obstacles.emplace_back(
+          target_obstacles.emplace_back(
             pointcloud.header.stamp, stop_collision_point, slow_down_front_collision_point,
             slow_down_back_collision_point, *ego_to_obstacle_distance,
             lat_dist_from_obstacle_to_traj);
@@ -1532,15 +1532,15 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
           object_id.c_str());
         debug_data_ptr_->intentionally_ignored_obstacles.push_back(obstacle);
         return std::nullopt;
+      }
     }
-  }
 
-  // calculate collision points with trajectory with lateral stop margin
+    // calculate collision points with trajectory with lateral stop margin
     const auto traj_polys_with_lat_margin = createOneStepPolygons(
       traj_points, vehicle_info_, odometry.pose.pose, max_lat_margin_for_stop);
 
     collision_point = polygon_utils::getCollisionPoint(
-    traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);
+      traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward_, vehicle_info_);
   }
   if (!collision_point) {
     return std::nullopt;
@@ -1624,72 +1624,72 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
         "[SlowDown] Ignore obstacle (%s) since it's far from trajectory. (%f [m])",
         object_id.c_str(), precise_lat_dist);
       return std::nullopt;
-  }
+    }
 
     const auto obstacle_poly = tier4_autoware_utils::toPolygon2d(obstacle.pose, obstacle.shape);
 
-  // calculate collision points with trajectory with lateral stop margin
-  // NOTE: For additional margin, hysteresis is not divided by two.
-  const auto traj_polys_with_lat_margin = createOneStepPolygons(
-    traj_points, vehicle_info_, odometry.pose.pose,
-    p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down);
+    // calculate collision points with trajectory with lateral stop margin
+    // NOTE: For additional margin, hysteresis is not divided by two.
+    const auto traj_polys_with_lat_margin = createOneStepPolygons(
+      traj_points, vehicle_info_, odometry.pose.pose,
+      p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down);
 
-  std::vector<Polygon2d> front_collision_polygons;
-  size_t front_seg_idx = 0;
-  std::vector<Polygon2d> back_collision_polygons;
-  size_t back_seg_idx = 0;
-  for (size_t i = 0; i < traj_polys_with_lat_margin.size(); ++i) {
-    std::vector<Polygon2d> collision_polygons;
-    bg::intersection(traj_polys_with_lat_margin.at(i), obstacle_poly, collision_polygons);
+    std::vector<Polygon2d> front_collision_polygons;
+    size_t front_seg_idx = 0;
+    std::vector<Polygon2d> back_collision_polygons;
+    size_t back_seg_idx = 0;
+    for (size_t i = 0; i < traj_polys_with_lat_margin.size(); ++i) {
+      std::vector<Polygon2d> collision_polygons;
+      bg::intersection(traj_polys_with_lat_margin.at(i), obstacle_poly, collision_polygons);
 
-    if (!collision_polygons.empty()) {
-      if (front_collision_polygons.empty()) {
-        front_collision_polygons = collision_polygons;
-        front_seg_idx = i == 0 ? i : i - 1;
-      }
-      back_collision_polygons = collision_polygons;
-      back_seg_idx = i == 0 ? i : i - 1;
-    } else {
-      if (!back_collision_polygons.empty()) {
-        break;  // for efficient calculation
-      }
-    }
-  }
-
-  if (front_collision_polygons.empty() || back_collision_polygons.empty()) {
-    RCLCPP_INFO_EXPRESSION(
-      get_logger(), enable_debug_info_,
-      "[SlowDown] Ignore obstacle (%s) since there is no collision point", object_id.c_str());
-    return std::nullopt;
-  }
-
-  // calculate front collision point
-  double front_min_dist = std::numeric_limits<double>::max();
-  for (const auto & collision_poly : front_collision_polygons) {
-    for (const auto & collision_point : collision_poly.outer()) {
-      const auto collision_geom_point = toGeomPoint(collision_point);
-      const double dist = motion_utils::calcLongitudinalOffsetToSegment(
-        traj_points, front_seg_idx, collision_geom_point);
-      if (dist < front_min_dist) {
-        front_min_dist = dist;
-        front_collision_point = collision_geom_point;
+      if (!collision_polygons.empty()) {
+        if (front_collision_polygons.empty()) {
+          front_collision_polygons = collision_polygons;
+          front_seg_idx = i == 0 ? i : i - 1;
+        }
+        back_collision_polygons = collision_polygons;
+        back_seg_idx = i == 0 ? i : i - 1;
+      } else {
+        if (!back_collision_polygons.empty()) {
+          break;  // for efficient calculation
+        }
       }
     }
-  }
 
-  // calculate back collision point
-  double back_max_dist = -std::numeric_limits<double>::max();
+    if (front_collision_polygons.empty() || back_collision_polygons.empty()) {
+      RCLCPP_INFO_EXPRESSION(
+        get_logger(), enable_debug_info_,
+        "[SlowDown] Ignore obstacle (%s) since there is no collision point", object_id.c_str());
+      return std::nullopt;
+    }
+
+    // calculate front collision point
+    double front_min_dist = std::numeric_limits<double>::max();
+    for (const auto & collision_poly : front_collision_polygons) {
+      for (const auto & collision_point : collision_poly.outer()) {
+        const auto collision_geom_point = toGeomPoint(collision_point);
+        const double dist = motion_utils::calcLongitudinalOffsetToSegment(
+          traj_points, front_seg_idx, collision_geom_point);
+        if (dist < front_min_dist) {
+          front_min_dist = dist;
+          front_collision_point = collision_geom_point;
+        }
+      }
+    }
+
+    // calculate back collision point
+    double back_max_dist = -std::numeric_limits<double>::max();
     back_collision_point = front_collision_point;
-  for (const auto & collision_poly : back_collision_polygons) {
-    for (const auto & collision_point : collision_poly.outer()) {
-      const auto collision_geom_point = toGeomPoint(collision_point);
-      const double dist = motion_utils::calcLongitudinalOffsetToSegment(
-        traj_points, back_seg_idx, collision_geom_point);
-      if (back_max_dist < dist) {
-        back_max_dist = dist;
-        back_collision_point = collision_geom_point;
+    for (const auto & collision_poly : back_collision_polygons) {
+      for (const auto & collision_point : collision_poly.outer()) {
+        const auto collision_geom_point = toGeomPoint(collision_point);
+        const double dist = motion_utils::calcLongitudinalOffsetToSegment(
+          traj_points, back_seg_idx, collision_geom_point);
+        if (back_max_dist < dist) {
+          back_max_dist = dist;
+          back_collision_point = collision_geom_point;
+        }
       }
-    }
     }
   }
   if (!front_collision_point || !back_collision_point) {
