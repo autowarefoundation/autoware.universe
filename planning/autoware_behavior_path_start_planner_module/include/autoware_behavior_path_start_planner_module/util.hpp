@@ -21,7 +21,7 @@
 #include "autoware_behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware_behavior_path_start_planner_module/pull_out_path.hpp"
 
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
@@ -34,14 +34,14 @@
 #include <memory>
 #include <utility>
 
-namespace behavior_path_planner::start_planner_utils
+namespace autoware::behavior_path_planner::start_planner_utils
 {
+using autoware::behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
+using autoware::route_handler::RouteHandler;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
-using behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using route_handler::RouteHandler;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 PathWithLaneId getBackwardPath(
@@ -53,6 +53,6 @@ Pose getBackedPose(
   const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance);
 std::optional<PathWithLaneId> extractCollisionCheckSection(
   const PullOutPath & path, const double collision_check_distance_from_end);
-}  // namespace behavior_path_planner::start_planner_utils
+}  // namespace autoware::behavior_path_planner::start_planner_utils
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__UTIL_HPP_
