@@ -31,7 +31,7 @@ using lanelet::utils::getArcCoordinates;
 using motion_utils::findNearestIndex;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using start_planner_utils::getPullOutLanes;
 
@@ -225,8 +225,9 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   // generate road lane reference path
   const auto arc_position_start = getArcCoordinates(road_lanes, start_pose);
   const double s_start = std::max(arc_position_start.length - backward_path_length, 0.0);
-  const auto path_end_info = behavior_path_planner::utils::parking_departure::calcEndArcLength(
-    s_start, forward_path_length, road_lanes, goal_pose);
+  const auto path_end_info =
+    autoware::behavior_path_planner::utils::parking_departure::calcEndArcLength(
+      s_start, forward_path_length, road_lanes, goal_pose);
   const double s_end = path_end_info.first;
   const bool path_terminal_is_goal = path_end_info.second;
 
@@ -324,7 +325,14 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
     shift_line.end = *shift_end_pose_ptr;
     shift_line.end_shift_length = shift_length;
     path_shifter.addShiftLine(shift_line);
-    path_shifter.setVelocity(0.0);  // initial velocity is 0
+    // In the current path generation logic:
+    // - Considering the maximum curvature of the path results in a smaller shift distance.
+    // - Setting the allowable maximum lateral acceleration to a value smaller than the one
+    // calculated by the constant lateral jerk trajectory generation.
+    // - Setting the initial velocity to a very small value, such as 0.0.
+    // These conditions cause the curvature around the shift start pose to become larger than
+    // expected. To address this issue, an initial velocity 1.0 is provided.
+    path_shifter.setVelocity(1.0);
     path_shifter.setLongitudinalAcceleration(longitudinal_acc);
     path_shifter.setLateralAccelerationLimit(lateral_acc);
 
@@ -416,4 +424,4 @@ double ShiftPullOut::calcBeforeShiftedArcLength(
   return before_arc_length;
 }
 
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner

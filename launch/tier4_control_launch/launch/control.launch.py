@@ -53,7 +53,8 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("control_validator_param_path").perform(context), "r") as f:
         control_validator_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
-        LaunchConfiguration("operation_mode_transition_manager_param_path").perform(context), "r"
+        LaunchConfiguration("operation_mode_transition_manager_param_path").perform(context),
+        "r",
     ) as f:
         operation_mode_transition_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("shift_decider_param_path").perform(context), "r") as f:
@@ -69,7 +70,7 @@ def launch_setup(context, *args, **kwargs):
     trajectory_follower_mode = LaunchConfiguration("trajectory_follower_mode").perform(context)
 
     controller_component = ComposableNode(
-        package="trajectory_follower_node",
+        package="autoware_trajectory_follower_node",
         plugin="autoware::motion::control::trajectory_follower_node::Controller",
         name="controller_node_exe",
         namespace="trajectory_follower",
@@ -122,9 +123,9 @@ def launch_setup(context, *args, **kwargs):
 
     # shift decider
     shift_decider_component = ComposableNode(
-        package="shift_decider",
-        plugin="ShiftDecider",
-        name="shift_decider",
+        package="autoware_shift_decider",
+        plugin="autoware::shift_decider::ShiftDecider",
+        name="autoware_shift_decider",
         remappings=[
             ("input/control_cmd", "/control/trajectory_follower/control_cmd"),
             ("input/state", "/autoware/state"),
@@ -245,10 +246,10 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # operation mode transition manager
-    operation_mode_transition_manager_component = ComposableNode(
-        package="operation_mode_transition_manager",
-        plugin="operation_mode_transition_manager::OperationModeTransitionManager",
-        name="operation_mode_transition_manager",
+    autoware_operation_mode_transition_manager_component = ComposableNode(
+        package="autoware_operation_mode_transition_manager",
+        plugin="autoware::operation_mode_transition_manager::OperationModeTransitionManager",
+        name="autoware_operation_mode_transition_manager",
         remappings=[
             # input
             ("kinematics", "/localization/kinematic_state"),
@@ -272,7 +273,10 @@ def launch_setup(context, *args, **kwargs):
     # external cmd selector
     external_cmd_selector_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_selector"), "/launch/external_cmd_selector.launch.py"]
+            [
+                FindPackageShare("autoware_external_cmd_selector"),
+                "/launch/external_cmd_selector.launch.py",
+            ]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
@@ -287,7 +291,10 @@ def launch_setup(context, *args, **kwargs):
     # external cmd converter
     external_cmd_converter_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_converter"), "/launch/external_cmd_converter.launch.py"]
+            [
+                FindPackageShare("autoware_external_cmd_converter"),
+                "/launch/external_cmd_converter.launch.py",
+            ]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
@@ -341,7 +348,7 @@ def launch_setup(context, *args, **kwargs):
                 lane_departure_component,
                 shift_decider_component,
                 vehicle_cmd_gate_component,
-                operation_mode_transition_manager_component,
+                autoware_operation_mode_transition_manager_component,
                 glog_component,
             ],
         )
@@ -356,7 +363,7 @@ def launch_setup(context, *args, **kwargs):
                 lane_departure_component,
                 shift_decider_component,
                 vehicle_cmd_gate_component,
-                operation_mode_transition_manager_component,
+                autoware_operation_mode_transition_manager_component,
                 glog_component,
             ],
         )
@@ -383,8 +390,8 @@ def launch_setup(context, *args, **kwargs):
 
     # control validator checker
     control_validator_component = ComposableNode(
-        package="control_validator",
-        plugin="control_validator::ControlValidator",
+        package="autoware_control_validator",
+        plugin="autoware::control_validator::ControlValidator",
         name="control_validator",
         remappings=[
             ("~/input/kinematics", "/localization/kinematic_state"),
