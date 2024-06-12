@@ -16,9 +16,9 @@
 #define TEST_ROUTE_HANDLER_HPP_
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
+#include "autoware_test_utils/autoware_test_utils.hpp"
+#include "autoware_test_utils/mock_data_parser.hpp"
 #include "gtest/gtest.h"
-#include "planning_test_utils/mock_data_parser.hpp"
-#include "planning_test_utils/planning_test_utils.hpp"
 
 #include <autoware_route_handler/route_handler.hpp>
 #include <lanelet2_extension/io/autoware_osm_parser.hpp>
@@ -44,7 +44,8 @@ class TestRouteHandler : public ::testing::Test
 public:
   TestRouteHandler()
   {
-    planning_test_utils_dir = ament_index_cpp::get_package_share_directory("planning_test_utils");
+    autoware_test_utils_dir =
+      ament_index_cpp::get_package_share_directory("autoware_test_utils");
     set_route_handler("/test_map/2km_test.osm");
     set_test_route("/test_route/lane_change_test_route.yaml");
   }
@@ -58,20 +59,22 @@ public:
   void set_route_handler(const std::string & relative_path)
   {
     route_handler_.reset();
-    const auto lanelet2_path = planning_test_utils_dir + relative_path;
-    const auto map_bin_msg = test_utils::make_map_bin_msg(lanelet2_path, center_line_resolution);
+    const auto lanelet2_path = autoware_test_utils_dir + relative_path;
+    const auto map_bin_msg =
+      autoware::test_utils::make_map_bin_msg(lanelet2_path, center_line_resolution);
     route_handler_ = std::make_shared<RouteHandler>(map_bin_msg);
   }
 
   void set_test_route(const std::string & route_path)
   {
-    const auto route_handler_dir = ament_index_cpp::get_package_share_directory("route_handler");
+    const auto route_handler_dir =
+      ament_index_cpp::get_package_share_directory("autoware_route_handler");
     const auto rh_test_route = route_handler_dir + route_path;
-    route_handler_->setRoute(test_utils::parse_lanelet_route_file(rh_test_route));
+    route_handler_->setRoute(autoware::test_utils::parse_lanelet_route_file(rh_test_route));
   }
 
   std::shared_ptr<RouteHandler> route_handler_;
-  std::string planning_test_utils_dir;
+  std::string autoware_test_utils_dir;
   static constexpr double center_line_resolution = 5.0;
 };
 }  // namespace autoware::route_handler::test
