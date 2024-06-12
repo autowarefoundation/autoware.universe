@@ -73,15 +73,13 @@ void GoalDistanceCalculatorNode::onTimer()
 {
   Input input = Input();
 
-  if(!tryGetCurrentPose(input.current_pose))
-  {
+  if (!tryGetCurrentPose(input.current_pose)) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), 5000, "waiting for current_pose...");
     return;
   }
 
-  if(!tryGetRoute(input.route))
-  {
+  if (!tryGetRoute(input.route)) {
     RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "waiting for route msg...");
     return;
   }
