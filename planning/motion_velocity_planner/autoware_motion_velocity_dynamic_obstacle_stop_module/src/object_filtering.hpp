@@ -26,7 +26,7 @@ namespace autoware::motion_velocity_planner::dynamic_obstacle_stop
 
 /// @brief filter the given predicted objects
 /// @param objects predicted objects
-/// @param ego_data ego data, including its path and pose
+/// @param ego_data ego data, including its trajectory and pose
 /// @param params parameters
 /// @param hysteresis [m] extra distance threshold used for filtering
 /// @return filtered predicted objects

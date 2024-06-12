@@ -56,15 +56,13 @@ using ObjectStopDecisionMap = std::unordered_map<std::string, ObjectStopDecision
 /// @param [inout] object_map object map to update
 /// @param [in] collisions detected collisions (used to update the objects' collision points)
 /// @param [in] now current time (used to update the objects' timers)
-/// @param [in] path_points ego path points (used to determine the closest collision points)
+/// @param [in] trajectory ego trajectory points (used to determine the closest collision points)
 /// @param [in] params planner parameters
 void update_object_map(
   ObjectStopDecisionMap & object_map, const std::vector<Collision> & collisions,
-  const rclcpp::Time & now,
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & path_points,
-  const PlannerParam & params);
+  const rclcpp::Time & now, const TrajectoryPoints & trajectory, const PlannerParam & params);
 
-/// @brief find the earliest collision requiring a stop along the ego path
+/// @brief find the earliest collision requiring a stop along the ego trajectory
 /// @param object_map map with the objects to avoid and their corresponding collision points
 /// @param ego_data ego data
 /// @return the earliest collision point (if any)
