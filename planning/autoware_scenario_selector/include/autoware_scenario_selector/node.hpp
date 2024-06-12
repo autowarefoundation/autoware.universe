@@ -73,8 +73,8 @@ private:
 
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr sub_route_;
-  tier4_autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry, 100>::SharedPtr
-    sub_odom_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<
+    nav_msgs::msg::Odometry, tier4_autoware_utils::PollingPolicy::ALL>::SharedPtr sub_odom_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr
     sub_lane_driving_trajectory_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_parking_trajectory_;
