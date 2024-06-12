@@ -15,10 +15,10 @@
 #ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 #define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 
+#include "autoware_behavior_path_planner_common/data_manager.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
-#include "behavior_path_planner_common/data_manager.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/time.hpp>
 
@@ -32,11 +32,11 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 
-using behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
-using route_handler::Direction;
+using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+using autoware::route_handler::Direction;
 
 enum class ObjectInfo {
   NONE = 0,
@@ -59,6 +59,7 @@ enum class ObjectInfo {
   // unavoidable reasons
   NEED_DECELERATION,
   SAME_DIRECTION_SHIFT,
+  LIMIT_DRIVABLE_SPACE_TEMPORARY,
   INSUFFICIENT_DRIVABLE_SPACE,
   INSUFFICIENT_LONGITUDINAL_DISTANCE,
   INVALID_SHIFT_LINE,
@@ -546,6 +547,8 @@ struct AvoidancePlanningData
   // nearest object that should be avoid
   std::optional<ObjectData> stop_target_object{std::nullopt};
 
+  std::optional<lanelet::ConstLanelet> red_signal_lane{std::nullopt};
+
   // new shift point
   AvoidLineArray new_shift_line{};
 
@@ -668,6 +671,6 @@ struct DebugData
   AvoidanceDebugMsgArray avoidance_debug_msg_array;
 };
 
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
