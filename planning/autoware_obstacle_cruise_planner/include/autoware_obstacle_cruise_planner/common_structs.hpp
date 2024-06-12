@@ -75,20 +75,19 @@ struct Obstacle
   }
 
   Obstacle(
-    const rclcpp::Time & arg_stamp, const PointCloud::Ptr & cloud,
-    const pcl::PointXYZ & front_point, const pcl::PointXYZ & back_point,
+    const rclcpp::Time & arg_stamp,
+    const std::optional<geometry_msgs::msg::Point> & stop_collision_point,
+    const std::optional<geometry_msgs::msg::Point> & slow_down_front_collision_point,
+    const std::optional<geometry_msgs::msg::Point> & slow_down_back_collision_point,
     const double ego_to_obstacle_distance, const double lat_dist_from_obstacle_to_traj)
   : stamp(arg_stamp),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
     lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
-    cloud(cloud),
-    front_point(front_point),
-    back_point(back_point)
+    stop_collision_point(stop_collision_point),
+    slow_down_front_collision_point(slow_down_front_collision_point),
+    slow_down_back_collision_point(slow_down_back_collision_point)
   {
   }
-
-  // available for PredictedObject only
-  Polygon2d toPolygon() const { return tier4_autoware_utils::toPolygon2d(pose, shape); }
 
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
   double ego_to_obstacle_distance;
@@ -105,9 +104,9 @@ struct Obstacle
   std::vector<PredictedPath> predicted_paths;
 
   // for PointCloud
-  PointCloud::Ptr cloud;
-  pcl::PointXYZ front_point;
-  pcl::PointXYZ back_point;
+  std::optional<geometry_msgs::msg::Point> stop_collision_point;
+  std::optional<geometry_msgs::msg::Point> slow_down_front_collision_point;
+  std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point;
 };
 
 struct TargetObstacleInterface
