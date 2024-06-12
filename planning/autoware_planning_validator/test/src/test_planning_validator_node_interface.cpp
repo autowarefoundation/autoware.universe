@@ -27,8 +27,7 @@ using autoware::planning_validator::PlanningValidator;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
-  auto test_manager =
-    std::make_shared<autoware::planning_test_manager::PlanningInterfaceTestManager>();
+  auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
 
   // set subscriber with topic name: planning_validator → test_node_
   test_manager->setTrajectorySubscriber("planning_validator/output/trajectory");
