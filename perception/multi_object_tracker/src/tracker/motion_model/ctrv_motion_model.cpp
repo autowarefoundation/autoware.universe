@@ -296,11 +296,11 @@ bool CTRVMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) cons
   A(IDX::YAW, IDX::WZ) = dt;
 
   // Process noise covariance Q
-  const double q_cov_x = std::pow(0.5 * motion_params_.q_cov_x * dt, 2);
-  const double q_cov_y = std::pow(0.5 * motion_params_.q_cov_y * dt, 2);
-  const double q_cov_yaw = std::pow(motion_params_.q_cov_yaw * dt, 2);
-  const double q_cov_vel = std::pow(motion_params_.q_cov_vel * dt, 2);
-  const double q_cov_wz = std::pow(motion_params_.q_cov_wz * dt, 2);
+  const double q_cov_x = motion_params_.q_cov_x * dt * dt;
+  const double q_cov_y = motion_params_.q_cov_y * dt * dt;
+  const double q_cov_yaw = motion_params_.q_cov_yaw * dt * dt;
+  const double q_cov_vel = motion_params_.q_cov_vel * dt * dt;
+  const double q_cov_wz = motion_params_.q_cov_wz * dt * dt;
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(DIM, DIM);
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.

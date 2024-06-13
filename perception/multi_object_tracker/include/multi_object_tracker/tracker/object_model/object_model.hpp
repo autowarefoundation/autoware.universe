@@ -74,7 +74,7 @@ struct MotionProcessNoise
   double yaw_rate_max{0.0};  // [rad/s] uncertain yaw rate, maximum
   double acc_long{0.0};      // [m/s^2] uncertain longitudinal acceleration
   double acc_lat{0.0};       // [m/s^2] uncertain lateral acceleration
-  double rotate_rate{0.0};   // [rad/s^2] uncertain rotation change rate
+  double acc_turn{0.0};      // [rad/s^2] uncertain rotation acceleration
 };
 struct MotionProcessLimit
 {
@@ -268,17 +268,17 @@ public:
         process_noise.vel_lat = 0.5;
         process_noise.yaw_rate = deg2rad(20.0);
         process_noise.acc_long = const_g * 0.3;
-        process_noise.rotate_rate = deg2rad(30.0);
+        process_noise.acc_turn = deg2rad(30.0);
 
         process_limit.vel_long_max = kmph2mps(100.0);
         process_limit.yaw_rate_max = deg2rad(30.0);
 
         // initial covariance
-        initial_covariance.pos_x = sq(1.0);
-        initial_covariance.pos_y = sq(0.3);
-        initial_covariance.yaw = sq(deg2rad(25.0));
-        initial_covariance.vel_long = sq(kmph2mps(1000.0));
-        initial_covariance.vel_lat = sq(0.2);
+        initial_covariance.pos_x = sq(2.0);
+        initial_covariance.pos_y = sq(2.0);
+        initial_covariance.yaw = sq(deg2rad(1000.0));
+        initial_covariance.vel_long = sq(kmph2mps(120.0));
+        initial_covariance.yaw_rate = sq(deg2rad(360.0));
 
         // measurement noise model
         measurement_covariance.pos_x = sq(0.4);

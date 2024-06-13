@@ -86,15 +86,16 @@ PedestrianTracker::PedestrianTracker(
     const double q_stddev_y = object_model_.process_noise.vel_lat;
     const double q_stddev_yaw = object_model_.process_noise.yaw_rate;
     const double q_stddev_vx = object_model_.process_noise.acc_long;
-    const double q_stddev_wz = object_model_.process_noise.rotate_rate;
+    const double q_stddev_wz = object_model_.process_noise.acc_turn;
     motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vx, q_stddev_wz);
   }
 
   // Set motion limits
-  motion_model_.setMotionLimits(
-    autoware::universe_utils::kmph2mps(100), /* [m/s] maximum velocity */
-    30.0                                     /* [deg/s] maximum turn rate */
-  );
+  {
+    const double max_vel = object_model_.process_limit.vel_long_max;
+    const double max_turn_rate = object_model_.process_limit.yaw_rate_max;
+    motion_model_.setMotionLimits(max_vel, max_turn_rate);  // maximum velocity and slip angle
+  }
 
   // Set initial state
   {
@@ -102,26 +103,13 @@ PedestrianTracker::PedestrianTracker(
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+
     auto pose_cov = object.kinematics.pose_with_covariance.covariance;
-    double vel = 0.0;
-    double wz = 0.0;
-    double vel_cov = 10.0;
-    double wz_cov = 10.0;
-
-    if (object.kinematics.has_twist) {
-      vel = object.kinematics.twist_with_covariance.twist.linear.x;
-      wz = object.kinematics.twist_with_covariance.twist.angular.z;
-    }
-
     if (!object.kinematics.has_position_covariance) {
       // initial state covariance
-      constexpr double p0_stddev_x = 2.0;  // in object coordinate [m]
-      constexpr double p0_stddev_y = 2.0;  // in object coordinate [m]
-      constexpr double p0_stddev_yaw =
-        autoware::universe_utils::deg2rad(1000);  // in map coordinate [rad]
-      constexpr double p0_cov_x = p0_stddev_x * p0_stddev_x;
-      constexpr double p0_cov_y = p0_stddev_y * p0_stddev_y;
-      constexpr double p0_cov_yaw = p0_stddev_yaw * p0_stddev_yaw;
+      const auto & p0_cov_x = object_model_.initial_covariance.pos_x;
+      const auto & p0_cov_y = object_model_.initial_covariance.pos_y;
+      const auto & p0_cov_yaw = object_model_.initial_covariance.yaw;
 
       const double cos_yaw = std::cos(yaw);
       const double sin_yaw = std::sin(yaw);
@@ -133,14 +121,16 @@ PedestrianTracker::PedestrianTracker(
       pose_cov[XYZRPY_COV_IDX::YAW_YAW] = p0_cov_yaw;
     }
 
-    if (!object.kinematics.has_twist_covariance) {
-      constexpr double p0_stddev_vel =
-        autoware::universe_utils::kmph2mps(120);  // in object coordinate [m/s]
-      constexpr double p0_stddev_wz =
-        autoware::universe_utils::deg2rad(360);  // in object coordinate [rad/s]
-      vel_cov = std::pow(p0_stddev_vel, 2.0);
-      wz_cov = std::pow(p0_stddev_wz, 2.0);
-    } else {
+    double vel = 0.0;
+    double wz = 0.0;
+    if (object.kinematics.has_twist) {
+      vel = object.kinematics.twist_with_covariance.twist.linear.x;
+      wz = object.kinematics.twist_with_covariance.twist.angular.z;
+    }
+
+    double vel_cov = object_model_.initial_covariance.vel_long;
+    double wz_cov = object_model_.initial_covariance.yaw_rate;
+    if (object.kinematics.has_twist_covariance) {
       vel_cov = object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::X_X];
       wz_cov = object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::YAW_YAW];
     }
@@ -178,10 +168,10 @@ autoware_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObje
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
     const double cos_yaw = std::cos(pose_yaw);
     const double sin_yaw = std::sin(pose_yaw);
-    const double sin_2yaw = std::sin(2.0f * pose_yaw);
+    const double sin_2yaw = std::sin(2.0 * pose_yaw);
     pose_cov[XYZRPY_COV_IDX::X_X] =
       r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;            // x - x
-    pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
+    pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5 * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
     pose_cov[XYZRPY_COV_IDX::Y_Y] =
       r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;                   // y - y
     pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];                 // y - x
