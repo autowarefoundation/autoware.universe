@@ -15,6 +15,8 @@
 #ifndef POSE_ESTIMATOR_ARBITER__RULE_HELPER__PCD_OCCUPANCY_HPP_
 #define POSE_ESTIMATOR_ARBITER__RULE_HELPER__PCD_OCCUPANCY_HPP_
 
+#include <string>
+
 #include <rclcpp/node.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -34,7 +36,7 @@ class PcdOccupancy
 public:
   explicit PcdOccupancy(int pcd_density_upper_threshold, int pcd_density_lower_threshold);
 
-  MarkerArray debug_marker_array() const;
+  [[nodiscard]] MarkerArray debug_marker_array() const;
   void init(PointCloud2::ConstSharedPtr msg);
   bool ndt_can_operate(
     const geometry_msgs::msg::Point & position, std::string * optional_message = nullptr) const;
