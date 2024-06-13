@@ -14,27 +14,58 @@
 
 #include "component_monitor_node.hpp"
 
+#include "unit_conversions.hpp"
+
+#include <rclcpp/rclcpp.hpp>
+
+#include <autoware_internal_msgs/msg/resource_usage_report.hpp>
+
+#include <boost/filesystem.hpp>
+#include <boost/process.hpp>
+
+#include <cctype>
+#include <cstdint>
+#include <exception>
+#include <functional>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 namespace autoware::component_monitor
 {
 ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
-: Node("component_monitor", node_options)
+: Node("component_monitor", node_options), publish_rate_(declare_parameter<double>("publish_rate"))
 {
-  usage_pub_ = create_publisher<msg_t>("component_system_usage", rclcpp::SensorDataQoS());
+  usage_pub_ =
+    create_publisher<ResourceUsageReport>("~/component_system_usage", rclcpp::SensorDataQoS());
 
-  const auto p = bp::search_path("top");
-  if (p.empty()) {
+  // Make sure top ins installed and is in path
+  const auto path_top = boost::process::search_path("top");
+  if (path_top.empty()) {
     RCLCPP_ERROR_STREAM(get_logger(), "Couldn't find 'top' in path.");
     rclcpp::shutdown();
   }
 
-  const auto pid = getpid();
+  int pid = getpid();
 
-  rclcpp::Rate loop_rate{10.0};
+  std::function<void()> on_timer_tick_wrapped =
+    std::bind(&ComponentMonitor::on_timer_tick, this, pid);
+
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), rclcpp::Rate(publish_rate_).period(), on_timer_tick_wrapped);
+}
+
+void ComponentMonitor::on_timer_tick(int pid)
+{
+  if (usage_pub_->get_subscription_count() == 0) return;
+
   try {
-    while (rclcpp::ok()) {
-      monitor(pid);
-      loop_rate.sleep();
-    }
+    auto usage_msg = pid_to_report(pid);
+    usage_msg.header.stamp = this->now();
+    usage_msg.pid = pid;
+    usage_pub_->publish(usage_msg);
   } catch (std::exception & e) {
     RCLCPP_ERROR(get_logger(), "%s", e.what());
   } catch (...) {
@@ -42,65 +73,24 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
   }
 }
 
-void ComponentMonitor::monitor(const pid_t & pid) const
+ComponentMonitor::ResourceUsageReport ComponentMonitor::pid_to_report(const pid_t & pid) const
 {
-  if (usage_pub_->get_subscription_count() == 0) return;
+  const auto std_out = run_system_command("top -b -n 1 -E k -p " + std::to_string(pid));
 
-  msg_t usage_msg{};
+  const auto fields = parse_lines_into_words(std_out);
 
-  auto fields = get_stats(pid);
-  usage_msg.cpu_usage_percentage = get_cpu_percentage(fields);
+  ResourceUsageReport report;
+  report.cpu_cores_utilized = std::stof(fields.back().at(8));
+  report.total_memory_bytes = unit_conversions::kib_to_bytes(std::stoul(fields.at(3).at(3)));
+  report.free_memory_bytes = unit_conversions::kib_to_bytes(std::stoul(fields.at(3).at(5)));
+  report.used_memory_bytes = parse_memory_res(fields.back().at(5));
 
-  const auto [total_mem_bytes, free_mem_bytes] = get_system_memory(fields);
-  usage_msg.total_memory_bytes = total_mem_bytes;
-  usage_msg.free_memory_bytes = free_mem_bytes;
-
-  const auto [used_mem_bytes, mem_usage_percentage] = get_process_memory(fields);
-  usage_msg.used_memory_bytes = used_mem_bytes;
-  usage_msg.memory_usage_percentage = mem_usage_percentage;
-
-  std_msgs::msg::Header header;
-  header.stamp = now();
-  header.frame_id = "component_monitor";
-  usage_msg.header = header;
-  usage_msg.pid = pid;
-  usage_pub_->publish(usage_msg);
+  return report;
 }
 
-/**
- * @brief Get system usage of the component.
- *
- * @details The output of top -b -n 1 -E k -p PID` is like below:
- *
- * top - 13:57:26 up  3:14,  1 user,  load average: 1,09, 1,10, 1,04
- * Tasks:   1 total,   0 running,   1 sleeping,   0 stopped,   0 zombie
- * %Cpu(s):  0,0 us,  0,8 sy,  0,0 ni, 99,2 id,  0,0 wa,  0,0 hi,  0,0 si,  0,0 st
- * KiB Mem : 65532208 total, 35117428 free, 17669824 used, 12744956 buff/cache
- * KiB Swap: 39062524 total, 39062524 free,        0 used. 45520816 avail Mem
- *
- *     PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND
- *    3352 meb       20   0 2905940   1,2g  39292 S   0,0   2,0  23:24.01 awesome
- *
- * We get 5th, 8th, and 9th fields, which are RES, %CPU, and %MEM, respectively.
- *
- */
-fields_t ComponentMonitor::get_stats(const pid_t & pid) const
+std::stringstream ComponentMonitor::run_system_command(const std::string & cmd) const
 {
-  std::string top_cmd{"top -b -n 1 -E k -p "};
-  top_cmd += std::to_string(pid);
-
-  auto std_out = run_command(top_cmd);
-  return get_fields(std_out);
-}
-
-/**
- * @brief Run a terminal command and return the standard output.
- *
- * @param cmd The terminal command to run
- * @return  The standard output of the command
- */
-std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
-{
+  namespace bp = boost::process;
   int out_fd[2];
   if (pipe2(out_fd, O_CLOEXEC) != 0) {
     RCLCPP_ERROR_STREAM(get_logger(), "Error setting flags on out_fd");
@@ -128,28 +118,24 @@ std::stringstream ComponentMonitor::run_command(const std::string & cmd) const
     RCLCPP_ERROR_STREAM(get_logger(), "Error running command: " << os.str());
   }
 
-  std::stringstream os;
-  os << is_out.rdbuf();
-  return os;
+  std::stringstream sstream;
+  sstream << is_out.rdbuf();
+  return sstream;
 }
 
-/**
- * @brief Get fields from the standard output.
- *
- * @param std_out The standard output
- * @return The fields of the output
- */
-fields_t ComponentMonitor::get_fields(std::stringstream & std_out)
+ComponentMonitor::VecVecStr ComponentMonitor::parse_lines_into_words(
+  const std::stringstream & std_out)
 {
-  fields_t fields;
+  VecVecStr fields;
   std::string line;
+  std::istringstream input{std_out.str()};
 
-  while (std::getline(std_out, line)) {
-    std::istringstream iss{line};
+  while (std::getline(input, line)) {
+    std::istringstream iss_line{line};
     std::string word;
     std::vector<std::string> words;
 
-    while (iss >> word) {
+    while (iss_line >> word) {
       words.push_back(word);
     }
 
@@ -159,114 +145,32 @@ fields_t ComponentMonitor::get_fields(std::stringstream & std_out)
   return fields;
 }
 
-/**
- * @brief Get the CPU usage percentage.
- *
- * @param fields The fields of the standard output from the terminal command
- * @return The CPU usage percentage
- */
-float ComponentMonitor::get_cpu_percentage(const fields_t & fields)
+std::uint64_t ComponentMonitor::parse_memory_res(const std::string & mem_res)
 {
-  const auto & cpu_percentage = fields.back()[8];
-  return to_float(cpu_percentage);
-}
+  // example 1: 12.3g
+  // example 2: 123 (without suffix, just bytes)
+  static const std::unordered_map<char, std::function<std::uint64_t(double)>> unit_map{
+    {'k', unit_conversions::kib_to_bytes<double>}, {'m', unit_conversions::mib_to_bytes<double>},
+    {'g', unit_conversions::gib_to_bytes<double>}, {'t', unit_conversions::tib_to_bytes<double>},
+    {'p', unit_conversions::pib_to_bytes<double>}, {'e', unit_conversions::eib_to_bytes<double>}};
 
-/**
- * @brief Get the system memory usage.
- *
- * @param fields The fields of the standard output from the terminal command
- * @return The total physical memory and free physical memory
- */
-std::pair<uint64_t, uint64_t> ComponentMonitor::get_system_memory(const fields_t & fields)
-{
-  // System wide memory usage
-  const auto total_memory_bytes = kib_to_bytes(to_uint64(fields[3][3]));
-  const auto free_memory_bytes = kib_to_bytes(to_uint64(fields[3][5]));
-
-  return std::pair{total_memory_bytes, free_memory_bytes};
-}
-
-/**
- * @brief Get the process memory usage.
- *
- * @param fields The fields of the standard output from the terminal command
- * @return The used memory by the process and the memory usage percentage
- */
-std::pair<uint64_t, float> ComponentMonitor::get_process_memory(fields_t & fields)
-{
-  // Process specific memory usage
-  auto & mem_usage = fields.back()[5];
-  const auto & memory_usage_percentage = fields.back()[9];
-
-  uint64_t used_memory_bytes{};
-  switch (mem_usage.back()) {
-    case 'm':
-      mem_usage.pop_back();
-      used_memory_bytes = mib_to_bytes(to_uint64(mem_usage));
-      break;
-    case 'g':
-      mem_usage.pop_back();
-      used_memory_bytes = gib_to_bytes(to_uint64(mem_usage));
-      break;
-    case 't':
-      mem_usage.pop_back();
-      used_memory_bytes = tib_to_bytes(to_uint64(mem_usage));
-      break;
-    case 'p':
-      mem_usage.pop_back();
-      used_memory_bytes = pib_to_bytes(to_uint64(mem_usage));
-      break;
-    case 'e':
-      mem_usage.pop_back();
-      used_memory_bytes = eib_to_bytes(to_uint64(mem_usage));
-      break;
-    default:
-      used_memory_bytes = to_uint64(mem_usage);
+  if (std::isdigit(mem_res.back())) {
+    return std::stoull(mem_res);  // Handle plain bytes without any suffix
   }
 
-  return std::pair{used_memory_bytes, to_float(memory_usage_percentage)};
-}
+  // Extract the numeric part and the unit suffix
+  double value = std::stod(mem_res.substr(0, mem_res.size() - 1));
+  char suffix = mem_res.back();
 
-float ComponentMonitor::to_float(const std::string & str)
-{
-  return std::strtof(str.c_str(), nullptr);
-}
+  // Find the appropriate function from the map
+  auto it = unit_map.find(suffix);
+  if (it != unit_map.end()) {
+    const auto & conversion_function = it->second;
+    return conversion_function(value);
+  }
 
-uint64_t ComponentMonitor::to_uint64(const std::string & str)
-{
-  return std::strtoul(str.c_str(), nullptr, 10);
-}
-
-// cSpell:ignore kibibytes, mebibytes, gibibytes, tebibytes, pebibytes, exbibytes
-
-uint64_t ComponentMonitor::kib_to_bytes(const uint64_t kibibytes)
-{
-  return kibibytes * 1024;
-}
-
-uint64_t ComponentMonitor::mib_to_bytes(const uint64_t mebibytes)
-{
-  return mebibytes * 1024 * 1024;
-}
-
-uint64_t ComponentMonitor::gib_to_bytes(const uint64_t gibibytes)
-{
-  return gibibytes * 1024 * 1024 * 1024;
-}
-
-uint64_t ComponentMonitor::tib_to_bytes(const uint64_t tebibytes)
-{
-  return tebibytes * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
-}
-
-uint64_t ComponentMonitor::pib_to_bytes(const uint64_t pebibytes)
-{
-  return pebibytes * 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
-}
-
-uint64_t ComponentMonitor::eib_to_bytes(const uint64_t exbibytes)
-{
-  return exbibytes * 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL * 1024ULL;
+  // Throw an exception or handle the error as needed if the suffix is not recognized
+  throw std::runtime_error("Unsupported unit suffix: " + std::string(1, suffix));
 }
 
 }  // namespace autoware::component_monitor

@@ -4,49 +4,74 @@ The `autoware_component_monitor` package allows monitoring system usage of compo
 The composable node inside the package is attached to a component container, and it publishes CPU and memory usage of
 the container.
 
+## Inputs / Outputs
+
+### Input
+
+None.
+
+### Output
+
+| Name                       | Type                                               | Description            |
+|----------------------------|----------------------------------------------------|------------------------|
+| `~/component_system_usage` | `autoware_internal_msgs::msg::ResourceUsageReport` | CPU, Memory usage etc. |
+
+## Parameters
+
+### Core Parameters
+
+{{ json_to_markdown("system/autoware_component_monitor/schema/component_monitor.schema.json") }}
+
 ## Running
 
-To attach the node into a component container, you can load the composable node directly in your launch file:
+You can run the component monitor in two ways:
+
+### Directly
+
+Add it as a composable node in your launch file:
 
 ```xml
 
 <launch>
-    <group>
-        <push-ros-namespace namespace="your_namespace"/>
-        ...
+  <group>
+    <push-ros-namespace namespace="your_namespace"/>
+    ...
 
-        <load_composable_node target="$(var container_name)">
-            <composable_node pkg="autoware_component_monitor" plugin="autoware::component_monitor::ComponentMonitor"
-                             name="component_monitor"/>
-        </load_composable_node>
+    <load_composable_node target="$(var container_name)">
+      <composable_node pkg="autoware_component_monitor"
+                       plugin="autoware::component_monitor::ComponentMonitor"
+                       name="component_monitor"/>
+    </load_composable_node>
 
-        ...
-    </group>
+    ...
+  </group>
 </launch>
 ```
 
-Or, you can include `component_monitor.launch.xml` in your launch file with the container name:
+### Through the launch file
+
+Include `component_monitor.launch.xml` in your launch file with the container name:
 
 ```xml
 
 <launch>
-    <group>
-        <push-ros-namespace namespace="your_namespace"/>
-        ...
+  <group>
+    <push-ros-namespace namespace="your_namespace"/>
+    ...
 
-        <include file="$(find-pkg-share autoware_component_monitor)/launch/component_monitor.launch.xml">
-            <arg name="container_name" value="your_container"/>
-        </include>
+    <include file="$(find-pkg-share autoware_component_monitor)/launch/component_monitor.launch.xml">
+      <arg name="container_name" value="your_container"/>
+    </include>
 
-        ...
-    </group>
+    ...
+  </group>
 </launch>
 ```
 
-## How does monitoring works
+## How it works
 
-The package uses the `top` command under the hood. `top -b -n 1 -E k -p PID` command is tried to run at 10 Hz to get
-the system usage of the process.
+The package uses the `top` command under the hood.
+`top -b -n 1 -E k -p PID` command is run at 10 Hz to get the system usage of the process.
 
 - `-b` activates the batch mode. By default, `top` doesn't exit and prints to stdout periodically. Batch mode allows
   exiting the program.
@@ -67,4 +92,4 @@ KiB Swap: 39062524 total, 39062524 free,        0 used. 45520816 avail Mem
    3352 meb       20   0 2905940   1,2g  39292 S   0,0   2,0  23:24.01 awesome
 ```
 
-We get 5th, 8th, and 9th fields from the last line, which are RES, %CPU, and %MEM, respectively.
+We get 5th, 8th fields from the last line, which are RES, %CPU respectively.
