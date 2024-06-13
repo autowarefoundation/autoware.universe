@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOCALIZATION_UTIL_TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
+#ifndef LOCALIZATION_UTIL__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
 #define LOCALIZATION_UTIL__TREE_STRUCTURED_PARZEN_ESTIMATOR_HPP_
 
 /*
