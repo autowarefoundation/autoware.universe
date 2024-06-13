@@ -869,9 +869,13 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
 
       const auto max_lat_margin =
         std::max(p.max_lat_margin_for_stop_against_unknown, p.max_lat_margin_for_slow_down);
+      const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
+
       double lat_dist_from_stop_collision_to_traj_poly = std::numeric_limits<double>::max();
+      double ego_to_slow_down_front_collision_distance = std::numeric_limits<double>::max();
+      double ego_to_slow_down_back_collision_distance = std::numeric_limits<double>::min();
       double lat_dist_from_obstacle_to_traj = std::numeric_limits<double>::max();
-      double ego_to_obstacle_distance = std::numeric_limits<double>::min();
+      double ego_to_obstacle_distance = std::numeric_limits<double>::max();
       std::optional<geometry_msgs::msg::Point> stop_collision_point = std::nullopt;
       std::optional<geometry_msgs::msg::Point> slow_down_front_collision_point = std::nullopt;
       std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point = std::nullopt;
@@ -889,12 +893,11 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
             std::abs(current_lat_dist_from_obstacle_to_traj) - vehicle_info_.vehicle_width_m;
 
           if (min_lat_dist_to_traj_poly < max_lat_margin) {
-            const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
             const auto current_ego_to_obstacle_distance =
               calcDistanceToFrontVehicle(traj_points, ego_idx, nearest_obstacle_point);
             if (current_ego_to_obstacle_distance) {
               ego_to_obstacle_distance =
-                std::max(ego_to_obstacle_distance, current_ego_to_obstacle_distance.value());
+                std::min(ego_to_obstacle_distance, *current_ego_to_obstacle_distance);
             } else {
               continue;
             }
@@ -905,10 +908,13 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
                 lat_dist_from_stop_collision_to_traj_poly = min_lat_dist_to_traj_poly;
               }
             } else if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_slow_down) {
-              if (!slow_down_front_collision_point) {
+              if (*current_ego_to_obstacle_distance < ego_to_slow_down_front_collision_distance) {
                 slow_down_front_collision_point = nearest_obstacle_point;
-              } else {
+                ego_to_slow_down_front_collision_distance = *current_ego_to_obstacle_distance;
+              } else if (
+                *current_ego_to_obstacle_distance > ego_to_slow_down_back_collision_distance) {
                 slow_down_back_collision_point = nearest_obstacle_point;
+                ego_to_slow_down_back_collision_distance = *current_ego_to_obstacle_distance;
               }
             }
             lat_dist_from_obstacle_to_traj =
