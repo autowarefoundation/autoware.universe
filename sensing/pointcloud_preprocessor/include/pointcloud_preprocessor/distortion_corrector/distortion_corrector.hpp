@@ -62,7 +62,7 @@ template <class Derived>
 class DistortionCorrector : public DistortionCorrectorBase
 {
 public:
-  bool is_pointcloud_transform_needed_{false};
+  bool pointcloud_transform_needed_{false};
   bool is_pointcloud_transform_exist_{false};
   bool is_imu_transform_exist_{false};
   rclcpp::Node * node_;
