@@ -121,15 +121,8 @@ NormalVehicleTracker::NormalVehicleTracker(
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+
     auto pose_cov = object.kinematics.pose_with_covariance.covariance;
-    double vel = 0.0;
-    double vel_cov = 10.0;
-    const double & length = bounding_box_.length;
-
-    if (object.kinematics.has_twist) {
-      vel = object.kinematics.twist_with_covariance.twist.linear.x;
-    }
-
     if (!object.kinematics.has_position_covariance) {
       // initial state covariance
       const auto & p0_cov_x = object_model_.initial_covariance.pos_x;
@@ -146,16 +139,18 @@ NormalVehicleTracker::NormalVehicleTracker(
       pose_cov[XYZRPY_COV_IDX::YAW_YAW] = p0_cov_yaw;
     }
 
-    if (!object.kinematics.has_twist_covariance) {
-      vel_cov = object_model_.initial_covariance.vel_long;
-    } else {
+    double vel = 0.0;
+    double vel_cov = object_model_.initial_covariance.vel_long;
+    if (object.kinematics.has_twist) {
+      vel = object.kinematics.twist_with_covariance.twist.linear.x;
+    }
+    if (object.kinematics.has_twist_covariance) {
       vel_cov = object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::X_X];
     }
 
     const double slip = 0.0;
-    const double p0_stddev_slip =
-      autoware::universe_utils::deg2rad(5);  // in object coordinate [rad/s]
-    const double slip_cov = std::pow(p0_stddev_slip, 2.0);
+    const double slip_cov = object_model_.bicycle_state.init_slip_angle_cov;
+    const double & length = bounding_box_.length;
 
     // initialize motion model
     motion_model_.initialize(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
@@ -295,7 +290,7 @@ bool NormalVehicleTracker::measureWithShape(
   }
 
   // check object size abnormality
-  constexpr double size_max = 30.0;  // [m]
+  constexpr double size_max = 35.0;  // [m]
   constexpr double size_min = 1.0;   // [m]
   bool is_size_valid =
     (object.shape.dimensions.x <= size_max && object.shape.dimensions.y <= size_max &&

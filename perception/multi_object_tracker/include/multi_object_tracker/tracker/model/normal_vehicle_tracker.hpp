@@ -32,13 +32,6 @@ private:
 
   object_model::ObjectModel object_model_ = object_model::normal_vehicle;
 
-  struct EkfParams
-  {
-    double r_cov_x;
-    double r_cov_y;
-    double r_cov_yaw;
-    double r_cov_vel;
-  } ekf_params_;
   double velocity_deviation_threshold_;
 
   double z_;

@@ -92,6 +92,7 @@ struct StateCovariance
 };
 struct BicycleModelState
 {
+  double init_slip_angle_cov{0.0};    // [rad^2/s^2] initial slip angle covariance
   double slip_angle_max{0.0};         // [rad] max slip angle
   double slip_rate_cov_min{0.0};      // [rad/s] uncertain slip angle change rate, minimum
   double slip_rate_cov_max{0.0};      // [rad/s] uncertain slip angle change rate, maximum
@@ -133,7 +134,7 @@ public:
 
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
-        process_limit.vel_long_max = kmph2mps(100.0);
+        process_limit.vel_long_max = kmph2mps(140.0);
 
         // initial covariance
         initial_covariance.pos_x = sq(1.0);
@@ -149,6 +150,7 @@ public:
         measurement_covariance.vel_long = sq(1.0);
 
         // bicycle motion model
+        bicycle_state.init_slip_angle_cov = sq(deg2rad(5.0));
         bicycle_state.slip_angle_max = 30.0;     // deg2rad(30.0);
         bicycle_state.slip_rate_cov_min = 0.3;   // sq(deg2rad(0.3));
         bicycle_state.slip_rate_cov_max = 10.0;  // sq(deg2rad(10.0));
@@ -159,28 +161,28 @@ public:
         break;
 
       case ObjectModelType::BigVehicle:
-        init_size.length = 10.0;
-        init_size.width = 2.5;
-        init_size.height = 3.0;
+        init_size.length = 6.0;
+        init_size.width = 2.0;
+        init_size.height = 2.0;
         size_limit.length_min = 1.0;
-        size_limit.length_max = 20.0;
+        size_limit.length_max = 35.0;
         size_limit.width_min = 1.0;
-        size_limit.width_max = 5.0;
+        size_limit.width_max = 10.0;
         size_limit.height_min = 1.0;
-        size_limit.height_max = 5.0;
+        size_limit.height_max = 10.0;
 
         process_noise.acc_long = const_g * 0.35;
         process_noise.acc_lat = const_g * 0.15;
-        process_noise.yaw_rate_min = deg2rad(1.5);
-        process_noise.yaw_rate_max = deg2rad(15.0);
+        process_noise.yaw_rate_min = 1.5;   // deg2rad(1.5);
+        process_noise.yaw_rate_max = 15.0;  // deg2rad(15.0);
 
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
-        process_limit.vel_long_max = kmph2mps(100.0);
+        process_limit.vel_long_max = kmph2mps(140.0);
 
         // initial covariance
-        initial_covariance.pos_x = sq(1.0);
-        initial_covariance.pos_y = sq(0.3);
+        initial_covariance.pos_x = sq(1.5);
+        initial_covariance.pos_y = sq(0.5);
         initial_covariance.yaw = sq(deg2rad(25.0));
         initial_covariance.vel_long = sq(kmph2mps(1000.0));
         initial_covariance.vel_lat = sq(0.2);
@@ -189,41 +191,42 @@ public:
         measurement_covariance.pos_x = sq(0.5);
         measurement_covariance.pos_y = sq(0.4);
         measurement_covariance.yaw = sq(deg2rad(20.0));
-        measurement_covariance.vel_long = sq(1.0);
+        measurement_covariance.vel_long = sq(kmph2mps(10.0));
 
         // bicycle motion model
-        bicycle_state.slip_angle_max = deg2rad(30.0);
-        bicycle_state.slip_rate_cov_min = sq(deg2rad(0.3));
-        bicycle_state.slip_rate_cov_max = sq(deg2rad(10.0));
+        bicycle_state.init_slip_angle_cov = sq(deg2rad(5.0));
+        bicycle_state.slip_angle_max = 30.0;     // deg2rad(30.0);
+        bicycle_state.slip_rate_cov_min = 0.3;   // sq(deg2rad(0.3));
+        bicycle_state.slip_rate_cov_max = 10.0;  // sq(deg2rad(10.0));
         bicycle_state.wheel_pos_ratio_front = 0.3;
         bicycle_state.wheel_pos_ratio_rear = 0.25;
-        bicycle_state.wheel_pos_front_min = 1.0;
-        bicycle_state.wheel_pos_rear_min = 1.0;
+        bicycle_state.wheel_pos_front_min = 1.5;
+        bicycle_state.wheel_pos_rear_min = 1.5;
         break;
 
       case ObjectModelType::Bicycle:
-        init_size.length = 2.0;
-        init_size.width = 0.7;
-        init_size.height = 1.0;
-        size_limit.length_min = 1.0;
-        size_limit.length_max = 20.0;
-        size_limit.width_min = 1.0;
-        size_limit.width_max = 5.0;
-        size_limit.height_min = 1.0;
-        size_limit.height_max = 5.0;
+        init_size.length = 1.0;
+        init_size.width = 0.5;
+        init_size.height = 1.7;
+        size_limit.length_min = 0.5;
+        size_limit.length_max = 8.0;
+        size_limit.width_min = 0.5;
+        size_limit.width_max = 3.0;
+        size_limit.height_min = 0.5;
+        size_limit.height_max = 2.5;
 
         process_noise.acc_long = const_g * 0.35;
         process_noise.acc_lat = const_g * 0.15;
-        process_noise.yaw_rate_min = deg2rad(1.5);
-        process_noise.yaw_rate_max = deg2rad(15.0);
+        process_noise.yaw_rate_min = 5.0;   // deg2rad(5.0);
+        process_noise.yaw_rate_max = 15.0;  // deg2rad(15.0);
 
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
-        process_limit.vel_long_max = kmph2mps(100.0);
+        process_limit.vel_long_max = kmph2mps(120.0);
 
         // initial covariance
-        initial_covariance.pos_x = sq(1.0);
-        initial_covariance.pos_y = sq(0.3);
+        initial_covariance.pos_x = sq(0.8);
+        initial_covariance.pos_y = sq(0.5);
         initial_covariance.yaw = sq(deg2rad(25.0));
         initial_covariance.vel_long = sq(kmph2mps(1000.0));
         initial_covariance.vel_lat = sq(0.2);
@@ -231,17 +234,18 @@ public:
         // measurement noise model
         measurement_covariance.pos_x = sq(0.5);
         measurement_covariance.pos_y = sq(0.4);
-        measurement_covariance.yaw = sq(deg2rad(20.0));
-        measurement_covariance.vel_long = sq(1.0);
+        measurement_covariance.yaw = sq(deg2rad(30.0));
+        measurement_covariance.vel_long = sq(kmph2mps(10.0));
 
         // bicycle motion model
-        bicycle_state.slip_angle_max = deg2rad(30.0);
-        bicycle_state.slip_rate_cov_min = sq(deg2rad(0.3));
-        bicycle_state.slip_rate_cov_max = sq(deg2rad(10.0));
+        bicycle_state.init_slip_angle_cov = sq(deg2rad(5.0));
+        bicycle_state.slip_angle_max = 30.0;     // deg2rad(30.0);
+        bicycle_state.slip_rate_cov_min = 1.0;   // sq(deg2rad(1.0));
+        bicycle_state.slip_rate_cov_max = 10.0;  // sq(deg2rad(10.0));
         bicycle_state.wheel_pos_ratio_front = 0.3;
-        bicycle_state.wheel_pos_ratio_rear = 0.25;
-        bicycle_state.wheel_pos_front_min = 1.0;
-        bicycle_state.wheel_pos_rear_min = 1.0;
+        bicycle_state.wheel_pos_ratio_rear = 0.3;
+        bicycle_state.wheel_pos_front_min = 0.3;
+        bicycle_state.wheel_pos_rear_min = 0.3;
         break;
 
       case ObjectModelType::Pedestrian:
@@ -257,8 +261,8 @@ public:
 
         process_noise.acc_long = const_g * 0.35;
         process_noise.acc_lat = const_g * 0.15;
-        process_noise.yaw_rate_min = deg2rad(1.5);
-        process_noise.yaw_rate_max = deg2rad(15.0);
+        process_noise.yaw_rate_min = 1.5;   // deg2rad(1.5);
+        process_noise.yaw_rate_max = 15.0;  // deg2rad(15.0);
 
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
@@ -275,7 +279,7 @@ public:
         measurement_covariance.pos_x = sq(0.5);
         measurement_covariance.pos_y = sq(0.4);
         measurement_covariance.yaw = sq(deg2rad(20.0));
-        measurement_covariance.vel_long = sq(1.0);
+        measurement_covariance.vel_long = sq(kmph2mps(10.0));
         break;
 
       default:

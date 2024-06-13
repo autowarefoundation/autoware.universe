@@ -22,6 +22,7 @@
 #include "kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "multi_object_tracker/tracker/motion_model/bicycle_motion_model.hpp"
+#include "multi_object_tracker/tracker/object_model/object_model.hpp"
 
 class BigVehicleTracker : public Tracker
 {
@@ -29,13 +30,8 @@ private:
   autoware_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
 
-  struct EkfParams
-  {
-    double r_cov_x;
-    double r_cov_y;
-    double r_cov_yaw;
-    double r_cov_vel;
-  } ekf_params_;
+  object_model::ObjectModel object_model_ = object_model::big_vehicle;
+
   double velocity_deviation_threshold_;
 
   double z_;

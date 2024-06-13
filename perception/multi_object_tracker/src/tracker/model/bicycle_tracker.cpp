@@ -55,45 +55,36 @@ BicycleTracker::BicycleTracker(
   // initialize existence probability
   initializeExistenceProbabilities(channel_index, object.existence_probability);
 
-  // Initialize parameters
-  // measurement noise covariance: detector uncertainty + ego vehicle motion uncertainty
-  double r_stddev_x = 0.5;                                      // in vehicle coordinate [m]
-  double r_stddev_y = 0.4;                                      // in vehicle coordinate [m]
-  double r_stddev_yaw = autoware::universe_utils::deg2rad(30);  // in map coordinate [rad]
-  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
-  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
-  ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
-
   // OBJECT SHAPE MODEL
   if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
-    bounding_box_ = {1.0, 0.5, 1.7};
+    bounding_box_ = {
+      object_model_.init_size.length, object_model_.init_size.width,
+      object_model_.init_size.height};  // default value
   }
   // set maximum and minimum size
-  constexpr double max_size = 5.0;
-  constexpr double min_size = 0.3;
-  bounding_box_.length = std::min(std::max(bounding_box_.length, min_size), max_size);
-  bounding_box_.width = std::min(std::max(bounding_box_.width, min_size), max_size);
-  bounding_box_.height = std::min(std::max(bounding_box_.height, min_size), max_size);
+  bounding_box_.length = std::clamp(
+    bounding_box_.length, object_model_.size_limit.length_min, object_model_.size_limit.length_max);
+  bounding_box_.width = std::clamp(
+    bounding_box_.width, object_model_.size_limit.width_min, object_model_.size_limit.width_max);
+  bounding_box_.height = std::clamp(
+    bounding_box_.height, object_model_.size_limit.height_min, object_model_.size_limit.height_max);
 
   // Set motion model parameters
   {
-    constexpr double q_stddev_acc_long =
-      9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
-    constexpr double q_stddev_acc_lat = 9.8 * 0.15;  // [m/(s*s)] uncertain lateral acceleration
-    constexpr double q_stddev_yaw_rate_min = 5.0;    // [deg/s] uncertain yaw change rate, minimum
-    constexpr double q_stddev_yaw_rate_max = 15.0;   // [deg/s] uncertain yaw change rate, maximum
-    constexpr double q_stddev_slip_rate_min =
-      1.0;  // [deg/s] uncertain slip angle change rate, minimum
-    constexpr double q_stddev_slip_rate_max =
-      10.0;                                  // [deg/s] uncertain slip angle change rate, maximum
-    constexpr double q_max_slip_angle = 30;  // [deg] max slip angle
-    constexpr double lf_ratio = 0.3;         // [-] ratio of front wheel position
-    constexpr double lf_min = 0.3;           // [m] minimum front wheel position
-    constexpr double lr_ratio = 0.3;         // [-] ratio of rear wheel position
-    constexpr double lr_min = 0.3;           // [m] minimum rear wheel position
+    const double q_stddev_acc_long = object_model_.process_noise.acc_long;
+    const double q_stddev_acc_lat = object_model_.process_noise.acc_lat;
+    const double q_stddev_yaw_rate_min = object_model_.process_noise.yaw_rate_min;
+    const double q_stddev_yaw_rate_max = object_model_.process_noise.yaw_rate_max;
+    const double q_stddev_slip_rate_min = object_model_.bicycle_state.slip_rate_cov_min;
+    const double q_stddev_slip_rate_max = object_model_.bicycle_state.slip_rate_cov_max;
+    const double q_max_slip_angle = object_model_.bicycle_state.slip_angle_max;
+    const double lf_ratio = object_model_.bicycle_state.wheel_pos_ratio_front;
+    const double lf_min = object_model_.bicycle_state.wheel_pos_front_min;
+    const double lr_ratio = object_model_.bicycle_state.wheel_pos_ratio_rear;
+    const double lr_min = object_model_.bicycle_state.wheel_pos_rear_min;
     motion_model_.setMotionParams(
       q_stddev_acc_long, q_stddev_acc_lat, q_stddev_yaw_rate_min, q_stddev_yaw_rate_max,
       q_stddev_slip_rate_min, q_stddev_slip_rate_max, q_max_slip_angle, lf_ratio, lf_min, lr_ratio,
@@ -102,8 +93,8 @@ BicycleTracker::BicycleTracker(
 
   // Set motion limits
   {
-    constexpr double max_vel = autoware::universe_utils::kmph2mps(80);  // [m/s] maximum velocity
-    constexpr double max_slip = 30;                                     // [deg] maximum slip angle
+    const double max_vel = object_model_.process_limit.vel_long_max;
+    const double max_slip = object_model_.bicycle_state.slip_angle_max;
     motion_model_.setMotionLimits(max_vel, max_slip);  // maximum velocity and slip angle
   }
 
@@ -113,24 +104,13 @@ BicycleTracker::BicycleTracker(
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+
     auto pose_cov = object.kinematics.pose_with_covariance.covariance;
-    double vel = 0.0;
-    double vel_cov = 10.0;
-    const double & length = bounding_box_.length;
-
-    if (object.kinematics.has_twist) {
-      vel = object.kinematics.twist_with_covariance.twist.linear.x;
-    }
-
     if (!object.kinematics.has_position_covariance) {
       // initial state covariance
-      constexpr double p0_stddev_x = 0.8;  // in object coordinate [m]
-      constexpr double p0_stddev_y = 0.5;  // in object coordinate [m]
-      constexpr double p0_stddev_yaw =
-        autoware::universe_utils::deg2rad(25);  // in map coordinate [rad]
-      constexpr double p0_cov_x = p0_stddev_x * p0_stddev_x;
-      constexpr double p0_cov_y = p0_stddev_y * p0_stddev_y;
-      constexpr double p0_cov_yaw = p0_stddev_yaw * p0_stddev_yaw;
+      const auto & p0_cov_x = object_model_.initial_covariance.pos_x;
+      const auto & p0_cov_y = object_model_.initial_covariance.pos_y;
+      const auto & p0_cov_yaw = object_model_.initial_covariance.yaw;
 
       const double cos_yaw = std::cos(yaw);
       const double sin_yaw = std::sin(yaw);
@@ -142,18 +122,18 @@ BicycleTracker::BicycleTracker(
       pose_cov[XYZRPY_COV_IDX::YAW_YAW] = p0_cov_yaw;
     }
 
-    if (!object.kinematics.has_twist_covariance) {
-      constexpr double p0_stddev_vel =
-        autoware::universe_utils::kmph2mps(1000);  // in object coordinate [m/s]
-      vel_cov = std::pow(p0_stddev_vel, 2.0);
-    } else {
+    double vel = 0.0;
+    double vel_cov = object_model_.initial_covariance.vel_long;
+    if (object.kinematics.has_twist) {
+      vel = object.kinematics.twist_with_covariance.twist.linear.x;
+    }
+    if (object.kinematics.has_twist_covariance) {
       vel_cov = object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::X_X];
     }
 
     const double slip = 0.0;
-    const double p0_stddev_slip =
-      autoware::universe_utils::deg2rad(5);  // in object coordinate [rad/s]
-    const double slip_cov = std::pow(p0_stddev_slip, 2.0);
+    const double slip_cov = object_model_.bicycle_state.init_slip_angle_cov;
+    const double & length = bounding_box_.length;
 
     // initialize motion model
     motion_model_.initialize(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
@@ -181,14 +161,37 @@ autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
+    // measurement noise covariance
+    auto r_cov_x = object_model_.measurement_covariance.pos_x;
+    auto r_cov_y = object_model_.measurement_covariance.pos_y;
+
+    // yaw angle fix
+    double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    bool is_yaw_available = object.kinematics.orientation_availability !=
+                            autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
+
     // fill covariance matrix
     using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
-    pose_cov[XYZRPY_COV_IDX::X_X] = ekf_params_.r_cov_x;        // x - x
-    pose_cov[XYZRPY_COV_IDX::X_Y] = 0;                          // x - y
-    pose_cov[XYZRPY_COV_IDX::Y_X] = 0;                          // y - x
-    pose_cov[XYZRPY_COV_IDX::Y_Y] = ekf_params_.r_cov_y;        // y - y
-    pose_cov[XYZRPY_COV_IDX::YAW_YAW] = ekf_params_.r_cov_yaw;  // yaw - yaw
+    const double cos_yaw = std::cos(pose_yaw);
+    const double sin_yaw = std::sin(pose_yaw);
+    const double sin_2yaw = std::sin(2.0f * pose_yaw);
+    pose_cov[XYZRPY_COV_IDX::X_X] =
+      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;            // x - x
+    pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
+    pose_cov[XYZRPY_COV_IDX::Y_Y] =
+      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;                   // y - y
+    pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];                 // y - x
+    pose_cov[XYZRPY_COV_IDX::X_YAW] = 0.0;                                         // x - yaw
+    pose_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;                                         // y - yaw
+    pose_cov[XYZRPY_COV_IDX::YAW_X] = 0.0;                                         // yaw - x
+    pose_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;                                         // yaw - y
+    pose_cov[XYZRPY_COV_IDX::YAW_YAW] = object_model_.measurement_covariance.yaw;  // yaw - yaw
+    if (!is_yaw_available) {
+      pose_cov[XYZRPY_COV_IDX::YAW_YAW] *= 1e3;  // yaw is not available, multiply large value
+    }
+    auto & twist_cov = updating_object.kinematics.twist_with_covariance.covariance;
+    twist_cov[XYZRPY_COV_IDX::X_X] = object_model_.measurement_covariance.vel_long;  // vel - vel
   }
 
   return updating_object;
