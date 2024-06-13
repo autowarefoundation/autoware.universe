@@ -434,7 +434,7 @@ void AutowareErrorMonitor::onTimer()
   const auto autoware_state_msg = sub_autoware_state_.takeData();
   const auto current_gate_msg = sub_current_gate_mode_.takeData();
   const auto control_mode_msg = sub_control_mode_.takeData();
-  
+
   if (autoware_state_msg) {
     autoware_state_ = autoware_state_msg;
     // for Heartbeat
@@ -452,7 +452,6 @@ void AutowareErrorMonitor::onTimer()
     // for Heartbeat
     control_mode_stamp_ = this->now();
   }
-  
 
   // for Heartbeat
   current_gate_mode_stamp_ = this->now();

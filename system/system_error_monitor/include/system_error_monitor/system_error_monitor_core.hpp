@@ -103,13 +103,13 @@ private:
   // Subscriber
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
   // polling subscribers
-  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_system_msgs::msg::AutowareState> sub_autoware_state_{
-    this, "~/input/current_gate_mode"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<tier4_control_msgs::msg::GateMode> sub_current_gate_mode_{
-    this, "~/input/autoware_state"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport> sub_control_mode_{
-    this, "~/input/control_mode"};
-  
+  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_system_msgs::msg::AutowareState>
+    sub_autoware_state_{this, "~/input/current_gate_mode"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<tier4_control_msgs::msg::GateMode>
+    sub_current_gate_mode_{this, "~/input/autoware_state"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport>
+    sub_control_mode_{this, "~/input/control_mode"};
+
   void onDiagArray(const diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg);
 
   const size_t diag_buffer_size_ = 100;
