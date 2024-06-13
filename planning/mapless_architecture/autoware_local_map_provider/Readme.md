@@ -1,3 +1,3 @@
 # Local Map Provider Node
 
-This node converts the mission_planner_messages::msg::RoadSegments message into a mission_planner_messages::msg::LocalMap message right now. More functionality can be added later.
+This node converts the RoadSegments message into a LocalMap message right now. More functionality can be added later.
