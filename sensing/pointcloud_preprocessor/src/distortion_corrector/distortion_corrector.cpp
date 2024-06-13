@@ -245,7 +245,7 @@ void DistortionCorrector<Derived>::warnIfTimestampsTooLate(
   if (is_imu_time_stamp_is_too_late) {
     RCLCPP_WARN_STREAM_THROTTLE(
       node_->get_logger(), *node_->get_clock(), 10000 /* ms */,
-      "imu time_stamp is too late. Could not interpolate.");
+      "IMU time_stamp is too late. Could not interpolate.");
   }
 }
 
