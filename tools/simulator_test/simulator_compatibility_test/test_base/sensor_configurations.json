@@ -1,0 +1,55 @@
+{
+  "Target_sim": ["AWSIM"],
+  "Camera_list": [
+    {
+      "topic": "/sensing/camera/traffic_light/image_raw",
+      "msg": "sensor_msgs/msg/Image"
+    },
+    {
+      "topic": "/sensing/camera/traffic_light/camera_info",
+      "msg": "sensor_msgs/msg/CameraInfo"
+    }
+  ],
+  "GPS_list": [
+    {
+      "topic": "/sensing/gnss/pose",
+      "msg": "geometry_msgs/msg/PoseStamped"
+    },
+    {
+      "topic": "/sensing/gnss/pose_with_covariance",
+      "msg": "geometry_msgs/msg/PoseWithCovarianceStamped"
+    }
+  ],
+  "IMU_list": [
+    {
+      "topic": "/sensing/imu/tamagawa/imu_raw",
+      "msg": "sensor_msgs/msg/Imu"
+    }
+  ],
+  "Lidar_list": [
+    {
+      "topic": "/sensing/lidar/left/pointcloud_raw",
+      "msg": "sensor_msgs/msg/PointCloud2"
+    },
+    {
+      "topic": "/sensing/lidar/left/pointcloud_raw_ex",
+      "msg": "sensor_msgs/msg/PointCloud2"
+    },
+    {
+      "topic": "/sensing/lidar/right/pointcloud_raw",
+      "msg": "sensor_msgs/msg/PointCloud2"
+    },
+    {
+      "topic": "/sensing/lidar/right/pointcloud_raw_ex",
+      "msg": "sensor_msgs/msg/PointCloud2"
+    },
+    {
+      "topic": "/sensing/lidar/top/pointcloud_raw",
+      "msg": "sensor_msgs/msg/PointCloud2"
+    },
+    {
+      "topic": "/sensing/lidar/top/pointcloud_raw_ex",
+      "msg": "sensor_msgs/msg/PointCloud2"
+    }
+  ]
+}
