@@ -29,7 +29,7 @@
   <arg name="use_emergency_handler" default="true" description="use emergency handler packages"/>
   <arg name="mrm_handler_param_path"/>
   <arg name="diagnostic_graph_aggregator_param_path"/>
-  <arg name="diagnostic_graph_aggregator_graph_path"/>
+  <arg name="diagnostic_graph_aggregator_graph_path" default="$(find-pkg-share system_diagnostic_monitor)/config/autoware-main.yaml" />
 
   <let name="sensor_launch_pkg" value="$(find-pkg-share $(var sensor_model)_launch)"/>
 
