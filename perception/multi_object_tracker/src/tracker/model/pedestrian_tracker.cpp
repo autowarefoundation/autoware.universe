@@ -55,18 +55,11 @@ PedestrianTracker::PedestrianTracker(
   // initialize existence probability
   initializeExistenceProbabilities(channel_index, object.existence_probability);
 
-  // Initialize parameters
-  // measurement noise covariance
-  float r_stddev_x = 0.4;                                      // [m]
-  float r_stddev_y = 0.4;                                      // [m]
-  float r_stddev_yaw = autoware::universe_utils::deg2rad(30);  // [rad]
-  ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
-  ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
-  ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
-
   // OBJECT SHAPE MODEL
-  bounding_box_ = {0.5, 0.5, 1.7};
-  cylinder_ = {0.5, 1.7};
+  bounding_box_ = {
+    object_model_.init_size.length, object_model_.init_size.width,
+    object_model_.init_size.height};                                             // default value
+  cylinder_ = {object_model_.init_size.length, object_model_.init_size.height};  // default value
   if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
@@ -76,21 +69,24 @@ PedestrianTracker::PedestrianTracker(
     // do not update polygon shape
   }
   // set maximum and minimum size
-  constexpr double max_size = 5.0;
-  constexpr double min_size = 0.3;
-  bounding_box_.length = std::min(std::max(bounding_box_.length, min_size), max_size);
-  bounding_box_.width = std::min(std::max(bounding_box_.width, min_size), max_size);
-  bounding_box_.height = std::min(std::max(bounding_box_.height, min_size), max_size);
-  cylinder_.width = std::min(std::max(cylinder_.width, min_size), max_size);
-  cylinder_.height = std::min(std::max(cylinder_.height, min_size), max_size);
+  bounding_box_.length = std::clamp(
+    bounding_box_.length, object_model_.size_limit.length_min, object_model_.size_limit.length_max);
+  bounding_box_.width = std::clamp(
+    bounding_box_.width, object_model_.size_limit.width_min, object_model_.size_limit.width_max);
+  bounding_box_.height = std::clamp(
+    bounding_box_.height, object_model_.size_limit.height_min, object_model_.size_limit.height_max);
+  cylinder_.width = std::clamp(
+    cylinder_.width, object_model_.size_limit.length_min, object_model_.size_limit.length_max);
+  cylinder_.height = std::clamp(
+    cylinder_.height, object_model_.size_limit.height_min, object_model_.size_limit.height_max);
 
   // Set motion model parameters
   {
-    constexpr double q_stddev_x = 0.5;                                      // [m/s]
-    constexpr double q_stddev_y = 0.5;                                      // [m/s]
-    constexpr double q_stddev_yaw = autoware::universe_utils::deg2rad(20);  // [rad/s]
-    constexpr double q_stddev_vx = 9.8 * 0.3;                               // [m/(s*s)]
-    constexpr double q_stddev_wz = autoware::universe_utils::deg2rad(30);   // [rad/(s*s)]
+    const double q_stddev_x = object_model_.process_noise.vel_long;
+    const double q_stddev_y = object_model_.process_noise.vel_lat;
+    const double q_stddev_yaw = object_model_.process_noise.yaw_rate;
+    const double q_stddev_vx = object_model_.process_noise.acc_long;
+    const double q_stddev_wz = object_model_.process_noise.rotate_rate;
     motion_model_.setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vx, q_stddev_wz);
   }
 
@@ -167,12 +163,19 @@ autoware_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObje
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
+    // measurement noise covariance
+    auto r_cov_x = object_model_.measurement_covariance.pos_x;
+    auto r_cov_y = object_model_.measurement_covariance.pos_y;
+
+    // yaw angle fix
+    const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const bool is_yaw_available =
+      object.kinematics.orientation_availability !=
+      autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
+
     // fill covariance matrix
     using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-    const double & r_cov_x = ekf_params_.r_cov_x;
-    const double & r_cov_y = ekf_params_.r_cov_y;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
-    const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
     const double cos_yaw = std::cos(pose_yaw);
     const double sin_yaw = std::sin(pose_yaw);
     const double sin_2yaw = std::sin(2.0f * pose_yaw);
@@ -180,9 +183,20 @@ autoware_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObje
       r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;            // x - x
     pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
     pose_cov[XYZRPY_COV_IDX::Y_Y] =
-      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;    // y - y
-    pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];  // y - x
+      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;                   // y - y
+    pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];                 // y - x
+    pose_cov[XYZRPY_COV_IDX::X_YAW] = 0.0;                                         // x - yaw
+    pose_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;                                         // y - yaw
+    pose_cov[XYZRPY_COV_IDX::YAW_X] = 0.0;                                         // yaw - x
+    pose_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;                                         // yaw - y
+    pose_cov[XYZRPY_COV_IDX::YAW_YAW] = object_model_.measurement_covariance.yaw;  // yaw - yaw
+    if (!is_yaw_available) {
+      pose_cov[XYZRPY_COV_IDX::YAW_YAW] *= 1e3;  // yaw is not available, multiply large value
+    }
+    auto & twist_cov = updating_object.kinematics.twist_with_covariance.covariance;
+    twist_cov[XYZRPY_COV_IDX::X_X] = object_model_.measurement_covariance.vel_long;  // vel - vel
   }
+
   return updating_object;
 }
 
@@ -246,13 +260,16 @@ bool PedestrianTracker::measureWithShape(
   }
 
   // set maximum and minimum size
-  constexpr double max_size = 5.0;
-  constexpr double min_size = 0.3;
-  bounding_box_.length = std::min(std::max(bounding_box_.length, min_size), max_size);
-  bounding_box_.width = std::min(std::max(bounding_box_.width, min_size), max_size);
-  bounding_box_.height = std::min(std::max(bounding_box_.height, min_size), max_size);
-  cylinder_.width = std::min(std::max(cylinder_.width, min_size), max_size);
-  cylinder_.height = std::min(std::max(cylinder_.height, min_size), max_size);
+  bounding_box_.length = std::clamp(
+    bounding_box_.length, object_model_.size_limit.length_min, object_model_.size_limit.length_max);
+  bounding_box_.width = std::clamp(
+    bounding_box_.width, object_model_.size_limit.width_min, object_model_.size_limit.width_max);
+  bounding_box_.height = std::clamp(
+    bounding_box_.height, object_model_.size_limit.height_min, object_model_.size_limit.height_max);
+  cylinder_.width = std::clamp(
+    cylinder_.width, object_model_.size_limit.length_min, object_model_.size_limit.length_max);
+  cylinder_.height = std::clamp(
+    cylinder_.height, object_model_.size_limit.height_min, object_model_.size_limit.height_max);
 
   return true;
 }

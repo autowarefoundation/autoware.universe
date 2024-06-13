@@ -67,10 +67,14 @@ struct ObjectSizeLimit
 };
 struct MotionProcessNoise
 {
+  double vel_long{0.0};      // [m/s] uncertain longitudinal velocity
+  double vel_lat{0.0};       // [m/s] uncertain lateral velocity
+  double yaw_rate{0.0};      // [rad/s] uncertain yaw rate
+  double yaw_rate_min{0.0};  // [rad/s] uncertain yaw rate, minimum
+  double yaw_rate_max{0.0};  // [rad/s] uncertain yaw rate, maximum
   double acc_long{0.0};      // [m/s^2] uncertain longitudinal acceleration
   double acc_lat{0.0};       // [m/s^2] uncertain lateral acceleration
-  double yaw_rate_min{0.0};  // [rad/s] uncertain yaw change rate, minimum
-  double yaw_rate_max{0.0};  // [rad/s] uncertain yaw change rate, maximum
+  double rotate_rate{0.0};   // [rad/s^2] uncertain rotation change rate
 };
 struct MotionProcessLimit
 {
@@ -78,6 +82,7 @@ struct MotionProcessLimit
   double acc_lat_max{0.0};   // [m/s^2]
   double vel_long_max{0.0};  // [m/s]
   double vel_lat_max{0.0};   // [m/s]
+  double yaw_rate_max{0.0};  // [rad/s]
 };
 struct StateCovariance
 {
@@ -256,17 +261,17 @@ public:
         size_limit.length_max = 2.0;
         size_limit.width_min = 0.3;
         size_limit.width_max = 1.0;
-        size_limit.height_min = 1.0;
+        size_limit.height_min = 0.6;
         size_limit.height_max = 2.0;
 
-        process_noise.acc_long = const_g * 0.35;
-        process_noise.acc_lat = const_g * 0.15;
-        process_noise.yaw_rate_min = 1.5;   // deg2rad(1.5);
-        process_noise.yaw_rate_max = 15.0;  // deg2rad(15.0);
+        process_noise.vel_long = 0.5;
+        process_noise.vel_lat = 0.5;
+        process_noise.yaw_rate = deg2rad(20.0);
+        process_noise.acc_long = const_g * 0.3;
+        process_noise.rotate_rate = deg2rad(30.0);
 
-        process_limit.acc_long_max = const_g;
-        process_limit.acc_lat_max = const_g;
         process_limit.vel_long_max = kmph2mps(100.0);
+        process_limit.yaw_rate_max = deg2rad(30.0);
 
         // initial covariance
         initial_covariance.pos_x = sq(1.0);
@@ -276,10 +281,10 @@ public:
         initial_covariance.vel_lat = sq(0.2);
 
         // measurement noise model
-        measurement_covariance.pos_x = sq(0.5);
+        measurement_covariance.pos_x = sq(0.4);
         measurement_covariance.pos_y = sq(0.4);
-        measurement_covariance.yaw = sq(deg2rad(20.0));
-        measurement_covariance.vel_long = sq(kmph2mps(10.0));
+        measurement_covariance.yaw = sq(deg2rad(30.0));
+
         break;
 
       default:

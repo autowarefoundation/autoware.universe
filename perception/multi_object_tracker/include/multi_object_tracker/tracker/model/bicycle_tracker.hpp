@@ -32,13 +32,6 @@ private:
 
   object_model::ObjectModel object_model_ = object_model::bicycle;
 
-  struct EkfParams
-  {
-    double r_cov_x;
-    double r_cov_y;
-    double r_cov_yaw;
-  } ekf_params_;
-
   double z_;
 
   struct BoundingBox

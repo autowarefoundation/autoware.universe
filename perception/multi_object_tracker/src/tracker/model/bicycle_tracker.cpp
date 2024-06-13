@@ -166,9 +166,10 @@ autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
     auto r_cov_y = object_model_.measurement_covariance.pos_y;
 
     // yaw angle fix
-    double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-    bool is_yaw_available = object.kinematics.orientation_availability !=
-                            autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
+    const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const bool is_yaw_available =
+      object.kinematics.orientation_availability !=
+      autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
 
     // fill covariance matrix
     using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;

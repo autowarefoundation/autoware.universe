@@ -22,6 +22,7 @@
 #include "kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "multi_object_tracker/tracker/motion_model/ctrv_motion_model.hpp"
+#include "multi_object_tracker/tracker/object_model/object_model.hpp"
 
 // cspell: ignore CTRV
 
@@ -31,12 +32,7 @@ private:
   autoware_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
 
-  struct EkfParams
-  {
-    double r_cov_x;
-    double r_cov_y;
-    double r_cov_yaw;
-  } ekf_params_;
+  object_model::ObjectModel object_model_ = object_model::pedestrian;
 
   double z_;
 
