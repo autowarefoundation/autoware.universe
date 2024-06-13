@@ -141,7 +141,7 @@ LaneletMapBin make_map_bin_msg(
   }
 
   // overwrite centerline
-  lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
+  lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, true, false);
 
   // create map bin msg
   const auto map_bin_msg =
