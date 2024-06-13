@@ -15,15 +15,15 @@
 #ifndef SCENE_HPP_
 #define SCENE_HPP_
 
-#include "behavior_path_lane_change_module/scene.hpp"
+#include "autoware_behavior_path_lane_change_module/scene.hpp"
 
 #include <memory>
 
 namespace autoware::behavior_path_planner
 {
-using ::behavior_path_planner::Direction;
-using ::behavior_path_planner::LaneChangeParameters;
-using ::behavior_path_planner::NormalLaneChange;
+using autoware::behavior_path_planner::Direction;
+using autoware::behavior_path_planner::LaneChangeParameters;
+using autoware::behavior_path_planner::NormalLaneChange;
 
 class ExternalRequestLaneChange : public NormalLaneChange
 {

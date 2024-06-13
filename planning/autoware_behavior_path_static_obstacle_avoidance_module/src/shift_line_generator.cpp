@@ -14,10 +14,10 @@
 
 #include "autoware_behavior_path_static_obstacle_avoidance_module/shift_line_generator.hpp"
 
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
-#include "behavior_path_planner_common/utils/utils.hpp"
 
-namespace behavior_path_planner::utils::static_obstacle_avoidance
+namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 {
 
 namespace
@@ -246,7 +246,13 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
   AvoidOutlines outlines;
   for (auto & o : data.target_objects) {
     if (!o.avoid_margin.has_value()) {
-      o.info = ObjectInfo::INSUFFICIENT_DRIVABLE_SPACE;
+      if (!data.red_signal_lane.has_value()) {
+        o.info = ObjectInfo::INSUFFICIENT_DRIVABLE_SPACE;
+      } else if (data.red_signal_lane.value().id() == o.overhang_lanelet.id()) {
+        o.info = ObjectInfo::LIMIT_DRIVABLE_SPACE_TEMPORARY;
+      } else {
+        o.info = ObjectInfo::INSUFFICIENT_DRIVABLE_SPACE;
+      }
       if (o.avoid_required && is_forward_object(o)) {
         break;
       } else {
@@ -1412,4 +1418,4 @@ void ShiftLineGenerator::setRawRegisteredShiftLine(
     }
   }
 }
-}  // namespace behavior_path_planner::utils::static_obstacle_avoidance
+}  // namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
