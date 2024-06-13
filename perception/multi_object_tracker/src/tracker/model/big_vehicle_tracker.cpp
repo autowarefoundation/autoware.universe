@@ -218,7 +218,7 @@ autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObje
     const double sin_yaw = std::sin(pose_yaw);
     const double sin_2yaw = std::sin(2.0 * pose_yaw);
     pose_cov[XYZRPY_COV_IDX::X_X] =
-      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;            // x - x
+      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;           // x - x
     pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5 * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
     pose_cov[XYZRPY_COV_IDX::Y_Y] =
       r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;                   // y - y
