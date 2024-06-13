@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/distortion_corrector/distortion_corrector_nodelet.hpp"
+#include "pointcloud_preprocessor/distortion_corrector/distortion_corrector_node.hpp"
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
@@ -43,28 +43,27 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   // Subscriber
   twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "~/input/twist", 10,
-    std::bind(
-      &DistortionCorrectorComponent::onTwistWithCovarianceStamped, this, std::placeholders::_1));
+    std::bind(&DistortionCorrectorComponent::onTwist, this, std::placeholders::_1));
   imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
     "~/input/imu", 10,
     std::bind(&DistortionCorrectorComponent::onImu, this, std::placeholders::_1));
-  input_points_sub_ = this->create_subscription<PointCloud2>(
+  pointcloud_sub_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&DistortionCorrectorComponent::onPointCloud, this, std::placeholders::_1));
 
   // Setup the distortion corrector
 
   if (use_3d_distortion_correction_) {
-    DistortionCorrector_ = std::make_unique<DistortionCorrector3D>(this);
+    distortion_corrector_ = std::make_unique<DistortionCorrector3D>(this);
   } else {
-    DistortionCorrector_ = std::make_unique<DistortionCorrector2D>(this);
+    distortion_corrector_ = std::make_unique<DistortionCorrector2D>(this);
   }
 }
 
-void DistortionCorrectorComponent::onTwistWithCovarianceStamped(
+void DistortionCorrectorComponent::onTwist(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg)
 {
-  DistortionCorrector_->processTwistMessage(twist_msg);
+  distortion_corrector_->processTwistMessage(twist_msg);
 }
 
 void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
@@ -73,7 +72,7 @@ void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstShare
     return;
   }
 
-  DistortionCorrector_->processIMUMessage(base_link_frame_, imu_msg);
+  distortion_corrector_->processIMUMessage(base_link_frame_, imu_msg);
 }
 
 void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointcloud_msg)
@@ -86,10 +85,10 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
     return;
   }
 
-  DistortionCorrector_->setPointCloudTransform(base_link_frame_, pointcloud_msg->header.frame_id);
+  distortion_corrector_->setPointCloudTransform(base_link_frame_, pointcloud_msg->header.frame_id);
 
-  DistortionCorrector_->initialize();
-  DistortionCorrector_->undistortPointCloud(use_imu_, *pointcloud_msg);
+  distortion_corrector_->initialize();
+  distortion_corrector_->undistortPointCloud(use_imu_, *pointcloud_msg);
 
   if (debug_publisher_) {
     auto pipeline_latency_ms =

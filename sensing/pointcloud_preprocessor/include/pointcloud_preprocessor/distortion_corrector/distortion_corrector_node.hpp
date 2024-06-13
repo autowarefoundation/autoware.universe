@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_NODELET_HPP_
-#define POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_NODELET_HPP_
+#ifndef POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_NODE_HPP_
+#define POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_NODE_HPP_
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
@@ -40,9 +40,10 @@ public:
   explicit DistortionCorrectorComponent(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::Subscription<PointCloud2>::SharedPtr input_points_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr pointcloud_sub_;
+
   rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_points_pub_;
 
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
@@ -52,14 +53,13 @@ private:
   bool use_imu_;
   bool use_3d_distortion_correction_;
 
-  std::unique_ptr<DistortionCorrectorBase> DistortionCorrector_;
+  std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
   void onPointCloud(PointCloud2::UniquePtr points_msg);
-  void onTwistWithCovarianceStamped(
-    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
+  void onTwist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
   void onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
 };
 
 }  // namespace pointcloud_preprocessor
 
-#endif  // POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_NODELET_HPP_
+#endif  // POINTCLOUD_PREPROCESSOR__DISTORTION_CORRECTOR__DISTORTION_CORRECTOR_NODE_HPP_
