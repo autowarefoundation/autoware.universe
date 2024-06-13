@@ -383,11 +383,13 @@ bool NDTScanMatcher::callback_sensor_points_main(
   diagnostics_scan_points_->add_key_value("is_succeed_transform_sensor_points", true);
 
   // check sensor_points_max_distance
-  double max_distance = 0.0;
-  for (const auto & point : sensor_points_in_baselink_frame->points) {
-    const double distance = std::hypot(point.x, point.y, point.z);
-    max_distance = std::max(max_distance, distance);
-  }
+  const double max_distance = std::transform_reduce(
+    sensor_points_in_baselink_frame->points.begin(), sensor_points_in_baselink_frame->points.end(),
+    0.0, [](double a, double b) { return std::max(a, b); },
+    [](const auto & point) {
+      // (Suppress the "do not access members of unions;" warning.)
+      return std::hypot(point.x, point.y, point.z);  // NOLINT
+    });
 
   diagnostics_scan_points_->add_key_value("sensor_points_max_distance", max_distance);
   if (max_distance < param_.sensor_points.required_distance) {
@@ -459,11 +461,12 @@ bool NDTScanMatcher::callback_sensor_points_main(
   const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
 
   const geometry_msgs::msg::Pose result_pose_msg = matrix4f_to_pose(ndt_result.pose);
-  std::vector<geometry_msgs::msg::Pose> transformation_msg_array;
-  for (const auto & pose_matrix : ndt_result.transformation_array) {
-    geometry_msgs::msg::Pose pose_ros = matrix4f_to_pose(pose_matrix);
-    transformation_msg_array.push_back(pose_ros);
-  }
+  std::vector<geometry_msgs::msg::Pose> transformation_msg_array(
+    ndt_result.transformation_array.size());
+  std::transform(
+    ndt_result.transformation_array.begin(), ndt_result.transformation_array.end(),
+    transformation_msg_array.begin(),
+    [](const Eigen::Matrix4f & pose_matrix) { return matrix4f_to_pose(pose_matrix); });
 
   // check iteration_num
   diagnostics_scan_points_->add_key_value("iteration_num", ndt_result.iteration_num);
@@ -626,14 +629,15 @@ bool NDTScanMatcher::callback_sensor_points_main(
     // remove ground
     pcl::shared_ptr<pcl::PointCloud<PointSource>> no_ground_points_in_map_ptr(
       new pcl::PointCloud<PointSource>);
-    for (std::size_t i = 0; i < sensor_points_in_map_ptr->size(); i++) {
-      const float point_z = sensor_points_in_map_ptr->points[i].z;  // NOLINT
-      if (
-        point_z - matrix4f_to_pose(ndt_result.pose).position.z >
-        param_.score_estimation.no_ground_points.z_margin_for_ground_removal) {
-        no_ground_points_in_map_ptr->points.push_back(sensor_points_in_map_ptr->points[i]);
-      }
-    }
+    const double ego_z = matrix4f_to_pose(ndt_result.pose).position.z;
+    std::copy_if(
+      sensor_points_in_map_ptr->begin(), sensor_points_in_map_ptr->end(),
+      std::back_inserter(no_ground_points_in_map_ptr->points), [&](const PointSource & point) {
+        // (Suppress the "do not access members of unions;" warning.)
+        const float z = point.z;  // NOLINT
+        return z - ego_z > param_.score_estimation.no_ground_points.z_margin_for_ground_removal;
+      });
+
     // pub remove-ground points
     sensor_msgs::msg::PointCloud2 no_ground_points_msg_in_map;
     pcl::toROSMsg(*no_ground_points_in_map_ptr, no_ground_points_msg_in_map);

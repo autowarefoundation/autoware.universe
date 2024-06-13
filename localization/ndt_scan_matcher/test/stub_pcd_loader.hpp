@@ -64,18 +64,20 @@ private:
     pcd_map_cell_with_id.cell_id = "0";
     pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
     for (auto & point : cloud.points) {
-      point.x += offset_x;
-      point.y += offset_y;
+      point.x += offset_x;  // NOLINT (Suppress the "do not access members of unions;" warning.)
+      point.y += offset_y;  // NOLINT
     }
     pcd_map_cell_with_id.metadata.min_x = std::numeric_limits<float>::max();
     pcd_map_cell_with_id.metadata.min_y = std::numeric_limits<float>::max();
     pcd_map_cell_with_id.metadata.max_x = std::numeric_limits<float>::lowest();
     pcd_map_cell_with_id.metadata.max_y = std::numeric_limits<float>::lowest();
     for (const auto & point : cloud.points) {
-      pcd_map_cell_with_id.metadata.min_x = std::min(pcd_map_cell_with_id.metadata.min_x, point.x);
-      pcd_map_cell_with_id.metadata.min_y = std::min(pcd_map_cell_with_id.metadata.min_y, point.y);
-      pcd_map_cell_with_id.metadata.max_x = std::max(pcd_map_cell_with_id.metadata.max_x, point.x);
-      pcd_map_cell_with_id.metadata.max_y = std::max(pcd_map_cell_with_id.metadata.max_y, point.y);
+      const float x = point.x;  // NOLINT (Suppress the "do not access members of unions;" warning.)
+      const float y = point.y;  // NOLINT
+      pcd_map_cell_with_id.metadata.min_x = std::min(pcd_map_cell_with_id.metadata.min_x, x);
+      pcd_map_cell_with_id.metadata.min_y = std::min(pcd_map_cell_with_id.metadata.min_y, y);
+      pcd_map_cell_with_id.metadata.max_x = std::max(pcd_map_cell_with_id.metadata.max_x, x);
+      pcd_map_cell_with_id.metadata.max_y = std::max(pcd_map_cell_with_id.metadata.max_y, y);
     }
     RCLCPP_INFO_STREAM(get_logger(), "cloud size: " << cloud.size());
     pcl::toROSMsg(cloud, pcd_map_cell_with_id.pointcloud);
