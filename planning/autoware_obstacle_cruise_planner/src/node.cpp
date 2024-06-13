@@ -871,7 +871,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
         std::max(p.max_lat_margin_for_stop_against_unknown, p.max_lat_margin_for_slow_down);
       const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
 
-      double lat_dist_from_stop_collision_to_traj_poly = std::numeric_limits<double>::max();
+      double ego_to_stop_collision_distance = std::numeric_limits<double>::max();
       double ego_to_slow_down_front_collision_distance = std::numeric_limits<double>::max();
       double ego_to_slow_down_back_collision_distance = std::numeric_limits<double>::min();
       double lat_dist_from_obstacle_to_traj = std::numeric_limits<double>::max();
@@ -903,9 +903,9 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
             }
 
             if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_stop_against_unknown) {
-              if (min_lat_dist_to_traj_poly < lat_dist_from_stop_collision_to_traj_poly) {
+              if (*current_ego_to_obstacle_distance < ego_to_stop_collision_distance) {
                 stop_collision_point = nearest_obstacle_point;
-                lat_dist_from_stop_collision_to_traj_poly = min_lat_dist_to_traj_poly;
+                ego_to_stop_collision_distance = *current_ego_to_obstacle_distance;
               }
             } else if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_slow_down) {
               if (*current_ego_to_obstacle_distance < ego_to_slow_down_front_collision_distance) {
@@ -925,8 +925,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
         }
       }
 
-      if (
-        stop_collision_point || slow_down_front_collision_point || slow_down_back_collision_point) {
+      if (stop_collision_point || slow_down_front_collision_point) {
         target_obstacles.emplace_back(
           pointcloud.header.stamp, stop_collision_point, slow_down_front_collision_point,
           slow_down_back_collision_point, ego_to_obstacle_distance, lat_dist_from_obstacle_to_traj);
