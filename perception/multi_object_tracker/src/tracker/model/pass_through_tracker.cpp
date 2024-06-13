@@ -15,8 +15,15 @@
 //
 // Author: v1.0 Yutaka Shimizu
 //
+#define EIGEN_MPL2_ONLY
+#include "multi_object_tracker/tracker/model/pass_through_tracker.hpp"
 
-#include <tier4_autoware_utils/ros/msg_covariance.hpp>
+#include "multi_object_tracker/utils/utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "tier4_autoware_utils/ros/msg_covariance.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -28,14 +35,6 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-
-#define EIGEN_MPL2_ONLY
-#include "multi_object_tracker/tracker/model/pass_through_tracker.hpp"
-#include "multi_object_tracker/utils/utils.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
-
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 
 PassThroughTracker::PassThroughTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,

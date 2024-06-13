@@ -15,21 +15,20 @@
 //
 // Author: v1.0 Taekjin Lee
 //
+#define EIGEN_MPL2_ONLY
 
 #include "multi_object_tracker/tracker/motion_model/cv_motion_model.hpp"
 
 #include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
+#include "tier4_autoware_utils/math/normalization.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
+#include "tier4_autoware_utils/ros/msg_covariance.hpp"
 
-#include <autoware/universe_utils/math/normalization.hpp>
-#include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <autoware/universe_utils/ros/msg_covariance.hpp>
-
-#include <tf2/utils.h>
-
-#define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+#include <tf2/utils.h>
 
 // cspell: ignore CV
 // Constant Velocity (CV) motion model

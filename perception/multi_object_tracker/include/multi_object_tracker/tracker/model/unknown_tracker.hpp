@@ -19,10 +19,9 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__UNKNOWN_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__UNKNOWN_TRACKER_HPP_
 
+#include "kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "multi_object_tracker/tracker/motion_model/cv_motion_model.hpp"
-
-#include <kalman_filter/kalman_filter.hpp>
 
 class UnknownTracker : public Tracker
 {

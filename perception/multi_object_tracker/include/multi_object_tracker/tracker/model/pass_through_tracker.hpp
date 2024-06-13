@@ -19,9 +19,8 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__PASS_THROUGH_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__PASS_THROUGH_TRACKER_HPP_
 
+#include "kalman_filter/kalman_filter.hpp"
 #include "tracker_base.hpp"
-
-#include <kalman_filter/kalman_filter.hpp>
 
 class PassThroughTracker : public Tracker
 {

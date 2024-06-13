@@ -15,15 +15,19 @@
 //
 // Author: v1.0 Yukihiro Saito
 //
+#define EIGEN_MPL2_ONLY
 
 #include "multi_object_tracker/tracker/model/normal_vehicle_tracker.hpp"
 
 #include "multi_object_tracker/utils/utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+#include "tier4_autoware_utils/math/normalization.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
+#include "tier4_autoware_utils/ros/msg_covariance.hpp"
 
-#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware/universe_utils/math/normalization.hpp>
-#include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <autoware/universe_utils/ros/msg_covariance.hpp>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -35,11 +39,6 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-#include "object_recognition_utils/object_recognition_utils.hpp"
-
-#define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 

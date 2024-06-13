@@ -16,6 +16,8 @@
 #define MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
 
 #include "multi_object_tracker/debugger/debug_object.hpp"
+#include "tier4_autoware_utils/ros/debug_publisher.hpp"
+#include "tier4_autoware_utils/ros/published_time_publisher.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
