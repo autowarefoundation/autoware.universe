@@ -19,8 +19,16 @@
           "type": "array",
           "description": "Offset arrangement in covariance estimation [m]. initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.",
           "default": [0.5, -0.5, 0.0, 0.0, 0.0, 0.0]
+        },
+        "covariance_estimation_type": {
+          "type": "float",
+          "description": "Converged estimation type. 0=LAPLACE_APPROXIMATION, 1=MULTI_NDT, 2=MULTI_NDT_SCORE",
+          "default": 2,
+          "minimum": 0,
+          "maximum": 2
         }
       },
+      
       "required": ["enable", "initial_pose_offset_model_x", "initial_pose_offset_model_y"],
       "additionalProperties": false
     }
