@@ -22,6 +22,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
