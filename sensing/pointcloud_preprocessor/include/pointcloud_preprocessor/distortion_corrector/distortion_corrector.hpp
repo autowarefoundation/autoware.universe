@@ -63,7 +63,7 @@ class DistortionCorrector : public DistortionCorrectorBase
 {
 public:
   bool pointcloud_transform_needed_{false};
-  bool is_pointcloud_transform_exist_{false};
+  bool pointcloud_transform_exists_{false};
   bool imu_transform_exists_{false};
   rclcpp::Node * node_;
   tf2_ros::Buffer tf_buffer_;
