@@ -23,7 +23,8 @@ namespace pose_estimator_arbiter::switch_rule
 VectorMapBasedRule::VectorMapBasedRule(
   rclcpp::Node & node, std::unordered_set<PoseEstimatorType> running_estimator_list,
   std::shared_ptr<const SharedData> shared_data)
-: BaseSwitchRule(node), running_estimator_list_(std::move(running_estimator_list)),
+: BaseSwitchRule(node),
+  running_estimator_list_(std::move(running_estimator_list)),
   shared_data_(std::move(shared_data))
 {
   pose_estimator_area_ = std::make_unique<rule_helper::PoseEstimatorArea>(node.get_logger());

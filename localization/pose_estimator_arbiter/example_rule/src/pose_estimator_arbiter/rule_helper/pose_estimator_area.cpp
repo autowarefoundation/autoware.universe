@@ -33,7 +33,7 @@ using BoostPolygon = boost::geometry::model::polygon<BoostPoint>;
 
 struct PoseEstimatorArea::Impl
 {
-  explicit Impl(const rclcpp::Logger& logger) : logger_(logger) {}
+  explicit Impl(const rclcpp::Logger & logger) : logger_(logger) {}
   std::multimap<std::string, BoostPolygon> bounding_boxes_;
 
   void init(HADMapBin::ConstSharedPtr msg);

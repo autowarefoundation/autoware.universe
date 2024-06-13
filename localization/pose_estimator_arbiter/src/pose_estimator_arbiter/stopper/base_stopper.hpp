@@ -35,10 +35,10 @@ public:
   }
 
   virtual ~BaseStopper() = default;
-  BaseStopper(const BaseStopper& other) = default;
-  BaseStopper(BaseStopper&& other) noexcept = default;
-  BaseStopper& operator=(const BaseStopper& other) = default;
-  BaseStopper& operator=(BaseStopper&& other) noexcept = default;
+  BaseStopper(const BaseStopper & other) = default;
+  BaseStopper(BaseStopper && other) noexcept = default;
+  BaseStopper & operator=(const BaseStopper & other) = default;
+  BaseStopper & operator=(BaseStopper && other) noexcept = default;
   void enable() { set_enable(true); }
   void disable() { set_enable(false); }
 

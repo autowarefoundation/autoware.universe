@@ -23,7 +23,8 @@ namespace pose_estimator_arbiter::switch_rule
 PcdMapBasedRule::PcdMapBasedRule(
   rclcpp::Node & node, std::unordered_set<PoseEstimatorType> running_estimator_list,
   std::shared_ptr<const SharedData> shared_data)
-: BaseSwitchRule(node), running_estimator_list_(std::move(running_estimator_list)),
+: BaseSwitchRule(node),
+  running_estimator_list_(std::move(running_estimator_list)),
   shared_data_(std::move(shared_data))
 {
   const int pcd_density_upper_threshold =

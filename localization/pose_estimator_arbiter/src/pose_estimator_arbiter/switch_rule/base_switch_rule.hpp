@@ -40,10 +40,10 @@ public:
   }
 
   virtual ~BaseSwitchRule() = default;
-  BaseSwitchRule(const BaseSwitchRule& other) = default;
-  BaseSwitchRule(BaseSwitchRule&& other) noexcept = default;
-  BaseSwitchRule& operator=(const BaseSwitchRule& other) = default;
-  BaseSwitchRule& operator=(BaseSwitchRule&& other) noexcept = default;
+  BaseSwitchRule(const BaseSwitchRule & other) = default;
+  BaseSwitchRule(BaseSwitchRule && other) noexcept = default;
+  BaseSwitchRule & operator=(const BaseSwitchRule & other) = default;
+  BaseSwitchRule & operator=(BaseSwitchRule && other) noexcept = default;
   virtual std::unordered_map<PoseEstimatorType, bool> update() = 0;
   virtual std::string debug_string() { return std::string{}; }
   virtual MarkerArray debug_marker_array() { return MarkerArray{}; }

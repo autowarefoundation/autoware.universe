@@ -15,8 +15,6 @@
 #ifndef POSE_ESTIMATOR_ARBITER__RULE_HELPER__PCD_OCCUPANCY_HPP_
 #define POSE_ESTIMATOR_ARBITER__RULE_HELPER__PCD_OCCUPANCY_HPP_
 
-#include <string>
-
 #include <rclcpp/node.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -25,6 +23,8 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+
+#include <string>
 
 namespace pose_estimator_arbiter::rule_helper
 {

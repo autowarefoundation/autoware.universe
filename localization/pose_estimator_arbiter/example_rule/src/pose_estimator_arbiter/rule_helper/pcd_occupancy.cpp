@@ -16,14 +16,14 @@
 
 #include "pose_estimator_arbiter/rule_helper/grid_key.hpp"
 
+#include <boost/functional/hash.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <boost/functional/hash.hpp>
-
-#include <pcl_conversions/pcl_conversions.h>
 
 namespace pose_estimator_arbiter::rule_helper
 {
