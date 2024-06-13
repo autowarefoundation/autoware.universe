@@ -348,6 +348,11 @@ public:
       return false;
     }
 
+    // can avoid it after relax drivable space limitation.
+    if (object.info == ObjectInfo::LIMIT_DRIVABLE_SPACE_TEMPORARY) {
+      return false;
+    }
+
     return true;
   }
 
