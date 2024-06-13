@@ -10,7 +10,7 @@ Since the LiDAR sensor scans by rotating an internal laser, the resulting point 
 
 The node utilizes twist information (linear velocity and angular velocity) from the `~/input/twist` topic. If the user sets `use_imu` to true, the node will replace the twist's angular velocity with the angular velocity from IMU. The node then moves every point in the pointcloud to compensate for the motion provided by the velocity information.
 
-The node also supports two different kinds of distortion methods: 2D distortion correction and 3D distortion correction. The main difference is that the 2D distortion corrector only utilizes the x-axis of linear velocity and the z-axis of angular velocity to correct the points. On the other hand, the 3D distortion corrector utilizes all linear and angular velocity components to correct the points.
+The node also supports two different modes of distortion correction: 2D distortion correction and 3D distortion correction. The main difference is that the 2D distortion corrector only utilizes the x-axis of linear velocity and the z-axis of angular velocity to correct the point positions. On the other hand, the 3D distortion corrector utilizes all linear and angular velocity components to correct the point positions.
 
 Please note that the processing time difference between the two distortion methods is significant; the 3D corrector takes 50% more time than the 2D corrector. Therefore, it is recommended that in general cases, users should set `use_3d_distortion_correction` to `false`. However, in scenarios such as a vehicle going over speed bumps, using the 3D corrector can be beneficial.
 
