@@ -1,4 +1,5 @@
-- repository: autowarefoundation/autoware
+- repository: autowarefoundation/sync-file-templates
+  source-dir: sources
   files:
     - source: CODE_OF_CONDUCT.md
     - source: CONTRIBUTING.md
@@ -12,29 +13,9 @@
     - source: .github/PULL_REQUEST_TEMPLATE/standard-change.md
     - source: .github/dependabot.yaml
     - source: .github/stale.yml
-    - source: .github/workflows/cancel-previous-workflows.yaml
-    - source: .github/workflows/github-release.yaml
-    - source: .github/workflows/pre-commit.yaml
-    - source: .github/workflows/pre-commit-optional.yaml
-    - source: .github/workflows/semantic-pull-request.yaml
-    - source: .github/workflows/spell-check-differential.yaml
-    - source: .github/workflows/sync-files.yaml
-    - source: .clang-format
-    - source: .markdown-link-check.json
-    - source: .markdownlint.yaml
-    - source: .pre-commit-config-optional.yaml
-    - source: .prettierignore
-    - source: .prettierrc.yaml
-    - source: .yamllint.yaml
-    - source: CPPLINT.cfg
-    - source: setup.cfg
-
-- repository: autowarefoundation/autoware_common
-  files:
     - source: .github/workflows/build-and-test.yaml
       pre-commands: |
         sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
-
         sd -s 'container: ${{ matrix.container }}' 'container: ${{ matrix.container }}${{ matrix.container-suffix }}' {source}
         sd -- \
         "       include:" \
@@ -45,7 +26,6 @@
     - source: .github/workflows/build-and-test-differential-self-hosted.yaml
       pre-commands: |
         sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
-
         sd -s 'container: ${{ matrix.container }}' 'container: ${{ matrix.container }}${{ matrix.container-suffix }}' {source}
         sd -- \
         "       include:" \
@@ -56,7 +36,6 @@
     - source: .github/workflows/build-and-test-self-hosted.yaml
       pre-commands: |
         sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
-
         sd -s 'container: ${{ matrix.container }}' 'container: ${{ matrix.container }}${{ matrix.container-suffix }}' {source}
         sd -- \
         "       include:" \
@@ -64,19 +43,32 @@
                   - \"\"
                   - -cuda
                 include:" {source}
+    - source: .github/workflows/cancel-previous-workflows.yaml
     - source: .github/workflows/check-build-depends.yaml
     - source: .github/workflows/clang-tidy-pr-comments.yaml
     - source: .github/workflows/clang-tidy-pr-comments-manually.yaml
-    - source: .github/workflows/update-codeowners-from-packages.yaml
-    - source: .pre-commit-config.yaml
-    - source: codecov.yaml
-
-- repository: autowarefoundation/autoware-documentation
-  files:
     - source: .github/workflows/deploy-docs.yaml
     - source: .github/workflows/delete-closed-pr-docs.yaml
-    - source: mkdocs-base.yaml
-      dest: mkdocs.yaml
+    - source: .github/workflows/github-release.yaml
+    - source: .github/workflows/pre-commit.yaml
+    - source: .github/workflows/pre-commit-optional.yaml
+    - source: .github/workflows/semantic-pull-request.yaml
+    - source: .github/workflows/spell-check-differential.yaml
+    - source: .github/workflows/sync-files.yaml
+    - source: .github/workflows/update-codeowners-from-packages.yaml
+    - source: .clang-format
+    - source: .markdown-link-check.json
+    - source: .markdownlint.yaml
+    - source: .pre-commit-config.yaml
+    - source: .pre-commit-config-optional.yaml
+    - source: .prettierignore
+    - source: .prettierrc.yaml
+    - source: .yamllint.yaml
+    - source: CPPLINT.cfg
+    - source: codecov.yaml
+    - source: setup.cfg
+    - source: docs/assets/js/mathjax.js
+    - source: mkdocs.yaml
       pre-commands: |
         sd "Autoware Documentation" "Autoware Universe Documentation" {source}
         sd "autoware-documentation" "autoware.universe" {source}
@@ -88,4 +80,3 @@
         "  - macros" \
         "  - macros:
               module_name: mkdocs_macros" {source}
-    - source: docs/assets/js/mathjax.js
