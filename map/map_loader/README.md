@@ -150,20 +150,8 @@ Please see [tier4_autoware_msgs/msg/MapProjectorInfo.msg](https://github.com/tie
 
 {{ json_to_markdown("map/map_loader/schema/lanelet2_map_loader.schema.json") }}
 
-### How to handle a centerline
-
-Centerline is defined in Lanelet2 to guide the vehicle. However, based on the current Autoware's usage, the centerline has following limitations.
-
-- The object's predicted path also follows the centerline. When the (modified) centerline is far from the actual road's centerline, the object's predictd path is modified as well, and this may adversely affect the decision making of planning modules.
-- The coordinate transformation on the lane's frenet frame may have an error (e.g. the lateral distance between the actual road's centerline and a parked vehicle) since the modified centerline is used.
-
-To solve these limitations, the lanelet2_map_loader has two options.
-
-- `use_waypoints` is True (Default)
-  - The centerline in the Lanelet2 map is converted to the new `waypoints` tag. This `waypoints` is only applied to the ego's path planning.
-  - Therefore, the above limitations can be solved, but the design of the centerline may be hard to understand.
-- `use_waypoints` is False
-  - The centerline in the Lanelet2 map is used as it is. It's easy to understand the design of the centerline, but we still have above limitations.
+`use_waypoints` decides how to handle a centerline.
+This flag is used in the `overwriteLaneletsCenterline` function. Please see [the document of the lanelet2_extension package](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md#centerline) in detail.
 
 ---
 
