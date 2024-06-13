@@ -94,8 +94,8 @@ BigVehicleTracker::BigVehicleTracker(
     const double q_stddev_acc_lat = object_model_.process_noise.acc_lat;
     const double q_stddev_yaw_rate_min = object_model_.process_noise.yaw_rate_min;
     const double q_stddev_yaw_rate_max = object_model_.process_noise.yaw_rate_max;
-    const double q_stddev_slip_rate_min = object_model_.bicycle_state.slip_rate_cov_min;
-    const double q_stddev_slip_rate_max = object_model_.bicycle_state.slip_rate_cov_max;
+    const double q_stddev_slip_rate_min = object_model_.bicycle_state.slip_rate_stddev_min;
+    const double q_stddev_slip_rate_max = object_model_.bicycle_state.slip_rate_stddev_max;
     const double q_max_slip_angle = object_model_.bicycle_state.slip_angle_max;
     const double lf_ratio = object_model_.bicycle_state.wheel_pos_ratio_front;
     const double lf_min = object_model_.bicycle_state.wheel_pos_front_min;

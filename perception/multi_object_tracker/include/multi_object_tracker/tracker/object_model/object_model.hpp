@@ -99,8 +99,8 @@ struct BicycleModelState
 {
   double init_slip_angle_cov{0.0};    // [rad^2/s^2] initial slip angle covariance
   double slip_angle_max{0.0};         // [rad] max slip angle
-  double slip_rate_cov_min{0.0};      // [rad/s] uncertain slip angle change rate, minimum
-  double slip_rate_cov_max{0.0};      // [rad/s] uncertain slip angle change rate, maximum
+  double slip_rate_stddev_min{0.0};   // [rad/s] uncertain slip angle change rate, minimum
+  double slip_rate_stddev_max{0.0};   // [rad/s] uncertain slip angle change rate, maximum
   double wheel_pos_ratio_front{0.0};  // [-]
   double wheel_pos_ratio_rear{0.0};   // [-]
   double wheel_pos_front_min{0.0};    // [m]
@@ -156,9 +156,9 @@ public:
 
         // bicycle motion model
         bicycle_state.init_slip_angle_cov = sq(deg2rad(5.0));
-        bicycle_state.slip_angle_max = 30.0;     // deg2rad(30.0);
-        bicycle_state.slip_rate_cov_min = 0.3;   // sq(deg2rad(0.3));
-        bicycle_state.slip_rate_cov_max = 10.0;  // sq(deg2rad(10.0));
+        bicycle_state.slip_angle_max = deg2rad(30.0);
+        bicycle_state.slip_rate_stddev_min = deg2rad(0.3);
+        bicycle_state.slip_rate_stddev_max = deg2rad(10.0);
         bicycle_state.wheel_pos_ratio_front = 0.3;
         bicycle_state.wheel_pos_ratio_rear = 0.25;
         bicycle_state.wheel_pos_front_min = 1.0;
@@ -178,8 +178,8 @@ public:
 
         process_noise.acc_long = const_g * 0.35;
         process_noise.acc_lat = const_g * 0.15;
-        process_noise.yaw_rate_min = 1.5;   // deg2rad(1.5);
-        process_noise.yaw_rate_max = 15.0;  // deg2rad(15.0);
+        process_noise.yaw_rate_min = deg2rad(1.5);
+        process_noise.yaw_rate_max = deg2rad(15.0);
 
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
@@ -200,9 +200,9 @@ public:
 
         // bicycle motion model
         bicycle_state.init_slip_angle_cov = sq(deg2rad(5.0));
-        bicycle_state.slip_angle_max = 30.0;     // deg2rad(30.0);
-        bicycle_state.slip_rate_cov_min = 0.3;   // sq(deg2rad(0.3));
-        bicycle_state.slip_rate_cov_max = 10.0;  // sq(deg2rad(10.0));
+        bicycle_state.slip_angle_max = deg2rad(30.0);
+        bicycle_state.slip_rate_stddev_min = deg2rad(0.3);
+        bicycle_state.slip_rate_stddev_max = deg2rad(10.0);
         bicycle_state.wheel_pos_ratio_front = 0.3;
         bicycle_state.wheel_pos_ratio_rear = 0.25;
         bicycle_state.wheel_pos_front_min = 1.5;
@@ -244,9 +244,9 @@ public:
 
         // bicycle motion model
         bicycle_state.init_slip_angle_cov = sq(deg2rad(5.0));
-        bicycle_state.slip_angle_max = 30.0;     // deg2rad(30.0);
-        bicycle_state.slip_rate_cov_min = 1.0;   // sq(deg2rad(1.0));
-        bicycle_state.slip_rate_cov_max = 10.0;  // sq(deg2rad(10.0));
+        bicycle_state.slip_angle_max = deg2rad(30.0);
+        bicycle_state.slip_rate_stddev_min = deg2rad(1.0);
+        bicycle_state.slip_rate_stddev_max = deg2rad(10.0);
         bicycle_state.wheel_pos_ratio_front = 0.3;
         bicycle_state.wheel_pos_ratio_rear = 0.3;
         bicycle_state.wheel_pos_front_min = 0.3;

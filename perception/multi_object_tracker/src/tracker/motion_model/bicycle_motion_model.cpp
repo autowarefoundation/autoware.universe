@@ -44,11 +44,15 @@ void BicycleMotionModel::setDefaultParams()
   // set default motion parameters
   constexpr double q_stddev_acc_long = 9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
   constexpr double q_stddev_acc_lat = 9.8 * 0.15;   // [m/(s*s)] uncertain lateral acceleration
-  constexpr double q_stddev_yaw_rate_min = 1.5;     // [deg/s] uncertain yaw change rate
-  constexpr double q_stddev_yaw_rate_max = 15.0;    // [deg/s] uncertain yaw change rate
-  constexpr double q_stddev_slip_rate_min = 0.3;    // [deg/s] uncertain slip angle change rate
-  constexpr double q_stddev_slip_rate_max = 10.0;   // [deg/s] uncertain slip angle change rate
-  constexpr double q_max_slip_angle = 30.0;         // [deg] max slip angle
+  constexpr double q_stddev_yaw_rate_min =
+    tier4_autoware_utils::deg2rad(1.5);  // [rad/s] uncertain yaw change rate
+  constexpr double q_stddev_yaw_rate_max =
+    tier4_autoware_utils::deg2rad(15.0);  // [rad/s] uncertain yaw change rate
+  constexpr double q_stddev_slip_rate_min =
+    tier4_autoware_utils::deg2rad(0.3);  // [rad/s] uncertain slip angle change rate
+  constexpr double q_stddev_slip_rate_max =
+    tier4_autoware_utils::deg2rad(10.0);  // [rad/s] uncertain slip angle change rate
+  constexpr double q_max_slip_angle = tier4_autoware_utils::deg2rad(30.0);  // [rad] max slip angle
   // extended state parameters
   constexpr double lf_ratio = 0.3;   // 30% front from the center
   constexpr double lf_min = 1.0;     // minimum of 1.0m
@@ -79,13 +83,13 @@ void BicycleMotionModel::setMotionParams(
   // set process noise covariance parameters
   motion_params_.q_stddev_acc_long = q_stddev_acc_long;
   motion_params_.q_stddev_acc_lat = q_stddev_acc_lat;
-  motion_params_.q_stddev_yaw_rate_min = autoware::universe_utils::deg2rad(q_stddev_yaw_rate_min);
-  motion_params_.q_stddev_yaw_rate_max = autoware::universe_utils::deg2rad(q_stddev_yaw_rate_max);
-  motion_params_.q_cov_slip_rate_min =
-    std::pow(autoware::universe_utils::deg2rad(q_stddev_slip_rate_min), 2.0);
-  motion_params_.q_cov_slip_rate_max =
-    std::pow(autoware::universe_utils::deg2rad(q_stddev_slip_rate_max), 2.0);
-  motion_params_.q_max_slip_angle = autoware::universe_utils::deg2rad(q_max_slip_angle);
+  motion_params_.q_cov_acc_long = q_stddev_acc_long * q_stddev_acc_long;
+  motion_params_.q_cov_acc_lat = q_stddev_acc_lat * q_stddev_acc_lat;
+  motion_params_.q_stddev_yaw_rate_min = q_stddev_yaw_rate_min;
+  motion_params_.q_stddev_yaw_rate_max = q_stddev_yaw_rate_max;
+  motion_params_.q_cov_slip_rate_min = q_stddev_slip_rate_min * q_stddev_slip_rate_min;
+  motion_params_.q_cov_slip_rate_max = q_stddev_slip_rate_max * q_stddev_slip_rate_max;
+  motion_params_.q_max_slip_angle = q_max_slip_angle;
 
   constexpr double minimum_wheel_pos = 0.01;  // minimum of 0.01m
   if (lf_min < minimum_wheel_pos || lr_min < minimum_wheel_pos) {
@@ -354,10 +358,8 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
   A(IDX::YAW, IDX::SLIP) = vel / lr_ * cos_slip * dt;
 
   // Process noise covariance Q
-  double q_stddev_yaw_rate{0.0};
-  if (vel <= 0.01) {
-    q_stddev_yaw_rate = motion_params_.q_stddev_yaw_rate_min;
-  } else {
+  double q_stddev_yaw_rate = motion_params_.q_stddev_yaw_rate_min;
+  if (vel > 0.01) {
     /* uncertainty of the yaw rate is limited by the following:
      *  - centripetal acceleration a_lat : d(yaw)/dt = w = a_lat/v
      *  - or maximum slip angle slip_max : w = v*sin(slip_max)/l_r
@@ -365,8 +367,9 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
     q_stddev_yaw_rate = std::min(
       motion_params_.q_stddev_acc_lat / vel,
       vel * std::sin(motion_params_.q_max_slip_angle) / lr_);  // [rad/s]
-    q_stddev_yaw_rate = std::min(q_stddev_yaw_rate, motion_params_.q_stddev_yaw_rate_max);
-    q_stddev_yaw_rate = std::max(q_stddev_yaw_rate, motion_params_.q_stddev_yaw_rate_min);
+    q_stddev_yaw_rate = std::clamp(
+      q_stddev_yaw_rate, motion_params_.q_stddev_yaw_rate_min,
+      motion_params_.q_stddev_yaw_rate_max);
   }
   double q_cov_slip_rate{0.0};
   if (vel <= 0.01) {
@@ -384,11 +387,13 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
     q_cov_slip_rate = std::min(q_cov_slip_rate, motion_params_.q_cov_slip_rate_max);
     q_cov_slip_rate = std::max(q_cov_slip_rate, motion_params_.q_cov_slip_rate_min);
   }
-  const double q_cov_x = std::pow(0.5 * motion_params_.q_stddev_acc_long * dt * dt, 2);
-  const double q_cov_y = std::pow(0.5 * motion_params_.q_stddev_acc_lat * dt * dt, 2);
-  const double q_cov_yaw = std::pow(q_stddev_yaw_rate * dt, 2);
-  const double q_cov_vel = std::pow(motion_params_.q_stddev_acc_long * dt, 2);
-  const double q_cov_slip = q_cov_slip_rate * dt * dt;
+  const double dt2 = dt * dt;
+  const double dt4 = dt2 * dt2;
+  const double q_cov_x = 0.5 * motion_params_.q_cov_acc_long * dt4;
+  const double q_cov_y = 0.5 * motion_params_.q_cov_acc_lat * dt4;
+  const double q_cov_yaw = q_stddev_yaw_rate * q_stddev_yaw_rate * dt2;
+  const double q_cov_vel = motion_params_.q_cov_acc_long * dt2;
+  const double q_cov_slip = q_cov_slip_rate * dt2;
 
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(DIM, DIM);
   // Rotate the covariance matrix according to the vehicle yaw

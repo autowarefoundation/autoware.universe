@@ -47,6 +47,8 @@ private:
   {
     double q_stddev_acc_long;
     double q_stddev_acc_lat;
+    double q_cov_acc_long;
+    double q_cov_acc_lat;
     double q_stddev_yaw_rate_min;
     double q_stddev_yaw_rate_max;
     double q_cov_slip_rate_min;
