@@ -66,8 +66,6 @@ void push_back_contour(
 pcl::PointCloud<pcl::PointXYZ> shrink_vertices(
   const pcl::PointCloud<pcl::PointXYZ> & vertices, float rate)
 {
-  // Eigen::Vector3f center = Eigen::Vector3f::Zero();
-  // for (const pcl::PointXYZ p : vertices) center += p.getVector3fMap();
   Eigen::Vector3f center = std::accumulate(
     vertices.begin(), vertices.end(), Eigen::Vector3f::Zero().eval(),
     [](const Eigen::Vector3f& acc, const pcl::PointXYZ& p) { return acc + p.getVector3fMap(); }
