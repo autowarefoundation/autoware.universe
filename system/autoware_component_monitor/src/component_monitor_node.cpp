@@ -50,11 +50,10 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
 
   int pid = getpid();
 
-  std::function<void()> on_timer_tick_wrapped =
-    std::bind(&ComponentMonitor::on_timer_tick, this, pid);
+  on_timer_tick_wrapped_ = std::bind(&ComponentMonitor::on_timer_tick, this, pid);
 
   timer_ = rclcpp::create_timer(
-    this, get_clock(), rclcpp::Rate(publish_rate_).period(), on_timer_tick_wrapped);
+    this, get_clock(), rclcpp::Rate(publish_rate_).period(), on_timer_tick_wrapped_);
 }
 
 void ComponentMonitor::on_timer_tick(int pid)
@@ -80,10 +79,10 @@ ComponentMonitor::ResourceUsageReport ComponentMonitor::pid_to_report(const pid_
   const auto fields = parse_lines_into_words(std_out);
 
   ResourceUsageReport report;
-  report.cpu_cores_utilized = std::stof(fields.back().at(8));
+  report.cpu_cores_utilized = std::stof(fields.back().at(8)) / 100.0f;
   report.total_memory_bytes = unit_conversions::kib_to_bytes(std::stoul(fields.at(3).at(3)));
   report.free_memory_bytes = unit_conversions::kib_to_bytes(std::stoul(fields.at(3).at(5)));
-  report.used_memory_bytes = parse_memory_res(fields.back().at(5));
+  report.process_memory_bytes = parse_memory_res(fields.back().at(5));
 
   return report;
 }

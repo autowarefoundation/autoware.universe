@@ -37,6 +37,8 @@ private:
 
   const double publish_rate_;
 
+  std::function<void()> on_timer_tick_wrapped_;
+
   rclcpp::Publisher<ResourceUsageReport>::SharedPtr usage_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 

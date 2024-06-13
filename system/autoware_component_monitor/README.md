@@ -22,11 +22,7 @@ None.
 
 {{ json_to_markdown("system/autoware_component_monitor/schema/component_monitor.schema.json") }}
 
-## Running
-
-You can run the component monitor in two ways:
-
-### Directly
+## How to use
 
 Add it as a composable node in your launch file:
 
@@ -50,24 +46,15 @@ Add it as a composable node in your launch file:
 </launch>
 ```
 
-### Through the launch file
+### Quick testing
 
-Include `component_monitor.launch.xml` in your launch file with the container name:
+You can test the package by running the following command:
 
-```xml
+```bash
+ros2 component load <container_name> autoware_component_monitor autoware::component_monitor::ComponentMonitor -p publish_rate:=10.0 --node-namespace <namespace>
 
-<launch>
-  <group>
-    <push-ros-namespace namespace="your_namespace"/>
-    ...
-
-    <include file="$(find-pkg-share autoware_component_monitor)/launch/component_monitor.launch.xml">
-      <arg name="container_name" value="your_container"/>
-    </include>
-
-    ...
-  </group>
-</launch>
+# Example usage
+ros2 component load /pointcloud_container autoware_component_monitor autoware::component_monitor::ComponentMonitor -p publish_rate:=10.0 --node-namespace /pointcloud_container
 ```
 
 ## How it works

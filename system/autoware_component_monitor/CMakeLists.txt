@@ -9,9 +9,8 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-    src/component_monitor_node.cpp
+  src/component_monitor_node.cpp
 )
-
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 
 rclcpp_components_register_node(${PROJECT_NAME}
@@ -21,5 +20,6 @@ rclcpp_components_register_node(${PROJECT_NAME}
 
 ament_auto_package(
   INSTALL_TO_SHARE
+  config
   launch
 )
