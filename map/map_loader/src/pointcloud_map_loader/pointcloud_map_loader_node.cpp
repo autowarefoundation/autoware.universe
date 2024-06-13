@@ -89,18 +89,18 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
   const std::string & pcd_metadata_path, const std::vector<std::string> & pcd_paths) const
 {
   if (fs::exists(pcd_metadata_path)) {
-    std::set<std::string> missing_pcds;
+    std::set<std::string> missing_pcd_names;
     auto pcd_metadata_dict = loadPCDMetadata(pcd_metadata_path);
 
-    pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict, pcd_paths, missing_pcds);
+    pcd_metadata_dict = replaceWithAbsolutePath(pcd_metadata_dict, pcd_paths, missing_pcd_names);
 
-    // Warning if some pcds are missing
-    if (!missing_pcds.empty()) {
+    // Warning if some segments are missing
+    if (!missing_pcd_names.empty()) {
       std::ostringstream oss;
 
       oss << "The following segment(s) are missing from the input PCDs: " << std::endl;
 
-      for (auto & fname : missing_pcds) {
+      for (auto & fname : missing_pcd_names) {
         oss << fname << std::endl;
       }
 

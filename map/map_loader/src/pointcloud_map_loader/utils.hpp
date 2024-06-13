@@ -39,7 +39,7 @@ struct PCDFileMetadata
 std::map<std::string, PCDFileMetadata> loadPCDMetadata(const std::string & pcd_metadata_path);
 std::map<std::string, PCDFileMetadata> replaceWithAbsolutePath(
   const std::map<std::string, PCDFileMetadata> & pcd_metadata_path,
-  const std::vector<std::string> & pcd_paths, std::set<std::string> & missing_pcds);
+  const std::vector<std::string> & pcd_paths, std::set<std::string> & missing_pcd_names);
 
 bool cylinderAndBoxOverlapExists(
   const double center_x, const double center_y, const double radius,
