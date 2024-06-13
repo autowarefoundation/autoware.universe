@@ -889,9 +889,9 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
             std::abs(current_lat_dist_from_obstacle_to_traj) - vehicle_info_.vehicle_width_m;
 
           if (min_lat_dist_to_traj_poly < max_lat_margin) {
-              const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
+            const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
             const auto current_ego_to_obstacle_distance =
-                calcDistanceToFrontVehicle(traj_points, ego_idx, nearest_obstacle_point);
+              calcDistanceToFrontVehicle(traj_points, ego_idx, nearest_obstacle_point);
             if (current_ego_to_obstacle_distance) {
               ego_to_obstacle_distance =
                 std::max(ego_to_obstacle_distance, current_ego_to_obstacle_distance.value());
