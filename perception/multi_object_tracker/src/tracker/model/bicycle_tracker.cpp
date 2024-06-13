@@ -257,11 +257,12 @@ bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::Detec
   bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
 
   // set maximum and minimum size
-  constexpr double max_size = 5.0;
-  constexpr double min_size = 0.3;
-  bounding_box_.length = std::min(std::max(bounding_box_.length, min_size), max_size);
-  bounding_box_.width = std::min(std::max(bounding_box_.width, min_size), max_size);
-  bounding_box_.height = std::min(std::max(bounding_box_.height, min_size), max_size);
+  bounding_box_.length = std::clamp(
+    bounding_box_.length, object_model_.size_limit.length_min, object_model_.size_limit.length_max);
+  bounding_box_.width = std::clamp(
+    bounding_box_.width, object_model_.size_limit.width_min, object_model_.size_limit.width_max);
+  bounding_box_.height = std::clamp(
+    bounding_box_.height, object_model_.size_limit.height_min, object_model_.size_limit.height_max);
 
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);

@@ -299,10 +299,9 @@ bool BigVehicleTracker::measureWithShape(
     return false;
   }
 
+  // update object size
   constexpr double gain = 0.5;
   constexpr double gain_inv = 1.0 - gain;
-
-  // update object size
   bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
   bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
   bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;

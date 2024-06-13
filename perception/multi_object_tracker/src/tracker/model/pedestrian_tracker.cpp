@@ -228,22 +228,25 @@ bool PedestrianTracker::measureWithShape(
     if (!is_size_valid) {
       return false;
     }
-
     // update bounding box size
     bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
     bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
     bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
+
   } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     // check cylinder size abnormality
     constexpr double size_max = 30.0;  // [m]
     constexpr double size_min = 0.1;   // [m]
-    if (object.shape.dimensions.x > size_max || object.shape.dimensions.z > size_max) {
-      return false;
-    } else if (object.shape.dimensions.x < size_min || object.shape.dimensions.z < size_min) {
+    bool is_size_valid =
+      (object.shape.dimensions.x <= size_max && object.shape.dimensions.z <= size_max &&
+       object.shape.dimensions.x >= size_min && object.shape.dimensions.z >= size_min);
+    if (!is_size_valid) {
       return false;
     }
+    // update cylinder size
     cylinder_.width = gain_inv * cylinder_.width + gain * object.shape.dimensions.x;
     cylinder_.height = gain_inv * cylinder_.height + gain * object.shape.dimensions.z;
+
   } else {
     // do not update polygon shape
     return false;
