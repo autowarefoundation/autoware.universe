@@ -248,7 +248,7 @@ To obtain the covariance, MULTI_NDT computes until convergence at each initial p
 The covariance can be seen as error ellipse from ndt_pose_with_covariance setting on rviz2.
 [original paper](https://www.fujipress.jp/jrm/rb/robot003500020435/).
 
-<img src="./media/calculation_of_ndt_ covariance.png" alt="drawing" width="600"/>
+<img src="./media/calculation_of_ndt_covariance.png" alt="drawing" width="600"/>
 
 Note that this function may spoil healthy system behavior if it consumes much calculation resources.
 
