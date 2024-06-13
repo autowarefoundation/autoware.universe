@@ -12,9 +12,7 @@
           "description": "Publish rate in Hz"
         }
       },
-      "required": [
-        "publish_rate"
-      ]
+      "required": ["publish_rate"]
     }
   },
   "properties": {
@@ -25,12 +23,8 @@
           "$ref": "#/definitions/component_monitor"
         }
       },
-      "required": [
-        "ros__parameters"
-      ]
+      "required": ["ros__parameters"]
     }
   },
-  "required": [
-    "/**"
-  ]
+  "required": ["/**"]
 }

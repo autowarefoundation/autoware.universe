@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BUILD_UNIT_CONVERSIONS_HPPA
-#define BUILD_UNIT_CONVERSIONS_HPPA
+#ifndef COMPONENT_MONITOR_NODE_HPP_
+#define COMPONENT_MONITOR_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -93,4 +93,4 @@ private:
 
 }  // namespace autoware::component_monitor
 
-#endif  // BUILD_UNIT_CONVERSIONS_HPPA
+#endif  // COMPONENT_MONITOR_NODE_HPP_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BUILD_UNIT_CONVERSIONS_HPP
-#define BUILD_UNIT_CONVERSIONS_HPP
+#ifndef UNIT_CONVERSIONS_HPP_
+#define UNIT_CONVERSIONS_HPP_
 
 #include <cstdint>
 #include <type_traits>
@@ -65,4 +65,4 @@ std::uint64_t eib_to_bytes(T exbibytes)
 
 }  // namespace autoware::component_monitor::unit_conversions
 
-#endif  // BUILD_UNIT_CONVERSIONS_HPP
+#endif  // UNIT_CONVERSIONS_HPP_

@@ -13,7 +13,7 @@ None.
 ### Output
 
 | Name                       | Type                                               | Description            |
-|----------------------------|----------------------------------------------------|------------------------|
+| -------------------------- | -------------------------------------------------- | ---------------------- |
 | `~/component_system_usage` | `autoware_internal_msgs::msg::ResourceUsageReport` | CPU, Memory usage etc. |
 
 ## Parameters
