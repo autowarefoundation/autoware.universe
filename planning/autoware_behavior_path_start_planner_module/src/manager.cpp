@@ -419,7 +419,8 @@ void StartPlannerModuleManager::updateModuleParams(
     updateParam<bool>(parameters, ns + "enable_geometric_pull_out", p->enable_geometric_pull_out);
     updateParam<bool>(parameters, ns + "divide_pull_out_path", p->divide_pull_out_path);
     updateParam<double>(
-      parameters, ns + "arc_path_interval", p->parallel_parking_parameters.pull_out_arc_path_interval);
+      parameters, ns + "arc_path_interval",
+      p->parallel_parking_parameters.pull_out_arc_path_interval);
     updateParam<double>(
       parameters, ns + "lane_departure_margin",
       p->parallel_parking_parameters.pull_out_lane_departure_margin);
