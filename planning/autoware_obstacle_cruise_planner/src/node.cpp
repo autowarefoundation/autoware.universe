@@ -28,11 +28,7 @@
 
 #include <boost/format.hpp>
 
-#include <pcl/common/centroid.h>
-#include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/search/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -63,22 +59,6 @@ std::optional<T> getObstacleFromUuid(
     return std::nullopt;
   }
   return *itr;
-}
-
-geometry_msgs::msg::Pose getVehicleCenterFromBase(
-  const geometry_msgs::msg::Pose & base_pose, const VehicleInfo & vehicle_info)
-{
-  const auto & i = vehicle_info;
-  const auto yaw = tier4_autoware_utils::getRPY(base_pose).z;
-
-  geometry_msgs::msg::Pose center_pose;
-  center_pose.position.x =
-    base_pose.position.x + (i.vehicle_length_m / 2.0 - i.rear_overhang_m) * std::cos(yaw);
-  center_pose.position.y =
-    base_pose.position.y + (i.vehicle_length_m / 2.0 - i.rear_overhang_m) * std::sin(yaw);
-  center_pose.position.z = base_pose.position.z;
-  center_pose.orientation = base_pose.orientation;
-  return center_pose;
 }
 
 std::optional<double> calcDistanceToFrontVehicle(
@@ -849,28 +829,12 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     ec.setInputCloud(filtered_points_ptr);
     ec.extract(clusters);
 
-    std::vector<geometry_msgs::msg::Point> center_points(traj_points.size());
-    for (const auto & traj_point : traj_points) {
-      center_points.push_back(getVehicleCenterFromBase(traj_point.pose, vehicle_info_).position);
-    }
+    const auto max_lat_margin =
+      std::max(p.max_lat_margin_for_stop_against_unknown, p.max_lat_margin_for_slow_down);
+    const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
 
     // 3. convert clusters to obstacles
     for (const auto & cluster_indices : clusters) {
-      pcl::IndicesConstPtr cluster_indices_ptr =
-        pcl::make_shared<pcl::Indices>(cluster_indices.indices);
-      PointCloud::Ptr cluster_points_ptr(new PointCloud);
-      pcl::ExtractIndices<pcl::PointXYZ> extract;
-      extract.setInputCloud(filtered_points_ptr);
-      extract.setIndices(cluster_indices_ptr);
-      extract.filter(*cluster_points_ptr);
-
-      pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
-      kdtree.setInputCloud(cluster_points_ptr);
-
-      const auto max_lat_margin =
-        std::max(p.max_lat_margin_for_stop_against_unknown, p.max_lat_margin_for_slow_down);
-      const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
-
       double ego_to_stop_collision_distance = std::numeric_limits<double>::max();
       double ego_to_slow_down_front_collision_distance = std::numeric_limits<double>::max();
       double ego_to_slow_down_back_collision_distance = std::numeric_limits<double>::min();
@@ -880,47 +844,40 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       std::optional<geometry_msgs::msg::Point> slow_down_front_collision_point = std::nullopt;
       std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point = std::nullopt;
 
-      for (const auto & center_point : center_points) {
-        pcl::PointXYZ point(center_point.x, center_point.y, 0.0);
-        pcl::Indices index(1);
-        std::vector<float> sqr_distance(1);
-        if (kdtree.nearestKSearch(point, 1, index, sqr_distance) > 0) {
-          const auto nearest_obstacle_point =
-            toGeomPoint(cluster_points_ptr->points[index.front()]);
-          const auto current_lat_dist_from_obstacle_to_traj =
-            motion_utils::calcLateralOffset(traj_points, nearest_obstacle_point);
-          const auto min_lat_dist_to_traj_poly =
-            std::abs(current_lat_dist_from_obstacle_to_traj) - vehicle_info_.vehicle_width_m;
+      for (const auto & index : cluster_indices.indices) {
+        const auto obstacle_point = toGeomPoint(filtered_points_ptr->points[index]);
+        const auto current_lat_dist_from_obstacle_to_traj =
+          motion_utils::calcLateralOffset(traj_points, obstacle_point);
+        const auto min_lat_dist_to_traj_poly =
+          std::abs(current_lat_dist_from_obstacle_to_traj) - vehicle_info_.vehicle_width_m;
 
-          if (min_lat_dist_to_traj_poly < max_lat_margin) {
-            const auto current_ego_to_obstacle_distance =
-              calcDistanceToFrontVehicle(traj_points, ego_idx, nearest_obstacle_point);
-            if (current_ego_to_obstacle_distance) {
-              ego_to_obstacle_distance =
-                std::min(ego_to_obstacle_distance, *current_ego_to_obstacle_distance);
-            } else {
-              continue;
-            }
-
-            if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_stop_against_unknown) {
-              if (*current_ego_to_obstacle_distance < ego_to_stop_collision_distance) {
-                stop_collision_point = nearest_obstacle_point;
-                ego_to_stop_collision_distance = *current_ego_to_obstacle_distance;
-              }
-            } else if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_slow_down) {
-              if (*current_ego_to_obstacle_distance < ego_to_slow_down_front_collision_distance) {
-                slow_down_front_collision_point = nearest_obstacle_point;
-                ego_to_slow_down_front_collision_distance = *current_ego_to_obstacle_distance;
-              } else if (
-                *current_ego_to_obstacle_distance > ego_to_slow_down_back_collision_distance) {
-                slow_down_back_collision_point = nearest_obstacle_point;
-                ego_to_slow_down_back_collision_distance = *current_ego_to_obstacle_distance;
-              }
-            }
-            lat_dist_from_obstacle_to_traj =
-              std::min(lat_dist_from_obstacle_to_traj, current_lat_dist_from_obstacle_to_traj);
+        if (min_lat_dist_to_traj_poly < max_lat_margin) {
+          const auto current_ego_to_obstacle_distance =
+            calcDistanceToFrontVehicle(traj_points, ego_idx, obstacle_point);
+          if (current_ego_to_obstacle_distance) {
+            ego_to_obstacle_distance =
+              std::min(ego_to_obstacle_distance, *current_ego_to_obstacle_distance);
           } else {
             continue;
+          }
+
+          lat_dist_from_obstacle_to_traj =
+            std::min(lat_dist_from_obstacle_to_traj, current_lat_dist_from_obstacle_to_traj);
+
+          if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_stop_against_unknown) {
+            if (*current_ego_to_obstacle_distance < ego_to_stop_collision_distance) {
+              stop_collision_point = obstacle_point;
+              ego_to_stop_collision_distance = *current_ego_to_obstacle_distance;
+            }
+          } else if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_slow_down) {
+            if (*current_ego_to_obstacle_distance < ego_to_slow_down_front_collision_distance) {
+              slow_down_front_collision_point = obstacle_point;
+              ego_to_slow_down_front_collision_distance = *current_ego_to_obstacle_distance;
+            } else if (
+              *current_ego_to_obstacle_distance > ego_to_slow_down_back_collision_distance) {
+              slow_down_back_collision_point = obstacle_point;
+              ego_to_slow_down_back_collision_distance = *current_ego_to_obstacle_distance;
+            }
           }
         }
       }
