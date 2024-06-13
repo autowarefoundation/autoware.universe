@@ -824,17 +824,16 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
   }
 
   if (transform_stamped && !pointcloud.data.empty()) {
-    PointCloud2 transformed_points{};
-    const Eigen::Matrix4f affine_matrix =
+    PointCloud::Ptr pointcloud_ptr(new PointCloud);
+    pcl::fromROSMsg(pointcloud, *pointcloud_ptr);
+    const Eigen::Matrix4f transform =
       tf2::transformToEigen(transform_stamped.value().transform).matrix().cast<float>();
-    pcl_ros::transformPointCloud(affine_matrix, pointcloud, transformed_points);
-    PointCloud::Ptr transformed_points_ptr(new PointCloud);
-    pcl::fromROSMsg(transformed_points, *transformed_points_ptr);
+    pcl::transformPointCloud(*pointcloud_ptr, *pointcloud_ptr, transform);
 
     // 2. downsample & cluster pointcloud
     PointCloud::Ptr filtered_points_ptr(new PointCloud);
     pcl::VoxelGrid<pcl::PointXYZ> filter;
-    filter.setInputCloud(transformed_points_ptr);
+    filter.setInputCloud(pointcloud_ptr);
     filter.setLeafSize(
       p.pointcloud_voxel_grid_x, p.pointcloud_voxel_grid_y, p.pointcloud_voxel_grid_z);
     filter.filter(*filtered_points_ptr);
