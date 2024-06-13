@@ -67,12 +67,8 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
       std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, true);
   }
 
-  std::map<std::string, PCDFileMetadata> pcd_metadata_dict;
-  try {
-    pcd_metadata_dict = getPCDMetadata(pcd_metadata_path, pcd_paths);
-  } catch (std::runtime_error & e) {
-    RCLCPP_ERROR_STREAM(get_logger(), e.what());
-  }
+  // Parse the metadata file and get the map of (absolute pcd path, pcd file metadata)
+  auto pcd_metadata_dict = getPCDMetadata(pcd_metadata_path, pcd_paths);
 
   if (enable_partial_load) {
     partial_map_loader_ = std::make_unique<PartialMapLoaderModule>(this, pcd_metadata_dict);
@@ -98,14 +94,14 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
     if (!missing_pcd_names.empty()) {
       std::ostringstream oss;
 
-      oss << "The following segment(s) are missing from the input PCDs: " << std::endl;
+      oss << "The following segment(s) are missing from the input PCDs: ";
 
       for (auto & fname : missing_pcd_names) {
-        oss << fname << std::endl;
+        oss << std::endl << fname;
       }
 
       RCLCPP_ERROR_STREAM(get_logger(), oss.str());
-      throw std::runtime_error("Missing PCD segments. Exiting map loader...\n");
+      throw std::runtime_error("Missing PCD segments. Exiting map loader...");
     }
 
     return pcd_metadata_dict;
