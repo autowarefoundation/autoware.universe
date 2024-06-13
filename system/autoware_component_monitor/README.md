@@ -40,7 +40,9 @@ Add it as a composable node in your launch file:
     <load_composable_node target="$(var container_name)">
       <composable_node pkg="autoware_component_monitor"
                        plugin="autoware::component_monitor::ComponentMonitor"
-                       name="component_monitor"/>
+                       name="component_monitor">
+        <param from="$(find-pkg-share autoware_component_monitor)/config/component_monitor.param.yaml"/>
+      </composable_node>
     </load_composable_node>
 
     ...
