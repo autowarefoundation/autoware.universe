@@ -25,7 +25,7 @@
 #include <memory>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using autoware::lane_departure_checker::LaneDepartureChecker;
 
@@ -37,7 +37,9 @@ public:
     std::shared_ptr<LaneDepartureChecker> & lane_departure_checker);
 
   PlannerType getPlannerType() const override { return PlannerType::SHIFT; };
-  std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) override;
+  std::optional<PullOutPath> plan(
+    const Pose & start_pose, const Pose & goal_pose,
+    PlannerDebugData & planner_debug_data) override;
 
   std::vector<PullOutPath> calcPullOutPaths(
     const RouteHandler & route_handler, const lanelet::ConstLanelets & road_lanes,
@@ -59,6 +61,6 @@ private:
     const double lon_acc, const double shift_time, const double shift_length,
     const double max_curvature, const double min_distance) const;
 };
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__SHIFT_PULL_OUT_HPP_

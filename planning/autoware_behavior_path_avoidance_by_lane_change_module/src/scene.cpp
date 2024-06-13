@@ -20,8 +20,8 @@
 #include "autoware_behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <autoware_behavior_path_lane_change_module/utils/utils.hpp>
 #include <autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
-#include <behavior_path_lane_change_module/utils/utils.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/logging.hpp>
 
@@ -35,12 +35,12 @@
 
 namespace autoware::behavior_path_planner
 {
-using ::behavior_path_planner::Direction;
-using ::behavior_path_planner::LaneChangeModuleType;
-using ::behavior_path_planner::ObjectInfo;
-using ::behavior_path_planner::Point2d;
-using ::behavior_path_planner::utils::lane_change::debug::createExecutionArea;
-namespace utils = ::behavior_path_planner::utils;
+using autoware::behavior_path_planner::Direction;
+using autoware::behavior_path_planner::LaneChangeModuleType;
+using autoware::behavior_path_planner::ObjectInfo;
+using autoware::behavior_path_planner::Point2d;
+using autoware::behavior_path_planner::utils::lane_change::debug::createExecutionArea;
+namespace utils = autoware::behavior_path_planner::utils;
 
 AvoidanceByLaneChange::AvoidanceByLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters,

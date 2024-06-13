@@ -25,7 +25,7 @@
 
 #include <memory>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using autoware::freespace_planning_algorithms::AbstractPlanningAlgorithm;
 using autoware::freespace_planning_algorithms::AstarSearch;
@@ -40,13 +40,14 @@ public:
 
   PlannerType getPlannerType() const override { return PlannerType::FREESPACE; }
 
-  std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & end_pose) override;
+  std::optional<PullOutPath> plan(
+    const Pose & start_pose, const Pose & end_pose, PlannerDebugData & planner_debug_data) override;
 
 protected:
   std::unique_ptr<AbstractPlanningAlgorithm> planner_;
   double velocity_;
   bool use_back_;
 };
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__FREESPACE_PULL_OUT_HPP_

@@ -15,23 +15,23 @@
 #ifndef SCENE_HPP_
 #define SCENE_HPP_
 
+#include "autoware_behavior_path_lane_change_module/scene.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/helper.hpp"
-#include "behavior_path_lane_change_module/scene.hpp"
 #include "data_structs.hpp"
 
 #include <memory>
 
 namespace autoware::behavior_path_planner
 {
-using ::behavior_path_planner::DebugData;
+using autoware::behavior_path_planner::DebugData;
 using AvoidanceDebugData = DebugData;
-using ::behavior_path_planner::AvoidancePlanningData;
-using ::behavior_path_planner::LaneChangeParameters;
-using ::behavior_path_planner::NormalLaneChange;
-using ::behavior_path_planner::ObjectData;
-using ::behavior_path_planner::ObjectDataArray;
-using ::behavior_path_planner::PredictedObject;
-using ::behavior_path_planner::helper::static_obstacle_avoidance::AvoidanceHelper;
+using autoware::behavior_path_planner::AvoidancePlanningData;
+using autoware::behavior_path_planner::LaneChangeParameters;
+using autoware::behavior_path_planner::NormalLaneChange;
+using autoware::behavior_path_planner::ObjectData;
+using autoware::behavior_path_planner::ObjectDataArray;
+using autoware::behavior_path_planner::PredictedObject;
+using autoware::behavior_path_planner::helper::static_obstacle_avoidance::AvoidanceHelper;
 
 class AvoidanceByLaneChange : public NormalLaneChange
 {
