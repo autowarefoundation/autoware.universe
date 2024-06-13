@@ -17,11 +17,10 @@ if(BUILD_TESTING)
     src/smart_pose_buffer.cpp
   )
 
-  ament_add_gtest(test_tpe
+  ament_auto_add_gtest(test_tpe
     test/test_tpe.cpp
     src/tree_structured_parzen_estimator.cpp
   )
-  target_include_directories(test_tpe PRIVATE include)
 endif()
 
 ament_auto_package(
