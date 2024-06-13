@@ -96,8 +96,6 @@ public:
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
   void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) override;
   void warnIfTimestampsTooLate(bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late);
-
-  virtual void initialize() = 0;
   void undistortPoint(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
@@ -108,9 +106,6 @@ public:
     static_cast<Derived *>(this)->undistortPointImplementation(
       it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
   };
-
-  virtual void setPointCloudTransform(
-    const std::string & base_link_frame, const std::string & lidar_frame) = 0;
 };
 
 class DistortionCorrector2D : public DistortionCorrector<DistortionCorrector2D>
