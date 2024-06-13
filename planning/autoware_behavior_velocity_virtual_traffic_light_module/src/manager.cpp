@@ -14,9 +14,16 @@
 
 #include "manager.hpp"
 
-#include <behavior_velocity_planner_common/utilization/util.hpp>
+#include "tier4_autoware_utils/geometry/boost_geometry.hpp"
+
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
+#include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/ros/parameter.hpp>
+
+#include <boost/geometry/algorithms/intersects.hpp>
+
+#include <lanelet2_core/geometry/LineString.h>
 
 #include <memory>
 #include <set>
@@ -28,7 +35,7 @@ namespace autoware::behavior_velocity_planner
 {
 using lanelet::autoware::VirtualTrafficLight;
 using tier4_autoware_utils::getOrDeclareParameter;
-namespace planning_utils = ::behavior_velocity_planner::planning_utils;
+namespace planning_utils = autoware::behavior_velocity_planner::planning_utils;
 
 VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
@@ -52,13 +59,30 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
 void VirtualTrafficLightModuleManager::launchNewModules(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
+  tier4_autoware_utils::LineString2d ego_path_linestring;
+  for (const auto & path_point : path.points) {
+    ego_path_linestring.push_back(
+      tier4_autoware_utils::fromMsg(path_point.point.pose.position).to_2d());
+  }
+
   for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
+    const auto stop_line_opt = m.first->getStopLine();
+    if (!stop_line_opt) {
+      RCLCPP_FATAL(
+        logger_, "No stop line at virtual_traffic_light_reg_elem_id = %ld, please fix the map!",
+        m.first->id());
+      continue;
+    }
+
     // Use lanelet_id to unregister module when the route is changed
     const auto lane_id = m.second.id();
     const auto module_id = lane_id;
-    if (!isModuleRegistered(module_id)) {
+    if (
+      !isModuleRegistered(module_id) &&
+      boost::geometry::intersects(
+        ego_path_linestring, lanelet::utils::to2D(stop_line_opt.value()).basicLineString())) {
       registerModule(std::make_shared<VirtualTrafficLightModule>(
         module_id, lane_id, *m.first, m.second, planner_param_,
         logger_.get_child("virtual_traffic_light_module"), clock_));
@@ -82,4 +106,4 @@ VirtualTrafficLightModuleManager::getModuleExpiredFunction(
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
   autoware::behavior_velocity_planner::VirtualTrafficLightModulePlugin,
-  behavior_velocity_planner::PluginInterface)
+  autoware::behavior_velocity_planner::PluginInterface)

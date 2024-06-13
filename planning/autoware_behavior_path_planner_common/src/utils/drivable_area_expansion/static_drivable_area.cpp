@@ -232,7 +232,7 @@ std::vector<lanelet::ConstPoint3d> extractBoundFromPolygon(
 }
 }  // namespace
 
-namespace behavior_path_planner::utils::drivable_area_processing
+namespace autoware::behavior_path_planner::utils::drivable_area_processing
 {
 std::optional<std::pair<size_t, geometry_msgs::msg::Point>> intersectBound(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
@@ -636,9 +636,9 @@ std::vector<Point> updateBoundary(
 
   return center_pos;
 }
-}  // namespace behavior_path_planner::utils::drivable_area_processing
+}  // namespace autoware::behavior_path_planner::utils::drivable_area_processing
 
-namespace behavior_path_planner::utils
+namespace autoware::behavior_path_planner::utils
 {
 using tier4_autoware_utils::Point2d;
 
@@ -843,7 +843,8 @@ void generateDrivableArea(
 
   const auto & expansion_params = planner_data->drivable_area_expansion_parameters;
   if (expansion_params.enabled) {
-    drivable_area_expansion::expand_drivable_area(path, planner_data);
+    autoware::behavior_path_planner::drivable_area_expansion::expand_drivable_area(
+      path, planner_data);
   }
 }
 
@@ -1822,4 +1823,4 @@ lanelet::ConstLanelets combineLanelets(
 
   return combined_lanes;
 }
-}  // namespace behavior_path_planner::utils
+}  // namespace autoware::behavior_path_planner::utils
