@@ -104,7 +104,8 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::getPCDMetadata(
         oss << fname << std::endl;
       }
 
-      RCLCPP_WARN_STREAM(get_logger(), oss.str());
+      RCLCPP_ERROR_STREAM(get_logger(), oss.str());
+      throw std::runtime_error("Missing PCD segments. Exiting map loader...\n");
     }
 
     return pcd_metadata_dict;
