@@ -52,7 +52,7 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&DistortionCorrectorComponent::onPointCloud, this, std::placeholders::_1));
 
-  // Setup the undistortor
+  // Setup the distortion corrector
 
   if (use_3d_distortion_correction_) {
     DistortionCorrector_ = std::make_unique<DistortionCorrector3D>(this);
