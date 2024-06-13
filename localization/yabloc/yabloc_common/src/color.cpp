@@ -42,16 +42,11 @@ Color hsv_to_rgb(float h_, float s_, float v_)
   const float max = v_;
   const float min = max * (1.0f - s_);
 
-  if (h < 60)
-    return {max, h / 60 * (max - min) + min, min};
-  if (h < 120)
-    return {(120 - h) / 60 * (max - min) + min, max, min};
-  if (h < 180)
-    return {min, max, (h - 120) / 60 * (max - min) + min};
-  if (h < 240)
-    return {min, (240 - h) / 60 * (max - min) + min, max};
-  if (h < 300)
-    return {(h - 240) / 60 * (max - min) + min, min, max};
+  if (h < 60) return {max, h / 60 * (max - min) + min, min};
+  if (h < 120) return {(120 - h) / 60 * (max - min) + min, max, min};
+  if (h < 180) return {min, max, (h - 120) / 60 * (max - min) + min};
+  if (h < 240) return {min, (240 - h) / 60 * (max - min) + min, max};
+  if (h < 300) return {(h - 240) / 60 * (max - min) + min, min, max};
   return {max, min, (360 - h) / 60 * (max - min) + min};
 }
 

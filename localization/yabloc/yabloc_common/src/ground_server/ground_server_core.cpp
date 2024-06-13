@@ -21,13 +21,14 @@
 #include <yabloc_common/color.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
-#include <cmath>
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/crop_box.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
+
+#include <cmath>
 
 namespace yabloc::ground_server
 {
@@ -230,8 +231,8 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
   const Eigen::Vector3f filt_normal = normal_filter_.update(normal);
 
   GroundPlane plane;
-  plane.xyz = Eigen::Vector3f(static_cast<float>(point.x), static_cast<float>(point.y),
-    predicted_z);
+  plane.xyz =
+    Eigen::Vector3f(static_cast<float>(point.x), static_cast<float>(point.y), predicted_z);
   plane.normal = filt_normal;
 
   // Compute z value by intersection of estimated plane and orthogonal line

@@ -30,10 +30,10 @@ void inline upsample_line_string(
   const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to,
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 {
-  Eigen::Vector3f f(static_cast<float>(from.x()), static_cast<float>(from.y()),
-    static_cast<float>(from.z()));
-  Eigen::Vector3f t(static_cast<float>(to.x()), static_cast<float>(to.y()),
-    static_cast<float>(to.z()));
+  Eigen::Vector3f f(
+    static_cast<float>(from.x()), static_cast<float>(from.y()), static_cast<float>(from.z()));
+  Eigen::Vector3f t(
+    static_cast<float>(to.x()), static_cast<float>(to.y()), static_cast<float>(to.z()));
   float length = (t - f).norm();
   Eigen::Vector3f d = (t - f).normalized();
   for (float l = 0; l < length; l += 0.5f) {
@@ -44,8 +44,7 @@ void inline upsample_line_string(
 };
 
 std::vector<int> inline merge_indices(
-  const std::vector<int> & indices1, const std::vector<int> & indices2
-)
+  const std::vector<int> & indices1, const std::vector<int> & indices2)
 {
   std::unordered_set<int> set;
   for (int i : indices1) set.insert(i);

@@ -55,7 +55,7 @@ private:
   void on_map(const LaneletMapBin & msg);
 
   static pcl::PointNormal to_point_normal(
-    const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to) ;
+    const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to);
 
   static pcl::PointCloud<pcl::PointNormal> split_line_strings(
     const lanelet::ConstLineStrings3d & line_strings);

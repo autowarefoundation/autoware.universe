@@ -44,7 +44,7 @@ Ll2Decomposer::Ll2Decomposer(const rclcpp::NodeOptions & options) : Node("ll2_to
     [this](const std::string & param_name, std::set<std::string> & labels) -> void {
     this->template declare_parameter<std::vector<std::string>>(param_name);
     auto label_array = get_parameter(param_name).as_string_array();
-    for (const auto& l : label_array) labels.insert(l);
+    for (const auto & l : label_array) labels.insert(l);
   };
 
   load_lanelet2_labels("road_marking_labels", road_marking_labels_);
@@ -86,7 +86,7 @@ pcl::PointCloud<pcl::PointXYZL> Ll2Decomposer::load_bounding_boxes(
 
   for (const lanelet::ConstPolygon3d & polygon : polygons) {
     if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
-    const lanelet::Attribute& attr = polygon.attribute(lanelet::AttributeName::Type);
+    const lanelet::Attribute & attr = polygon.attribute(lanelet::AttributeName::Type);
     if (bounding_box_labels_.count(attr.value()) == 0) continue;
 
     for (const lanelet::ConstPoint3d & p : polygon) {
@@ -151,7 +151,7 @@ lanelet::ConstLineStrings3d Ll2Decomposer::extract_specified_line_string(
   lanelet::ConstLineStrings3d line_strings;
   for (const lanelet::ConstLineString3d & line : line_string_layer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
-    const lanelet::Attribute& attr = line.attribute(lanelet::AttributeName::Type);
+    const lanelet::Attribute & attr = line.attribute(lanelet::AttributeName::Type);
     if (visible_labels.count(attr.value()) == 0) continue;
     line_strings.push_back(line);
   }
@@ -164,7 +164,7 @@ lanelet::ConstPolygons3d Ll2Decomposer::extract_specified_polygon(
   lanelet::ConstPolygons3d polygons;
   for (const lanelet::ConstPolygon3d & polygon : polygon_layer) {
     if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
-    const lanelet::Attribute& attr = polygon.attribute(lanelet::AttributeName::Type);
+    const lanelet::Attribute & attr = polygon.attribute(lanelet::AttributeName::Type);
     if (visible_labels.count(attr.value()) == 0) continue;
     polygons.push_back(polygon);
   }

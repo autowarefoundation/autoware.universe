@@ -31,8 +31,10 @@ struct Color
   }
 
   explicit Color(const cv::Scalar & rgb, float a = 1.0f)
-  : r(static_cast<float>(rgb[2]) / 255.f), g(static_cast<float>(rgb[1]) / 255.f),
-    b(static_cast<float>(rgb[0]) / 255.f), a(a)
+  : r(static_cast<float>(rgb[2]) / 255.f),
+    g(static_cast<float>(rgb[1]) / 255.f),
+    b(static_cast<float>(rgb[0]) / 255.f),
+    a(a)
   {
   }
 

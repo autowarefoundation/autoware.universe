@@ -68,8 +68,7 @@ pcl::PointCloud<pcl::PointXYZ> shrink_vertices(
 {
   Eigen::Vector3f center = std::accumulate(
     vertices.begin(), vertices.end(), Eigen::Vector3f::Zero().eval(),
-    [](const Eigen::Vector3f& acc, const pcl::PointXYZ& p) { return acc + p.getVector3fMap(); }
-  );
+    [](const Eigen::Vector3f & acc, const pcl::PointXYZ & p) { return acc + p.getVector3fMap(); });
   center /= static_cast<float>(vertices.size());
 
   pcl::PointCloud<pcl::PointXYZ> dst_cloud;
