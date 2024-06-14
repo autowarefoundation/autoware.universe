@@ -335,15 +335,13 @@ dc   | dc dc dc  dc ||zc|
       continue;
     }
     // project
-    Eigen::Vector3f normalized_projected_point = camera_projection * Eigen::Vector3f(p_x, p_y, p_z);
+    Eigen::Vector3f projected_point = camera_projection * Eigen::Vector3f(p_x, p_y, p_z);
     // iterate 2d bbox
     for (const auto & feature_object : objects) {
       sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
       // paint current point if it is inside bbox
       int label2d = feature_object.object.classification.front().label;
-      if (
-        !isUnknown(label2d) &&
-        isInsideBbox(normalized_projected_point.x(), normalized_projected_point.y(), roi, p_z)) {
+      if (!isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, p_z)) {
         data = &painted_pointcloud_msg.data[0];
         auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
         for (const auto & cls : isClassTable_) {
@@ -354,7 +352,7 @@ dc   | dc dc dc  dc ||zc|
 #if 0
       // Parallelizing loop don't support push_back
       if (debugger_) {
-        debug_image_points.push_back(normalized_projected_point);
+        debug_image_points.push_back(projected_point);
       }
 #endif
     }
