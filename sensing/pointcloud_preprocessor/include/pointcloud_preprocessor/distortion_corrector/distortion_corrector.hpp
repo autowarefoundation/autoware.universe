@@ -84,7 +84,7 @@ public:
   void getIMUTransformation(
     const std::string & base_frame, const std::string & imu_frame,
     geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
-  void storeIMUToQueue(
+  void enqueueIMU(
     const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg,
     geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
 

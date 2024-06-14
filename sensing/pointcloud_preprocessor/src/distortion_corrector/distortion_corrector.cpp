@@ -49,7 +49,7 @@ void DistortionCorrector<Derived>::processIMUMessage(
   geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr =
     std::make_shared<geometry_msgs::msg::TransformStamped>();
   getIMUTransformation(base_frame, imu_msg->header.frame_id, geometry_imu_to_base_link_ptr);
-  storeIMUToQueue(imu_msg, geometry_imu_to_base_link_ptr);
+  enqueueIMU(imu_msg, geometry_imu_to_base_link_ptr);
 }
 
 template <class Derived>
@@ -87,7 +87,7 @@ void DistortionCorrector<Derived>::getIMUTransformation(
 }
 
 template <class Derived>
-void DistortionCorrector<Derived>::storeIMUToQueue(
+void DistortionCorrector<Derived>::enqueueIMU(
   const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg,
   geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr)
 {
