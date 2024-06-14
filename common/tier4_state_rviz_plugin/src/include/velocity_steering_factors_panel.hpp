@@ -26,6 +26,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
+// Autoware
+#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
+
 #include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
@@ -59,11 +62,21 @@ protected:
   QTableWidget * velocity_factors_table_{nullptr};
   QTableWidget * steering_factors_table_{nullptr};
 
-  rclcpp::Subscription<VelocityFactorArray>::SharedPtr sub_velocity_factors_;
-  rclcpp::Subscription<SteeringFactorArray>::SharedPtr sub_steering_factors_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<VelocityFactorArray>::SharedPtr
+    sub_velocity_factors_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<SteeringFactorArray>::SharedPtr
+    sub_steering_factors_;
+  // rclcpp::Subscription<VelocityFactorArray>::SharedPtr sub_velocity_factors_;
+  // rclcpp::Subscription<SteeringFactorArray>::SharedPtr sub_steering_factors_;
 
+  void onTimer();
   void onVelocityFactors(const VelocityFactorArray::ConstSharedPtr msg);
   void onSteeringFactors(const SteeringFactorArray::ConstSharedPtr msg);
+
+  // timer
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  static constexpr double check_rate = 20.0;  // [Hz]
 };
 }  // namespace rviz_plugins
 

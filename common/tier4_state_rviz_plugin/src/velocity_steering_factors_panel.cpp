@@ -90,13 +90,37 @@ void VelocitySteeringFactorsPanel::onInitialize()
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   // Planning
-  sub_velocity_factors_ = raw_node_->create_subscription<VelocityFactorArray>(
-    "/api/planning/velocity_factors", 10,
-    std::bind(&VelocitySteeringFactorsPanel::onVelocityFactors, this, _1));
+  sub_velocity_factors_ =
+    tier4_autoware_utils::InterProcessPollingSubscriber<VelocityFactorArray>::create_subscription(
+      raw_node_.get(), "/api/planning/velocity_factors", 10);
 
-  sub_steering_factors_ = raw_node_->create_subscription<SteeringFactorArray>(
-    "/api/planning/steering_factors", 10,
-    std::bind(&VelocitySteeringFactorsPanel::onSteeringFactors, this, _1));
+  sub_steering_factors_ =
+    tier4_autoware_utils::InterProcessPollingSubscriber<SteeringFactorArray>::create_subscription(
+      raw_node_.get(), "/api/planning/steering_factors", 10);
+
+  // timer
+  auto on_timer = std::bind(&VelocitySteeringFactorsPanel::onTimer, this);
+  auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::chrono::duration<double>(1.0 / check_rate));
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(on_timer)>>(
+    raw_node_->get_clock(), period, std::move(on_timer),
+    raw_node_->get_node_base_interface()->get_context());
+  raw_node_->get_node_timers_interface()->add_timer(timer_, nullptr);
+}
+
+void VelocitySteeringFactorsPanel::onTimer()
+{
+  // VelocityFactors
+  {
+    auto steering_factors = sub_steering_factors_->takeNewData();
+    if (steering_factors) onSteeringFactors(steering_factors);
+  }
+
+  // SteeringFactors
+  {
+    auto velocity_factors = sub_velocity_factors_->takeNewData();
+    if (velocity_factors) onVelocityFactors(velocity_factors);
+  }
 }
 
 void VelocitySteeringFactorsPanel::onVelocityFactors(const VelocityFactorArray::ConstSharedPtr msg)

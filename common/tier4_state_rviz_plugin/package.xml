@@ -20,6 +20,7 @@
   <depend>qtbase5-dev</depend>
   <depend>rclcpp</depend>
   <depend>rviz_common</depend>
+  <depend>tier4_autoware_utils</depend>
   <depend>tier4_control_msgs</depend>
   <depend>tier4_external_api_msgs</depend>
   <depend>tier4_planning_msgs</depend>
@@ -29,6 +30,6 @@
 
   <export>
     <build_type>ament_cmake</build_type>
-    <rviz plugin="${prefix}/plugins/plugin_description.xml"/>
+    <rviz plugin="${prefix}/plugins/plugin_description.xml" />
   </export>
 </package>
