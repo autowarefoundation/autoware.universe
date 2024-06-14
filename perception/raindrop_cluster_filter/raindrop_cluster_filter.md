@@ -27,7 +27,7 @@ Mainly this focuses on filtering out unknown objects with very low intensity poi
 ### Core Parameters
 
 | Name                              | Type  | Default Value                                           | Description                                   |
-| --------------------------------- | ----- | ------------------------------------------------------- | --------------------------------------------- |
+| --------------------------------- | ----- | ------------------------------------------------------- |-----------------------------------------------|
 | `filter_target_label.UNKNOWN`     | bool  | false                                                   | If true, unknown objects are filtered.        |
 | `filter_target_label.CAR`         | bool  | false                                                   | If true, car objects are filtered.            |
 | `filter_target_label.TRUCK`       | bool  | false                                                   | If true, truck objects are filtered.          |
@@ -41,7 +41,7 @@ Mainly this focuses on filtering out unknown objects with very low intensity poi
 | `max_y`                           | float | 20.00                                                   | Maximum of y of the filter effective range    |
 | `min_y`                           | float | -20.00                                                  | Minium of y of the filter effective range     |
 | `intensity_threshold`             | float | 1.0                                                     | The threshold of average intensity for filter |
-| `existence_probability_threshold` | float | The existence probability threshold to apply the filter |
+| `existence_probability_threshold` | float | The existence probability threshold to apply the filter | 0.2                                           |
 
 ## Assumptions / Known limits
 
