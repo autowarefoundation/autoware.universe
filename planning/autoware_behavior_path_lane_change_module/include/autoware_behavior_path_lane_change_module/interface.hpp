@@ -35,7 +35,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
@@ -58,8 +58,6 @@ public:
   LaneChangeInterface & operator=(const LaneChangeInterface &) = delete;
   LaneChangeInterface & operator=(LaneChangeInterface &&) = delete;
   ~LaneChangeInterface() override = default;
-
-  void processOnEntry() override;
 
   void processOnExit() override;
 
@@ -92,25 +90,6 @@ public:
   void setData(const std::shared_ptr<const PlannerData> & data) override;
 
   MarkerArray getModuleVirtualWall() override;
-
-  // TODO(someone): remove this, and use base class function
-  [[deprecated]] BehaviorModuleOutput run() override
-  {
-    updateData();
-
-    if (!isWaitingApproval()) {
-      return plan();
-    }
-
-    // module is waiting approval. Check it.
-    if (isActivated()) {
-      RCLCPP_DEBUG(getLogger(), "Was waiting approval, and now approved. Do plan().");
-      return plan();
-    } else {
-      RCLCPP_DEBUG(getLogger(), "keep waiting approval... Do planCandidate().");
-      return planWaitingApproval();
-    }
-  }
 
 protected:
   std::shared_ptr<LaneChangeParameters> parameters_;
@@ -154,6 +133,6 @@ protected:
 
   bool is_abort_approval_requested_{false};
 };
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_

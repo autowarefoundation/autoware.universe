@@ -39,7 +39,7 @@
 #include <string>
 #include <vector>
 
-namespace behavior_path_planner::utils
+namespace autoware::behavior_path_planner::utils
 {
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
@@ -231,7 +231,8 @@ bool isInLaneletWithYawThreshold(
   const double radius = 0.0);
 
 bool isEgoOutOfRoute(
-  const Pose & self_pose, const std::optional<PoseWithUuidStamped> & modified_goal,
+  const Pose & self_pose, const lanelet::ConstLanelet & closest_road_lane,
+  const std::optional<PoseWithUuidStamped> & modified_goal,
   const std::shared_ptr<RouteHandler> & route_handler);
 
 bool isEgoWithinOriginalLane(
@@ -348,6 +349,6 @@ size_t findNearestSegmentIndex(
 
   return motion_utils::findNearestSegmentIndex(points, pose.position);
 }
-}  // namespace behavior_path_planner::utils
+}  // namespace autoware::behavior_path_planner::utils
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_PLANNER_COMMON__UTILS__UTILS_HPP_

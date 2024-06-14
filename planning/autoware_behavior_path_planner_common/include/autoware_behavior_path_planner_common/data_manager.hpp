@@ -48,7 +48,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using autoware::route_handler::RouteHandler;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
@@ -162,7 +162,8 @@ struct PlannerData
   std::shared_ptr<RouteHandler> route_handler{std::make_shared<RouteHandler>()};
   std::map<int64_t, TrafficSignalStamped> traffic_light_id_map;
   BehaviorPathPlannerParameters parameters{};
-  drivable_area_expansion::DrivableAreaExpansionParameters drivable_area_expansion_parameters{};
+  autoware::behavior_path_planner::drivable_area_expansion::DrivableAreaExpansionParameters
+    drivable_area_expansion_parameters{};
   VelocityLimit::ConstSharedPtr external_limit_max_velocity{};
 
   mutable std::vector<geometry_msgs::msg::Pose> drivable_area_expansion_prev_path_poses{};
@@ -267,6 +268,6 @@ struct PlannerData
   }
 };
 
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_PLANNER_COMMON__DATA_MANAGER_HPP_
