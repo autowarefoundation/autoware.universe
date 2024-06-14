@@ -17,9 +17,9 @@
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
-#include <behavior_velocity_planner_common/planner_data.hpp>
-#include <behavior_velocity_planner_common/utilization/util.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
+#include <autoware_behavior_velocity_planner_common/planner_data.hpp>
+#include <autoware_behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
@@ -34,19 +34,17 @@ namespace autoware::behavior_velocity_planner
 namespace run_out_utils
 {
 namespace bg = boost::geometry;
+using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::PathPoint;
-using ::behavior_velocity_planner::PlannerData;
-using ::behavior_velocity_planner::Polygons2d;
 using tier4_autoware_utils::Box2d;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_debug_msgs::msg::Float32Stamped;
 using tier4_planning_msgs::msg::PathWithLaneId;
-using vehicle_info_util::VehicleInfo;
 using PathPointsWithLaneId = std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>;
 struct CommonParam
 {

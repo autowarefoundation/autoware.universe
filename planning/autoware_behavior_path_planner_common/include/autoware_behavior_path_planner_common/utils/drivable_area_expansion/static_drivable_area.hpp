@@ -21,9 +21,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-namespace behavior_path_planner::utils
+namespace autoware::behavior_path_planner::utils
 {
-using drivable_area_expansion::DrivableAreaExpansionParameters;
+using autoware::behavior_path_planner::drivable_area_expansion::DrivableAreaExpansionParameters;
 
 std::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes);
 
@@ -100,7 +100,7 @@ std::vector<DrivableLanes> combineDrivableLanes(
   const std::vector<DrivableLanes> & original_drivable_lanes_vec,
   const std::vector<DrivableLanes> & new_drivable_lanes_vec);
 
-}  // namespace behavior_path_planner::utils
+}  // namespace autoware::behavior_path_planner::utils
 
 // clang-format off
 #endif  // AUTOWARE_BEHAVIOR_PATH_PLANNER_COMMON__UTILS__DRIVABLE_AREA_EXPANSION__STATIC_DRIVABLE_AREA_HPP_  // NOLINT

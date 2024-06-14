@@ -22,14 +22,14 @@
 
 #include <autoware_behavior_path_planner_common/interface/steering_factor_interface.hpp>
 #include <autoware_behavior_path_planner_common/turn_signal_decider.hpp>
+#include <autoware_objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
+#include <autoware_route_handler/route_handler.hpp>
+#include <autoware_rtc_interface/rtc_interface.hpp>
 #include <magic_enum.hpp>
 #include <motion_utils/marker/marker_helper.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
-#include <objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <route_handler/route_handler.hpp>
-#include <rtc_interface/rtc_interface.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 #include <tier4_autoware_utils/ros/uuid_helper.hpp>
@@ -54,13 +54,13 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
+using autoware::objects_of_interest_marker_interface::ColorName;
+using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
+using autoware::rtc_interface::RTCInterface;
 using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
-using objects_of_interest_marker_interface::ColorName;
-using objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
-using rtc_interface::RTCInterface;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::generateUUID;
@@ -643,6 +643,6 @@ protected:
   mutable MarkerArray drivable_lanes_marker_;
 };
 
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_PLANNER_COMMON__INTERFACE__SCENE_MODULE_INTERFACE_HPP_

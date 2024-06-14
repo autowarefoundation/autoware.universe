@@ -18,7 +18,7 @@
 #include "autoware_behavior_path_planner_common/data_manager.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
-#include <route_handler/route_handler.hpp>
+#include <autoware_route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
@@ -39,17 +39,17 @@
 #include <string>
 #include <vector>
 
-namespace behavior_path_planner::utils
+namespace autoware::behavior_path_planner::utils
 {
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
 
+using autoware::route_handler::RouteHandler;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Vector3;
-using route_handler::RouteHandler;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
@@ -231,7 +231,8 @@ bool isInLaneletWithYawThreshold(
   const double radius = 0.0);
 
 bool isEgoOutOfRoute(
-  const Pose & self_pose, const std::optional<PoseWithUuidStamped> & modified_goal,
+  const Pose & self_pose, const lanelet::ConstLanelet & closest_road_lane,
+  const std::optional<PoseWithUuidStamped> & modified_goal,
   const std::shared_ptr<RouteHandler> & route_handler);
 
 bool isEgoWithinOriginalLane(
@@ -327,7 +328,7 @@ lanelet::ConstLanelets calcLaneAroundPose(
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 
 lanelet::ConstLanelets getLaneletsFromPath(
-  const PathWithLaneId & path, const std::shared_ptr<route_handler::RouteHandler> & route_handler);
+  const PathWithLaneId & path, const std::shared_ptr<RouteHandler> & route_handler);
 
 std::string convertToSnakeCase(const std::string & input_str);
 
@@ -348,6 +349,6 @@ size_t findNearestSegmentIndex(
 
   return motion_utils::findNearestSegmentIndex(points, pose.position);
 }
-}  // namespace behavior_path_planner::utils
+}  // namespace autoware::behavior_path_planner::utils
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_PLANNER_COMMON__UTILS__UTILS_HPP_
