@@ -1,17 +1,17 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- Interface parameters -->
+  <!-- Pipeline junctions -->
   <arg name="mode" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
+  <arg name="lidar_detection_model" description="options: `transfusion`, `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="use_object_filter" description="use object filter"/>
   <arg name="use_detection_by_tracker"/>
   <arg name="objects_validation_method"/>
 
-  <!-- Lidar parameters -->
+  <!-- Lidar interfaces -->
   <arg name="input/pointcloud"/>
-  <arg name="lidar_detection_model" description="options: `transfusion`, `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
-  <arg name="use_object_filter" description="use object filter"/>
   <arg name="pointcloud_container_name"/>
 
-  <!-- Camera parameters -->
+  <!-- Camera interfaces -->
   <arg name="image_raw0"/>
   <arg name="camera_info0"/>
   <arg name="image_raw1"/>
@@ -30,7 +30,7 @@
   <arg name="camera_info7"/>
   <arg name="image_number"/>
 
-  <!-- Radar parameters -->
+  <!-- Radar interfaces -->
   <arg name="input/radar" default="/sensing/radar/detected_objects"/>
 
   <!-- Camera-Lidar-Radar fusion based detection -->
