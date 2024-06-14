@@ -99,8 +99,8 @@ public:
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
-    bool & is_twist_valid, bool & is_imu_valid)
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float const & time_offset,
+    const bool & is_twist_valid, const bool & is_imu_valid)
   {
     static_cast<Derived *>(this)->undistortPointImplementation(
       it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
@@ -130,8 +130,8 @@ public:
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
-    bool & is_twist_valid, bool & is_imu_valid);
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, const float & time_offset,
+    const bool & is_twist_valid, const bool & is_imu_valid);
 
   void setPointCloudTransform(
     const std::string & base_frame, const std::string & lidar_frame) override;
@@ -157,8 +157,8 @@ public:
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
-    bool & is_twist_valid, bool & is_imu_valid);
+    std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, const float & time_offset,
+    const bool & is_twist_valid, const bool & is_imu_valid);
   void setPointCloudTransform(
     const std::string & base_frame, const std::string & lidar_frame) override;
 };

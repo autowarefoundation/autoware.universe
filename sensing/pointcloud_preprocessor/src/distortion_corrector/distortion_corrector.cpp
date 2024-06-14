@@ -328,8 +328,8 @@ void DistortionCorrector2D::undistortPointImplementation(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-  std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
-  bool & is_twist_valid, bool & is_imu_valid)
+  std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, const float & time_offset,
+  const bool & is_twist_valid, const bool & is_imu_valid)
 {
   // Initialize linear velocity and angular velocity
   float v{0.0f}, w{0.0f};
@@ -373,8 +373,8 @@ void DistortionCorrector3D::undistortPointImplementation(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
-  std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
-  bool & is_twist_valid, bool & is_imu_valid)
+  std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, const float & time_offset,
+  const bool & is_twist_valid, const bool & is_imu_valid)
 {
   // Initialize linear velocity and angular velocity
   float v_x_{0.0f}, v_y_{0.0f}, v_z_{0.0f}, w_x_{0.0f}, w_y_{0.0f}, w_z_{0.0f};
