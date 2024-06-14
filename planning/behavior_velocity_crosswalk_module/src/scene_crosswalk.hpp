@@ -17,13 +17,13 @@
 
 #include "behavior_velocity_crosswalk_module/util.hpp"
 
-#include <behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware_behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_debug_msgs/msg/string_stamped.hpp>
 
@@ -46,18 +46,18 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner
+namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
-using autoware_auto_perception_msgs::msg::ObjectClassification;
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using autoware_perception_msgs::msg::TrafficSignalElement;
+using autoware_perception_msgs::msg::ObjectClassification;
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::TrafficLightElement;
 using lanelet::autoware::Crosswalk;
 using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_autoware_utils::Polygon2d;
 using tier4_autoware_utils::StopWatch;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace
 {
@@ -182,7 +182,7 @@ public:
       const rclcpp::Time & now, const geometry_msgs::msg::Point & position, const double vel,
       const bool is_ego_yielding, const std::optional<CollisionPoint> & collision_point,
       const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon,
-      const bool is_object_on_ego_path)
+      const bool is_object_away_from_path)
     {
       const bool is_stopped = vel < planner_param.stop_object_velocity;
 
@@ -202,7 +202,7 @@ public:
           planner_param.timeout_set_for_no_intention_to_walk, distance_to_crosswalk);
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < timeout_no_intention_to_walk;
-        if (is_ego_yielding && !intent_to_cross && !is_object_on_ego_path) {
+        if (is_ego_yielding && !intent_to_cross && is_object_away_from_path) {
           collision_state = CollisionState::IGNORE;
           return;
         }
@@ -261,15 +261,16 @@ public:
       // update current uuids
       current_uuids_.push_back(uuid);
 
-      const bool is_object_on_ego_path =
-        boost::geometry::distance(tier4_autoware_utils::fromMsg(position).to_2d(), attention_area) <
-        0.5;
+      const bool is_object_away_from_path =
+        !attention_area.outer().empty() &&
+        boost::geometry::distance(tier4_autoware_utils::fromMsg(position).to_2d(), attention_area) >
+          0.5;
 
       // add new object
       if (objects.count(uuid) == 0) {
         if (
           has_traffic_light && planner_param.disable_yield_for_new_stopped_object &&
-          !is_object_on_ego_path) {
+          is_object_away_from_path) {
           objects.emplace(uuid, ObjectInfo{CollisionState::IGNORE});
         } else {
           objects.emplace(uuid, ObjectInfo{CollisionState::YIELD});
@@ -279,7 +280,7 @@ public:
       // update object state
       objects.at(uuid).transitState(
         now, position, vel, is_ego_yielding, collision_point, planner_param, crosswalk_polygon,
-        is_object_on_ego_path);
+        is_object_away_from_path);
       objects.at(uuid).collision_point = collision_point;
       objects.at(uuid).position = position;
       objects.at(uuid).classification = classification;
@@ -352,7 +353,7 @@ private:
   std::optional<double> findEgoPassageDirectionAlongPath(
     const PathWithLaneId & sparse_resample_path) const;
   std::optional<double> findObjectPassageDirectionAlongVehicleLane(
-    const autoware_auto_perception_msgs::msg::PredictedPath & path) const;
+    const autoware_perception_msgs::msg::PredictedPath & path) const;
 
   std::optional<CollisionPoint> getCollisionPoint(
     const PathWithLaneId & ego_path, const PredictedObject & object,
@@ -418,7 +419,7 @@ private:
     const double width_m, const double length_m);
 
   static geometry_msgs::msg::Polygon createVehiclePolygon(
-    const vehicle_info_util::VehicleInfo & vehicle_info);
+    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
   void recordTime(const int step_num)
   {
@@ -458,6 +459,6 @@ private:
   std::optional<rclcpp::Time> current_initial_occlusion_time_;
   std::optional<rclcpp::Time> most_recent_occlusion_time_;
 };
-}  // namespace behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner
 
 #endif  // SCENE_CROSSWALK_HPP_

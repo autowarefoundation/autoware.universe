@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace behavior_velocity_planner::dynamic_obstacle_stop
+namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop
 {
 
 /// @brief filter the given predicted objects
@@ -30,20 +30,19 @@ namespace behavior_velocity_planner::dynamic_obstacle_stop
 /// @param params parameters
 /// @param hysteresis [m] extra distance threshold used for filtering
 /// @return filtered predicted objects
-std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicted_objects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const EgoData & ego_data,
+std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_objects(
+  const autoware_perception_msgs::msg::PredictedObjects & objects, const EgoData & ego_data,
   const PlannerParam & params, const double hysteresis)
 {
-  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filtered_objects;
+  std::vector<autoware_perception_msgs::msg::PredictedObject> filtered_objects;
   const auto is_vehicle = [](const auto & o) {
     return std::find_if(o.classification.begin(), o.classification.end(), [](const auto & c) {
-             return c.label == autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
-                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::BUS ||
-                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
-                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
-                    c.label ==
-                      autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
-                    c.label == autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE;
+             return c.label == autoware_perception_msgs::msg::ObjectClassification::CAR ||
+                    c.label == autoware_perception_msgs::msg::ObjectClassification::BUS ||
+                    c.label == autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
+                    c.label == autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
+                    c.label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
+                    c.label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE;
            }) != o.classification.end();
   };
   const auto is_in_range = [&](const auto & o) {
@@ -92,4 +91,4 @@ std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicte
   }
   return filtered_objects;
 }
-}  // namespace behavior_velocity_planner::dynamic_obstacle_stop
+}  // namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop

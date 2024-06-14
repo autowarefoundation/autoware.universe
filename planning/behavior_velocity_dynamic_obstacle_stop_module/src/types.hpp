@@ -18,9 +18,9 @@
 #include <rclcpp/time.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/geometry/index/rtree.hpp>
 
@@ -29,7 +29,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_velocity_planner::dynamic_obstacle_stop
+namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop
 {
 using BoxIndexPair = std::pair<tier4_autoware_utils::Box2d, size_t>;
 using Rtree = boost::geometry::index::rtree<BoxIndexPair, boost::geometry::index::rstar<16, 4>>;
@@ -52,7 +52,7 @@ struct PlannerParam
 
 struct EgoData
 {
-  autoware_auto_planning_msgs::msg::PathWithLaneId path{};
+  tier4_planning_msgs::msg::PathWithLaneId path{};
   size_t first_path_idx{};
   double longitudinal_offset_to_first_path_idx;  // [m]
   geometry_msgs::msg::Pose pose;
@@ -84,6 +84,6 @@ struct Collision
   geometry_msgs::msg::Point point;
   std::string object_uuid;
 };
-}  // namespace behavior_velocity_planner::dynamic_obstacle_stop
+}  // namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop
 
 #endif  // TYPES_HPP_

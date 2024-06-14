@@ -17,11 +17,11 @@
 
 #include "types.hpp"
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
 #include <vector>
 
-namespace behavior_velocity_planner::dynamic_obstacle_stop
+namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop
 {
 
 /// @brief filter the given predicted objects
@@ -30,10 +30,10 @@ namespace behavior_velocity_planner::dynamic_obstacle_stop
 /// @param params parameters
 /// @param hysteresis [m] extra distance threshold used for filtering
 /// @return filtered predicted objects
-std::vector<autoware_auto_perception_msgs::msg::PredictedObject> filter_predicted_objects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const EgoData & ego_data,
+std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_objects(
+  const autoware_perception_msgs::msg::PredictedObjects & objects, const EgoData & ego_data,
   const PlannerParam & params, const double hysteresis);
 
-}  // namespace behavior_velocity_planner::dynamic_obstacle_stop
+}  // namespace autoware::behavior_velocity_planner::dynamic_obstacle_stop
 
 #endif  // OBJECT_FILTERING_HPP_

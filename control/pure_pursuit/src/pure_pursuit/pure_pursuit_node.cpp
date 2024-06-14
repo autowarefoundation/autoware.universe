@@ -34,7 +34,7 @@
 #include "pure_pursuit/util/planning_utils.hpp"
 #include "pure_pursuit/util/tf_utils.hpp"
 
-#include <vehicle_info_util/vehicle_info_util.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -59,7 +59,7 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
   pure_pursuit_ = std::make_unique<PurePursuit>();
 
   // Vehicle Parameters
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
+  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
   param_.wheel_base = vehicle_info.wheel_base_m;
 
   // Node Parameters
@@ -73,14 +73,14 @@ PurePursuitNode::PurePursuitNode(const rclcpp::NodeOptions & node_options)
 
   // Subscribers
   using std::placeholders::_1;
-  sub_trajectory_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+  sub_trajectory_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "input/reference_trajectory", 1, std::bind(&PurePursuitNode::onTrajectory, this, _1));
   sub_current_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "input/current_odometry", 1, std::bind(&PurePursuitNode::onCurrentOdometry, this, _1));
 
   // Publishers
-  pub_ctrl_cmd_ = this->create_publisher<autoware_auto_control_msgs::msg::AckermannLateralCommand>(
-    "output/control_raw", 1);
+  pub_ctrl_cmd_ =
+    this->create_publisher<autoware_control_msgs::msg::Lateral>("output/control_raw", 1);
 
   // Debug Publishers
   pub_debug_marker_ =
@@ -124,7 +124,7 @@ void PurePursuitNode::onCurrentOdometry(const nav_msgs::msg::Odometry::ConstShar
 }
 
 void PurePursuitNode::onTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg)
 {
   trajectory_ = msg;
 }
@@ -150,7 +150,7 @@ void PurePursuitNode::onTimer()
 
 void PurePursuitNode::publishCommand(const double target_curvature)
 {
-  autoware_auto_control_msgs::msg::AckermannLateralCommand cmd;
+  autoware_control_msgs::msg::Lateral cmd;
   cmd.stamp = get_clock()->now();
   cmd.steering_tire_angle =
     planning_utils::convertCurvatureToSteeringAngle(param_.wheel_base, target_curvature);
@@ -211,8 +211,8 @@ boost::optional<double> PurePursuitNode::calcTargetCurvature()
   return kappa;
 }
 
-boost::optional<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-PurePursuitNode::calcTargetPoint() const
+boost::optional<autoware_planning_msgs::msg::TrajectoryPoint> PurePursuitNode::calcTargetPoint()
+  const
 {
   const auto closest_idx_result = planning_utils::findClosestIdxWithDistAngThr(
     planning_utils::extractPoses(*trajectory_), current_pose_->pose, 3.0, M_PI_4);

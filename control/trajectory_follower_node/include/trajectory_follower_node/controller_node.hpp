@@ -15,25 +15,25 @@
 #ifndef TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
 #define TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
 
+#include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
+#include "autoware_trajectory_follower_base/longitudinal_controller_base.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
-#include "trajectory_follower_base/lateral_controller_base.hpp"
-#include "trajectory_follower_base/longitudinal_controller_base.hpp"
 #include "trajectory_follower_node/visibility_control.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
-#include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
-#include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+#include "autoware_control_msgs/msg/control.hpp"
+#include "autoware_control_msgs/msg/longitudinal.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/accel_stamped.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -76,22 +76,34 @@ private:
   std::shared_ptr<trajectory_follower::LongitudinalControllerBase> longitudinal_controller_;
   std::shared_ptr<trajectory_follower::LateralControllerBase> lateral_controller_;
 
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr sub_ref_path_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
-  rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>::SharedPtr sub_steering_;
-  rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_accel_;
-  rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
-  rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
-    control_cmd_pub_;
+  // Subscribers
+  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::Trajectory>
+    sub_ref_path_{this, "~/input/reference_trajectory"};
+
+  tier4_autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odometry_{
+    this, "~/input/current_odometry"};
+
+  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::SteeringReport>
+    sub_steering_{this, "~/input/current_steering"};
+
+  tier4_autoware_utils::InterProcessPollingSubscriber<
+    geometry_msgs::msg::AccelWithCovarianceStamped>
+    sub_accel_{this, "~/input/current_accel"};
+
+  tier4_autoware_utils::InterProcessPollingSubscriber<OperationModeState> sub_operation_mode_{
+    this, "~/input/current_operation_mode"};
+
+  // Publishers
+  rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr control_cmd_pub_;
   rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_lat_ms_;
   rclcpp::Publisher<Float64Stamped>::SharedPtr pub_processing_time_lon_ms_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_marker_pub_;
 
-  autoware_auto_planning_msgs::msg::Trajectory::SharedPtr current_trajectory_ptr_;
-  nav_msgs::msg::Odometry::SharedPtr current_odometry_ptr_;
-  autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr current_steering_ptr_;
-  geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr current_accel_ptr_;
-  OperationModeState::SharedPtr current_operation_mode_ptr_;
+  autoware_planning_msgs::msg::Trajectory::ConstSharedPtr current_trajectory_ptr_;
+  nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_ptr_;
+  autoware_vehicle_msgs::msg::SteeringReport::ConstSharedPtr current_steering_ptr_;
+  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr current_accel_ptr_;
+  OperationModeState::ConstSharedPtr current_operation_mode_ptr_;
 
   enum class LateralControllerMode {
     INVALID = 0,
@@ -106,12 +118,9 @@ private:
   /**
    * @brief compute control command, and publish periodically
    */
-  boost::optional<trajectory_follower::InputData> createInputData(rclcpp::Clock & clock) const;
+  boost::optional<trajectory_follower::InputData> createInputData(rclcpp::Clock & clock);
   void callbackTimerControl();
-  void onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr);
-  void onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void onSteering(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg);
-  void onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg);
+  bool processData(rclcpp::Clock & clock);
   bool isTimeOut(const LongitudinalOutput & lon_out, const LateralOutput & lat_out);
   LateralControllerMode getLateralControllerMode(const std::string & algorithm_name) const;
   LongitudinalControllerMode getLongitudinalControllerMode(
@@ -127,6 +136,8 @@ private:
   void publishProcessingTime(
     const double t_ms, const rclcpp::Publisher<Float64Stamped>::SharedPtr pub);
   StopWatch<std::chrono::milliseconds> stop_watch_;
+
+  static constexpr double logger_throttle_interval = 5000;
 };
 }  // namespace trajectory_follower_node
 }  // namespace autoware::motion::control
