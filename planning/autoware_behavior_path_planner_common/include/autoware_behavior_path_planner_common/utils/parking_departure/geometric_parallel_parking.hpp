@@ -31,7 +31,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -60,7 +60,7 @@ struct ParallelParkingParameters
   // pull_out
   double pull_out_velocity{0.0};
   double pull_out_lane_departure_margin{0.0};
-  double pull_out_path_interval{0.0};
+  double pull_out_arc_path_interval{0.0};
   double pull_out_max_steer_angle{0.0};
 };
 
@@ -148,7 +148,7 @@ private:
   Pose start_pose_{};
   Pose arc_end_pose_{};
 };
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 // clang-format off
 #endif  // AUTOWARE_BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PARKING_DEPARTURE__GEOMETRIC_PARALLEL_PARKING_HPP_  // NOLINT

@@ -25,27 +25,21 @@
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
+#include <string>
+#include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 using geometry_msgs::msg::Pose;
 using tier4_autoware_utils::LinearRing2d;
 using tier4_planning_msgs::msg::PathWithLaneId;
-
-enum class PlannerType {
-  NONE = 0,
-  SHIFT = 1,
-  GEOMETRIC = 2,
-  STOP = 3,
-  FREESPACE = 4,
-};
 
 class PullOutPlannerBase
 {
 public:
   explicit PullOutPlannerBase(rclcpp::Node & node, const StartPlannerParameters & parameters)
   {
-    vehicle_info_ = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+    vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
     vehicle_footprint_ = vehicle_info_.createFootprint();
     parameters_ = parameters;
   }
@@ -61,11 +55,12 @@ public:
     collision_check_margin_ = collision_check_margin;
   };
   virtual PlannerType getPlannerType() const = 0;
-  virtual std::optional<PullOutPath> plan(const Pose & start_pose, const Pose & goal_pose) = 0;
+  virtual std::optional<PullOutPath> plan(
+    const Pose & start_pose, const Pose & goal_pose, PlannerDebugData & planner_debug_data) = 0;
 
 protected:
   bool isPullOutPathCollided(
-    behavior_path_planner::PullOutPath & pull_out_path,
+    autoware::behavior_path_planner::PullOutPath & pull_out_path,
     double collision_check_distance_from_end) const
   {
     // check for collisions
@@ -86,7 +81,7 @@ protected:
       pull_out_lane_stop_objects, parameters_.object_types_to_check_for_path_generation);
 
     const auto collision_check_section_path =
-      behavior_path_planner::start_planner_utils::extractCollisionCheckSection(
+      autoware::behavior_path_planner::start_planner_utils::extractCollisionCheckSection(
         pull_out_path, collision_check_distance_from_end);
     if (!collision_check_section_path) return true;
 
@@ -95,11 +90,11 @@ protected:
       collision_check_margin_);
   };
   std::shared_ptr<const PlannerData> planner_data_;
-  vehicle_info_util::VehicleInfo vehicle_info_;
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
   LinearRing2d vehicle_footprint_;
   StartPlannerParameters parameters_;
   double collision_check_margin_;
 };
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
 
 #endif  // AUTOWARE_BEHAVIOR_PATH_START_PLANNER_MODULE__PULL_OUT_PLANNER_BASE_HPP_

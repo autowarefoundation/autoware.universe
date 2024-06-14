@@ -24,11 +24,11 @@
 #include <memory>
 #include <vector>
 
-namespace behavior_path_planner
+namespace autoware::behavior_path_planner
 {
 FreespacePullOut::FreespacePullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
-  const vehicle_info_util::VehicleInfo & vehicle_info)
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
 : PullOutPlannerBase{node, parameters}, velocity_{parameters.freespace_planner_velocity}
 {
   autoware::freespace_planning_algorithms::VehicleShape vehicle_shape(
@@ -45,7 +45,8 @@ FreespacePullOut::FreespacePullOut(
   }
 }
 
-std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const Pose & end_pose)
+std::optional<PullOutPath> FreespacePullOut::plan(
+  const Pose & start_pose, const Pose & end_pose, PlannerDebugData & planner_debug_data)
 {
   const auto & route_handler = planner_data_->route_handler;
   const double backward_path_length = planner_data_->parameters.backward_path_length;
@@ -55,6 +56,7 @@ std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const
 
   const bool found_path = planner_->makePlan(start_pose, end_pose);
   if (!found_path) {
+    planner_debug_data.conditions_evaluation.emplace_back("no path found");
     return {};
   }
 
@@ -91,8 +93,9 @@ std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const
   constexpr double offset_from_end_pose = 1.0;
   const auto arc_position_end = lanelet::utils::getArcCoordinates(road_lanes, end_pose);
   const double s_start = std::max(arc_position_end.length + offset_from_end_pose, 0.0);
-  const auto path_end_info = behavior_path_planner::utils::parking_departure::calcEndArcLength(
-    s_start, forward_path_length, road_lanes, goal_pose);
+  const auto path_end_info =
+    autoware::behavior_path_planner::utils::parking_departure::calcEndArcLength(
+      s_start, forward_path_length, road_lanes, goal_pose);
   const double s_end = path_end_info.first;
   const bool path_terminal_is_goal = path_end_info.second;
 
@@ -112,6 +115,7 @@ std::optional<PullOutPath> FreespacePullOut::plan(const Pose & start_pose, const
   pull_out_path.start_pose = start_pose;
   pull_out_path.end_pose = end_pose;
 
+  planner_debug_data.conditions_evaluation.emplace_back("success");
   return pull_out_path;
 }
-}  // namespace behavior_path_planner
+}  // namespace autoware::behavior_path_planner
