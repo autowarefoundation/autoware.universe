@@ -115,7 +115,7 @@ void DistortionCorrector<Derived>::enqueueIMU(
 }
 
 template <class Derived>
-void DistortionCorrector<Derived>::getIteratorOfTwistAndIMU(
+void DistortionCorrector<Derived>::getTwistAndIMUIterator(
   bool use_imu, double first_point_time_stamp_sec,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
   std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu)
@@ -176,7 +176,7 @@ void DistortionCorrector<Derived>::undistortPointCloud(
 
   std::deque<geometry_msgs::msg::TwistStamped>::iterator it_twist;
   std::deque<geometry_msgs::msg::Vector3Stamped>::iterator it_imu;
-  getIteratorOfTwistAndIMU(use_imu, first_point_time_stamp_sec, it_twist, it_imu);
+  getTwistAndIMUIterator(use_imu, first_point_time_stamp_sec, it_twist, it_imu);
 
   // For performance, do not instantiate `rclcpp::Time` inside of the for-loop
   double twist_stamp = rclcpp::Time(it_twist->header.stamp).seconds();

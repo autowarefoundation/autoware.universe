@@ -89,7 +89,7 @@ public:
     geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
 
   bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
-  void getIteratorOfTwistAndIMU(
+  void getTwistAndIMUIterator(
     bool use_imu, double first_point_time_stamp_sec,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
