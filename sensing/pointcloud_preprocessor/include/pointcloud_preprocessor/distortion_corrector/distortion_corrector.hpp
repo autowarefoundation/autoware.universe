@@ -94,7 +94,7 @@ public:
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
   void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) override;
-  void warnIfTimestampsTooLate(bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late);
+  void warnIfTimestampIsTooLate(bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late);
   void undistortPoint(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
     sensor_msgs::PointCloud2Iterator<float> & it_z,

@@ -228,11 +228,11 @@ void DistortionCorrector<Derived>::undistortPointCloud(
     prev_time_stamp_sec = *it_time_stamp;
   }
 
-  warnIfTimestampsTooLate(is_twist_time_stamp_too_late, is_imu_time_stamp_too_late);
+  warnIfTimestampIsTooLate(is_twist_time_stamp_too_late, is_imu_time_stamp_too_late);
 }
 
 template <class Derived>
-void DistortionCorrector<Derived>::warnIfTimestampsTooLate(
+void DistortionCorrector<Derived>::warnIfTimestampIsTooLate(
   bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late)
 {
   if (is_twist_time_stamp_too_late) {
