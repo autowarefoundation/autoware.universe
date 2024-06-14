@@ -8,9 +8,9 @@ Since the LiDAR sensor scans by rotating an internal laser, the resulting point 
 
 ## Inner-workings / Algorithms
 
-The node utilizes twist information (linear velocity and angular velocity) from the `~/input/twist` topic. If the user sets `use_imu` to true, the node will replace the twist's angular velocity with the angular velocity from IMU. The node then moves every point in the pointcloud to compensate for the motion provided by the velocity information.
+The node uses twist information (linear and angular velocity) from the `~/input/twist` topic to correct each point in the point cloud. If the user sets `use_imu` to true, the node will replace the twist's angular velocity with the angular velocity from IMU.
 
-The node also supports two different modes of distortion correction: 2D distortion correction and 3D distortion correction. The main difference is that the 2D distortion corrector only utilizes the x-axis of linear velocity and the z-axis of angular velocity to correct the point positions. On the other hand, the 3D distortion corrector utilizes all linear and angular velocity components to correct the point positions.
+The node supports two different modes of distortion correction: 2D distortion correction and 3D distortion correction. The main difference is that the 2D distortion corrector only utilizes the x-axis of linear velocity and the z-axis of angular velocity to correct the point positions. On the other hand, the 3D distortion corrector utilizes all linear and angular velocity components to correct the point positions.
 
 Please note that the processing time difference between the two distortion methods is significant; the 3D corrector takes 50% more time than the 2D corrector. Therefore, it is recommended that in general cases, users should set `use_3d_distortion_correction` to `false`. However, in scenarios such as a vehicle going over speed bumps, using the 3D corrector can be beneficial.
 
@@ -45,4 +45,4 @@ Please note that the processing time difference between the two distortion metho
 ## Assumptions / Known limits
 
 - The node requires that time synchronization works well between the pointcloud, twist, and IMU.
-- If you want to use 3D distortion corrector without IMU, please check that the linear and angular velocity fields of your twist message are not empty.
+- If you want to use a 3D distortion corrector without IMU, please check that the linear and angular velocity fields of your twist message are not empty.
