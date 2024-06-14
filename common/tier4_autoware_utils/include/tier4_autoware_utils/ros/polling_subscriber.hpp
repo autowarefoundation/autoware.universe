@@ -20,33 +20,55 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 namespace tier4_autoware_utils
 {
 
-template <typename T, int N = 1, typename Enable = void>
+/**
+ * @brief Enum to define different polling policies
+ */
+enum class PollingPolicy {
+  LATEST,  ///< Take the latest data from queue
+  NEWEST,  ///< Take the latest data from queue if such data existed, otherwise return nullopt
+  ALL,     ///< Take all data from queue
+};
+
+template <typename T, PollingPolicy policy = PollingPolicy::LATEST>
 class InterProcessPollingSubscriber;
 
-template <typename T, int N>
-class InterProcessPollingSubscriber<T, N, typename std::enable_if<N == 1>::type>
+/**
+ * @brief Implementation class for InterProcessPollingSubscriber
+ */
+template <typename T, PollingPolicy policy>
+class InterProcessPollingSubscriberImpl
 {
 public:
-  using SharedPtr =
-    std::shared_ptr<InterProcessPollingSubscriber<T, N, typename std::enable_if<N == 1>::type>>;
+  typename rclcpp::Subscription<T>::SharedPtr subscriber_;  ///< Subscription object
+
+public:
+  using SharedPtr = std::shared_ptr<InterProcessPollingSubscriber<T, policy>>;
+
+  /**
+   * @brief Factory method to create a subscription
+   * @param node Node to create the subscription
+   * @param topic_name Name of the topic to subscribe to
+   * @param qos Quality of Service settings for the subscription
+   * @return Shared pointer to the created InterProcessPollingSubscriber
+   */
   static SharedPtr create_subscription(
     rclcpp::Node * node, const std::string & topic_name, const rclcpp::QoS & qos = rclcpp::QoS{1})
   {
-    return std::make_shared<InterProcessPollingSubscriber<T, N>>(node, topic_name, qos);
+    return std::make_shared<InterProcessPollingSubscriber<T, policy>>(node, topic_name, qos);
   }
 
-private:
-  typename rclcpp::Subscription<T>::SharedPtr subscriber_;
-  typename T::SharedPtr data_;
-
-public:
-  explicit InterProcessPollingSubscriber(
+  /**
+   * @brief Constructor
+   * @param node Node to create the subscription
+   * @param topic_name Name of the topic to subscribe to
+   * @param qos Quality of Service settings for the subscription
+   */
+  explicit InterProcessPollingSubscriberImpl(
     rclcpp::Node * node, const std::string & topic_name, const rclcpp::QoS & qos = rclcpp::QoS{1})
   {
     auto noexec_callback_group =
@@ -58,91 +80,89 @@ public:
       topic_name, qos,
       [node]([[maybe_unused]] const typename T::ConstSharedPtr msg) { assert(false); },
       noexec_subscription_options);
+  }
+};
+
+/**
+ * @brief Specialization of InterProcessPollingSubscriber for the LATEST polling policy
+ * @tparam T Message type
+ */
+template <typename T>
+class InterProcessPollingSubscriber<T, PollingPolicy::LATEST>
+: public InterProcessPollingSubscriberImpl<T, PollingPolicy::LATEST>
+{
+private:
+  typename T::SharedPtr data_;  ///< Data pointer to store the latest data
+
+public:
+  /**
+   * @brief Constructor
+   * @param node Node to create the subscription
+   * @param topic_name Name of the topic to subscribe to
+   * @param qos Quality of Service settings for the subscription
+   */
+  explicit InterProcessPollingSubscriber(
+    rclcpp::Node * node, const std::string & topic_name, const rclcpp::QoS & qos = rclcpp::QoS{1})
+  : InterProcessPollingSubscriberImpl<T, PollingPolicy::LATEST>(node, topic_name, qos)
+  {
     if (qos.get_rmw_qos_profile().depth > 1) {
       throw std::invalid_argument(
         "InterProcessPollingSubscriber will be used with depth > 1, which may cause inefficient "
         "serialization while updateLatestData()");
     }
   };
-  /*
-   * @brief take and return the latest data from DDS queue if such data existed, otherwise return
-   * previous taken data("stale" data)
-   * @note if you want to ignore "stale" data, you should use takeNewData()
-   * instead
+
+  /**
+   * @brief Take and return the latest data from DDS queue if such data existed, otherwise return
+   * previous taken data ("stale" data)
+   * @return Const shared pointer to the taken data
+   * @note If you want to ignore "stale" data, you should use takeNewData() instead
    */
   typename T::ConstSharedPtr takeData()
   {
     auto new_data = std::make_shared<T>();
     rclcpp::MessageInfo message_info;
-    const bool success = subscriber_->take(*new_data, message_info);
+    const bool success = this->subscriber_->take(*new_data, message_info);
     if (success) {
       data_ = new_data;
     }
 
     return data_;
   };
-
-  /*
-   * @brief take and return the latest data from DDS queue if such data existed, otherwise return
-   * nullptr instead
-   * @note this API allows you to avoid redundant computation on the taken data which is unchanged
-   * since the previous cycle
-   */
-  typename T::ConstSharedPtr takeNewData()
-  {
-    auto new_data = std::make_shared<T>();
-    rclcpp::MessageInfo message_info;
-    const bool success = subscriber_->take(*new_data, message_info);
-    if (success) {
-      data_ = new_data;
-      return data_;
-    } else {
-      return nullptr;
-    }
-  }
 };
 
-template <typename T, int N>
-class InterProcessPollingSubscriber<T, N, typename std::enable_if<(N >= 2)>::type>
+/**
+ * @brief Specialization of InterProcessPollingSubscriber for the ALL polling policy
+ * @tparam T Message type
+ */
+template <typename T>
+class InterProcessPollingSubscriber<T, PollingPolicy::ALL>
+: public InterProcessPollingSubscriberImpl<T, PollingPolicy::ALL>
 {
 public:
-  using SharedPtr =
-    std::shared_ptr<InterProcessPollingSubscriber<T, N, typename std::enable_if<(N >= 2)>::type>>;
-  static SharedPtr create_subscription(
-    rclcpp::Node * node, const std::string & topic_name, const rclcpp::QoS & qos = rclcpp::QoS{N})
+  /**
+   * @brief Constructor
+   * @param node Node to create the subscription
+   * @param topic_name Name of the topic to subscribe to
+   * @param qos Quality of Service settings for the subscription
+   */
+  explicit InterProcessPollingSubscriber(
+    rclcpp::Node * node, const std::string & topic_name, const rclcpp::QoS & qos = rclcpp::QoS{1})
+  : InterProcessPollingSubscriberImpl<T, PollingPolicy::ALL>(node, topic_name, qos)
   {
-    return std::make_shared<InterProcessPollingSubscriber<T, N>>(node, topic_name, qos);
   }
 
-private:
-  typename rclcpp::Subscription<T>::SharedPtr subscriber_;
-
-public:
-  explicit InterProcessPollingSubscriber(
-    rclcpp::Node * node, const std::string & topic_name, const rclcpp::QoS & qos = rclcpp::QoS{N})
-  {
-    auto noexec_callback_group =
-      node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive, false);
-    auto noexec_subscription_options = rclcpp::SubscriptionOptions();
-    noexec_subscription_options.callback_group = noexec_callback_group;
-
-    subscriber_ = node->create_subscription<T>(
-      topic_name, qos,
-      [node]([[maybe_unused]] const typename T::ConstSharedPtr msg) { assert(false); },
-      noexec_subscription_options);
-    if (qos.get_rmw_qos_profile().depth < N) {
-      throw std::invalid_argument(
-        "InterProcessPollingSubscriber will be used with depth == " + std::to_string(N) +
-        ", which may cause inefficient serialization while updateLatestData()");
-    }
-  };
+  /**
+   * @brief Take and return all the data from DDS queue
+   * @return Vector of const shared pointers to the taken data
+   */
   std::vector<typename T::ConstSharedPtr> takeData()
   {
     std::vector<typename T::ConstSharedPtr> data;
     rclcpp::MessageInfo message_info;
-    for (int i = 0; i < N; ++i) {
+    while (true) {
       auto datum = std::make_shared<T>();
-      if (subscriber_->take(*datum, message_info)) {
+      if (this->subscriber_->take(*datum, message_info)) {
         data.push_back(datum);
       } else {
         break;
@@ -150,6 +170,54 @@ public:
     }
     return data;
   };
+};
+
+/**
+ * @brief Specialization of InterProcessPollingSubscriber for the NEWEST polling policy
+ * @tparam T Message type
+ */
+template <typename T>
+class InterProcessPollingSubscriber<T, PollingPolicy::NEWEST>
+: public InterProcessPollingSubscriberImpl<T, PollingPolicy::NEWEST>
+{
+private:
+  typename T::SharedPtr data_;  ///< Data pointer to store the newest data
+
+public:
+  /**
+   * @brief Constructor
+   * @param node Node to create the subscription
+   * @param topic_name Name of the topic to subscribe to
+   * @param qos Quality of Service settings for the subscription
+   */
+  explicit InterProcessPollingSubscriber(
+    rclcpp::Node * node, const std::string & topic_name, const rclcpp::QoS & qos = rclcpp::QoS{1})
+  : InterProcessPollingSubscriberImpl<T, PollingPolicy::NEWEST>(node, topic_name, qos)
+  {
+    if (qos.get_rmw_qos_profile().depth > 1) {
+      throw std::invalid_argument(
+        "InterProcessPollingSubscriber will be used with depth > 1, which may cause inefficient "
+        "serialization while updateLatestData()");
+    }
+  };
+
+  /**
+   * @brief Take and return the latest data from DDS queue if such data existed, otherwise return
+   * nullptr instead.
+   * @return Const shared pointer to the taken data, or nullopt if no data existed
+   */
+  typename T::ConstSharedPtr takeData()
+  {
+    auto new_data = std::make_shared<T>();
+    rclcpp::MessageInfo message_info;
+    const bool success = this->subscriber_->take(*new_data, message_info);
+    if (success) {
+      data_ = new_data;
+      return data_;
+    } else {
+      return nullptr;
+    }
+  }
 };
 
 }  // namespace tier4_autoware_utils

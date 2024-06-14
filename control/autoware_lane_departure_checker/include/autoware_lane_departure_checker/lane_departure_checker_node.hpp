@@ -69,8 +69,9 @@ private:
   // Subscriber
   tier4_autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odom_{
     this, "~/input/odometry"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<LaneletMapBin> sub_lanelet_map_bin_{
-    this, "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local()};
+  tier4_autoware_utils::InterProcessPollingSubscriber<
+    LaneletMapBin, tier4_autoware_utils::PollingPolicy::NEWEST>
+    sub_lanelet_map_bin_{this, "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local()};
   tier4_autoware_utils::InterProcessPollingSubscriber<LaneletRoute> sub_route_{
     this, "~/input/route"};
   tier4_autoware_utils::InterProcessPollingSubscriber<Trajectory> sub_reference_trajectory_{
