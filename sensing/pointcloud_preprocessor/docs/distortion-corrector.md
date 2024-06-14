@@ -36,11 +36,10 @@ Please note that the processing time difference between the two distortion metho
 
 ### Core Parameters
 
-| Name                           | Type     | Default Value | Description                                                 |
-| ------------------------------ | -------- | ------------- | ----------------------------------------------------------- |
-| `timestamp_field_name`         | `string` | `time_stamp`  | Name of time stamp field.                                   |
-| `use_imu`                      | `bool`   | `true`        | Use gyroscope for yaw rate if true, else use vehicle status |
-| `use_3d_distortion_correction` | `bool`   |               | Use 3d correction if true, otherwise use 2d correction      |
+| Name                           | Type   | Default Value | Description                                                 |
+| ------------------------------ | ------ | ------------- | ----------------------------------------------------------- |
+| `use_imu`                      | `bool` | `true`        | Use gyroscope for yaw rate if true, else use vehicle status |
+| `use_3d_distortion_correction` | `bool` | `false`       | Use 3d correction if true, otherwise use 2d correction      |
 
 ## Assumptions / Known limits
 
