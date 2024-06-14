@@ -32,11 +32,12 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   stop_watch_ptr_->tic("processing_time");
 
   // Parameter
-  use_imu_ = declare_parameter("use_imu", true);
-  use_3d_distortion_correction_ = declare_parameter("use_3d_distortion_correction", false);
+  base_frame_ = declare_parameter<std::string>("base_frame");
+  use_imu_ = declare_parameter<bool>("use_imu");
+  use_3d_distortion_correction_ = declare_parameter<bool>("use_3d_distortion_correction");
 
   // Publisher
-  undistorted_points_pub_ =
+  undistorted_pointcloud_pub_ =
     this->create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
 
   // Subscriber
@@ -71,20 +72,20 @@ void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstShare
     return;
   }
 
-  distortion_corrector_->processIMUMessage(base_link_frame_, imu_msg);
+  distortion_corrector_->processIMUMessage(base_frame_, imu_msg);
 }
 
 void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointcloud_msg)
 {
   stop_watch_ptr_->toc("processing_time", true);
-  const auto points_sub_count = undistorted_points_pub_->get_subscription_count() +
-                                undistorted_points_pub_->get_intra_process_subscription_count();
+  const auto points_sub_count = undistorted_pointcloud_pub_->get_subscription_count() +
+                                undistorted_pointcloud_pub_->get_intra_process_subscription_count();
 
   if (points_sub_count < 1) {
     return;
   }
 
-  distortion_corrector_->setPointCloudTransform(base_link_frame_, pointcloud_msg->header.frame_id);
+  distortion_corrector_->setPointCloudTransform(base_frame_, pointcloud_msg->header.frame_id);
 
   distortion_corrector_->initialize();
   distortion_corrector_->undistortPointCloud(use_imu_, *pointcloud_msg);
@@ -99,7 +100,7 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr pointclou
       "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 
-  undistorted_points_pub_->publish(std::move(pointcloud_msg));
+  undistorted_pointcloud_pub_->publish(std::move(pointcloud_msg));
 
   // add processing time for debug
   if (debug_publisher_) {

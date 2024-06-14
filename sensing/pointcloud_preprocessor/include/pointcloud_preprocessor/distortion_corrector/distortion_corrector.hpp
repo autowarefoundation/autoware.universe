@@ -51,9 +51,9 @@ public:
   virtual void processTwistMessage(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) = 0;
   virtual void processIMUMessage(
-    const std::string & base_link_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) = 0;
+    const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) = 0;
   virtual void setPointCloudTransform(
-    const std::string & base_link_frame, const std::string & lidar_frame) = 0;
+    const std::string & base_frame, const std::string & lidar_frame) = 0;
   virtual void initialize() = 0;
   virtual void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
 };
@@ -80,10 +80,9 @@ public:
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
 
   void processIMUMessage(
-    const std::string & base_link_frame,
-    const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
+    const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
   void getIMUTransformation(
-    const std::string & base_link_frame, const std::string & imu_frame,
+    const std::string & base_frame, const std::string & imu_frame,
     geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
   void storeIMUToQueue(
     const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg,
@@ -135,7 +134,7 @@ public:
     bool & is_twist_valid, bool & is_imu_valid);
 
   void setPointCloudTransform(
-    const std::string & base_link_frame, const std::string & lidar_frame) override;
+    const std::string & base_frame, const std::string & lidar_frame) override;
 };
 
 class DistortionCorrector3D : public DistortionCorrector<DistortionCorrector3D>
@@ -161,7 +160,7 @@ public:
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float & time_offset,
     bool & is_twist_valid, bool & is_imu_valid);
   void setPointCloudTransform(
-    const std::string & base_link_frame, const std::string & lidar_frame) override;
+    const std::string & base_frame, const std::string & lidar_frame) override;
 };
 
 }  // namespace pointcloud_preprocessor

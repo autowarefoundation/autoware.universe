@@ -20,26 +20,29 @@ Please note that the processing time difference between the two distortion metho
 
 ### Input
 
-| Name             | Type                                             | Description                        |
-| ---------------- | ------------------------------------------------ | ---------------------------------- |
-| `~/input/points` | `sensor_msgs::msg::PointCloud2`                  | Topic of the distorted pointcloud. |
-| `~/input/twist`  | `geometry_msgs::msg::TwistWithCovarianceStamped` | Topic of the twist information.    |
-| `~/input/imu`    | `sensor_msgs::msg::Imu`                          | Topic of the IMU data.             |
+| Name                 | Type                                             | Description                        |
+| -------------------- | ------------------------------------------------ | ---------------------------------- |
+| `~/input/pointcloud` | `sensor_msgs::msg::PointCloud2`                  | Topic of the distorted pointcloud. |
+| `~/input/twist`      | `geometry_msgs::msg::TwistWithCovarianceStamped` | Topic of the twist information.    |
+| `~/input/imu`        | `sensor_msgs::msg::Imu`                          | Topic of the IMU data.             |
 
 ### Output
 
-| Name              | Type                            | Description                         |
-| ----------------- | ------------------------------- | ----------------------------------- |
-| `~/output/points` | `sensor_msgs::msg::PointCloud2` | Topic of the undistorted pointcloud |
+| Name                  | Type                            | Description                         |
+| --------------------- | ------------------------------- | ----------------------------------- |
+| `~/output/pointcloud` | `sensor_msgs::msg::PointCloud2` | Topic of the undistorted pointcloud |
 
 ## Parameters
 
 ### Core Parameters
 
-| Name                           | Type   | Default Value | Description                                                 |
-| ------------------------------ | ------ | ------------- | ----------------------------------------------------------- |
-| `use_imu`                      | `bool` | `true`        | Use gyroscope for yaw rate if true, else use vehicle status |
-| `use_3d_distortion_correction` | `bool` | `false`       | Use 3d correction if true, otherwise use 2d correction      |
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/distortion_corrector.schema.json") }}
+
+## Launch
+
+```bash
+ros2 launch pointcloud_preprocessor distortion_corrector.launch.xml
+```
 
 ## Assumptions / Known limits
 

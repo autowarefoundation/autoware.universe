@@ -44,12 +44,12 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<PointCloud2>::SharedPtr pointcloud_sub_;
 
-  rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_points_pub_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr undistorted_pointcloud_pub_;
 
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
 
-  std::string base_link_frame_ = "base_link";
+  std::string base_frame_;
   bool use_imu_;
   bool use_3d_distortion_correction_;
 
