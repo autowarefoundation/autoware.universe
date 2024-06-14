@@ -23,14 +23,13 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
 : Node("distortion_corrector_node", options)
 {
   // initialize debug tool
-  {
-    using tier4_autoware_utils::DebugPublisher;
-    using tier4_autoware_utils::StopWatch;
-    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
-    debug_publisher_ = std::make_unique<DebugPublisher>(this, "distortion_corrector");
-    stop_watch_ptr_->tic("cyclic_time");
-    stop_watch_ptr_->tic("processing_time");
-  }
+
+  using tier4_autoware_utils::DebugPublisher;
+  using tier4_autoware_utils::StopWatch;
+  stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+  debug_publisher_ = std::make_unique<DebugPublisher>(this, "distortion_corrector");
+  stop_watch_ptr_->tic("cyclic_time");
+  stop_watch_ptr_->tic("processing_time");
 
   // Parameter
   use_imu_ = declare_parameter("use_imu", true);
