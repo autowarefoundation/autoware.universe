@@ -48,10 +48,11 @@ SegmentFilter::SegmentFilter(const rclcpp::NodeOptions & options)
 cv::Point2i SegmentFilter::to_cv_point(const Eigen::Vector3f & v) const
 {
   cv::Point2i pt;
-  pt.x = static_cast<int>(-v.y() / max_range_ * static_cast<float>(image_size_) * 0.5f +
+  pt.x = static_cast<int>(
+    -v.y() / max_range_ * static_cast<float>(image_size_) * 0.5f +
     static_cast<float>(image_size_) / 2.0);
-  pt.y = static_cast<int>(-v.x() / max_range_ * static_cast<float>(image_size_) * 0.5f +
-    static_cast<float>(image_size_));
+  pt.y = static_cast<int>(
+    -v.x() / max_range_ * static_cast<float>(image_size_) * 0.5f + static_cast<float>(image_size_));
   return pt;
 }
 

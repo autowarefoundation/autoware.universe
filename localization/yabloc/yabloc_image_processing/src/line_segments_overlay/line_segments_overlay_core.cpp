@@ -82,7 +82,8 @@ void LineSegmentsOverlay::on_line_segments(const PointCloud2::ConstSharedPtr & l
       color = cv::Scalar(0, 0, 255);  // Red
     }
 
-    cv::line(image, cv::Point(static_cast<int>(xy1(0)), static_cast<int>(xy1(1))),
+    cv::line(
+      image, cv::Point(static_cast<int>(xy1(0)), static_cast<int>(xy1(1))),
       cv::Point(static_cast<int>(xy2(0)), static_cast<int>(xy2(1))), color, 2);
   }
 

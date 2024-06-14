@@ -72,7 +72,7 @@ void Lanelet2Overlay::on_image(const sensor_msgs::msg::Image & msg)
   // Search synchronized pose
   float min_abs_dt = std::numeric_limits<float>::max();
   std::optional<Pose> synched_pose{std::nullopt};
-  for (const auto& pose : pose_buffer_) {
+  for (const auto & pose : pose_buffer_) {
     auto dt = (rclcpp::Time(pose.header.stamp) - stamp);
     auto abs_dt = std::abs(dt.seconds());
     if (abs_dt < min_abs_dt) {
@@ -93,7 +93,7 @@ void Lanelet2Overlay::on_line_segments(const PointCloud2 & msg)
   // Search synchronized pose
   float min_dt = std::numeric_limits<float>::max();
   geometry_msgs::msg::PoseStamped synched_pose;
-  for (const auto& pose : pose_buffer_) {
+  for (const auto & pose : pose_buffer_) {
     auto dt = (rclcpp::Time(pose.header.stamp) - stamp);
     auto abs_dt = std::abs(dt.seconds());
     if (abs_dt < min_dt) {
@@ -160,8 +160,9 @@ void Lanelet2Overlay::draw_overlay_line_segments(
     if (p2_is_visible) uv2 = from_camera2 / from_camera2.z();
 
     if ((p1_is_visible) && (p2_is_visible))
-      return {true, cv::Point2i(static_cast<int>(uv1.x()), static_cast<int>(uv1.y())),
-    cv::Point2i(static_cast<int>(uv2.x()), static_cast<int>(uv2.y()))};
+      return {
+        true, cv::Point2i(static_cast<int>(uv1.x()), static_cast<int>(uv1.y())),
+        cv::Point2i(static_cast<int>(uv2.x()), static_cast<int>(uv2.y()))};
 
     Eigen::Vector3f tangent = from_camera2 - from_camera1;
     float mu = (epsilon - from_camera1.z()) / (tangent.z());
@@ -173,8 +174,9 @@ void Lanelet2Overlay::draw_overlay_line_segments(
       from_camera2 = from_camera1 + mu * tangent;
       uv2 = from_camera2 / from_camera2.z();
     }
-    return {true, cv::Point2i(static_cast<int>(uv1.x()), static_cast<int>(uv1.y())),
-    cv::Point2i(static_cast<int>(uv2.x()), static_cast<int>(uv2.y()))};
+    return {
+      true, cv::Point2i(static_cast<int>(uv1.x()), static_cast<int>(uv1.y())),
+      cv::Point2i(static_cast<int>(uv2.x()), static_cast<int>(uv2.y()))};
   };
 
   for (const pcl::PointNormal & pn : near_segments) {

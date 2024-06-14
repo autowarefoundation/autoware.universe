@@ -86,9 +86,10 @@ private:
     cv::Size new_size = size;
     if (OUTPUT_WIDTH_ > 0)
       // set new_size along with aspect ratio
-      new_size = cv::Size(OUTPUT_WIDTH_,
-        static_cast<int>(static_cast<float>(OUTPUT_WIDTH_) *
-        (static_cast<float>(size.height) / static_cast<float>(size.width))));
+      new_size = cv::Size(
+        OUTPUT_WIDTH_, static_cast<int>(
+                         static_cast<float>(OUTPUT_WIDTH_) *
+                         (static_cast<float>(size.height) / static_cast<float>(size.width))));
 
     cv::Mat new_k = cv::getOptimalNewCameraMatrix(k, d, size, 0, new_size);
 

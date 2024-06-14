@@ -27,8 +27,7 @@ GraphSegment::GraphSegment(const rclcpp::NodeOptions & options)
 : Node("graph_segment", options),
   target_height_ratio_(static_cast<float>(declare_parameter<float>("target_height_ratio"))),
   target_candidate_box_width_(
-    static_cast<int>(declare_parameter<int>("target_candidate_box_width"))
-  )
+    static_cast<int>(declare_parameter<int>("target_candidate_box_width")))
 {
   using std::placeholders::_1;
 
@@ -47,9 +46,7 @@ GraphSegment::GraphSegment(const rclcpp::NodeOptions & options)
   // additional area pickup module
   if (declare_parameter<bool>("pickup_additional_areas", true)) {
     similar_area_searcher_ =
-      std::make_unique<SimilarAreaSearcher>(
-        declare_parameter<float>("similarity_score_threshold")
-      );
+      std::make_unique<SimilarAreaSearcher>(declare_parameter<float>("similarity_score_threshold"));
   }
 }
 
@@ -59,9 +56,7 @@ cv::Vec3b random_hsv(int index)
   auto base = static_cast<double>(index);
   return {
     static_cast<unsigned char>(std::fmod(base * 0.7, 1.0) * 180),
-    static_cast<unsigned char>(0.7 * 255),
-    static_cast<unsigned char>(0.5 * 255)
-  };
+    static_cast<unsigned char>(0.7 * 255), static_cast<unsigned char>(0.5 * 255)};
 };
 
 int GraphSegment::search_most_road_like_class(const cv::Mat & segmented) const
@@ -70,8 +65,7 @@ int GraphSegment::search_most_road_like_class(const cv::Mat & segmented) const
   const float r = target_height_ratio_;
   cv::Point2i target_px(
     static_cast<int>(static_cast<float>(segmented.cols) * 0.5),
-    static_cast<int>(static_cast<float>(segmented.rows) * r)
-  );
+    static_cast<int>(static_cast<float>(segmented.rows) * r));
   cv::Rect2i rect(target_px + cv::Point2i(-bw, -bw), target_px + cv::Point2i(bw, bw));
 
   std::unordered_map<int, int> areas;

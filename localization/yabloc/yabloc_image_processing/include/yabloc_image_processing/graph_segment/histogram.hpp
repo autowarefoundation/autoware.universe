@@ -37,12 +37,9 @@ struct Histogram
   void add(const cv::Vec3b & rgb)
   {
     for (int ch = 0; ch < 3; ++ch) {
-      int index =
-        std::clamp(
-          static_cast<int>(static_cast<float>(rgb[ch]) * static_cast<float>(bin) / 255.f),
-          0,
-          bin - 1
-        );
+      int index = std::clamp(
+        static_cast<int>(static_cast<float>(rgb[ch]) * static_cast<float>(bin) / 255.f), 0,
+        bin - 1);
       data(ch, index) += 1.0f;
     }
   }
