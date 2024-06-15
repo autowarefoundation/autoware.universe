@@ -712,6 +712,7 @@ void VehicleCmdGate::onExternalEmergencyStopHeartbeat(
 void VehicleCmdGate::onGateMode(GateMode::ConstSharedPtr msg)
 {
   const auto prev_gate_mode = current_gate_mode_;
+  current_gate_mode_ = *msg;
 
   if (current_gate_mode_.data != prev_gate_mode.data) {
     RCLCPP_INFO(
