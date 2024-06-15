@@ -25,6 +25,14 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 import yaml
 
+def load_parameter_dic(share_direc_path, yaml_path):
+    param_file = os.path.join(
+        get_package_share_directory(share_direc_path), yaml_path)
+
+    with open(param_file, "r") as f:
+        param_dic = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    return param_dic
 
 def launch_setup(context, *args, **kwargs):
     ns = "pointcloud_preprocessor"
@@ -37,9 +45,46 @@ def launch_setup(context, *args, **kwargs):
         separate_concatenate_node_and_time_sync_node.lower() == "true"
     )
 
-    shared_filter_file = os.path.join(
-        get_package_share_directory("pointcloud_preprocessor"), "config/filter_param_file.yaml"
-    )
+    ## ---------------------- Set up Example parameters ---------------------------
+    ## you could modify thie part and change the parameter directly in .yaml file.
+    filter_param = load_parameter_dic("pointcloud_preprocessor", "config/filter_param_file.yaml")
+
+    sync_and_concat_param = load_parameter_dic("pointcloud_preprocessor", "config/concatenate_and_time_sync_param_file.yaml")
+
+    time_sync_param = load_parameter_dic("pointcloud_preprocessor", "config/time_synchronizer_param_file.yaml")
+
+    concat_param = load_parameter_dic("pointcloud_preprocessor", "config/concatenate_pointclouds_param_file.yaml")
+
+    crop_box_param = load_parameter_dic("pointcloud_preprocessor", "config/crop_box_filter_param_file.yaml")
+
+    sync_and_concat_updated_param = {"input_topics": LaunchConfiguration("input_points_raw_list"),
+                    "output_frame": LaunchConfiguration("tf_output_frame"),
+                    "approximate_sync": True,
+                    "publish_synchronized_pointcloud": False}
+    updated_param = {"input_topics": LaunchConfiguration("input_points_raw_list"),
+                    "output_frame": LaunchConfiguration("tf_output_frame"),
+                    "approximate_sync": True}
+    crop_box_updated_param = {"input_frame": LaunchConfiguration("tf_output_frame"),
+                        "output_frame": LaunchConfiguration("tf_output_frame"),
+                        "min_x": -200.0,
+                        "max_x": 1000.0,
+                        "min_y": -50.0,
+                        "max_y": 50.0,
+                        "min_z": -2.0,
+                        "max_z": 3.0,
+                        "negative": False}
+
+    sync_and_concat_updated = {**filter_param, **sync_and_concat_param}
+    sync_and_concat_updated.update(sync_and_concat_updated_param)
+
+    time_sync_param.update(updated_param)
+
+    concat_param_updated = {**filter_param, **concat_param}
+    concat_param_updated.update(updated_param)
+    
+    crop_box_updated = {**filter_param, **crop_box_param}
+    crop_box_updated.update(crop_box_updated_param)
+    ## ----------------------  --------------------------  ---------------------------
 
     if not is_separate_concatenate_node_and_time_sync_node:
         sync_and_concat_component = ComposableNode(
@@ -51,14 +96,7 @@ def launch_setup(context, *args, **kwargs):
                 ("output", "points_raw/concatenated"),
             ],
             parameters=[
-                {
-                    "input_topics": LaunchConfiguration("input_points_raw_list"),
-                    "output_frame": LaunchConfiguration("tf_output_frame"),
-                    "approximate_sync": True,
-                    "publish_synchronized_pointcloud": False,
-                    "input_twist_topic_type": "twist",
-                },
-                shared_filter_file,
+                sync_and_concat_updated
             ],
         )
         concat_components = [sync_and_concat_component]
@@ -72,12 +110,7 @@ def launch_setup(context, *args, **kwargs):
                 ("output", "points_raw/concatenated"),
             ],
             parameters=[
-                {
-                    "input_topics": LaunchConfiguration("input_points_raw_list"),
-                    "output_frame": LaunchConfiguration("tf_output_frame"),
-                    "approximate_sync": True,
-                },
-                shared_filter_file,
+                time_sync_param
             ],
         )
 
@@ -87,12 +120,7 @@ def launch_setup(context, *args, **kwargs):
             name="concatenate_filter",
             remappings=[("output", "points_raw/concatenated")],
             parameters=[
-                {
-                    "input_topics": LaunchConfiguration("input_points_raw_list"),
-                    "output_frame": LaunchConfiguration("tf_output_frame"),
-                    "approximate_sync": True,
-                },
-                shared_filter_file,
+                concat_param_updated
             ],
         )
         concat_components = [time_sync_component, concat_component]
@@ -118,18 +146,7 @@ def launch_setup(context, *args, **kwargs):
             ("output", LaunchConfiguration("output_points_raw")),
         ],
         parameters=[
-            {
-                "input_frame": LaunchConfiguration("tf_output_frame"),
-                "output_frame": LaunchConfiguration("tf_output_frame"),
-                "min_x": -200.0,
-                "max_x": 1000.0,
-                "min_y": -50.0,
-                "max_y": 50.0,
-                "min_z": -2.0,
-                "max_z": 3.0,
-                "negative": False,
-            },
-            shared_filter_file,
+            crop_box_updated
         ],
     )
 
