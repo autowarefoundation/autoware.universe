@@ -20,32 +20,31 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 import yaml
 
+def load_parameter_dic(share_direc_path, yaml_path):
+    param_file = os.path.join(
+        get_package_share_directory(share_direc_path), yaml_path)
+
+    with open(param_file, "r") as f:
+        param_dic = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    return param_dic
 
 def generate_launch_description():
     ns = "pointcloud_preprocessor"
     pkg = "pointcloud_preprocessor"
 
-    param_file = os.path.join(
-        get_package_share_directory("autoware_vehicle_info_utils"), "config/polygon_remover.yaml"
-    )
+    polygon_remover_param = load_parameter_dic("autoware_vehicle_info_utils", "config/polygon_remover.yaml")
 
-    shared_filter_file = os.path.join(
-        get_package_share_directory("pointcloude_preprocessor"), "config/filter_param_file.yaml"
-    )
+    param = load_parameter_dic("pointcloud_preprocessor", "config/filter_param_file.yaml")
 
-    with open(param_file, "r") as f:
-        polygon_remover_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+    param.update(polygon_remover_param)
 
     my_component = ComposableNode(
         package=pkg,
         plugin="pointcloud_preprocessor::PolygonRemoverComponent",
         name="polygon_remover",
         parameters=[
-            {
-                "polygon_vertices": polygon_remover_param["polygon_vertices"],
-                "will_visualize": polygon_remover_param["will_visualize"],
-            },
-            shared_filter_file,
+            param
         ],
     )
 
