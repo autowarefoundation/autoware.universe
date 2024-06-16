@@ -1,4 +1,4 @@
-name: build-and-test-daily
+name: build-and-test
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test-daily:
+  build-and-test:
     runs-on: [self-hosted, linux, X64]
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
