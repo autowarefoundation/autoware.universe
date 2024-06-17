@@ -324,6 +324,11 @@ bool AEB::fetchLatestData()
     return missing("control predicted trajectory");
   }
 
+  predicted_objects_ptr_ = predicted_objects_sub_.takeData();
+  if (!predicted_objects_ptr_) {
+    return missing("predicted objects");
+  }
+
   autoware_state_ = sub_autoware_state_.takeData();
   if (!autoware_state_) {
     return missing("autoware_state");
