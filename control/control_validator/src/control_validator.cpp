@@ -61,6 +61,7 @@ void ControlValidator::setupParameters()
     auto & p = validation_params_;
     const std::string t = "thresholds.";
     p.max_distance_deviation_threshold = declare_parameter<double>(t + "max_distance_deviation");
+    p.min_velocity_for_checking = declare_parameter<double>(t + "min_velocity_for_checking");
   }
 
   try {
@@ -175,6 +176,10 @@ void ControlValidator::validate(const Trajectory & predicted_trajectory)
 
 bool ControlValidator::checkValidMaxDistanceDeviation(const Trajectory & predicted_trajectory)
 {
+  if (current_kinematics_->twist.twist.linear.x < validation_params_.min_velocity_for_checking) {
+    return true;
+  }
+
   validation_status_.max_distance_deviation =
     calcMaxLateralDistance(*current_reference_trajectory_, predicted_trajectory);
   if (
