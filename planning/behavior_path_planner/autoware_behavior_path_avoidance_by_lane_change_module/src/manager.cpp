@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include "autoware_behavior_path_static_obstacle_avoidance_module/parameter_helper.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/parameter_helper.hpp"
 #include "data_structs.hpp"
 #include "tier4_autoware_utils/ros/parameter.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"

@@ -14,7 +14,7 @@
 #ifndef DATA_STRUCTS_HPP_
 #define DATA_STRUCTS_HPP_
 
-#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 
 namespace autoware::behavior_path_planner
 {
