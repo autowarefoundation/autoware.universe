@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_PARAMETERS_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_PARAMETERS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_PARAMETERS_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_PARAMETERS_HPP_
 
 #include "autoware_bezier_sampler/bezier_sampling.hpp"
 #include "autoware_sampler_common/structures.hpp"
@@ -88,4 +88,4 @@ struct SamplingPlannerInternalParameters
   Preprocessing preprocessing{};
 };
 }  // namespace autoware::behavior_path_planner
-#endif  // AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_PARAMETERS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_PARAMETERS_HPP_

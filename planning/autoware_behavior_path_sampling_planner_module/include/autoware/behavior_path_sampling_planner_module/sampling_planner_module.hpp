@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_MODULE_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_MODULE_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_MODULE_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_MODULE_HPP_
 
+#include "autoware/behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
+#include "autoware/behavior_path_sampling_planner_module/util.hpp"
 #include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
 #include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/drivable_area_expansion.hpp"
 #include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware_behavior_path_planner_common/utils/utils.hpp"
-#include "autoware_behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
-#include "autoware_behavior_path_sampling_planner_module/util.hpp"
 #include "autoware_bezier_sampler/bezier_sampling.hpp"
 #include "autoware_frenet_planner/frenet_planner.hpp"
 #include "autoware_sampler_common/constraints/footprint.hpp"
@@ -263,4 +263,4 @@ private:
 
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_MODULE_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__SAMPLING_PLANNER_MODULE_HPP_

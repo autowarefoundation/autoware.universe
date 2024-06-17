@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_
 
+#include "autoware/behavior_path_sampling_planner_module/sampling_planner_module.hpp"
+#include "autoware/behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
 #include "autoware_behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
-#include "autoware_behavior_path_sampling_planner_module/sampling_planner_module.hpp"
-#include "autoware_behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -50,4 +50,4 @@ private:
 
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__MANAGER_HPP_

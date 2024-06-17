@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_
 #include "autoware_sampler_common/structures.hpp"
 #include "autoware_sampler_common/transform/spline_transform.hpp"
 
@@ -102,4 +102,4 @@ inline autoware::sampler_common::State getInitialState(
 
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_SAMPLING_PLANNER_MODULE__UTIL_HPP_
