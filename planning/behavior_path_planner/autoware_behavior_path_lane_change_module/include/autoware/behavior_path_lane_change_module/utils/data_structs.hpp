@@ -25,6 +25,37 @@
 #include <utility>
 #include <vector>
 
+namespace autoware::behavior_path_planner::lane_change
+{
+struct CancelParameters
+{
+  bool enable_on_prepare_phase{true};
+  bool enable_on_lane_changing_phase{false};
+  double delta_time{1.0};
+  double duration{5.0};
+  double max_lateral_jerk{10.0};
+  double overhang_tolerance{0.0};
+
+  // unsafe_hysteresis_threshold will be compare with the number of detected unsafe instance. If the
+  // number of unsafe exceeds unsafe_hysteresis_threshold, the lane change will be cancelled or
+  // aborted.
+  int unsafe_hysteresis_threshold{2};
+};
+
+struct PathSafetyStatus
+{
+  bool is_safe{true};
+  bool is_object_coming_from_rear{false};
+};
+
+struct LanesPolygon
+{
+  std::optional<lanelet::BasicPolygon2d> current;
+  std::optional<lanelet::BasicPolygon2d> target;
+  std::vector<lanelet::BasicPolygon2d> target_backward;
+};
+
+}  // namespace autoware::behavior_path_planner::lane_change
 namespace autoware::behavior_path_planner
 {
 struct LateralAccelerationMap
@@ -66,21 +97,6 @@ struct LateralAccelerationMap
 
     return std::make_pair(min_acc, max_acc);
   }
-};
-
-struct LaneChangeCancelParameters
-{
-  bool enable_on_prepare_phase{true};
-  bool enable_on_lane_changing_phase{false};
-  double delta_time{1.0};
-  double duration{5.0};
-  double max_lateral_jerk{10.0};
-  double overhang_tolerance{0.0};
-
-  // unsafe_hysteresis_threshold will be compare with the number of detected unsafe instance. If the
-  // number of unsafe exceeds unsafe_hysteresis_threshold, the lane change will be cancelled or
-  // aborted.
-  int unsafe_hysteresis_threshold{2};
 };
 
 struct LaneChangeParameters
@@ -142,7 +158,7 @@ struct LaneChangeParameters
   utils::path_safety_checker::RSSparams rss_params_for_stuck{};
 
   // abort
-  LaneChangeCancelParameters cancel{};
+  lane_change::CancelParameters cancel{};
 
   double finish_judge_lateral_threshold{0.2};
 
@@ -189,13 +205,6 @@ struct LaneChangeInfo
   double terminal_lane_changing_velocity{0.0};
 };
 
-struct LaneChangeTargetObjectIndices
-{
-  std::vector<size_t> current_lane{};
-  std::vector<size_t> target_lane{};
-  std::vector<size_t> other_lane{};
-};
-
 struct LaneChangeLanesFilteredObjects
 {
   utils::path_safety_checker::ExtendedPredictedObjects current_lane{};
@@ -209,21 +218,5 @@ enum class LaneChangeModuleType {
   AVOIDANCE_BY_LANE_CHANGE,
 };
 }  // namespace autoware::behavior_path_planner
-
-namespace autoware::behavior_path_planner::data::lane_change
-{
-struct PathSafetyStatus
-{
-  bool is_safe{true};
-  bool is_object_coming_from_rear{false};
-};
-
-struct LanesPolygon
-{
-  std::optional<lanelet::BasicPolygon2d> current;
-  std::optional<lanelet::BasicPolygon2d> target;
-  std::vector<lanelet::BasicPolygon2d> target_backward;
-};
-}  // namespace autoware::behavior_path_planner::data::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DATA_STRUCTS_HPP_
