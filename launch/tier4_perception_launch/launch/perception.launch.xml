@@ -115,12 +115,13 @@
   <!-- Whether to use detection by tracker -->
   <arg name="use_detection_by_tracker" default="true"/>
 
-  <!-- Radar long range integration methods -->
+  <!-- Radar parameters -->
   <arg
     name="use_radar_tracking_fusion"
     default="true"
     description="if use_radar_tracking_fusion:=true, radar information is merged in tracking launch. Otherwise, radar information is merged in detection launch."
   />
+  <arg name="input/radar" default="/sensing/radar/detected_objects"/>
 
   <!-- Downsample pointcloud for perception usage -->
   <arg name="downsample_perception_common_pointcloud" default="false"/>
@@ -205,6 +206,7 @@
           <arg name="image_raw7" value="$(var image_raw7)"/>
           <arg name="camera_info7" value="$(var camera_info7)"/>
           <arg name="image_number" value="$(var image_number)"/>
+          <arg name="input/radar" value="$(var input/radar)"/>
           <arg name="sync_param_path" value="$(var object_recognition_detection_fusion_sync_param_path)"/>
           <arg name="roi_cluster_fusion_param_path" value="$(var object_recognition_detection_roi_cluster_fusion_param_path)"/>
           <arg name="roi_pointcloud_fusion_param_path" value="$(var object_recognition_detection_roi_pointcloud_fusion_param_path)"/>
