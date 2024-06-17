@@ -1,3 +1,17 @@
+# 使用说明
+
+该目录是在patchwork-plusplus-ros 基础上将ROS接口去除以后得到的代码目录，并移植了Dora的数据接口。
+
+dora 节点启动命名
+
+```
+dora start dataflow_ground_filter.yml --name  ground_filter
+```
+
+启动节点后，可通过ROS2中的RVIZ查看滤除地面以后的点（话题：/ros2_bridge/pointcloud_filter_ground/pointcloud_no_ground）。 
+
+
+
 # patchwork-plusplus-ros
 
 This is ROS package of Patchwork++ (@ IROS'22), which is a fast and robust ground segmentation method.

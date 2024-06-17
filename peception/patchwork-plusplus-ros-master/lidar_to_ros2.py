@@ -9,7 +9,7 @@ class Operator:
         self.ros2_context = dora.experimental.ros2_bridge.Ros2Context()
         # create ros2 node
         self.ros2_node = self.ros2_context.new_node(
-            "lidar2ros",
+            "pointcloud_filter_ground",
             "/ros2_bridge",
             dora.experimental.ros2_bridge.Ros2NodeOptions(rosout=True)
         )
@@ -19,7 +19,7 @@ class Operator:
         )
         # create ros2 topic
         self.lidar_data_topic = self.ros2_node.create_topic(
-            "/ros2_bridge/lidar_data",
+            "/ros2_bridge/pointcloud_filter_ground/pointcloud_no_ground",
             "sensor_msgs::PointCloud2",
             self.topic_qos
         )

@@ -8,12 +8,6 @@ nodes:
       outputs:
         - pointcloud
 
-  - id: show_lidar_input
-    operator:
-        python: ../../dora-hardware/vendors/lidar/lidar_to_ros2.py
-        inputs:
-          pointcloud: rslidar_driver/pointcloud
-
   - id: ground_filter
     custom:
       source: build/demo
@@ -21,7 +15,9 @@ nodes:
         pointcloud: rslidar_driver/pointcloud 
       outputs:
         - pointcloud_no_ground
-        
 
-
- 
+  - id: show_lidar_input
+    operator:
+        python: ../../dora-hardware/vendors/lidar/lidar_to_ros2.py
+        inputs:
+          pointcloud: ground_filter/pointcloud_no_ground
