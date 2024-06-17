@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_surround_obstacle_checker/debug_marker.hpp"
+#include "debug_marker.hpp"
 
 #include <motion_utils/marker/marker_helper.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
