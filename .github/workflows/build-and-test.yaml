@@ -60,7 +60,6 @@ jobs:
         run: du -sh ${CCACHE_DIR} && ccache -s
         shell: bash
 
-      # TODO: before merging, keep target-packages unchanged
       - name: Build
         if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
         uses: autowarefoundation/autoware-github-actions/colcon-build@v1
@@ -73,7 +72,7 @@ jobs:
         run: du -sh ${CCACHE_DIR} && ccache -s
         shell: bash
 
-      # TODO: before merging, only run on push to main
+      # Only keep save the -cuda version because cuda packages covers non-cuda packages too
       - name: Push the ccache cache
         if: matrix.container-suffix == '-cuda'
         uses: actions/cache/save@v4
