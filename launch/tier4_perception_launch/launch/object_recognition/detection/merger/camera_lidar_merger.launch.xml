@@ -17,6 +17,31 @@
   <let name="without_dbt_and_filter" value="$(eval &quot;'$(var use_detection_by_tracker)'=='false' and '$(var use_object_filter)'=='false' &quot;)"/>
 
   <!-- external interfaces -->
+  <arg name="image_raw0"/>
+  <arg name="camera_info0"/>
+  <arg name="detection_rois0"/>
+  <arg name="image_raw1"/>
+  <arg name="camera_info1"/>
+  <arg name="detection_rois1"/>
+  <arg name="image_raw2"/>
+  <arg name="camera_info2"/>
+  <arg name="detection_rois2"/>
+  <arg name="image_raw3"/>
+  <arg name="camera_info3"/>
+  <arg name="detection_rois3"/>
+  <arg name="image_raw4"/>
+  <arg name="camera_info4"/>
+  <arg name="detection_rois4" />
+  <arg name="image_raw5"/>
+  <arg name="camera_info5"/>
+  <arg name="detection_rois5" />
+  <arg name="image_raw6"/>
+  <arg name="camera_info6"/>
+  <arg name="detection_rois6"/>
+  <arg name="image_raw7"/>
+  <arg name="camera_info7"/>
+  <arg name="detection_rois7"/>
+  <arg name="image_number"/>
   <arg name="input/pointcloud_map/pointcloud" default="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
   <arg name="input/lidar_ml/objects" default="$(var lidar_detection_model)/objects"/>
