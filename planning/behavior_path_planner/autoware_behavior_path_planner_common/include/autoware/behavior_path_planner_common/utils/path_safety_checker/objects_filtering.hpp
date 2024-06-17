@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_  // NOLINT
+#define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_  // NOLINT
 
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
@@ -320,4 +320,6 @@ void filterObjects(std::vector<PredictedObject> & objects, Func filter)
 }
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker
 
-#endif  // AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_
+// clang-format off
+#endif  // AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SAFETY_CHECKER__OBJECTS_FILTERING_HPP_  // NOLINT
+// clang-format on
