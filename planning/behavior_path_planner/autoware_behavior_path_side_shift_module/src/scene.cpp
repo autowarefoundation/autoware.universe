@@ -14,11 +14,11 @@
 
 #include "autoware/behavior_path_side_shift_module/scene.hpp"
 
-#include "autoware/behavior_path_side_shift_module/utils.hpp"
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/behavior_path_side_shift_module/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 

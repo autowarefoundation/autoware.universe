@@ -14,8 +14,8 @@
 
 #include "autoware/behavior_path_static_obstacle_avoidance_module/shift_line_generator.hpp"
 
-#include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
 namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 {

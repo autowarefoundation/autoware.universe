@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
 
+#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/helper.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <memory>
 

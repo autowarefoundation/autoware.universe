@@ -15,8 +15,8 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_START_PLANNER_MODULE__MANAGER_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_START_PLANNER_MODULE__MANAGER_HPP_
 
-#include "autoware/behavior_path_start_planner_module/start_planner_module.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
+#include "autoware/behavior_path_start_planner_module/start_planner_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

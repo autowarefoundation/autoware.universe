@@ -14,11 +14,11 @@
 
 #include "autoware/behavior_path_start_planner_module/shift_pull_out.hpp"
 
-#include "autoware/behavior_path_start_planner_module/util.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/behavior_path_start_planner_module/util.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 

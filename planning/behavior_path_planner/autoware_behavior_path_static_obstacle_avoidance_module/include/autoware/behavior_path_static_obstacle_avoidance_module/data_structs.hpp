@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DATA_STRUCTS_HPP_
 
-#include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 
 #include <rclcpp/time.hpp>
 
