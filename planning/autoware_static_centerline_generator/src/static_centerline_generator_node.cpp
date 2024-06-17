@@ -374,8 +374,8 @@ void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_
       Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, *map_projector_info_);
 
     // overwrite more dense centerline
-    const bool use_waypoints = false;  // NOTE: Waypoints is used only in real time calculation.
-    lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, use_waypoints, false);
+    // NOTE: overwriteLaneletsCenterlineWithWaypoints is used only in real time calculation.
+    lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
 
     // create map bin msg
     const auto map_bin_msg =

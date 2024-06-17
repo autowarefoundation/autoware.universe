@@ -81,7 +81,11 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   }
 
   // overwrite centerline
-  lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, use_waypoints, false);
+  if (use_waypoints) {
+    lanelet::utils::overwriteLaneletsCenterlineWithWaypoints(map, center_line_resolution, false);
+  } else {
+    lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
+  }
 
   // create map bin msg
   const auto map_bin_msg = create_map_bin_msg(map, lanelet2_filename, now());
