@@ -189,30 +189,30 @@
           <arg name="mode" value="$(var mode)"/>
           <arg name="input/pointcloud" value="$(var perception_pointcloud)"/>
           <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
-          <arg name="image_raw0" value="$(var image_raw0)"/>
-          <arg name="camera_info0" value="$(var camera_info0)"/>
-          <arg name="detection_rois0" value="$(var detection_rois0)"/>
-          <arg name="image_raw1" value="$(var image_raw1)"/>
-          <arg name="camera_info1" value="$(var camera_info1)"/>
-          <arg name="detection_rois1" value="$(var detection_rois1)"/>
-          <arg name="image_raw2" value="$(var image_raw2)"/>
-          <arg name="camera_info2" value="$(var camera_info2)"/>
-          <arg name="detection_rois2" value="$(var detection_rois2)"/>
-          <arg name="image_raw3" value="$(var image_raw3)"/>
-          <arg name="camera_info3" value="$(var camera_info3)"/>
-          <arg name="detection_rois3" value="$(var detection_rois3)"/>
-          <arg name="image_raw4" value="$(var image_raw4)"/>
-          <arg name="camera_info4" value="$(var camera_info4)"/>
-          <arg name="detection_rois4" value="$(var detection_rois4)"/>
-          <arg name="image_raw5" value="$(var image_raw5)"/>
-          <arg name="camera_info5" value="$(var camera_info5)"/>
-          <arg name="detection_rois5" value="$(var detection_rois5)"/>
-          <arg name="image_raw6" value="$(var image_raw6)"/>
-          <arg name="camera_info6" value="$(var camera_info6)"/>
-          <arg name="detection_rois6" value="$(var detection_rois6)"/>
-          <arg name="image_raw7" value="$(var image_raw7)"/>
-          <arg name="camera_info7" value="$(var camera_info7)"/>
-          <arg name="detection_rois7" value="$(var detection_rois7)"/>
+          <arg name="input/camera0/image" value="$(var image_raw0)"/>
+          <arg name="input/camera0/info" value="$(var camera_info0)"/>
+          <arg name="input/camera0/rois" value="$(var detection_rois0)"/>
+          <arg name="input/camera1/image" value="$(var image_raw1)"/>
+          <arg name="input/camera1/info" value="$(var camera_info1)"/>
+          <arg name="input/camera1/rois" value="$(var detection_rois1)"/>
+          <arg name="input/camera2/image" value="$(var image_raw2)"/>
+          <arg name="input/camera2/info" value="$(var camera_info2)"/>
+          <arg name="input/camera2/rois" value="$(var detection_rois2)"/>
+          <arg name="input/camera3/image" value="$(var image_raw3)"/>
+          <arg name="input/camera3/info" value="$(var camera_info3)"/>
+          <arg name="input/camera3/rois" value="$(var detection_rois3)"/>
+          <arg name="input/camera4/image" value="$(var image_raw4)"/>
+          <arg name="input/camera4/info" value="$(var camera_info4)"/>
+          <arg name="input/camera4/rois" value="$(var detection_rois4)"/>
+          <arg name="input/camera5/image" value="$(var image_raw5)"/>
+          <arg name="input/camera5/info" value="$(var camera_info5)"/>
+          <arg name="input/camera5/rois" value="$(var detection_rois5)"/>
+          <arg name="input/camera6/image" value="$(var image_raw6)"/>
+          <arg name="input/camera6/info" value="$(var camera_info6)"/>
+          <arg name="input/camera6/rois" value="$(var detection_rois6)"/>
+          <arg name="input/camera7/image" value="$(var image_raw7)"/>
+          <arg name="input/camera7/info" value="$(var camera_info7)"/>
+          <arg name="input/camera7/rois" value="$(var detection_rois7)"/>
           <arg name="image_number" value="$(var image_number)"/>
           <arg name="input/radar" value="$(var input/radar)"/>
           <arg name="sync_param_path" value="$(var object_recognition_detection_fusion_sync_param_path)"/>
