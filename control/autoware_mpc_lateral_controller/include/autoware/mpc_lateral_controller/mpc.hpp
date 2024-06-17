@@ -443,7 +443,7 @@ public:
   bool calculateMPC(
     const SteeringReport & current_steer, const Odometry & current_kinematics, Lateral & ctrl_cmd,
     Trajectory & predicted_trajectory, Float32MultiArrayStamped & diagnostic);
-  
+
   /**
    * @brief Set the reference trajectory to be followed.
    * @param trajectory_msg The reference trajectory message.
