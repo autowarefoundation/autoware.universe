@@ -138,26 +138,52 @@ void GoalPlannerModule::updateOccupancyGrid()
 
 bool GoalPlannerModule::hasPreviousModulePathShapeChanged() const
 {
+  constexpr double LATERAL_DEVIATION_THRESH = 0.3;
   if (!last_previous_module_output_) {
     return true;
   }
 
+  // Calculate the lateral distance between each point of the current path and the nearest point of
+  // the last path
   const auto current_path = getPreviousModuleOutput().path;
-
-  // the terminal distance is far
-  return calcDistance2d(
-           last_previous_module_output_->path.points.back().point,
-           current_path.points.back().point) > 0.3;
+  for (const auto & p : current_path.points) {
+    const size_t nearest_seg_idx = motion_utils::findNearestSegmentIndex(
+      last_previous_module_output_->path.points, p.point.pose.position);
+    const auto seg_front = last_previous_module_output_->path.points.at(nearest_seg_idx);
+    const auto seg_back = last_previous_module_output_->path.points.at(nearest_seg_idx + 1);
+    // Check if the target point is within the segment
+    const Eigen::Vector3d segment_vec{
+      seg_back.point.pose.position.x - seg_front.point.pose.position.x,
+      seg_back.point.pose.position.y - seg_front.point.pose.position.y, 0.0};
+    const Eigen::Vector3d target_vec{
+      p.point.pose.position.x - seg_front.point.pose.position.x,
+      p.point.pose.position.y - seg_front.point.pose.position.y, 0.0};
+    const double dot_product = segment_vec.x() * target_vec.x() + segment_vec.y() * target_vec.y();
+    const double segment_length_squared =
+      segment_vec.x() * segment_vec.x() + segment_vec.y() * segment_vec.y();
+    if (dot_product < 0 || dot_product > segment_length_squared) {
+      // p.point.pose.position is not within the segment, skip lateral distance check
+      continue;
+    }
+    const double lateral_distance = std::abs(motion_utils::calcLateralOffset(
+      last_previous_module_output_->path.points, p.point.pose.position, nearest_seg_idx));
+    if (lateral_distance > LATERAL_DEVIATION_THRESH) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool GoalPlannerModule::hasDeviatedFromLastPreviousModulePath() const
 {
+  constexpr double LATERAL_DEVIATION_THRESH = 0.3;
+
   if (!last_previous_module_output_) {
     return true;
   }
   return std::abs(motion_utils::calcLateralOffset(
            last_previous_module_output_->path.points,
-           planner_data_->self_odometry->pose.pose.position)) > 0.3;
+           planner_data_->self_odometry->pose.pose.position)) > LATERAL_DEVIATION_THRESH;
 }
 
 // generate pull over candidate paths
