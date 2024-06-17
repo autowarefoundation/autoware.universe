@@ -9,7 +9,7 @@ This ros package enables communication between Autoware and CARLA for autonomous
 
 | ubuntu |  ros   | carla  | autoware |
 | :----: | :----: | :----: | :------: |
-| 22.04  | humble | 0.9.15 | 2024.04  |
+| 22.04  | humble | 0.9.15 |   Main   |
 
 ## Setup
 
@@ -55,27 +55,31 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 ## Inner-workings / Algorithms
 
-The main class responsible for setting up the CARLA world and the ego vehicle is InitializeInterface. The configuration parameters are fetched using the carla_interface.
+The `InitializeInterface` class is key to setting up both the CARLA world and the ego vehicle. It fetches configuration parameters through the `carla_autoware.launch.xml`.
+
+The main simulation loop runs within the `carla_ros2_interface` class. This loop ticks simulation time inside the CARLA simulator at `fixed_delta_seconds` time, where data is received and published as ROS2 messages at frequencies defined in `self.sensor_frequencies`.
+
+Ego vehicle commands from Autoware are processed through the `autoware_raw_vehicle_cmd_converter`, which calibrates these commands for CARLA. The calibrated commands are then fed directly into CARLA control via `CarlaDataProvider`.
 
 ### Configurable Parameters for World Loading
 
 All the key parameters can be configured in `carla_autoware.launch.xml`.
 
-| Name                      | Type   | Default Value                                                           | Description                                                                                                                                                                                                |
-| ------------------------- | ------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `host`                    | string | "localhost"                                                             | Hostname for the CARLA server                                                                                                                                                                              |
-| `port`                    | int    | "2000"                                                                  | Port number for the CARLA server                                                                                                                                                                           |
-| `timeout`                 | int    | 20                                                                      | Timeout for the CARLA client                                                                                                                                                                               |
-| `ego_vehicle_role_name`   | string | "ego_vehicle"                                                           | Role name for the ego vehicle                                                                                                                                                                              |
-| `vehicle_type`            | string | "vehicle.toyota.prius"                                                  | Blueprint ID of the vehicle to spawn. The Blueprint ID of vehicles can be found in [CARLA Blueprint ID](https://carla.readthedocs.io/en/latest/catalogue_vehicles/)                                        |
-| `spawn_point`             | string | None                                                                    | Coordinates for spawning the ego vehicle (None is random). Format = [x, y, z, roll, pitch, yaw]                                                                                                            |
-| `carla_map`               | string | "Town01"                                                                | Name of the map to load in CARLA                                                                                                                                                                           |
-| `sync_mode`               | bool   | True                                                                    | Boolean flag to set synchronous mode in CARLA                                                                                                                                                              |
-| `fixed_delta_seconds`     | double | 0.05                                                                    | Time step for the simulation (related to client FPS)                                                                                                                                                       |
-| `objects_definition_file` | string | "$(find-pkg-share carla_autoware)/objects.json"                         | Sensor parameters file that are used for spawning sensor in CARLA                                                                                                                                          |
-| `use_traffic_manager`     | bool   | True                                                                    | Boolean flag to set traffic manager in CARLA                                                                                                                                                               |
-| `max_real_delta_seconds`  | double | 0.05                                                                    | Parameter to limit the simulation speed below `fixed_delta_seconds`                                                                                                                                        |
-| `config_file`             | string | "$(find-pkg-share carla_autoware)/raw_vehicle_cmd_converter.param.yaml" | Control mapping file to be used in `raw_vehicle_cmd_converter`. Current control are calibrated based on `vehicle.toyota.prius` Blueprints ID in CARLA. Changing the vehicle type may need a recalibration. |
+| Name                      | Type   | Default Value                                                           | Description                                                                                                                                                                                                         |
+| ------------------------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `host`                    | string | "localhost"                                                             | Hostname for the CARLA server                                                                                                                                                                                       |
+| `port`                    | int    | "2000"                                                                  | Port number for the CARLA server                                                                                                                                                                                    |
+| `timeout`                 | int    | 20                                                                      | Timeout for the CARLA client                                                                                                                                                                                        |
+| `ego_vehicle_role_name`   | string | "ego_vehicle"                                                           | Role name for the ego vehicle                                                                                                                                                                                       |
+| `vehicle_type`            | string | "vehicle.toyota.prius"                                                  | Blueprint ID of the vehicle to spawn. The Blueprint ID of vehicles can be found in [CARLA Blueprint ID](https://carla.readthedocs.io/en/latest/catalogue_vehicles/)                                                 |
+| `spawn_point`             | string | None                                                                    | Coordinates for spawning the ego vehicle (None is random). Format = [x, y, z, roll, pitch, yaw]                                                                                                                     |
+| `carla_map`               | string | "Town01"                                                                | Name of the map to load in CARLA                                                                                                                                                                                    |
+| `sync_mode`               | bool   | True                                                                    | Boolean flag to set synchronous mode in CARLA                                                                                                                                                                       |
+| `fixed_delta_seconds`     | double | 0.05                                                                    | Time step for the simulation (related to client FPS)                                                                                                                                                                |
+| `objects_definition_file` | string | "$(find-pkg-share carla_autoware)/objects.json"                         | Sensor parameters file that are used for spawning sensor in CARLA                                                                                                                                                   |
+| `use_traffic_manager`     | bool   | True                                                                    | Boolean flag to set traffic manager in CARLA                                                                                                                                                                        |
+| `max_real_delta_seconds`  | double | 0.05                                                                    | Parameter to limit the simulation speed below `fixed_delta_seconds`                                                                                                                                                 |
+| `config_file`             | string | "$(find-pkg-share carla_autoware)/raw_vehicle_cmd_converter.param.yaml" | Control mapping file to be used in `autoware_raw_vehicle_cmd_converter`. Current control are calibrated based on `vehicle.toyota.prius` Blueprints ID in CARLA. Changing the vehicle type may need a recalibration. |
 
 ### Configurable Parameters for Sensors
 

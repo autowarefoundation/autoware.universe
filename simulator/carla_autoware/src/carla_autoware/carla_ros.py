@@ -16,11 +16,11 @@ import json
 import math
 import threading
 
-from autoware_auto_vehicle_msgs.msg import ControlModeReport
-from autoware_auto_vehicle_msgs.msg import GearReport
-from autoware_auto_vehicle_msgs.msg import SteeringReport
-from autoware_auto_vehicle_msgs.msg import VelocityReport
-from autoware_perception_msgs.msg import TrafficSignalArray
+from autoware_perception_msgs.msg import TrafficLightGroupArray
+from autoware_vehicle_msgs.msg import ControlModeReport
+from autoware_vehicle_msgs.msg import GearReport
+from autoware_vehicle_msgs.msg import SteeringReport
+from autoware_vehicle_msgs.msg import VelocityReport
 from builtin_interfaces.msg import Time
 import carla
 from cv_bridge import CvBridge
@@ -120,7 +120,7 @@ class carla_ros2_interface(object):
             PoseWithCovarianceStamped, "/sensing/gnss/pose_with_covariance", 1
         )
         self.pub_traffic_signal_info = self.ros2_node.create_publisher(
-            TrafficSignalArray, "/perception/traffic_light_recognition/traffic_signals", 1
+            TrafficLightGroupArray, "/perception/traffic_light_recognition/traffic_signals", 1
         )
         self.pub_vel_state = self.ros2_node.create_publisher(
             VelocityReport, "/vehicle/status/velocity_status", 1
@@ -151,7 +151,7 @@ class carla_ros2_interface(object):
             elif sensor["type"] == "sensor.lidar.ray_cast":
                 if sensor["id"] in self.sensor_frequencies:
                     self.pub_lidar[sensor["id"]] = self.ros2_node.create_publisher(
-                        PointCloud2, f'/sensing/lidar/{sensor["id"]}/pointcloud', 10
+                        PointCloud2, "/sensing/lidar/concatenated/pointcloud", 10
                     )
                 else:
                     self.ros2_node.get_logger().info(
@@ -162,7 +162,7 @@ class carla_ros2_interface(object):
                     Imu, "/sensing/imu/tamagawa/imu_raw", 1
                 )
             else:
-                self.ros2_node.get_logger().info("No Publisher for this Sensor")
+                self.ros2_node.get_logger().info(f'No Publisher for {sensor["type"]} Sensor')
                 pass
 
         self.spin_thread = threading.Thread(target=rclpy.spin, args=(self.ros2_node,))
@@ -401,7 +401,7 @@ class carla_ros2_interface(object):
         out_steering_state = SteeringReport()
         out_ctrl_mode = ControlModeReport()
         out_gear_state = GearReport()
-        out_traffic = TrafficSignalArray()
+        out_traffic = TrafficLightGroupArray()
         out_actuation_status = ActuationStatusStamped()
 
         out_vel_state.header = self.get_msg_header(frame_id="base_link")
