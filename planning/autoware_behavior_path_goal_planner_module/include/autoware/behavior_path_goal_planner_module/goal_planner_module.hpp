@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 
-#include "autoware_behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
-#include "autoware_behavior_path_goal_planner_module/freespace_pull_over.hpp"
-#include "autoware_behavior_path_goal_planner_module/geometric_pull_over.hpp"
-#include "autoware_behavior_path_goal_planner_module/goal_planner_parameters.hpp"
-#include "autoware_behavior_path_goal_planner_module/goal_searcher.hpp"
-#include "autoware_behavior_path_goal_planner_module/shift_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
+#include "autoware/behavior_path_goal_planner_module/freespace_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/geometric_pull_over.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
+#include "autoware/behavior_path_goal_planner_module/shift_pull_over.hpp"
 #include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware_behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 #include "autoware_behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
@@ -668,4 +668,4 @@ private:
 };
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_

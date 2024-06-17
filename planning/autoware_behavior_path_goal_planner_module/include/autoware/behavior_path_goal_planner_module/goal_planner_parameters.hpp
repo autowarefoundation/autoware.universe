@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_PARAMETERS_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_PARAMETERS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_PARAMETERS_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_PARAMETERS_HPP_
 
 #include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 #include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
@@ -128,4 +128,4 @@ struct GoalPlannerParameters
 };
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_PARAMETERS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_PARAMETERS_HPP_

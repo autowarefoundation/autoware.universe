@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__MANAGER_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__MANAGER_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__MANAGER_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__MANAGER_HPP_
 
-#include "autoware_behavior_path_goal_planner_module/goal_planner_module.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_planner_module.hpp"
 #include "autoware_behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -55,4 +55,4 @@ private:
 
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__MANAGER_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__MANAGER_HPP_

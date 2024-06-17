@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 
-#include "autoware_behavior_path_goal_planner_module/goal_searcher_base.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware_lane_departure_checker/lane_departure_checker.hpp>
@@ -110,4 +110,4 @@ MarkerArray createNumObjectsToAvoidTextsMarkerArray(
   const std_msgs::msg::ColorRGBA & color);
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
