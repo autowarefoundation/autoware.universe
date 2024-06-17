@@ -379,7 +379,9 @@ def launch_setup(context, *args, **kwargs):
         name="control_evaluator",
         remappings=[
             ("~/input/diagnostics", "/diagnostics"),
-            ("~/output/metrics", "~/metrics"),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/input/trajectory", "/planning/scenario_planning/trajectory"),
+            ("~/metrics", "/diagnostic/control_evaluator/metrics"),
         ],
     )
 

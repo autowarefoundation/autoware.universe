@@ -24,7 +24,6 @@ nav:
         - 'Blind Spot': planning/autoware_behavior_velocity_blind_spot_module
         - 'Crosswalk': planning/autoware_behavior_velocity_crosswalk_module
         - 'Detection Area': planning/behavior_velocity_detection_area_module
-        - 'Dynamic Obstacle Stop': planning/behavior_velocity_dynamic_obstacle_stop_module
         - 'Intersection': planning/autoware_behavior_velocity_intersection_module
         - 'No Drivable Lane': planning/behavior_velocity_no_drivable_lane_module
         - 'No Stopping Area': planning/autoware_behavior_velocity_no_stopping_area_module
@@ -64,6 +63,7 @@ nav:
     - 'Motion Velocity Planner':
       - 'About Motion Velocity Planner': planning/motion_velocity_planner/autoware_motion_velocity_planner_node/
       - 'Available Modules':
+        - 'Dynamic Obstacle Stop': planning/motion_velocity_planner/autoware_motion_velocity_dynamic_obstacle_stop_module/
         - 'Out of Lane': planning/motion_velocity_planner/autoware_motion_velocity_planner_out_of_lane_module/
         - 'Obstacle Velocity Limiter': planning/motion_velocity_planner/autoware_motion_velocity_obstacle_velocity_limiter_module/
     - 'Velocity Smoother':
@@ -83,7 +83,6 @@ nav:
     - 'Planning Debug Tools':
       - 'About Planning Debug Tools': https://github.com/autowarefoundation/autoware_tools/tree/main/planning/planning_debug_tools
       - 'Stop Reason Visualizer': https://github.com/autowarefoundation/autoware_tools/blob/main/planning/planning_debug_tools/doc-stop-reason-visualizer.md
-    - 'Planning Test Utils': planning/planning_test_utils
     - 'Planning Test Manager': planning/autoware_planning_test_manager
     - 'Planning Topic Converter': planning/autoware_planning_topic_converter
     - 'Planning Validator': planning/autoware_planning_validator

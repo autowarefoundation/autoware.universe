@@ -198,8 +198,12 @@ public:
 
       const auto nearest_idx = motion_utils::findNearestIndex(path, nearest_collision_point);
       const auto & nearest_path_pose = path.at(nearest_idx);
-      const auto & traj_yaw = tf2::getYaw(nearest_path_pose.orientation);
-      const auto estimated_velocity = p_vel * std::cos(p_yaw - traj_yaw) + current_ego_speed;
+      // When the ego moves backwards, the direction of movement axis is reversed
+      const auto & traj_yaw = (current_ego_speed > 0.0)
+                                ? tf2::getYaw(nearest_path_pose.orientation)
+                                : tf2::getYaw(nearest_path_pose.orientation) + M_PI;
+      const auto estimated_velocity =
+        p_vel * std::cos(p_yaw - traj_yaw) + std::abs(current_ego_speed);
 
       // Current RSS distance calculation does not account for negative velocities
       return (estimated_velocity > 0.0) ? estimated_velocity : 0.0;
@@ -225,13 +229,6 @@ private:
   rclcpp::Clock::SharedPtr clock_;
 };
 
-static rclcpp::SensorDataQoS SingleDepthSensorQoS()
-{
-  rclcpp::SensorDataQoS qos;
-  qos.get_rmw_qos_profile().depth = 1;
-  return qos;
-}
-
 class AEB : public rclcpp::Node
 {
 public:
@@ -239,7 +236,7 @@ public:
 
   // subscriber
   tier4_autoware_utils::InterProcessPollingSubscriber<PointCloud2> sub_point_cloud_{
-    this, "~/input/pointcloud", SingleDepthSensorQoS()};
+    this, "~/input/pointcloud", tier4_autoware_utils::SingleDepthSensorQoS()};
   tier4_autoware_utils::InterProcessPollingSubscriber<VelocityReport> sub_velocity_{
     this, "~/input/velocity"};
   tier4_autoware_utils::InterProcessPollingSubscriber<Imu> sub_imu_{this, "~/input/imu"};
@@ -315,6 +312,7 @@ public:
   bool publish_debug_pointcloud_;
   bool use_predicted_trajectory_;
   bool use_imu_path_;
+  bool use_object_velocity_calculation_;
   double path_footprint_extra_margin_;
   double detection_range_min_height_;
   double detection_range_max_height_margin_;
