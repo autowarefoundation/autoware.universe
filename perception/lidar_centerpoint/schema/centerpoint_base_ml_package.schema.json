@@ -3,7 +3,7 @@
   "title": "Parameters for Centerpoint ML model",
   "type": "object",
   "definitions": {
-    "centerpoint_ml_package": {
+    "centerpoint_base_ml_package": {
       "type": "object",
       "properties": {
         "model_params": {
