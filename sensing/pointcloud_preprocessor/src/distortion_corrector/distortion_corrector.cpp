@@ -324,7 +324,7 @@ void DistortionCorrector3D::setPointCloudTransform(
   }
 }
 
-void DistortionCorrector2D::undistortPointImplementation(
+inline void DistortionCorrector2D::undistortPointImplementation(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
@@ -369,7 +369,7 @@ void DistortionCorrector2D::undistortPointImplementation(
   *it_z = static_cast<float>(undistorted_point_tf_.getZ());
 }
 
-void DistortionCorrector3D::undistortPointImplementation(
+inline void DistortionCorrector3D::undistortPointImplementation(
   sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
   sensor_msgs::PointCloud2Iterator<float> & it_z,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
