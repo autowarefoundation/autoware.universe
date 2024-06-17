@@ -8,8 +8,8 @@
 
   <!-- Lidar + Camera detector parameters -->
   <arg name="lidar_detection_model" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
-  <arg name="use_roi_based_cluster" default="false"/>
-  <arg name="use_low_intensity_cluster_filter" default="false"/>
+  <arg name="use_roi_based_cluster"/>
+  <arg name="use_low_intensity_cluster_filter"/>
 
   <!-- Camera parameters -->
   <arg name="number_of_cameras"/>

@@ -9,6 +9,7 @@
   <arg name="use_detection_by_tracker"/>
   <arg name="use_validator" description="use obstacle_pointcloud based validator"/>
   <arg name="objects_validation_method" description="options: `obstacle_pointcloud` or `occupancy_grid`"/>
+  <arg name="use_low_intensity_cluster_filter"/>
 
   <!-- Lidar interfaces -->
   <arg name="input/pointcloud"/>
@@ -84,6 +85,7 @@
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
       <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
+      <arg name="use_low_intensity_cluster_filter" value="$(var use_low_intensity_cluster_filter)"/>
     </include>
     <!-- Lidar dnn-based detectors-->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/lidar_dnn_detector.launch.xml">
@@ -188,6 +190,7 @@
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
       <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
+      <arg name="use_low_intensity_cluster_filter" value="$(var use_low_intensity_cluster_filter)"/>
     </include>
     <!-- Lidar dnn-based detectors-->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/lidar_dnn_detector.launch.xml">
