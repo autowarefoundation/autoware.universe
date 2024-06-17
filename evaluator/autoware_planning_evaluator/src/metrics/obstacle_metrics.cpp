@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "planning_evaluator/metrics/obstacle_metrics.hpp"
+#include "autoware/planning_evaluator/metrics/obstacle_metrics.hpp"
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 

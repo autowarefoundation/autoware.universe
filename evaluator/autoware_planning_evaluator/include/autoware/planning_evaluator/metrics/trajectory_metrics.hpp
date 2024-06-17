@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
-#define PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
+#ifndef AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
+#define AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
 
-#include "planning_evaluator/stat.hpp"
+#include "autoware/planning_evaluator/stat.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
@@ -87,4 +87,4 @@ Stat<double> calcTrajectoryJerk(const Trajectory & traj);
 }  // namespace metrics
 }  // namespace planning_diagnostics
 
-#endif  // PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
+#endif  // AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_

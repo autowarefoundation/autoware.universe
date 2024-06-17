@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "planning_evaluator/metrics/trajectory_metrics.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
+#ifndef AUTOWARE__PLANNING_EVALUATOR__METRICS__METRICS_UTILS_HPP_
+#define AUTOWARE__PLANNING_EVALUATOR__METRICS__METRICS_UTILS_HPP_
+
+#include "autoware/planning_evaluator/stat.hpp"
+
+#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_planning_msgs/msg/trajectory_point.hpp"
+
 namespace planning_diagnostics
 {
 namespace metrics
@@ -21,27 +27,17 @@ namespace metrics
 namespace utils
 {
 using autoware_planning_msgs::msg::Trajectory;
-using autoware_planning_msgs::msg::TrajectoryPoint;
-using tier4_autoware_utils::calcDistance2d;
 
-size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, const double distance)
-{
-  // Get Current Trajectory Point
-  const TrajectoryPoint & curr_p = traj.points.at(curr_id);
-
-  size_t target_id = curr_id;
-  double current_distance = 0.0;
-  for (size_t traj_id = curr_id + 1; traj_id < traj.points.size(); ++traj_id) {
-    current_distance = calcDistance2d(traj.points.at(traj_id), curr_p);
-    if (current_distance >= distance) {
-      target_id = traj_id;
-      break;
-    }
-  }
-
-  return target_id;
-}
+/**
+ * @brief find the index in the trajectory at the given distance of the given index
+ * @param [in] traj input trajectory
+ * @param [in] curr_id index
+ * @param [in] distance distance
+ * @return index of the trajectory point at distance ahead of traj[curr_id]
+ */
+size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, const double distance);
 
 }  // namespace utils
 }  // namespace metrics
 }  // namespace planning_diagnostics
+#endif  // AUTOWARE__PLANNING_EVALUATOR__METRICS__METRICS_UTILS_HPP_

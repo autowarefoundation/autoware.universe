@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_EVALUATOR__METRICS_CALCULATOR_HPP_
-#define PLANNING_EVALUATOR__METRICS_CALCULATOR_HPP_
-#include "planning_evaluator/metrics/metric.hpp"
-#include "planning_evaluator/parameters.hpp"
-#include "planning_evaluator/stat.hpp"
+#ifndef AUTOWARE__PLANNING_EVALUATOR__METRICS_CALCULATOR_HPP_
+#define AUTOWARE__PLANNING_EVALUATOR__METRICS_CALCULATOR_HPP_
+#include "autoware/planning_evaluator/metrics/metric.hpp"
+#include "autoware/planning_evaluator/parameters.hpp"
+#include "autoware/planning_evaluator/stat.hpp"
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp"
@@ -104,4 +104,4 @@ private:
 
 }  // namespace planning_diagnostics
 
-#endif  // PLANNING_EVALUATOR__METRICS_CALCULATOR_HPP_
+#endif  // AUTOWARE__PLANNING_EVALUATOR__METRICS_CALCULATOR_HPP_

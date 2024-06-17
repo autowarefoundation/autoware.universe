@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_EVALUATOR__METRICS__OBSTACLE_METRICS_HPP_
-#define PLANNING_EVALUATOR__METRICS__OBSTACLE_METRICS_HPP_
+#ifndef AUTOWARE__PLANNING_EVALUATOR__METRICS__OBSTACLE_METRICS_HPP_
+#define AUTOWARE__PLANNING_EVALUATOR__METRICS__OBSTACLE_METRICS_HPP_
 
-#include "planning_evaluator/stat.hpp"
+#include "autoware/planning_evaluator/stat.hpp"
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -48,4 +48,4 @@ Stat<double> calcTimeToCollision(
 }  // namespace metrics
 }  // namespace planning_diagnostics
 
-#endif  // PLANNING_EVALUATOR__METRICS__OBSTACLE_METRICS_HPP_
+#endif  // AUTOWARE__PLANNING_EVALUATOR__METRICS__OBSTACLE_METRICS_HPP_

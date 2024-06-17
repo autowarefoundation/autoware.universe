@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "planning_evaluator/metrics_calculator.hpp"
+#include "autoware/planning_evaluator/metrics_calculator.hpp"
 
+#include "autoware/planning_evaluator/metrics/deviation_metrics.hpp"
+#include "autoware/planning_evaluator/metrics/obstacle_metrics.hpp"
+#include "autoware/planning_evaluator/metrics/stability_metrics.hpp"
+#include "autoware/planning_evaluator/metrics/trajectory_metrics.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
-#include "planning_evaluator/metrics/deviation_metrics.hpp"
-#include "planning_evaluator/metrics/obstacle_metrics.hpp"
-#include "planning_evaluator/metrics/stability_metrics.hpp"
-#include "planning_evaluator/metrics/trajectory_metrics.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 namespace planning_diagnostics
 {

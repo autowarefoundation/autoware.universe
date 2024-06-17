@@ -15,8 +15,8 @@
 #include <iostream>
 #include <limits>
 
-#ifndef PLANNING_EVALUATOR__STAT_HPP_
-#define PLANNING_EVALUATOR__STAT_HPP_
+#ifndef AUTOWARE__PLANNING_EVALUATOR__STAT_HPP_
+#define AUTOWARE__PLANNING_EVALUATOR__STAT_HPP_
 
 namespace planning_diagnostics
 {
@@ -90,4 +90,4 @@ std::ostream & operator<<(std::ostream & os, const Stat<T> & stat)
 
 }  // namespace planning_diagnostics
 
-#endif  // PLANNING_EVALUATOR__STAT_HPP_
+#endif  // AUTOWARE__PLANNING_EVALUATOR__STAT_HPP_

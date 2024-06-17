@@ -18,7 +18,7 @@
 #include "rclcpp/time.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
-#include <planning_evaluator/planning_evaluator_node.hpp>
+#include <autoware/planning_evaluator/planning_evaluator_node.hpp>
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -50,7 +50,8 @@ protected:
     rclcpp::init(0, nullptr);
 
     rclcpp::NodeOptions options;
-    const auto share_dir = ament_index_cpp::get_package_share_directory("planning_evaluator");
+    const auto share_dir =
+      ament_index_cpp::get_package_share_directory("autoware_planning_evaluator");
     options.arguments(
       {"--ros-args", "--params-file", share_dir + "/param/planning_evaluator.defaults.yaml"});
 

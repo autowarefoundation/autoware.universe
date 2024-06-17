@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_EVALUATOR__PARAMETERS_HPP_
-#define PLANNING_EVALUATOR__PARAMETERS_HPP_
+#ifndef AUTOWARE__PLANNING_EVALUATOR__PARAMETERS_HPP_
+#define AUTOWARE__PLANNING_EVALUATOR__PARAMETERS_HPP_
 
-#include "planning_evaluator/metrics/metric.hpp"
+#include "autoware/planning_evaluator/metrics/metric.hpp"
 
 #include <array>
 
@@ -46,4 +46,4 @@ struct Parameters
 
 }  // namespace planning_diagnostics
 
-#endif  // PLANNING_EVALUATOR__PARAMETERS_HPP_
+#endif  // AUTOWARE__PLANNING_EVALUATOR__PARAMETERS_HPP_

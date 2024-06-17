@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_
-#define PLANNING_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_
+#ifndef AUTOWARE__PLANNING_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_
+#define AUTOWARE__PLANNING_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_
 
-#include "planning_evaluator/metrics_calculator.hpp"
-#include "planning_evaluator/stat.hpp"
+#include "autoware/planning_evaluator/metrics_calculator.hpp"
+#include "autoware/planning_evaluator/stat.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -71,4 +71,4 @@ private:
 };
 }  // namespace planning_diagnostics
 
-#endif  // PLANNING_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_
+#endif  // AUTOWARE__PLANNING_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_

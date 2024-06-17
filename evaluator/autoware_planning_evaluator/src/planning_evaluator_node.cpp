@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "planning_evaluator/planning_evaluator_node.hpp"
+#include "autoware/planning_evaluator/planning_evaluator_node.hpp"
 
 #include "boost/lexical_cast.hpp"
 
