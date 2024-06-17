@@ -8,22 +8,22 @@
       "properties": {
         "blockage_ratio_threshold": {
           "type": "number",
-          "description": "blockage ration threshold",
+          "description": "The threshold of blockage area ratio.If the blockage value exceeds this threshold, the diagnostic state will be set to ERROR.",
           "default": "0.1"
         },
         "blockage_count_threshold": {
           "type": "number",
-          "description": "blockage count threshold",
+          "description": "The threshold of number continuous blockage frames",
           "default": "50"
         },
         "blockage_buffering_frames": {
           "type": "number",
-          "description": "blockage buffering frames",
+          "description": "The number of buffering about blockage detection [range:1-200]",
           "default": "2"
         },
         "blockage_buffering_interval": {
           "type": "number",
-          "description": "blockage buffering interval",
+          "description": "The interval of buffering about blockage detection",
           "default": "1"
         },
         "enable_dust_diag": {
@@ -38,42 +38,42 @@
         },
         "dust_ratio_threshold": {
           "type": "number",
-          "description": "dust ration threshold",
+          "description": "The threshold of dusty area ratio",
           "default": "0.2"
         },
         "dust_count_threshold": {
           "type": "number",
-          "description": "dust count threshold",
+          "description": "The threshold of number continuous frames include dusty area",
           "default": "10"
         },
         "dust_kernel_size": {
           "type": "number",
-          "description": "dust kernel size",
+          "description": "The kernel size of morphology processing in dusty area detection",
           "default": "2"
         },
         "dust_buffering_frames": {
           "type": "number",
-          "description": "dust buffering frames",
+          "description": "The number of buffering about dusty area detection [range:1-200]",
           "default": "10"
         },
         "dust_buffering_interval": {
           "type": "number",
-          "description": "dust buffering interval",
+          "description": "The interval of buffering about dusty area detection",
           "default": "1"
         },
         "max_distance_range": {
           "type": "number",
-          "description": "max distance range",
+          "description": "Maximum view range for the LiDAR",
           "default": "200.0"
         },
         "horizontal_resolution": {
           "type": "number",
-          "description": "horizontal resolution",
-          "default": "INSERT_DEFAULT"
+          "description": "The horizontal resolution of depth map image [deg/pixel]",
+          "default": "0.4"
         },
         "blockage_kernel": {
           "type": "number",
-          "description": "blockage kernel",
+          "description": "The kernel size of morphology processing the detected blockage area",
           "default": "10"
         }
       },
