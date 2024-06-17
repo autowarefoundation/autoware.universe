@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
 
 #include "autoware/behavior_path_lane_change_module/scene.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/base_class.hpp"
@@ -135,4 +135,4 @@ protected:
 };
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_

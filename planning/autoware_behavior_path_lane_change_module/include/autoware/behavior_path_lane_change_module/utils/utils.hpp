@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
 
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/path.hpp"
@@ -309,4 +309,4 @@ geometry_msgs::msg::Polygon createExecutionArea(
   double additional_lon_offset, double additional_lat_offset);
 }  // namespace autoware::behavior_path_planner::utils::lane_change::debug
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

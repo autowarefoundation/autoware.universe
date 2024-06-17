@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
 
 #include "autoware/behavior_path_lane_change_module/utils/base_class.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
@@ -206,4 +206,4 @@ protected:
   double stop_time_{0.0};
 };
 }  // namespace autoware::behavior_path_planner
-#endif  // AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
