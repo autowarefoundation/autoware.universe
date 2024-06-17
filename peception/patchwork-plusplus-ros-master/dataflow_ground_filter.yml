@@ -1,0 +1,27 @@
+nodes:
+  #rslidar driver   node
+  - id: rslidar_driver
+    custom:
+      source: ../../dora-hardware/vendors/lidar/build/rslidar_driver_pcap
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - pointcloud
+
+  - id: show_lidar_input
+    operator:
+        python: ../../dora-hardware/vendors/lidar/lidar_to_ros2.py
+        inputs:
+          pointcloud: rslidar_driver/pointcloud
+
+  - id: ground_filter
+    custom:
+      source: build/demo
+      inputs:
+        pointcloud: rslidar_driver/pointcloud 
+      outputs:
+        - pointcloud_no_ground
+        
+
+
+ 

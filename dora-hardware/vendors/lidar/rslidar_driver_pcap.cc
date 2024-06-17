@@ -245,7 +245,7 @@ int main()
 
     RSDriverParam param;                  ///< Create a parameter object
     param.input_type = InputType::PCAP_FILE;
-    param.input_param.pcap_path = "lidar.pcap";  ///< Set the pcap file directory
+    param.input_param.pcap_path = "/home/crp/dora_data/lidar2.pcap";  ///< Set the pcap file directory
     param.input_param.msop_port = 6699;   ///< Set the lidar msop port number, the default is 6699
     param.input_param.difop_port = 7788;  ///< Set the lidar difop port number, the default is 7788
     param.lidar_type = LidarType::RSHELIOS;   ///< Set the lidar type. Make sure this type is correct雷达类型
