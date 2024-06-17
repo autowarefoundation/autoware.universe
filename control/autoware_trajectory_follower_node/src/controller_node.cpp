@@ -14,8 +14,8 @@
 
 #include "autoware_trajectory_follower_node/controller_node.hpp"
 
-#include "autoware_mpc_lateral_controller/mpc_lateral_controller.hpp"
-#include "autoware_pid_longitudinal_controller/pid_longitudinal_controller.hpp"
+#include "autoware/mpc_lateral_controller/mpc_lateral_controller.hpp"
+#include "autoware/pid_longitudinal_controller/pid_longitudinal_controller.hpp"
 #include "autoware_pure_pursuit/autoware_pure_pursuit_lateral_controller.hpp"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
 
