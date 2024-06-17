@@ -15,8 +15,8 @@
 #ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
 #define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
 
-#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
-#include "autoware_behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 
 #include <memory>
 #include <string>

@@ -17,10 +17,10 @@
 
 #include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware_behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
-#include "autoware_behavior_path_static_obstacle_avoidance_module/helper.hpp"
-#include "autoware_behavior_path_static_obstacle_avoidance_module/shift_line_generator.hpp"
-#include "autoware_behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/helper.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/shift_line_generator.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 
 #include <rclcpp/logging.hpp>
 #include <rclcpp/node.hpp>

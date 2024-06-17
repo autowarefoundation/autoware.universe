@@ -16,8 +16,8 @@
 #define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__MANAGER_HPP_
 
 #include "autoware_behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
-#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
-#include "autoware_behavior_path_static_obstacle_avoidance_module/scene.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/scene.hpp"
 
 #include <rclcpp/node.hpp>
 #include <rclcpp/parameter.hpp>

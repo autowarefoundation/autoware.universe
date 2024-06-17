@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
-#include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

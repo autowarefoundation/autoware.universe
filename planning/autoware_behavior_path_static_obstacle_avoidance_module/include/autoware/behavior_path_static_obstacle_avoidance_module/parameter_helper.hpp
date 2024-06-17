@@ -16,7 +16,7 @@
 
 #include "tier4_autoware_utils/ros/parameter.hpp"
 
-#include <autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
+#include <autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
 #include <rclcpp/node.hpp>
 
 #include <autoware_perception_msgs/msg/detail/object_classification__struct.hpp>
