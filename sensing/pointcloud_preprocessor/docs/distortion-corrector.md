@@ -46,5 +46,5 @@ ros2 launch pointcloud_preprocessor distortion_corrector.launch.xml
 
 ## Assumptions / Known limits
 
-- The node requires that time synchronization between the topics from lidars, twist, and IMU.
+- The node requires time synchronization between the topics from lidars, twist, and IMU.
 - If you want to use a 3D distortion corrector without IMU, please check that the linear and angular velocity fields of your twist message are not empty.
