@@ -2,8 +2,9 @@
   <arg name="planning_validator_param_path" default="$(find-pkg-share autoware_planning_validator)/config/planning_validator.param.yaml"/>
   <arg name="input_trajectory" default="/planning/scenario_planning/velocity_smoother/trajectory"/>
   <arg name="output_trajectory" default="/planning/scenario_planning/trajectory"/>
+  <arg name="log_level" default="WARN"/>
 
-  <node name="planning_validator" exec="planning_validator_node" pkg="autoware_planning_validator" output="screen">
+  <node name="planning_validator" exec="planning_validator_node" pkg="autoware_planning_validator" output="screen" ros_args="--log-level $(var log_level)">
     <!-- load config a file -->
     <param from="$(var planning_validator_param_path)"/>
 

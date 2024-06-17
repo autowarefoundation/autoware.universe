@@ -4,10 +4,11 @@
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/lane_driving/motion_planning/path_optimizer/trajectory"/>
   <arg name="input/objects" default="/perception/object_recognition/objects"/>
   <arg name="input/modified_goal" default="/planning/scenario_planning/modified_goal"/>
+  <arg name="log_level" default="WARN"/>
 
   <!-- planning evaluator -->
   <group>
-    <node name="planning_evaluator" exec="planning_evaluator" pkg="autoware_planning_evaluator">
+    <node name="planning_evaluator" exec="planning_evaluator" pkg="autoware_planning_evaluator" ros_args="--log-level $(var log_level)">
       <param from="$(find-pkg-share autoware_planning_evaluator)/param/planning_evaluator.defaults.yaml"/>
       <remap from="~/input/odometry" to="$(var input/odometry)"/>
       <remap from="~/input/trajectory" to="$(var input/trajectory)"/>

@@ -1,5 +1,6 @@
 <launch>
-  <node pkg="hazard_status_converter" exec="converter" name="hazard_status_converter">
+  <arg name="log_level" default="WARN"/>
+  <node pkg="hazard_status_converter" exec="converter" name="hazard_status_converter" ros_args="--log-level $(var log_level)">
     <remap from="~/diagnostics_graph" to="/diagnostics_graph"/>
     <remap from="~/hazard_status" to="/system/emergency/hazard_status"/>
   </node>

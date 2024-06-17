@@ -1,6 +1,7 @@
 <launch>
   <arg name="enable_all_modules_auto_mode"/>
   <arg name="is_simulation"/>
+  <arg name="log_level" default="WARN"/>
 
   <!-- lane_driving scenario -->
   <group>
@@ -15,6 +16,7 @@
           <arg name="is_simulation" value="$(var is_simulation)"/>
           <!-- This condition should be true if run_out module is enabled and its detection method is Points -->
           <arg name="launch_compare_map_pipeline" value="false"/>
+          <arg name="log_level" value="$(var log_level)"/>
         </include>
       </group>
     </group>
@@ -25,6 +27,7 @@
       <group>
         <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/lane_driving/motion_planning/motion_planning.launch.xml">
           <arg name="container_type" value="component_container_mt"/>
+          <arg name="log_level" value="$(var log_level)"/>
         </include>
       </group>
     </group>

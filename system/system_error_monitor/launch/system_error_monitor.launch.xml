@@ -21,10 +21,12 @@
   <arg name="extra_agg_config_file_system" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/_empty.param.yaml"/>
   <arg name="extra_agg_config_file_vehicle" default="$(find-pkg-share system_error_monitor)/config/diagnostic_aggregator/_empty.param.yaml"/>
 
+  <arg name="log_level" default="WARN"/>
+
   <group>
     <push-ros-namespace namespace="/"/>
 
-    <node pkg="diagnostic_aggregator" exec="aggregator_node" name="aggregator_node" output="screen" args="--ros-args --log-level WARN">
+    <node pkg="diagnostic_aggregator" exec="aggregator_node" name="aggregator_node" output="screen" ros_args="--log-level $(var log_level)">
       <param name="pub_rate" value="10.0"/>
       <param name="path" value="autoware"/>
       <param from="$(var agg_config_file_control)"/>
@@ -51,5 +53,6 @@
     <arg name="hazard_recovery_timeout" value="$(var hazard_recovery_timeout)"/>
     <arg name="use_emergency_hold" value="$(var use_emergency_hold)"/>
     <arg name="use_emergency_hold_in_manual_driving" value="$(var use_emergency_hold_in_manual_driving)"/>
+    <arg name="log_level" value="$(var log_level)"/>
   </include>
 </launch>

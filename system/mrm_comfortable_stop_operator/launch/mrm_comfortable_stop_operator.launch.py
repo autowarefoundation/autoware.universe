@@ -51,6 +51,8 @@ def launch_setup(context, *args, **kwargs):
             component,
         ],
         output="screen",
+        ros_arguments=["--log-level", ["system.mrm_comfortable_stop_operator.mrm_comfortable_stop_operator_container:=", LaunchConfiguration("log_level")],
+                       "--log-level", ["system.mrm_comfortable_stop_operator.mrm_comfortable_stop_operator:=" , LaunchConfiguration("log_level")],],
     )
 
     return [container]
@@ -65,7 +67,8 @@ def generate_launch_description():
                 "/config/mrm_comfortable_stop_operator.param.yaml",
             ],
             description="path to the parameter file of mrm_comfortable_stop_operator",
-        )
+        ),
+        DeclareLaunchArgument("log_level"),
     ]
 
     return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])

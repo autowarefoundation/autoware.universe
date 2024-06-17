@@ -10,6 +10,7 @@
   <!-- Auto mode setting-->
   <arg name="enable_all_modules_auto_mode"/>
   <arg name="is_simulation"/>
+  <arg name="log_level" default="WARN"/>
 
   <group>
     <push-ros-namespace namespace="planning"/>
@@ -18,6 +19,7 @@
       <push-ros-namespace namespace="mission_planning"/>
       <include file="$(find-pkg-share tier4_planning_launch)/launch/mission_planning/mission_planning.launch.xml">
         <arg name="mission_planner_param_path" value="$(var mission_planner_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -27,6 +29,7 @@
       <include file="$(find-pkg-share tier4_planning_launch)/launch/scenario_planning/scenario_planning.launch.xml">
         <arg name="enable_all_modules_auto_mode" value="$(var enable_all_modules_auto_mode)"/>
         <arg name="is_simulation" value="$(var is_simulation)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -36,17 +39,22 @@
         <arg name="input_trajectory" value="/planning/scenario_planning/velocity_smoother/trajectory"/>
         <arg name="output_trajectory" value="/planning/scenario_planning/trajectory"/>
         <arg name="planning_validator_param_path" value="$(var planning_validator_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
     <!-- planning evaluator -->
     <group>
-      <include file="$(find-pkg-share autoware_planning_evaluator)/launch/planning_evaluator.launch.xml"/>
+      <include file="$(find-pkg-share autoware_planning_evaluator)/launch/planning_evaluator.launch.xml">
+        <arg name="log_level" value="$(var log_level)"/>
+      </include>
     </group>
 
     <!-- mission remaining distance and time calculator -->
     <group>
-      <include file="$(find-pkg-share autoware_remaining_distance_time_calculator)/launch/remaining_distance_time_calculator.launch.xml"/>
+      <include file="$(find-pkg-share autoware_remaining_distance_time_calculator)/launch/remaining_distance_time_calculator.launch.xml">
+        <arg name="log_level" value="$(var log_level)"/>
+      </include>
     </group>
   </group>
 </launch>

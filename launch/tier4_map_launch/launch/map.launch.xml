@@ -19,10 +19,17 @@
   <let name="container_type" value="component_container" unless="$(var use_multithread)"/>
   <let name="container_type" value="component_container_mt" if="$(var use_multithread)"/>
 
+  <arg name="log_level" default="WARN"/>
+
   <group>
     <push-ros-namespace namespace="map"/>
 
-    <node_container pkg="rclcpp_components" exec="$(var container_type)" name="map_container" namespace="" output="both">
+    <node_container pkg="rclcpp_components" exec="$(var container_type)" name="map_container" namespace="" output="both"
+      ros_args="--log-level map.map_container:=$(var log_level) \
+                --log-level map.pointcloud_map_loader:=$(var log_level) \
+                --log-level map.lanelet2_map_loader:=$(var log_level) \
+                --log-level map.lanelet2_map_visualization:=$(var log_level) \
+                --log-level map.vector_map_tf_generator:=$(var log_level)">
       <composable_node pkg="map_loader" plugin="PointCloudMapLoaderNode" name="pointcloud_map_loader">
         <param from="$(var pointcloud_map_loader_param_path)"/>
         <param name="pcd_paths_or_directory" value="[$(var pointcloud_map_path)]"/>
@@ -54,7 +61,7 @@
       </composable_node>
     </node_container>
 
-    <node pkg="map_loader" exec="map_hash_generator" name="map_hash_generator">
+    <node pkg="map_loader" exec="map_hash_generator" name="map_hash_generator" ros_args="--log-level $(var log_level)">
       <param name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
       <param name="pointcloud_map_path" value="$(var pointcloud_map_path)"/>
     </node>
@@ -63,6 +70,7 @@
       <arg name="param_path" value="$(var map_projection_loader_param_path)"/>
       <arg name="map_projector_info_path" value="$(var map_projector_info_path)"/>
       <arg name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
+      <arg name="log_level" value="$(var log_level)"/>
     </include>
   </group>
 </launch>
