@@ -65,11 +65,16 @@ using autoware_universe_utils::Point2d;
 using autoware_universe_utils::Polygon2d;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
+using tier4_autoware_utils::LineString2d;
+using tier4_autoware_utils::Point2d;
+using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using Path = std::vector<geometry_msgs::msg::Pose>;
 using Vector3 = geometry_msgs::msg::Vector3;
+using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
+
 struct ObjectData
 {
   rclcpp::Time stamp;
@@ -278,6 +283,10 @@ public:
     const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
     std::vector<ObjectData> & objects,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr);
+
+  void createObjectDataUsingPredictedObjects(
+    const Path & ego_path, const std::vector<Polygon2d> & ego_polys,
+    std::vector<ObjectData> & objects);
 
   void cropPointCloudWithEgoFootprintPath(
     const std::vector<Polygon2d> & ego_polys, pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects);

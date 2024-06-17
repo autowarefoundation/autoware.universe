@@ -14,6 +14,8 @@
 
 #include "autoware/autonomous_emergency_braking/node.hpp"
 
+#include "autoware_autonomous_emergency_braking/utils.hpp"
+
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -21,7 +23,11 @@
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <pcl_ros/transforms.hpp>
 
+#include <geometry_msgs/msg/polygon.hpp>
+
 #include <boost/geometry/algorithms/convex_hull.hpp>
+#include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
@@ -46,6 +52,7 @@
 
 namespace autoware::motion::control::autonomous_emergency_braking
 {
+using autoware::motion::control::autonomous_emergency_braking::utils::convertObjToPolygon;
 using diagnostic_msgs::msg::DiagnosticStatus;
 namespace bg = boost::geometry;
 
@@ -100,7 +107,7 @@ Polygon2d createPolygon(
 
   Polygon2d hull_polygon;
   bg::convex_hull(polygon, hull_polygon);
-
+  bg::correct(hull_polygon);
   return hull_polygon;
 }
 
@@ -382,10 +389,10 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     return false;
   }
 
-  auto check_collision = [&](
-                           const auto & path, const colorTuple & debug_colors,
-                           const std::string & debug_ns,
-                           pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) {
+  auto check_pointcloud_collision = [&](
+                                      const auto & path, const colorTuple & debug_colors,
+                                      const std::string & debug_ns,
+                                      pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects) {
     // Crop out Pointcloud using an extra wide ego path
     const auto expanded_ego_polys =
       generatePathFootprint(path, expand_width_ + path_footprint_extra_margin_);
@@ -394,9 +401,11 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     // Check which points of the cropped point cloud are on the ego path, and get the closest one
     std::vector<ObjectData> objects_from_point_clusters;
     const auto ego_polys = generatePathFootprint(path, expand_width_);
-    const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
-    createObjectDataUsingPointCloudClusters(
-      path, ego_polys, current_time, objects_from_point_clusters, filtered_objects);
+    // const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
+    // createObjectDataUsingPointCloudClusters(
+    //   path, ego_polys, current_time, objects_from_point_clusters, filtered_objects);
+
+    createObjectDataUsingPredictedObjects(path, ego_polys, objects_from_point_clusters);
 
     // Get only the closest object and calculate its speed
     const auto closest_object_point = std::invoke([&]() -> std::optional<ObjectData> {
@@ -441,7 +450,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const std::string ns = "ego";
     const auto ego_path = generateEgoPath(current_v, current_w);
 
-    return check_collision(ego_path, debug_color, ns, filtered_objects);
+    return check_pointcloud_collision(ego_path, debug_color, ns, filtered_objects);
   };
 
   // step4. make function to check collision with predicted trajectory from control module
@@ -456,7 +465,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const std::string ns = "predicted";
     const auto & predicted_path = predicted_path_opt.value();
 
-    return check_collision(predicted_path, debug_color, ns, filtered_objects);
+    return check_pointcloud_collision(predicted_path, debug_color, ns, filtered_objects);
   };
 
   // Data of filtered point cloud
@@ -580,6 +589,104 @@ std::vector<Polygon2d> AEB::generatePathFootprint(
       createPolygon(path.at(i), path.at(i + 1), vehicle_info_, extra_width_margin));
   }
   return polygons;
+}
+
+void AEB::createObjectDataUsingPredictedObjects(
+  const Path & ego_path, const std::vector<Polygon2d> & ego_polys,
+  std::vector<ObjectData> & object_data_vector)
+{
+  if (predicted_objects_ptr_->objects.empty()) return;
+
+  const double current_ego_speed = current_velocity_ptr_->longitudinal_velocity;
+  const auto & objects = predicted_objects_ptr_->objects;
+  const auto & stamp = predicted_objects_ptr_->header.stamp;
+
+  // Ego position
+  const auto current_p = [&]() {
+    const auto & first_point_of_path = ego_path.front();
+    const auto & p = first_point_of_path.position;
+    return tier4_autoware_utils::createPoint(p.x, p.y, p.z);
+  }();
+
+  auto get_object_velocity = [&](const PredictedObject & predicted_object, const auto & obj_pose) {
+    const double obj_vel_norm = std::hypot(
+      predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x,
+      predicted_object.kinematics.initial_twist_with_covariance.twist.linear.y);
+
+    const auto obj_yaw = tf2::getYaw(obj_pose.orientation);
+    const auto obj_idx = motion_utils::findNearestIndex(ego_path, obj_pose.position);
+    const auto path_yaw = (current_ego_speed > 0.0)
+                            ? tf2::getYaw(ego_path.at(obj_idx).orientation)
+                            : tf2::getYaw(ego_path.at(obj_idx).orientation) + M_PI;
+    return obj_vel_norm * std::cos(obj_yaw - path_yaw);
+  };
+
+  // auto convert_polygon_object_to_geometry_polygon =
+  //   [](
+  //     const geometry_msgs::msg::Pose & current_pose,
+  //     const autoware_perception_msgs::msg::Shape & obj_shape) {
+  //     Polygon2d object_polygon;
+  //     tf2::Transform tf_map2obj;
+  //     fromMsg(current_pose, tf_map2obj);
+  //     const auto obj_points = obj_shape.footprint.points;
+  //     object_polygon.outer().reserve(obj_points.size() + 1);
+  //     for (const auto & obj_point : obj_points) {
+  //       tf2::Vector3 obj(obj_point.x, obj_point.y, obj_point.z);
+  //       tf2::Vector3 tf_obj = tf_map2obj * obj;
+  //       object_polygon.outer().emplace_back(tf_obj.x(), tf_obj.y());
+  //     }
+  //     object_polygon.outer().push_back(object_polygon.outer().front());
+  //     object_polygon = tier4_autoware_utils::isClockwise(object_polygon)
+  //                        ? object_polygon
+  //                        : tier4_autoware_utils::inverseClockwise(object_polygon);
+  //     bg::correct(object_polygon);
+  //     return object_polygon;
+  //   };
+
+  // Check which objects collide with the ego footprints
+  std::for_each(objects.begin(), objects.end(), [&](const auto & predicted_object) {
+    const auto & obj_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+    const auto obj_poly = convertObjToPolygon(predicted_object);
+    const double obj_velocity = get_object_velocity(predicted_object, obj_pose);
+
+    for (const auto & ego_poly : ego_polys) {
+      // check collision with 2d polygon
+      std::vector<Point2d> collision_points_bg;
+      bg::intersection(ego_poly, obj_poly, collision_points_bg);
+
+      const bool inter_sec = bg::intersects(obj_poly, ego_poly);
+      std::cerr << "BEFORE Intersects! " << static_cast<int>(inter_sec) << "\n";
+
+      std::cerr << "obj_poly.outer().size() " << obj_poly.outer().size() << "\n";
+      std::cerr << "ego_poly.outer().size() " << ego_poly.outer().size() << "\n";
+
+      if (collision_points_bg.empty()) continue;
+      std::cerr << "Intersects! YEEEEEEEES\n";
+
+      // Create an object for each intersection point
+      for (const auto & collision_point : collision_points_bg) {
+        const auto obj_position =
+          tier4_autoware_utils::createPoint(collision_point.x(), collision_point.y(), 0.0);
+        const double obj_arc_length =
+          motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
+        if (std::isnan(obj_arc_length)) continue;
+
+        // If the object is behind the ego, we need to use the backward long offset. The
+        // distance should be a positive number in any case
+        const bool is_object_in_front_of_ego = obj_arc_length > 0.0;
+        const double dist_ego_to_object =
+          (is_object_in_front_of_ego) ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
+                                      : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
+
+        ObjectData obj;
+        obj.stamp = stamp;
+        obj.position = obj_position;
+        obj.velocity = (obj_velocity > 0.0) ? obj_velocity : 0.0;
+        obj.distance_to_object = std::abs(dist_ego_to_object);
+        object_data_vector.push_back(obj);
+      }
+    }
+  });
 }
 
 void AEB::createObjectDataUsingPointCloudClusters(
