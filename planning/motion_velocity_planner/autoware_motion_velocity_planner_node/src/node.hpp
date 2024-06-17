@@ -17,7 +17,7 @@
 
 #include "planner_manager.hpp"
 
-#include <autoware_motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/motion_velocity_planner_common/planner_data.hpp>
 #include <autoware_motion_velocity_planner_node/srv/load_plugin.hpp>
 #include <autoware_motion_velocity_planner_node/srv/unload_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -66,7 +66,8 @@ private:
     autoware_perception_msgs::msg::PredictedObjects>
     sub_predicted_objects_{this, "~/input/dynamic_objects"};
   tier4_autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
-    sub_no_ground_pointcloud_{this, "~/input/no_ground_pointcloud"};
+    sub_no_ground_pointcloud_{
+      this, "~/input/no_ground_pointcloud", tier4_autoware_utils::SingleDepthSensorQoS()};
   tier4_autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
     sub_vehicle_odometry_{this, "~/input/vehicle_odometry"};
   tier4_autoware_utils::InterProcessPollingSubscriber<
