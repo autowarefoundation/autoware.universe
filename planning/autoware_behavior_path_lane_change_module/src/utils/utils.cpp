@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_lane_change_module/utils/utils.hpp"
+#include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 
-#include "autoware_behavior_path_lane_change_module/utils/data_structs.hpp"
-#include "autoware_behavior_path_lane_change_module/utils/path.hpp"
+#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
+#include "autoware/behavior_path_lane_change_module/utils/path.hpp"
 #include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
 #include "autoware_behavior_path_planner_common/parameters.hpp"
 #include "autoware_behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"

@@ -15,7 +15,7 @@
 #ifndef AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
 #define AUTOWARE_BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
 
-#include "autoware_behavior_path_lane_change_module/utils/data_structs.hpp"
+#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware_behavior_path_planner_common/turn_signal_decider.hpp"
 #include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 

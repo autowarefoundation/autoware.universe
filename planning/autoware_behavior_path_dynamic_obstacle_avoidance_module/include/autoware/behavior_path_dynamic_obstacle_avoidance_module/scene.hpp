@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
 
 #include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
@@ -461,4 +461,4 @@ private:
 };
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
