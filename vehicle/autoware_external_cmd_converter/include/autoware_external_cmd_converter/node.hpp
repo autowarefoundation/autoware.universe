@@ -15,7 +15,7 @@
 #ifndef AUTOWARE_EXTERNAL_CMD_CONVERTER__NODE_HPP_
 #define AUTOWARE_EXTERNAL_CMD_CONVERTER__NODE_HPP_
 
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 
 #include <autoware_raw_vehicle_cmd_converter/accel_map.hpp>
 #include <autoware_raw_vehicle_cmd_converter/brake_map.hpp>

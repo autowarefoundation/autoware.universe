@@ -14,7 +14,7 @@
 
 #include "autoware/behavior_path_dynamic_obstacle_avoidance_module/manager.hpp"
 
-#include "autoware_universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

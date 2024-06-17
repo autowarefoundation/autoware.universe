@@ -22,7 +22,7 @@
 #include "autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 

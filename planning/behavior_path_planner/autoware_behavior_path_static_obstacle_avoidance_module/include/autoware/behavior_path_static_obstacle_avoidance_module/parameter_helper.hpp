@@ -14,7 +14,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
 
-#include "autoware_universe_utils/ros/parameter.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 
 #include <autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
 #include <rclcpp/node.hpp>

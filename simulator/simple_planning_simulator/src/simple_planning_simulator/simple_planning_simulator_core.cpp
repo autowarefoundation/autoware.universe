@@ -14,9 +14,9 @@
 
 #include "simple_planning_simulator/simple_planning_simulator_core.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/ros/msg_covariance.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "rclcpp_components/register_node_macro.hpp"

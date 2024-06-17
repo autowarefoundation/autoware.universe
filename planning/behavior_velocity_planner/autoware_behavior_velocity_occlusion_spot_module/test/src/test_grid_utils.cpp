@@ -16,7 +16,7 @@
 #include "utils.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 
 #include <gtest/gtest.h>
 

@@ -14,7 +14,7 @@
 
 #include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <string>
 

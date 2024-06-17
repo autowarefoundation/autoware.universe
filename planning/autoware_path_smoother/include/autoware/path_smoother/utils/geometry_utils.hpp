@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__PATH_SMOOTHER__UTILS__GEOMETRY_UTILS_HPP_
 #define AUTOWARE__PATH_SMOOTHER__UTILS__GEOMETRY_UTILS_HPP_
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 namespace autoware::path_smoother
 {

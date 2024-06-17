@@ -17,9 +17,9 @@
 
 #include "lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <lidar_centerpoint/centerpoint_trt.hpp>
 #include <lidar_centerpoint/detection_class_remapper.hpp>
 #include <rclcpp/rclcpp.hpp>

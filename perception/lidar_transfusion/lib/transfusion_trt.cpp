@@ -17,7 +17,7 @@
 #include "lidar_transfusion/preprocess/preprocess_kernel.hpp"
 #include "lidar_transfusion/transfusion_config.hpp"
 
-#include <autoware_universe_utils/math/constants.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
 
 #include <iostream>
 #include <memory>

@@ -31,7 +31,7 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 

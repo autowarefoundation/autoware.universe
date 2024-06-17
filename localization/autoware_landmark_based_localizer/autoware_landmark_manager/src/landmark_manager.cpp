@@ -14,7 +14,7 @@
 
 #include "autoware/landmark_manager/landmark_manager.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "localization_util/util_func.hpp"
 

@@ -14,8 +14,8 @@
 
 #include "predicted_path_checker/predicted_path_checker_node.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <motion_utils/marker/marker_helper.hpp>
 #include <motion_utils/resample/resample.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>

@@ -16,12 +16,12 @@
 #define VEHICLE_CMD_GATE_HPP_
 
 #include "adapi_pause_interface.hpp"
-#include "autoware_universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "moderate_stop_interface.hpp"
 #include "vehicle_cmd_filter.hpp"
 
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>

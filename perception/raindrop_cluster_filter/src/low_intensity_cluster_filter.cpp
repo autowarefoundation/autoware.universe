@@ -14,7 +14,7 @@
 
 #include "raindrop_cluster_filter/low_intensity_cluster_filter/low_intensity_cluster_filter.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>

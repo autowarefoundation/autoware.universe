@@ -14,7 +14,7 @@
 
 #include "autoware/route_handler/route_handler.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_utils/math/normalization.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>

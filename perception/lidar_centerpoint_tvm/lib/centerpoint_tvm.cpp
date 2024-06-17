@@ -14,7 +14,7 @@
 
 #include "lidar_centerpoint_tvm/centerpoint_tvm.hpp"
 
-#include <autoware_universe_utils/math/constants.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
 #include <centerpoint_backbone/inference_engine_tvm_config.hpp>
 #include <centerpoint_backbone/preprocessing_inference_engine_tvm_config.hpp>
 #include <centerpoint_encoder/inference_engine_tvm_config.hpp>

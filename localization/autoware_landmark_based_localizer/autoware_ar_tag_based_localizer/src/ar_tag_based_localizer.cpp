@@ -62,7 +62,7 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
 : rclcpp::Node("ar_tag_based_localizer", options), cam_info_received_(false)

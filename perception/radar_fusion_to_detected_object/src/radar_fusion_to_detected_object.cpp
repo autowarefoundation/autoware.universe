@@ -15,8 +15,8 @@
 
 #include "radar_fusion_to_detected_object/radar_fusion_to_detected_object.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
 
 #include <boost/geometry.hpp>
 

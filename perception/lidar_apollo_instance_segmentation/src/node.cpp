@@ -16,8 +16,8 @@
 
 #include "lidar_apollo_instance_segmentation/detector.hpp"
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 
 namespace lidar_apollo_instance_segmentation
 {

@@ -19,13 +19,13 @@
 #include "autoware/path_optimizer/mpt_optimizer.hpp"
 #include "autoware/path_optimizer/replan_checker.hpp"
 #include "autoware/path_optimizer/type_alias.hpp"
-#include "autoware_universe_utils/ros/logger_level_configure.hpp"
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 
 #include <algorithm>
 #include <memory>

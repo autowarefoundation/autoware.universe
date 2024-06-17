@@ -15,7 +15,7 @@
 #ifndef ELEVATION_MAP_LOADER__ELEVATION_MAP_LOADER_NODE_HPP_
 #define ELEVATION_MAP_LOADER__ELEVATION_MAP_LOADER_NODE_HPP_
 
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <filters/filter_chain.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_pcl/GridMapPclLoader.hpp>

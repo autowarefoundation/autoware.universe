@@ -16,8 +16,8 @@
 #define AUTOWARE__PATH_OPTIMIZER__COMMON_STRUCTS_HPP_
 
 #include "autoware/path_optimizer/type_alias.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
-#include "autoware_universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <memory>

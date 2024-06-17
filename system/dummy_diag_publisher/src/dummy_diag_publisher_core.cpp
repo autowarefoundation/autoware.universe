@@ -17,7 +17,7 @@
 #include <rcl_interfaces/msg/detail/set_parameters_result__struct.hpp>
 
 #define FMT_HEADER_ONLY
-#include <autoware_universe_utils/ros/update_param.hpp>
+#include <autoware/universe_utils/ros/update_param.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rcl_interfaces/msg/set_parameters_result.hpp>
 #include <rclcpp/create_timer.hpp>

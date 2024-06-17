@@ -15,7 +15,7 @@
 #include "yabloc_image_processing/graph_segment/graph_segment.hpp"
 #include "yabloc_image_processing/graph_segment/histogram.hpp"
 
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <yabloc_common/cv_decompress.hpp>

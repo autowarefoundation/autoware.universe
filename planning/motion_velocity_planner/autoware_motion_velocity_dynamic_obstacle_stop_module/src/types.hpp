@@ -15,7 +15,7 @@
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/time.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>

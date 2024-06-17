@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__TRAJECTORY_FOLLOWER_NODE__SIMPLE_TRAJECTORY_FOLLOWER_HPP_
 #define AUTOWARE__TRAJECTORY_FOLLOWER_NODE__SIMPLE_TRAJECTORY_FOLLOWER_HPP_
 
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

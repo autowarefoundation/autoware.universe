@@ -14,8 +14,8 @@
 
 #include "traffic_light_map_based_detector/node.hpp"
 
-#include <autoware_universe_utils/math/normalization.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>

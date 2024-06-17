@@ -22,8 +22,8 @@
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning_message.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/ros/msg_covariance.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/msg_covariance.hpp>
 
 #include <fmt/core.h>
 #include <tf2/LinearMath/Quaternion.h>

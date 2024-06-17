@@ -15,8 +15,8 @@
 #ifndef AUTOWARE__VELOCITY_SMOOTHER__SMOOTHER__L2_PSEUDO_JERK_SMOOTHER_HPP_
 #define AUTOWARE__VELOCITY_SMOOTHER__SMOOTHER__L2_PSEUDO_JERK_SMOOTHER_HPP_
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 

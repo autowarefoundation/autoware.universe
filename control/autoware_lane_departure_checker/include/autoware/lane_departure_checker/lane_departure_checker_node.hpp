@@ -16,10 +16,10 @@
 #define AUTOWARE__LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
 
 #include "autoware/lane_departure_checker/lane_departure_checker.hpp"
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/ros/processing_time_publisher.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/processing_time_publisher.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 

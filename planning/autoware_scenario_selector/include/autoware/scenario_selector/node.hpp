@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__SCENARIO_SELECTOR__NODE_HPP_
 #define AUTOWARE__SCENARIO_SELECTOR__NODE_HPP_
 
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
@@ -35,7 +35,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>

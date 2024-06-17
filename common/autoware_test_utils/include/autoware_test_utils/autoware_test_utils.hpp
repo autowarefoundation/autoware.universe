@@ -15,7 +15,7 @@
 #ifndef AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 #define AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <component_interface_specs/planning.hpp>
 #include <lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <lanelet2_extension/projection/mgrs_projector.hpp>

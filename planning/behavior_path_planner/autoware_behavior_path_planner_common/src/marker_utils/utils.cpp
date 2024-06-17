@@ -18,9 +18,9 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware_universe_utils/ros/marker_helper.hpp>
-#include <autoware_universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 
 #include <lanelet2_core/primitives/CompoundPolygon.h>
 #include <lanelet2_core/primitives/Lanelet.h>

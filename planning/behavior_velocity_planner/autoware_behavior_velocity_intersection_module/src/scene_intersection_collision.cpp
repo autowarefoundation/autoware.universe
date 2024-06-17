@@ -17,8 +17,8 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>  // for toGeomPoly
 #include <autoware/behavior_velocity_planner_common/utilization/trajectory_utils.hpp>  // for smoothPath
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>

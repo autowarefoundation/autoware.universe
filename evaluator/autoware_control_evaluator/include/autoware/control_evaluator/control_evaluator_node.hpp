@@ -17,7 +17,7 @@
 
 #include "autoware/control_evaluator/metrics/deviation_metrics.hpp"
 
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>

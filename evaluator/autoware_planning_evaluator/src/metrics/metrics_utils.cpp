@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "autoware/planning_evaluator/metrics/trajectory_metrics.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 namespace planning_diagnostics
 {
 namespace metrics

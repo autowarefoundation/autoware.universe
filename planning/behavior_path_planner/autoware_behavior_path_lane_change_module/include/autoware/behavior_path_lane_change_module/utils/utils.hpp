@@ -23,7 +23,7 @@
 #include "rclcpp/logger.hpp"
 
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>

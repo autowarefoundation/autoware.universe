@@ -14,10 +14,10 @@
 
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "autoware/velocity_smoother/resample.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/math/unit_conversion.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"

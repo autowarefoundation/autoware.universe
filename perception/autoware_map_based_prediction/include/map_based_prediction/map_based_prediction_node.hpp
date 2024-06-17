@@ -15,17 +15,17 @@
 #ifndef MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
 #define MAP_BASED_PREDICTION__MAP_BASED_PREDICTION_NODE_HPP_
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 #include "map_based_prediction/path_generator.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
-#include <autoware_universe_utils/ros/transform_listener.hpp>
-#include <autoware_universe_utils/ros/uuid_helper.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/transform_listener.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>

@@ -14,7 +14,7 @@
 
 #include "autoware/planning_topic_converter/path_to_trajectory.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <motion_utils/trajectory/conversion.hpp>
 
 namespace autoware::planning_topic_converter

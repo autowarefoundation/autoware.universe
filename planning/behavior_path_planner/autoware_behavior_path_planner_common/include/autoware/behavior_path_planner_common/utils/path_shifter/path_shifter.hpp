@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SHIFTER__PATH_SHIFTER_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__PATH_SHIFTER__PATH_SHIFTER_HPP_
 
-#include <autoware_universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logging.hpp>
 

@@ -17,7 +17,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <motion_utils/trajectory/interpolation.hpp>
 
 #include <boost/geometry/algorithms/distance.hpp>

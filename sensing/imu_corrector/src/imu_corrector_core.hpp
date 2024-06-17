@@ -14,8 +14,8 @@
 #ifndef IMU_CORRECTOR_CORE_HPP_
 #define IMU_CORRECTOR_CORE_HPP_
 
-#include "autoware_universe_utils/ros/msg_covariance.hpp"
-#include "autoware_universe_utils/ros/transform_listener.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
+#include "autoware/universe_utils/ros/transform_listener.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

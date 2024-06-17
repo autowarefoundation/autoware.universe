@@ -15,8 +15,8 @@
 #include "scene_walkway.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <motion_utils/marker/marker_helper.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 

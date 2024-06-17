@@ -19,8 +19,8 @@
 #include "localization_util/util_func.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/transform/transforms.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/transform/transforms.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 

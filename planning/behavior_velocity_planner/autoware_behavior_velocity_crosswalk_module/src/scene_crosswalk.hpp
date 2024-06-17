@@ -18,8 +18,8 @@
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
 

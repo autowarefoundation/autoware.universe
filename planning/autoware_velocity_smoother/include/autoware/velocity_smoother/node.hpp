@@ -15,6 +15,12 @@
 #ifndef AUTOWARE__VELOCITY_SMOOTHER__NODE_HPP_
 #define AUTOWARE__VELOCITY_SMOOTHER__NODE_HPP_
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
+#include "autoware/universe_utils/ros/self_pose_listener.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 #include "autoware/velocity_smoother/resample.hpp"
 #include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
@@ -22,12 +28,6 @@
 #include "autoware/velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/math/unit_conversion.hpp"
-#include "autoware_universe_utils/ros/logger_level_configure.hpp"
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
-#include "autoware_universe_utils/ros/self_pose_listener.hpp"
-#include "autoware_universe_utils/system/stop_watch.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "osqp_interface/osqp_interface.hpp"
@@ -35,7 +35,7 @@
 #include "tf2/utils.h"
 #include "tf2_ros/transform_listener.h"
 
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"

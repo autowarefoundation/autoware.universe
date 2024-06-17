@@ -14,9 +14,9 @@
 
 #include "occupancy_grid_map_outlier_filter/occupancy_grid_map_outlier_filter_nodelet.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <boost/optional.hpp>

@@ -14,9 +14,9 @@
 
 #include "autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/constants.hpp>
-#include <autoware_universe_utils/math/trigonometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
+#include <autoware/universe_utils/math/trigonometry.hpp>
 
 namespace autoware::objects_of_interest_marker_interface
 {

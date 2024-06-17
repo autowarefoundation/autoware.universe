@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "object_recognition_utils/matching.hpp"
 
 #include <autoware_perception_msgs/msg/detected_object.hpp>

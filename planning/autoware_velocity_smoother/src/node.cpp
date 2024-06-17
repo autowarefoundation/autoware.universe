@@ -14,10 +14,10 @@
 
 #include "autoware/velocity_smoother/node.hpp"
 
+#include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
 
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>

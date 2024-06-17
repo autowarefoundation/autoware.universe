@@ -15,8 +15,8 @@
 #ifndef NODE_HPP_
 #define NODE_HPP_
 
-#include "autoware_universe_utils/ros/logger_level_configure.hpp"
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "debug_marker.hpp"
 
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>

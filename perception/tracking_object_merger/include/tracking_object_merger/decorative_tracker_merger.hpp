@@ -19,9 +19,9 @@
 #include "tracking_object_merger/utils/tracker_state.hpp"
 #include "tracking_object_merger/utils/utils.hpp"
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/tracked_objects.hpp>

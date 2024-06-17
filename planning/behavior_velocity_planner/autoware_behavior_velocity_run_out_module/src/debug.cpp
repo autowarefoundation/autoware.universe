@@ -16,8 +16,8 @@
 
 #include "scene.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 
 using autoware_universe_utils::appendMarkerArray;

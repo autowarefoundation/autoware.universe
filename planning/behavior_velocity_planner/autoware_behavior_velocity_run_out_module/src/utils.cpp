@@ -31,7 +31,7 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 namespace autoware::behavior_velocity_planner
 {

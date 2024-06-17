@@ -18,8 +18,8 @@
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "autoware_universe_utils/ros/debug_publisher.hpp"
-#include "autoware_universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/ros/debug_publisher.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>

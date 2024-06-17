@@ -14,7 +14,7 @@
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
-#include "autoware_universe_utils/math/trigonometry.hpp"
+#include "autoware/universe_utils/math/trigonometry.hpp"
 
 #include <deque>
 #include <string>

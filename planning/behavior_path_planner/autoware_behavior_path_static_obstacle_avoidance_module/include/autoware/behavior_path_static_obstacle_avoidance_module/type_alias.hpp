@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__TYPE_ALIAS_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__TYPE_ALIAS_HPP_
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/ros/marker_helper.hpp>
-#include <autoware_universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>

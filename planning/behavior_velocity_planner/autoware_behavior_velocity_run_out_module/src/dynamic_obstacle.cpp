@@ -14,11 +14,11 @@
 
 #include "dynamic_obstacle.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/geometry/pose_deviation.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
-#include <autoware_universe_utils/ros/uuid_helper.hpp>
-#include <autoware_universe_utils/transform/transforms.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/transform/transforms.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 
 #include <boost/geometry/algorithms/covered_by.hpp>

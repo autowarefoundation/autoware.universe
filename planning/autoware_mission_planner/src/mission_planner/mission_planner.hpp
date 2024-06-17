@@ -16,11 +16,11 @@
 #define MISSION_PLANNER__MISSION_PLANNER_HPP_
 
 #include "arrival_checker.hpp"
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 
 #include <autoware/mission_planner/mission_planner_plugin.hpp>
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware_universe_utils/ros/logger_level_configure.hpp>
+#include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 

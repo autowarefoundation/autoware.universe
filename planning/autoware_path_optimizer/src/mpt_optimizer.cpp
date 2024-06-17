@@ -16,8 +16,8 @@
 
 #include "autoware/path_optimizer/utils/geometry_utils.hpp"
 #include "autoware/path_optimizer/utils/trajectory_utils.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/math/normalization.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/normalization.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"

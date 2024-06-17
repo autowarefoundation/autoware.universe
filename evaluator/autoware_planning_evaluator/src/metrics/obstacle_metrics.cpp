@@ -14,7 +14,7 @@
 
 #include "autoware/planning_evaluator/metrics/obstacle_metrics.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <Eigen/Core>
 

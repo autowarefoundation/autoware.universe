@@ -14,7 +14,7 @@
 
 #include "detected_object_validation/detected_object_filter/object_lanelet_filter.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <object_recognition_utils/object_recognition_utils.hpp>

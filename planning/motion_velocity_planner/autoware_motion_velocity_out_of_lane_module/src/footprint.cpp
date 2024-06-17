@@ -14,7 +14,7 @@
 
 #include "footprint.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 

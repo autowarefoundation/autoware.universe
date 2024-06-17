@@ -15,8 +15,8 @@
 #include "manager.hpp"
 
 #include "autoware/behavior_path_static_obstacle_avoidance_module/parameter_helper.hpp"
-#include "autoware_universe_utils/ros/parameter.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 #include "data_structs.hpp"
 
 #include <rclcpp/rclcpp.hpp>

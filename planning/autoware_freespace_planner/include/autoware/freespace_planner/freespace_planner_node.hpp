@@ -31,7 +31,7 @@
 #ifndef AUTOWARE__FREESPACE_PLANNER__FREESPACE_PLANNER_NODE_HPP_
 #define AUTOWARE__FREESPACE_PLANNER__FREESPACE_PLANNER_NODE_HPP_
 
-#include "autoware_universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
 
 #include <autoware/freespace_planning_algorithms/astar_search.hpp>
 #include <autoware/freespace_planning_algorithms/rrtstar.hpp>

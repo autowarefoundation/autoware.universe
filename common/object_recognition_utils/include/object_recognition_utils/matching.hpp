@@ -15,8 +15,8 @@
 #ifndef OBJECT_RECOGNITION_UTILS__MATCHING_HPP_
 #define OBJECT_RECOGNITION_UTILS__MATCHING_HPP_
 
-#include "autoware_universe_utils/geometry/boost_geometry.hpp"
-#include "autoware_universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "object_recognition_utils/geometry.hpp"
 
 #include <boost/geometry.hpp>

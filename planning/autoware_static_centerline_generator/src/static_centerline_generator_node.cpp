@@ -14,9 +14,9 @@
 
 #include "static_centerline_generator_node.hpp"
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 #include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/ros/parameter.hpp"
 #include "centerline_source/bag_ego_trajectory_based_centerline.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
@@ -30,7 +30,7 @@
 #include "utils.hpp"
 
 #include <autoware/mission_planner/mission_planner_plugin.hpp>
-#include <autoware_universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
 #include <pluginlib/class_loader.hpp>
 

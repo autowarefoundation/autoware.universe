@@ -15,7 +15,7 @@
 #ifndef SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
 #define SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
 
-#include "autoware_universe_utils/ros/transform_listener.hpp"
+#include "autoware/universe_utils/ros/transform_listener.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_perception_msgs/msg/detected_objects.hpp"

@@ -15,7 +15,7 @@
 #ifndef MOTION_UTILS__TRAJECTORY__INTERPOLATION_HPP_
 #define MOTION_UTILS__TRAJECTORY__INTERPOLATION_HPP_
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "tier4_planning_msgs/msg/path_with_lane_id.hpp"

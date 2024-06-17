@@ -14,7 +14,7 @@
 
 #include "detected_object_validation/occupancy_grid_based_validator/occupancy_grid_based_validator.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <object_recognition_utils/object_classification.hpp>
 #include <object_recognition_utils/object_recognition_utils.hpp>
 

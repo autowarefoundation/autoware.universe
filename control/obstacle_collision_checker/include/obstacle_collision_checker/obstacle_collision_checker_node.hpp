@@ -17,11 +17,11 @@
 
 #include "obstacle_collision_checker/obstacle_collision_checker.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/ros/processing_time_publisher.hpp>
-#include <autoware_universe_utils/ros/self_pose_listener.hpp>
-#include <autoware_universe_utils/ros/transform_listener.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/processing_time_publisher.hpp>
+#include <autoware/universe_utils/ros/self_pose_listener.hpp>
+#include <autoware/universe_utils/ros/transform_listener.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 

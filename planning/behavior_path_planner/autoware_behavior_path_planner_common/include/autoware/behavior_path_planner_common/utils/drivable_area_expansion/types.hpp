@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__DRIVABLE_AREA_EXPANSION__TYPES_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__UTILS__DRIVABLE_AREA_EXPANSION__TYPES_HPP_
 
-#include "autoware_universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/path_point.hpp>

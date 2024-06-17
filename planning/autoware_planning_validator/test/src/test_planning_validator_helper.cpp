@@ -14,7 +14,7 @@
 
 #include "test_planning_validator_helper.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "test_parameter.hpp"
 
 #include <math.h>

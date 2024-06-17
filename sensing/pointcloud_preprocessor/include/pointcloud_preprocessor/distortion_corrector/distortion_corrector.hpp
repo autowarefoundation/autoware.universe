@@ -36,8 +36,8 @@
 #include <tf2_ros/transform_listener.h>
 
 // Include tier4 autoware utils
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 
 #include <deque>
 #include <memory>

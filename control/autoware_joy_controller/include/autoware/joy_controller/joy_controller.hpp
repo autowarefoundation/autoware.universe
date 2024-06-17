@@ -17,7 +17,7 @@
 
 #include "autoware/joy_controller/joy_converter/joy_converter_base.hpp"
 
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>

@@ -16,7 +16,7 @@
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__UTILS_HPP_
 
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "common_structs.hpp"
 
 #include <rclcpp/rclcpp.hpp>

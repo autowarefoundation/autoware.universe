@@ -14,7 +14,7 @@
 
 #include "test_route_handler.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

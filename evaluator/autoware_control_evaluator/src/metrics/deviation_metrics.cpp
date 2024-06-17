@@ -14,8 +14,8 @@
 
 #include "autoware/control_evaluator/metrics/deviation_metrics.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/geometry/pose_deviation.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/pose_deviation.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 namespace control_diagnostics

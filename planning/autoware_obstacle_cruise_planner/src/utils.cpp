@@ -14,7 +14,7 @@
 
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 
-#include "autoware_universe_utils/ros/marker_helper.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
 namespace obstacle_cruise_utils

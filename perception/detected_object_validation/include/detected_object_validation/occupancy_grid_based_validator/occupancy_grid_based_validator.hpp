@@ -15,7 +15,7 @@
 #ifndef DETECTED_OBJECT_VALIDATION__OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
 #define DETECTED_OBJECT_VALIDATION__OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
 
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/opencv.hpp>

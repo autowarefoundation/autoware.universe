@@ -15,13 +15,13 @@
 #ifndef AUTOWARE_PATH_SAMPLER__COMMON_STRUCTS_HPP_
 #define AUTOWARE_PATH_SAMPLER__COMMON_STRUCTS_HPP_
 
+#include "autoware/universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
 #include "autoware_sampler_common/structures.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
-#include "autoware_universe_utils/system/stop_watch.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include <memory>
 #include <optional>

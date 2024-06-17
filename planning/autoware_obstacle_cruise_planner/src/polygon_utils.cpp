@@ -14,8 +14,8 @@
 
 #include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
 
-#include "autoware_universe_utils/geometry/boost_polygon_utils.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 namespace

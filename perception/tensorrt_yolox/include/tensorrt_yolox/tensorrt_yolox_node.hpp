@@ -15,8 +15,8 @@
 #ifndef TENSORRT_YOLOX__TENSORRT_YOLOX_NODE_HPP_
 #define TENSORRT_YOLOX__TENSORRT_YOLOX_NODE_HPP_
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <image_transport/image_transport.hpp>
 #include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>

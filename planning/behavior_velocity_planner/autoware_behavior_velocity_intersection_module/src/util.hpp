@@ -17,7 +17,7 @@
 
 #include "interpolated_path_info.hpp"
 
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/logger.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object_kinematics.hpp>

@@ -16,9 +16,9 @@
 
 #include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
-#include "autoware_universe_utils/geometry/boost_polygon_utils.hpp"
-#include "autoware_universe_utils/ros/marker_helper.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"

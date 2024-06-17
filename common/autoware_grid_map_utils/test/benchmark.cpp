@@ -17,7 +17,7 @@
 #include "grid_map_cv/GridMapCvConverter.hpp"
 #include "grid_map_cv/GridMapCvProcessing.hpp"
 
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <grid_map_core/iterators/PolygonIterator.hpp>
 #include <grid_map_cv/grid_map_cv.hpp>
 #include <opencv2/core.hpp>

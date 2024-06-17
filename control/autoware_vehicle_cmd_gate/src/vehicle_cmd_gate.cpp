@@ -14,7 +14,7 @@
 
 #include "vehicle_cmd_gate.hpp"
 
-#include "autoware_universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 #include "marker_helper.hpp"
 
 #include <rclcpp/logging.hpp>

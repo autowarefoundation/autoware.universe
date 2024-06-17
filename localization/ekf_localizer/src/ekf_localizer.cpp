@@ -18,9 +18,9 @@
 #include "ekf_localizer/string.hpp"
 #include "ekf_localizer/warning_message.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
-#include <autoware_universe_utils/ros/msg_covariance.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/msg_covariance.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 

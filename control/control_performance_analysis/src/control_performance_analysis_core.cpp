@@ -14,7 +14,7 @@
 
 #include "control_performance_analysis/control_performance_analysis_core.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "motion_utils/trajectory/interpolation.hpp"
 
 #include <algorithm>

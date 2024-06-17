@@ -15,8 +15,8 @@
 #ifndef IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
 #define IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <image_projection_based_fusion/debugger.hpp>
 #include <rclcpp/rclcpp.hpp>
 

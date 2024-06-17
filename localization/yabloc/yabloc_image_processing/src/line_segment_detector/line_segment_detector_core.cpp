@@ -14,7 +14,7 @@
 
 #include "yabloc_image_processing/line_segment_detector/line_segment_detector.hpp"
 
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <yabloc_common/cv_decompress.hpp>
 #include <yabloc_common/pub_sub.hpp>

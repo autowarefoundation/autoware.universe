@@ -14,8 +14,8 @@
 
 #include "autoware/freespace_planning_algorithms/astar_search.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #include <tf2/utils.h>
 

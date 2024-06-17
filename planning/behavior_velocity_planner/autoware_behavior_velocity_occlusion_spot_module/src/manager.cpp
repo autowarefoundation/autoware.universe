@@ -17,7 +17,7 @@
 #include "scene_occlusion_spot.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware_universe_utils/ros/parameter.hpp>
+#include <autoware/universe_utils/ros/parameter.hpp>
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 

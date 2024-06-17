@@ -16,7 +16,7 @@
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 
-#include <autoware_universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 

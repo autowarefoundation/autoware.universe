@@ -17,7 +17,7 @@
 
 #include "autoware/obstacle_cruise_planner/common_structs.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
-#include "autoware_universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
 #include <boost/geometry.hpp>

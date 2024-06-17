@@ -14,7 +14,7 @@
 
 #include "autoware/planning_evaluator/metrics/stability_metrics.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <Eigen/Core>

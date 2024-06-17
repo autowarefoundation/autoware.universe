@@ -17,7 +17,7 @@
 
 #include "types.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <optional>
 #include <vector>

@@ -20,7 +20,7 @@
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/path_projection.hpp"
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/types.hpp"
 
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <interpolation/linear_interpolation.hpp>
 #include <motion_utils/resample/resample.hpp>
 #include <motion_utils/trajectory/interpolation.hpp>

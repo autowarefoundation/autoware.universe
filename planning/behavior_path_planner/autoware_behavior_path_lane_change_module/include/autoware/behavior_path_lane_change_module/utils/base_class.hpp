@@ -21,7 +21,7 @@
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
-#include "autoware_universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>

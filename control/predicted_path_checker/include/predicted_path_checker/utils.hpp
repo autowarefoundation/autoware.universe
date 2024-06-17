@@ -15,7 +15,7 @@
 #ifndef PREDICTED_PATH_CHECKER__UTILS_HPP_
 #define PREDICTED_PATH_CHECKER__UTILS_HPP_
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <interpolation/linear_interpolation.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>

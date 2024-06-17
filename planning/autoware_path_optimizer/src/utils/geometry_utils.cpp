@@ -18,7 +18,7 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tf2/utils.h"
 
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"

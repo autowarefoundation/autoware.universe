@@ -15,7 +15,7 @@
 #ifndef DETECTED_OBJECT_FEATURE_REMOVER__DETECTED_OBJECT_FEATURE_REMOVER_HPP_
 #define DETECTED_OBJECT_FEATURE_REMOVER__DETECTED_OBJECT_FEATURE_REMOVER_HPP_
 
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>

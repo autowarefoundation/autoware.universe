@@ -14,7 +14,7 @@
 
 #include "object_merger/data_association/data_association.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "object_merger/data_association/solver/gnn_solver.hpp"
 #include "object_merger/utils/utils.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"

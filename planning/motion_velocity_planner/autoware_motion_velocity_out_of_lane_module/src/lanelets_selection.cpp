@@ -14,7 +14,7 @@
 
 #include "lanelets_selection.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>

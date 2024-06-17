@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_universe_utils/geometry/pose_deviation.hpp"
+#include "autoware/universe_utils/geometry/pose_deviation.hpp"
 
-#include "autoware_universe_utils/math/normalization.hpp"
+#include "autoware/universe_utils/math/normalization.hpp"
 
 #include <tf2/utils.h>
 

@@ -16,8 +16,8 @@
 
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/parameters.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/strategies/transform/matrix_transformers.hpp>
 

@@ -15,9 +15,9 @@
 #ifndef MOTION_UTILS__RESAMPLE__RESAMPLE_UTILS_HPP_
 #define MOTION_UTILS__RESAMPLE__RESAMPLE_UTILS_HPP_
 
-#include "autoware_universe_utils/system/backtrace.hpp"
+#include "autoware/universe_utils/system/backtrace.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <motion_utils/constants.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 

@@ -14,7 +14,7 @@
 
 #include "autoware/obstacle_cruise_planner/planner_interface.hpp"
 
-#include "autoware_universe_utils/ros/marker_helper.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "motion_utils/distance/distance.hpp"
 #include "motion_utils/marker/marker_helper.hpp"
 #include "motion_utils/resample/resample.hpp"

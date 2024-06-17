@@ -14,11 +14,11 @@
 
 #include "manager.hpp"
 
-#include "autoware_universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
-#include <autoware_universe_utils/ros/parameter.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/parameter.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/intersects.hpp>

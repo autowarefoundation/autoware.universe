@@ -16,8 +16,8 @@
 #define AUTOWARE__CONTROL_VALIDATOR__CONTROL_VALIDATOR_HPP_
 
 #include "autoware/control_validator/debug_marker.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware_control_validator/msg/control_validator_status.hpp"
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>

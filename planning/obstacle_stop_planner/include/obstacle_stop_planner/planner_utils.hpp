@@ -18,7 +18,7 @@
 
 #include "obstacle_stop_planner/planner_data.hpp"
 
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>

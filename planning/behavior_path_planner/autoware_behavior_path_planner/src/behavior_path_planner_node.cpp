@@ -19,7 +19,7 @@
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 
-#include <autoware_universe_utils/ros/update_param.hpp>
+#include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <tier4_planning_msgs/msg/path_change_module_id.hpp>

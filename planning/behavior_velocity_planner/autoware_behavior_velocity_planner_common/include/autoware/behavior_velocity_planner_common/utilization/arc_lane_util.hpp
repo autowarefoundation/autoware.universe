@@ -16,7 +16,7 @@
 #define AUTOWARE__BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__ARC_LANE_UTIL_HPP_
 
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 

@@ -30,7 +30,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <autoware_universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
 
 #include <algorithm>
 #include <limits>

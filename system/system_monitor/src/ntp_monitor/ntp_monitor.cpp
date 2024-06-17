@@ -19,7 +19,7 @@
 
 #include "system_monitor/ntp_monitor/ntp_monitor.hpp"
 
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>

@@ -19,7 +19,7 @@
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>

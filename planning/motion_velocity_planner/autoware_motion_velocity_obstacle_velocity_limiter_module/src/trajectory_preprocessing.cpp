@@ -14,7 +14,7 @@
 
 #include "trajectory_preprocessing.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 

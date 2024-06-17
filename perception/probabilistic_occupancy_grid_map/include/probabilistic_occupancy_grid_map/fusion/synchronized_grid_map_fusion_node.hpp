@@ -20,8 +20,8 @@
 #include "probabilistic_occupancy_grid_map/updater/occupancy_grid_map_log_odds_bayes_filter_updater.hpp"
 #include "probabilistic_occupancy_grid_map/updater/occupancy_grid_map_updater_interface.hpp"
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 #include <rclcpp/rclcpp.hpp>
 

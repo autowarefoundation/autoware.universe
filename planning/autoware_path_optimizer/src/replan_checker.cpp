@@ -15,8 +15,8 @@
 #include "autoware/path_optimizer/replan_checker.hpp"
 
 #include "autoware/path_optimizer/utils/trajectory_utils.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <vector>

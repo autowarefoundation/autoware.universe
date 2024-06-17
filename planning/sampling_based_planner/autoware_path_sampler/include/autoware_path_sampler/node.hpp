@@ -22,8 +22,8 @@
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware_sampler_common/structures.hpp>
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
 
 #include <algorithm>
 #include <memory>

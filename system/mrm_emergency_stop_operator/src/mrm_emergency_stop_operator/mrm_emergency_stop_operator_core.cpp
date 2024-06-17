@@ -14,7 +14,7 @@
 
 #include "mrm_emergency_stop_operator/mrm_emergency_stop_operator_core.hpp"
 
-#include <autoware_universe_utils/ros/update_param.hpp>
+#include <autoware/universe_utils/ros/update_param.hpp>
 
 namespace mrm_emergency_stop_operator
 {

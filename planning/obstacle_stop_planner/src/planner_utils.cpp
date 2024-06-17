@@ -14,7 +14,7 @@
 
 #include "obstacle_stop_planner/planner_utils.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <motion_utils/distance/distance.hpp>
 #include <motion_utils/trajectory/conversion.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>

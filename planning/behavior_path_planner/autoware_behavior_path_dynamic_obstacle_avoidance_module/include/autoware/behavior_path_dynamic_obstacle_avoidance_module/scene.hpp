@@ -16,9 +16,9 @@
 #define AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware_universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>

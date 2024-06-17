@@ -14,7 +14,7 @@
 #ifndef GYRO_BIAS_ESTIMATOR_HPP_
 #define GYRO_BIAS_ESTIMATOR_HPP_
 
-#include "autoware_universe_utils/ros/transform_listener.hpp"
+#include "autoware/universe_utils/ros/transform_listener.hpp"
 #include "gyro_bias_estimation_module.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>

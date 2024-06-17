@@ -32,7 +32,7 @@
 
 #include "autoware/freespace_planning_algorithms/abstract_algorithm.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 
 #include <algorithm>

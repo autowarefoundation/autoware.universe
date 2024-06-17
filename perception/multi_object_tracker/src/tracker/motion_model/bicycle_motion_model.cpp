@@ -21,8 +21,8 @@
 #include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
 
-#include <autoware_universe_utils/math/normalization.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>

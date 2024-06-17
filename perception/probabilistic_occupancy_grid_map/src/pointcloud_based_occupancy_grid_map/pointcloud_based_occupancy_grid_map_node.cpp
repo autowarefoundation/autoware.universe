@@ -19,8 +19,8 @@
 #include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_projective.hpp"
 #include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>

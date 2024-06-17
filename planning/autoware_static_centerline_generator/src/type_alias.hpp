@@ -15,7 +15,7 @@
 #define TYPE_ALIAS_HPP_
 
 #include "autoware/route_handler/route_handler.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include "autoware_map_msgs/msg/lanelet_map_bin.hpp"
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"

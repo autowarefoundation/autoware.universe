@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_universe_utils/geometry/boost_geometry.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/math/constants.hpp"
-#include "autoware_universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/constants.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "motion_utils/constants.hpp"
 #include "motion_utils/resample/resample.hpp"
 

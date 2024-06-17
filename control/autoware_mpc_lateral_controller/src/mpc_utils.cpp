@@ -14,8 +14,8 @@
 
 #include "autoware/mpc_lateral_controller/mpc_utils.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/math/normalization.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/normalization.hpp"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"

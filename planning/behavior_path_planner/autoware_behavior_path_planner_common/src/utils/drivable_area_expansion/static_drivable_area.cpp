@@ -16,8 +16,8 @@
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/drivable_area_expansion.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>

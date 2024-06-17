@@ -14,7 +14,7 @@
 
 #include "lidar_centerpoint/centerpoint_trt.hpp"
 
-#include <autoware_universe_utils/math/constants.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
 #include <lidar_centerpoint/centerpoint_config.hpp>
 #include <lidar_centerpoint/network/scatter_kernel.hpp>
 #include <lidar_centerpoint/preprocess/preprocess_kernel.hpp>

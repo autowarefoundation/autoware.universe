@@ -16,7 +16,7 @@
 
 #include "autoware/path_optimizer/node.hpp"
 #include "autoware/path_smoother/elastic_band_smoother.hpp"
-#include "autoware_universe_utils/ros/parameter.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "static_centerline_generator_node.hpp"

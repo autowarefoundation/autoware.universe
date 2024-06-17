@@ -24,7 +24,7 @@
 #include "lidar_transfusion/utils.hpp"
 #include "lidar_transfusion/visibility_control.hpp"
 
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 

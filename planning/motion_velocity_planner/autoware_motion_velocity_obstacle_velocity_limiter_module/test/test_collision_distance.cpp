@@ -15,7 +15,7 @@
 #include "../src/distance.hpp"
 #include "../src/obstacles.hpp"
 #include "../src/types.hpp"
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>

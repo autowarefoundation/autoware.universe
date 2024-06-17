@@ -15,7 +15,7 @@
 #ifndef RADAR_FUSION_TO_DETECTED_OBJECT__RADAR_FUSION_TO_DETECTED_OBJECT_HPP_
 #define RADAR_FUSION_TO_DETECTED_OBJECT__RADAR_FUSION_TO_DETECTED_OBJECT_HPP_
 
-#include "autoware_universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "rclcpp/logger.hpp"
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>

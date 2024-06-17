@@ -14,8 +14,8 @@
 
 #include "autoware/freespace_planning_algorithms/abstract_algorithm.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
 
 #include <vector>
 

@@ -33,8 +33,8 @@
 #include "autoware/pure_pursuit/autoware_pure_pursuit.hpp"
 #include "autoware/pure_pursuit/autoware_pure_pursuit_viz.hpp"
 
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
-#include <autoware_universe_utils/ros/self_pose_listener.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_control_msgs/msg/lateral.hpp>

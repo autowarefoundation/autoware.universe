@@ -15,8 +15,8 @@
 #ifndef TIER4_PLANNING_RVIZ_PLUGIN__UTILS_HPP_
 #define TIER4_PLANNING_RVIZ_PLUGIN__UTILS_HPP_
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
 
 #include <tf2/utils.h>
 

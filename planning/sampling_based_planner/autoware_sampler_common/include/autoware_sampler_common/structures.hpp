@@ -15,7 +15,7 @@
 #ifndef AUTOWARE_SAMPLER_COMMON__STRUCTURES_HPP_
 #define AUTOWARE_SAMPLER_COMMON__STRUCTURES_HPP_
 
-#include "autoware_universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
 #include <eigen3/Eigen/Core>
 #include <interpolation/linear_interpolation.hpp>

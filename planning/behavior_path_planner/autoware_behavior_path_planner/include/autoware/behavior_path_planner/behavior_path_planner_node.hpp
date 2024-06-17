@@ -18,11 +18,11 @@
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/steering_factor_interface.hpp"
-#include "autoware_universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "planner_manager.hpp"
 
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>

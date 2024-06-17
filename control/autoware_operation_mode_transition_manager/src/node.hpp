@@ -18,7 +18,7 @@
 #include "compatibility.hpp"
 #include "state.hpp"
 
-#include <autoware_universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <component_interface_specs/system.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>

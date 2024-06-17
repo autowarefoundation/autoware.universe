@@ -14,7 +14,7 @@
 
 #include "gyro_bias_estimation_module.hpp"
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

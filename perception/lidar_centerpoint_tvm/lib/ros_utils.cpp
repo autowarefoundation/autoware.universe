@@ -14,8 +14,8 @@
 
 #include "lidar_centerpoint_tvm/ros_utils.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/constants.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
 
 namespace autoware
 {

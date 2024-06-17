@@ -15,7 +15,7 @@
 #ifndef POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 
-#include <autoware_universe_utils/ros/logger_level_configure.hpp>
+#include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>

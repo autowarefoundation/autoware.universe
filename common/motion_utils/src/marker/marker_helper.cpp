@@ -14,9 +14,9 @@
 
 #include "motion_utils/marker/marker_helper.hpp"
 
-#include "autoware_universe_utils/ros/marker_helper.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 

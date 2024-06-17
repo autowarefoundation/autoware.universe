@@ -17,7 +17,7 @@
 
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
-#include <autoware_universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "unique_identifier_msgs/msg/uuid.hpp"

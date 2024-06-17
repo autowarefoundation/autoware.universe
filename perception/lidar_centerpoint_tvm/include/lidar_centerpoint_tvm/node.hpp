@@ -15,8 +15,8 @@
 #ifndef LIDAR_CENTERPOINT_TVM__NODE_HPP_
 #define LIDAR_CENTERPOINT_TVM__NODE_HPP_
 
-#include <autoware_universe_utils/ros/debug_publisher.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_tvm.hpp>
 #include <lidar_centerpoint_tvm/visibility_control.hpp>
 #include <rclcpp/rclcpp.hpp>

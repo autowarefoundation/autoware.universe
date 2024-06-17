@@ -14,9 +14,9 @@
 
 #include "node.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/ros/update_param.hpp>
-#include <autoware_universe_utils/transform/transforms.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/update_param.hpp>
+#include <autoware/universe_utils/transform/transforms.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>

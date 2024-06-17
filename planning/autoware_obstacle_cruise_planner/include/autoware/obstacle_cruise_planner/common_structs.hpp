@@ -16,9 +16,9 @@
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
-#include "autoware_universe_utils/geometry/boost_polygon_utils.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
-#include "autoware_universe_utils/ros/uuid_helper.hpp"
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/ros/uuid_helper.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 #include "motion_utils/trajectory/interpolation.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"

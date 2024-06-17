@@ -15,8 +15,8 @@
 #ifndef PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 #define PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/ros/self_pose_listener.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/self_pose_listener.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <component_interface_specs/control.hpp>

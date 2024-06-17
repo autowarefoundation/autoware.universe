@@ -14,7 +14,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__MARKER_UTILS__COLORS_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__MARKER_UTILS__COLORS_HPP_
 
-#include "autoware_universe_utils/ros/marker_helper.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 
 #include "std_msgs/msg/detail/color_rgba__struct.hpp"
 

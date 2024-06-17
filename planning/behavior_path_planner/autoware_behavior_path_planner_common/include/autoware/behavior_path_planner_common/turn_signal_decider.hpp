@@ -15,13 +15,13 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__TURN_SIGNAL_DECIDER_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__TURN_SIGNAL_DECIDER_HPP_
 
-#include "autoware_universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware/behavior_path_planner_common/parameters.hpp>
 #include <autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp>
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware_universe_utils/geometry/boost_geometry.hpp>
-#include <autoware_universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>

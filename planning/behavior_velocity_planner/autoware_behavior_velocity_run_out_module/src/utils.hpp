@@ -15,7 +15,7 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>

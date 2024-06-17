@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include <autoware_universe_utils/ros/parameter.hpp>
+#include <autoware/universe_utils/ros/parameter.hpp>
 
 #include <string>
 #include <utility>

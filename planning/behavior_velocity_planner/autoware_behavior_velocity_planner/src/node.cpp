@@ -15,9 +15,9 @@
 #include "node.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
+#include <autoware/universe_utils/ros/wait_for_param.hpp>
+#include <autoware/universe_utils/transform/transforms.hpp>
 #include <autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
-#include <autoware_universe_utils/ros/wait_for_param.hpp>
-#include <autoware_universe_utils/transform/transforms.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <motion_utils/trajectory/path_with_lane_id.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>

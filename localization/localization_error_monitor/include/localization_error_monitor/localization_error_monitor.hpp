@@ -16,7 +16,7 @@
 #define LOCALIZATION_ERROR_MONITOR__LOCALIZATION_ERROR_MONITOR_HPP_
 
 #include <Eigen/Dense>
-#include <autoware_universe_utils/ros/logger_level_configure.hpp>
+#include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>

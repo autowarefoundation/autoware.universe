@@ -15,7 +15,7 @@
 #include "scene_intersection.hpp"
 #include "util.hpp"
 
-#include <autoware_universe_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
 #include <opencv2/imgproc.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>

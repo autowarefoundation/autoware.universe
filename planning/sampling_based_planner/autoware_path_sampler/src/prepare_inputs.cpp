@@ -14,11 +14,11 @@
 
 #include "autoware_path_sampler/prepare_inputs.hpp"
 
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware_frenet_planner/structures.hpp"
 #include "autoware_path_sampler/utils/geometry_utils.hpp"
 #include "autoware_sampler_common/structures.hpp"
 #include "autoware_sampler_common/transform/spline_transform.hpp"
-#include "autoware_universe_utils/geometry/boost_polygon_utils.hpp"
 
 #include <eigen3/unsupported/Eigen/Splines>
 

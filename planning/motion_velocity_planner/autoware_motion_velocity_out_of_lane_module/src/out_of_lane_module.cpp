@@ -23,9 +23,9 @@
 #include "overlapping_range.hpp"
 #include "types.hpp"
 
-#include <autoware_universe_utils/ros/parameter.hpp>
-#include <autoware_universe_utils/ros/update_param.hpp>
-#include <autoware_universe_utils/system/stop_watch.hpp>
+#include <autoware/universe_utils/ros/parameter.hpp>
+#include <autoware/universe_utils/ros/update_param.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <motion_utils/trajectory/interpolation.hpp>
 #include <motion_utils/trajectory/trajectory.hpp>
 

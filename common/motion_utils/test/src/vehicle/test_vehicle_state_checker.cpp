@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "motion_utils/vehicle/vehicle_state_checker.hpp"
 #include "test_vehicle_state_checker_helper.hpp"
 

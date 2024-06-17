@@ -14,7 +14,7 @@
 
 #include "pose_estimator_arbiter/switch_rule/pcd_map_based_rule.hpp"
 
-#include <autoware_universe_utils/ros/parameter.hpp>
+#include <autoware/universe_utils/ros/parameter.hpp>
 
 #include <utility>
 

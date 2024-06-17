@@ -15,7 +15,7 @@
 #ifndef INTERPOLATION__SPLINE_INTERPOLATION_HPP_
 #define INTERPOLATION__SPLINE_INTERPOLATION_HPP_
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "interpolation/interpolation_utils.hpp"
 
 #include <algorithm>

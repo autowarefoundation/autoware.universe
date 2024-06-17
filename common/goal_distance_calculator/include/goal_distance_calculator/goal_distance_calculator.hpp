@@ -15,7 +15,7 @@
 #ifndef GOAL_DISTANCE_CALCULATOR__GOAL_DISTANCE_CALCULATOR_HPP_
 #define GOAL_DISTANCE_CALCULATOR__GOAL_DISTANCE_CALCULATOR_HPP_
 
-#include <autoware_universe_utils/geometry/pose_deviation.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>

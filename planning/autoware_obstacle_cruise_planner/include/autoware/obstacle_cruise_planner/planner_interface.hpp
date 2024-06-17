@@ -19,8 +19,8 @@
 #include "autoware/obstacle_cruise_planner/stop_planning_debug_info.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
-#include "autoware_universe_utils/ros/update_param.hpp"
-#include "autoware_universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <algorithm>

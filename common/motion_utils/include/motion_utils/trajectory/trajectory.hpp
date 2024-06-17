@@ -15,10 +15,10 @@
 #ifndef MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 #define MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 
-#include "autoware_universe_utils/geometry/geometry.hpp"
-#include "autoware_universe_utils/geometry/pose_deviation.hpp"
-#include "autoware_universe_utils/math/constants.hpp"
-#include "autoware_universe_utils/system/backtrace.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/pose_deviation.hpp"
+#include "autoware/universe_utils/math/constants.hpp"
+#include "autoware/universe_utils/system/backtrace.hpp"
 
 #include <Eigen/Geometry>
 #include <rclcpp/logging.hpp>

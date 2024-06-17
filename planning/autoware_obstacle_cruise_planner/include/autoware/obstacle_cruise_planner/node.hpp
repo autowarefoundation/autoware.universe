@@ -19,12 +19,12 @@
 #include "autoware/obstacle_cruise_planner/optimization_based_planner/optimization_based_planner.hpp"
 #include "autoware/obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
-#include "autoware_universe_utils/ros/logger_level_configure.hpp"
-#include "autoware_universe_utils/ros/polling_subscriber.hpp"
-#include "autoware_universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 
-#include <autoware_universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <algorithm>

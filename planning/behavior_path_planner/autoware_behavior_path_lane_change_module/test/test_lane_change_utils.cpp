@@ -13,8 +13,8 @@
 // limitations under the License.
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 
-#include <autoware_universe_utils/geometry/geometry.hpp>
-#include <autoware_universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>

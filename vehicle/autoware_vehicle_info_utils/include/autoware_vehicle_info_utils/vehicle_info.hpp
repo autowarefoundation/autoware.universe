@@ -15,7 +15,7 @@
 #ifndef AUTOWARE_VEHICLE_INFO_UTILS__VEHICLE_INFO_HPP_
 #define AUTOWARE_VEHICLE_INFO_UTILS__VEHICLE_INFO_HPP_
 
-#include "autoware_universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
 namespace autoware::vehicle_info_utils
 {

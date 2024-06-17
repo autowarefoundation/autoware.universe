@@ -14,7 +14,7 @@
 
 #include "ekf_localizer/measurement.hpp"
 
-#include "autoware_universe_utils/ros/msg_covariance.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
 #include "ekf_localizer/state_index.hpp"
 
 Eigen::Matrix<double, 3, 6> pose_measurement_matrix()
