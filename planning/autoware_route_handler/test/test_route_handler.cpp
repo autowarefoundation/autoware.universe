@@ -145,7 +145,7 @@ TEST_F(TestRouteHandler, checkGetLaneletSequence)
   ASSERT_EQ(current_lanes.at(5).id(), 4785ul);
 }
 
-TEST_F(TestRouteHandler, checkLateralIntervalToPrefferedLaneWhenLaneChangeToRight)
+TEST_F(TestRouteHandler, checkLateralIntervalToPreferredLaneWhenLaneChangeToRight)
 {
   const auto current_lanes = get_current_lanes();
 
@@ -182,7 +182,7 @@ TEST_F(TestRouteHandler, checkLateralIntervalToPrefferedLaneWhenLaneChangeToRigh
   });
 }
 
-TEST_F(TestRouteHandler, checkLateralIntervalToPrefferedLaneUsingUnexpectedResults)
+TEST_F(TestRouteHandler, checkLateralIntervalToPreferredLaneUsingUnexpectedResults)
 {
   const auto current_lanes = get_current_lanes();
 
@@ -271,7 +271,7 @@ TEST_F(TestRouteHandler, testGetLaneChangeTargetLanes)
 
   {
     // The input is within expectation.
-    // There exist lane changing lane since 4424 is subset of preffered lane 9598.
+    // There exist lane changing lane since 4424 is subset of preferred lane 9598.
     const auto current_lanes = route_handler_->getLaneletsFromIds({4775, 4424});
     const auto lane_change_lane =
       route_handler_->getLaneChangeTarget(current_lanes, Direction::RIGHT);
