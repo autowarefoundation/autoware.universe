@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
-#define AUTOWARE_TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
+#ifndef AUTOWARE__TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
+#define AUTOWARE__TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
 
+#include "autoware/trajectory_follower_node/visibility_control.hpp"
 #include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
 #include "autoware_trajectory_follower_base/longitudinal_controller_base.hpp"
-#include "autoware_trajectory_follower_node/visibility_control.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
@@ -142,4 +142,4 @@ private:
 }  // namespace trajectory_follower_node
 }  // namespace autoware::motion::control
 
-#endif  // AUTOWARE_TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_
+#endif  // AUTOWARE__TRAJECTORY_FOLLOWER_NODE__CONTROLLER_NODE_HPP_

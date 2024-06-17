@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_TRAJECTORY_FOLLOWER_NODE__VISIBILITY_CONTROL_HPP_
-#define AUTOWARE_TRAJECTORY_FOLLOWER_NODE__VISIBILITY_CONTROL_HPP_
+#ifndef AUTOWARE__TRAJECTORY_FOLLOWER_NODE__VISIBILITY_CONTROL_HPP_
+#define AUTOWARE__TRAJECTORY_FOLLOWER_NODE__VISIBILITY_CONTROL_HPP_
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(__WIN32)
@@ -34,4 +34,4 @@
 #error "Unsupported Build Configuration"
 #endif
 
-#endif  // AUTOWARE_TRAJECTORY_FOLLOWER_NODE__VISIBILITY_CONTROL_HPP_
+#endif  // AUTOWARE__TRAJECTORY_FOLLOWER_NODE__VISIBILITY_CONTROL_HPP_
