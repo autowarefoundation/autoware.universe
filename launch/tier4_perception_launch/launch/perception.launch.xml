@@ -215,7 +215,7 @@
           <arg name="input/camera7/info" value="$(var camera_info7)"/>
           <arg name="input/camera7/rois" value="$(var detection_rois7)"/>
           <arg name="input/pointcloud" value="$(var perception_pointcloud)"/>
-          <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+          <arg name="node/pointcloud_container" value="$(var pointcloud_container_name)"/>
           <arg name="input/radar" value="$(var input/radar)"/>
           <arg name="sync_param_path" value="$(var object_recognition_detection_fusion_sync_param_path)"/>
           <arg name="roi_cluster_fusion_param_path" value="$(var object_recognition_detection_roi_cluster_fusion_param_path)"/>
