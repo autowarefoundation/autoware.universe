@@ -72,6 +72,8 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=[component],
+        ros_arguments=["--log-level", ["system.component_state_monitor.container:=" , LaunchConfiguration("log_level")],
+                       "--log-level", ["system.component_state_monitor.component:=" , LaunchConfiguration("log_level")],],
     )
     return [container, *topic_monitor_nodes]
 
@@ -81,6 +83,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument("file"),
             DeclareLaunchArgument("mode"),
+            DeclareLaunchArgument("log_level"),
             OpaqueFunction(function=launch_setup),
         ]
     )

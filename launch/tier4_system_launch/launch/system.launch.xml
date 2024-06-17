@@ -39,6 +39,8 @@
   <arg name="launch_rqt_robot_monitor" default="false"/>
   <arg name="launch_rqt_runtime_monitor_err" default="false"/>
 
+  <arg name="log_level" default="WARN"/>
+
   <group>
     <push-ros-namespace namespace="/system"/>
 
@@ -54,6 +56,7 @@
         <arg name="ntp_monitor_config_file" value="$(var system_monitor_ntp_monitor_param_path)"/>
         <arg name="process_monitor_config_file" value="$(var system_monitor_process_monitor_param_path)"/>
         <arg name="voltage_monitor_config_file" value="$(var system_monitor_voltage_monitor_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -61,12 +64,15 @@
     <group>
       <include file="$(find-pkg-share duplicated_node_checker)/launch/duplicated_node_checker.launch.xml">
         <arg name="config_file" value="$(var duplicated_node_checker_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
     <!-- Service Log Checker -->
     <group>
-      <include file="$(find-pkg-share component_interface_tools)/launch/service_log_checker.launch.xml"/>
+      <include file="$(find-pkg-share component_interface_tools)/launch/service_log_checker.launch.xml">
+        <arg name="log_level" value="$(var log_level)"/>
+      </include>
     </group>
 
     <!-- Component State Monitor -->
@@ -74,6 +80,7 @@
       <include file="$(find-pkg-share component_state_monitor)/launch/component_state_monitor.launch.py">
         <arg name="mode" value="$(var run_mode)"/>
         <arg name="file" value="$(var component_state_monitor_topic_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -81,11 +88,13 @@
     <group>
       <include file="$(find-pkg-share mrm_comfortable_stop_operator)/launch/mrm_comfortable_stop_operator.launch.py">
         <arg name="config_file" value="$(var mrm_comfortable_stop_operator_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
     <group>
       <include file="$(find-pkg-share mrm_emergency_stop_operator)/launch/mrm_emergency_stop_operator.launch.py">
         <arg name="config_file" value="$(var mrm_emergency_stop_operator_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -100,6 +109,7 @@
         <arg name="extra_agg_config_file_system" value="$(var diagnostic_aggregator_system_param_path)"/>
         <arg name="extra_agg_config_file_vehicle" value="$(var diagnostic_aggregator_vehicle_param_path)"/>
         <arg name="use_emergency_hold" value="false"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -107,6 +117,7 @@
     <group if="$(var use_emergency_handler)">
       <include file="$(find-pkg-share emergency_handler)/launch/emergency_handler.launch.xml">
         <arg name="config_file" value="$(var emergency_handler_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -120,13 +131,16 @@
 
     <!-- Hazard Status Converter -->
     <group unless="$(var use_emergency_handler)">
-      <include file="$(find-pkg-share hazard_status_converter)/launch/hazard_status_converter.launch.xml"/>
+      <include file="$(find-pkg-share hazard_status_converter)/launch/hazard_status_converter.launch.xml">
+        <arg name="log_level" value="$(var log_level)"/>
+      </include>
     </group>
 
     <!-- MRM Handler -->
     <group unless="$(var use_emergency_handler)">
       <include file="$(find-pkg-share mrm_handler)/launch/mrm_handler.launch.xml">
         <arg name="config_file" value="$(var mrm_handler_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
   </group>
