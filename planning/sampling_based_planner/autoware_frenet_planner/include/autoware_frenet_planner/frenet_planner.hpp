@@ -18,7 +18,7 @@
 #include "autoware_frenet_planner/structures.hpp"
 #include "autoware_sampler_common/structures.hpp"
 #include "autoware_sampler_common/transform/spline_transform.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "autoware_universe_utils/geometry/geometry.hpp"
 
 #include <optional>
 #include <vector>

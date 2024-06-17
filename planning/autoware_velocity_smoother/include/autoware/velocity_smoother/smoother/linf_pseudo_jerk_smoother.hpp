@@ -16,9 +16,9 @@
 #define AUTOWARE__VELOCITY_SMOOTHER__SMOOTHER__LINF_PSEUDO_JERK_SMOOTHER_HPP_
 
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
+#include "autoware_universe_utils/geometry/geometry.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "osqp_interface/osqp_interface.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 

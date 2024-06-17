@@ -30,16 +30,16 @@
 #include "autoware_sampler_common/constraints/soft_constraint.hpp"
 #include "autoware_sampler_common/structures.hpp"
 #include "autoware_sampler_common/transform/spline_transform.hpp"
+#include "autoware_universe_utils/geometry/boost_geometry.hpp"
+#include "autoware_universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware_universe_utils/math/constants.hpp"
+#include "autoware_universe_utils/ros/update_param.hpp"
+#include "autoware_universe_utils/system/stop_watch.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
 #include "motion_utils/trajectory/path_with_lane_id.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/geometry/boost_geometry.hpp"
-#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
-#include "tier4_autoware_utils/math/constants.hpp"
-#include "tier4_autoware_utils/ros/update_param.hpp"
-#include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include "tier4_planning_msgs/msg/lateral_offset.hpp"
 #include "tier4_planning_msgs/msg/path_with_lane_id.hpp"
@@ -75,8 +75,8 @@ struct SamplingPlannerDebugData
 {
   std::vector<autoware::sampler_common::Path> sampled_candidates{};
   size_t previous_sampled_candidates_nb = 0UL;
-  std::vector<tier4_autoware_utils::Polygon2d> obstacles{};
-  std::vector<tier4_autoware_utils::MultiPoint2d> footprints{};
+  std::vector<autoware_universe_utils::Polygon2d> obstacles{};
+  std::vector<autoware_universe_utils::MultiPoint2d> footprints{};
 };
 class SamplingPlannerModule : public SceneModuleInterface
 {
@@ -207,7 +207,7 @@ private:
       motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
     if (!nearest_index) return false;
     auto toYaw = [](const geometry_msgs::msg::Quaternion & quat) -> double {
-      const auto rpy = tier4_autoware_utils::getRPY(quat);
+      const auto rpy = autoware_universe_utils::getRPY(quat);
       return rpy.z;
     };
     const auto quat = prev_module_reference_path->points[*nearest_index].point.pose.orientation;
