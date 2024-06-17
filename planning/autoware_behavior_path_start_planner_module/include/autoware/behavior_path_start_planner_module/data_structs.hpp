@@ -16,8 +16,8 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_START_PLANNER_MODULE__DATA_STRUCTS_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_START_PLANNER_MODULE__DATA_STRUCTS_HPP_
 
-#include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <autoware_freespace_planning_algorithms/abstract_algorithm.hpp>
 #include <autoware_freespace_planning_algorithms/astar_search.hpp>

@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER__BEHAVIOR_PATH_PLANNER_NODE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_PLANNER__BEHAVIOR_PATH_PLANNER_NODE_HPP_
 
-#include "autoware_behavior_path_planner_common/data_manager.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware_behavior_path_planner_common/interface/steering_factor_interface.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware/behavior_path_planner_common/interface/steering_factor_interface.hpp"
 #include "planner_manager.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 

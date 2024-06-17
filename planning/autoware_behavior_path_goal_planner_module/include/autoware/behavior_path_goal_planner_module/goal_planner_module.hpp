@@ -21,12 +21,12 @@
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
 #include "autoware/behavior_path_goal_planner_module/shift_pull_over.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware_behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
-#include "autoware_behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
-#include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "autoware_behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware/behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware_freespace_planning_algorithms/astar_search.hpp>
 #include <autoware_freespace_planning_algorithms/rrtstar.hpp>

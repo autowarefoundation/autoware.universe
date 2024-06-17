@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER__PLANNER_MANAGER_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_PLANNER__PLANNER_MANAGER_HPP_
 
-#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
 #include "tier4_autoware_utils/ros/debug_publisher.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 

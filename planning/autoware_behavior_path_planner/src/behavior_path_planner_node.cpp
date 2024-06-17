@@ -14,9 +14,9 @@
 
 #include "autoware/behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
-#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "motion_utils/trajectory/conversion.hpp"
 
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>

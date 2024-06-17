@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 
-#include "autoware_behavior_path_planner_common/utils/parking_departure/utils.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
-#include "autoware_behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 

@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_START_PLANNER_MODULE__PULL_OUT_PATH_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_START_PLANNER_MODULE__PULL_OUT_PATH_HPP_
 
-#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 

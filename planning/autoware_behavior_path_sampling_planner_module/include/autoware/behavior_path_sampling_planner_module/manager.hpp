@@ -17,7 +17,7 @@
 
 #include "autoware/behavior_path_sampling_planner_module/sampling_planner_module.hpp"
 #include "autoware/behavior_path_sampling_planner_module/sampling_planner_parameters.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

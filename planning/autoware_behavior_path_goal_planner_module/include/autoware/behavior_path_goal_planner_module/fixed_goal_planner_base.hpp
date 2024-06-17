@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__FIXED_GOAL_PLANNER_BASE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__FIXED_GOAL_PLANNER_BASE_HPP_
 
-#include "autoware_behavior_path_planner_common/data_manager.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>

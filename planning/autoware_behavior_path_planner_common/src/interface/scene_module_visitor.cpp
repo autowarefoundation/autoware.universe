@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
 
-#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 
 namespace autoware::behavior_path_planner
 {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/map_utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/map_utils.hpp"
 
 #include <boost/geometry/strategies/strategies.hpp>
 

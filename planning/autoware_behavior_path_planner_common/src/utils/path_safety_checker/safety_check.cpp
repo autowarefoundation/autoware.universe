@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 
-#include "autoware_behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "interpolation/linear_interpolation.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"

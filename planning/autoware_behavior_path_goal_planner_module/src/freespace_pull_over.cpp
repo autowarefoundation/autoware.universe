@@ -15,10 +15,10 @@
 #include "autoware/behavior_path_goal_planner_module/freespace_pull_over.hpp"
 
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
-#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "autoware_behavior_path_planner_common/utils/parking_departure/utils.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
-#include "autoware_behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <memory>
 #include <vector>

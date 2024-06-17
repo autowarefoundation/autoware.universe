@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/marker_utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
-#include "autoware_behavior_path_planner_common/marker_utils/colors.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware/behavior_path_planner_common/marker_utils/colors.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>

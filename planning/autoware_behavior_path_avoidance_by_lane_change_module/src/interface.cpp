@@ -14,8 +14,8 @@
 
 #include "interface.hpp"
 
-#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
 
 #include <memory>
 #include <string>

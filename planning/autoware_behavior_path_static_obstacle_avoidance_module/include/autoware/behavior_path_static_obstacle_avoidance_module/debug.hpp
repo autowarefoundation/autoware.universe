@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
 
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
@@ -60,4 +60,4 @@ std::string toStrInfo(const autoware::behavior_path_planner::ShiftLine & sl);
 
 std::string toStrInfo(const autoware::behavior_path_planner::AvoidLine & ap);
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__DEBUG_HPP_

@@ -15,7 +15,7 @@
 #include "autoware/behavior_path_goal_planner_module/geometric_pull_over.hpp"
 
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
-#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>

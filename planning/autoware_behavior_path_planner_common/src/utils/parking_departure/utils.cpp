@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/utils/parking_departure/utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/utils.hpp"
 
-#include "autoware_behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/distance/distance.hpp>

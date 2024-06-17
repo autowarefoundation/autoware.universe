@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/interface/steering_factor_interface.hpp"
+#include "autoware/behavior_path_planner_common/interface/steering_factor_interface.hpp"
 
 namespace steering_factor_interface
 {

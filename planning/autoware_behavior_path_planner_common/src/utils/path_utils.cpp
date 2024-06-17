@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
-#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "autoware_behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/query.hpp>

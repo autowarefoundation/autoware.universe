@@ -16,7 +16,7 @@
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GEOMETRIC_PULL_OVER_HPP_
 
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner_base.hpp"
-#include "autoware_behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
+#include "autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 
 #include <autoware_lane_departure_checker/lane_departure_checker.hpp>
 

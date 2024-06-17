@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
 
-#include "autoware_behavior_path_planner_common/data_manager.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <memory>
 #include <utility>
@@ -177,4 +177,4 @@ double calcDistanceToAvoidStartLine(
 
 }  // namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__UTILS_HPP_

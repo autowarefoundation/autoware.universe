@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
-#define AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
 
-#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/helper.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <memory>
 
@@ -244,4 +244,4 @@ private:
 
 }  // namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 
-#endif  // AUTOWARE_BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__SHIFT_LINE_GENERATOR_HPP_

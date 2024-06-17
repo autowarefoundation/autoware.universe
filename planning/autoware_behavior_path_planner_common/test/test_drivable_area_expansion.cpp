@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_behavior_path_planner_common/data_manager.hpp"
-#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/drivable_area_expansion.hpp"
-#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/path_projection.hpp"
-#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/types.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/drivable_area_expansion.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/path_projection.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/types.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 
 #include <gtest/gtest.h>

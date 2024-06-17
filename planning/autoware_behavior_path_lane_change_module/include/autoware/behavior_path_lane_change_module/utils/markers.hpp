@@ -17,7 +17,7 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/debug_structs.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/path.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
 #include <geometry_msgs/msg/detail/polygon__struct.hpp>
 #include <geometry_msgs/msg/detail/pose__struct.hpp>

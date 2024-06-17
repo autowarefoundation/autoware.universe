@@ -16,8 +16,8 @@
 #define AUTOWARE__BEHAVIOR_PATH_SIDE_SHIFT_MODULE__SCENE_HPP_
 
 #include "autoware/behavior_path_side_shift_module/data_structs.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

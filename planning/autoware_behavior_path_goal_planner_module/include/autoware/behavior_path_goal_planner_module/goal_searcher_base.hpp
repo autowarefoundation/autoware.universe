@@ -16,8 +16,8 @@
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_SEARCHER_BASE_HPP_
 
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
-#include "autoware_behavior_path_planner_common/data_manager.hpp"
-#include "autoware_behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
+#include "autoware/behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 

@@ -19,9 +19,9 @@
 #include "autoware/behavior_path_lane_change_module/utils/base_class.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/path.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware_behavior_path_planner_common/turn_signal_decider.hpp"
-#include "autoware_behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

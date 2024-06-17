@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include "autoware_behavior_path_planner_common/turn_signal_decider.hpp"
+#include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>

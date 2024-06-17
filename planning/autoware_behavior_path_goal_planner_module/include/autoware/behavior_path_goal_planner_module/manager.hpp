@@ -16,7 +16,7 @@
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__MANAGER_HPP_
 
 #include "autoware/behavior_path_goal_planner_module/goal_planner_module.hpp"
-#include "autoware_behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
+#include "autoware/behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
