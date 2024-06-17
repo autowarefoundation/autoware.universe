@@ -23,6 +23,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <limits>
 #include <memory>
 
 namespace autoware::surround_obstacle_checker
