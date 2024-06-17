@@ -103,10 +103,11 @@ void HierarchicalCostMap::build_map(const Area & area)
 {
   if (!cloud_.has_value()) return;
 
-  cv::Mat image = 255 * cv::Mat::ones(
-    cv::Size(static_cast<int>(image_size_), static_cast<int>(image_size_)), CV_8UC1);
-  cv::Mat orientation = cv::Mat::zeros(cv::Size(
-    static_cast<int>(image_size_), static_cast<int>(image_size_)), CV_8UC1);
+  cv::Mat image =
+    255 *
+    cv::Mat::ones(cv::Size(static_cast<int>(image_size_), static_cast<int>(image_size_)), CV_8UC1);
+  cv::Mat orientation =
+    cv::Mat::zeros(cv::Size(static_cast<int>(image_size_), static_cast<int>(image_size_)), CV_8UC1);
 
   auto cv_point = [this, area](const Eigen::Vector3f & p) -> cv::Point {
     return this->to_cv_point(area, p.topRows(2));
@@ -177,8 +178,7 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::show_map_range() const
     marker.points.push_back(point_msg(xy.x(), xy.y()));
     marker.points.push_back(point_msg(xy.x() + yabloc::Area::unit_length, xy.y()));
     marker.points.push_back(
-      point_msg(xy.x() + yabloc::Area::unit_length, xy.y() + yabloc::Area::unit_length)
-    );
+      point_msg(xy.x() + yabloc::Area::unit_length, xy.y() + yabloc::Area::unit_length));
     marker.points.push_back(point_msg(xy.x(), xy.y() + yabloc::Area::unit_length));
     marker.points.push_back(point_msg(xy.x(), xy.y()));
     array_msg.markers.push_back(marker);
@@ -206,22 +206,19 @@ cv::Mat HierarchicalCostMap::get_map_image(const Pose & pose)
     return center + r * offset;
   };
 
-  cv::Mat image = cv::Mat::zeros(
-    cv::Size(static_cast<int>(image_size_), static_cast<int>(image_size_)), CV_8UC3);
+  cv::Mat image =
+    cv::Mat::zeros(cv::Size(static_cast<int>(image_size_), static_cast<int>(image_size_)), CV_8UC3);
   for (int w_index = 0; static_cast<float>(w_index) < image_size_; w_index++) {
     for (int h_index = 0; static_cast<float>(h_index) < image_size_; h_index++) {
-      CostMapValue v3 = this->at(
-        to_vector2f(static_cast<float>(h_index), static_cast<float>(w_index))
-      );
+      CostMapValue v3 =
+        this->at(to_vector2f(static_cast<float>(h_index), static_cast<float>(w_index)));
       if (v3.unmapped)
         image.at<cv::Vec3b>(h_index, w_index) =
           cv::Vec3b(v3.angle, static_cast<unsigned char>(255 * v3.intensity), 50);
       else
         image.at<cv::Vec3b>(h_index, w_index) = cv::Vec3b(
-          v3.angle,
-          static_cast<unsigned char>(255 * v3.intensity),
-          static_cast<unsigned char>(255 * v3.intensity)
-        );
+          v3.angle, static_cast<unsigned char>(255 * v3.intensity),
+          static_cast<unsigned char>(255 * v3.intensity));
     }
   }
 

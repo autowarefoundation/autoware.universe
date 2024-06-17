@@ -96,11 +96,8 @@ Eigen::Matrix3f std_of_distribution(const yabloc_particle_filter::msg::ParticleA
   using Particle = yabloc_particle_filter::msg::Particle;
   auto ori = get_mean_pose(array).orientation;
   Eigen::Quaternionf orientation(
-    static_cast<float>(ori.w),
-    static_cast<float>(ori.x),
-    static_cast<float>(ori.y),
-    static_cast<float>(ori.z)
-  );
+    static_cast<float>(ori.w), static_cast<float>(ori.x), static_cast<float>(ori.y),
+    static_cast<float>(ori.z));
   float inv_n = 1.f / static_cast<float>(array.particles.size());
   Eigen::Vector3f mean = Eigen::Vector3f::Zero();
   for (const Particle & p : array.particles) {

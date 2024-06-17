@@ -72,7 +72,8 @@ struct WeightManager
   {
     if (is_rtk_fixed) {
       return normal_pdf(distance, for_fixed_);
-    }       return normal_pdf(distance, for_not_fixed_);
+    }
+    return normal_pdf(distance, for_not_fixed_);
   }
 
   [[nodiscard]] static float inverse_normal_pdf(float prob, const Parameter & param)
@@ -88,7 +89,8 @@ struct WeightManager
   {
     if (is_rtk_fixed) {
       return inverse_normal_pdf(prob, for_fixed_);
-    }       return inverse_normal_pdf(prob, for_not_fixed_);
+    }
+    return inverse_normal_pdf(prob, for_not_fixed_);
   }
 };
 }  // namespace yabloc::modularized_particle_filter

@@ -62,9 +62,8 @@ void GnssParticleCorrector::on_pose(const PoseCovStamped::ConstSharedPtr pose_ms
   const rclcpp::Time stamp = pose_msg->header.stamp;
   const auto & position = pose_msg->pose.pose.position;
   Eigen::Vector3f gnss_position;
-  gnss_position << static_cast<float>(position.x),
-                   static_cast<float>(position.y),
-                   static_cast<float>(position.z);
+  gnss_position << static_cast<float>(position.x), static_cast<float>(position.y),
+    static_cast<float>(position.z);
 
   constexpr bool is_rtk_fixed = false;
   process(gnss_position, stamp, is_rtk_fixed);

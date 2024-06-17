@@ -56,7 +56,7 @@ private:
   int latest_resampling_generation_;
 
   // Random generator from 0 to 1
-  [[nodiscard]] static double random_from_01_uniformly() ;
+  [[nodiscard]] static double random_from_01_uniformly();
   // Check the sanity of the particles obtained from the particle corrector.
   [[nodiscard]] bool check_weighted_particles_validity(
     const ParticleArray & weighted_particles) const;

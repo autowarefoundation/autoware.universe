@@ -15,7 +15,6 @@
 #include "yabloc_particle_filter/camera_corrector/camera_particle_corrector.hpp"
 #include "yabloc_particle_filter/camera_corrector/logit.hpp"
 
-#include <cmath>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <tier4_autoware_utils/math/trigonometry.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
@@ -25,6 +24,8 @@
 #include <yabloc_common/transform_line_segments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
+
+#include <cmath>
 
 namespace yabloc::modularized_particle_filter
 {
@@ -113,7 +114,7 @@ CameraParticleCorrector::split_line_segments(const PointCloud2 & msg)
   auto [good_cloud, bad_cloud] = filt(iffy_cloud);
   {
     cv::Mat debug_image = cv::Mat::zeros(800, 800, CV_8UC3);
-    auto draw = [&debug_image](const LineSegments & cloud, const cv::Scalar& color) -> void {
+    auto draw = [&debug_image](const LineSegments & cloud, const cv::Scalar & color) -> void {
       for (const auto & line : cloud) {
         const Eigen::Vector3f p1 = line.getVector3fMap();
         const Eigen::Vector3f p2 = line.getNormalVector3fMap();
@@ -201,9 +202,9 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
     pcl::PointCloud<pcl::PointXYZRGB> rgb_iffy_cloud;
 
-    float max_score = std::accumulate(cloud.begin(), cloud.end(), 0.0f,
-      [](float max_score, const auto& p) { return std::max(max_score, std::abs(p.intensity)); }
-    );
+    float max_score = std::accumulate(
+      cloud.begin(), cloud.end(), 0.0f,
+      [](float max_score, const auto & p) { return std::max(max_score, std::abs(p.intensity)); });
     for (const auto p : cloud) {
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
@@ -312,11 +313,10 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
 
       CostMapValue v3 = cost_map_.at(p.topRows(2));
       float logit = 0;
-      if (!v3.unmapped){
+      if (!v3.unmapped) {
         float gain = std::exp(-far_weight_gain_ * squared_norm);
 
-        logit =
-          gain * (abs_cos(tangent, static_cast<float>(v3.angle)) * v3.intensity - 0.5f);
+        logit = gain * (abs_cos(tangent, static_cast<float>(v3.angle)) * v3.intensity - 0.5f);
       }
 
       pcl::PointXYZI xyzi(logit_to_prob(logit, 10.f));

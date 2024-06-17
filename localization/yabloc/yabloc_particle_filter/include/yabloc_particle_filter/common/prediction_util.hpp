@@ -27,7 +27,7 @@ namespace yabloc::modularized_particle_filter::util
 inline std::random_device seed_gen;
 inline std::default_random_engine engine(seed_gen());
 
-inline Eigen::Vector2d nrand_2d(const Eigen::Matrix2d& cov)
+inline Eigen::Vector2d nrand_2d(const Eigen::Matrix2d & cov)
 {
   Eigen::JacobiSVD<Eigen::Matrix2d> svd;
   svd.compute(cov, Eigen::ComputeFullU | Eigen::ComputeFullV);

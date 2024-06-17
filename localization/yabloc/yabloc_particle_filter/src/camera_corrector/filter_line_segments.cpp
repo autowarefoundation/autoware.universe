@@ -22,7 +22,7 @@
 
 namespace yabloc::modularized_particle_filter
 {
-cv::Point2f cv2pt(const Eigen::Vector3f& v)
+cv::Point2f cv2pt(const Eigen::Vector3f & v)
 {
   const float metric_per_pixel = 0.05;
   const float image_radius = 400;
@@ -42,7 +42,8 @@ float normalized_atan2(const Eigen::Vector3f & t, float deg)
 
   if (diff < M_PI) {
     return static_cast<float>(diff / M_PI_2 - 1.0);
-  }     throw std::runtime_error("invalid cos");
+  }
+  throw std::runtime_error("invalid cos");
 }
 
 std::pair<CameraParticleCorrector::LineSegments, CameraParticleCorrector::LineSegments>

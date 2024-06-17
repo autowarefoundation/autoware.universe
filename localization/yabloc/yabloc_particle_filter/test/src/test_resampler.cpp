@@ -146,9 +146,9 @@ TEST(ResamplerTestSuite, simpleResampling)
     predicted = resampled;
     EXPECT_EQ(predicted.id, 2);
 
-    int centroid = std::accumulate(predicted.particles.begin(), predicted.particles.end(), 0,
-      [](int sum, const auto& p) { return sum + static_cast<int>(p.pose.position.x); }
-    );
+    int centroid = std::accumulate(
+      predicted.particles.begin(), predicted.particles.end(), 0,
+      [](int sum, const auto & p) { return sum + static_cast<int>(p.pose.position.x); });
     EXPECT_GT(centroid, 0);
   }
 }
@@ -180,11 +180,9 @@ TEST(ResamplerTestSuite, resamplingWithRetrogression)
 
   // Update by ancient measurement
   {
-    double before_centroid = std::accumulate(predicted.particles.begin(),
-      predicted.particles.end(), 0.0, [](double sum, const auto& p)
-      { return sum + p.pose.position.x * p.weight; }
-    );
-
+    double before_centroid = std::accumulate(
+      predicted.particles.begin(), predicted.particles.end(), 0.0,
+      [](double sum, const auto & p) { return sum + p.pose.position.x * p.weight; });
 
     // Weight
     ParticleArray weighted;
@@ -201,10 +199,9 @@ TEST(ResamplerTestSuite, resamplingWithRetrogression)
 
     predicted = resampler.add_weight_retroactively(predicted, weighted);
 
-    double after_centroid = std::accumulate(predicted.particles.begin(),
-      predicted.particles.end(), 0.0, [](double sum, const auto& p)
-      { return sum + p.pose.position.x * p.weight; }
-    );
+    double after_centroid = std::accumulate(
+      predicted.particles.begin(), predicted.particles.end(), 0.0,
+      [](double sum, const auto & p) { return sum + p.pose.position.x * p.weight; });
 
     EXPECT_TRUE(after_centroid > before_centroid);
   }

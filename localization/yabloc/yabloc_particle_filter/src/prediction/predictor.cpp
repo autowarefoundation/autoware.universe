@@ -116,9 +116,8 @@ void Predictor::on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose
   // Publish initial pose marker
   auto position = initialpose->pose.pose.position;
   Eigen::Vector3f pos_vec3f;
-  pos_vec3f << static_cast<float>(position.x),
-               static_cast<float>(position.y),
-               static_cast<float>(position.z);
+  pos_vec3f << static_cast<float>(position.x), static_cast<float>(position.y),
+    static_cast<float>(position.z);
 
   auto orientation = initialpose->pose.pose.orientation;
   auto theta = static_cast<float>(2 * std::atan2(orientation.z, orientation.w));
