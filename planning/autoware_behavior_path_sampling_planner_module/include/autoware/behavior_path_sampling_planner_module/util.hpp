@@ -18,8 +18,14 @@
 #include "autoware_sampler_common/transform/spline_transform.hpp"
 
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/geometry/index/rtree.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/LaneletSequence.h>
 
 #include <any>
 #include <functional>
@@ -29,6 +35,8 @@
 namespace autoware::behavior_path_planner
 {
 using geometry_msgs::msg::Pose;
+using tier4_planning_msgs::msg::PathWithLaneId;
+using PlanResult = PathWithLaneId::SharedPtr;
 
 struct SoftConstraintsInputs
 {
