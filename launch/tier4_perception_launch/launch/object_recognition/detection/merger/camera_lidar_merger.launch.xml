@@ -17,6 +17,7 @@
   <let name="without_dbt_and_filter" value="$(eval &quot;'$(var use_detection_by_tracker)'=='false' and '$(var use_object_filter)'=='false' &quot;)"/>
 
   <!-- external interfaces -->
+  <arg name="number_of_cameras"/>
   <arg name="input/camera0/image"/>
   <arg name="input/camera0/info"/>
   <arg name="input/camera0/rois"/>
@@ -41,7 +42,6 @@
   <arg name="input/camera7/image"/>
   <arg name="input/camera7/info"/>
   <arg name="input/camera7/rois"/>
-  <arg name="image_number"/>
   <arg name="input/pointcloud_map/pointcloud" default="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud" default="/perception/obstacle_segmentation/pointcloud"/>
   <arg name="input/lidar_ml/objects" default="$(var lidar_detection_model)/objects"/>
@@ -76,23 +76,23 @@
   <!-- Camera ROI fusion -->
   <group>
     <include file="$(find-pkg-share image_projection_based_fusion)/launch/roi_detected_object_fusion.launch.xml">
-      <arg name="input/camera_info0" value="$(var input/camera0/info)"/>
+      <arg name="input/rois_number" value="$(var number_of_cameras)"/>
       <arg name="input/rois0" value="$(var input/camera0/rois)"/>
-      <arg name="input/camera_info1" value="$(var input/camera1/info)"/>
       <arg name="input/rois1" value="$(var input/camera1/rois)"/>
-      <arg name="input/camera_info2" value="$(var input/camera2/info)"/>
       <arg name="input/rois2" value="$(var input/camera2/rois)"/>
-      <arg name="input/camera_info3" value="$(var input/camera3/info)"/>
       <arg name="input/rois3" value="$(var input/camera3/rois)"/>
-      <arg name="input/camera_info4" value="$(var input/camera4/info)"/>
       <arg name="input/rois4" value="$(var input/camera4/rois)"/>
-      <arg name="input/camera_info5" value="$(var input/camera5/info)"/>
       <arg name="input/rois5" value="$(var input/camera5/rois)"/>
-      <arg name="input/camera_info6" value="$(var input/camera6/info)"/>
       <arg name="input/rois6" value="$(var input/camera6/rois)"/>
-      <arg name="input/camera_info7" value="$(var input/camera7/info)"/>
       <arg name="input/rois7" value="$(var input/camera7/rois)"/>
-      <arg name="input/rois_number" value="$(var image_number)"/>
+      <arg name="input/camera_info0" value="$(var input/camera0/info)"/>
+      <arg name="input/camera_info1" value="$(var input/camera1/info)"/>
+      <arg name="input/camera_info2" value="$(var input/camera2/info)"/>
+      <arg name="input/camera_info3" value="$(var input/camera3/info)"/>
+      <arg name="input/camera_info4" value="$(var input/camera4/info)"/>
+      <arg name="input/camera_info5" value="$(var input/camera5/info)"/>
+      <arg name="input/camera_info6" value="$(var input/camera6/info)"/>
+      <arg name="input/camera_info7" value="$(var input/camera7/info)"/>
       <arg name="input/image0" value="$(var input/camera0/image)"/>
       <arg name="input/image1" value="$(var input/camera1/image)"/>
       <arg name="input/image2" value="$(var input/camera2/image)"/>

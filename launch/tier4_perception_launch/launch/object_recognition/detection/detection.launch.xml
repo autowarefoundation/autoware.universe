@@ -12,6 +12,7 @@
   <arg name="pointcloud_container_name"/>
 
   <!-- Camera interfaces -->
+  <arg name="number_of_cameras"/>
   <arg name="input/camera0/image"/>
   <arg name="input/camera0/info"/>
   <arg name="input/camera0/rois"/>
@@ -36,7 +37,6 @@
   <arg name="input/camera7/image"/>
   <arg name="input/camera7/info"/>
   <arg name="input/camera7/rois"/>
-  <arg name="image_number"/>
 
   <!-- Radar interfaces -->
   <arg name="input/radar"/>
@@ -45,35 +45,35 @@
   <group if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_radar_fusion&quot;')">
     <!-- Camera-Lidar detectors -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/camera_lidar_detector.launch.xml">
-      <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
-      <arg name="input/camera0/rois" value="$(var input/camera0/rois)"/>
-      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
+      <arg name="number_of_cameras" value="$(var number_of_cameras)"/>
       <arg name="input/camera0/image" value="$(var input/camera0/image)"/>
-      <arg name="input/camera1/rois" value="$(var input/camera1/rois)"/>
-      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
+      <arg name="input/camera0/rois" value="$(var input/camera0/rois)"/>
       <arg name="input/camera1/image" value="$(var input/camera1/image)"/>
-      <arg name="input/camera2/rois" value="$(var input/camera2/rois)"/>
-      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera1/rois" value="$(var input/camera1/rois)"/>
       <arg name="input/camera2/image" value="$(var input/camera2/image)"/>
-      <arg name="input/camera3/rois" value="$(var input/camera3/rois)"/>
-      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera2/rois" value="$(var input/camera2/rois)"/>
       <arg name="input/camera3/image" value="$(var input/camera3/image)"/>
-      <arg name="input/camera4/rois" value="$(var input/camera4/rois)"/>
-      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera3/rois" value="$(var input/camera3/rois)"/>
       <arg name="input/camera4/image" value="$(var input/camera4/image)"/>
-      <arg name="input/camera5/rois" value="$(var input/camera5/rois)"/>
-      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera4/rois" value="$(var input/camera4/rois)"/>
       <arg name="input/camera5/image" value="$(var input/camera5/image)"/>
-      <arg name="input/camera6/rois" value="$(var input/camera6/rois)"/>
-      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera5/rois" value="$(var input/camera5/rois)"/>
       <arg name="input/camera6/image" value="$(var input/camera6/image)"/>
-      <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
-      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera6/rois" value="$(var input/camera6/rois)"/>
       <arg name="input/camera7/image" value="$(var input/camera7/image)"/>
-      <arg name="image_number" value="$(var image_number)"/>
+      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
+      <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
       <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
-      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
       <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
@@ -104,31 +104,31 @@
     </group>
     <!-- Object merger -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/merger/camera_lidar_radar_merger.launch.xml">
-      <arg name="input/camera0/rois" value="$(var input/camera0/rois)"/>
-      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
+      <arg name="number_of_cameras" value="$(var number_of_cameras)"/>
       <arg name="input/camera0/image" value="$(var input/camera0/image)"/>
-      <arg name="input/camera1/rois" value="$(var input/camera1/rois)"/>
-      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
+      <arg name="input/camera0/rois" value="$(var input/camera0/rois)"/>
       <arg name="input/camera1/image" value="$(var input/camera1/image)"/>
-      <arg name="input/camera2/rois" value="$(var input/camera2/rois)"/>
-      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera1/rois" value="$(var input/camera1/rois)"/>
       <arg name="input/camera2/image" value="$(var input/camera2/image)"/>
-      <arg name="input/camera3/rois" value="$(var input/camera3/rois)"/>
-      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera2/rois" value="$(var input/camera2/rois)"/>
       <arg name="input/camera3/image" value="$(var input/camera3/image)"/>
-      <arg name="input/camera4/rois" value="$(var input/camera4/rois)"/>
-      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera3/rois" value="$(var input/camera3/rois)"/>
       <arg name="input/camera4/image" value="$(var input/camera4/image)"/>
-      <arg name="input/camera5/rois" value="$(var input/camera5/rois)"/>
-      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera4/rois" value="$(var input/camera4/rois)"/>
       <arg name="input/camera5/image" value="$(var input/camera5/image)"/>
-      <arg name="input/camera6/rois" value="$(var input/camera6/rois)"/>
-      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera5/rois" value="$(var input/camera5/rois)"/>
       <arg name="input/camera6/image" value="$(var input/camera6/image)"/>
-      <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
-      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera6/rois" value="$(var input/camera6/rois)"/>
       <arg name="input/camera7/image" value="$(var input/camera7/image)"/>
-      <arg name="image_number" value="$(var image_number)"/>
+      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
       <arg name="use_radar_tracking_fusion" value="$(var use_radar_tracking_fusion)"/>
       <arg name="use_detection_by_tracker" value="$(var use_detection_by_tracker)"/>
@@ -143,34 +143,34 @@
     <!-- Camera-Lidar detectors -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/camera_lidar_detector.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
-      <arg name="input/camera0/rois" value="$(var input/camera0/rois)"/>
-      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
+      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
+      <arg name="number_of_cameras" value="$(var number_of_cameras)"/>
       <arg name="input/camera0/image" value="$(var input/camera0/image)"/>
-      <arg name="input/camera1/rois" value="$(var input/camera1/rois)"/>
-      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
+      <arg name="input/camera0/rois" value="$(var input/camera0/rois)"/>
       <arg name="input/camera1/image" value="$(var input/camera1/image)"/>
-      <arg name="input/camera2/rois" value="$(var input/camera2/rois)"/>
-      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera1/rois" value="$(var input/camera1/rois)"/>
       <arg name="input/camera2/image" value="$(var input/camera2/image)"/>
-      <arg name="input/camera3/rois" value="$(var input/camera3/rois)"/>
-      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera2/rois" value="$(var input/camera2/rois)"/>
       <arg name="input/camera3/image" value="$(var input/camera3/image)"/>
-      <arg name="input/camera4/rois" value="$(var input/camera4/rois)"/>
-      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera3/rois" value="$(var input/camera3/rois)"/>
       <arg name="input/camera4/image" value="$(var input/camera4/image)"/>
-      <arg name="input/camera5/rois" value="$(var input/camera5/rois)"/>
-      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera4/rois" value="$(var input/camera4/rois)"/>
       <arg name="input/camera5/image" value="$(var input/camera5/image)"/>
-      <arg name="input/camera6/rois" value="$(var input/camera6/rois)"/>
-      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera5/rois" value="$(var input/camera5/rois)"/>
       <arg name="input/camera6/image" value="$(var input/camera6/image)"/>
-      <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
-      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera6/rois" value="$(var input/camera6/rois)"/>
       <arg name="input/camera7/image" value="$(var input/camera7/image)"/>
-      <arg name="image_number" value="$(var image_number)"/>
+      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
       <arg name="use_pointcloud_map" value="$(var use_pointcloud_map)"/>
-      <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
       <arg name="use_low_height_cropbox" value="$(var use_low_height_cropbox)"/>
       <arg name="use_roi_based_cluster" value="$(var use_roi_based_cluster)"/>
       <arg name="detection_by_tracker_param_path" value="$(var detection_by_tracker_param_path)"/>
@@ -188,31 +188,31 @@
     </group>
     <!-- Object merger -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/merger/camera_lidar_merger.launch.xml">
-      <arg name="input/camera0/rois" value="$(var input/camera0/rois)"/>
-      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
       <arg name="input/camera0/image" value="$(var input/camera0/image)"/>
-      <arg name="input/camera1/rois" value="$(var input/camera1/rois)"/>
-      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
+      <arg name="input/camera0/rois" value="$(var input/camera0/rois)"/>
       <arg name="input/camera1/image" value="$(var input/camera1/image)"/>
-      <arg name="input/camera2/rois" value="$(var input/camera2/rois)"/>
-      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera1/rois" value="$(var input/camera1/rois)"/>
       <arg name="input/camera2/image" value="$(var input/camera2/image)"/>
-      <arg name="input/camera3/rois" value="$(var input/camera3/rois)"/>
-      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera2/rois" value="$(var input/camera2/rois)"/>
       <arg name="input/camera3/image" value="$(var input/camera3/image)"/>
-      <arg name="input/camera4/rois" value="$(var input/camera4/rois)"/>
-      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera3/rois" value="$(var input/camera3/rois)"/>
       <arg name="input/camera4/image" value="$(var input/camera4/image)"/>
-      <arg name="input/camera5/rois" value="$(var input/camera5/rois)"/>
-      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera4/rois" value="$(var input/camera4/rois)"/>
       <arg name="input/camera5/image" value="$(var input/camera5/image)"/>
-      <arg name="input/camera6/rois" value="$(var input/camera6/rois)"/>
-      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera5/rois" value="$(var input/camera5/rois)"/>
       <arg name="input/camera6/image" value="$(var input/camera6/image)"/>
-      <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
-      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera6/rois" value="$(var input/camera6/rois)"/>
       <arg name="input/camera7/image" value="$(var input/camera7/image)"/>
-      <arg name="image_number" value="$(var image_number)"/>
+      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
+      <arg name="number_of_cameras" value="$(var number_of_cameras)"/>
       <arg name="use_object_filter" value="$(var use_object_filter)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
       <arg name="use_detection_by_tracker" value="$(var use_detection_by_tracker)"/>
