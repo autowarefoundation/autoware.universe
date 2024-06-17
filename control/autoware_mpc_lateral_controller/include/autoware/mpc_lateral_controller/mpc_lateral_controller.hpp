@@ -19,7 +19,7 @@
 #include "autoware/mpc_lateral_controller/mpc_trajectory.hpp"
 #include "autoware/mpc_lateral_controller/mpc_utils.hpp"
 #include "autoware/mpc_lateral_controller/steering_offset/steering_offset.hpp"
-#include "autoware_trajectory_follower_base/lateral_controller_base.hpp"
+#include "autoware/trajectory_follower_base/lateral_controller_base.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/lateral.hpp"
