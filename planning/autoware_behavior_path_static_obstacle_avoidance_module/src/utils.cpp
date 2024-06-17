@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner_common/utils/utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/utils.hpp"
 
+#include "autoware_behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
+#include "autoware_behavior_path_planner_common/utils/path_utils.hpp"
+#include "autoware_behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
-#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
-#include "behavior_path_planner_common/utils/path_utils.hpp"
-#include "behavior_path_planner_common/utils/traffic_light_utils.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
@@ -37,12 +37,12 @@
 #include <string>
 #include <vector>
 
-namespace behavior_path_planner::utils::static_obstacle_avoidance
+namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 {
 
+using autoware::behavior_path_planner::utils::traffic_light::calcDistanceToRedTrafficLight;
+using autoware::behavior_path_planner::utils::traffic_light::getDistanceToNextTrafficLight;
 using autoware_perception_msgs::msg::TrafficLightElement;
-using behavior_path_planner::utils::traffic_light::calcDistanceToRedTrafficLight;
-using behavior_path_planner::utils::traffic_light::getDistanceToNextTrafficLight;
 
 namespace
 {
@@ -138,7 +138,7 @@ double calcSignedArcLengthToFirstNearestPoint(
 }
 
 geometry_msgs::msg::Polygon createVehiclePolygon(
-  const vehicle_info_util::VehicleInfo & vehicle_info, const double offset)
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const double offset)
 {
   const auto & i = vehicle_info;
   const auto & front_m = i.max_longitudinal_offset_m;
@@ -2369,4 +2369,4 @@ double calcDistanceToReturnDeadLine(
 
   return distance_to_return_dead_line;
 }
-}  // namespace behavior_path_planner::utils::static_obstacle_avoidance
+}  // namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
