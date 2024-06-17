@@ -765,10 +765,11 @@ VectorXd MPC::calcSteerRateLimitOnTrajectory(
     return reference.back();
   };
 
-  // when the vehicle is stopped, no steering rate limit.
+  /// when the vehicle is stopped, no steering rate limit.
+  constexpr double steer_rate_lim = 5.0;
   const bool is_vehicle_stopped = std::fabs(current_velocity) < 0.01;
   if (is_vehicle_stopped) {
-    return VectorXd::Zero(m_param.prediction_horizon);
+    return steer_rate_lim * VectorXd::Ones(m_param.prediction_horizon);
   }
 
   // calculate steering rate limit
