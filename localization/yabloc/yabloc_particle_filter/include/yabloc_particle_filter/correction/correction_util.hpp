@@ -22,14 +22,11 @@
 
 #include <optional>
 
-namespace yabloc
-{
-namespace modularized_particle_filter
+namespace yabloc::modularized_particle_filter
 {
 std::optional<yabloc_particle_filter::msg::ParticleArray> find_synced_particles(
   boost::circular_buffer<yabloc_particle_filter::msg::ParticleArray> circular_buffer,
   rclcpp::Time time);
-}
-}  // namespace yabloc
+}  // namespace yabloc::modularized_particle_filter
 
 #endif  // YABLOC_PARTICLE_FILTER__CORRECTION__CORRECTION_UTIL_HPP_
