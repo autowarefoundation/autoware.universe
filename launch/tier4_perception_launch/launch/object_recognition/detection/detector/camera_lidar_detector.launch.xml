@@ -4,7 +4,7 @@
   <arg name="input/pointcloud"/>
   <arg name="input/pointcloud_map/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud"/>
-  <arg name="pointcloud_container_name" default="pointcloud_container"/>
+  <arg name="pointcloud_container_name"/>
 
   <!-- Lidar + Camera detector parameters -->
   <arg name="lidar_detection_model" description="options: `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>

@@ -8,12 +8,12 @@
   <arg name="lidar_detection_model"/>
   <arg name="use_detection_by_tracker"/>
 
-  <arg name="use_validator" default="true" description="use obstacle_pointcloud based validator"/>
-  <arg name="objects_validation_method" default="obstacle_pointcloud"/>
+  <arg name="use_validator" description="use obstacle_pointcloud based validator"/>
+  <arg name="objects_validation_method"/>
   <arg name="use_pointcloud_map"/>
 
-  <arg name="use_object_filter" default="true" description="use object filter"/>
-  <arg name="objects_filter_method" default="lanelet_filter"/>
+  <arg name="use_object_filter" description="use object filter"/>
+  <arg name="objects_filter_method"/>
   <let name="without_dbt_and_filter" value="$(eval &quot;'$(var use_detection_by_tracker)'=='false' and '$(var use_object_filter)'=='false' &quot;)"/>
 
   <!-- external interfaces -->

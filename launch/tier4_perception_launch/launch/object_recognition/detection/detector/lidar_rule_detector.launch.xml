@@ -4,6 +4,7 @@
   <arg name="input/pointcloud_map/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud"/>
   <arg name="pointcloud_container_name"/>
+  <arg name="use_pointcloud_map"/>
 
   <!-- Pointcloud filter -->
   <group>
