@@ -3,7 +3,7 @@
   "title": "Parameters for Lidar Centerpoint Node",
   "type": "object",
   "definitions": {
-    "centerpoint": {
+    "centerpoint_base": {
       "type": "object",
       "properties": {
         "trt_precision": {
