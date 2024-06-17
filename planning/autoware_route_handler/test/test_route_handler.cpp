@@ -281,8 +281,8 @@ TEST_F(TestRouteHandler, testGetLaneChangeTargetLanes)
 
   {
     // The input is within expectation.
-    // There exist lane changing lane since when using the maximum current lanes for seaching, there
-    // exist the input
+    // There is a lane-changing lane. Within the maximum current lanes, there is an alternative lane
+    // to the preferred lane. Therefore, the lane-changing lane exists.
     const auto current_lanes = get_current_lanes();
     const auto lane_change_lane = route_handler_->getLaneChangeTarget(current_lanes);
     ASSERT_TRUE(lane_change_lane.has_value());
