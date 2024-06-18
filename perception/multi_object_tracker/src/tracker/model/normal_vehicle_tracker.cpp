@@ -142,13 +142,12 @@ NormalVehicleTracker::NormalVehicleTracker(
 
     if (!object.kinematics.has_position_covariance) {
       // initial state covariance
-      constexpr double p0_stddev_x = 1.0;  // in object coordinate [m]
-      constexpr double p0_stddev_y = 0.3;  // in object coordinate [m]
-      constexpr double p0_stddev_yaw =
-        tier4_autoware_utils::deg2rad(25);  // in map coordinate [rad]
-      constexpr double p0_cov_x = p0_stddev_x * p0_stddev_x;
-      constexpr double p0_cov_y = p0_stddev_y * p0_stddev_y;
-      constexpr double p0_cov_yaw = p0_stddev_yaw * p0_stddev_yaw;
+      const double p0_stddev_x = 1.0;                                  // in object coordinate [m]
+      const double p0_stddev_y = 0.3;                                  // in object coordinate [m]
+      const double p0_stddev_yaw = tier4_autoware_utils::deg2rad(25);  // in map coordinate [rad]
+      const double p0_cov_x = p0_stddev_x * p0_stddev_x;
+      const double p0_cov_y = p0_stddev_y * p0_stddev_y;
+      const double p0_cov_yaw = p0_stddev_yaw * p0_stddev_yaw;
 
       const double cos_yaw = std::cos(yaw);
       const double sin_yaw = std::sin(yaw);
