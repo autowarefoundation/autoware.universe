@@ -65,7 +65,6 @@ using autoware_universe_utils::Point2d;
 using autoware_universe_utils::Polygon2d;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
-using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
