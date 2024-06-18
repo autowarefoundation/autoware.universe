@@ -548,7 +548,8 @@ void LidarMarkerLocalizer::save_intensity(
   time_info = std::localtime(&time_integer);
   std::stringstream file_name;
   file_name << param_.savefile_name << std::put_time(time_info, "%Y%m%d-%H%M%S") << "-"
-            << std::setw(3) << std::setfill('0') << static_cast<int>((time_decimal)*1000) << ".csv";
+            << std::setw(3) << std::setfill('0') << static_cast<int>((time_decimal) * 1000)
+            << ".csv";
 
   // write log_message to file
   std::filesystem::path savefile_directory_path = param_.savefile_directory_path;
