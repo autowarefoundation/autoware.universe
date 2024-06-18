@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/autonomous_emergency_braking/node.hpp"
-
-#include "autoware/autonomous_emergency_braking/utils.hpp"
-
+#include <autoware/autonomous_emergency_braking/node.hpp>
+#include <autoware/autonomous_emergency_braking/utils.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
