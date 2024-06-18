@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
-#define AUTOWARE_AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
+#ifndef AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
+#define AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
 
 #include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
@@ -165,4 +165,4 @@ inline Polygon2d convertObjToPolygon(const PredictedObject & obj)
 }
 }  // namespace autoware::motion::control::autonomous_emergency_braking::utils
 
-#endif  // AUTOWARE_AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
+#endif  // AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
