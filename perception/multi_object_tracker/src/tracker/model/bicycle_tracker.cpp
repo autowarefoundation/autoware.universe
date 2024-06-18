@@ -21,10 +21,10 @@
 
 #include "multi_object_tracker/utils/utils.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
-#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
-#include "tier4_autoware_utils/math/normalization.hpp"
-#include "tier4_autoware_utils/math/unit_conversion.hpp"
-#include "tier4_autoware_utils/ros/msg_covariance.hpp"
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/math/normalization.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -100,7 +100,7 @@ BicycleTracker::BicycleTracker(
 
   // Set initial state
   {
-    using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
@@ -172,7 +172,7 @@ autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
       autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
 
     // fill covariance matrix
-    using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
     const double cos_yaw = std::cos(pose_yaw);
     const double sin_yaw = std::sin(pose_yaw);

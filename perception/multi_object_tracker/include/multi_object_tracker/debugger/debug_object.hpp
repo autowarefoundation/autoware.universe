@@ -16,7 +16,7 @@
 #define MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
 
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
-#include "tier4_autoware_utils/ros/uuid_helper.hpp"
+#include "autoware/universe_utils/ros/uuid_helper.hpp"
 
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <rclcpp/rclcpp.hpp>

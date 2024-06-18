@@ -21,16 +21,16 @@
 
 #include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
-#include "tier4_autoware_utils/math/normalization.hpp"
-#include "tier4_autoware_utils/math/unit_conversion.hpp"
-#include "tier4_autoware_utils/ros/msg_covariance.hpp"
+#include "autoware/universe_utils/math/normalization.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 // cspell: ignore CTRV
 // Constant Turn Rate and constant Velocity (CTRV) motion model
-using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 CTRVMotionModel::CTRVMotionModel() : logger_(rclcpp::get_logger("CTRVMotionModel"))
 {

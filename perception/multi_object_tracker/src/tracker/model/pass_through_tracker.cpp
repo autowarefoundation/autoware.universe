@@ -20,7 +20,7 @@
 
 #include "multi_object_tracker/utils/utils.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
-#include "tier4_autoware_utils/ros/msg_covariance.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -87,7 +87,7 @@ bool PassThroughTracker::measure(
 bool PassThroughTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
-  using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();

@@ -16,10 +16,10 @@
 #include "multi_object_tracker/tracker/model/unknown_tracker.hpp"
 
 #include "multi_object_tracker/utils/utils.hpp"
-#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
-#include "tier4_autoware_utils/math/normalization.hpp"
-#include "tier4_autoware_utils/math/unit_conversion.hpp"
-#include "tier4_autoware_utils/ros/msg_covariance.hpp"
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/math/normalization.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -73,7 +73,7 @@ UnknownTracker::UnknownTracker(
 
   // Set initial state
   {
-    using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     auto pose_cov = object.kinematics.pose_with_covariance.covariance;
@@ -148,7 +148,7 @@ autoware_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingObject(
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
     // fill covariance matrix
-    using tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double & r_cov_x = ekf_params_.r_cov_x;
     const double & r_cov_y = ekf_params_.r_cov_y;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
