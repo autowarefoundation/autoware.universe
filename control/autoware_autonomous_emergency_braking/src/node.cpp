@@ -669,6 +669,7 @@ void AEB::createObjectDataUsingPredictedObjects(
       if (collision_points_bg.empty()) continue;
 
       // Create an object for each intersection point
+      bool collision_points_added{false};
       for (const auto & collision_point : collision_points_bg) {
         const auto obj_position =
           tier4_autoware_utils::createPoint(collision_point.x(), collision_point.y(), 0.0);
@@ -689,7 +690,11 @@ void AEB::createObjectDataUsingPredictedObjects(
         obj.velocity = (obj_tangent_velocity > 0.0) ? obj_tangent_velocity : 0.0;
         obj.distance_to_object = std::abs(dist_ego_to_object);
         object_data_vector.push_back(obj);
+        collision_points_added = true;
       }
+      // The ego polygons are in order, so the first intersection points found are the closest
+      // points. It is not necessary to continue iterating the ego polys for the same object.
+      if (collision_points_added) break;
     }
   });
 }
