@@ -780,7 +780,7 @@ On the other hand, this module has only one parameter `soft_margin` for soft lat
 
 As the hard margin parameters the distance which the user definitely want to keep, they are used in the logic to check whether the ego can pass side of the target object without avoidance maneuver as well.
 
-If the lateral distance is less than `hard_margin`/`hard_margin_for_parked_vehicle` when assuming that the ego follows current lane without avoidance maneuver, this module thinks the ego can pass the side of the object safely and the ego must avoid it. In this case, this module inserts stop point until the avoidance maneuver is allowed to execute so that the ego can avoid the object after approval. (e.g. The ego keeps stopping in front of such a object until operator approves avoidance maneuver if user uses this module in MANUAL mode.)
+If the lateral distance is less than `hard_margin`/`hard_margin_for_parked_vehicle` when assuming that the ego follows current lane without avoidance maneuver, this module thinks the ego can not pass the side of the object safely and the ego must avoid it. In this case, this module inserts stop point until the avoidance maneuver is allowed to execute so that the ego can avoid the object after approval. (e.g. The ego keeps stopping in front of such a object until operator approves avoidance maneuver if user uses this module in MANUAL mode.)
 
 ![fig](./images/path_generation/must_avoid.png)
 
