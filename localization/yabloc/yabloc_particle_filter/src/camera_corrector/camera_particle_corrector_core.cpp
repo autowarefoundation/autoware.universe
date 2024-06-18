@@ -15,9 +15,9 @@
 #include "yabloc_particle_filter/camera_corrector/camera_particle_corrector.hpp"
 #include "yabloc_particle_filter/camera_corrector/logit.hpp"
 
+#include <autoware/universe_utils/math/trigonometry.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
-#include <tier4_autoware_utils/math/trigonometry.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <yabloc_common/color.hpp>
 #include <yabloc_common/pose_conversions.hpp>
 #include <yabloc_common/pub_sub.hpp>
@@ -28,8 +28,8 @@
 namespace yabloc::modularized_particle_filter
 {
 
-CameraParticleCorrector::CameraParticleCorrector()
-: AbstractCorrector("camera_particle_corrector"),
+CameraParticleCorrector::CameraParticleCorrector(const rclcpp::NodeOptions & options)
+: AbstractCorrector("camera_particle_corrector", options),
   min_prob_(declare_parameter<float>("min_prob")),
   far_weight_gain_(declare_parameter<float>("far_weight_gain")),
   cost_map_(this)
@@ -130,7 +130,7 @@ CameraParticleCorrector::split_line_segments(const PointCloud2 & msg)
 
 void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments_msg)
 {
-  tier4_autoware_utils::StopWatch stop_watch;
+  autoware_universe_utils::StopWatch stop_watch;
   const rclcpp::Time stamp = line_segments_msg.header.stamp;
   std::optional<ParticleArray> opt_array = this->get_synchronized_particle_array(stamp);
   if (!opt_array.has_value()) {
@@ -206,13 +206,13 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
     for (const auto p : cloud) {
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
-      rgb.rgba = common::color_scale::blue_red(p.intensity / max_score);
+      rgb.rgba = static_cast<uint32_t>(common::color_scale::blue_red(p.intensity / max_score));
       rgb_cloud.push_back(rgb);
     }
     for (const auto p : iffy_cloud) {
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
-      rgb.rgba = common::color_scale::blue_red(p.intensity / max_score);
+      rgb.rgba = static_cast<uint32_t>(common::color_scale::blue_red(p.intensity / max_score));
       rgb_iffy_cloud.push_back(rgb);
     }
 
@@ -258,7 +258,7 @@ float abs_cos(const Eigen::Vector3f & t, float deg)
 {
   const float radian = deg * M_PI / 180.0;
   Eigen::Vector2f x(t.x(), t.y());
-  Eigen::Vector2f y(tier4_autoware_utils::cos(radian), tier4_autoware_utils::sin(radian));
+  Eigen::Vector2f y(autoware_universe_utils::cos(radian), autoware_universe_utils::sin(radian));
   x.normalize();
   return std::abs(x.dot(y));
 }
@@ -321,3 +321,6 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
   return cloud;
 }
 }  // namespace yabloc::modularized_particle_filter
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(yabloc::modularized_particle_filter::CameraParticleCorrector)

@@ -4,7 +4,13 @@
   <name>pose_estimator_arbiter</name>
   <version>0.1.0</version>
   <description>The arbiter of multiple pose estimators</description>
+  <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
+  <maintainer email="masahiro.sakamoto@tier4.jp">Masahiro Sakamoto</maintainer>
+  <maintainer email="anh.nguyen.2@tier4.jp">NGUYEN Viet Anh</maintainer>
+  <maintainer email="taiki.yamada@tier4.jp">Taiki Yamada</maintainer>
+  <maintainer email="shintaro.sakoda@tier4.jp">Shintaro Sakoda</maintainer>
+  <maintainer email="ryu.yamamoto@tier4.jp">Ryu Yamamoto</maintainer>
   <license>Apache License 2.0</license>
   <author email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</author>
 
@@ -12,25 +18,22 @@
   <build_depend>autoware_cmake</build_depend>
 
   <depend>autoware_adapi_v1_msgs</depend>
-  <depend>autoware_auto_mapping_msgs</depend>
+  <depend>autoware_map_msgs</depend>
+  <depend>autoware_universe_utils</depend>
   <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>glog</depend>
   <depend>lanelet2_extension</depend>
   <depend>magic_enum</depend>
   <depend>pcl_conversions</depend>
   <depend>pcl_ros</depend>
   <depend>pluginlib</depend>
+  <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>tier4_autoware_utils</depend>
   <depend>ublox_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>yabloc_particle_filter</depend>
-
-  <exec_depend>rclcpp</exec_depend>
-  <exec_depend>rclcpp_components</exec_depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

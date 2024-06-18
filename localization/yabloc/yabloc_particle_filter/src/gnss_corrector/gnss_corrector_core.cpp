@@ -19,8 +19,8 @@
 
 namespace yabloc::modularized_particle_filter
 {
-GnssParticleCorrector::GnssParticleCorrector()
-: AbstractCorrector("gnss_particle_corrector"),
+GnssParticleCorrector::GnssParticleCorrector(const rclcpp::NodeOptions & options)
+: AbstractCorrector("gnss_particle_corrector", options),
   mahalanobis_distance_threshold_(declare_parameter<float>("mahalanobis_distance_threshold")),
   weight_manager_(this)
 {
@@ -136,7 +136,7 @@ void GnssParticleCorrector::publish_marker(const Eigen::Vector3f & position, boo
     marker.pose.position.z = latest_height_.data;
 
     float prob = i / 4.0f;
-    marker.color = common::color_scale::rainbow(prob);
+    marker.color = static_cast<std_msgs::msg::ColorRGBA>(common::color_scale::rainbow(prob));
     marker.color.a = 0.5f;
     marker.scale.x = 0.1;
     drawCircle(marker.points, weight_manager_.inverse_normal_pdf(prob, is_rtk_fixed));
@@ -160,3 +160,6 @@ GnssParticleCorrector::ParticleArray GnssParticleCorrector::weight_particles(
 }
 
 }  // namespace yabloc::modularized_particle_filter
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(yabloc::modularized_particle_filter::GnssParticleCorrector)
