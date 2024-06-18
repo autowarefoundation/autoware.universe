@@ -7,7 +7,6 @@
   <arg name="vertical_bins" default="128"/>
   <arg name="max_azimuth_diff" default="50.0"/>
   <arg name="dual_return_outlier_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/dual_return_outlier_filter_param_file.yaml"/>
-  <arg name="dual_return_outlier_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.yaml"/>
   <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="dual_return_outlier_filter_node" name="dual_return_outlier_filter">
     <remap from="input" to="$(var input_topic_name)"/>
