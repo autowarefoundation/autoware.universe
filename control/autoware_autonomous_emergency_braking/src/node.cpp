@@ -624,7 +624,7 @@ void AEB::createObjectDataUsingPredictedObjects(
   const auto current_p = [&]() {
     const auto & first_point_of_path = ego_path.front();
     const auto & p = first_point_of_path.position;
-    return tier4_autoware_utils::createPoint(p.x, p.y, p.z);
+    return autoware_universe_utils::createPoint(p.x, p.y, p.z);
   }();
 
   auto get_object_tangent_velocity =
@@ -670,7 +670,7 @@ void AEB::createObjectDataUsingPredictedObjects(
       bool collision_points_added{false};
       for (const auto & collision_point : collision_points_bg) {
         const auto obj_position =
-          tier4_autoware_utils::createPoint(collision_point.x(), collision_point.y(), 0.0);
+          autoware_universe_utils::createPoint(collision_point.x(), collision_point.y(), 0.0);
         const double obj_arc_length =
           motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
         if (std::isnan(obj_arc_length)) continue;

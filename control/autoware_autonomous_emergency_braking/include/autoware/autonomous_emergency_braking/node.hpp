@@ -65,8 +65,6 @@ using autoware_universe_utils::Point2d;
 using autoware_universe_utils::Polygon2d;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using Path = std::vector<geometry_msgs::msg::Pose>;
@@ -256,9 +254,9 @@ public:
   autoware_universe_utils::InterProcessPollingSubscriber<Imu> sub_imu_{this, "~/input/imu"};
   autoware_universe_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_traj_{
     this, "~/input/predicted_trajectory"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<PredictedObjects> predicted_objects_sub_{
+  autoware_universe_utils::InterProcessPollingSubscriber<PredictedObjects> predicted_objects_sub_{
     this, "~/input/objects"};
-  tier4_autoware_utils::InterProcessPollingSubscriber<AutowareState> sub_autoware_state_{
+  autoware_universe_utils::InterProcessPollingSubscriber<AutowareState> sub_autoware_state_{
     this, "/autoware/state"};
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;

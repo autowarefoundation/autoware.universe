@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
 #define AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_
 
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/point.hpp>
@@ -35,11 +35,11 @@ namespace autoware::motion::control::autonomous_emergency_braking::utils
 {
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_universe_utils::Point2d;
+using autoware_universe_utils::Polygon2d;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Polygon2d;
 
 inline PredictedObject transformObjectFrame(
   const PredictedObject & input, geometry_msgs::msg::TransformStamped transform_stamped)
