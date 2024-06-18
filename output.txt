@@ -1,0 +1,236 @@
+planning/autoware_obstacle_cruise_planner/src/node.cpp:15:0: information: Include file: "autoware/obstacle_cruise_planner/node.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/node.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:17:0: information: Include file: "autoware/obstacle_cruise_planner/polygon_utils.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:18:0: information: Include file: "autoware/obstacle_cruise_planner/utils.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:19:0: information: Include file: "motion_utils/resample/resample.hpp" not found. [missingInclude]
+#include "motion_utils/resample/resample.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:20:0: information: Include file: "motion_utils/trajectory/conversion.hpp" not found. [missingInclude]
+#include "motion_utils/trajectory/conversion.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:21:0: information: Include file: "object_recognition_utils/predicted_path_utils.hpp" not found. [missingInclude]
+#include "object_recognition_utils/predicted_path_utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:22:0: information: Include file: "tier4_autoware_utils/geometry/boost_polygon_utils.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:23:0: information: Include file: "tier4_autoware_utils/ros/marker_helper.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:24:0: information: Include file: "tier4_autoware_utils/ros/update_param.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/ros/update_param.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:26:0: information: Include file: <boost/format.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <boost/format.hpp>
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:28:0: information: Include file: <algorithm> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <algorithm>
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:29:0: information: Include file: <chrono> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <chrono>
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:1648:0: information: Include file: <rclcpp_components/register_node_macro.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <rclcpp_components/register_node_macro.hpp>
+^
+planning/autoware_obstacle_cruise_planner/src/node.cpp:409:12: style: Instance of 'std::logic_error' object is destroyed immediately. [unusedScopedObject]
+      std::logic_error("Designated algorithm is not supported.");
+           ^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:15:0: information: Include file: "autoware/obstacle_cruise_planner/optimization_based_planner/optimization_based_planner.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/optimization_based_planner/optimization_based_planner.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:17:0: information: Include file: "autoware/obstacle_cruise_planner/utils.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:18:0: information: Include file: "interpolation/linear_interpolation.hpp" not found. [missingInclude]
+#include "interpolation/linear_interpolation.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:19:0: information: Include file: "interpolation/spline_interpolation.hpp" not found. [missingInclude]
+#include "interpolation/spline_interpolation.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:20:0: information: Include file: "interpolation/zero_order_hold.hpp" not found. [missingInclude]
+#include "interpolation/zero_order_hold.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:21:0: information: Include file: "motion_utils/marker/marker_helper.hpp" not found. [missingInclude]
+#include "motion_utils/marker/marker_helper.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:22:0: information: Include file: "motion_utils/resample/resample.hpp" not found. [missingInclude]
+#include "motion_utils/resample/resample.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:23:0: information: Include file: "motion_utils/trajectory/interpolation.hpp" not found. [missingInclude]
+#include "motion_utils/trajectory/interpolation.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:24:0: information: Include file: "motion_utils/trajectory/trajectory.hpp" not found. [missingInclude]
+#include "motion_utils/trajectory/trajectory.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:25:0: information: Include file: "tier4_autoware_utils/geometry/geometry.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:26:0: information: Include file: "tier4_autoware_utils/ros/marker_helper.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:31:0: information: Include file: <tf2_geometry_msgs/tf2_geometry_msgs.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:34:0: information: Include file: <tf2/utils.h> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <tf2/utils.h>
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:351:18: style: Condition 'stop_dist' is always true [knownConditionTrueFalse]
+      } else if (stop_dist) {
+                 ^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:122:11: style: Consider using std::accumulate algorithm instead of a raw loop. [useStlAlgorithm]
+    v_max = std::max(v_max, static_cast<double>(point.longitudinal_velocity_mps));
+          ^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:705:34: style: Variable 'time' is assigned a value that is never used. [unreadVariable]
+  const std::vector<double> time = opt_result.t;
+                                 ^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/optimization_based_planner.cpp:29:0: information: Include file: <tf2_geometry_msgs/tf2_geometry_msgs.h> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/velocity_optimizer.cpp:15:0: information: Include file: "autoware/obstacle_cruise_planner/optimization_based_planner/velocity_optimizer.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/optimization_based_planner/velocity_optimizer.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/velocity_optimizer.cpp:17:0: information: Include file: <Eigen/Core> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <Eigen/Core>
+^
+planning/autoware_obstacle_cruise_planner/src/optimization_based_planner/velocity_optimizer.cpp:19:0: information: Include file: <iostream> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <iostream>
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:15:0: information: Include file: "autoware/obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:17:0: information: Include file: "autoware/obstacle_cruise_planner/utils.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:18:0: information: Include file: "interpolation/spline_interpolation.hpp" not found. [missingInclude]
+#include "interpolation/spline_interpolation.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:19:0: information: Include file: "motion_utils/marker/marker_helper.hpp" not found. [missingInclude]
+#include "motion_utils/marker/marker_helper.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:20:0: information: Include file: "tier4_autoware_utils/geometry/geometry.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:21:0: information: Include file: "tier4_autoware_utils/ros/marker_helper.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:22:0: information: Include file: "tier4_autoware_utils/ros/update_param.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/ros/update_param.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:24:0: information: Include file: "tier4_planning_msgs/msg/velocity_limit.hpp" not found. [missingInclude]
+#include "tier4_planning_msgs/msg/velocity_limit.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:583:15: style: Local variable 'i' shadows outer variable [shadowVariable]
+  for (size_t i = 0; i < s_vec.size(); ++i) {
+              ^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:511:16: note: Shadowed declaration
+  const auto & i = longitudinal_info_;
+               ^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:583:15: note: Shadow variable
+  for (size_t i = 0; i < s_vec.size(); ++i) {
+              ^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:599:15: style: Local variable 'i' shadows outer variable [shadowVariable]
+  for (size_t i = ego_seg_idx; i < acc_limited_traj_points.size(); ++i) {
+              ^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:511:16: note: Shadowed declaration
+  const auto & i = longitudinal_info_;
+               ^
+planning/autoware_obstacle_cruise_planner/src/pid_based_planner/pid_based_planner.cpp:599:15: note: Shadow variable
+  for (size_t i = ego_seg_idx; i < acc_limited_traj_points.size(); ++i) {
+              ^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:15:0: information: Include file: "autoware/obstacle_cruise_planner/planner_interface.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/planner_interface.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:17:0: information: Include file: "motion_utils/distance/distance.hpp" not found. [missingInclude]
+#include "motion_utils/distance/distance.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:18:0: information: Include file: "motion_utils/marker/marker_helper.hpp" not found. [missingInclude]
+#include "motion_utils/marker/marker_helper.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:19:0: information: Include file: "motion_utils/resample/resample.hpp" not found. [missingInclude]
+#include "motion_utils/resample/resample.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:20:0: information: Include file: "motion_utils/trajectory/conversion.hpp" not found. [missingInclude]
+#include "motion_utils/trajectory/conversion.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:21:0: information: Include file: "motion_utils/trajectory/trajectory.hpp" not found. [missingInclude]
+#include "motion_utils/trajectory/trajectory.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:22:0: information: Include file: "signal_processing/lowpass_filter_1d.hpp" not found. [missingInclude]
+#include "signal_processing/lowpass_filter_1d.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:23:0: information: Include file: "tier4_autoware_utils/ros/marker_helper.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:25:0: information: Include file: <boost/geometry/algorithms/distance.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <boost/geometry/algorithms/distance.hpp>
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:26:0: information: Include file: <boost/geometry/strategies/strategies.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <boost/geometry/strategies/strategies.hpp>
+^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:637:49: style: Condition 'slow_down_end_idx' is always true [knownConditionTrueFalse]
+    slow_down_debug_multi_array_.data.push_back(slow_down_end_idx ? *slow_down_end_idx : -1.0);
+                                                ^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:623:17: style: Local variable 'i' shadows outer variable [shadowVariable]
+    for (size_t i = (slow_down_start_idx ? *slow_down_start_idx : 0); i <= *slow_down_end_idx;
+                ^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:577:15: note: Shadowed declaration
+  for (size_t i = 0; i < obstacles.size(); ++i) {
+              ^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:623:17: note: Shadow variable
+    for (size_t i = (slow_down_start_idx ? *slow_down_start_idx : 0); i <= *slow_down_end_idx;
+                ^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:146:10: style: Instance of 'std::logic_error' object is destroyed immediately. [unusedScopedObject]
+    std::logic_error("[obstacle_cruise_planner](findReachTime): search range is invalid");
+         ^
+planning/autoware_obstacle_cruise_planner/src/planner_interface.cpp:178:10: style: Instance of 'std::logic_error' object is destroyed immediately. [unusedScopedObject]
+    std::logic_error("max_slowdown_jerk and max_slowdown_accel should be negative");
+         ^
+planning/autoware_obstacle_cruise_planner/src/polygon_utils.cpp:15:0: information: Include file: "autoware/obstacle_cruise_planner/polygon_utils.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/polygon_utils.cpp:17:0: information: Include file: "motion_utils/trajectory/trajectory.hpp" not found. [missingInclude]
+#include "motion_utils/trajectory/trajectory.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/polygon_utils.cpp:18:0: information: Include file: "tier4_autoware_utils/geometry/boost_polygon_utils.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/polygon_utils.cpp:19:0: information: Include file: "tier4_autoware_utils/geometry/geometry.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/utils.cpp:15:0: information: Include file: "autoware/obstacle_cruise_planner/utils.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/utils.cpp:17:0: information: Include file: "object_recognition_utils/predicted_path_utils.hpp" not found. [missingInclude]
+#include "object_recognition_utils/predicted_path_utils.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/utils.cpp:18:0: information: Include file: "tier4_autoware_utils/ros/marker_helper.hpp" not found. [missingInclude]
+#include "tier4_autoware_utils/ros/marker_helper.hpp"
+^
+planning/autoware_obstacle_cruise_planner/src/utils.cpp:84:21: style: Consider using std::copy algorithm instead of a raw loop. [useStlAlgorithm]
+    predicted_paths.push_back(path);
+                    ^
+planning/autoware_obstacle_cruise_planner/test/test_obstacle_cruise_planner_node_interface.cpp:15:0: information: Include file: "autoware/obstacle_cruise_planner/node.hpp" not found. [missingInclude]
+#include "autoware/obstacle_cruise_planner/node.hpp"
+^
+planning/autoware_obstacle_cruise_planner/test/test_obstacle_cruise_planner_node_interface.cpp:17:0: information: Include file: <ament_index_cpp/get_package_share_directory.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <ament_index_cpp/get_package_share_directory.hpp>
+^
+planning/autoware_obstacle_cruise_planner/test/test_obstacle_cruise_planner_node_interface.cpp:18:0: information: Include file: <autoware_planning_test_manager/autoware_planning_test_manager.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
+^
+planning/autoware_obstacle_cruise_planner/test/test_obstacle_cruise_planner_node_interface.cpp:19:0: information: Include file: <autoware_test_utils/autoware_test_utils.hpp> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <autoware_test_utils/autoware_test_utils.hpp>
+^
+planning/autoware_obstacle_cruise_planner/test/test_obstacle_cruise_planner_node_interface.cpp:21:0: information: Include file: <gtest/gtest.h> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <gtest/gtest.h>
+^
+planning/autoware_obstacle_cruise_planner/test/test_obstacle_cruise_planner_node_interface.cpp:23:0: information: Include file: <vector> not found. Please note: Cppcheck does not need standard library headers to get proper results. [missingIncludeSystem]
+#include <vector>
+^
+nofile:0:0: information: Active checkers: 174/712 (use --checkers-report=<filename> to see details) [checkersReport]
+
