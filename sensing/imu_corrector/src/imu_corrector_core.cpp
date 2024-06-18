@@ -23,7 +23,7 @@
 
 #include <algorithm>
 
-//TODO(mfc): remove this comment before merging.
+// TODO(mfc): remove this comment before merging.
 
 std::array<double, 9> transformCovariance(const std::array<double, 9> & cov)
 {
