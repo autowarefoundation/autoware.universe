@@ -26,12 +26,15 @@
   <arg name="vehicle_model" description="vehicle model name"/>
   <arg name="initial_engage_state" default="true" description="/vehicle/engage state after starting Autoware"/>
 
+  <arg name="log_level" default="WARN"/>
+
   <let name="vehicle_model_pkg" value="$(find-pkg-share $(var vehicle_model)_description)"/>
 
   <group if="$(var launch_simulator_perception_modules)">
     <group if="$(var scenario_simulation)">
       <include file="$(find-pkg-share fault_injection)/launch/fault_injection.launch.xml">
         <arg name="config_file" value="$(var fault_injection_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -42,6 +45,7 @@
         <arg name="use_object_recognition" value="$(var perception/enable_object_recognition)"/>
         <arg name="use_base_link_z" value="$(var perception/use_base_link_z)"/>
         <arg name="visible_range" value="$(var sensing/visible_range)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -57,6 +61,7 @@
         <arg name="occupancy_grid_map_param_path" value="$(var laserscan_based_occupancy_grid_map_param_path)"/>
         <arg name="occupancy_grid_map_updater" value="$(var occupancy_grid_map_updater)"/>
         <arg name="occupancy_grid_map_updater_param_path" value="$(var occupancy_grid_map_updater_param_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -85,6 +90,7 @@
           <push-ros-namespace namespace="prediction"/>
           <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/prediction/prediction.launch.xml">
             <arg name="use_vector_map" value="true"/>
+            <arg name="log_level" value="$(var log_level)"/>
           </include>
         </group>
       </group>
@@ -97,14 +103,14 @@
       <!-- publish empty objects instead of object recognition module -->
       <group unless="$(var perception/enable_object_recognition)">
         <push-ros-namespace namespace="object_recognition"/>
-        <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
+        <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen" ros_args="--log-level $(var log_level)">
           <remap from="~/output/objects" to="/perception/object_recognition/objects"/>
         </node>
       </group>
 
       <group if="$(var perception/enable_elevation_map)">
         <push-ros-namespace namespace="obstacle_segmentation/elevation_map"/>
-        <node pkg="elevation_map_loader" exec="elevation_map_loader" name="elevation_map_loader" output="screen">
+        <node pkg="elevation_map_loader" exec="elevation_map_loader" name="elevation_map_loader" output="screen" ros_args="--log-level $(var log_level)">
           <remap from="output/elevation_map" to="map"/>
           <remap from="input/pointcloud_map" to="/map/pointcloud_map"/>
           <remap from="input/vector_map" to="/map/vector_map"/>
@@ -120,7 +126,9 @@
       <!-- traffic light module -->
       <group if="$(var perception/enable_traffic_light)">
         <push-ros-namespace namespace="traffic_light_recognition"/>
-        <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light.launch.xml"/>
+        <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light.launch.xml">
+          <arg name="log_level" value="$(var log_level)"/>
+        </include>
       </group>
     </group>
   </group>
@@ -136,17 +144,20 @@
       <arg name="yabloc_enabled" value="false"/>
       <arg name="stop_check_enabled" value="false"/>
       <arg name="config_file" value="$(var pose_initializer_param_path)"/>
+      <arg name="log_level" value="$(var log_level)"/>
     </include>
   </group>
 
   <!-- Dummy doors -->
   <group if="$(var launch_dummy_doors)">
-    <include file="$(find-pkg-share vehicle_door_simulator)/launch/vehicle_door_simulator.launch.xml"/>
+    <include file="$(find-pkg-share vehicle_door_simulator)/launch/vehicle_door_simulator.launch.xml">
+      <arg name="log_level" value="$(var log_level)"/>
+    </include>
   </group>
 
   <!-- Diagnostic Converter -->
   <group if="$(var launch_diagnostic_converter)">
-    <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen">
+    <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen" ros_args="--log-level $(var log_level)">
       <param name="diagnostic_topics" value="[/diagnostic/planning_evaluator/metrics, /diagnostic/control_evaluator/metrics, /diagnostics_err]"/>
     </node>
   </group>
@@ -158,6 +169,7 @@
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
       <arg name="simulator_model_param_file" value="$(var simulator_model)"/>
       <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
+      <arg name="log_level" value="$(var log_level)"/>
     </include>
   </group>
 </launch>

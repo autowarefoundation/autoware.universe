@@ -98,7 +98,7 @@ def launch_setup(context, *args, **kwargs):
             lat_controller_param,
             vehicle_info_param,
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")},],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # lane departure checker
@@ -118,7 +118,7 @@ def launch_setup(context, *args, **kwargs):
             ),
         ],
         parameters=[nearest_search_param, lane_departure_checker_param, vehicle_info_param],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")},],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # shift decider
@@ -135,7 +135,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             shift_decider_param,
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")},],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # autonomous emergency braking
@@ -157,7 +157,7 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             aeb_param,
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")},],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     autonomous_emergency_braking_loader = LoadComposableNodes(
@@ -185,7 +185,7 @@ def launch_setup(context, *args, **kwargs):
             vehicle_info_param,
             predicted_path_checker_param,
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")},],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     predicted_path_checker_loader = LoadComposableNodes(
@@ -243,7 +243,7 @@ def launch_setup(context, *args, **kwargs):
                 ),
             },
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")},],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     # operation mode transition manager
@@ -322,7 +322,7 @@ def launch_setup(context, *args, **kwargs):
             obstacle_collision_checker_param,
             vehicle_info_param,
         ],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")},],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
     obstacle_collision_checker_loader = LoadComposableNodes(
@@ -418,7 +418,6 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/validation_status", "~/validation_status"),
         ],
         parameters=[control_validator_param],
-        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")},],
     )
 
     group = GroupAction(

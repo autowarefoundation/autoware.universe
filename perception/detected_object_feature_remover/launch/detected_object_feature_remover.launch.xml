@@ -2,8 +2,9 @@
   <arg name="input"/>
   <arg name="output"/>
   <arg name="node_name" default="detected_object_feature_remover"/>
+  <arg name="log_level" default="WARN"/>
 
-  <node pkg="detected_object_feature_remover" exec="detected_object_feature_remover" name="$(var node_name)" output="screen">
+  <node pkg="detected_object_feature_remover" exec="detected_object_feature_remover" name="$(var node_name)" output="screen" ros_args="--log-level $(var log_level)">
     <remap from="~/input" to="$(var input)"/>
     <remap from="~/output" to="$(var output)"/>
   </node>
