@@ -30,7 +30,8 @@ public:
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
-  ParticleVisualize() : Node("particle_visualize")
+  explicit ParticleVisualize(const rclcpp::NodeOptions & options = rclcpp::NodeOptions())
+  : Node("particle_visualize", options)
   {
     using std::placeholders::_1;
     // Subscriber
@@ -93,7 +94,8 @@ private:
       marker.scale.y = 0.1;
       marker.scale.z = 0.1;
 
-      marker.color = common::color_scale::rainbow(bound_weight(p.weight));
+      marker.color =
+        static_cast<std_msgs::msg::ColorRGBA>(common::color_scale::rainbow(bound_weight(p.weight)));
       marker.pose.orientation = p.pose.orientation;
       marker.pose.position.x = p.pose.position.x;
       marker.pose.position.y = p.pose.position.y;
@@ -105,11 +107,5 @@ private:
 };
 }  // namespace yabloc::modularized_particle_filter
 
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-
-  rclcpp::spin(std::make_shared<yabloc::modularized_particle_filter::ParticleVisualize>());
-  rclcpp::shutdown();
-  return 0;
-}
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(yabloc::modularized_particle_filter::ParticleVisualize)
