@@ -1204,7 +1204,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
   //       and the collision between ego and obstacles are within the margin threshold.
   const bool is_obstacle_crossing = isObstacleCrossing(traj_points, obstacle);
   const bool has_high_speed = p.crossing_obstacle_velocity_threshold <
-                                std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y);
+                              std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y);
   if (is_obstacle_crossing && has_high_speed) {
     // Get highest confidence predicted path
     const auto resampled_predicted_path = resampleHighestConfidencePredictedPath(
