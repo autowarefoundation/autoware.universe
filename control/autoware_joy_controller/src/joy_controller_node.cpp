@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_joy_controller/joy_controller.hpp"
-#include "autoware_joy_controller/joy_converter/ds4_joy_converter.hpp"
-#include "autoware_joy_controller/joy_converter/g29_joy_converter.hpp"
-#include "autoware_joy_controller/joy_converter/p65_joy_converter.hpp"
-#include "autoware_joy_controller/joy_converter/xbox_joy_converter.hpp"
+#include "autoware/joy_controller/joy_controller.hpp"
+#include "autoware/joy_controller/joy_converter/ds4_joy_converter.hpp"
+#include "autoware/joy_controller/joy_converter/g29_joy_converter.hpp"
+#include "autoware/joy_controller/joy_converter/p65_joy_converter.hpp"
+#include "autoware/joy_controller/joy_converter/xbox_joy_converter.hpp"
 
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
@@ -151,6 +151,10 @@ namespace autoware::joy_controller
 void AutowareJoyControllerNode::onJoy()
 {
   const auto msg = sub_joy_.takeData();
+  if (!msg) {
+    return;
+  }
+
   last_joy_received_time_ = msg->header.stamp;
   if (joy_type_ == "G29") {
     joy_ = std::make_shared<const G29JoyConverter>(*msg);
@@ -198,6 +202,10 @@ void AutowareJoyControllerNode::onOdometry()
   }
 
   const auto msg = sub_odom_.takeData();
+  if (!msg) {
+    return;
+  }
+
   auto twist = std::make_shared<geometry_msgs::msg::TwistStamped>();
   twist->header = msg->header;
   twist->twist = msg->twist.twist;

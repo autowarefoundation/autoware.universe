@@ -29,8 +29,8 @@
 #include "type_alias.hpp"
 #include "utils.hpp"
 
+#include <autoware/mission_planner/mission_planner_plugin.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
-#include <mission_planner/mission_planner_plugin.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
@@ -374,6 +374,7 @@ void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_
       Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, *map_projector_info_);
 
     // overwrite more dense centerline
+    // NOTE: overwriteLaneletsCenterlineWithWaypoints is used only in real time calculation.
     lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
 
     // create map bin msg
