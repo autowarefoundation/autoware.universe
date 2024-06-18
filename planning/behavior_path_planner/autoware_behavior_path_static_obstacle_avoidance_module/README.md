@@ -83,7 +83,7 @@ partition fillEgoStatus() {
 note right
   This module has following status:
   - RUNNING: target object is still remaining. Or, the ego hasn't returned original lane.
-  - CANCEL: taget object has gone. And, the ego hasn't initiated avoidance maneuver.
+  - CANCEL: target object has gone. And, the ego hasn't initiated avoidance maneuver.
   - SUCCEEDED: the ego finishes avoiding all objects and returns original lane.
 end note
 
@@ -788,15 +788,15 @@ On the other hand, if the lateral distance is larger than `hard_margin`/`hard_ma
 
 ![fig](./images/path_generation/pass_through.png)
 
-### When there is no enough space
+### When there is not enough space
 
-This module inserts stop point only when the ego can potentially avoid the object. So, if it is not able to keep distance more than `hard_margin`/`hard_margin_for_parked_vehicle`, this module do nothing. Following figure shows the situation where this module is not able to keep enough lateral distance when user set a parameter `use_opposite_lane` to `false`.
+This module inserts stop point only when the ego can potentially avoid the object. So, if it is not able to keep distance more than `hard_margin`/`hard_margin_for_parked_vehicle`, this module does nothing. Following figure shows the situation where this module is not able to keep enough lateral distance when user set a parameter `use_opposite_lane` to `false`.
 
 ![fig](./images/path_generation/do_nothing.png)
 
 !!! info
 
-    In this situation, obstacle stop feature in [obstacle_cruise_planner](../autoware_obstacle_cruise_planner/README.md) is responsible for ego vehicle safety.
+    In this situation, obstacle stop feature in [obstacle_cruise_planner](../../autoware_obstacle_cruise_planner/README.md) is responsible for ego vehicle safety.
 
 ![fig](./images/path_generation/insufficient_drivable_space.png)
 
