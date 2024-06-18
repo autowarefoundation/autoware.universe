@@ -3,9 +3,12 @@
   <arg name="external_traffic_signals" default="/external/traffic_signals"/>
   <arg name="output_traffic_signals" default="/traffic_light_arbiter/traffic_signals"/>
   <arg name="traffic_light_arbiter_param_path" default="$(find-pkg-share traffic_light_arbiter)/config/traffic_light_arbiter.param.yaml"/>
+  <arg name="log_level" default="WARN"/>
 
   <push-ros-namespace namespace="traffic_light_arbiter"/>
-  <node_container pkg="rclcpp_components" exec="component_container" name="container" namespace="">
+  <node_container pkg="rclcpp_components" exec="component_container" name="container" namespace=""
+    ros_args="--log-level perception.traffic_light_recognition.traffic_light_arbiter.container:=$(var log_level) \
+              --log-level perception.traffic_light_recognition.traffic_light_arbiter.arbiter:=$(var log_level)">
     <composable_node pkg="traffic_light_arbiter" plugin="TrafficLightArbiter" name="arbiter">
       <remap from="~/sub/vector_map" to="/map/vector_map"/>
       <remap from="~/sub/perception_traffic_signals" to="$(var perception_traffic_signals)"/>

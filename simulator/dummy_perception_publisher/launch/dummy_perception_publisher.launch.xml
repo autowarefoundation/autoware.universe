@@ -5,11 +5,12 @@
   <arg name="real" default="true"/>
   <arg name="use_object_recognition" default="true"/>
   <arg name="use_base_link_z" default="true"/>
+  <arg name="log_level" default="WARN"/>
 
   <group>
     <push-ros-namespace namespace="simulation"/>
     <group if="$(var real)">
-      <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen">
+      <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen" ros_args="--log-level $(var log_level)">
         <remap from="output/dynamic_object" to="/perception/object_recognition/detection/labeled_clusters"/>
         <remap from="output/objects_pose" to="debug/object_pose"/>
         <remap from="output/points_raw" to="/perception/obstacle_segmentation/pointcloud"/>
@@ -30,7 +31,7 @@
       </include>
     </group>
     <group unless="$(var real)">
-      <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen">
+      <node pkg="dummy_perception_publisher" exec="dummy_perception_publisher_node" name="dummy_perception_publisher" output="screen"  ros_args="--log-level $(var log_level)">
         <remap from="output/dynamic_object" to="/perception/object_recognition/detection/objects_with_feature"/>
         <remap from="output/objects_pose" to="debug/object_pose"/>
         <remap from="output/points_raw" to="/perception/obstacle_segmentation/pointcloud"/>

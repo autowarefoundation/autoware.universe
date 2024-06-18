@@ -6,8 +6,9 @@
   <arg name="traffic_signals_topic" default="/perception/traffic_light_recognition/traffic_signals"/>
   <arg name="output_topic" default="objects"/>
   <arg name="input_topic" default="/perception/object_recognition/tracking/objects"/>
+  <arg name="log_level" default="WARN"/>
 
-  <node pkg="autoware_map_based_prediction" exec="map_based_prediction" name="map_based_prediction" output="screen">
+  <node pkg="autoware_map_based_prediction" exec="map_based_prediction" name="map_based_prediction" output="screen" ros_args="--log-level $(var log_level)">
     <param from="$(var param_path)"/>
     <remap from="/vector_map" to="$(var vector_map_topic)"/>
     <remap from="/traffic_signals" to="$(var traffic_signals_topic)"/>

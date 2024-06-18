@@ -28,6 +28,8 @@
   <arg name="car_classifier_param_path" default="$(find-pkg-share traffic_light_classifier)/config/car_traffic_light_classifier.param.yaml"/>
   <arg name="pedestrian_classifier_param_path" default="$(find-pkg-share traffic_light_classifier)/config/pedestrian_traffic_light_classifier.param.yaml"/>
 
+  <arg name="log_level" default="WARN"/>
+
   <!-- namespace1 camera TLR pipeline -->
   <group>
     <push-ros-namespace namespace="$(var namespace1)"/>
@@ -79,6 +81,7 @@
         <arg name="input/car/traffic_signals" value="classified/car/traffic_signals"/>
         <arg name="input/pedestrian/traffic_signals" value="classified/pedestrian/traffic_signals"/>
         <arg name="output/traffic_signals" value="$(var output/traffic_signals1)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
   </group>
@@ -140,7 +143,7 @@
 
   <!-- traffic_light_multi_camera_fusion -->
   <group>
-    <node pkg="traffic_light_multi_camera_fusion" exec="traffic_light_multi_camera_fusion_node" name="traffic_light_multi_camera_fusion" output="screen">
+    <node pkg="traffic_light_multi_camera_fusion" exec="traffic_light_multi_camera_fusion_node" name="traffic_light_multi_camera_fusion" output="screen" ros_args="--log-level $(var log_level)">
       <param name="camera_namespaces" value="$(var all_camera_namespaces)"/>
       <param name="perform_group_fusion" value="true"/>
       <remap from="~/input/vector_map" to="/map/vector_map"/>
@@ -154,11 +157,12 @@
       <arg name="perception_traffic_signals" value="$(var internal/traffic_signals)"/>
       <arg name="external_traffic_signals" value="$(var external/traffic_signals)"/>
       <arg name="output_traffic_signals" value="$(var judged/traffic_signals)"/>
+      <arg name="log_level" value="$(var log_level)"/>
     </include>
   </group>
 
   <group if="$(var use_crosswalk_traffic_light_estimator)">
-    <node pkg="autoware_crosswalk_traffic_light_estimator" exec="crosswalk_traffic_light_estimator_node" name="crosswalk_traffic_light_estimator" output="screen">
+    <node pkg="autoware_crosswalk_traffic_light_estimator" exec="crosswalk_traffic_light_estimator_node" name="crosswalk_traffic_light_estimator" output="screen" ros_args="--log-level $(var log_level)">
       <remap from="~/input/vector_map" to="/map/vector_map"/>
       <remap from="~/input/route" to="/planning/mission_planning/route"/>
       <remap from="~/input/classified/traffic_signals" to="$(var judged/traffic_signals)"/>
@@ -168,7 +172,7 @@
   </group>
 
   <group unless="$(var use_crosswalk_traffic_light_estimator)">
-    <node pkg="topic_tools" exec="relay" name="fusion_signals_relay" output="screen">
+    <node pkg="topic_tools" exec="relay" name="fusion_signals_relay" output="screen" ros_args="--log-level $(var log_level)">
       <param name="input_topic" value="$(var judged/traffic_signals)"/>
       <param name="output_topic" value="$(var output/traffic_signals)"/>
       <param name="type" value="autoware_perception_msgs/msg/TrafficLightGroupArray"/>
@@ -177,6 +181,8 @@
 
   <!-- visualizer -->
   <group>
-    <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml"/>
+    <include file="$(find-pkg-share traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml">
+      <arg name="log_level" value="$(var log_level)"/>
+    </include>
   </group>
 </launch>
