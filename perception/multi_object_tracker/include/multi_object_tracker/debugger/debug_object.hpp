@@ -15,8 +15,8 @@
 #ifndef MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
 #define MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
 
-#include "multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "autoware/universe_utils/ros/uuid_helper.hpp"
+#include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <rclcpp/rclcpp.hpp>

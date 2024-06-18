@@ -19,11 +19,11 @@
 
 #include "multi_object_tracker/tracker/motion_model/bicycle_motion_model.hpp"
 
-#include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
-#include "multi_object_tracker/utils/utils.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "autoware/universe_utils/ros/msg_covariance.hpp"
+#include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
+#include "multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -52,7 +52,8 @@ void BicycleMotionModel::setDefaultParams()
     autoware_universe_utils::deg2rad(0.3);  // [rad/s] uncertain slip angle change rate
   constexpr double q_stddev_slip_rate_max =
     autoware_universe_utils::deg2rad(10.0);  // [rad/s] uncertain slip angle change rate
-  constexpr double q_max_slip_angle = autoware_universe_utils::deg2rad(30.0);  // [rad] max slip angle
+  constexpr double q_max_slip_angle =
+    autoware_universe_utils::deg2rad(30.0);  // [rad] max slip angle
   // extended state parameters
   constexpr double lf_ratio = 0.3;   // 30% front from the center
   constexpr double lf_min = 1.0;     // minimum of 1.0m
