@@ -23,6 +23,8 @@
 
 #include <algorithm>
 
+//TODO(mfc): remove this comment before merging.
+
 std::array<double, 9> transformCovariance(const std::array<double, 9> & cov)
 {
   using COV_IDX = autoware_universe_utils::xyz_covariance_index::XYZ_COV_IDX;

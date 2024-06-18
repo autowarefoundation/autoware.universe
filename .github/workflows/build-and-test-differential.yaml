@@ -89,11 +89,12 @@ jobs:
       - name: Test
         id: test
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
-        uses: autowarefoundation/autoware-github-actions/colcon-test@v1
+        uses: autowarefoundation/autoware-github-actions/colcon-test@v-test-colcon-build-cache
         with:
           rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           build-depends-repos: ${{ matrix.build-depends-repos }}
+          cache-build-artifacts: true
 
       - name: Upload coverage to CodeCov
         if: ${{ steps.test.outputs.coverage-report-files != '' }}
