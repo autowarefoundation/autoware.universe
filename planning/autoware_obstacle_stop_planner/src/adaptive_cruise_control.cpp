@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_stop_planner/adaptive_cruise_control.hpp"
+#include "adaptive_cruise_control.hpp"
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 
@@ -122,7 +122,7 @@ constexpr double sign(const double value)
 }
 }  // namespace
 
-namespace motion_planning
+namespace autoware::motion_planning
 {
 AdaptiveCruiseController::AdaptiveCruiseController(
   rclcpp::Node * node, const double vehicle_width, const double vehicle_length,
@@ -783,4 +783,4 @@ double AdaptiveCruiseController::lowpass_filter(
   return gain * prev_value + (1.0 - gain) * current_value;
 }
 
-}  // namespace motion_planning
+}  // namespace autoware::motion_planning

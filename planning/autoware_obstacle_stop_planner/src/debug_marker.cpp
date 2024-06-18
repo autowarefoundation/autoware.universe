@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_stop_planner/debug_marker.hpp"
+#include "debug_marker.hpp"
 
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -38,7 +38,7 @@ using autoware::universe_utils::createMarkerColor;
 using autoware::universe_utils::createMarkerScale;
 using autoware::universe_utils::createPoint;
 
-namespace motion_planning
+namespace autoware::motion_planning
 {
 ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
   rclcpp::Node * node, const double base_link2front)
@@ -542,4 +542,4 @@ VelocityFactorArray ObstacleStopPlannerDebugNode::makeVelocityFactorArray()
   return velocity_factor_array;
 }
 
-}  // namespace motion_planning
+}  // namespace autoware::motion_planning
