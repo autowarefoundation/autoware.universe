@@ -217,7 +217,6 @@ ament_export_targets(export_${PROJECT_NAME})
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
-  config
 )
 
 if(BUILD_TESTING)
@@ -235,6 +234,10 @@ if(BUILD_TESTING)
   )
   add_ros_test(
     test/test_distortion_corrector_use_imu_false.py
+    TIMEOUT "30"
+  )
+  add_ros_test(
+    test/test_ring_outlier_filter.py
     TIMEOUT "30"
   )
 endif()
