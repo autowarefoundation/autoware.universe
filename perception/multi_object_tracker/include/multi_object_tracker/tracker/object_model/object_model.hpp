@@ -134,8 +134,8 @@ public:
 
         process_noise.acc_long = const_g * 0.35;
         process_noise.acc_lat = const_g * 0.15;
-        process_noise.yaw_rate_min = 1.5;   // deg2rad(1.5);
-        process_noise.yaw_rate_max = 15.0;  // deg2rad(15.0);
+        process_noise.yaw_rate_min = deg2rad(1.5);
+        process_noise.yaw_rate_max = deg2rad(15.0);
 
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
@@ -222,8 +222,8 @@ public:
 
         process_noise.acc_long = const_g * 0.35;
         process_noise.acc_lat = const_g * 0.15;
-        process_noise.yaw_rate_min = 5.0;   // deg2rad(5.0);
-        process_noise.yaw_rate_max = 15.0;  // deg2rad(15.0);
+        process_noise.yaw_rate_min = deg2rad(5.0);
+        process_noise.yaw_rate_max = deg2rad(15.0);
 
         process_limit.acc_long_max = const_g;
         process_limit.acc_lat_max = const_g;
