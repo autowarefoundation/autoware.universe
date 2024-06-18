@@ -183,6 +183,13 @@ public:
   std::optional<double> calcObjectSpeedFromHistory(
     const ObjectData & closest_object, const Path & path, const double current_ego_speed)
   {
+    // in case the object comes from predicted objects info, we reuse the speed.
+    if (closest_object.velocity > 0.0) {
+      this->setPreviousObjectData(closest_object);
+      this->updateVelocityHistory(closest_object.velocity, closest_object.stamp);
+      return this->getMedianObstacleVelocity();
+    }
+
     if (this->checkPreviousObjectDataExpired()) {
       this->setPreviousObjectData(closest_object);
       this->resetVelocityHistory();
@@ -327,6 +334,8 @@ public:
   bool publish_debug_pointcloud_;
   bool use_predicted_trajectory_;
   bool use_imu_path_;
+  bool use_pointcloud_data_;
+  bool use_predicted_object_data_;
   bool use_object_velocity_calculation_;
   double path_footprint_extra_margin_;
   double detection_range_min_height_;

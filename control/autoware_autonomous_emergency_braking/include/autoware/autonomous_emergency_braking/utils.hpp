@@ -41,6 +41,28 @@ using geometry_msgs::msg::TransformStamped;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
+inline PredictedObject transformObjectFrame(
+  const PredictedObject & input, geometry_msgs::msg::TransformStamped transform_stamped)
+{
+  PredictedObject output = input;
+  const auto & linear_twist = input.kinematics.initial_twist_with_covariance.twist.linear;
+  const auto & angular_twist = input.kinematics.initial_twist_with_covariance.twist.angular;
+  const auto & pose = input.kinematics.initial_pose_with_covariance.pose;
+
+  geometry_msgs::msg::Pose t_pose;
+  Vector3 t_linear_twist;
+  Vector3 t_angular_twist;
+
+  tf2::doTransform(pose, t_pose, transform_stamped);
+  tf2::doTransform(linear_twist, t_linear_twist, transform_stamped);
+  tf2::doTransform(angular_twist, t_angular_twist, transform_stamped);
+
+  output.kinematics.initial_pose_with_covariance.pose = t_pose;
+  output.kinematics.initial_twist_with_covariance.twist.linear = t_linear_twist;
+  output.kinematics.initial_twist_with_covariance.twist.angular = t_angular_twist;
+  return output;
+}
+
 inline Polygon2d convertPolygonObjectToGeometryPolygon(
   const Pose & current_pose, const autoware_perception_msgs::msg::Shape & obj_shape)
 {
