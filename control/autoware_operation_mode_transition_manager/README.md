@@ -11,17 +11,16 @@ This module is responsible for managing the different modes of operation for the
 
 There is also an `In Transition` state that occurs during each mode transitions. During this state, the transition to the new operator is not yet complete, and the previous operator is still responsible for controlling the system until the transition is complete. Some actions may be restricted during the `In Transition` state, such as sudden braking or steering. (This is restricted by the `vehicle_cmd_gate`).
 
-### Features
-
-- Transit mode between `Autonomous`, `Local`, `Remote` and `Stop` based on the indication command.
-- Check whether the each transition is available (safe or not).
-- Limit some sudden motion control in `In Transition` mode (this is done with `vehicle_cmd_gate` feature).
-- Check whether the transition is completed.
+### Provided Features
 
 - Transition between the `Autonomous`, `Local`, `Remote`, and `Stop` modes based on the indicated command.
 - Determine whether each transition is safe to execute.
+  - This function determines whether Autoware's functionalities are operating properly (e.g. if the target route is nearby), and is managed by the set of `engage_acceptable_limits` parameters.
+  - If it is determined to be unsafe, the mode transition command will be rejected.
 - Restrict certain sudden motion controls during the `In Transition` mode (using the `vehicle_cmd_gate` feature).
 - Verify that the transition is complete.
+  - This function determines whether Autoware's control is being executed properly, especially during transitions from manual to autonomous driving, and is managed by the set of `stable_check` parameters.
+  - If it is determined that the transition was not successful, the mode will revert to the original mode.
 
 ## Design
 
@@ -33,17 +32,17 @@ A more detailed structure is below.
 
 ![transition_detailed_structure](image/transition_detailed_structure.drawio.svg)
 
-Here we see that `autoware_operation_mode_transition_manager` has multiple state transitions as follows
+In this figure, we see that `autoware_operation_mode_transition_manager` has multiple state transitions as follows
 
-- **AUTOWARE ENABLED <---> DISABLED**
+- **Two Autoware Control States** : this indicates whether the vehicle operates according to the control signals from Autoware
   - **ENABLED**: the vehicle is controlled by Autoware.
   - **DISABLED**: the vehicle is out of Autoware control, expecting the e.g. manual driving.
-- **AUTOWARE ENABLED <---> AUTO/LOCAL/REMOTE/NONE**
+- **Four Operation States** : this selects what instructions to send to the vehicle as directives from Autoware (whether it's remote control instructions or instructions to follow a route)
   - **AUTO**: the vehicle is controlled by Autoware, with the autonomous control command calculated by the planning/control component.
   - **LOCAL**: the vehicle is controlled by Autoware, with the locally connected operator, e.g. joystick controller.
   - **REMOTE**: the vehicle is controlled by Autoware, with the remotely connected operator.
   - **NONE**: the vehicle is not controlled by any operator.
-- **IN TRANSITION <---> COMPLETED**
+- **Two Transition States** : this indicates whether the mode is in transition
   - **IN TRANSITION**: the mode listed above is in the transition process, expecting the former operator to have a responsibility to confirm the transition is completed.
   - **COMPLETED**: the mode transition is completed.
 
