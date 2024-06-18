@@ -193,6 +193,7 @@
         <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detection.launch.xml">
           <arg name="mode" value="$(var mode)"/>
           <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
+          <arg name="use_multi_channel_tracker_merger" value="$(var use_multi_channel_tracker_merger)"/>
           <arg name="number_of_cameras" value="$(var image_number)"/>
           <arg name="input/camera0/image" value="$(var image_raw0)"/>
           <arg name="input/camera0/info" value="$(var camera_info0)"/>
