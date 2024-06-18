@@ -25,7 +25,9 @@ setup(
     license="Apache License 2.0",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["autoware_carla_interface = autoware_carla_interface.autoware_carla_interface:main"],
+        "console_scripts": [
+            "autoware_carla_interface = autoware_carla_interface.autoware_carla_interface:main"
+        ],
     },
     package_dir={"": "src"},
 )
