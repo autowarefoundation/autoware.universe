@@ -98,10 +98,9 @@ void GnssParticleCorrector::process(
   // Compute travel distance from last update position
   // If the distance is too short, skip weighting
   {
-    Eigen::Vector3f tmp_mean_position = common::pose_to_affine(mean_pose).translation();
-    if ((tmp_mean_position - last_mean_position_).squaredNorm() > 1) {
+    if ((mean_position - last_mean_position_).squaredNorm() > 1) {
       this->set_weighted_particle_array(weighted_particles);
-      last_mean_position_ = tmp_mean_position;
+      last_mean_position_ = mean_position;
     } else {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 2000,

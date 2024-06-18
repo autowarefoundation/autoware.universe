@@ -190,7 +190,7 @@ void CameraParticleCorrector::on_line_segments(const PointCloud2 & line_segments
 
   // DEBUG: just visualization
   {
-    Sophus::SE3f transform = common::pose_to_se3(get_mean_pose(weighted_particles););
+    Sophus::SE3f transform = common::pose_to_se3(get_mean_pose(weighted_particles));
 
     pcl::PointCloud<pcl::PointXYZI> cloud = evaluate_cloud(
       common::transform_line_segments(line_segments_cloud, transform), transform.translation());
