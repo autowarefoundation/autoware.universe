@@ -42,7 +42,7 @@ void generateFeatures_worker(
 
     // voxel/pillar information
     float points_sum[3] = {0.0, 0.0, 0.0};  // sum of x, y, z in the voxel
-    int32_t coordinate[3] = {
+    const int32_t coordinate[3] = {
       coords[pillar_idx * 3], coords[pillar_idx * 3 + 1],
       coords[pillar_idx * 3 + 2]};                            // 3D position(z,y,x) of the voxel
     std::size_t points_count = voxel_num_points[pillar_idx];  // number of points in the voxel
@@ -58,7 +58,7 @@ void generateFeatures_worker(
     }
 
     // calculate voxel mean
-    float mean[3] = {
+    const float mean[3] = {
       points_sum[0] / points_count, points_sum[1] / points_count, points_sum[2] / points_count};
     // calculate offset
     float x_offset = coordinate[2] * config.voxel_size_x_ + config.offset_x_;
