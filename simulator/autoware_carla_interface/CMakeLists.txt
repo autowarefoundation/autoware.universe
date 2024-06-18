@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(carla_autoware)
+project(autoware_carla_interface)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

@@ -1,8 +1,8 @@
 /**:
   ros__parameters:
-    csv_path_accel_map: $(find-pkg-share carla_autoware)/accel_map.csv
-    csv_path_brake_map: $(find-pkg-share carla_autoware)/brake_map.csv
-    csv_path_steer_map: $(find-pkg-share carla_autoware)/steer_map.csv
+    csv_path_accel_map: $(find-pkg-share autoware_carla_interface)/accel_map.csv
+    csv_path_brake_map: $(find-pkg-share autoware_carla_interface)/brake_map.csv
+    csv_path_steer_map: $(find-pkg-share autoware_carla_interface)/steer_map.csv
     convert_accel_cmd: true
     convert_brake_cmd: true
     convert_steer_cmd: false

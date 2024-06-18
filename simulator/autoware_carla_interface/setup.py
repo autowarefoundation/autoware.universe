@@ -5,7 +5,7 @@ from setuptools import setup
 
 ROS_VERSION = int(os.environ["ROS_VERSION"])
 
-package_name = "carla_autoware"
+package_name = "autoware_carla_interface"
 
 setup(
     name=package_name,
@@ -15,7 +15,7 @@ setup(
         ("share/" + package_name, glob("config/*")),
         ("share/" + package_name, glob("calibration_maps/*.csv")),
         ("share/" + package_name, ["package.xml"]),
-        (os.path.join("share", package_name), glob("launch/carla_autoware.launch.xml")),
+        (os.path.join("share", package_name), glob("launch/autoware_carla_interface.launch.xml")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
@@ -25,7 +25,7 @@ setup(
     license="Apache License 2.0",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["carla_autoware = carla_autoware.carla_autoware:main"],
+        "console_scripts": ["autoware_carla_interface = autoware_carla_interface.autoware_carla_interface:main"],
     },
     package_dir={"": "src"},
 )

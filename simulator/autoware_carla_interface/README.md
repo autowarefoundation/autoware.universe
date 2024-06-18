@@ -1,4 +1,4 @@
-# CARLA Autoware
+# autoware_carla_interface
 
 ## ROS 2/Autoware.universe bridge for CARLA simulator
 
@@ -55,15 +55,15 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 ## Inner-workings / Algorithms
 
-The `InitializeInterface` class is key to setting up both the CARLA world and the ego vehicle. It fetches configuration parameters through the `carla_autoware.launch.xml`.
+The `InitializeInterface` class is key to setting up both the CARLA world and the ego vehicle. It fetches configuration parameters through the `autoware_carla_interface.launch.xml`.
 
-The main simulation loop runs within the `carla_ros2_interface` class. This loop ticks simulation time inside the CARLA simulator at `fixed_delta_seconds` time, where data is received and published as ROS2 messages at frequencies defined in `self.sensor_frequencies`.
+The main simulation loop runs within the `carla_ros2_interface` class. This loop ticks simulation time inside the CARLA simulator at `fixed_delta_seconds` time, where data is received and published as ROS 2 messages at frequencies defined in `self.sensor_frequencies`.
 
 Ego vehicle commands from Autoware are processed through the `autoware_raw_vehicle_cmd_converter`, which calibrates these commands for CARLA. The calibrated commands are then fed directly into CARLA control via `CarlaDataProvider`.
 
 ### Configurable Parameters for World Loading
 
-All the key parameters can be configured in `carla_autoware.launch.xml`.
+All the key parameters can be configured in `autoware_carla_interface.launch.xml`.
 
 | Name                      | Type   | Default Value                                                           | Description                                                                                                                                                                                                         |
 | ------------------------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -76,10 +76,10 @@ All the key parameters can be configured in `carla_autoware.launch.xml`.
 | `carla_map`               | string | "Town01"                                                                | Name of the map to load in CARLA                                                                                                                                                                                    |
 | `sync_mode`               | bool   | True                                                                    | Boolean flag to set synchronous mode in CARLA                                                                                                                                                                       |
 | `fixed_delta_seconds`     | double | 0.05                                                                    | Time step for the simulation (related to client FPS)                                                                                                                                                                |
-| `objects_definition_file` | string | "$(find-pkg-share carla_autoware)/objects.json"                         | Sensor parameters file that are used for spawning sensor in CARLA                                                                                                                                                   |
+| `objects_definition_file` | string | "$(find-pkg-share autoware_carla_interface)/objects.json"                         | Sensor parameters file that are used for spawning sensor in CARLA                                                                                                                                                   |
 | `use_traffic_manager`     | bool   | True                                                                    | Boolean flag to set traffic manager in CARLA                                                                                                                                                                        |
 | `max_real_delta_seconds`  | double | 0.05                                                                    | Parameter to limit the simulation speed below `fixed_delta_seconds`                                                                                                                                                 |
-| `config_file`             | string | "$(find-pkg-share carla_autoware)/raw_vehicle_cmd_converter.param.yaml" | Control mapping file to be used in `autoware_raw_vehicle_cmd_converter`. Current control are calibrated based on `vehicle.toyota.prius` Blueprints ID in CARLA. Changing the vehicle type may need a recalibration. |
+| `config_file`             | string | "$(find-pkg-share autoware_carla_interface)/raw_vehicle_cmd_converter.param.yaml" | Control mapping file to be used in `autoware_raw_vehicle_cmd_converter`. Current control are calibrated based on `vehicle.toyota.prius` Blueprints ID in CARLA. Changing the vehicle type may need a recalibration. |
 
 ### Configurable Parameters for Sensors
 
@@ -139,6 +139,6 @@ The `carla_ros.py` sets up the CARLA world:
 - Testing on procedural map (Adv Digital Twin).
   - Currently unable to test it due to failing in the creation of the Adv digital twin map.
 - Automatic sensor configuration of the CARLA sensors from the Autoware sensor kit.
-  - Sensor currently not automatically configured to have the same location as the Autoware Sensor kit. The current work around is to create a new frame of each sensors with (0, 0, 0, 0, 0, 0) coordinate relative to base_link and attach each sensor on the new frame (`carla_autoware.launch.xml` Line 28). This work around is very limited and restrictive, as when the sensor_kit is changed the sensor location will be wrongly attached.
+  - Sensor currently not automatically configured to have the same location as the Autoware Sensor kit. The current work around is to create a new frame of each sensors with (0, 0, 0, 0, 0, 0) coordinate relative to base_link and attach each sensor on the new frame (`autoware_carla_interface.launch.xml` Line 28). This work around is very limited and restrictive, as when the sensor_kit is changed the sensor location will be wrongly attached.
 - Traffic light recognition.
   - Currently the HDmap of CARLA did not have information regarding the traffic light which is necessary for Autoware to conduct traffic light recognition.
