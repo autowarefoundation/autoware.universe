@@ -41,7 +41,7 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 
-inline PredictedObject transformObjectFrame(
+PredictedObject transformObjectFrame(
   const PredictedObject & input, geometry_msgs::msg::TransformStamped transform_stamped)
 {
   PredictedObject output = input;
@@ -63,7 +63,7 @@ inline PredictedObject transformObjectFrame(
   return output;
 }
 
-inline Polygon2d convertPolygonObjectToGeometryPolygon(
+Polygon2d convertPolygonObjectToGeometryPolygon(
   const Pose & current_pose, const autoware_perception_msgs::msg::Shape & obj_shape)
 {
   Polygon2d object_polygon;
@@ -82,7 +82,7 @@ inline Polygon2d convertPolygonObjectToGeometryPolygon(
   return object_polygon;
 }
 
-inline Polygon2d convertCylindricalObjectToGeometryPolygon(
+Polygon2d convertCylindricalObjectToGeometryPolygon(
   const Pose & current_pose, const autoware_perception_msgs::msg::Shape & obj_shape)
 {
   Polygon2d object_polygon;
@@ -104,7 +104,7 @@ inline Polygon2d convertCylindricalObjectToGeometryPolygon(
   return object_polygon;
 }
 
-inline Polygon2d convertBoundingBoxObjectToGeometryPolygon(
+Polygon2d convertBoundingBoxObjectToGeometryPolygon(
   const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
   const double & base_to_width)
 {
@@ -144,7 +144,7 @@ inline Polygon2d convertBoundingBoxObjectToGeometryPolygon(
   return object_polygon;
 }
 
-inline Polygon2d convertObjToPolygon(const PredictedObject & obj)
+Polygon2d convertObjToPolygon(const PredictedObject & obj)
 {
   Polygon2d object_polygon{};
   if (obj.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
