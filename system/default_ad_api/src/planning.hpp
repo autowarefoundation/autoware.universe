@@ -25,6 +25,7 @@
 #include <vector>
 
 // This file should be included after messages.
+#include "utils/interface_subscriber.hpp"
 #include "utils/types.hpp"
 
 namespace default_ad_api
@@ -40,8 +41,14 @@ private:
   using SteeringFactorArray = autoware_adapi_v1_msgs::msg::SteeringFactorArray;
   Pub<autoware_ad_api::planning::VelocityFactors> pub_velocity_factors_;
   Pub<autoware_ad_api::planning::SteeringFactors> pub_steering_factors_;
-  Sub<planning_interface::Trajectory> sub_trajectory_;
-  Sub<localization_interface::KinematicState> sub_kinematic_state_;
+
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<planning_interface::Trajectory::Message>>
+    trajectory_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    localization_interface::KinematicState::Message>>
+    kinematic_state_sub_;
+
   std::vector<rclcpp::Subscription<VelocityFactorArray>::SharedPtr> sub_velocity_factors_;
   std::vector<rclcpp::Subscription<SteeringFactorArray>::SharedPtr> sub_steering_factors_;
   std::vector<VelocityFactorArray::ConstSharedPtr> velocity_factors_;
@@ -51,8 +58,6 @@ private:
   using VehicleStopChecker = motion_utils::VehicleStopCheckerBase;
   using Trajectory = planning_interface::Trajectory::Message;
   using KinematicState = localization_interface::KinematicState::Message;
-  void on_trajectory(const Trajectory::ConstSharedPtr msg);
-  void on_kinematic_state(const KinematicState::ConstSharedPtr msg);
   void on_timer();
 
   double stop_distance_;

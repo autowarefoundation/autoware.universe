@@ -21,7 +21,10 @@
 #include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
+
 // This file should be included after messages.
+#include "utils/interface_subscriber.hpp"
 #include "utils/types.hpp"
 
 namespace default_ad_api
@@ -46,19 +49,22 @@ private:
   Srv<autoware_ad_api::routing::ChangeRoute> srv_change_route_;
   Srv<autoware_ad_api::routing::ClearRoute> srv_clear_route_;
   Sub<planning_interface::RouteState> sub_state_;
-  Sub<planning_interface::LaneletRoute> sub_route_;
   Cli<planning_interface::SetWaypointRoute> cli_set_waypoint_route_;
   Cli<planning_interface::SetLaneletRoute> cli_set_lanelet_route_;
   Cli<planning_interface::ClearRoute> cli_clear_route_;
   Cli<system_interface::ChangeOperationMode> cli_operation_mode_;
-  Sub<system_interface::OperationModeState> sub_operation_mode_;
+  std::shared_ptr<
+    tier4_autoware_utils::InterProcessPollingSubscriber<planning_interface::LaneletRoute::Message>>
+    route_sub_;
+  std::shared_ptr<tier4_autoware_utils::InterProcessPollingSubscriber<
+    system_interface::OperationModeState::Message>>
+    operation_mode_sub_;
+
   bool is_auto_mode_;
   State::Message state_;
 
   void change_stop_mode();
-  void on_operation_mode(const OperationModeState::Message::ConstSharedPtr msg);
   void on_state(const State::Message::ConstSharedPtr msg);
-  void on_route(const Route::Message::ConstSharedPtr msg);
   void on_clear_route(
     const autoware_ad_api::routing::ClearRoute::Service::Request::SharedPtr req,
     const autoware_ad_api::routing::ClearRoute::Service::Response::SharedPtr res);
