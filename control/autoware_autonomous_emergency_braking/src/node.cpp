@@ -14,7 +14,7 @@
 
 #include "autoware/autonomous_emergency_braking/node.hpp"
 
-#include "autoware_autonomous_emergency_braking/utils.hpp"
+#include "autoware/autonomous_emergency_braking/utils.hpp"
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
