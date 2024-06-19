@@ -177,7 +177,7 @@ void SimModelDelaySteerAccGeared::updateStateWithGear(
     if (state(IDX::VX) > 0.0) {
       setStopState();
     }
-  } else { // including 'gear == GearCommand::PARK'
+  } else {  // including 'gear == GearCommand::PARK'
     setStopState();
   }
 }
