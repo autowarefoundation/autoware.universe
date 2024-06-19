@@ -35,7 +35,8 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
-MpcLateralController::MpcLateralController(rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater)
+MpcLateralController::MpcLateralController(
+  rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater)
 : clock_(node.get_clock()), logger_(node.get_logger().get_child("lateral_controller"))
 {
   const auto dp_int = [&](const std::string & s) { return node.declare_parameter<int>(s); };
@@ -231,8 +232,7 @@ std::shared_ptr<SteeringOffsetEstimator> MpcLateralController::createSteerOffset
   return steering_offset_;
 }
 
-void MpcLateralController::setStatus(
-  diagnostic_updater::DiagnosticStatusWrapper & stat)
+void MpcLateralController::setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   if (m_is_mpc_solved) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "MPC succeeded.");
@@ -247,10 +247,7 @@ void MpcLateralController::setupDiag()
   auto & d = diag_updater_;
   d->setHardwareID("mpc_lateral_controller");
 
-  d->add("MPC_solve_checker", [&](auto & stat) {
-    setStatus(
-      stat);
-  });
+  d->add("MPC_solve_checker", [&](auto & stat) { setStatus(stat); });
 }
 
 trajectory_follower::LateralOutput MpcLateralController::run(
@@ -281,7 +278,7 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   const bool is_mpc_solved = m_mpc->calculateMPC(
     m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values);
 
-  m_is_mpc_solved = is_mpc_solved; // for diagnostic updater
+  m_is_mpc_solved = is_mpc_solved;  // for diagnostic updater
 
   diag_updater_->force_update();
 
