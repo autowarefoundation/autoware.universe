@@ -30,7 +30,7 @@
 
 #include <limits>
 
-namespace drivable_area_expansion
+namespace autoware::behavior_path_planner::drivable_area_expansion
 {
 
 namespace
@@ -359,7 +359,7 @@ void calculate_expansion_distances(
 
 void expand_drivable_area(
   PathWithLaneId & path,
-  const std::shared_ptr<const behavior_path_planner::PlannerData> planner_data)
+  const std::shared_ptr<const autoware::behavior_path_planner::PlannerData> planner_data)
 {
   // skip if no bounds or not enough points to calculate path curvature
   if (path.points.size() < 3 || path.left_bound.empty() || path.right_bound.empty()) return;
@@ -435,4 +435,4 @@ void expand_drivable_area(
   planner_data->drivable_area_expansion_prev_path_poses = path_poses;
   planner_data->drivable_area_expansion_prev_curvatures = curvatures;
 }
-}  // namespace drivable_area_expansion
+}  // namespace autoware::behavior_path_planner::drivable_area_expansion
