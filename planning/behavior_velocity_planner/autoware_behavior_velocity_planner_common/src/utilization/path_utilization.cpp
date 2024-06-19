@@ -34,7 +34,7 @@ bool splineInterpolate(
     return false;
   }
 
-  output = autoware_motion_utils::resamplePath(input, interval, false, true, true, false);
+  output = autoware::motion_utils::resamplePath(input, interval, false, true, true, false);
 
   return true;
 }
@@ -68,7 +68,7 @@ autoware_planning_msgs::msg::Path interpolatePath(
     return path;
   }
 
-  double path_len = std::min(length, autoware_motion_utils::calcArcLength(path.points));
+  double path_len = std::min(length, autoware::motion_utils::calcArcLength(path.points));
   {
     double s = 0.0;
     for (size_t idx = 0; idx < path.points.size(); ++idx) {
@@ -122,7 +122,7 @@ autoware_planning_msgs::msg::Path interpolatePath(
     return path;
   }
 
-  return autoware_motion_utils::resamplePath(path, s_out);
+  return autoware::motion_utils::resamplePath(path, s_out);
 }
 
 autoware_planning_msgs::msg::Path filterLitterPathPoint(

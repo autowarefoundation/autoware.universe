@@ -239,7 +239,7 @@ void PathSampler::onPath(const Path::SharedPtr path_ptr)
 
   // 0. return if path is backward
   // TODO(Maxime): support backward path
-  if (!autoware_motion_utils::isDrivingForward(path_ptr->points)) {
+  if (!autoware::motion_utils::isDrivingForward(path_ptr->points)) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000,
       "Backward path is NOT supported. Just converting path to trajectory");
@@ -251,13 +251,13 @@ void PathSampler::onPath(const Path::SharedPtr path_ptr)
   // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
   if (!generated_traj_points.empty()) {
     const auto output_traj_msg =
-      autoware_motion_utils::convertToTrajectory(generated_traj_points, path_ptr->header);
+      autoware::motion_utils::convertToTrajectory(generated_traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
   } else {
     auto stopping_traj = trajectory_utils::convertToTrajectoryPoints(planner_data.traj_points);
     for (auto & p : stopping_traj) p.longitudinal_velocity_mps = 0.0;
     const auto output_traj_msg =
-      autoware_motion_utils::convertToTrajectory(stopping_traj, path_ptr->header);
+      autoware::motion_utils::convertToTrajectory(stopping_traj, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
   }
 
@@ -533,7 +533,7 @@ void PathSampler::publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose)
 {
   time_keeper_ptr_->tic(__func__);
 
-  const auto virtual_wall_marker = autoware_motion_utils::createStopVirtualWallMarker(
+  const auto virtual_wall_marker = autoware::motion_utils::createStopVirtualWallMarker(
     stop_pose, "outside drivable area", now(), 0, vehicle_info_.max_longitudinal_offset_m);
 
   virtual_wall_pub_->publish(virtual_wall_marker);

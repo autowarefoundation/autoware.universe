@@ -22,9 +22,9 @@
 namespace simple_trajectory_follower
 {
 
+using autoware::motion_utils::findNearestIndex;
 using autoware::universe_utils::calcLateralDeviation;
 using autoware::universe_utils::calcYawDeviation;
-using autoware_motion_utils::findNearestIndex;
 
 SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & options)
 : Node("simple_trajectory_follower", options)

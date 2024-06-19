@@ -48,10 +48,10 @@
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+using autoware::motion_utils::calcSignedArcLength;
 using autoware::universe_utils::createPoint;
 using autoware::universe_utils::Line2d;
 using autoware::universe_utils::Point2d;
-using autoware_motion_utils::calcSignedArcLength;
 
 std::vector<std::pair<int64_t, lanelet::ConstLanelet>> getCrosswalksOnPath(
   const geometry_msgs::msg::Pose & current_pose,

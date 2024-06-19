@@ -172,7 +172,7 @@ protected:
     const geometry_msgs::msg::Pose & ego_pose) const
   {
     const auto & p = ego_nearest_param_;
-    return autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
   }
 
@@ -181,7 +181,7 @@ protected:
     const geometry_msgs::msg::Pose & ego_pose) const
   {
     const auto & p = ego_nearest_param_;
-    return autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
   }
 

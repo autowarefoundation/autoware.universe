@@ -43,11 +43,11 @@ double calcInterpolatedZ(
   const tier4_planning_msgs::msg::PathWithLaneId & input,
   const geometry_msgs::msg::Point target_pos, const size_t seg_idx)
 {
-  const double closest_to_target_dist = autoware_motion_utils::calcSignedArcLength(
+  const double closest_to_target_dist = autoware::motion_utils::calcSignedArcLength(
     input.points, input.points.at(seg_idx).point.pose.position,
     target_pos);  // TODO(murooka) implement calcSignedArcLength(points, idx, point)
   const double seg_dist =
-    autoware_motion_utils::calcSignedArcLength(input.points, seg_idx, seg_idx + 1);
+    autoware::motion_utils::calcSignedArcLength(input.points, seg_idx, seg_idx + 1);
 
   const double closest_z = input.points.at(seg_idx).point.pose.position.z;
   const double next_z = input.points.at(seg_idx + 1).point.pose.position.z;
@@ -62,7 +62,7 @@ double calcInterpolatedVelocity(
   const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t seg_idx)
 {
   const double seg_dist =
-    autoware_motion_utils::calcSignedArcLength(input.points, seg_idx, seg_idx + 1);
+    autoware::motion_utils::calcSignedArcLength(input.points, seg_idx, seg_idx + 1);
 
   const double closest_vel = input.points.at(seg_idx).point.longitudinal_velocity_mps;
   const double next_vel = input.points.at(seg_idx + 1).point.longitudinal_velocity_mps;
@@ -441,7 +441,7 @@ PathWithLaneId refinePathForGoal(
 {
   PathWithLaneId filtered_path = input;
   PathWithLaneId path_with_goal;
-  filtered_path.points = autoware_motion_utils::removeOverlapPoints(filtered_path.points);
+  filtered_path.points = autoware::motion_utils::removeOverlapPoints(filtered_path.points);
 
   // always set zero velocity at the end of path for safety
   if (!filtered_path.points.empty()) {
@@ -782,7 +782,7 @@ PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
   const size_t original_size = path.points.size();
 
   // insert stop point
-  const auto insert_idx = autoware_motion_utils::insertStopPoint(length, path.points);
+  const auto insert_idx = autoware::motion_utils::insertStopPoint(length, path.points);
   if (!insert_idx) {
     return PathPointWithLaneId();
   }
@@ -1151,13 +1151,13 @@ PathWithLaneId getCenterLinePath(
 
   const auto raw_path_with_lane_id =
     route_handler.getCenterLinePath(lanelet_sequence, s_backward, s_forward, true);
-  auto resampled_path_with_lane_id = autoware_motion_utils::resamplePath(
+  auto resampled_path_with_lane_id = autoware::motion_utils::resamplePath(
     raw_path_with_lane_id, parameter.input_path_interval, parameter.enable_akima_spline_first);
 
   // convert centerline, which we consider as CoG center,  to rear wheel center
   if (parameter.enable_cog_on_centerline) {
     const double rear_to_cog = parameter.vehicle_length / 2 - parameter.rear_overhang;
-    return autoware_motion_utils::convertToRearWheelCenter(
+    return autoware::motion_utils::convertToRearWheelCenter(
       resampled_path_with_lane_id, rear_to_cog);
   }
 
@@ -1197,7 +1197,7 @@ PathWithLaneId setDecelerationVelocity(
 
   for (auto & point : reference_path.points) {
     const auto arclength_to_target = std::max(
-      0.0, autoware_motion_utils::calcSignedArcLength(
+      0.0, autoware::motion_utils::calcSignedArcLength(
              reference_path.points, point.point.pose.position, target_pose.position) +
              buffer);
     if (arclength_to_target > deceleration_interval) continue;
@@ -1210,7 +1210,7 @@ PathWithLaneId setDecelerationVelocity(
   }
 
   const auto stop_point_length =
-    autoware_motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) +
+    autoware::motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) +
     buffer;
   constexpr double eps{0.01};
   if (std::abs(target_velocity) < eps && stop_point_length > 0.0) {

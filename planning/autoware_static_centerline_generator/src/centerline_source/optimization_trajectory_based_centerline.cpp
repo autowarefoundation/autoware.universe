@@ -95,7 +95,7 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
     const auto non_resampled_path_with_lane_id = utils::get_path_with_lane_id(
       route_handler, route_lanelets, start_center_pose, ego_nearest_dist_threshold,
       ego_nearest_yaw_threshold);
-    return autoware_motion_utils::resamplePath(
+    return autoware::motion_utils::resamplePath(
       non_resampled_path_with_lane_id, behavior_path_interval);
   }();
   pub_raw_path_with_lane_id_->publish(raw_path_with_lane_id);
@@ -104,7 +104,7 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
   // convert path with lane id to path
   const auto raw_path = [&]() {
     const auto non_resampled_path = convert_to_path(raw_path_with_lane_id);
-    return autoware_motion_utils::resamplePath(non_resampled_path, behavior_vel_interval);
+    return autoware::motion_utils::resamplePath(non_resampled_path, behavior_vel_interval);
   }();
   pub_raw_path_->publish(raw_path);
   RCLCPP_INFO(node.get_logger(), "Converted to path and published.");
@@ -124,7 +124,7 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
   // convert to trajectory points
   const auto raw_traj_points = [&]() {
     const auto raw_traj = convert_to_trajectory(raw_path);
-    return autoware_motion_utils::convertToTrajectoryPointArray(raw_traj);
+    return autoware::motion_utils::convertToTrajectoryPointArray(raw_traj);
   }();
 
   // create an instance of elastic band and model predictive trajectory.

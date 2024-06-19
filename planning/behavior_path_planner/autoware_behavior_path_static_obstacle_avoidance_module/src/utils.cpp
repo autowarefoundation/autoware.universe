@@ -68,7 +68,7 @@ geometry_msgs::msg::Polygon toMsg(
 template <class T>
 size_t findFirstNearestIndex(const T & points, const geometry_msgs::msg::Point & point)
 {
-  autoware_motion_utils::validateNonEmpty(points);
+  autoware::motion_utils::validateNonEmpty(points);
 
   double min_dist = std::numeric_limits<double>::max();
   size_t min_idx = 0;
@@ -104,7 +104,7 @@ size_t findFirstNearestSegmentIndex(const T & points, const geometry_msgs::msg::
   }
 
   const double signed_length =
-    autoware_motion_utils::calcLongitudinalOffsetToSegment(points, nearest_idx, point);
+    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, nearest_idx, point);
 
   if (signed_length <= 0) {
     return nearest_idx - 1;
@@ -119,7 +119,7 @@ double calcSignedArcLengthToFirstNearestPoint(
   const geometry_msgs::msg::Point & dst_point)
 {
   try {
-    autoware_motion_utils::validateNonEmpty(points);
+    autoware::motion_utils::validateNonEmpty(points);
   } catch (const std::exception & e) {
     std::cerr << e.what() << std::endl;
     return 0.0;
@@ -129,11 +129,11 @@ double calcSignedArcLengthToFirstNearestPoint(
   const size_t dst_seg_idx = findFirstNearestSegmentIndex(points, dst_point);
 
   const double signed_length_on_traj =
-    autoware_motion_utils::calcSignedArcLength(points, src_seg_idx, dst_seg_idx);
+    autoware::motion_utils::calcSignedArcLength(points, src_seg_idx, dst_seg_idx);
   const double signed_length_src_offset =
-    autoware_motion_utils::calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
+    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
   const double signed_length_dst_offset =
-    autoware_motion_utils::calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
+    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
 
   return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
 }
@@ -759,7 +759,7 @@ bool isSatisfiedWithCommonCondition(
   const auto ego_idx = planner_data->findEgoIndex(data.reference_path_rough.points);
   const auto to_goal_distance =
     rh->isInGoalRouteSection(data.current_lanelets.back())
-      ? autoware_motion_utils::calcSignedArcLength(
+      ? autoware::motion_utils::calcSignedArcLength(
           data.reference_path_rough.points, ego_idx, data.reference_path_rough.points.size() - 1)
       : std::numeric_limits<double>::max();
 
@@ -946,7 +946,7 @@ double getRoadShoulderDistance(
 
   const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto object_closest_index =
-    autoware_motion_utils::findNearestIndex(data.reference_path.points, object_pose.position);
+    autoware::motion_utils::findNearestIndex(data.reference_path.points, object_pose.position);
   const auto object_closest_pose = data.reference_path.points.at(object_closest_index).point.pose;
 
   const auto rh = planner_data->route_handler;
@@ -1196,7 +1196,7 @@ void fillLongitudinalAndLengthByClosestEnvelopeFootprint(
     const auto point = autoware::universe_utils::createPoint(p.x(), p.y(), 0.0);
     // TODO(someone): search around first position where the ego should avoid the object.
     const double arc_length =
-      autoware_motion_utils::calcSignedArcLength(path.points, ego_pos, point);
+      autoware::motion_utils::calcSignedArcLength(path.points, ego_pos, point);
     min_distance = std::min(min_distance, arc_length);
     max_distance = std::max(max_distance, arc_length);
   }
@@ -1213,7 +1213,7 @@ std::vector<std::pair<double, Point>> calcEnvelopeOverhangDistance(
   for (const auto & p : object_data.envelope_poly.outer()) {
     const auto point = autoware::universe_utils::createPoint(p.x(), p.y(), 0.0);
     // TODO(someone): search around first position where the ego should avoid the object.
-    const auto idx = autoware_motion_utils::findNearestIndex(path.points, point);
+    const auto idx = autoware::motion_utils::findNearestIndex(path.points, point);
     const auto lateral = calcLateralDeviation(getPose(path.points.at(idx)), point);
     overhang_points.emplace_back(lateral, point);
   }
@@ -1385,7 +1385,7 @@ void insertDecelPoint(
   std::optional<Pose> & p_out)
 {
   const auto decel_point =
-    autoware_motion_utils::calcLongitudinalOffsetPoint(path.points, p_src, offset);
+    autoware::motion_utils::calcLongitudinalOffsetPoint(path.points, p_src, offset);
 
   if (!decel_point) {
     // TODO(Satoshi OTA)  Think later the process in the case of no decel point found.
@@ -1393,9 +1393,9 @@ void insertDecelPoint(
   }
 
   const auto seg_idx =
-    autoware_motion_utils::findNearestSegmentIndex(path.points, decel_point.value());
+    autoware::motion_utils::findNearestSegmentIndex(path.points, decel_point.value());
   const auto insert_idx =
-    autoware_motion_utils::insertTargetPoint(seg_idx, decel_point.value(), path.points);
+    autoware::motion_utils::insertTargetPoint(seg_idx, decel_point.value(), path.points);
 
   if (!insert_idx) {
     // TODO(Satoshi OTA)  Think later the process in the case of no decel point found.
@@ -1817,9 +1817,9 @@ void fillAdditionalInfoFromPoint(const AvoidancePlanningData & data, AvoidLineAr
 
   // calc longitudinal
   for (auto & sl : lines) {
-    sl.start_idx = autoware_motion_utils::findNearestIndex(path.points, sl.start.position);
+    sl.start_idx = autoware::motion_utils::findNearestIndex(path.points, sl.start.position);
     sl.start_longitudinal = arc.at(sl.start_idx);
-    sl.end_idx = autoware_motion_utils::findNearestIndex(path.points, sl.end.position);
+    sl.end_idx = autoware::motion_utils::findNearestIndex(path.points, sl.end.position);
     sl.end_longitudinal = arc.at(sl.end_idx);
   }
 }
@@ -2117,7 +2117,7 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByPath(
   double next_longitudinal_distance = parameters->resample_interval_for_output;
   for (size_t i = 0; i < points_size; ++i) {
     const auto distance_from_ego =
-      autoware_motion_utils::calcSignedArcLength(reference_path.points, ego_idx, i);
+      autoware::motion_utils::calcSignedArcLength(reference_path.points, ego_idx, i);
     if (distance_from_ego > object_check_forward_distance) {
       break;
     }
@@ -2365,7 +2365,7 @@ double calcDistanceToReturnDeadLine(
     if (planner_data->route_handler->isInGoalRouteSection(lanelets.back())) {
       const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
       const auto to_goal_distance =
-        autoware_motion_utils::calcSignedArcLength(path.points, ego_pos, path.points.size() - 1);
+        autoware::motion_utils::calcSignedArcLength(path.points, ego_pos, path.points.size() - 1);
       distance_to_return_dead_line = std::min(
         distance_to_return_dead_line, to_goal_distance - parameters->dead_line_buffer_for_goal);
     }

@@ -186,12 +186,12 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
   return visualization_marker_array;
 }
 
-autoware_motion_utils::VirtualWalls RunOutDebug::createVirtualWalls()
+autoware::motion_utils::VirtualWalls RunOutDebug::createVirtualWalls()
 {
-  autoware_motion_utils::VirtualWalls virtual_walls;
-  autoware_motion_utils::VirtualWall wall;
+  autoware::motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWall wall;
   wall.text = "run_out";
-  wall.style = autoware_motion_utils::VirtualWallType::stop;
+  wall.style = autoware::motion_utils::VirtualWallType::stop;
   for (const auto & p : stop_pose_) {
     wall.pose = p;
     virtual_walls.push_back(wall);
@@ -363,7 +363,7 @@ visualization_msgs::msg::MarkerArray RunOutModule::createDebugMarkerArray()
   return debug_ptr_->createVisualizationMarkerArray();
 }
 
-autoware_motion_utils::VirtualWalls RunOutModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls RunOutModule::createVirtualWalls()
 {
   return debug_ptr_->createVirtualWalls();
 }

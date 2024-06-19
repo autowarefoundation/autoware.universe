@@ -445,7 +445,7 @@ void BehaviorPathPlannerNode::run()
   const auto current_pose = planner_data_->self_odometry->pose.pose;
   if (!path->points.empty()) {
     const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(path->points);
-    path->points = autoware_motion_utils::cropPoints(
+    path->points = autoware::motion_utils::cropPoints(
       path->points, current_pose.position, current_seg_idx,
       planner_data_->parameters.forward_path_length,
       planner_data_->parameters.backward_path_length +
@@ -744,7 +744,7 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = autoware_motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
+  output = autoware::motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
     *path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();

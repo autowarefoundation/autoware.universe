@@ -214,12 +214,12 @@ MarkerArray OcclusionSpotModule::createDebugMarkerArray()
   return debug_marker_array;
 }
 
-autoware_motion_utils::VirtualWalls OcclusionSpotModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls OcclusionSpotModule::createVirtualWalls()
 {
-  autoware_motion_utils::VirtualWalls virtual_walls;
-  autoware_motion_utils::VirtualWall wall;
+  autoware::motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWall wall;
   wall.text = "occlusion_spot";
-  wall.style = autoware_motion_utils::VirtualWallType::slowdown;
+  wall.style = autoware::motion_utils::VirtualWallType::slowdown;
   for (size_t id = 0; id < debug_data_.debug_poses.size(); id++) {
     wall.pose =
       calcOffsetPose(debug_data_.debug_poses.at(id), debug_data_.baselink_to_front, 0.0, 0.0);

@@ -146,7 +146,7 @@ public:
     updateData();
     const auto output = isWaitingApproval() ? planWaitingApproval() : plan();
     try {
-      autoware_motion_utils::validateNonEmpty(output.path.points);
+      autoware::motion_utils::validateNonEmpty(output.path.points);
     } catch (const std::exception & ex) {
       throw std::invalid_argument("[" + name_ + "]" + ex.what());
     }
@@ -566,7 +566,7 @@ protected:
 
     StopFactor stop_factor;
     stop_factor.stop_pose = stop_pose_.value();
-    stop_factor.dist_to_stop_pose = autoware_motion_utils::calcSignedArcLength(
+    stop_factor.dist_to_stop_pose = autoware::motion_utils::calcSignedArcLength(
       path.points, getEgoPosition(), stop_pose_.value().position);
     stop_reason_.stop_factors.push_back(stop_factor);
   }

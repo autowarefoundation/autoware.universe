@@ -33,8 +33,8 @@
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
-using autoware_motion_utils::calcLongitudinalOffsetPose;
-using autoware_motion_utils::calcSignedArcLength;
+using autoware::motion_utils::calcLongitudinalOffsetPose;
+using autoware::motion_utils::calcSignedArcLength;
 
 DetectionAreaModule::DetectionAreaModule(
   const int64_t module_id, const int64_t lane_id,

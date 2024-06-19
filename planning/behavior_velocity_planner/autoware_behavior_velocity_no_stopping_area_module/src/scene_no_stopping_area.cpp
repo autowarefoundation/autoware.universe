@@ -132,7 +132,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
     return true;
   }
   const auto & stop_pose = stop_point->second;
-  setDistance(autoware_motion_utils::calcSignedArcLength(
+  setDistance(autoware::motion_utils::calcSignedArcLength(
     original_path.points, current_pose->pose.position, stop_pose.position));
   if (planning_utils::isOverLine(
         original_path, current_pose->pose, stop_pose, planner_param_.dead_line_margin)) {
@@ -266,7 +266,7 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
     }
     // judge if stop point p0 is near goal, by its distance to the path end.
     const double dist_to_path_end =
-      autoware_motion_utils::calcSignedArcLength(path.points, i, path.points.size() - 1);
+      autoware::motion_utils::calcSignedArcLength(path.points, i, path.points.size() - 1);
     if (dist_to_path_end < close_to_goal_distance) {
       // exit with false, cause position is near goal.
       return false;
@@ -302,10 +302,10 @@ Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
   auto & pp = interpolated_path.points;
   /* calc closest index */
   const auto closest_idx_opt =
-    autoware_motion_utils::findNearestIndex(interpolated_path.points, ego_pose, 3.0, M_PI_4);
+    autoware::motion_utils::findNearestIndex(interpolated_path.points, ego_pose, 3.0, M_PI_4);
   if (!closest_idx_opt) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_, *clock_, 1000 /* ms */, "autoware_motion_utils::findNearestIndex fail");
+      logger_, *clock_, 1000 /* ms */, "autoware::motion_utils::findNearestIndex fail");
     return ego_area;
   }
   const size_t closest_idx = closest_idx_opt.value();

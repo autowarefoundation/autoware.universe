@@ -171,19 +171,19 @@ visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray
   return wall_marker;
 }
 
-autoware_motion_utils::VirtualWalls DetectionAreaModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls DetectionAreaModule::createVirtualWalls()
 {
-  autoware_motion_utils::VirtualWalls virtual_walls;
-  autoware_motion_utils::VirtualWall wall;
+  autoware::motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWall wall;
   wall.text = "detection_area";
 
-  wall.style = autoware_motion_utils::VirtualWallType::stop;
+  wall.style = autoware::motion_utils::VirtualWallType::stop;
   for (const auto & p : debug_data_.stop_poses) {
     wall.pose = autoware::universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
 
-  wall.style = autoware_motion_utils::VirtualWallType::deadline;
+  wall.style = autoware::motion_utils::VirtualWallType::deadline;
   for (const auto & p : debug_data_.dead_line_poses) {
     wall.pose = autoware::universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);

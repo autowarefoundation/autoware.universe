@@ -32,11 +32,11 @@
 namespace motion_planning
 {
 
+using autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints;
+using autoware::motion_utils::findFirstNearestIndexWithSoftConstraints;
+using autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using autoware::universe_utils::calcDistance2d;
 using autoware::universe_utils::getRPY;
-using autoware_motion_utils::calcDecelDistWithJerkAndAccConstraints;
-using autoware_motion_utils::findFirstNearestIndexWithSoftConstraints;
-using autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 

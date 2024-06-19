@@ -66,7 +66,7 @@ TEST(trajectory_benchmark, DISABLED_calcLateralOffset)
   std::default_random_engine e1(r());
   std::uniform_real_distribution<double> uniform_dist(0.0, 1000.0);
 
-  using autoware_motion_utils::calcLateralOffset;
+  using autoware::motion_utils::calcLateralOffset;
 
   const auto traj = generateTestTrajectory<Trajectory>(1000, 1.0, 0.0, 0.0, 0.1);
   constexpr auto nb_iteration = 10000;

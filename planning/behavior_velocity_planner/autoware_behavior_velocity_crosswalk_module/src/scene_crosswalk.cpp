@@ -41,22 +41,22 @@
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+using autoware::motion_utils::calcArcLength;
+using autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints;
+using autoware::motion_utils::calcLateralOffset;
+using autoware::motion_utils::calcLongitudinalOffsetPoint;
+using autoware::motion_utils::calcLongitudinalOffsetPose;
+using autoware::motion_utils::calcSignedArcLength;
+using autoware::motion_utils::calcSignedArcLengthPartialSum;
+using autoware::motion_utils::findNearestSegmentIndex;
+using autoware::motion_utils::insertTargetPoint;
+using autoware::motion_utils::resamplePath;
 using autoware::universe_utils::createPoint;
 using autoware::universe_utils::getPose;
 using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
 using autoware::universe_utils::pose2transform;
 using autoware::universe_utils::toHexString;
-using autoware_motion_utils::calcArcLength;
-using autoware_motion_utils::calcDecelDistWithJerkAndAccConstraints;
-using autoware_motion_utils::calcLateralOffset;
-using autoware_motion_utils::calcLongitudinalOffsetPoint;
-using autoware_motion_utils::calcLongitudinalOffsetPose;
-using autoware_motion_utils::calcSignedArcLength;
-using autoware_motion_utils::calcSignedArcLengthPartialSum;
-using autoware_motion_utils::findNearestSegmentIndex;
-using autoware_motion_utils::insertTargetPoint;
-using autoware_motion_utils::resamplePath;
 
 namespace
 {
@@ -385,9 +385,10 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
     const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
     const double dist_ego2crosswalk =
       calcSignedArcLength(ego_path.points, ego_pos, path_intersects.front());
-    const auto braking_distance_opt = autoware_motion_utils::calcDecelDistWithJerkAndAccConstraints(
-      ego_vel, 0.0, ego_acc, p.min_acc_for_no_stop_decision, p.max_jerk_for_no_stop_decision,
-      p.min_jerk_for_no_stop_decision);
+    const auto braking_distance_opt =
+      autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints(
+        ego_vel, 0.0, ego_acc, p.min_acc_for_no_stop_decision, p.max_jerk_for_no_stop_decision,
+        p.min_jerk_for_no_stop_decision);
     const double braking_distance = braking_distance_opt ? *braking_distance_opt : 0.0;
     if (
       dist_ego2crosswalk - base_link2front - braking_distance <

@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware_motion_utils
+namespace autoware::motion_utils
 {
 
 std::optional<std::pair<size_t, size_t>> getPathIndexRangeWithLaneId(
@@ -136,4 +136,4 @@ tier4_planning_msgs::msg::PathWithLaneId convertToRearWheelCenter(
 
   return cog_path;
 }
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils

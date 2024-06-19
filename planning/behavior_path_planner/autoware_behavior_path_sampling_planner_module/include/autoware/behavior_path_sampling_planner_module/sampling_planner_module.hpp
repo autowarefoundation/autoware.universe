@@ -204,7 +204,7 @@ private:
     if (length_to_goal < epsilon) return isReferencePathSafe();
 
     const auto nearest_index =
-      autoware_motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
+      autoware::motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
     if (!nearest_index) return false;
     auto toYaw = [](const geometry_msgs::msg::Quaternion & quat) -> double {
       const auto rpy = autoware::universe_utils::getRPY(quat);

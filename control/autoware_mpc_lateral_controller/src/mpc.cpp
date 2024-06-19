@@ -167,10 +167,10 @@ void MPC::setReferenceTrajectory(
   const Odometry & current_kinematics)
 {
   const size_t nearest_seg_idx =
-    autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       trajectory_msg.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
       ego_nearest_yaw_threshold);
-  const double ego_offset_to_segment = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+  const double ego_offset_to_segment = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     trajectory_msg.points, nearest_seg_idx, current_kinematics.pose.pose.position);
 
   const auto mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
@@ -184,7 +184,7 @@ void MPC::setReferenceTrajectory(
   }
 
   const auto is_forward_shift =
-    autoware_motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
+    autoware::motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
 
   // if driving direction is unknown, use previous value
   m_is_forward_shift = is_forward_shift ? is_forward_shift.value() : m_is_forward_shift;
@@ -391,7 +391,7 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
   }
 
   const size_t nearest_seg_idx =
-    autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
       ego_nearest_yaw_threshold);
 
@@ -678,7 +678,7 @@ double MPC::getPredictionDeltaTime(
 {
   // Calculate the time min_prediction_length ahead from current_pose
   const auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
-  const size_t nearest_idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
     ego_nearest_yaw_threshold);
   double sum_dist = 0;

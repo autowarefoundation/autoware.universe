@@ -123,7 +123,7 @@ Trajectory MetricsCalculator::getLookaheadTrajectory(
   }
 
   const auto ego_index =
-    autoware_motion_utils::findNearestSegmentIndex(traj.points, ego_pose_.position);
+    autoware::motion_utils::findNearestSegmentIndex(traj.points, ego_pose_.position);
   Trajectory lookahead_traj;
   lookahead_traj.header = traj.header;
   double dist = 0.0;

@@ -509,11 +509,11 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   // ==========================================================================================
   // Remove overlapped points after inserting the interpolated points
   control_data.interpolated_traj.points =
-    autoware_motion_utils::removeOverlapPoints(control_data.interpolated_traj.points);
-  control_data.nearest_idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware::motion_utils::removeOverlapPoints(control_data.interpolated_traj.points);
+  control_data.nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     control_data.interpolated_traj.points, nearest_point.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
-  control_data.target_idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  control_data.target_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     control_data.interpolated_traj.points, target_point.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
 
@@ -594,7 +594,7 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
     stop_dist > p.drive_state_stop_dist + p.drive_state_offset_stop_dist;
   const bool departure_condition_from_stopped = stop_dist > p.drive_state_stop_dist;
 
-  // NOTE: the same velocity threshold as autoware_motion_utils::searchZeroVelocity
+  // NOTE: the same velocity threshold as autoware::motion_utils::searchZeroVelocity
   static constexpr double vel_epsilon = 1e-3;
 
   // Let vehicle start after the steering is converged for control accuracy
@@ -971,7 +971,7 @@ PidLongitudinalController::Motion PidLongitudinalController::keepBrakeBeforeStop
   }
   const auto traj = control_data.interpolated_traj;
 
-  const auto stop_idx = autoware_motion_utils::searchZeroVelocityIndex(traj.points);
+  const auto stop_idx = autoware::motion_utils::searchZeroVelocityIndex(traj.points);
   if (!stop_idx) {
     return output_motion;
   }

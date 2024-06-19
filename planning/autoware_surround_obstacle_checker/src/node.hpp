@@ -46,8 +46,8 @@
 namespace autoware::surround_obstacle_checker
 {
 
+using autoware::motion_utils::VehicleStopChecker;
 using autoware::vehicle_info_utils::VehicleInfo;
-using autoware_motion_utils::VehicleStopChecker;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
 using tier4_planning_msgs::msg::VelocityLimit;

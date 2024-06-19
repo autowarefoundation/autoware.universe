@@ -197,7 +197,7 @@ public:
       const double p_vel = p_dist / p_dt;
 
       const auto nearest_idx =
-        autoware_motion_utils::findNearestIndex(path, nearest_collision_point);
+        autoware::motion_utils::findNearestIndex(path, nearest_collision_point);
       const auto & nearest_path_pose = path.at(nearest_idx);
       // When the ego moves backwards, the direction of movement axis is reversed
       const auto & traj_yaw = (current_ego_speed > 0.0)

@@ -16,13 +16,13 @@
 
 namespace autoware::behavior_path_planner
 {
+using autoware::motion_utils::calcSignedArcLength;
+using autoware::motion_utils::findNearestIndex;
+using autoware::motion_utils::findNearestSegmentIndex;
 using autoware::universe_utils::calcDistance2d;
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::getPoint;
 using autoware::universe_utils::Point2d;
-using autoware_motion_utils::calcSignedArcLength;
-using autoware_motion_utils::findNearestIndex;
-using autoware_motion_utils::findNearestSegmentIndex;
 using geometry_msgs::msg::Point;
 
 namespace bg = boost::geometry;
@@ -190,7 +190,7 @@ bool SamplingPlannerModule::isExecutionRequested() const
     return false;
   }
 
-  if (!autoware_motion_utils::isDrivingForward(getPreviousModuleOutput().reference_path.points)) {
+  if (!autoware::motion_utils::isDrivingForward(getPreviousModuleOutput().reference_path.points)) {
     RCLCPP_WARN(getLogger(), "Backward path is NOT supported. Just converting path to trajectory");
     return false;
   }
@@ -343,7 +343,7 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
       point.lane_ids = path.points.at(i - 1).lane_ids;
     }
     if (reference_path_ptr) {
-      const auto idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+      const auto idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
         reference_path_ptr->points, point.point.pose);
       const auto & closest_point = reference_path_ptr->points[idx];
       point.point.longitudinal_velocity_mps = closest_point.point.longitudinal_velocity_mps;

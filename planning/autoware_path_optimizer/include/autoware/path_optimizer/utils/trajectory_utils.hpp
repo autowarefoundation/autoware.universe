@@ -61,7 +61,7 @@ std::optional<size_t> getPointIndexAfter(
   }
 
   double sum_length =
-    -autoware_motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+    -autoware::motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
 
   std::optional<size_t> output_idx{std::nullopt};
 
@@ -144,7 +144,7 @@ size_t findEgoIndex(
   const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose,
   const EgoNearestParam & ego_nearest_param)
 {
-  return autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     points, ego_pose, ego_nearest_param.dist_threshold, ego_nearest_param.yaw_threshold);
 }
 
@@ -153,7 +153,7 @@ size_t findEgoSegmentIndex(
   const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose,
   const EgoNearestParam & ego_nearest_param)
 {
-  return autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     points, ego_pose, ego_nearest_param.dist_threshold, ego_nearest_param.yaw_threshold);
 }
 
@@ -179,7 +179,7 @@ std::optional<size_t> updateFrontPointForFix(
 
   // check if the points_for_fix is longer in front than points
   const double lon_offset_to_prev_front =
-    autoware_motion_utils::calcSignedArcLength(points, 0, front_fix_point.pose.position);
+    autoware::motion_utils::calcSignedArcLength(points, 0, front_fix_point.pose.position);
   if (0 < lon_offset_to_prev_front) {
     RCLCPP_DEBUG(
       rclcpp::get_logger("autoware_path_optimizer.trajectory_utils"),

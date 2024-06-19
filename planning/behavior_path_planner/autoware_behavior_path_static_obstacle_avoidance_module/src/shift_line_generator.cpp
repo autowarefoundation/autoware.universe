@@ -355,7 +355,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
         return false;
       }
       const auto goal_pose = data_->route_handler->getGoalPose();
-      const double goal_longitudinal_distance = autoware_motion_utils::calcSignedArcLength(
+      const double goal_longitudinal_distance = autoware::motion_utils::calcSignedArcLength(
         data.reference_path.points, 0, goal_pose.position);
       const bool is_return_shift_to_goal =
         std::abs(al_return.end_longitudinal - goal_longitudinal_distance) <

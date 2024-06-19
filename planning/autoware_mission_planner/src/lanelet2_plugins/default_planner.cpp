@@ -108,7 +108,7 @@ geometry_msgs::msg::Pose get_closest_centerline_pose(
 
   const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, point.position);
 
-  const auto nearest_idx = autoware_motion_utils::findNearestIndex(
+  const auto nearest_idx = autoware::motion_utils::findNearestIndex(
     convertCenterlineToPoints(closest_lanelet), point.position);
   const auto nearest_point = closest_lanelet.centerline()[nearest_idx];
 

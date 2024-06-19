@@ -596,7 +596,7 @@ std::vector<double> calcVelocityProfileWithConstantJerkAndAccelerationLimit(
 
 double calcStopDistance(const TrajectoryPoints & trajectory, const size_t closest)
 {
-  const auto idx = autoware_motion_utils::searchZeroVelocityIndex(trajectory);
+  const auto idx = autoware::motion_utils::searchZeroVelocityIndex(trajectory);
 
   if (!idx) {
     return std::numeric_limits<double>::max();  // stop point is located far away

@@ -254,7 +254,7 @@ struct PlannerData
   template <class T>
   size_t findEgoIndex(const std::vector<T> & points) const
   {
-    return autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       points, self_odometry->pose.pose, parameters.ego_nearest_dist_threshold,
       parameters.ego_nearest_yaw_threshold);
   }
@@ -262,7 +262,7 @@ struct PlannerData
   template <class T>
   size_t findEgoSegmentIndex(const std::vector<T> & points) const
   {
-    return autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       points, self_odometry->pose.pose, parameters.ego_nearest_dist_threshold,
       parameters.ego_nearest_yaw_threshold);
   }

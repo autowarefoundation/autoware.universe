@@ -90,7 +90,7 @@ size_t findNearestSegmentIndexFromLateralDistance(
   double min_lateral_dist = std::numeric_limits<double>::max();
   for (size_t seg_idx = 0; seg_idx < points.size() - 1; ++seg_idx) {
     const double lon_dist =
-      autoware_motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, target_point);
+      autoware::motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, target_point);
     const double segment_length = calcDistance2d(points.at(seg_idx), points.at(seg_idx + 1));
     const double lat_dist = [&]() {
       if (lon_dist < 0.0) {
@@ -99,7 +99,7 @@ size_t findNearestSegmentIndexFromLateralDistance(
       if (segment_length < lon_dist) {
         return calcDistance2d(points.at(seg_idx + 1), target_point);
       }
-      return std::abs(autoware_motion_utils::calcLateralOffset(points, target_point, seg_idx));
+      return std::abs(autoware::motion_utils::calcLateralOffset(points, target_point, seg_idx));
     }();
     if (lat_dist < min_lateral_dist) {
       closest_idx = seg_idx;
@@ -111,7 +111,7 @@ size_t findNearestSegmentIndexFromLateralDistance(
     return *closest_idx;
   }
 
-  return autoware_motion_utils::findNearestSegmentIndex(points, target_point);
+  return autoware::motion_utils::findNearestSegmentIndex(points, target_point);
 }
 
 template <class T>
@@ -132,7 +132,7 @@ size_t findNearestSegmentIndexFromLateralDistance(
     if (yaw_threshold < std::abs(yaw)) {
       continue;
     }
-    const double lon_dist = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+    const double lon_dist = autoware::motion_utils::calcLongitudinalOffsetToSegment(
       points, seg_idx, target_point.position);
     const double segment_length = calcDistance2d(points.at(seg_idx), points.at(seg_idx + 1));
     const double lat_dist = [&]() {
@@ -143,7 +143,7 @@ size_t findNearestSegmentIndexFromLateralDistance(
         return calcDistance2d(points.at(seg_idx + 1), target_point.position);
       }
       return std::abs(
-        autoware_motion_utils::calcLateralOffset(points, target_point.position, seg_idx));
+        autoware::motion_utils::calcLateralOffset(points, target_point.position, seg_idx));
     }();
     if (lat_dist < min_lateral_dist) {
       closest_idx = seg_idx;
@@ -155,7 +155,7 @@ size_t findNearestSegmentIndexFromLateralDistance(
     return *closest_idx;
   }
 
-  return autoware_motion_utils::findNearestSegmentIndex(points, target_point.position);
+  return autoware::motion_utils::findNearestSegmentIndex(points, target_point.position);
 }
 
 bool checkHasSameLane(
@@ -177,9 +177,9 @@ geometry_msgs::msg::Point calcLongitudinalOffsetStartPoint(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
   const size_t nearest_segment_idx, const double offset)
 {
-  const double offset_length = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+  const double offset_length = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     points, nearest_segment_idx, pose.position);
-  const auto offset_point = autoware_motion_utils::calcLongitudinalOffsetPoint(
+  const auto offset_point = autoware::motion_utils::calcLongitudinalOffsetPoint(
     points, nearest_segment_idx, offset_length + offset);
 
   return offset_point ? offset_point.value() : points.at(nearest_segment_idx);
@@ -189,9 +189,9 @@ geometry_msgs::msg::Point calcLongitudinalOffsetGoalPoint(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
   const size_t nearest_segment_idx, const double offset)
 {
-  const double offset_length = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+  const double offset_length = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     points, nearest_segment_idx, pose.position);
-  const auto offset_point = autoware_motion_utils::calcLongitudinalOffsetPoint(
+  const auto offset_point = autoware::motion_utils::calcLongitudinalOffsetPoint(
     points, nearest_segment_idx, offset_length + offset);
 
   return offset_point ? offset_point.value() : points.at(nearest_segment_idx + 1);
@@ -294,10 +294,10 @@ PolygonPoint transformBoundFrenetCoordinate(
   const size_t min_dist_seg_idx = std::distance(
     dist_to_bound_segment_vec.begin(),
     std::min_element(dist_to_bound_segment_vec.begin(), dist_to_bound_segment_vec.end()));
-  const double lon_dist_to_segment = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+  const double lon_dist_to_segment = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     bound_points, min_dist_seg_idx, target_point);
   const double lat_dist_to_segment =
-    autoware_motion_utils::calcLateralOffset(bound_points, target_point, min_dist_seg_idx);
+    autoware::motion_utils::calcLateralOffset(bound_points, target_point, min_dist_seg_idx);
   return PolygonPoint{target_point, min_dist_seg_idx, lon_dist_to_segment, lat_dist_to_segment};
 }
 
@@ -343,7 +343,7 @@ std::vector<PolygonPoint> generatePolygonInsideBounds(
     if (!intersection) {
       continue;
     }
-    const double lon_dist = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+    const double lon_dist = autoware::motion_utils::calcLongitudinalOffsetToSegment(
       bound, intersection->first, intersection->second);
     const auto intersect_point =
       PolygonPoint{intersection->second, intersection->first, lon_dist, 0.0};
@@ -569,7 +569,7 @@ std::vector<PolygonPoint> getPolygonPointsInsideBounds(
   // add start and end points projected to bound if necessary
   if (inside_polygon.at(start_idx).lat_dist_to_bound != 0.0) {  // not on bound
     auto start_point = inside_polygon.at(start_idx);
-    const auto start_point_on_bound = autoware_motion_utils::calcLongitudinalOffsetPoint(
+    const auto start_point_on_bound = autoware::motion_utils::calcLongitudinalOffsetPoint(
       bound, start_point.bound_seg_idx, start_point.lon_dist_to_segment);
     if (start_point_on_bound) {
       start_point.point = start_point_on_bound.value();
@@ -578,7 +578,7 @@ std::vector<PolygonPoint> getPolygonPointsInsideBounds(
   }
   if (inside_polygon.at(end_idx).lat_dist_to_bound != 0.0) {  // not on bound
     auto end_point = inside_polygon.at(end_idx);
-    const auto end_point_on_bound = autoware_motion_utils::calcLongitudinalOffsetPoint(
+    const auto end_point_on_bound = autoware::motion_utils::calcLongitudinalOffsetPoint(
       bound, end_point.bound_seg_idx, end_point.lon_dist_to_segment);
     if (end_point_on_bound) {
       end_point.point = end_point_on_bound.value();
@@ -606,7 +606,7 @@ std::vector<Point> updateBoundary(
     const auto & start_poly = polygon.front();
     const auto & end_poly = polygon.back();
 
-    const double front_offset = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+    const double front_offset = autoware::motion_utils::calcLongitudinalOffsetToSegment(
       updated_bound, start_poly.bound_seg_idx, start_poly.point);
 
     const size_t removed_start_idx =
@@ -865,7 +865,7 @@ void generateDrivableArea(
       const auto & prev_point = resampled_path.points.back().point.pose.position;
       const auto & curr_point = path.points.at(i).point.pose.position;
       const double signed_arc_length =
-        autoware_motion_utils::calcSignedArcLength(path.points, prev_point, curr_point);
+        autoware::motion_utils::calcSignedArcLength(path.points, prev_point, curr_point);
       if (signed_arc_length > resample_interval) {
         resampled_path.points.push_back(path.points.at(i));
       }
@@ -1041,8 +1041,8 @@ void extractObstaclesFromDrivableArea(
     const auto & obj_pos = obstacle.pose.position;
 
     // get edge points of the object
-    const size_t nearest_path_idx =
-      autoware_motion_utils::findNearestIndex(path.points, obj_pos);  // to get z for object polygon
+    const size_t nearest_path_idx = autoware::motion_utils::findNearestIndex(
+      path.points, obj_pos);  // to get z for object polygon
     std::vector<Point> edge_points;
     for (int i = 0; i < static_cast<int>(obstacle.poly.outer().size()) - 1;
          ++i) {  // NOTE: There is a duplicated points
@@ -1558,7 +1558,7 @@ std::vector<geometry_msgs::msg::Point> postProcess(
 
   const auto start_idx = [&]() {
     const size_t current_seg_idx = planner_data->findEgoSegmentIndex(path.points);
-    const auto cropped_path_points = autoware_motion_utils::cropPoints(
+    const auto cropped_path_points = autoware::motion_utils::cropPoints(
       path.points, current_pose.position, current_seg_idx,
       planner_data->parameters.forward_path_length,
       planner_data->parameters.backward_path_length + planner_data->parameters.input_path_interval);
@@ -1621,7 +1621,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
   const bool enable_expanding_freespace_areas, const bool is_left, const bool is_driving_forward)
 {
-  using autoware_motion_utils::removeOverlapPoints;
+  using autoware::motion_utils::removeOverlapPoints;
 
   const auto & route_handler = planner_data->route_handler;
 

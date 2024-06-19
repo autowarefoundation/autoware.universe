@@ -284,9 +284,9 @@ void MotionVelocityPlannerNode::insert_stop(
   const geometry_msgs::msg::Point & stop_point) const
 {
   const auto seg_idx =
-    autoware_motion_utils::findNearestSegmentIndex(trajectory.points, stop_point);
+    autoware::motion_utils::findNearestSegmentIndex(trajectory.points, stop_point);
   const auto insert_idx =
-    autoware_motion_utils::insertTargetPoint(seg_idx, stop_point, trajectory.points);
+    autoware::motion_utils::insertTargetPoint(seg_idx, stop_point, trajectory.points);
   if (insert_idx) {
     for (auto idx = *insert_idx; idx < trajectory.points.size(); ++idx)
       trajectory.points[idx].longitudinal_velocity_mps = 0.0;
@@ -300,13 +300,13 @@ void MotionVelocityPlannerNode::insert_slowdown(
   const autoware::motion_velocity_planner::SlowdownInterval & slowdown_interval) const
 {
   const auto from_seg_idx =
-    autoware_motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.from);
-  const auto from_insert_idx = autoware_motion_utils::insertTargetPoint(
+    autoware::motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.from);
+  const auto from_insert_idx = autoware::motion_utils::insertTargetPoint(
     from_seg_idx, slowdown_interval.from, trajectory.points);
   const auto to_seg_idx =
-    autoware_motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.to);
+    autoware::motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.to);
   const auto to_insert_idx =
-    autoware_motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
+    autoware::motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
   if (from_insert_idx && to_insert_idx) {
     for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
       trajectory.points[idx].longitudinal_velocity_mps = 0.0;
@@ -336,7 +336,7 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
     traj_steering_rate_limited, v0, current_pose, planner_data.ego_nearest_dist_threshold,
     planner_data.ego_nearest_yaw_threshold);
   const size_t traj_resampled_closest =
-    autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_resampled, current_pose, planner_data.ego_nearest_dist_threshold,
       planner_data.ego_nearest_yaw_threshold);
   std::vector<autoware::motion_velocity_planner::TrajectoryPoints> debug_trajectories;
