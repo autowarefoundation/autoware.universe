@@ -255,6 +255,7 @@ void RingOutlierFilterComponent::faster_filter(
     PointCloud2 outlier;
     pcl::toROSMsg(*outlier_pcl, outlier);
     outlier.header = input->header;
+    outlier_pointcloud_publisher_->publish(outlier);
 
     tier4_debug_msgs::msg::Float32Stamped visibility_msg;
     visibility_msg.data = calculateVisibilityScore(outlier);
@@ -352,15 +353,11 @@ void RingOutlierFilterComponent::setUpPointCloudFormat(
   formatted_points.is_bigendian = input->is_bigendian;
   formatted_points.is_dense = input->is_dense;
 
-  // pcl::PCLPointCloud2 pcl_aux;
+  // This is a hack to get the correct fields in the output point cloud without creating the fields
+  // manually
   sensor_msgs::msg::PointCloud2 msg_aux;
-  // pcl_conversions::moveFromPCL(pcl_pc2, cloud);
   pcl::toROSMsg(pcl::PointCloud<OutputPointType>(), msg_aux);
   formatted_points.fields = msg_aux.fields;
-  // pcl::for_each_type<typename pcl::traits::fieldList<OutputPointType>::type>
-  // pcl::detail::FieldAdder<OutputPointType>(formatted_points.fields); pcl::for_each_type<typename
-  // pcl::traits::fieldList<OutputPointType>::type>
-  // (pcl::detail::FieldAdder<OutputPointType>(formatted_points.fields));
 }
 
 float RingOutlierFilterComponent::calculateVisibilityScore(
