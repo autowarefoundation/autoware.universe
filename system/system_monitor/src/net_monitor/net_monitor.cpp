@@ -280,7 +280,6 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
   int whole_level = DiagStatus::OK;
   std::string error_message;
   uint64_t total_reassembles_failed = 0;
-  uint64_t unit_reassembles_failed = 0;
 
   if (get_reassembles_failed(total_reassembles_failed)) {
     reassembles_failed_queue_.push_back(total_reassembles_failed - last_reassembles_failed_);
@@ -288,6 +287,7 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
       reassembles_failed_queue_.pop_front();
     }
 
+    uint64_t unit_reassembles_failed = 0;
     for (auto reassembles_failed : reassembles_failed_queue_) {
       unit_reassembles_failed += reassembles_failed;
     }
