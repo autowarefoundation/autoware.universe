@@ -277,8 +277,6 @@ double ByteTracker::lapjv(
   std::vector<std::vector<float>> cost_c;
   cost_c.assign(cost.begin(), cost.end());
 
-  std::vector<std::vector<float>> cost_c_extended;
-
   int n_rows = cost.size();
   int n_cols = cost[0].size();
   rowsol.resize(n_rows);
@@ -296,6 +294,8 @@ double ByteTracker::lapjv(
   }
 
   if (extend_cost || cost_limit < LONG_MAX) {
+    std::vector<std::vector<float>> cost_c_extended;
+
     n = n_rows + n_cols;
     cost_c_extended.resize(n);
     for (size_t i = 0; i < cost_c_extended.size(); i++) cost_c_extended[i].resize(n);
