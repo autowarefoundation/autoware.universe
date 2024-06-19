@@ -452,7 +452,6 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int socket
   strncpy(request.ifr_name, network.interface_name.c_str(), IFNAMSIZ - 1);
   request.ifr_data = (caddr_t)&ether_request;  // NOLINT [cppcoreguidelines-pro-type-cstyle-cast]
 
-  ether_request.cmd = ETHTOOL_GSET;
   if (ioctl(socket, SIOCETHTOOL, &request) >= 0) {
     network.speed = ether_request.speed;
     return;
