@@ -112,11 +112,6 @@ void STrack::activate(int frame_id)
   this->track_id = this->next_id();
   this->unique_id = boost::uuids::random_generator()();
 
-  std::vector<float> _tlwh_tmp(4);
-  _tlwh_tmp[0] = this->original_tlwh[0];
-  _tlwh_tmp[1] = this->original_tlwh[1];
-  _tlwh_tmp[2] = this->original_tlwh[2];
-  _tlwh_tmp[3] = this->original_tlwh[3];
   // init kf
   init_kalman_filter();
   // reflect state
