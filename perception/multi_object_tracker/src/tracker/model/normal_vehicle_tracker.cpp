@@ -20,9 +20,9 @@
 
 #include "multi_object_tracker/utils/utils.hpp"
 
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/math/normalization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -44,7 +44,7 @@ using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 NormalVehicleTracker::NormalVehicleTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
+  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("NormalVehicleTracker")),
@@ -58,10 +58,10 @@ NormalVehicleTracker::NormalVehicleTracker(
 
   // Initialize parameters
   // measurement noise covariance: detector uncertainty + ego vehicle motion uncertainty
-  float r_stddev_x = 0.5;                                  // in vehicle coordinate [m]
-  float r_stddev_y = 0.4;                                  // in vehicle coordinate [m]
-  float r_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // in map coordinate [rad]
-  float r_stddev_vel = 1.0;                                // in object coordinate [m/s]
+  float r_stddev_x = 0.5;                                     // in vehicle coordinate [m]
+  float r_stddev_y = 0.4;                                     // in vehicle coordinate [m]
+  float r_stddev_yaw = autoware_universe_utils::deg2rad(20);  // in map coordinate [rad]
+  float r_stddev_vel = 1.0;                                   // in object coordinate [m/s]
   ekf_params_.r_cov_x = std::pow(r_stddev_x, 2.0);
   ekf_params_.r_cov_y = std::pow(r_stddev_y, 2.0);
   ekf_params_.r_cov_yaw = std::pow(r_stddev_yaw, 2.0);
@@ -70,13 +70,12 @@ NormalVehicleTracker::NormalVehicleTracker(
   // velocity deviation threshold
   //   if the predicted velocity is close to the observed velocity,
   //   the observed velocity is used as the measurement.
-  velocity_deviation_threshold_ = tier4_autoware_utils::kmph2mps(10);  // [m/s]
+  velocity_deviation_threshold_ = autoware_universe_utils::kmph2mps(10);  // [m/s]
 
   // OBJECT SHAPE MODEL
   if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
-    last_input_bounding_box_ = bounding_box_;
   } else {
     autoware_perception_msgs::msg::DetectedObject bbox_object;
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
@@ -90,7 +89,6 @@ NormalVehicleTracker::NormalVehicleTracker(
         bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
         bbox_object.shape.dimensions.z};
     }
-    last_input_bounding_box_ = bounding_box_;
   }
   // set maximum and minimum size
   constexpr double max_size = 20.0;
@@ -123,8 +121,8 @@ NormalVehicleTracker::NormalVehicleTracker(
 
   // Set motion limits
   {
-    constexpr double max_vel = tier4_autoware_utils::kmph2mps(100);  // [m/s] maximum velocity
-    constexpr double max_slip = 30;                                  // [deg] maximum slip angle
+    constexpr double max_vel = autoware_universe_utils::kmph2mps(100);  // [m/s] maximum velocity
+    constexpr double max_slip = 30;                                     // [deg] maximum slip angle
     motion_model_.setMotionLimits(max_vel, max_slip);  // maximum velocity and slip angle
   }
 
@@ -147,7 +145,7 @@ NormalVehicleTracker::NormalVehicleTracker(
       constexpr double p0_stddev_x = 1.0;  // in object coordinate [m]
       constexpr double p0_stddev_y = 0.3;  // in object coordinate [m]
       constexpr double p0_stddev_yaw =
-        tier4_autoware_utils::deg2rad(25);  // in map coordinate [rad]
+        autoware_universe_utils::deg2rad(25);  // in map coordinate [rad]
       constexpr double p0_cov_x = p0_stddev_x * p0_stddev_x;
       constexpr double p0_cov_y = p0_stddev_y * p0_stddev_y;
       constexpr double p0_cov_yaw = p0_stddev_yaw * p0_stddev_yaw;
@@ -166,22 +164,20 @@ NormalVehicleTracker::NormalVehicleTracker(
 
     if (!object.kinematics.has_twist_covariance) {
       constexpr double p0_stddev_vel =
-        tier4_autoware_utils::kmph2mps(1000);  // in object coordinate [m/s]
+        autoware_universe_utils::kmph2mps(1000);  // in object coordinate [m/s]
       vel_cov = std::pow(p0_stddev_vel, 2.0);
     } else {
       vel_cov = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
     }
 
     const double slip = 0.0;
-    const double p0_stddev_slip = tier4_autoware_utils::deg2rad(5);  // in object coordinate [rad/s]
+    const double p0_stddev_slip =
+      autoware_universe_utils::deg2rad(5);  // in object coordinate [rad/s]
     const double slip_cov = std::pow(p0_stddev_slip, 2.0);
 
     // initialize motion model
     motion_model_.initialize(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
   }
-
-  /* calc nearest corner index*/
-  setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 }
 
 bool NormalVehicleTracker::predict(const rclcpp::Time & time)
@@ -216,11 +212,11 @@ autoware_perception_msgs::msg::DetectedObject NormalVehicleTracker::getUpdatingO
   }
 
   // get offset measurement
-  int nearest_corner_index = utils::getNearestCornerOrSurface(
+  const int nearest_corner_index = utils::getNearestCornerOrSurface(
     tracked_x, tracked_y, tracked_yaw, bounding_box_.width, bounding_box_.length, self_transform);
   utils::calcAnchorPointOffset(
-    last_input_bounding_box_.width, last_input_bounding_box_.length, nearest_corner_index,
-    bbox_object, tracked_yaw, updating_object, tracking_offset_);
+    bounding_box_.width, bounding_box_.length, nearest_corner_index, bbox_object, tracked_yaw,
+    updating_object, tracking_offset_);
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
@@ -334,15 +330,13 @@ bool NormalVehicleTracker::measureWithShape(
     return false;
   }
 
-  constexpr double gain = 0.1;
+  constexpr double gain = 0.5;
   constexpr double gain_inv = 1.0 - gain;
 
   // update object size
   bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
   bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
   bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
-  last_input_bounding_box_ = {
-    object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
 
   // set maximum and minimum size
   constexpr double max_size = 20.0;
@@ -354,11 +348,19 @@ bool NormalVehicleTracker::measureWithShape(
   // update motion model
   motion_model_.updateExtendedState(bounding_box_.length);
 
-  // // update offset into object position
-  // motion_model_.adjustPosition(gain * tracking_offset_.x(), gain * tracking_offset_.y());
-  // // update offset
-  // tracking_offset_.x() = gain_inv * tracking_offset_.x();
-  // tracking_offset_.y() = gain_inv * tracking_offset_.y();
+  // update offset into object position
+  {
+    // rotate back the offset vector from object coordinate to global coordinate
+    const double yaw = motion_model_.getStateElement(IDX::YAW);
+    const double offset_x_global =
+      tracking_offset_.x() * std::cos(yaw) - tracking_offset_.y() * std::sin(yaw);
+    const double offset_y_global =
+      tracking_offset_.x() * std::sin(yaw) + tracking_offset_.y() * std::cos(yaw);
+    motion_model_.adjustPosition(-gain * offset_x_global, -gain * offset_y_global);
+    // update offset (object coordinate)
+    tracking_offset_.x() = gain_inv * tracking_offset_.x();
+    tracking_offset_.y() = gain_inv * tracking_offset_.y();
+  }
 
   return true;
 }
@@ -392,9 +394,6 @@ bool NormalVehicleTracker::measure(
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
-  /* calc nearest corner index*/
-  setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
-
   return true;
 }
 
@@ -416,15 +415,6 @@ bool NormalVehicleTracker::getTrackedObject(
     return false;
   }
 
-  // recover bounding box from tracking point
-  const double dl = bounding_box_.length - last_input_bounding_box_.length;
-  const double dw = bounding_box_.width - last_input_bounding_box_.width;
-  const Eigen::Vector2d recovered_pose = utils::recoverFromTrackingPoint(
-    pose_with_cov.pose.position.x, pose_with_cov.pose.position.y,
-    motion_model_.getStateElement(IDX::YAW), dw, dl, last_nearest_corner_index_, tracking_offset_);
-  pose_with_cov.pose.position.x = recovered_pose.x();
-  pose_with_cov.pose.position.y = recovered_pose.y();
-
   // position
   pose_with_cov.pose.position.z = z_;
 
@@ -435,7 +425,7 @@ bool NormalVehicleTracker::getTrackedObject(
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
   object.shape.footprint =
-    tier4_autoware_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
+    autoware_universe_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
 
   return true;
 }

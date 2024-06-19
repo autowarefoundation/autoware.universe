@@ -15,12 +15,12 @@
 #include "ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 
 #include "localization_util/matrix_type.hpp"
+#include "localization_util/tree_structured_parzen_estimator.hpp"
 #include "localization_util/util_func.hpp"
 #include "ndt_scan_matcher/particle.hpp"
-#include "tree_structured_parzen_estimator/tree_structured_parzen_estimator.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/transform/transforms.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/transform/transforms.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -210,7 +210,7 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   diagnostics_trigger_node_ =
     std::make_unique<DiagnosticsModule>(this, "trigger_node_service_status");
 
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware_universe_utils::LoggerLevelConfigure>(this);
 }
 
 void NDTScanMatcher::callback_timer()
@@ -300,12 +300,11 @@ void NDTScanMatcher::callback_sensor_points(
     callback_sensor_points_main(sensor_points_msg_in_sensor_frame);
 
   // check skipping_publish_num
-  static size_t skipping_publish_num = 0;
-  const size_t error_skipping_publish_num = 5;
+  static int64_t skipping_publish_num = 0;
   skipping_publish_num =
     ((is_succeed_scan_matching || !is_activated_) ? 0 : (skipping_publish_num + 1));
   diagnostics_scan_points_->add_key_value("skipping_publish_num", skipping_publish_num);
-  if (skipping_publish_num >= error_skipping_publish_num) {
+  if (skipping_publish_num >= param_.validation.skipping_publish_num) {
     std::stringstream message;
     message << "skipping_publish_num exceed limit (" << skipping_publish_num << " times).";
     diagnostics_scan_points_->update_level_and_message(
@@ -340,11 +339,11 @@ bool NDTScanMatcher::callback_sensor_points_main(
     (this->now() - sensor_points_msg_in_sensor_frame->header.stamp).seconds();
   diagnostics_scan_points_->add_key_value(
     "sensor_points_delay_time_sec", sensor_points_delay_time_sec);
-  if (sensor_points_delay_time_sec > param_.validation.lidar_topic_timeout_sec) {
+  if (sensor_points_delay_time_sec > param_.sensor_points.timeout_sec) {
     std::stringstream message;
     message << "sensor points is experiencing latency."
             << "The delay time is " << sensor_points_delay_time_sec << "[sec] "
-            << "(the tolerance is " << param_.validation.lidar_topic_timeout_sec << "[sec]).";
+            << "(the tolerance is " << param_.sensor_points.timeout_sec << "[sec]).";
     diagnostics_scan_points_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
 
@@ -578,8 +577,7 @@ bool NDTScanMatcher::callback_sensor_points_main(
   const auto distance_initial_to_result = static_cast<double>(
     norm(interpolation_result.interpolated_pose.pose.pose.position, result_pose_msg.position));
   diagnostics_scan_points_->add_key_value("distance_initial_to_result", distance_initial_to_result);
-  const double warn_distance_initial_to_result = 3.0;
-  if (distance_initial_to_result > warn_distance_initial_to_result) {
+  if (distance_initial_to_result > param_.validation.initial_to_result_distance_tolerance_m) {
     std::stringstream message;
     message << "distance_initial_to_result is too large (" << distance_initial_to_result
             << " [m]).";
@@ -617,7 +615,7 @@ bool NDTScanMatcher::callback_sensor_points_main(
 
   pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_in_map_ptr(
     new pcl::PointCloud<PointSource>);
-  tier4_autoware_utils::transformPointCloud(
+  autoware_universe_utils::transformPointCloud(
     *sensor_points_in_baselink_frame, *sensor_points_in_map_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, param_.frame.map_frame, sensor_points_in_map_ptr);
 
@@ -673,10 +671,10 @@ void NDTScanMatcher::transform_sensor_measurement(
   }
 
   const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
-    tier4_autoware_utils::transform2pose(transform);
+    autoware_universe_utils::transform2pose(transform);
   const Eigen::Matrix4f base_to_sensor_matrix =
     pose_to_matrix4f(target_to_source_pose_stamped.pose);
-  tier4_autoware_utils::transformPointCloud(
+  autoware_universe_utils::transformPointCloud(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
 
@@ -688,7 +686,7 @@ void NDTScanMatcher::publish_tf(
   result_pose_stamped_msg.header.frame_id = param_.frame.map_frame;
   result_pose_stamped_msg.pose = result_pose_msg;
   tf2_broadcaster_.sendTransform(
-    tier4_autoware_utils::pose2transform(result_pose_stamped_msg, param_.frame.ndt_base_frame));
+    autoware_universe_utils::pose2transform(result_pose_stamped_msg, param_.frame.ndt_base_frame));
 }
 
 void NDTScanMatcher::publish_pose(
@@ -732,7 +730,7 @@ void NDTScanMatcher::publish_marker(
   marker.header.frame_id = param_.frame.map_frame;
   marker.type = visualization_msgs::msg::Marker::ARROW;
   marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.scale = tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1);
+  marker.scale = autoware_universe_utils::createMarkerScale(0.3, 0.1, 0.1);
   int i = 0;
   marker.ns = "result_pose_matrix_array";
   marker.action = visualization_msgs::msg::Marker::ADD;
@@ -761,7 +759,7 @@ void NDTScanMatcher::publish_initial_to_result(
 {
   geometry_msgs::msg::PoseStamped initial_to_result_relative_pose_stamped;
   initial_to_result_relative_pose_stamped.pose =
-    tier4_autoware_utils::inverseTransformPose(result_pose_msg, initial_pose_cov_msg.pose.pose);
+    autoware_universe_utils::inverseTransformPose(result_pose_msg, initial_pose_cov_msg.pose.pose);
   initial_to_result_relative_pose_stamped.header.stamp = sensor_ros_time;
   initial_to_result_relative_pose_stamped.header.frame_id = param_.frame.map_frame;
   initial_to_result_relative_pose_pub_->publish(initial_to_result_relative_pose_stamped);
@@ -1093,7 +1091,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
     tpe.add_trial(TreeStructuredParzenEstimator::Trial{result, ndt_result.transform_probability});
 
     auto sensor_points_in_map_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
-    tier4_autoware_utils::transformPointCloud(
+    autoware_universe_utils::transformPointCloud(
       *ndt_ptr_->getInputSource(), *sensor_points_in_map_ptr, ndt_result.pose);
     publish_point_cloud(
       initial_pose_with_cov.header.stamp, param_.frame.map_frame, sensor_points_in_map_ptr);

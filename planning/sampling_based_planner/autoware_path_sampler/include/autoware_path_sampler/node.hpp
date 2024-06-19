@@ -22,6 +22,7 @@
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware_sampler_common/structures.hpp>
 
 #include <algorithm>
@@ -51,7 +52,6 @@ protected:  // for the static_centerline_generator package
 
   // variables for subscribers
   Odometry::SharedPtr ego_state_ptr_;
-  PredictedObjects::SharedPtr in_objects_ptr_ = std::make_shared<PredictedObjects>();
 
   // variables for previous information
   std::optional<autoware::sampler_common::Path> prev_path_;
@@ -62,8 +62,10 @@ protected:  // for the static_centerline_generator package
 
   // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
+  autoware_universe_utils::InterProcessPollingSubscriber<Odometry> odom_sub_{
+    this, "~/input/odometry"};
+  autoware_universe_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
+    this, "~/input/objects"};
 
   // debug publisher
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_markers_pub_;
@@ -79,8 +81,9 @@ protected:  // for the static_centerline_generator package
   void onPath(const Path::SharedPtr);
 
   // main functions
-  bool isDataReady(const Path & path, rclcpp::Clock clock) const;
-  PlannerData createPlannerData(const Path & path) const;
+  bool isDataReady(
+    const Path & path, const Odometry::ConstSharedPtr ego_state_ptr, rclcpp::Clock clock);
+  PlannerData createPlannerData(const Path & path, const Odometry & ego_state) const;
   std::vector<TrajectoryPoint> generateTrajectory(const PlannerData & planner_data);
   std::vector<TrajectoryPoint> extendTrajectory(
     const std::vector<TrajectoryPoint> & traj_points,
