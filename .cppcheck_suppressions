@@ -1,7 +1,6 @@
 *:*/test/*
 
 arrayIndexThenCheck
-assignBoolToFloat
 checkersReport
 constParameterPointer
 constParameterReference
