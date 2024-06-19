@@ -6,7 +6,6 @@ constParameterPointer
 constParameterReference
 constStatement
 constVariable
-constVariablePointer
 constVariableReference
 containerOutOfBounds
 cstyleCast
