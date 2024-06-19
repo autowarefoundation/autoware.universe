@@ -28,6 +28,8 @@
 #include <memory>
 #include <vector>
 
+using autoware::motion_utils::createDeletedStopVirtualWallMarker;
+using autoware::motion_utils::createStopVirtualWallMarker;
 using autoware::universe_utils::appendMarkerArray;
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::createDefaultMarker;
@@ -35,8 +37,6 @@ using autoware::universe_utils::createMarkerColor;
 using autoware::universe_utils::createMarkerOrientation;
 using autoware::universe_utils::createMarkerScale;
 using autoware::universe_utils::createPoint;
-using autoware_motion_utils::createDeletedStopVirtualWallMarker;
-using autoware_motion_utils::createStopVirtualWallMarker;
 
 namespace autoware::motion::control::predicted_path_checker
 {

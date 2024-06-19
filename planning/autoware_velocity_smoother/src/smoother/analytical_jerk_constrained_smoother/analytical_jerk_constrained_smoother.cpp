@@ -298,9 +298,9 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
     for (double s = 0; s < in_arclength.back(); s += points_interval) {
       out_arclength.push_back(s);
     }
-    const auto output_traj = autoware_motion_utils::resampleTrajectory(
-      autoware_motion_utils::convertToTrajectory(input), out_arclength);
-    output = autoware_motion_utils::convertToTrajectoryPointArray(output_traj);
+    const auto output_traj = autoware::motion_utils::resampleTrajectory(
+      autoware::motion_utils::convertToTrajectory(input), out_arclength);
+    output = autoware::motion_utils::convertToTrajectoryPointArray(output_traj);
     output.back() = input.back();  // keep the final speed.
   } else {
     output = input;

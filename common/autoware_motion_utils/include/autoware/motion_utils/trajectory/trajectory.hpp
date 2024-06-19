@@ -35,7 +35,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware_motion_utils
+namespace autoware::motion_utils
 {
 static inline rclcpp::Logger get_logger()
 {
@@ -1788,7 +1788,7 @@ std::optional<size_t> insertStopPoint(
   const size_t stop_seg_idx, const geometry_msgs::msg::Point & stop_point, T & points_with_twist,
   const double overlap_threshold = 1e-3)
 {
-  const auto insert_idx = autoware_motion_utils::insertTargetPoint(
+  const auto insert_idx = autoware::motion_utils::insertTargetPoint(
     stop_seg_idx, stop_point, points_with_twist, overlap_threshold);
 
   if (!insert_idx) {
@@ -2231,13 +2231,13 @@ std::optional<double> calcDistanceToForwardStopPoint(
   }
 
   const auto nearest_segment_idx =
-    autoware_motion_utils::findNearestSegmentIndex(points_with_twist, pose, max_dist, max_yaw);
+    autoware::motion_utils::findNearestSegmentIndex(points_with_twist, pose, max_dist, max_yaw);
 
   if (!nearest_segment_idx) {
     return std::nullopt;
   }
 
-  const auto stop_idx = autoware_motion_utils::searchZeroVelocityIndex(
+  const auto stop_idx = autoware::motion_utils::searchZeroVelocityIndex(
     points_with_twist, *nearest_segment_idx + 1, points_with_twist.size());
 
   if (!stop_idx) {
@@ -2278,7 +2278,7 @@ T cropForwardPoints(
   }
 
   double sum_length =
-    -autoware_motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+    -autoware::motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
   for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
     sum_length += autoware::universe_utils::calcDistance2d(points.at(i), points.at(i - 1));
     if (forward_length < sum_length) {
@@ -2318,7 +2318,7 @@ T cropBackwardPoints(
   }
 
   double sum_length =
-    -autoware_motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+    -autoware::motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
   for (int i = target_seg_idx; 0 < i; --i) {
     sum_length -= autoware::universe_utils::calcDistance2d(points.at(i), points.at(i - 1));
     if (sum_length < -backward_length) {
@@ -2487,6 +2487,6 @@ extern template bool isTargetPointFront<std::vector<autoware_planning_msgs::msg:
   const geometry_msgs::msg::Point & base_point, const geometry_msgs::msg::Point & target_point,
   const double threshold = 0.0);
 
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils
 
 #endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_

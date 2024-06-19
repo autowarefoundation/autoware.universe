@@ -159,7 +159,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
 
-    const double signed_arc_dist_to_stop_point = autoware_motion_utils::calcSignedArcLength(
+    const double signed_arc_dist_to_stop_point = autoware::motion_utils::calcSignedArcLength(
       path->points, current_pose.position, path->points.at(stopline_idx).point.pose.position);
 
     if (

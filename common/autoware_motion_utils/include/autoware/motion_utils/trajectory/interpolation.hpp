@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace autoware_motion_utils
+namespace autoware::motion_utils
 {
 /**
  * @brief An interpolation function that finds the closest interpolated point on the trajectory from
@@ -91,6 +91,6 @@ geometry_msgs::msg::Pose calcInterpolatedPose(const T & points, const double tar
   return autoware::universe_utils::getPose(points.back());
 }
 
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils
 
 #endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY__INTERPOLATION_HPP_

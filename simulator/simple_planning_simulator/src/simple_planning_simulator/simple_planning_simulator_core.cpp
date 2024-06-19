@@ -333,7 +333,7 @@ double SimplePlanningSimulator::calculate_ego_pitch() const
   }
   const auto centerline_points = convert_centerline_to_points(ego_lanelet);
   const size_t ego_seg_idx =
-    autoware_motion_utils::findNearestSegmentIndex(centerline_points, ego_pose.position);
+    autoware::motion_utils::findNearestSegmentIndex(centerline_points, ego_pose.position);
 
   const auto & prev_point = centerline_points.at(ego_seg_idx);
   const auto & next_point = centerline_points.at(ego_seg_idx + 1);

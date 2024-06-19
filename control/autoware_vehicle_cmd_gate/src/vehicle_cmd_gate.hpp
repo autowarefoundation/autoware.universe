@@ -81,7 +81,7 @@ using nav_msgs::msg::Odometry;
 using EngageMsg = autoware_vehicle_msgs::msg::Engage;
 using EngageSrv = tier4_external_api_msgs::srv::Engage;
 
-using autoware_motion_utils::VehicleStopChecker;
+using autoware::motion_utils::VehicleStopChecker;
 struct Commands
 {
   Control control;

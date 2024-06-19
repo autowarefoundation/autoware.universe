@@ -630,7 +630,7 @@ std::string IntersectionModule::generateEgoRiskEvasiveDiagnosis(
       object_dist_to_margin_point / std::max(min_vel, object_info->observed_velocity());
     // ego side
     const double ego_dist_to_collision_pos =
-      autoware_motion_utils::calcSignedArcLength(path.points, closest_idx, collision_pos);
+      autoware::motion_utils::calcSignedArcLength(path.points, closest_idx, collision_pos);
     const auto ego_eta_to_collision_pos_it = std::lower_bound(
       ego_time_distance_array.begin(), ego_time_distance_array.end(), ego_dist_to_collision_pos,
       [](const auto & a, const double b) { return a.second < b; });
@@ -898,7 +898,7 @@ IntersectionModule::TimeDistanceArray IntersectionModule::calcIntersectionPassin
   // NOTE: `reference_path` is resampled in `reference_smoothed_path`, so
   // `last_intersection_stopline_candidate_idx` makes no sense
   const auto smoothed_path_closest_idx =
-    autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       smoothed_reference_path.points, path.points.at(closest_idx).point.pose,
       planner_data_->ego_nearest_dist_threshold, planner_data_->ego_nearest_yaw_threshold);
 
@@ -906,7 +906,7 @@ IntersectionModule::TimeDistanceArray IntersectionModule::calcIntersectionPassin
     if (upstream_stopline) {
       const auto upstream_stopline_point =
         reference_path.points.at(upstream_stopline.value()).point.pose;
-      return autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+      return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
         smoothed_reference_path.points, upstream_stopline_point,
         planner_data_->ego_nearest_dist_threshold, planner_data_->ego_nearest_yaw_threshold);
     } else {

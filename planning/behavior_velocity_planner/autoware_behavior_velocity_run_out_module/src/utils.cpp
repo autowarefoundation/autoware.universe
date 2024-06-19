@@ -218,7 +218,7 @@ std::vector<DynamicObstacle> excludeObstaclesOutSideOfLine(
   std::vector<DynamicObstacle> extracted_dynamic_obstacle;
   for (const auto & obstacle : dynamic_obstacles) {
     const auto obstacle_nearest_idx =
-      autoware_motion_utils::findNearestIndex(path_points, obstacle.pose.position);
+      autoware::motion_utils::findNearestIndex(path_points, obstacle.pose.position);
     const auto & obstacle_nearest_path_point =
       path_points.at(obstacle_nearest_idx).point.pose.position;
 
@@ -273,7 +273,7 @@ PathWithLaneId trimPathFromSelfPose(
   const double trim_distance)
 {
   const size_t nearest_idx =
-    autoware_motion_utils::findNearestIndex(input.points, self_pose.position);
+    autoware::motion_utils::findNearestIndex(input.points, self_pose.position);
 
   PathWithLaneId output{};
   output.header = input.header;
@@ -381,7 +381,7 @@ Polygons2d createDetectionAreaPolygon(
   const float jerk_acc = std::abs(jerk_dec);
   const float planning_dec =
     jerk_dec < pp.common.normal_min_jerk ? pp.common.limit_min_acc : pp.common.normal_min_acc;
-  auto stop_dist = autoware_motion_utils::calcDecelDistWithJerkAndAccConstraints(
+  auto stop_dist = autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints(
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
   if (!stop_dist) {
@@ -401,9 +401,10 @@ Polygons2d createDetectionAreaPolygon(
   da_range.left_overhang = pp.vehicle_param.left_overhang;
   da_range.max_lateral_distance = obstacle_vel_mps * pp.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
-  const size_t ego_seg_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, pd.current_odometry->pose, pd.ego_nearest_dist_threshold,
-    pd.ego_nearest_yaw_threshold);
+  const size_t ego_seg_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, pd.current_odometry->pose, pd.ego_nearest_dist_threshold,
+      pd.ego_nearest_yaw_threshold);
   planning_utils::createDetectionAreaPolygons(
     detection_area_poly, path, pd.current_odometry->pose, ego_seg_idx, da_range,
     pp.dynamic_obstacle.max_vel_kmph / 3.6);
@@ -425,7 +426,7 @@ Polygons2d createMandatoryDetectionAreaPolygon(
   const float jerk_acc = std::abs(jerk_dec);
   const float planning_dec =
     jerk_dec < pp.common.normal_min_jerk ? pp.common.limit_min_acc : pp.common.normal_min_acc;
-  auto stop_dist = autoware_motion_utils::calcDecelDistWithJerkAndAccConstraints(
+  auto stop_dist = autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints(
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
   if (!stop_dist) {
@@ -443,9 +444,10 @@ Polygons2d createMandatoryDetectionAreaPolygon(
   da_range.left_overhang = pp.vehicle_param.left_overhang;
   da_range.max_lateral_distance = obstacle_vel_mps * pp.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
-  const size_t ego_seg_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, pd.current_odometry->pose, pd.ego_nearest_dist_threshold,
-    pd.ego_nearest_yaw_threshold);
+  const size_t ego_seg_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, pd.current_odometry->pose, pd.ego_nearest_dist_threshold,
+      pd.ego_nearest_yaw_threshold);
   planning_utils::createDetectionAreaPolygons(
     detection_area_poly, path, pd.current_odometry->pose, ego_seg_idx, da_range,
     pp.dynamic_obstacle.max_vel_kmph / 3.6);

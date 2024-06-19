@@ -280,21 +280,22 @@ struct EgoNearestParam
   TrajectoryPoint calcInterpolatedPoint(
     const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
   {
-    return autoware_motion_utils::calcInterpolatedPoint(
-      autoware_motion_utils::convertToTrajectory(traj_points), pose, dist_threshold, yaw_threshold);
+    return autoware::motion_utils::calcInterpolatedPoint(
+      autoware::motion_utils::convertToTrajectory(traj_points), pose, dist_threshold,
+      yaw_threshold);
   }
 
   size_t findIndex(
     const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
   {
-    return autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_points, pose, dist_threshold, yaw_threshold);
   }
 
   size_t findSegmentIndex(
     const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
   {
-    return autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       traj_points, pose, dist_threshold, yaw_threshold);
   }
 

@@ -177,7 +177,7 @@ std::vector<double> generateArclength(const size_t num_points, const double inte
 
 TEST(resample_vector_pose, resample_by_same_interval)
 {
-  using autoware_motion_utils::resamplePoseVector;
+  using autoware::motion_utils::resamplePoseVector;
   using geometry_msgs::msg::Pose;
 
   std::vector<Pose> path(10);
@@ -220,7 +220,7 @@ TEST(resample_vector_pose, resample_by_same_interval)
 
 TEST(resample_path_with_lane_id, resample_path_by_vector)
 {
-  using autoware_motion_utils::resamplePath;
+  using autoware::motion_utils::resamplePath;
   // Output is same as input
   {
     auto path = generateTestPathWithLaneId(10, 1.0, 3.0, 1.0, 0.01);
@@ -540,7 +540,7 @@ TEST(resample_path_with_lane_id, resample_path_by_vector)
 
 TEST(resample_path_with_lane_id, resample_path_by_vector_backward)
 {
-  using autoware_motion_utils::resamplePath;
+  using autoware::motion_utils::resamplePath;
 
   {
     tier4_planning_msgs::msg::PathWithLaneId path;
@@ -771,7 +771,7 @@ TEST(resample_path_with_lane_id, resample_path_by_vector_backward)
 
 TEST(resample_path_with_lane_id, resample_path_by_vector_non_default)
 {
-  using autoware_motion_utils::resamplePath;
+  using autoware::motion_utils::resamplePath;
 
   // Lerp x, y
   {
@@ -1009,7 +1009,7 @@ TEST(resample_path_with_lane_id, resample_path_by_vector_non_default)
 
 TEST(resample_path_with_lane_id, resample_path_by_same_interval)
 {
-  using autoware_motion_utils::resamplePath;
+  using autoware::motion_utils::resamplePath;
 
   // Same point resampling
   {
@@ -1194,7 +1194,7 @@ TEST(resample_path_with_lane_id, resample_path_by_same_interval)
     path.points.at(0).point.longitudinal_velocity_mps = 5.0;
     path.points.back().point.is_final = true;
 
-    const double ds = 1.0 - autoware_motion_utils::overlap_threshold;
+    const double ds = 1.0 - autoware::motion_utils::overlap_threshold;
     const auto resampled_path = resamplePath(path, ds);
     for (size_t i = 0; i < resampled_path.points.size() - 1; ++i) {
       const auto p = resampled_path.points.at(i);
@@ -1564,7 +1564,7 @@ TEST(resample_path_with_lane_id, resample_path_by_same_interval)
 
 TEST(resample_path, resample_path_by_vector)
 {
-  using autoware_motion_utils::resamplePath;
+  using autoware::motion_utils::resamplePath;
   // Output is same as input
   {
     auto path = generateTestPath<Path>(10, 1.0, 3.0, 1.0, 0.01);
@@ -1812,7 +1812,7 @@ TEST(resample_path, resample_path_by_vector)
 
 TEST(resample_path, resample_path_by_vector_backward)
 {
-  using autoware_motion_utils::resamplePath;
+  using autoware::motion_utils::resamplePath;
 
   {
     autoware_planning_msgs::msg::Path path;
@@ -1990,7 +1990,7 @@ TEST(resample_path, resample_path_by_vector_backward)
 
 TEST(resample_path, resample_path_by_vector_non_default)
 {
-  using autoware_motion_utils::resamplePath;
+  using autoware::motion_utils::resamplePath;
 
   // Lerp x, y
   {
@@ -2175,7 +2175,7 @@ TEST(resample_path, resample_path_by_vector_non_default)
 
 TEST(resample_path, resample_path_by_same_interval)
 {
-  using autoware_motion_utils::resamplePath;
+  using autoware::motion_utils::resamplePath;
 
   // Same point resampling
   {
@@ -2321,7 +2321,7 @@ TEST(resample_path, resample_path_by_same_interval)
     }
     path.points.at(0).longitudinal_velocity_mps = 5.0;
 
-    const double ds = 1.0 - autoware_motion_utils::overlap_threshold;
+    const double ds = 1.0 - autoware::motion_utils::overlap_threshold;
     const auto resampled_path = resamplePath(path, ds);
     for (size_t i = 0; i < resampled_path.points.size() - 1; ++i) {
       const auto p = resampled_path.points.at(i);
@@ -2633,7 +2633,7 @@ TEST(resample_path, resample_path_by_same_interval)
 
 TEST(resample_trajectory, resample_trajectory_by_vector)
 {
-  using autoware_motion_utils::resampleTrajectory;
+  using autoware::motion_utils::resampleTrajectory;
   // Output is same as input
   {
     auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 3.0, 1.0, 0.01, 0.5);
@@ -2891,7 +2891,7 @@ TEST(resample_trajectory, resample_trajectory_by_vector)
 
 TEST(resample_trajectory, resample_trajectory_by_vector_non_default)
 {
-  using autoware_motion_utils::resampleTrajectory;
+  using autoware::motion_utils::resampleTrajectory;
 
   // Lerp x, y
   {
@@ -3090,7 +3090,7 @@ TEST(resample_trajectory, resample_trajectory_by_vector_non_default)
 
 TEST(resample_trajectory, resample_trajectory_by_same_interval)
 {
-  using autoware_motion_utils::resampleTrajectory;
+  using autoware::motion_utils::resampleTrajectory;
 
   // Same point resampling
   {
@@ -3246,7 +3246,7 @@ TEST(resample_trajectory, resample_trajectory_by_same_interval)
     }
     traj.points.at(0).longitudinal_velocity_mps = 5.0;
 
-    const double ds = 1.0 - autoware_motion_utils::overlap_threshold;
+    const double ds = 1.0 - autoware::motion_utils::overlap_threshold;
     const auto resampled_traj = resampleTrajectory(traj, ds);
     for (size_t i = 0; i < resampled_traj.points.size() - 1; ++i) {
       const auto p = resampled_traj.points.at(i);

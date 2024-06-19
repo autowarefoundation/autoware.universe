@@ -435,7 +435,7 @@ bool MpcLateralController::isStoppedState() const
   // for the stop state judgement. However, it has been removed since the steering
   // control was turned off when approaching/exceeding the stop line on a curve or
   // emergency stop situation and it caused large tracking error.
-  const size_t nearest = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t nearest = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
 

@@ -50,7 +50,7 @@ PathToTrajectory::PathToTrajectory(const rclcpp::NodeOptions & options)
 void PathToTrajectory::process(const Path::ConstSharedPtr msg)
 {
   const auto trajectory_points = convertToTrajectoryPoints(msg->points);
-  const auto output = autoware_motion_utils::convertToTrajectory(trajectory_points, msg->header);
+  const auto output = autoware::motion_utils::convertToTrajectory(trajectory_points, msg->header);
   pub_->publish(output);
 }
 

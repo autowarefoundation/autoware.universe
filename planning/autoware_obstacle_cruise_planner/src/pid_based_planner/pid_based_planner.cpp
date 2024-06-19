@@ -313,7 +313,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
       const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
         stop_traj_points, dist_to_rss_wall, ego_idx);
 
-      auto markers = autoware_motion_utils::createSlowDownVirtualWallMarker(
+      auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         stop_traj_points.at(wall_idx).pose, "obstacle cruise", planner_data.current_time, 0);
       // NOTE: use a different color from slow down one to visualize cruise and slow down
       // separately.
@@ -345,7 +345,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
 
   // delete marker
   const auto markers =
-    autoware_motion_utils::createDeletedSlowDownVirtualWallMarker(planner_data.current_time, 0);
+    autoware::motion_utils::createDeletedSlowDownVirtualWallMarker(planner_data.current_time, 0);
   autoware::universe_utils::appendMarkerArray(markers, &debug_data_ptr_->cruise_wall_marker);
 
   return stop_traj_points;
@@ -480,7 +480,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::doCruiseWithTrajectory(
   // set target longitudinal motion
   const auto prev_traj_closest_point = [&]() -> TrajectoryPoint {
     // if (smoothed_trajectory_ptr_) {
-    //   return autoware_motion_utils::calcInterpolatedPoint(
+    //   return autoware::motion_utils::calcInterpolatedPoint(
     //     *smoothed_trajectory_ptr_, planner_data.ego_pose, nearest_dist_deviation_threshold_,
     //     nearest_yaw_deviation_threshold_);
     // }
@@ -492,7 +492,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::doCruiseWithTrajectory(
   auto cruise_traj_points = getAccelerationLimitedTrajectory(
     stop_traj_points, planner_data.ego_pose, v0, a0, target_acc, target_jerk_ratio);
 
-  const auto zero_vel_idx_opt = autoware_motion_utils::searchZeroVelocityIndex(cruise_traj_points);
+  const auto zero_vel_idx_opt = autoware::motion_utils::searchZeroVelocityIndex(cruise_traj_points);
   if (!zero_vel_idx_opt) {
     return cruise_traj_points;
   }
@@ -529,7 +529,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::getAccelerationLimitedTrajectory(
   };
 
   // calculate sv graph
-  const double s_traj = autoware_motion_utils::calcArcLength(traj_points);
+  const double s_traj = autoware::motion_utils::calcArcLength(traj_points);
   // const double t_max = 10.0;
   const double s_max = 50.0;
   const double max_sampling_num = 100.0;

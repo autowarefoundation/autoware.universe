@@ -36,10 +36,10 @@
 namespace autoware::behavior_path_planner
 {
 
+using autoware::motion_utils::createDeadLineVirtualWallMarker;
+using autoware::motion_utils::createSlowDownVirtualWallMarker;
+using autoware::motion_utils::createStopVirtualWallMarker;
 using autoware::universe_utils::toHexString;
-using autoware_motion_utils::createDeadLineVirtualWallMarker;
-using autoware_motion_utils::createSlowDownVirtualWallMarker;
-using autoware_motion_utils::createStopVirtualWallMarker;
 using unique_identifier_msgs::msg::UUID;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleObserver = std::weak_ptr<SceneModuleInterface>;

@@ -38,7 +38,7 @@ namespace
 geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
   const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & point)
 {
-  const auto nearest_idx = autoware_motion_utils::findNearestIndex(path_points, point);
+  const auto nearest_idx = autoware::motion_utils::findNearestIndex(path_points, point);
   const auto & nearest_pose = path_points.at(nearest_idx).point.pose;
 
   const auto longitudinal_offset =
@@ -167,7 +167,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>> groupPointsWithNearestSegmentIndex(
   for (const auto & p : input_points.points) {
     const auto ros_point = autoware::universe_utils::createPoint(p.x, p.y, p.z);
     const size_t nearest_seg_idx =
-      autoware_motion_utils::findNearestSegmentIndex(path_points, ros_point);
+      autoware::motion_utils::findNearestSegmentIndex(path_points, ros_point);
 
     // if the point is ahead of end of the path, index should be path.size() - 1
     if (

@@ -85,7 +85,7 @@ inline visualization_msgs::msg::MarkerArray createDeletedVirtualWallMarkerArray(
 }
 }  // namespace
 
-namespace autoware_motion_utils
+namespace autoware::motion_utils
 {
 visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
   const geometry_msgs::msg::Pose & pose, const std::string & module_name, const rclcpp::Time & now,
@@ -140,4 +140,4 @@ visualization_msgs::msg::MarkerArray createDeletedDeadLineVirtualWallMarker(
 {
   return createDeletedVirtualWallMarkerArray("dead_line_", now, id);
 }
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils

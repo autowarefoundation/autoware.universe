@@ -242,8 +242,8 @@ void PredictedPathCheckerNode::onTimer()
   // Convert to trajectory array
 
   TrajectoryPoints predicted_trajectory_array =
-    autoware_motion_utils::convertToTrajectoryPointArray(
-      autoware_motion_utils::resampleTrajectory(cut_trajectory, node_param_.resample_interval));
+    autoware::motion_utils::convertToTrajectoryPointArray(
+      autoware::motion_utils::resampleTrajectory(cut_trajectory, node_param_.resample_interval));
 
   // Filter the objects
 
@@ -323,7 +323,7 @@ void PredictedPathCheckerNode::onTimer()
   // trajectory or not
 
   const auto reference_trajectory_array =
-    autoware_motion_utils::convertToTrajectoryPointArray(*reference_trajectory_);
+    autoware::motion_utils::convertToTrajectoryPointArray(*reference_trajectory_);
 
   const auto is_discrete_point =
     isItDiscretePoint(reference_trajectory_array, predicted_trajectory_array.at(stop_idx));
@@ -368,7 +368,7 @@ TrajectoryPoints PredictedPathCheckerNode::trimTrajectoryFromSelfPose(
   TrajectoryPoints output{};
 
   const size_t min_distance_index =
-    autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       input, self_pose, node_param_.ego_nearest_dist_threshold,
       node_param_.ego_nearest_yaw_threshold) +
     1;
@@ -387,9 +387,9 @@ bool PredictedPathCheckerNode::isThereStopPointOnReferenceTrajectory(
     trimTrajectoryFromSelfPose(reference_trajectory_array, current_pose_.get()->pose);
 
   const auto nearest_stop_point_on_ref_trajectory =
-    autoware_motion_utils::findNearestIndex(trimmed_reference_trajectory_array, pose);
+    autoware::motion_utils::findNearestIndex(trimmed_reference_trajectory_array, pose);
 
-  const auto stop_point_on_trajectory = autoware_motion_utils::searchZeroVelocityIndex(
+  const auto stop_point_on_trajectory = autoware::motion_utils::searchZeroVelocityIndex(
     trimmed_reference_trajectory_array, 0, *nearest_stop_point_on_ref_trajectory);
 
   return !!stop_point_on_trajectory;
@@ -427,7 +427,7 @@ bool PredictedPathCheckerNode::isItDiscretePoint(
   const TrajectoryPoints & reference_trajectory, const TrajectoryPoint & collision_point) const
 {
   const auto nearest_segment =
-    autoware_motion_utils::findNearestSegmentIndex(reference_trajectory, collision_point.pose);
+    autoware::motion_utils::findNearestSegmentIndex(reference_trajectory, collision_point.pose);
 
   const auto nearest_point = utils::calcInterpolatedPoint(
     reference_trajectory, collision_point.pose.position, *nearest_segment, false);
@@ -482,7 +482,7 @@ Trajectory PredictedPathCheckerNode::cutTrajectory(
     cut.points.push_back(point);
     total_length += points_distance;
   }
-  autoware_motion_utils::removeOverlapPoints(cut.points);
+  autoware::motion_utils::removeOverlapPoints(cut.points);
 
   return cut;
 }
@@ -501,7 +501,7 @@ size_t PredictedPathCheckerNode::insertStopPoint(
   TrajectoryPoints & trajectory, const geometry_msgs::msg::Point collision_point)
 {
   const auto nearest_collision_segment =
-    autoware_motion_utils::findNearestSegmentIndex(trajectory, collision_point);
+    autoware::motion_utils::findNearestSegmentIndex(trajectory, collision_point);
 
   const auto nearest_collision_point =
     utils::calcInterpolatedPoint(trajectory, collision_point, nearest_collision_segment, true);
@@ -555,7 +555,7 @@ void PredictedPathCheckerNode::filterObstacles(
 
     // Check is it near to trajectory
     const double max_length = utils::calcObstacleMaxLength(object.shape);
-    const size_t seg_idx = autoware_motion_utils::findNearestSegmentIndex(
+    const size_t seg_idx = autoware::motion_utils::findNearestSegmentIndex(
       traj, object.kinematics.initial_pose_with_covariance.pose.position);
     const auto p_front = autoware::universe_utils::getPoint(traj.at(seg_idx));
     const auto p_back = autoware::universe_utils::getPoint(traj.at(seg_idx + 1));

@@ -42,7 +42,7 @@ bool validate_size(const T & points)
 template <class T>
 bool validate_resampling_range(const T & points, const std::vector<double> & resampling_intervals)
 {
-  const double points_length = autoware_motion_utils::calcArcLength(points);
+  const double points_length = autoware::motion_utils::calcArcLength(points);
   return points_length >= resampling_intervals.back();
 }
 
@@ -105,10 +105,10 @@ bool validate_arguments(const T & input_points, const double resampling_interval
   }
 
   // check resampling interval
-  if (resampling_interval < autoware_motion_utils::overlap_threshold) {
+  if (resampling_interval < autoware::motion_utils::overlap_threshold) {
     RCLCPP_DEBUG(
       get_logger(), "invalid argument: resampling interval is less than %f",
-      autoware_motion_utils::overlap_threshold);
+      autoware::motion_utils::overlap_threshold);
     autoware::universe_utils::print_backtrace();
     return false;
   }

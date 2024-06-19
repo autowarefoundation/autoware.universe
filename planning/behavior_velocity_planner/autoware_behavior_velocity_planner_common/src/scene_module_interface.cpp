@@ -41,7 +41,7 @@ size_t SceneModuleInterface::findEgoSegmentIndex(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const
 {
   const auto & p = planner_data_;
-  return autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     points, p->current_odometry->pose, p->ego_nearest_dist_threshold);
 }
 
@@ -77,7 +77,7 @@ size_t SceneModuleManagerInterface::findEgoSegmentIndex(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const
 {
   const auto & p = planner_data_;
-  return autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     points, p->current_odometry->pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
 }
 

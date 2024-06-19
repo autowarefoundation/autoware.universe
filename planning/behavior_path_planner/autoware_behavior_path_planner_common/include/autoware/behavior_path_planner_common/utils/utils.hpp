@@ -93,11 +93,11 @@ FrenetPoint convertToFrenetPoint(
   FrenetPoint frenet_point;
 
   const double longitudinal_length =
-    autoware_motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, search_point_geom);
+    autoware::motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, search_point_geom);
   frenet_point.length =
-    autoware_motion_utils::calcSignedArcLength(points, 0, seg_idx) + longitudinal_length;
+    autoware::motion_utils::calcSignedArcLength(points, 0, seg_idx) + longitudinal_length;
   frenet_point.distance =
-    autoware_motion_utils::calcLateralOffset(points, search_point_geom, seg_idx);
+    autoware::motion_utils::calcLateralOffset(points, search_point_geom, seg_idx);
 
   return frenet_point;
 }
@@ -344,12 +344,12 @@ size_t findNearestSegmentIndex(
   const double yaw_threshold)
 {
   const auto nearest_idx =
-    autoware_motion_utils::findNearestSegmentIndex(points, pose, dist_threshold, yaw_threshold);
+    autoware::motion_utils::findNearestSegmentIndex(points, pose, dist_threshold, yaw_threshold);
   if (nearest_idx) {
     return nearest_idx.value();
   }
 
-  return autoware_motion_utils::findNearestSegmentIndex(points, pose.position);
+  return autoware::motion_utils::findNearestSegmentIndex(points, pose.position);
 }
 }  // namespace autoware::behavior_path_planner::utils
 

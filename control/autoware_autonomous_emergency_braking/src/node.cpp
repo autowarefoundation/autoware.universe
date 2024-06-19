@@ -553,7 +553,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   }
 
   // If path is shorter than minimum path length
-  while (autoware_motion_utils::calcArcLength(path) < min_generated_path_length_) {
+  while (autoware::motion_utils::calcArcLength(path) < min_generated_path_length_) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
     curr_yaw = curr_yaw + curr_w * dt;
@@ -634,7 +634,7 @@ void AEB::createObjectDataUsingPredictedObjects(
         predicted_object.kinematics.initial_twist_with_covariance.twist.linear.y);
 
       const auto obj_yaw = tf2::getYaw(obj_pose.orientation);
-      const auto obj_idx = autoware_motion_utils::findNearestIndex(ego_path, obj_pose.position);
+      const auto obj_idx = autoware::motion_utils::findNearestIndex(ego_path, obj_pose.position);
       const auto path_yaw = (current_ego_speed > 0.0)
                               ? tf2::getYaw(ego_path.at(obj_idx).orientation)
                               : tf2::getYaw(ego_path.at(obj_idx).orientation) + M_PI;
@@ -672,7 +672,7 @@ void AEB::createObjectDataUsingPredictedObjects(
         const auto obj_position =
           autoware::universe_utils::createPoint(collision_point.x(), collision_point.y(), 0.0);
         const double obj_arc_length =
-          autoware_motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
+          autoware::motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
         if (std::isnan(obj_arc_length)) continue;
 
         // If the object is behind the ego, we need to use the backward long offset. The
@@ -750,7 +750,7 @@ void AEB::createObjectDataUsingPointCloudClusters(
   for (const auto & p : *points_belonging_to_cluster_hulls) {
     const auto obj_position = autoware::universe_utils::createPoint(p.x, p.y, p.z);
     const double obj_arc_length =
-      autoware_motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
+      autoware::motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
     if (std::isnan(obj_arc_length)) continue;
 
     // If the object is behind the ego, we need to use the backward long offset. The distance should

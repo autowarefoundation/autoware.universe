@@ -73,12 +73,12 @@ visualization_msgs::msg::MarkerArray createLaneletPolygonsMarkerArray(
 
 }  // namespace
 
-autoware_motion_utils::VirtualWalls BlindSpotModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls BlindSpotModule::createVirtualWalls()
 {
-  autoware_motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWalls virtual_walls;
 
   if (debug_data_.virtual_wall_pose) {
-    autoware_motion_utils::VirtualWall wall;
+    autoware::motion_utils::VirtualWall wall;
     wall.text = "blind_spot";
     wall.pose = debug_data_.virtual_wall_pose.value();
     wall.ns = std::to_string(module_id_) + "_";

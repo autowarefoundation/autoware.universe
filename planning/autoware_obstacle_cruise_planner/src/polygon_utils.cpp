@@ -35,7 +35,7 @@ PointWithStamp calcNearestCollisionPoint(
 
   std::vector<double> dist_vec;
   for (const auto & collision_point : collision_points) {
-    const double dist = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+    const double dist = autoware::motion_utils::calcLongitudinalOffsetToSegment(
       segment_points, 0, collision_point.point);
     dist_vec.push_back(dist);
   }
@@ -121,7 +121,7 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   }
   return std::make_pair(
     *max_collision_point,
-    autoware_motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first) -
+    autoware::motion_utils::calcSignedArcLength(traj_points, 0, collision_info->first) -
       *max_collision_length);
 }
 

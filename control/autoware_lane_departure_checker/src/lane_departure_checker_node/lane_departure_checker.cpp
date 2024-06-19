@@ -30,12 +30,12 @@
 #include <algorithm>
 #include <vector>
 
+using autoware::motion_utils::calcArcLength;
 using autoware::universe_utils::LinearRing2d;
 using autoware::universe_utils::LineString2d;
 using autoware::universe_utils::MultiPoint2d;
 using autoware::universe_utils::MultiPolygon2d;
 using autoware::universe_utils::Point2d;
-using autoware_motion_utils::calcArcLength;
 
 namespace
 {
@@ -169,7 +169,7 @@ PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
   const double yaw_threshold)
 {
-  const auto nearest_idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const auto nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, pose, dist_threshold, yaw_threshold);
   return autoware::universe_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
 }

@@ -22,7 +22,7 @@ using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
-namespace autoware_motion_utils
+namespace autoware::motion_utils
 {
 TrajectoryPoint calcInterpolatedPoint(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & target_pose,
@@ -37,8 +37,9 @@ TrajectoryPoint calcInterpolatedPoint(
     return trajectory.points.front();
   }
 
-  const size_t segment_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    trajectory.points, target_pose, dist_threshold, yaw_threshold);
+  const size_t segment_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      trajectory.points, target_pose, dist_threshold, yaw_threshold);
 
   // Calculate interpolation ratio
   const auto & curr_pt = trajectory.points.at(segment_idx);
@@ -105,8 +106,9 @@ PathPointWithLaneId calcInterpolatedPoint(
     return path.points.front();
   }
 
-  const size_t segment_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, target_pose, dist_threshold, yaw_threshold);
+  const size_t segment_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, target_pose, dist_threshold, yaw_threshold);
 
   // Calculate interpolation ratio
   const auto & curr_pt = path.points.at(segment_idx);
@@ -145,4 +147,4 @@ PathPointWithLaneId calcInterpolatedPoint(
 
   return interpolated_point;
 }
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils

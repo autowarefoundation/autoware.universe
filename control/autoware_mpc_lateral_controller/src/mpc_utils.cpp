@@ -346,7 +346,7 @@ bool calcNearestPoseInterp(
     return false;
   }
 
-  *nearest_index = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  *nearest_index = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, self_pose, max_dist, max_yaw);
   const size_t traj_size = traj.size();
 

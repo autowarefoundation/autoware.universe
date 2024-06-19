@@ -95,7 +95,7 @@ double calcAbsLateralOffset(
     boundary_path[i] = autoware::universe_utils::createPoint(x, y, 0.0);
   }
 
-  return std::fabs(autoware_motion_utils::calcLateralOffset(boundary_path, search_pose.position));
+  return std::fabs(autoware::motion_utils::calcLateralOffset(boundary_path, search_pose.position));
 }
 
 /**
@@ -1700,7 +1700,7 @@ float MapBasedPredictionNode::calculateLocalLikelihood(
     converted_centerline.push_back(converted_p);
   }
   const double lat_dist =
-    std::fabs(autoware_motion_utils::calcLateralOffset(converted_centerline, obj_point));
+    std::fabs(autoware::motion_utils::calcLateralOffset(converted_centerline, obj_point));
 
   // Compute Chi-squared distributed (Equation (8) in the paper)
   const double sigma_d = sigma_lateral_offset_;  // Standard Deviation for lateral position
@@ -2192,7 +2192,7 @@ double MapBasedPredictionNode::calcRightLateralOffset(
     boundary_path[i] = autoware::universe_utils::createPoint(x, y, 0.0);
   }
 
-  return std::fabs(autoware_motion_utils::calcLateralOffset(boundary_path, search_pose.position));
+  return std::fabs(autoware::motion_utils::calcLateralOffset(boundary_path, search_pose.position));
 }
 
 double MapBasedPredictionNode::calcLeftLateralOffset(
@@ -2370,7 +2370,7 @@ std::vector<PosePath> MapBasedPredictionNode::convertPathType(
 
     // Resample Path
     const auto resampled_converted_path =
-      autoware_motion_utils::resamplePoseVector(converted_path, reference_path_resolution_);
+      autoware::motion_utils::resamplePoseVector(converted_path, reference_path_resolution_);
     converted_paths.push_back(resampled_converted_path);
   }
 

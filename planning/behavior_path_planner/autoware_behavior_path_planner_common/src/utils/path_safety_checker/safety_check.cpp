@@ -81,7 +81,7 @@ bool isTargetObjectFront(
   const auto obj_polygon_outer = obj_polygon.outer();
   for (const auto & obj_edge : obj_polygon_outer) {
     const auto obj_point = autoware::universe_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
-    if (autoware_motion_utils::isTargetPointFront(path.points, ego_point, obj_point)) {
+    if (autoware::motion_utils::isTargetPointFront(path.points, ego_point, obj_point)) {
       return true;
     }
   }
@@ -208,7 +208,7 @@ Polygon2d createExtendedPolygonAlongPath(
     debug.lat_offset = lat_offset;
   }
 
-  const auto lon_offset_pose = autoware_motion_utils::calcLongitudinalOffsetPose(
+  const auto lon_offset_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
     planned_path.points, base_link_pose.position, lon_length);
   if (!lon_offset_pose.has_value()) {
     return createExtendedPolygon(
@@ -216,8 +216,8 @@ Polygon2d createExtendedPolygonAlongPath(
   }
 
   const size_t start_idx =
-    autoware_motion_utils::findNearestSegmentIndex(planned_path.points, base_link_pose.position);
-  const size_t end_idx = autoware_motion_utils::findNearestSegmentIndex(
+    autoware::motion_utils::findNearestSegmentIndex(planned_path.points, base_link_pose.position);
+  const size_t end_idx = autoware::motion_utils::findNearestSegmentIndex(
     planned_path.points, lon_offset_pose.value().position);
 
   Polygon2d polygon;

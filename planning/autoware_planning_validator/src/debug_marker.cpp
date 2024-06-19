@@ -89,8 +89,8 @@ void PlanningValidatorDebugMarkerPublisher::pushWarningMsg(
 void PlanningValidatorDebugMarkerPublisher::pushVirtualWall(const geometry_msgs::msg::Pose & pose)
 {
   const auto now = node_->get_clock()->now();
-  const auto stop_wall_marker =
-    autoware_motion_utils::createStopVirtualWallMarker(pose, "autoware_planning_validator", now, 0);
+  const auto stop_wall_marker = autoware::motion_utils::createStopVirtualWallMarker(
+    pose, "autoware_planning_validator", now, 0);
   autoware::universe_utils::appendMarkerArray(stop_wall_marker, &marker_array_virtual_wall_, now);
 }
 

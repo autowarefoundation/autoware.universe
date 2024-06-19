@@ -18,7 +18,7 @@
 
 namespace autoware::behavior_path_planner::utils::traffic_light
 {
-using autoware_motion_utils::calcSignedArcLength;
+using autoware::motion_utils::calcSignedArcLength;
 
 double getDistanceToNextTrafficLight(
   const Pose & current_pose, const lanelet::ConstLanelets & lanelets)

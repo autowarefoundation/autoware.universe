@@ -90,7 +90,7 @@ void ControlValidatorDebugMarkerPublisher::pushVirtualWall(const geometry_msgs::
 {
   const auto now = node_->get_clock()->now();
   const auto stop_wall_marker =
-    autoware_motion_utils::createStopVirtualWallMarker(pose, "control_validator", now, 0);
+    autoware::motion_utils::createStopVirtualWallMarker(pose, "control_validator", now, 0);
   autoware::universe_utils::appendMarkerArray(stop_wall_marker, &marker_array_virtual_wall_, now);
 }
 
