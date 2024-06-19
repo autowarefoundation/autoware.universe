@@ -23,7 +23,6 @@ invalidPointerCast
 knownConditionTrueFalse
 missingInclude
 missingIncludeSystem
-multiCondition
 noConstructor
 noExplicitConstructor
 noValidConfiguration
