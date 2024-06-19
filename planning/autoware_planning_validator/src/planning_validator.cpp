@@ -44,9 +44,9 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
 
   setupParameters();
 
-  logger_configure_ = std::make_unique<autoware_universe_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ =
-    std::make_unique<autoware_universe_utils::PublishedTimePublisher>(this);
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void PlanningValidator::setupParameters()
@@ -469,7 +469,7 @@ bool PlanningValidator::checkValidDistanceDeviation(const Trajectory & trajector
   const auto idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, current_kinematics_->pose.pose);
 
-  validation_status_.distance_deviation = autoware_universe_utils::calcDistance2d(
+  validation_status_.distance_deviation = autoware::universe_utils::calcDistance2d(
     trajectory.points.at(idx), current_kinematics_->pose.pose);
 
   if (validation_status_.distance_deviation > validation_params_.distance_deviation_threshold) {
@@ -501,7 +501,7 @@ bool PlanningValidator::checkValidLongitudinalDistanceDeviation(const Trajectory
     // for last, need to remove distance for the last segment.
     if (is_last) {
       const auto size = trajectory.points.size();
-      long_offset -= autoware_universe_utils::calcDistance2d(
+      long_offset -= autoware::universe_utils::calcDistance2d(
         trajectory.points.at(size - 1), trajectory.points.at(size - 2));
     }
 

@@ -28,13 +28,14 @@ double calcLateralDeviation(const Trajectory & traj, const Point & point)
 {
   const size_t nearest_index = autoware_motion_utils::findNearestIndex(traj.points, point);
   return std::abs(
-    autoware_universe_utils::calcLateralDeviation(traj.points[nearest_index].pose, point));
+    autoware::universe_utils::calcLateralDeviation(traj.points[nearest_index].pose, point));
 }
 
 double calcYawDeviation(const Trajectory & traj, const Pose & pose)
 {
   const size_t nearest_index = autoware_motion_utils::findNearestIndex(traj.points, pose.position);
-  return std::abs(autoware_universe_utils::calcYawDeviation(traj.points[nearest_index].pose, pose));
+  return std::abs(
+    autoware::universe_utils::calcYawDeviation(traj.points[nearest_index].pose, pose));
 }
 
 }  // namespace metrics

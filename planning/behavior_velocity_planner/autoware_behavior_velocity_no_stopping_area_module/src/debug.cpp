@@ -34,10 +34,10 @@ namespace
 {
 const double marker_lifetime = 0.2;
 using DebugData = NoStoppingAreaModule::DebugData;
-using autoware_universe_utils::appendMarkerArray;
-using autoware_universe_utils::createDefaultMarker;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerScale;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::createDefaultMarker;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerScale;
 
 lanelet::BasicPoint3d getCentroidPoint(const lanelet::BasicPolygon3d & poly)
 {
@@ -170,7 +170,7 @@ autoware_motion_utils::VirtualWalls NoStoppingAreaModule::createVirtualWalls()
   wall.text = "no_stopping_area";
   wall.style = autoware_motion_utils::VirtualWallType::stop;
   for (const auto & p : debug_data_.stop_poses) {
-    wall.pose = autoware_universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
+    wall.pose = autoware::universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
   return virtual_walls;

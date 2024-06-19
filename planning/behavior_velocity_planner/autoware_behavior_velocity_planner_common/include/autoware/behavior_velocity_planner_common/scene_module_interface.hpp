@@ -51,10 +51,10 @@ namespace autoware::behavior_velocity_planner
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
 using autoware::rtc_interface::RTCInterface;
+using autoware::universe_utils::DebugPublisher;
+using autoware::universe_utils::getOrDeclareParameter;
 using autoware_motion_utils::PlanningBehavior;
 using autoware_motion_utils::VelocityFactor;
-using autoware_universe_utils::DebugPublisher;
-using autoware_universe_utils::getOrDeclareParameter;
 using builtin_interfaces::msg::Time;
 using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::PathWithLaneId;

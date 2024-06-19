@@ -26,9 +26,9 @@
 namespace autoware::operation_mode_transition_manager
 {
 
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::calcYawDeviation;
 using autoware_motion_utils::findNearestIndex;
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::calcYawDeviation;
 
 AutonomousMode::AutonomousMode(rclcpp::Node * node)
 : logger_(node->get_logger()), clock_(node->get_clock())

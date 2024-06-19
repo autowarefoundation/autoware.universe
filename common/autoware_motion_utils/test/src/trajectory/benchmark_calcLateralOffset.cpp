@@ -22,9 +22,9 @@
 
 namespace
 {
+using autoware::universe_utils::createPoint;
+using autoware::universe_utils::createQuaternionFromRPY;
 using autoware_planning_msgs::msg::Trajectory;
-using autoware_universe_utils::createPoint;
-using autoware_universe_utils::createQuaternionFromRPY;
 
 constexpr double epsilon = 1e-6;
 

@@ -129,7 +129,7 @@ std::vector<autoware::motion_velocity_planner::SlowdownInterval> calculate_slowd
     if (i > 0) {
       const auto & prev_point = trajectory[i - 1];
       time += static_cast<double>(
-        autoware_universe_utils::calcDistance2d(prev_point, trajectory_point) /
+        autoware::universe_utils::calcDistance2d(prev_point, trajectory_point) /
         prev_point.longitudinal_velocity_mps);
     }
     // First linestring is used to calculate distance

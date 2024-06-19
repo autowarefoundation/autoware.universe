@@ -82,7 +82,7 @@ private:
 
   // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
-  autoware_universe_utils::InterProcessPollingSubscriber<Odometry> odom_sub_{
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> odom_sub_{
     this, "~/input/odometry"};
 
   // debug publisher
@@ -113,9 +113,9 @@ private:
     const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<TrajectoryPoint> & optimized_points) const;
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
-  std::unique_ptr<autoware_universe_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace autoware::path_smoother
 

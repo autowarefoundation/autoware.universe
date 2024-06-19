@@ -65,7 +65,7 @@ PathWithLaneId getBackwardPath(
     const double lateral_distance_to_shoulder_center = current_pose_arc_coords.distance;
     for (size_t i = 0; i < backward_path.points.size(); ++i) {
       auto & p = backward_path.points.at(i).point.pose;
-      p = autoware_universe_utils::calcOffsetPose(p, 0, lateral_distance_to_shoulder_center, 0);
+      p = autoware::universe_utils::calcOffsetPose(p, 0, lateral_distance_to_shoulder_center, 0);
     }
   }
 

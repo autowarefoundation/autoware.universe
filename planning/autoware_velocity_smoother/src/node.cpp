@@ -90,9 +90,9 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
 
   clock_ = get_clock();
 
-  logger_configure_ = std::make_unique<autoware_universe_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ =
-    std::make_unique<autoware_universe_utils::PublishedTimePublisher>(this);
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void VelocitySmootherNode::setupSmoother(const double wheelbase)
@@ -911,7 +911,7 @@ void VelocitySmootherNode::applyStopApproachingVelocity(TrajectoryPoints & traj)
   }
   double distance_sum = 0.0;
   for (size_t i = *stop_idx - 1; i < traj.size(); --i) {  // search backward
-    distance_sum += autoware_universe_utils::calcDistance2d(traj.at(i), traj.at(i + 1));
+    distance_sum += autoware::universe_utils::calcDistance2d(traj.at(i), traj.at(i + 1));
     if (distance_sum > node_param_.stopping_distance) {
       break;
     }
@@ -1022,7 +1022,7 @@ double VelocitySmootherNode::calcTravelDistance() const
 
   if (prev_closest_point_) {
     const double travel_dist =
-      autoware_universe_utils::calcDistance2d(*prev_closest_point_, closest_point);
+      autoware::universe_utils::calcDistance2d(*prev_closest_point_, closest_point);
     return travel_dist;
   }
 

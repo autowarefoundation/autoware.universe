@@ -59,7 +59,7 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
 }
 void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 {
-  using autoware_universe_utils::getOrDeclareParameter;
+  using autoware::universe_utils::getOrDeclareParameter;
   auto & pp = params_;
 
   pp.mode = getOrDeclareParameter<std::string>(node, ns_ + ".mode");
@@ -109,7 +109,7 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 
 void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_universe_utils::updateParam;
+  using autoware::universe_utils::updateParam;
   auto & pp = params_;
   updateParam(parameters, ns_ + ".mode", pp.mode);
   updateParam(parameters, ns_ + ".skip_if_already_overlapping", pp.skip_if_already_overlapping);
@@ -151,7 +151,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const std::shared_ptr<const PlannerData> planner_data)
 {
   VelocityPlanningResult result;
-  autoware_universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
+  autoware::universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
   out_of_lane::EgoData ego_data;
   ego_data.pose = planner_data->current_odometry.pose.pose;

@@ -24,7 +24,7 @@
 namespace autoware::behavior_velocity_planner
 {
 
-using autoware_universe_utils::StopWatch;
+using autoware::universe_utils::StopWatch;
 
 SceneModuleInterface::SceneModuleInterface(
   const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
@@ -236,7 +236,7 @@ UUID SceneModuleManagerInterfaceWithRTC::getUUID(const int64_t & module_id) cons
 
 void SceneModuleManagerInterfaceWithRTC::generateUUID(const int64_t & module_id)
 {
-  map_uuid_.insert({module_id, autoware_universe_utils::generateUUID()});
+  map_uuid_.insert({module_id, autoware::universe_utils::generateUUID()});
 }
 
 void SceneModuleManagerInterfaceWithRTC::removeUUID(const int64_t & module_id)

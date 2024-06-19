@@ -30,12 +30,12 @@ namespace
 {
 using builtin_interfaces::msg::Time;
 using BasicPolygons = std::vector<lanelet::BasicPolygon2d>;
-using autoware_universe_utils::appendMarkerArray;
-using autoware_universe_utils::calcOffsetPose;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerOrientation;
-using autoware_universe_utils::createMarkerPosition;
-using autoware_universe_utils::createMarkerScale;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::calcOffsetPose;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerOrientation;
+using autoware::universe_utils::createMarkerPosition;
+using autoware::universe_utils::createMarkerScale;
 using occlusion_spot_utils::PossibleCollisionInfo;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;

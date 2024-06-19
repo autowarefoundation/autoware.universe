@@ -25,9 +25,9 @@
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::normalizeRadian;
-using autoware_universe_utils::rad2deg;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::normalizeRadian;
+using autoware::universe_utils::rad2deg;
 
 MPC::MPC(rclcpp::Node & node)
 {
@@ -501,7 +501,7 @@ MPCMatrix MPC::generateMPCMatrix(
     // get reference input (feed-forward)
     m_vehicle_model_ptr->setCurvature(ref_smooth_k);
     m_vehicle_model_ptr->calculateReferenceInput(Uref);
-    if (std::fabs(Uref(0, 0)) < autoware_universe_utils::deg2rad(m_param.zero_ff_steer_deg)) {
+    if (std::fabs(Uref(0, 0)) < autoware::universe_utils::deg2rad(m_param.zero_ff_steer_deg)) {
       Uref(0, 0) = 0.0;  // ignore curvature noise
     }
     m.Uref_ex.block(i * DIM_U, 0, DIM_U, 1) = Uref;

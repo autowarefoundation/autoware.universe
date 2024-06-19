@@ -26,9 +26,9 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_universe_utils::appendMarkerArray;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerScale;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerScale;
 
 namespace
 {
@@ -105,7 +105,7 @@ autoware_motion_utils::VirtualWalls StopLineModule::createVirtualWalls()
     wall.text = "stopline";
     wall.style = autoware_motion_utils::VirtualWallType::stop;
     wall.ns = std::to_string(module_id_) + "_";
-    wall.pose = autoware_universe_utils::calcOffsetPose(
+    wall.pose = autoware::universe_utils::calcOffsetPose(
       *debug_data_.stop_pose, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }

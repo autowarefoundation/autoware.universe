@@ -71,16 +71,16 @@ bool isPolygonOverlapLanelet(const PredictedObject & object, const lanelet::Cons
 }
 
 bool isPolygonOverlapLanelet(
-  const PredictedObject & object, const autoware_universe_utils::Polygon2d & lanelet_polygon)
+  const PredictedObject & object, const autoware::universe_utils::Polygon2d & lanelet_polygon)
 {
-  const auto object_polygon = autoware_universe_utils::toPolygon2d(object);
+  const auto object_polygon = autoware::universe_utils::toPolygon2d(object);
   return !boost::geometry::disjoint(lanelet_polygon, object_polygon);
 }
 
 bool isPolygonOverlapLanelet(
   const PredictedObject & object, const lanelet::BasicPolygon2d & lanelet_polygon)
 {
-  const auto object_polygon = autoware_universe_utils::toPolygon2d(object);
+  const auto object_polygon = autoware::universe_utils::toPolygon2d(object);
   return !boost::geometry::disjoint(lanelet_polygon, object_polygon);
 }
 
@@ -315,7 +315,7 @@ ExtendedPredictedObject transform(
     for (double t = 0.0; t < safety_check_time_horizon + 1e-3; t += safety_check_time_resolution) {
       const auto obj_pose = object_recognition_utils::calcInterpolatedPose(path, t);
       if (obj_pose) {
-        const auto obj_polygon = autoware_universe_utils::toPolygon2d(*obj_pose, object.shape);
+        const auto obj_polygon = autoware::universe_utils::toPolygon2d(*obj_pose, object.shape);
         extended_object.predicted_paths[i].path.emplace_back(
           t, *obj_pose, obj_velocity, obj_polygon);
       }

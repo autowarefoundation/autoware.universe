@@ -51,7 +51,7 @@ void reuse_previous_poses(
   const auto ego_is_behind =
     prev_poses.size() > 1 &&
     autoware_motion_utils::calcLongitudinalOffsetToSegment(prev_poses, 0, ego_point) < 0.0;
-  const auto ego_is_far = !prev_poses.empty() && autoware_universe_utils::calcDistance2d(
+  const auto ego_is_far = !prev_poses.empty() && autoware::universe_utils::calcDistance2d(
                                                    ego_point, prev_poses.front()) < 0.0;
   // make sure the reused points are not behind the current original drivable area
   LineString2d left_bound;
@@ -162,7 +162,7 @@ void apply_arc_length_range_smoothing(
     auto arc_length = boost::geometry::distance(
       bound_projections[path_idx].point, convert_point(bound[bound_idx + 1]));
     const auto update_arc_length_and_bound_expansions = [&](auto idx) {
-      arc_length += autoware_universe_utils::calcDistance2d(bound[idx - 1], bound[idx]);
+      arc_length += autoware::universe_utils::calcDistance2d(bound[idx - 1], bound[idx]);
       bound_expansions[idx] = std::max(bound_expansions[idx], original_expansions[bound_idx]);
     };
     for (auto up_bound_idx = bound_idx + 2; up_bound_idx < bound.size(); ++up_bound_idx) {
@@ -201,7 +201,7 @@ void apply_bound_change_rate_limit(
   if (distances.empty()) return;
   const auto apply_max_vel = [&](auto & exp, const auto from, const auto to) {
     if (exp[from] > exp[to]) {
-      const auto arc_length = autoware_universe_utils::calcDistance2d(bound[from], bound[to]);
+      const auto arc_length = autoware::universe_utils::calcDistance2d(bound[from], bound[to]);
       const auto smoothed_dist = exp[from] - arc_length * max_rate;
       exp[to] = std::max(exp[to], smoothed_dist);
     }
@@ -285,12 +285,12 @@ void expand_bound(
   for (auto idx = 1LU; idx < bound.size(); ++idx) {
     bool is_intersecting = false;
     for (auto succ_idx = idx + 1; succ_idx < bound.size(); ++succ_idx) {
-      const auto intersection = autoware_universe_utils::intersect(
+      const auto intersection = autoware::universe_utils::intersect(
         bound[idx - 1], bound[idx], bound[succ_idx - 1], bound[succ_idx]);
       if (
         intersection &&
-        autoware_universe_utils::calcDistance2d(*intersection, bound[idx - 1]) < 1e-3 &&
-        autoware_universe_utils::calcDistance2d(*intersection, bound[idx]) < 1e-3) {
+        autoware::universe_utils::calcDistance2d(*intersection, bound[idx - 1]) < 1e-3 &&
+        autoware::universe_utils::calcDistance2d(*intersection, bound[idx]) < 1e-3) {
         idx = succ_idx;
         is_intersecting = true;
       }
@@ -364,7 +364,7 @@ void expand_drivable_area(
 {
   // skip if no bounds or not enough points to calculate path curvature
   if (path.points.size() < 3 || path.left_bound.empty() || path.right_bound.empty()) return;
-  autoware_universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("overall");
   stop_watch.tic("preprocessing");
   const auto & params = planner_data->drivable_area_expansion_parameters;

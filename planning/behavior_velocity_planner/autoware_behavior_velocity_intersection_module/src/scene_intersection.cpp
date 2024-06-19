@@ -56,7 +56,7 @@ IntersectionModule::IntersectionModule(
   associative_ids_(associative_ids),
   turn_direction_(turn_direction),
   has_traffic_light_(has_traffic_light),
-  occlusion_uuid_(autoware_universe_utils::generateUUID())
+  occlusion_uuid_(autoware::universe_utils::generateUUID())
 {
   velocity_factor_.init(PlanningBehavior::INTERSECTION);
 
