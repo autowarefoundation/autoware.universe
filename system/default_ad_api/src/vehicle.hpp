@@ -61,18 +61,6 @@ private:
   vehicle_interface::EnergyStatus::Message::ConstSharedPtr energy_status_msgs_;
   map_interface::MapProjectorInfo::Message::ConstSharedPtr map_projector_info_;
 
-  void kinematic_state(
-    const localization_interface::KinematicState::Message::ConstSharedPtr msg_ptr);
-  void acceleration_status(
-    const localization_interface::Acceleration::Message::ConstSharedPtr msg_ptr);
-  void steering_status(const vehicle_interface::SteeringStatus::Message::ConstSharedPtr msg_ptr);
-  void gear_status(const vehicle_interface::GearStatus::Message::ConstSharedPtr msg_ptr);
-  void turn_indicator_status(
-    const vehicle_interface::TurnIndicatorStatus::Message::ConstSharedPtr msg_ptr);
-  void map_projector_info(const map_interface::MapProjectorInfo::Message::ConstSharedPtr msg_ptr);
-  void hazard_light_status(
-    const vehicle_interface::HazardLightStatus::Message::ConstSharedPtr msg_ptr);
-  void energy_status(const vehicle_interface::EnergyStatus::Message::ConstSharedPtr msg_ptr);
   uint8_t mapping(
     std::unordered_map<uint8_t, uint8_t> hash_map, uint8_t input, uint8_t default_value);
   void publish_kinematics();

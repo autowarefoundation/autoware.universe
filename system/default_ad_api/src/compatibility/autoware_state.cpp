@@ -42,9 +42,13 @@ AutowareStateNode::AutowareStateNode(const rclcpp::NodeOptions & options)
     std::bind(&AutowareStateNode::on_shutdown, this, std::placeholders::_1, std::placeholders::_2));
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
-  adaptor.init_sub(sub_localization_, this, &AutowareStateNode::on_localization);
-  adaptor.init_sub(sub_routing_, this, &AutowareStateNode::on_routing);
-  adaptor.init_sub(sub_operation_mode_, this, &AutowareStateNode::on_operation_mode);
+  adaptor.init_sub(sub_localization_, nullptr);
+  adaptor.init_sub(sub_routing_, nullptr);
+  adaptor.init_sub(sub_operation_mode_, nullptr);
+
+  RCLCPP_INFO_STREAM(get_logger(), sub_localization_);
+  RCLCPP_INFO_STREAM(get_logger(), sub_routing_);
+  RCLCPP_INFO_STREAM(get_logger(), sub_operation_mode_);
 
   const auto rate = rclcpp::Rate(declare_parameter<double>("update_rate"));
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -54,19 +58,6 @@ AutowareStateNode::AutowareStateNode(const rclcpp::NodeOptions & options)
   localization_state_.state = LocalizationState::UNKNOWN;
   routing_state_.state = RoutingState::UNKNOWN;
   operation_mode_state_.mode = OperationModeState::UNKNOWN;
-}
-
-void AutowareStateNode::on_localization(const LocalizationState::ConstSharedPtr msg)
-{
-  localization_state_ = *msg;
-}
-void AutowareStateNode::on_routing(const RoutingState::ConstSharedPtr msg)
-{
-  routing_state_ = *msg;
-}
-void AutowareStateNode::on_operation_mode(const OperationModeState::ConstSharedPtr msg)
-{
-  operation_mode_state_ = *msg;
 }
 
 void AutowareStateNode::on_shutdown(
@@ -114,6 +105,11 @@ void AutowareStateNode::on_timer()
     }
     return AutowareState::PLANNING;
   };
+
+  // Update each state
+  sub_localization_->updateWithLatestData(localization_state_);
+  sub_routing_->updateWithLatestData(routing_state_);
+  sub_operation_mode_->updateWithLatestData(operation_mode_state_);
 
   // Update launch state.
   if (launch_state_ == LaunchState::Initializing) {
