@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_mpc_lateral_controller/mpc_lateral_controller.hpp"
+#include "autoware/mpc_lateral_controller/mpc_lateral_controller.hpp"
 
-#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
-#include "autoware_mpc_lateral_controller/qp_solver/qp_solver_unconstraint_fast.hpp"
-#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
-#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
-#include "autoware_mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
+#include "autoware/mpc_lateral_controller/qp_solver/qp_solver_unconstraint_fast.hpp"
+#include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
+#include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
+#include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/create_timer_ros.h"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <algorithm>
 #include <deque>
@@ -69,7 +69,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
   m_mpc_converged_threshold_rps = dp_double("mpc_converged_threshold_rps");  // [rad/s]
 
   /* mpc parameters */
-  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
+  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   const double wheelbase = vehicle_info.wheel_base_m;
   constexpr double deg2rad = static_cast<double>(M_PI) / 180.0;
   m_mpc->m_steer_lim = vehicle_info.max_steer_angle_rad;
@@ -408,7 +408,7 @@ bool MpcLateralController::isStoppedState() const
   // for the stop state judgement. However, it has been removed since the steering
   // control was turned off when approaching/exceeding the stop line on a curve or
   // emergency stop situation and it caused large tracking error.
-  const size_t nearest = motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t nearest = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
     m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
 
@@ -616,7 +616,7 @@ bool MpcLateralController::isTrajectoryShapeChanged() const
   // TODO(Horibe): update implementation to check trajectory shape around ego vehicle.
   // Now temporally check the goal position.
   for (const auto & trajectory : m_trajectory_buffer) {
-    const auto change_distance = tier4_autoware_utils::calcDistance2d(
+    const auto change_distance = autoware_universe_utils::calcDistance2d(
       trajectory.points.back().pose, m_current_trajectory.points.back().pose);
     if (change_distance > m_new_traj_end_dist) {
       return true;
