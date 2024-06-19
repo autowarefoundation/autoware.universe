@@ -68,11 +68,7 @@
   <group if="$(var use_multi_channel_tracker_merger)">
     <let name="detection_enabled_channels" value="$(var input/detection_input_channels)"/>
     <group scoped="false" if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_radar_fusion&quot;')">
-      <let
-        name="detection_enabled_channels"
-        value="['lidar_$(var lidar_detection_model)_validated','camera_lidar_fusion','detection_by_tracker','radar_far']"
-        if="$(var use_detection_by_tracker)"
-      />
+      <let name="detection_enabled_channels" value="['lidar_$(var lidar_detection_model)_validated','camera_lidar_fusion','detection_by_tracker','radar_far']" if="$(var use_detection_by_tracker)"/>
       <let name="detection_enabled_channels" value="['lidar_$(var lidar_detection_model)_validated','camera_lidar_fusion','radar_far']" unless="$(var use_detection_by_tracker)"/>
     </group>
     <group scoped="false" if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_fusion&quot;')">
