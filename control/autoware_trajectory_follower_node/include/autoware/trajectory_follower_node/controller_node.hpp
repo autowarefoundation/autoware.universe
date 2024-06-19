@@ -29,12 +29,8 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-<<<<<<< HEAD
-#include <autoware/universe_utils/ros/published_time_publisher.hpp>
-=======
 #include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
->>>>>>> 7d50bb6e8 (dependency added.)
 
 #include "autoware_control_msgs/msg/control.hpp"
 #include "autoware_control_msgs/msg/longitudinal.hpp"
