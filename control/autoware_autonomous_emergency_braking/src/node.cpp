@@ -634,7 +634,7 @@ void AEB::createObjectDataUsingPredictedObjects(
         predicted_object.kinematics.initial_twist_with_covariance.twist.linear.y);
 
       const auto obj_yaw = tf2::getYaw(obj_pose.orientation);
-      const auto obj_idx = motion_utils::findNearestIndex(ego_path, obj_pose.position);
+      const auto obj_idx = autoware_motion_utils::findNearestIndex(ego_path, obj_pose.position);
       const auto path_yaw = (current_ego_speed > 0.0)
                               ? tf2::getYaw(ego_path.at(obj_idx).orientation)
                               : tf2::getYaw(ego_path.at(obj_idx).orientation) + M_PI;
@@ -672,7 +672,7 @@ void AEB::createObjectDataUsingPredictedObjects(
         const auto obj_position =
           autoware_universe_utils::createPoint(collision_point.x(), collision_point.y(), 0.0);
         const double obj_arc_length =
-          motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
+          autoware_motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
         if (std::isnan(obj_arc_length)) continue;
 
         // If the object is behind the ego, we need to use the backward long offset. The

@@ -21,14 +21,8 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-#include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
-#include <boost/geometry/algorithms/distance.hpp>
-#include <boost/optional.hpp>
 
-#include <map>
-#include <string>
-#include <utility>
 #include <vector>
 
 namespace autoware::motion::control::autonomous_emergency_braking::utils
