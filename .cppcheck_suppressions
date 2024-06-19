@@ -38,7 +38,6 @@ shadowVariable
 syntaxError
 uninitMemberVar
 unknownMacro
-unpreciseMathCall
 unreadVariable
 unusedFunction
 unusedScopedObject
@@ -46,7 +45,6 @@ unusedStructMember
 unusedVariable
 useInitializationList
 useStlAlgorithm
-uselessCallsSubstr
 uselessOverride
 variableScope
 virtualCallInConstructor
