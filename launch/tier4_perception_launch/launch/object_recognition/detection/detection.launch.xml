@@ -56,6 +56,8 @@
   <arg name="tracker_based_detector/output/objects" default="$(var ns)/detection_by_tracker/objects"/>
   <arg name="lidar_object_filter/output/objects" default="$(var ns)/$(var lidar_detection_model)/validation/objects"/>
   <arg name="camera_lidar_object_filter/output/objects" default="$(var ns)/clustering/camera_lidar_fusion/filtered/objects"/>
+  <arg name="radar_pipeline/output/objects" default="$(var ns)/radar/far_objects"/>
+  <arg name="radar_object_filter/output/objects" default="$(var ns)/radar/far_objects"/>
 
   <!-- Module switching -->
   <arg name="switch/detector/camera_lidar" default="false"/>
@@ -179,7 +181,7 @@
     <push-ros-namespace namespace="radar"/>
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/filter/radar_filter.launch.xml">
       <arg name="input/radar" value="$(var input/radar)"/>
-      <arg name="output/objects" value="far_objects"/>
+      <arg name="output/objects" value="$(var radar_pipeline/output/objects)"/>
       <arg name="radar_lanelet_filtering_range_param_path" value="$(var radar_lanelet_filtering_range_param_path)"/>
       <arg name="radar_crossing_objects_noise_filter_param_path" value="$(var object_recognition_detection_radar_crossing_objects_noise_filter_param_path)"/>
       <arg name="object_velocity_splitter_param_path" value="$(var object_recognition_detection_object_velocity_splitter_radar_fusion_param_path)"/>
@@ -269,7 +271,7 @@
       <arg name="input/lidar_rule/objects" value="$(var camera_lidar_rule_detector/output/objects)"/>
       <arg name="input/detection_by_tracker/objects" value="$(var tracker_based_detector/output/objects)"/>
       <arg name="input/radar/objects" value="radar/noise_filtered_objects"/>
-      <arg name="input/radar_far/objects" value="radar/far_objects"/>
+      <arg name="input/radar_far/objects" value="$(var radar_pipeline/output/objects)"/>
       <arg name="output/objects" value="$(var output/objects)"/>
       <arg name="lidar_detection_model" value="$(var lidar_detection_model)"/>
       <arg name="use_radar_tracking_fusion" value="$(var use_radar_tracking_fusion)"/>
