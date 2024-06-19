@@ -59,10 +59,10 @@ namespace autoware::behavior_path_planner
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
 using autoware::rtc_interface::RTCInterface;
+using autoware::universe_utils::calcOffsetPose;
+using autoware::universe_utils::generateUUID;
 using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
-using autoware_universe_utils::calcOffsetPose;
-using autoware_universe_utils::generateUUID;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::PathWithLaneId;

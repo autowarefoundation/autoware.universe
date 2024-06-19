@@ -82,13 +82,13 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
 
   // get ego nearest search parameters and resample interval in behavior_path_planner
   const double ego_nearest_dist_threshold =
-    autoware_universe_utils::getOrDeclareParameter<double>(node, "ego_nearest_dist_threshold");
+    autoware::universe_utils::getOrDeclareParameter<double>(node, "ego_nearest_dist_threshold");
   const double ego_nearest_yaw_threshold =
-    autoware_universe_utils::getOrDeclareParameter<double>(node, "ego_nearest_yaw_threshold");
+    autoware::universe_utils::getOrDeclareParameter<double>(node, "ego_nearest_yaw_threshold");
   const double behavior_path_interval =
-    autoware_universe_utils::getOrDeclareParameter<double>(node, "output_path_interval");
+    autoware::universe_utils::getOrDeclareParameter<double>(node, "output_path_interval");
   const double behavior_vel_interval =
-    autoware_universe_utils::getOrDeclareParameter<double>(node, "behavior_output_path_interval");
+    autoware::universe_utils::getOrDeclareParameter<double>(node, "behavior_output_path_interval");
 
   // extract path with lane id from lanelets
   const auto raw_path_with_lane_id = [&]() {
@@ -166,7 +166,7 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
 
     // connect the previously and currently optimized trajectory points
     for (size_t j = 0; j < whole_optimized_traj_points.size(); ++j) {
-      const double dist = autoware_universe_utils::calcDistance2d(
+      const double dist = autoware::universe_utils::calcDistance2d(
         whole_optimized_traj_points.at(j), optimized_traj_points.front());
       if (dist < 0.5) {
         const std::vector<TrajectoryPoint> extracted_whole_optimized_traj_points{

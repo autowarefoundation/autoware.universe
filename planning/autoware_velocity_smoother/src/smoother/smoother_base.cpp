@@ -249,7 +249,7 @@ TrajectoryPoints SmootherBase::applySteeringRateLimit(
     }
 
     const auto steer_rate = steer_rate_arr.at(i);
-    if (steer_rate < autoware_universe_utils::deg2rad(base_param_.max_steering_angle_rate)) {
+    if (steer_rate < autoware::universe_utils::deg2rad(base_param_.max_steering_angle_rate)) {
       continue;
     }
 
@@ -257,7 +257,7 @@ TrajectoryPoints SmootherBase::applySteeringRateLimit(
       (output.at(i).longitudinal_velocity_mps + output.at(i + 1).longitudinal_velocity_mps) / 2.0;
     const auto target_mean_vel =
       mean_vel *
-      (autoware_universe_utils::deg2rad(base_param_.max_steering_angle_rate) / steer_rate);
+      (autoware::universe_utils::deg2rad(base_param_.max_steering_angle_rate) / steer_rate);
 
     for (size_t k = 0; k < 2; k++) {
       auto & velocity = output.at(i + k).longitudinal_velocity_mps;

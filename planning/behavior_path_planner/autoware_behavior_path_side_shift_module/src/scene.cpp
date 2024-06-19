@@ -28,11 +28,11 @@
 
 namespace autoware::behavior_path_planner
 {
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::getPoint;
 using autoware_motion_utils::calcSignedArcLength;
 using autoware_motion_utils::findNearestIndex;
 using autoware_motion_utils::findNearestSegmentIndex;
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::getPoint;
 using geometry_msgs::msg::Point;
 
 SideShiftModule::SideShiftModule(
@@ -196,7 +196,7 @@ void SideShiftModule::updateData()
     double max_dist = 0.0;
     for (const auto & pnt : path_shifter_.getShiftLines()) {
       max_dist =
-        std::max(max_dist, autoware_universe_utils::calcDistance2d(getEgoPose(), pnt.start));
+        std::max(max_dist, autoware::universe_utils::calcDistance2d(getEgoPose(), pnt.start));
     }
     return max_dist;
   }();
@@ -468,7 +468,7 @@ void SideShiftModule::setDebugMarkersVisualization() const
   debug_marker_.markers.clear();
 
   const auto add = [this](const MarkerArray & added) {
-    autoware_universe_utils::appendMarkerArray(added, &debug_marker_);
+    autoware::universe_utils::appendMarkerArray(added, &debug_marker_);
   };
 
   const auto add_shift_line_marker = [this, add](

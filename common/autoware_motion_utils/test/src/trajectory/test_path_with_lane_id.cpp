@@ -22,7 +22,7 @@
 
 namespace
 {
-using autoware_universe_utils::createPoint;
+using autoware::universe_utils::createPoint;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
@@ -31,7 +31,7 @@ geometry_msgs::msg::Pose createPose(
 {
   geometry_msgs::msg::Pose p;
   p.position = createPoint(x, y, z);
-  p.orientation = autoware_universe_utils::createQuaternionFromRPY(roll, pitch, yaw);
+  p.orientation = autoware::universe_utils::createQuaternionFromRPY(roll, pitch, yaw);
   return p;
 }
 

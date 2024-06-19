@@ -135,7 +135,7 @@ TrajectoryPoints resampleTrajectory(
   // add end point directly to consider the endpoint velocity.
   if (is_endpoint_included) {
     constexpr double ep_dist = 1.0E-3;
-    if (autoware_universe_utils::calcDistance2d(output.back(), input.back()) < ep_dist) {
+    if (autoware::universe_utils::calcDistance2d(output.back(), input.back()) < ep_dist) {
       output.back() = input.back();
     } else {
       output.push_back(input.back());
@@ -255,7 +255,7 @@ TrajectoryPoints resampleTrajectory(
   // add end point directly to consider the endpoint velocity.
   if (is_endpoint_included) {
     constexpr double ep_dist = 1.0E-3;
-    if (autoware_universe_utils::calcDistance2d(output.back(), input.back()) < ep_dist) {
+    if (autoware::universe_utils::calcDistance2d(output.back(), input.back()) < ep_dist) {
       output.back() = input.back();
     } else {
       output.push_back(input.back());

@@ -24,7 +24,7 @@ namespace
 TrajectoryPoint convertToTrajectoryPoint(const PathPoint & point)
 {
   TrajectoryPoint traj_point;
-  traj_point.pose = autoware_universe_utils::getPose(point);
+  traj_point.pose = autoware::universe_utils::getPose(point);
   traj_point.longitudinal_velocity_mps = point.longitudinal_velocity_mps;
   traj_point.lateral_velocity_mps = point.lateral_velocity_mps;
   traj_point.heading_rate_rps = point.heading_rate_rps;

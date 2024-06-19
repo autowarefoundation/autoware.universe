@@ -47,8 +47,8 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
 
 using autoware::route_handler::RouteHandler;
-using autoware_universe_utils::LinearRing2d;
-using autoware_universe_utils::Polygon2d;
+using autoware::universe_utils::LinearRing2d;
+using autoware::universe_utils::Polygon2d;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Vector3;
@@ -147,7 +147,7 @@ bool checkCollisionWithExtraStoppingMargin(
  * @return Has collision or not
  */
 bool checkCollisionBetweenPathFootprintsAndObjects(
-  const autoware_universe_utils::LinearRing2d & vehicle_footprint, const PathWithLaneId & ego_path,
+  const autoware::universe_utils::LinearRing2d & vehicle_footprint, const PathWithLaneId & ego_path,
   const PredictedObjects & dynamic_objects, const double margin);
 
 /**
@@ -155,7 +155,7 @@ bool checkCollisionBetweenPathFootprintsAndObjects(
  * @return Has collision or not
  */
 bool checkCollisionBetweenFootprintAndObjects(
-  const autoware_universe_utils::LinearRing2d & vehicle_footprint, const Pose & ego_pose,
+  const autoware::universe_utils::LinearRing2d & vehicle_footprint, const Pose & ego_pose,
   const PredictedObjects & dynamic_objects, const double margin);
 
 /**

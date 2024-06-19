@@ -59,9 +59,9 @@ using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::Imu;
 using sensor_msgs::msg::PointCloud2;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
-using autoware_universe_utils::Point2d;
-using autoware_universe_utils::Polygon2d;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using visualization_msgs::msg::Marker;
@@ -236,14 +236,14 @@ public:
   explicit AEB(const rclcpp::NodeOptions & node_options);
 
   // subscriber
-  autoware_universe_utils::InterProcessPollingSubscriber<PointCloud2> sub_point_cloud_{
-    this, "~/input/pointcloud", autoware_universe_utils::SingleDepthSensorQoS()};
-  autoware_universe_utils::InterProcessPollingSubscriber<VelocityReport> sub_velocity_{
+  autoware::universe_utils::InterProcessPollingSubscriber<PointCloud2> sub_point_cloud_{
+    this, "~/input/pointcloud", autoware::universe_utils::SingleDepthSensorQoS()};
+  autoware::universe_utils::InterProcessPollingSubscriber<VelocityReport> sub_velocity_{
     this, "~/input/velocity"};
-  autoware_universe_utils::InterProcessPollingSubscriber<Imu> sub_imu_{this, "~/input/imu"};
-  autoware_universe_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_traj_{
+  autoware::universe_utils::InterProcessPollingSubscriber<Imu> sub_imu_{this, "~/input/imu"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_traj_{
     this, "~/input/predicted_trajectory"};
-  autoware_universe_utils::InterProcessPollingSubscriber<AutowareState> sub_autoware_state_{
+  autoware::universe_utils::InterProcessPollingSubscriber<AutowareState> sub_autoware_state_{
     this, "/autoware/state"};
   // publisher
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_obstacle_pointcloud_;

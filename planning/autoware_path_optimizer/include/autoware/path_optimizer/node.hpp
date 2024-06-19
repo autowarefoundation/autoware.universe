@@ -90,7 +90,7 @@ protected:  // for the static_centerline_generator package
 
   // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
-  autoware_universe_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
     this, "~/input/odometry"};
 
   // debug publisher
@@ -137,9 +137,9 @@ protected:  // for the static_centerline_generator package
 private:
   double vehicle_stop_margin_outside_drivable_area_;
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
-  std::unique_ptr<autoware_universe_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace autoware::path_optimizer
 

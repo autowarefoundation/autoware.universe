@@ -39,7 +39,7 @@ ReplanChecker::ReplanChecker(rclcpp::Node * node, const EgoNearestParam & ego_ne
 
 void ReplanChecker::onParam(const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_universe_utils::updateParam;
+  using autoware::universe_utils::updateParam;
 
   updateParam<double>(
     parameters, "replan.max_path_shape_around_ego_lat_dist", max_path_shape_around_ego_lat_dist_);
@@ -78,7 +78,7 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data) const
 
     // ego pose is lost or new ego pose is designated in simulation
     const double delta_dist =
-      autoware_universe_utils::calcDistance2d(p.ego_pose, prev_ego_pose_ptr_->position);
+      autoware::universe_utils::calcDistance2d(p.ego_pose, prev_ego_pose_ptr_->position);
     if (max_ego_moving_dist_ < delta_dist) {
       RCLCPP_DEBUG(
         logger_,
@@ -205,7 +205,7 @@ bool ReplanChecker::isPathGoalChanged(
   }
 
   const double goal_moving_dist =
-    autoware_universe_utils::calcDistance2d(p.traj_points.back(), prev_traj_points.back());
+    autoware::universe_utils::calcDistance2d(p.traj_points.back(), prev_traj_points.back());
   if (goal_moving_dist < max_goal_moving_dist_) {
     return false;
   }

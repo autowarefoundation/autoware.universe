@@ -149,7 +149,7 @@ double calcMaxLateralDistance(
     alignTrajectoryWithReferenceTrajectory(reference_trajectory, predicted_trajectory);
   double max_dist = 0;
   for (const auto & point : alined_predicted_trajectory.points) {
-    const auto p0 = autoware_universe_utils::getPoint(point);
+    const auto p0 = autoware::universe_utils::getPoint(point);
     // find nearest segment
     const size_t nearest_segment_idx =
       autoware_motion_utils::findNearestSegmentIndex(reference_trajectory.points, p0);

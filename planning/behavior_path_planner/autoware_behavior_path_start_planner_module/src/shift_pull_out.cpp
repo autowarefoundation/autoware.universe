@@ -27,9 +27,9 @@
 #include <memory>
 #include <vector>
 
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::calcOffsetPose;
 using autoware_motion_utils::findNearestIndex;
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::calcOffsetPose;
 using lanelet::utils::getArcCoordinates;
 namespace autoware::behavior_path_planner
 {

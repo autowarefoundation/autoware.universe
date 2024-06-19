@@ -41,13 +41,13 @@ autoware_motion_utils::VirtualWalls TrafficLightModule::createVirtualWalls()
 
   wall.style = autoware_motion_utils::VirtualWallType::deadline;
   for (const auto & p : debug_data_.dead_line_poses) {
-    wall.pose = autoware_universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
+    wall.pose = autoware::universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
 
   wall.style = autoware_motion_utils::VirtualWallType::stop;
   for (const auto & p : debug_data_.stop_poses) {
-    wall.pose = autoware_universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
+    wall.pose = autoware::universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
 

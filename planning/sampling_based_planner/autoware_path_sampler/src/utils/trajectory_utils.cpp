@@ -46,12 +46,12 @@ void compensateLastPose(
 
   const geometry_msgs::msg::Pose last_traj_pose = traj_points.back().pose;
 
-  const double dist =
-    autoware_universe_utils::calcDistance2d(last_path_point.pose.position, last_traj_pose.position);
+  const double dist = autoware::universe_utils::calcDistance2d(
+    last_path_point.pose.position, last_traj_pose.position);
   const double norm_diff_yaw = [&]() {
     const double diff_yaw =
       tf2::getYaw(last_path_point.pose.orientation) - tf2::getYaw(last_traj_pose.orientation);
-    return autoware_universe_utils::normalizeRadian(diff_yaw);
+    return autoware::universe_utils::normalizeRadian(diff_yaw);
   }();
   if (dist > delta_dist_threshold || std::fabs(norm_diff_yaw) > delta_yaw_threshold) {
     traj_points.push_back(convertToTrajectoryPoint(last_path_point));

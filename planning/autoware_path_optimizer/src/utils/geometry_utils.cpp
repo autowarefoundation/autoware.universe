@@ -39,10 +39,10 @@
 namespace autoware::path_optimizer
 {
 namespace bg = boost::geometry;
-using autoware_universe_utils::LinearRing2d;
-using autoware_universe_utils::LineString2d;
-using autoware_universe_utils::Point2d;
-using autoware_universe_utils::Polygon2d;
+using autoware::universe_utils::LinearRing2d;
+using autoware::universe_utils::LineString2d;
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
 
 namespace
 {
@@ -136,13 +136,13 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
 
   // calculate footprint corner points
   const auto top_left_pos =
-    autoware_universe_utils::calcOffsetPose(pose, base_to_front, base_to_left, 0.0).position;
+    autoware::universe_utils::calcOffsetPose(pose, base_to_front, base_to_left, 0.0).position;
   const auto top_right_pos =
-    autoware_universe_utils::calcOffsetPose(pose, base_to_front, -base_to_right, 0.0).position;
+    autoware::universe_utils::calcOffsetPose(pose, base_to_front, -base_to_right, 0.0).position;
   const auto bottom_right_pos =
-    autoware_universe_utils::calcOffsetPose(pose, -base_to_rear, -base_to_right, 0.0).position;
+    autoware::universe_utils::calcOffsetPose(pose, -base_to_rear, -base_to_right, 0.0).position;
   const auto bottom_left_pos =
-    autoware_universe_utils::calcOffsetPose(pose, -base_to_rear, base_to_left, 0.0).position;
+    autoware::universe_utils::calcOffsetPose(pose, -base_to_rear, base_to_left, 0.0).position;
 
   if (use_footprint_polygon_for_outside_drivable_area_check) {
     // calculate footprint polygon

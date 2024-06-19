@@ -450,7 +450,7 @@ std::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
 
       const auto markers = autoware_motion_utils::createSlowDownVirtualWallMarker(
         marker_pose.value(), "obstacle to follow", current_time, 0);
-      autoware_universe_utils::appendMarkerArray(markers, &wall_msg);
+      autoware::universe_utils::appendMarkerArray(markers, &wall_msg);
 
       // publish rviz marker
       debug_wall_marker_pub_->publish(wall_msg);
@@ -627,7 +627,7 @@ geometry_msgs::msg::Pose OptimizationBasedPlanner::transformBaseLink2Center(
 
   geometry_msgs::msg::Pose center_pose;
   center_pose.position =
-    autoware_universe_utils::createPoint(map2center.x(), map2center.y(), map2center.z());
+    autoware::universe_utils::createPoint(map2center.x(), map2center.y(), map2center.z());
   center_pose.orientation = pose_base_link.orientation;
 
   return center_pose;

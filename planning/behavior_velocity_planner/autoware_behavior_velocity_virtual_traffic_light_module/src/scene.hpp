@@ -48,10 +48,10 @@ public:
     std::string instrument_type{};
     std::string instrument_id{};
     std::vector<tier4_v2x_msgs::msg::KeyValue> custom_tags{};
-    autoware_universe_utils::Point3d instrument_center{};
-    std::optional<autoware_universe_utils::LineString3d> stop_line{};
-    autoware_universe_utils::LineString3d start_line{};
-    std::vector<autoware_universe_utils::LineString3d> end_lines{};
+    autoware::universe_utils::Point3d instrument_center{};
+    std::optional<autoware::universe_utils::LineString3d> stop_line{};
+    autoware::universe_utils::LineString3d start_line{};
+    std::vector<autoware::universe_utils::LineString3d> end_lines{};
   };
 
   struct ModuleData

@@ -29,7 +29,7 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware_universe_utils::appendMarkerArray;
+using autoware::universe_utils::appendMarkerArray;
 using utils::lane_change::assignToCandidate;
 
 LaneChangeInterface::LaneChangeInterface(

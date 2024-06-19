@@ -132,7 +132,7 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
-  autoware_universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
+  autoware::universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
   VelocityPlanningResult result;
   stopwatch.tic("preprocessing");
