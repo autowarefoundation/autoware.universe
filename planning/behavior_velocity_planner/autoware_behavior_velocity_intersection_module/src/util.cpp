@@ -19,8 +19,8 @@
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -51,7 +51,7 @@ static std::optional<size_t> getDuplicatedPointIdx(
     const auto & p = path.points.at(i).point.pose.position;
 
     constexpr double min_dist = 0.001;
-    if (tier4_autoware_utils::calcDistance2d(p, point) < min_dist) {
+    if (autoware_universe_utils::calcDistance2d(p, point) < min_dist) {
       return i;
     }
   }
@@ -68,7 +68,7 @@ std::optional<size_t> insertPointIndex(
     return duplicate_idx_opt.value();
   }
 
-  const size_t closest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t closest_idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
     inout_path->points, in_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
   // vector.insert(i) inserts element on the left side of v[i]
   // the velocity need to be zero order hold(from prior point)
@@ -130,7 +130,7 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
 
 std::optional<size_t> getFirstPointInsidePolygonByFootprint(
   const lanelet::CompoundPolygon3d & polygon, const InterpolatedPathInfo & interpolated_path_info,
-  const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length)
+  const autoware_universe_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto [lane_start, lane_end] = interpolated_path_info.lane_id_interval.value();
@@ -140,8 +140,8 @@ std::optional<size_t> getFirstPointInsidePolygonByFootprint(
   const auto area_2d = lanelet::utils::to2D(polygon).basicPolygon();
   for (auto i = start; i <= lane_end; ++i) {
     const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = tier4_autoware_utils::transformVector(
-      footprint, tier4_autoware_utils::pose2transform(base_pose));
+    const auto path_footprint = autoware_universe_utils::transformVector(
+      footprint, autoware_universe_utils::pose2transform(base_pose));
     if (bg::intersects(path_footprint, area_2d)) {
       return std::make_optional<size_t>(i);
     }
@@ -154,7 +154,7 @@ std::optional<std::pair<
 getFirstPointInsidePolygonsByFootprint(
   const std::vector<lanelet::CompoundPolygon3d> & polygons,
   const InterpolatedPathInfo & interpolated_path_info,
-  const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length)
+  const autoware_universe_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto [lane_start, lane_end] = interpolated_path_info.lane_id_interval.value();
@@ -164,8 +164,8 @@ getFirstPointInsidePolygonsByFootprint(
 
   for (size_t i = start; i <= lane_end; ++i) {
     const auto & pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint =
-      tier4_autoware_utils::transformVector(footprint, tier4_autoware_utils::pose2transform(pose));
+    const auto path_footprint = autoware_universe_utils::transformVector(
+      footprint, autoware_universe_utils::pose2transform(pose));
     for (size_t j = 0; j < polygons.size(); ++j) {
       const auto area_2d = lanelet::utils::to2D(polygons.at(j)).basicPolygon();
       const bool is_in_polygon = bg::intersects(area_2d, path_footprint);
@@ -332,7 +332,7 @@ bool isBeforeTargetIndex(
   return static_cast<bool>(target_idx > closest_idx);
 }
 
-std::optional<tier4_autoware_utils::Polygon2d> getIntersectionArea(
+std::optional<autoware_universe_utils::Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr)
 {
   const std::string area_id_str = assigned_lane.attributeOr("intersection_area", "else");

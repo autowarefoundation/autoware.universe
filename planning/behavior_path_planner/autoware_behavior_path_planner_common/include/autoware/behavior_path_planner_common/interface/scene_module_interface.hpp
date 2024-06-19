@@ -22,17 +22,17 @@
 
 #include <autoware/behavior_path_planner_common/interface/steering_factor_interface.hpp>
 #include <autoware/behavior_path_planner_common/turn_signal_decider.hpp>
+#include <autoware/motion_utils/marker/marker_helper.hpp>
+#include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/rtc_interface/rtc_interface.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <magic_enum.hpp>
-#include <motion_utils/marker/marker_helper.hpp>
-#include <motion_utils/trajectory/path_with_lane_id.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
@@ -61,9 +61,9 @@ using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInt
 using autoware::rtc_interface::RTCInterface;
 using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
+using autoware_universe_utils::calcOffsetPose;
+using autoware_universe_utils::generateUUID;
 using steering_factor_interface::SteeringFactorInterface;
-using tier4_autoware_utils::calcOffsetPose;
-using tier4_autoware_utils::generateUUID;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_planning_msgs::msg::StopFactor;
@@ -146,7 +146,7 @@ public:
     updateData();
     const auto output = isWaitingApproval() ? planWaitingApproval() : plan();
     try {
-      motion_utils::validateNonEmpty(output.path.points);
+      autoware_motion_utils::validateNonEmpty(output.path.points);
     } catch (const std::exception & ex) {
       throw std::invalid_argument("[" + name_ + "]" + ex.what());
     }
@@ -566,8 +566,8 @@ protected:
 
     StopFactor stop_factor;
     stop_factor.stop_pose = stop_pose_.value();
-    stop_factor.dist_to_stop_pose =
-      motion_utils::calcSignedArcLength(path.points, getEgoPosition(), stop_pose_.value().position);
+    stop_factor.dist_to_stop_pose = autoware_motion_utils::calcSignedArcLength(
+      path.points, getEgoPosition(), stop_pose_.value().position);
     stop_reason_.stop_factors.push_back(stop_factor);
   }
 

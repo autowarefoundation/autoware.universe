@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include <geometry_msgs/msg/twist.hpp>
@@ -27,12 +27,12 @@ using autoware::behavior_path_planner::Pose;
 using autoware::behavior_path_planner::TurnSignalDecider;
 using autoware::behavior_path_planner::TurnSignalInfo;
 using autoware_planning_msgs::msg::PathPoint;
+using autoware_universe_utils::createPoint;
+using autoware_universe_utils::createQuaternionFromYaw;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Twist;
-using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::createQuaternionFromYaw;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 
 constexpr double nearest_dist_threshold = 5.0;
@@ -105,8 +105,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose on the behavior desired start
   {
     Pose current_pose = generateEgoSamplePose(5.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -116,8 +117,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is right before the intersection required start
   {
     Pose current_pose = generateEgoSamplePose(34.99f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -127,8 +129,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is within the intersection required section
   {
     Pose current_pose = generateEgoSamplePose(40.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -138,8 +141,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is within the intersection and behavior required section
   {
     Pose current_pose = generateEgoSamplePose(45.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -149,8 +153,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is on the intersection required end
   {
     Pose current_pose = generateEgoSamplePose(48.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -160,8 +165,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is right after the intersection required end
   {
     Pose current_pose = generateEgoSamplePose(48.1f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -171,8 +177,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is on the behavior required end
   {
     Pose current_pose = generateEgoSamplePose(50.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -182,8 +189,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is right after the behavior required end
   {
     Pose current_pose = generateEgoSamplePose(50.1f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -193,8 +201,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is right on the intersection desired end
   {
     Pose current_pose = generateEgoSamplePose(65.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -204,8 +213,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
   // current pose is right right after the intersection desired end
   {
     Pose current_pose = generateEgoSamplePose(65.1f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -244,8 +254,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition2)
   // current pose on the behavior desired start
   {
     Pose current_pose = generateEgoSamplePose(5.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -255,8 +266,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition2)
   // current pose is right before the intersection required start
   {
     Pose current_pose = generateEgoSamplePose(34.99f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -266,8 +278,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition2)
   // current pose is on the behavior required start
   {
     Pose current_pose = generateEgoSamplePose(40.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -277,8 +290,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition2)
   // current pose is on the behavior required end
   {
     Pose current_pose = generateEgoSamplePose(45.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -288,8 +302,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition2)
   // current pose is on the intersection required end
   {
     Pose current_pose = generateEgoSamplePose(50.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -299,8 +314,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition2)
   // current pose is right after the intersection required end
   {
     Pose current_pose = generateEgoSamplePose(50.1f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -310,8 +326,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition2)
   // current pose is on the intersection desired end
   {
     Pose current_pose = generateEgoSamplePose(65.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -338,7 +355,6 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
 
   TurnSignalInfo behavior_signal_info;
   behavior_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
-  behavior_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   behavior_signal_info.desired_start_point.position = createPoint(5.0, 0.0, 0.0);
   behavior_signal_info.desired_start_point.orientation = createQuaternionFromYaw(0.0);
   behavior_signal_info.desired_end_point.position = createPoint(70.0, 0.0, 0.0);
@@ -351,8 +367,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose on the behavior desired start
   {
     Pose current_pose = generateEgoSamplePose(5.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -362,8 +379,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right before the behavior required start
   {
     Pose current_pose = generateEgoSamplePose(29.9f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -373,8 +391,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right on the behavior required start
   {
     Pose current_pose = generateEgoSamplePose(30.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -384,8 +403,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right before the intersection required start
   {
     Pose current_pose = generateEgoSamplePose(33.9f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -395,8 +415,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right on the intersection required start
   {
     Pose current_pose = generateEgoSamplePose(35.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -406,8 +427,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right before the behavior required end
   {
     Pose current_pose = generateEgoSamplePose(44.9f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -417,8 +439,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right on the behavior required end
   {
     Pose current_pose = generateEgoSamplePose(45.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -428,8 +451,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right before the intersection required end
   {
     Pose current_pose = generateEgoSamplePose(49.9f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -439,8 +463,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right on the intersection required end
   {
     Pose current_pose = generateEgoSamplePose(50.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);
@@ -450,8 +475,9 @@ TEST(BehaviorPathPlanningTurnSignal, Condition3)
   // current pose is right on the intersection desired end
   {
     Pose current_pose = generateEgoSamplePose(65.0f, 0.0f, 0.0);
-    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      path.points, current_pose, 3.0, 1.0);
+    const size_t current_seg_idx =
+      autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+        path.points, current_pose, 3.0, 1.0);
     const auto result_signal = turn_signal_decider.resolve_turn_signal(
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info,
       nearest_dist_threshold, nearest_yaw_threshold);

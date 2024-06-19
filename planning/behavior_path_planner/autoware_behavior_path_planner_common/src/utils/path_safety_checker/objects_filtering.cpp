@@ -17,8 +17,8 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 
-#include <motion_utils/trajectory/interpolation.hpp>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/motion_utils/trajectory/interpolation.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 
 #include <boost/geometry/algorithms/distance.hpp>
 
@@ -39,7 +39,7 @@ bool position_filter(
   const geometry_msgs::msg::Point & current_pose, const double forward_distance,
   const double backward_distance)
 {
-  const auto dist_ego_to_obj = motion_utils::calcSignedArcLength(
+  const auto dist_ego_to_obj = autoware_motion_utils::calcSignedArcLength(
     path_points, current_pose, object.kinematics.initial_pose_with_covariance.pose.position);
 
   return (backward_distance < dist_ego_to_obj && dist_ego_to_obj < forward_distance);
@@ -71,16 +71,16 @@ bool isPolygonOverlapLanelet(const PredictedObject & object, const lanelet::Cons
 }
 
 bool isPolygonOverlapLanelet(
-  const PredictedObject & object, const tier4_autoware_utils::Polygon2d & lanelet_polygon)
+  const PredictedObject & object, const autoware_universe_utils::Polygon2d & lanelet_polygon)
 {
-  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object);
+  const auto object_polygon = autoware_universe_utils::toPolygon2d(object);
   return !boost::geometry::disjoint(lanelet_polygon, object_polygon);
 }
 
 bool isPolygonOverlapLanelet(
   const PredictedObject & object, const lanelet::BasicPolygon2d & lanelet_polygon)
 {
-  const auto object_polygon = tier4_autoware_utils::toPolygon2d(object);
+  const auto object_polygon = autoware_universe_utils::toPolygon2d(object);
   return !boost::geometry::disjoint(lanelet_polygon, object_polygon);
 }
 
@@ -274,7 +274,7 @@ std::vector<PoseWithVelocityStamped> createPredictedPath(
     }
 
     const auto pose =
-      motion_utils::calcInterpolatedPose(path_points, vehicle_pose_frenet.length + length);
+      autoware_motion_utils::calcInterpolatedPose(path_points, vehicle_pose_frenet.length + length);
     predicted_path.emplace_back(t, pose, velocity);
   }
 
@@ -315,7 +315,7 @@ ExtendedPredictedObject transform(
     for (double t = 0.0; t < safety_check_time_horizon + 1e-3; t += safety_check_time_resolution) {
       const auto obj_pose = object_recognition_utils::calcInterpolatedPose(path, t);
       if (obj_pose) {
-        const auto obj_polygon = tier4_autoware_utils::toPolygon2d(*obj_pose, object.shape);
+        const auto obj_polygon = autoware_universe_utils::toPolygon2d(*obj_pose, object.shape);
         extended_object.predicted_paths[i].path.emplace_back(
           t, *obj_pose, obj_velocity, obj_polygon);
       }

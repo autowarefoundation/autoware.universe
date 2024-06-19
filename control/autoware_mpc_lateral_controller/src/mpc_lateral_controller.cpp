@@ -14,13 +14,13 @@
 
 #include "autoware/mpc_lateral_controller/mpc_lateral_controller.hpp"
 
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/mpc_lateral_controller/qp_solver/qp_solver_osqp.hpp"
 #include "autoware/mpc_lateral_controller/qp_solver/qp_solver_unconstraint_fast.hpp"
 #include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
 #include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/create_timer_ros.h"
 
@@ -35,12 +35,15 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
-MpcLateralController::MpcLateralController(rclcpp::Node & node)
+MpcLateralController::MpcLateralController(
+  rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater)
 : clock_(node.get_clock()), logger_(node.get_logger().get_child("lateral_controller"))
 {
   const auto dp_int = [&](const std::string & s) { return node.declare_parameter<int>(s); };
   const auto dp_bool = [&](const std::string & s) { return node.declare_parameter<bool>(s); };
   const auto dp_double = [&](const std::string & s) { return node.declare_parameter<double>(s); };
+
+  diag_updater_ = diag_updater;
 
   m_mpc = std::make_unique<MPC>(node);
 
@@ -152,6 +155,8 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
 
   m_mpc->setLogger(logger_);
   m_mpc->setClock(clock_);
+
+  setupDiag();
 }
 
 MpcLateralController::~MpcLateralController()
@@ -227,6 +232,24 @@ std::shared_ptr<SteeringOffsetEstimator> MpcLateralController::createSteerOffset
   return steering_offset_;
 }
 
+void MpcLateralController::setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (m_is_mpc_solved) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "MPC succeeded.");
+  } else {
+    const std::string error_msg = "The MPC solver failed. Call MRM to stop the car.";
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, error_msg);
+  }
+}
+
+void MpcLateralController::setupDiag()
+{
+  auto & d = diag_updater_;
+  d->setHardwareID("mpc_lateral_controller");
+
+  d->add("MPC_solve_checker", [&](auto & stat) { setStatus(stat); });
+}
+
 trajectory_follower::LateralOutput MpcLateralController::run(
   trajectory_follower::InputData const & input_data)
 {
@@ -254,6 +277,10 @@ trajectory_follower::LateralOutput MpcLateralController::run(
 
   const bool is_mpc_solved = m_mpc->calculateMPC(
     m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values);
+
+  m_is_mpc_solved = is_mpc_solved;  // for diagnostic updater
+
+  diag_updater_->force_update();
 
   // reset previous MPC result
   // Note: When a large deviation from the trajectory occurs, the optimization stops and
@@ -408,7 +435,7 @@ bool MpcLateralController::isStoppedState() const
   // for the stop state judgement. However, it has been removed since the steering
   // control was turned off when approaching/exceeding the stop line on a curve or
   // emergency stop situation and it caused large tracking error.
-  const size_t nearest = motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t nearest = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
     m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
 
@@ -616,7 +643,7 @@ bool MpcLateralController::isTrajectoryShapeChanged() const
   // TODO(Horibe): update implementation to check trajectory shape around ego vehicle.
   // Now temporally check the goal position.
   for (const auto & trajectory : m_trajectory_buffer) {
-    const auto change_distance = tier4_autoware_utils::calcDistance2d(
+    const auto change_distance = autoware_universe_utils::calcDistance2d(
       trajectory.points.back().pose, m_current_trajectory.points.back().pose);
     if (change_distance > m_new_traj_end_dist) {
       return true;

@@ -14,11 +14,11 @@
 
 #include "util.hpp"
 
-#include "motion_utils/trajectory/path_with_lane_id.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
@@ -40,11 +40,11 @@ using Point = bg::model::d2::point_xy<double>;
 using Polygon = bg::model::polygon<Point>;
 using Line = bg::model::linestring<Point>;
 
-using motion_utils::calcLongitudinalOffsetPoint;
-using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestSegmentIndex;
-using motion_utils::insertTargetPoint;
-using tier4_autoware_utils::createPoint;
+using autoware_motion_utils::calcLongitudinalOffsetPoint;
+using autoware_motion_utils::calcSignedArcLength;
+using autoware_motion_utils::findNearestSegmentIndex;
+using autoware_motion_utils::insertTargetPoint;
+using autoware_universe_utils::createPoint;
 
 PathPolygonIntersectionStatus getPathPolygonIntersectionStatus(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,

@@ -15,23 +15,23 @@
 #include "scene.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_utils/marker/marker_helper.hpp>
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <lanelet2_extension/regulatory_elements/speed_bump.hpp>
-#include <motion_utils/marker/marker_helper.hpp>
-#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <vector>
 
 namespace autoware::behavior_velocity_planner
 {
-using motion_utils::createSlowDownVirtualWallMarker;
-using tier4_autoware_utils::appendMarkerArray;
-using tier4_autoware_utils::calcOffsetPose;
-using tier4_autoware_utils::createDefaultMarker;
-using tier4_autoware_utils::createMarkerColor;
-using tier4_autoware_utils::createMarkerScale;
-using tier4_autoware_utils::createPoint;
+using autoware_motion_utils::createSlowDownVirtualWallMarker;
+using autoware_universe_utils::appendMarkerArray;
+using autoware_universe_utils::calcOffsetPose;
+using autoware_universe_utils::createDefaultMarker;
+using autoware_universe_utils::createMarkerColor;
+using autoware_universe_utils::createMarkerScale;
+using autoware_universe_utils::createPoint;
 using visualization_msgs::msg::Marker;
 
 namespace
@@ -96,15 +96,15 @@ visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
 }
 }  // namespace
 
-motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
+autoware_motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
 {
-  motion_utils::VirtualWalls virtual_walls;
-  motion_utils::VirtualWall wall;
+  autoware_motion_utils::VirtualWalls virtual_walls;
+  autoware_motion_utils::VirtualWall wall;
   wall.text = "speed_bump";
   wall.ns = std::to_string(module_id_) + "_";
-  wall.style = motion_utils::VirtualWallType::slowdown;
+  wall.style = autoware_motion_utils::VirtualWallType::slowdown;
   for (const auto & p : debug_data_.slow_start_poses) {
-    wall.pose = tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
+    wall.pose = autoware_universe_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
   return virtual_walls;

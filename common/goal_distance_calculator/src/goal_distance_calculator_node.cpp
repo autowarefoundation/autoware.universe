@@ -14,9 +14,9 @@
 
 #include "goal_distance_calculator/goal_distance_calculator_node.hpp"
 
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/timer.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
@@ -97,7 +97,7 @@ void GoalDistanceCalculatorNode::onTimer()
   Output output = goal_distance_calculator_->update(input);
 
   {
-    using tier4_autoware_utils::rad2deg;
+    using autoware_universe_utils::rad2deg;
     const auto & deviation = output.goal_deviation;
 
     debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>(

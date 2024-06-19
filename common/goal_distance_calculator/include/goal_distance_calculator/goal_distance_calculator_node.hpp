@@ -17,10 +17,10 @@
 
 #include "goal_distance_calculator/goal_distance_calculator.hpp"
 
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
-#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -45,12 +45,12 @@ public:
 
 private:
   // Subscriber
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_;
-  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute>
+  autoware_universe_utils::SelfPoseListener self_pose_listener_;
+  autoware_universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute>
     sub_route_{this, "/planning/mission_planning/route"};
 
   // Publisher
-  tier4_autoware_utils::DebugPublisher debug_publisher_;
+  autoware_universe_utils::DebugPublisher debug_publisher_;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
