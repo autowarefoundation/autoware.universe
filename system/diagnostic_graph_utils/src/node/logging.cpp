@@ -53,7 +53,7 @@ void LoggingNode::on_create(DiagGraph::ConstSharedPtr graph)
 void LoggingNode::on_timer()
 {
   static const auto message = "The target mode is not available for the following reasons:";
-  if (root_unit_) {
+  if (root_unit_ && root_unit_->level() != DiagUnit::DiagnosticStatus::OK) {
     dump_text_.str("");
     dump_text_.clear(std::stringstream::goodbit);
     dump_unit(root_unit_, 0, "  ");
