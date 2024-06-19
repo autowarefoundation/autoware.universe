@@ -27,6 +27,9 @@
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
 #include <algorithm>
 #include <memory>
 #include <mutex>
@@ -58,9 +61,17 @@ private:
   std::vector<Obstacle> convertToObstacles(
     const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & traj_points) const;
+  std::vector<Obstacle> convertToObstacles(
+    const Odometry & odometry, const PointCloud2 & pointcloud,
+    const std::vector<TrajectoryPoint> & traj_points,
+    const std_msgs::msg::Header & traj_header) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
     const Odometry & odometry, const PredictedObjects & objects,
+    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
+  std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
+  determineEgoBehaviorAgainstObstacles(
+    const Odometry & odometry, const PointCloud2 & /* pointcloud */,
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
   std::vector<TrajectoryPoint> decimateTrajectoryPoints(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points) const;
@@ -116,6 +127,8 @@ private:
 
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
+  bool use_pointcloud_{false};
+  bool enable_slow_down_planning_{false};
   double min_behavior_stop_margin_;
   bool enable_approaching_on_curve_;
   double additional_safe_distance_margin_on_curve_;
@@ -126,6 +139,8 @@ private:
   std::vector<int> inside_cruise_obstacle_types_;
   std::vector<int> outside_cruise_obstacle_types_;
   std::vector<int> slow_down_obstacle_types_;
+  bool use_pointcloud_for_stop_;
+  bool use_pointcloud_for_slow_down_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -149,8 +164,13 @@ private:
     this, "~/input/odometry"};
   autoware_universe_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
     this, "~/input/objects"};
+  autoware_universe_utils::InterProcessPollingSubscriber<PointCloud2> pointcloud_sub_{
+    this, "~/input/pointcloud"};
   autoware_universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
     this, "~/input/acceleration"};
+
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
@@ -182,6 +202,13 @@ private:
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
     double decimate_trajectory_step_length;
+    double pointcloud_search_radius;
+    double pointcloud_voxel_grid_x;
+    double pointcloud_voxel_grid_y;
+    double pointcloud_voxel_grid_z;
+    double pointcloud_cluster_tolerance;
+    int pointcloud_min_cluster_size;
+    int pointcloud_max_cluster_size;
     // hysteresis for stop and cruise
     double obstacle_velocity_threshold_from_cruise_to_stop;
     double obstacle_velocity_threshold_from_stop_to_cruise;
@@ -270,7 +297,6 @@ private:
   EgoNearestParam ego_nearest_param_;
 
   bool is_driving_forward_{true};
-  bool enable_slow_down_planning_{false};
 
   std::vector<StopObstacle> prev_closest_stop_obstacles_{};
 
