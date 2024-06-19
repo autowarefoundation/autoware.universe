@@ -29,7 +29,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include "autoware_control_msgs/msg/control.hpp"
