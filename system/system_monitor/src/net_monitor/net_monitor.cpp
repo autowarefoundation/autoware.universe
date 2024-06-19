@@ -450,6 +450,7 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int socket
 
   // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
   strncpy(request.ifr_name, network.interface_name.c_str(), IFNAMSIZ - 1);
+  ether_request.cmd = ETHTOOL_GSET;
   request.ifr_data = (caddr_t)&ether_request;  // NOLINT [cppcoreguidelines-pro-type-cstyle-cast]
 
   if (ioctl(socket, SIOCETHTOOL, &request) >= 0) {
