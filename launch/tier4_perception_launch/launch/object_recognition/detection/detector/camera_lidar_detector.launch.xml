@@ -40,7 +40,6 @@
   <arg name="output/ml_detector/objects"/>
   <arg name="output/rule_detector/objects"/>
 
-
   <!-- Jetson AGX -->
   <!-- <include file="$(find-pkg-share tensorrt_yolox)/launch/multiple_yolox.launch.xml">
     <arg name="image_raw0" value="$(var input/camera0/image)"/>
