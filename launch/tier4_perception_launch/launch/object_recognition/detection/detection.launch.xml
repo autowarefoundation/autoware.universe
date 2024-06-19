@@ -82,17 +82,25 @@
     <let name="switch/detector/camera_lidar" value="true"/>
     <let name="switch/detector/lidar_dnn" value="true"/>
     <let name="switch/detector/radar" value="true"/>
-    <let name="switch/filter/camera_lidar_object" value="true" if="$(var use_multi_channel_tracker_merger)"/>
-    <let name="switch/filter/lidar_object" value="true" if="$(var use_multi_channel_tracker_merger)"/>
     <let name="switch/merger/camera_lidar_radar" value="true" unless="$(var use_multi_channel_tracker_merger)"/>
+    <group scoped="false" if="$(var use_multi_channel_tracker_merger)">
+      <let name="switch/filter/camera_lidar_object" value="true"/>
+      <let name="switch/filter/lidar_object" value="true"/>
+      <let name="camera_lidar_rule_detector/output/objects" value="$(var ns)/clustering/camera_lidar_fusion/unfiltered/objects"/>
+      <let name="camera_lidar_object_filter/output/objects" value="$(var ns)/clustering/camera_lidar_fusion/objects"/>
+    </group>
   </group>
   <group scoped="false" if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_fusion&quot;')">
     <let name="switch/filter/pointcloud" value="true"/>
     <let name="switch/detector/camera_lidar" value="true"/>
     <let name="switch/detector/lidar_dnn" value="true"/>
-    <let name="switch/filter/camera_lidar_object" value="true" if="$(var use_multi_channel_tracker_merger)"/>
-    <let name="switch/filter/lidar_object" value="true" if="$(var use_multi_channel_tracker_merger)"/>
     <let name="switch/merger/camera_lidar" value="true" unless="$(var use_multi_channel_tracker_merger)"/>
+    <group scoped="false" if="$(var use_multi_channel_tracker_merger)">
+      <let name="switch/filter/camera_lidar_object" value="true"/>
+      <let name="switch/filter/lidar_object" value="true"/>
+      <let name="camera_lidar_rule_detector/output/objects" value="$(var ns)/clustering/camera_lidar_fusion/unfiltered/objects"/>
+      <let name="camera_lidar_object_filter/output/objects" value="$(var ns)/clustering/camera_lidar_fusion/objects"/>
+    </group>
   </group>
   <group scoped="false" if="$(eval '&quot;$(var mode)&quot;==&quot;lidar_radar_fusion&quot;')">
     <let name="switch/filter/pointcloud" value="true"/>
