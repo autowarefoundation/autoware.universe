@@ -184,7 +184,6 @@ private:
   {
     double vel;
     double acc;
-    double jerk;
   };
   StoppedStateParams m_stopped_state_params;
 
@@ -193,7 +192,6 @@ private:
   {
     double vel;
     double acc;
-    double jerk;
   };
   EmergencyStateParams m_emergency_state_params;
 
@@ -204,6 +202,8 @@ private:
   // jerk limit
   double m_max_jerk;
   double m_min_jerk;
+
+  double m_max_pedal_pos_diff_rate;
 
   // slope compensation
   enum class SlopeSource { RAW_PITCH = 0, TRAJECTORY_PITCH, TRAJECTORY_ADAPTIVE };
@@ -227,8 +227,8 @@ private:
   Shift m_prev_shift{Shift::Forward};
 
   // diff limit
-  Motion m_prev_ctrl_cmd{};      // with slope compensation
   Motion m_prev_raw_ctrl_cmd{};  // without slope compensation
+  Motion m_prev_ctrl_cmd{};      // with slope compensation
   std::vector<std::pair<rclcpp::Time, double>> m_vel_hist;
 
   // debug values
@@ -292,7 +292,7 @@ private:
    * @brief calculate control command in emergency state
    * @param [in] dt time between previous and current one
    */
-  Motion calcEmergencyCtrlCmd(const double dt) const;
+  Motion calcEmergencyCtrlCmd() const;
 
   /**
    * @brief update control state according to the current situation
