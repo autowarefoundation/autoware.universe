@@ -1,4 +1,4 @@
-<launch> 
+<launch>
   <arg name="input_topic_name" default="/sensing/lidar/top/pointcloud"/>
   <arg name="output_topic_name" default="/sensing/lidar/top/pointcloud_accumulated"/>
   <arg name="input_frame" default=""/>
