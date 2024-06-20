@@ -21,8 +21,10 @@
 
 #include <vector>
 
-using autoware_perception_msgs::msg::DetectedObjects;
 using object_position_filter::ObjectPositionFilterNode;
+using autoware_perception_msgs::msg::DetectedObjects;
+using autoware_perception_msgs::msg::DetectedObject;
+using ObjectClassification;
 
 std::shared_ptr<autoware::test_utils::AutowareTestManager> generateTestManager()
 {
@@ -50,10 +52,7 @@ TEST(DetectedObjectValidationTest, testObjectPositionFilterEmptyObject)
   auto test_target_node = generateNode();
 
   int counter = 0;
-  auto callback = [&counter](const DetectedObjects::ConstSharedPtr msg) {
-    (void)msg;
-    ++counter;
-  };
+  auto callback = [&counter](const DetectedObjects::ConstSharedPtr msg) {(void)msg; ++counter;};
   test_manager->set_subscriber<DetectedObjects>(output_topic, callback);
 
   DetectedObjects msg;
@@ -76,46 +75,46 @@ TEST(DetectedObjectValidationTest, testObjectPositionFilterSeveralObjects)
 
   // Object 1: Inside bounds
   {
-    autoware_perception_msgs::msg::DetectedObject object;
+    DetectedObject object;
     object.kinematics.pose_with_covariance.pose.position.x = 10.0;
     object.kinematics.pose_with_covariance.pose.position.y = 5.0;
     object.classification.resize(1);
-    object.classification[0].label = autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    object.classification[0].label = ObjectClassification::UNKNOWN;
     msg.objects.push_back(object);
   }
 
   // Object 2: Outside bounds (x-axis)
   {
-    autoware_perception_msgs::msg::DetectedObject object;
+    DetectedObject object;
     object.kinematics.pose_with_covariance.pose.position.x = 110.0;
     object.kinematics.pose_with_covariance.pose.position.y = 5.0;
     object.classification.resize(1);
-    object.classification[0].label = autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    object.classification[0].label = ObjectClassification::UNKNOWN;
     msg.objects.push_back(object);
   }
 
   // Object 3: Outside bounds (y-axis)
   {
-    autoware_perception_msgs::msg::DetectedObject object;
+    DetectedObject object;
     object.kinematics.pose_with_covariance.pose.position.x = 10.0;
     object.kinematics.pose_with_covariance.pose.position.y = 60.0;
     object.classification.resize(1);
-    object.classification[0].label = autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    object.classification[0].label = ObjectClassification::UNKNOWN;
     msg.objects.push_back(object);
   }
 
   // Object 4: Inside bounds
   {
-    autoware_perception_msgs::msg::DetectedObject object;
+    DetectedObject object;
     object.kinematics.pose_with_covariance.pose.position.x = 20.0;
     object.kinematics.pose_with_covariance.pose.position.y = -5.0;
     object.classification.resize(1);
-    object.classification[0].label = autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    object.classification[0].label = ObjectClassification::UNKNOWN;
     msg.objects.push_back(object);
   }
 
   DetectedObjects latest_msg;
-  auto callback = [&latest_msg](const DetectedObjects::ConstSharedPtr msg) { latest_msg = *msg; };
+  auto callback = [&latest_msg](const DetectedObjects::ConstSharedPtr msg) {latest_msg = *msg;};
   test_manager->set_subscriber<DetectedObjects>(output_topic, callback);
 
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic, msg);
