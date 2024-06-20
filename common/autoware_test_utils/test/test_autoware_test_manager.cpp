@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
+#include "autoware_test_utils/autoware_test_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+
 #include <std_msgs/msg/string.hpp>
 
-#include "autoware_test_utils/autoware_test_utils.hpp"
+#include <gtest/gtest.h>
 
 class RelayNode : public rclcpp::Node
 {
@@ -25,8 +26,7 @@ public:
   RelayNode() : Node("relay_node")
   {
     subscription_ = this->create_subscription<std_msgs::msg::String>(
-      "input_topic", 10,
-      [this](const std_msgs::msg::String::ConstSharedPtr msg) {
+      "input_topic", 10, [this](const std_msgs::msg::String::ConstSharedPtr msg) {
         RCLCPP_INFO(this->get_logger(), "Received message: %s", msg->data.c_str());
         auto new_msg = std::make_shared<std_msgs::msg::String>();
         new_msg->data = msg->data;
@@ -41,7 +41,6 @@ private:
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
 };
 
-
 class AutowareTestManagerTest : public ::testing::Test
 {
 protected:
@@ -53,19 +52,14 @@ protected:
     manager_ = std::make_shared<autoware::test_utils::AutowareTestManager>();
   }
 
-  ~AutowareTestManagerTest()
-  {
-    rclcpp::shutdown();
-  }
+  ~AutowareTestManagerTest() { rclcpp::shutdown(); }
 
   void SetUp() override
   {
     // Set up a subscriber on the test node to listen for messages from the relay node
     manager_->set_subscriber<std_msgs::msg::String>(
       "output_topic",
-      [this](const std_msgs::msg::String::ConstSharedPtr msg) {
-        received_message_ = msg->data;
-      });
+      [this](const std_msgs::msg::String::ConstSharedPtr msg) { received_message_ = msg->data; });
   }
 
   rclcpp::Node::SharedPtr test_node_;
