@@ -36,13 +36,13 @@ jobs:
           sudo make install
 
       - name: Fetch the base branch with enough history for a common merge-base commit
-        run: git fetch origin ${{ inputs.base-ref }}
+        run: git fetch origin ${{ github.base_ref }}
         shell: bash
 
       - name: Get changed files
         id: changed-files
         run: |
-          git diff --name-only "origin/${{ inputs.base-ref }}"...HEAD > changed_files.txt
+          git diff --name-only "origin/$${{ github.base_ref }}"...HEAD > changed_files.txt
           cat changed_files.txt
         shell: bash
 
