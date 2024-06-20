@@ -55,4 +55,4 @@ int main(int argc, char ** argv)
   return RUN_ALL_TESTS();
   rclcpp::shutdown();
 }
-}
+}  // namespace autoware::mapless_architecture

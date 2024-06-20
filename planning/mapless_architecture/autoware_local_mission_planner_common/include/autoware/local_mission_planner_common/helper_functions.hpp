@@ -1,15 +1,15 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
-#ifndef LIB_MISSION_PLANNER__HELPER_FUNCTIONS_HPP_
-#define LIB_MISSION_PLANNER__HELPER_FUNCTIONS_HPP_
+#ifndef AUTOWARE__LOCAL_MISSION_PLANNER_COMMON__HELPER_FUNCTIONS_HPP_
+#define AUTOWARE__LOCAL_MISSION_PLANNER_COMMON__HELPER_FUNCTIONS_HPP_
 
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
 #include "lanelet2_core/primitives/Lanelet.h"
-#include "autoware_planning_msgs/msg/road_segments.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
+#include "autoware_planning_msgs/msg/road_segments.hpp"
 #include "db_msgs/msg/lanelets_stamped.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -278,6 +278,6 @@ int FindOccupiedLaneletID(
 int FindEgoOccupiedLaneletID(const std::vector<lanelet::Lanelet> & lanelets);
 
 }  // namespace lib_mission_planner
-}
+}  // namespace autoware::mapless_architecture
 
-#endif  // LIB_MISSION_PLANNER__HELPER_FUNCTIONS_HPP_
+#endif  // AUTOWARE__LOCAL_MISSION_PLANNER_COMMON__HELPER_FUNCTIONS_HPP_

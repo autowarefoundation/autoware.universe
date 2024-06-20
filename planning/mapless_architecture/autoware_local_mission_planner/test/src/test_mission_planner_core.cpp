@@ -1,9 +1,9 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
 
-#include "gtest/gtest.h"
-#include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "autoware/local_mission_planner/mission_planner_node.hpp"
+#include "autoware/local_mission_planner_common/helper_functions.hpp"
+#include "gtest/gtest.h"
 
 #include "db_msgs/msg/lanelets_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -665,4 +665,4 @@ int TestCreateDrivingCorridor()
 
   return 0;
 }
-}
+}  // namespace autoware::mapless_architecture

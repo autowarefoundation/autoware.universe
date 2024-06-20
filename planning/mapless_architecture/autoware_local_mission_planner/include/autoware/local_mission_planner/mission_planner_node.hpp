@@ -1,19 +1,19 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
-#ifndef MISSION_PLANNER_NODE_HPP_
-#define MISSION_PLANNER_NODE_HPP_
+#ifndef AUTOWARE__LOCAL_MISSION_PLANNER__MISSION_PLANNER_NODE_HPP_
+#define AUTOWARE__LOCAL_MISSION_PLANNER__MISSION_PLANNER_NODE_HPP_
 
-#include "lanelet2_core/geometry/LineString.h"
 #include "autoware/local_mission_planner_common/helper_functions.hpp"
+#include "lanelet2_core/geometry/LineString.h"
+#include "rclcpp/rclcpp.hpp"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
+
 #include "autoware_planning_msgs/msg/driving_corridor.hpp"
 #include "autoware_planning_msgs/msg/local_map.hpp"
 #include "autoware_planning_msgs/msg/mission.hpp"
 #include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
 #include "autoware_planning_msgs/msg/visualization_distance.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-
 #include "db_msgs/msg/lanelets_stamped.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -338,6 +338,6 @@ private:
   // Unique ID for each marker
   int centerline_marker_id_ = 0;
 };
-}
+}  // namespace autoware::mapless_architecture
 
-#endif  // MISSION_PLANNER_NODE_HPP_
+#endif  // AUTOWARE__LOCAL_MISSION_PLANNER__MISSION_PLANNER_NODE_HPP_

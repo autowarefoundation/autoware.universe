@@ -36,4 +36,4 @@ void LocalRoadProviderNode::CallbackLaneletsMessages_(const db_msgs::msg::Lanele
   // Publish the RoadSegments message
   road_publisher_->publish(road_segments);
 }
-}
+}  // namespace autoware::mapless_architecture

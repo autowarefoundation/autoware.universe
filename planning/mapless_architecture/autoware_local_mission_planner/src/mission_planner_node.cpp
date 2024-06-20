@@ -2,15 +2,15 @@
 // driveblocks proprietary license
 #include "autoware/local_mission_planner/mission_planner_node.hpp"
 
+#include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "lanelet2_core/LaneletMap.h"
 #include "lanelet2_core/geometry/Lanelet.h"
 #include "lanelet2_core/geometry/LineString.h"
-#include "autoware/local_mission_planner_common/helper_functions.hpp"
+#include "rclcpp/rclcpp.hpp"
+
 #include "autoware_planning_msgs/msg/driving_corridor.hpp"
 #include "autoware_planning_msgs/msg/mission.hpp"
 #include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-
 #include "db_msgs/msg/lanelets_stamped.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
@@ -455,8 +455,7 @@ lanelet::BasicPoint2d MissionPlannerNode::RecenterGoalPoint(
   return projected_goal_point;
 }
 
-void MissionPlannerNode::CallbackMissionMessages_(
-  const autoware_planning_msgs::msg::Mission & msg)
+void MissionPlannerNode::CallbackMissionMessages_(const autoware_planning_msgs::msg::Mission & msg)
 {
   // Initialize variables
   lane_change_trigger_success_ = false;
@@ -1118,4 +1117,4 @@ void MissionPlannerNode::CalculatePredecessors(std::vector<LaneletConnection> & 
     }
   }
 }
-}
+}  // namespace autoware::mapless_architecture

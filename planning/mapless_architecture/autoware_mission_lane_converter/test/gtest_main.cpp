@@ -20,4 +20,4 @@ int main(int argc, char ** argv)
   rclcpp::shutdown();
 }
 
-}
+}  // namespace autoware::mapless_architecture

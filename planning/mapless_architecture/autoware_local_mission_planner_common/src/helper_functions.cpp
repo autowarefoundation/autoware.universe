@@ -3,9 +3,9 @@
 #include "autoware/local_mission_planner_common/helper_functions.hpp"
 
 #include "lanelet2_core/geometry/Lanelet.h"
-#include "autoware_planning_msgs/msg/road_segments.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include "autoware_planning_msgs/msg/road_segments.hpp"
 #include "db_msgs/msg/lanelets_stamped.hpp"
 
 namespace autoware::mapless_architecture
@@ -444,4 +444,4 @@ int FindEgoOccupiedLaneletID(const std::vector<lanelet::Lanelet> & lanelets)
 
 }  // namespace lib_mission_planner
 
-}
+}  // namespace autoware::mapless_architecture

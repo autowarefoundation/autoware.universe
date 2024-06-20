@@ -3,8 +3,9 @@
 
 #include "autoware/hmi/hmi_node.hpp"
 
-#include "autoware_planning_msgs/msg/mission.hpp"
 #include "rclcpp/rclcpp.hpp"
+
+#include "autoware_planning_msgs/msg/mission.hpp"
 
 namespace autoware::mapless_architecture
 {
@@ -84,4 +85,4 @@ void HMINode::PublishMission_(std::string mission)
 
   mission_publisher_->publish(missionMessage);
 }
-}
+}  // namespace autoware::mapless_architecture

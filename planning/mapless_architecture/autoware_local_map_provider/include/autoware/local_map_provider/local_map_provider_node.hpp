@@ -1,13 +1,15 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
-#ifndef LOCAL_MAP_PROVIDER_NODE_HPP_
-#define LOCAL_MAP_PROVIDER_NODE_HPP_
+#ifndef AUTOWARE__LOCAL_MAP_PROVIDER__LOCAL_MAP_PROVIDER_NODE_HPP_
+#define AUTOWARE__LOCAL_MAP_PROVIDER__LOCAL_MAP_PROVIDER_NODE_HPP_
+
+#include "rclcpp/rclcpp.hpp"
 
 #include "autoware_planning_msgs/msg/local_map.hpp"
 #include "autoware_planning_msgs/msg/road_segments.hpp"
-#include "rclcpp/rclcpp.hpp"
 
-namespace autoware::mapless_architecture{
+namespace autoware::mapless_architecture
+{
 
 /**
  * Node for the Local Map Provider.
@@ -44,6 +46,6 @@ private:
 
   rclcpp::Subscription<autoware_planning_msgs::msg::RoadSegments>::SharedPtr road_subscriber_;
 };
-}
+}  // namespace autoware::mapless_architecture
 
-#endif  // LOCAL_MAP_PROVIDER_NODE_HPP_
+#endif  // AUTOWARE__LOCAL_MAP_PROVIDER__LOCAL_MAP_PROVIDER_NODE_HPP_

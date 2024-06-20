@@ -75,6 +75,6 @@ int TestCreateMarkerArray();
  */
 int TestCreateDrivingCorridor();
 
-}
+}  // namespace autoware::mapless_architecture
 
 #endif  // TEST_MISSION_PLANNER_CORE_HPP_

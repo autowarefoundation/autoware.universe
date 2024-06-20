@@ -1,13 +1,13 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
-#ifndef MISSION_LANE_CONVERTER_NODE_HPP_
-#define MISSION_LANE_CONVERTER_NODE_HPP_
+#ifndef AUTOWARE__MISSION_LANE_CONVERTER__MISSION_LANE_CONVERTER_NODE_HPP_
+#define AUTOWARE__MISSION_LANE_CONVERTER__MISSION_LANE_CONVERTER_NODE_HPP_
 
-#include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -178,6 +178,6 @@ private:
   // ros parameters
   float target_speed_;
 };
-}
+}  // namespace autoware::mapless_architecture
 
-#endif  // MISSION_LANE_CONVERTER_NODE_HPP_
+#endif  // AUTOWARE__MISSION_LANE_CONVERTER__MISSION_LANE_CONVERTER_NODE_HPP_

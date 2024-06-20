@@ -611,4 +611,4 @@ visualization_msgs::msg::Marker MissionLaneConverterNode::GetGlobalTrjVisualizat
 
   return trj_vis_global;
 }
-}
+}  // namespace autoware::mapless_architecture

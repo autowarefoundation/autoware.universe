@@ -1,10 +1,11 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
-#ifndef HMI_NODE_HPP_
-#define HMI_NODE_HPP_
+#ifndef AUTOWARE__HMI__HMI_NODE_HPP_
+#define AUTOWARE__HMI__HMI_NODE_HPP_
+
+#include "rclcpp/rclcpp.hpp"
 
 #include "autoware_planning_msgs/msg/mission.hpp"
-#include "rclcpp/rclcpp.hpp"
 
 #include <string>
 #include <vector>
@@ -54,6 +55,6 @@ private:
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 };
-}
+}  // namespace autoware::mapless_architecture
 
-#endif  // HMI_NODE_HPP_
+#endif  // AUTOWARE__HMI__HMI_NODE_HPP_
