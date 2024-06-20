@@ -73,7 +73,7 @@ UnknownTracker::UnknownTracker(
 
   // Set initial state
   {
-    using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     auto pose_cov = object.kinematics.pose_with_covariance.covariance;
@@ -148,7 +148,7 @@ autoware_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingObject(
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
     // fill covariance matrix
-    using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double & r_cov_x = ekf_params_.r_cov_x;
     const double & r_cov_y = ekf_params_.r_cov_y;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;

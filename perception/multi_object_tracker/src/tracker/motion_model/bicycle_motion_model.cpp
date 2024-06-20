@@ -31,7 +31,7 @@
 // cspell: ignore CTRV
 // Bicycle CTRV motion model
 // CTRV : Constant Turn Rate and constant Velocity
-using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 BicycleMotionModel::BicycleMotionModel() : logger_(rclcpp::get_logger("BicycleMotionModel"))
 {
@@ -45,15 +45,15 @@ void BicycleMotionModel::setDefaultParams()
   constexpr double q_stddev_acc_long = 9.8 * 0.35;  // [m/(s*s)] uncertain longitudinal acceleration
   constexpr double q_stddev_acc_lat = 9.8 * 0.15;   // [m/(s*s)] uncertain lateral acceleration
   constexpr double q_stddev_yaw_rate_min =
-    autoware_universe_utils::deg2rad(1.5);  // [rad/s] uncertain yaw change rate
+    autoware::universe_utils::deg2rad(1.5);  // [rad/s] uncertain yaw change rate
   constexpr double q_stddev_yaw_rate_max =
-    autoware_universe_utils::deg2rad(15.0);  // [rad/s] uncertain yaw change rate
+    autoware::universe_utils::deg2rad(15.0);  // [rad/s] uncertain yaw change rate
   constexpr double q_stddev_slip_rate_min =
-    autoware_universe_utils::deg2rad(0.3);  // [rad/s] uncertain slip angle change rate
+    autoware::universe_utils::deg2rad(0.3);  // [rad/s] uncertain slip angle change rate
   constexpr double q_stddev_slip_rate_max =
-    autoware_universe_utils::deg2rad(10.0);  // [rad/s] uncertain slip angle change rate
+    autoware::universe_utils::deg2rad(10.0);  // [rad/s] uncertain slip angle change rate
   constexpr double q_max_slip_angle =
-    autoware_universe_utils::deg2rad(30.0);  // [rad] max slip angle
+    autoware::universe_utils::deg2rad(30.0);  // [rad] max slip angle
   // extended state parameters
   constexpr double lf_ratio = 0.3;   // 30% front from the center
   constexpr double lf_min = 1.0;     // minimum of 1.0m

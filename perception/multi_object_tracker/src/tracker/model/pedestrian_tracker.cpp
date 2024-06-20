@@ -99,7 +99,7 @@ PedestrianTracker::PedestrianTracker(
 
   // Set initial state
   {
-    using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
@@ -164,7 +164,7 @@ autoware_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObje
       autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
 
     // fill covariance matrix
-    using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
     const double cos_yaw = std::cos(pose_yaw);
     const double sin_yaw = std::sin(pose_yaw);

@@ -87,7 +87,7 @@ bool PassThroughTracker::measure(
 bool PassThroughTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
-  using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();

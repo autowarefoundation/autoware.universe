@@ -32,7 +32,7 @@
 
 // cspell: ignore CV
 // Constant Velocity (CV) motion model
-using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 CVMotionModel::CVMotionModel() : logger_(rclcpp::get_logger("CVMotionModel"))
 {

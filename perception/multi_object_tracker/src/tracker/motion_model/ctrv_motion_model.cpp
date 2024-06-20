@@ -30,7 +30,7 @@
 
 // cspell: ignore CTRV
 // Constant Turn Rate and constant Velocity (CTRV) motion model
-using autoware_universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 CTRVMotionModel::CTRVMotionModel() : logger_(rclcpp::get_logger("CTRVMotionModel"))
 {
