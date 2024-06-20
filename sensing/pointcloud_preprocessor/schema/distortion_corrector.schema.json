@@ -1,39 +1,38 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "distortion_corrector",
-    "type": "object",
-    "definitions": {
-      "distortion_corrector": {
-        "type": "object",
-        "properties": {
-          "time_stamp_field_name": {
-            "type": "string",
-            "description": "time stamp field name",
-            "default": "time_stamp"
-          },
-          "use_imu": {
-            "type": "boolean",
-            "description": "use gyroscope for yaw rate if true, else use vehicle status",
-            "default": "true"
-          }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "distortion_corrector",
+  "type": "object",
+  "definitions": {
+    "distortion_corrector": {
+      "type": "object",
+      "properties": {
+        "time_stamp_field_name": {
+          "type": "string",
+          "description": "time stamp field name",
+          "default": "time_stamp"
         },
-        "required": ["time_stamp_field_name", "use_imu"],
-        "additionalProperties": false
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/distortion_corrector"
-          }
-        },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
-      }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
-  }
-  
+        "use_imu": {
+          "type": "boolean",
+          "description": "use gyroscope for yaw rate if true, else use vehicle status",
+          "default": "true"
+        }
+      },
+      "required": ["time_stamp_field_name", "use_imu"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/distortion_corrector"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
