@@ -72,7 +72,14 @@
         pointcloud: false
 
     behavior_determination:
-      use_pointcloud: false
+      pointcloud_search_radius: 5.0
+      pointcloud_voxel_grid_x: 0.05
+      pointcloud_voxel_grid_y: 0.05
+      pointcloud_voxel_grid_z: 100000.0
+      pointcloud_cluster_tolerance: 1.0
+      pointcloud_min_cluster_size: 1
+      pointcloud_max_cluster_size: 100000
+
       decimate_trajectory_step_length : 2.0 # longitudinal step length to calculate trajectory polygon for collision checking
 
       prediction_resampling_time_interval: 0.1
