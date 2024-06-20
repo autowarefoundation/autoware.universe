@@ -21,11 +21,11 @@
 #include "obstacle_stop_planner/debug_marker.hpp"
 #include "obstacle_stop_planner/planner_data.hpp"
 
+#include <autoware/motion_utils/trajectory/conversion.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
-#include <motion_utils/trajectory/conversion.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -77,13 +77,13 @@ using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using std_msgs::msg::Header;
 
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
+using autoware::universe_utils::StopWatch;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using autoware_universe_utils::Point2d;
-using autoware_universe_utils::Polygon2d;
-using autoware_universe_utils::StopWatch;
 using tier4_debug_msgs::msg::BoolStamped;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_debug_msgs::msg::Float32Stamped;
@@ -315,9 +315,9 @@ private:
     return ret;
   }
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
-  std::unique_ptr<autoware_universe_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace motion_planning
 

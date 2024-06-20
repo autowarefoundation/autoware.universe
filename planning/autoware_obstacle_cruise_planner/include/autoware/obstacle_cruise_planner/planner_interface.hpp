@@ -15,13 +15,13 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/obstacle_cruise_planner/common_structs.hpp"
 #include "autoware/obstacle_cruise_planner/stop_planning_debug_info.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -125,7 +125,7 @@ protected:
   bool suppress_sudden_obstacle_stop_;
 
   // stop watch
-  autoware_universe_utils::StopWatch<
+  autoware::universe_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
     stop_watch_;
 
@@ -172,7 +172,7 @@ protected:
     const geometry_msgs::msg::Pose & ego_pose) const
   {
     const auto & p = ego_nearest_param_;
-    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
   }
 
@@ -181,7 +181,7 @@ protected:
     const geometry_msgs::msg::Pose & ego_pose) const
   {
     const auto & p = ego_nearest_param_;
-    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
   }
 
@@ -303,29 +303,29 @@ private:
           if (obstacle_to_param_struct_map.count(label + "." + movement_postfix) < 1) continue;
           auto & param_by_obstacle_label =
             obstacle_to_param_struct_map.at(label + "." + movement_postfix);
-          autoware_universe_utils::updateParam<double>(
+          autoware::universe_utils::updateParam<double>(
             parameters, "slow_down." + label + "." + movement_postfix + ".max_lat_margin",
             param_by_obstacle_label.max_lat_margin);
-          autoware_universe_utils::updateParam<double>(
+          autoware::universe_utils::updateParam<double>(
             parameters, "slow_down." + label + "." + movement_postfix + ".min_lat_margin",
             param_by_obstacle_label.min_lat_margin);
-          autoware_universe_utils::updateParam<double>(
+          autoware::universe_utils::updateParam<double>(
             parameters, "slow_down." + label + "." + movement_postfix + ".max_ego_velocity",
             param_by_obstacle_label.max_ego_velocity);
-          autoware_universe_utils::updateParam<double>(
+          autoware::universe_utils::updateParam<double>(
             parameters, "slow_down." + label + "." + movement_postfix + ".min_ego_velocity",
             param_by_obstacle_label.min_ego_velocity);
         }
       }
 
       // common parameters
-      autoware_universe_utils::updateParam<double>(
+      autoware::universe_utils::updateParam<double>(
         parameters, "slow_down.time_margin_on_target_velocity", time_margin_on_target_velocity);
-      autoware_universe_utils::updateParam<double>(
+      autoware::universe_utils::updateParam<double>(
         parameters, "slow_down.lpf_gain_slow_down_vel", lpf_gain_slow_down_vel);
-      autoware_universe_utils::updateParam<double>(
+      autoware::universe_utils::updateParam<double>(
         parameters, "slow_down.lpf_gain_lat_dist", lpf_gain_lat_dist);
-      autoware_universe_utils::updateParam<double>(
+      autoware::universe_utils::updateParam<double>(
         parameters, "slow_down.lpf_gain_dist_to_slow_down", lpf_gain_dist_to_slow_down);
     }
 
@@ -385,15 +385,15 @@ private:
         if (type_str == "default") {
           continue;
         }
-        autoware_universe_utils::updateParam<double>(
+        autoware::universe_utils::updateParam<double>(
           parameters, param_prefix + type_str + ".limit_min_acc", param.limit_min_acc);
-        autoware_universe_utils::updateParam<double>(
+        autoware::universe_utils::updateParam<double>(
           parameters, param_prefix + type_str + ".sudden_object_acc_threshold",
           param.sudden_object_acc_threshold);
-        autoware_universe_utils::updateParam<double>(
+        autoware::universe_utils::updateParam<double>(
           parameters, param_prefix + type_str + ".sudden_object_dist_threshold",
           param.sudden_object_dist_threshold);
-        autoware_universe_utils::updateParam<bool>(
+        autoware::universe_utils::updateParam<bool>(
           parameters, param_prefix + type_str + ".abandon_to_stop", param.abandon_to_stop);
 
         param.sudden_object_acc_threshold =

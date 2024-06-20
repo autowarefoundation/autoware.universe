@@ -16,8 +16,8 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/debug.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
-#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
@@ -27,10 +27,10 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_universe_utils::appendMarkerArray;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerOrientation;
-using autoware_universe_utils::createMarkerScale;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerOrientation;
+using autoware::universe_utils::createMarkerScale;
 
 namespace
 {
@@ -73,12 +73,12 @@ visualization_msgs::msg::MarkerArray createLaneletPolygonsMarkerArray(
 
 }  // namespace
 
-motion_utils::VirtualWalls BlindSpotModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls BlindSpotModule::createVirtualWalls()
 {
-  motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWalls virtual_walls;
 
   if (debug_data_.virtual_wall_pose) {
-    motion_utils::VirtualWall wall;
+    autoware::motion_utils::VirtualWall wall;
     wall.text = "blind_spot";
     wall.pose = debug_data_.virtual_wall_pose.value();
     wall.ns = std::to_string(module_id_) + "_";

@@ -17,8 +17,8 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/debug.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
-#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
 
 #include <cmath>
 #include <string>
@@ -30,12 +30,12 @@ namespace
 {
 using builtin_interfaces::msg::Time;
 using BasicPolygons = std::vector<lanelet::BasicPolygon2d>;
-using autoware_universe_utils::appendMarkerArray;
-using autoware_universe_utils::calcOffsetPose;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerOrientation;
-using autoware_universe_utils::createMarkerPosition;
-using autoware_universe_utils::createMarkerScale;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::calcOffsetPose;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerOrientation;
+using autoware::universe_utils::createMarkerPosition;
+using autoware::universe_utils::createMarkerScale;
 using occlusion_spot_utils::PossibleCollisionInfo;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
@@ -214,12 +214,12 @@ MarkerArray OcclusionSpotModule::createDebugMarkerArray()
   return debug_marker_array;
 }
 
-motion_utils::VirtualWalls OcclusionSpotModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls OcclusionSpotModule::createVirtualWalls()
 {
-  motion_utils::VirtualWalls virtual_walls;
-  motion_utils::VirtualWall wall;
+  autoware::motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWall wall;
   wall.text = "occlusion_spot";
-  wall.style = motion_utils::VirtualWallType::slowdown;
+  wall.style = autoware::motion_utils::VirtualWallType::slowdown;
   for (size_t id = 0; id < debug_data_.debug_poses.size(); id++) {
     wall.pose =
       calcOffsetPose(debug_data_.debug_poses.at(id), debug_data_.baselink_to_front, 0.0, 0.0);

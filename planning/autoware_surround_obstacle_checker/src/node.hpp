@@ -19,8 +19,8 @@
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "debug_marker.hpp"
 
+#include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
-#include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -46,10 +46,10 @@
 namespace autoware::surround_obstacle_checker
 {
 
+using autoware::motion_utils::VehicleStopChecker;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
-using motion_utils::VehicleStopChecker;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 
@@ -111,11 +111,11 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   // publisher and subscriber
-  autoware_universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odometry_{
+  autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odometry_{
     this, "~/input/odometry"};
-  autoware_universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
-    sub_pointcloud_{this, "~/input/pointcloud", autoware_universe_utils::SingleDepthSensorQoS()};
-  autoware_universe_utils::InterProcessPollingSubscriber<PredictedObjects> sub_dynamic_objects_{
+  autoware::universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
+    sub_pointcloud_{this, "~/input/pointcloud", autoware::universe_utils::SingleDepthSensorQoS()};
+  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> sub_dynamic_objects_{
     this, "~/input/objects"};
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
@@ -143,7 +143,7 @@ private:
   State state_ = State::PASS;
   std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
   bool use_dynamic_object_;
 

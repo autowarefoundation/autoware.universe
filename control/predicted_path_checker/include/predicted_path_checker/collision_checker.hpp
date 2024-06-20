@@ -15,12 +15,12 @@
 #ifndef PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
 #define PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
 
+#include <autoware/motion_utils/trajectory/conversion.hpp>
+#include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/transform_listener.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
-#include <motion_utils/trajectory/conversion.hpp>
-#include <motion_utils/trajectory/interpolation.hpp>
 #include <predicted_path_checker/debug_marker.hpp>
 #include <predicted_path_checker/utils.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -45,10 +45,10 @@ namespace autoware::motion::control::predicted_path_checker
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
-using autoware_universe_utils::Point2d;
-using autoware_universe_utils::Polygon2d;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 using PointArray = std::vector<geometry_msgs::msg::Point>;
