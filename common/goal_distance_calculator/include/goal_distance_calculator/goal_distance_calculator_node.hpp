@@ -45,12 +45,12 @@ public:
 
 private:
   // Subscriber
-  autoware_universe_utils::SelfPoseListener self_pose_listener_;
-  autoware_universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute>
+  autoware::universe_utils::SelfPoseListener self_pose_listener_;
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute>
     sub_route_{this, "/planning/mission_planning/route"};
 
   // Publisher
-  autoware_universe_utils::DebugPublisher debug_publisher_;
+  autoware::universe_utils::DebugPublisher debug_publisher_;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
