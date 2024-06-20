@@ -730,8 +730,9 @@ void AEB::createObjectDataUsingPointCloudClusters(
     bool cluster_surpasses_threshold_height{false};
     for (const auto & index : indices.indices) {
       const auto & p = (*obstacle_points_ptr)[index];
-      cluster_surpasses_threshold_height =
-        (p.z > cluster_minimum_height_) ? true : cluster_surpasses_threshold_height;
+      cluster_surpasses_threshold_height = (cluster_surpasses_threshold_height)
+                                             ? cluster_surpasses_threshold_height
+                                             : (p.z > cluster_minimum_height_);
       cluster->push_back(p);
     }
     if (!cluster_surpasses_threshold_height) continue;
