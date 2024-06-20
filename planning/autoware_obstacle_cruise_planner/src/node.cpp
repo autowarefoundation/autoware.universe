@@ -1109,11 +1109,11 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
   const Obstacle & obstacle, const double precise_lat_dist)
 {
-  const auto & p = behavior_determination_param_;
-
   if (use_pointcloud_) {
     return std::nullopt;
   }
+
+  const auto & p = behavior_determination_param_;
 
   const auto & object_id = obstacle.uuid.substr(0, 4);
 
@@ -1157,11 +1157,11 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
 std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstacle(
   const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points)
 {
-  const auto & p = behavior_determination_param_;
-
   if (use_pointcloud_) {
     return std::nullopt;
   }
+
+  const auto & p = behavior_determination_param_;
 
   if (traj_points.empty()) return std::nullopt;
   // check label
