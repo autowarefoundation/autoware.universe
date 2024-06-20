@@ -21,10 +21,10 @@
 
 #include <vector>
 
-using object_position_filter::ObjectPositionFilterNode;
-using autoware_perception_msgs::msg::DetectedObjects;
-using autoware_perception_msgs::msg::DetectedObject;
 using ObjectClassification;
+using autoware_perception_msgs::msg::DetectedObject;
+using autoware_perception_msgs::msg::DetectedObjects;
+using object_position_filter::ObjectPositionFilterNode;
 
 std::shared_ptr<autoware::test_utils::AutowareTestManager> generateTestManager()
 {
@@ -52,7 +52,10 @@ TEST(DetectedObjectValidationTest, testObjectPositionFilterEmptyObject)
   auto test_target_node = generateNode();
 
   int counter = 0;
-  auto callback = [&counter](const DetectedObjects::ConstSharedPtr msg) {(void)msg; ++counter;};
+  auto callback = [&counter](const DetectedObjects::ConstSharedPtr msg) {
+    (void)msg;
+    ++counter;
+  };
   test_manager->set_subscriber<DetectedObjects>(output_topic, callback);
 
   DetectedObjects msg;
@@ -114,7 +117,7 @@ TEST(DetectedObjectValidationTest, testObjectPositionFilterSeveralObjects)
   }
 
   DetectedObjects latest_msg;
-  auto callback = [&latest_msg](const DetectedObjects::ConstSharedPtr msg) {latest_msg = *msg;};
+  auto callback = [&latest_msg](const DetectedObjects::ConstSharedPtr msg) { latest_msg = *msg; };
   test_manager->set_subscriber<DetectedObjects>(output_topic, callback);
 
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic, msg);
