@@ -8,6 +8,9 @@
 
 #include "db_msgs/msg/lanelets_stamped.hpp"
 
+namespace autoware::mapless_architecture
+{
+
 /**
  * Node for the Local Road Provider.
  */
@@ -43,5 +46,6 @@ private:
 
   rclcpp::Subscription<db_msgs::msg::LaneletsStamped>::SharedPtr lanelets_subscriber_;
 };
+}
 
 #endif  // LOCAL_ROAD_PROVIDER_NODE_HPP_

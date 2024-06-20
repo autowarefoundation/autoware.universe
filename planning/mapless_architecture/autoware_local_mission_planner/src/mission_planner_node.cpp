@@ -27,6 +27,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware::mapless_architecture
+{
 using std::placeholders::_1;
 using namespace lib_mission_planner;
 
@@ -1115,4 +1117,5 @@ void MissionPlannerNode::CalculatePredecessors(std::vector<LaneletConnection> & 
       lanelet_connection.predecessor_lanelet_ids = {-1};
     }
   }
+}
 }

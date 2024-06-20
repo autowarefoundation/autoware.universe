@@ -6,6 +6,8 @@
 #include "autoware_planning_msgs/msg/mission.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+namespace autoware::mapless_architecture
+{
 using std::placeholders::_1;
 
 /**
@@ -81,4 +83,5 @@ void HMINode::PublishMission_(std::string mission)
   missionMessage.deadline = 1000;
 
   mission_publisher_->publish(missionMessage);
+}
 }

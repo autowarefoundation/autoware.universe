@@ -8,6 +8,8 @@
 
 #include "db_msgs/msg/lanelets_stamped.hpp"
 
+namespace autoware::mapless_architecture
+{
 namespace lib_mission_planner
 {
 
@@ -441,3 +443,5 @@ int FindEgoOccupiedLaneletID(const std::vector<lanelet::Lanelet> & lanelets)
 }
 
 }  // namespace lib_mission_planner
+
+}

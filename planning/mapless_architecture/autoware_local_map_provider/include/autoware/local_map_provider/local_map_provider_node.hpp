@@ -7,6 +7,8 @@
 #include "autoware_planning_msgs/msg/road_segments.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+namespace autoware::mapless_architecture{
+
 /**
  * Node for the Local Map Provider.
  */
@@ -42,5 +44,6 @@ private:
 
   rclcpp::Subscription<autoware_planning_msgs::msg::RoadSegments>::SharedPtr road_subscriber_;
 };
+}
 
 #endif  // LOCAL_MAP_PROVIDER_NODE_HPP_

@@ -9,6 +9,9 @@
 #include <string>
 #include <vector>
 
+namespace autoware::mapless_architecture
+{
+
 /**
  * Node for HMI.
  */
@@ -51,5 +54,6 @@ private:
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 };
+}
 
 #endif  // HMI_NODE_HPP_

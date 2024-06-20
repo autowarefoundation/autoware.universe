@@ -6,6 +6,9 @@
 
 #include "geometry_msgs/msg/point.hpp"
 
+namespace autoware::mapless_architecture
+{
+
 int TestMissionToTrajectory()
 {
   MissionLaneConverterNode mission_converter = MissionLaneConverterNode();
@@ -108,4 +111,5 @@ int TestMissionToTrajectory()
     mission_msg.drivable_lanes_right.back().centerline.back().y);
 
   return 0;
+}
 }

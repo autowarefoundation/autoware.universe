@@ -12,7 +12,7 @@ int main(int argc, char * argv[])
   RCLCPP_INFO(rclcpp::get_logger("hmi"), "Launching HMI node...");
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<HMINode>());
+  rclcpp::spin(std::make_shared<autoware::mapless_architecture::HMINode>());
   rclcpp::shutdown();
   return 0;
 }

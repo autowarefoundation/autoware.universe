@@ -5,6 +5,9 @@
 
 #include "db_msgs/msg/lanelets_stamped.hpp"
 
+namespace autoware::mapless_architecture
+{
+
 /**
  * @brief Test distance between point and LineString calculation.
  *
@@ -71,5 +74,7 @@ int TestCreateMarkerArray();
  * @return int: returns 0 on success
  */
 int TestCreateDrivingCorridor();
+
+}
 
 #endif  // TEST_MISSION_PLANNER_CORE_HPP_

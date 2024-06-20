@@ -16,6 +16,8 @@
 
 #include <vector>
 
+namespace autoware::mapless_architecture
+{
 namespace lib_mission_planner
 {
 
@@ -276,5 +278,6 @@ int FindOccupiedLaneletID(
 int FindEgoOccupiedLaneletID(const std::vector<lanelet::Lanelet> & lanelets);
 
 }  // namespace lib_mission_planner
+}
 
 #endif  // LIB_MISSION_PLANNER__HELPER_FUNCTIONS_HPP_

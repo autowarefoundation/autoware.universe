@@ -12,7 +12,7 @@ int main(int argc, char * argv[])
   RCLCPP_INFO(rclcpp::get_logger("local_map_provider"), "Launching Local Map Provider node...");
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<LocalMapProviderNode>());
+  rclcpp::spin(std::make_shared<autoware::mapless_architecture::LocalMapProviderNode>());
   rclcpp::shutdown();
   return 0;
 }

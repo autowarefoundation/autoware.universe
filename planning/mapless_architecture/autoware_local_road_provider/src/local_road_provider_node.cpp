@@ -6,6 +6,8 @@
 #include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+namespace autoware::mapless_architecture
+{
 using std::placeholders::_1;
 
 LocalRoadProviderNode::LocalRoadProviderNode() : Node("local_road_provider_node")
@@ -33,4 +35,5 @@ void LocalRoadProviderNode::CallbackLaneletsMessages_(const db_msgs::msg::Lanele
 
   // Publish the RoadSegments message
   road_publisher_->publish(road_segments);
+}
 }

@@ -27,6 +27,8 @@
 #include <tuple>
 #include <vector>
 
+namespace autoware::mapless_architecture
+{
 using namespace lib_mission_planner;
 
 // Create Direction data type
@@ -336,5 +338,6 @@ private:
   // Unique ID for each marker
   int centerline_marker_id_ = 0;
 };
+}
 
 #endif  // MISSION_PLANNER_NODE_HPP_

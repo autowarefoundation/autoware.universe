@@ -16,6 +16,8 @@
 #include <chrono>
 #include <functional>
 
+namespace autoware::mapless_architecture
+{
 using std::placeholders::_1;
 using namespace lib_mission_planner;
 
@@ -608,4 +610,5 @@ visualization_msgs::msg::Marker MissionLaneConverterNode::GetGlobalTrjVisualizat
   }
 
   return trj_vis_global;
+}
 }

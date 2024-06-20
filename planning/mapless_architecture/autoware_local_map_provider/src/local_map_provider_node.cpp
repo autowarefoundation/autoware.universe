@@ -5,6 +5,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+namespace autoware::mapless_architecture{
 using std::placeholders::_1;
 
 LocalMapProviderNode::LocalMapProviderNode() : Node("local_map_provider_node")
@@ -36,4 +37,5 @@ void LocalMapProviderNode::CallbackRoadSegmentsMessages_(
   // Publish the LocalMap message
   map_publisher_->publish(
     local_map);  // Outlook: Add global map, sign detection etc. to the message
+}
 }

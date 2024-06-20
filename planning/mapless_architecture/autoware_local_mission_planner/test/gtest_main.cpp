@@ -5,6 +5,9 @@
 #include "include/test_mission_planner_core.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+namespace autoware::mapless_architecture
+{
+
 TEST(MissionPlannerCore, CalculateDistanceBetweenPointAndLineString)
 {
   EXPECT_EQ(TestCalculateDistanceBetweenPointAndLineString(), 0);
@@ -51,4 +54,5 @@ int main(int argc, char ** argv)
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
   rclcpp::shutdown();
+}
 }

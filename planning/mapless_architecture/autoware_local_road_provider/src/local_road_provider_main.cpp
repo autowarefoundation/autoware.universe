@@ -12,7 +12,7 @@ int main(int argc, char * argv[])
   RCLCPP_INFO(rclcpp::get_logger("local_road_provider"), "Launching Local Road Provider node...");
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<LocalRoadProviderNode>());
+  rclcpp::spin(std::make_shared<autoware::mapless_architecture::LocalRoadProviderNode>());
   rclcpp::shutdown();
   return 0;
 }

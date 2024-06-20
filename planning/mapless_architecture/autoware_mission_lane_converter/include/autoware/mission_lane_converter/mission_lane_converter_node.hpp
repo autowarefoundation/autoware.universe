@@ -16,6 +16,9 @@
 #include <tuple>
 #include <vector>
 
+namespace autoware::mapless_architecture
+{
+
 /**
  * Node to convert the mission lane to an autoware trajectory type.
  */
@@ -175,5 +178,6 @@ private:
   // ros parameters
   float target_speed_;
 };
+}
 
 #endif  // MISSION_LANE_CONVERTER_NODE_HPP_

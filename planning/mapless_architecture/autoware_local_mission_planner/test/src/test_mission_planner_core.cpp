@@ -11,6 +11,9 @@
 #include <iostream>
 #include <tuple>
 
+namespace autoware::mapless_architecture
+{
+
 db_msgs::msg::LaneletsStamped CreateLanelets()
 {
   // Local variables
@@ -661,4 +664,5 @@ int TestCreateDrivingCorridor()
   EXPECT_EQ(driving_corridor.bound_right[0].y, 0.5);
 
   return 0;
+}
 }

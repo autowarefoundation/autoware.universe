@@ -12,7 +12,7 @@ int main(int argc, char * argv[])
     "Launching mission lane converter node...");
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MissionLaneConverterNode>());
+  rclcpp::spin(std::make_shared<autoware::mapless_architecture::MissionLaneConverterNode>());
   rclcpp::shutdown();
   return 0;
 }
