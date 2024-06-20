@@ -127,8 +127,9 @@ private:
 
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
-  bool use_pointcloud_{false};
   bool enable_slow_down_planning_{false};
+  bool use_pointcloud_for_stop_;
+  bool use_pointcloud_for_slow_down_;
   double min_behavior_stop_margin_;
   bool enable_approaching_on_curve_;
   double additional_safe_distance_margin_on_curve_;
@@ -139,8 +140,6 @@ private:
   std::vector<int> inside_cruise_obstacle_types_;
   std::vector<int> outside_cruise_obstacle_types_;
   std::vector<int> slow_down_obstacle_types_;
-  bool use_pointcloud_for_stop_;
-  bool use_pointcloud_for_slow_down_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -297,6 +296,7 @@ private:
   EgoNearestParam ego_nearest_param_;
 
   bool is_driving_forward_{true};
+  bool use_pointcloud_{false};
 
   std::vector<StopObstacle> prev_closest_stop_obstacles_{};
 

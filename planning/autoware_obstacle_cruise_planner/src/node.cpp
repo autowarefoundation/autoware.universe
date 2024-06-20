@@ -442,8 +442,12 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
 
   enable_debug_info_ = declare_parameter<bool>("common.enable_debug_info");
   enable_calculation_time_info_ = declare_parameter<bool>("common.enable_calculation_time_info");
-  use_pointcloud_ = declare_parameter<bool>("common.use_pointcloud");
   enable_slow_down_planning_ = declare_parameter<bool>("common.enable_slow_down_planning");
+  
+  use_pointcloud_for_stop_ = declare_parameter<bool>("common.stop_obstacle_type.pointcloud");
+  use_pointcloud_for_slow_down_ =
+    declare_parameter<bool>("common.slow_down_obstacle_type.pointcloud");
+  use_pointcloud_ = use_pointcloud_for_stop_ || use_pointcloud_for_slow_down_;
 
   behavior_determination_param_ = BehaviorDeterminationParam(*this);
 
@@ -484,9 +488,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     outside_cruise_obstacle_types_ =
       getTargetObjectType(*this, "common.cruise_obstacle_type.outside.");
     slow_down_obstacle_types_ = getTargetObjectType(*this, "common.slow_down_obstacle_type.");
-    use_pointcloud_for_stop_ = declare_parameter<bool>("common.stop_obstacle_type.pointcloud");
-    use_pointcloud_for_slow_down_ =
-      declare_parameter<bool>("common.slow_down_obstacle_type.pointcloud");
   }
 
   // set parameter callback
@@ -518,8 +519,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
     parameters, "common.enable_debug_info", enable_debug_info_);
   autoware_universe_utils::updateParam<bool>(
     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
-
-  autoware_universe_utils::updateParam<bool>(parameters, "common.use_pointcloud", use_pointcloud_);
 
   autoware_universe_utils::updateParam<bool>(
     parameters, "common.stop_on_curve.enable_approaching", enable_approaching_on_curve_);
