@@ -20,7 +20,7 @@
 #include <memory>
 
 // Autoware
-#include <tier4_autoware_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 
 #include <autoware_control_msgs/msg/control.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
@@ -57,7 +57,7 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   // Subscriber without callback
-  tier4_autoware_utils::InterProcessPollingSubscriber<Control> sub_control_cmd_{
+  autoware::universe_utils::InterProcessPollingSubscriber<Control> sub_control_cmd_{
     this, "~/input/control/control_cmd"};
 
   Control subscribeControlCommand();
