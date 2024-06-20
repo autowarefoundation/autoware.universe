@@ -851,7 +851,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       for (const auto & index : cluster_indices.indices) {
         const auto obstacle_point = toGeomPoint(filtered_points_ptr->points[index]);
         const auto current_lat_dist_from_obstacle_to_traj =
-          autoware_motion_utils::calcLateralOffset(traj_points, obstacle_point);
+          autoware::motion_utils::calcLateralOffset(traj_points, obstacle_point);
         const auto min_lat_dist_to_traj_poly =
           std::abs(current_lat_dist_from_obstacle_to_traj) - vehicle_info_.vehicle_width_m;
 
@@ -965,7 +965,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   std::vector<SlowDownObstacle> slow_down_obstacles;
   slow_down_condition_counter_.resetCurrentUuids();
   for (const auto & obstacle : obstacles) {
-    const auto obstacle_poly = autoware_universe_utils::toPolygon2d(obstacle.pose, obstacle.shape);
+    const auto obstacle_poly = autoware::universe_utils::toPolygon2d(obstacle.pose, obstacle.shape);
 
     // Calculate distance between trajectory and obstacle first
     double precise_lat_dist = std::numeric_limits<double>::max();
@@ -1447,7 +1447,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
   std::optional<std::pair<geometry_msgs::msg::Point, double>> collision_point = std::nullopt;
   if (use_pointcloud_) {
     if (obstacle.stop_collision_point) {
-      const auto dist_to_collide_on_traj = autoware_motion_utils::calcSignedArcLength(
+      const auto dist_to_collide_on_traj = autoware::motion_utils::calcSignedArcLength(
         traj_points, 0, obstacle.stop_collision_point.value());
       collision_point =
         std::make_pair(obstacle.stop_collision_point.value(), dist_to_collide_on_traj);
@@ -1599,7 +1599,7 @@ std::optional<SlowDownObstacle> ObstacleCruisePlannerNode::createSlowDownObstacl
       return std::nullopt;
     }
 
-    const auto obstacle_poly = autoware_universe_utils::toPolygon2d(obstacle.pose, obstacle.shape);
+    const auto obstacle_poly = autoware::universe_utils::toPolygon2d(obstacle.pose, obstacle.shape);
 
     // calculate collision points with trajectory with lateral stop margin
     // NOTE: For additional margin, hysteresis is not divided by two.
