@@ -21,7 +21,7 @@ def generate_launch_description():
     # https://github.com/ros2/launch/issues/618
     # https://gitlab.com/driveblocks/mod_feature_detection/-/merge_requests/102/diffs
     mission_lane_converter_pkg_share_directory = get_package_share_directory(
-        "mission_lane_converter"
+        "autoware_mission_lane_converter"
     )
     mission_lane_converter_file_name = "mission_lane_converter.launch.py"
     mission_lane_converter_path = (
@@ -35,7 +35,7 @@ def generate_launch_description():
         # launch_arguments={'node_name': 'bar'}.items()
     )
 
-    hmi_pkg_share_directory = get_package_share_directory("hmi")
+    hmi_pkg_share_directory = get_package_share_directory("autoware_hmi")
     hmi_file_name = "hmi.launch.py"
     hmi_path = Path(hmi_pkg_share_directory) / "launch/" / hmi_file_name
 
@@ -44,7 +44,9 @@ def generate_launch_description():
         # launch_arguments={'node_name': 'bar'}.items()
     )
 
-    local_road_provider_pkg_share_directory = get_package_share_directory("local_road_provider")
+    local_road_provider_pkg_share_directory = get_package_share_directory(
+        "autoware_local_road_provider"
+    )
     local_road_provider_file_name = "local_road_provider.launch.py"
     local_road_provider_path = (
         Path(local_road_provider_pkg_share_directory) / "launch/" / local_road_provider_file_name
@@ -55,7 +57,9 @@ def generate_launch_description():
         # launch_arguments={'node_name': 'bar'}.items()
     )
 
-    local_map_provider_pkg_share_directory = get_package_share_directory("local_map_provider")
+    local_map_provider_pkg_share_directory = get_package_share_directory(
+        "autoware_local_map_provider"
+    )
     local_map_provider_file_name = "local_map_provider.launch.py"
     local_map_provider_path = (
         Path(local_map_provider_pkg_share_directory) / "launch/" / local_map_provider_file_name

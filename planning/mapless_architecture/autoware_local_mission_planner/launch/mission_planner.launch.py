@@ -11,7 +11,9 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     mission_planner_param_file = os.path.join(
-        get_package_share_directory("mission_planner"), "param", "mission_planner_default.yaml"
+        get_package_share_directory("autoware_local_mission_planner"),
+        "param",
+        "mission_planner_default.yaml",
     )
 
     mission_planner_param = DeclareLaunchArgument(
@@ -26,10 +28,10 @@ def generate_launch_description():
             mission_planner_param,
             # mission_planner executable
             Node(
-                package="mission_planner",
-                executable="mission_planner",
-                name="mission_planner",
-                namespace="mission_planner",
+                package="autoware_local_mission_planner",
+                executable="autoware_local_mission_planner",
+                name="autoware_local_mission_planner",
+                namespace="mapless_architecture",
                 remappings=[
                     (
                         "mission_planner_node/output/marker",

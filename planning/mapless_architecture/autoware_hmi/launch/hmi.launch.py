@@ -9,10 +9,10 @@ def generate_launch_description():
         [
             # hmi executable
             Node(
-                package="hmi",
-                executable="hmi",
-                name="hmi",
-                namespace="mission_planner",
+                package="autoware_hmi",
+                executable="autoware_hmi",
+                name="autoware_hmi",
+                namespace="mapless_architecture",
                 remappings=[
                     ("hmi_node/output/mission", "hmi_node/output/mission"),
                 ],

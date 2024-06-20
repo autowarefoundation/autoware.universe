@@ -7,12 +7,12 @@ from launch_ros.actions import Node
 def generate_launch_description():
     return LaunchDescription(
         [
-            # local_map_provider executable
+            # autoware_local_map_provider executable
             Node(
-                package="local_map_provider",
-                executable="local_map_provider",
-                name="local_map_provider",
-                namespace="mission_planner",
+                package="autoware_local_map_provider",
+                executable="autoware_local_map_provider",
+                name="autoware_local_map_provider",
+                namespace="mapless_architecture",
                 remappings=[
                     (
                         "local_map_provider_node/output/local_map",

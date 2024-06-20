@@ -11,7 +11,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     mission_lane_converter_param_file = os.path.join(
-        get_package_share_directory("mission_lane_converter"),
+        get_package_share_directory("autoware_mission_lane_converter"),
         "param",
         "mission_lane_converter_default.yaml",
     )
@@ -28,10 +28,10 @@ def generate_launch_description():
             mission_lane_converter_param,
             # mission lane converter executable
             Node(
-                package="mission_lane_converter",
-                executable="mission_lane_converter",
-                name="mission_lane_converter",
-                namespace="mission_planner",
+                package="autoware_mission_lane_converter",
+                executable="autoware_mission_lane_converter",
+                name="autoware_mission_lane_converter",
+                namespace="mapless_architecture",
                 remappings=[
                     (
                         "mission_lane_converter/input/mission_lanes",
