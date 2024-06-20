@@ -390,8 +390,8 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
   }
   const double dt2 = dt * dt;
   const double dt4 = dt2 * dt2;
-  const double q_cov_x = 0.5 * motion_params_.q_cov_acc_long * dt4;
-  const double q_cov_y = 0.5 * motion_params_.q_cov_acc_lat * dt4;
+  const double q_cov_x = 0.25 * motion_params_.q_cov_acc_long * dt4;
+  const double q_cov_y = 0.25 * motion_params_.q_cov_acc_lat * dt4;
   const double q_cov_yaw = q_stddev_yaw_rate * q_stddev_yaw_rate * dt2;
   const double q_cov_vel = motion_params_.q_cov_acc_long * dt2;
   const double q_cov_slip = q_cov_slip_rate * dt2;

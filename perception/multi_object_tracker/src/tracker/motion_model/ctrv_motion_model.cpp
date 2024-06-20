@@ -64,11 +64,11 @@ void CTRVMotionModel::setMotionParams(
   const double & q_stddev_vel, const double & q_stddev_wz)
 {
   // set process noise covariance parameters
-  motion_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
-  motion_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
-  motion_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
-  motion_params_.q_cov_vel = std::pow(q_stddev_vel, 2.0);
-  motion_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
+  motion_params_.q_cov_x = q_stddev_x * q_stddev_x;
+  motion_params_.q_cov_y = q_stddev_y * q_stddev_y;
+  motion_params_.q_cov_yaw = q_stddev_yaw * q_stddev_yaw;
+  motion_params_.q_cov_vel = q_stddev_vel * q_stddev_vel;
+  motion_params_.q_cov_wz = q_stddev_wz * q_stddev_wz;
 }
 
 void CTRVMotionModel::setMotionLimits(const double & max_vel, const double & max_wz)
@@ -296,11 +296,12 @@ bool CTRVMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) cons
   A(IDX::YAW, IDX::WZ) = dt;
 
   // Process noise covariance Q
-  const double q_cov_x = motion_params_.q_cov_x * dt * dt;
-  const double q_cov_y = motion_params_.q_cov_y * dt * dt;
-  const double q_cov_yaw = motion_params_.q_cov_yaw * dt * dt;
-  const double q_cov_vel = motion_params_.q_cov_vel * dt * dt;
-  const double q_cov_wz = motion_params_.q_cov_wz * dt * dt;
+  const double dt2 = dt * dt;
+  const double q_cov_x = motion_params_.q_cov_x * dt2;
+  const double q_cov_y = motion_params_.q_cov_y * dt2;
+  const double q_cov_yaw = motion_params_.q_cov_yaw * dt2;
+  const double q_cov_vel = motion_params_.q_cov_vel * dt2;
+  const double q_cov_wz = motion_params_.q_cov_wz * dt2;
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(DIM, DIM);
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.

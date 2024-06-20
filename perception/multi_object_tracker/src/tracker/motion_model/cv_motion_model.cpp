@@ -64,10 +64,10 @@ void CVMotionModel::setMotionParams(
   const double & q_stddev_vy)
 {
   // set process noise covariance parameters
-  motion_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
-  motion_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
-  motion_params_.q_cov_vx = std::pow(q_stddev_vx, 2.0);
-  motion_params_.q_cov_vy = std::pow(q_stddev_vy, 2.0);
+  motion_params_.q_cov_x = q_stddev_x * q_stddev_x;
+  motion_params_.q_cov_y = q_stddev_y * q_stddev_y;
+  motion_params_.q_cov_vx = q_stddev_vx * q_stddev_vx;
+  motion_params_.q_cov_vy = q_stddev_vy * q_stddev_vy;
 }
 
 void CVMotionModel::setMotionLimits(const double & max_vx, const double & max_vy)
