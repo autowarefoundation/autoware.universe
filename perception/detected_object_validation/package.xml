@@ -19,7 +19,6 @@
 
   <depend>autoware_map_msgs</depend>
   <depend>autoware_perception_msgs</depend>
-  <depend>autoware_test_utils</depend>
   <depend>autoware_universe_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
