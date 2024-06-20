@@ -535,11 +535,11 @@ public:
   {
     if (publishers_.find(topic_name) == publishers_.end()) {
       auto publisher = test_node_->create_publisher<MessageType>(topic_name, 10);
-      publishers_[topic_name] = std::static_pointer_cast<void>(publisher);
+      publishers_[topic_name] = std::static_pointer_cast<rclcpp::PublisherBase>(publisher);
     }
 
     auto publisher =
-      std::static_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
+      std::dynamic_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
 
     autoware::test_utils::publishToTargetNode(test_node_, target_node, topic_name, publisher, msg);
     RCLCPP_INFO(test_node_->get_logger(), "Published message on topic '%s'", topic_name.c_str());
@@ -554,7 +554,7 @@ public:
       std::shared_ptr<rclcpp::Subscription<MessageType>> subscriber;
       autoware::test_utils::createSubscription<MessageType>(
         test_node_, topic_name, callback, subscriber);
-      subscribers_[topic_name] = std::static_pointer_cast<void>(subscriber);
+      subscribers_[topic_name] = std::static_pointer_cast<rclcpp::SubscriptionBase>(subscriber);
     } else {
       RCLCPP_WARN(test_node_->get_logger(), "Subscriber %s already set.", topic_name.c_str());
     }
@@ -562,8 +562,8 @@ public:
 
 protected:
   // Publisher
-  std::unordered_map<std::string, std::shared_ptr<void>> publishers_;
-  std::unordered_map<std::string, std::shared_ptr<void>> subscribers_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::PublisherBase>> publishers_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscribers_;
 
   // Node
   rclcpp::Node::SharedPtr test_node_;
