@@ -108,7 +108,7 @@ void BicycleMotionModel::setMotionLimits(const double & max_vel, const double & 
 {
   // set motion limitations
   motion_params_.max_vel = max_vel;
-  motion_params_.max_slip = autoware::universe_utils::deg2rad(max_slip);
+  motion_params_.max_slip = max_slip;
 }
 
 bool BicycleMotionModel::initialize(
