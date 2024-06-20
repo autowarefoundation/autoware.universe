@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_objects_of_interest_marker_interface/marker_utils.hpp"
+#include "autoware/objects_of_interest_marker_interface/marker_utils.hpp"
 
 namespace autoware::objects_of_interest_marker_interface::marker_utils
 {
@@ -20,8 +20,8 @@ using geometry_msgs::msg::Point;
 
 using std_msgs::msg::ColorRGBA;
 
-using tier4_autoware_utils::createDefaultMarker;
-using tier4_autoware_utils::createMarkerScale;
+using autoware::universe_utils::createDefaultMarker;
+using autoware::universe_utils::createMarkerScale;
 
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
@@ -66,9 +66,9 @@ Marker createCircleMarker(
   for (size_t i = 0; i < num_points; ++i) {
     Point point;
     const double ratio = static_cast<double>(i) / static_cast<double>(num_points);
-    const double theta = 2 * tier4_autoware_utils::pi * ratio;
-    point.x = data.pose.position.x + radius * tier4_autoware_utils::cos(theta);
-    point.y = data.pose.position.y + radius * tier4_autoware_utils::sin(theta);
+    const double theta = 2 * autoware::universe_utils::pi * ratio;
+    point.x = data.pose.position.x + radius * autoware::universe_utils::cos(theta);
+    point.y = data.pose.position.y + radius * autoware::universe_utils::sin(theta);
     point.z = data.pose.position.z + height + height_offset;
     marker.points.push_back(point);
   }

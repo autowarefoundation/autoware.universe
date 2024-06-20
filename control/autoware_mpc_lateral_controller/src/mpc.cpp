@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_mpc_lateral_controller/mpc.hpp"
+#include "autoware/mpc_lateral_controller/mpc.hpp"
 
-#include "autoware_mpc_lateral_controller/mpc_utils.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/mpc_lateral_controller/mpc_utils.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "interpolation/linear_interpolation.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <algorithm>
 #include <limits>
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
-using tier4_autoware_utils::calcDistance2d;
-using tier4_autoware_utils::normalizeRadian;
-using tier4_autoware_utils::rad2deg;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::normalizeRadian;
+using autoware::universe_utils::rad2deg;
 
 MPC::MPC(rclcpp::Node & node)
 {
@@ -166,10 +166,11 @@ void MPC::setReferenceTrajectory(
   const Trajectory & trajectory_msg, const TrajectoryFilteringParam & param,
   const Odometry & current_kinematics)
 {
-  const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    trajectory_msg.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
-    ego_nearest_yaw_threshold);
-  const double ego_offset_to_segment = motion_utils::calcLongitudinalOffsetToSegment(
+  const size_t nearest_seg_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      trajectory_msg.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
+      ego_nearest_yaw_threshold);
+  const double ego_offset_to_segment = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     trajectory_msg.points, nearest_seg_idx, current_kinematics.pose.pose.position);
 
   const auto mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
@@ -183,7 +184,7 @@ void MPC::setReferenceTrajectory(
   }
 
   const auto is_forward_shift =
-    motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
+    autoware::motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
 
   // if driving direction is unknown, use previous value
   m_is_forward_shift = is_forward_shift ? is_forward_shift.value() : m_is_forward_shift;
@@ -243,7 +244,7 @@ void MPC::setReferenceTrajectory(
 
 void MPC::resetPrevResult(const SteeringReport & current_steer)
 {
-  // Consider limit. The prev value larger than limitation brakes the optimization constraint and
+  // Consider limit. The prev value larger than limitation breaks the optimization constraint and
   // results in optimization failure.
   const float steer_lim_f = static_cast<float>(m_steer_lim);
   m_raw_steer_cmd_prev = std::clamp(current_steer.steering_tire_angle, -steer_lim_f, steer_lim_f);
@@ -389,9 +390,10 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
     return input;
   }
 
-  const size_t nearest_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
-    ego_nearest_yaw_threshold);
+  const size_t nearest_seg_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
+      ego_nearest_yaw_threshold);
 
   MPCTrajectory output = input;
   MPCUtils::dynamicSmoothingVelocity(
@@ -499,7 +501,7 @@ MPCMatrix MPC::generateMPCMatrix(
     // get reference input (feed-forward)
     m_vehicle_model_ptr->setCurvature(ref_smooth_k);
     m_vehicle_model_ptr->calculateReferenceInput(Uref);
-    if (std::fabs(Uref(0, 0)) < tier4_autoware_utils::deg2rad(m_param.zero_ff_steer_deg)) {
+    if (std::fabs(Uref(0, 0)) < autoware::universe_utils::deg2rad(m_param.zero_ff_steer_deg)) {
       Uref(0, 0) = 0.0;  // ignore curvature noise
     }
     m.Uref_ex.block(i * DIM_U, 0, DIM_U, 1) = Uref;
@@ -676,7 +678,7 @@ double MPC::getPredictionDeltaTime(
 {
   // Calculate the time min_prediction_length ahead from current_pose
   const auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
-  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
     ego_nearest_yaw_threshold);
   double sum_dist = 0;
