@@ -529,25 +529,30 @@ public:
   }
 
   template <typename MessageType>
-  void test_pub_msg(rclcpp::Node::SharedPtr target_node, const std::string & topic_name, MessageType & msg)
+  void test_pub_msg(
+    rclcpp::Node::SharedPtr target_node, const std::string & topic_name, MessageType & msg)
   {
     if (publishers_.find(topic_name) == publishers_.end()) {
       auto publisher = test_node_->create_publisher<MessageType>(topic_name, 10);
       publishers_[topic_name] = std::static_pointer_cast<void>(publisher);
     }
 
-    auto publisher = std::static_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
+    auto publisher =
+      std::static_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
 
     autoware::test_utils::publishToTargetNode(test_node_, target_node, topic_name, publisher, msg);
     RCLCPP_INFO(test_node_->get_logger(), "Published message on topic '%s'", topic_name.c_str());
   }
 
   template <typename MessageType>
-  void set_subscriber(const std::string & topic_name, std::function<void(const typename MessageType::ConstSharedPtr)> callback)
+  void set_subscriber(
+    const std::string & topic_name,
+    std::function<void(const typename MessageType::ConstSharedPtr)> callback)
   {
     if (subscribers_.find(topic_name) == subscribers_.end()) {
       std::shared_ptr<rclcpp::Subscription<MessageType>> subscriber;
-      autoware::test_utils::createSubscription<MessageType>(test_node_, topic_name, callback, subscriber);
+      autoware::test_utils::createSubscription<MessageType>(
+        test_node_, topic_name, callback, subscriber);
       subscribers_[topic_name] = std::static_pointer_cast<void>(subscriber);
     } else {
       RCLCPP_WARN(test_node_->get_logger(), "Subscriber %s already set.", topic_name.c_str());
