@@ -3,8 +3,10 @@
 <package format="3">
   <name>autoware_overlay_rviz_plugin</name>
   <version>0.0.1</version>
-  <description> RViz2 plugin for 2D overlays in the 3D view. Mainly a port of the JSK overlay plugin
-    (https://github.com/jsk-ros-pkg/jsk_visualization). </description>
+  <description>
+    RViz2 plugin for 2D overlays in the 3D view. Mainly a port of the JSK overlay plugin
+    (https://github.com/jsk-ros-pkg/jsk_visualization).
+  </description>
   <maintainer email="khalil@leodrive.ai">Khalil Selyan</maintainer>
 
   <license>BSD-3-Clause</license>
