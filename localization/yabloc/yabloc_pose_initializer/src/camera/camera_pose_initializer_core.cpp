@@ -30,8 +30,9 @@
 
 namespace yabloc
 {
-CameraPoseInitializer::CameraPoseInitializer()
-: Node("camera_pose_initializer"), angle_resolution_(declare_parameter<int>("angle_resolution"))
+CameraPoseInitializer::CameraPoseInitializer(const rclcpp::NodeOptions & options)
+: Node("camera_pose_initializer", options),
+  angle_resolution_(declare_parameter<int>("angle_resolution"))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -44,7 +45,7 @@ CameraPoseInitializer::CameraPoseInitializer()
   // Subscriber
   auto on_map = std::bind(&CameraPoseInitializer::on_map, this, _1);
   auto on_image = [this](Image::ConstSharedPtr msg) -> void { latest_image_msg_ = msg; };
-  sub_map_ = create_subscription<HADMapBin>("~/input/vector_map", map_qos, on_map);
+  sub_map_ = create_subscription<LaneletMapBin>("~/input/vector_map", map_qos, on_map);
   sub_image_ = create_subscription<Image>("~/input/image_raw", 10, on_image);
 
   // Server
@@ -168,7 +169,7 @@ std::optional<double> CameraPoseInitializer::estimate_pose(
   return angles_rad.at(max_index);
 }
 
-void CameraPoseInitializer::on_map(const HADMapBin & msg)
+void CameraPoseInitializer::on_map(const LaneletMapBin & msg)
 {
   lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
   lanelet::utils::conversion::fromBinMsg(msg, lanelet_map);
@@ -220,3 +221,6 @@ CameraPoseInitializer::PoseCovStamped CameraPoseInitializer::create_rectified_in
 }
 
 }  // namespace yabloc
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(yabloc::CameraPoseInitializer)

@@ -26,7 +26,8 @@
 #include <sstream>
 #include <vector>
 
-PoseInitializer::PoseInitializer() : Node("pose_initializer")
+PoseInitializer::PoseInitializer(const rclcpp::NodeOptions & options)
+: rclcpp::Node("pose_initializer", options)
 {
   const auto node = component_interface_utils::NodeAdaptor(this);
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -55,7 +56,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
     stop_check_duration_ = declare_parameter<double>("stop_check_duration");
     stop_check_ = std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0);
   }
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 
   change_state(State::Message::UNINITIALIZED);
 
@@ -66,28 +67,24 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
       throw std::invalid_argument(
         "Could not set user defined initial pose. The size of initial_pose is " +
         std::to_string(initial_pose_array.size()) + ". It must be 7.");
-    } else if (
+    }
+    if (
       std::abs(initial_pose_array[3]) < 1e-6 && std::abs(initial_pose_array[4]) < 1e-6 &&
       std::abs(initial_pose_array[5]) < 1e-6 && std::abs(initial_pose_array[6]) < 1e-6) {
       throw std::invalid_argument("Input quaternion is invalid. All elements are close to zero.");
-    } else {
-      geometry_msgs::msg::Pose initial_pose;
-      initial_pose.position.x = initial_pose_array[0];
-      initial_pose.position.y = initial_pose_array[1];
-      initial_pose.position.z = initial_pose_array[2];
-      initial_pose.orientation.x = initial_pose_array[3];
-      initial_pose.orientation.y = initial_pose_array[4];
-      initial_pose.orientation.z = initial_pose_array[5];
-      initial_pose.orientation.w = initial_pose_array[6];
-
-      set_user_defined_initial_pose(initial_pose, true);
     }
-  }
-}
 
-PoseInitializer::~PoseInitializer()
-{
-  // to delete gnss module
+    geometry_msgs::msg::Pose initial_pose;
+    initial_pose.position.x = initial_pose_array[0];
+    initial_pose.position.y = initial_pose_array[1];
+    initial_pose.position.z = initial_pose_array[2];
+    initial_pose.orientation.x = initial_pose_array[3];
+    initial_pose.orientation.y = initial_pose_array[4];
+    initial_pose.orientation.z = initial_pose_array[5];
+    initial_pose.orientation.w = initial_pose_array[6];
+
+    set_user_defined_initial_pose(initial_pose, true);
+  }
 }
 
 void PoseInitializer::change_state(State::Message::_state_type state)
@@ -174,7 +171,7 @@ void PoseInitializer::on_initialize(
         std::stringstream message;
         message << "No input pose_with_covariance. If you want to use DIRECT method, please input "
                    "pose_with_covariance.";
-        RCLCPP_ERROR(get_logger(), message.str().c_str());
+        RCLCPP_ERROR_STREAM(get_logger(), message.str());
         throw ServiceException(
           autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
       }
@@ -185,7 +182,7 @@ void PoseInitializer::on_initialize(
     } else {
       std::stringstream message;
       message << "Unknown method type (=" << std::to_string(req->method) << ")";
-      RCLCPP_ERROR(get_logger(), message.str().c_str());
+      RCLCPP_ERROR_STREAM(get_logger(), message.str());
       throw ServiceException(
         autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
     }
@@ -209,3 +206,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::get_gnss_pose()
   throw ServiceException(
     Initialize::Service::Response::ERROR_GNSS_SUPPORT, "GNSS is not supported.");
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(PoseInitializer)

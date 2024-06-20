@@ -22,8 +22,8 @@
 #include "ndt_scan_matcher/hyper_parameters.hpp"
 #include "ndt_scan_matcher/map_update_module.hpp"
 
+#include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
@@ -131,8 +131,6 @@ private:
 
   static int count_oscillation(const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array);
 
-  std::array<double, 36> rotate_covariance(
-    const std::array<double, 36> & src_covariance, const Eigen::Matrix3d & rotation) const;
   std::array<double, 36> estimate_covariance(
     const pclomp::NdtResult & ndt_result, const Eigen::Matrix4f & initial_pose_matrix,
     const rclcpp::Time & sensor_ros_time);
@@ -205,7 +203,7 @@ private:
   std::unique_ptr<DiagnosticsModule> diagnostics_ndt_align_;
   std::unique_ptr<DiagnosticsModule> diagnostics_trigger_node_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
-  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
   HyperParameters param_;
 };

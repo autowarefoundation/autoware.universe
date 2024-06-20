@@ -15,10 +15,10 @@
 #ifndef SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
 #define SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
 
+#include "autoware/universe_utils/ros/transform_listener.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/ros/transform_listener.hpp"
 
-#include "autoware_auto_perception_msgs/msg/detected_objects.hpp"
+#include "autoware_perception_msgs/msg/detected_objects.hpp"
 
 #include <chrono>
 #include <memory>
@@ -27,8 +27,8 @@
 
 namespace simple_object_merger
 {
-using autoware_auto_perception_msgs::msg::DetectedObject;
-using autoware_auto_perception_msgs::msg::DetectedObjects;
+using autoware_perception_msgs::msg::DetectedObject;
+using autoware_perception_msgs::msg::DetectedObjects;
 
 class SimpleObjectMergerNode : public rclcpp::Node
 {
@@ -47,7 +47,7 @@ private:
   // Subscriber
   rclcpp::Subscription<DetectedObjects>::SharedPtr sub_objects_{};
   std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array{};
-  std::shared_ptr<tier4_autoware_utils::TransformListener> transform_listener_;
+  std::shared_ptr<autoware::universe_utils::TransformListener> transform_listener_;
 
   // Callback
   void onData(const DetectedObjects::ConstSharedPtr msg, size_t array_number);

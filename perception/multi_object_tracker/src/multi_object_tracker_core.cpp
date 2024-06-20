@@ -67,7 +67,7 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
 
 namespace multi_object_tracker
 {
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
@@ -199,7 +199,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // Debugger
   debugger_ = std::make_unique<TrackerDebugger>(*this, world_frame_id_);
   debugger_->setObjectChannels(input_names_short);
-  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ =
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void MultiObjectTracker::onTrigger()

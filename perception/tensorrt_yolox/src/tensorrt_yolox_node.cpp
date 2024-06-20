@@ -16,7 +16,7 @@
 
 #include "object_recognition_utils/object_classification.hpp"
 
-#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
+#include <autoware_perception_msgs/msg/object_classification.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -31,9 +31,9 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
 {
   {
     stop_watch_ptr_ =
-      std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
+      std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ =
-      std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "tensorrt_yolox");
+      std::make_unique<autoware::universe_utils::DebugPublisher>(this, "tensorrt_yolox");
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }

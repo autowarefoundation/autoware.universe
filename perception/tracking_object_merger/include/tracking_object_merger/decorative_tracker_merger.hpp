@@ -19,12 +19,12 @@
 #include "tracking_object_merger/utils/tracker_state.hpp"
 #include "tracking_object_merger/utils/utils.hpp"
 
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_perception_msgs/msg/tracked_objects.hpp>
 #include <std_msgs/msg/header.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -58,40 +58,36 @@ private:
     std::unordered_map<std::string, std::unique_ptr<DataAssociation>> & data_association_map);
 
   void mainObjectsCallback(
-    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
+    const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
   void subObjectsCallback(
-    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
+    const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
 
   bool decorativeMerger(
     const MEASUREMENT_STATE input_index,
-    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
-  autoware_auto_perception_msgs::msg::TrackedObjects predictFutureState(
-    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg,
+    const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg);
+  autoware_perception_msgs::msg::TrackedObjects predictFutureState(
+    const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg,
     const std_msgs::msg::Header & header);
-  std::optional<autoware_auto_perception_msgs::msg::TrackedObjects> interpolateObjectState(
-    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg1,
-    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg2,
+  std::optional<autoware_perception_msgs::msg::TrackedObjects> interpolateObjectState(
+    const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg1,
+    const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr & input_object_msg2,
     const std_msgs::msg::Header & header);
   TrackedObjects getTrackedObjects(const std_msgs::msg::Header & header);
   TrackerState createNewTracker(
     const MEASUREMENT_STATE input_index, rclcpp::Time current_time,
-    const autoware_auto_perception_msgs::msg::TrackedObject & input_object);
+    const autoware_perception_msgs::msg::TrackedObject & input_object);
 
 private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
-    merged_object_pub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
-    sub_main_objects_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
-    sub_sub_objects_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr merged_object_pub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr sub_main_objects_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr sub_sub_objects_;
   // debug object publisher
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
-    debug_object_pub_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr debug_object_pub_;
   bool publish_interpolated_sub_objects_;
-  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
-  std::unique_ptr<tier4_autoware_utils::DebugPublisher> processing_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<autoware::universe_utils::DebugPublisher> processing_time_publisher_;
 
   /* handle objects */
   std::unordered_map<MEASUREMENT_STATE, std::function<void(TrackedObject &, const TrackedObject &)>>
@@ -103,15 +99,14 @@ private:
   std::string target_frame_;
   std::string base_link_frame_id_;
   // buffer to save the sub objects
-  std::vector<autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr>
-    sub_objects_buffer_;
+  std::vector<autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr> sub_objects_buffer_;
   double sub_object_timeout_sec_;
   double time_sync_threshold_;
 
   // tracker default settings
   TrackerStateParameter tracker_state_parameter_;
 
-  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 
   // merge policy (currently not used)
   struct

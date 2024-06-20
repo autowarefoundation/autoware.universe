@@ -16,6 +16,8 @@
 
 #include "autoware_point_types/types.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 #include <lidar_centerpoint/centerpoint_config.hpp>
@@ -23,8 +25,6 @@
 #include <lidar_centerpoint/ros_utils.hpp>
 #include <lidar_centerpoint/utils.hpp>
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/constants.hpp>
 
 #include <omp.h>
 
@@ -54,42 +54,42 @@ inline bool isInsideBbox(
 
 inline bool isVehicle(int label2d)
 {
-  return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::CAR ||
-         label2d == autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
-         label2d == autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER ||
-         label2d == autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
+  return label2d == autoware_perception_msgs::msg::ObjectClassification::CAR ||
+         label2d == autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
+         label2d == autoware_perception_msgs::msg::ObjectClassification::TRAILER ||
+         label2d == autoware_perception_msgs::msg::ObjectClassification::BUS;
 }
 
 inline bool isCar(int label2d)
 {
-  return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::CAR;
+  return label2d == autoware_perception_msgs::msg::ObjectClassification::CAR;
 }
 
 inline bool isTruck(int label2d)
 {
-  return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK ||
-         label2d == autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER;
+  return label2d == autoware_perception_msgs::msg::ObjectClassification::TRUCK ||
+         label2d == autoware_perception_msgs::msg::ObjectClassification::TRAILER;
 }
 
 inline bool isBus(int label2d)
 {
-  return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::BUS;
+  return label2d == autoware_perception_msgs::msg::ObjectClassification::BUS;
 }
 
 inline bool isPedestrian(int label2d)
 {
-  return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
+  return label2d == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN;
 }
 
 inline bool isBicycle(int label2d)
 {
-  return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE ||
-         label2d == autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
+  return label2d == autoware_perception_msgs::msg::ObjectClassification::BICYCLE ||
+         label2d == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE;
 }
 
 inline bool isUnknown(int label2d)
 {
-  return label2d == autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+  return label2d == autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
 }
 
 PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & options)
@@ -398,15 +398,15 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
     return;
   }
 
-  std::vector<autoware_auto_perception_msgs::msg::DetectedObject> raw_objects;
+  std::vector<autoware_perception_msgs::msg::DetectedObject> raw_objects;
   raw_objects.reserve(det_boxes3d.size());
   for (const auto & box3d : det_boxes3d) {
-    autoware_auto_perception_msgs::msg::DetectedObject obj;
+    autoware_perception_msgs::msg::DetectedObject obj;
     box3DToDetectedObject(box3d, class_names_, has_twist_, has_variance_, obj);
     raw_objects.emplace_back(obj);
   }
 
-  autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
+  autoware_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = painted_pointcloud_msg.header;
   output_msg.objects = iou_bev_nms_.apply(raw_objects);
 

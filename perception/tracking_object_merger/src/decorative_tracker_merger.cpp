@@ -29,13 +29,13 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 namespace tracking_object_merger
 {
 
-using autoware_auto_perception_msgs::msg::TrackedObject;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_perception_msgs::msg::TrackedObject;
+using autoware_perception_msgs::msg::TrackedObjects;
 
 // get unix time from header
 double getUnixTime(const std_msgs::msg::Header & header)
@@ -46,7 +46,7 @@ double getUnixTime(const std_msgs::msg::Header & header)
 // calc association score matrix
 Eigen::MatrixXd calcScoreMatrixForAssociation(
   const MEASUREMENT_STATE measurement_state,
-  const autoware_auto_perception_msgs::msg::TrackedObjects & objects0,
+  const autoware_perception_msgs::msg::TrackedObjects & objects0,
   const std::vector<TrackerState> & trackers,
   const std::unordered_map<std::string, std::unique_ptr<DataAssociation>> & data_association_map
   // const bool debug_log, const std::string & file_name // do not logging for now
@@ -155,12 +155,14 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   set3dDataAssociation("radar-radar", data_association_map_);
 
   // debug publisher
-  processing_time_publisher_ =
-    std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "decorative_object_merger_node");
-  stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
+  processing_time_publisher_ = std::make_unique<autoware::universe_utils::DebugPublisher>(
+    this, "decorative_object_merger_node");
+  stop_watch_ptr_ =
+    std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
-  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ =
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void DecorativeTrackerMergerNode::set3dDataAssociation(
@@ -395,7 +397,7 @@ TrackedObjects DecorativeTrackerMergerNode::getTrackedObjects(const std_msgs::ms
 // create new tracker
 TrackerState DecorativeTrackerMergerNode::createNewTracker(
   const MEASUREMENT_STATE input_index, rclcpp::Time current_time,
-  const autoware_auto_perception_msgs::msg::TrackedObject & input_object)
+  const autoware_perception_msgs::msg::TrackedObject & input_object)
 {
   // check if object id is not included in inner_tracker_objects_
   for (const auto & object : inner_tracker_objects_) {

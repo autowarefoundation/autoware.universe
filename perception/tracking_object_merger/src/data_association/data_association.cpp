@@ -14,8 +14,8 @@
 
 #include "tracking_object_merger/data_association/data_association.hpp"
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tracking_object_merger/data_association/solver/gnn_solver.hpp"
 #include "tracking_object_merger/utils/utils.hpp"
 
@@ -31,8 +31,8 @@ double getFormedYawAngle(
   const geometry_msgs::msg::Quaternion & quat0, const geometry_msgs::msg::Quaternion & quat1,
   const bool distinguish_front_or_back = true)
 {
-  const double yaw0 = tier4_autoware_utils::normalizeRadian(tf2::getYaw(quat0));
-  const double yaw1 = tier4_autoware_utils::normalizeRadian(tf2::getYaw(quat1));
+  const double yaw0 = autoware::universe_utils::normalizeRadian(tf2::getYaw(quat0));
+  const double yaw1 = autoware::universe_utils::normalizeRadian(tf2::getYaw(quat1));
   const double angle_range = distinguish_front_or_back ? M_PI : M_PI_2;
   const double angle_step = distinguish_front_or_back ? 2.0 * M_PI : M_PI;
   // Fixed yaw0 to be in the range of +-90 or 180 degrees of yaw1
@@ -129,8 +129,8 @@ void DataAssociation::assign(
  * @return Eigen::MatrixXd
  */
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
-  const autoware_auto_perception_msgs::msg::TrackedObjects & objects0,
-  const autoware_auto_perception_msgs::msg::TrackedObjects & objects1)
+  const autoware_perception_msgs::msg::TrackedObjects & objects0,
+  const autoware_perception_msgs::msg::TrackedObjects & objects1)
 {
   Eigen::MatrixXd score_matrix =
     Eigen::MatrixXd::Zero(objects1.objects.size(), objects0.objects.size());
@@ -154,7 +154,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
  * @return Eigen::MatrixXd
  */
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
-  const autoware_auto_perception_msgs::msg::TrackedObjects & objects0,
+  const autoware_perception_msgs::msg::TrackedObjects & objects0,
   const std::vector<TrackerState> & trackers)
 {
   Eigen::MatrixXd score_matrix = Eigen::MatrixXd::Zero(trackers.size(), objects0.objects.size());
@@ -172,8 +172,8 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
 }
 
 double DataAssociation::calcScoreBetweenObjects(
-  const autoware_auto_perception_msgs::msg::TrackedObject & object0,
-  const autoware_auto_perception_msgs::msg::TrackedObject & object1) const
+  const autoware_perception_msgs::msg::TrackedObject & object0,
+  const autoware_perception_msgs::msg::TrackedObject & object1) const
 {
   const std::uint8_t object1_label =
     object_recognition_utils::getHighestProbLabel(object1.classification);
@@ -183,7 +183,7 @@ double DataAssociation::calcScoreBetweenObjects(
   double score = 0.0;
   if (can_assign_matrix_(object1_label, object0_label)) {
     const double max_dist = max_dist_matrix_(object1_label, object0_label);
-    const double dist = tier4_autoware_utils::calcDistance2d(
+    const double dist = autoware::universe_utils::calcDistance2d(
       object0.kinematics.pose_with_covariance.pose.position,
       object1.kinematics.pose_with_covariance.pose.position);
 

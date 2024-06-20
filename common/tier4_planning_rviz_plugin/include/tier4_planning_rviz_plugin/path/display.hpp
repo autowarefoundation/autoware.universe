@@ -17,9 +17,9 @@
 
 #include "tier4_planning_rviz_plugin/path/display_base.hpp"
 
-#include <autoware_auto_planning_msgs/msg/path.hpp>
-#include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 #include <utility>
@@ -61,22 +61,22 @@ void visualizeBound(
     const auto [normal_vector_angle, adaptive_width] = [&]() -> std::pair<float, float> {
       if (i == 0) {
         return std::make_pair(
-          tier4_autoware_utils::calcAzimuthAngle(bound.at(i), bound.at(i + 1)) + M_PI_2, width);
+          autoware::universe_utils::calcAzimuthAngle(bound.at(i), bound.at(i + 1)) + M_PI_2, width);
       }
       if (i == bound.size() - 1) {
         return std::make_pair(
-          tier4_autoware_utils::calcAzimuthAngle(bound.at(i - 1), bound.at(i)) + M_PI_2, width);
+          autoware::universe_utils::calcAzimuthAngle(bound.at(i - 1), bound.at(i)) + M_PI_2, width);
       }
       const auto & prev_p = bound.at(i - 1);
       const auto & curr_p = bound.at(i);
       const auto & next_p = bound.at(i + 1);
 
-      const float curr_to_prev_angle = tier4_autoware_utils::calcAzimuthAngle(curr_p, prev_p);
-      const float curr_to_next_angle = tier4_autoware_utils::calcAzimuthAngle(curr_p, next_p);
+      const float curr_to_prev_angle = autoware::universe_utils::calcAzimuthAngle(curr_p, prev_p);
+      const float curr_to_next_angle = autoware::universe_utils::calcAzimuthAngle(curr_p, next_p);
       const float normal_vector_angle = (curr_to_prev_angle + curr_to_next_angle) / 2.0;
 
       const float diff_angle =
-        tier4_autoware_utils::normalizeRadian(normal_vector_angle - curr_to_next_angle);
+        autoware::universe_utils::normalizeRadian(normal_vector_angle - curr_to_next_angle);
       if (diff_angle == 0.0) {
         return std::make_pair(normal_vector_angle, width);
       }
@@ -188,7 +188,7 @@ private:
 };
 
 class AutowarePathWithLaneIdDisplay
-: public AutowarePathWithDrivableAreaDisplay<autoware_auto_planning_msgs::msg::PathWithLaneId>
+: public AutowarePathWithDrivableAreaDisplay<tier4_planning_msgs::msg::PathWithLaneId>
 {
   Q_OBJECT
 public:
@@ -198,9 +198,9 @@ public:
 private:
   void preProcessMessageDetail() override;
   void preVisualizePathFootprintDetail(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr) override;
+    const tier4_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr) override;
   void visualizePathFootprintDetail(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr,
+    const tier4_planning_msgs::msg::PathWithLaneId::ConstSharedPtr msg_ptr,
     const size_t p_idx) override;
 
   rviz_common::properties::BoolProperty property_lane_id_view_;
@@ -212,7 +212,7 @@ private:
 };
 
 class AutowarePathDisplay
-: public AutowarePathWithDrivableAreaDisplay<autoware_auto_planning_msgs::msg::Path>
+: public AutowarePathWithDrivableAreaDisplay<autoware_planning_msgs::msg::Path>
 {
   Q_OBJECT
 private:
@@ -220,7 +220,7 @@ private:
 };
 
 class AutowareTrajectoryDisplay
-: public AutowarePathBaseDisplay<autoware_auto_planning_msgs::msg::Trajectory>
+: public AutowarePathBaseDisplay<autoware_planning_msgs::msg::Trajectory>
 {
   Q_OBJECT
 private:

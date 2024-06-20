@@ -17,10 +17,10 @@
 #include <rcl_interfaces/msg/detail/set_parameters_result__struct.hpp>
 
 #define FMT_HEADER_ONLY
+#include <autoware/universe_utils/ros/update_param.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rcl_interfaces/msg/set_parameters_result.hpp>
 #include <rclcpp/create_timer.hpp>
-#include <tier4_autoware_utils/ros/update_param.hpp>
 
 #include <fmt/format.h>
 
@@ -66,8 +66,8 @@ rcl_interfaces::msg::SetParametersResult DummyDiagPublisher::paramCallback(
       auto prev_status_str = status_str;
       auto is_active = true;
       try {
-        tier4_autoware_utils::updateParam(parameters, status_prefix_str, status_str);
-        tier4_autoware_utils::updateParam(parameters, is_active_prefix_str, is_active);
+        autoware::universe_utils::updateParam(parameters, status_prefix_str, status_str);
+        autoware::universe_utils::updateParam(parameters, is_active_prefix_str, is_active);
       } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
         result.successful = false;
         result.reason = e.what();
@@ -245,12 +245,14 @@ void DummyDiagPublisher::onTimer()
   updater_.force_update();
 }
 
-DummyDiagPublisher::DummyDiagPublisher()
-: Node(
-    "dummy_diag_publisher", rclcpp::NodeOptions()
-                              .allow_undeclared_parameters(true)
-                              .automatically_declare_parameters_from_overrides(true)),
-  updater_(this)
+rclcpp::NodeOptions override_options(rclcpp::NodeOptions options)
+{
+  return options.allow_undeclared_parameters(true).automatically_declare_parameters_from_overrides(
+    true);
+}
+
+DummyDiagPublisher::DummyDiagPublisher(const rclcpp::NodeOptions & options)
+: Node("dummy_diag_publisher", override_options(options)), updater_(this)
 
 {
   // Parameter
@@ -277,3 +279,6 @@ DummyDiagPublisher::DummyDiagPublisher()
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&DummyDiagPublisher::onTimer, this));
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(DummyDiagPublisher)
