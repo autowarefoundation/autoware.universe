@@ -412,6 +412,8 @@ private:
 
   UUID candidate_uuid_;
 
+  ObjectDataArray clip_objects_;
+
   // TODO(Satoshi OTA) create detected object manager.
   ObjectDataArray registered_objects_;
 
