@@ -21,8 +21,8 @@
 
 #include <vector>
 
-using object_position_filter::ObjectPositionFilterNode;
 using autoware_perception_msgs::msg::DetectedObjects;
+using object_position_filter::ObjectPositionFilterNode;
 
 class AutowareTestManager
 {
@@ -33,29 +33,30 @@ public:
   }
 
   template <typename MessageType>
-  void test_pub_msg(rclcpp::Node::SharedPtr target_node, const std::string & topic_name, MessageType & msg)
+  void test_pub_msg(
+    rclcpp::Node::SharedPtr target_node, const std::string & topic_name, MessageType & msg)
   {
     if (publishers_.find(topic_name) == publishers_.end()) {
       auto publisher = test_node_->create_publisher<MessageType>(topic_name, 10);
       publishers_[topic_name] = std::static_pointer_cast<void>(publisher);
     }
 
-    auto publisher = std::static_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
+    auto publisher =
+      std::static_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
 
     autoware::test_utils::publishToTargetNode(test_node_, target_node, topic_name, publisher, msg);
     RCLCPP_INFO(test_node_->get_logger(), "Published message on topic '%s'", topic_name.c_str());
   }
 
   template <typename MessageType>
-  void set_subscriber(const std::string & topic_name, std::function<void(const typename MessageType::ConstSharedPtr)> callback)
+  void set_subscriber(
+    const std::string & topic_name,
+    std::function<void(const typename MessageType::ConstSharedPtr)> callback)
   {
     if (subscribers_.find(topic_name) == subscribers_.end()) {
       auto subscriber = test_node_->create_subscription<MessageType>(
-        topic_name,
-        rclcpp::QoS{1},
-        [callback](const typename MessageType::ConstSharedPtr msg) {
-          callback(msg);
-        });
+        topic_name, rclcpp::QoS{1},
+        [callback](const typename MessageType::ConstSharedPtr msg) { callback(msg); });
       subscribers_[topic_name] = std::static_pointer_cast<void>(subscriber);
     }
   }
@@ -68,7 +69,6 @@ protected:
   // Node
   rclcpp::Node::SharedPtr test_node_;
 };  // class AutowareTestManager
-
 
 std::shared_ptr<AutowareTestManager> generateTestManager()
 {
@@ -96,7 +96,10 @@ TEST(DetectedObjectValidationTest, testObjectPositionFilterEmptyObject)
   auto test_target_node = generateNode();
 
   int counter = 0;
-  auto callback = [&counter](const DetectedObjects::ConstSharedPtr msg) {(void)msg; ++counter;};
+  auto callback = [&counter](const DetectedObjects::ConstSharedPtr msg) {
+    (void)msg;
+    ++counter;
+  };
   test_manager->set_subscriber<DetectedObjects>(output_topic, callback);
 
   DetectedObjects msg;
@@ -158,7 +161,7 @@ TEST(DetectedObjectValidationTest, testObjectPositionFilterSeveralObjects)
   }
 
   DetectedObjects latest_msg;
-  auto callback = [&latest_msg](const DetectedObjects::ConstSharedPtr msg) {latest_msg = *msg;};
+  auto callback = [&latest_msg](const DetectedObjects::ConstSharedPtr msg) { latest_msg = *msg; };
   test_manager->set_subscriber<DetectedObjects>(output_topic, callback);
 
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic, msg);
