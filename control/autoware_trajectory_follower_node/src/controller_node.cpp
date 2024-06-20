@@ -39,7 +39,8 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
     getLateralControllerMode(declare_parameter<std::string>("lateral_controller_mode"));
   switch (lateral_controller_mode) {
     case LateralControllerMode::MPC: {
-      lateral_controller_ = std::make_shared<mpc_lateral_controller::MpcLateralController>(*this);
+      lateral_controller_ =
+        std::make_shared<mpc_lateral_controller::MpcLateralController>(*this, diag_updater_);
       break;
     }
     case LateralControllerMode::PURE_PURSUIT: {
@@ -80,10 +81,10 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
       this, get_clock(), period_ns, std::bind(&Controller::callbackTimerControl, this));
   }
 
-  logger_configure_ = std::make_unique<autoware_universe_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 
   published_time_publisher_ =
-    std::make_unique<autoware_universe_utils::PublishedTimePublisher>(this);
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 Controller::LateralControllerMode Controller::getLateralControllerMode(
@@ -223,10 +224,10 @@ void Controller::publishDebugMarker(
 
   // steer converged marker
   {
-    auto marker = autoware_universe_utils::createDefaultMarker(
+    auto marker = autoware::universe_utils::createDefaultMarker(
       "map", this->now(), "steer_converged", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      autoware_universe_utils::createMarkerScale(0.0, 0.0, 1.0),
-      autoware_universe_utils::createMarkerColor(1.0, 1.0, 1.0, 0.99));
+      autoware::universe_utils::createMarkerScale(0.0, 0.0, 1.0),
+      autoware::universe_utils::createMarkerColor(1.0, 1.0, 1.0, 0.99));
     marker.pose = input_data.current_odometry.pose.pose;
 
     std::stringstream ss;
