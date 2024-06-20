@@ -28,11 +28,11 @@ public:
   explicit PathDistanceCalculator(const rclcpp::NodeOptions & options);
 
 private:
-  autoware_universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::Path>
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::Path>
     sub_path_{this, "~/input/path"};
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_dist_;
   rclcpp::TimerBase::SharedPtr timer_;
-  autoware_universe_utils::SelfPoseListener self_pose_listener_;
+  autoware::universe_utils::SelfPoseListener self_pose_listener_;
 };
 
 #endif  // PATH_DISTANCE_CALCULATOR_HPP_
