@@ -14,7 +14,7 @@
 
 #include "obstacle_stop_planner/adaptive_cruise_control.hpp"
 
-#include "motion_utils/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 
 #include <boost/algorithm/clamp.hpp>
 #include <boost/assert.hpp>
@@ -30,7 +30,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <tier4_autoware_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -366,7 +366,8 @@ void AdaptiveCruiseController::calcDistanceToNearestPointOnPath(
   /* get total distance to collision point */
   double dist_to_point = 0;
   // get distance from self to next nearest point
-  dist_to_point += motion_utils::calcSignedArcLength(trajectory, self_pose.position, size_t(1));
+  dist_to_point +=
+    autoware::motion_utils::calcSignedArcLength(trajectory, self_pose.position, size_t(1));
 
   // add distance from next self-nearest-point(=idx:0) to prev point of nearest_point_idx
   for (int i = 1; i < nearest_point_idx - 1; i++) {
@@ -458,7 +459,7 @@ void AdaptiveCruiseController::calculateProjectedVelocityFromObject(
                 object.kinematics.initial_twist_with_covariance.twist.linear.x);
 
   *velocity =
-    obj_vel_norm * std::cos(tier4_autoware_utils::normalizeRadian(obj_vel_yaw - traj_yaw));
+    obj_vel_norm * std::cos(autoware::universe_utils::normalizeRadian(obj_vel_yaw - traj_yaw));
   debug_values_.data.at(DBGVAL::ESTIMATED_VEL_OBJ) = *velocity;
 }
 
@@ -684,8 +685,8 @@ void AdaptiveCruiseController::insertMaxVelocityToPath(
   double dist_to_first_point = 0.0;
 
   if (output_trajectory->size() > 1) {
-    dist_to_first_point =
-      motion_utils::calcSignedArcLength(*output_trajectory, self_pose.position, size_t(1));
+    dist_to_first_point = autoware::motion_utils::calcSignedArcLength(
+      *output_trajectory, self_pose.position, size_t(1));
   }
 
   double margin_to_insert = dist_to_collision_point * param_.margin_rate_to_change_vel;

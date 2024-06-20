@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
+#include "autoware/velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
 
-#include "autoware_velocity_smoother/trajectory_utils.hpp"
+#include "autoware/velocity_smoother/trajectory_utils.hpp"
 
 #include <Eigen/Core>
 
@@ -23,7 +23,7 @@
 #include <limits>
 #include <vector>
 
-namespace autoware_velocity_smoother
+namespace autoware::velocity_smoother
 {
 LinfPseudoJerkSmoother::LinfPseudoJerkSmoother(rclcpp::Node & node) : SmootherBase(node)
 {
@@ -254,4 +254,4 @@ TrajectoryPoints LinfPseudoJerkSmoother::resampleTrajectory(
     base_param_.resample_param);
 }
 
-}  // namespace autoware_velocity_smoother
+}  // namespace autoware::velocity_smoother
