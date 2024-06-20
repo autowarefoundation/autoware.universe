@@ -28,9 +28,9 @@
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
 #if __has_include(<image_geometry/pinhole_camera_model.hpp>)
-#include <image_geometry/pinhole_camera_model.hpp>
+#include <image_geometry/pinhole_camera_model.hpp>  // for ROS 2 Jazzy or newer
 #else
-#include <image_geometry/pinhole_camera_model.h>
+#include <image_geometry/pinhole_camera_model.h>  // for ROS 2 Humble or older
 #endif
 
 #include <message_filters/subscriber.h>

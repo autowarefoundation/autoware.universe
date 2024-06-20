@@ -25,9 +25,9 @@
 #include <sensor_msgs/msg/image.hpp>
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
-#include <cv_bridge/cv_bridge.hpp>
+#include <cv_bridge/cv_bridge.hpp>  // for ROS 2 Jazzy or newer
 #else
-#include <cv_bridge/cv_bridge.h>
+#include <cv_bridge/cv_bridge.h>  // for ROS 2 Humble or older
 #endif
 
 #include <optional>
