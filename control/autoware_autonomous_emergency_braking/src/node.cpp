@@ -199,6 +199,7 @@ rcl_interfaces::msg::SetParametersResult AEB::onParameter(
   updateParam<double>(parameters, "a_obj_min", a_obj_min_);
 
   updateParam<double>(parameters, "cluster_tolerance", cluster_tolerance_);
+  updateParam<double>(parameters, "cluster_minimum_height", cluster_minimum_height_);
   updateParam<int>(parameters, "minimum_cluster_size", minimum_cluster_size_);
   updateParam<int>(parameters, "maximum_cluster_size", maximum_cluster_size_);
 
