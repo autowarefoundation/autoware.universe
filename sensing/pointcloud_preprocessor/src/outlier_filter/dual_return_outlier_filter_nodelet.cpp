@@ -231,7 +231,7 @@ void DualReturnOutlierFilterComponent::filter(
       if (deleted_azimuths.size() == 0) {
         continue;
       }
-      while (current_deleted_index < (deleted_azimuths.size() - 1) &&
+      while (current_deleted_index < deleted_azimuths.size()) &&
              (uint)deleted_azimuths[current_deleted_index] <
                ((i + static_cast<uint>(min_azimuth / horizontal_resolution) + 1) *
                 horizontal_resolution)) {
