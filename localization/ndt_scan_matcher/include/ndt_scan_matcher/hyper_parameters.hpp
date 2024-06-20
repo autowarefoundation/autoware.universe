@@ -160,8 +160,8 @@ public:
     covariance.covariance_estimation.enable =
       node->declare_parameter<bool>("covariance.covariance_estimation.enable");
     if (covariance.covariance_estimation.enable) {
-      const int64_t covariance_estimation_type_tmp =
-        node->declare_parameter<int64_t>("covariance.covariance_estimation.covariance_estimation_type");
+      const int64_t covariance_estimation_type_tmp = node->declare_parameter<int64_t>(
+        "covariance.covariance_estimation.covariance_estimation_type");
       covariance.covariance_estimation.covariance_estimation_type =
         static_cast<CovarianceEstimationType>(covariance_estimation_type_tmp);
       covariance.covariance_estimation.initial_pose_offset_model_x =
@@ -171,7 +171,9 @@ public:
         node->declare_parameter<std::vector<double>>(
           "covariance.covariance_estimation.initial_pose_offset_model_y");
 
-      if (covariance.covariance_estimation.initial_pose_offset_model_x.size() == covariance.covariance_estimation.initial_pose_offset_model_y.size()) {
+      if (
+        covariance.covariance_estimation.initial_pose_offset_model_x.size() ==
+        covariance.covariance_estimation.initial_pose_offset_model_y.size()) {
         const size_t size = covariance.covariance_estimation.initial_pose_offset_model_x.size();
         covariance.covariance_estimation.initial_pose_offset_model.resize(size);
         for (size_t i = 0; i < size; i++) {
