@@ -1,9 +1,9 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
 
-#include "mission_lane_converter_node.hpp"
+#include "autoware/mission_lane_converter/mission_lane_converter_node.hpp"
 
-#include "lib_mission_planner/helper_functions.hpp"
+#include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"

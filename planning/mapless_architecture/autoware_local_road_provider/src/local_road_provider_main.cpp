@@ -1,7 +1,7 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
 
-#include "local_road_provider_node.hpp"
+#include "autoware/local_road_provider/local_road_provider_node.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

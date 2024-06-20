@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>local_road_provider</name>
+  <name>autoware_local_road_provider</name>
   <version>0.0.1</version>
   <description>local_road_provider</description>
   <maintainer email="simon.eisenmann@driveblocks.ai">driveblocks</maintainer>
@@ -12,7 +12,7 @@
   <exec_depend>ros2launch</exec_depend>
 
   <depend>db_msgs</depend>
-  <depend>lib_mission_planner</depend>
+  <depend>autoware_local_mission_planner_common</depend>
   <depend>rclcpp</depend>
   <depend>autoware_planning_msgs</depend>
 

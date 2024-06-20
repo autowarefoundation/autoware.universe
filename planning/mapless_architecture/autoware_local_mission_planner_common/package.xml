@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>lib_mission_planner</name>
+  <name>autoware_local_mission_planner_common</name>
   <version>0.0.0</version>
   <description>Library containing helper functions for the different nodes.</description>
   <maintainer email="simon.eisenmann@driveblocks.ai">driveblocks</maintainer>

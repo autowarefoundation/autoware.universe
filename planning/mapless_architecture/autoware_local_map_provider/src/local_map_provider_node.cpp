@@ -1,7 +1,7 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
 
-#include "local_map_provider_node.hpp"
+#include "autoware/local_map_provider/local_map_provider_node.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 

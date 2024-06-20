@@ -4,7 +4,7 @@
 #define MISSION_PLANNER_NODE_HPP_
 
 #include "lanelet2_core/geometry/LineString.h"
-#include "lib_mission_planner/helper_functions.hpp"
+#include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "autoware_planning_msgs/msg/driving_corridor.hpp"
 #include "autoware_planning_msgs/msg/local_map.hpp"
 #include "autoware_planning_msgs/msg/mission.hpp"

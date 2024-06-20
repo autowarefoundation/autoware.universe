@@ -1,6 +1,6 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
-#include "mission_planner_node.hpp"
+#include "autoware/local_mission_planner/mission_planner_node.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <memory>

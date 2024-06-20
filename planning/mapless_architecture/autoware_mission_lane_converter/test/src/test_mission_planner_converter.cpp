@@ -2,7 +2,7 @@
 // driveblocks proprietary license
 
 #include "gtest/gtest.h"
-#include "mission_lane_converter_node.hpp"
+#include "autoware/mission_lane_converter/mission_lane_converter_node.hpp"
 
 #include "geometry_msgs/msg/point.hpp"
 

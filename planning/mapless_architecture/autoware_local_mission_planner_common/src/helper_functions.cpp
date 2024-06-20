@@ -1,6 +1,6 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
-#include "lib_mission_planner/helper_functions.hpp"
+#include "autoware/local_mission_planner_common/helper_functions.hpp"
 
 #include "lanelet2_core/geometry/Lanelet.h"
 #include "autoware_planning_msgs/msg/road_segments.hpp"

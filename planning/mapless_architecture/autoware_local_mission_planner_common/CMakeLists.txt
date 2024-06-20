@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(lib_mission_planner)
+project(autoware_local_mission_planner_common)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -71,7 +71,7 @@ if(BUILD_TESTING)
     # MAIN
     test/gtest_main.cpp
     #
-    test/src/test_helper_functions.cpp src/helper_functions.cpp)
+    src/helper_functions.cpp)
 
   ament_lint_auto_find_test_dependencies()
   target_include_directories(${PROJECT_NAME}_tests PRIVATE test/include)

@@ -1,7 +1,7 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
 
-#include "hmi_node.hpp"
+#include "autoware/hmi/hmi_node.hpp"
 
 #include "autoware_planning_msgs/msg/mission.hpp"
 #include "rclcpp/rclcpp.hpp"

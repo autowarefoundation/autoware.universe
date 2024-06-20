@@ -1,9 +1,9 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
 
-#include "local_road_provider_node.hpp"
+#include "autoware/local_road_provider/local_road_provider_node.hpp"
 
-#include "lib_mission_planner/helper_functions.hpp"
+#include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 using std::placeholders::_1;

@@ -1,6 +1,6 @@
 // Copyright 2024 driveblocks GmbH
 // driveblocks proprietary license
-#include "mission_lane_converter_node.hpp"
+#include "autoware/mission_lane_converter/mission_lane_converter_node.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <memory>
