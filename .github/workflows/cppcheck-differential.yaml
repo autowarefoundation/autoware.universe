@@ -42,7 +42,7 @@ jobs:
       - name: Get changed files
         id: changed-files
         run: |
-          git diff --name-only "origin/$${{ github.base_ref }}"...HEAD > changed_files.txt
+          git diff --name-only "origin/${{ github.base_ref }}"...HEAD > changed_files.txt
           cat changed_files.txt
         shell: bash
 
