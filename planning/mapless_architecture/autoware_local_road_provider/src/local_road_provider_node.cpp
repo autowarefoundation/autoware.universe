@@ -17,7 +17,7 @@ LocalRoadProviderNode::LocalRoadProviderNode() : Node("local_road_provider_node"
   qos.best_effort();
 
   // Initialize publisher for road segments
-  road_publisher_ = this->create_publisher<mission_planner_messages::msg::RoadSegments>(
+  road_publisher_ = this->create_publisher<autoware_planning_msgs::msg::RoadSegments>(
     "local_road_provider_node/output/road_segments", 1);
 
   // Initialize subscriber to lanelets stamped messages
@@ -28,7 +28,7 @@ LocalRoadProviderNode::LocalRoadProviderNode() : Node("local_road_provider_node"
 
 void LocalRoadProviderNode::CallbackLaneletsMessages_(const db_msgs::msg::LaneletsStamped & msg)
 {
-  mission_planner_messages::msg::RoadSegments road_segments =
+  autoware_planning_msgs::msg::RoadSegments road_segments =
     lib_mission_planner::ConvertLaneletsStamped2RoadSegments(msg);
 
   // Publish the RoadSegments message

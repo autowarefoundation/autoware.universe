@@ -3,7 +3,7 @@
 #ifndef MISSION_LANE_CONVERTER_NODE_HPP_
 #define MISSION_LANE_CONVERTER_NODE_HPP_
 
-#include "mission_planner_messages/msg/mission_lanes_stamped.hpp"
+#include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path.hpp"
@@ -41,7 +41,7 @@ public:
   std::tuple<
     autoware_auto_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
     autoware_auto_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
-  ConvertMissionToTrajectory(const mission_planner_messages::msg::MissionLanesStamped & msg);
+  ConvertMissionToTrajectory(const autoware_planning_msgs::msg::MissionLanesStamped & msg);
 
 private:
   // ###########################################################################
@@ -53,7 +53,7 @@ private:
    *
    * @param msg Mission lanes from the mission planner module
    */
-  void MissionLanesCallback_(const mission_planner_messages::msg::MissionLanesStamped & msg);
+  void MissionLanesCallback_(const autoware_planning_msgs::msg::MissionLanesStamped & msg);
 
   /**
    * @brief Adds a trajectory point to the pre-allocated ROS message.
@@ -144,7 +144,7 @@ private:
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
 
-  rclcpp::Subscription<mission_planner_messages::msg::MissionLanesStamped>::SharedPtr
+  rclcpp::Subscription<autoware_planning_msgs::msg::MissionLanesStamped>::SharedPtr
     mission_lane_subscriber_;
 
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_publisher_,

@@ -4,15 +4,12 @@
 #define MISSION_PLANNER_NODE_HPP_
 
 #include "lanelet2_core/geometry/LineString.h"
-#include "lanelet_helper/lanelet_converter.hpp"
-#include "lanelet_helper/lanelet_geometry.hpp"
-#include "lanelet_helper/lanelet_tools.hpp"
 #include "lib_mission_planner/helper_functions.hpp"
-#include "mission_planner_messages/msg/driving_corridor.hpp"
-#include "mission_planner_messages/msg/local_map.hpp"
-#include "mission_planner_messages/msg/mission.hpp"
-#include "mission_planner_messages/msg/mission_lanes_stamped.hpp"
-#include "mission_planner_messages/msg/visualization_distance.hpp"
+#include "autoware_planning_msgs/msg/driving_corridor.hpp"
+#include "autoware_planning_msgs/msg/local_map.hpp"
+#include "autoware_planning_msgs/msg/mission.hpp"
+#include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
+#include "autoware_planning_msgs/msg/visualization_distance.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -103,13 +100,13 @@ public:
     * @param converted_lanelets The lanelets from the road model
     (std::vector<lanelet::Lanelet>).
     * @param lanelet_connections The lanelet connections from the road model
-    (std::vector<lanelet_types::LaneletConnection>).
+    (std::vector<LaneletConnection>).
     * @return bool (is on goal lane or not).
     */
   bool IsOnGoalLane_(
     const int ego_lanelet_index, const lanelet::BasicPoint2d & goal_point,
     const std::vector<lanelet::Lanelet> & converted_lanelets,
-    const std::vector<lanelet_types::LaneletConnection> & lanelet_connections);
+    const std::vector<LaneletConnection> & lanelet_connections);
 
   /**
    * @brief Function which checks if the goal point has a negative x value und
@@ -119,11 +116,11 @@ public:
    * @param converted_lanelets The lanelets from the road model
     (std::vector<lanelet::Lanelet>).
    * @param lanelet_connections The lanelet connections from the road model
-    (std::vector<lanelet_types::LaneletConnection>).
+    (std::vector<LaneletConnection>).
    */
   void CheckIfGoalPointShouldBeReset_(
     const lanelet::Lanelets & converted_lanelets,
-    const std::vector<lanelet_types::LaneletConnection> & lanelet_connections);
+    const std::vector<LaneletConnection> & lanelet_connections);
 
   /**
    * @brief Function for calculating lanes
@@ -135,7 +132,7 @@ public:
    */
   Lanes CalculateLanes_(
     const std::vector<lanelet::Lanelet> & converted_lanelets,
-    std::vector<lanelet_types::LaneletConnection> & lanelet_connections);
+    std::vector<LaneletConnection> & lanelet_connections);
 
   /**
     * @brief Function for creating a marker array.
@@ -152,7 +149,7 @@ public:
     const std::vector<lanelet::ConstLineString3d> & centerline,
     const std::vector<lanelet::ConstLineString3d> & left,
     const std::vector<lanelet::ConstLineString3d> & right,
-    const mission_planner_messages::msg::RoadSegments & msg);
+    const autoware_planning_msgs::msg::RoadSegments & msg);
 
   /**
    * @brief Getter for goal_point_
@@ -174,36 +171,36 @@ public:
    * @param lane The lane which is a std::vector<int> containing all the indices
    * of the lane.
    * @param converted_lanelets The lanelets (std::vector<lanelet::Lanelet>).
-   * @return mission_planner_messages::msg::DrivingCorridor
+   * @return autoware_planning_msgs::msg::DrivingCorridor
    */
-  mission_planner_messages::msg::DrivingCorridor CreateDrivingCorridor_(
+  autoware_planning_msgs::msg::DrivingCorridor CreateDrivingCorridor_(
     const std::vector<int> & lane, const std::vector<lanelet::Lanelet> & converted_lanelets);
 
   /**
    * @brief The callback for the Mission messages.
    *
-   * @param msg The mission_planner_messages::msg::Mission message.
+   * @param msg The autoware_planning_msgs::msg::Mission message.
    */
-  void CallbackMissionMessages_(const mission_planner_messages::msg::Mission & msg);
+  void CallbackMissionMessages_(const autoware_planning_msgs::msg::Mission & msg);
 
   /**
    * @brief The callback for the LocalMap messages.
    *
-   * @param msg The mission_planner_messages::msg::LocalMap message.
+   * @param msg The autoware_planning_msgs::msg::LocalMap message.
    */
-  void CallbackLocalMapMessages_(const mission_planner_messages::msg::LocalMap & msg);
+  void CallbackLocalMapMessages_(const autoware_planning_msgs::msg::LocalMap & msg);
 
   /**
    * @brief Convert RoadSegments into lanelets.
    *
-   * @param msg The message (mission_planner_messages::msg::RoadSegments).
+   * @param msg The message (autoware_planning_msgs::msg::RoadSegments).
    * @param out_lanelets The lanelets (output).
    * @param out_lanelet_connections The lanelet connections (output).
    */
   void ConvertInput2LaneletFormat(
-    const mission_planner_messages::msg::RoadSegments & msg,
+    const autoware_planning_msgs::msg::RoadSegments & msg,
     std::vector<lanelet::Lanelet> & out_lanelets,
-    std::vector<lanelet_types::LaneletConnection> & out_lanelet_connections);
+    std::vector<LaneletConnection> & out_lanelet_connections);
 
 private:
   // ###########################################################################
@@ -217,7 +214,7 @@ private:
    * @param converted_lanelets The lanelets (std::vector<lanelet::Lanelet>).
    */
   void VisualizeLanes_(
-    const mission_planner_messages::msg::RoadSegments & msg,
+    const autoware_planning_msgs::msg::RoadSegments & msg,
     const std::vector<lanelet::Lanelet> & converted_lanelets);
 
   /**
@@ -227,8 +224,8 @@ private:
    * @param driving_corridor The considered driving corridor for which the centerline is visualized.
    */
   void VisualizeCenterlineOfDrivingCorridor_(
-    const mission_planner_messages::msg::RoadSegments & msg,
-    const mission_planner_messages::msg::DrivingCorridor & driving_corridor);
+    const autoware_planning_msgs::msg::RoadSegments & msg,
+    const autoware_planning_msgs::msg::DrivingCorridor & driving_corridor);
 
   /**
    * @brief Function for creating a lanelet::LineString2d.
@@ -264,8 +261,7 @@ private:
    * @return std::vector<int>
    */
   std::vector<int> GetAllNeighborsOfLane(
-    const std::vector<int> & lane,
-    const std::vector<lanelet_types::LaneletConnection> & lanelet_connections,
+    const std::vector<int> & lane, const std::vector<LaneletConnection> & lanelet_connections,
     const int vehicle_side);
 
   /**
@@ -277,35 +273,34 @@ private:
    *
    */
   void InsertPredecessorLanelet(
-    std::vector<int> & lane_idx,
-    const std::vector<lanelet_types::LaneletConnection> & lanelet_connections);
+    std::vector<int> & lane_idx, const std::vector<LaneletConnection> & lanelet_connections);
 
   /**
    * @brief Calculate the predecessors.
    *
    * @param lanelet_connections The lanelet connections.
    */
-  void CalculatePredecessors(std::vector<lanelet_types::LaneletConnection> & lanelet_connections);
+  void CalculatePredecessors(std::vector<LaneletConnection> & lanelet_connections);
 
   // ###########################################################################
   // #  PRIVATE VARIABLES
   // ###########################################################################
   //  Declare ROS2 publisher and subscriber
-  rclcpp::Subscription<mission_planner_messages::msg::LocalMap>::SharedPtr mapSubscriber_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::LocalMap>::SharedPtr mapSubscriber_;
 
-  rclcpp::Subscription<mission_planner_messages::msg::Mission>::SharedPtr missionSubscriber_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Mission>::SharedPtr missionSubscriber_;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr visualizationPublisher_;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
     visualization_publisher_centerline_;
 
-  rclcpp::Publisher<mission_planner_messages::msg::VisualizationDistance>::SharedPtr
+  rclcpp::Publisher<autoware_planning_msgs::msg::VisualizationDistance>::SharedPtr
     visualizationDistancePublisher_;
 
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr visualizationGoalPointPublisher_;
 
-  rclcpp::Publisher<mission_planner_messages::msg::MissionLanesStamped>::SharedPtr
+  rclcpp::Publisher<autoware_planning_msgs::msg::MissionLanesStamped>::SharedPtr
     missionLanesStampedPublisher_;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr OdometrySubscriber_;

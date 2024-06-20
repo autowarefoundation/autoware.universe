@@ -3,8 +3,8 @@
 #ifndef LOCAL_MAP_PROVIDER_NODE_HPP_
 #define LOCAL_MAP_PROVIDER_NODE_HPP_
 
-#include "mission_planner_messages/msg/local_map.hpp"
-#include "mission_planner_messages/msg/road_segments.hpp"
+#include "autoware_planning_msgs/msg/local_map.hpp"
+#include "autoware_planning_msgs/msg/road_segments.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 /**
@@ -29,18 +29,18 @@ private:
   /**
    * @brief The callback for the RoadSegments messages.
    *
-   * @param msg The mission_planner_messages::msg::RoadSegments message.
+   * @param msg The autoware_planning_msgs::msg::RoadSegments message.
    */
-  void CallbackRoadSegmentsMessages_(const mission_planner_messages::msg::RoadSegments & msg);
+  void CallbackRoadSegmentsMessages_(const autoware_planning_msgs::msg::RoadSegments & msg);
 
   // ###########################################################################
   // #  PRIVATE VARIABLES
   // ###########################################################################
   // Declare ROS2 publisher and subscriber
 
-  rclcpp::Publisher<mission_planner_messages::msg::LocalMap>::SharedPtr map_publisher_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::LocalMap>::SharedPtr map_publisher_;
 
-  rclcpp::Subscription<mission_planner_messages::msg::RoadSegments>::SharedPtr road_subscriber_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::RoadSegments>::SharedPtr road_subscriber_;
 };
 
 #endif  // LOCAL_MAP_PROVIDER_NODE_HPP_

@@ -3,8 +3,6 @@
 
 #include "gtest/gtest.h"
 #include "mission_lane_converter_node.hpp"
-#include "mission_planner_messages/msg/driving_corridor.hpp"
-#include "mission_planner_messages/msg/mission_lanes_stamped.hpp"
 
 #include "geometry_msgs/msg/point.hpp"
 
@@ -12,13 +10,13 @@ int TestMissionToTrajectory()
 {
   MissionLaneConverterNode mission_converter = MissionLaneConverterNode();
 
-  mission_planner_messages::msg::MissionLanesStamped mission_msg;
+  autoware_planning_msgs::msg::MissionLanesStamped mission_msg;
 
   // set target lane to ego lane
   mission_msg.target_lane = 0;
 
   // add a driving corridor to the ego lane
-  mission_msg.ego_lane = mission_planner_messages::msg::DrivingCorridor();
+  mission_msg.ego_lane = autoware_planning_msgs::msg::DrivingCorridor();
 
   // add points to the ego lane centerline
   mission_msg.ego_lane.centerline.push_back(geometry_msgs::msg::Point());
@@ -60,7 +58,7 @@ int TestMissionToTrajectory()
   EXPECT_EQ(trj_msg.points.back().pose.position.y, mission_msg.ego_lane.centerline.back().y);
 
   // TEST 3: neighbor lane left
-  mission_msg.drivable_lanes_left.push_back(mission_planner_messages::msg::DrivingCorridor());
+  mission_msg.drivable_lanes_left.push_back(autoware_planning_msgs::msg::DrivingCorridor());
   mission_msg.drivable_lanes_left.back().centerline.push_back(geometry_msgs::msg::Point());
   mission_msg.drivable_lanes_left.back().centerline.back().x = 0.0;
   mission_msg.drivable_lanes_left.back().centerline.back().y = 0.0;
@@ -85,7 +83,7 @@ int TestMissionToTrajectory()
     mission_msg.drivable_lanes_left.back().centerline.back().y);
 
   // TEST 4: neighbor lane right
-  mission_msg.drivable_lanes_right.push_back(mission_planner_messages::msg::DrivingCorridor());
+  mission_msg.drivable_lanes_right.push_back(autoware_planning_msgs::msg::DrivingCorridor());
   mission_msg.drivable_lanes_right.back().centerline.push_back(geometry_msgs::msg::Point());
   mission_msg.drivable_lanes_right.back().centerline.back().x = 1.0;
   mission_msg.drivable_lanes_right.back().centerline.back().y = 1.2;

@@ -35,7 +35,7 @@ MissionLaneConverterNode::MissionLaneConverterNode() : Node("mission_lane_conver
     std::bind(&MissionLaneConverterNode::CallbackOdometryMessages_, this, _1));
 
   mission_lane_subscriber_ =
-    this->create_subscription<mission_planner_messages::msg::MissionLanesStamped>(
+    this->create_subscription<autoware_planning_msgs::msg::MissionLanesStamped>(
       "mission_lane_converter/input/mission_lanes", qos_best_effort,
       std::bind(&MissionLaneConverterNode::MissionLanesCallback_, this, _1));
 
@@ -108,7 +108,7 @@ void MissionLaneConverterNode::TimedStartupTrajectoryCallback()
 }
 
 void MissionLaneConverterNode::MissionLanesCallback_(
-  const mission_planner_messages::msg::MissionLanesStamped & msg_mission)
+  const autoware_planning_msgs::msg::MissionLanesStamped & msg_mission)
 {
   // FIXME: workaround to get the vehicle driving in autonomous mode until the
   // environment model is available
@@ -172,7 +172,7 @@ std::tuple<
   autoware_auto_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
   autoware_auto_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
 MissionLaneConverterNode::ConvertMissionToTrajectory(
-  const mission_planner_messages::msg::MissionLanesStamped & msg)
+  const autoware_planning_msgs::msg::MissionLanesStamped & msg)
 {
   // empty trajectory for controller
   autoware_auto_planning_msgs::msg::Trajectory trj_msg =

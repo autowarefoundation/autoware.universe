@@ -5,14 +5,10 @@
 #include "lanelet2_core/LaneletMap.h"
 #include "lanelet2_core/geometry/Lanelet.h"
 #include "lanelet2_core/geometry/LineString.h"
-#include "lanelet_helper/data_types.hpp"
-#include "lanelet_helper/lanelet_converter.hpp"
-#include "lanelet_helper/lanelet_geometry.hpp"
-#include "lanelet_helper/lanelet_tools.hpp"
 #include "lib_mission_planner/helper_functions.hpp"
-#include "mission_planner_messages/msg/driving_corridor.hpp"
-#include "mission_planner_messages/msg/mission.hpp"
-#include "mission_planner_messages/msg/mission_lanes_stamped.hpp"
+#include "autoware_planning_msgs/msg/driving_corridor.hpp"
+#include "autoware_planning_msgs/msg/mission.hpp"
+#include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "db_msgs/msg/lanelets_stamped.hpp"
@@ -53,7 +49,7 @@ MissionPlannerNode::MissionPlannerNode() : Node("mission_planner_node")
 
   // Initialize publisher for visualization of the distance
   visualizationDistancePublisher_ =
-    this->create_publisher<mission_planner_messages::msg::VisualizationDistance>(
+    this->create_publisher<autoware_planning_msgs::msg::VisualizationDistance>(
       "mission_planner_node/output/visualization_distance", 1);
 
   // Initialize publisher for goal point marker
@@ -62,16 +58,16 @@ MissionPlannerNode::MissionPlannerNode() : Node("mission_planner_node")
 
   // Initialize publisher for mission lanes
   missionLanesStampedPublisher_ =
-    this->create_publisher<mission_planner_messages::msg::MissionLanesStamped>(
+    this->create_publisher<autoware_planning_msgs::msg::MissionLanesStamped>(
       "mission_planner_node/output/mission_lanes_stamped", 1);
 
   // Initialize subscriber to lanelets stamped messages
-  mapSubscriber_ = this->create_subscription<mission_planner_messages::msg::LocalMap>(
+  mapSubscriber_ = this->create_subscription<autoware_planning_msgs::msg::LocalMap>(
     "mission_planner_node/input/local_map", qos,
     std::bind(&MissionPlannerNode::CallbackLocalMapMessages_, this, _1));
 
   // Initialize subscriber to mission messages
-  missionSubscriber_ = this->create_subscription<mission_planner_messages::msg::Mission>(
+  missionSubscriber_ = this->create_subscription<autoware_planning_msgs::msg::Mission>(
     "mission_planner/input/mission", qos,
     std::bind(&MissionPlannerNode::CallbackMissionMessages_, this, _1));
 
@@ -104,10 +100,10 @@ MissionPlannerNode::MissionPlannerNode() : Node("mission_planner_node")
 }
 
 void MissionPlannerNode::CallbackLocalMapMessages_(
-  const mission_planner_messages::msg::LocalMap & msg)
+  const autoware_planning_msgs::msg::LocalMap & msg)
 {
   // Used for output
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections;
+  std::vector<LaneletConnection> lanelet_connections;
   std::vector<lanelet::Lanelet> converted_lanelets;
 
   ConvertInput2LaneletFormat(msg.road_segments, converted_lanelets, lanelet_connections);
@@ -159,8 +155,7 @@ void MissionPlannerNode::CallbackLocalMapMessages_(
 
   // Check if lane change was successful, if yes -> reset mission
   if (mission_ != stay) {
-    int egoLaneletIndex =
-      path_geometry::FindEgoOccupiedLaneletID(converted_lanelets);  // Returns -1 if no match
+    int egoLaneletIndex = FindEgoOccupiedLaneletID(converted_lanelets);  // Returns -1 if no match
     lanelet::BasicPoint2d pointEgo(0,
                                    0);  // Vehicle is always located at (0, 0)
 
@@ -196,7 +191,7 @@ void MissionPlannerNode::CallbackLocalMapMessages_(
   visualization_publisher_centerline_->publish(clear_marker_array);
 
   // Publish mission lanes
-  mission_planner_messages::msg::MissionLanesStamped lanes;
+  autoware_planning_msgs::msg::MissionLanesStamped lanes;
   lanes.header.frame_id = msg.road_segments.header.frame_id;  // Same frame_id as msg
   lanes.header.stamp = rclcpp::Node::now();
 
@@ -231,7 +226,7 @@ void MissionPlannerNode::CallbackLocalMapMessages_(
   MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor_(msg.road_segments, lanes.ego_lane);
 
   // Initialize driving corridor
-  mission_planner_messages::msg::DrivingCorridor driving_corridor;
+  autoware_planning_msgs::msg::DrivingCorridor driving_corridor;
 
   if (!left_lanes.empty()) {
     for (const std::vector<int> & lane : left_lanes) {
@@ -441,7 +436,7 @@ lanelet::BasicPoint2d MissionPlannerNode::RecenterGoalPoint(
   lanelet::BasicPoint2d projected_goal_point;
 
   // Get current lanelet index of goal point
-  const int lanelet_idx_goal_point = path_geometry::FindOccupiedLaneletID(road_model, goal_point);
+  const int lanelet_idx_goal_point = FindOccupiedLaneletID(road_model, goal_point);
 
   if (lanelet_idx_goal_point >= 0) {
     // Get the centerline of the goal point's lanelet
@@ -459,36 +454,36 @@ lanelet::BasicPoint2d MissionPlannerNode::RecenterGoalPoint(
 }
 
 void MissionPlannerNode::CallbackMissionMessages_(
-  const mission_planner_messages::msg::Mission & msg)
+  const autoware_planning_msgs::msg::Mission & msg)
 {
   // Initialize variables
   lane_change_trigger_success_ = false;
   retry_attempts_ = 0;
 
   switch (msg.mission_type) {
-    case mission_planner_messages::msg::Mission::LANE_KEEP:
+    case autoware_planning_msgs::msg::Mission::LANE_KEEP:
       // Keep the lane
       mission_ = stay;
       target_lane_ = stay;
       break;
-    case mission_planner_messages::msg::Mission::LANE_CHANGE_LEFT:
+    case autoware_planning_msgs::msg::Mission::LANE_CHANGE_LEFT:
       // Initiate left lane change
       RCLCPP_INFO(this->get_logger(), "Lane change to the left initiated.");
       lane_change_direction_ = left;
       InitiateLaneChange_(lane_change_direction_, lane_left_);
       break;
-    case mission_planner_messages::msg::Mission::LANE_CHANGE_RIGHT:
+    case autoware_planning_msgs::msg::Mission::LANE_CHANGE_RIGHT:
       // Initiate right lane change
       RCLCPP_INFO(this->get_logger(), "Lane change to the right initiated.");
       lane_change_direction_ = right;
       InitiateLaneChange_(lane_change_direction_, lane_right_);
       break;
-    case mission_planner_messages::msg::Mission::TAKE_NEXT_EXIT_LEFT:
+    case autoware_planning_msgs::msg::Mission::TAKE_NEXT_EXIT_LEFT:
       // Initiate take next exit
       RCLCPP_INFO(this->get_logger(), "Take next exit (left) initiated.");
       target_lane_ = left_most;  // Set target lane
       break;
-    case mission_planner_messages::msg::Mission::TAKE_NEXT_EXIT_RIGHT:
+    case autoware_planning_msgs::msg::Mission::TAKE_NEXT_EXIT_RIGHT:
       // Initiate take next exit
       RCLCPP_INFO(this->get_logger(), "Take next exit (right) initiated.");
       target_lane_ = right_most;  // Set target lane
@@ -520,7 +515,7 @@ void MissionPlannerNode::InitiateLaneChange_(
 }
 
 void MissionPlannerNode::VisualizeLanes_(
-  const mission_planner_messages::msg::RoadSegments & msg,
+  const autoware_planning_msgs::msg::RoadSegments & msg,
   const std::vector<lanelet::Lanelet> & converted_lanelets)
 {
   // Calculate centerlines, left and right bounds
@@ -547,8 +542,8 @@ void MissionPlannerNode::VisualizeLanes_(
 }
 
 void MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor_(
-  const mission_planner_messages::msg::RoadSegments & msg,
-  const mission_planner_messages::msg::DrivingCorridor & driving_corridor)
+  const autoware_planning_msgs::msg::RoadSegments & msg,
+  const autoware_planning_msgs::msg::DrivingCorridor & driving_corridor)
 {
   // Create a marker for the centerline
   visualization_msgs::msg::Marker centerline_marker;
@@ -592,16 +587,16 @@ void MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor_(
 // Determine the lanes
 Lanes MissionPlannerNode::CalculateLanes_(
   const std::vector<lanelet::Lanelet> & converted_lanelets,
-  std::vector<lanelet_types::LaneletConnection> & lanelet_connections)
+  std::vector<LaneletConnection> & lanelet_connections)
 {
   // Calculate centerlines, left and right bounds
   std::vector<lanelet::ConstLineString3d> centerlines;
   std::vector<lanelet::ConstLineString3d> left_bounds;
   std::vector<lanelet::ConstLineString3d> right_bounds;
 
-  int ego_lanelet_index = path_geometry::FindEgoOccupiedLaneletID(
-    converted_lanelets);  // Finds the ID of the ego vehicle occupied
-                          // lanelet (returns -1 if no match)
+  int ego_lanelet_index =
+    FindEgoOccupiedLaneletID(converted_lanelets);  // Finds the ID of the ego vehicle occupied
+                                                   // lanelet (returns -1 if no match)
 
   // Initialize variables
   std::vector<std::vector<int>> ego_lane;
@@ -611,23 +606,23 @@ Lanes MissionPlannerNode::CalculateLanes_(
 
   if (ego_lanelet_index >= 0) {
     // Get ego lane
-    ego_lane = lanelet_tools::GetAllSuccessorSequences(lanelet_connections, ego_lanelet_index);
+    ego_lane = GetAllSuccessorSequences(lanelet_connections, ego_lanelet_index);
 
     // Extract the first available ego lane
     if (ego_lane.size() > 0) {
       ego_lane_stripped_idx = ego_lane[0];
 
       // Get all neighbor lanelets to the ego lanelet on the left side
-      std::vector<int> left_neighbors = lanelet_tools::GetAllNeighboringLaneletIDs(
-        lanelet_connections, ego_lanelet_index, lanelet_types::VehicleSide::kLeft);
+      std::vector<int> left_neighbors =
+        GetAllNeighboringLaneletIDs(lanelet_connections, ego_lanelet_index, VehicleSide::kLeft);
 
       // Initialize current_lane and next_lane
       std::vector<int> current_lane = ego_lane_stripped_idx;
       std::vector<int> neighbor_lane;
 
       for (size_t i = 0; i < left_neighbors.size(); ++i) {
-        neighbor_lane = GetAllNeighborsOfLane(
-          current_lane, lanelet_connections, lanelet_types::VehicleSide::kLeft);
+        neighbor_lane =
+          GetAllNeighborsOfLane(current_lane, lanelet_connections, VehicleSide::kLeft);
 
         left_lanes.push_back(neighbor_lane);
 
@@ -635,15 +630,15 @@ Lanes MissionPlannerNode::CalculateLanes_(
       }
 
       // Get all neighbor lanelets to the ego lanelet on the right side
-      std::vector<int> right_neighbors = lanelet_tools::GetAllNeighboringLaneletIDs(
-        lanelet_connections, ego_lanelet_index, lanelet_types::VehicleSide::kRight);
+      std::vector<int> right_neighbors =
+        GetAllNeighboringLaneletIDs(lanelet_connections, ego_lanelet_index, VehicleSide::kRight);
 
       // Reinitialize current_lane
       current_lane = ego_lane_stripped_idx;
 
       for (size_t i = 0; i < right_neighbors.size(); ++i) {
-        neighbor_lane = GetAllNeighborsOfLane(
-          current_lane, lanelet_connections, lanelet_types::VehicleSide::kRight);
+        neighbor_lane =
+          GetAllNeighborsOfLane(current_lane, lanelet_connections, VehicleSide::kRight);
 
         right_lanes.push_back(neighbor_lane);
 
@@ -675,8 +670,7 @@ Lanes MissionPlannerNode::CalculateLanes_(
 }
 
 void MissionPlannerNode::InsertPredecessorLanelet(
-  std::vector<int> & lane_idx,
-  const std::vector<lanelet_types::LaneletConnection> & lanelet_connections)
+  std::vector<int> & lane_idx, const std::vector<LaneletConnection> & lanelet_connections)
 {
   if (!lane_idx.empty()) {
     // Get index of first lanelet
@@ -696,8 +690,8 @@ void MissionPlannerNode::InsertPredecessorLanelet(
 }
 
 std::vector<int> MissionPlannerNode::GetAllNeighborsOfLane(
-  const std::vector<int> & lane,
-  const std::vector<lanelet_types::LaneletConnection> & lanelet_connections, const int vehicle_side)
+  const std::vector<int> & lane, const std::vector<LaneletConnection> & lanelet_connections,
+  const int vehicle_side)
 {
   // Initialize vector
   std::vector<int> neighbor_lane_idx = {};
@@ -730,7 +724,7 @@ visualization_msgs::msg::MarkerArray MissionPlannerNode::CreateMarkerArray_(
   const std::vector<lanelet::ConstLineString3d> & centerline,
   const std::vector<lanelet::ConstLineString3d> & left,
   const std::vector<lanelet::ConstLineString3d> & right,
-  const mission_planner_messages::msg::RoadSegments & msg)
+  const autoware_planning_msgs::msg::RoadSegments & msg)
 {
   visualization_msgs::msg::MarkerArray markerArray;
 
@@ -810,11 +804,11 @@ visualization_msgs::msg::MarkerArray MissionPlannerNode::CreateMarkerArray_(
   return markerArray;
 }
 
-mission_planner_messages::msg::DrivingCorridor MissionPlannerNode::CreateDrivingCorridor_(
+autoware_planning_msgs::msg::DrivingCorridor MissionPlannerNode::CreateDrivingCorridor_(
   const std::vector<int> & lane, const std::vector<lanelet::Lanelet> & converted_lanelets)
 {
   // Create driving corridor
-  mission_planner_messages::msg::DrivingCorridor driving_corridor;
+  autoware_planning_msgs::msg::DrivingCorridor driving_corridor;
 
   for (int id : lane) {
     if (id >= 0) {
@@ -895,16 +889,15 @@ lanelet::BasicPoint2d MissionPlannerNode::GetPointOnLane_(
 bool MissionPlannerNode::IsOnGoalLane_(
   const int ego_lanelet_index, const lanelet::BasicPoint2d & goal_point,
   const std::vector<lanelet::Lanelet> & converted_lanelets,
-  const std::vector<lanelet_types::LaneletConnection> & lanelet_connections)
+  const std::vector<LaneletConnection> & lanelet_connections)
 {
   bool result = false;
 
   // Find the index of the lanelet containing the goal point
-  int goal_index =
-    path_geometry::FindOccupiedLaneletID(converted_lanelets, goal_point);  // Returns -1 if no match
+  int goal_index = FindOccupiedLaneletID(converted_lanelets, goal_point);  // Returns -1 if no match
 
   if (goal_index >= 0) {  // Check if -1
-    std::vector<std::vector<int>> goal_lane = lanelet_tools::GetAllPredecessorSequences(
+    std::vector<std::vector<int>> goal_lane = GetAllPredecessorSequences(
       lanelet_connections,
       goal_index);  // Get goal lane
 
@@ -954,7 +947,7 @@ double MissionPlannerNode::CalculateDistanceBetweenPointAndLineString_(
   double distance = lanelet::geometry::distance2d(point, projected_point);
 
   // Publish distance
-  mission_planner_messages::msg::VisualizationDistance d;
+  autoware_planning_msgs::msg::VisualizationDistance d;
   d.distance = distance;
   visualizationDistancePublisher_->publish(d);
 
@@ -963,20 +956,20 @@ double MissionPlannerNode::CalculateDistanceBetweenPointAndLineString_(
 
 void MissionPlannerNode::CheckIfGoalPointShouldBeReset_(
   const lanelet::Lanelets & converted_lanelets,
-  const std::vector<lanelet_types::LaneletConnection> & lanelet_connections)
+  const std::vector<LaneletConnection> & lanelet_connections)
 {
   // Check if goal point should be reset: If the x value of the goal point is
   // negative, then the point is behind the vehicle and must be therefore reset.
   if (goal_point_.x() < 0 && mission_ != stay) {  // TODO(simon.eisenmann@driveblocks.ai): Maybe
                                                   // remove condition mission_ != stay
     // Find the index of the lanelet containing the goal point
-    int goal_index = path_geometry::FindOccupiedLaneletID(
-      converted_lanelets, goal_point_);  // Returns -1 if no match
+    int goal_index =
+      FindOccupiedLaneletID(converted_lanelets, goal_point_);  // Returns -1 if no match
 
     if (goal_index >= 0) {  // Check if -1
       // Reset goal point
       goal_point_ = GetPointOnLane_(
-        lanelet_tools::GetAllSuccessorSequences(lanelet_connections, goal_index)[0],
+        GetAllSuccessorSequences(lanelet_connections, goal_index)[0],
         projection_distance_on_goallane_, converted_lanelets);
     } else {
       // Reset of goal point not successful -> reset mission and target lane
@@ -1001,9 +994,9 @@ void MissionPlannerNode::goal_point(const lanelet::BasicPoint2d & goal_point)
 }
 
 void MissionPlannerNode::ConvertInput2LaneletFormat(
-  const mission_planner_messages::msg::RoadSegments & msg,
+  const autoware_planning_msgs::msg::RoadSegments & msg,
   std::vector<lanelet::Lanelet> & out_lanelets,
-  std::vector<lanelet_types::LaneletConnection> & out_lanelet_connections)
+  std::vector<LaneletConnection> & out_lanelet_connections)
 {
   // Local variables
   const unsigned int n_linestrings_per_lanelet = 2;
@@ -1047,7 +1040,7 @@ void MissionPlannerNode::ConvertInput2LaneletFormat(
     out_lanelets.push_back(lanelet);
 
     // Add empty lanelet connection
-    out_lanelet_connections.push_back(lanelet_types::LaneletConnection());
+    out_lanelet_connections.push_back(LaneletConnection());
 
     // Set origin lanelet ID (and store it in translation map)
     out_lanelet_connections[idx_segment].original_lanelet_id = msg.segments[idx_segment].id;
@@ -1097,8 +1090,7 @@ void MissionPlannerNode::ConvertInput2LaneletFormat(
   return;
 }
 
-void MissionPlannerNode::CalculatePredecessors(
-  std::vector<lanelet_types::LaneletConnection> & lanelet_connections)
+void MissionPlannerNode::CalculatePredecessors(std::vector<LaneletConnection> & lanelet_connections)
 {
   // Determine predecessor information from already known information
   for (std::size_t id_lanelet = 0; id_lanelet < lanelet_connections.size(); id_lanelet++) {
@@ -1118,7 +1110,7 @@ void MissionPlannerNode::CalculatePredecessors(
   }
 
   // Write -1 to lanelets which have no predecessors
-  for (lanelet_types::LaneletConnection lanelet_connection : lanelet_connections) {
+  for (LaneletConnection lanelet_connection : lanelet_connections) {
     if (lanelet_connection.predecessor_lanelet_ids.empty()) {
       lanelet_connection.predecessor_lanelet_ids = {-1};
     }

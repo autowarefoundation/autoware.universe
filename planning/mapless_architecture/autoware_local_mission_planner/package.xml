@@ -15,14 +15,13 @@
   <depend>db_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_core</depend>
-  <depend>lanelet_helper</depend>
   <depend>lib_mission_planner</depend>
-  <depend>mission_planner_messages</depend>
   <depend>rclcpp</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
+  <depend>autoware_planning_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

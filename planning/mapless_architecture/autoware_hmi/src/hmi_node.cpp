@@ -3,7 +3,7 @@
 
 #include "hmi_node.hpp"
 
-#include "mission_planner_messages/msg/mission.hpp"
+#include "autoware_planning_msgs/msg/mission.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 using std::placeholders::_1;
@@ -29,7 +29,7 @@ HMINode::HMINode() : Node("hmi_node")
 
   // Initialize publisher
   mission_publisher_ =
-    this->create_publisher<mission_planner_messages::msg::Mission>("hmi_node/output/mission", 1);
+    this->create_publisher<autoware_planning_msgs::msg::Mission>("hmi_node/output/mission", 1);
 
   // Initialize parameters callback handle
   param_callback_handle_ = this->add_on_set_parameters_callback(
@@ -64,17 +64,17 @@ rcl_interfaces::msg::SetParametersResult HMINode::ParamCallback_(
 
 void HMINode::PublishMission_(std::string mission)
 {
-  mission_planner_messages::msg::Mission missionMessage;
+  autoware_planning_msgs::msg::Mission missionMessage;
   if (mission == "LANE_KEEP") {
-    missionMessage.mission_type = mission_planner_messages::msg::Mission::LANE_KEEP;
+    missionMessage.mission_type = autoware_planning_msgs::msg::Mission::LANE_KEEP;
   } else if (mission == "LANE_CHANGE_LEFT") {
-    missionMessage.mission_type = mission_planner_messages::msg::Mission::LANE_CHANGE_LEFT;
+    missionMessage.mission_type = autoware_planning_msgs::msg::Mission::LANE_CHANGE_LEFT;
   } else if (mission == "LANE_CHANGE_RIGHT") {
-    missionMessage.mission_type = mission_planner_messages::msg::Mission::LANE_CHANGE_RIGHT;
+    missionMessage.mission_type = autoware_planning_msgs::msg::Mission::LANE_CHANGE_RIGHT;
   } else if (mission == "TAKE_NEXT_EXIT_LEFT") {
-    missionMessage.mission_type = mission_planner_messages::msg::Mission::TAKE_NEXT_EXIT_LEFT;
+    missionMessage.mission_type = autoware_planning_msgs::msg::Mission::TAKE_NEXT_EXIT_LEFT;
   } else if (mission == "TAKE_NEXT_EXIT_RIGHT") {
-    missionMessage.mission_type = mission_planner_messages::msg::Mission::TAKE_NEXT_EXIT_RIGHT;
+    missionMessage.mission_type = autoware_planning_msgs::msg::Mission::TAKE_NEXT_EXIT_RIGHT;
   }
 
   // TODO(simon.eisenmann@driveblocks.ai): Change deadline parameter

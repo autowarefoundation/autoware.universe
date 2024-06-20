@@ -3,7 +3,7 @@
 #ifndef LOCAL_ROAD_PROVIDER_NODE_HPP_
 #define LOCAL_ROAD_PROVIDER_NODE_HPP_
 
-#include "mission_planner_messages/msg/road_segments.hpp"
+#include "autoware_planning_msgs/msg/road_segments.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "db_msgs/msg/lanelets_stamped.hpp"
@@ -39,7 +39,7 @@ private:
   // ###########################################################################
   // Declare ROS2 publisher and subscriber
 
-  rclcpp::Publisher<mission_planner_messages::msg::RoadSegments>::SharedPtr road_publisher_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::RoadSegments>::SharedPtr road_publisher_;
 
   rclcpp::Subscription<db_msgs::msg::LaneletsStamped>::SharedPtr lanelets_subscriber_;
 };

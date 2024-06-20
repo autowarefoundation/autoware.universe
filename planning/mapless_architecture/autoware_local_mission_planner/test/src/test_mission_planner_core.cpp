@@ -154,15 +154,18 @@ int TestGetPointOnLane()
   // Create some example lanelets
   auto msg_lanelets = CreateLanelets();
 
-  // convert road model
-  LaneletConverter lanelet_converter;
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections;
-  std::vector<lanelet::Lanelet> lanelets;
-
-  lanelet_converter.ConvertInput2LaneletFormat(msg_lanelets, lanelets, lanelet_connections);
-
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
+
+  // Convert road model
+  std::vector<LaneletConnection> lanelet_connections;
+  std::vector<lanelet::Lanelet> lanelets;
+
+  // Convert message
+  autoware_planning_msgs::msg::RoadSegments road_segments =
+    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(msg_lanelets);
+
+  MissionPlanner.ConvertInput2LaneletFormat(road_segments, lanelets, lanelet_connections);
 
   // Get a point from the tested function which has the x value 3.0 and lies on
   // the centerline of the lanelets
@@ -188,15 +191,19 @@ int TestIsOnGoalLane()
 {
   // Create some example lanelets
   auto msg_road_model = CreateLanelets();
-  // convert road model
-  LaneletConverter lanelet_converter;
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections;
-  std::vector<lanelet::Lanelet> lanelets;
-
-  lanelet_converter.ConvertInput2LaneletFormat(msg_road_model, lanelets, lanelet_connections);
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
+
+  // Convert road model
+  std::vector<LaneletConnection> lanelet_connections;
+  std::vector<lanelet::Lanelet> lanelets;
+
+  // Convert message
+  autoware_planning_msgs::msg::RoadSegments road_segments =
+    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(msg_road_model);
+
+  MissionPlanner.ConvertInput2LaneletFormat(road_segments, lanelets, lanelet_connections);
 
   // Define a point with x = 1.0 and y = 0.0
   lanelet::BasicPoint2d point(1.0, 0.0);
@@ -313,14 +320,16 @@ int TestRecenterGoalpoint()
   // Get a local road model for testing
   db_msgs::msg::LaneletsStamped local_road_model = GetTestRoadModelForRecenterTests();
 
-  LaneletConverter lanelet_converter;
-
   // Used for the output
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections;
+  std::vector<LaneletConnection> lanelet_connections;
   std::vector<lanelet::Lanelet> converted_lanelets;
 
-  lanelet_converter.ConvertInput2LaneletFormat(
-    local_road_model, converted_lanelets, lanelet_connections);
+  // Convert message
+  autoware_planning_msgs::msg::RoadSegments road_segments =
+    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(local_road_model);
+
+  mission_planner.ConvertInput2LaneletFormat(
+    road_segments, converted_lanelets, lanelet_connections);
 
   // TEST 1: point on centerline of origin lanelet
   // define a test point and re-center onto its centerline
@@ -382,18 +391,17 @@ int TestCheckIfGoalPointShouldBeReset()
   auto msg = CreateLanelets();
 
   // Convert message
-  mission_planner_messages::msg::RoadSegments road_segments =
+  autoware_planning_msgs::msg::RoadSegments road_segments =
     lib_mission_planner::ConvertLaneletsStamped2RoadSegments(msg);
-  mission_planner_messages::msg::LocalMap local_map;
+  autoware_planning_msgs::msg::LocalMap local_map;
   local_map.road_segments = road_segments;
-
-  // Convert road model
-  LaneletConverter lanelet_converter;
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections;
-  std::vector<lanelet::Lanelet> lanelets;
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
+
+  // Convert road model
+  std::vector<LaneletConnection> lanelet_connections;
+  std::vector<lanelet::Lanelet> lanelets;
 
   MissionPlanner.ConvertInput2LaneletFormat(road_segments, lanelets, lanelet_connections);
 
@@ -406,8 +414,8 @@ int TestCheckIfGoalPointShouldBeReset()
   MissionPlanner.goal_point(point);
 
   // set a non-default mission to make the goal point reset work
-  mission_planner_messages::msg::Mission mission_msg;
-  mission_msg.mission_type = mission_planner_messages::msg::Mission::LANE_CHANGE_LEFT;
+  autoware_planning_msgs::msg::Mission mission_msg;
+  mission_msg.mission_type = autoware_planning_msgs::msg::Mission::LANE_CHANGE_LEFT;
   MissionPlanner.CallbackMissionMessages_(mission_msg);
 
   // Call function which is tested
@@ -423,7 +431,7 @@ int TestCheckIfGoalPointShouldBeReset()
   MissionPlanner.goal_point(point);
 
   // set a non-default mission to make the goal point reset work
-  mission_msg.mission_type = mission_planner_messages::msg::Mission::LANE_KEEP;
+  mission_msg.mission_type = autoware_planning_msgs::msg::Mission::LANE_KEEP;
   MissionPlanner.CallbackMissionMessages_(mission_msg);
 
   // Call function which is tested
@@ -438,8 +446,7 @@ int TestCheckIfGoalPointShouldBeReset()
   return 0;
 }
 
-std::tuple<std::vector<lanelet::Lanelet>, std::vector<lanelet_types::LaneletConnection>>
-CreateLane()
+std::tuple<std::vector<lanelet::Lanelet>, std::vector<LaneletConnection>> CreateLane()
 {
   // Local variables
   const int n_lanelets = 2;
@@ -522,14 +529,18 @@ CreateLane()
   message.lanelets[1].successor_lanelet_id = {-1};
   message.lanelets[1].neighboring_lanelet_id = {-1, -1};
 
-  // Get converter
-  LaneletConverter lanelet_converter;
+  // Initialize MissionPlannerNode
+  MissionPlannerNode MissionPlanner = MissionPlannerNode();
 
   // Output
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections;
+  std::vector<LaneletConnection> lanelet_connections;
   std::vector<lanelet::Lanelet> converted_lanelets;
 
-  lanelet_converter.ConvertInput2LaneletFormat(message, converted_lanelets, lanelet_connections);
+  // Convert message
+  autoware_planning_msgs::msg::RoadSegments road_segments =
+    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(message);
+
+  MissionPlanner.ConvertInput2LaneletFormat(road_segments, converted_lanelets, lanelet_connections);
   return std::make_tuple(converted_lanelets, lanelet_connections);
 }
 
@@ -539,7 +550,7 @@ int TestCalculateLanes()
   // 0, the ego lanelet is 0
   auto tuple = CreateLane();
   std::vector<lanelet::Lanelet> lanelets = std::get<0>(tuple);
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections = std::get<1>(tuple);
+  std::vector<LaneletConnection> lanelet_connections = std::get<1>(tuple);
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
@@ -575,13 +586,13 @@ int TestCreateMarkerArray()
   // Create some example lanelets
   auto tuple = CreateLane();
   std::vector<lanelet::Lanelet> lanelets = std::get<0>(tuple);
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections = std::get<1>(tuple);
+  std::vector<LaneletConnection> lanelet_connections = std::get<1>(tuple);
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
 
   // Create empty message
-  mission_planner_messages::msg::RoadSegments message;
+  autoware_planning_msgs::msg::RoadSegments message;
 
   // Calculate centerlines, left and right bounds
   std::vector<lanelet::ConstLineString3d> centerlines;
@@ -622,13 +633,13 @@ int TestCreateDrivingCorridor()
   // Create some example lanelets
   auto tuple = CreateLane();
   std::vector<lanelet::Lanelet> lanelets = std::get<0>(tuple);
-  std::vector<lanelet_types::LaneletConnection> lanelet_connections = std::get<1>(tuple);
+  std::vector<LaneletConnection> lanelet_connections = std::get<1>(tuple);
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
 
   // Call function which is tested
-  mission_planner_messages::msg::DrivingCorridor driving_corridor =
+  autoware_planning_msgs::msg::DrivingCorridor driving_corridor =
     MissionPlanner.CreateDrivingCorridor_({0, 1}, lanelets);
 
   // Check if x value of first point in centerline is -2.0
