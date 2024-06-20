@@ -41,47 +41,31 @@ private:
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
 };
 
-class AutowareTestManagerTest : public ::testing::Test
+TEST(AutowareTestManagerTest, TestRelayNode)
 {
-protected:
-  AutowareTestManagerTest()
-  {
-    rclcpp::init(0, nullptr);
-    test_node_ = std::make_shared<rclcpp::Node>("autoware_test_manager_test_node");
-    relay_node_ = std::make_shared<RelayNode>();
-    manager_ = std::make_shared<autoware::test_utils::AutowareTestManager>();
-  }
+  rclcpp::init(0, nullptr);
 
-  ~AutowareTestManagerTest() { rclcpp::shutdown(); }
-
-  void SetUp() override
-  {
-    // Set up a subscriber on the test node to listen for messages from the relay node
-    manager_->set_subscriber<std_msgs::msg::String>(
-      "output_topic",
-      [this](const std_msgs::msg::String::ConstSharedPtr msg) { received_message_ = msg->data; });
-  }
-
-  rclcpp::Node::SharedPtr test_node_;
-  std::shared_ptr<RelayNode> relay_node_;
-  std::shared_ptr<autoware::test_utils::AutowareTestManager> manager_;
-  std::string received_message_;
-};
-
-TEST_F(AutowareTestManagerTest, TestRelayNode)
-{
   const std::string input_topic_name = "input_topic";
   const std::string output_topic_name = "output_topic";
+
+  // Setup target node and its test manager
+  auto target_node = std::make_shared<RelayNode>();
+  auto manager = std::make_shared<autoware::test_utils::AutowareTestManager>();
+
+  // Setup subscriber for test manager
+  std::string received_msg;
+  manager->set_subscriber<std_msgs::msg::String>(
+    "output_topic",
+    [&received_msg](const std_msgs::msg::String::ConstSharedPtr msg) { received_msg = msg->data; });
 
   // Publish a message to the relay node
   std_msgs::msg::String msg;
   msg.data = "Hello, Relay!";
-  manager_->test_pub_msg<std_msgs::msg::String>(relay_node_, input_topic_name, msg);
+  manager->test_pub_msg<std_msgs::msg::String>(target_node, input_topic_name, msg);
 
   // Spin to process callbacks
-  rclcpp::spin_some(test_node_);
-  rclcpp::spin_some(relay_node_);
+  rclcpp::spin_some(target_node);
 
   // Check that the message was relayed and received by the test node
-  EXPECT_EQ(received_message_, "Hello, Relay!");
+  EXPECT_EQ(received_msg, "Hello, Relay!");
 }
