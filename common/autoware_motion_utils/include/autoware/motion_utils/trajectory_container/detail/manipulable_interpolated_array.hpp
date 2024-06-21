@@ -25,7 +25,7 @@
 namespace autoware::motion_utils::trajectory_container::trajectory
 {
 template <typename T>
-class TrajectoryV2;
+class TrajectoryContainer;
 }  // namespace autoware::motion_utils::trajectory_container::trajectory
 
 namespace autoware::motion_utils::trajectory_container::detail
@@ -75,7 +75,7 @@ template <typename T>
 class ManipulableInterpolatedArray
 {
   template <typename U>
-  friend class motion_utils::trajectory_container::trajectory::TrajectoryV2;
+  friend class motion_utils::trajectory_container::trajectory::TrajectoryContainer;
 
   friend class RangeSetter<T>;
 

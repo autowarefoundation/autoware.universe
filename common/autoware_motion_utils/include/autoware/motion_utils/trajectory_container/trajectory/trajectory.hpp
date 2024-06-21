@@ -23,7 +23,7 @@ namespace autoware::motion_utils::trajectory_container::trajectory
  * @tparam PointType Type of the points in the trajectory.
  */
 template <typename PointType>
-class TrajectoryV2
+class TrajectoryContainer
 {
 };
 
@@ -38,7 +38,7 @@ template <typename PointType>
 class CropTrajectoryImpl
 {
 protected:
-  using TrajectoryType = TrajectoryV2<PointType>;
+  using TrajectoryType = TrajectoryContainer<PointType>;
 
 private:
   /**

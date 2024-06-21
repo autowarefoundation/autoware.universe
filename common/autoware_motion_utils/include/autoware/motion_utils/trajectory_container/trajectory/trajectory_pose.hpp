@@ -31,12 +31,12 @@ namespace autoware::motion_utils::trajectory_container::trajectory
  * @brief Trajectory class for geometry_msgs::msg::Pose
  */
 template <>
-class TrajectoryV2<geometry_msgs::msg::Pose>
-: public TrajectoryV2<geometry_msgs::msg::Point>,
+class TrajectoryContainer<geometry_msgs::msg::Pose>
+: public TrajectoryContainer<geometry_msgs::msg::Point>,
   public detail::CropTrajectoryImpl<geometry_msgs::msg::Pose>
 {
   friend class CropTrajectoryImpl<geometry_msgs::msg::Pose>;
-  using BaseClass = TrajectoryV2<geometry_msgs::msg::Point>;
+  using BaseClass = TrajectoryContainer<geometry_msgs::msg::Point>;
 
 private:
   std::shared_ptr<interpolator::Interpolator<double>> orientation_x_interpolator_;
@@ -48,14 +48,14 @@ public:
   /**
    * @brief Constructor
    */
-  TrajectoryV2();
+  TrajectoryContainer();
 
   /**
    * @brief Set the interpolator for orientation
    * @param interpolator Interpolator object
    * @return Reference to this object
    */
-  TrajectoryV2 & set_orientation_interpolator(
+  TrajectoryContainer & set_orientation_interpolator(
     const interpolator::Interpolator<double> & interpolator);
 
   /**
@@ -63,7 +63,7 @@ public:
    * @param points Vector of poses
    * @return Reference to this object
    */
-  TrajectoryV2 & build(const std::vector<geometry_msgs::msg::Pose> & points);
+  TrajectoryContainer & build(const std::vector<geometry_msgs::msg::Pose> & points);
 
   /**
    * @brief Compute the pose on the trajectory at a given s value

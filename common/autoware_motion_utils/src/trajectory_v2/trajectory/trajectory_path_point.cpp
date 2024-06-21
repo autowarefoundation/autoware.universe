@@ -20,35 +20,38 @@
 namespace autoware::motion_utils::trajectory_container::trajectory
 {
 
-TrajectoryV2<PathPoint>::TrajectoryV2() : BaseClass()
+TrajectoryContainer<PathPoint>::TrajectoryContainer() : BaseClass()
 {
   set_longitudinal_velocity_mps_interpolator(interpolator::ZeroOrderHold<double>());
   set_lateral_velocity_mps_interpolator(interpolator::ZeroOrderHold<double>());
   set_heading_rate_rps_interpolator(interpolator::ZeroOrderHold<double>());
 }
 
-TrajectoryV2<PathPoint> & TrajectoryV2<PathPoint>::set_longitudinal_velocity_mps_interpolator(
+TrajectoryContainer<PathPoint> &
+TrajectoryContainer<PathPoint>::set_longitudinal_velocity_mps_interpolator(
   const interpolator::Interpolator<double> & interpolator)
 {
   longitudinal_velocity_mps.set_interpolator(interpolator);
   return *this;
 }
 
-TrajectoryV2<PathPoint> & TrajectoryV2<PathPoint>::set_lateral_velocity_mps_interpolator(
+TrajectoryContainer<PathPoint> &
+TrajectoryContainer<PathPoint>::set_lateral_velocity_mps_interpolator(
   const interpolator::Interpolator<double> & interpolator)
 {
   lateral_velocity_mps.set_interpolator(interpolator);
   return *this;
 }
 
-TrajectoryV2<PathPoint> & TrajectoryV2<PathPoint>::set_heading_rate_rps_interpolator(
+TrajectoryContainer<PathPoint> & TrajectoryContainer<PathPoint>::set_heading_rate_rps_interpolator(
   const interpolator::Interpolator<double> & interpolator)
 {
   heading_rate_rps.set_interpolator(interpolator);
   return *this;
 }
 
-TrajectoryV2<PathPoint> & TrajectoryV2<PathPoint>::build(const std::vector<PathPoint> points)
+TrajectoryContainer<PathPoint> & TrajectoryContainer<PathPoint>::build(
+  const std::vector<PathPoint> points)
 {
   std::vector<geometry_msgs::msg::Pose> poses;
   std::vector<double> longitudinal_velocity_mps_values, lateral_velocity_mps_values,
@@ -61,7 +64,7 @@ TrajectoryV2<PathPoint> & TrajectoryV2<PathPoint>::build(const std::vector<PathP
     heading_rate_rps_values.emplace_back(point.heading_rate_rps);
   }
 
-  TrajectoryV2<geometry_msgs::msg::Pose>::build(poses);
+  TrajectoryContainer<geometry_msgs::msg::Pose>::build(poses);
   this->longitudinal_velocity_mps.build(axis_, longitudinal_velocity_mps_values);
   this->lateral_velocity_mps.build(axis_, lateral_velocity_mps_values);
   this->heading_rate_rps.build(axis_, heading_rate_rps_values);
@@ -69,17 +72,17 @@ TrajectoryV2<PathPoint> & TrajectoryV2<PathPoint>::build(const std::vector<PathP
   return *this;
 }
 
-PathPoint TrajectoryV2<PathPoint>::compute(const double & s) const
+PathPoint TrajectoryContainer<PathPoint>::compute(const double & s) const
 {
   PathPoint result;
-  result.pose = TrajectoryV2<geometry_msgs::msg::Pose>::compute(s);
+  result.pose = TrajectoryContainer<geometry_msgs::msg::Pose>::compute(s);
   result.longitudinal_velocity_mps = longitudinal_velocity_mps.compute(s);
   result.lateral_velocity_mps = lateral_velocity_mps.compute(s);
   result.heading_rate_rps = heading_rate_rps.compute(s);
   return result;
 }
 
-std::vector<PathPoint> TrajectoryV2<PathPoint>::restore() const
+std::vector<PathPoint> TrajectoryContainer<PathPoint>::restore() const
 {
   auto new_axis = trajectory_container::detail::merge_vectors(
     axis_, longitudinal_velocity_mps.axis_, lateral_velocity_mps.axis_, heading_rate_rps.axis_);
@@ -87,7 +90,7 @@ std::vector<PathPoint> TrajectoryV2<PathPoint>::restore() const
   std::vector<PathPoint> points(new_axis.size());
   std::transform(new_axis.begin(), new_axis.end(), points.begin(), [this](const auto & s) {
     PathPoint p;
-    p.pose = TrajectoryV2<geometry_msgs::msg::Pose>::compute(s);
+    p.pose = TrajectoryContainer<geometry_msgs::msg::Pose>::compute(s);
     p.longitudinal_velocity_mps = longitudinal_velocity_mps.compute(s);
     p.lateral_velocity_mps = lateral_velocity_mps.compute(s);
     p.heading_rate_rps = heading_rate_rps.compute(s);

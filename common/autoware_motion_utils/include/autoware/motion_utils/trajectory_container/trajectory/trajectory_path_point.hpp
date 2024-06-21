@@ -35,11 +35,11 @@ using motion_utils::trajectory_container::detail::ManipulableInterpolatedArray;
  * @brief Trajectory class for PathPoint
  */
 template <>
-class TrajectoryV2<PathPoint> : public TrajectoryV2<geometry_msgs::msg::Pose>,
-                                public detail::CropTrajectoryImpl<PathPoint>
+class TrajectoryContainer<PathPoint> : public TrajectoryContainer<geometry_msgs::msg::Pose>,
+                                       public detail::CropTrajectoryImpl<PathPoint>
 {
   friend class CropTrajectoryImpl<PathPoint>;
-  using BaseClass = TrajectoryV2<geometry_msgs::msg::Pose>;
+  using BaseClass = TrajectoryContainer<geometry_msgs::msg::Pose>;
 
 public:
   ManipulableInterpolatedArray<double> longitudinal_velocity_mps;
@@ -49,14 +49,14 @@ public:
   /**
    * @brief Constructor
    */
-  TrajectoryV2();
+  TrajectoryContainer();
 
   /**
    * @brief Set the interpolator for longitudinal velocity
    * @param interpolator Interpolator object
    * @return Reference to this object
    */
-  TrajectoryV2 & set_longitudinal_velocity_mps_interpolator(
+  TrajectoryContainer & set_longitudinal_velocity_mps_interpolator(
     const interpolator::Interpolator<double> & interpolator);
 
   /**
@@ -64,7 +64,7 @@ public:
    * @param interpolator Interpolator object
    * @return Reference to this object
    */
-  TrajectoryV2 & set_lateral_velocity_mps_interpolator(
+  TrajectoryContainer & set_lateral_velocity_mps_interpolator(
     const interpolator::Interpolator<double> & interpolator);
 
   /**
@@ -72,7 +72,7 @@ public:
    * @param interpolator Interpolator object
    * @return Reference to this object
    */
-  TrajectoryV2 & set_heading_rate_rps_interpolator(
+  TrajectoryContainer & set_heading_rate_rps_interpolator(
     const interpolator::Interpolator<double> & interpolator);
 
   /**
@@ -80,7 +80,7 @@ public:
    * @param points Vector of path points
    * @return Reference to this object
    */
-  TrajectoryV2 & build(const std::vector<PathPoint> points);
+  TrajectoryContainer & build(const std::vector<PathPoint> points);
 
   /**
    * @brief Compute the path point on the trajectory at a given s value
