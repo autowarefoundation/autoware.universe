@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_path_optimizer/utils/geometry_utils.hpp"
+#include "autoware/path_optimizer/utils/geometry_utils.hpp"
 
-#include "autoware_path_optimizer/mpt_optimizer.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/path_optimizer/mpt_optimizer.hpp"
 #include "tf2/utils.h"
 
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
@@ -39,17 +39,17 @@
 namespace autoware::path_optimizer
 {
 namespace bg = boost::geometry;
-using tier4_autoware_utils::LinearRing2d;
-using tier4_autoware_utils::LineString2d;
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Polygon2d;
+using autoware::universe_utils::LinearRing2d;
+using autoware::universe_utils::LineString2d;
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
 
 namespace
 {
 geometry_msgs::msg::Point getStartPoint(
   const std::vector<geometry_msgs::msg::Point> & bound, const geometry_msgs::msg::Point & point)
 {
-  const size_t segment_idx = motion_utils::findNearestSegmentIndex(bound, point);
+  const size_t segment_idx = autoware::motion_utils::findNearestSegmentIndex(bound, point);
   const auto & curr_seg_point = bound.at(segment_idx);
   const auto & next_seg_point = bound.at(segment_idx);
   const Eigen::Vector2d first_to_target{point.x - curr_seg_point.x, point.y - curr_seg_point.y};
@@ -61,7 +61,8 @@ geometry_msgs::msg::Point getStartPoint(
     return bound.front();
   }
 
-  const auto first_point = motion_utils::calcLongitudinalOffsetPoint(bound, segment_idx, length);
+  const auto first_point =
+    autoware::motion_utils::calcLongitudinalOffsetPoint(bound, segment_idx, length);
   if (first_point) {
     return *first_point;
   }
@@ -84,7 +85,8 @@ bool isFrontDrivableArea(
 
   // ignore point behind of the front line
   const std::vector<geometry_msgs::msg::Point> front_bound = {left_start_point, right_start_point};
-  const double lat_dist_to_front_bound = motion_utils::calcLateralOffset(front_bound, point);
+  const double lat_dist_to_front_bound =
+    autoware::motion_utils::calcLateralOffset(front_bound, point);
   if (lat_dist_to_front_bound < min_dist) {
     return true;
   }
@@ -134,13 +136,13 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
 
   // calculate footprint corner points
   const auto top_left_pos =
-    tier4_autoware_utils::calcOffsetPose(pose, base_to_front, base_to_left, 0.0).position;
+    autoware::universe_utils::calcOffsetPose(pose, base_to_front, base_to_left, 0.0).position;
   const auto top_right_pos =
-    tier4_autoware_utils::calcOffsetPose(pose, base_to_front, -base_to_right, 0.0).position;
+    autoware::universe_utils::calcOffsetPose(pose, base_to_front, -base_to_right, 0.0).position;
   const auto bottom_right_pos =
-    tier4_autoware_utils::calcOffsetPose(pose, -base_to_rear, -base_to_right, 0.0).position;
+    autoware::universe_utils::calcOffsetPose(pose, -base_to_rear, -base_to_right, 0.0).position;
   const auto bottom_left_pos =
-    tier4_autoware_utils::calcOffsetPose(pose, -base_to_rear, base_to_left, 0.0).position;
+    autoware::universe_utils::calcOffsetPose(pose, -base_to_rear, base_to_left, 0.0).position;
 
   if (use_footprint_polygon_for_outside_drivable_area_check) {
     // calculate footprint polygon

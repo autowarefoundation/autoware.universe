@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_obstacle_cruise_planner/utils.hpp"
+#include "autoware/obstacle_cruise_planner/utils.hpp"
 
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
-#include "tier4_autoware_utils/ros/marker_helper.hpp"
 
 namespace obstacle_cruise_utils
 {
@@ -59,10 +59,10 @@ visualization_msgs::msg::Marker getObjectMarker(
 {
   const auto current_time = rclcpp::Clock().now();
 
-  auto marker = tier4_autoware_utils::createDefaultMarker(
+  auto marker = autoware::universe_utils::createDefaultMarker(
     "map", current_time, ns, idx, visualization_msgs::msg::Marker::SPHERE,
-    tier4_autoware_utils::createMarkerScale(2.0, 2.0, 2.0),
-    tier4_autoware_utils::createMarkerColor(r, g, b, 0.8));
+    autoware::universe_utils::createMarkerScale(2.0, 2.0, 2.0),
+    autoware::universe_utils::createMarkerColor(r, g, b, 0.8));
 
   marker.pose = obj_pose;
 
