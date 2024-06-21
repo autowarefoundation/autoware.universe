@@ -6,6 +6,26 @@
     "centerpoint_base": {
       "type": "object",
       "properties": {
+        "encoder_onnx_path": {
+          "type": "string",
+          "description": "Path to VoxelFeatureEncoder ONNX file.",
+          "default": ""
+        },
+        "encoder_engine_path": {
+          "type": "string",
+          "description": "Path to VoxelFeatureEncoder TensorRT Engine file.",
+          "default": ""
+        },
+        "head_onnx_path": {
+          "type": "string",
+          "description": "Path to DetectionHead ONNX file.",
+          "default": ""
+        },
+        "head_engine_path": {
+          "type": "string",
+          "description": "Path to DetectionHead TensorRT Engine file.",
+          "default": ""
+        },
         "trt_precision": {
           "type": "string",
           "description": "TensorRT inference precision.",
@@ -54,11 +74,6 @@
               "default": 0.1,
               "minimum": 0.0,
               "maximum": 1.0
-            },
-            "has_twist": {
-              "type": "boolean",
-              "description": "Indicates whether the model outputs twist value.",
-              "default": false
             }
           }
         },

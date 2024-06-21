@@ -46,6 +46,16 @@
               "type": "integer",
               "description": "A size of encoder input feature channels.",
               "default": 9
+            },
+            "has_variance": {
+              "type": "boolean",
+              "description": "Flag indicating if the model includes variance estimation.",
+              "default": false
+            },
+            "has_twist": {
+              "type": "boolean",
+              "description": "Flag indicating if the model includes twist estimation.",
+              "default": false
             }
           }
         }
