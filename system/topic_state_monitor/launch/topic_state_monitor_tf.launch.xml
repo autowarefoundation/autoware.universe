@@ -10,8 +10,9 @@
   <arg name="error_rate" description="error rate[Hz]"/>
   <arg name="timeout" description="timeout period[s]"/>
   <arg name="window_size" default="10" description="window size"/>
+  <arg name="log_level" default="WARN"/>
 
-  <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="screen">
+  <node pkg="topic_state_monitor" exec="topic_state_monitor_node" name="topic_state_monitor_$(var node_name_suffix)" output="screen" ros_args="--log-level $(var log_level)">
     <param name="topic" value="$(var topic)"/>
     <param name="frame_id" value="$(var frame_id)"/>
     <param name="child_frame_id" value="$(var child_frame_id)"/>

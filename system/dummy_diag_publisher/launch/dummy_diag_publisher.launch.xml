@@ -8,20 +8,22 @@
   <arg name="launch_rqt_robot_monitor" default="true"/>
   <arg name="launch_rqt_runtime_monitor_err" default="true"/>
 
+  <arg name="log_level" default="WARN"/>
+
   <group if="$(var launch_rqt_reconfigure)">
-    <node pkg="rqt_reconfigure" exec="rqt_reconfigure" name="rqt_reconfigure"/>
+    <node pkg="rqt_reconfigure" exec="rqt_reconfigure" name="rqt_reconfigure" ros_args="--log-level $(var log_level)"/>
   </group>
 
   <group if="$(var launch_rqt_runtime_monitor)">
-    <node pkg="rqt_runtime_monitor" exec="rqt_runtime_monitor" name="rqt_runtime_monitor"/>
+    <node pkg="rqt_runtime_monitor" exec="rqt_runtime_monitor" name="rqt_runtime_monitor" ros_args="--log-level $(var log_level)"/>
   </group>
 
   <group if="$(var launch_rqt_robot_monitor)">
-    <node pkg="rqt_robot_monitor" exec="rqt_robot_monitor" name="rqt_robot_monitor"/>
+    <node pkg="rqt_robot_monitor" exec="rqt_robot_monitor" name="rqt_robot_monitor" ros_args="--log-level $(var log_level)"/>
   </group>
 
   <group if="$(var launch_rqt_runtime_monitor_err)">
-    <node pkg="rqt_runtime_monitor" exec="rqt_runtime_monitor" name="rqt_runtime_monitor_err">
+    <node pkg="rqt_runtime_monitor" exec="rqt_runtime_monitor" name="rqt_runtime_monitor_err" ros_args="--log-level $(var log_level)">
       <remap from="/diagnostics" to="/diagnostics_err"/>
     </node>
   </group>
@@ -30,5 +32,6 @@
     <arg name="config_file" value="$(var config_file)"/>
     <arg name="extra_config_file_sensor" value="$(var extra_config_file_sensor)"/>
     <arg name="update_rate" value="$(var update_rate)"/>
+    <arg name="log_level" value="$(var log_level)"/>
   </include>
 </launch>
