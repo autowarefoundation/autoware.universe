@@ -13,11 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git
-
       # cppcheck from apt does not yet support --check-level args, and thus install from snap
       - name: Install Cppcheck from snap
         run: |
