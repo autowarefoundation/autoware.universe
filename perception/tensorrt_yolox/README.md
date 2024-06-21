@@ -32,7 +32,6 @@ Zheng Ge, Songtao Liu, Feng Wang, Zeming Li, Jian Sun, "YOLOX: Exceeding YOLO Se
 {{ json_to_markdown("perception/tensorrt_yolox/schema/yolox_s_plus_opt.schema.json") }}
 {{ json_to_markdown("perception/tensorrt_yolox/schema/yolox_tiny.schema.json") }}
 
-
 ## Assumptions / Known limits
 
 The label contained in detected 2D bounding boxes (i.e., `out/objects`) will be either one of the followings:
