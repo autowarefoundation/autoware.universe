@@ -81,11 +81,9 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
 {
   // Parameters
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id");
-  priority_mode_ = static_cast<PriorityMode>(
-    declare_parameter<int>("priority_mode"));
+  priority_mode_ = static_cast<PriorityMode>(declare_parameter<int>("priority_mode"));
   sync_queue_size_ = declare_parameter<int>("sync_queue_size");
-  remove_overlapped_unknown_objects_ =
-    declare_parameter<bool>("remove_overlapped_unknown_objects");
+  remove_overlapped_unknown_objects_ = declare_parameter<bool>("remove_overlapped_unknown_objects");
   overlapped_judge_param_.precision_threshold =
     declare_parameter<double>("precision_threshold_to_judge_overlapped");
   overlapped_judge_param_.recall_threshold =
