@@ -5,9 +5,14 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Boost REQUIRED)
+find_package(fmt REQUIRED)
 
 ament_auto_add_library(autoware_motion_utils SHARED
   DIRECTORY src
+)
+
+target_link_libraries(motion_utils
+  fmt::fmt
 )
 
 if(BUILD_TESTING)
