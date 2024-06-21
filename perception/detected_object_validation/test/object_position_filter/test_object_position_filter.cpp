@@ -21,10 +21,10 @@
 
 #include <vector>
 
-using object_position_filter::ObjectPositionFilterNode;
-using autoware_perception_msgs::msg::DetectedObjects;
 using autoware_perception_msgs::msg::DetectedObject;
+using autoware_perception_msgs::msg::DetectedObjects;
 using autoware_perception_msgs::msg::ObjectClassification;
+using object_position_filter::ObjectPositionFilterNode;
 
 std::shared_ptr<autoware::test_utils::AutowareTestManager> generateTestManager()
 {
