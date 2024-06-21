@@ -524,7 +524,7 @@ bool MpcLateralController::isMpcConverged()
 
   // Find the maximum and minimum values of the steering angle in the past 1 second.
   double min_steering_value = m_mpc_steering_history[0].first.steering_tire_angle;
-  double max_steering_value = m_mpc_steering_history[0].first.steering_tire_angle;
+  double max_steering_value = min_steering_value;
   for (size_t i = 1; i < m_mpc_steering_history.size(); i++) {
     if (m_mpc_steering_history.at(i).first.steering_tire_angle < min_steering_value) {
       min_steering_value = m_mpc_steering_history.at(i).first.steering_tire_angle;
@@ -660,8 +660,8 @@ bool MpcLateralController::isValidTrajectory(const Trajectory & traj) const
       !isfinite(p.pose.orientation.w) || !isfinite(p.pose.orientation.x) ||
       !isfinite(p.pose.orientation.y) || !isfinite(p.pose.orientation.z) ||
       !isfinite(p.longitudinal_velocity_mps) || !isfinite(p.lateral_velocity_mps) ||
-      !isfinite(p.lateral_velocity_mps) || !isfinite(p.heading_rate_rps) ||
-      !isfinite(p.front_wheel_angle_rad) || !isfinite(p.rear_wheel_angle_rad)) {
+      !isfinite(p.heading_rate_rps) || !isfinite(p.front_wheel_angle_rad) ||
+      !isfinite(p.rear_wheel_angle_rad)) {
       return false;
     }
   }
