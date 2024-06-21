@@ -126,6 +126,7 @@
       <include file="$(find-pkg-share system_diagnostic_monitor)/launch/system_diagnostic_monitor.launch.xml">
         <arg name="param_file" value="$(var diagnostic_graph_aggregator_param_path)"/>
         <arg name="graph_file" value="$(var diagnostic_graph_aggregator_graph_path)"/>
+        <arg name="log_level" value="$(var log_level)"/>
       </include>
     </group>
 
@@ -154,6 +155,7 @@
       <arg name="launch_rqt_runtime_monitor" value="$(var launch_rqt_runtime_monitor)"/>
       <arg name="launch_rqt_robot_monitor" value="$(var launch_rqt_robot_monitor)"/>
       <arg name="launch_rqt_runtime_monitor_err" value="$(var launch_rqt_runtime_monitor_err)"/>
+      <arg name="log_level" value="$(var log_level)"/>
     </include>
   </group>
 </launch>
