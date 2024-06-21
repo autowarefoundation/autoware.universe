@@ -28,7 +28,6 @@ You may need to choose `scan_origin_frame` and `gridmap_origin_frame` which mean
 {{ json_to_markdown("perception/probabilistic_occupancy_grid_map/schema/pointcloud_based_occupancy_grid_map.schema.json") }}
 {{ json_to_markdown("perception/probabilistic_occupancy_grid_map/schema/synchronized_grid_map_fusion_node.schema.json") }}
 
-
 ### Downsample input pointcloud(Optional)
 
 If you set `downsample_input_pointcloud` to `true`, the input pointcloud will be downsampled and following topics are also used. This feature is currently only for the pointcloud based occupancy grid map.
