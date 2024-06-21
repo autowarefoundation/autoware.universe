@@ -86,7 +86,7 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> pcl_euclidean_cluster;
   pcl_euclidean_cluster.setClusterTolerance(tolerance_);
-  pcl_euclidean_cluster.setMinClusterSize(1);
+  pcl_euclidean_cluster.setMinClusterSize(min_cluster_size_);
   pcl_euclidean_cluster.setMaxClusterSize(max_cluster_size_);
   pcl_euclidean_cluster.setSearchMethod(tree);
   pcl_euclidean_cluster.setInputCloud(pointcloud_2d_ptr);
@@ -106,7 +106,7 @@ bool VoxelGridBasedEuclideanCluster::cluster(
     temporary_cluster.height = pointcloud_msg->height;
     temporary_cluster.fields = pointcloud_msg->fields;
     temporary_cluster.point_step = point_step;
-    temporary_cluster.data.resize(max_cluster_size_ * point_step);
+    temporary_cluster.data.resize(cluster.indices.size() * point_step);
     clusters_data_size.push_back(0);
   }
 
@@ -124,6 +124,9 @@ bool VoxelGridBasedEuclideanCluster::cluster(
         &temporary_clusters.at(map[index]).data[cluster_data_size],
         &pointcloud_msg->data[i * point_step], point_step);
       cluster_data_size += point_step;
+      if (cluster_data_size == temporary_clusters.at(map[index]).data.size()) {
+        temporary_clusters.at(map[index]).data.resize(temporary_clusters.at(map[index]).data.size() * 2);
+      }
     }
   }
 
