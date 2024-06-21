@@ -11,7 +11,7 @@ ament_auto_add_library(autoware_motion_utils SHARED
   DIRECTORY src
 )
 
-target_link_libraries(motion_utils
+target_link_libraries(autoware_motion_utils
   fmt::fmt
 )
 
