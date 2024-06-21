@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_utils/trajectory_v2/interpolator/cubic_spline.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
 
 #include <Eigen/Dense>
 
 #include <algorithm>
 
-namespace autoware::motion_utils::trajectory_v2::interpolator
+namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
 void CubicSpline::compute_parameters(
@@ -102,4 +102,4 @@ double CubicSpline::compute_second_derivative_(const double & s) const
   return 2 * c(i) + 6 * d(i) * dx;
 }
 
-}  // namespace autoware::motion_utils::trajectory_v2::interpolator
+}  // namespace autoware::motion_utils::trajectory_container::interpolator

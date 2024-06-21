@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_POSE_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_POSE_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_POSE_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_POSE_HPP_
 
-#include "autoware/motion_utils/trajectory_v2/interpolator/interpolator.hpp"
-#include "autoware/motion_utils/trajectory_v2/trajectory/trajectory.hpp"
-#include "autoware/motion_utils/trajectory_v2/trajectory/trajectory_point.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory_point.hpp"
 
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <memory>
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::trajectory
+namespace autoware::motion_utils::trajectory_container::trajectory
 {
 
 /**
@@ -82,6 +82,6 @@ public:
   using CropTrajectoryImpl<geometry_msgs::msg::Pose>::cropInPlace;
 };
 
-}  // namespace autoware::motion_utils::trajectory_v2::trajectory
+}  // namespace autoware::motion_utils::trajectory_container::trajectory
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_POSE_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_POSE_HPP_

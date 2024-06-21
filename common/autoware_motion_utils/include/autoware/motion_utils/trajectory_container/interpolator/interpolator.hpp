@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__INTERPOLATOR_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__INTERPOLATOR_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__INTERPOLATOR_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__INTERPOLATOR_HPP_
 
 #include <Eigen/Dense>
 #include <rclcpp/logging.hpp>
@@ -23,7 +23,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::interpolator
+namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
 namespace detail
@@ -333,6 +333,6 @@ public:
 
 }  // namespace detail
 
-}  // namespace autoware::motion_utils::trajectory_v2::interpolator
+}  // namespace autoware::motion_utils::trajectory_container::interpolator
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__INTERPOLATOR_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__INTERPOLATOR_HPP_

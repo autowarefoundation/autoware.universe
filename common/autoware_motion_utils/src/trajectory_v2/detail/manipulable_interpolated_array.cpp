@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_utils/trajectory_v2/detail/manipulable_interpolated_array.hpp"
+#include "autoware/motion_utils/trajectory_container/detail/manipulable_interpolated_array.hpp"
 
 #include <algorithm>
 #include <stdexcept>
 
-namespace autoware::motion_utils::trajectory_v2::detail
+namespace autoware::motion_utils::trajectory_container::detail
 {
 
 template <typename T>
@@ -132,4 +132,4 @@ template class ManipulableInterpolatedArray<double>;
 template class ManipulableInterpolatedArray<std::vector<int64_t>>;
 template class ManipulableInterpolatedArray<std::vector<std::vector<int64_t>>>;
 
-}  // namespace autoware::motion_utils::trajectory_v2::detail
+}  // namespace autoware::motion_utils::trajectory_container::detail

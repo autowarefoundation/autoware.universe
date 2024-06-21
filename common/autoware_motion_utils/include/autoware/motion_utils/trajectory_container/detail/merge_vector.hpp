@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__MERGE_VECTOR_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__MERGE_VECTOR_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__MERGE_VECTOR_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__MERGE_VECTOR_HPP_
 
 #include <set>
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::detail
+namespace autoware::motion_utils::trajectory_container::detail
 {
 /**
  * @brief Merge multiple vectors into one, keeping only unique elements.
@@ -45,6 +45,6 @@ std::vector<double> merge_vectors(const Vectors &... vectors)
   return result;
 }
 
-}  // namespace autoware::motion_utils::trajectory_v2::detail
+}  // namespace autoware::motion_utils::trajectory_container::detail
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__MERGE_VECTOR_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__MERGE_VECTOR_HPP_

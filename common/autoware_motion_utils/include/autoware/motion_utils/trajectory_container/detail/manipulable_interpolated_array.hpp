@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_
 
-#include "autoware/motion_utils/trajectory_v2/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 
 #include <Eigen/Dense>
 
 #include <memory>
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::trajectory
+namespace autoware::motion_utils::trajectory_container::trajectory
 {
 template <typename T>
 class TrajectoryV2;
-}  // namespace autoware::motion_utils::trajectory_v2::trajectory
+}  // namespace autoware::motion_utils::trajectory_container::trajectory
 
-namespace autoware::motion_utils::trajectory_v2::detail
+namespace autoware::motion_utils::trajectory_container::detail
 {
 
 /**
@@ -75,7 +75,7 @@ template <typename T>
 class ManipulableInterpolatedArray
 {
   template <typename U>
-  friend class motion_utils::trajectory_v2::trajectory::TrajectoryV2;
+  friend class motion_utils::trajectory_container::trajectory::TrajectoryV2;
 
   friend class RangeSetter<T>;
 
@@ -139,6 +139,6 @@ public:
   T compute(const double & x) const;
 };
 
-}  // namespace autoware::motion_utils::trajectory_v2::detail
+}  // namespace autoware::motion_utils::trajectory_container::detail
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__MANIPULABLE_INTERPOLATED_ARRAY_HPP_

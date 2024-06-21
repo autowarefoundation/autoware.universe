@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__TYPES_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__TYPES_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__TYPES_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__TYPES_HPP_
 
 #include <Eigen/Dense>
 
@@ -22,7 +22,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-namespace autoware::motion_utils::trajectory_v2::detail
+namespace autoware::motion_utils::trajectory_container::detail
 {
 
 geometry_msgs::msg::Point to_point(const geometry_msgs::msg::Point & p)
@@ -54,6 +54,6 @@ geometry_msgs::msg::Point to_point(const tier4_planning_msgs::msg::PathPointWith
   point.y = p.point.pose.position.y;
   return point;
 }
-}  // namespace autoware::motion_utils::trajectory_v2::detail
+}  // namespace autoware::motion_utils::trajectory_container::detail
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__DETAIL__TYPES_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__DETAIL__TYPES_HPP_

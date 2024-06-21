@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_HPP_
 
-namespace autoware::motion_utils::trajectory_v2::trajectory
+namespace autoware::motion_utils::trajectory_container::trajectory
 {
 
 /**
@@ -83,6 +83,6 @@ public:
 
 }  // namespace detail
 
-}  // namespace autoware::motion_utils::trajectory_v2::trajectory
+}  // namespace autoware::motion_utils::trajectory_container::trajectory
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__TRAJECTORY__TRAJECTORY_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__TRAJECTORY__TRAJECTORY_HPP_

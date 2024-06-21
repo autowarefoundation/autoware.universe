@@ -12,41 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__CUBIC_SPLINE_HPP_
-#define AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__CUBIC_SPLINE_HPP_
+#ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__LINEAR_HPP_
+#define AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__LINEAR_HPP_
 
-#include "autoware/motion_utils/trajectory_v2/interpolator/interpolator.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/interpolator.hpp"
 
 #include <Eigen/Dense>
 
 #include <vector>
 
-namespace autoware::motion_utils::trajectory_v2::interpolator
+namespace autoware::motion_utils::trajectory_container::interpolator
 {
 
 /**
- * @brief Class for cubic spline interpolation.
+ * @brief Class for linear interpolation.
  *
- * This class provides methods to perform cubic spline interpolation on a set of data points.
+ * This class provides methods to perform linear interpolation on a set of data points.
  */
-class CubicSpline : public detail::InterpolatorCRTP<CubicSpline, double>
+class Linear : public detail::InterpolatorCRTP<Linear, double>
 {
 private:
-  Eigen::VectorXd axis;        ///< Axis values for the interpolation.
-  Eigen::VectorXd a, b, c, d;  ///< Coefficients for the cubic spline.
-  Eigen::VectorXd h;           ///< Interval sizes between axis points.
-
-  /**
-   * @brief Compute the spline parameters.
-   *
-   * This method computes the coefficients for the cubic spline.
-   *
-   * @param axis The axis values.
-   * @param values The values to interpolate.
-   */
-  void compute_parameters(
-    const Eigen::Ref<const Eigen::VectorXd> & axis,
-    const Eigen::Ref<const Eigen::VectorXd> & values);
+  Eigen::VectorXd axis;    ///< Axis values for the interpolation.
+  Eigen::VectorXd values;  ///< Interpolation values.
 
   /**
    * @brief Build the interpolator with the given axis and values.
@@ -79,17 +66,22 @@ private:
    * @param s The point at which to compute the second derivative.
    * @return The second derivative.
    */
-  double compute_second_derivative_(const double & s) const override;
+  double compute_second_derivative_(const double &) const override;
 
 public:
+  /**
+   * @brief Default constructor.
+   */
+  Linear() = default;
+
   /**
    * @brief Get the minimum number of required points for the interpolator.
    *
    * @return The minimum number of required points.
    */
-  size_t minimum_required_points() const override { return 3; }
+  size_t minimum_required_points() const override;
 };
 
-}  // namespace autoware::motion_utils::trajectory_v2::interpolator
+}  // namespace autoware::motion_utils::trajectory_container::interpolator
 
-#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_V2__INTERPOLATOR__CUBIC_SPLINE_HPP_
+#endif  // AUTOWARE__MOTION_UTILS__TRAJECTORY_CONTAINER__INTERPOLATOR__LINEAR_HPP_

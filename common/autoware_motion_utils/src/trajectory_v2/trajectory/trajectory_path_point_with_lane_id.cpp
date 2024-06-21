@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_utils/trajectory_v2/trajectory/trajectory_path_point_with_lane_id.hpp"
+#include "autoware/motion_utils/trajectory_container/trajectory/trajectory_path_point_with_lane_id.hpp"
 
-#include "autoware/motion_utils/trajectory_v2/detail/merge_vector.hpp"
-#include "autoware/motion_utils/trajectory_v2/interpolator/zero_order_hold.hpp"
+#include "autoware/motion_utils/trajectory_container/detail/merge_vector.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/zero_order_hold.hpp"
 
-namespace autoware::motion_utils::trajectory_v2::trajectory
+namespace autoware::motion_utils::trajectory_container::trajectory
 {
 
 TrajectoryV2<PathPointWithLaneId>::TrajectoryV2() : BaseClass()
@@ -59,7 +59,7 @@ PathPointWithLaneId TrajectoryV2<PathPointWithLaneId>::compute(const double & s)
 
 std::vector<PathPointWithLaneId> TrajectoryV2<PathPointWithLaneId>::restore() const
 {
-  auto new_axis = trajectory_v2::detail::merge_vectors(
+  auto new_axis = trajectory_container::detail::merge_vectors(
     axis_, lane_ids.axis_, longitudinal_velocity_mps.axis_, lateral_velocity_mps.axis_,
     heading_rate_rps.axis_);
 
@@ -74,4 +74,4 @@ std::vector<PathPointWithLaneId> TrajectoryV2<PathPointWithLaneId>::restore() co
   return points;
 }
 
-}  // namespace autoware::motion_utils::trajectory_v2::trajectory
+}  // namespace autoware::motion_utils::trajectory_container::trajectory
