@@ -16,13 +16,14 @@
 
 #include "autoware/motion_utils/trajectory_container/detail/types.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
+#include "autoware/motion_utils/trajectory_container/interpolator/linear.hpp"
 
 namespace autoware::motion_utils::trajectory_container::trajectory
 {
 TrajectoryContainer<geometry_msgs::msg::Point>::TrajectoryContainer()
 {
   set_xy_interpolator(interpolator::CubicSpline());
-  set_z_interpolator(interpolator::CubicSpline());
+  set_z_interpolator(interpolator::Linear());
 }
 
 TrajectoryContainer<geometry_msgs::msg::Point> & TrajectoryContainer<
@@ -149,9 +150,8 @@ double TrajectoryContainer<geometry_msgs::msg::Point>::nearest(const InputPointT
 }
 
 template <typename InputPointType>
-std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::crossed_with_constraint(
-  const InputPointType & start, const InputPointType & end,
-  const ConstraintFunction & constraints) const
+std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::crossed(
+  const InputPointType & start, const InputPointType & end) const
 {
   Eigen::Vector2d line_start(to_point(start).x, to_point(start).y);
   Eigen::Vector2d line_end(to_point(end).x, to_point(end).y);
@@ -178,20 +178,11 @@ std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::crossed_wi
 
     if (t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0) {
       double intersection_s = axis_(i - 1) + t * (axis_(i) - axis_(i - 1));
-      if (constraints(intersection_s)) {
-        return intersection_s;
-      }
+      return intersection_s;
     }
   }
 
   return std::nullopt;
-}
-
-template <typename InputPointType>
-std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::crossed(
-  const InputPointType & start, const InputPointType & end) const
-{
-  return crossed_with_constraint(start, end, [](const double &) { return true; });
 }
 
 std::vector<geometry_msgs::msg::Point> TrajectoryContainer<geometry_msgs::msg::Point>::restore()
@@ -230,6 +221,14 @@ TrajectoryContainer<geometry_msgs::msg::Point>::nearest_with_constraint(
   const tier4_planning_msgs::msg::PathPointWithLaneId & p,
   const ConstraintFunction & constraints) const;
 
+template std::optional<double>
+TrajectoryContainer<geometry_msgs::msg::Point>::nearest_with_constraint(
+  const lanelet::BasicPoint2d & p, const ConstraintFunction & constraints) const;
+
+template std::optional<double>
+TrajectoryContainer<geometry_msgs::msg::Point>::nearest_with_constraint(
+  const lanelet::ConstPoint3d & p, const ConstraintFunction & constraints) const;
+
 // Explicit instantiation for nearest
 template double TrajectoryContainer<geometry_msgs::msg::Point>::nearest(
   const geometry_msgs::msg::Point & p) const;
@@ -246,32 +245,11 @@ template double TrajectoryContainer<geometry_msgs::msg::Point>::nearest(
 template double TrajectoryContainer<geometry_msgs::msg::Point>::nearest(
   const tier4_planning_msgs::msg::PathPointWithLaneId & p) const;
 
-// Explicit instantiation for crossed_with_constraint
-template std::optional<double>
-TrajectoryContainer<geometry_msgs::msg::Point>::crossed_with_constraint(
-  const geometry_msgs::msg::Point & start, const geometry_msgs::msg::Point & end,
-  const ConstraintFunction & constraints) const;
+template double TrajectoryContainer<geometry_msgs::msg::Point>::nearest(
+  const lanelet::BasicPoint2d & p) const;
 
-template std::optional<double>
-TrajectoryContainer<geometry_msgs::msg::Point>::crossed_with_constraint(
-  const geometry_msgs::msg::Pose & start, const geometry_msgs::msg::Pose & end,
-  const ConstraintFunction & constraints) const;
-
-template std::optional<double>
-TrajectoryContainer<geometry_msgs::msg::Point>::crossed_with_constraint(
-  const Eigen::Ref<const Eigen::Vector2d> & start, const Eigen::Ref<const Eigen::Vector2d> & end,
-  const ConstraintFunction & constraints) const;
-
-template std::optional<double>
-TrajectoryContainer<geometry_msgs::msg::Point>::crossed_with_constraint(
-  const autoware_planning_msgs::msg::PathPoint & start,
-  const autoware_planning_msgs::msg::PathPoint & end, const ConstraintFunction & constraints) const;
-
-template std::optional<double>
-TrajectoryContainer<geometry_msgs::msg::Point>::crossed_with_constraint(
-  const tier4_planning_msgs::msg::PathPointWithLaneId & start,
-  const tier4_planning_msgs::msg::PathPointWithLaneId & end,
-  const ConstraintFunction & constraints) const;
+template double TrajectoryContainer<geometry_msgs::msg::Point>::nearest(
+  const lanelet::ConstPoint3d & p) const;
 
 // Explicit instantiation for crossed
 template std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::crossed(
@@ -291,5 +269,11 @@ template std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::c
 template std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::crossed(
   const tier4_planning_msgs::msg::PathPointWithLaneId & start,
   const tier4_planning_msgs::msg::PathPointWithLaneId & end) const;
+
+template std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::crossed(
+  const lanelet::BasicPoint2d & start, const lanelet::BasicPoint2d & end) const;
+
+template std::optional<double> TrajectoryContainer<geometry_msgs::msg::Point>::crossed(
+  const lanelet::ConstPoint3d & start, const lanelet::ConstPoint3d & end) const;
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

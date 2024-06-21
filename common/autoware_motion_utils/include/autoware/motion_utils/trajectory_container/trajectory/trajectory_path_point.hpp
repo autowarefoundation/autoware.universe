@@ -52,6 +52,41 @@ public:
   TrajectoryContainer();
 
   /**
+   * @brief Set interpolator for x and y coordinates
+   * @param interpolator Interpolator object
+   * @return Reference to this object
+   */
+  TrajectoryContainer & set_xy_interpolator(const interpolator::Interpolator<double> & interpolator)
+  {
+    BaseClass::set_xy_interpolator(interpolator);
+    return *this;
+  }
+
+  /**
+   * @brief Set interpolator for z coordinate
+   * @param interpolator Interpolator object
+   * @return Reference to this object
+   */
+  TrajectoryContainer & set_z_interpolator(const interpolator::Interpolator<double> & interpolator)
+  {
+    BaseClass::set_z_interpolator(interpolator);
+    return *this;
+  }
+
+  /**
+   * @brief Set the interpolator for orientation
+   * @param interpolator Interpolator object
+   * @return Reference to this object
+   */
+
+  TrajectoryContainer & set_orientation_interpolator(
+    const interpolator::Interpolator<double> & interpolator)
+  {
+    BaseClass::set_orientation_interpolator(interpolator);
+    return *this;
+  }
+
+  /**
    * @brief Set the interpolator for longitudinal velocity
    * @param interpolator Interpolator object
    * @return Reference to this object
