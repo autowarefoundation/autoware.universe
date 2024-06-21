@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_freespace_planning_algorithms/astar_search.hpp"
+#include "autoware/freespace_planning_algorithms/astar_search.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #include <tf2/utils.h>
 
@@ -42,7 +42,7 @@ double calcReedsSheppDistance(
 
 void setYaw(geometry_msgs::msg::Quaternion * orientation, const double yaw)
 {
-  *orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+  *orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
 }
 
 geometry_msgs::msg::Pose calcRelativePose(
@@ -86,8 +86,9 @@ AstarSearch::TransitionTable createTransitionTable(
   for (int i = 0; i < turning_radius_size; ++i) {
     double R = R_min + i * dR;
     double step = R * dtheta;
-    const NodeUpdate forward_left{
-      R * sin(dtheta), R * (1 - cos(dtheta)), dtheta, step, true, false};
+    const double shift_x = R * sin(dtheta);
+    const double shift_y = R * (1 - cos(dtheta));
+    const NodeUpdate forward_left{shift_x, shift_y, dtheta, step, true, false};
     const NodeUpdate forward_right = forward_left.flipped();
     forward_node_candidates.push_back(forward_left);
     forward_node_candidates.push_back(forward_right);
@@ -209,7 +210,7 @@ double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose) const
     total_cost +=
       calcReedsSheppDistance(pose, goal_pose_, radius) * astar_param_.distance_heuristic_weight;
   } else {
-    total_cost += tier4_autoware_utils::calcDistance2d(pose, goal_pose_) *
+    total_cost += autoware::universe_utils::calcDistance2d(pose, goal_pose_) *
                   astar_param_.distance_heuristic_weight;
   }
   return total_cost;
@@ -332,7 +333,7 @@ bool AstarSearch::isGoal(const AstarNode & node) const
   const double lateral_goal_range = planner_common_param_.lateral_goal_range / 2.0;
   const double longitudinal_goal_range = planner_common_param_.longitudinal_goal_range / 2.0;
   const double goal_angle =
-    tier4_autoware_utils::deg2rad(planner_common_param_.angle_goal_range / 2.0);
+    autoware::universe_utils::deg2rad(planner_common_param_.angle_goal_range / 2.0);
 
   const auto relative_pose = calcRelativePose(goal_pose_, node2pose(node));
 
@@ -348,7 +349,7 @@ bool AstarSearch::isGoal(const AstarNode & node) const
   }
 
   const auto angle_diff =
-    tier4_autoware_utils::normalizeRadian(tf2::getYaw(relative_pose.orientation));
+    autoware::universe_utils::normalizeRadian(tf2::getYaw(relative_pose.orientation));
   if (std::abs(angle_diff) > goal_angle) {
     return false;
   }
@@ -363,7 +364,7 @@ geometry_msgs::msg::Pose AstarSearch::node2pose(const AstarNode & node) const
   pose_local.position.x = node.x;
   pose_local.position.y = node.y;
   pose_local.position.z = goal_pose_.position.z;
-  pose_local.orientation = tier4_autoware_utils::createQuaternionFromYaw(node.theta);
+  pose_local.orientation = autoware::universe_utils::createQuaternionFromYaw(node.theta);
 
   return pose_local;
 }

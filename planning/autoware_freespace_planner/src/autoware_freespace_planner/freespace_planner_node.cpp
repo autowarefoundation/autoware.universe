@@ -28,12 +28,12 @@
  * limitations under the License.
  */
 
-#include "autoware_freespace_planner/freespace_planner_node.hpp"
+#include "autoware/freespace_planner/freespace_planner_node.hpp"
 
-#include "autoware_freespace_planning_algorithms/abstract_algorithm.hpp"
+#include "autoware/freespace_planning_algorithms/abstract_algorithm.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <algorithm>
 #include <deque>
@@ -142,8 +142,8 @@ Trajectory getPartialTrajectory(
 
 double calcDistance2d(const Trajectory & trajectory, const Pose & pose)
 {
-  const auto idx = motion_utils::findNearestIndex(trajectory.points, pose.position);
-  return tier4_autoware_utils::calcDistance2d(trajectory.points.at(idx), pose);
+  const auto idx = autoware::motion_utils::findNearestIndex(trajectory.points, pose.position);
+  return autoware::universe_utils::calcDistance2d(trajectory.points.at(idx), pose);
 }
 
 Pose transformPose(const Pose & pose, const TransformStamped & transform)
@@ -287,7 +287,7 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
       this, get_clock(), period_ns, std::bind(&FreespacePlannerNode::onTimer, this));
   }
 
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 }
 
 PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
@@ -365,8 +365,8 @@ bool FreespacePlannerNode::isPlanRequired()
   if (node_param_.replan_when_obstacle_found) {
     algo_->setMap(*occupancy_grid_);
 
-    const size_t nearest_index_partial =
-      motion_utils::findNearestIndex(partial_trajectory_.points, current_pose_.pose.position);
+    const size_t nearest_index_partial = autoware::motion_utils::findNearestIndex(
+      partial_trajectory_.points, current_pose_.pose.position);
     const size_t end_index_partial = partial_trajectory_.points.size() - 1;
 
     const auto forward_trajectory =
@@ -395,7 +395,7 @@ bool FreespacePlannerNode::isPlanRequired()
 void FreespacePlannerNode::updateTargetIndex()
 {
   const auto is_near_target =
-    tier4_autoware_utils::calcDistance2d(trajectory_.points.at(target_index_), current_pose_) <
+    autoware::universe_utils::calcDistance2d(trajectory_.points.at(target_index_), current_pose_) <
     node_param_.th_arrived_distance_m;
 
   const auto is_stopped = isStopped(odom_buffer_, node_param_.th_stopped_velocity_mps);

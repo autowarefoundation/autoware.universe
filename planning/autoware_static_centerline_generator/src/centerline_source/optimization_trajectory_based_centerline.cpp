@@ -14,12 +14,12 @@
 
 #include "centerline_source/optimization_trajectory_based_centerline.hpp"
 
-#include "autoware_path_optimizer/node.hpp"
-#include "autoware_path_smoother/elastic_band_smoother.hpp"
-#include "motion_utils/resample/resample.hpp"
-#include "motion_utils/trajectory/conversion.hpp"
+#include "autoware/motion_utils/resample/resample.hpp"
+#include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/path_optimizer/node.hpp"
+#include "autoware/path_smoother/elastic_band_smoother.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 #include "static_centerline_generator_node.hpp"
-#include "tier4_autoware_utils/ros/parameter.hpp"
 #include "utils.hpp"
 
 #include <algorithm>
@@ -82,20 +82,21 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
 
   // get ego nearest search parameters and resample interval in behavior_path_planner
   const double ego_nearest_dist_threshold =
-    tier4_autoware_utils::getOrDeclareParameter<double>(node, "ego_nearest_dist_threshold");
+    autoware::universe_utils::getOrDeclareParameter<double>(node, "ego_nearest_dist_threshold");
   const double ego_nearest_yaw_threshold =
-    tier4_autoware_utils::getOrDeclareParameter<double>(node, "ego_nearest_yaw_threshold");
+    autoware::universe_utils::getOrDeclareParameter<double>(node, "ego_nearest_yaw_threshold");
   const double behavior_path_interval =
-    tier4_autoware_utils::getOrDeclareParameter<double>(node, "output_path_interval");
+    autoware::universe_utils::getOrDeclareParameter<double>(node, "output_path_interval");
   const double behavior_vel_interval =
-    tier4_autoware_utils::getOrDeclareParameter<double>(node, "behavior_output_path_interval");
+    autoware::universe_utils::getOrDeclareParameter<double>(node, "behavior_output_path_interval");
 
   // extract path with lane id from lanelets
   const auto raw_path_with_lane_id = [&]() {
     const auto non_resampled_path_with_lane_id = utils::get_path_with_lane_id(
       route_handler, route_lanelets, start_center_pose, ego_nearest_dist_threshold,
       ego_nearest_yaw_threshold);
-    return motion_utils::resamplePath(non_resampled_path_with_lane_id, behavior_path_interval);
+    return autoware::motion_utils::resamplePath(
+      non_resampled_path_with_lane_id, behavior_path_interval);
   }();
   pub_raw_path_with_lane_id_->publish(raw_path_with_lane_id);
   RCLCPP_INFO(node.get_logger(), "Calculated raw path with lane id and published.");
@@ -103,7 +104,7 @@ OptimizationTrajectoryBasedCenterline::generate_centerline_with_optimization(
   // convert path with lane id to path
   const auto raw_path = [&]() {
     const auto non_resampled_path = convert_to_path(raw_path_with_lane_id);
-    return motion_utils::resamplePath(non_resampled_path, behavior_vel_interval);
+    return autoware::motion_utils::resamplePath(non_resampled_path, behavior_vel_interval);
   }();
   pub_raw_path_->publish(raw_path);
   RCLCPP_INFO(node.get_logger(), "Converted to path and published.");
@@ -123,7 +124,7 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
   // convert to trajectory points
   const auto raw_traj_points = [&]() {
     const auto raw_traj = convert_to_trajectory(raw_path);
-    return motion_utils::convertToTrajectoryPointArray(raw_traj);
+    return autoware::motion_utils::convertToTrajectoryPointArray(raw_traj);
   }();
 
   // create an instance of elastic band and model predictive trajectory.
@@ -165,7 +166,7 @@ std::vector<TrajectoryPoint> OptimizationTrajectoryBasedCenterline::optimize_tra
 
     // connect the previously and currently optimized trajectory points
     for (size_t j = 0; j < whole_optimized_traj_points.size(); ++j) {
-      const double dist = tier4_autoware_utils::calcDistance2d(
+      const double dist = autoware::universe_utils::calcDistance2d(
         whole_optimized_traj_points.at(j), optimized_traj_points.front());
       if (dist < 0.5) {
         const std::vector<TrajectoryPoint> extracted_whole_optimized_traj_points{

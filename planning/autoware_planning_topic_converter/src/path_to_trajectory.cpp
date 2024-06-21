@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_planning_topic_converter/path_to_trajectory.hpp"
+#include "autoware/planning_topic_converter/path_to_trajectory.hpp"
 
-#include <motion_utils/trajectory/conversion.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <autoware/motion_utils/trajectory/conversion.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 namespace autoware::planning_topic_converter
 {
@@ -24,7 +24,7 @@ namespace
 TrajectoryPoint convertToTrajectoryPoint(const PathPoint & point)
 {
   TrajectoryPoint traj_point;
-  traj_point.pose = tier4_autoware_utils::getPose(point);
+  traj_point.pose = autoware::universe_utils::getPose(point);
   traj_point.longitudinal_velocity_mps = point.longitudinal_velocity_mps;
   traj_point.lateral_velocity_mps = point.lateral_velocity_mps;
   traj_point.heading_rate_rps = point.heading_rate_rps;
@@ -50,7 +50,7 @@ PathToTrajectory::PathToTrajectory(const rclcpp::NodeOptions & options)
 void PathToTrajectory::process(const Path::ConstSharedPtr msg)
 {
   const auto trajectory_points = convertToTrajectoryPoints(msg->points);
-  const auto output = motion_utils::convertToTrajectory(trajectory_points, msg->header);
+  const auto output = autoware::motion_utils::convertToTrajectory(trajectory_points, msg->header);
   pub_->publish(output);
 }
 

@@ -14,6 +14,8 @@
 
 #include "autoware_path_sampler/node.hpp"
 
+#include "autoware/motion_utils/marker/marker_helper.hpp"
+#include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware_path_sampler/path_generation.hpp"
 #include "autoware_path_sampler/prepare_inputs.hpp"
 #include "autoware_path_sampler/utils/geometry_utils.hpp"
@@ -21,8 +23,6 @@
 #include "autoware_sampler_common/constraints/hard_constraint.hpp"
 #include "autoware_sampler_common/constraints/soft_constraint.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
-#include "motion_utils/marker/marker_helper.hpp"
-#include "motion_utils/trajectory/conversion.hpp"
 #include "rclcpp/time.hpp"
 
 #include <boost/geometry/algorithms/distance.hpp>
@@ -70,10 +70,6 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
   // interface subscriber
   path_sub_ = create_subscription<Path>(
     "~/input/path", 1, std::bind(&PathSampler::onPath, this, std::placeholders::_1));
-  odom_sub_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
-  objects_sub_ = create_subscription<PredictedObjects>(
-    "~/input/objects", 1, std::bind(&PathSampler::objectsCallback, this, std::placeholders::_1));
 
   // debug publisher
   debug_markers_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
@@ -148,7 +144,7 @@ PathSampler::PathSampler(const rclcpp::NodeOptions & node_options)
 rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-  using tier4_autoware_utils::updateParam;
+  using autoware::universe_utils::updateParam;
 
   updateParam(parameters, "constraints.hard.max_curvature", params_.constraints.hard.max_curvature);
   updateParam(parameters, "constraints.hard.min_curvature", params_.constraints.hard.min_curvature);
@@ -215,11 +211,6 @@ void PathSampler::resetPreviousData()
   prev_path_.reset();
 }
 
-void PathSampler::objectsCallback(const PredictedObjects::SharedPtr msg)
-{
-  in_objects_ptr_ = msg;
-}
-
 autoware::sampler_common::State PathSampler::getPlanningState(
   autoware::sampler_common::State & state,
   const autoware::sampler_common::transform::Spline2D & path_spline) const
@@ -241,30 +232,32 @@ void PathSampler::onPath(const Path::SharedPtr path_ptr)
   time_keeper_ptr_->tic(__func__);
 
   // check if data is ready and valid
-  if (!isDataReady(*path_ptr, *get_clock())) {
+  const auto ego_state_ptr = odom_sub_.takeData();
+  if (!isDataReady(*path_ptr, ego_state_ptr, *get_clock())) {
     return;
   }
 
   // 0. return if path is backward
   // TODO(Maxime): support backward path
-  if (!motion_utils::isDrivingForward(path_ptr->points)) {
+  if (!autoware::motion_utils::isDrivingForward(path_ptr->points)) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000,
       "Backward path is NOT supported. Just converting path to trajectory");
   }
   // 1. create planner data
-  const auto planner_data = createPlannerData(*path_ptr);
+  const auto planner_data = createPlannerData(*path_ptr, *ego_state_ptr);
   // 2. generate trajectory
   const auto generated_traj_points = generateTrajectory(planner_data);
   // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
   if (!generated_traj_points.empty()) {
     const auto output_traj_msg =
-      motion_utils::convertToTrajectory(generated_traj_points, path_ptr->header);
+      autoware::motion_utils::convertToTrajectory(generated_traj_points, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
   } else {
     auto stopping_traj = trajectory_utils::convertToTrajectoryPoints(planner_data.traj_points);
     for (auto & p : stopping_traj) p.longitudinal_velocity_mps = 0.0;
-    const auto output_traj_msg = motion_utils::convertToTrajectory(stopping_traj, path_ptr->header);
+    const auto output_traj_msg =
+      autoware::motion_utils::convertToTrajectory(stopping_traj, path_ptr->header);
     traj_pub_->publish(output_traj_msg);
   }
 
@@ -278,9 +271,10 @@ void PathSampler::onPath(const Path::SharedPtr path_ptr)
   debug_calculation_time_pub_->publish(calculation_time_msg);
 }
 
-bool PathSampler::isDataReady(const Path & path, rclcpp::Clock clock) const
+bool PathSampler::isDataReady(
+  const Path & path, const Odometry::ConstSharedPtr ego_state_ptr, rclcpp::Clock clock)
 {
-  if (!ego_state_ptr_) {
+  if (!ego_state_ptr) {
     RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Waiting for ego pose and twist.");
     return false;
   }
@@ -296,10 +290,15 @@ bool PathSampler::isDataReady(const Path & path, rclcpp::Clock clock) const
     return false;
   }
 
+  if (!objects_sub_.takeData()) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), clock, 5000, "Waiting for detected objects.");
+    return false;
+  }
+
   return true;
 }
 
-PlannerData PathSampler::createPlannerData(const Path & path) const
+PlannerData PathSampler::createPlannerData(const Path & path, const Odometry & ego_state) const
 {
   // create planner data
   PlannerData planner_data;
@@ -307,8 +306,8 @@ PlannerData PathSampler::createPlannerData(const Path & path) const
   planner_data.traj_points = trajectory_utils::convertToTrajectoryPoints(path.points);
   planner_data.left_bound = path.left_bound;
   planner_data.right_bound = path.right_bound;
-  planner_data.ego_pose = ego_state_ptr_->pose.pose;
-  planner_data.ego_vel = ego_state_ptr_->twist.twist.linear.x;
+  planner_data.ego_pose = ego_state.pose.pose;
+  planner_data.ego_vel = ego_state.twist.twist.linear.x;
   return planner_data;
 }
 
@@ -319,14 +318,14 @@ void PathSampler::copyZ(
   to_traj.front().pose.position.z = from_traj.front().pose.position.z;
   if (from_traj.size() < 2 || to_traj.size() < 2) return;
   auto from = from_traj.begin() + 1;
-  auto s_from = tier4_autoware_utils::calcDistance2d(from->pose, std::next(from)->pose);
+  auto s_from = autoware::universe_utils::calcDistance2d(from->pose, std::next(from)->pose);
   auto s_to = 0.0;
   auto s_from_prev = 0.0;
   for (auto to = to_traj.begin() + 1; to + 1 != to_traj.end(); ++to) {
-    s_to += tier4_autoware_utils::calcDistance2d(std::prev(to)->pose, to->pose);
+    s_to += autoware::universe_utils::calcDistance2d(std::prev(to)->pose, to->pose);
     for (; s_from < s_to && from + 1 != from_traj.end(); ++from) {
       s_from_prev = s_from;
-      s_from += tier4_autoware_utils::calcDistance2d(from->pose, std::next(from)->pose);
+      s_from += autoware::universe_utils::calcDistance2d(from->pose, std::next(from)->pose);
     }
     const auto ratio = (s_to - s_from_prev) / (s_from - s_from_prev);
     to->pose.position.z = std::prev(from)->pose.position.z +
@@ -342,8 +341,8 @@ void PathSampler::copyVelocity(
   if (to_traj.empty() || from_traj.empty()) return;
 
   const auto closest_fn = [&](const auto & p1, const auto & p2) {
-    return tier4_autoware_utils::calcDistance2d(p1.pose, ego_pose) <=
-           tier4_autoware_utils::calcDistance2d(p2.pose, ego_pose);
+    return autoware::universe_utils::calcDistance2d(p1.pose, ego_pose) <=
+           autoware::universe_utils::calcDistance2d(p2.pose, ego_pose);
   };
   const auto first_from = std::min_element(from_traj.begin(), from_traj.end() - 1, closest_fn);
   const auto first_to = std::min_element(to_traj.begin(), to_traj.end() - 1, closest_fn);
@@ -353,14 +352,14 @@ void PathSampler::copyVelocity(
     to->longitudinal_velocity_mps = first_from->longitudinal_velocity_mps;
 
   auto from = first_from;
-  auto s_from = tier4_autoware_utils::calcDistance2d(from->pose, std::next(from)->pose);
+  auto s_from = autoware::universe_utils::calcDistance2d(from->pose, std::next(from)->pose);
   auto s_to = 0.0;
   auto s_from_prev = 0.0;
   for (; to + 1 != to_traj.end(); ++to) {
-    s_to += tier4_autoware_utils::calcDistance2d(to->pose, std::next(to)->pose);
+    s_to += autoware::universe_utils::calcDistance2d(to->pose, std::next(to)->pose);
     for (; s_from < s_to && from + 1 != from_traj.end(); ++from) {
       s_from_prev = s_from;
-      s_from += tier4_autoware_utils::calcDistance2d(from->pose, std::next(from)->pose);
+      s_from += autoware::universe_utils::calcDistance2d(from->pose, std::next(from)->pose);
     }
     if (
       from->longitudinal_velocity_mps == 0.0 || std::prev(from)->longitudinal_velocity_mps == 0.0) {
@@ -425,8 +424,8 @@ std::vector<autoware::sampler_common::Path> PathSampler::generateCandidatesFromP
       size_t reuse_idx = 0;
       for (reuse_idx = 0; reuse_idx + 1 < prev_path_->lengths.size() &&
                           prev_path_->lengths[reuse_idx] < reuse_length;
-           ++reuse_idx)
-        ;
+           ++reuse_idx) {
+      }
       if (reuse_idx == 0UL) continue;
       const auto reused_path = *prev_path_->subset(0UL, reuse_idx);
       reuse_state.curvature = reused_path.curvatures.back();
@@ -467,8 +466,9 @@ autoware::sampler_common::Path PathSampler::generatePath(const PlannerData & pla
   current_state.heading = tf2::getYaw(planner_data.ego_pose.orientation);
 
   const auto planning_state = getPlanningState(current_state, path_spline);
+  const auto objects = objects_sub_.takeData();
   prepareConstraints(
-    params_.constraints, *in_objects_ptr_, planner_data.left_bound, planner_data.right_bound);
+    params_.constraints, *objects, planner_data.left_bound, planner_data.right_bound);
 
   auto candidate_paths = generateCandidatePaths(planning_state, path_spline, 0.0, params_);
   const auto candidates_from_prev_path =
@@ -523,7 +523,6 @@ autoware::sampler_common::Path PathSampler::generatePath(const PlannerData & pla
 
 std::vector<TrajectoryPoint> PathSampler::generateTrajectoryPoints(const PlannerData & planner_data)
 {
-  std::vector<TrajectoryPoint> trajectory;
   time_keeper_ptr_->tic(__func__);
   const auto path = generatePath(planner_data);
   return trajectory_utils::convertToTrajectoryPoints(path);
@@ -533,7 +532,7 @@ void PathSampler::publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose)
 {
   time_keeper_ptr_->tic(__func__);
 
-  const auto virtual_wall_marker = motion_utils::createStopVirtualWallMarker(
+  const auto virtual_wall_marker = autoware::motion_utils::createStopVirtualWallMarker(
     stop_pose, "outside drivable area", now(), 0, vehicle_info_.max_longitudinal_offset_m);
 
   virtual_wall_pub_->publish(virtual_wall_marker);

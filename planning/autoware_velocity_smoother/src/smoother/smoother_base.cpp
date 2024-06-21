@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_velocity_smoother/smoother/smoother_base.hpp"
+#include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 
-#include "autoware_velocity_smoother/resample.hpp"
-#include "autoware_velocity_smoother/trajectory_utils.hpp"
-#include "motion_utils/resample/resample.hpp"
-#include "motion_utils/trajectory/conversion.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "tier4_autoware_utils/math/unit_conversion.hpp"
+#include "autoware/motion_utils/resample/resample.hpp"
+#include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/velocity_smoother/resample.hpp"
+#include "autoware/velocity_smoother/trajectory_utils.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -34,10 +34,10 @@ namespace
 TrajectoryPoints applyPreProcess(
   const TrajectoryPoints & input, const double interval, const bool use_resampling)
 {
-  using motion_utils::calcArcLength;
-  using motion_utils::convertToTrajectory;
-  using motion_utils::convertToTrajectoryPointArray;
-  using motion_utils::resampleTrajectory;
+  using autoware::motion_utils::calcArcLength;
+  using autoware::motion_utils::convertToTrajectory;
+  using autoware::motion_utils::convertToTrajectoryPointArray;
+  using autoware::motion_utils::resampleTrajectory;
 
   if (!use_resampling) {
     return input;
@@ -141,13 +141,13 @@ TrajectoryPoints SmootherBase::applyLateralAccelerationFilter(
   // since the resampling takes a long time, omit the resampling when it is not requested
   if (use_resampling) {
     std::vector<double> out_arclength;
-    const auto traj_length = motion_utils::calcArcLength(input);
+    const auto traj_length = autoware::motion_utils::calcArcLength(input);
     for (double s = 0; s < traj_length; s += points_interval) {
       out_arclength.push_back(s);
     }
-    const auto output_traj =
-      motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(input), out_arclength);
-    output = motion_utils::convertToTrajectoryPointArray(output_traj);
+    const auto output_traj = autoware::motion_utils::resampleTrajectory(
+      autoware::motion_utils::convertToTrajectory(input), out_arclength);
+    output = autoware::motion_utils::convertToTrajectoryPointArray(output_traj);
     output.back() = input.back();  // keep the final speed.
   } else {
     output = input;
@@ -249,14 +249,15 @@ TrajectoryPoints SmootherBase::applySteeringRateLimit(
     }
 
     const auto steer_rate = steer_rate_arr.at(i);
-    if (steer_rate < tier4_autoware_utils::deg2rad(base_param_.max_steering_angle_rate)) {
+    if (steer_rate < autoware::universe_utils::deg2rad(base_param_.max_steering_angle_rate)) {
       continue;
     }
 
     const auto mean_vel =
       (output.at(i).longitudinal_velocity_mps + output.at(i + 1).longitudinal_velocity_mps) / 2.0;
     const auto target_mean_vel =
-      mean_vel * (tier4_autoware_utils::deg2rad(base_param_.max_steering_angle_rate) / steer_rate);
+      mean_vel *
+      (autoware::universe_utils::deg2rad(base_param_.max_steering_angle_rate) / steer_rate);
 
     for (size_t k = 0; k < 2; k++) {
       auto & velocity = output.at(i + k).longitudinal_velocity_mps;

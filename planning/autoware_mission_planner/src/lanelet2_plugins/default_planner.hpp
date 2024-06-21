@@ -15,10 +15,10 @@
 #ifndef LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
 #define LANELET2_PLUGINS__DEFAULT_PLANNER_HPP_
 
+#include <autoware/mission_planner/mission_planner_plugin.hpp>
+#include <autoware/route_handler/route_handler.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
-#include <mission_planner/mission_planner_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <route_handler/route_handler.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
@@ -51,14 +51,15 @@ public:
   void updateRoute(const PlannerPlugin::LaneletRoute & route) override;
   void clearRoute() override;
   MarkerArray visualize(const LaneletRoute & route) const override;
-  MarkerArray visualize_debug_footprint(tier4_autoware_utils::LinearRing2d goal_footprint_) const;
+  MarkerArray visualize_debug_footprint(
+    autoware::universe_utils::LinearRing2d goal_footprint_) const;
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
 private:
   using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
   using Pose = geometry_msgs::msg::Pose;
   bool is_graph_ready_;
-  route_handler::RouteHandler route_handler_;
+  autoware::route_handler::RouteHandler route_handler_;
 
   DefaultPlannerParameters param_;
 
@@ -85,7 +86,7 @@ private:
   bool check_goal_footprint_inside_lanes(
     const lanelet::ConstLanelet & current_lanelet,
     const lanelet::ConstLanelet & combined_prev_lanelet,
-    const tier4_autoware_utils::Polygon2d & goal_footprint, double & next_lane_length,
+    const autoware::universe_utils::Polygon2d & goal_footprint, double & next_lane_length,
     const double search_margin = 2.0);
 
   /**

@@ -21,10 +21,10 @@
 #include <unordered_set>
 #include <utility>
 
-tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
-  tier4_autoware_utils::LinearRing2d footprint)
+autoware::universe_utils::Polygon2d convert_linear_ring_to_polygon(
+  autoware::universe_utils::LinearRing2d footprint)
 {
-  tier4_autoware_utils::Polygon2d footprint_polygon;
+  autoware::universe_utils::Polygon2d footprint_polygon;
   boost::geometry::append(footprint_polygon.outer(), footprint[0]);
   boost::geometry::append(footprint_polygon.outer(), footprint[1]);
   boost::geometry::append(footprint_polygon.outer(), footprint[2]);
@@ -42,7 +42,8 @@ void insert_marker_array(
 }
 
 lanelet::ConstLanelet combine_lanelets_with_shoulder(
-  const lanelet::ConstLanelets & lanelets, const route_handler::RouteHandler & route_handler)
+  const lanelet::ConstLanelets & lanelets,
+  const autoware::route_handler::RouteHandler & route_handler)
 {
   lanelet::Points3d lefts;
   lanelet::Points3d rights;
@@ -119,7 +120,7 @@ geometry_msgs::msg::Pose convertBasicPoint3dToPose(
   pose.position.y = point.y();
   pose.position.z = point.z();
 
-  pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(lane_yaw);
+  pose.orientation = autoware::universe_utils::createQuaternionFromYaw(lane_yaw);
 
   return pose;
 }

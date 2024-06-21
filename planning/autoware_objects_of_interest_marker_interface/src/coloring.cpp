@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_objects_of_interest_marker_interface/coloring.hpp"
+#include "autoware/objects_of_interest_marker_interface/coloring.hpp"
 
 namespace
 {
@@ -22,7 +22,7 @@ std_msgs::msg::ColorRGBA convertFromColorCode(const uint64_t code, const float a
   const float g = static_cast<int>((code << 48) >> 56) / 255.0;
   const float b = static_cast<int>((code << 56) >> 56) / 255.0;
 
-  return tier4_autoware_utils::createMarkerColor(r, g, b, alpha);
+  return autoware::universe_utils::createMarkerColor(r, g, b, alpha);
 }
 }  // namespace
 
