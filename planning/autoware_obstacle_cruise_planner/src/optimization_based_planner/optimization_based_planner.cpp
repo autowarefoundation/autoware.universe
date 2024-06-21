@@ -348,7 +348,7 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
           "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f",
           vehicle_speed, target_vel, engage_velocity_, engage_vel_thr, stop_dist.value());
         return std::make_tuple(initial_vel, initial_acc);
-      } else if (stop_dist) {
+      } else {
         RCLCPP_DEBUG(
           rclcpp::get_logger("ObstacleCruisePlanner::OptimizationBasedPlanner"),
           "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist.value());
