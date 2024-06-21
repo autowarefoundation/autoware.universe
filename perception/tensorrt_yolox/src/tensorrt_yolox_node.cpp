@@ -216,17 +216,18 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       8, 0);
     // Refine mask: replacing segmentation mask by roi class
     // This should remove when the segmentation accuracy is high
-    if (is_roi_overlap_segment_) {
+    if (is_roi_overlap_segment_ && trt_yolox_->getMultitaskNum() > 0) {
       overlapSegmentByRoi(yolox_object, mask);
     }
   }
   // TODO(badai-nguyen): consider to change to 4bits data transfer
-  sensor_msgs::msg::Image::SharedPtr out_mask_msg =
-    cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
-      .toImageMsg();
-  out_mask_msg->header = msg->header;
-  mask_pub_.publish(out_mask_msg);
-
+  if (trt_yolox_->getMultitaskNum() > 0) {
+    sensor_msgs::msg::Image::SharedPtr out_mask_msg =
+      cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
+        .toImageMsg();
+    out_mask_msg->header = msg->header;
+    mask_pub_.publish(out_mask_msg);
+  }
   image_pub_.publish(in_image_ptr->toImageMsg());
   out_objects.header = msg->header;
   objects_pub_->publish(out_objects);
@@ -247,7 +248,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 
-  if (is_publish_color_mask_) {
+  if (is_publish_color_mask_ && trt_yolox_->getMultitaskNum() > 0) {
     cv::Mat color_mask =
       cv::Mat::zeros(in_image_ptr->image.rows, in_image_ptr->image.cols, CV_8UC3);
     trt_yolox_->getColorizedMask(trt_yolox_->getColorMap(), mask, color_mask);
