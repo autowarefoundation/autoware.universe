@@ -231,14 +231,13 @@ void DualReturnOutlierFilterComponent::filter(
       if (deleted_azimuths.size() == 0) {
         continue;
       }
-      while (current_deleted_index < deleted_azimuths.size()) &&
+      while (current_deleted_index < deleted_azimuths.size() &&
              (uint)deleted_azimuths[current_deleted_index] <
                ((i + static_cast<uint>(min_azimuth / horizontal_resolution) + 1) *
-                horizontal_resolution))
-        {
-          noise_frequency[i] = noise_frequency[i] + 1;
-          current_deleted_index++;
-        }
+                horizontal_resolution)) {
+        noise_frequency[i] = noise_frequency[i] + 1;
+        current_deleted_index++;
+      }
       if (temp_segment.points.size() > 0) {
         while ((temp_segment.points[current_temp_segment_index].azimuth < 0.f
                   ? 0.f
