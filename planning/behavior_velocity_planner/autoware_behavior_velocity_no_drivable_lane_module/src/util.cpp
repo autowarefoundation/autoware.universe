@@ -86,7 +86,8 @@ PathWithNoDrivableLanePolygonIntersection getPathIntersectionWithNoDrivableLaneP
   auto const & is_last_path_point_inside_polygon = bg::within(last_path_point, polygon);
 
   if (intersects.empty()) {
-    if (path_no_drivable_lane_polygon_intersection.is_first_path_point_inside_polygon &&
+    if (
+      path_no_drivable_lane_polygon_intersection.is_first_path_point_inside_polygon &&
       is_last_path_point_inside_polygon) {
       path_no_drivable_lane_polygon_intersection.is_path_inside_of_polygon = true;
     } else {
@@ -95,7 +96,7 @@ PathWithNoDrivableLanePolygonIntersection getPathIntersectionWithNoDrivableLaneP
   } else if (intersects.size() == 1) {
     const auto & p = intersects.at(0);
     if (is_last_path_point_inside_polygon) {
-       path_no_drivable_lane_polygon_intersection.first_intersection_point =
+      path_no_drivable_lane_polygon_intersection.first_intersection_point =
         createPoint(p.x(), p.y(), ego_pos.z);
     } else if (path_no_drivable_lane_polygon_intersection.is_first_path_point_inside_polygon) {
       path_no_drivable_lane_polygon_intersection.second_intersection_point =
