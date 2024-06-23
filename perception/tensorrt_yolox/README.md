@@ -194,3 +194,4 @@ with labels according to the order in this file.
 
 - <https://github.com/Megvii-BaseDetection/YOLOX>
 - <https://github.com/wep21/yolox_onnx_modifier>
+- <https://github.com/tier4/trt-yoloXP>
