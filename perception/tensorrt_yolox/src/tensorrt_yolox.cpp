@@ -905,7 +905,7 @@ bool TrtYoloX::feedforwardAndDecode(
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     out_prob_h_.get(), out_prob_d_.get(), sizeof(float) * out_elem_num_, cudaMemcpyDeviceToHost,
     *stream_));
-  if (multitask_) {
+  if (multitask_ && !use_gpu_preprocess_) {
     CHECK_CUDA_ERROR(cudaMemcpyAsync(
       segmentation_out_prob_h_.get(), segmentation_out_prob_d_.get(),
       sizeof(float) * segmentation_out_elem_num_, cudaMemcpyDeviceToHost, *stream_));
