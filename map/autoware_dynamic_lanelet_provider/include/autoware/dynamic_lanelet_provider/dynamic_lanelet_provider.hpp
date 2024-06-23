@@ -22,7 +22,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include "autoware_map_msgs/msg/lanelet_map_meta_data.hpp"
-#include "autoware_map_msgs/srv/get_differential_lanelet2_map.hpp"
+#include "autoware_map_msgs/srv/get_selected_lanelet2_map.hpp"
 #include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
@@ -59,7 +59,7 @@ private:
 
   rclcpp::Publisher<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr dynamic_map_pub_;
 
-  rclcpp::Client<autoware_map_msgs::srv::GetDifferentialLanelet2Map>::SharedPtr map_loader_client_;
+  rclcpp::Client<autoware_map_msgs::srv::GetSelectedLanelet2Map>::SharedPtr map_loader_client_;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
 

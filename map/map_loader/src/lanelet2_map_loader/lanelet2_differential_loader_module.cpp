@@ -200,18 +200,12 @@ Lanelet2DifferentialLoaderModule::getLaneletMapMetaDataMsg(
 
   autoware_map_msgs::msg::LaneletMapMetaData metadata;
   for (const auto & file : lanelet2_file_metadata_dict_) {
-    lanelet::GPSPoint gps_point;
-    gps_point.lat = file.second.origin_lat;
-    gps_point.lon = file.second.origin_lon;
-    gps_point.ele = 0;
-    lanelet::BasicPoint3d point = projector->forward(gps_point);
-
     autoware_map_msgs::msg::LaneletMapTileMetaData tile_msg;
     tile_msg.tile_id = file.second.id;
-    tile_msg.min_x = point.x();
-    tile_msg.min_y = point.y();
-    tile_msg.max_x = point.x() + x_res;
-    tile_msg.max_y = point.y() + y_res;
+    tile_msg.min_x = file.second.min_x;
+    tile_msg.min_y = file.second.min_y;
+    tile_msg.max_x = file.second.min_x + x_res;
+    tile_msg.max_y = file.second.min_y + y_res;
 
     metadata.metadata_list.push_back(tile_msg);
   }

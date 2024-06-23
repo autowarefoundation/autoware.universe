@@ -68,7 +68,7 @@ DynamicLaneletProviderNode::DynamicLaneletProviderNode(const rclcpp::NodeOptions
   dynamic_map_pub_ = this->create_publisher<autoware_map_msgs::msg::LaneletMapBin>(
     "output/lanelet2_map", rclcpp::QoS{1}.transient_local());
 
-  map_loader_client_ = this->create_client<autoware_map_msgs::srv::GetDifferentialLanelet2Map>(
+  map_loader_client_ = this->create_client<autoware_map_msgs::srv::GetSelectedLanelet2Map>(
     "service/get_differential_lanelet_map", rmw_qos_profile_services_default,
     client_callback_group_);
 
@@ -141,7 +141,7 @@ void DynamicLaneletProviderNode::updateMap(const geometry_msgs::msg::Point & pos
     return;
   }
 
-  auto request = std::make_shared<autoware_map_msgs::srv::GetDifferentialLanelet2Map::Request>();
+  auto request = std::make_shared<autoware_map_msgs::srv::GetSelectedLanelet2Map::Request>();
   request->vector_map_file_ids.insert(
     request->vector_map_file_ids.end(), cache_ids.begin(), cache_ids.end());
 
@@ -151,7 +151,7 @@ void DynamicLaneletProviderNode::updateMap(const geometry_msgs::msg::Point & pos
 
   auto result{map_loader_client_->async_send_request(
     request,
-    [](rclcpp::Client<autoware_map_msgs::srv::GetDifferentialLanelet2Map>::SharedFuture) {})};
+    [](rclcpp::Client<autoware_map_msgs::srv::GetSelectedLanelet2Map>::SharedFuture) {})};
 
   std::future_status status = result.wait_for(std::chrono::seconds(0));
   while (status != std::future_status::ready) {
