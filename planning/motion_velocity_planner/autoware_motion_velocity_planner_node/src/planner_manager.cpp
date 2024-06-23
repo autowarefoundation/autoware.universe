@@ -14,6 +14,8 @@
 
 #include "planner_manager.hpp"
 
+#include <autoware/universe_utils/system/stop_watch.hpp>
+
 #include <boost/format.hpp>
 
 #include <memory>
@@ -71,13 +73,16 @@ void MotionVelocityPlannerManager::update_module_parameters(
   for (auto & plugin : loaded_plugins_) plugin->update_parameters(parameters);
 }
 
-std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocities(
+VelocityPlanningResults MotionVelocityPlannerManager::plan_velocities(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
-  std::vector<VelocityPlanningResult> results;
-  for (auto & plugin : loaded_plugins_)
-    results.push_back(plugin->plan(ego_trajectory_points, planner_data));
+  VelocityPlanningResults results;
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  for (auto & plugin : loaded_plugins_) {
+    results.results.push_back(plugin->plan(ego_trajectory_points, planner_data));
+    results.processing_times_map[plugin->get_module_name()] = stop_watch.toc(true);
+  }
   return results;
 }
 }  // namespace autoware::motion_velocity_planner

@@ -21,6 +21,7 @@
 #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -44,6 +45,12 @@ struct VelocityPlanningResult
   std::vector<geometry_msgs::msg::Point> stop_points{};
   std::vector<SlowdownInterval> slowdown_intervals{};
   std::optional<autoware_adapi_v1_msgs::msg::VelocityFactor> velocity_factor{};
+};
+
+struct VelocityPlanningResults
+{
+  std::vector<VelocityPlanningResult> results{};         // planning result for each module
+  std::map<std::string, double> processing_times_map{};  // processing time of each module
 };
 }  // namespace autoware::motion_velocity_planner
 

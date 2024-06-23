@@ -20,6 +20,7 @@
 #include <autoware/motion_velocity_planner_common/planner_data.hpp>
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/processing_time_publisher.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <autoware_motion_velocity_planner_node/srv/load_plugin.hpp>
 #include <autoware_motion_velocity_planner_node/srv/unload_plugin.hpp>
@@ -96,6 +97,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
     velocity_factor_publisher_;
+  autoware::universe_utils::ProcessingTimePublisher processing_time_publisher_{this};
 
   //  parameters
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;

@@ -373,7 +373,7 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   velocity_factors.header.frame_id = "map";
   velocity_factors.header.stamp = get_clock()->now();
 
-  for (const auto & planning_result : planning_results) {
+  for (const auto & planning_result : planning_results.results) {
     for (const auto & stop_point : planning_result.stop_points)
       insert_stop(output_trajectory_msg, stop_point);
     for (const auto & slowdown_interval : planning_result.slowdown_intervals)
@@ -383,6 +383,7 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   }
 
   velocity_factor_publisher_->publish(velocity_factors);
+  processing_time_publisher_.publish(planning_results.processing_times_map);
   return output_trajectory_msg;
 }
 
