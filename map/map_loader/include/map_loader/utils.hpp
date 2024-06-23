@@ -22,8 +22,8 @@
 struct Lanelet2FileMetaData
 {
   int id;
-  double origin_lat;
-  double origin_lon;
+  double min_x;
+  double min_y;
 };
 
 std::map<std::string, Lanelet2FileMetaData> loadLanelet2Metadata(

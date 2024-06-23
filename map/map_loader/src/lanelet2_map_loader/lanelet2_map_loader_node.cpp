@@ -75,6 +75,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
 {
   declare_parameter<std::string>("lanelet2_map_path");
   declare_parameter<double>("center_line_resolution");
+  declare_parameter<bool>("use_waypoints");
 
   if (isOsmFile(get_parameter("lanelet2_map_path").as_string())) {
     RCLCPP_INFO(get_logger(), "Single osm file provided. Dynamic loading is disabled.");

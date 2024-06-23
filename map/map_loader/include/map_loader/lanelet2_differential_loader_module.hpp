@@ -28,7 +28,7 @@
 #include <pugixml.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_map_msgs/srv/get_differential_lanelet2_map.hpp"
+#include "autoware_map_msgs/srv/get_selected_lanelet2_map.hpp"
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_meta_data.hpp>
 #include <tier4_map_msgs/msg/map_projector_info.hpp>
@@ -42,7 +42,7 @@
 #include <map>
 #include <string>
 
-using GetDifferentialLanelet2Map = autoware_map_msgs::srv::GetDifferentialLanelet2Map;
+using GetDifferentialLanelet2Map = autoware_map_msgs::srv::GetSelectedLanelet2Map;
 using autoware_map_msgs::msg::LaneletMapBin;
 
 class Lanelet2DifferentialLoaderModule
