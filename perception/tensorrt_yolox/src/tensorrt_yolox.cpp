@@ -944,7 +944,7 @@ bool TrtYoloX::feedforwardAndDecode(
           mask = getMaskImageGpu(&(d_segmentation_results[counter]), output_dims, out_w, out_h, i);
         } else {
           float * segmentation_results =
-              segmentation_out_prob_h_.get() + (i * segmentation_out_elem_num_per_batch_);
+            segmentation_out_prob_h_.get() + (i * segmentation_out_elem_num_per_batch_);
           mask = getMaskImage(&(segmentation_results[counter]), output_dims, out_w, out_h);
         }
         segmentation_masks_.emplace_back(std::move(mask));
