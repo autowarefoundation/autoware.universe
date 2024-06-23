@@ -922,7 +922,7 @@ bool TrtYoloX::feedforwardAndDecode(
     objects.emplace_back(object_array);
     if (multitask_) {
       segmentation_masks_.clear();
-    
+
       size_t counter = 0;
       int batch =
         static_cast<int>(segmentation_out_elem_num_ / segmentation_out_elem_num_per_batch_);
