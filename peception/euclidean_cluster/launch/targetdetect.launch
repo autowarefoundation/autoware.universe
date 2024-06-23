@@ -1,0 +1,12 @@
+<launch>
+    <!--<include file="$(find ground_segmentaion)/launch/ground_extract.launch" />-->
+ <!--   <include file="$(find curb_extract)/launch/curb_extract.launch" /> -->
+    <node
+        pkg="euclidean_cluster_detect"
+        type="targetDetect"
+        name="targetDetect"
+        output="screen"
+        cwd="node">
+    </node>
+
+</launch>

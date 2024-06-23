@@ -1,0 +1,12 @@
+<launch>
+    <node pkg="euclidean_cluster_detect"
+        type="lidarRawpoint_saver"
+        name="lidardata_saver"
+        output="screen"
+        cwd="node">
+
+        <param name="lidar_data_savepos"
+            value="/home/mjx/Desktop/123.txt" />
+    </node>
+
+</launch>

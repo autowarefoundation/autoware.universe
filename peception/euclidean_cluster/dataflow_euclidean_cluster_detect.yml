@@ -1,0 +1,39 @@
+nodes:
+  #rslidar driver   node
+  - id: rslidar_driver
+    custom:
+      source: ../../dora-hardware/vendors/lidar/build/rslidar_driver_pcap
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - pointcloud
+
+# 去地面
+  - id: ground_filter
+    custom:
+      source: ../patchwork-plusplus-ros-master/build/demo
+      inputs:
+        pointcloud: rslidar_driver/pointcloud 
+      outputs:
+        - pointcloud_no_ground
+
+  - id: show_pointcloud_no_ground
+    operator:
+        python: ../patchwork-plusplus-ros-master/lidar_to_ros2.py
+        inputs:
+          pointcloud: ground_filter/pointcloud_no_ground
+          
+  # 聚类
+  - id: euclidean_cluster
+    custom:
+      source: build/euclidean_cluster
+      inputs:
+        pointcloud: ground_filter/pointcloud_no_ground
+      outputs:
+        - pointcloud_euclidean_cluster
+
+  - id: show_pointcloud_euclidean_cluster
+    operator:
+        python: lidar_to_ros2_euclidean_cluster_detect.py
+        inputs:
+          pointcloud: euclidean_cluster/pointcloud_euclidean_cluster

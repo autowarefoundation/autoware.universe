@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <name>euclidean_cluster_detect</name>
+  <version>1.0.0</version>
+  <description>The euclidean_cluster_detect package</description>
+
+  <maintainer email="caiyufeng@163.com">caiyufeng</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>custom_msgs</build_depend>
+  <build_depend>message_runtime</build_depend>
+
+  <run_depend>message_runtime</run_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>custom_msgs</run_depend>
+  
+
+
+
+  <export></export>
+</package>

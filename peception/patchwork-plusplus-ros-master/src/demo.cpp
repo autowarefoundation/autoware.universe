@@ -40,6 +40,7 @@ std::string lidar_deviceid;
 
 bool to_exit_process = false;
 static Vec_uint8_t point_data;
+uint32_t local_cnt=0;// 统计该节点接收到多少条消息
 
 int run(void *dora_context)
 {
@@ -69,7 +70,7 @@ int run(void *dora_context)
             read_dora_input_id(event, &id, &id_len);
             if (strcmp(id, "pointcloud") == 0)
             {
-
+               
                 char *data;
                 size_t data_len;
                 read_dora_input_data(event, &data, &data_len);
@@ -97,6 +98,12 @@ int run(void *dora_context)
                     pointcloud.points.push_back(tem_point);
                     //   pointcloud.points.push_back(pcl::PointXYZI(*(float*)(data + 16 + 16 * i), *(float*)(data + 16 + 4 + 16 * i),*(float*)(data + 16 + 8 + 16 * i), *(float*)(data + 16 + 12 + 16 * i)));
                 }
+                std::cout.precision(20);
+                cout<<"\033[1;32m" << "Input PointCloud: seq " << pointcloud.header.seq 
+                    <<"  local_cnt: " <<local_cnt
+                    << "  stamp:" << pointcloud.header.stamp/1e9
+                     << "\033[0m"<<endl;
+                local_cnt++;
 
                 pointcloud_ptr = pointcloud.makeShared();
 
