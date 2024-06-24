@@ -46,6 +46,7 @@ private:
 
   boost::process::native_environment environment_;
 
+  void on_timer_tick(int pid) const;
 
   /**
    * @brief Get system usage of the component.

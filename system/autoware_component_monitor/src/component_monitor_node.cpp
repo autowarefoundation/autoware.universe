@@ -58,7 +58,7 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
     this, get_clock(), rclcpp::Rate(publish_rate_).period(), on_timer_tick_wrapped_);
 }
 
-void ComponentMonitor::on_timer_tick(int pid)
+void ComponentMonitor::on_timer_tick(const int pid) const
 {
   if (usage_pub_->get_subscription_count() == 0) return;
 
