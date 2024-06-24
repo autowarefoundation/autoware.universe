@@ -6,13 +6,13 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 # Targets
-ament_auto_add_library(object_velocity_splitter_node_component SHARED
-  src/object_velocity_splitter_node/object_velocity_splitter_node.cpp
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/object_velocity_splitter_node.cpp
 )
 
-rclcpp_components_register_node(object_velocity_splitter_node_component
-  PLUGIN "object_velocity_splitter::ObjectVelocitySplitterNode"
-  EXECUTABLE object_velocity_splitter_node
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "autoware::object_velocity_splitter::ObjectVelocitySplitterNode"
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 # Tests
