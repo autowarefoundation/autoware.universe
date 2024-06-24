@@ -1,12 +1,12 @@
 *:*/test/*
 
-arrayIndexThenCheck
 checkersReport
 constParameterPointer
 constParameterReference
 constVariable
 constVariableReference
 containerOutOfBounds
+// cspell: ignore cstyle
 cstyleCast
 duplicateBranch
 duplicateBreak
@@ -28,6 +28,7 @@ shadowArgument
 shadowFunction
 shadowVariable
 syntaxError
+// cspell: ignore uninit
 uninitMemberVar
 unknownMacro
 unmatchedSuppression
