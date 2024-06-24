@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "object_merger/node.hpp"
+#define EIGEN_MPL2_ONLY
+
+#include "autoware/object_merger/node.hpp"
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "object_merger/utils/utils.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <boost/optional.hpp>
 
 #include <chrono>
 #include <unordered_map>
-
-#define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
@@ -70,7 +70,7 @@ std::map<int, double> convertListToClassMap(const std::vector<double> & distance
 }
 }  // namespace
 
-namespace object_association
+namespace autoware::object_merger
 {
 ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("object_association_merger_node", node_options),
@@ -231,7 +231,7 @@ void ObjectAssociationMergerNode::objectsCallback(
   processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
 }
-}  // namespace object_association
+}  // namespace autoware::object_merger
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(object_association::ObjectAssociationMergerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::object_merger::ObjectAssociationMergerNode)

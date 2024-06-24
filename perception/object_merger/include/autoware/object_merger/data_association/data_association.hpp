@@ -16,21 +16,22 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#ifndef OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
-#define OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
+#ifndef AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
+#define AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
+
+#define EIGEN_MPL2_ONLY
+
+#include "autoware/object_merger/data_association/solver/gnn_solver.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+
+#include "autoware_perception_msgs/msg/detected_objects.hpp"
 
 #include <list>
 #include <memory>
 #include <unordered_map>
 #include <vector>
-
-#define EIGEN_MPL2_ONLY
-#include "object_merger/data_association/solver/gnn_solver.hpp"
-
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
-#include <autoware_perception_msgs/msg/detected_objects.hpp>
 
 class DataAssociation
 {
@@ -56,4 +57,4 @@ public:
   virtual ~DataAssociation() {}
 };
 
-#endif  // OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
+#endif  // AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
