@@ -24,11 +24,23 @@ include_directories(
 
 add_library(pointcloud_preprocessor_filter_base SHARED
   src/filter.cpp
+  src/utility/utilities.cpp
+)
+
+set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
+
+target_link_libraries(pointcloud_preprocessor_filter_base
+  ${autoware_point_types_LIBRARIES}
+  gmp
+  CGAL
+  CGAL::CGAL
+  CGAL::CGAL_Core
 )
 
 target_include_directories(pointcloud_preprocessor_filter_base PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+  ${autoware_point_types_INCLUDE_DIRS}
 )
 
 ament_target_dependencies(pointcloud_preprocessor_filter_base
@@ -57,7 +69,6 @@ ament_target_dependencies(faster_voxel_grid_downsample_filter
 )
 
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED
-  src/utility/utilities.cpp
   src/concatenate_data/concatenate_and_time_sync_nodelet.cpp
   src/concatenate_data/concatenate_pointclouds.cpp
   src/time_synchronizer/time_synchronizer_nodelet.cpp
