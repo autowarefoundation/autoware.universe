@@ -46,6 +46,9 @@ double getFormedYawAngle(
 }
 }  // namespace
 
+namespace autoware::object_merger
+{
+
 DataAssociation::DataAssociation(
   std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
   std::vector<double> max_rad_vector, std::vector<double> min_iou_vector)
@@ -76,7 +79,7 @@ DataAssociation::DataAssociation(
     min_iou_matrix_ = min_iou_matrix_tmp.transpose();
   }
 
-  gnn_solver_ptr_ = std::make_unique<gnn_solver::MuSSP>();
+  gnn_solver_ptr_ = std::make_unique<autoware::object_merger::gnn_solver::MuSSP>();
 }
 
 void DataAssociation::assign(
@@ -171,3 +174,5 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
 
   return score_matrix;
 }
+
+}  // namespace autoware::object_merger

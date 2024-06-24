@@ -33,6 +33,9 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware::object_merger
+{
+
 class DataAssociation
 {
 private:
@@ -41,7 +44,7 @@ private:
   Eigen::MatrixXd max_rad_matrix_;
   Eigen::MatrixXd min_iou_matrix_;
   const double score_threshold_;
-  std::unique_ptr<gnn_solver::GnnSolverInterface> gnn_solver_ptr_;
+  std::unique_ptr<autoware::object_merger::gnn_solver::GnnSolverInterface> gnn_solver_ptr_;
 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -56,5 +59,7 @@ public:
     const autoware_perception_msgs::msg::DetectedObjects & objects1);
   virtual ~DataAssociation() {}
 };
+
+}  // namespace autoware::object_merger
 
 #endif  // AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_

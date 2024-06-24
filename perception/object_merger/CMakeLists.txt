@@ -30,7 +30,7 @@ target_link_libraries(${PROJECT_NAME}
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::object_merger::ObjectAssociationMergerNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTABLE object_association_merger_node
 )
 
 ament_auto_package(INSTALL_TO_SHARE
