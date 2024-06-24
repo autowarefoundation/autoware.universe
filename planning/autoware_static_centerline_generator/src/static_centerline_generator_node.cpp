@@ -187,7 +187,7 @@ bool areSameDirection(
   const double yaw, const geometry_msgs::msg::Point & start_point,
   const geometry_msgs::msg::Point & end_point)
 {
-  return tier4_autoware_utils::normalizeRadian(
+  return autoware::universe_utils::normalizeRadian(
            yaw - std::atan2(end_point.y - start_point.y, end_point.x - start_point.x)) < M_PI_2;
 }
 
@@ -625,10 +625,10 @@ RoadBounds StaticCenterlineGeneratorNode::update_road_boundary(
     const auto & centerline_point = centerline.at(i).pose;
     if (i == 0) {
       // Add the first bound point
-      ego_left_bound.push_back(tier4_autoware_utils::calcOffsetPose(
+      ego_left_bound.push_back(autoware::universe_utils::calcOffsetPose(
                                  centerline_point, min_ego_lon_offset, ego_lat_offset, 0.0)
                                  .position);
-      ego_right_bound.push_back(tier4_autoware_utils::calcOffsetPose(
+      ego_right_bound.push_back(autoware::universe_utils::calcOffsetPose(
                                   centerline_point, min_ego_lon_offset, -ego_lat_offset, 0.0)
                                   .position);
     }
@@ -636,14 +636,14 @@ RoadBounds StaticCenterlineGeneratorNode::update_road_boundary(
     if (i == centerline.size() - 1) {
       // Add the last bound point
       const auto ego_left_bound_last_point =
-        tier4_autoware_utils::calcOffsetPose(
+        autoware::universe_utils::calcOffsetPose(
           centerline_point, max_ego_lon_offset, ego_lat_offset, 0.0)
           .position;
       if (!arePointsClose(ego_left_bound.back(), ego_left_bound_last_point, 1e-6)) {
         ego_left_bound.push_back(ego_left_bound_last_point);
       }
       const auto ego_right_bound_last_point =
-        tier4_autoware_utils::calcOffsetPose(
+        autoware::universe_utils::calcOffsetPose(
           centerline_point, max_ego_lon_offset, -ego_lat_offset, 0.0)
           .position;
       if (!arePointsClose(ego_right_bound.back(), ego_right_bound_last_point, 1e-6)) {
@@ -652,22 +652,22 @@ RoadBounds StaticCenterlineGeneratorNode::update_road_boundary(
     } else {
       // Calculate new bound point depending on the orientation
       const auto & next_centerline_point = centerline.at(i + 1).pose;
-      const double diff_yaw = tier4_autoware_utils::normalizeRadian(
+      const double diff_yaw = autoware::universe_utils::normalizeRadian(
         tf2::getYaw(next_centerline_point.orientation) - tf2::getYaw(centerline_point.orientation));
       const auto [ego_left_bound_new_point, ego_right_bound_new_point] = [&]() {
         if (0 < diff_yaw) {
           return std::make_pair(
-            tier4_autoware_utils::calcOffsetPose(centerline_point, 0.0, ego_lat_offset, 0.0)
+            autoware::universe_utils::calcOffsetPose(centerline_point, 0.0, ego_lat_offset, 0.0)
               .position,
-            tier4_autoware_utils::calcOffsetPose(
+            autoware::universe_utils::calcOffsetPose(
               centerline_point, max_ego_lon_offset, -ego_lat_offset, 0.0)
               .position);
         }
         return std::make_pair(
-          tier4_autoware_utils::calcOffsetPose(
+          autoware::universe_utils::calcOffsetPose(
             centerline_point, max_ego_lon_offset, ego_lat_offset, 0.0)
             .position,
-          tier4_autoware_utils::calcOffsetPose(centerline_point, 0.0, -ego_lat_offset, 0.0)
+          autoware::universe_utils::calcOffsetPose(centerline_point, 0.0, -ego_lat_offset, 0.0)
             .position);
       }();
 
@@ -688,10 +688,10 @@ RoadBounds StaticCenterlineGeneratorNode::update_road_boundary(
   // Publish marker
   MarkerArray ego_footprint_bounds_marker_array;
   {
-    auto left_bound_marker = tier4_autoware_utils::createDefaultMarker(
+    auto left_bound_marker = autoware::universe_utils::createDefaultMarker(
       "map", now(), "road_bounds", 0, Marker::LINE_STRIP,
-      tier4_autoware_utils::createMarkerScale(0.05, 0.0, 0.0),
-      tier4_autoware_utils::createMarkerColor(1.0, 0.5, 0.7, 0.8));
+      autoware::universe_utils::createMarkerScale(0.05, 0.0, 0.0),
+      autoware::universe_utils::createMarkerColor(1.0, 0.5, 0.7, 0.8));
     left_bound_marker.lifetime = rclcpp::Duration(0, 0);
     for (const auto & ego_left_bound_point : ego_left_bound) {
       left_bound_marker.points.push_back(ego_left_bound_point);
@@ -699,10 +699,10 @@ RoadBounds StaticCenterlineGeneratorNode::update_road_boundary(
     ego_footprint_bounds_marker_array.markers.push_back(left_bound_marker);
   }
   {
-    auto right_bound_marker = tier4_autoware_utils::createDefaultMarker(
+    auto right_bound_marker = autoware::universe_utils::createDefaultMarker(
       "map", now(), "road_bounds", 1, Marker::LINE_STRIP,
-      tier4_autoware_utils::createMarkerScale(0.05, 0.0, 0.0),
-      tier4_autoware_utils::createMarkerColor(1.0, 0.5, 0.7, 0.8));
+      autoware::universe_utils::createMarkerScale(0.05, 0.0, 0.0),
+      autoware::universe_utils::createMarkerColor(1.0, 0.5, 0.7, 0.8));
     right_bound_marker.lifetime = rclcpp::Duration(0, 0);
     for (const auto & ego_right_bound_point : ego_right_bound) {
       right_bound_marker.points.push_back(ego_right_bound_point);

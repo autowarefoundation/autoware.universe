@@ -232,7 +232,8 @@ Marker create_points_marker(
   const double r, const double g, const double b, const double a, const rclcpp::Time & now)
 {
   auto marker = autoware::universe_utils::createDefaultMarker(
-    "map", now, ns, 1, Marker::LINE_STRIP, autoware::universeutils::createMarkerScale(width, 0.0, 0.0),
+    "map", now, ns, 1, Marker::LINE_STRIP,
+    autoware::universe_utils::createMarkerScale(width, 0.0, 0.0),
     autoware::universe_utils::createMarkerColor(r, g, b, a));
   marker.lifetime = rclcpp::Duration(0, 0);
   marker.points = points;
