@@ -30,8 +30,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/tracker/model/tracker_base.cpp
   src/tracker/model/linear_motion_tracker.cpp
   src/tracker/model/constant_turn_rate_motion_tracker.cpp
-  src/data_association/data_association.cpp
-  src/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
+  src/association/data_association.cpp
+  src/association/mu_ssp/mu_successive_shortest_path_wrapper.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

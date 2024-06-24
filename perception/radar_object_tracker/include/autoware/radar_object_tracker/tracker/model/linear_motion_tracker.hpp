@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RADAR_OBJECT_TRACKER__TRACKER__MODEL__LINEAR_MOTION_TRACKER_HPP_
-#define RADAR_OBJECT_TRACKER__TRACKER__MODEL__LINEAR_MOTION_TRACKER_HPP_
+#ifndef AUTOWARE__RADAR_OBJECT_TRACKER__TRACKER__MODEL__LINEAR_MOTION_TRACKER_HPP_
+#define AUTOWARE__RADAR_OBJECT_TRACKER__TRACKER__MODEL__LINEAR_MOTION_TRACKER_HPP_
 
-#include "radar_object_tracker/tracker/model/tracker_base.hpp"
-
-#include <kalman_filter/kalman_filter.hpp>
+#include "autoware/radar_object_tracker/tracker/model/tracker_base.hpp"
+#include "kalman_filter/kalman_filter.hpp"
 
 #include <string>
 
@@ -112,4 +111,4 @@ public:
   virtual ~LinearMotionTracker() {}
 };
 
-#endif  // RADAR_OBJECT_TRACKER__TRACKER__MODEL__LINEAR_MOTION_TRACKER_HPP_
+#endif  // AUTOWARE__RADAR_OBJECT_TRACKER__TRACKER__MODEL__LINEAR_MOTION_TRACKER_HPP_

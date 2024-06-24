@@ -16,12 +16,13 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#include "radar_object_tracker/tracker/model/constant_turn_rate_motion_tracker.hpp"
+#define EIGEN_MPL2_ONLY
 
-#include "radar_object_tracker/utils/utils.hpp"
+#include "autoware/radar_object_tracker/tracker/model/constant_turn_rate_motion_tracker.hpp"
 
-#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include "autoware/radar_object_tracker/utils/utils.hpp"
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -34,7 +35,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>

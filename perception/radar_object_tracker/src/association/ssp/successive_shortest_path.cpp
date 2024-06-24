@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "radar_object_tracker/data_association/solver/successive_shortest_path.hpp"
+#include "autoware/radar_object_tracker/association/solver/ssp.hpp"
 
 #include <algorithm>
 #include <cassert>

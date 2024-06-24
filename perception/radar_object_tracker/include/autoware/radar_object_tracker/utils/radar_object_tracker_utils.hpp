@@ -12,12 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_
-#define RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_
+#ifndef AUTOWARE__RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_
+#define AUTOWARE__RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_
+
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/rclcpp.hpp>
 
+#include "autoware_perception_msgs/msg/tracked_object.hpp"
 #include <geometry_msgs/msg/transform.hpp>
 
 #include <boost/optional.hpp>
@@ -33,13 +38,6 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <rclcpp/rclcpp.hpp>
-
-#include <autoware_perception_msgs/msg/tracked_object.hpp>
-
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
@@ -47,6 +45,7 @@
 
 #include <string>
 #include <utility>
+
 namespace radar_object_tracker_utils
 {
 
@@ -74,4 +73,4 @@ bool hasValidVelocityDirectionToLanelet(
 
 }  // namespace radar_object_tracker_utils
 
-#endif  // RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_
+#endif  // AUTOWARE__RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_

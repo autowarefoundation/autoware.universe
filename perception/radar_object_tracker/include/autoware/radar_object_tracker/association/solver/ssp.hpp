@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RADAR_OBJECT_TRACKER__DATA_ASSOCIATION__SOLVER__SUCCESSIVE_SHORTEST_PATH_HPP_
-#define RADAR_OBJECT_TRACKER__DATA_ASSOCIATION__SOLVER__SUCCESSIVE_SHORTEST_PATH_HPP_
+#ifndef AUTOWARE__RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__SSP_HPP_
+#define AUTOWARE__RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__SSP_HPP_
 
-#include "radar_object_tracker/data_association/solver/gnn_solver_interface.hpp"
+#include "autoware/radar_object_tracker/association/solver/gnn_solver_interface.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -34,4 +34,4 @@ public:
 };
 }  // namespace gnn_solver
 
-#endif  // RADAR_OBJECT_TRACKER__DATA_ASSOCIATION__SOLVER__SUCCESSIVE_SHORTEST_PATH_HPP_
+#endif  // AUTOWARE__RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__SSP_HPP_
