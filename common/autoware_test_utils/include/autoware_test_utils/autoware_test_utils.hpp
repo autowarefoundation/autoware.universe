@@ -562,6 +562,16 @@ public:
     }
   }
 
+  /**
+   * @brief Publishes a ROS Clock message with the specified time.
+   *
+   * This function publishes a ROS Clock message with the specified time.
+   * Be careful when using this function, as it can affect the behavior of
+   * the system under test. Consider using ament_add_ros_isolated_gtest to
+   * isolate the system under test from the ROS clock.
+   *
+   * @param time The time to publish.
+   */
   void jump_clock(const rclcpp::Time & time)
   {
     rosgraph_msgs::msg::Clock clock;
