@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE__RADAR_OBJECT_TRACKER_NODE_HPP_
-#define RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE__RADAR_OBJECT_TRACKER_NODE_HPP_
+#ifndef RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE_HPP_
+#define RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE_HPP_
 
 #include "radar_object_tracker/data_association/data_association.hpp"
 
@@ -132,4 +132,4 @@ private:
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
 };
 
-#endif  // RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE__RADAR_OBJECT_TRACKER_NODE_HPP_
+#endif  // RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE_HPP_

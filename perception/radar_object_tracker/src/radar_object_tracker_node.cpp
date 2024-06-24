@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "radar_object_tracker/radar_object_tracker_node/radar_object_tracker_node.hpp"
+#define EIGEN_MPL2_ONLY
+
+#include "radar_object_tracker/radar_object_tracker_node.hpp"
 
 #include "radar_object_tracker/utils/radar_object_tracker_utils.hpp"
 #include "radar_object_tracker/utils/utils.hpp"
@@ -35,7 +37,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#define EIGEN_MPL2_ONLY
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
