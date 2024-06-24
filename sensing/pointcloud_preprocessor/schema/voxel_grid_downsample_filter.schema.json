@@ -1,44 +1,43 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "voxel_grid_downsample_filter",
-    "type": "object",
-    "definitions": {
-      "voxel_grid_downsample_filter": {
-        "type": "object",
-        "properties": {
-          "voxel_size_x": {
-            "type": "number",
-            "description": "voxel size x [m]",
-            "default": "0.3"
-          },
-          "voxel_size_y": {
-            "type": "number",
-            "description": "voxel size y [m]",
-            "default": "0.3"
-          },
-          "voxel_size_z": {
-            "type": "number",
-            "description": "voxel size z [m]",
-            "default": "0.1"
-          }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "voxel_grid_downsample_filter",
+  "type": "object",
+  "definitions": {
+    "voxel_grid_downsample_filter": {
+      "type": "object",
+      "properties": {
+        "voxel_size_x": {
+          "type": "number",
+          "description": "voxel size x [m]",
+          "default": "0.3"
         },
-        "required": ["voxel_size_x", "voxel_size_y", "voxel_size_z"],
-        "additionalProperties": false
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/voxel_grid_downsample_filter"
-          }
+        "voxel_size_y": {
+          "type": "number",
+          "description": "voxel size y [m]",
+          "default": "0.3"
         },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
-      }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
-  }
-  
+        "voxel_size_z": {
+          "type": "number",
+          "description": "voxel size z [m]",
+          "default": "0.1"
+        }
+      },
+      "required": ["voxel_size_x", "voxel_size_y", "voxel_size_z"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/voxel_grid_downsample_filter"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
