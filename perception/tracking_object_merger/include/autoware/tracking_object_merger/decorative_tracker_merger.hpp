@@ -24,7 +24,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/tracked_objects.hpp>
+#include "autoware_perception_msgs/msg/tracked_objects.hpp"
 #include <std_msgs/msg/header.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
