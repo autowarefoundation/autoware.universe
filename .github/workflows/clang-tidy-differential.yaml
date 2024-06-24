@@ -35,21 +35,25 @@ jobs:
         id: get-modified-packages
         uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
 
+      - name: Fetch the base branch with enough history for a common merge-base commit
+        run: git fetch origin ${{ github.base_ref }}
+        shell: bash
+
       - name: Get modified files
         id: get-modified-files
-        uses: tj-actions/changed-files@v42
-        with:
-          files: |
-            **/*.cpp
-            **/*.hpp
+        run: |
+          git diff --name-only "origin/${{ github.base_ref }}"...HEAD > changed_files.txt
+          files=$(cat changed_files.txt | grep -E '\.(cpp|hpp)$' || true)
+          echo "::set-output name=changed_files::$files"
+        shell: bash
 
       - name: Run clang-tidy
-        if: ${{ steps.get-modified-files.outputs.all_changed_files != '' }}
+        if: ${{ steps.get-modified-files.outputs.changed_files != '' }}
         uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
         with:
           rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
-          target-files: ${{ steps.get-modified-files.outputs.all_changed_files }}
+          target-files: ${{ steps.get-modified-files.outputs.changed_files }}
           clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy
           build-depends-repos: build_depends.repos
 
