@@ -14,7 +14,9 @@
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
-#include "autoware/universe_utils/math/trigonometry.hpp"
+#include "pointcloud_preprocessor/utility/utilities.hpp"
+
+#include <autoware/universe_utils/math/trigonometry.hpp>
 
 #include <deque>
 #include <string>
@@ -120,6 +122,20 @@ void DistortionCorrectorComponent::onPointCloud(PointCloud2::UniquePtr points_ms
                                 undistorted_points_pub_->get_intra_process_subscription_count();
 
   if (points_sub_count < 1) {
+    return;
+  }
+
+  if (!utils::is_data_layout_compatible_with_point_xyzircaedt(*points_msg)) {
+    RCLCPP_ERROR(
+      get_logger(), "The pointcloud layout is not compatible with PointXYZIRCAEDT. Aborting");
+
+    if (utils::is_data_layout_compatible_with_point_xyziradrt(*points_msg)) {
+      RCLCPP_ERROR(
+        get_logger(),
+        "The pointcloud layout is compatible with PointXYZIRADRT. You may be using legacy "
+        "code/data");
+    }
+
     return;
   }
 

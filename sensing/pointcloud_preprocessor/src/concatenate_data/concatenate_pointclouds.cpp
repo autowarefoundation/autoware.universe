@@ -14,6 +14,8 @@
 
 #include "pointcloud_preprocessor/concatenate_data/concatenate_pointclouds.hpp"
 
+#include "pointcloud_preprocessor/utility/utilities.hpp"
+
 #include <pcl_ros/transforms.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
@@ -397,6 +399,19 @@ void PointCloudConcatenationComponent::setPeriod(const int64_t new_period)
 void PointCloudConcatenationComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
 {
+  if (!utils::is_data_layout_compatible_with_point_xyzirc(*input_ptr)) {
+    RCLCPP_ERROR(
+      get_logger(), "The pointcloud layout is not compatible with PointXYZIRC. Aborting");
+
+    if (utils::is_data_layout_compatible_with_point_xyzi(*input_ptr)) {
+      RCLCPP_ERROR(
+        get_logger(),
+        "The pointcloud layout is compatible with PointXYZI. You may be using legacy code/data");
+    }
+
+    return;
+  }
+
   std::lock_guard<std::mutex> lock(mutex_);
   auto input = std::make_shared<sensor_msgs::msg::PointCloud2>(*input_ptr);
   sensor_msgs::msg::PointCloud2::SharedPtr xyzirc_input_ptr(new sensor_msgs::msg::PointCloud2());

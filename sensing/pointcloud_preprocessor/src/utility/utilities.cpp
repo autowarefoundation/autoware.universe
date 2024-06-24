@@ -157,7 +157,7 @@ bool point_within_cgal_polys(
   return false;
 }
 
-bool is_data_layout_compatible_with_PointXYZI(const sensor_msgs::msg::PointCloud2 & input)
+bool is_data_layout_compatible_with_point_xyzi(const sensor_msgs::msg::PointCloud2 & input)
 {
   using PointIndex = autoware_point_types::PointXYZIIndex;
   using autoware_point_types::PointXYZI;
@@ -188,7 +188,49 @@ bool is_data_layout_compatible_with_PointXYZI(const sensor_msgs::msg::PointCloud
   return same_layout;
 }
 
-bool is_data_layout_compatible_with_PointXYZIRADRT(const sensor_msgs::msg::PointCloud2 & input)
+bool is_data_layout_compatible_with_point_xyzirc(const sensor_msgs::msg::PointCloud2 & input)
+{
+  using PointIndex = autoware_point_types::PointXYZIRCIndex;
+  using autoware_point_types::PointXYZIRC;
+  if (input.fields.size() < 6) {
+    return false;
+  }
+  bool same_layout = true;
+  const auto & field_x = input.fields.at(static_cast<size_t>(PointIndex::X));
+  same_layout &= field_x.name == "x";
+  same_layout &= field_x.offset == offsetof(PointXYZIRC, x);
+  same_layout &= field_x.datatype == sensor_msgs::msg::PointField::FLOAT32;
+  same_layout &= field_x.count == 1;
+  const auto & field_y = input.fields.at(static_cast<size_t>(PointIndex::Y));
+  same_layout &= field_y.name == "y";
+  same_layout &= field_y.offset == offsetof(PointXYZIRC, y);
+  same_layout &= field_y.datatype == sensor_msgs::msg::PointField::FLOAT32;
+  same_layout &= field_y.count == 1;
+  const auto & field_z = input.fields.at(static_cast<size_t>(PointIndex::Z));
+  same_layout &= field_z.name == "z";
+  same_layout &= field_z.offset == offsetof(PointXYZIRC, z);
+  same_layout &= field_z.datatype == sensor_msgs::msg::PointField::FLOAT32;
+  same_layout &= field_z.count == 1;
+  const auto & field_intensity = input.fields.at(static_cast<size_t>(PointIndex::Intensity));
+  same_layout &= field_intensity.name == "intensity";
+  same_layout &= field_intensity.offset == offsetof(PointXYZIRC, intensity);
+  same_layout &= field_intensity.datatype == sensor_msgs::msg::PointField::UINT8;
+  same_layout &= field_intensity.count == 1;
+  const auto & field_return_type = input.fields.at(static_cast<size_t>(PointIndex::ReturnType));
+  same_layout &= field_return_type.name == "return_type";
+  same_layout &= field_return_type.offset == offsetof(PointXYZIRC, return_type);
+  same_layout &= field_return_type.datatype == sensor_msgs::msg::PointField::UINT8;
+  same_layout &= field_return_type.count == 1;
+  const auto & field_ring = input.fields.at(static_cast<size_t>(PointIndex::Channel));
+  same_layout &= field_ring.name == "channel";
+  same_layout &= field_ring.offset == offsetof(PointXYZIRC, channel);
+  same_layout &= field_ring.datatype == sensor_msgs::msg::PointField::UINT16;
+  same_layout &= field_ring.count == 1;
+
+  return same_layout;
+}
+
+bool is_data_layout_compatible_with_point_xyziradrt(const sensor_msgs::msg::PointCloud2 & input)
 {
   using PointIndex = autoware_point_types::PointXYZIRADRTIndex;
   using autoware_point_types::PointXYZIRADRT;
@@ -244,7 +286,7 @@ bool is_data_layout_compatible_with_PointXYZIRADRT(const sensor_msgs::msg::Point
   return same_layout;
 }
 
-bool is_data_layout_compatible_with_PointXYZIRCAEDT(const sensor_msgs::msg::PointCloud2 & input)
+bool is_data_layout_compatible_with_point_xyzircaedt(const sensor_msgs::msg::PointCloud2 & input)
 {
   using PointIndex = autoware_point_types::PointXYZIRCAEDTIndex;
   using autoware_point_types::PointXYZIRCAEDT;
@@ -289,7 +331,7 @@ bool is_data_layout_compatible_with_PointXYZIRCAEDT(const sensor_msgs::msg::Poin
   same_layout &= field_azimuth.count == 1;
   const auto & field_elevation = input.fields.at(static_cast<size_t>(PointIndex::Elevation));
   same_layout &= field_elevation.name == "elevation";
-  same_layout &= field_elevation.offset == offsetof(PointXYZIRCAEDT, azimuth);
+  same_layout &= field_elevation.offset == offsetof(PointXYZIRCAEDT, elevation);
   same_layout &= field_elevation.datatype == sensor_msgs::msg::PointField::FLOAT32;
   same_layout &= field_elevation.count == 1;
   const auto & field_distance = input.fields.at(static_cast<size_t>(PointIndex::Distance));

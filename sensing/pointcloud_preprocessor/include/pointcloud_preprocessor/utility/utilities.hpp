@@ -83,15 +83,19 @@ bool point_within_cgal_polys(
 
 /** \brief Return whether the input PointCloud2 data has the same layout than PointXYZI. That is to
  * say whether you can memcpy from the PointCloud2 data buffer to a PointXYZI */
-bool is_data_layout_compatible_with_PointXYZI(const sensor_msgs::msg::PointCloud2 & input);
+bool is_data_layout_compatible_with_point_xyzi(const sensor_msgs::msg::PointCloud2 & input);
+
+/** \brief Return whether the input PointCloud2 data has the same layout than PointXYZIRC. That is
+ * to say whether you can memcpy from the PointCloud2 data buffer to a PointXYZIRC */
+bool is_data_layout_compatible_with_point_xyzirc(const sensor_msgs::msg::PointCloud2 & input);
 
 /** \brief Return whether the input PointCloud2 data has the same layout than PointXYZIRADRT. That
  * is to say whether you can memcpy from the PointCloud2 data buffer to a PointXYZIRADRT */
-bool is_data_layout_compatible_with_PointXYZIRADRT(const sensor_msgs::msg::PointCloud2 & input);
+bool is_data_layout_compatible_with_point_xyziradrt(const sensor_msgs::msg::PointCloud2 & input);
 
 /** \brief Return whether the input PointCloud2 data has the same layout than PointXYZIRCAEDT. That
  * is to say whether you can memcpy from the PointCloud2 data buffer to a PointXYZIRCAEDT */
-bool is_data_layout_compatible_with_PointXYZIRCAEDT(const sensor_msgs::msg::PointCloud2 & input);
+bool is_data_layout_compatible_with_point_xyzircaedt(const sensor_msgs::msg::PointCloud2 & input);
 
 }  // namespace pointcloud_preprocessor::utils
 
