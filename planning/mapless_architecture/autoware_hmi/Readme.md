@@ -12,6 +12,6 @@ Available missions:
 
 Interact with this node by changing the ROS parameters. For a lane change to the right use this command in the terminal:
 
-```
+```bash
 ros2 param set /mission_planner/hmi mission LANE_CHANGE_RIGHT
 ```
