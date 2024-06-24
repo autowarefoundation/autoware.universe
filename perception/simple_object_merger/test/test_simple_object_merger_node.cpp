@@ -79,13 +79,15 @@ TEST(SimpleObjectMergerNodeTest, testSimpleObjectMerge)
   auto clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   rclcpp::Time current_time(0, 0, clock->get_clock_type());
 
-  // Publish the message
+  // Publish the message to topic1
   test_manager->jump_clock(current_time);
   msg.header.stamp = current_time;
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic_1, msg);
 
-  // Increment time
+  // Increment time for 0.1 sec
   current_time = current_time + rclcpp::Duration(0, 1e8); // 0.1 sec
+
+  // Publish the message to topic2
   test_manager->jump_clock(current_time);
   msg.header.stamp = current_time;
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic_2, msg);
@@ -131,13 +133,15 @@ TEST(SimpleObjectMergerNodeTest, testSimpleObjectMergeTimeOut)
   auto clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   rclcpp::Time current_time(0, 0, clock->get_clock_type());
 
-  // Publish the message
+  // Publish the message to topic1
   test_manager->jump_clock(current_time);
   msg.header.stamp = current_time;
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic_1, msg);
 
-  // Increment time
+  // Increment time for 2.0 sec
   current_time = current_time + rclcpp::Duration(0, 2e9); // 2.0 sec
+
+  // Publish the message to topic2
   test_manager->jump_clock(current_time);
   msg.header.stamp = current_time;
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic_2, msg);
