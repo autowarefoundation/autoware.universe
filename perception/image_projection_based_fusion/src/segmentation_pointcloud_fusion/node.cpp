@@ -65,6 +65,10 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   if (mask.cols == 0 || mask.rows == 0) {
     return;
   }
+  const int orig_width = camera_info.width;
+  const int orig_height = camera_info.height;
+  // resize mask to the same size as the camera image
+  cv::resize(mask, mask, cv::Size(orig_width, orig_height), 0, 0, cv::INTER_NEAREST);
   Eigen::Matrix4d projection;
   projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2), camera_info.p.at(3),
     camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6), camera_info.p.at(7),
