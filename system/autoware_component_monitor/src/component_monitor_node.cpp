@@ -91,20 +91,19 @@ ComponentMonitor::ResourceUsageReport ComponentMonitor::pid_to_report(const pid_
 
 std::stringstream ComponentMonitor::run_system_command(const std::string & cmd) const
 {
-  namespace bp = boost::process;
   int out_fd[2];
   if (pipe2(out_fd, O_CLOEXEC) != 0) {
     RCLCPP_ERROR_STREAM(get_logger(), "Error setting flags on out_fd");
   }
-  bp::pipe out_pipe{out_fd[0], out_fd[1]};
-  bp::ipstream is_out{std::move(out_pipe)};
+  boost::process::pipe out_pipe{out_fd[0], out_fd[1]};
+  boost::process::ipstream is_out{std::move(out_pipe)};
 
   int err_fd[2];
   if (pipe2(err_fd, O_CLOEXEC) != 0) {
     RCLCPP_ERROR_STREAM(get_logger(), "Error setting flags on err_fd");
   }
-  bp::pipe err_pipe{err_fd[0], err_fd[1]};
-  bp::ipstream is_err{std::move(err_pipe)};
+  boost::process::pipe err_pipe{err_fd[0], err_fd[1]};
+  boost::process::ipstream is_err{std::move(err_pipe)};
 
   boost::process::child c(
     cmd, environment_, boost::process::std_out > is_out, boost::process::std_err > is_err);
