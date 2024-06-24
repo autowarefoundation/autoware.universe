@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__OBJECT_MERGER__OBJECT_ASSOCIATION_MERGER_NODE_HPP_
 #define AUTOWARE__OBJECT_MERGER__OBJECT_ASSOCIATION_MERGER_NODE_HPP_
 
-#include "autoware/object_merger/data_association/data_association.hpp"
+#include "autoware/object_merger/association/data_association.hpp"
 #include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"

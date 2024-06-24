@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__SOLVER__SUCCESSIVE_SHORTEST_PATH_HPP_
-#define AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__SOLVER__SUCCESSIVE_SHORTEST_PATH_HPP_
+#ifndef AUTOWARE__OBJECT_MERGER__ASSOCIATION__SOLVER__MU_SSP_HPP_
+#define AUTOWARE__OBJECT_MERGER__ASSOCIATION__SOLVER__MU_SSP_HPP_
 
-#include "autoware/object_merger/data_association/solver/gnn_solver_interface.hpp"
+#include "autoware/object_merger/association/solver/gnn_solver_interface.hpp"
 
 #include <unordered_map>
 #include <vector>
 
 namespace autoware::object_merger::gnn_solver
 {
-class SSP : public GnnSolverInterface
+class MuSSP : public GnnSolverInterface
 {
 public:
-  SSP() = default;
-  ~SSP() = default;
+  MuSSP() = default;
+  ~MuSSP() = default;
 
   void maximizeLinearAssignment(
     const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
@@ -34,4 +34,4 @@ public:
 };
 }  // namespace autoware::object_merger::gnn_solver
 
-#endif  // AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__SOLVER__SUCCESSIVE_SHORTEST_PATH_HPP_
+#endif  // AUTOWARE__OBJECT_MERGER__ASSOCIATION__SOLVER__MU_SSP_HPP_

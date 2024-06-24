@@ -16,12 +16,12 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#ifndef AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
-#define AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
+#ifndef AUTOWARE__OBJECT_MERGER__ASSOCIATION__DATA_ASSOCIATION_HPP_
+#define AUTOWARE__OBJECT_MERGER__ASSOCIATION__DATA_ASSOCIATION_HPP_
 
 #define EIGEN_MPL2_ONLY
 
-#include "autoware/object_merger/data_association/solver/gnn_solver.hpp"
+#include "autoware/object_merger/association/solver/gnn_solver.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -62,4 +62,4 @@ public:
 
 }  // namespace autoware::object_merger
 
-#endif  // AUTOWARE__OBJECT_MERGER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
+#endif  // AUTOWARE__OBJECT_MERGER__ASSOCIATION__DATA_ASSOCIATION_HPP_
