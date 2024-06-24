@@ -46,10 +46,6 @@ AutowareStateNode::AutowareStateNode(const rclcpp::NodeOptions & options)
   adaptor.init_sub(sub_routing_, nullptr);
   adaptor.init_sub(sub_operation_mode_, nullptr);
 
-  RCLCPP_INFO_STREAM(get_logger(), sub_localization_);
-  RCLCPP_INFO_STREAM(get_logger(), sub_routing_);
-  RCLCPP_INFO_STREAM(get_logger(), sub_operation_mode_);
-
   const auto rate = rclcpp::Rate(declare_parameter<double>("update_rate"));
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
 
