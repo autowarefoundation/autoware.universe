@@ -41,6 +41,8 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
     node->declare_parameter<double>(ns + "th_distance_to_middle_of_the_road");
   p.extra_width_margin_for_rear_obstacle =
     node->declare_parameter<double>(ns + "extra_width_margin_for_rear_obstacle");
+  p.collision_check_yaw_diff_threshold =
+    node->declare_parameter<double>(ns + "collision_check_yaw_diff_threshold");
   p.collision_check_margins =
     node->declare_parameter<std::vector<double>>(ns + "collision_check_margins");
   p.collision_check_margin_from_front_object =
@@ -367,7 +369,8 @@ void StartPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "extra_width_margin_for_rear_obstacle",
       p->extra_width_margin_for_rear_obstacle);
-
+    updateParam<double>(
+      parameters, ns + "collision_check_yaw_diff_threshold", p->collision_check_yaw_diff_threshold);
     updateParam<std::vector<double>>(
       parameters, ns + "collision_check_margins", p->collision_check_margins);
     updateParam<double>(

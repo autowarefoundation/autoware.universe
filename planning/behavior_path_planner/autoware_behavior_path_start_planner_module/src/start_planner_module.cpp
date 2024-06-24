@@ -34,6 +34,7 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <utility>
@@ -104,7 +105,7 @@ void StartPlannerModule::onFreespacePlannerTimer()
   std::optional<ModuleStatus> current_status_opt{std::nullopt};
   std::optional<StartPlannerParameters> parameters_opt{std::nullopt};
   std::optional<PullOutStatus> pull_out_status_opt{std::nullopt};
-  bool is_stopped;
+  bool is_stopped{false};
 
   // making a local copy of thread sensitive data
   {
@@ -1422,10 +1423,12 @@ bool StartPlannerModule::isSafePath() const
   merged_target_object.insert(
     merged_target_object.end(), target_objects_on_lane.on_shoulder_lane.begin(),
     target_objects_on_lane.on_shoulder_lane.end());
+
   return autoware::behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
     pull_out_path, ego_predicted_path, merged_target_object, debug_data_.collision_check,
     planner_data_->parameters, safety_check_params_->rss_params,
-    objects_filtering_params_->use_all_predicted_path, hysteresis_factor);
+    objects_filtering_params_->use_all_predicted_path, hysteresis_factor,
+    parameters_->collision_check_yaw_diff_threshold);
 }
 
 bool StartPlannerModule::isGoalBehindOfEgoInSameRouteSegment() const

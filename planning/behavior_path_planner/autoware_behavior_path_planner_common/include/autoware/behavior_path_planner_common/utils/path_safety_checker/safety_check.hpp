@@ -26,6 +26,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 
+#include <cmath>
 #include <vector>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker
@@ -98,7 +99,8 @@ bool checkSafetyWithRSS(
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
   const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & debug_map,
   const BehaviorPathPlannerParameters & parameters, const RSSparams & rss_params,
-  const bool check_all_predicted_path, const double hysteresis_factor);
+  const bool check_all_predicted_path, const double hysteresis_factor,
+  const double yaw_difference_th = M_PI);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
@@ -120,7 +122,8 @@ bool checkCollision(
   const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
-  const double hysteresis_factor, CollisionCheckDebug & debug);
+  const double hysteresis_factor, CollisionCheckDebug & debug,
+  const double yaw_difference_th = M_PI);
 
 /**
  * @brief Iterate the points in the ego and target's predicted path and
@@ -142,7 +145,8 @@ std::vector<Polygon2d> getCollidedPolygons(
   const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
-  const double hysteresis_factor, const double max_velocity_limit, CollisionCheckDebug & debug);
+  const double hysteresis_factor, const double max_velocity_limit, CollisionCheckDebug & debug,
+  const double yaw_difference_th = M_PI);
 
 bool checkPolygonsIntersects(
   const std::vector<Polygon2d> & polys_1, const std::vector<Polygon2d> & polys_2);
