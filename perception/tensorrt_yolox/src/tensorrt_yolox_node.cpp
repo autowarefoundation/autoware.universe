@@ -190,10 +190,6 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     return;
   }
   auto & mask = masks.at(0);
-  // TODO(badai-nguyen): change to postprocess on gpu option
-  cv::resize(
-    mask, mask, cv::Size(in_image_ptr->image.cols, in_image_ptr->image.rows), 0, 0,
-    cv::INTER_NEAREST);
 
   for (const auto & yolox_object : objects.at(0)) {
     tier4_perception_msgs::msg::DetectedObjectWithFeature object;
@@ -217,7 +213,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     // Refine mask: replacing segmentation mask by roi class
     // This should remove when the segmentation accuracy is high
     if (is_roi_overlap_segment_ && trt_yolox_->getMultitaskNum() > 0) {
-      overlapSegmentByRoi(yolox_object, mask);
+      overlapSegmentByRoi(yolox_object, mask, width, height);
     }
   }
   // TODO(badai-nguyen): consider to change to 4bits data transfer
@@ -249,8 +245,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
   }
 
   if (is_publish_color_mask_ && trt_yolox_->getMultitaskNum() > 0) {
-    cv::Mat color_mask =
-      cv::Mat::zeros(in_image_ptr->image.rows, in_image_ptr->image.cols, CV_8UC3);
+    cv::Mat color_mask = cv::Mat::zeros(mask.rows, mask.cols, CV_8UC3);
     trt_yolox_->getColorizedMask(trt_yolox_->getColorMap(), mask, color_mask);
     sensor_msgs::msg::Image::SharedPtr output_color_mask_msg =
       cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::BGR8, color_mask)
@@ -304,16 +299,25 @@ int TrtYoloXNode::mapRoiLabel2SegLabel(const int32_t roi_label_index)
   return -1;
 }
 
-void TrtYoloXNode::overlapSegmentByRoi(const tensorrt_yolox::Object & roi_object, cv::Mat & mask)
+void TrtYoloXNode::overlapSegmentByRoi(
+  const tensorrt_yolox::Object & roi_object, cv::Mat & mask, const int orig_width,
+  const int orig_height)
 {
   if (roi_object.score < overlap_roi_score_threshold_) return;
   int seg_class_index = mapRoiLabel2SegLabel(roi_object.type);
   if (seg_class_index < 0) return;
+
+  const float scale_x = static_cast<float>(mask.cols) / static_cast<float>(orig_width);
+  const float scale_y = static_cast<float>(mask.rows) / static_cast<float>(orig_height);
+  const int roi_width = static_cast<int>(roi_object.width * scale_x);
+  const int roi_height = static_cast<int>(roi_object.height * scale_y);
+  const int roi_x_offset = static_cast<int>(roi_object.x_offset * scale_x);
+  const int roi_y_offset = static_cast<int>(roi_object.y_offset * scale_y);
+
   cv::Mat replace_roi(
-    cv::Size(roi_object.width, roi_object.height), mask.type(),
-    static_cast<uint8_t>(seg_class_index));
-  replace_roi.copyTo(mask.colRange(roi_object.x_offset, roi_object.x_offset + roi_object.width)
-                       .rowRange(roi_object.y_offset, roi_object.y_offset + roi_object.height));
+    cv::Size(roi_width, roi_height), mask.type(), static_cast<uint8_t>(seg_class_index));
+  replace_roi.copyTo(mask.colRange(roi_x_offset, roi_x_offset + roi_width)
+                       .rowRange(roi_y_offset, roi_y_offset + roi_height));
 }
 
 }  // namespace tensorrt_yolox
