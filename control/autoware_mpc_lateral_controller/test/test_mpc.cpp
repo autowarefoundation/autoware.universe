@@ -19,9 +19,9 @@
 #include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_dynamics.hpp"
 #include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_bicycle_kinematics_no_delay.hpp"
+#include "autoware_test_utils/autoware_test_utils.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
-#include "autoware_test_utils/autoware_test_utils.hpp"
 
 #include "autoware_control_msgs/msg/lateral.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
