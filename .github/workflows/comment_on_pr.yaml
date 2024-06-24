@@ -1,10 +1,6 @@
 name: Comment on PR
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
 
 jobs:
   comment-on-pr:
