@@ -86,7 +86,7 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> pcl_euclidean_cluster;
   pcl_euclidean_cluster.setClusterTolerance(tolerance_);
-  pcl_euclidean_cluster.setMinClusterSize(min_cluster_size_);
+  pcl_euclidean_cluster.setMinClusterSize(1);
   pcl_euclidean_cluster.setMaxClusterSize(max_cluster_size_);
   pcl_euclidean_cluster.setSearchMethod(tree);
   pcl_euclidean_cluster.setInputCloud(pointcloud_2d_ptr);
