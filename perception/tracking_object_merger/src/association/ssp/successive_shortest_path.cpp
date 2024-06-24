@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tracking_object_merger/data_association/solver/successive_shortest_path.hpp"
+#include "autoware/tracking_object_merger/association/solver/ssp.hpp"
 
 #include <algorithm>
 #include <cassert>

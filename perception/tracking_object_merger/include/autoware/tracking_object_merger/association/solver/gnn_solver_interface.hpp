@@ -12,30 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tracking_object_merger/data_association/solver/mu_successive_shortest_path.hpp"
+#ifndef AUTOWARE__TRACKING_OBJECT_MERGER__ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_
+#define AUTOWARE__TRACKING_OBJECT_MERGER__ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_
 
-#include <mussp/mussp.h>
-
-#include <array>
-#include <cassert>
-#include <fstream>
-#include <iostream>
-#include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace gnn_solver
 {
-void MuSSP::maximizeLinearAssignment(
-  const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
-  std::unordered_map<int, int> * reverse_assignment)
+class GnnSolverInterface
 {
-  // Terminate if the graph is empty
-  if (cost.size() == 0 || cost.at(0).size() == 0) {
-    return;
-  }
+public:
+  GnnSolverInterface() = default;
+  virtual ~GnnSolverInterface() = default;
 
-  // Solve DA by muSSP
-  solve_muSSP(cost, direct_assignment, reverse_assignment);
-}
+  virtual void maximizeLinearAssignment(
+    const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
+    std::unordered_map<int, int> * reverse_assignment) = 0;
+};
 }  // namespace gnn_solver
+
+#endif  // AUTOWARE__TRACKING_OBJECT_MERGER__ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_

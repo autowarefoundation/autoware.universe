@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tracking_object_merger/utils/tracker_state.hpp"
+#include "autoware/tracking_object_merger/utils/tracker_state.hpp"
 
-#include "tracking_object_merger/utils/utils.hpp"
+#include "autoware/tracking_object_merger/utils/utils.hpp"
 
 using autoware_perception_msgs::msg::TrackedObject;
 using autoware_perception_msgs::msg::TrackedObjects;

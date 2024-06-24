@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tracking_object_merger/utils/utils.hpp"
+#include "autoware/tracking_object_merger/utils/utils.hpp"
 
-#include <autoware_perception_msgs/msg/shape.hpp>
-#include <autoware_perception_msgs/msg/tracked_object.hpp>
-#include <autoware_perception_msgs/msg/tracked_objects.hpp>
+#include "autoware_perception_msgs/msg/shape.hpp"
+#include "autoware_perception_msgs/msg/tracked_object.hpp"
+#include "autoware_perception_msgs/msg/tracked_objects.hpp"
 
 #include <algorithm>
 #include <cmath>

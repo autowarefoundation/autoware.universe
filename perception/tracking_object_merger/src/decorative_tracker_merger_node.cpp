@@ -12,11 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tracking_object_merger/decorative_tracker_merger.hpp"
+#define EIGEN_MPL2_ONLY
 
+#include "autoware/tracking_object_merger/association/solver/ssp.hpp"
+#include "autoware/tracking_object_merger/decorative_tracker_merger.hpp"
+#include "autoware/tracking_object_merger/utils/utils.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
-#include "tracking_object_merger/data_association/solver/successive_shortest_path.hpp"
-#include "tracking_object_merger/utils/utils.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <boost/optional.hpp>
 
@@ -24,10 +28,6 @@
 
 #include <chrono>
 #include <unordered_map>
-
-#define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 

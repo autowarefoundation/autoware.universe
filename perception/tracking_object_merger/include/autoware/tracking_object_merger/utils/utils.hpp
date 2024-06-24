@@ -14,19 +14,19 @@
 //
 //
 
-#ifndef TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
-#define TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
+#ifndef AUTOWARE__TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
+#define AUTOWARE__TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
 
 // #include <autoware/universe_utils/autoware_universe_utils.hpp>
 #include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_perception_msgs/msg/object_classification.hpp>
-#include <autoware_perception_msgs/msg/shape.hpp>
-#include <autoware_perception_msgs/msg/tracked_object.hpp>
-#include <autoware_perception_msgs/msg/tracked_object_kinematics.hpp>
-#include <autoware_perception_msgs/msg/tracked_objects.hpp>
+#include "autoware_perception_msgs/msg/object_classification.hpp"
+#include "autoware_perception_msgs/msg/shape.hpp"
+#include "autoware_perception_msgs/msg/tracked_object.hpp"
+#include "autoware_perception_msgs/msg/tracked_object_kinematics.hpp"
+#include "autoware_perception_msgs/msg/tracked_objects.hpp"
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -132,4 +132,4 @@ void updateWholeTrackedObject(TrackedObject & main_obj, const TrackedObject & su
 
 }  // namespace merger_utils
 
-#endif  // TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
+#endif  // AUTOWARE__TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
