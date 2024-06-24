@@ -85,7 +85,7 @@ TEST(SimpleObjectMergerNodeTest, testSimpleObjectMerge)
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic_1, msg);
 
   // Increment time for 0.1 sec
-  current_time = current_time + rclcpp::Duration(0, 1e8); // 0.1 sec
+  current_time = current_time + rclcpp::Duration(0, 1e8);  // 0.1 sec
 
   // Publish the message to topic2
   test_manager->jump_clock(current_time);
@@ -95,8 +95,6 @@ TEST(SimpleObjectMergerNodeTest, testSimpleObjectMerge)
   EXPECT_EQ(latest_msg_objects_size, 2u);
   rclcpp::shutdown();
 }
-
-
 
 TEST(SimpleObjectMergerNodeTest, testSimpleObjectMergeTimeOut)
 {
@@ -139,7 +137,7 @@ TEST(SimpleObjectMergerNodeTest, testSimpleObjectMergeTimeOut)
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic_1, msg);
 
   // Increment time for 2.0 sec
-  current_time = current_time + rclcpp::Duration(0, 2e9); // 2.0 sec
+  current_time = current_time + rclcpp::Duration(0, 2e9);  // 2.0 sec
 
   // Publish the message to topic2
   test_manager->jump_clock(current_time);
