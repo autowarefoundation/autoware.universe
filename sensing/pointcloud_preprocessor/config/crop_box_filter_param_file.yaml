@@ -7,4 +7,4 @@
     max_x: 1.0
     max_y: 1.0
     max_z: 1.0
-    negative: false
+    # negative: false
