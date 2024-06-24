@@ -20,7 +20,6 @@
 
 #include <autoware_internal_msgs/msg/resource_usage_report.hpp>
 
-#include <boost/filesystem.hpp>
 #include <boost/process.hpp>
 
 #include <cctype>
