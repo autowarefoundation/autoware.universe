@@ -1,18 +1,15 @@
 *:*/test/*
 
-arrayIndexThenCheck
 checkersReport
 constParameterPointer
 constParameterReference
-constStatement
 constVariable
 constVariableReference
 containerOutOfBounds
+// cspell: ignore cstyle
 cstyleCast
-duplicateAssignExpression
 duplicateBranch
 duplicateBreak
-duplicateExpression
 funcArgNamesDifferent
 functionConst
 functionStatic
@@ -25,19 +22,18 @@ noExplicitConstructor
 noValidConfiguration
 passedByValue
 preprocessorErrorDirective
-redundantContinue
 redundantInitialization
 returnByReference
 shadowArgument
 shadowFunction
 shadowVariable
 syntaxError
+// cspell: ignore uninit
 uninitMemberVar
 unknownMacro
 unmatchedSuppression
 unreadVariable
 unusedFunction
-unusedScopedObject
 unusedStructMember
 unusedVariable
 useInitializationList
