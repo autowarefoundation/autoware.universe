@@ -33,6 +33,8 @@
 
 #include <vector>
 
+namespace autoware::radar_object_tracker
+{
 class Tracker
 {
 protected:
@@ -92,5 +94,5 @@ public:
     const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const = 0;
   virtual bool predict(const rclcpp::Time & time) = 0;
 };
-
+}  // namespace autoware::radar_object_tracker
 #endif  // AUTOWARE__RADAR_OBJECT_TRACKER__TRACKER__MODEL__TRACKER_BASE_HPP_

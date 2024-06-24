@@ -33,8 +33,7 @@
 #include <cmath>
 #include <tuple>
 #include <vector>
-
-namespace utils
+namespace autoware::radar_object_tracker::utils
 {
 enum MSG_COV_IDX {
   X_X = 0,
@@ -79,6 +78,6 @@ enum MSG_COV_IDX {
 Eigen::MatrixXd stackMatricesVertically(const std::vector<Eigen::MatrixXd> & matrices);
 Eigen::MatrixXd stackMatricesDiagonally(const std::vector<Eigen::MatrixXd> & matrices);
 
-}  // namespace utils
+}  // namespace autoware::radar_object_tracker::utils
 
 #endif  // AUTOWARE__RADAR_OBJECT_TRACKER__UTILS__UTILS_HPP_

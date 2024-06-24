@@ -46,7 +46,7 @@
 #include <string>
 #include <utility>
 
-namespace radar_object_tracker_utils
+namespace autoware::radar_object_tracker::utils
 {
 
 boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
@@ -71,6 +71,6 @@ bool hasValidVelocityDirectionToLanelet(
   const autoware_perception_msgs::msg::TrackedObject & object,
   const lanelet::ConstLanelets & lanelets, const double max_lateral_velocity);
 
-}  // namespace radar_object_tracker_utils
+}  // namespace autoware::radar_object_tracker::utils
 
 #endif  // AUTOWARE__RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_

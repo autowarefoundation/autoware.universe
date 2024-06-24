@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace gnn_solver
+namespace autoware::radar_object_tracker::gnn_solver
 {
 class GnnSolverInterface
 {
@@ -30,6 +30,6 @@ public:
     const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
     std::unordered_map<int, int> * reverse_assignment) = 0;
 };
-}  // namespace gnn_solver
+}  // namespace autoware::radar_object_tracker::gnn_solver
 
 #endif  // AUTOWARE__RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_

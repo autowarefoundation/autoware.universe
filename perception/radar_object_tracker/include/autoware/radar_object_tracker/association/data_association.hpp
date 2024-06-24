@@ -35,7 +35,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
+namespace autoware::radar_object_tracker
+{
 class DataAssociation
 {
 private:
@@ -63,5 +64,5 @@ public:
     const std::string & file_name);
   virtual ~DataAssociation() {}
 };
-
+}  // namespace autoware::radar_object_tracker
 #endif  // AUTOWARE__RADAR_OBJECT_TRACKER__ASSOCIATION__DATA_ASSOCIATION_HPP_

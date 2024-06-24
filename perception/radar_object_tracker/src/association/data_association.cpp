@@ -69,6 +69,8 @@ double getFormedYawAngle(
 }
 }  // namespace
 
+namespace autoware::radar_object_tracker
+{
 DataAssociation::DataAssociation(
   std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
   std::vector<double> max_area_vector, std::vector<double> min_area_vector,
@@ -292,3 +294,5 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
 
   return score_matrix;
 }
+
+}  // namespace autoware::radar_object_tracker

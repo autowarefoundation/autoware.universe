@@ -42,6 +42,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+namespace autoware::radar_object_tracker
+{
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 // init static member variables
@@ -442,9 +444,9 @@ bool ConstantTurnRateMotionTracker::measureWithPose(
   }
 
   // stacking matrices vertically or diagonally
-  const auto C = utils::stackMatricesVertically(C_list);
-  const auto Y = utils::stackMatricesVertically(Y_list);
-  const auto R = utils::stackMatricesDiagonally(R_block_list);
+  const auto C = autoware::radar_object_tracker::utils::stackMatricesVertically(C_list);
+  const auto Y = autoware::radar_object_tracker::utils::stackMatricesVertically(Y_list);
+  const auto R = autoware::radar_object_tracker::utils::stackMatricesDiagonally(R_block_list);
 
   // 4. EKF update
   if (!ekf_.update(Y, C, R)) {
@@ -622,3 +624,5 @@ bool ConstantTurnRateMotionTracker::getTrackedObject(
 
   return true;
 }
+
+}  // namespace autoware::radar_object_tracker

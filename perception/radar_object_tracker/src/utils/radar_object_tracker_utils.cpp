@@ -14,7 +14,7 @@
 
 #include "autoware/radar_object_tracker/utils/radar_object_tracker_utils.hpp"
 
-namespace radar_object_tracker_utils
+namespace autoware::radar_object_tracker::utils
 {
 
 boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
@@ -151,4 +151,4 @@ bool hasValidVelocityDirectionToLanelet(
   return false;
 }
 
-}  // namespace radar_object_tracker_utils
+}  // namespace autoware::radar_object_tracker::utils

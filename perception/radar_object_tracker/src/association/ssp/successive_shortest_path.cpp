@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace gnn_solver
+namespace autoware::radar_object_tracker::gnn_solver
 {
 struct ResidualEdge
 {
@@ -367,4 +367,4 @@ void SSP::maximizeLinearAssignment(
   }
 #endif
 }
-}  // namespace gnn_solver
+}  // namespace autoware::radar_object_tracker::gnn_solver

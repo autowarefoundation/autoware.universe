@@ -49,6 +49,8 @@
 #include <memory>
 #include <string>
 
+namespace autoware::radar_object_tracker
+{
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_perception_msgs::msg::DetectedObject;
 using autoware_perception_msgs::msg::DetectedObjects;
@@ -129,5 +131,7 @@ private:
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
 };
+
+}  // namespace autoware::radar_object_tracker
 
 #endif  // AUTOWARE__RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE_HPP_

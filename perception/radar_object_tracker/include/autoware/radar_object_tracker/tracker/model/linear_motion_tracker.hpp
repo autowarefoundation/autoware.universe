@@ -20,6 +20,9 @@
 
 #include <string>
 
+namespace autoware::radar_object_tracker
+{
+
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 class LinearMotionTracker : public Tracker
 {
@@ -110,5 +113,5 @@ public:
     autoware_perception_msgs::msg::TrackedObject & object) const override;
   virtual ~LinearMotionTracker() {}
 };
-
+}  // namespace autoware::radar_object_tracker
 #endif  // AUTOWARE__RADAR_OBJECT_TRACKER__TRACKER__MODEL__LINEAR_MOTION_TRACKER_HPP_

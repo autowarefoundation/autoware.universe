@@ -22,7 +22,6 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <rclcpp_components/register_node_macro.hpp>
 
 #include <boost/optional.hpp>
 
@@ -38,6 +37,8 @@
 #include <utility>
 #include <vector>
 
+namespace autoware::radar_object_tracker
+{
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 RadarObjectTrackerNode::RadarObjectTrackerNode(const rclcpp::NodeOptions & node_options)
@@ -141,7 +142,7 @@ void RadarObjectTrackerNode::onMap(const LaneletMapBin::ConstSharedPtr msg)
 void RadarObjectTrackerNode::onMeasurement(
   const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg)
 {
-  const auto self_transform = radar_object_tracker_utils::getTransformAnonymous(
+  const auto self_transform = autoware::radar_object_tracker::utils::getTransformAnonymous(
     tf_buffer_, "base_link", world_frame_id_, input_objects_msg->header.stamp);
   if (!self_transform) {
     return;
@@ -237,7 +238,7 @@ std::shared_ptr<Tracker> RadarObjectTrackerNode::createNewTracker(
 void RadarObjectTrackerNode::onTimer()
 {
   rclcpp::Time current_time = this->now();
-  const auto self_transform = radar_object_tracker_utils::getTransformAnonymous(
+  const auto self_transform = autoware::radar_object_tracker::utils::getTransformAnonymous(
     tf_buffer_, world_frame_id_, "base_link", current_time);
   if (!self_transform) {
     return;
@@ -284,14 +285,14 @@ void RadarObjectTrackerNode::mapBasedNoiseFilter(
   for (auto itr = list_tracker.begin(); itr != list_tracker.end(); ++itr) {
     autoware_perception_msgs::msg::TrackedObject object;
     (*itr)->getTrackedObject(time, object);
-    const auto closest_lanelets = radar_object_tracker_utils::getClosestValidLanelets(
+    const auto closest_lanelets = autoware::radar_object_tracker::utils::getClosestValidLanelets(
       object, lanelet_map_ptr_, max_distance_from_lane_, max_angle_diff_from_lane_);
 
     // 1. If the object is not close to any lanelet, delete the tracker
     const bool no_closest_lanelet = closest_lanelets.empty();
     // 2. If the object velocity direction is not close to the lanelet direction, delete the tracker
     const bool is_velocity_direction_close_to_lanelet =
-      radar_object_tracker_utils::hasValidVelocityDirectionToLanelet(
+      autoware::radar_object_tracker::utils::hasValidVelocityDirectionToLanelet(
         object, closest_lanelets, max_lateral_velocity_);
     if (no_closest_lanelet || !is_velocity_direction_close_to_lanelet) {
       // std::cout << "object removed due to map based noise filter" << " no close lanelet: " <<
@@ -422,5 +423,8 @@ void RadarObjectTrackerNode::publish(const rclcpp::Time & time) const
   // Publish
   tracked_objects_pub_->publish(output_msg);
 }
+}  // namespace autoware::radar_object_tracker
 
-RCLCPP_COMPONENTS_REGISTER_NODE(RadarObjectTrackerNode)
+#include <rclcpp_components/register_node_macro.hpp>
+
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::radar_object_tracker::RadarObjectTrackerNode)
