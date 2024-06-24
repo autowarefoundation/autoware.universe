@@ -147,6 +147,7 @@ MarkerArray createObjectInfoMarkerArray(
       string_stream << std::fixed << std::setprecision(2) << std::boolalpha;
       string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
                     << "lateral:" << object.to_centerline << " [m]\n"
+                    << "clip:" << object.is_clip_target << " [-]\n"
                     << "necessity:" << object.avoid_required << " [-]\n"
                     << "stoppable:" << object.is_stoppable << " [-]\n"
                     << "stop_factor:" << object.to_stop_factor_distance << " [m]\n"
@@ -681,7 +682,7 @@ std::string toStrInfo(const autoware::behavior_path_planner::AvoidLineArray & ap
 }
 std::string toStrInfo(const autoware::behavior_path_planner::AvoidLine & ap)
 {
-  using autoware_universe_utils::toHexString;
+  using autoware::universe_utils::toHexString;
 
   std::stringstream pids;
   for (const auto pid : ap.parent_ids) {

@@ -31,7 +31,7 @@ size_t calculateStartIndex(
   auto dist = 0.0;
   auto idx = ego_idx;
   while (idx + 1 < trajectory.size() && dist < start_distance) {
-    dist += autoware_universe_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
+    dist += autoware::universe_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
     ++idx;
   }
   return idx;
@@ -46,7 +46,7 @@ size_t calculateEndIndex(
   auto idx = start_idx;
   while (idx + 1 < trajectory.size() && length < max_length && duration < max_duration) {
     const auto length_d =
-      autoware_universe_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
+      autoware::universe_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
     length += length_d;
     if (trajectory[idx].longitudinal_velocity_mps > 0.0)
       duration += length_d / trajectory[idx].longitudinal_velocity_mps;
@@ -68,15 +68,13 @@ TrajectoryPoints downsampleTrajectory(
 
 void calculateSteeringAngles(TrajectoryPoints & trajectory, const double wheel_base)
 {
-  auto t = 0.0;
   auto prev_point = trajectory.front();
   auto prev_heading = tf2::getYaw(prev_point.pose.orientation);
   for (auto i = 1ul; i < trajectory.size(); ++i) {
     const auto & prev_point = trajectory[i - 1];
     auto & point = trajectory[i];
-    const auto dt = autoware_universe_utils::calcDistance2d(prev_point, point) /
+    const auto dt = autoware::universe_utils::calcDistance2d(prev_point, point) /
                     prev_point.longitudinal_velocity_mps;
-    t += dt;
     const auto heading = tf2::getYaw(point.pose.orientation);
     const auto d_heading = heading - prev_heading;
     prev_heading = heading;

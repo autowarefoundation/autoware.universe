@@ -17,6 +17,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/wait_for_param.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
 #include <autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <autoware/velocity_smoother/trajectory_utils.hpp>
@@ -31,6 +32,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <vector>
 
@@ -102,9 +104,9 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   set_param_callback_ = this->add_on_set_parameters_callback(
     std::bind(&MotionVelocityPlannerNode::on_set_param, this, std::placeholders::_1));
 
-  logger_configure_ = std::make_unique<autoware_universe_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ =
-    std::make_unique<autoware_universe_utils::PublishedTimePublisher>(this);
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void MotionVelocityPlannerNode::on_load_plugin(
@@ -193,7 +195,7 @@ MotionVelocityPlannerNode::process_no_ground_pointcloud(
 
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
-  if (!pc.empty()) autoware_universe_utils::transformPointCloud(pc, *pc_transformed, affine);
+  if (!pc.empty()) autoware::universe_utils::transformPointCloud(pc, *pc_transformed, affine);
   return *pc_transformed;
 }
 
@@ -252,9 +254,14 @@ void MotionVelocityPlannerNode::on_trajectory(
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  std::map<std::string, double> processing_times;
+  stop_watch.tic("Total");
+
   if (!update_planner_data()) {
     return;
   }
+  processing_times["update_planner_data"] = stop_watch.toc(true);
 
   if (input_trajectory_msg->points.empty()) {
     RCLCPP_WARN(get_logger(), "Input trajectory message is empty");
@@ -264,6 +271,7 @@ void MotionVelocityPlannerNode::on_trajectory(
   if (has_received_map_) {
     planner_data_.route_handler = std::make_shared<route_handler::RouteHandler>(*map_ptr_);
     has_received_map_ = false;
+    processing_times["make_RouteHandler"] = stop_watch.toc(true);
   }
 
   autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points{
@@ -271,12 +279,15 @@ void MotionVelocityPlannerNode::on_trajectory(
 
   auto output_trajectory_msg = generate_trajectory(input_trajectory_points);
   output_trajectory_msg.header = input_trajectory_msg->header;
+  processing_times["generate_trajectory"] = stop_watch.toc(true);
 
   lk.unlock();
 
   trajectory_pub_->publish(output_trajectory_msg);
   published_time_publisher_->publish_if_subscribed(
     trajectory_pub_, output_trajectory_msg.header.stamp);
+  processing_times["Total"] = stop_watch.toc("Total");
+  processing_time_publisher_.publish(processing_times);
 }
 
 void MotionVelocityPlannerNode::insert_stop(
@@ -284,9 +295,9 @@ void MotionVelocityPlannerNode::insert_stop(
   const geometry_msgs::msg::Point & stop_point) const
 {
   const auto seg_idx =
-    autoware_motion_utils::findNearestSegmentIndex(trajectory.points, stop_point);
+    autoware::motion_utils::findNearestSegmentIndex(trajectory.points, stop_point);
   const auto insert_idx =
-    autoware_motion_utils::insertTargetPoint(seg_idx, stop_point, trajectory.points);
+    autoware::motion_utils::insertTargetPoint(seg_idx, stop_point, trajectory.points);
   if (insert_idx) {
     for (auto idx = *insert_idx; idx < trajectory.points.size(); ++idx)
       trajectory.points[idx].longitudinal_velocity_mps = 0.0;
@@ -300,13 +311,13 @@ void MotionVelocityPlannerNode::insert_slowdown(
   const autoware::motion_velocity_planner::SlowdownInterval & slowdown_interval) const
 {
   const auto from_seg_idx =
-    autoware_motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.from);
-  const auto from_insert_idx = autoware_motion_utils::insertTargetPoint(
+    autoware::motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.from);
+  const auto from_insert_idx = autoware::motion_utils::insertTargetPoint(
     from_seg_idx, slowdown_interval.from, trajectory.points);
   const auto to_seg_idx =
-    autoware_motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.to);
+    autoware::motion_utils::findNearestSegmentIndex(trajectory.points, slowdown_interval.to);
   const auto to_insert_idx =
-    autoware_motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
+    autoware::motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
   if (from_insert_idx && to_insert_idx) {
     for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
       trajectory.points[idx].longitudinal_velocity_mps = 0.0;
@@ -336,7 +347,7 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
     traj_steering_rate_limited, v0, current_pose, planner_data.ego_nearest_dist_threshold,
     planner_data.ego_nearest_yaw_threshold);
   const size_t traj_resampled_closest =
-    autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       traj_resampled, current_pose, planner_data.ego_nearest_dist_threshold,
       planner_data.ego_nearest_yaw_threshold);
   std::vector<autoware::motion_velocity_planner::TrajectoryPoints> debug_trajectories;
@@ -389,7 +400,7 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
 rcl_interfaces::msg::SetParametersResult MotionVelocityPlannerNode::on_set_param(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_universe_utils::updateParam;
+  using autoware::universe_utils::updateParam;
 
   {
     std::unique_lock<std::mutex> lk(mutex_);  // for planner_manager_
