@@ -6,13 +6,13 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 # Targets
-ament_auto_add_library(radar_object_clustering_node_component SHARED
-  src/radar_object_clustering_node/radar_object_clustering_node.cpp
+ament_auto_add_library(${PROJECT_NAME} SHARED
+  src/radar_object_clustering_node.cpp
 )
 
-rclcpp_components_register_node(radar_object_clustering_node_component
-  PLUGIN "radar_object_clustering::RadarObjectClusteringNode"
-  EXECUTABLE radar_object_clustering_node
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "autoware::radar_object_clustering::RadarObjectClusteringNode"
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 # Tests
