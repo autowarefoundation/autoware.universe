@@ -38,7 +38,7 @@ template <typename T>
 std::uint64_t gib_to_bytes(T gibibytes)
 {
   static_assert(std::is_arithmetic<T>::value, "Template parameter must be a numeric type");
-  return static_cast<std::uint64_t>(gibibytes * 1024 * 1024 * 1024);
+  return static_cast<std::uint64_t>(gibibytes * 1024ULL * 1024ULL * 1024ULL);
 }
 
 template <typename T>
