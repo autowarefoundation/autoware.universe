@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace gnn_solver
+namespace autoware::tracking_object_merger::gnn_solver
 {
 struct ResidualEdge
 {
@@ -367,4 +367,4 @@ void SSP::maximizeLinearAssignment(
   }
 #endif
 }
-}  // namespace gnn_solver
+}  // namespace autoware::tracking_object_merger::gnn_solver

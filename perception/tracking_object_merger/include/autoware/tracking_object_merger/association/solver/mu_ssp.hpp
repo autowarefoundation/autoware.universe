@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace gnn_solver
+namespace autoware::tracking_object_merger::gnn_solver
 {
 class MuSSP : public GnnSolverInterface
 {
@@ -32,6 +32,6 @@ public:
     const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
     std::unordered_map<int, int> * reverse_assignment) override;
 };
-}  // namespace gnn_solver
+}  // namespace autoware::tracking_object_merger::gnn_solver
 
 #endif  // AUTOWARE__TRACKING_OBJECT_MERGER__ASSOCIATION__SOLVER__MU_SSP_HPP_

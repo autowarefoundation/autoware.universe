@@ -36,7 +36,7 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "tracking_object_merger::DecorativeTrackerMergerNode"
+  PLUGIN "autoware::tracking_object_merger::DecorativeTrackerMergerNode"
   EXECUTABLE decorative_tracker_merger_node
 )
 

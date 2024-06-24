@@ -47,6 +47,8 @@ double getFormedYawAngle(
 }
 }  // namespace
 
+namespace autoware::tracking_object_merger
+{
 DataAssociation::DataAssociation(
   std::vector<int> can_assign_vector, std::vector<double> max_dist_vector,
   std::vector<double> max_rad_vector, std::vector<double> min_iou_vector,
@@ -229,3 +231,5 @@ double DataAssociation::calcScoreBetweenObjects(
   }
   return score;
 }
+
+}  // namespace autoware::tracking_object_merger

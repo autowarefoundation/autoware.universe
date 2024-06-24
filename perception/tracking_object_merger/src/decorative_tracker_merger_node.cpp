@@ -31,7 +31,7 @@
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
-namespace tracking_object_merger
+namespace autoware::tracking_object_merger
 {
 
 using autoware_perception_msgs::msg::TrackedObject;
@@ -419,7 +419,7 @@ TrackerState DecorativeTrackerMergerNode::createNewTracker(
   return new_tracker;
 }
 
-}  // namespace tracking_object_merger
+}  // namespace autoware::tracking_object_merger
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(tracking_object_merger::DecorativeTrackerMergerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::tracking_object_merger::DecorativeTrackerMergerNode)

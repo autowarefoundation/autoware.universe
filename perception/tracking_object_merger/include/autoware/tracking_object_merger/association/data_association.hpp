@@ -36,6 +36,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware::tracking_object_merger
+{
 class DataAssociation
 {
 private:
@@ -67,5 +69,7 @@ public:
     const autoware_perception_msgs::msg::TrackedObject & object1) const;
   virtual ~DataAssociation() {}
 };
+
+}  // namespace autoware::tracking_object_merger
 
 #endif  // AUTOWARE__TRACKING_OBJECT_MERGER__ASSOCIATION__DATA_ASSOCIATION_HPP_

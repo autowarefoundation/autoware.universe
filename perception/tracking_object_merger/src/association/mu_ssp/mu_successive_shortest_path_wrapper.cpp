@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace gnn_solver
+namespace autoware::tracking_object_merger::gnn_solver
 {
 void MuSSP::maximizeLinearAssignment(
   const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
@@ -38,4 +38,4 @@ void MuSSP::maximizeLinearAssignment(
   // Solve DA by muSSP
   solve_muSSP(cost, direct_assignment, reverse_assignment);
 }
-}  // namespace gnn_solver
+}  // namespace autoware::tracking_object_merger::gnn_solver

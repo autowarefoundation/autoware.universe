@@ -43,7 +43,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace tracking_object_merger
+namespace autoware::tracking_object_merger
 {
 
 class DecorativeTrackerMergerNode : public rclcpp::Node
@@ -131,6 +131,6 @@ private:
   } logging_;
 };
 
-}  // namespace tracking_object_merger
+}  // namespace autoware::tracking_object_merger
 
 #endif  // AUTOWARE__TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_HPP_

@@ -25,7 +25,7 @@
 
 using autoware_perception_msgs::msg::TrackedObject;
 using autoware_perception_msgs::msg::TrackedObjects;
-namespace utils
+namespace autoware::tracking_object_merger::utils
 {
 
 /**
@@ -243,9 +243,9 @@ TrackedObjects interpolateTrackedObjects(
   return output_objects;
 }
 
-}  // namespace utils
+}  // namespace autoware::tracking_object_merger::utils
 
-namespace merger_utils
+namespace autoware::tracking_object_merger::merger_utils
 {
 
 double mean(const double a, const double b)
@@ -513,4 +513,4 @@ void updateWholeTrackedObject(TrackedObject & main_obj, const TrackedObject & su
   main_obj = sub_obj;
 }
 
-}  // namespace merger_utils
+}  // namespace autoware::tracking_object_merger::merger_utils
