@@ -8,33 +8,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Set PR fetch depth
+        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
+
+      - name: Checkout PR branch and all PR commits
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake git libpcre3-dev
+          sudo apt-get install -y git
 
-      # cppcheck from apt does not yet support --check-level args, and thus install from source
-      - name: Install Cppcheck from source
+      # cppcheck from apt does not yet support --check-level args, and thus install from snap
+      - name: Install Cppcheck from snap
         run: |
-          mkdir /tmp/cppcheck
-          git clone https://github.com/danmar/cppcheck.git /tmp/cppcheck
-          cd /tmp/cppcheck
-          git checkout 2.14.1
-          mkdir build
-          cd build
-          cmake ..
-          make -j $(nproc)
-          sudo make install
+          sudo snap install cppcheck
+
+      - name: Fetch the base branch with enough history for a common merge-base commit
+        run: git fetch origin ${{ github.base_ref }}
+        shell: bash
 
       - name: Get changed files
         id: changed-files
         run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          git diff --name-only FETCH_HEAD ${{ github.sha }} > changed_files.txt
+          git diff --name-only "origin/${{ github.base_ref }}"...HEAD > changed_files.txt
           cat changed_files.txt
+        shell: bash
 
       - name: Run Cppcheck on changed files
         continue-on-error: true
