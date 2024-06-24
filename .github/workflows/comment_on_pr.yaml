@@ -21,9 +21,9 @@ jobs:
           message: |
             Thank you for contributing to the Autoware project!
 
-            🚧 If your pull request is in progress, switch it to draft mode.
+            🚧 If your pull request is in progress, [switch it to draft mode](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request#converting-a-pull-request-to-a-draft).
 
             Please ensure:
             - You've checked our [contribution guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/).
             - Your PR follows our [pull request guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/pull-request-guidelines/).
-            - All required CI checks pass before marking the PR ready for review.
+            - All required CI checks pass before [marking the PR ready for review](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/changing-the-stage-of-a-pull-request#marking-a-pull-request-as-ready-for-review).
