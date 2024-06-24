@@ -30,7 +30,7 @@
   <depend>cv_bridge</depend>
   <depend>diagnostic_updater</depend>
   <depend>image_transport</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>libopencv-dev</depend>
   <depend>libpcl-all-dev</depend>
   <depend>message_filters</depend>

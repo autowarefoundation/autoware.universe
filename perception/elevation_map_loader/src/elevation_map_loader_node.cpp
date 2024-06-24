@@ -20,8 +20,8 @@
 #include <grid_map_pcl/GridMapPclLoader.hpp>
 #include <grid_map_pcl/helpers.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 #include <rclcpp/logger.hpp>
 
 #include <grid_map_msgs/msg/grid_map.hpp>

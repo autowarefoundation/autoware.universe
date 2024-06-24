@@ -22,7 +22,7 @@
   <depend>autoware_test_utils</depend>
   <depend>autoware_universe_utils</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>message_filters</depend>
   <depend>nav_msgs</depend>
   <depend>object_recognition_utils</depend>

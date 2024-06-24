@@ -15,7 +15,7 @@
 #include <GeographicLib/Geoid.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
 #include <geography_utils/projection.hpp>
-#include <lanelet2_extension/projection/mgrs_projector.hpp>
+#include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
 
 namespace geography_utils
 {

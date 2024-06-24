@@ -14,7 +14,7 @@
   <depend>autoware_perception_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>message_filters</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

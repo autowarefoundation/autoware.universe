@@ -25,7 +25,7 @@
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>glog</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>nav_msgs</depend>
   <depend>object_recognition_utils</depend>
   <depend>pluginlib</depend>

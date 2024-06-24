@@ -18,7 +18,7 @@
   <depend>autoware_universe_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>image_geometry</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>

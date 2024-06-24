@@ -21,7 +21,7 @@
   <depend>autoware_planning_test_manager</depend>
   <depend>autoware_route_handler</depend>
   <depend>autoware_universe_utils</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

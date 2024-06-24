@@ -14,8 +14,8 @@
 
 #include <GeographicLib/Geoid.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
-#include <lanelet2_extension/projection/mgrs_projector.hpp>
-#include <lanelet2_extension/projection/transverse_mercator_projector.hpp>
+#include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
+#include <autoware_lanelet2_extension/projection/transverse_mercator_projector.hpp>
 
 #include <lanelet2_projection/UTM.h>
 

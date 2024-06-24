@@ -24,7 +24,7 @@
   <depend>autoware_velocity_smoother</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>rclcpp</depend>
   <depend>tier4_planning_msgs</depend>

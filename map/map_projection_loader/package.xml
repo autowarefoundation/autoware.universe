@@ -19,7 +19,7 @@
 
   <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tier4_map_msgs</depend>

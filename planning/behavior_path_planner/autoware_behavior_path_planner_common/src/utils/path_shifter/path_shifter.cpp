@@ -18,7 +18,7 @@
 
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <interpolation/spline_interpolation.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <string>
 #include <utility>

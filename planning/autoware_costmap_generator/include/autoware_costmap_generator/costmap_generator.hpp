@@ -50,7 +50,7 @@
 
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>

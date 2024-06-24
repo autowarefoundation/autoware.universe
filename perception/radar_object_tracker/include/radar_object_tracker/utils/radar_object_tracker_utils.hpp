@@ -15,8 +15,8 @@
 #ifndef RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_
 #define RADAR_OBJECT_TRACKER__UTILS__RADAR_OBJECT_TRACKER_UTILS_HPP_
 
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <geometry_msgs/msg/transform.hpp>
 

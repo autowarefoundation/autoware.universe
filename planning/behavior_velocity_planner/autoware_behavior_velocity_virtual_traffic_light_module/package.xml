@@ -24,7 +24,7 @@
   <depend>autoware_universe_utils</depend>
   <depend>autoware_vehicle_info_utils</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>nlohmann-json-dev</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>

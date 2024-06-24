@@ -12,7 +12,7 @@
 
   <depend>autoware_map_msgs</depend>
   <depend>autoware_perception_msgs</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>libqt5-core</depend>
   <depend>libqt5-gui</depend>
   <depend>libqt5-widgets</depend>

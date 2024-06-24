@@ -19,7 +19,7 @@
   <depend>eigen</depend>
   <depend>glog</depend>
   <depend>kalman_filter</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>mussp</depend>
   <depend>nlohmann-json-dev</depend>
   <depend>object_recognition_utils</depend>

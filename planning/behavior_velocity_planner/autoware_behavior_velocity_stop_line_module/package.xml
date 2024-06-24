@@ -24,7 +24,7 @@
   <depend>autoware_route_handler</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>tf2_geometry_msgs</depend>

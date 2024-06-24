@@ -27,7 +27,7 @@
   <depend>geometry_msgs</depend>
   <depend>grid_map_ros</depend>
   <depend>interpolation</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>libboost-dev</depend>
   <depend>libopencv-dev</depend>
   <depend>nav_msgs</depend>

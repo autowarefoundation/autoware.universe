@@ -22,7 +22,7 @@
   <depend>diagnostic_updater</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2_extension</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
