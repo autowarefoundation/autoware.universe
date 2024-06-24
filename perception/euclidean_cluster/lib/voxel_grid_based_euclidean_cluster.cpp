@@ -125,7 +125,8 @@ bool VoxelGridBasedEuclideanCluster::cluster(
         &pointcloud_msg->data[i * point_step], point_step);
       cluster_data_size += point_step;
       if (cluster_data_size == temporary_clusters.at(map[index]).data.size()) {
-        temporary_clusters.at(map[index]).data.resize(temporary_clusters.at(map[index]).data.size() * 2);
+        temporary_clusters.at(map[index])
+          .data.resize(temporary_clusters.at(map[index]).data.size() * 2);
       }
     }
   }
