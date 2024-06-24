@@ -20,9 +20,9 @@ jobs:
         with:
           message: |
             Thank you for contributing to the Autoware project!
-            
+
             🚧 If your pull request is in progress, switch it to draft mode.
-            
+
             Please ensure:
             - You've checked our [contribution guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/).
             - Your PR follows our [pull request guidelines](https://autowarefoundation.github.io/autoware-documentation/main/contributing/pull-request-guidelines/).
