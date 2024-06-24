@@ -35,12 +35,13 @@ std::shared_ptr<autoware::test_utils::AutowareTestManager> generateTestManager()
 std::shared_ptr<SimpleObjectMergerNode> generateNode()
 {
   auto node_options = rclcpp::NodeOptions{};
-  const auto simple_object_merger_dir =
-    ament_index_cpp::get_package_share_directory("simple_object_merger");
-  node_options.arguments(
-    {"--ros-args", "--params-file",
-     simple_object_merger_dir + "/config/simple_object_merger.param.yaml"});
   node_options.append_parameter_override("use_sim_time", true);
+  node_options.append_parameter_override("update_rate_hz", 20.0);
+  node_options.append_parameter_override("new_frame_id", "base_link");
+  node_options.append_parameter_override("timeout_threshold", 1.0);
+  node_options.append_parameter_override(
+    "input_topics", std::vector<std::string>{"/input/objects1", "/input/objects2"});
+
   return std::make_shared<SimpleObjectMergerNode>(node_options);
 }
 
@@ -85,7 +86,7 @@ TEST(SimpleObjectMergerNodeTest, testSimpleObjectMerge)
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic_1, msg);
 
   // Increment time for 0.1 sec
-  current_time = current_time + rclcpp::Duration(0, 1e8);  // 0.1 sec
+  current_time = current_time + rclcpp::Duration::from_seconds(0.1);  // 0.1 sec
 
   // Publish the message to topic2
   test_manager->jump_clock(current_time);
@@ -137,7 +138,7 @@ TEST(SimpleObjectMergerNodeTest, testSimpleObjectMergeTimeOut)
   test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_topic_1, msg);
 
   // Increment time for 2.0 sec
-  current_time = current_time + rclcpp::Duration(0, 2e9);  // 2.0 sec
+  current_time = current_time + rclcpp::Duration::from_seconds(2.0);  // 2.0 sec
 
   // Publish the message to topic2
   test_manager->jump_clock(current_time);
