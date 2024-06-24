@@ -19,25 +19,19 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
 
+#include "kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "multi_object_tracker/tracker/motion_model/bicycle_motion_model.hpp"
-
-#include <kalman_filter/kalman_filter.hpp>
+#include "multi_object_tracker/tracker/object_model/object_model.hpp"
 
 class NormalVehicleTracker : public Tracker
 {
 private:
-  autoware_auto_perception_msgs::msg::DetectedObject object_;
+  autoware_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
 
-private:
-  struct EkfParams
-  {
-    double r_cov_x;
-    double r_cov_y;
-    double r_cov_yaw;
-    double r_cov_vel;
-  } ekf_params_;
+  object_model::ObjectModel object_model_ = object_model::normal_vehicle;
+
   double velocity_deviation_threshold_;
 
   double z_;
@@ -49,43 +43,31 @@ private:
     double height;
   };
   BoundingBox bounding_box_;
-  BoundingBox last_input_bounding_box_;
   Eigen::Vector2d tracking_offset_;
-  int last_nearest_corner_index_;
 
-private:
   BicycleMotionModel motion_model_;
-  const char DIM = motion_model_.DIM;
   using IDX = BicycleMotionModel::IDX;
 
 public:
   NormalVehicleTracker(
-    const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-    const geometry_msgs::msg::Transform & self_transform);
+    const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+    const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
+    const uint & channel_index);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;
-  autoware_auto_perception_msgs::msg::DetectedObject getUpdatingObject(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object,
-    const geometry_msgs::msg::Transform & self_transform);
-  bool measureWithPose(const autoware_auto_perception_msgs::msg::DetectedObject & object);
-  bool measureWithShape(const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  bool measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object);
+  bool measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object);
   bool getTrackedObject(
     const rclcpp::Time & time,
-    autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
-  virtual ~NormalVehicleTracker() {}
+    autoware_perception_msgs::msg::TrackedObject & object) const override;
 
 private:
-  void setNearestCornerOrSurfaceIndex(const geometry_msgs::msg::Transform & self_transform)
-  {
-    Eigen::MatrixXd X_t(DIM, 1);
-    motion_model_.getStateVector(X_t);
-    last_nearest_corner_index_ = utils::getNearestCornerOrSurface(
-      X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
-      self_transform);
-  }
+  autoware_perception_msgs::msg::DetectedObject getUpdatingObject(
+    const autoware_perception_msgs::msg::DetectedObject & object,
+    const geometry_msgs::msg::Transform & self_transform);
 };
 
 #endif  // MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_

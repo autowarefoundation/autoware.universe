@@ -10,6 +10,7 @@ The `vector_map_inside_area_filter` is a node that removes points inside the vec
 - Extract the vector map area that intersects with the bounding box of input points to reduce the calculation cost
 - Create the 2D polygon from the extracted vector map area
 - Remove input points inside the polygon
+- If the z value is used for filtering, remove points that are below the z threshold
 
 ![vector_map_inside_area_filter_figure](./image/vector_map_inside_area_filter_overview.svg)
 
@@ -19,10 +20,10 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, so please 
 
 ### Input
 
-| Name                 | Type                                         | Description                          |
-| -------------------- | -------------------------------------------- | ------------------------------------ |
-| `~/input`            | `sensor_msgs::msg::PointCloud2`              | input points                         |
-| `~/input/vector_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map used for filtering points |
+| Name                 | Type                                    | Description                          |
+| -------------------- | --------------------------------------- | ------------------------------------ |
+| `~/input`            | `sensor_msgs::msg::PointCloud2`         | input points                         |
+| `~/input/vector_map` | `autoware_map_msgs::msg::LaneletMapBin` | vector map used for filtering points |
 
 ### Output
 
@@ -35,5 +36,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, so please 
 | Name           | Type   | Description                 |
 | -------------- | ------ | --------------------------- |
 | `polygon_type` | string | polygon type to be filtered |
+| `use_z`        | bool   | use z value for filtering   |
+| `z_threshold`  | float  | z threshold for filtering   |
 
 ## Assumptions / Known limits

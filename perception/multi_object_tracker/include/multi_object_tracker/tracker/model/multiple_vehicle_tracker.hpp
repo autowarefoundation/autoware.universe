@@ -19,11 +19,11 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__MULTIPLE_VEHICLE_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__MULTIPLE_VEHICLE_TRACKER_HPP_
 
+#include "kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/model/big_vehicle_tracker.hpp"
 #include "multi_object_tracker/tracker/model/normal_vehicle_tracker.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
-#include <kalman_filter/kalman_filter.hpp>
 #include <rclcpp/time.hpp>
 
 class MultipleVehicleTracker : public Tracker
@@ -34,16 +34,17 @@ private:
 
 public:
   MultipleVehicleTracker(
-    const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-    const geometry_msgs::msg::Transform & self_transform);
+    const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+    const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
+    const uint & channel_index);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;
   bool getTrackedObject(
     const rclcpp::Time & time,
-    autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
+    autoware_perception_msgs::msg::TrackedObject & object) const override;
   virtual ~MultipleVehicleTracker() {}
 };
 

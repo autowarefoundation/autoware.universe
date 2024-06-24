@@ -14,15 +14,16 @@
 
 #include "utils.hpp"
 
-#include "behavior_path_planner_common/data_manager.hpp"
-#include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "tier4_autoware_utils/ros/marker_helper.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
+#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/Lanelet.h>
 
 #include <limits>
+#include <utility>
 
 namespace autoware::static_centerline_generator
 {
@@ -35,12 +36,19 @@ nav_msgs::msg::Odometry::ConstSharedPtr convert_to_odometry(const geometry_msgs:
   return odometry_ptr;
 }
 
-lanelet::Point3d createPoint3d(const double x, const double y, const double z = 19.0)
+lanelet::Point3d createPoint3d(const double x, const double y, const double z)
 {
   lanelet::Point3d point(lanelet::utils::getId());
+
+  // position
+  point.x() = x;
+  point.y() = y;
+  point.z() = z;
+
+  // attributes
   point.setAttribute("local_x", x);
   point.setAttribute("local_y", y);
-  point.setAttribute("ele", z);
+  // NOTE: It seems that the attribute "ele" is assigned automatically.
 
   return point;
 }
@@ -76,17 +84,19 @@ geometry_msgs::msg::Pose get_center_pose(
   geometry_msgs::msg::Point middle_pos;
   middle_pos.x = center_line[middle_point_idx].x();
   middle_pos.y = center_line[middle_point_idx].y();
+  middle_pos.z = center_line[middle_point_idx].z();
 
   // get next middle position of the lanelet
   geometry_msgs::msg::Point next_middle_pos;
   next_middle_pos.x = center_line[middle_point_idx + 1].x();
   next_middle_pos.y = center_line[middle_point_idx + 1].y();
+  next_middle_pos.z = center_line[middle_point_idx + 1].z();
 
   // calculate middle pose
   geometry_msgs::msg::Pose middle_pose;
   middle_pose.position = middle_pos;
-  const double yaw = tier4_autoware_utils::calcAzimuthAngle(middle_pos, next_middle_pos);
-  middle_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+  const double yaw = autoware::universe_utils::calcAzimuthAngle(middle_pos, next_middle_pos);
+  middle_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
 
   return middle_pose;
 }
@@ -119,13 +129,13 @@ PathWithLaneId get_path_with_lane_id(
 }
 
 void update_centerline(
-  RouteHandler & route_handler, const lanelet::ConstLanelets & lanelets,
+  lanelet::LaneletMapPtr lanelet_map_ptr, const lanelet::ConstLanelets & lanelets,
   const std::vector<TrajectoryPoint> & new_centerline)
 {
   // get lanelet as reference to update centerline
   lanelet::Lanelets lanelets_ref;
   for (const auto & lanelet : lanelets) {
-    for (auto & lanelet_ref : route_handler.getLaneletMapPtr()->laneletLayer) {
+    for (auto & lanelet_ref : lanelet_map_ptr->laneletLayer) {
       if (lanelet_ref.id() == lanelet.id()) {
         lanelets_ref.push_back(lanelet_ref);
       }
@@ -142,19 +152,20 @@ void update_centerline(
       auto & lanelet_ref = lanelets_ref.at(lanelet_idx);
 
       const lanelet::BasicPoint2d point(traj_pos.x, traj_pos.y);
+      // TODO(murooka) This does not work with L-crank map.
       const bool is_inside = lanelet::geometry::inside(lanelet_ref, point);
       if (is_inside) {
         const auto center_point = createPoint3d(traj_pos.x, traj_pos.y, traj_pos.z);
 
         // set center point
         centerline.push_back(center_point);
-        route_handler.getLaneletMapPtr()->add(center_point);
+        lanelet_map_ptr->add(center_point);
         break;
       }
 
       if (!centerline.empty()) {
         // set centerline
-        route_handler.getLaneletMapPtr()->add(centerline);
+        lanelet_map_ptr->add(centerline);
         lanelet_ref.setCenterline(centerline);
 
         // prepare new centerline
@@ -166,26 +177,23 @@ void update_centerline(
       auto & lanelet_ref = lanelets_ref.at(lanelet_idx);
 
       // set centerline
-      route_handler.getLaneletMapPtr()->add(centerline);
+      lanelet_map_ptr->add(centerline);
       lanelet_ref.setCenterline(centerline);
     }
   }
 }
 
-MarkerArray create_footprint_marker(
-  const LinearRing2d & footprint_poly, const std::array<double, 3> & marker_color,
-  const rclcpp::Time & now, const size_t idx)
+Marker create_footprint_marker(
+  const LinearRing2d & footprint_poly, const double width, const double r, const double g,
+  const double b, const double a, const rclcpp::Time & now, const size_t idx)
 {
-  const double r = marker_color.at(0);
-  const double g = marker_color.at(1);
-  const double b = marker_color.at(2);
-
-  auto marker = tier4_autoware_utils::createDefaultMarker(
+  auto marker = autoware::universe_utils::createDefaultMarker(
     "map", rclcpp::Clock().now(), "unsafe_footprints", idx,
     visualization_msgs::msg::Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(0.1, 0.0, 0.0),
-    tier4_autoware_utils::createMarkerColor(r, g, b, 0.999));
+    autoware::universe_utils::createMarkerScale(width, 0.0, 0.0),
+    autoware::universe_utils::createMarkerColor(r, g, b, a));
   marker.header.stamp = now;
+  // TODO(murooka) Ideally, the following is unnecessary for the topic of transient local.
   marker.lifetime = rclcpp::Duration(0, 0);
 
   for (const auto & point : footprint_poly) {
@@ -197,38 +205,79 @@ MarkerArray create_footprint_marker(
     marker.points.push_back(geom_point);
   }
   marker.points.push_back(marker.points.front());
-
-  visualization_msgs::msg::MarkerArray marker_array;
-  marker_array.markers.push_back(marker);
-
-  return marker_array;
+  return marker;
 }
 
-MarkerArray create_distance_text_marker(
-  const geometry_msgs::msg::Pose & pose, const double dist,
-  const std::array<double, 3> & marker_color, const rclcpp::Time & now, const size_t idx)
+Marker create_text_marker(
+  const std::string & ns, const geometry_msgs::msg::Pose & pose, const double value, const double r,
+  const double g, const double b, const double a, const rclcpp::Time & now, const size_t idx)
 {
-  const double r = marker_color.at(0);
-  const double g = marker_color.at(1);
-  const double b = marker_color.at(2);
-
-  auto marker = tier4_autoware_utils::createDefaultMarker(
-    "map", rclcpp::Clock().now(), "unsafe_footprints_distance", idx,
-    visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-    tier4_autoware_utils::createMarkerScale(0.5, 0.5, 0.5),
-    tier4_autoware_utils::createMarkerColor(r, g, b, 0.999));
+  auto marker = autoware::universe_utils::createDefaultMarker(
+    "map", rclcpp::Clock().now(), ns, idx, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    autoware::universe_utils::createMarkerScale(0.5, 0.5, 0.5),
+    autoware::universe_utils::createMarkerColor(r, g, b, a));
   marker.pose = pose;
   marker.header.stamp = now;
   marker.lifetime = rclcpp::Duration(0, 0);
 
   std::stringstream ss;
-  ss << std::setprecision(2) << dist;
+  ss << std::setprecision(2) << value;
   marker.text = ss.str();
 
-  visualization_msgs::msg::MarkerArray marker_array;
-  marker_array.markers.push_back(marker);
+  return marker;
+}
+
+Marker create_points_marker(
+  const std::string & ns, const std::vector<geometry_msgs::msg::Point> & points, const double width,
+  const double r, const double g, const double b, const double a, const rclcpp::Time & now)
+{
+  auto marker = autoware::universe_utils::createDefaultMarker(
+    "map", now, ns, 1, Marker::LINE_STRIP,
+    autoware::universe_utils::createMarkerScale(width, 0.0, 0.0),
+    autoware::universe_utils::createMarkerColor(r, g, b, a));
+  marker.lifetime = rclcpp::Duration(0, 0);
+  marker.points = points;
+  return marker;
+}
+
+MarkerArray create_delete_all_marker_array(
+  const std::vector<std::string> & ns_vec, const rclcpp::Time & now)
+{
+  Marker marker;
+  marker.header.stamp = now;
+  marker.action = visualization_msgs::msg::Marker::DELETEALL;
+
+  MarkerArray marker_array;
+  for (const auto & ns : ns_vec) {
+    marker.ns = ns;
+    marker_array.markers.push_back(marker);
+  }
 
   return marker_array;
+}
+
+std::pair<std::vector<geometry_msgs::msg::Point>, std::vector<geometry_msgs::msg::Point>>
+calcBoundsFromLanelets(const lanelet::ConstLanelets lanelets)
+{
+  std::vector<geometry_msgs::msg::Point> left_bound;
+  std::vector<geometry_msgs::msg::Point> right_bound;
+  for (const auto & lanelet : lanelets) {
+    for (const auto & lanelet_left_bound_point : lanelet.leftBound()) {
+      geometry_msgs::msg::Point left_bound_point;
+      left_bound_point.x = lanelet_left_bound_point.x();
+      left_bound_point.y = lanelet_left_bound_point.y();
+      left_bound_point.z = lanelet_left_bound_point.z();
+      left_bound.push_back(left_bound_point);
+    }
+    for (const auto & lanelet_right_bound_point : lanelet.rightBound()) {
+      geometry_msgs::msg::Point right_bound_point;
+      right_bound_point.x = lanelet_right_bound_point.x();
+      right_bound_point.y = lanelet_right_bound_point.y();
+      right_bound_point.z = lanelet_right_bound_point.z();
+      right_bound.push_back(right_bound_point);
+    }
+  }
+  return std::make_pair(left_bound, right_bound);
 }
 }  // namespace utils
 }  // namespace autoware::static_centerline_generator

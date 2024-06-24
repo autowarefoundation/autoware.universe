@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <lidar_centerpoint/detection_class_remapper.hpp>
+#include "lidar_centerpoint/detection_class_remapper.hpp"
 
 namespace centerpoint
 {
@@ -48,7 +48,7 @@ void DetectionClassRemapper::setParameters(
     [](double v) { return std::isfinite(v) ? v : std::numeric_limits<double>::max(); });
 }
 
-void DetectionClassRemapper::mapClasses(autoware_auto_perception_msgs::msg::DetectedObjects & msg)
+void DetectionClassRemapper::mapClasses(autoware_perception_msgs::msg::DetectedObjects & msg)
 {
   for (auto & object : msg.objects) {
     const float bev_area = object.shape.dimensions.x * object.shape.dimensions.y;

@@ -16,18 +16,22 @@
 
 #include <magic_enum.hpp>
 
+#include <utility>
+
 namespace pose_estimator_arbiter::switch_rule
 {
 VectorMapBasedRule::VectorMapBasedRule(
-  rclcpp::Node & node, const std::unordered_set<PoseEstimatorType> & running_estimator_list,
-  const std::shared_ptr<const SharedData> shared_data)
-: BaseSwitchRule(node), running_estimator_list_(running_estimator_list), shared_data_(shared_data)
+  rclcpp::Node & node, std::unordered_set<PoseEstimatorType> running_estimator_list,
+  std::shared_ptr<const SharedData> shared_data)
+: BaseSwitchRule(node),
+  running_estimator_list_(std::move(running_estimator_list)),
+  shared_data_(std::move(shared_data))
 {
   pose_estimator_area_ = std::make_unique<rule_helper::PoseEstimatorArea>(node.get_logger());
 
   // Register callback
   shared_data_->vector_map.register_callback(
-    [this](autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) -> void {
+    [this](autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg) -> void {
       pose_estimator_area_->init(msg);
     });
 

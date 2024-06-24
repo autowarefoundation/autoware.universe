@@ -15,10 +15,10 @@
 #ifndef POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER__POSE_INITIALIZER_CORE_HPP_
 
+#include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/logger_level_configure.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
@@ -34,8 +34,7 @@ class NdtLocalizationTriggerModule;
 class PoseInitializer : public rclcpp::Node
 {
 public:
-  PoseInitializer();
-  ~PoseInitializer();
+  explicit PoseInitializer(const rclcpp::NodeOptions & options);
 
 private:
   using ServiceException = component_interface_utils::ServiceException;
@@ -48,19 +47,20 @@ private:
   component_interface_utils::Publisher<State>::SharedPtr pub_state_;
   component_interface_utils::Service<Initialize>::SharedPtr srv_initialize_;
   State::Message state_;
-  std::array<double, 36> output_pose_covariance_;
-  std::array<double, 36> gnss_particle_covariance_;
+  std::array<double, 36> output_pose_covariance_{};
+  std::array<double, 36> gnss_particle_covariance_{};
   std::unique_ptr<GnssModule> gnss_;
   std::unique_ptr<NdtModule> ndt_;
   std::unique_ptr<YabLocModule> yabloc_;
   std::unique_ptr<StopCheckModule> stop_check_;
   std::unique_ptr<EkfLocalizationTriggerModule> ekf_localization_trigger_;
   std::unique_ptr<NdtLocalizationTriggerModule> ndt_localization_trigger_;
-  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
   double stop_check_duration_;
 
   void change_node_trigger(bool flag, bool need_spin = false);
-  void set_user_defined_initial_pose(const geometry_msgs::msg::Pose initial_pose);
+  void set_user_defined_initial_pose(
+    const geometry_msgs::msg::Pose initial_pose, bool need_spin = false);
   void change_state(State::Message::_state_type state);
   void on_initialize(
     const Initialize::Service::Request::SharedPtr req,

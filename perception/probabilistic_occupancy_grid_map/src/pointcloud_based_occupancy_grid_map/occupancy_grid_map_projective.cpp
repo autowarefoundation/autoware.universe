@@ -17,10 +17,10 @@
 #include "probabilistic_occupancy_grid_map/cost_value.hpp"
 #include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <grid_map_costmap_2d/grid_map_costmap_2d.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
@@ -56,9 +56,9 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   const PointCloud2 & raw_pointcloud, const PointCloud2 & obstacle_pointcloud,
   const Pose & robot_pose, const Pose & scan_origin)
 {
-  constexpr double min_angle = tier4_autoware_utils::deg2rad(-180.0);
-  constexpr double max_angle = tier4_autoware_utils::deg2rad(180.0);
-  constexpr double angle_increment = tier4_autoware_utils::deg2rad(0.1);
+  constexpr double min_angle = autoware::universe_utils::deg2rad(-180.0);
+  constexpr double max_angle = autoware::universe_utils::deg2rad(180.0);
+  constexpr double angle_increment = autoware::universe_utils::deg2rad(0.1);
   const size_t angle_bin_size = ((max_angle - min_angle) / angle_increment) + size_t(1 /*margin*/);
 
   // Transform from base_link to map frame
@@ -225,11 +225,9 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
 
       if (dist_index + 1 == obstacle_pointcloud_angle_bin.size()) {
         const auto & source = obstacle_pointcloud_angle_bin.at(dist_index);
-        if (!no_visible_point_beyond) {
-          raytrace(
-            source.wx, source.wy, source.projected_wx, source.projected_wy,
-            occupancy_cost_value::NO_INFORMATION);
-        }
+        raytrace(
+          source.wx, source.wy, source.projected_wx, source.projected_wy,
+          occupancy_cost_value::NO_INFORMATION);
         continue;
       }
 
@@ -237,11 +235,6 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
         obstacle_pointcloud_angle_bin.at(dist_index + 1).range -
         obstacle_pointcloud_angle_bin.at(dist_index).range);
       if (next_obstacle_point_distance <= obstacle_separation_threshold_) {
-        continue;
-      } else if (no_visible_point_beyond) {
-        const auto & source = obstacle_pointcloud_angle_bin.at(dist_index);
-        const auto & target = obstacle_pointcloud_angle_bin.at(dist_index + 1);
-        raytrace(source.wx, source.wy, target.wx, target.wy, occupancy_cost_value::NO_INFORMATION);
         continue;
       }
 

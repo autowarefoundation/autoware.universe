@@ -23,9 +23,11 @@
 #include "yabloc_module.hpp"
 
 #include <memory>
+#include <sstream>
 #include <vector>
 
-PoseInitializer::PoseInitializer() : Node("pose_initializer")
+PoseInitializer::PoseInitializer(const rclcpp::NodeOptions & options)
+: rclcpp::Node("pose_initializer", options)
 {
   const auto node = component_interface_utils::NodeAdaptor(this);
   group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -54,7 +56,7 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
     stop_check_duration_ = declare_parameter<double>("stop_check_duration");
     stop_check_ = std::make_unique<StopCheckModule>(this, stop_check_duration_ + 1.0);
   }
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 
   change_state(State::Message::UNINITIALIZED);
 
@@ -65,28 +67,24 @@ PoseInitializer::PoseInitializer() : Node("pose_initializer")
       throw std::invalid_argument(
         "Could not set user defined initial pose. The size of initial_pose is " +
         std::to_string(initial_pose_array.size()) + ". It must be 7.");
-    } else if (
+    }
+    if (
       std::abs(initial_pose_array[3]) < 1e-6 && std::abs(initial_pose_array[4]) < 1e-6 &&
       std::abs(initial_pose_array[5]) < 1e-6 && std::abs(initial_pose_array[6]) < 1e-6) {
       throw std::invalid_argument("Input quaternion is invalid. All elements are close to zero.");
-    } else {
-      geometry_msgs::msg::Pose initial_pose;
-      initial_pose.position.x = initial_pose_array[0];
-      initial_pose.position.y = initial_pose_array[1];
-      initial_pose.position.z = initial_pose_array[2];
-      initial_pose.orientation.x = initial_pose_array[3];
-      initial_pose.orientation.y = initial_pose_array[4];
-      initial_pose.orientation.z = initial_pose_array[5];
-      initial_pose.orientation.w = initial_pose_array[6];
-
-      set_user_defined_initial_pose(initial_pose);
     }
-  }
-}
 
-PoseInitializer::~PoseInitializer()
-{
-  // to delete gnss module
+    geometry_msgs::msg::Pose initial_pose;
+    initial_pose.position.x = initial_pose_array[0];
+    initial_pose.position.y = initial_pose_array[1];
+    initial_pose.position.z = initial_pose_array[2];
+    initial_pose.orientation.x = initial_pose_array[3];
+    initial_pose.orientation.y = initial_pose_array[4];
+    initial_pose.orientation.z = initial_pose_array[5];
+    initial_pose.orientation.w = initial_pose_array[6];
+
+    set_user_defined_initial_pose(initial_pose, true);
+  }
 }
 
 void PoseInitializer::change_state(State::Message::_state_type state)
@@ -114,11 +112,12 @@ void PoseInitializer::change_node_trigger(bool flag, bool need_spin)
   }
 }
 
-void PoseInitializer::set_user_defined_initial_pose(const geometry_msgs::msg::Pose initial_pose)
+void PoseInitializer::set_user_defined_initial_pose(
+  const geometry_msgs::msg::Pose initial_pose, bool need_spin)
 {
   try {
     change_state(State::Message::INITIALIZING);
-    change_node_trigger(false, true);
+    change_node_trigger(false, need_spin);
 
     PoseWithCovarianceStamped pose;
     pose.header.frame_id = "map";
@@ -127,7 +126,7 @@ void PoseInitializer::set_user_defined_initial_pose(const geometry_msgs::msg::Po
     pose.pose.covariance = output_pose_covariance_;
     pub_reset_->publish(pose);
 
-    change_node_trigger(true, true);
+    change_node_trigger(true, need_spin);
     change_state(State::Message::INITIALIZED);
 
     RCLCPP_INFO(get_logger(), "Set user defined initial pose");
@@ -147,25 +146,52 @@ void PoseInitializer::on_initialize(
       Initialize::Service::Response::ERROR_UNSAFE, "The vehicle is not stopped.");
   }
   try {
-    change_state(State::Message::INITIALIZING);
-    change_node_trigger(false, false);
+    if (req->method == Initialize::Service::Request::AUTO) {
+      change_state(State::Message::INITIALIZING);
+      change_node_trigger(false, false);
 
-    auto pose = req->pose.empty() ? get_gnss_pose() : req->pose.front();
-    if (ndt_) {
-      pose = ndt_->align_pose(pose);
-    } else if (yabloc_) {
-      // If both the NDT and YabLoc initializer are enabled, prioritize NDT as it offers more
-      // accuracy pose.
-      pose = yabloc_->align_pose(pose);
+      auto pose =
+        req->pose_with_covariance.empty() ? get_gnss_pose() : req->pose_with_covariance.front();
+      if (ndt_) {
+        pose = ndt_->align_pose(pose);
+      } else if (yabloc_) {
+        // If both the NDT and YabLoc initializer are enabled, prioritize NDT as it offers more
+        // accuracy pose.
+        pose = yabloc_->align_pose(pose);
+      }
+      pose.pose.covariance = output_pose_covariance_;
+      pub_reset_->publish(pose);
+
+      change_node_trigger(true, false);
+      res->status.success = true;
+      change_state(State::Message::INITIALIZED);
+
+    } else if (req->method == Initialize::Service::Request::DIRECT) {
+      if (req->pose_with_covariance.empty()) {
+        std::stringstream message;
+        message << "No input pose_with_covariance. If you want to use DIRECT method, please input "
+                   "pose_with_covariance.";
+        RCLCPP_ERROR_STREAM(get_logger(), message.str());
+        throw ServiceException(
+          autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
+      }
+      auto pose = req->pose_with_covariance.front().pose.pose;
+      set_user_defined_initial_pose(pose, false);
+      res->status.success = true;
+
+    } else {
+      std::stringstream message;
+      message << "Unknown method type (=" << std::to_string(req->method) << ")";
+      RCLCPP_ERROR_STREAM(get_logger(), message.str());
+      throw ServiceException(
+        autoware_common_msgs::msg::ResponseStatus::PARAMETER_ERROR, message.str());
     }
-    pose.pose.covariance = output_pose_covariance_;
-    pub_reset_->publish(pose);
-
-    change_node_trigger(true, false);
-    res->status.success = true;
-    change_state(State::Message::INITIALIZED);
   } catch (const ServiceException & error) {
-    res->status = error.status();
+    autoware_adapi_v1_msgs::msg::ResponseStatus respose_status;
+    respose_status = error.status();
+    res->status.success = respose_status.success;
+    res->status.code = respose_status.code;
+    res->status.message = respose_status.message;
     change_state(State::Message::UNINITIALIZED);
   }
 }
@@ -180,3 +206,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializer::get_gnss_pose()
   throw ServiceException(
     Initialize::Service::Response::ERROR_GNSS_SUPPORT, "GNSS is not supported.");
 }
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(PoseInitializer)

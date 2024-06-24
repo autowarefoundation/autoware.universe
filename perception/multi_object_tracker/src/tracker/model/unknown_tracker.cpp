@@ -11,14 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#define EIGEN_MPL2_ONLY
 
 #include "multi_object_tracker/tracker/model/unknown_tracker.hpp"
 
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware/universe_utils/math/normalization.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
 
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/math/normalization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -32,18 +36,18 @@
 #endif
 #include "object_recognition_utils/object_recognition_utils.hpp"
 
-#define EIGEN_MPL2_ONLY
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
 UnknownTracker::UnknownTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/)
-: Tracker(time, object.classification),
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
+  const uint & channel_index)
+: Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("UnknownTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z)
 {
   object_ = object;
+
+  // initialize existence probability
+  initializeExistenceProbabilities(channel_index, object.existence_probability);
 
   // initialize params
   // measurement noise covariance
@@ -63,12 +67,13 @@ UnknownTracker::UnknownTracker(
 
   // Set motion limits
   motion_model_.setMotionLimits(
-    tier4_autoware_utils::kmph2mps(60), /* [m/s] maximum velocity, x */
-    tier4_autoware_utils::kmph2mps(60)  /* [m/s] maximum velocity, y */
+    autoware::universe_utils::kmph2mps(60), /* [m/s] maximum velocity, x */
+    autoware::universe_utils::kmph2mps(60)  /* [m/s] maximum velocity, y */
   );
 
   // Set initial state
   {
+    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     auto pose_cov = object.kinematics.pose_with_covariance.covariance;
@@ -94,37 +99,35 @@ UnknownTracker::UnknownTracker(
       const double cos_yaw = std::cos(yaw);
       const double sin_yaw = std::sin(yaw);
       const double sin_2yaw = std::sin(2.0 * yaw);
-      pose_cov[utils::MSG_COV_IDX::X_X] =
-        p0_cov_x * cos_yaw * cos_yaw + p0_cov_y * sin_yaw * sin_yaw;
-      pose_cov[utils::MSG_COV_IDX::X_Y] = 0.5 * (p0_cov_x - p0_cov_y) * sin_2yaw;
-      pose_cov[utils::MSG_COV_IDX::Y_Y] =
-        p0_cov_x * sin_yaw * sin_yaw + p0_cov_y * cos_yaw * cos_yaw;
-      pose_cov[utils::MSG_COV_IDX::Y_X] = pose_cov[utils::MSG_COV_IDX::X_Y];
+      pose_cov[XYZRPY_COV_IDX::X_X] = p0_cov_x * cos_yaw * cos_yaw + p0_cov_y * sin_yaw * sin_yaw;
+      pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5 * (p0_cov_x - p0_cov_y) * sin_2yaw;
+      pose_cov[XYZRPY_COV_IDX::Y_Y] = p0_cov_x * sin_yaw * sin_yaw + p0_cov_y * cos_yaw * cos_yaw;
+      pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];
     }
 
     if (!object.kinematics.has_twist_covariance) {
-      constexpr double p0_stddev_vx = tier4_autoware_utils::kmph2mps(10);  // [m/s]
-      constexpr double p0_stddev_vy = tier4_autoware_utils::kmph2mps(10);  // [m/s]
+      constexpr double p0_stddev_vx = autoware::universe_utils::kmph2mps(10);  // [m/s]
+      constexpr double p0_stddev_vy = autoware::universe_utils::kmph2mps(10);  // [m/s]
       const double p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
       const double p0_cov_vy = std::pow(p0_stddev_vy, 2.0);
-      twist_cov[utils::MSG_COV_IDX::X_X] = p0_cov_vx;
-      twist_cov[utils::MSG_COV_IDX::X_Y] = 0.0;
-      twist_cov[utils::MSG_COV_IDX::Y_X] = 0.0;
-      twist_cov[utils::MSG_COV_IDX::Y_Y] = p0_cov_vy;
+      twist_cov[XYZRPY_COV_IDX::X_X] = p0_cov_vx;
+      twist_cov[XYZRPY_COV_IDX::X_Y] = 0.0;
+      twist_cov[XYZRPY_COV_IDX::Y_X] = 0.0;
+      twist_cov[XYZRPY_COV_IDX::Y_Y] = p0_cov_vy;
     }
 
     // rotate twist covariance matrix, since it is in the vehicle coordinate system
     Eigen::MatrixXd twist_cov_rotate(2, 2);
-    twist_cov_rotate(0, 0) = twist_cov[utils::MSG_COV_IDX::X_X];
-    twist_cov_rotate(0, 1) = twist_cov[utils::MSG_COV_IDX::X_Y];
-    twist_cov_rotate(1, 0) = twist_cov[utils::MSG_COV_IDX::Y_X];
-    twist_cov_rotate(1, 1) = twist_cov[utils::MSG_COV_IDX::Y_Y];
+    twist_cov_rotate(0, 0) = twist_cov[XYZRPY_COV_IDX::X_X];
+    twist_cov_rotate(0, 1) = twist_cov[XYZRPY_COV_IDX::X_Y];
+    twist_cov_rotate(1, 0) = twist_cov[XYZRPY_COV_IDX::Y_X];
+    twist_cov_rotate(1, 1) = twist_cov[XYZRPY_COV_IDX::Y_Y];
     Eigen::MatrixXd R_yaw = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
     Eigen::MatrixXd twist_cov_rotated = R_yaw * twist_cov_rotate * R_yaw.transpose();
-    twist_cov[utils::MSG_COV_IDX::X_X] = twist_cov_rotated(0, 0);
-    twist_cov[utils::MSG_COV_IDX::X_Y] = twist_cov_rotated(0, 1);
-    twist_cov[utils::MSG_COV_IDX::Y_X] = twist_cov_rotated(1, 0);
-    twist_cov[utils::MSG_COV_IDX::Y_Y] = twist_cov_rotated(1, 1);
+    twist_cov[XYZRPY_COV_IDX::X_X] = twist_cov_rotated(0, 0);
+    twist_cov[XYZRPY_COV_IDX::X_Y] = twist_cov_rotated(0, 1);
+    twist_cov[XYZRPY_COV_IDX::Y_X] = twist_cov_rotated(1, 0);
+    twist_cov[XYZRPY_COV_IDX::Y_Y] = twist_cov_rotated(1, 1);
 
     // initialize motion model
     motion_model_.initialize(time, x, y, pose_cov, vx, vy, twist_cov);
@@ -136,14 +139,16 @@ bool UnknownTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_auto_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+autoware_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingObject(
+  const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 {
-  autoware_auto_perception_msgs::msg::DetectedObject updating_object = object;
+  autoware_perception_msgs::msg::DetectedObject updating_object = object;
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
+    // fill covariance matrix
+    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double & r_cov_x = ekf_params_.r_cov_x;
     const double & r_cov_y = ekf_params_.r_cov_y;
     auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
@@ -151,18 +156,17 @@ autoware_auto_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingOb
     const double cos_yaw = std::cos(pose_yaw);
     const double sin_yaw = std::sin(pose_yaw);
     const double sin_2yaw = std::sin(2.0f * pose_yaw);
-    pose_cov[utils::MSG_COV_IDX::X_X] =
-      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;                // x - x
-    pose_cov[utils::MSG_COV_IDX::X_Y] = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
-    pose_cov[utils::MSG_COV_IDX::Y_Y] =
-      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;            // y - y
-    pose_cov[utils::MSG_COV_IDX::Y_X] = pose_cov[utils::MSG_COV_IDX::X_Y];  // y - x
+    pose_cov[XYZRPY_COV_IDX::X_X] =
+      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;            // x - x
+    pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5f * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
+    pose_cov[XYZRPY_COV_IDX::Y_Y] =
+      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;    // y - y
+    pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];  // y - x
   }
   return updating_object;
 }
 
-bool UnknownTracker::measureWithPose(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+bool UnknownTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
 {
   // update motion model
   bool is_updated = false;
@@ -183,7 +187,7 @@ bool UnknownTracker::measureWithPose(
 }
 
 bool UnknownTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
@@ -200,7 +204,7 @@ bool UnknownTracker::measure(
   }
 
   // update object
-  const autoware_auto_perception_msgs::msg::DetectedObject updating_object =
+  const autoware_perception_msgs::msg::DetectedObject updating_object =
     getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
 
@@ -208,7 +212,7 @@ bool UnknownTracker::measure(
 }
 
 bool UnknownTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();

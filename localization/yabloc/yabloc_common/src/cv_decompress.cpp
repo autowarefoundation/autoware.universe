@@ -17,7 +17,11 @@
 #include <opencv4/opencv2/imgcodecs.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 
-#include <cv_bridge/cv_bridge.h>
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>  // for ROS 2 Jazzy or newer
+#else
+#include <cv_bridge/cv_bridge.h>  // for ROS 2 Humble or older
+#endif
 
 #include <iostream>
 
@@ -28,16 +32,16 @@ cv::Mat decompress_image(const sensor_msgs::msg::CompressedImage & compressed_im
   cv::Mat raw_image;
 
   const std::string & format = compressed_img.format;
-  const std::string encoding = format.substr(0, format.find(";"));
+  const std::string encoding = format.substr(0, format.find(';'));
 
-  constexpr int DECODE_GRAY = 0;
-  constexpr int DECODE_RGB = 1;
+  constexpr int decode_gray = 0;
+  constexpr int decode_rgb = 1;
 
   bool encoding_is_bayer = encoding.find("bayer") != std::string::npos;
   if (!encoding_is_bayer) {
-    return cv::imdecode(cv::Mat(compressed_img.data), DECODE_RGB);
+    return cv::imdecode(cv::Mat(compressed_img.data), decode_rgb);
   }
-  raw_image = cv::imdecode(cv::Mat(compressed_img.data), DECODE_GRAY);
+  raw_image = cv::imdecode(cv::Mat(compressed_img.data), decode_gray);
 
   // TODO(KYabuuchi) integrate with implementation in the sensing/perception component
   if (encoding == "bayer_rggb8") {
