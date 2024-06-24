@@ -44,7 +44,7 @@ jobs:
         run: |
           git diff --name-only "origin/${{ github.base_ref }}"...HEAD > changed_files.txt
           files=$(cat changed_files.txt | grep -E '\.(cpp|hpp)$' || true)
-          echo "::set-output name=changed_files::$files"
+          echo "changed_files=$files" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Run clang-tidy
