@@ -24,13 +24,13 @@ The Mission Planner consists of several components (ROS2 packages) working toget
 To launch all nodes of the software:
 
 ```
-ros2 launch mission_planner mission_planner_compose.launch.py
+ros2 launch autoware_local_mission_planner mission_planner_compose.launch.py
 ```
 
 To launch a specific node, such as the mission planner:
 
 ```
-ros2 launch mission_planner mission_planner.launch.py
+ros2 launch autoware_local_mission_planner mission_planner.launch.py
 ```
 
 ## Additional Notes
