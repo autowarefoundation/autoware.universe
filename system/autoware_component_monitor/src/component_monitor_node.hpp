@@ -19,6 +19,8 @@
 
 #include <autoware_internal_msgs/msg/resource_usage_report.hpp>
 
+#include <boost/process.hpp>
+
 #include <cstdint>
 #include <sstream>
 #include <string>
@@ -42,7 +44,8 @@ private:
   rclcpp::Publisher<ResourceUsageReport>::SharedPtr usage_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  void on_timer_tick(int pid);
+  boost::process::native_environment environment_;
+
 
   /**
    * @brief Get system usage of the component.

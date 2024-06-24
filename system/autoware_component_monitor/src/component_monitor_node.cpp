@@ -49,6 +49,9 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
 
   int pid = getpid();
 
+  environment_ = boost::this_process::environment();
+  environment_["LC_NUMERIC"] = "en_US.UTF-8";
+
   on_timer_tick_wrapped_ = std::bind(&ComponentMonitor::on_timer_tick, this, pid);
 
   timer_ = rclcpp::create_timer(
@@ -103,11 +106,8 @@ std::stringstream ComponentMonitor::run_system_command(const std::string & cmd) 
   bp::pipe err_pipe{err_fd[0], err_fd[1]};
   bp::ipstream is_err{std::move(err_pipe)};
 
-  auto env = boost::this_process::environment();
-  env["LC_NUMERIC"] = "en_US.UTF-8";  // To make sure that decimal separator is a dot.
-
-  bp::environment child_env = env;
-  bp::child c(cmd, child_env, bp::std_out > is_out, bp::std_err > is_err);
+  boost::process::child c(
+    cmd, environment_, boost::process::std_out > is_out, boost::process::std_err > is_err);
   c.wait();
 
   if (c.exit_code() != 0) {
