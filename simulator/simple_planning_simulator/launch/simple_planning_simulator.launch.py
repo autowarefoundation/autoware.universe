@@ -75,6 +75,7 @@ def launch_setup(context, *args, **kwargs):
             ("output/hazard_lights_report", "/vehicle/status/hazard_lights_status"),
             ("output/control_mode_report", "/vehicle/status/control_mode"),
         ],
+        ros_arguments=["--log-level", LaunchConfiguration("log_level")],
     )
 
     return [simple_planning_simulator_node]
@@ -122,5 +123,7 @@ def generate_launch_description():
             "/param/acceleration_map.csv",
         ],
     )
+
+    add_launch_arg("log_level", "false")
 
     return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])

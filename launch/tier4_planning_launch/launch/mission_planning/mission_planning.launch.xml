@@ -1,8 +1,10 @@
 <launch>
   <arg name="mission_planner_param_path" default="$(find-pkg-share autoware_mission_planner)/config/mission_planner.param.yaml"/>
+  <arg name="log_level" default="WARN"/>
   <group>
     <include file="$(find-pkg-share autoware_mission_planner)/launch/mission_planner.launch.xml">
       <arg name="mission_planner_param_path" value="$(var mission_planner_param_path)"/>
+      <arg name="log_level" value="$(var log_level)"/>
     </include>
   </group>
   <group>

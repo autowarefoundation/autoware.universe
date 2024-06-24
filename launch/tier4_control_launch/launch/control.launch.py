@@ -337,6 +337,30 @@ def launch_setup(context, *args, **kwargs):
         name="glog_component",
     )
 
+    log_args = [
+        "--log-level",
+        ["control.control_container:=", LaunchConfiguration("log_level")],
+        "--log-level",
+        ["control.obstacle_collision_checker:=", LaunchConfiguration("log_level")],
+        "--log-level",
+        ["control.autoware_operation_mode_transition_manager:=", LaunchConfiguration("log_level")],
+        "--log-level",
+        ["control.vehicle_cmd_gate:=", LaunchConfiguration("log_level")],
+        "--log-level",
+        ["control.predicted_path_checker:=", LaunchConfiguration("log_level")],
+        "--log-level",
+        ["control.autonomous_emergency_braking:=", LaunchConfiguration("log_level")],
+        "--log-level",
+        ["control.autoware_shift_decider:=", LaunchConfiguration("log_level")],
+        "--log-level",
+        [
+            "control.trajectory_follower.lane_departure_checker_node:=",
+            LaunchConfiguration("log_level"),
+        ],
+        "--log-level",
+        ["control.trajectory_follower.controller_node_exe:=", LaunchConfiguration("log_level")],
+    ]
+
     # set container to run all required components in the same process
     if trajectory_follower_mode == "trajectory_follower_node":
         container = ComposableNodeContainer(
@@ -352,6 +376,7 @@ def launch_setup(context, *args, **kwargs):
                 autoware_operation_mode_transition_manager_component,
                 glog_component,
             ],
+            ros_arguments=log_args,
         )
 
     elif trajectory_follower_mode == "smart_mpc_trajectory_follower":
@@ -367,6 +392,7 @@ def launch_setup(context, *args, **kwargs):
                 autoware_operation_mode_transition_manager_component,
                 glog_component,
             ],
+            ros_arguments=log_args,
         )
     else:
         raise Exception(
@@ -437,6 +463,12 @@ def launch_setup(context, *args, **kwargs):
                         name="glog_validator_component",
                     ),
                 ],
+                ros_arguments=[
+                    "--log-level",
+                    ["control.control_validator_container:=", LaunchConfiguration("log_level")],
+                    "--log-level",
+                    ["control.control_validator:=", LaunchConfiguration("log_level")],
+                ],
             ),
         ]
     )
@@ -445,6 +477,7 @@ def launch_setup(context, *args, **kwargs):
         package="autoware_smart_mpc_trajectory_follower",
         executable="pympc_trajectory_follower.py",
         name="pympc_trajectory_follower",
+        arguments=["--ros-args", "--log-level", LaunchConfiguration("log_level")],
     )
     if trajectory_follower_mode == "trajectory_follower_node":
         return [group, control_validator_group]
@@ -493,6 +526,7 @@ def generate_launch_description():
         "trajectory_follower_node",
         "Options for which trajectory_follower to use. Options: `trajectory_follower_node`, `smart_mpc_trajectory_follower`",
     )
+    add_launch_arg("log_level", "WARN")
     set_container_executable = SetLaunchConfiguration(
         "container_executable",
         "component_container",
