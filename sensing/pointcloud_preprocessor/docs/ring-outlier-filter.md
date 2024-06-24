@@ -73,7 +73,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ## Assumptions / Known limits
 
-This nodes requires that the points of the input point cloud are in chronological order and that individual points follow the memory layout specified by `PointXYZIRCAEDT`.
+This nodes requires that the points of the input point cloud are in chronological order and that individual points follow the memory layout specified by [PointXYZIRCAEDT](../../../common/autoware_point_types/include/autoware_point_types/types.hpp#L95-L116).
 
 ## (Optional) Error detection and handling
 
