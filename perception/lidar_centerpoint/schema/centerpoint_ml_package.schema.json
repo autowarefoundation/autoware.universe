@@ -36,7 +36,7 @@
               "description": "An array of voxel grid sizes for PointPainting, this must have same length with `paint_class_names`.",
               "default": [0.32, 0.32, 10.0]
             },
-            "down_sample_factor": {
+            "downsample_factor": {
               "type": "integer",
               "description": "A scale factor of downsampling points",
               "default": 1,
