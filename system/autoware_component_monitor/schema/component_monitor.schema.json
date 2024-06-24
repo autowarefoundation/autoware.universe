@@ -8,7 +8,7 @@
       "properties": {
         "publish_rate": {
           "type": "number",
-          "default": "10.0",
+          "default": "5.0",
           "description": "Publish rate in Hz"
         }
       },

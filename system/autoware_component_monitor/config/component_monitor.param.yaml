@@ -1,3 +1,3 @@
 /**:
   ros__parameters:
-    publish_rate: 10.0  # Hz
+    publish_rate: 5.0  # Hz
