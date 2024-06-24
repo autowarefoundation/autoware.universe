@@ -6,7 +6,13 @@
   <arg name="input_route" default="/planning/mission_planning/route"/>
   <arg name="log_level" default="WARN"/>
 
-  <node pkg="autoware_remaining_distance_time_calculator" exec="autoware_remaining_distance_time_calculator_node" name="remaining_distance_time_calculator" output="screen" ros_args="--log-level $(var log_level)">
+  <node
+    pkg="autoware_remaining_distance_time_calculator"
+    exec="autoware_remaining_distance_time_calculator_node"
+    name="remaining_distance_time_calculator"
+    output="screen"
+    ros_args="--log-level $(var log_level)"
+  >
     <!-- param -->
     <param from="$(var remaining_distance_time_calculator_param_path)"/>
 

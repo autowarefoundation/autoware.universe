@@ -2,7 +2,7 @@
   <arg name="config_file" default="$(find-pkg-share duplicated_node_checker)/config/duplicated_node_checker.param.yaml"/>
   <arg name="log_level" default="WARN"/>
 
-  <node pkg="duplicated_node_checker" exec="duplicated_node_checker_node" name="duplicated_node_checker" output="screen"  ros_args="--log-level $(var log_level)">
+  <node pkg="duplicated_node_checker" exec="duplicated_node_checker_node" name="duplicated_node_checker" output="screen" ros_args="--log-level $(var log_level)">
     <param from="$(var config_file)"/>
   </node>
 </launch>

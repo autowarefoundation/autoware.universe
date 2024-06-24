@@ -1,5 +1,5 @@
 <launch>
   <arg name="log_level" default="WARN"/>
 
-  <node pkg="component_interface_tools" exec="service_log_checker_node"   ros_args="--log-level $(var log_level)"/>
+  <node pkg="component_interface_tools" exec="service_log_checker_node" ros_args="--log-level $(var log_level)"/>
 </launch>

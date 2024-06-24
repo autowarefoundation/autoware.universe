@@ -5,10 +5,16 @@
   <group if="$(var launch_parking_module)">
     <push-ros-namespace namespace="parking"/>
 
-    <node_container pkg="rclcpp_components" exec="$(var container_type)" name="parking_container" namespace="" output="screen"
+    <node_container
+      pkg="rclcpp_components"
+      exec="$(var container_type)"
+      name="parking_container"
+      namespace=""
+      output="screen"
       ros_args="--log-level planning.scenario_planning.parking.parking_container:=$(var log_level) \
                 --log-level planning.scenario_planning.parking.costmap_generator:=$(var log_level) \
-                --log-level planning.scenario_planning.parking.freespace_planner:=$(var log_level)">
+                --log-level planning.scenario_planning.parking.freespace_planner:=$(var log_level)"
+    >
       <composable_node pkg="autoware_costmap_generator" plugin="autoware::costmap_generator::CostmapGenerator" name="costmap_generator" namespace="">
         <!-- topic remap -->
         <remap from="~/input/objects" to="/perception/object_recognition/objects"/>

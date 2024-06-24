@@ -28,7 +28,13 @@
   />
   <let name="motion_velocity_planner_launch_modules" value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + '$(var launch_module_list_end)'&quot;)"/>
 
-  <node_container pkg="rclcpp_components" exec="$(var container_type)" name="motion_planning_container" namespace="" args="" output="screen"
+  <node_container
+    pkg="rclcpp_components"
+    exec="$(var container_type)"
+    name="motion_planning_container"
+    namespace=""
+    args=""
+    output="screen"
     ros_args="--log-level planning.scenario_planning.lane_driving.motion_planning.motion_planning_container:=$(var log_level) \
               --log-level planning.scenario_planning.lane_driving.motion_planning.elastic_band_smoother:=$(var log_level) \
               --log-level planning.scenario_planning.lane_driving.motion_planning.path_smoother_relay:=$(var log_level) \
@@ -37,7 +43,8 @@
               --log-level planning.scenario_planning.lane_driving.motion_planning.path_to_trajectory_converter:=$(var log_level) \
               --log-level planning.scenario_planning.lane_driving.motion_planning.obstacle_cruise_planner:=$(var log_level) \
               --log-level planning.scenario_planning.lane_driving.motion_planning.obstacle_stop_planner:=$(var log_level) \
-              --log-level planning.scenario_planning.lane_driving.motion_planning.obstacle_stop_relay:=$(var log_level)">
+              --log-level planning.scenario_planning.lane_driving.motion_planning.obstacle_stop_relay:=$(var log_level)"
+  >
     <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component" namespace=""/>
   </node_container>
 

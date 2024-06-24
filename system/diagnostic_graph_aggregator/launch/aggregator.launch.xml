@@ -2,7 +2,7 @@
   <arg name="param_file" default="$(find-pkg-share diagnostic_graph_aggregator)/config/default.param.yaml"/>
   <arg name="graph_file"/>
   <arg name="log_level" default="WARN"/>
-  <node pkg="diagnostic_graph_aggregator" exec="aggregator_node"  ros_args="--log-level $(var log_level)">
+  <node pkg="diagnostic_graph_aggregator" exec="aggregator_node" ros_args="--log-level $(var log_level)">
     <param from="$(var param_file)"/>
     <param name="graph_file" value="$(var graph_file)"/>
   </node>

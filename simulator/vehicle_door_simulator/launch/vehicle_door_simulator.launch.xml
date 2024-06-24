@@ -1,7 +1,7 @@
 <launch>
   <arg name="log_level" default="WARN"/>
 
-  <node pkg="vehicle_door_simulator" exec="dummy_doors" name="dummy_doors"  ros_args="--log-level $(var log_level)">
+  <node pkg="vehicle_door_simulator" exec="dummy_doors" name="dummy_doors" ros_args="--log-level $(var log_level)">
     <remap from="~/doors/command" to="/vehicle/doors/command"/>
     <remap from="~/doors/layout" to="/vehicle/doors/layout"/>
     <remap from="~/doors/status" to="/vehicle/doors/status"/>

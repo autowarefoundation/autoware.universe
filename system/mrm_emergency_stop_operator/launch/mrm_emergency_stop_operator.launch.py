@@ -51,8 +51,18 @@ def launch_setup(context, *args, **kwargs):
             component,
         ],
         output="screen",
-        ros_arguments=["--log-level", ["system.mrm_emergency_stop_operator.mrm_emergency_stop_operator_container:=", LaunchConfiguration("log_level")],
-                       "--log-level", ["system.mrm_emergency_stop_operator.mrm_emergency_stop_operator_container:=" , LaunchConfiguration("log_level")],],
+        ros_arguments=[
+            "--log-level",
+            [
+                "system.mrm_emergency_stop_operator.mrm_emergency_stop_operator_container:=",
+                LaunchConfiguration("log_level"),
+            ],
+            "--log-level",
+            [
+                "system.mrm_emergency_stop_operator.mrm_emergency_stop_operator_container:=",
+                LaunchConfiguration("log_level"),
+            ],
+        ],
     )
 
     return [container]

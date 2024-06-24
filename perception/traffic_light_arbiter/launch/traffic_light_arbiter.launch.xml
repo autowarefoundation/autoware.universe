@@ -6,9 +6,14 @@
   <arg name="log_level" default="WARN"/>
 
   <push-ros-namespace namespace="traffic_light_arbiter"/>
-  <node_container pkg="rclcpp_components" exec="component_container" name="container" namespace=""
+  <node_container
+    pkg="rclcpp_components"
+    exec="component_container"
+    name="container"
+    namespace=""
     ros_args="--log-level perception.traffic_light_recognition.traffic_light_arbiter.container:=$(var log_level) \
-              --log-level perception.traffic_light_recognition.traffic_light_arbiter.arbiter:=$(var log_level)">
+              --log-level perception.traffic_light_recognition.traffic_light_arbiter.arbiter:=$(var log_level)"
+  >
     <composable_node pkg="traffic_light_arbiter" plugin="TrafficLightArbiter" name="arbiter">
       <remap from="~/sub/vector_map" to="/map/vector_map"/>
       <remap from="~/sub/perception_traffic_signals" to="$(var perception_traffic_signals)"/>

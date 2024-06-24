@@ -122,9 +122,14 @@ def launch_setup(context, *args, **kwargs):
         composable_node_descriptions=composable_nodes,
         condition=UnlessCondition(LaunchConfiguration("use_pointcloud_container")),
         output="screen",
-        ros_arguments=["--log-level", ["occupancy_grid_map.occupancy_grid_map_container:=", LaunchConfiguration("log_level")],
-                       "--log-level", ["occupancy_grid_map.occupancy_grid_map_node:=", LaunchConfiguration("log_level")],
-                       "--log-level", ["occupancy_grid_map.pointcloud_to_laserscan_node:=", LaunchConfiguration("log_level")],]
+        ros_arguments=[
+            "--log-level",
+            ["occupancy_grid_map.occupancy_grid_map_container:=", LaunchConfiguration("log_level")],
+            "--log-level",
+            ["occupancy_grid_map.occupancy_grid_map_node:=", LaunchConfiguration("log_level")],
+            "--log-level",
+            ["occupancy_grid_map.pointcloud_to_laserscan_node:=", LaunchConfiguration("log_level")],
+        ],
     )
 
     load_composable_nodes = LoadComposableNodes(

@@ -24,12 +24,18 @@
   <group>
     <push-ros-namespace namespace="map"/>
 
-    <node_container pkg="rclcpp_components" exec="$(var container_type)" name="map_container" namespace="" output="both"
+    <node_container
+      pkg="rclcpp_components"
+      exec="$(var container_type)"
+      name="map_container"
+      namespace=""
+      output="both"
       ros_args="--log-level map.map_container:=$(var log_level) \
                 --log-level map.pointcloud_map_loader:=$(var log_level) \
                 --log-level map.lanelet2_map_loader:=$(var log_level) \
                 --log-level map.lanelet2_map_visualization:=$(var log_level) \
-                --log-level map.vector_map_tf_generator:=$(var log_level)">
+                --log-level map.vector_map_tf_generator:=$(var log_level)"
+    >
       <composable_node pkg="map_loader" plugin="PointCloudMapLoaderNode" name="pointcloud_map_loader">
         <param from="$(var pointcloud_map_loader_param_path)"/>
         <param name="pcd_paths_or_directory" value="[$(var pointcloud_map_path)]"/>
