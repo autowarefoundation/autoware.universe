@@ -40,7 +40,7 @@
 class Twist2Accel : public rclcpp::Node
 {
 public:
-  Twist2Accel(const std::string & node_name, const rclcpp::NodeOptions & options);
+  explicit Twist2Accel(const rclcpp::NodeOptions & options);
 
 private:
   rclcpp::Publisher<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr
@@ -63,9 +63,9 @@ private:
   /**
    * @brief set odometry measurement
    */
-  void callbackTwistWithCovariance(
+  void callback_twist_with_covariance(
     const geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg);
-  void callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
-  void estimateAccel(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
+  void callback_odometry(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void estimate_accel(const geometry_msgs::msg::TwistStamped::SharedPtr msg);
 };
 #endif  // TWIST2ACCEL__TWIST2ACCEL_HPP_

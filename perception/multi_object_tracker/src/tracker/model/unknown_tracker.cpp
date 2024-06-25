@@ -16,9 +16,9 @@
 
 #include "multi_object_tracker/utils/utils.hpp"
 
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/math/normalization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -37,13 +37,17 @@
 #include <Eigen/Geometry>
 
 UnknownTracker::UnknownTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/)
-: Tracker(time, object.classification),
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
+  const uint & channel_index)
+: Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("UnknownTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z)
 {
   object_ = object;
+
+  // initialize existence probability
+  initializeExistenceProbabilities(channel_index, object.existence_probability);
 
   // initialize params
   // measurement noise covariance
@@ -63,8 +67,8 @@ UnknownTracker::UnknownTracker(
 
   // Set motion limits
   motion_model_.setMotionLimits(
-    tier4_autoware_utils::kmph2mps(60), /* [m/s] maximum velocity, x */
-    tier4_autoware_utils::kmph2mps(60)  /* [m/s] maximum velocity, y */
+    autoware::universe_utils::kmph2mps(60), /* [m/s] maximum velocity, x */
+    autoware::universe_utils::kmph2mps(60)  /* [m/s] maximum velocity, y */
   );
 
   // Set initial state
@@ -103,8 +107,8 @@ UnknownTracker::UnknownTracker(
     }
 
     if (!object.kinematics.has_twist_covariance) {
-      constexpr double p0_stddev_vx = tier4_autoware_utils::kmph2mps(10);  // [m/s]
-      constexpr double p0_stddev_vy = tier4_autoware_utils::kmph2mps(10);  // [m/s]
+      constexpr double p0_stddev_vx = autoware::universe_utils::kmph2mps(10);  // [m/s]
+      constexpr double p0_stddev_vy = autoware::universe_utils::kmph2mps(10);  // [m/s]
       const double p0_cov_vx = std::pow(p0_stddev_vx, 2.0);
       const double p0_cov_vy = std::pow(p0_stddev_vy, 2.0);
       twist_cov[utils::MSG_COV_IDX::X_X] = p0_cov_vx;
@@ -136,11 +140,11 @@ bool UnknownTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_auto_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+autoware_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingObject(
+  const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/)
 {
-  autoware_auto_perception_msgs::msg::DetectedObject updating_object = object;
+  autoware_perception_msgs::msg::DetectedObject updating_object = object;
 
   // UNCERTAINTY MODEL
   if (!object.kinematics.has_position_covariance) {
@@ -161,8 +165,7 @@ autoware_auto_perception_msgs::msg::DetectedObject UnknownTracker::getUpdatingOb
   return updating_object;
 }
 
-bool UnknownTracker::measureWithPose(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+bool UnknownTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
 {
   // update motion model
   bool is_updated = false;
@@ -183,7 +186,7 @@ bool UnknownTracker::measureWithPose(
 }
 
 bool UnknownTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
@@ -200,7 +203,7 @@ bool UnknownTracker::measure(
   }
 
   // update object
-  const autoware_auto_perception_msgs::msg::DetectedObject updating_object =
+  const autoware_perception_msgs::msg::DetectedObject updating_object =
     getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
 
@@ -208,7 +211,7 @@ bool UnknownTracker::measure(
 }
 
 bool UnknownTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();

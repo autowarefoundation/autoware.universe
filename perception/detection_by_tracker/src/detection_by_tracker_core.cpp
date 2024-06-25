@@ -16,8 +16,8 @@
 
 #include "object_recognition_utils/object_recognition_utils.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #include <chrono>
 #include <memory>
@@ -29,7 +29,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 namespace
 {
 void setClusterInObjectWithFeature(
@@ -41,10 +41,10 @@ void setClusterInObjectWithFeature(
   ros_pointcloud.header = header;
   feature_object.feature.cluster = ros_pointcloud;
 }
-autoware_auto_perception_msgs::msg::Shape extendShape(
-  const autoware_auto_perception_msgs::msg::Shape & shape, const float scale)
+autoware_perception_msgs::msg::Shape extendShape(
+  const autoware_perception_msgs::msg::Shape & shape, const float scale)
 {
-  autoware_auto_perception_msgs::msg::Shape output = shape;
+  autoware_perception_msgs::msg::Shape output = shape;
   output.dimensions.x *= scale;
   output.dimensions.y *= scale;
   output.dimensions.z *= scale;
@@ -61,14 +61,14 @@ boost::optional<ReferenceYawInfo> getReferenceYawInfo(const uint8_t label, const
   const bool is_vehicle =
     Label::CAR == label || Label::TRUCK == label || Label::BUS == label || Label::TRAILER == label;
   if (is_vehicle) {
-    return ReferenceYawInfo{yaw, tier4_autoware_utils::deg2rad(30)};
+    return ReferenceYawInfo{yaw, autoware::universe_utils::deg2rad(30)};
   } else {
     return boost::none;
   }
 }
 
 boost::optional<ReferenceShapeSizeInfo> getReferenceShapeSizeInfo(
-  const uint8_t label, const autoware_auto_perception_msgs::msg::Shape & shape)
+  const uint8_t label, const autoware_perception_msgs::msg::Shape & shape)
 {
   const bool is_vehicle =
     Label::CAR == label || Label::TRUCK == label || Label::BUS == label || Label::TRAILER == label;
@@ -81,7 +81,7 @@ boost::optional<ReferenceShapeSizeInfo> getReferenceShapeSizeInfo(
 }  // namespace
 
 void TrackerHandler::onTrackedObjects(
-  const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr msg)
+  const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr msg)
 {
   constexpr size_t max_buffer_size = 10;
 
@@ -95,7 +95,7 @@ void TrackerHandler::onTrackedObjects(
 }
 
 bool TrackerHandler::estimateTrackedObjects(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObjects & output)
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObjects & output)
 {
   if (objects_buffer_.empty()) {
     return false;
@@ -105,8 +105,8 @@ bool TrackerHandler::estimateTrackedObjects(
   const auto target_objects_iter = std::min_element(
     objects_buffer_.cbegin(), objects_buffer_.cend(),
     [&time](
-      autoware_auto_perception_msgs::msg::TrackedObjects first,
-      autoware_auto_perception_msgs::msg::TrackedObjects second) {
+      autoware_perception_msgs::msg::TrackedObjects first,
+      autoware_perception_msgs::msg::TrackedObjects second) {
       return std::fabs((time - first.header.stamp).seconds()) <
              std::fabs((time - second.header.stamp).seconds());
     });
@@ -126,7 +126,7 @@ bool TrackerHandler::estimateTrackedObjects(
     const float & wz = twist.angular.z;
 
     // build output
-    autoware_auto_perception_msgs::msg::TrackedObject estimated_object;
+    autoware_perception_msgs::msg::TrackedObject estimated_object;
     estimated_object.object_id = object.object_id;
     estimated_object.existence_probability = object.existence_probability;
     estimated_object.classification = object.classification;
@@ -136,9 +136,9 @@ bool TrackerHandler::estimateTrackedObjects(
     estimated_object.kinematics.pose_with_covariance.pose.position.y =
       y + vx * std::sin(yaw) * dt.seconds();
     estimated_object.kinematics.pose_with_covariance.pose.position.z = z;
-    const float yaw_hat = tier4_autoware_utils::normalizeRadian(yaw + wz * dt.seconds());
+    const float yaw_hat = autoware::universe_utils::normalizeRadian(yaw + wz * dt.seconds());
     estimated_object.kinematics.pose_with_covariance.pose.orientation =
-      tier4_autoware_utils::createQuaternionFromYaw(yaw_hat);
+      autoware::universe_utils::createQuaternionFromYaw(yaw_hat);
     output.objects.push_back(estimated_object);
   }
   return true;
@@ -150,15 +150,15 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   tf_listener_(tf_buffer_)
 {
   // Create publishers and subscribers
-  trackers_sub_ = create_subscription<autoware_auto_perception_msgs::msg::TrackedObjects>(
+  trackers_sub_ = create_subscription<autoware_perception_msgs::msg::TrackedObjects>(
     "~/input/tracked_objects", rclcpp::QoS{1},
     std::bind(&TrackerHandler::onTrackedObjects, &tracker_handler_, std::placeholders::_1));
   initial_objects_sub_ =
     create_subscription<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
       "~/input/initial_objects", rclcpp::QoS{1},
       std::bind(&DetectionByTracker::onObjects, this, std::placeholders::_1));
-  objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
-    "~/output", rclcpp::QoS{1});
+  objects_pub_ =
+    create_publisher<autoware_perception_msgs::msg::DetectedObjects>("~/output", rclcpp::QoS{1});
 
   // Set parameters
   tracker_ignore_.UNKNOWN = declare_parameter<bool>("tracker_ignore_label.UNKNOWN");
@@ -177,12 +177,13 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
     false, 10, 10000, 0.7, 0.3, 0);
   debugger_ = std::make_shared<Debugger>(this);
-  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ =
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void DetectionByTracker::setMaxSearchRange()
 {
-  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  using Label = autoware_perception_msgs::msg::ObjectClassification;
   // set max search distance for merger
   max_search_distance_for_merger_[Label::UNKNOWN] = 5.0;
   max_search_distance_for_merger_[Label::CAR] = 5.0;
@@ -208,13 +209,13 @@ void DetectionByTracker::onObjects(
   const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg)
 {
   debugger_->startMeasureProcessingTime();
-  autoware_auto_perception_msgs::msg::DetectedObjects detected_objects;
+  autoware_perception_msgs::msg::DetectedObjects detected_objects;
   detected_objects.header = input_msg->header;
 
   // get objects from tracking module
-  autoware_auto_perception_msgs::msg::DetectedObjects tracked_objects;
+  autoware_perception_msgs::msg::DetectedObjects tracked_objects;
   {
-    autoware_auto_perception_msgs::msg::TrackedObjects objects, transformed_objects;
+    autoware_perception_msgs::msg::TrackedObjects objects, transformed_objects;
     const bool available_trackers =
       tracker_handler_.estimateTrackedObjects(input_msg->header.stamp, objects);
     if (
@@ -233,13 +234,13 @@ void DetectionByTracker::onObjects(
 
   // merge over segmented objects
   tier4_perception_msgs::msg::DetectedObjectsWithFeature merged_objects;
-  autoware_auto_perception_msgs::msg::DetectedObjects no_found_tracked_objects;
+  autoware_perception_msgs::msg::DetectedObjects no_found_tracked_objects;
   mergeOverSegmentedObjects(tracked_objects, *input_msg, no_found_tracked_objects, merged_objects);
   debugger_->publishMergedObjects(merged_objects);
 
   // divide under segmented objects
   tier4_perception_msgs::msg::DetectedObjectsWithFeature divided_objects;
-  autoware_auto_perception_msgs::msg::DetectedObjects temp_no_found_tracked_objects;
+  autoware_perception_msgs::msg::DetectedObjects temp_no_found_tracked_objects;
   divideUnderSegmentedObjects(
     no_found_tracked_objects, *input_msg, temp_no_found_tracked_objects, divided_objects);
   debugger_->publishDividedObjects(divided_objects);
@@ -258,9 +259,9 @@ void DetectionByTracker::onObjects(
 }
 
 void DetectionByTracker::divideUnderSegmentedObjects(
-  const autoware_auto_perception_msgs::msg::DetectedObjects & tracked_objects,
+  const autoware_perception_msgs::msg::DetectedObjects & tracked_objects,
   const tier4_perception_msgs::msg::DetectedObjectsWithFeature & in_cluster_objects,
-  autoware_auto_perception_msgs::msg::DetectedObjects & out_no_found_tracked_objects,
+  autoware_perception_msgs::msg::DetectedObjects & out_no_found_tracked_objects,
   tier4_perception_msgs::msg::DetectedObjectsWithFeature & out_objects)
 {
   constexpr float recall_min_threshold = 0.4;
@@ -283,7 +284,7 @@ void DetectionByTracker::divideUnderSegmentedObjects(
 
     for (const auto & initial_object : in_cluster_objects.feature_objects) {
       // search near object
-      const float distance = tier4_autoware_utils::calcDistance2d(
+      const float distance = autoware::universe_utils::calcDistance2d(
         tracked_object.kinematics.pose_with_covariance.pose,
         initial_object.object.kinematics.pose_with_covariance.pose);
       if (max_search_range < distance) {
@@ -321,7 +322,7 @@ void DetectionByTracker::divideUnderSegmentedObjects(
 }
 
 float DetectionByTracker::optimizeUnderSegmentedObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & target_object,
+  const autoware_perception_msgs::msg::DetectedObject & target_object,
   const sensor_msgs::msg::PointCloud2 & under_segmented_cluster,
   tier4_perception_msgs::msg::DetectedObjectWithFeature & output)
 {
@@ -397,9 +398,9 @@ float DetectionByTracker::optimizeUnderSegmentedObject(
 }
 
 void DetectionByTracker::mergeOverSegmentedObjects(
-  const autoware_auto_perception_msgs::msg::DetectedObjects & tracked_objects,
+  const autoware_perception_msgs::msg::DetectedObjects & tracked_objects,
   const tier4_perception_msgs::msg::DetectedObjectsWithFeature & in_cluster_objects,
-  autoware_auto_perception_msgs::msg::DetectedObjects & out_no_found_tracked_objects,
+  autoware_perception_msgs::msg::DetectedObjects & out_no_found_tracked_objects,
   tier4_perception_msgs::msg::DetectedObjectsWithFeature & out_objects)
 {
   constexpr float precision_threshold = 0.5;
@@ -414,12 +415,12 @@ void DetectionByTracker::mergeOverSegmentedObjects(
     const float max_search_range = max_search_distance_for_merger_[label];
 
     // extend shape
-    autoware_auto_perception_msgs::msg::DetectedObject extended_tracked_object = tracked_object;
+    autoware_perception_msgs::msg::DetectedObject extended_tracked_object = tracked_object;
     extended_tracked_object.shape = extendShape(tracked_object.shape, /*scale*/ 1.1);
 
     pcl::PointCloud<pcl::PointXYZ> pcl_merged_cluster;
     for (const auto & initial_object : in_cluster_objects.feature_objects) {
-      const float distance = tier4_autoware_utils::calcDistance2d(
+      const float distance = autoware::universe_utils::calcDistance2d(
         tracked_object.kinematics.pose_with_covariance.pose,
         initial_object.object.kinematics.pose_with_covariance.pose);
 

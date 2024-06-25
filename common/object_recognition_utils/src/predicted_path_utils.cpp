@@ -23,7 +23,7 @@
 namespace object_recognition_utils
 {
 boost::optional<geometry_msgs::msg::Pose> calcInterpolatedPose(
-  const autoware_auto_perception_msgs::msg::PredictedPath & path, const double relative_time)
+  const autoware_perception_msgs::msg::PredictedPath & path, const double relative_time)
 {
   // Check if relative time is in the valid range
   if (path.path.empty() || relative_time < 0.0) {
@@ -38,15 +38,15 @@ boost::optional<geometry_msgs::msg::Pose> calcInterpolatedPose(
     if (relative_time - epsilon < time_step * path_idx) {
       const double offset = relative_time - time_step * (path_idx - 1);
       const double ratio = std::clamp(offset / time_step, 0.0, 1.0);
-      return tier4_autoware_utils::calcInterpolatedPose(prev_pt, pt, ratio, false);
+      return autoware::universe_utils::calcInterpolatedPose(prev_pt, pt, ratio, false);
     }
   }
 
   return boost::none;
 }
 
-autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
-  const autoware_auto_perception_msgs::msg::PredictedPath & path,
+autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
+  const autoware_perception_msgs::msg::PredictedPath & path,
   const std::vector<double> & resampled_time, const bool use_spline_for_xy,
   const bool use_spline_for_z)
 {
@@ -83,14 +83,14 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
   const auto interpolated_z = use_spline_for_z ? spline(z) : lerp(z);
   const auto interpolated_quat = slerp(quat);
 
-  autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
+  autoware_perception_msgs::msg::PredictedPath resampled_path;
   const auto resampled_size = std::min(resampled_path.path.max_size(), resampled_time.size());
   resampled_path.confidence = path.confidence;
   resampled_path.path.resize(resampled_size);
 
   // Set Position
   for (size_t i = 0; i < resampled_size; ++i) {
-    const auto p = tier4_autoware_utils::createPoint(
+    const auto p = autoware::universe_utils::createPoint(
       interpolated_x.at(i), interpolated_y.at(i), interpolated_z.at(i));
     resampled_path.path.at(i).position = p;
     resampled_path.path.at(i).orientation = interpolated_quat.at(i);
@@ -99,10 +99,9 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
   return resampled_path;
 }
 
-autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
-  const autoware_auto_perception_msgs::msg::PredictedPath & path,
-  const double sampling_time_interval, const double sampling_horizon, const bool use_spline_for_xy,
-  const bool use_spline_for_z)
+autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
+  const autoware_perception_msgs::msg::PredictedPath & path, const double sampling_time_interval,
+  const double sampling_horizon, const bool use_spline_for_xy, const bool use_spline_for_z)
 {
   if (path.path.empty()) {
     throw std::invalid_argument("Predicted Path is empty");

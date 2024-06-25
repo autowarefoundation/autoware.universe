@@ -14,7 +14,7 @@
 
 #include "gyro_bias_estimator.hpp"
 
-#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -23,8 +23,8 @@
 
 namespace imu_corrector
 {
-GyroBiasEstimator::GyroBiasEstimator()
-: Node("gyro_bias_validator"),
+GyroBiasEstimator::GyroBiasEstimator(const rclcpp::NodeOptions & options)
+: rclcpp::Node("gyro_bias_validator", options),
   gyro_bias_threshold_(declare_parameter<double>("gyro_bias_threshold")),
   angular_velocity_offset_x_(declare_parameter<double>("angular_velocity_offset_x")),
   angular_velocity_offset_y_(declare_parameter<double>("angular_velocity_offset_y")),
@@ -59,7 +59,7 @@ GyroBiasEstimator::GyroBiasEstimator()
     this->get_node_base_interface()->get_context());
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 
-  transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
+  transform_listener_ = std::make_shared<autoware::universe_utils::TransformListener>(this);
 
   // initialize diagnostics_info_
   {
@@ -150,10 +150,10 @@ void GyroBiasEstimator::timer_callback()
 
   // Check if the vehicle is moving straight
   const geometry_msgs::msg::Vector3 rpy_0 =
-    tier4_autoware_utils::getRPY(pose_buf.front().pose.orientation);
+    autoware::universe_utils::getRPY(pose_buf.front().pose.orientation);
   const geometry_msgs::msg::Vector3 rpy_1 =
-    tier4_autoware_utils::getRPY(pose_buf.back().pose.orientation);
-  const double yaw_diff = std::abs(tier4_autoware_utils::normalizeRadian(rpy_1.z - rpy_0.z));
+    autoware::universe_utils::getRPY(pose_buf.back().pose.orientation);
+  const double yaw_diff = std::abs(autoware::universe_utils::normalizeRadian(rpy_1.z - rpy_0.z));
   const double time_diff = (t1_rclcpp_time - t0_rclcpp_time).seconds();
   const double yaw_vel = yaw_diff / time_diff;
   const bool is_straight = (yaw_vel < straight_motion_ang_vel_upper_limit_);
@@ -244,3 +244,6 @@ void GyroBiasEstimator::update_diagnostics(diagnostic_updater::DiagnosticStatusW
 }
 
 }  // namespace imu_corrector
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(imu_corrector::GyroBiasEstimator)
