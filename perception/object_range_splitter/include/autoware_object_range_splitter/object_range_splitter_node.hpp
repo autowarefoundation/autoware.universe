@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBJECT_RANGE_SPLITTER__OBJECT_RANGE_SPLITTER_NODE_HPP_
-#define AUTOWARE__OBJECT_RANGE_SPLITTER__OBJECT_RANGE_SPLITTER_NODE_HPP_
+#ifndef AUTOWARE_OBJECT_RANGE_SPLITTER__OBJECT_RANGE_SPLITTER_NODE_HPP_
+#define AUTOWARE_OBJECT_RANGE_SPLITTER__OBJECT_RANGE_SPLITTER_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -44,4 +44,4 @@ private:
 
 }  // namespace autoware::object_range_splitter
 
-#endif  // AUTOWARE__OBJECT_RANGE_SPLITTER__OBJECT_RANGE_SPLITTER_NODE_HPP_
+#endif  // AUTOWARE_OBJECT_RANGE_SPLITTER__OBJECT_RANGE_SPLITTER_NODE_HPP_
