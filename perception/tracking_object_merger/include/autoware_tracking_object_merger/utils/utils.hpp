@@ -14,8 +14,8 @@
 //
 //
 
-#ifndef AUTOWARE__TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
-#define AUTOWARE__TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
+#ifndef AUTOWARE_TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
+#define AUTOWARE_TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
 
 // #include <autoware/universe_utils/autoware_universe_utils.hpp>
 #include "autoware/universe_utils/geometry/geometry.hpp"
@@ -101,4 +101,4 @@ void updateWholeTrackedObject(TrackedObject & main_obj, const TrackedObject & su
 
 }  // namespace autoware::tracking_object_merger
 
-#endif  // AUTOWARE__TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
+#endif  // AUTOWARE_TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
