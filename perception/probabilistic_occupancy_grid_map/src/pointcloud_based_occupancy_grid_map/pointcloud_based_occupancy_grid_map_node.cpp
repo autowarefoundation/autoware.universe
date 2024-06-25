@@ -147,7 +147,7 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   bool is_obstacle_transformed = false;
   // Prepare for applying height filter
   if (use_height_filter_) {
-    // make sure that frame is base_link
+    // Make sure that the frame is base_link
     if (input_raw_msg->header.frame_id != base_link_frame_) {
       if (!utils::transformPointcloud(*input_raw_msg, *tf2_, base_link_frame_, trans_input_raw)) {
         return;

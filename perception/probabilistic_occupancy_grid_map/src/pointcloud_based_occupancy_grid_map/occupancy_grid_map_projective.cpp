@@ -110,6 +110,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
   const size_t obstacle_reserve_size = obstacle_pointcloud_size / angle_bin_size;
+  // Reserve a certain amount of memory in advance for performance reasons
   for (auto & raw_pointcloud_angle_bin : raw_pointcloud_angle_bins) {
     raw_pointcloud_angle_bin.reserve(raw_reserve_size);
   }
