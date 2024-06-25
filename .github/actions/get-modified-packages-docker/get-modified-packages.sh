@@ -1,5 +1,6 @@
 #!/bin/bash
 # Usage: get-modified-packages.sh '<modified_files>'
+# modified_files: line-separated list of modified files
 
 # Parse arguments
 args=()

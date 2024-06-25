@@ -50,14 +50,16 @@ runs:
       run: |
         echo ${{ steps.get-modified-files.outputs.modified-files }}
         echo ""
-        docker run --shm-size 1G \
+        modified_packages=$( \
+          docker run --shm-size 1G \
           -v ${{ github.workspace }}:/workspace \
           -w /workspace \
           -e GITHUB_ACTION_PATH \
           -v ${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH} \
           ghcr.io/autowarefoundation/autoware:latest-prebuilt \
           /bin/bash -c \
-          "ls -alF && ${GITHUB_ACTION_PATH}/get-modified-packages.sh '${{ steps.get-modified-files.outputs.modified-files }}'"
+          "${GITHUB_ACTION_PATH}/get-modified-packages.sh '${{ steps.get-modified-files.outputs.modified-files }}'" \
+        )
         echo "modified-packages=$modified_packages" >> $GITHUB_OUTPUT
       shell: bash
 
