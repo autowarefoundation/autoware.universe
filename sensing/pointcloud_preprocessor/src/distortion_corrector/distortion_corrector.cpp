@@ -14,7 +14,7 @@
 
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
-#include "tier4_autoware_utils/math/trigonometry.hpp"
+#include "autoware/universe_utils/math/trigonometry.hpp"
 
 #include <tf2_eigen/tf2_eigen.hpp>
 
@@ -349,11 +349,11 @@ inline void DistortionCorrector2D::undistortPointImplementation(
   }
   theta_ += w * time_offset;
   baselink_quat_.setValue(
-    0, 0, tier4_autoware_utils::sin(theta_ * 0.5f),
-    tier4_autoware_utils::cos(theta_ * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
+    0, 0, autoware::universe_utils::sin(theta_ * 0.5f),
+    autoware::universe_utils::cos(theta_ * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
   const float dis = v * time_offset;
-  x_ += dis * tier4_autoware_utils::cos(theta_);
-  y_ += dis * tier4_autoware_utils::sin(theta_);
+  x_ += dis * autoware::universe_utils::cos(theta_);
+  y_ += dis * autoware::universe_utils::sin(theta_);
 
   baselink_tf_odom_.setOrigin(tf2::Vector3(x_, y_, 0.0));
   baselink_tf_odom_.setRotation(baselink_quat_);

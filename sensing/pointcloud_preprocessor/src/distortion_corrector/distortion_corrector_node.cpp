@@ -24,8 +24,8 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
 {
   // initialize debug tool
 
-  using tier4_autoware_utils::DebugPublisher;
-  using tier4_autoware_utils::StopWatch;
+  using autoware::universe_utils::DebugPublisher;
+  using autoware::universe_utils::StopWatch;
   stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
   debug_publisher_ = std::make_unique<DebugPublisher>(this, "distortion_corrector");
   stop_watch_ptr_->tic("cyclic_time");
