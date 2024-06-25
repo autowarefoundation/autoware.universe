@@ -92,7 +92,7 @@ void SimModelDelaySteerAccGearedWoFallGuard::update(const double & dt)
   const auto prev_state = state_;
   updateEuler(dt, delayed_input);
   // we cannot use updateRungeKutta() because the differentiability or the continuity condition is
-  // not sutisfied, but we can use Runge-Kutta method with code restruction.
+  // not satisfied, but we can use Runge-Kutta method with code reconstruction.
 
   // take velocity limit explicitly
   state_(IDX::VX) = std::max(-vx_lim_, std::min(state_(IDX::VX), vx_lim_));
