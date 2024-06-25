@@ -10,7 +10,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::object_range_splitter::ObjectRangeSplitterNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTABLE object_range_splitter_node
 )
 
 ament_auto_package(
