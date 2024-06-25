@@ -44,8 +44,6 @@ enum class PointType : int8_t { Stop = 0 };
 
 enum class PoseType : int8_t { Stop = 0, Collision };
 
-enum class Hege : int8_t { Stop = 0 };
-
 class PredictedPathCheckerDebugNode
 {
 public:
