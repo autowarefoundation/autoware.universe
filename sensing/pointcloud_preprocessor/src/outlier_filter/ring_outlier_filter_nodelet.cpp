@@ -35,7 +35,7 @@ RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "ring_outlier_filter");
     {
       rclcpp::PublisherOptions pub_options;
-      pub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();     
+      pub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
       outlier_pointcloud_publisher_ =
         this->create_publisher<PointCloud2>("debug/ring_outlier_filter", 1, pub_options);
     }
