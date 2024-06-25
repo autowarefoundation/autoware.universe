@@ -51,7 +51,7 @@
 
 #include "pointcloud_preprocessor/filter.hpp"
 
-#include "pointcloud_preprocessor/utility/utilities.hpp"
+#include "pointcloud_preprocessor/utility/memory.hpp"
 
 #include <pcl_ros/transforms.hpp>
 

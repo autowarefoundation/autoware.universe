@@ -24,17 +24,7 @@ include_directories(
 
 add_library(pointcloud_preprocessor_filter_base SHARED
   src/filter.cpp
-  src/utility/utilities.cpp
-)
-
-set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
-
-target_link_libraries(pointcloud_preprocessor_filter_base
-  ${autoware_point_types_LIBRARIES}
-  gmp
-  CGAL
-  CGAL::CGAL
-  CGAL::CGAL_Core
+  src/utility/memory.cpp
 )
 
 target_include_directories(pointcloud_preprocessor_filter_base PUBLIC
@@ -51,6 +41,7 @@ ament_target_dependencies(pointcloud_preprocessor_filter_base
   tf2_ros
   autoware_universe_utils
   pcl_ros
+  autoware_point_types
 )
 
 add_library(faster_voxel_grid_downsample_filter SHARED
@@ -90,6 +81,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/blockage_diag/blockage_diag_nodelet.cpp
   src/polygon_remover/polygon_remover.cpp
   src/vector_map_filter/vector_map_inside_area_filter.cpp
+  src/utility/geometry.cpp
 )
 
 target_link_libraries(pointcloud_preprocessor_filter

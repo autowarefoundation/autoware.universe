@@ -51,7 +51,7 @@
 
 #include "pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_nodelet.hpp"
 
-#include "pointcloud_preprocessor/utility/utilities.hpp"
+#include "pointcloud_preprocessor/utility/memory.hpp"
 
 #include <pcl_ros/transforms.hpp>
 
