@@ -35,15 +35,14 @@ runs:
     - name: Get modified packages
       id: get-modified-packages
       run: |
-        modified_packages=$(docker run --shm-size 1G \
+        docker run --shm-size 1G \
           -v ${{ github.workspace }}:/workspace \
           -w /workspace \
           -e GITHUB_ACTION_PATH \
           -v ${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH} \
           ghcr.io/autowarefoundation/autoware:latest-prebuilt \
           /bin/bash -c \
-          "${GITHUB_ACTION_PATH}/get-modified-packages.sh origin/${{ inputs.base-ref }}" \
-          )
+          "ls -alF && tree -L 2 && ${GITHUB_ACTION_PATH}/get-modified-packages.sh origin/${{ inputs.base-ref }}"
         echo "modified-packages=$modified_packages" >> $GITHUB_OUTPUT
       shell: bash
 
