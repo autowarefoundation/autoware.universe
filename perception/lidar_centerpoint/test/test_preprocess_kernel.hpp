@@ -28,7 +28,7 @@ public:
   void SetUp() override;
   void TearDown() override;
 
-  cudaStream_t stream_{};
+  cudaStream_t stream_{nullptr};
 
   std::size_t max_voxel_size_{};
   std::size_t max_point_in_voxel_size_{};

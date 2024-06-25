@@ -14,18 +14,19 @@
 
 #include "lidar_centerpoint/preprocess/pointcloud_densification.hpp"
 
-#include "pcl_conversions/pcl_conversions.h"
-#include "pcl_ros/transforms.hpp"
+#include <pcl_ros/transforms.hpp>
 
-#include "boost/optional.hpp"
+#include <boost/optional.hpp>
+
+#include <pcl_conversions/pcl_conversions.h>
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_eigen/tf2_eigen.h>
+#else
+#include <tf2_eigen/tf2_eigen.hpp>
+#endif
 
 #include <string>
 #include <utility>
-#ifdef ROS_DISTRO_GALACTIC
-#include "tf2_eigen/tf2_eigen.h"
-#else
-#include "tf2_eigen/tf2_eigen.hpp"
-#endif
 
 namespace
 {
@@ -60,8 +61,7 @@ PointCloudDensification::PointCloudDensification(const DensificationParam & para
 }
 
 bool PointCloudDensification::enqueuePointCloud(
-  const sensor_msgs::msg::PointCloud2 & pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-  cudaStream_t stream)
+  const sensor_msgs::msg::PointCloud2 & pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
 {
   const auto header = pointcloud_msg.header;
 
@@ -73,9 +73,9 @@ bool PointCloudDensification::enqueuePointCloud(
     }
     auto affine_world2current = transformToEigen(transform_world2current.get());
 
-    enqueue(pointcloud_msg, affine_world2current, stream);
+    enqueue(pointcloud_msg, affine_world2current);
   } else {
-    enqueue(pointcloud_msg, Eigen::Affine3f::Identity(), stream);
+    enqueue(pointcloud_msg, Eigen::Affine3f::Identity());
   }
 
   dequeue();
@@ -84,24 +84,12 @@ bool PointCloudDensification::enqueuePointCloud(
 }
 
 void PointCloudDensification::enqueue(
-  const sensor_msgs::msg::PointCloud2 & msg, const Eigen::Affine3f & affine_world2current,
-  cudaStream_t stream)
+  const sensor_msgs::msg::PointCloud2 & msg, const Eigen::Affine3f & affine_world2current)
 {
   affine_world2current_ = affine_world2current;
   current_timestamp_ = rclcpp::Time(msg.header.stamp).seconds();
-
-  assert(sizeof(uint8_t) * msg.width * msg.height * msg.point_step % sizeof(float) == 0);
-  auto points_d = cuda::make_unique<float[]>(
-    sizeof(uint8_t) * msg.width * msg.height * msg.point_step / sizeof(float));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    points_d.get(), msg.data.data(), sizeof(uint8_t) * msg.width * msg.height * msg.point_step,
-    cudaMemcpyHostToDevice, stream));
-
-  PointCloudWithTransform pointcloud = {
-    std::move(points_d), msg.header, msg.width * msg.height, msg.point_step,
-    affine_world2current.inverse()};
-
-  pointcloud_cache_.push_front(std::move(pointcloud));
+  PointCloudWithTransform pointcloud = {msg, affine_world2current.inverse()};
+  pointcloud_cache_.push_front(pointcloud);
 }
 
 void PointCloudDensification::dequeue()
