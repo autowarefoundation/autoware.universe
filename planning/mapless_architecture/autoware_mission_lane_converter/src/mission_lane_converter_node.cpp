@@ -19,7 +19,6 @@
 namespace autoware::mapless_architecture
 {
 using std::placeholders::_1;
-using namespace lib_mission_planner;
 
 MissionLaneConverterNode::MissionLaneConverterNode() : Node("mission_lane_converter_node")
 {
@@ -453,7 +452,8 @@ void MissionLaneConverterNode::AddHeadingToTrajectory_(
   return;
 }
 
-// TODO: store the latest odometry message here and then re-use in the output conversion
+// TODO(thomas.herrmann@driveblocks.ai): store the latest odometry message here and then re-use in
+// the output conversion
 void MissionLaneConverterNode::CallbackOdometryMessages_(const nav_msgs::msg::Odometry & msg)
 {
   // store current odometry information

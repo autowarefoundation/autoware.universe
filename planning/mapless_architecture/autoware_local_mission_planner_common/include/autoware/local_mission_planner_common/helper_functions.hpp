@@ -14,11 +14,10 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
+#include <tuple>
 #include <vector>
 
 namespace autoware::mapless_architecture
-{
-namespace lib_mission_planner
 {
 
 /**
@@ -277,7 +276,6 @@ int FindOccupiedLaneletID(
  */
 int FindEgoOccupiedLaneletID(const std::vector<lanelet::Lanelet> & lanelets);
 
-}  // namespace lib_mission_planner
 }  // namespace autoware::mapless_architecture
 
 #endif  // AUTOWARE__LOCAL_MISSION_PLANNER_COMMON__HELPER_FUNCTIONS_HPP_

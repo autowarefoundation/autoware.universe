@@ -30,7 +30,6 @@
 namespace autoware::mapless_architecture
 {
 using std::placeholders::_1;
-using namespace lib_mission_planner;
 
 MissionPlannerNode::MissionPlannerNode() : Node("mission_planner_node")
 {

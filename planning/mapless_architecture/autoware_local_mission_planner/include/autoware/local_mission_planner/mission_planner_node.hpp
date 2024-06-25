@@ -29,7 +29,6 @@
 
 namespace autoware::mapless_architecture
 {
-using namespace lib_mission_planner;
 
 // Create Direction data type
 typedef int Direction;

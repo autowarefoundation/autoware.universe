@@ -10,8 +10,6 @@
 
 namespace autoware::mapless_architecture
 {
-namespace lib_mission_planner
-{
 
 double NormalizePsi(const double psi)
 {
@@ -441,7 +439,5 @@ int FindEgoOccupiedLaneletID(const std::vector<lanelet::Lanelet> & lanelets)
 
   return FindOccupiedLaneletID(lanelets, position_ego);
 }
-
-}  // namespace lib_mission_planner
 
 }  // namespace autoware::mapless_architecture
