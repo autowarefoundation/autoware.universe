@@ -548,8 +548,14 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
 void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   const auto ego_odom_ptr = ego_odom_sub_.takeData();
-  const auto objects_ptr = objects_sub_.takeData();
-  const auto pointcloud_ptr = pointcloud_sub_.takeData();
+  const auto [pointcloud_ptr, objects_ptr] =
+    [&]() -> std::pair<PointCloud2::ConstSharedPtr, PredictedObjects::ConstSharedPtr> {
+    if (use_pointcloud_) {
+      return std::make_pair(pointcloud_sub_.takeData(), nullptr);
+    } else {
+      return std::make_pair(nullptr, objects_sub_.takeData());
+    }
+  }();
   const auto acc_ptr = acc_sub_.takeData();
   if (
     !ego_odom_ptr || (!use_pointcloud_ && !objects_ptr) || (use_pointcloud_ && !pointcloud_ptr) ||
