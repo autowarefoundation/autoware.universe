@@ -64,7 +64,8 @@ class PidLongitudinalController : public trajectory_follower::LongitudinalContro
 {
 public:
   /// \param node Reference to the node used only for the component and parameter initialization.
-  explicit PidLongitudinalController(rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater);
+  explicit PidLongitudinalController(
+    rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater);
 
 private:
   struct Motion

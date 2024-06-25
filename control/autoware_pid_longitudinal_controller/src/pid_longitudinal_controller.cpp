@@ -27,7 +27,8 @@
 
 namespace autoware::motion::control::pid_longitudinal_controller
 {
-PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater)
+PidLongitudinalController::PidLongitudinalController(
+  rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater)
 : node_parameters_(node.get_node_parameters_interface()),
   clock_(node.get_clock()),
   logger_(node.get_logger().get_child("longitudinal_controller"))
