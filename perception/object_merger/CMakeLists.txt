@@ -19,8 +19,8 @@ include_directories(
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/data_association/data_association.cpp
-  src/data_association/mu_ssp/mu_successive_shortest_path_wrapper.cpp
+  src/association/data_association.cpp
+  src/association/solver/mu_successive_shortest_path_wrapper.cpp
   src/object_association_merger_node.cpp
 )
 
