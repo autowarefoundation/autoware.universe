@@ -31,7 +31,7 @@ LocalRoadProviderNode::LocalRoadProviderNode() : Node("local_road_provider_node"
 void LocalRoadProviderNode::CallbackLaneletsMessages_(const db_msgs::msg::LaneletsStamped & msg)
 {
   autoware_planning_msgs::msg::RoadSegments road_segments =
-    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(msg);
+    ConvertLaneletsStamped2RoadSegments(msg);
 
   // Publish the RoadSegments message
   road_publisher_->publish(road_segments);

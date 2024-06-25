@@ -167,7 +167,7 @@ int TestGetPointOnLane()
 
   // Convert message
   autoware_planning_msgs::msg::RoadSegments road_segments =
-    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(msg_lanelets);
+    ConvertLaneletsStamped2RoadSegments(msg_lanelets);
 
   MissionPlanner.ConvertInput2LaneletFormat(road_segments, lanelets, lanelet_connections);
 
@@ -205,7 +205,7 @@ int TestIsOnGoalLane()
 
   // Convert message
   autoware_planning_msgs::msg::RoadSegments road_segments =
-    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(msg_road_model);
+    ConvertLaneletsStamped2RoadSegments(msg_road_model);
 
   MissionPlanner.ConvertInput2LaneletFormat(road_segments, lanelets, lanelet_connections);
 
@@ -330,7 +330,7 @@ int TestRecenterGoalpoint()
 
   // Convert message
   autoware_planning_msgs::msg::RoadSegments road_segments =
-    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(local_road_model);
+    ConvertLaneletsStamped2RoadSegments(local_road_model);
 
   mission_planner.ConvertInput2LaneletFormat(
     road_segments, converted_lanelets, lanelet_connections);
@@ -396,7 +396,7 @@ int TestCheckIfGoalPointShouldBeReset()
 
   // Convert message
   autoware_planning_msgs::msg::RoadSegments road_segments =
-    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(msg);
+    ConvertLaneletsStamped2RoadSegments(msg);
   autoware_planning_msgs::msg::LocalMap local_map;
   local_map.road_segments = road_segments;
 
@@ -542,7 +542,7 @@ std::tuple<std::vector<lanelet::Lanelet>, std::vector<LaneletConnection>> Create
 
   // Convert message
   autoware_planning_msgs::msg::RoadSegments road_segments =
-    lib_mission_planner::ConvertLaneletsStamped2RoadSegments(message);
+    ConvertLaneletsStamped2RoadSegments(message);
 
   MissionPlanner.ConvertInput2LaneletFormat(road_segments, converted_lanelets, lanelet_connections);
   return std::make_tuple(converted_lanelets, lanelet_connections);
