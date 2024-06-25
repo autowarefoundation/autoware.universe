@@ -199,7 +199,6 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   occupancy_grid_map_ptr_->updateOrigin(
     gridmap_origin.position.x - occupancy_grid_map_ptr_->getSizeInMetersX() / 2,
     gridmap_origin.position.y - occupancy_grid_map_ptr_->getSizeInMetersY() / 2);
-
   occupancy_grid_map_ptr_->updateWithPointCloud(
     *input_raw_use, (use_input_obstacle_pc_common ? input_obstacle_pc_common : *input_obstacle_use),
     robot_pose, scan_origin);

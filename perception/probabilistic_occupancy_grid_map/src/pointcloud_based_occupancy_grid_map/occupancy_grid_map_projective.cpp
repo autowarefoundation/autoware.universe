@@ -59,6 +59,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   constexpr double min_angle = autoware::universe_utils::deg2rad(-180.0);
   constexpr double max_angle = autoware::universe_utils::deg2rad(180.0);
   constexpr double angle_increment = autoware::universe_utils::deg2rad(0.1);
+  const auto angle_increment_inv = 1.0 / angle_increment;
   const size_t angle_bin_size = ((max_angle - min_angle) / angle_increment) + size_t(1 /*margin*/);
 
   // Transform from base_link to map frame
@@ -94,7 +95,6 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
     double projected_wx;
     double projected_wy;
   };
-
   std::vector</*angle bin*/ std::vector<BinInfo3D>> obstacle_pointcloud_angle_bins(angle_bin_size);
   std::vector</*angle bin*/ std::vector<BinInfo3D>> raw_pointcloud_angle_bins(angle_bin_size);
   const int x_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "x")].offset;
@@ -108,7 +108,6 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
     obstacle_pointcloud.fields[pcl::getFieldIndex(obstacle_pointcloud, "z")].offset;
   const size_t raw_pointcloud_size = raw_pointcloud.width * raw_pointcloud.height;
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
-
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
   const size_t obstacle_reserve_size = obstacle_pointcloud_size / angle_bin_size;
   for (auto & raw_pointcloud_angle_bin : raw_pointcloud_angle_bins) {
@@ -118,8 +117,6 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
     obstacle_pointcloud_angle_bin.reserve(obstacle_reserve_size);
   }
   size_t global_offset = 0;
-  const auto angle_increment_inv = 1.0 / angle_increment;
-
   for (size_t i = 0; i < raw_pointcloud_size; i++) {
     Eigen::Vector4f pt(
       *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + x_offset_raw]),
@@ -151,8 +148,8 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       return a.range < b.range;
     });
   }
-
   global_offset = 0;
+  // Create obstacle angle bins and sort points by range
   for (size_t i = 0; i < obstacle_pointcloud_size; i++) {
     Eigen::Vector4f pt(
       *reinterpret_cast<const float *>(

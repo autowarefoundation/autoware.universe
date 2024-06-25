@@ -55,7 +55,6 @@ class PointcloudBasedOccupancyGridMapNode : public rclcpp::Node
 {
 public:
   explicit PointcloudBasedOccupancyGridMapNode(const rclcpp::NodeOptions & node_options);
-  ~PointcloudBasedOccupancyGridMapNode();
 
 private:
   void onPointcloudWithObstacleAndRaw(
