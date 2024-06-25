@@ -16,16 +16,16 @@
 
 #include "utility_functions.hpp"
 
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/normalization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -39,20 +39,6 @@
 namespace
 {
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
-RouteSections combine_consecutive_route_sections(
-  const RouteSections & route_sections1, const RouteSections & route_sections2)
-{
-  RouteSections route_sections;
-  route_sections.reserve(route_sections1.size() + route_sections2.size());
-  if (!route_sections1.empty()) {
-    // remove end route section because it is overlapping with first one in next route_section
-    route_sections.insert(route_sections.end(), route_sections1.begin(), route_sections1.end() - 1);
-  }
-  if (!route_sections2.empty()) {
-    route_sections.insert(route_sections.end(), route_sections2.begin(), route_sections2.end());
-  }
-  return route_sections;
-}
 
 bool is_in_lane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point)
 {
@@ -122,8 +108,8 @@ geometry_msgs::msg::Pose get_closest_centerline_pose(
 
   const double lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, point.position);
 
-  const auto nearest_idx =
-    motion_utils::findNearestIndex(convertCenterlineToPoints(closest_lanelet), point.position);
+  const auto nearest_idx = autoware::motion_utils::findNearestIndex(
+    convertCenterlineToPoints(closest_lanelet), point.position);
   const auto nearest_point = closest_lanelet.centerline()[nearest_idx];
 
   // shift nearest point on its local y axis so that vehicle's right and left edges
@@ -204,13 +190,13 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route)
   }
 
   const std_msgs::msg::ColorRGBA cl_route =
-    tier4_autoware_utils::createMarkerColor(0.8, 0.99, 0.8, 0.15);
+    autoware::universe_utils::createMarkerColor(0.8, 0.99, 0.8, 0.15);
   const std_msgs::msg::ColorRGBA cl_ll_borders =
-    tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.999);
+    autoware::universe_utils::createMarkerColor(1.0, 1.0, 1.0, 0.999);
   const std_msgs::msg::ColorRGBA cl_end =
-    tier4_autoware_utils::createMarkerColor(0.2, 0.2, 0.4, 0.05);
+    autoware::universe_utils::createMarkerColor(0.2, 0.2, 0.4, 0.05);
   const std_msgs::msg::ColorRGBA cl_goal =
-    tier4_autoware_utils::createMarkerColor(0.2, 0.4, 0.4, 0.05);
+    autoware::universe_utils::createMarkerColor(0.2, 0.4, 0.4, 0.05);
 
   visualization_msgs::msg::MarkerArray route_marker_array;
   insert_marker_array(
@@ -230,27 +216,27 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route)
 }
 
 visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
-  tier4_autoware_utils::LinearRing2d goal_footprint) const
+  autoware::universe_utils::LinearRing2d goal_footprint) const
 {
   visualization_msgs::msg::MarkerArray msg;
-  auto marker = tier4_autoware_utils::createDefaultMarker(
+  auto marker = autoware::universe_utils::createDefaultMarker(
     "map", rclcpp::Clock().now(), "goal_footprint", 0, visualization_msgs::msg::Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(0.05, 0.0, 0.0),
-    tier4_autoware_utils::createMarkerColor(0.99, 0.99, 0.2, 1.0));
+    autoware::universe_utils::createMarkerScale(0.05, 0.0, 0.0),
+    autoware::universe_utils::createMarkerColor(0.99, 0.99, 0.2, 1.0));
   marker.lifetime = rclcpp::Duration::from_seconds(2.5);
 
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint[0][0], goal_footprint[0][1], 0.0));
+    autoware::universe_utils::createPoint(goal_footprint[0][0], goal_footprint[0][1], 0.0));
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint[1][0], goal_footprint[1][1], 0.0));
+    autoware::universe_utils::createPoint(goal_footprint[1][0], goal_footprint[1][1], 0.0));
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint[2][0], goal_footprint[2][1], 0.0));
+    autoware::universe_utils::createPoint(goal_footprint[2][0], goal_footprint[2][1], 0.0));
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint[3][0], goal_footprint[3][1], 0.0));
+    autoware::universe_utils::createPoint(goal_footprint[3][0], goal_footprint[3][1], 0.0));
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint[4][0], goal_footprint[4][1], 0.0));
+    autoware::universe_utils::createPoint(goal_footprint[4][0], goal_footprint[4][1], 0.0));
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint[5][0], goal_footprint[5][1], 0.0));
+    autoware::universe_utils::createPoint(goal_footprint[5][0], goal_footprint[5][1], 0.0));
   marker.points.push_back(marker.points.front());
 
   msg.markers.push_back(marker);
@@ -261,7 +247,7 @@ visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
 bool DefaultPlanner::check_goal_footprint_inside_lanes(
   const lanelet::ConstLanelet & current_lanelet,
   const lanelet::ConstLanelet & combined_prev_lanelet,
-  const tier4_autoware_utils::Polygon2d & goal_footprint, double & next_lane_length,
+  const autoware::universe_utils::Polygon2d & goal_footprint, double & next_lane_length,
   const double search_margin)
 {
   // check if goal footprint is in current lane
@@ -316,8 +302,8 @@ bool DefaultPlanner::is_goal_valid(
         shoulder_lanelets, goal, &closest_shoulder_lanelet)) {
     const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
     const auto goal_yaw = tf2::getYaw(goal.orientation);
-    const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
-    const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
+    const auto angle_diff = autoware::universe_utils::normalizeRadian(lane_yaw - goal_yaw);
+    const double th_angle = autoware::universe_utils::deg2rad(param_.goal_angle_threshold_deg);
     if (std::abs(angle_diff) < th_angle) {
       return true;
     }
@@ -346,8 +332,8 @@ bool DefaultPlanner::is_goal_valid(
   }
 
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
-  tier4_autoware_utils::LinearRing2d goal_footprint =
-    transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(goal));
+  autoware::universe_utils::LinearRing2d goal_footprint =
+    transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(goal));
   pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint));
   const auto polygon_footprint = convert_linear_ring_to_polygon(goal_footprint);
 
@@ -371,9 +357,9 @@ bool DefaultPlanner::is_goal_valid(
   if (is_in_lane(closest_lanelet, goal_lanelet_pt)) {
     const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal.position);
     const auto goal_yaw = tf2::getYaw(goal.orientation);
-    const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
+    const auto angle_diff = autoware::universe_utils::normalizeRadian(lane_yaw - goal_yaw);
 
-    const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
+    const double th_angle = autoware::universe_utils::deg2rad(param_.goal_angle_threshold_deg);
     if (std::abs(angle_diff) < th_angle) {
       return true;
     }
@@ -422,15 +408,14 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
       RCLCPP_WARN(logger, "Failed to plan route.");
       return route_msg;
     }
+
     for (const auto & lane : path_lanelets) {
+      if (!all_route_lanelets.empty() && lane.id() == all_route_lanelets.back().id()) continue;
       all_route_lanelets.push_back(lane);
     }
-    // create local route sections
-    route_handler_.setRouteLanelets(path_lanelets);
-    const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
-    route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
   route_handler_.setRouteLanelets(all_route_lanelets);
+  route_sections = route_handler_.createMapSegments(all_route_lanelets);
 
   auto goal_pose = points.back();
   if (param_.enable_correct_goal_pose) {

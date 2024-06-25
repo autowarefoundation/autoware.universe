@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_lane_departure_checker/lane_departure_checker_node.hpp"
+#include "autoware/lane_departure_checker/lane_departure_checker_node.hpp"
 
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/route_checker.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 
@@ -31,7 +31,7 @@
 #include <utility>
 #include <vector>
 
-using tier4_autoware_utils::rad2deg;
+using autoware::universe_utils::rad2deg;
 
 namespace
 {
@@ -170,6 +170,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   lane_departure_checker_->setParam(param_, vehicle_info);
 
   // Publisher
+  processing_time_publisher_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
   // Nothing
 
   // Diagnostic Updater
@@ -251,7 +253,7 @@ bool LaneDepartureCheckerNode::isDataValid()
 void LaneDepartureCheckerNode::onTimer()
 {
   std::map<std::string, double> processing_time_map;
-  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("Total");
 
   current_odom_ = sub_odom_.takeData();
@@ -347,7 +349,11 @@ void LaneDepartureCheckerNode::onTimer()
   }
 
   processing_time_map["Total"] = stop_watch.toc("Total");
-  processing_time_publisher_.publish(processing_time_map);
+  processing_diag_publisher_.publish(processing_time_map);
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = processing_time_map["Total"];
+  processing_time_publisher_->publish(processing_time_msg);
 }
 
 rcl_interfaces::msg::SetParametersResult LaneDepartureCheckerNode::onParameter(
@@ -453,9 +459,9 @@ void LaneDepartureCheckerNode::checkTrajectoryDeviation(
 
 visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray() const
 {
-  using tier4_autoware_utils::createDefaultMarker;
-  using tier4_autoware_utils::createMarkerColor;
-  using tier4_autoware_utils::createMarkerScale;
+  using autoware::universe_utils::createDefaultMarker;
+  using autoware::universe_utils::createMarkerColor;
+  using autoware::universe_utils::createMarkerScale;
 
   visualization_msgs::msg::MarkerArray marker_array;
 

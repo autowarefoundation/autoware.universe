@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_planning_validator/utils.hpp"
+#include "autoware/planning_validator/utils.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <memory>
 #include <string>
@@ -24,9 +24,9 @@
 
 namespace autoware::planning_validator
 {
-using tier4_autoware_utils::calcCurvature;
-using tier4_autoware_utils::calcDistance2d;
-using tier4_autoware_utils::getPoint;
+using autoware::universe_utils::calcCurvature;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::getPoint;
 
 namespace
 {
@@ -138,7 +138,7 @@ void calcCurvature(
     const auto p2 = getPoint(trajectory.points.at(i));
     const auto p3 = getPoint(trajectory.points.at(next_idx));
     try {
-      curvature_arr.at(i) = tier4_autoware_utils::calcCurvature(p1, p2, p3);
+      curvature_arr.at(i) = autoware::universe_utils::calcCurvature(p1, p2, p3);
     } catch (...) {
       curvature_arr.at(i) = 0.0;  // maybe distance is too close
     }
@@ -236,11 +236,12 @@ std::pair<double, size_t> calcMaxRelativeAngles(const Trajectory & trajectory)
     const auto & p2 = trajectory.points.at(i + 1).pose.position;
     const auto & p3 = trajectory.points.at(i + 2).pose.position;
 
-    const auto angle_a = tier4_autoware_utils::calcAzimuthAngle(p1, p2);
-    const auto angle_b = tier4_autoware_utils::calcAzimuthAngle(p2, p3);
+    const auto angle_a = autoware::universe_utils::calcAzimuthAngle(p1, p2);
+    const auto angle_b = autoware::universe_utils::calcAzimuthAngle(p2, p3);
 
     // convert relative angle to [-pi ~ pi]
-    const auto relative_angle = std::abs(tier4_autoware_utils::normalizeRadian(angle_b - angle_a));
+    const auto relative_angle =
+      std::abs(autoware::universe_utils::normalizeRadian(angle_b - angle_a));
 
     takeBigger(max_relative_angles, max_index, std::abs(relative_angle), i);
   }
