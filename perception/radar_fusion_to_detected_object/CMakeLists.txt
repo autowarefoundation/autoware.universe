@@ -13,7 +13,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::radar_fusion_to_detected_object::RadarObjectFusionToDetectedObjectNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTABLE radar_fusion_to_detected_object_node
 )
 
 # Tests
