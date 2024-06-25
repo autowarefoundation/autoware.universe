@@ -17,5 +17,6 @@
 
 #include "autoware_object_merger/association/solver/gnn_solver_interface.hpp"
 #include "autoware_object_merger/association/solver/mu_ssp.hpp"
+#include "autoware_object_merger/association/solver/ssp.hpp"
 
 #endif  // AUTOWARE_OBJECT_MERGER__ASSOCIATION__SOLVER__GNN_SOLVER_HPP_
