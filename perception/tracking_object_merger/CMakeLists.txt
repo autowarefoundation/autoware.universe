@@ -24,7 +24,7 @@ include_directories(
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/association/data_association.cpp
-  src/association/mu_ssp/mu_successive_shortest_path_wrapper.cpp
+  src/association/solver/mu_successive_shortest_path_wrapper.cpp
   src/decorative_tracker_merger_node.cpp
   src/utils/utils.cpp
   src/utils/tracker_state.cpp
