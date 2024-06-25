@@ -11,7 +11,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::radar_tracks_msgs_converter::RadarTracksMsgsConverterNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTABLE radar_tracks_msgs_converter_node
 )
 
 ## Tests
