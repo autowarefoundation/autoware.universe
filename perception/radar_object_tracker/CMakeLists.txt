@@ -44,7 +44,7 @@ target_link_libraries(${PROJECT_NAME}
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::radar_object_tracker::RadarObjectTrackerNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTABLE radar_object_tracker_node
 )
 
 # testing
