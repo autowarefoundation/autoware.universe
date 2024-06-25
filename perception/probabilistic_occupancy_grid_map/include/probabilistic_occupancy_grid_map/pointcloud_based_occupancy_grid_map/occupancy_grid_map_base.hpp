@@ -83,11 +83,18 @@ public:
 
   virtual void initRosParam(rclcpp::Node & node) = 0;
 
+  void setHeightLimit(const double min_height, const double max_height);
+
+  double min_height_ = -std::numeric_limits<double>::infinity();
+  double max_height_ = std::numeric_limits<double>::infinity();
+
 private:
   bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my) const;
 
   rclcpp::Logger logger_{rclcpp::get_logger("pointcloud_based_occupancy_grid_map")};
   rclcpp::Clock clock_{RCL_ROS_TIME};
+
+  double resolution_inv_;
 };
 
 }  // namespace costmap_2d
