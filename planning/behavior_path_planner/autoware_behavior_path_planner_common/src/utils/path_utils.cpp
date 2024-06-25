@@ -473,7 +473,7 @@ std::vector<Pose> interpolatePose(
 
   const double distance =
     autoware::universe_utils::calcDistance2d(start_pose.position, end_pose.position);
-  const std::vector<double> base_s{0, distance};
+  const std::vector<double> base_s{0.0, distance};
   const std::vector<double> base_x{start_pose.position.x, end_pose.position.x};
   const std::vector<double> base_y{start_pose.position.y, end_pose.position.y};
   std::vector<double> new_s;
