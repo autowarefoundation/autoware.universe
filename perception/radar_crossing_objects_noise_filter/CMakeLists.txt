@@ -12,7 +12,7 @@ ament_auto_add_library(${PROJECT_NAME}_node_component SHARED
 
 rclcpp_components_register_node(${PROJECT_NAME}_node_component
   PLUGIN "autoware::radar_crossing_objects_noise_filter::RadarCrossingObjectsNoiseFilterNode"
-  EXECUTABLE ${PROJECT_NAME}_node
+  EXECUTABLE radar_crossing_objects_noise_filter_node
 )
 
 # Tests
