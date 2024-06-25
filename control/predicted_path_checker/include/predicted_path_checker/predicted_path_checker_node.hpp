@@ -77,6 +77,7 @@ enum class State {
   DRIVE = 0,
   EMERGENCY = 1,
   STOP = 2,
+  A = 3,
 };
 
 class PredictedPathCheckerNode : public rclcpp::Node
