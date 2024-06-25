@@ -40,7 +40,7 @@ runs:
           -w /workspace \
           -e GITHUB_ACTION_PATH \
           -v ${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH} \
-          ubuntu:22.04 \
+          ghcr.io/autowarefoundation/autoware:latest-prebuilt \
           /bin/bash -c \
           "${GITHUB_ACTION_PATH}/get-modified-packages.sh origin/${{ inputs.base-ref }}" \
           )
