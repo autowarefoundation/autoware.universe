@@ -1,6 +1,5 @@
 #!/bin/bash
-# Search for packages that have been modified from the base branch.
-# Usage: get-modified-packages.sh <base_branch>
+# Usage: get-modified-packages.sh '<modified_files>'
 
 # Parse arguments
 args=()
@@ -13,14 +12,7 @@ while [ "${1-}" != "" ]; do
     shift
 done
 
-# example: base_branch="origin/main"
-base_branch="${args[0]}"
-
-# Check args
-if [ "$base_branch" = "" ]; then
-    echo -e "\e[31mPlease input a valid base_branch as the 1st argument.\e[m"
-    exit 1
-fi
+modified_files="${args[0]}"
 
 function find_package_dir() {
     [ "$1" == "" ] && return 1
@@ -47,12 +39,6 @@ function find_package_dir() {
 
     return 1
 }
-
-# Find modified files from the base branch
-if ! modified_files=$(git diff --name-only "$base_branch"...HEAD); then
-    echo -e "\e[31mFailed to determine modified files. Please check if the base branch exists and fetch depth is sufficient.\e[m"
-    exit 1
-fi
 
 # Find modified packages
 modified_package_dirs=()

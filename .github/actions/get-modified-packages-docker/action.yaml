@@ -28,6 +28,13 @@ runs:
         git fetch origin ${{ inputs.base-ref }}
       shell: bash
 
+    - name: Get modified files
+      id: get-modified-files
+      run: |
+        modified_files=$(git diff --name-only "origin/${{ inputs.base-ref }}"...HEAD)
+        echo "modified-files=$modified_files" >> $GITHUB_OUTPUT
+      shell: bash
+
     - name: printenv
       run: printenv
       shell: bash
@@ -35,6 +42,8 @@ runs:
     - name: Get modified packages
       id: get-modified-packages
       run: |
+        echo ${{ steps.get-modified-files.outputs.modified-files }}
+        echo ""
         docker run --shm-size 1G \
           -v ${{ github.workspace }}:/workspace \
           -w /workspace \
@@ -42,7 +51,7 @@ runs:
           -v ${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH} \
           ghcr.io/autowarefoundation/autoware:latest-prebuilt \
           /bin/bash -c \
-          "ls -alF && ${GITHUB_ACTION_PATH}/get-modified-packages.sh origin/${{ inputs.base-ref }}"
+          "ls -alF && ${GITHUB_ACTION_PATH}/get-modified-packages.sh '${{ steps.get-modified-files.outputs.modified-files }}'"
         echo "modified-packages=$modified_packages" >> $GITHUB_OUTPUT
       shell: bash
 
