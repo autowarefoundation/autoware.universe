@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/simple_object_merger/simple_object_merger_node.hpp"
+#include "autoware_simple_object_merger/simple_object_merger_node.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 

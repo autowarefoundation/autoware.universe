@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
-#define AUTOWARE__SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
+#ifndef AUTOWARE_SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
+#define AUTOWARE_SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
 
 #include "autoware/universe_utils/ros/transform_listener.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -78,4 +78,4 @@ private:
 
 }  // namespace autoware::simple_object_merger
 
-#endif  // AUTOWARE__SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
+#endif  // AUTOWARE_SIMPLE_OBJECT_MERGER__SIMPLE_OBJECT_MERGER_NODE_HPP_
