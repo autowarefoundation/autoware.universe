@@ -60,6 +60,7 @@ struct Obstacle
   : stamp(arg_stamp),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
     lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
+    source_type(SourceType::PREDICTED_OBJECT),
     pose(arg_pose),
     orientation_reliable(true),
     twist(object.kinematics.initial_twist_with_covariance.twist),
@@ -83,15 +84,22 @@ struct Obstacle
   : stamp(arg_stamp),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
     lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
+    source_type(SourceType::POINTCLOUD),
     stop_collision_point(stop_collision_point),
     slow_down_front_collision_point(slow_down_front_collision_point),
     slow_down_back_collision_point(slow_down_back_collision_point)
   {
   }
 
+  enum class SourceType {
+    PREDICTED_OBJECT,
+    POINTCLOUD,
+  };
+
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
   double ego_to_obstacle_distance;
   double lat_dist_from_obstacle_to_traj;
+  SourceType source_type;
 
   // for PredictedObject
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
