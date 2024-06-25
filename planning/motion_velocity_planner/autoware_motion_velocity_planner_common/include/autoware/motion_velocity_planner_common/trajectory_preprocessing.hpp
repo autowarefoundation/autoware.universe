@@ -35,7 +35,7 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> downsample_trajectory(
     return trajectory;
   }
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> downsampled_traj;
-  downsampled_traj.reserve((end_idx - start_idx) / factor);
+  downsampled_traj.reserve((end_idx - start_idx) / factor + 1);
   for (size_t i = start_idx; i <= end_idx; i += factor) {
     downsampled_traj.push_back(trajectory[i]);
   }
