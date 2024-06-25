@@ -386,8 +386,7 @@ private:
    * @param reference_trajectory The reference trajectory.
    * @param current_velocity current velocity of ego.
    */
-  VectorXd calcSteerRateLimitOnTrajectory(
-    const MPCTrajectory & trajectory) const;
+  VectorXd calcSteerRateLimitOnTrajectory(const MPCTrajectory & trajectory) const;
 
   //!< @brief logging with warn and return false
   template <typename... Args>

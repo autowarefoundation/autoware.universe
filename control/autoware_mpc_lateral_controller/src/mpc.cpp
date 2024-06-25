@@ -76,8 +76,8 @@ bool MPC::calculateMPC(
   const auto mpc_matrix = generateMPCMatrix(mpc_resampled_ref_trajectory, prediction_dt);
 
   // solve Optimization problem
-  const auto [success_opt, Uex] = executeOptimization(
-    mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_trajectory);
+  const auto [success_opt, Uex] =
+    executeOptimization(mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_trajectory);
   if (!success_opt) {
     return fail_warn_throttle("optimization failed. Stop MPC.");
   }
@@ -728,8 +728,7 @@ double MPC::calcDesiredSteeringRate(
   return steer_rate;
 }
 
-VectorXd MPC::calcSteerRateLimitOnTrajectory(
-  const MPCTrajectory & trajectory) const
+VectorXd MPC::calcSteerRateLimitOnTrajectory(const MPCTrajectory & trajectory) const
 {
   const auto interp = [&](const auto & steer_rate_limit_map, const auto & current) {
     std::vector<double> reference, limits;
