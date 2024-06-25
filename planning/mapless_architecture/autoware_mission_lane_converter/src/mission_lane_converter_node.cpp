@@ -48,11 +48,11 @@ MissionLaneConverterNode::MissionLaneConverterNode() : Node("mission_lane_conver
     this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
       "mission_lane_converter/output/global_trajectory", qos_reliability);
 
-  // artificial publisher to test the trajectory generation
+  // Artificial publisher to test the trajectory generation
   publisher_ = this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "mission_lane_converter/output/global_trajectory", qos_reliability);
 
-  // path publisher
+  // Path publisher
   path_publisher_ = create_publisher<autoware_auto_planning_msgs::msg::Path>(
     "mission_lane_converter/output/path", qos_reliability);
 
@@ -83,11 +83,11 @@ MissionLaneConverterNode::MissionLaneConverterNode() : Node("mission_lane_conver
 void MissionLaneConverterNode::TimedStartupTrajectoryCallback()
 {
   if (!mission_lanes_available_once_) {
-    // empty trajectory for controller
+    // Empty trajectory for controller
     autoware_auto_planning_msgs::msg::Trajectory trj_msg =
       autoware_auto_planning_msgs::msg::Trajectory();
 
-    // frame id must be "map" for Autoware controller
+    // Frame id must be "map" for Autoware controller
     trj_msg.header.frame_id = "map";
     trj_msg.header.stamp = rclcpp::Node::now();
 
@@ -99,7 +99,7 @@ void MissionLaneConverterNode::TimedStartupTrajectoryCallback()
       AddTrajectoryPoint_(trj_msg, x, y, v_x);
     }
 
-    // heading in trajectory path will be overwritten
+    // Heading in trajectory path will be overwritten
     this->AddHeadingToTrajectory_(trj_msg);
 
     trj_msg = TransformToGlobalFrame(trj_msg);
@@ -114,9 +114,9 @@ void MissionLaneConverterNode::MissionLanesCallback_(
   // FIXME: workaround to get the vehicle driving in autonomous mode until the
   // environment model is available
   if (msg_mission.ego_lane.centerline.size() == 0) {
-    // do not continue to publish empty trajectory
+    // Do not continue to publish empty trajectory
     if (mission_lanes_available_once_) {
-      // do only print warning if full mission lane was already available once
+      // Do only print warning if full mission lane was already available once
       RCLCPP_WARN(this->get_logger(), "Received empty ego mission lane, aborting conversion!");
     }
     return;
@@ -142,20 +142,21 @@ void MissionLaneConverterNode::MissionLanesCallback_(
   visualization_msgs::msg::Marker trj_vis_global = GetGlobalTrjVisualization_(trj_msg_global);
   vis_trajectory_publisher_global_->publish(trj_vis_global);
 
-  // publish trajectory to motion planner
+  // Publish trajectory to motion planner
   trajectory_publisher_->publish(trj_msg);
   trajectory_publisher_global_->publish(trj_msg_global);
 
-  // publish path to motion planner
+  // Publish path to motion planner
   path_publisher_->publish(path_msg);
   path_publisher_global_->publish(path_msg_global);
 
   // TODO(thomas.herrmann@driveblocks.ai): outsource this to a separate method
-  // clear all markers in scene
+  // Clear all markers in scene
   visualization_msgs::msg::Marker msg_marker;
   msg_marker.header = msg_mission.header;
   msg_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  // this specifies the clear all / delete all action
+
+  // This specifies the clear all / delete all action
   msg_marker.action = 3;
   vis_trajectory_publisher_->publish(msg_marker);
 
@@ -175,13 +176,13 @@ std::tuple<
 MissionLaneConverterNode::ConvertMissionToTrajectory(
   const autoware_planning_msgs::msg::MissionLanesStamped & msg)
 {
-  // empty trajectory for controller
+  // Empty trajectory for controller
   autoware_auto_planning_msgs::msg::Trajectory trj_msg =
     autoware_auto_planning_msgs::msg::Trajectory();
 
   autoware_auto_planning_msgs::msg::Path path_msg = autoware_auto_planning_msgs::msg::Path();
 
-  // empty trajectory visualization message
+  // Empty trajectory visualization message
   visualization_msgs::msg::Marker trj_vis, path_center_vis, path_left_vis, path_right_vis;
   visualization_msgs::msg::MarkerArray path_area_vis;
 
@@ -191,12 +192,12 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
   trj_vis.type = visualization_msgs::msg::Marker::LINE_STRIP;
   trj_vis.pose.orientation.w = 1.0;  // Neutral orientation
   trj_vis.scale.x = 0.4;
-  trj_vis.color.g = 0.742;  // green color
-  trj_vis.color.b = 0.703;  // blue color
+  trj_vis.color.g = 0.742;  // Green color
+  trj_vis.color.b = 0.703;  // Blue color
   trj_vis.color.a = 0.750;
-  trj_vis.lifetime.sec = 0;      // forever
-  trj_vis.lifetime.nanosec = 0;  // forever
-  trj_vis.frame_locked = false;  // always transform into baselink
+  trj_vis.lifetime.sec = 0;      // Forever
+  trj_vis.lifetime.nanosec = 0;  // Forever
+  trj_vis.frame_locked = false;  // Always transform into baselink
 
   path_left_vis.header.frame_id = msg.header.frame_id;
   path_left_vis.header.stamp = msg.header.stamp;
@@ -205,31 +206,30 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
   path_left_vis.pose.orientation.w = 1.0;  // Neutral orientation
   path_left_vis.scale.x = 0.6;
 
-  path_left_vis.color.g = 0.742;  // green color
-  path_left_vis.color.b = 0.703;  // blue color
+  path_left_vis.color.g = 0.742;  // Green color
+  path_left_vis.color.b = 0.703;  // Blue color
   path_left_vis.color.a = 0.350;
-  path_left_vis.lifetime.sec = 0;      // forever
-  path_left_vis.lifetime.nanosec = 0;  // forever
-  path_left_vis.frame_locked = false;  // always transform into baselink
+  path_left_vis.lifetime.sec = 0;      // Forever
+  path_left_vis.lifetime.nanosec = 0;  // Forever
+  path_left_vis.frame_locked = false;  // Always transform into baselink
 
   path_right_vis = path_left_vis;
   path_center_vis = path_left_vis;
 
-  // fill output trajectory
-  // header
+  // Fill output trajectory header
   trj_msg.header = msg.header;
   path_msg.header = msg.header;
-  // frame id must be "map" for Autoware controller
+  // Frame id must be "map" for Autoware controller
   trj_msg.header.frame_id = "map";
   path_msg.header.frame_id = "map";
 
   switch (msg.target_lane) {
     case 0:
-      // if target == 0, forward ego lane
+      // If target == 0, forward ego lane
       CreateMotionPlannerInput_(
         trj_msg, path_msg, trj_vis, path_center_vis, msg.ego_lane.centerline);
 
-      // fill path bounds left and right
+      // Fill path bounds left and right
       CreatePathBound_(path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left, 1);
       CreatePathBound_(path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right, 2);
       break;
@@ -238,40 +238,37 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
       CreateMotionPlannerInput_(
         trj_msg, path_msg, trj_vis, path_center_vis, msg.drivable_lanes_left[0].centerline);
 
-      // fill path bounds left and right
+      // Fill path bounds left and right
       CreatePathBound_(
         path_msg.left_bound, path_left_vis, msg.drivable_lanes_left[0].bound_left, 1);
       CreatePathBound_(path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right, 2);
       break;
     case 1:
-
       // Lane change to the right
       CreateMotionPlannerInput_(
         trj_msg, path_msg, trj_vis, path_center_vis, msg.drivable_lanes_right[0].centerline);
 
-      // fill path bounds left and right
+      // Fill path bounds left and right
       CreatePathBound_(path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left, 1);
       CreatePathBound_(
         path_msg.right_bound, path_right_vis, msg.drivable_lanes_right[0].bound_right, 2);
       break;
     case -2:
-
-      // take exit left
+      // Take exit left
       CreateMotionPlannerInput_(
         trj_msg, path_msg, trj_vis, path_center_vis, msg.drivable_lanes_left.back().centerline);
 
-      // fill path bounds left and right
+      // Fill path bounds left and right
       CreatePathBound_(
         path_msg.left_bound, path_left_vis, msg.drivable_lanes_left.back().bound_left, 1);
       CreatePathBound_(path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right, 2);
       break;
     case 2:
-
-      // take exit right
+      // Take exit right
       CreateMotionPlannerInput_(
         trj_msg, path_msg, trj_vis, path_center_vis, msg.drivable_lanes_right.back().centerline);
 
-      // fill path bounds left and right
+      // Fill path bounds left and right
       CreatePathBound_(path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left, 1);
       CreatePathBound_(
         path_msg.right_bound, path_right_vis, msg.drivable_lanes_right.back().bound_right, 2);
@@ -299,11 +296,11 @@ void MissionLaneConverterNode::CreateMotionPlannerInput_(
   visualization_msgs::msg::Marker & path_vis,
   const std::vector<geometry_msgs::msg::Point> & centerline_mission_lane)
 {
-  // add a mission lane's centerline to the output trajectory and path messages
+  // Add a mission lane's centerline to the output trajectory and path messages
   for (size_t idx_point = 0; idx_point < centerline_mission_lane.size(); idx_point++) {
-    // check if trajectory message is empty
+    // Check if trajectory message is empty
     if (trj_msg.points.size() > 0) {
-      // check if last trajectory point equals the one we want to add now
+      // Check if last trajectory point equals the one we want to add now
       if (
         trj_msg.points.back().pose.position.x != centerline_mission_lane[idx_point].x &&
         trj_msg.points.back().pose.position.y != centerline_mission_lane[idx_point].y) {
@@ -311,26 +308,26 @@ void MissionLaneConverterNode::CreateMotionPlannerInput_(
           trj_msg, centerline_mission_lane[idx_point].x, centerline_mission_lane[idx_point].y,
           target_speed_);
 
-        // similar point has to be added to the path message
+        // Similar point has to be added to the path message
         AddPathPoint_(
           path_msg, centerline_mission_lane[idx_point].x, centerline_mission_lane[idx_point].y,
           target_speed_);
 
-        // add visualization marker to trajectory vis message
+        // Add visualization marker to trajectory vis message
         AddPointVisualizationMarker_(
           trj_vis, centerline_mission_lane[idx_point].x, centerline_mission_lane[idx_point].y, 0);
 
-        // add visualization marker to path vis message
+        // Add visualization marker to path vis message
         AddPointVisualizationMarker_(
           path_vis, centerline_mission_lane[idx_point].x, centerline_mission_lane[idx_point].y, 0);
       }
-    } else {  // add first point
-      // add a trajectory point
+    } else {  // Add first point
+      // Add a trajectory point
       AddTrajectoryPoint_(
         trj_msg, centerline_mission_lane[idx_point].x, centerline_mission_lane[idx_point].y,
         target_speed_);
 
-      // similar point has to be added to the path message
+      // Similar point has to be added to the path message
       AddPathPoint_(
         path_msg, centerline_mission_lane[idx_point].x, centerline_mission_lane[idx_point].y,
         target_speed_);
@@ -338,7 +335,7 @@ void MissionLaneConverterNode::CreateMotionPlannerInput_(
       AddPointVisualizationMarker_(
         trj_vis, centerline_mission_lane[idx_point].x, centerline_mission_lane[idx_point].y, 0);
 
-      // add visualization marker to path vis message
+      // Add visualization marker to path vis message
       AddPointVisualizationMarker_(
         path_vis, centerline_mission_lane[idx_point].x, centerline_mission_lane[idx_point].y, 0);
     }
@@ -355,20 +352,20 @@ void MissionLaneConverterNode::CreatePathBound_(
     geometry_msgs::msg::Point pt_path;
     pt_path.x = bound_mission_lane[idx_point].x;
     pt_path.y = bound_mission_lane[idx_point].y;
-    // check if path bound is empty
+    // Check if path bound is empty
     if (bound_path.size() > 0) {
-      // check if last path point equals the one we want to add now
+      // Check if last path point equals the one we want to add now
       if (
         bound_path.back().x != bound_mission_lane[idx_point].x &&
         bound_path.back().y != bound_mission_lane[idx_point].y) {
-        // finally add the path point after successful checks
+        // Finally add the path point after successful checks
         bound_path.push_back(pt_path);
       }
-    } else {  // add first point to path
+    } else {  // Add first point to path
       bound_path.push_back(pt_path);
     }
 
-    // add last added point to a marker message for debugging
+    // Add last added point to a marker message for debugging
     // FIXME: probably no unique ids for multiple calls?
     AddPointVisualizationMarker_(path_vis, bound_path.back().x, bound_path.back().y, id_marker);
   }
@@ -380,14 +377,14 @@ void MissionLaneConverterNode::AddPathPoint_(
   autoware_auto_planning_msgs::msg::Path & pth_msg, const double x, const double y,
   const double v_x)
 {
-  // add a trajectory point
+  // Add a trajectory point
   pth_msg.points.push_back(autoware_auto_planning_msgs::msg::PathPoint());
 
-  // fill trajectory points with meaningful data
+  // Fill trajectory points with meaningful data
   pth_msg.points.back().pose.position.x = x;
   pth_msg.points.back().pose.position.y = y;
 
-  // constant velocity
+  // Constant velocity
   pth_msg.points.back().longitudinal_velocity_mps = v_x;
 
   return;
@@ -397,14 +394,14 @@ void MissionLaneConverterNode::AddTrajectoryPoint_(
   autoware_auto_planning_msgs::msg::Trajectory & trj_msg, const double x, const double y,
   const double v_x)
 {
-  // add a trajectory point
+  // Add a trajectory point
   trj_msg.points.push_back(autoware_auto_planning_msgs::msg::TrajectoryPoint());
 
-  // fill trajectory points with meaningful data
+  // Fill trajectory points with meaningful data
   trj_msg.points.back().pose.position.x = x;
   trj_msg.points.back().pose.position.y = y;
 
-  // constant velocity
+  // Constant velocity
   trj_msg.points.back().longitudinal_velocity_mps = v_x;
 
   return;
@@ -413,7 +410,7 @@ void MissionLaneConverterNode::AddTrajectoryPoint_(
 void MissionLaneConverterNode::AddPointVisualizationMarker_(
   visualization_msgs::msg::Marker & trj_vis, const double x, const double y, const int id_marker)
 {
-  // fill visualization message
+  // Fill visualization message
   trj_vis.points.push_back(geometry_msgs::msg::Point());
 
   trj_vis.points.back().x = x;
@@ -434,7 +431,7 @@ void MissionLaneConverterNode::AddHeadingToTrajectory_(
     points.back().y = trj_msg.points[idx_point].pose.position.y;
   }
 
-  // only execute if we have at least 2 points
+  // Only execute if we have at least 2 points
   if (points.size() > 1) {
     std::vector<double> psi_vec = GetPsiForPoints(points);
 
@@ -456,7 +453,7 @@ void MissionLaneConverterNode::AddHeadingToTrajectory_(
 // the output conversion
 void MissionLaneConverterNode::CallbackOdometryMessages_(const nav_msgs::msg::Odometry & msg)
 {
-  // store current odometry information
+  // Store current odometry information
   last_odom_msg_ = msg;
 
   if (!received_motion_update_once_) {
@@ -472,12 +469,12 @@ void MissionLaneConverterNode::CallbackOdometryMessages_(const nav_msgs::msg::Od
   odom_vis.type = visualization_msgs::msg::Marker::POINTS;
   odom_vis.pose.orientation.w = 1.0;  // Neutral orientation
   odom_vis.scale.x = 5.0;
-  odom_vis.color.g = 0.0;  // green color
-  odom_vis.color.b = 0.7;  // blue color
+  odom_vis.color.g = 0.0;  // Green color
+  odom_vis.color.b = 0.7;  // Blue color
   odom_vis.color.a = 0.7;
-  odom_vis.lifetime.sec = 0;      // forever
-  odom_vis.lifetime.nanosec = 0;  // forever
-  odom_vis.frame_locked = false;  // always transform into baselink
+  odom_vis.lifetime.sec = 0;      // Forever
+  odom_vis.lifetime.nanosec = 0;  // Forever
+  odom_vis.frame_locked = false;  // Always transform into baselink
 
   odom_vis.points.push_back(geometry_msgs::msg::Point());
 
@@ -493,7 +490,7 @@ void MissionLaneConverterNode::CallbackOdometryMessages_(const nav_msgs::msg::Od
 template <typename T>
 T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
 {
-  // define output message
+  // Define output message
   T msg_output = msg_input;
   msg_output.header.frame_id = "map";
 
@@ -533,10 +530,10 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
     const Pose2D pose_cur(
       last_odom_msg_.pose.pose.position.x, last_odom_msg_.pose.pose.position.y, psi_cur);
 
-    // get relationship from current odom frame to global map frame origin
+    // Get relationship from current odom frame to global map frame origin
     const Pose2D d_current_to_map_origin = TransformToNewCosy2D(pose_cur, Pose2D{0.0, 0.0});
 
-    // convert all the input points to the global map frame
+    // Convert all the input points to the global map frame
     for (size_t i = 0; i < msg_input.points.size(); i++) {
       // convert input pose
       const double psi_point = GetYawFromQuaternion(
@@ -545,14 +542,14 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
       const Pose2D pose(
         msg_input.points[i].pose.position.x, msg_input.points[i].pose.position.y, psi_point);
 
-      // express point in global map frame
+      // Express point in global map frame
       Pose2D pose_map = TransformToNewCosy2D(d_current_to_map_origin, pose);
 
       msg_output.points[i].pose.position.x = pose_map.get_x();
       msg_output.points[i].pose.position.y = pose_map.get_y();
     }
 
-    // convert the path area's bounds
+    // Convert the path area's bounds
     if constexpr (std::is_same<T, autoware_auto_planning_msgs::msg::Path>::value) {
       for (size_t ib = 0; ib < 2; ib++) {
         std::vector<geometry_msgs::msg::Point> bound;
@@ -561,10 +558,10 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
         else
           bound = msg_input.right_bound;
         for (size_t i = 0; i < bound.size(); i++) {
-          // convert input pose
+          // Convert input pose
           const Pose2D pose(bound[i].x, bound[i].y);
 
-          // express point in global map frame
+          // Express point in global map frame
           Pose2D pose_map = TransformToNewCosy2D(d_current_to_map_origin, pose);
 
           if (ib == 0) {
@@ -578,7 +575,7 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
       }
     }
 
-    // add heading if type is a trajectory
+    // Add heading if type is a trajectory
     if constexpr (std::is_same<T, autoware_auto_planning_msgs::msg::Trajectory>::value)
       AddHeadingToTrajectory_(msg_output);
   }
@@ -589,7 +586,7 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
 visualization_msgs::msg::Marker MissionLaneConverterNode::GetGlobalTrjVisualization_(
   const autoware_auto_planning_msgs::msg::Trajectory & trj_msg)
 {
-  // empty trajectory visualization message
+  // Empty trajectory visualization message
   visualization_msgs::msg::Marker trj_vis_global;
   trj_vis_global.header.frame_id = trj_msg.header.frame_id;
   trj_vis_global.header.stamp = trj_msg.header.stamp;
@@ -597,12 +594,12 @@ visualization_msgs::msg::Marker MissionLaneConverterNode::GetGlobalTrjVisualizat
   trj_vis_global.type = visualization_msgs::msg::Marker::LINE_STRIP;
   trj_vis_global.pose.orientation.w = 1.0;  // Neutral orientation
   trj_vis_global.scale.x = 0.4;
-  trj_vis_global.color.g = 0.0;    // green color
-  trj_vis_global.color.b = 0.703;  // blue color
+  trj_vis_global.color.g = 0.0;    // Green color
+  trj_vis_global.color.b = 0.703;  // Blue color
   trj_vis_global.color.a = 0.0;
-  trj_vis_global.lifetime.sec = 0;      // forever
-  trj_vis_global.lifetime.nanosec = 0;  // forever
-  trj_vis_global.frame_locked = false;  // always transform into baselink
+  trj_vis_global.lifetime.sec = 0;      // Forever
+  trj_vis_global.lifetime.nanosec = 0;  // Forever
+  trj_vis_global.frame_locked = false;  // Always transform into baselink
 
   for (size_t i = 0; i < trj_msg.points.size(); i++) {
     AddPointVisualizationMarker_(

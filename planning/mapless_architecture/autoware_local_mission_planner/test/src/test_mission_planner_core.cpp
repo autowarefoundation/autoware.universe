@@ -127,6 +127,7 @@ int TestCalculateDistanceBetweenPointAndLineString()
 {
   // Create an example Linestring
   lanelet::LineString2d linestring;
+
   lanelet::Point2d p1(0, 1.0,
                       0.0);  // First argument is ID (set it to 0 for now)
   linestring.push_back(p1);
@@ -241,7 +242,7 @@ db_msgs::msg::LaneletsStamped GetTestRoadModelForRecenterTests()
   std::vector<db_msgs::msg::Lanelet> lanelet_vec(n_lanelets);
   message.lanelets = lanelet_vec;
 
-  // global position
+  // Global position
   geometry_msgs::msg::PoseStamped msg_global_pose;
   msg_global_pose.header.frame_id = "base_link";
 
@@ -267,7 +268,7 @@ db_msgs::msg::LaneletsStamped GetTestRoadModelForRecenterTests()
 
   tf2::Quaternion quaternion;
 
-  // vehicle position in global cosy
+  // Vehicle position in global cosy
   message.pose.position.x = 0.0;
   message.pose.position.y = 0.0;
   quaternion.setRPY(0, 0, 0);
@@ -276,7 +277,7 @@ db_msgs::msg::LaneletsStamped GetTestRoadModelForRecenterTests()
   message.pose.orientation.z = quaternion.getZ();
   message.pose.orientation.w = quaternion.getW();
 
-  // street layout in current local cosy = global cosy since vehicle position is
+  // Street layout in current local cosy = global cosy since vehicle position is
   // at the origin in the global cosy
   message.lanelets[0].linestrings[0].points[0].pose.position.x = 0.0;
   message.lanelets[0].linestrings[0].points[0].pose.position.y = -0.5;
@@ -349,7 +350,7 @@ int TestRecenterGoalpoint()
   goal_point.y() = 0.25;
   goal_point_recentered = mission_planner.RecenterGoalPoint(goal_point, converted_lanelets);
 
-  // expect re-centered point to lie on y coordinate 0
+  // Expect re-centered point to lie on y coordinate 0
   EXPECT_NEAR(goal_point_recentered.x(), goal_point.x(), 1e-5);
   EXPECT_NEAR(goal_point_recentered.y(), 0.0, 1e-5);
 
@@ -359,7 +360,7 @@ int TestRecenterGoalpoint()
   goal_point.y() = -0.2;
   goal_point_recentered = mission_planner.RecenterGoalPoint(goal_point, converted_lanelets);
 
-  // expect re-centered point to lie on y coordinate 0 but with x coord equal to
+  // Expect re-centered point to lie on y coordinate 0 but with x coord equal to
   // goal_point (removes lateral error/noise)
   EXPECT_NEAR(goal_point_recentered.x(), goal_point.x(), 1e-5);
   EXPECT_NEAR(goal_point_recentered.y(), 0.0, 1e-5);
@@ -371,7 +372,7 @@ int TestRecenterGoalpoint()
   goal_point.y() = 1.75;
   goal_point_recentered = mission_planner.RecenterGoalPoint(goal_point, converted_lanelets);
 
-  // expect re-centered point to lie on y coordinate 0 but with x coord equal to
+  // Expect re-centered point to lie on y coordinate 0 but with x coord equal to
   // goal_point (removes lateral error/noise)
   EXPECT_NEAR(goal_point_recentered.x(), goal_point.x(), 1e-5);
   EXPECT_NEAR(goal_point_recentered.y(), 1.5, 1e-5);
@@ -416,7 +417,7 @@ int TestCheckIfGoalPointShouldBeReset()
   lanelet::BasicPoint2d point(-1.0, 0.0);
   MissionPlanner.goal_point(point);
 
-  // set a non-default mission to make the goal point reset work
+  // Set a non-default mission to make the goal point reset work
   autoware_planning_msgs::msg::Mission mission_msg;
   mission_msg.mission_type = autoware_planning_msgs::msg::Mission::LANE_CHANGE_LEFT;
   MissionPlanner.CallbackMissionMessages_(mission_msg);
@@ -433,7 +434,7 @@ int TestCheckIfGoalPointShouldBeReset()
   // TEST 2: check if goal point reset is skipped in default mission
   MissionPlanner.goal_point(point);
 
-  // set a non-default mission to make the goal point reset work
+  // Set a non-default mission to make the goal point reset work
   mission_msg.mission_type = autoware_planning_msgs::msg::Mission::LANE_KEEP;
   MissionPlanner.CallbackMissionMessages_(mission_msg);
 

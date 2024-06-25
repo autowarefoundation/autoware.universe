@@ -15,24 +15,24 @@ int TestMissionToTrajectory()
 
   autoware_planning_msgs::msg::MissionLanesStamped mission_msg;
 
-  // set target lane to ego lane
+  // Set target lane to ego lane
   mission_msg.target_lane = 0;
 
-  // add a driving corridor to the ego lane
+  // Add a driving corridor to the ego lane
   mission_msg.ego_lane = autoware_planning_msgs::msg::DrivingCorridor();
 
-  // add points to the ego lane centerline
+  // Add points to the ego lane centerline
   mission_msg.ego_lane.centerline.push_back(geometry_msgs::msg::Point());
   mission_msg.ego_lane.centerline.back().x = 0.0;
   mission_msg.ego_lane.centerline.back().y = 0.0;
 
-  // get converted trajectory
+  // Get converted trajectory
   std::tuple<
     autoware_auto_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
     autoware_auto_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
     mission_to_trj = mission_converter.ConvertMissionToTrajectory(mission_msg);
 
-  // extract trajectory
+  // Extract trajectory
   autoware_auto_planning_msgs::msg::Trajectory trj_msg = std::get<0>(mission_to_trj);
 
   EXPECT_EQ(trj_msg.points.back().pose.position.x, mission_msg.ego_lane.centerline.back().x);
@@ -51,10 +51,10 @@ int TestMissionToTrajectory()
   mission_msg.ego_lane.centerline.back().x = 2.0;
   mission_msg.ego_lane.centerline.back().y = 2.0;
 
-  // convert
+  // Convert
   mission_to_trj = mission_converter.ConvertMissionToTrajectory(mission_msg);
 
-  // extract trajectory
+  // Extract trajectory
   trj_msg = std::get<0>(mission_to_trj);
 
   EXPECT_EQ(trj_msg.points.back().pose.position.x, mission_msg.ego_lane.centerline.back().x);
@@ -69,13 +69,13 @@ int TestMissionToTrajectory()
   mission_msg.drivable_lanes_left.back().centerline.back().x = 5.0;
   mission_msg.drivable_lanes_left.back().centerline.back().y = 3.0;
 
-  // set target lane to neighbor left
+  // Set target lane to neighbor left
   mission_msg.target_lane = -1;
 
-  // convert
+  // Convert
   mission_to_trj = mission_converter.ConvertMissionToTrajectory(mission_msg);
 
-  // extract trajectory
+  // Extract trajectory
   trj_msg = std::get<0>(mission_to_trj);
 
   EXPECT_EQ(
@@ -94,13 +94,13 @@ int TestMissionToTrajectory()
   mission_msg.drivable_lanes_right.back().centerline.back().x = 3.0;
   mission_msg.drivable_lanes_right.back().centerline.back().y = 3.6;
 
-  // set target lane to neighbor right
+  // Set target lane to neighbor right
   mission_msg.target_lane = 1;
 
-  // convert
+  // Convert
   mission_to_trj = mission_converter.ConvertMissionToTrajectory(mission_msg);
 
-  // extract trajectory
+  // Extract trajectory
   trj_msg = std::get<0>(mission_to_trj);
 
   EXPECT_EQ(

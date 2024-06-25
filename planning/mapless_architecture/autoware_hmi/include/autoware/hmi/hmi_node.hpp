@@ -27,10 +27,6 @@ public:
   HMINode();
 
 private:
-  // ###########################################################################
-  // #  PRIVATE PROCESSING METHODS
-  // ###########################################################################
-
   /**
    * @brief Callback function for parameter changes.
    * This callback function is triggered whenever a ROS 2 parameter is changed.
@@ -46,9 +42,6 @@ private:
    */
   void PublishMission_(std::string mission);
 
-  // ###########################################################################
-  // #  PRIVATE VARIABLES
-  // ###########################################################################
   // Declare ROS2 publisher and subscriber
 
   rclcpp::Publisher<autoware_planning_msgs::msg::Mission>::SharedPtr mission_publisher_;

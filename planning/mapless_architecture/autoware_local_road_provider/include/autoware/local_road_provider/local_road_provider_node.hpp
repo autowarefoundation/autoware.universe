@@ -26,10 +26,6 @@ public:
   LocalRoadProviderNode();
 
 private:
-  // ###########################################################################
-  // #  PRIVATE PROCESSING METHODS
-  // ###########################################################################
-
   /**
    * @brief The callback for the LaneletsStamped messages.
    *
@@ -37,9 +33,6 @@ private:
    */
   void CallbackLaneletsMessages_(const db_msgs::msg::LaneletsStamped & msg);
 
-  // ###########################################################################
-  // #  PRIVATE VARIABLES
-  // ###########################################################################
   // Declare ROS2 publisher and subscriber
 
   rclcpp::Publisher<autoware_planning_msgs::msg::RoadSegments>::SharedPtr road_publisher_;

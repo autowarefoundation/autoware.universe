@@ -11,14 +11,6 @@ namespace autoware::mapless_architecture
 {
 using std::placeholders::_1;
 
-/**
-
-* @brief Constructor for the HMINode class.
-
-* Initializes the publisher and subscriber with appropriate topics and QoS
-settings.
-
-*/
 HMINode::HMINode() : Node("hmi_node")
 {
   // Set quality of service to best effort (if transmission fails, do not try to

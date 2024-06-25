@@ -27,19 +27,14 @@ class MissionLaneConverterNode : public rclcpp::Node
 public:
   MissionLaneConverterNode();
 
-  // ###########################################################################
-  // #  PUBLIC METHODS
-  // ###########################################################################
-
   /**
    * @brief Converts the mission message into a reference trajectory which is
    * forwarded to a local trajectory planner for refinement.
    *
    * @param msg The mission lanes
    * @return std::tuple<autoware_auto_planning_msgs::msg::Trajectory,
-           visualization_msgs::msg::Marker,
-           autoware_auto_planning_msgs::msg::Path,
-           visualization_msgs::msg::Marker>
+   * visualization_msgs::msg::Marker, autoware_auto_planning_msgs::msg::Path,
+   * visualization_msgs::msg::Marker>
    */
   std::tuple<
     autoware_auto_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
@@ -47,10 +42,6 @@ public:
   ConvertMissionToTrajectory(const autoware_planning_msgs::msg::MissionLanesStamped & msg);
 
 private:
-  // ###########################################################################
-  // #  PRIVATE PROCESSING METHODS
-  // ###########################################################################
-
   /**
    * @brief Computes a trajectory based on the mission planner input.
    *
@@ -99,14 +90,39 @@ private:
    */
   void TimedStartupTrajectoryCallback();
 
+  /**
+   *@brief Create a path bound.
+   *
+   *@param bound_path The path.
+   *@param path_vis The visualization marker.
+   *@param bound_mission_lane The mission lane.
+   *@param id_marker The ID marker.
+   */
   void CreatePathBound_(
     std::vector<geometry_msgs::msg::Point> & bound_path, visualization_msgs::msg::Marker & path_vis,
     const std::vector<geometry_msgs::msg::Point> & bound_mission_lane, const int id_marker);
 
+  /**
+   *@brief Add a path point.
+   *
+   *@param pth_msg The path.
+   *@param x The x value.
+   *@param y The y value.
+   *@param v_x The v_x value.
+   */
   void AddPathPoint_(
     autoware_auto_planning_msgs::msg::Path & pth_msg, const double x, const double y,
     const double v_x);
 
+  /**
+   *@brief Create a motion planner input.
+   *
+   *@param trj_msg The trajectory.
+   *@param path_msg The path.
+   *@param trj_vis The visualization marker for the trajectory.
+   *@param path_vis The visualization marker for the path.
+   *@param centerline_mission_lane The centerline of the mission lane.
+   */
   void CreateMotionPlannerInput_(
     autoware_auto_planning_msgs::msg::Trajectory & trj_msg,
     autoware_auto_planning_msgs::msg::Path & path_msg, visualization_msgs::msg::Marker & trj_vis,
@@ -140,9 +156,6 @@ private:
   visualization_msgs::msg::Marker GetGlobalTrjVisualization_(
     const autoware_auto_planning_msgs::msg::Trajectory & trj_msg);
 
-  // ###########################################################################
-  // #  PRIVATE VARIABLES
-  // ###########################################################################
   // Declare ROS2 publisher and subscriber
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_subscriber_;
@@ -165,17 +178,17 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
 
-  // switch to print a warning about wrongly configured odometry frames
+  // Switch to print a warning about wrongly configured odometry frames
   bool b_global_odometry_deprecation_warning_ = false;
   bool received_motion_update_once_ = false;
-  // store initial and last available odom messages
+
+  // Store initial and last available odom messages
   nav_msgs::msg::Odometry last_odom_msg_, initial_odom_msg_;
 
-  // workaround to start the vehicle driving into the computed local road
-  // model
+  // Workaround to start the vehicle driving into the computed local road model
   bool mission_lanes_available_once_ = false;
 
-  // ros parameters
+  // ROS parameters
   float target_speed_;
 };
 }  // namespace autoware::mapless_architecture

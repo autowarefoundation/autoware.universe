@@ -30,7 +30,7 @@
 namespace autoware::mapless_architecture
 {
 
-// Create Direction data type
+// Direction data type
 typedef int Direction;
 const Direction stay = 0;
 const Direction left = 1;
@@ -38,6 +38,7 @@ const Direction right = 2;
 const Direction left_most = 3;
 const Direction right_most = 4;
 
+// Define Lanes
 struct Lanes
 {
   std::vector<int> ego;
@@ -204,10 +205,6 @@ public:
     std::vector<LaneletConnection> & out_lanelet_connections);
 
 private:
-  // ###########################################################################
-  // #  PRIVATE PROCESSING METHODS
-  // ###########################################################################
-
   /**
    * @brief Function for the visualization of lanes.
    *
@@ -283,9 +280,6 @@ private:
    */
   void CalculatePredecessors(std::vector<LaneletConnection> & lanelet_connections);
 
-  // ###########################################################################
-  // #  PRIVATE VARIABLES
-  // ###########################################################################
   //  Declare ROS2 publisher and subscriber
   rclcpp::Subscription<autoware_planning_msgs::msg::LocalMap>::SharedPtr mapSubscriber_;
 
@@ -309,11 +303,12 @@ private:
   // ROS buffer interface (for TF transforms)
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
-  // store previous odometry message
-  nav_msgs::msg::Odometry last_odom_msg_;
-  Pose2D pose_prev_;
-  // Pose2D target_pose_ = {0.0, 0.0};
 
+  // Store previous odometry message
+  nav_msgs::msg::Odometry last_odom_msg_;
+
+  // Initialize some variables
+  Pose2D pose_prev_;
   bool pose_prev_init_ = false;
   bool b_global_odometry_deprecation_warning_ = false;
   bool received_motion_update_once_ = false;
@@ -329,7 +324,7 @@ private:
   std::vector<int> lane_right_;
   std::vector<lanelet::Lanelet> current_lanelets_;
 
-  // ros parameters
+  // ROS parameters
   float distance_to_centerline_threshold_;
   float projection_distance_on_goallane_;
   int retrigger_attempts_max_;

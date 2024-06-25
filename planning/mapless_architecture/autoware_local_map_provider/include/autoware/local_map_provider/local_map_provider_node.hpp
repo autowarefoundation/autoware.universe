@@ -26,10 +26,6 @@ public:
   LocalMapProviderNode();
 
 private:
-  // ###########################################################################
-  // #  PRIVATE PROCESSING METHODS
-  // ###########################################################################
-
   /**
    * @brief The callback for the RoadSegments messages.
    *
@@ -37,9 +33,6 @@ private:
    */
   void CallbackRoadSegmentsMessages_(const autoware_planning_msgs::msg::RoadSegments & msg);
 
-  // ###########################################################################
-  // #  PRIVATE VARIABLES
-  // ###########################################################################
   // Declare ROS2 publisher and subscriber
 
   rclcpp::Publisher<autoware_planning_msgs::msg::LocalMap>::SharedPtr map_publisher_;
