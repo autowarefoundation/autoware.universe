@@ -1,0 +1,53 @@
+name: get-modified-packages
+description: ""
+
+inputs:
+  base-ref:
+    description: ""
+    required: false
+    default: ${{ github.base_ref }}
+#  docker-run:
+#    description: ""
+#    required: true
+
+outputs:
+  modified-packages:
+    description: ""
+    value: ${{ steps.get-modified-packages.outputs.modified-packages }}
+
+runs:
+  using: composite
+  steps:
+    - name: Workaround for https://github.com/actions/checkout/issues/766
+      run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      shell: bash
+
+    - name: Fetch the base branch with enough history for a common merge-base commit
+      run: |
+        git fetch origin ${{ inputs.base-ref }}
+      shell: bash
+
+    - name: printenv
+      run: printenv
+      shell: bash
+
+    - name: Get modified packages
+      id: get-modified-packages
+      run: |
+        modified_packages=$(docker run --shm-size 1G \
+          -v ${{ github.workspace }}:/workspace \
+          -w /workspace \
+          -e GITHUB_ACTION_PATH \
+          -v ${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH} \
+          ubuntu:22.04 \
+          /bin/bash -c \
+          "${GITHUB_ACTION_PATH}/get-modified-packages.sh origin/${{ inputs.base-ref }}" \
+          )
+        echo "modified-packages=$modified_packages" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Show result
+      run: |
+        echo "modified-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}"
+      shell: bash

@@ -1,0 +1,145 @@
+name: colcon-test
+description: ""
+
+inputs:
+  rosdistro:
+    description: ""
+    required: true
+  target-packages:
+    description: ""
+    required: true
+  build-depends-repos:
+    description: ""
+    required: false
+  label-regex:
+    description: ""
+    required: false
+    default: .* # Run all tests
+  token:
+    description: ""
+    required: false
+    default: ${{ github.token }}
+  include-eol-distros:
+    description: ""
+    required: false
+outputs:
+  coverage-report-files:
+    description: ""
+    value: ${{ steps.test.outputs.coverage-reports }}
+
+runs:
+  using: composite
+  steps:
+    - name: Show target packages
+      run: |
+        echo "target packages: ${{ inputs.target-packages }}"
+      shell: bash
+
+    - name: Set up colcon-mixin
+      run: |
+        colcon mixin add default https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml || true
+        colcon mixin update default
+      shell: bash
+
+    - name: Install packages for coverage commands
+      run: |
+        sudo apt-get -yqq update
+        sudo apt-get -yqq install \
+          lcov \
+          python3-pip \
+          python3-colcon-coveragepy-result \
+          python3-colcon-lcov-result \
+          python3-pytest-cov
+      shell: bash
+
+    - name: Set git config
+      if: ${{ inputs.build-depends-repos != '' }}
+      uses: autowarefoundation/autoware-github-actions/set-git-config@v1
+      with:
+        token: ${{ inputs.token }}
+
+    - name: Clone dependency packages
+      if: ${{ inputs.build-depends-repos != '' }}
+      run: |
+        mkdir -p dependency_ws
+        vcs import dependency_ws < ${{ inputs.build-depends-repos }}
+      shell: bash
+
+    - name: Run rosdep install
+      run: |
+        package_paths=$(colcon list -p --packages-above-and-dependencies ${{ inputs.target-packages }} --base-paths . dependency_ws)
+        sudo apt-get -yqq update
+        if [ "${{ inputs.include-eol-distros }}" = "true" ]; then
+            rosdep update --include-eol-distros
+        else
+            rosdep update
+        fi
+        DEBIAN_FRONTEND=noninteractive rosdep install -yqq --from-paths ${package_paths} --ignore-src --rosdistro ${{ inputs.rosdistro }}
+      shell: bash
+
+    - name: Restore build files from cache
+      id: restore-build-files
+      uses: actions/cache@v4
+      with:
+        path: |
+          ./build
+          ./install
+        key: build-${{ inputs.rosdistro }}-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cmake-build-type }}-${{ github.sha }}
+
+    - name: Test
+      run: |
+        set -e
+        . /opt/ros/${{ inputs.rosdistro }}/setup.sh
+
+        colcon lcov-result --zero-counters \
+          --verbose \
+          --packages-above ${{ inputs.target-packages }}
+
+        colcon lcov-result --initial \
+          --verbose \
+          --packages-above ${{ inputs.target-packages }}
+
+        colcon test --event-handlers console_cohesion+ \
+          --mixin coverage-pytest \
+          --packages-above ${{ inputs.target-packages }} \
+          --ctest-args -L "${{ inputs.label-regex }}" \
+          --executor sequential \
+          --return-code-on-test-failure
+
+        colcon lcov-result \
+          --verbose \
+          --packages-above ${{ inputs.target-packages }} || true
+
+        colcon coveragepy-result \
+          --verbose \
+          --packages-above ${{ inputs.target-packages }} || true
+      shell: bash
+
+    - name: Check if the lcov coverage file exists
+      id: lcov-coverage-file-existence
+      uses: autowarefoundation/autoware-github-actions/check-file-existence@v1
+      with:
+        files: lcov/total_coverage.info
+
+    - name: Check if the coveragepy coverage file exists
+      id: coveragepy-coverage-file-existence
+      uses: autowarefoundation/autoware-github-actions/check-file-existence@v1
+      with:
+        files: coveragepy/.coverage
+
+    - name: Generate output
+      id: test
+      run: |
+        coverage_files=()
+        if [[ "${{ steps.lcov-coverage-file-existence.outputs.exists }}" == "true" ]]; then
+          coverage_files+=("lcov/total_coverage.info")
+        fi
+
+        if [[ "${{ steps.coveragepy-coverage-file-existence.outputs.exists}}" == "true" ]]; then
+          coverage_files+=("coveragepy/.coverage")
+        fi
+
+        # Join coverage file names
+        coverage_files_str="$(IFS=,; echo "${coverage_files[*]}")"
+        echo "coverage-reports=$coverage_files_str" >> $GITHUB_OUTPUT
+      shell: bash
