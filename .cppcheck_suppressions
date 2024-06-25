@@ -40,3 +40,4 @@ useStlAlgorithm
 uselessOverride
 variableScope
 virtualCallInConstructor
+virtualDestructor
