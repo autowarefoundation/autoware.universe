@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_HPP_
-#define AUTOWARE__TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_HPP_
+#ifndef AUTOWARE__TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_NODE_HPP_
+#define AUTOWARE__TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_NODE_HPP_
 
 #include "autoware/tracking_object_merger/association/data_association.hpp"
 #include "autoware/tracking_object_merger/utils/tracker_state.hpp"
@@ -133,4 +133,4 @@ private:
 
 }  // namespace autoware::tracking_object_merger
 
-#endif  // AUTOWARE__TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_HPP_
+#endif  // AUTOWARE__TRACKING_OBJECT_MERGER__DECORATIVE_TRACKER_MERGER_NODE_HPP_
