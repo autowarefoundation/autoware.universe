@@ -28,12 +28,17 @@ runs:
         git fetch origin ${{ inputs.base-ref }}
       shell: bash
 
+    # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
     - name: Get modified files
       id: get-modified-files
       run: |
         modified_files=$(git diff --name-only "origin/${{ inputs.base-ref }}"...HEAD)
         echo "modified-files=$modified_files"
-        echo "modified-files=$modified_files" >> $GITHUB_OUTPUT
+        {
+          echo 'modified-files<<EOF'
+          echo $modified_files
+          echo EOF
+        } >> $GITHUB_OUTPUT
       shell: bash
 
     - name: printenv
