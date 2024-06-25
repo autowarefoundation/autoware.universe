@@ -42,7 +42,7 @@ runs:
           -v ${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH} \
           ghcr.io/autowarefoundation/autoware:latest-prebuilt \
           /bin/bash -c \
-          "ls -alF && tree -L 2 && ${GITHUB_ACTION_PATH}/get-modified-packages.sh origin/${{ inputs.base-ref }}"
+          "ls -alF && ${GITHUB_ACTION_PATH}/get-modified-packages.sh origin/${{ inputs.base-ref }}"
         echo "modified-packages=$modified_packages" >> $GITHUB_OUTPUT
       shell: bash
 
