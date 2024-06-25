@@ -32,6 +32,7 @@ runs:
       id: get-modified-files
       run: |
         modified_files=$(git diff --name-only "origin/${{ inputs.base-ref }}"...HEAD)
+        echo "modified-files=$modified_files"
         echo "modified-files=$modified_files" >> $GITHUB_OUTPUT
       shell: bash
 
