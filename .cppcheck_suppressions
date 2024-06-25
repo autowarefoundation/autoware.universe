@@ -4,7 +4,6 @@ checkersReport
 constParameterReference
 constVariable
 constVariableReference
-containerOutOfBounds
 // cspell: ignore cstyle
 cstyleCast
 duplicateBranch
@@ -32,7 +31,6 @@ unmatchedSuppression
 unreadVariable
 unusedFunction
 unusedStructMember
-unusedVariable
 useInitializationList
 useStlAlgorithm
 uselessOverride
