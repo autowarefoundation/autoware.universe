@@ -499,7 +499,7 @@ bool checkSafetyWithRSS(
       obj_predicted_paths.begin(), obj_predicted_paths.end(), [&](const auto & obj_path) {
         const bool has_collision = !utils::path_safety_checker::checkCollision(
           planned_path, ego_predicted_path, object, obj_path, parameters, rss_params,
-          hysteresis_factor, current_debug_data.second, yaw_difference_th);
+          hysteresis_factor, yaw_difference_th, current_debug_data.second);
 
         utils::path_safety_checker::updateCollisionCheckDebugMap(
           debug_map, current_debug_data, !has_collision);
@@ -563,12 +563,12 @@ bool checkCollision(
   const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
-  const double hysteresis_factor, CollisionCheckDebug & debug, const double yaw_difference_th)
+  const double hysteresis_factor, const double yaw_difference_th, CollisionCheckDebug & debug)
 {
   const auto collided_polygons = getCollidedPolygons(
     planned_path, predicted_ego_path, target_object, target_object_path, common_parameters,
-    rss_parameters, hysteresis_factor, std::numeric_limits<double>::max(), debug,
-    yaw_difference_th);
+    rss_parameters, hysteresis_factor, std::numeric_limits<double>::max(), yaw_difference_th,
+    debug);
   return collided_polygons.empty();
 }
 
@@ -578,8 +578,8 @@ std::vector<Polygon2d> getCollidedPolygons(
   const ExtendedPredictedObject & target_object,
   const PredictedPathWithPolygon & target_object_path,
   const BehaviorPathPlannerParameters & common_parameters, const RSSparams & rss_parameters,
-  double hysteresis_factor, const double max_velocity_limit, CollisionCheckDebug & debug,
-  const double yaw_difference_th)
+  double hysteresis_factor, const double max_velocity_limit, const double yaw_difference_th,
+  CollisionCheckDebug & debug)
 {
   {
     debug.ego_predicted_path = predicted_ego_path;
