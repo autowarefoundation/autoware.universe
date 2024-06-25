@@ -59,19 +59,13 @@ private:
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
     const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin = 0.0) const;
   std::vector<Obstacle> convertToObstacles(
-    const Odometry & odometry, const PredictedObjects & objects,
-    const std::vector<TrajectoryPoint> & traj_points) const;
-  std::vector<Obstacle> convertToObstacles(
-    const Odometry & odometry, const PointCloud2 & pointcloud,
+    const Odometry & odometry, const PredictedObjects::ConstSharedPtr objects_ptr,
+    const PointCloud2::ConstSharedPtr pointcloud_ptr,
     const std::vector<TrajectoryPoint> & traj_points,
     const std_msgs::msg::Header & traj_header) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstObstacles(
-    const Odometry & odometry, const PredictedObjects & objects,
-    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
-  std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
-  determineEgoBehaviorAgainstObstacles(
-    const Odometry & odometry, const PointCloud2 & /* pointcloud */,
+    const Odometry & odometry, const PredictedObjects::ConstSharedPtr objects_ptr,
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
   std::vector<TrajectoryPoint> decimateTrajectoryPoints(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points) const;
