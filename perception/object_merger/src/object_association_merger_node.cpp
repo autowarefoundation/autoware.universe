@@ -14,7 +14,7 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include "autoware_object_merger/object_association_merger_node.hpp"
+#include "object_association_merger_node.hpp"
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
@@ -26,6 +26,7 @@
 
 #include <chrono>
 #include <unordered_map>
+#include <utility>
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
