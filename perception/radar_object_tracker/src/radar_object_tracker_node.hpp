@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE_HPP_
-#define AUTOWARE__RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE_HPP_
+#ifndef RADAR_OBJECT_TRACKER_NODE_HPP_
+#define RADAR_OBJECT_TRACKER_NODE_HPP_
 
-#include "autoware/radar_object_tracker/association/data_association.hpp"
+#include "autoware_radar_object_tracker/association/data_association.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -134,4 +134,4 @@ private:
 
 }  // namespace autoware::radar_object_tracker
 
-#endif  // AUTOWARE__RADAR_OBJECT_TRACKER__RADAR_OBJECT_TRACKER_NODE_HPP_
+#endif  // RADAR_OBJECT_TRACKER_NODE_HPP_

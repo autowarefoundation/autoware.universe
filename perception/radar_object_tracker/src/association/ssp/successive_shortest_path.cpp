@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/radar_object_tracker/association/solver/ssp.hpp"
+#include "autoware_radar_object_tracker/association/solver/ssp.hpp"
 
 #include <algorithm>
 #include <cassert>

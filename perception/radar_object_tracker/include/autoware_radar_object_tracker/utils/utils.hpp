@@ -16,8 +16,8 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#ifndef AUTOWARE__RADAR_OBJECT_TRACKER__UTILS__UTILS_HPP_
-#define AUTOWARE__RADAR_OBJECT_TRACKER__UTILS__UTILS_HPP_
+#ifndef AUTOWARE_RADAR_OBJECT_TRACKER__UTILS__UTILS_HPP_
+#define AUTOWARE_RADAR_OBJECT_TRACKER__UTILS__UTILS_HPP_
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -41,4 +41,4 @@ Eigen::MatrixXd stackMatricesDiagonally(const std::vector<Eigen::MatrixXd> & mat
 
 }  // namespace autoware::radar_object_tracker::utils
 
-#endif  // AUTOWARE__RADAR_OBJECT_TRACKER__UTILS__UTILS_HPP_
+#endif  // AUTOWARE_RADAR_OBJECT_TRACKER__UTILS__UTILS_HPP_

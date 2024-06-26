@@ -14,9 +14,9 @@
 //
 //
 
-#include "autoware/radar_object_tracker/tracker/model/tracker_base.hpp"
+#include "autoware_radar_object_tracker/tracker/model/tracker_base.hpp"
 
-#include "autoware/radar_object_tracker/utils/utils.hpp"
+#include "autoware_radar_object_tracker/utils/utils.hpp"
 
 #include <algorithm>
 #include <random>

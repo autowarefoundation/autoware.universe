@@ -16,13 +16,13 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#ifndef AUTOWARE__RADAR_OBJECT_TRACKER__ASSOCIATION__DATA_ASSOCIATION_HPP_
-#define AUTOWARE__RADAR_OBJECT_TRACKER__ASSOCIATION__DATA_ASSOCIATION_HPP_
+#ifndef AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__DATA_ASSOCIATION_HPP_
+#define AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__DATA_ASSOCIATION_HPP_
 
 #define EIGEN_MPL2_ONLY
 
-#include "autoware/radar_object_tracker/association/solver/gnn_solver.hpp"
-#include "autoware/radar_object_tracker/tracker/tracker.hpp"
+#include "autoware_radar_object_tracker/association/solver/gnn_solver.hpp"
+#include "autoware_radar_object_tracker/tracker/tracker.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
@@ -65,4 +65,4 @@ public:
   virtual ~DataAssociation() {}
 };
 }  // namespace autoware::radar_object_tracker
-#endif  // AUTOWARE__RADAR_OBJECT_TRACKER__ASSOCIATION__DATA_ASSOCIATION_HPP_
+#endif  // AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__DATA_ASSOCIATION_HPP_
