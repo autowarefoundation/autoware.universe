@@ -70,6 +70,8 @@ else()
 endif()
 
 if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
+  message("Building stuff for lidar_centerpoint")
+
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
 
@@ -149,6 +151,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   if(BUILD_TESTING)
+    message("Building tests for lidar_centerpoint")
     find_package(ament_cmake_gtest REQUIRED)
     ament_auto_add_gtest(test_detection_class_remapper
       test/test_detection_class_remapper.cpp
