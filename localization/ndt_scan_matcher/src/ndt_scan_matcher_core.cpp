@@ -445,7 +445,8 @@ bool NDTScanMatcher::callback_sensor_points_main(
     std::stringstream msg;
 
     msg << "Lidar has gone out of the map range";
-    diagnostics_scan_points_->update_level_and_message(diagnostic_msgs::msg::DiagnosticStatus::WARN, msg.str());
+    diagnostics_scan_points_->update_level_and_message(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, msg.str());
 
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, msg.str());
   }
