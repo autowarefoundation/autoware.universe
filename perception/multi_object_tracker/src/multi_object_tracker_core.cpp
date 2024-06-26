@@ -13,6 +13,15 @@
 // limitations under the License.
 //
 //
+#define EIGEN_MPL2_ONLY
+
+#include "multi_object_tracker/multi_object_tracker_core.hpp"
+
+#include "multi_object_tracker/utils/utils.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <rclcpp_components/register_node_macro.hpp>
 
 #include <boost/optional.hpp>
 
@@ -27,14 +36,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#define EIGEN_MPL2_ONLY
-#include "multi_object_tracker/multi_object_tracker_core.hpp"
-#include "multi_object_tracker/utils/utils.hpp"
-
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-#include <rclcpp_components/register_node_macro.hpp>
 
 namespace
 {
@@ -200,14 +201,14 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   debugger_ = std::make_unique<TrackerDebugger>(*this, world_frame_id_);
   debugger_->setObjectChannels(input_names_short);
   published_time_publisher_ =
-    std::make_unique<autoware_universe_utils::PublishedTimePublisher>(this);
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void MultiObjectTracker::onTrigger()
 {
   const rclcpp::Time current_time = this->now();
   // get objects from the input manager and run process
-  std::vector<std::pair<uint, DetectedObjects>> objects_list;
+  ObjectsList objects_list;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
 

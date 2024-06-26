@@ -24,7 +24,11 @@
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-#include <cv_bridge/cv_bridge.h>
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>  // for ROS 2 Jazzy or newer
+#else
+#include <cv_bridge/cv_bridge.h>  // for ROS 2 Humble or older
+#endif
 
 #include <optional>
 
@@ -147,7 +151,7 @@ private:
       sub_compressed_image_.reset();
     }
 
-    autoware_universe_utils::StopWatch stop_watch;
+    autoware::universe_utils::StopWatch stop_watch;
     remap_and_publish(common::decompress_to_cv_mat(msg), msg.header);
     RCLCPP_INFO_STREAM(get_logger(), "image undistort: " << stop_watch.toc() << "[ms]");
   }
@@ -161,7 +165,7 @@ private:
       make_remap_lut();
     }
 
-    autoware_universe_utils::StopWatch stop_watch;
+    autoware::universe_utils::StopWatch stop_watch;
     remap_and_publish(common::decompress_to_cv_mat(msg), msg.header);
     RCLCPP_INFO_STREAM(get_logger(), "image undistort: " << stop_watch.toc() << "[ms]");
   }

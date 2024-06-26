@@ -21,8 +21,8 @@
 
 namespace autoware::freespace_planning_algorithms
 {
-using autoware_universe_utils::createQuaternionFromYaw;
-using autoware_universe_utils::normalizeRadian;
+using autoware::universe_utils::createQuaternionFromYaw;
+using autoware::universe_utils::normalizeRadian;
 
 geometry_msgs::msg::Pose transformPose(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::TransformStamped & transform)
@@ -91,13 +91,13 @@ geometry_msgs::msg::Pose local2global(
 double PlannerWaypoints::compute_length() const
 {
   if (waypoints.empty()) {
-    std::runtime_error("cannot compute cost because waypoint has size 0");
+    throw std::runtime_error("cannot compute cost because waypoint has size 0");
   }
   double total_cost = 0.0;
   for (size_t i = 0; i < waypoints.size() - 1; ++i) {
     const auto pose_a = waypoints.at(i);
     const auto pose_b = waypoints.at(i + 1);
-    total_cost += autoware_universe_utils::calcDistance2d(pose_a.pose, pose_b.pose);
+    total_cost += autoware::universe_utils::calcDistance2d(pose_a.pose, pose_b.pose);
   }
   return total_cost;
 }

@@ -153,20 +153,20 @@ TrackedObject predictPastOrFutureTrackedObject(const TrackedObject & obj, const 
 /**
  * @brief predict past or future tracked objects
  *
- * @param obj
+ * @param input_objects
  * @param header
  * @return TrackedObjects
  */
 TrackedObjects predictPastOrFutureTrackedObjects(
-  const TrackedObjects & obj, const std_msgs::msg::Header & header)
+  const TrackedObjects & input_objects, const std_msgs::msg::Header & header)
 {
   // for each object, predict past or future
   TrackedObjects output_objects;
-  output_objects.header = obj.header;
+  output_objects.header = input_objects.header;
   output_objects.header.stamp = header.stamp;
 
-  const auto dt = (rclcpp::Time(header.stamp) - rclcpp::Time(obj.header.stamp)).seconds();
-  for (const auto & obj : obj.objects) {
+  const auto dt = (rclcpp::Time(header.stamp) - rclcpp::Time(input_objects.header.stamp)).seconds();
+  for (const auto & obj : input_objects.objects) {
     output_objects.objects.push_back(predictPastOrFutureTrackedObject(obj, dt));
   }
   return output_objects;
@@ -280,7 +280,7 @@ bool objectsHaveSameMotionDirections(const TrackedObject & main_obj, const Track
   // diff of motion yaw angle
   const auto motion_yaw_diff = std::fabs(main_motion_yaw - sub_motion_yaw);
   const auto normalized_motion_yaw_diff =
-    autoware_universe_utils::normalizeRadian(motion_yaw_diff);  // -pi ~ pi
+    autoware::universe_utils::normalizeRadian(motion_yaw_diff);  // -pi ~ pi
   // evaluate if motion yaw angle is same
   constexpr double yaw_threshold = M_PI / 4.0;  // 45 deg
   if (std::abs(normalized_motion_yaw_diff) < yaw_threshold) {
@@ -305,7 +305,7 @@ bool objectsYawIsReverted(const TrackedObject & main_obj, const TrackedObject & 
   const auto sub_yaw = tf2::getYaw(sub_obj.kinematics.pose_with_covariance.pose.orientation);
   // calc yaw diff
   const auto yaw_diff = std::fabs(main_yaw - sub_yaw);
-  const auto normalized_yaw_diff = autoware_universe_utils::normalizeRadian(yaw_diff);  // -pi ~ pi
+  const auto normalized_yaw_diff = autoware::universe_utils::normalizeRadian(yaw_diff);  // -pi ~ pi
   // evaluate if yaw is reverted
   constexpr double yaw_threshold = M_PI / 2.0;  // 90 deg
   if (std::abs(normalized_yaw_diff) >= yaw_threshold) {
