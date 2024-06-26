@@ -76,11 +76,12 @@ jobs:
 
       - name: Export CUDA state as a variable for adding to cache key
         run: |
+          build_type_cuda_state=nocuda
           if [[ "${{ matrix.container-suffix }}" == "-cuda" ]]; then
-            echo "BUILD_TYPE_CUDA_STATE=cuda" >> "${GITHUB_ENV}"
-          else
-            echo "BUILD_TYPE_CUDA_STATE=nocuda" >> "${GITHUB_ENV}"
+            build_type_cuda_state=cuda
           fi
+          echo "BUILD_TYPE_CUDA_STATE=$build_type_cuda_state" >> "${GITHUB_ENV}"
+        shell: bash
 
       - name: Build
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
