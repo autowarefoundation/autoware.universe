@@ -52,7 +52,7 @@ public:
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
     HyperParameters::DynamicMapLoading param);
 
-    bool out_of_map_range(const geometry_msgs::msg::Point & position);
+  bool out_of_map_range(const geometry_msgs::msg::Point & position);
 
 private:
   friend class NDTScanMatcher;
