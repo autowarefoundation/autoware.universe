@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__RADAR_FUSION_TO_DETECTED_OBJECT__RADAR_FUSION_TO_DETECTED_OBJECT_HPP_
-#define AUTOWARE__RADAR_FUSION_TO_DETECTED_OBJECT__RADAR_FUSION_TO_DETECTED_OBJECT_HPP_
+#ifndef RADAR_FUSION_TO_DETECTED_OBJECT_HPP_
+#define RADAR_FUSION_TO_DETECTED_OBJECT_HPP_
 
 #define EIGEN_MPL2_ONLY
 
@@ -26,7 +26,6 @@
 #include "autoware_perception_msgs/msg/detected_objects.hpp"
 #include "geometry_msgs/msg/pose_with_covariance.hpp"
 #include "geometry_msgs/msg/twist_with_covariance.hpp"
-// #include "std_msgs/msg/header.hpp"
 
 #include <memory>
 #include <string>
@@ -117,4 +116,4 @@ private:
 };
 }  // namespace autoware::radar_fusion_to_detected_object
 
-#endif  // AUTOWARE__RADAR_FUSION_TO_DETECTED_OBJECT__RADAR_FUSION_TO_DETECTED_OBJECT_HPP_
+#endif  // RADAR_FUSION_TO_DETECTED_OBJECT_HPP_

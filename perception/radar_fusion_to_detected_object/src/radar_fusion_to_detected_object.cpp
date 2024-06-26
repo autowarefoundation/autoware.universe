@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/radar_fusion_to_detected_object/radar_fusion_to_detected_object.hpp"
+#include "include/radar_fusion_to_detected_object.hpp"
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"

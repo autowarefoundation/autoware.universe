@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/radar_fusion_to_detected_object/node.hpp"
+#include "include/node.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 
