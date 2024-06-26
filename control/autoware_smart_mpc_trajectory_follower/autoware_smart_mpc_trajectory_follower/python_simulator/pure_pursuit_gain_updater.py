@@ -214,7 +214,5 @@ class pure_pursuit_gain_updater:
 
         estimated_steer_scaling = np.clip(-best_steer_coef[1] / best_steer_coef[0], 0.1, 10.0)
 
-        # estimated_steer_scaling = np.clip( (np.abs(steer_array).mean() + 1e-16)/ (np.abs(steer_input_array).mean() + 1e-16),0.1,10.0)
-        # print("pure_steer_scaling", estimated_steer_scaling)
 
         return np.clip(estimated_wheel_base_scaling / estimated_steer_scaling, 0.1, 10.0)
