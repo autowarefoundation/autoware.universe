@@ -612,7 +612,8 @@ std::vector<Polygon2d> getCollidedPolygons(
 
     const double ego_yaw = tf2::getYaw(ego_pose.orientation);
     const double object_yaw = tf2::getYaw(obj_pose.orientation);
-    if (std::abs(ego_yaw - object_yaw) > yaw_difference_th) continue;
+    const double yaw_difference = autoware::universe_utils::normalizeRadian(ego_yaw - object_yaw);
+    if (std::abs(yaw_difference) > yaw_difference_th) continue;
 
     // check overlap
     if (boost::geometry::overlaps(ego_polygon, obj_polygon)) {
