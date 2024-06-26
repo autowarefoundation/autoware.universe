@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// cSpell:ignore lstm
+
 #include <Eigen/Core>
 
 #include <pybind11/eigen.h>
@@ -36,10 +38,19 @@ Eigen::RowVectorXd Nominal_model_input(Eigen::MatrixXd Var, double lam, int step
   nominal_pred += (Var.row(step - 2) - nominal_pred) * 0.03333 / lam;
   return nominal_pred;
 }
-
+Eigen::VectorXd tanh(Eigen::VectorXd v)
+{
+  Eigen::VectorXd result = v.array().tanh();
+  return result;
+}
 Eigen::VectorXd d_tanh(Eigen::VectorXd v)
 {
   Eigen::VectorXd result = 1 / (v.array().cosh() * v.array().cosh());
+  return result;
+}
+Eigen::VectorXd sigmoid(Eigen::VectorXd v)
+{
+  Eigen::VectorXd result = 0.5 * (0.5 * v).array().tanh() + 0.5;
   return result;
 }
 Eigen::VectorXd relu(Eigen::VectorXd x)
@@ -62,7 +73,6 @@ Eigen::VectorXd d_relu(Eigen::VectorXd x)
   }
   return result;
 }
-
 Eigen::MatrixXd d_relu_product(Eigen::MatrixXd m, Eigen::VectorXd x)
 {
   Eigen::MatrixXd result = Eigen::MatrixXd::Zero(m.rows(), m.cols());
@@ -81,10 +91,31 @@ Eigen::MatrixXd d_tanh_product(Eigen::MatrixXd m, Eigen::VectorXd x)
   }
   return result;
 }
-Eigen::MatrixXd test_product(Eigen::VectorXd v, Eigen::MatrixXd m)
+Eigen::VectorXd d_tanh_product_vec(Eigen::VectorXd v, Eigen::VectorXd x)
 {
-  return v.asDiagonal() * m;
+  Eigen::VectorXd result = Eigen::VectorXd(v.size());
+  for (int i = 0; i < v.size(); i++) {
+    result[i] = v[i] / (std::cosh(x[i]) * std::cosh(x[i]));
+  }
+  return result;
 }
+Eigen::MatrixXd d_sigmoid_product(Eigen::MatrixXd m, Eigen::VectorXd x)
+{
+  Eigen::MatrixXd result = Eigen::MatrixXd(m.rows(), m.cols());
+  for (int i = 0; i < m.cols(); i++) {
+    result.col(i) = 0.25 * m.col(i) / (std::cosh(0.5 * x[i]) * std::cosh(0.5 * x[i]));
+  }
+  return result;
+}
+Eigen::VectorXd d_sigmoid_product_vec(Eigen::VectorXd v, Eigen::VectorXd x)
+{
+  Eigen::VectorXd result = Eigen::VectorXd(v.size());
+  for (int i = 0; i < v.size(); i++) {
+    result[i] = 0.25 * v[i] / (std::cosh(0.5 * x[i]) * std::cosh(0.5 * x[i]));
+  }
+  return result;
+}
+
 Eigen::VectorXd get_polynomial_features(Eigen::VectorXd x, int deg, int dim)
 {
   int n_features = x.size();
@@ -147,22 +178,22 @@ Eigen::MatrixXd get_polynomial_features_with_diff(Eigen::VectorXd x, int deg, in
 class transform_model_to_eigen
 {
 private:
-  Eigen::MatrixXd weight_0;
-  Eigen::MatrixXd weight_1;
-  Eigen::MatrixXd weight_2;
-  Eigen::MatrixXd weight_3;
-  Eigen::MatrixXd weight_4;
-  Eigen::MatrixXd weight_5;
-  Eigen::MatrixXd weight_6;
-  Eigen::MatrixXd weight_7;
-  Eigen::VectorXd bias_0;
-  Eigen::VectorXd bias_1;
-  Eigen::VectorXd bias_2;
-  Eigen::VectorXd bias_3;
-  Eigen::VectorXd bias_4;
-  Eigen::VectorXd bias_5;
-  Eigen::VectorXd bias_6;
-  Eigen::VectorXd bias_7;
+  Eigen::MatrixXd weight_acc_layer_1;
+  Eigen::MatrixXd weight_steer_layer_1_head;
+  Eigen::MatrixXd weight_steer_layer_1_tail;
+  Eigen::MatrixXd weight_acc_layer_2;
+  Eigen::MatrixXd weight_steer_layer_2;
+  Eigen::MatrixXd weight_linear_relu_1;
+  Eigen::MatrixXd weight_linear_relu_2;
+  Eigen::MatrixXd weight_finalize;
+  Eigen::VectorXd bias_acc_layer_1;
+  Eigen::VectorXd bias_steer_layer_1_head;
+  Eigen::VectorXd bias_steer_layer_1_tail;
+  Eigen::VectorXd bias_acc_layer_2;
+  Eigen::VectorXd bias_steer_layer_2;
+  Eigen::VectorXd bias_linear_relu_1;
+  Eigen::VectorXd bias_linear_relu_2;
+  Eigen::VectorXd bias_linear_finalize;
   Eigen::MatrixXd A_linear_reg;
   Eigen::VectorXd b_linear_reg;
   int deg;
@@ -173,38 +204,45 @@ private:
   int acc_ctrl_queue_size;
   int steer_ctrl_queue_size;
   int steer_ctrl_queue_size_core;
+  double vel_normalize;
+  double acc_normalize;
+  double steer_normalize;
   double max_acc_error = 20.0;
   double max_steer_error = 20.0;
 
 public:
   transform_model_to_eigen() {}
   void set_params(
-    Eigen::MatrixXd weight_0_, Eigen::MatrixXd weight_1_, Eigen::MatrixXd weight_2_,
-    Eigen::MatrixXd weight_3_, Eigen::MatrixXd weight_4_, Eigen::MatrixXd weight_5_,
-    Eigen::MatrixXd weight_6_, Eigen::MatrixXd weight_7_, Eigen::VectorXd bias_0_,
-    Eigen::VectorXd bias_1_, Eigen::VectorXd bias_2_, Eigen::VectorXd bias_3_,
-    Eigen::VectorXd bias_4_, Eigen::VectorXd bias_5_, Eigen::VectorXd bias_6_,
-    Eigen::VectorXd bias_7_, Eigen::MatrixXd A_linear_reg_, Eigen::VectorXd b_linear_reg_, int deg_,
+    Eigen::MatrixXd weight_acc_layer_1_, Eigen::MatrixXd weight_steer_layer_1_head_,
+    Eigen::MatrixXd weight_steer_layer_1_tail_, Eigen::MatrixXd weight_acc_layer_2_,
+    Eigen::MatrixXd weight_steer_layer_2_, Eigen::MatrixXd weight_linear_relu_1_,
+    Eigen::MatrixXd weight_linear_relu_2_, Eigen::MatrixXd weight_finalize_,
+    Eigen::VectorXd bias_acc_layer_1_, Eigen::VectorXd bias_steer_layer_1_head_,
+    Eigen::VectorXd bias_steer_layer_1_tail_, Eigen::VectorXd bias_acc_layer_2_,
+    Eigen::VectorXd bias_steer_layer_2_, Eigen::VectorXd bias_linear_relu_1_,
+    Eigen::VectorXd bias_linear_relu_2_, Eigen::VectorXd bias_linear_finalize_,
+    Eigen::MatrixXd A_linear_reg_, Eigen::VectorXd b_linear_reg_, int deg_,
     double acc_time_constant_, int acc_delay_step_, double steer_time_constant_,
     int steer_delay_step_, int acc_ctrl_queue_size_, int steer_ctrl_queue_size_,
-    int steer_ctrl_queue_size_core_)
+    int steer_ctrl_queue_size_core_, double vel_normalize_, double acc_normalize_,
+    double steer_normalize_)
   {
-    weight_0 = weight_0_;
-    weight_1 = weight_1_;
-    weight_2 = weight_2_;
-    weight_3 = weight_3_;
-    weight_4 = weight_4_;
-    weight_5 = weight_5_;
-    weight_6 = weight_6_;
-    weight_7 = weight_7_;
-    bias_0 = bias_0_;
-    bias_1 = bias_1_;
-    bias_2 = bias_2_;
-    bias_3 = bias_3_;
-    bias_4 = bias_4_;
-    bias_5 = bias_5_;
-    bias_6 = bias_6_;
-    bias_7 = bias_7_;
+    weight_acc_layer_1 = weight_acc_layer_1_;
+    weight_steer_layer_1_head = weight_steer_layer_1_head_;
+    weight_steer_layer_1_tail = weight_steer_layer_1_tail_;
+    weight_acc_layer_2 = weight_acc_layer_2_;
+    weight_steer_layer_2 = weight_steer_layer_2_;
+    weight_linear_relu_1 = weight_linear_relu_1_;
+    weight_linear_relu_2 = weight_linear_relu_2_;
+    weight_finalize = weight_finalize_;
+    bias_acc_layer_1 = bias_acc_layer_1_;
+    bias_steer_layer_1_head = bias_steer_layer_1_head_;
+    bias_steer_layer_1_tail = bias_steer_layer_1_tail_;
+    bias_acc_layer_2 = bias_acc_layer_2_;
+    bias_steer_layer_2 = bias_steer_layer_2_;
+    bias_linear_relu_1 = bias_linear_relu_1_;
+    bias_linear_relu_2 = bias_linear_relu_2_;
+    bias_linear_finalize = bias_linear_finalize_;
     A_linear_reg = A_linear_reg_;
     b_linear_reg = b_linear_reg_;
     deg = deg_;
@@ -215,45 +253,58 @@ public:
     acc_ctrl_queue_size = acc_ctrl_queue_size_;
     steer_ctrl_queue_size = steer_ctrl_queue_size_;
     steer_ctrl_queue_size_core = steer_ctrl_queue_size_core_;
+    vel_normalize = vel_normalize_;
+    acc_normalize = acc_normalize_;
+    steer_normalize = steer_normalize_;
   }
   Eigen::VectorXd error_prediction(Eigen::VectorXd x)
   {
     Eigen::VectorXd acc_sub(acc_ctrl_queue_size + 1);
-    acc_sub[0] = x[1];
-    acc_sub.tail(acc_ctrl_queue_size) = x.segment(3, acc_ctrl_queue_size);
+    acc_sub[0] = acc_normalize * x[1];
+    acc_sub.tail(acc_ctrl_queue_size) = acc_normalize * x.segment(3, acc_ctrl_queue_size);
 
     Eigen::VectorXd steer_sub(steer_ctrl_queue_size_core + 1);
-    steer_sub[0] = x[2];
+    steer_sub[0] = steer_normalize * x[2];
     steer_sub.tail(steer_ctrl_queue_size_core) =
-      x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size_core);
-    Eigen::VectorXd acc_layer_1 = relu(weight_0 * acc_sub + bias_0);
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size_core);
+    Eigen::VectorXd acc_layer_1 = relu(weight_acc_layer_1 * acc_sub + bias_acc_layer_1);
 
-    Eigen::VectorXd steer_layer_1(bias_1.size() + bias_2.size());
-    steer_layer_1.head(bias_1.size()) = relu(weight_1 * steer_sub + bias_1);
+    Eigen::VectorXd steer_layer_1(bias_steer_layer_1_head.size() + bias_steer_layer_1_tail.size());
+    steer_layer_1.head(bias_steer_layer_1_head.size()) =
+      relu(weight_steer_layer_1_head * steer_sub + bias_steer_layer_1_head);
 
-    Eigen::VectorXd steer_input_full = x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size);
-    steer_layer_1.tail(bias_2.size()) = relu(weight_2 * steer_input_full + bias_2);
+    Eigen::VectorXd steer_input_full =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size);
+    steer_layer_1.tail(bias_steer_layer_1_tail.size()) =
+      relu(weight_steer_layer_1_tail * steer_input_full + bias_steer_layer_1_tail);
 
-    Eigen::VectorXd acc_layer_2 = (weight_3 * acc_layer_1 + bias_3).array().tanh();
+    Eigen::VectorXd acc_layer_2 = relu(weight_acc_layer_2 * acc_layer_1 + bias_acc_layer_2);
 
-    Eigen::VectorXd steer_layer_2 = (weight_4 * steer_layer_1 + bias_4).array().tanh();
+    Eigen::VectorXd steer_layer_2 = relu(weight_steer_layer_2 * steer_layer_1 + bias_steer_layer_2);
 
     Eigen::VectorXd h1(1 + acc_layer_2.size() + steer_layer_2.size());
-    h1[0] = x[0];
+    h1[0] = vel_normalize * x[0];
     h1.segment(1, acc_layer_2.size()) = acc_layer_2;
     h1.tail(steer_layer_2.size()) = steer_layer_2;
-    Eigen::VectorXd h2 = relu(weight_5 * h1 + bias_5);
-    Eigen::VectorXd h3 = relu(weight_6 * h2 + bias_6);
+    Eigen::VectorXd h2 = relu(weight_linear_relu_1 * h1 + bias_linear_relu_1);
+    Eigen::VectorXd h3 = relu(weight_linear_relu_2 * h2 + bias_linear_relu_2);
     Eigen::VectorXd h4(h3.size() + acc_layer_2.size() + steer_layer_2.size());
     h4.head(h3.size()) = h3;
     h4.segment(h3.size(), acc_layer_2.size()) = acc_layer_2;
     h4.tail(steer_layer_2.size()) = steer_layer_2;
-    Eigen::VectorXd x_for_polynomial_reg(5);
+    // Eigen::VectorXd x_for_polynomial_reg(5);
+    // x_for_polynomial_reg.head(3) = x.head(3);
+    // x_for_polynomial_reg[3] = x[3 + acc_delay_step];
+    // x_for_polynomial_reg[4] = x[3 + acc_ctrl_queue_size + steer_delay_step];
+    Eigen::VectorXd x_for_polynomial_reg(9);
     x_for_polynomial_reg.head(3) = x.head(3);
-    x_for_polynomial_reg[3] = x[3 + acc_delay_step];
-    x_for_polynomial_reg[4] = x[3 + acc_ctrl_queue_size + steer_delay_step];
+    int acc_start = 3 + std::max(acc_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(3, 3) = x.segment(acc_start, 3);
+    int steer_start = 3 + acc_ctrl_queue_size + std::max(steer_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(6, 3) = x.segment(steer_start, 3);
+
     Eigen::VectorXd y =
-      weight_7 * h4 + bias_7 +
+      weight_finalize * h4 + bias_linear_finalize +
       A_linear_reg * get_polynomial_features(x_for_polynomial_reg, deg, A_linear_reg.cols()) +
       b_linear_reg;
     y[4] = std::min(std::max(y[4], -max_acc_error), max_acc_error);
@@ -302,100 +353,112 @@ public:
   Eigen::MatrixXd error_prediction_with_diff(Eigen::VectorXd x)
   {
     Eigen::VectorXd acc_sub(acc_ctrl_queue_size + 1);
-    acc_sub[0] = x[1];
-    acc_sub.tail(acc_ctrl_queue_size) = x.segment(3, acc_ctrl_queue_size);
+    acc_sub[0] = acc_normalize * x[1];
+    acc_sub.tail(acc_ctrl_queue_size) = acc_normalize * x.segment(3, acc_ctrl_queue_size);
 
     Eigen::VectorXd steer_sub(steer_ctrl_queue_size_core + 1);
-    steer_sub[0] = x[2];
+    steer_sub[0] = steer_normalize * x[2];
     steer_sub.tail(steer_ctrl_queue_size_core) =
-      x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size_core);
-    Eigen::VectorXd steer_input_full = x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size);
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size_core);
+    Eigen::VectorXd steer_input_full =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size);
 
-    Eigen::VectorXd u_acc_layer_1 = weight_0 * acc_sub + bias_0;
+    Eigen::VectorXd u_acc_layer_1 = weight_acc_layer_1 * acc_sub + bias_acc_layer_1;
     Eigen::VectorXd acc_layer_1 = relu(u_acc_layer_1);
 
-    Eigen::VectorXd u_steer_layer_1(bias_1.size() + bias_2.size());
-    u_steer_layer_1.head(bias_1.size()) = weight_1 * steer_sub + bias_1;
-    u_steer_layer_1.tail(bias_2.size()) = weight_2 * steer_input_full + bias_2;
+    Eigen::VectorXd u_steer_layer_1(
+      bias_steer_layer_1_head.size() + bias_steer_layer_1_tail.size());
+    u_steer_layer_1.head(bias_steer_layer_1_head.size()) =
+      weight_steer_layer_1_head * steer_sub + bias_steer_layer_1_head;
+    u_steer_layer_1.tail(bias_steer_layer_1_tail.size()) =
+      weight_steer_layer_1_tail * steer_input_full + bias_steer_layer_1_tail;
     Eigen::VectorXd steer_layer_1 = relu(u_steer_layer_1);
 
-    Eigen::VectorXd u_acc_layer_2 = weight_3 * acc_layer_1 + bias_3;
-    Eigen::VectorXd acc_layer_2 = u_acc_layer_2.array().tanh();
+    Eigen::VectorXd u_acc_layer_2 = weight_acc_layer_2 * acc_layer_1 + bias_acc_layer_2;
+    Eigen::VectorXd acc_layer_2 = relu(u_acc_layer_2);
 
-    Eigen::VectorXd u_steer_layer_2 = weight_4 * steer_layer_1 + bias_4;
-    Eigen::VectorXd steer_layer_2 = u_steer_layer_2.array().tanh();
+    Eigen::VectorXd u_steer_layer_2 = weight_steer_layer_2 * steer_layer_1 + bias_steer_layer_2;
+    Eigen::VectorXd steer_layer_2 = relu(u_steer_layer_2);
 
     Eigen::VectorXd h1(1 + acc_layer_2.size() + steer_layer_2.size());
-    h1[0] = x[0];
+    h1[0] = vel_normalize * x[0];
     h1.segment(1, acc_layer_2.size()) = acc_layer_2;
     h1.tail(steer_layer_2.size()) = steer_layer_2;
-    Eigen::VectorXd u2 = weight_5 * h1 + bias_5;
+    Eigen::VectorXd u2 = weight_linear_relu_1 * h1 + bias_linear_relu_1;
     Eigen::VectorXd h2 = relu(u2);
-    Eigen::VectorXd u3 = weight_6 * h2 + bias_6;
+    Eigen::VectorXd u3 = weight_linear_relu_2 * h2 + bias_linear_relu_2;
     Eigen::VectorXd h3 = relu(u3);
     Eigen::VectorXd h4(h3.size() + acc_layer_2.size() + steer_layer_2.size());
     h4.head(h3.size()) = h3;
     h4.segment(h3.size(), acc_layer_2.size()) = acc_layer_2;
     h4.tail(steer_layer_2.size()) = steer_layer_2;
-    Eigen::VectorXd x_for_polynomial_reg(5);
+    // Eigen::VectorXd x_for_polynomial_reg(5);
+    // x_for_polynomial_reg.head(3) = x.head(3);
+    // x_for_polynomial_reg[3] = x[3 + acc_delay_step];
+    // x_for_polynomial_reg[4] = x[3 + acc_ctrl_queue_size + steer_delay_step];
+    // Eigen::MatrixXd polynomial_features_with_diff =
+    //   get_polynomial_features_with_diff(x_for_polynomial_reg, deg, A_linear_reg.cols());
+
+    Eigen::VectorXd x_for_polynomial_reg(9);
     x_for_polynomial_reg.head(3) = x.head(3);
-    x_for_polynomial_reg[3] = x[3 + acc_delay_step];
-    x_for_polynomial_reg[4] = x[3 + acc_ctrl_queue_size + steer_delay_step];
+    int acc_start = 3 + std::max(acc_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(3, 3) = x.segment(acc_start, 3);
+    int steer_start = 3 + acc_ctrl_queue_size + std::max(steer_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(6, 3) = x.segment(steer_start, 3);
     Eigen::MatrixXd polynomial_features_with_diff =
       get_polynomial_features_with_diff(x_for_polynomial_reg, deg, A_linear_reg.cols());
 
     Eigen::VectorXd y =
-      weight_7 * h4 + bias_7 +
+      weight_finalize * h4 + bias_linear_finalize +
       A_linear_reg * polynomial_features_with_diff.block(0, 0, A_linear_reg.cols(), 1) +
       b_linear_reg;
     y[4] = std::min(std::max(y[4], -max_acc_error), max_acc_error);
     y[5] = std::min(std::max(y[5], -max_steer_error), max_steer_error);
-    // Eigen::MatrixXd dy_dh4 = weight_7;
+    // Eigen::MatrixXd dy_dh4 = weight_finalize;
 
-    Eigen::MatrixXd dy_dh3 = weight_7.block(0, 0, y.size(), h3.size());
-    Eigen::MatrixXd dy_dh2 = d_relu_product(dy_dh3, u3) * weight_6;
-    Eigen::MatrixXd dy_dh1 = d_relu_product(dy_dh2, u2) * weight_5;
+    Eigen::MatrixXd dy_dh3 = weight_finalize.block(0, 0, y.size(), h3.size());
+    Eigen::MatrixXd dy_dh2 = d_relu_product(dy_dh3, u3) * weight_linear_relu_2;
+    Eigen::MatrixXd dy_dh1 = d_relu_product(dy_dh2, u2) * weight_linear_relu_1;
 
     Eigen::MatrixXd dy_da2 = dy_dh1.block(0, 1, y.size(), acc_layer_2.size()) +
-                             weight_7.block(0, h3.size(), y.size(), acc_layer_2.size());
+                             weight_finalize.block(0, h3.size(), y.size(), acc_layer_2.size());
     Eigen::MatrixXd dy_ds2 =
       dy_dh1.block(0, 1 + acc_layer_2.size(), y.size(), steer_layer_2.size()) +
-      weight_7.block(0, h3.size() + acc_layer_2.size(), y.size(), steer_layer_2.size());
-    Eigen::MatrixXd dy_da1 = d_tanh_product(dy_da2, u_acc_layer_2) * weight_3;
-    Eigen::MatrixXd dy_ds1 = d_tanh_product(dy_ds2, u_steer_layer_2) * weight_4;
+      weight_finalize.block(0, h3.size() + acc_layer_2.size(), y.size(), steer_layer_2.size());
+    Eigen::MatrixXd dy_da1 = d_relu_product(dy_da2, u_acc_layer_2) * weight_acc_layer_2;
+    Eigen::MatrixXd dy_ds1 = d_relu_product(dy_ds2, u_steer_layer_2) * weight_steer_layer_2;
 
-    Eigen::MatrixXd dy_d_acc = d_relu_product(dy_da1, u_acc_layer_1) * weight_0;
+    Eigen::MatrixXd dy_d_acc = d_relu_product(dy_da1, u_acc_layer_1) * weight_acc_layer_1;
     Eigen::MatrixXd dy_d_steer = Eigen::MatrixXd::Zero(y.size(), steer_input_full.size() + 1);
     dy_d_steer.block(0, 1, y.size(), steer_input_full.size()) +=
       d_relu_product(
-        dy_ds1.block(0, bias_1.size(), y.size(), bias_2.size()),
-        u_steer_layer_1.tail(bias_2.size())) *
-      weight_2;
+        dy_ds1.block(0, bias_steer_layer_1_head.size(), y.size(), bias_steer_layer_1_tail.size()),
+        u_steer_layer_1.tail(bias_steer_layer_1_tail.size())) *
+      weight_steer_layer_1_tail;
     dy_d_steer.block(0, 0, y.size(), steer_sub.size()) +=
       d_relu_product(
-        dy_ds1.block(0, 0, y.size(), bias_1.size()), u_steer_layer_1.head(bias_1.size())) *
-      weight_1;
+        dy_ds1.block(0, 0, y.size(), bias_steer_layer_1_head.size()),
+        u_steer_layer_1.head(bias_steer_layer_1_head.size())) *
+      weight_steer_layer_1_head;
 
     Eigen::MatrixXd result = Eigen::MatrixXd::Zero(y.size(), x.size() + 1);
 
     result.col(0) = y;
 
-    result.col(1) = dy_dh1.col(0);
-    result.col(2) = dy_d_acc.col(0);
-    result.col(3) = dy_d_steer.col(0);
+    result.col(1) = vel_normalize * dy_dh1.col(0);
+    result.col(2) = acc_normalize * dy_d_acc.col(0);
+    result.col(3) = steer_normalize * dy_d_steer.col(0);
     result.block(0, 4, y.size(), acc_ctrl_queue_size) =
-      dy_d_acc.block(0, 1, y.size(), acc_ctrl_queue_size);
+      acc_normalize * dy_d_acc.block(0, 1, y.size(), acc_ctrl_queue_size);
     result.block(0, 4 + acc_ctrl_queue_size, y.size(), steer_ctrl_queue_size) =
-      dy_d_steer.block(0, 1, y.size(), steer_ctrl_queue_size);
+      steer_normalize * dy_d_steer.block(0, 1, y.size(), steer_ctrl_queue_size);
 
     Eigen::MatrixXd polynomial_reg_diff =
       A_linear_reg *
       polynomial_features_with_diff.block(0, 1, A_linear_reg.cols(), x_for_polynomial_reg.size());
     result.block(0, 1, y.size(), 3) += polynomial_reg_diff.block(0, 0, y.size(), 3);
-    result.block(0, 4 + acc_delay_step, y.size(), 1) +=
-      polynomial_reg_diff.block(0, 3, y.size(), 1);
-    result.block(0, 4 + acc_ctrl_queue_size + steer_delay_step, y.size(), 1) +=
-      polynomial_reg_diff.block(0, 4, y.size(), 1);
+    result.block(0, 1 + acc_start, y.size(), 3) += polynomial_reg_diff.block(0, 3, y.size(), 3);
+    result.block(0, 1 + steer_start, y.size(), 3) += polynomial_reg_diff.block(0, 6, y.size(), 3);
     return result;
   }
   Eigen::MatrixXd rot_and_d_rot_error_prediction_with_diff(Eigen::VectorXd x)
@@ -439,6 +502,92 @@ public:
       rot_pred_with_diff.block(0, 3, 6, x_dim - 6);
     return coef * rot_and_d_rot_pred_with_diff;
   }
+  Eigen::MatrixXd rot_and_d_rot_error_prediction_with_poly_diff(Eigen::VectorXd x)
+  {
+    int x_dim = x.size();
+    double theta = x[3];
+    double v = x[2];
+    double coef = 2.0 * std::abs(v);
+    coef = coef * coef * coef * coef * coef * coef * coef;
+    if (coef > 1.0) {
+      coef = 1.0;
+    }
+    double cos = std::cos(theta);
+    double sin = std::sin(theta);
+    Eigen::Matrix2d Rot;
+    Rot << cos, -sin, sin, cos;
+
+    Eigen::Matrix2d dRot;
+    dRot << -sin, -cos, cos, -sin;
+    Eigen::VectorXd vars(x_dim - 3);
+    vars[0] = x[2];
+    vars[1] = x[4];
+    vars[2] = x[5];
+    vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+
+    Eigen::VectorXd pred = error_prediction(vars);
+    Eigen::MatrixXd d_pred = Eigen::MatrixXd::Zero(6, x_dim - 3);
+
+    // Eigen::VectorXd x_for_polynomial_reg(5);
+    // x_for_polynomial_reg.head(3) = vars.head(3);
+    // x_for_polynomial_reg[3] = vars[3 + acc_delay_step];
+    // x_for_polynomial_reg[4] = vars[3 + acc_ctrl_queue_size + steer_delay_step];
+    Eigen::VectorXd x_for_polynomial_reg(9);
+    x_for_polynomial_reg.head(3) = x.head(3);
+    int acc_start = 3 + std::max(acc_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(3, 3) = x.segment(acc_start, 3);
+    int steer_start = 3 + acc_ctrl_queue_size + std::max(steer_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(6, 3) = x.segment(steer_start, 3);
+
+    Eigen::MatrixXd polynomial_features_with_diff =
+      get_polynomial_features_with_diff(x_for_polynomial_reg, deg, A_linear_reg.cols());
+    Eigen::MatrixXd polynomial_reg_diff =
+      A_linear_reg *
+      polynomial_features_with_diff.block(0, 1, A_linear_reg.cols(), x_for_polynomial_reg.size());
+    d_pred.block(0, 0, 6, 3) += polynomial_reg_diff.block(0, 0, 6, 3);
+    d_pred.block(0, 1 + acc_start, 6, 3) += polynomial_reg_diff.block(0, 3, 6, 3);
+    d_pred.block(0, 1 + steer_start, 6, 3) += polynomial_reg_diff.block(0, 6, 6, 3);
+
+    Eigen::MatrixXd rot_and_d_rot_pred_with_diff = Eigen::MatrixXd::Zero(6, x_dim + 2);
+    Eigen::MatrixXd rot_pred_with_diff(6, x_dim - 3);
+    rot_pred_with_diff.block(0, 0, 2, x_dim - 3) = Rot * d_pred.block(0, 0, 2, x_dim - 3);
+    rot_pred_with_diff.block(2, 0, 4, x_dim - 3) = d_pred.block(2, 0, 4, x_dim - 3);
+
+    rot_and_d_rot_pred_with_diff.block(0, 0, 2, 1) = Rot * pred.head(2);
+    rot_and_d_rot_pred_with_diff.block(2, 0, 4, 1) = pred.segment(2, 4);
+    rot_and_d_rot_pred_with_diff.block(0, 1, 2, 1) = dRot * pred.head(2);
+    rot_and_d_rot_pred_with_diff.col(2 + 2) = rot_pred_with_diff.col(0);
+    rot_and_d_rot_pred_with_diff.col(2 + 4) = rot_pred_with_diff.col(1);
+    rot_and_d_rot_pred_with_diff.col(2 + 5) = rot_pred_with_diff.col(2);
+    rot_and_d_rot_pred_with_diff.block(0, 2 + 6, 6, x_dim - 6) =
+      rot_pred_with_diff.block(0, 3, 6, x_dim - 6);
+    return coef * rot_and_d_rot_pred_with_diff;
+  }
+  Eigen::VectorXd rotated_error_prediction(Eigen::VectorXd x)
+  {
+    int x_dim = x.size();
+    double theta = x[3];
+    double v = x[2];
+    double coef = 2.0 * std::abs(v);
+    coef = coef * coef * coef * coef * coef * coef * coef;
+    if (coef > 1.0) {
+      coef = 1.0;
+    }
+    double cos = std::cos(theta);
+    double sin = std::sin(theta);
+    Eigen::Matrix2d Rot;
+    Rot << cos, -sin, sin, cos;
+    Eigen::VectorXd vars(x_dim - 3);
+    vars[0] = x[2];
+    vars[1] = x[4];
+    vars[2] = x[5];
+    vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+    Eigen::VectorXd pred = error_prediction(vars);
+    Eigen::VectorXd rot_pred(6);
+    rot_pred.head(2) = coef * Rot * pred.head(2);
+    rot_pred.tail(4) = coef * pred.tail(4);
+    return rot_pred;
+  }
   Eigen::MatrixXd Rotated_error_prediction(Eigen::MatrixXd X)
   {
     int X_cols = X.cols();
@@ -471,7 +620,959 @@ public:
     return Pred;
   }
 };
+class transform_model_with_memory_to_eigen
+{
+private:
+  Eigen::MatrixXd weight_acc_layer_1;
+  Eigen::MatrixXd weight_steer_layer_1_head;
+  Eigen::MatrixXd weight_steer_layer_1_tail;
+  Eigen::MatrixXd weight_acc_layer_2;
+  Eigen::MatrixXd weight_steer_layer_2;
+  Eigen::MatrixXd weight_lstm_ih;
+  Eigen::MatrixXd weight_lstm_hh;
+  Eigen::MatrixXd weight_linear_relu_1;
+  Eigen::MatrixXd weight_linear_relu_2;
+  Eigen::MatrixXd weight_finalize;
+  Eigen::VectorXd bias_acc_layer_1;
+  Eigen::VectorXd bias_steer_layer_1_head;
+  Eigen::VectorXd bias_steer_layer_1_tail;
+  Eigen::VectorXd bias_acc_layer_2;
+  Eigen::VectorXd bias_steer_layer_2;
+  Eigen::VectorXd bias_lstm_ih;
+  Eigen::VectorXd bias_lstm_hh;
+  Eigen::VectorXd bias_linear_relu_1;
+  Eigen::VectorXd bias_linear_relu_2;
+  Eigen::VectorXd bias_linear_finalize;
+  Eigen::MatrixXd A_linear_reg;
+  Eigen::VectorXd b_linear_reg;
+  int deg;
+  double acc_time_constant;
+  int acc_delay_step;
+  double steer_time_constant;
+  int steer_delay_step;
+  int acc_ctrl_queue_size;
+  int steer_ctrl_queue_size;
+  int steer_ctrl_queue_size_core;
+  double vel_normalize;
+  double acc_normalize;
+  double steer_normalize;
 
+  double max_acc_error = 20.0;
+  double max_steer_error = 20.0;
+  Eigen::VectorXd h, c;
+  Eigen::MatrixXd H, C;
+  Eigen::MatrixXd dy_dhc, dhc_dhc, dhc_dx;
+  Eigen::MatrixXd dy_dhc_, dhc_dx_;
+
+public:
+  transform_model_with_memory_to_eigen() {}
+  void set_params(
+    Eigen::MatrixXd weight_acc_layer_1_, Eigen::MatrixXd weight_steer_layer_1_head_,
+    Eigen::MatrixXd weight_steer_layer_1_tail_, Eigen::MatrixXd weight_acc_layer_2_,
+    Eigen::MatrixXd weight_steer_layer_2_, Eigen::MatrixXd weight_lstm_ih_,
+    Eigen::MatrixXd weight_lstm_hh_, Eigen::MatrixXd weight_linear_relu_1_,
+    Eigen::MatrixXd weight_linear_relu_2_, Eigen::MatrixXd weight_finalize_,
+    Eigen::VectorXd bias_acc_layer_1_, Eigen::VectorXd bias_steer_layer_1_head_,
+    Eigen::VectorXd bias_steer_layer_1_tail_, Eigen::VectorXd bias_acc_layer_2_,
+    Eigen::VectorXd bias_steer_layer_2_, Eigen::VectorXd bias_lstm_ih_,
+    Eigen::VectorXd bias_lstm_hh_, Eigen::VectorXd bias_linear_relu_1_,
+    Eigen::VectorXd bias_linear_relu_2_, Eigen::VectorXd bias_linear_finalize_)
+  {
+    weight_acc_layer_1 = weight_acc_layer_1_;
+    weight_steer_layer_1_head = weight_steer_layer_1_head_;
+    weight_steer_layer_1_tail = weight_steer_layer_1_tail_;
+    weight_acc_layer_2 = weight_acc_layer_2_;
+    weight_steer_layer_2 = weight_steer_layer_2_;
+    weight_lstm_ih = weight_lstm_ih_;
+    weight_lstm_hh = weight_lstm_hh_;
+    weight_linear_relu_1 = weight_linear_relu_1_;
+    weight_linear_relu_2 = weight_linear_relu_2_;
+    weight_finalize = weight_finalize_;
+    bias_acc_layer_1 = bias_acc_layer_1_;
+    bias_steer_layer_1_head = bias_steer_layer_1_head_;
+    bias_steer_layer_1_tail = bias_steer_layer_1_tail_;
+    bias_acc_layer_2 = bias_acc_layer_2_;
+    bias_steer_layer_2 = bias_steer_layer_2_;
+    bias_lstm_ih = bias_lstm_ih_;
+    bias_lstm_hh = bias_lstm_hh_;
+    bias_linear_relu_1 = bias_linear_relu_1_;
+    bias_linear_relu_2 = bias_linear_relu_2_;
+    bias_linear_finalize = bias_linear_finalize_;
+  }
+  void set_params_res(
+    Eigen::MatrixXd A_linear_reg_, Eigen::VectorXd b_linear_reg_, int deg_,
+    double acc_time_constant_, int acc_delay_step_, double steer_time_constant_,
+    int steer_delay_step_, int acc_ctrl_queue_size_, int steer_ctrl_queue_size_,
+    int steer_ctrl_queue_size_core_, double vel_normalize_, double acc_normalize_,
+    double steer_normalize_)
+  {
+    A_linear_reg = A_linear_reg_;
+    b_linear_reg = b_linear_reg_;
+    deg = deg_;
+    acc_time_constant = acc_time_constant_;
+    acc_delay_step = acc_delay_step_;
+    steer_time_constant = steer_time_constant_;
+    steer_delay_step = steer_delay_step_;
+    acc_ctrl_queue_size = acc_ctrl_queue_size_;
+    steer_ctrl_queue_size = steer_ctrl_queue_size_;
+    steer_ctrl_queue_size_core = steer_ctrl_queue_size_core_;
+    vel_normalize = vel_normalize_;
+    acc_normalize = acc_normalize_;
+    steer_normalize = steer_normalize_;
+    int h_dim = weight_lstm_hh.cols();
+    h = Eigen::VectorXd::Zero(h_dim);
+    c = Eigen::VectorXd::Zero(h_dim);
+    dy_dhc_ = Eigen::MatrixXd::Zero(6, 2 * h_dim);
+    dhc_dx_ = Eigen::MatrixXd::Zero(2 * h_dim, 3 + acc_ctrl_queue_size + steer_ctrl_queue_size);
+    dy_dhc = Eigen::MatrixXd::Zero(6, 2 * h_dim);
+    dhc_dhc = Eigen::MatrixXd::Zero(2 * h_dim, 2 * h_dim);
+    dhc_dx = Eigen::MatrixXd::Zero(2 * h_dim, 6 + acc_ctrl_queue_size + steer_ctrl_queue_size);
+  }
+  void set_lstm(Eigen::VectorXd h_, Eigen::VectorXd c_)
+  {
+    h = h_;
+    c = c_;
+  }
+  void set_lstm_for_candidate(Eigen::VectorXd h_, Eigen::VectorXd c_, int sample_size)
+  {
+    H = Eigen::MatrixXd::Zero(h_.size(), sample_size);
+    C = Eigen::MatrixXd::Zero(c_.size(), sample_size);
+    for (int i = 0; i < sample_size; i++) {
+      H.col(i) = h_;
+      C.col(i) = c_;
+    }
+  }
+  Eigen::VectorXd get_h() { return h; }
+  Eigen::VectorXd get_c() { return c; }
+  Eigen::MatrixXd get_dy_dhc() { return dy_dhc; }
+  Eigen::MatrixXd get_dhc_dhc() { return dhc_dhc; }
+  Eigen::MatrixXd get_dhc_dx() { return dhc_dx; }
+  Eigen::VectorXd error_prediction(Eigen::VectorXd x, int cell_index)
+  {
+    Eigen::VectorXd acc_sub(acc_ctrl_queue_size + 1);
+    acc_sub[0] = acc_normalize * x[1];
+    acc_sub.tail(acc_ctrl_queue_size) = acc_normalize * x.segment(3, acc_ctrl_queue_size);
+    Eigen::VectorXd steer_sub(steer_ctrl_queue_size_core + 1);
+    steer_sub[0] = steer_normalize * x[2];
+    steer_sub.tail(steer_ctrl_queue_size_core) =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size_core);
+    Eigen::VectorXd acc_layer_1 = relu(weight_acc_layer_1 * acc_sub + bias_acc_layer_1);
+    Eigen::VectorXd steer_layer_1(bias_steer_layer_1_head.size() + bias_steer_layer_1_tail.size());
+    steer_layer_1.head(bias_steer_layer_1_head.size()) =
+      relu(weight_steer_layer_1_head * steer_sub + bias_steer_layer_1_head);
+
+    Eigen::VectorXd steer_input_full =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size);
+    steer_layer_1.tail(bias_steer_layer_1_tail.size()) =
+      relu(weight_steer_layer_1_tail * steer_input_full + bias_steer_layer_1_tail);
+
+    Eigen::VectorXd acc_layer_2 = relu(weight_acc_layer_2 * acc_layer_1 + bias_acc_layer_2);
+
+    Eigen::VectorXd steer_layer_2 = relu(weight_steer_layer_2 * steer_layer_1 + bias_steer_layer_2);
+    Eigen::VectorXd h1(1 + acc_layer_2.size() + steer_layer_2.size());
+    h1[0] = vel_normalize * x[0];
+    h1.segment(1, acc_layer_2.size()) = acc_layer_2;
+    h1.tail(steer_layer_2.size()) = steer_layer_2;
+    Eigen::VectorXd h_, c_;
+    if (cell_index < 0) {
+      h_ = h;
+      c_ = c;
+    } else {
+      h_ = H.col(cell_index);
+      c_ = C.col(cell_index);
+    }
+
+    Eigen::VectorXd i_new = sigmoid(
+      weight_lstm_ih.block(0, 0, h.size(), h1.size()) * h1 + bias_lstm_ih.head(h.size()) +
+      weight_lstm_hh.block(0, 0, h.size(), h.size()) * h_ + bias_lstm_hh.head(h.size()));
+    Eigen::VectorXd f_new = sigmoid(
+      weight_lstm_ih.block(h.size(), 0, h.size(), h1.size()) * h1 +
+      bias_lstm_ih.segment(h.size(), h.size()) +
+      weight_lstm_hh.block(h.size(), 0, h.size(), h.size()) * h_ +
+      bias_lstm_hh.segment(h.size(), h.size()));
+    Eigen::VectorXd g_new = tanh(
+      weight_lstm_ih.block(2 * h.size(), 0, h.size(), h1.size()) * h1 +
+      bias_lstm_ih.segment(2 * h.size(), h.size()) +
+      weight_lstm_hh.block(2 * h.size(), 0, h.size(), h.size()) * h_ +
+      bias_lstm_hh.segment(2 * h.size(), h.size()));
+    Eigen::VectorXd o_new = sigmoid(
+      weight_lstm_ih.block(3 * h.size(), 0, h.size(), h1.size()) * h1 +
+      bias_lstm_ih.segment(3 * h.size(), h.size()) +
+      weight_lstm_hh.block(3 * h.size(), 0, h.size(), h.size()) * h_ +
+      bias_lstm_hh.segment(3 * h.size(), h.size()));
+    Eigen::VectorXd c_new = f_new.array() * c_.array() + i_new.array() * g_new.array();
+    Eigen::VectorXd h_new = o_new.array() * tanh(c_new).array();
+
+    Eigen::VectorXd h2(h_new.size() + bias_linear_relu_1.size());
+    h2.head(h_new.size()) = h_new;
+    h2.tail(bias_linear_relu_1.size()) = relu(weight_linear_relu_1 * h1 + bias_linear_relu_1);
+
+    Eigen::VectorXd h3 = relu(weight_linear_relu_2 * h2 + bias_linear_relu_2);
+    Eigen::VectorXd h4(h3.size() + acc_layer_2.size() + steer_layer_2.size());
+    h4.head(h3.size()) = h3;
+    h4.segment(h3.size(), acc_layer_2.size()) = acc_layer_2;
+    h4.tail(steer_layer_2.size()) = steer_layer_2;
+
+    Eigen::VectorXd x_for_polynomial_reg(9);
+    x_for_polynomial_reg.head(3) = x.head(3);
+    int acc_start = 3 + std::max(acc_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(3, 3) = x.segment(acc_start, 3);
+    int steer_start = 3 + acc_ctrl_queue_size + std::max(steer_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(6, 3) = x.segment(steer_start, 3);
+
+    Eigen::VectorXd y =
+      weight_finalize * h4 + bias_linear_finalize +
+      A_linear_reg * get_polynomial_features(x_for_polynomial_reg, deg, A_linear_reg.cols()) +
+      b_linear_reg;
+
+    y[4] = std::min(std::max(y[4], -max_acc_error), max_acc_error);
+    y[5] = std::min(std::max(y[5], -max_steer_error), max_steer_error);
+    // Eigen result(y.size()+h.size()+c.size());
+    // result.head(y.size())=y;
+    // result.segment(y.size(),h.size())=h_new;
+    // result.segment(y.size()+h.size(),c.size())=c_new;
+
+    if (cell_index < 0) {
+      h = h_new;
+      c = c_new;
+    } else {
+      H.col(cell_index) = h_new;
+      C.col(cell_index) = c_new;
+    }
+    return y;
+  }
+
+  Eigen::MatrixXd error_prediction_with_diff(Eigen::VectorXd x)
+  {
+    Eigen::VectorXd acc_sub(acc_ctrl_queue_size + 1);
+    acc_sub[0] = acc_normalize * x[1];
+    acc_sub.tail(acc_ctrl_queue_size) = acc_normalize * x.segment(3, acc_ctrl_queue_size);
+    Eigen::VectorXd steer_sub(steer_ctrl_queue_size_core + 1);
+    steer_sub[0] = steer_normalize * x[2];
+    steer_sub.tail(steer_ctrl_queue_size_core) =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size_core);
+    Eigen::VectorXd steer_input_full =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size);
+
+    Eigen::VectorXd u_acc_layer_1 = weight_acc_layer_1 * acc_sub + bias_acc_layer_1;
+    Eigen::VectorXd acc_layer_1 = relu(u_acc_layer_1);
+
+    Eigen::VectorXd u_steer_layer_1(
+      bias_steer_layer_1_head.size() + bias_steer_layer_1_tail.size());
+    u_steer_layer_1.head(bias_steer_layer_1_head.size()) =
+      weight_steer_layer_1_head * steer_sub + bias_steer_layer_1_head;
+    u_steer_layer_1.tail(bias_steer_layer_1_tail.size()) =
+      weight_steer_layer_1_tail * steer_input_full + bias_steer_layer_1_tail;
+    Eigen::VectorXd steer_layer_1 = relu(u_steer_layer_1);
+
+    Eigen::VectorXd u_acc_layer_2 = weight_acc_layer_2 * acc_layer_1 + bias_acc_layer_2;
+    Eigen::VectorXd acc_layer_2 = relu(u_acc_layer_2);
+
+    Eigen::VectorXd u_steer_layer_2 = weight_steer_layer_2 * steer_layer_1 + bias_steer_layer_2;
+    Eigen::VectorXd steer_layer_2 = relu(u_steer_layer_2);
+
+    Eigen::VectorXd h1(1 + acc_layer_2.size() + steer_layer_2.size());
+    h1[0] = vel_normalize * x[0];
+    h1.segment(1, acc_layer_2.size()) = acc_layer_2;
+    h1.tail(steer_layer_2.size()) = steer_layer_2;
+
+    Eigen::VectorXd u_i_new =
+      weight_lstm_ih.block(0, 0, h.size(), h1.size()) * h1 + bias_lstm_ih.head(h.size()) +
+      weight_lstm_hh.block(0, 0, h.size(), h.size()) * h + bias_lstm_hh.head(h.size());
+    Eigen::VectorXd u_f_new = weight_lstm_ih.block(h.size(), 0, h.size(), h1.size()) * h1 +
+                              bias_lstm_ih.segment(h.size(), h.size()) +
+                              weight_lstm_hh.block(h.size(), 0, h.size(), h.size()) * h +
+                              bias_lstm_hh.segment(h.size(), h.size());
+    Eigen::VectorXd u_g_new = weight_lstm_ih.block(2 * h.size(), 0, h.size(), h1.size()) * h1 +
+                              bias_lstm_ih.segment(2 * h.size(), h.size()) +
+                              weight_lstm_hh.block(2 * h.size(), 0, h.size(), h.size()) * h +
+                              bias_lstm_hh.segment(2 * h.size(), h.size());
+    Eigen::VectorXd u_o_new = weight_lstm_ih.block(3 * h.size(), 0, h.size(), h1.size()) * h1 +
+                              bias_lstm_ih.segment(3 * h.size(), h.size()) +
+                              weight_lstm_hh.block(3 * h.size(), 0, h.size(), h.size()) * h +
+                              bias_lstm_hh.segment(3 * h.size(), h.size());
+    Eigen::VectorXd i_new = sigmoid(u_i_new);
+    Eigen::VectorXd f_new = sigmoid(u_f_new);
+    Eigen::VectorXd g_new = tanh(u_g_new);
+    Eigen::VectorXd o_new = sigmoid(u_o_new);
+
+    Eigen::VectorXd c_new = f_new.array() * c.array() + i_new.array() * g_new.array();
+    Eigen::VectorXd h_new = o_new.array() * tanh(c_new).array();
+
+    Eigen::VectorXd h2(h_new.size() + bias_linear_relu_1.size());
+    h2.head(h_new.size()) = h_new;
+    Eigen::VectorXd u2 = weight_linear_relu_1 * h1 + bias_linear_relu_1;
+    h2.tail(bias_linear_relu_1.size()) = relu(u2);
+
+    Eigen::VectorXd u3 = weight_linear_relu_2 * h2 + bias_linear_relu_2;
+    Eigen::VectorXd h3 = relu(u3);
+    Eigen::VectorXd h4(h3.size() + acc_layer_2.size() + steer_layer_2.size());
+
+    h4.head(h3.size()) = h3;
+    h4.segment(h3.size(), acc_layer_2.size()) = acc_layer_2;
+    h4.tail(steer_layer_2.size()) = steer_layer_2;
+
+    Eigen::VectorXd x_for_polynomial_reg(9);
+    x_for_polynomial_reg.head(3) = x.head(3);
+    int acc_start = 3 + std::max(acc_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(3, 3) = x.segment(acc_start, 3);
+    int steer_start = 3 + acc_ctrl_queue_size + std::max(steer_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(6, 3) = x.segment(steer_start, 3);
+
+    Eigen::MatrixXd polynomial_features_with_diff =
+      get_polynomial_features_with_diff(x_for_polynomial_reg, deg, A_linear_reg.cols());
+
+    Eigen::VectorXd y =
+      weight_finalize * h4 + bias_linear_finalize +
+      A_linear_reg * polynomial_features_with_diff.block(0, 0, A_linear_reg.cols(), 1) +
+      b_linear_reg;
+
+    y[4] = std::min(std::max(y[4], -max_acc_error), max_acc_error);
+    y[5] = std::min(std::max(y[5], -max_steer_error), max_steer_error);
+    // Eigen::MatrixXd dy_dh4 = weight_finalize;
+
+    Eigen::MatrixXd dy_dh3 = weight_finalize.block(0, 0, y.size(), h3.size());
+    Eigen::MatrixXd dy_dh2 = d_relu_product(dy_dh3, u3) * weight_linear_relu_2;
+    Eigen::MatrixXd dy_dh2_head = dy_dh2.block(0, 0, y.size(), h_new.size());
+    Eigen::MatrixXd dy_dh2_tail =
+      dy_dh2.block(0, h_new.size(), y.size(), bias_linear_relu_1.size());
+
+    Eigen::MatrixXd dy_do = dy_dh2_head * tanh(c_new).asDiagonal();
+    Eigen::MatrixXd dy_dc_new = d_tanh_product(dy_dh2_head * o_new.asDiagonal(), c_new);
+    Eigen::MatrixXd dy_dh1 = d_sigmoid_product(dy_do, u_o_new) *
+                             weight_lstm_ih.block(3 * h.size(), 0, h.size(), h1.size());
+
+    dy_dh1 += d_sigmoid_product(dy_dc_new * c.asDiagonal(), u_f_new) *
+              weight_lstm_ih.block(h.size(), 0, h.size(), h1.size());
+    dy_dh1 += d_tanh_product(dy_dc_new * i_new.asDiagonal(), u_g_new) *
+              weight_lstm_ih.block(2 * h.size(), 0, h.size(), h1.size());
+    dy_dh1 += d_sigmoid_product(dy_dc_new * g_new.asDiagonal(), u_i_new) *
+              weight_lstm_ih.block(0, 0, h.size(), h1.size());
+
+    dy_dh1 += d_relu_product(dy_dh2_tail, u2) * weight_linear_relu_1;
+
+    Eigen::MatrixXd dy_da2 = dy_dh1.block(0, 1, y.size(), acc_layer_2.size()) +
+                             weight_finalize.block(0, h3.size(), y.size(), acc_layer_2.size());
+    Eigen::MatrixXd dy_ds2 =
+      dy_dh1.block(0, 1 + acc_layer_2.size(), y.size(), steer_layer_2.size()) +
+      weight_finalize.block(0, h3.size() + acc_layer_2.size(), y.size(), steer_layer_2.size());
+    Eigen::MatrixXd dy_da1 = d_relu_product(dy_da2, u_acc_layer_2) * weight_acc_layer_2;
+    Eigen::MatrixXd dy_ds1 = d_relu_product(dy_ds2, u_steer_layer_2) * weight_steer_layer_2;
+
+    Eigen::MatrixXd dy_d_acc = d_relu_product(dy_da1, u_acc_layer_1) * weight_acc_layer_1;
+    Eigen::MatrixXd dy_d_steer = Eigen::MatrixXd::Zero(y.size(), steer_input_full.size() + 1);
+    dy_d_steer.block(0, 1, y.size(), steer_input_full.size()) +=
+      d_relu_product(
+        dy_ds1.block(0, bias_steer_layer_1_head.size(), y.size(), bias_steer_layer_1_tail.size()),
+        u_steer_layer_1.tail(bias_steer_layer_1_tail.size())) *
+      weight_steer_layer_1_tail;
+    dy_d_steer.block(0, 0, y.size(), steer_sub.size()) +=
+      d_relu_product(
+        dy_ds1.block(0, 0, y.size(), bias_steer_layer_1_head.size()),
+        u_steer_layer_1.head(bias_steer_layer_1_head.size())) *
+      weight_steer_layer_1_head;
+
+    Eigen::MatrixXd result = Eigen::MatrixXd::Zero(y.size(), x.size() + 1);
+
+    result.col(0) = y;
+
+    result.col(1) = vel_normalize * dy_dh1.col(0);
+    result.col(2) = acc_normalize * dy_d_acc.col(0);
+    result.col(3) = steer_normalize * dy_d_steer.col(0);
+    result.block(0, 4, y.size(), acc_ctrl_queue_size) =
+      acc_normalize * dy_d_acc.block(0, 1, y.size(), acc_ctrl_queue_size);
+    result.block(0, 4 + acc_ctrl_queue_size, y.size(), steer_ctrl_queue_size) =
+      steer_normalize * dy_d_steer.block(0, 1, y.size(), steer_ctrl_queue_size);
+
+    Eigen::MatrixXd polynomial_reg_diff =
+      A_linear_reg *
+      polynomial_features_with_diff.block(0, 1, A_linear_reg.cols(), x_for_polynomial_reg.size());
+    result.block(0, 1, y.size(), 3) += polynomial_reg_diff.block(0, 0, y.size(), 3);
+    result.block(0, 1 + acc_start, y.size(), 3) += polynomial_reg_diff.block(0, 3, y.size(), 3);
+    result.block(0, 1 + steer_start, y.size(), 3) += polynomial_reg_diff.block(0, 6, y.size(), 3);
+
+    h = h_new;
+    c = c_new;
+    return result;
+  }
+  Eigen::MatrixXd error_prediction_with_memory_diff(Eigen::VectorXd x)
+  {
+    Eigen::VectorXd acc_sub(acc_ctrl_queue_size + 1);
+    acc_sub[0] = acc_normalize * x[1];
+    acc_sub.tail(acc_ctrl_queue_size) = acc_normalize * x.segment(3, acc_ctrl_queue_size);
+    Eigen::VectorXd steer_sub(steer_ctrl_queue_size_core + 1);
+    steer_sub[0] = steer_normalize * x[2];
+    steer_sub.tail(steer_ctrl_queue_size_core) =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size_core);
+    Eigen::VectorXd steer_input_full =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size);
+
+    Eigen::VectorXd u_acc_layer_1 = weight_acc_layer_1 * acc_sub + bias_acc_layer_1;
+    Eigen::VectorXd acc_layer_1 = relu(u_acc_layer_1);
+
+    Eigen::VectorXd u_steer_layer_1(
+      bias_steer_layer_1_head.size() + bias_steer_layer_1_tail.size());
+    u_steer_layer_1.head(bias_steer_layer_1_head.size()) =
+      weight_steer_layer_1_head * steer_sub + bias_steer_layer_1_head;
+    u_steer_layer_1.tail(bias_steer_layer_1_tail.size()) =
+      weight_steer_layer_1_tail * steer_input_full + bias_steer_layer_1_tail;
+    Eigen::VectorXd steer_layer_1 = relu(u_steer_layer_1);
+
+    Eigen::VectorXd u_acc_layer_2 = weight_acc_layer_2 * acc_layer_1 + bias_acc_layer_2;
+    Eigen::VectorXd acc_layer_2 = relu(u_acc_layer_2);
+
+    Eigen::VectorXd u_steer_layer_2 = weight_steer_layer_2 * steer_layer_1 + bias_steer_layer_2;
+    Eigen::VectorXd steer_layer_2 = relu(u_steer_layer_2);
+
+    Eigen::VectorXd h1(1 + acc_layer_2.size() + steer_layer_2.size());
+    h1[0] = vel_normalize * x[0];
+    h1.segment(1, acc_layer_2.size()) = acc_layer_2;
+    h1.tail(steer_layer_2.size()) = steer_layer_2;
+
+    Eigen::VectorXd u_i_new =
+      weight_lstm_ih.block(0, 0, h.size(), h1.size()) * h1 + bias_lstm_ih.head(h.size()) +
+      weight_lstm_hh.block(0, 0, h.size(), h.size()) * h + bias_lstm_hh.head(h.size());
+    Eigen::VectorXd u_f_new = weight_lstm_ih.block(h.size(), 0, h.size(), h1.size()) * h1 +
+                              bias_lstm_ih.segment(h.size(), h.size()) +
+                              weight_lstm_hh.block(h.size(), 0, h.size(), h.size()) * h +
+                              bias_lstm_hh.segment(h.size(), h.size());
+    Eigen::VectorXd u_g_new = weight_lstm_ih.block(2 * h.size(), 0, h.size(), h1.size()) * h1 +
+                              bias_lstm_ih.segment(2 * h.size(), h.size()) +
+                              weight_lstm_hh.block(2 * h.size(), 0, h.size(), h.size()) * h +
+                              bias_lstm_hh.segment(2 * h.size(), h.size());
+    Eigen::VectorXd u_o_new = weight_lstm_ih.block(3 * h.size(), 0, h.size(), h1.size()) * h1 +
+                              bias_lstm_ih.segment(3 * h.size(), h.size()) +
+                              weight_lstm_hh.block(3 * h.size(), 0, h.size(), h.size()) * h +
+                              bias_lstm_hh.segment(3 * h.size(), h.size());
+    Eigen::VectorXd i_new = sigmoid(u_i_new);
+    Eigen::VectorXd f_new = sigmoid(u_f_new);
+    Eigen::VectorXd g_new = tanh(u_g_new);
+    Eigen::VectorXd o_new = sigmoid(u_o_new);
+
+    Eigen::VectorXd c_new = f_new.array() * c.array() + i_new.array() * g_new.array();
+    Eigen::VectorXd h_new = o_new.array() * tanh(c_new).array();
+
+    Eigen::VectorXd h2(h_new.size() + bias_linear_relu_1.size());
+    h2.head(h_new.size()) = h_new;
+    Eigen::VectorXd u2 = weight_linear_relu_1 * h1 + bias_linear_relu_1;
+    h2.tail(bias_linear_relu_1.size()) = relu(u2);
+
+    Eigen::VectorXd u3 = weight_linear_relu_2 * h2 + bias_linear_relu_2;
+    Eigen::VectorXd h3 = relu(u3);
+    Eigen::VectorXd h4(h3.size() + acc_layer_2.size() + steer_layer_2.size());
+
+    h4.head(h3.size()) = h3;
+    h4.segment(h3.size(), acc_layer_2.size()) = acc_layer_2;
+    h4.tail(steer_layer_2.size()) = steer_layer_2;
+
+    Eigen::VectorXd x_for_polynomial_reg(9);
+    x_for_polynomial_reg.head(3) = x.head(3);
+    int acc_start = 3 + std::max(acc_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(3, 3) = x.segment(acc_start, 3);
+    int steer_start = 3 + acc_ctrl_queue_size + std::max(steer_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(6, 3) = x.segment(steer_start, 3);
+
+    Eigen::MatrixXd polynomial_features_with_diff =
+      get_polynomial_features_with_diff(x_for_polynomial_reg, deg, A_linear_reg.cols());
+
+    Eigen::VectorXd y =
+      weight_finalize * h4 + bias_linear_finalize +
+      A_linear_reg * polynomial_features_with_diff.block(0, 0, A_linear_reg.cols(), 1) +
+      b_linear_reg;
+
+    y[4] = std::min(std::max(y[4], -max_acc_error), max_acc_error);
+    y[5] = std::min(std::max(y[5], -max_steer_error), max_steer_error);
+    // Eigen::MatrixXd dy_dh4 = weight_finalize;
+
+    Eigen::MatrixXd dy_dh3 = weight_finalize.block(0, 0, y.size(), h3.size());
+    Eigen::MatrixXd dy_dh2 = d_relu_product(dy_dh3, u3) * weight_linear_relu_2;
+    Eigen::MatrixXd dy_dh2_head = dy_dh2.block(0, 0, y.size(), h_new.size());
+    Eigen::MatrixXd dy_dh2_tail =
+      dy_dh2.block(0, h_new.size(), y.size(), bias_linear_relu_1.size());
+
+    Eigen::MatrixXd dy_do = dy_dh2_head * tanh(c_new).asDiagonal();
+    Eigen::MatrixXd dy_dc_new = d_tanh_product(dy_dh2_head * o_new.asDiagonal(), c_new);
+
+    // calc dy_dhc_, dhc_dhc, dhc_dx_
+    Eigen::VectorXd dc_du_f = d_sigmoid_product_vec(c, u_f_new);
+    Eigen::VectorXd dc_du_g = d_tanh_product_vec(i_new, u_g_new);
+    Eigen::VectorXd dc_du_i = d_sigmoid_product_vec(g_new, u_i_new);
+    Eigen::VectorXd dh_dc_new = d_tanh_product_vec(o_new, c_new);
+    Eigen::VectorXd dh_du_o = d_sigmoid_product_vec(tanh(c_new), u_o_new);
+
+    Eigen::MatrixXd dc_dc = f_new.asDiagonal();
+    Eigen::MatrixXd dy_dc = dy_dc_new * dc_dc;
+
+    Eigen::MatrixXd dc_dh =
+      dc_du_f.asDiagonal() * weight_lstm_hh.block(h.size(), 0, h.size(), h.size());
+    dc_dh += dc_du_g.asDiagonal() * weight_lstm_hh.block(2 * h.size(), 0, h.size(), h.size());
+    dc_dh += dc_du_i.asDiagonal() * weight_lstm_hh.block(0, 0, h.size(), h.size());
+    Eigen::VectorXd dh_dc = dh_dc_new.array() * f_new.array();
+
+    Eigen::MatrixXd dh_dh =
+      dh_du_o.asDiagonal() * weight_lstm_hh.block(3 * h.size(), 0, h.size(), h.size());
+
+    dh_dh += dh_dc_new.asDiagonal() * dc_dh;
+
+    Eigen::MatrixXd dy_dh = dy_dh2_head * dh_dh;
+    Eigen::MatrixXd dc_dh1 =
+      dc_du_f.asDiagonal() * weight_lstm_ih.block(h.size(), 0, h.size(), h1.size());
+    dc_dh1 += dc_du_g.asDiagonal() * weight_lstm_ih.block(2 * h.size(), 0, h.size(), h1.size());
+    dc_dh1 += dc_du_i.asDiagonal() * weight_lstm_ih.block(0, 0, h.size(), h1.size());
+
+    Eigen::MatrixXd dh_dh1 =
+      dh_du_o.asDiagonal() * weight_lstm_ih.block(3 * h.size(), 0, h.size(), h1.size());
+    dh_dh1 += dh_dc_new.asDiagonal() * dc_dh1;
+
+    Eigen::MatrixXd dc_da2 = dc_dh1.block(0, 1, h.size(), acc_layer_2.size());
+    Eigen::MatrixXd dc_ds2 =
+      dc_dh1.block(0, 1 + acc_layer_2.size(), h.size(), steer_layer_2.size());
+
+    Eigen::MatrixXd dh_da2 = dh_dh1.block(0, 1, h.size(), acc_layer_2.size());
+    Eigen::MatrixXd dh_ds2 =
+      dh_dh1.block(0, 1 + acc_layer_2.size(), h.size(), steer_layer_2.size());
+
+    Eigen::MatrixXd dc_da1 = d_relu_product(dc_da2, u_acc_layer_2) * weight_acc_layer_2;
+    Eigen::MatrixXd dc_ds1 = d_relu_product(dc_ds2, u_steer_layer_2) * weight_steer_layer_2;
+
+    Eigen::MatrixXd dh_da1 = d_relu_product(dh_da2, u_acc_layer_2) * weight_acc_layer_2;
+    Eigen::MatrixXd dh_ds1 = d_relu_product(dh_ds2, u_steer_layer_2) * weight_steer_layer_2;
+
+    Eigen::MatrixXd dc_d_acc = d_relu_product(dc_da1, u_acc_layer_1) * weight_acc_layer_1;
+    // Eigen::MatrixXd dc_d_steer = d_relu_product(dc_ds1, u_steer_layer_1)*weight_steer_layer_1;
+
+    Eigen::MatrixXd dc_d_steer = Eigen::MatrixXd::Zero(h.size(), steer_input_full.size() + 1);
+    dc_d_steer.block(0, 1, h.size(), steer_input_full.size()) +=
+      d_relu_product(
+        dc_ds1.block(0, bias_steer_layer_1_head.size(), h.size(), bias_steer_layer_1_tail.size()),
+        u_steer_layer_1.tail(bias_steer_layer_1_tail.size())) *
+      weight_steer_layer_1_tail;
+    dc_d_steer.block(0, 0, h.size(), steer_sub.size()) +=
+      d_relu_product(
+        dc_ds1.block(0, 0, h.size(), bias_steer_layer_1_head.size()),
+        u_steer_layer_1.head(bias_steer_layer_1_head.size())) *
+      weight_steer_layer_1_head;
+
+    Eigen::MatrixXd dh_d_acc = d_relu_product(dh_da1, u_acc_layer_1) * weight_acc_layer_1;
+    // Eigen::MatrixXd dh_d_steer = d_relu_product(dh_ds1, u_steer_layer_1)*weight_steer_layer_1;
+
+    Eigen::MatrixXd dh_d_steer = Eigen::MatrixXd::Zero(h.size(), steer_input_full.size() + 1);
+    dh_d_steer.block(0, 1, h.size(), steer_input_full.size()) +=
+      d_relu_product(
+        dh_ds1.block(0, bias_steer_layer_1_head.size(), h.size(), bias_steer_layer_1_tail.size()),
+        u_steer_layer_1.tail(bias_steer_layer_1_tail.size())) *
+      weight_steer_layer_1_tail;
+    dh_d_steer.block(0, 0, h.size(), steer_sub.size()) +=
+      d_relu_product(
+        dh_ds1.block(0, 0, h.size(), bias_steer_layer_1_head.size()),
+        u_steer_layer_1.head(bias_steer_layer_1_head.size())) *
+      weight_steer_layer_1_head;
+
+    Eigen::MatrixXd dc_dx = Eigen::MatrixXd(h.size(), x.size());
+    Eigen::MatrixXd dh_dx = Eigen::MatrixXd(h.size(), x.size());
+    dc_dx.col(0) = vel_normalize * dc_dh1.col(0);
+    dc_dx.col(1) = acc_normalize * dc_d_acc.col(0);
+    dc_dx.col(2) = steer_normalize * dc_d_steer.col(0);
+    dc_dx.block(0, 3, h.size(), acc_ctrl_queue_size) =
+      acc_normalize * dc_d_acc.block(0, 1, h.size(), acc_ctrl_queue_size);
+    dc_dx.block(0, 3 + acc_ctrl_queue_size, h.size(), steer_ctrl_queue_size) =
+      steer_normalize * dc_d_steer.block(0, 1, h.size(), steer_ctrl_queue_size);
+
+    dh_dx.col(0) = vel_normalize * dh_dh1.col(0);
+    dh_dx.col(1) = acc_normalize * dh_d_acc.col(0);
+    dh_dx.col(2) = steer_normalize * dh_d_steer.col(0);
+    dh_dx.block(0, 3, h.size(), acc_ctrl_queue_size) =
+      acc_normalize * dh_d_acc.block(0, 1, h.size(), acc_ctrl_queue_size);
+    dh_dx.block(0, 3 + acc_ctrl_queue_size, h.size(), steer_ctrl_queue_size) =
+      steer_normalize * dh_d_steer.block(0, 1, h.size(), steer_ctrl_queue_size);
+
+    dy_dhc_.block(0, 0, y.size(), h.size()) = dy_dh;
+    dy_dhc_.block(0, h.size(), y.size(), h.size()) = dy_dc;
+    dhc_dhc.block(0, 0, h.size(), h.size()) = dh_dh;
+    dhc_dhc.block(h.size(), 0, h.size(), h.size()) = dc_dh;
+    dhc_dhc.block(0, h.size(), h.size(), h.size()) = dh_dc.asDiagonal();
+    dhc_dhc.block(h.size(), h.size(), h.size(), h.size()) = dc_dc;
+    dhc_dx_.block(0, 0, h.size(), x.size()) = dh_dx;
+    dhc_dx_.block(h.size(), 0, h.size(), x.size()) = dc_dx;
+
+    // finished calc dy_dhc_, dhc_dhc, dhc_dx_
+
+    // Eigen::MatrixXd dy_dh1 =
+    // d_sigmoid_product(dy_do,u_o_new)*weight_lstm_ih.block(3*h.size(),0,h.size(),h1.size());
+    // dy_dh1 +=
+    // (dy_dc_new*(dc_du_f.asDiagonal()))*weight_lstm_ih.block(h.size(),0,h.size(),h1.size());//d_sigmoid_product(dy_dc_new*c.asDiagonal(),u_f_new)*weight_lstm_ih.block(h.size(),0,h.size(),h1.size());
+    // dy_dh1 +=
+    // (dy_dc_new*(dc_du_g.asDiagonal()))*weight_lstm_ih.block(2*h.size(),0,h.size(),h1.size());//d_tanh_product(dy_dc_new*i_new.asDiagonal(),u_g_new)*weight_lstm_ih.block(2*h.size(),0,h.size(),h1.size());
+    // dy_dh1 +=
+    // (dy_dc_new*(dc_du_i.asDiagonal()))*weight_lstm_ih.block(0,0,h.size(),h1.size());//d_sigmoid_product(dy_dc_new*g_new.asDiagonal(),u_i_new)*weight_lstm_ih.block(0,0,h.size(),h1.size());
+
+    // dy_dh1 += d_relu_product(dy_dh2_tail,u2) * weight_linear_relu_1;
+
+    Eigen::MatrixXd dy_dh1 = d_sigmoid_product(dy_do, u_o_new) *
+                             weight_lstm_ih.block(3 * h.size(), 0, h.size(), h1.size());
+
+    dy_dh1 += d_sigmoid_product(dy_dc_new * c.asDiagonal(), u_f_new) *
+              weight_lstm_ih.block(h.size(), 0, h.size(), h1.size());
+    dy_dh1 += d_tanh_product(dy_dc_new * i_new.asDiagonal(), u_g_new) *
+              weight_lstm_ih.block(2 * h.size(), 0, h.size(), h1.size());
+    dy_dh1 += d_sigmoid_product(dy_dc_new * g_new.asDiagonal(), u_i_new) *
+              weight_lstm_ih.block(0, 0, h.size(), h1.size());
+
+    dy_dh1 += d_relu_product(dy_dh2_tail, u2) * weight_linear_relu_1;
+    // Eigen::MatrixXd abs_diff = (dy_dh1-dy_dh1_).array().abs();
+    // if (abs_diff.maxCoeff()>1e-16){
+    //   std::cout<<"abs_diff: "<<abs_diff.maxCoeff()<<std::endl;
+    // }
+    // dy_dh1 = dy_dh1_;
+    Eigen::MatrixXd dy_da2 = dy_dh1.block(0, 1, y.size(), acc_layer_2.size()) +
+                             weight_finalize.block(0, h3.size(), y.size(), acc_layer_2.size());
+    Eigen::MatrixXd dy_ds2 =
+      dy_dh1.block(0, 1 + acc_layer_2.size(), y.size(), steer_layer_2.size()) +
+      weight_finalize.block(0, h3.size() + acc_layer_2.size(), y.size(), steer_layer_2.size());
+    Eigen::MatrixXd dy_da1 = d_relu_product(dy_da2, u_acc_layer_2) * weight_acc_layer_2;
+    Eigen::MatrixXd dy_ds1 = d_relu_product(dy_ds2, u_steer_layer_2) * weight_steer_layer_2;
+
+    Eigen::MatrixXd dy_d_acc = d_relu_product(dy_da1, u_acc_layer_1) * weight_acc_layer_1;
+    Eigen::MatrixXd dy_d_steer = Eigen::MatrixXd::Zero(y.size(), steer_input_full.size() + 1);
+    dy_d_steer.block(0, 1, y.size(), steer_input_full.size()) +=
+      d_relu_product(
+        dy_ds1.block(0, bias_steer_layer_1_head.size(), y.size(), bias_steer_layer_1_tail.size()),
+        u_steer_layer_1.tail(bias_steer_layer_1_tail.size())) *
+      weight_steer_layer_1_tail;
+    dy_d_steer.block(0, 0, y.size(), steer_sub.size()) +=
+      d_relu_product(
+        dy_ds1.block(0, 0, y.size(), bias_steer_layer_1_head.size()),
+        u_steer_layer_1.head(bias_steer_layer_1_head.size())) *
+      weight_steer_layer_1_head;
+
+    Eigen::MatrixXd result = Eigen::MatrixXd::Zero(y.size(), x.size() + 1);
+
+    result.col(0) = y;
+
+    result.col(1) = vel_normalize * dy_dh1.col(0);
+    result.col(2) = acc_normalize * dy_d_acc.col(0);
+    result.col(3) = steer_normalize * dy_d_steer.col(0);
+    result.block(0, 4, y.size(), acc_ctrl_queue_size) =
+      acc_normalize * dy_d_acc.block(0, 1, y.size(), acc_ctrl_queue_size);
+    result.block(0, 4 + acc_ctrl_queue_size, y.size(), steer_ctrl_queue_size) =
+      steer_normalize * dy_d_steer.block(0, 1, y.size(), steer_ctrl_queue_size);
+
+    Eigen::MatrixXd polynomial_reg_diff =
+      A_linear_reg *
+      polynomial_features_with_diff.block(0, 1, A_linear_reg.cols(), x_for_polynomial_reg.size());
+    result.block(0, 1, y.size(), 3) += polynomial_reg_diff.block(0, 0, y.size(), 3);
+    result.block(0, 1 + acc_start, y.size(), 3) += polynomial_reg_diff.block(0, 3, y.size(), 3);
+    result.block(0, 1 + steer_start, y.size(), 3) += polynomial_reg_diff.block(0, 6, y.size(), 3);
+
+    h = h_new;
+    c = c_new;
+    return result;
+  }
+
+  void update_memory(Eigen::VectorXd x)
+  {
+    Eigen::VectorXd acc_sub(acc_ctrl_queue_size + 1);
+    acc_sub[0] = acc_normalize * x[1];
+    acc_sub.tail(acc_ctrl_queue_size) = acc_normalize * x.segment(3, acc_ctrl_queue_size);
+    Eigen::VectorXd steer_sub(steer_ctrl_queue_size_core + 1);
+    steer_sub[0] = steer_normalize * x[2];
+    steer_sub.tail(steer_ctrl_queue_size_core) =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size_core);
+    Eigen::VectorXd acc_layer_1 = relu(weight_acc_layer_1 * acc_sub + bias_acc_layer_1);
+    Eigen::VectorXd steer_layer_1(bias_steer_layer_1_head.size() + bias_steer_layer_1_tail.size());
+    steer_layer_1.head(bias_steer_layer_1_head.size()) =
+      relu(weight_steer_layer_1_head * steer_sub + bias_steer_layer_1_head);
+
+    Eigen::VectorXd steer_input_full =
+      steer_normalize * x.segment(3 + acc_ctrl_queue_size, steer_ctrl_queue_size);
+    steer_layer_1.tail(bias_steer_layer_1_tail.size()) =
+      relu(weight_steer_layer_1_tail * steer_input_full + bias_steer_layer_1_tail);
+
+    Eigen::VectorXd acc_layer_2 = relu(weight_acc_layer_2 * acc_layer_1 + bias_acc_layer_2);
+
+    Eigen::VectorXd steer_layer_2 = relu(weight_steer_layer_2 * steer_layer_1 + bias_steer_layer_2);
+    Eigen::VectorXd h1(1 + acc_layer_2.size() + steer_layer_2.size());
+    h1[0] = vel_normalize * x[0];
+    h1.segment(1, acc_layer_2.size()) = acc_layer_2;
+    h1.tail(steer_layer_2.size()) = steer_layer_2;
+    Eigen::VectorXd h_, c_;
+    h_ = h;
+    c_ = c;
+
+    Eigen::VectorXd i_new = sigmoid(
+      weight_lstm_ih.block(0, 0, h.size(), h1.size()) * h1 + bias_lstm_ih.head(h.size()) +
+      weight_lstm_hh.block(0, 0, h.size(), h.size()) * h_ + bias_lstm_hh.head(h.size()));
+    Eigen::VectorXd f_new = sigmoid(
+      weight_lstm_ih.block(h.size(), 0, h.size(), h1.size()) * h1 +
+      bias_lstm_ih.segment(h.size(), h.size()) +
+      weight_lstm_hh.block(h.size(), 0, h.size(), h.size()) * h_ +
+      bias_lstm_hh.segment(h.size(), h.size()));
+    Eigen::VectorXd g_new = tanh(
+      weight_lstm_ih.block(2 * h.size(), 0, h.size(), h1.size()) * h1 +
+      bias_lstm_ih.segment(2 * h.size(), h.size()) +
+      weight_lstm_hh.block(2 * h.size(), 0, h.size(), h.size()) * h_ +
+      bias_lstm_hh.segment(2 * h.size(), h.size()));
+    Eigen::VectorXd o_new = sigmoid(
+      weight_lstm_ih.block(3 * h.size(), 0, h.size(), h1.size()) * h1 +
+      bias_lstm_ih.segment(3 * h.size(), h.size()) +
+      weight_lstm_hh.block(3 * h.size(), 0, h.size(), h.size()) * h_ +
+      bias_lstm_hh.segment(3 * h.size(), h.size()));
+    Eigen::VectorXd c_new = f_new.array() * c_.array() + i_new.array() * g_new.array();
+    Eigen::VectorXd h_new = o_new.array() * tanh(c_new).array();
+    h = h_new;
+    c = c_new;
+  }
+  Eigen::VectorXd rot_and_d_rot_error_prediction(Eigen::VectorXd x)
+  {
+    int x_dim = x.size();
+    double theta = x[3];
+    double v = x[2];
+    double coef = 2.0 * std::abs(v);
+    coef = coef * coef * coef * coef * coef * coef * coef;
+    if (coef > 1.0) {
+      coef = 1.0;
+    }
+    double cos = std::cos(theta);
+    double sin = std::sin(theta);
+    Eigen::Matrix2d Rot;
+    Rot << cos, -sin, sin, cos;
+
+    Eigen::Matrix2d dRot;
+    dRot << -sin, -cos, cos, -sin;
+    Eigen::VectorXd vars(x_dim - 3);
+    vars[0] = x[2];
+    vars[1] = x[4];
+    vars[2] = x[5];
+    vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+    Eigen::VectorXd pred = error_prediction(vars, -1);
+    Eigen::VectorXd rot_and_d_rot_pred(8);
+    rot_and_d_rot_pred.head(2) = Rot * pred.head(2);
+    rot_and_d_rot_pred.segment(2, 4) = pred.segment(2, 4);
+    rot_and_d_rot_pred.tail(2) = dRot * pred.head(2);
+
+    return coef * rot_and_d_rot_pred;
+  }
+  Eigen::MatrixXd rot_and_d_rot_error_prediction_with_diff(Eigen::VectorXd x)
+  {
+    int x_dim = x.size();
+    double theta = x[3];
+    double v = x[2];
+    double coef = 2.0 * std::abs(v);
+    coef = coef * coef * coef * coef * coef * coef * coef;
+    if (coef > 1.0) {
+      coef = 1.0;
+    }
+    double cos = std::cos(theta);
+    double sin = std::sin(theta);
+    Eigen::Matrix2d Rot;
+    Rot << cos, -sin, sin, cos;
+
+    Eigen::Matrix2d dRot;
+    dRot << -sin, -cos, cos, -sin;
+    Eigen::VectorXd vars(x_dim - 3);
+    vars[0] = x[2];
+    vars[1] = x[4];
+    vars[2] = x[5];
+    vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+
+    Eigen::MatrixXd pred_d_pred = error_prediction_with_diff(vars);
+    Eigen::VectorXd pred = pred_d_pred.col(0);
+    Eigen::MatrixXd d_pred = pred_d_pred.block(0, 1, 6, x_dim - 3);
+    Eigen::MatrixXd rot_and_d_rot_pred_with_diff = Eigen::MatrixXd::Zero(6, x_dim + 2);
+    Eigen::MatrixXd rot_pred_with_diff(6, x_dim - 3);
+    rot_pred_with_diff.block(0, 0, 2, x_dim - 3) = Rot * d_pred.block(0, 0, 2, x_dim - 3);
+    rot_pred_with_diff.block(2, 0, 4, x_dim - 3) = d_pred.block(2, 0, 4, x_dim - 3);
+
+    rot_and_d_rot_pred_with_diff.block(0, 0, 2, 1) = Rot * pred.head(2);
+    rot_and_d_rot_pred_with_diff.block(2, 0, 4, 1) = pred.segment(2, 4);
+    rot_and_d_rot_pred_with_diff.block(0, 1, 2, 1) = dRot * pred.head(2);
+    rot_and_d_rot_pred_with_diff.col(2 + 2) = rot_pred_with_diff.col(0);
+    rot_and_d_rot_pred_with_diff.col(2 + 4) = rot_pred_with_diff.col(1);
+    rot_and_d_rot_pred_with_diff.col(2 + 5) = rot_pred_with_diff.col(2);
+    rot_and_d_rot_pred_with_diff.block(0, 2 + 6, 6, x_dim - 6) =
+      rot_pred_with_diff.block(0, 3, 6, x_dim - 6);
+
+    return coef * rot_and_d_rot_pred_with_diff;
+  }
+  Eigen::MatrixXd rot_and_d_rot_error_prediction_with_memory_diff(Eigen::VectorXd x)
+  {
+    int x_dim = x.size();
+    double theta = x[3];
+    double v = x[2];
+    double coef = 2.0 * std::abs(v);
+    coef = coef * coef * coef * coef * coef * coef * coef;
+    if (coef > 1.0) {
+      coef = 1.0;
+    }
+    double cos = std::cos(theta);
+    double sin = std::sin(theta);
+    Eigen::Matrix2d Rot;
+    Rot << cos, -sin, sin, cos;
+
+    Eigen::Matrix2d dRot;
+    dRot << -sin, -cos, cos, -sin;
+    Eigen::VectorXd vars(x_dim - 3);
+    vars[0] = x[2];
+    vars[1] = x[4];
+    vars[2] = x[5];
+    vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+
+    Eigen::MatrixXd pred_d_pred = error_prediction_with_memory_diff(vars);
+    Eigen::VectorXd pred = pred_d_pred.col(0);
+    Eigen::MatrixXd d_pred = pred_d_pred.block(0, 1, 6, x_dim - 3);
+    Eigen::MatrixXd rot_and_d_rot_pred_with_diff = Eigen::MatrixXd::Zero(6, x_dim + 2);
+    Eigen::MatrixXd rot_pred_with_diff(6, x_dim - 3);
+    rot_pred_with_diff.block(0, 0, 2, x_dim - 3) = Rot * d_pred.block(0, 0, 2, x_dim - 3);
+    rot_pred_with_diff.block(2, 0, 4, x_dim - 3) = d_pred.block(2, 0, 4, x_dim - 3);
+
+    rot_and_d_rot_pred_with_diff.block(0, 0, 2, 1) = Rot * pred.head(2);
+    rot_and_d_rot_pred_with_diff.block(2, 0, 4, 1) = pred.segment(2, 4);
+    rot_and_d_rot_pred_with_diff.block(0, 1, 2, 1) = dRot * pred.head(2);
+    rot_and_d_rot_pred_with_diff.col(2 + 2) = rot_pred_with_diff.col(0);
+    rot_and_d_rot_pred_with_diff.col(2 + 4) = rot_pred_with_diff.col(1);
+    rot_and_d_rot_pred_with_diff.col(2 + 5) = rot_pred_with_diff.col(2);
+    rot_and_d_rot_pred_with_diff.block(0, 2 + 6, 6, x_dim - 6) =
+      rot_pred_with_diff.block(0, 3, 6, x_dim - 6);
+
+    dy_dhc.block(0, 0, 2, 2 * h.size()) = Rot * dy_dhc_.block(0, 0, 2, 2 * h.size());
+    dy_dhc.block(2, 0, 4, 2 * h.size()) = dy_dhc_.block(2, 0, 4, 2 * h.size());
+
+    dhc_dx.col(2) = dhc_dx_.col(0);
+    dhc_dx.col(4) = dhc_dx_.col(1);
+    dhc_dx.col(5) = dhc_dx_.col(2);
+    dhc_dx.block(0, 6, 2 * h.size(), x_dim - 6) = dhc_dx_.block(0, 3, 2 * h.size(), x_dim - 6);
+
+    return coef * rot_and_d_rot_pred_with_diff;
+  }
+  Eigen::MatrixXd rot_and_d_rot_error_prediction_with_poly_diff(Eigen::VectorXd x)
+  {
+    int x_dim = x.size();
+    double theta = x[3];
+    double v = x[2];
+    double coef = 2.0 * std::abs(v);
+    coef = coef * coef * coef * coef * coef * coef * coef;
+    if (coef > 1.0) {
+      coef = 1.0;
+    }
+    double cos = std::cos(theta);
+    double sin = std::sin(theta);
+    Eigen::Matrix2d Rot;
+    Rot << cos, -sin, sin, cos;
+
+    Eigen::Matrix2d dRot;
+    dRot << -sin, -cos, cos, -sin;
+    Eigen::VectorXd vars(x_dim - 3);
+    vars[0] = x[2];
+    vars[1] = x[4];
+    vars[2] = x[5];
+    vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+
+    Eigen::VectorXd pred = error_prediction(vars, -1);
+    Eigen::MatrixXd d_pred = Eigen::MatrixXd::Zero(6, x_dim - 3);
+
+    Eigen::VectorXd x_for_polynomial_reg(9);
+    x_for_polynomial_reg.head(3) = x.head(3);
+    int acc_start = 3 + std::max(acc_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(3, 3) = x.segment(acc_start, 3);
+    int steer_start = 3 + acc_ctrl_queue_size + std::max(steer_delay_step - 3, 0);
+    x_for_polynomial_reg.segment(6, 3) = x.segment(steer_start, 3);
+
+    Eigen::MatrixXd polynomial_features_with_diff =
+      get_polynomial_features_with_diff(x_for_polynomial_reg, deg, A_linear_reg.cols());
+    Eigen::MatrixXd polynomial_reg_diff =
+      A_linear_reg *
+      polynomial_features_with_diff.block(0, 1, A_linear_reg.cols(), x_for_polynomial_reg.size());
+    d_pred.block(0, 0, 6, 3) += polynomial_reg_diff.block(0, 0, 6, 3);
+    d_pred.block(0, 1 + acc_start, 6, 3) += polynomial_reg_diff.block(0, 3, 6, 3);
+    d_pred.block(0, 1 + steer_start, 6, 3) += polynomial_reg_diff.block(0, 6, 6, 3);
+
+    Eigen::MatrixXd rot_and_d_rot_pred_with_diff = Eigen::MatrixXd::Zero(6, x_dim + 2);
+    Eigen::MatrixXd rot_pred_with_diff(6, x_dim - 3);
+    rot_pred_with_diff.block(0, 0, 2, x_dim - 3) = Rot * d_pred.block(0, 0, 2, x_dim - 3);
+    rot_pred_with_diff.block(2, 0, 4, x_dim - 3) = d_pred.block(2, 0, 4, x_dim - 3);
+
+    rot_and_d_rot_pred_with_diff.block(0, 0, 2, 1) = Rot * pred.head(2);
+    rot_and_d_rot_pred_with_diff.block(2, 0, 4, 1) = pred.segment(2, 4);
+    rot_and_d_rot_pred_with_diff.block(0, 1, 2, 1) = dRot * pred.head(2);
+    rot_and_d_rot_pred_with_diff.col(2 + 2) = rot_pred_with_diff.col(0);
+    rot_and_d_rot_pred_with_diff.col(2 + 4) = rot_pred_with_diff.col(1);
+    rot_and_d_rot_pred_with_diff.col(2 + 5) = rot_pred_with_diff.col(2);
+    rot_and_d_rot_pred_with_diff.block(0, 2 + 6, 6, x_dim - 6) =
+      rot_pred_with_diff.block(0, 3, 6, x_dim - 6);
+
+    return coef * rot_and_d_rot_pred_with_diff;
+  }
+  Eigen::VectorXd rotated_error_prediction(Eigen::VectorXd x)
+  {
+    int x_dim = x.size();
+    double theta = x[3];
+    double v = x[2];
+    double coef = 2.0 * std::abs(v);
+    coef = coef * coef * coef * coef * coef * coef * coef;
+    if (coef > 1.0) {
+      coef = 1.0;
+    }
+    double cos = std::cos(theta);
+    double sin = std::sin(theta);
+    Eigen::Matrix2d Rot;
+    Rot << cos, -sin, sin, cos;
+    Eigen::VectorXd vars(x_dim - 3);
+    vars[0] = x[2];
+    vars[1] = x[4];
+    vars[2] = x[5];
+    vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+    Eigen::VectorXd pred = error_prediction(vars, -1);
+    Eigen::VectorXd rot_pred(6);
+    rot_pred.head(2) = coef * Rot * pred.head(2);
+    rot_pred.tail(4) = coef * pred.tail(4);
+    return rot_pred;
+  }
+  Eigen::MatrixXd Rotated_error_prediction(Eigen::MatrixXd X)
+  {
+    int X_cols = X.cols();
+    int x_dim = X.rows();
+    Eigen::MatrixXd Pred(6, X_cols);
+    for (int i = 0; i < X_cols; i++) {
+      Eigen::VectorXd x = X.col(i);
+      double theta = x[3];
+      double v = x[2];
+      double coef = 2.0 * std::abs(v);
+      coef = coef * coef * coef * coef * coef * coef * coef;
+      if (coef > 1.0) {
+        coef = 1.0;
+      }
+      double cos = std::cos(theta);
+      double sin = std::sin(theta);
+      Eigen::Matrix2d Rot;
+      Rot << cos, -sin, sin, cos;
+      Eigen::VectorXd vars(x_dim - 3);
+
+      vars[0] = x[2];
+
+      vars[1] = x[4];
+      vars[2] = x[5];
+      vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+      Eigen::VectorXd pred = error_prediction(vars, i);
+      Pred.block(0, i, 2, 1) = coef * Rot * pred.head(2);
+      Pred.block(2, i, 4, 1) = coef * pred.tail(4);
+    }
+    return Pred;
+  }
+  void update_memory_by_state_history(Eigen::MatrixXd X)
+  {
+    int X_cols = X.cols();
+    int x_dim = X.rows();
+    for (int i = 0; i < X_cols; i++) {
+      Eigen::VectorXd x = X.col(i);
+      Eigen::VectorXd vars(x_dim - 3);
+      vars[0] = x[2];
+      vars[1] = x[4];
+      vars[2] = x[5];
+      vars.tail(x_dim - 6) = x.tail(x_dim - 6);
+      update_memory(vars);
+    }
+  }
+};
 PYBIND11_MODULE(proxima_calc, m)
 {
   py::class_<transform_model_to_eigen>(m, "transform_model_to_eigen")
@@ -483,5 +1584,40 @@ PYBIND11_MODULE(proxima_calc, m)
     .def(
       "rot_and_d_rot_error_prediction_with_diff",
       &transform_model_to_eigen::rot_and_d_rot_error_prediction_with_diff)
+    .def(
+      "rot_and_d_rot_error_prediction_with_poly_diff",
+      &transform_model_to_eigen::rot_and_d_rot_error_prediction_with_poly_diff)
+    .def("rotated_error_prediction", &transform_model_to_eigen::rotated_error_prediction)
     .def("Rotated_error_prediction", &transform_model_to_eigen::Rotated_error_prediction);
+  py::class_<transform_model_with_memory_to_eigen>(m, "transform_model_with_memory_to_eigen")
+    .def(py::init())
+    .def("set_params", &transform_model_with_memory_to_eigen::set_params)
+    .def("set_params_res", &transform_model_with_memory_to_eigen::set_params_res)
+    .def("set_lstm", &transform_model_with_memory_to_eigen::set_lstm)
+    .def("set_lstm_for_candidate", &transform_model_with_memory_to_eigen::set_lstm_for_candidate)
+    .def("get_h", &transform_model_with_memory_to_eigen::get_h)
+    .def("get_c", &transform_model_with_memory_to_eigen::get_c)
+    .def("get_dy_dhc", &transform_model_with_memory_to_eigen::get_dy_dhc)
+    .def("get_dhc_dx", &transform_model_with_memory_to_eigen::get_dhc_dx)
+    .def("get_dhc_dhc", &transform_model_with_memory_to_eigen::get_dhc_dhc)
+    .def("error_prediction", &transform_model_with_memory_to_eigen::error_prediction)
+    .def(
+      "rot_and_d_rot_error_prediction",
+      &transform_model_with_memory_to_eigen::rot_and_d_rot_error_prediction)
+    .def(
+      "rot_and_d_rot_error_prediction_with_diff",
+      &transform_model_with_memory_to_eigen::rot_and_d_rot_error_prediction_with_diff)
+    .def(
+      "rot_and_d_rot_error_prediction_with_memory_diff",
+      &transform_model_with_memory_to_eigen::rot_and_d_rot_error_prediction_with_memory_diff)
+    .def(
+      "rot_and_d_rot_error_prediction_with_poly_diff",
+      &transform_model_with_memory_to_eigen::rot_and_d_rot_error_prediction_with_poly_diff)
+    .def(
+      "update_memory_by_state_history",
+      &transform_model_with_memory_to_eigen::update_memory_by_state_history)
+    .def(
+      "rotated_error_prediction", &transform_model_with_memory_to_eigen::rotated_error_prediction)
+    .def(
+      "Rotated_error_prediction", &transform_model_with_memory_to_eigen::Rotated_error_prediction);
 }
