@@ -157,12 +157,6 @@ def get_vel_sine(t, v_mid, v_range, period, constant_vel_time):
     else:
         vel = v_mid + v_range * np.sin(2 * np.pi * (t - 2 * constant_vel_time) / period)
 
-    # vel = v_mid + width_vel_array[vel_index] * np.sin(
-    #     2
-    #     * np.pi
-    #     * (t - t_vel_array[vel_index])
-    #     / interval
-    # )
     return vel
 
 
@@ -259,7 +253,6 @@ class FigureEight:
         self.v_min = v_min
         self.v_max = v_max
         self.split_size = split_size
-        # self.v_start = v_min + 0.5*(v_max-v_min)/(split_size - 1)
 
         self.v_mid = 0.5 * (v_min + v_max)
         self.v_start = self.v_mid
@@ -298,12 +291,9 @@ class FigureEight:
         achievement_rates = []
 
         # Boundary points between circular and linear trajectory
-        # A = [-(b - a) / 2, a / 2]
-        # B = [(b - a) / 2, a / 2]
         C = [-(b - a) / 2, -a / 2]
         D = [(b - a) / 2, -a / 2]
 
-        # O = [0.0, 0.0]  # origin
         R = a / 2  # radius of the circle
         OL = [-(b - a) / 2, 0]  # center of the left circle
         OR = [(b - a) / 2, 0]  # center of the right circle
@@ -436,10 +426,8 @@ class FigureEight:
                 * (get_periodic_count(index, self.split_size) + 1 - adjust)
                 / self.split_size
             )
-            # v_range = (self.v_max - self.v_mid)*(get_periodic_count(index, self.split_size) + 1)/self.split_size
             return get_vel_sine(t1, self.v_mid, v_range, self.period, self.constant_vel_time)
         else:
-            # if t1 > self.constant_vel_time:
             self.break_flag = True
             return self.v_mid
 

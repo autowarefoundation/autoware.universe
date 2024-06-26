@@ -690,7 +690,7 @@ class PyMPCTrajectoryFollower(Node):
                 self.control_cmd_steer_list.pop(0)
                 self.control_cmd_acc_list.pop(0)
 
-        # [3-6] Update control state
+        # [3-7] Update control state
         if control_state != ControlStatus.EMERGENCY:
             stopped_velocity_threshold = 0.1
             if present_linear_velocity[0] <= stopped_velocity_threshold:
