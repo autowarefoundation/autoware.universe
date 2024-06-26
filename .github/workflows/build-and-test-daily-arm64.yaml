@@ -33,7 +33,7 @@ jobs:
       - name: Show CUDA and NVIDIA driver version
         if: matrix.container-suffix == '-cuda'
         run: |
-          nvcc --version
+          /usr/local/cuda/bin/nvcc --version
         shell: bash
 
       - name: Remove exec_depend
