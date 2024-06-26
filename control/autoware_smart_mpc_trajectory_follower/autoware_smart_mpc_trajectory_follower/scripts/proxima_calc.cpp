@@ -528,10 +528,6 @@ public:
     Eigen::VectorXd pred = error_prediction(vars);
     Eigen::MatrixXd d_pred = Eigen::MatrixXd::Zero(6, x_dim - 3);
 
-    // Eigen::VectorXd x_for_polynomial_reg(5);
-    // x_for_polynomial_reg.head(3) = vars.head(3);
-    // x_for_polynomial_reg[3] = vars[3 + acc_delay_step];
-    // x_for_polynomial_reg[4] = vars[3 + acc_ctrl_queue_size + steer_delay_step];
     Eigen::VectorXd x_for_polynomial_reg(9);
     x_for_polynomial_reg.head(3) = x.head(3);
     int acc_start = 3 + std::max(acc_delay_step - 3, 0);
