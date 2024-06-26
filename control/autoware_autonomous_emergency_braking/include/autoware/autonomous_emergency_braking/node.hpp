@@ -218,7 +218,7 @@ public:
         p_vel * std::cos(p_yaw - traj_yaw) + std::abs(current_ego_speed);
 
       // Current RSS distance calculation does not account for negative velocities
-      return (estimated_velocity > 0.0) ? estimated_velocity : 0.0;
+      return estimated_velocity;
     });
 
     if (!estimated_velocity_opt.has_value()) {
