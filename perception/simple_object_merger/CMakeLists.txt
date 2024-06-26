@@ -17,9 +17,13 @@ rclcpp_components_register_node(simple_object_merger_node_component
 
 # Tests
 if(BUILD_TESTING)
-  list(APPEND AMENT_LINT_AUTO_EXCLUDE ament_cmake_uncrustify)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  file(GLOB_RECURSE test_files test/*.cpp)
+
+  ament_add_ros_isolated_gtest(test_simple_object_merger_node ${test_files})
+
+  target_link_libraries(test_simple_object_merger_node
+    simple_object_merger_node_component
+  )
 endif()
 
 # Package

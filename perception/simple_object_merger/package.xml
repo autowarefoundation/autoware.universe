@@ -12,7 +12,9 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <depend>ament_cmake_ros</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_test_utils</depend>
   <depend>autoware_universe_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
