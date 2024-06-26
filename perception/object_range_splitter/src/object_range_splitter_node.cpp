@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_object_range_splitter/object_range_splitter_node.hpp"
+#include "object_range_splitter_node.hpp"
 
 namespace autoware::object_range_splitter
 {
