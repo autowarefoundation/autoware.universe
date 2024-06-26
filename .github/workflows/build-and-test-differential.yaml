@@ -51,7 +51,6 @@ jobs:
       - name: Show CUDA and NVIDIA driver version
         if: matrix.container-suffix == '-cuda'
         run: |
-          nvidia-smi
           nvcc --version
         shell: bash
 
