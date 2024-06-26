@@ -1,6 +1,3 @@
-[![pipeline status](https://gitlab.com/driveblocks/mod_mission_planner/badges/dev/pipeline.svg)](https://gitlab.com/driveblocks/mod_mission_planner/-/commits/dev)
-[![coverage status](https://gitlab.com/driveblocks/mod_mission_planner/badges/dev/coverage.svg)](https://gitlab.com/driveblocks/mod_mission_planner/-/commits/dev)
-
 # Mission Planner
 
 The Mission Planner module generates a reference trajectory/path in a local road model based on mission inputs. These inputs are received from the Human Machine Interface (HMI) or another agent. The resulting trajectory or path is then forwarded to the Behavior Planner for further processing.
@@ -36,13 +33,3 @@ ros2 launch autoware_local_mission_planner mission_planner.launch.py
 ## Additional Notes
 
 During the beta phase, the mission planner will immediately output a straight trajectory with low velocity to move the vehicle into the local road model. Once the vehicle can be located in the local road model, a trajectory following the ego lane will be computed.
-
-## Styleguide
-
-This package adheres to the [Autoware styleguide](https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/languages/cpp/) which can be achieved via [`pre-commit`](https://autowarefoundation.github.io/autoware-documentation/pr-347/contributing/pull-request-guidelines/ci-checks/#pre-commit). Run
-
-```bash
-pre-commit run -a
-```
-
-to format the code in the Autoware style and check the tests for errors which have to be solved manually.
