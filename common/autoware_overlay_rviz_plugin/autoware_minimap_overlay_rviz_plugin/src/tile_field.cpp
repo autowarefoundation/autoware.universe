@@ -153,7 +153,7 @@ std::pair<int, int> TileField::getTileOffsets(double lat, double lon)
   int x_offset = static_cast<int>((x - x_tile) * 256);
   int y_offset = static_cast<int>((y - y_tile) * 256);
 
-  return {150 + x_offset, 150 + y_offset};
+  return {128 + x_offset, 128 + y_offset};
 }
 
 std::pair<double, double> TileField::latLonToTile(double lat, double lon, int zoom)

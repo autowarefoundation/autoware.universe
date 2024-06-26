@@ -9,7 +9,10 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wunused)
 endif()
 
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
+
 find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rviz_common REQUIRED)
@@ -20,7 +23,8 @@ find_package(pluginlib REQUIRED)
 find_package(angles REQUIRED)
 find_package(Qt5 COMPONENTS Network REQUIRED)
 find_package(OGRE REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(GeographicLib REQUIRED)
+
 
 set(
     headers_to_moc
@@ -29,6 +33,7 @@ set(
 set(
   headers_to_not_moc
   src/include/minimap.hpp
+  src/include/goal_pose.hpp
   src/include/tile.hpp
   src/include/tile_field.hpp
   src/include/overlay_utils.hpp
@@ -44,6 +49,7 @@ set(
     src/minimap.cpp
     src/tile.cpp
     src/tile_field.cpp
+    src/goal_pose.cpp
 )
 
 add_library(
@@ -59,12 +65,22 @@ target_compile_options(
   "-DVEHICLEMAP_VERSION=\"${vehicle_map_VERSION}\""
 )
 
+include_directories(
+  src
+  /usr/include/x86_64-linux-gnu/qt5
+  ${OGRE_INCLUDE_DIRS}
+  ${rviz_common_INCLUDE_DIRS}
+  ${rviz_default_plugins_INCLUDE_DIRS}
+  ${GeographicLib_INCLUDE_DIRS}
+)
+
 target_include_directories(${PROJECT_NAME}
   PRIVATE src
   PRIVATE /usr/include/x86_64-linux-gnu/qt5
   PRIVATE ${OGRE_INCLUDE_DIRS}
   PRIVATE ${rviz_common_INCLUDE_DIRS}
   PRIVATE ${rviz_default_plugins_INCLUDE_DIRS}
+  PRIVATE ${GeographicLib_INCLUDE_DIRS}
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -73,6 +89,7 @@ target_link_libraries(${PROJECT_NAME}
   ${OGRE_LIBRARIES}
   ${rviz_common_LIBRARIES}
   ${rviz_default_plugins_LIBRARIES}
+  ${GeographicLib_LIBRARIES}
 )
 
 # prevent pluginlib from using boost

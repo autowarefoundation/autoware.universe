@@ -1,6 +1,7 @@
 #ifndef MINIMAP_HPP_
 #define MINIMAP_HPP_
 
+#include "goal_pose.hpp"
 #include "overlay_utils.hpp"
 #include "rviz_common/properties/color_property.hpp"
 #include "rviz_common/properties/float_property.hpp"
@@ -21,6 +22,8 @@
 #include <rviz_common/window_manager_interface.hpp>
 #include <rviz_rendering/render_window.hpp>
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <OgreColourValue.h>
@@ -56,6 +59,8 @@ protected Q_SLOTS:
   void updateLatitude();
   void updateLongitude();
   void updateTopic();
+  void updateGoalPose();
+  void updateMapPosition();
 
 protected:
   void onEnable() override;
@@ -65,6 +70,9 @@ private:
   void drawWidget(QImage & hud);
   void drawCircle(QPainter & painter, const QRectF & backgroundRect);
   void navSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
+  void goalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+  void poseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
+  std::pair<double, double> localXYZToLatLon(double local_x, double local_y);
 
   rviz_satellite::OverlayObject::SharedPtr overlay_;
 
@@ -82,6 +90,8 @@ private:
   rviz_common::properties::FloatProperty * property_latitude_;
   rviz_common::properties::FloatProperty * property_longitude_;
   rviz_common::properties::StringProperty * property_topic_;
+  rviz_common::properties::FloatProperty * property_goal_x_;
+  rviz_common::properties::FloatProperty * property_goal_y_;
 
   int zoom_;
 
@@ -94,6 +104,12 @@ private:
 
   double latitude_;
   double longitude_;
+
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_sub_;
+  GoalPose goal_pose_;
+
+  void drawGoalPose(QPainter & painter, const QRectF & backgroundRect);
 };
 
 }  // namespace autoware_minimap_overlay_rviz_plugin
