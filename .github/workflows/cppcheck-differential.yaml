@@ -31,10 +31,10 @@ jobs:
         run: git fetch origin ${{ github.base_ref }}
         shell: bash
 
-      - name: Get changed files
+      - name: Get changed files (existing files only)
         id: get-changed-files
         run: |
-          echo "changed-files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD | grep -E '\.(cpp|hpp)$' | tr '\n' ' ' || true)" >> $GITHUB_OUTPUT
+          echo "changed-files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD | grep -E '\.(cpp|hpp)$' | while read -r file; do [ -e "$file" ] && echo -n "$file "; done)" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Run Cppcheck on changed files
