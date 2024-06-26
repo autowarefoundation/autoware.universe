@@ -14,7 +14,7 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include "autoware_tracking_object_merger/decorative_tracker_merger_node.hpp"
+#include "decorative_tracker_merger_node.hpp"
 
 #include "autoware_tracking_object_merger/association/solver/ssp.hpp"
 #include "autoware_tracking_object_merger/utils/utils.hpp"
