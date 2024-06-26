@@ -135,7 +135,6 @@ class pure_pursuit_gain_updater:
                 best_acc_coef = coef[[1, 2]]
         estimated_acc_scaling = np.clip(-best_acc_coef[1] / best_acc_coef[0], 0.1, 10.0)
 
-
         return 1 / estimated_acc_scaling
 
     def get_steer_gain_scaling(self):
@@ -213,6 +212,5 @@ class pure_pursuit_gain_updater:
                 best_steer_coef = coef[[1, 2]]
 
         estimated_steer_scaling = np.clip(-best_steer_coef[1] / best_steer_coef[0], 0.1, 10.0)
-
 
         return np.clip(estimated_wheel_base_scaling / estimated_steer_scaling, 0.1, 10.0)

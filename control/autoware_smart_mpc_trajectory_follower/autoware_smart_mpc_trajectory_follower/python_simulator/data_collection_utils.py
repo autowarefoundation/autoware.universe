@@ -444,8 +444,6 @@ class FigureEight:
             return self.v_mid
 
 
-
-
 def get_pure_pursuit_info(x_current, trajectory_position_data, trajectory_yaw_data, previous_index):
     """Calculate the target position and yaw angle required for pure pursuit."""
     search_range = (
