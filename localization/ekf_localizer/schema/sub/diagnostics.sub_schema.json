@@ -50,7 +50,6 @@
           "description": "The lateral direction size of the error ellipse to trigger a WARN state",
           "default": 0.25
         }
-        }
       },
       "required": [
         "pose_no_update_count_threshold_warn",
