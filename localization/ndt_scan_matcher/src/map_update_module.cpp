@@ -107,6 +107,20 @@ bool MapUpdateModule::should_update_map(
   return distance > param_.update_distance;
 }
 
+bool MapUpdateModule::out_of_map_range(const geometry_msgs::msg::Point & position)
+{
+  if (last_update_position_ == std::nullopt) {
+    return true;
+  }
+
+  const double dx = position.x - last_update_position_.value().x;
+  const double dy = position.y - last_update_position_.value().y;
+  const double distance = std::hypot(dx, dy);
+
+  // check distance_last_update_position_to_current_position
+  return (distance + param_.lidar_radius > param_.map_radius);
+}
+
 void MapUpdateModule::update_map(
   const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticsModule> & diagnostics_ptr)
 {

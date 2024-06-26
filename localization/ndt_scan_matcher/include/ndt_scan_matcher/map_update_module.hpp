@@ -52,15 +52,17 @@ public:
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex, NdtPtrType & ndt_ptr,
     HyperParameters::DynamicMapLoading param);
 
-  [[nodiscard]] bool should_update_map(
-    const geometry_msgs::msg::Point & position,
-    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+    bool out_of_map_range(const geometry_msgs::msg::Point & position);
 
 private:
   friend class NDTScanMatcher;
 
   void callback_timer(
     const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position,
+    std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
+
+  [[nodiscard]] bool should_update_map(
+    const geometry_msgs::msg::Point & position,
     std::unique_ptr<DiagnosticsModule> & diagnostics_ptr);
 
   void update_map(

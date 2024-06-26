@@ -440,7 +440,7 @@ bool NDTScanMatcher::callback_sensor_points_main(
   }
 
   // Warn if the lidar has gone out of the map range
-  if (map_update_module_->should_update_map(interpolation_result.interpolated_pose.pose.pose.position, diagnostics_scan_points_))
+  if (map_update_module_->out_of_map_range(interpolation_result.interpolated_pose.pose.pose.position))
   {
     std::stringstream msg;
 
