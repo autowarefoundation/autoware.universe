@@ -5,7 +5,6 @@
 #include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "gtest/gtest.h"
 
-#include "db_msgs/msg/lanelets_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
 #include <iostream>
@@ -13,49 +12,25 @@
 
 namespace autoware::mapless_architecture
 {
+// Note: Lanelets and Segments are basically the same!
 
-db_msgs::msg::LaneletsStamped CreateLanelets()
+autoware_planning_msgs::msg::RoadSegments CreateSegments()
 {
   // Local variables
-  const int n_lanelets = 3;
-  const int n_attribute_vecs = 1;
-  const int n_points = 2;
+  const int n_segments = 3;
 
   // Fill lanelet2 message
-  db_msgs::msg::LaneletsStamped message;
-  std::vector<db_msgs::msg::Lanelet> lanelet_vec(n_lanelets);
-  message.lanelets = lanelet_vec;
+  autoware_planning_msgs::msg::RoadSegments message;
+  std::vector<autoware_planning_msgs::msg::Segment> lanelet_vec(n_segments);
+  message.segments = lanelet_vec;
 
   // Global position
   geometry_msgs::msg::PoseStamped msg_global_pose;
   msg_global_pose.header.frame_id = "base_link";
 
-  std::array<db_msgs::msg::Linestring, 2> linestring_vec;
-  std::vector<db_msgs::msg::Attribute> attribute_vec(n_attribute_vecs);
-  message.lanelets[0].id = 0;
-  message.lanelets[0].linestrings = linestring_vec;
-  message.lanelets[0].attributes = attribute_vec;
-  message.lanelets[1].id = 1;
-  message.lanelets[1].linestrings = linestring_vec;
-  message.lanelets[1].attributes = attribute_vec;
-  message.lanelets[2].id = 2;
-  message.lanelets[2].linestrings = linestring_vec;
-  message.lanelets[2].attributes = attribute_vec;
-
-  uint16_t id = 0;
-  std::vector<db_msgs::msg::DBPoint> points_vec(n_points);
-  message.lanelets[0].linestrings[0].id = id;
-  message.lanelets[0].linestrings[1].id = ++id;
-  message.lanelets[0].linestrings[0].points = points_vec;
-  message.lanelets[0].linestrings[1].points = points_vec;
-  message.lanelets[1].linestrings[0].id = ++id;
-  message.lanelets[1].linestrings[1].id = ++id;
-  message.lanelets[1].linestrings[0].points = points_vec;
-  message.lanelets[1].linestrings[1].points = points_vec;
-  message.lanelets[2].linestrings[0].id = ++id;
-  message.lanelets[2].linestrings[1].id = ++id;
-  message.lanelets[2].linestrings[0].points = points_vec;
-  message.lanelets[2].linestrings[1].points = points_vec;
+  message.segments[0].id = 0;
+  message.segments[1].id = 1;
+  message.segments[2].id = 2;
 
   tf2::Quaternion quaternion;
 
@@ -70,55 +45,55 @@ db_msgs::msg::LaneletsStamped CreateLanelets()
 
   // Street layout in current local cosy = global cosy since vehicle position is
   // at the origin in the global cosy
-  message.lanelets[0].linestrings[0].points[0].pose.position.x = -2.0;
-  message.lanelets[0].linestrings[0].points[0].pose.position.y = -0.5;
-  message.lanelets[0].linestrings[0].points[0].pose.position.z = 0.0;
-  message.lanelets[0].linestrings[0].points[1].pose.position.x = 10.0;
-  message.lanelets[0].linestrings[0].points[1].pose.position.y = -0.5;
-  message.lanelets[0].linestrings[0].points[1].pose.position.z = 0.0;
+  message.segments[0].linestrings[0].poses[0].position.x = -2.0;
+  message.segments[0].linestrings[0].poses[0].position.y = -0.5;
+  message.segments[0].linestrings[0].poses[0].position.z = 0.0;
+  message.segments[0].linestrings[0].poses[1].position.x = 10.0;
+  message.segments[0].linestrings[0].poses[1].position.y = -0.5;
+  message.segments[0].linestrings[0].poses[1].position.z = 0.0;
 
-  message.lanelets[0].linestrings[1].points[0].pose.position.x = -2.0;
-  message.lanelets[0].linestrings[1].points[0].pose.position.y = 0.5;
-  message.lanelets[0].linestrings[1].points[0].pose.position.z = 0.0;
-  message.lanelets[0].linestrings[1].points[1].pose.position.x = 10.0;
-  message.lanelets[0].linestrings[1].points[1].pose.position.y = 0.5;
-  message.lanelets[0].linestrings[1].points[1].pose.position.z = 0.0;
+  message.segments[0].linestrings[1].poses[0].position.x = -2.0;
+  message.segments[0].linestrings[1].poses[0].position.y = 0.5;
+  message.segments[0].linestrings[1].poses[0].position.z = 0.0;
+  message.segments[0].linestrings[1].poses[1].position.x = 10.0;
+  message.segments[0].linestrings[1].poses[1].position.y = 0.5;
+  message.segments[0].linestrings[1].poses[1].position.z = 0.0;
 
-  message.lanelets[1].linestrings[0].points[0].pose.position.x = 0.0;
-  message.lanelets[1].linestrings[0].points[0].pose.position.y = 1.0;
-  message.lanelets[1].linestrings[0].points[0].pose.position.z = 0.0;
-  message.lanelets[1].linestrings[0].points[1].pose.position.x = 10.0;
-  message.lanelets[1].linestrings[0].points[1].pose.position.y = 1.0;
-  message.lanelets[1].linestrings[0].points[1].pose.position.z = 0.0;
+  message.segments[1].linestrings[0].poses[0].position.x = 0.0;
+  message.segments[1].linestrings[0].poses[0].position.y = 1.0;
+  message.segments[1].linestrings[0].poses[0].position.z = 0.0;
+  message.segments[1].linestrings[0].poses[1].position.x = 10.0;
+  message.segments[1].linestrings[0].poses[1].position.y = 1.0;
+  message.segments[1].linestrings[0].poses[1].position.z = 0.0;
 
-  message.lanelets[1].linestrings[1].points[0].pose.position.x = 0.0;
-  message.lanelets[1].linestrings[1].points[0].pose.position.y = 2.0;
-  message.lanelets[1].linestrings[1].points[0].pose.position.z = 0.0;
-  message.lanelets[1].linestrings[1].points[1].pose.position.x = 10.0;
-  message.lanelets[1].linestrings[1].points[1].pose.position.y = 2.0;
-  message.lanelets[1].linestrings[1].points[1].pose.position.z = 0.0;
+  message.segments[1].linestrings[1].poses[0].position.x = 0.0;
+  message.segments[1].linestrings[1].poses[0].position.y = 2.0;
+  message.segments[1].linestrings[1].poses[0].position.z = 0.0;
+  message.segments[1].linestrings[1].poses[1].position.x = 10.0;
+  message.segments[1].linestrings[1].poses[1].position.y = 2.0;
+  message.segments[1].linestrings[1].poses[1].position.z = 0.0;
 
-  message.lanelets[2].linestrings[0].points[0].pose.position.x = 10.0;
-  message.lanelets[2].linestrings[0].points[0].pose.position.y = -0.5;
-  message.lanelets[2].linestrings[0].points[0].pose.position.z = 0.0;
-  message.lanelets[2].linestrings[0].points[1].pose.position.x = 20.0;
-  message.lanelets[2].linestrings[0].points[1].pose.position.y = -0.5;
-  message.lanelets[2].linestrings[0].points[1].pose.position.z = 0.0;
+  message.segments[2].linestrings[0].poses[0].position.x = 10.0;
+  message.segments[2].linestrings[0].poses[0].position.y = -0.5;
+  message.segments[2].linestrings[0].poses[0].position.z = 0.0;
+  message.segments[2].linestrings[0].poses[1].position.x = 20.0;
+  message.segments[2].linestrings[0].poses[1].position.y = -0.5;
+  message.segments[2].linestrings[0].poses[1].position.z = 0.0;
 
-  message.lanelets[2].linestrings[1].points[0].pose.position.x = 10.0;
-  message.lanelets[2].linestrings[1].points[0].pose.position.y = 0.5;
-  message.lanelets[2].linestrings[1].points[0].pose.position.z = 0.0;
-  message.lanelets[2].linestrings[1].points[1].pose.position.x = 20.0;
-  message.lanelets[2].linestrings[1].points[1].pose.position.y = 0.5;
-  message.lanelets[2].linestrings[1].points[1].pose.position.z = 0.0;
+  message.segments[2].linestrings[1].poses[0].position.x = 10.0;
+  message.segments[2].linestrings[1].poses[0].position.y = 0.5;
+  message.segments[2].linestrings[1].poses[0].position.z = 0.0;
+  message.segments[2].linestrings[1].poses[1].position.x = 20.0;
+  message.segments[2].linestrings[1].poses[1].position.y = 0.5;
+  message.segments[2].linestrings[1].poses[1].position.z = 0.0;
 
   // Define connections
-  message.lanelets[0].neighboring_lanelet_id = {0, 1};
-  message.lanelets[1].neighboring_lanelet_id = {0, 1};
-  message.lanelets[2].neighboring_lanelet_id = {-1, -1};
-  message.lanelets[0].successor_lanelet_id = {2};
-  message.lanelets[1].successor_lanelet_id = {-1};
-  message.lanelets[2].successor_lanelet_id = {-1};
+  message.segments[0].neighboring_lanelet_id = {0, 1};
+  message.segments[1].neighboring_lanelet_id = {0, 1};
+  message.segments[2].neighboring_lanelet_id = {-1, -1};
+  message.segments[0].successor_lanelet_id = {2};
+  message.segments[1].successor_lanelet_id = {-1};
+  message.segments[2].successor_lanelet_id = {-1};
 
   return message;
 }
@@ -155,8 +130,8 @@ int TestCalculateDistanceBetweenPointAndLineString()
 
 int TestGetPointOnLane()
 {
-  // Create some example lanelets
-  auto msg_lanelets = CreateLanelets();
+  // Create some example segments
+  autoware_planning_msgs::msg::RoadSegments road_segments = CreateSegments();
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
@@ -164,10 +139,6 @@ int TestGetPointOnLane()
   // Convert road model
   std::vector<LaneletConnection> lanelet_connections;
   std::vector<lanelet::Lanelet> lanelets;
-
-  // Convert message
-  autoware_planning_msgs::msg::RoadSegments road_segments =
-    ConvertLaneletsStamped2RoadSegments(msg_lanelets);
 
   MissionPlanner.ConvertInput2LaneletFormat(road_segments, lanelets, lanelet_connections);
 
@@ -193,8 +164,8 @@ int TestGetPointOnLane()
 
 int TestIsOnGoalLane()
 {
-  // Create some example lanelets
-  auto msg_road_model = CreateLanelets();
+  // Create some example segments
+  autoware_planning_msgs::msg::RoadSegments road_segments = CreateSegments();
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
@@ -202,10 +173,6 @@ int TestIsOnGoalLane()
   // Convert road model
   std::vector<LaneletConnection> lanelet_connections;
   std::vector<lanelet::Lanelet> lanelets;
-
-  // Convert message
-  autoware_planning_msgs::msg::RoadSegments road_segments =
-    ConvertLaneletsStamped2RoadSegments(msg_road_model);
 
   MissionPlanner.ConvertInput2LaneletFormat(road_segments, lanelets, lanelet_connections);
 
@@ -230,41 +197,22 @@ int TestIsOnGoalLane()
   return 0;
 }
 
-db_msgs::msg::LaneletsStamped GetTestRoadModelForRecenterTests()
+autoware_planning_msgs::msg::RoadSegments GetTestRoadModelForRecenterTests()
 {
   // local variables
-  const int n_lanelets = 2;
-  const int n_attribute_vecs = 1;
-  const int n_points = 2;
+  const int n_segments = 2;
 
   // Fill lanelet2 message
-  db_msgs::msg::LaneletsStamped message;
-  std::vector<db_msgs::msg::Lanelet> lanelet_vec(n_lanelets);
-  message.lanelets = lanelet_vec;
+  autoware_planning_msgs::msg::RoadSegments message;
+  std::vector<autoware_planning_msgs::msg::Segment> lanelet_vec(n_segments);
+  message.segments = lanelet_vec;
 
   // Global position
   geometry_msgs::msg::PoseStamped msg_global_pose;
   msg_global_pose.header.frame_id = "base_link";
 
-  std::array<db_msgs::msg::Linestring, 2> linestring_vec;
-  std::vector<db_msgs::msg::Attribute> attribute_vec(n_attribute_vecs);
-  message.lanelets[0].id = 0;
-  message.lanelets[0].linestrings = linestring_vec;
-  message.lanelets[0].attributes = attribute_vec;
-  message.lanelets[1].id = 1;
-  message.lanelets[1].linestrings = linestring_vec;
-  message.lanelets[1].attributes = attribute_vec;
-
-  uint16_t id = 0;
-  std::vector<db_msgs::msg::DBPoint> points_vec(n_points);
-  message.lanelets[0].linestrings[0].id = id;
-  message.lanelets[0].linestrings[1].id = ++id;
-  message.lanelets[0].linestrings[0].points = points_vec;
-  message.lanelets[0].linestrings[1].points = points_vec;
-  message.lanelets[1].linestrings[0].id = ++id;
-  message.lanelets[1].linestrings[1].id = ++id;
-  message.lanelets[1].linestrings[0].points = points_vec;
-  message.lanelets[1].linestrings[1].points = points_vec;
+  message.segments[0].id = 0;
+  message.segments[1].id = 1;
 
   tf2::Quaternion quaternion;
 
@@ -279,39 +227,39 @@ db_msgs::msg::LaneletsStamped GetTestRoadModelForRecenterTests()
 
   // Street layout in current local cosy = global cosy since vehicle position is
   // at the origin in the global cosy
-  message.lanelets[0].linestrings[0].points[0].pose.position.x = 0.0;
-  message.lanelets[0].linestrings[0].points[0].pose.position.y = -0.5;
-  message.lanelets[0].linestrings[0].points[0].pose.position.z = 0.0;
-  message.lanelets[0].linestrings[0].points[1].pose.position.x = 10.0;
-  message.lanelets[0].linestrings[0].points[1].pose.position.y = -0.5;
-  message.lanelets[0].linestrings[0].points[1].pose.position.z = 0.0;
+  message.segments[0].linestrings[0].poses[0].position.x = 0.0;
+  message.segments[0].linestrings[0].poses[0].position.y = -0.5;
+  message.segments[0].linestrings[0].poses[0].position.z = 0.0;
+  message.segments[0].linestrings[0].poses[1].position.x = 10.0;
+  message.segments[0].linestrings[0].poses[1].position.y = -0.5;
+  message.segments[0].linestrings[0].poses[1].position.z = 0.0;
 
-  message.lanelets[0].linestrings[1].points[0].pose.position.x = 0.0;
-  message.lanelets[0].linestrings[1].points[0].pose.position.y = 0.5;
-  message.lanelets[0].linestrings[1].points[0].pose.position.z = 0.0;
-  message.lanelets[0].linestrings[1].points[1].pose.position.x = 10.0;
-  message.lanelets[0].linestrings[1].points[1].pose.position.y = 0.5;
-  message.lanelets[0].linestrings[1].points[1].pose.position.z = 0.0;
+  message.segments[0].linestrings[1].poses[0].position.x = 0.0;
+  message.segments[0].linestrings[1].poses[0].position.y = 0.5;
+  message.segments[0].linestrings[1].poses[0].position.z = 0.0;
+  message.segments[0].linestrings[1].poses[1].position.x = 10.0;
+  message.segments[0].linestrings[1].poses[1].position.y = 0.5;
+  message.segments[0].linestrings[1].poses[1].position.z = 0.0;
 
-  message.lanelets[1].linestrings[0].points[0].pose.position.x = 0.0;
-  message.lanelets[1].linestrings[0].points[0].pose.position.y = 1.0;
-  message.lanelets[1].linestrings[0].points[0].pose.position.z = 0.0;
-  message.lanelets[1].linestrings[0].points[1].pose.position.x = 10.0;
-  message.lanelets[1].linestrings[0].points[1].pose.position.y = 1.0;
-  message.lanelets[1].linestrings[0].points[1].pose.position.z = 0.0;
+  message.segments[1].linestrings[0].poses[0].position.x = 0.0;
+  message.segments[1].linestrings[0].poses[0].position.y = 1.0;
+  message.segments[1].linestrings[0].poses[0].position.z = 0.0;
+  message.segments[1].linestrings[0].poses[1].position.x = 10.0;
+  message.segments[1].linestrings[0].poses[1].position.y = 1.0;
+  message.segments[1].linestrings[0].poses[1].position.z = 0.0;
 
-  message.lanelets[1].linestrings[1].points[0].pose.position.x = 0.0;
-  message.lanelets[1].linestrings[1].points[0].pose.position.y = 2.0;
-  message.lanelets[1].linestrings[1].points[0].pose.position.z = 0.0;
-  message.lanelets[1].linestrings[1].points[1].pose.position.x = 10.0;
-  message.lanelets[1].linestrings[1].points[1].pose.position.y = 2.0;
-  message.lanelets[1].linestrings[1].points[1].pose.position.z = 0.0;
+  message.segments[1].linestrings[1].poses[0].position.x = 0.0;
+  message.segments[1].linestrings[1].poses[0].position.y = 2.0;
+  message.segments[1].linestrings[1].poses[0].position.z = 0.0;
+  message.segments[1].linestrings[1].poses[1].position.x = 10.0;
+  message.segments[1].linestrings[1].poses[1].position.y = 2.0;
+  message.segments[1].linestrings[1].poses[1].position.z = 0.0;
 
   int32_t neigh_1 = 1;
   std::vector<int32_t> neighboring_ids = {neigh_1};
-  message.lanelets[0].neighboring_lanelet_id = neighboring_ids;
+  message.segments[0].neighboring_lanelet_id = neighboring_ids;
   std::vector<int32_t> neighboring_ids_2 = {};
-  message.lanelets[1].neighboring_lanelet_id = neighboring_ids_2;
+  message.segments[1].neighboring_lanelet_id = neighboring_ids_2;
 
   return message;
 }
@@ -322,15 +270,11 @@ int TestRecenterGoalpoint()
   MissionPlannerNode mission_planner = MissionPlannerNode();
 
   // Get a local road model for testing
-  db_msgs::msg::LaneletsStamped local_road_model = GetTestRoadModelForRecenterTests();
+  autoware_planning_msgs::msg::RoadSegments road_segments = GetTestRoadModelForRecenterTests();
 
   // Used for the output
   std::vector<LaneletConnection> lanelet_connections;
   std::vector<lanelet::Lanelet> converted_lanelets;
-
-  // Convert message
-  autoware_planning_msgs::msg::RoadSegments road_segments =
-    ConvertLaneletsStamped2RoadSegments(local_road_model);
 
   mission_planner.ConvertInput2LaneletFormat(
     road_segments, converted_lanelets, lanelet_connections);
@@ -391,12 +335,9 @@ int TestRecenterGoalpoint()
 
 int TestCheckIfGoalPointShouldBeReset()
 {
-  // Create some example lanelets
-  auto msg = CreateLanelets();
+  // Create some example segments
+  autoware_planning_msgs::msg::RoadSegments road_segments = CreateSegments();
 
-  // Convert message
-  autoware_planning_msgs::msg::RoadSegments road_segments =
-    ConvertLaneletsStamped2RoadSegments(msg);
   autoware_planning_msgs::msg::LocalMap local_map;
   local_map.road_segments = road_segments;
 
@@ -453,38 +394,19 @@ int TestCheckIfGoalPointShouldBeReset()
 std::tuple<std::vector<lanelet::Lanelet>, std::vector<LaneletConnection>> CreateLane()
 {
   // Local variables
-  const int n_lanelets = 2;
-  const int n_attribute_vecs = 1;
-  const int n_points = 2;
+  const int n_segments = 2;
 
   // Fill lanelet2 message
-  db_msgs::msg::LaneletsStamped message;
-  std::vector<db_msgs::msg::Lanelet> lanelet_vec(n_lanelets);
-  message.lanelets = lanelet_vec;
+  autoware_planning_msgs::msg::RoadSegments message;
+  std::vector<autoware_planning_msgs::msg::Segment> lanelet_vec(n_segments);
+  message.segments = lanelet_vec;
 
   // Global position
   geometry_msgs::msg::PoseStamped msg_global_pose;
   msg_global_pose.header.frame_id = "base_link";
 
-  std::array<db_msgs::msg::Linestring, 2> linestring_vec;
-  std::vector<db_msgs::msg::Attribute> attribute_vec(n_attribute_vecs);
-  message.lanelets[0].id = 0;
-  message.lanelets[0].linestrings = linestring_vec;
-  message.lanelets[0].attributes = attribute_vec;
-  message.lanelets[1].id = 1;
-  message.lanelets[1].linestrings = linestring_vec;
-  message.lanelets[1].attributes = attribute_vec;
-
-  uint16_t id = 0;
-  std::vector<db_msgs::msg::DBPoint> points_vec(n_points);
-  message.lanelets[0].linestrings[0].id = id;
-  message.lanelets[0].linestrings[1].id = ++id;
-  message.lanelets[0].linestrings[0].points = points_vec;
-  message.lanelets[0].linestrings[1].points = points_vec;
-  message.lanelets[1].linestrings[0].id = ++id;
-  message.lanelets[1].linestrings[1].id = ++id;
-  message.lanelets[1].linestrings[0].points = points_vec;
-  message.lanelets[1].linestrings[1].points = points_vec;
+  message.segments[0].id = 0;
+  message.segments[1].id = 1;
 
   tf2::Quaternion quaternion;
 
@@ -499,39 +421,39 @@ std::tuple<std::vector<lanelet::Lanelet>, std::vector<LaneletConnection>> Create
 
   // Street layout in current local cosy = global cosy since vehicle position is
   // at the origin in the global cosy
-  message.lanelets[0].linestrings[0].points[0].pose.position.x = -2.0;
-  message.lanelets[0].linestrings[0].points[0].pose.position.y = -0.5;
-  message.lanelets[0].linestrings[0].points[0].pose.position.z = 0.0;
-  message.lanelets[0].linestrings[0].points[1].pose.position.x = 10.0;
-  message.lanelets[0].linestrings[0].points[1].pose.position.y = -0.5;
-  message.lanelets[0].linestrings[0].points[1].pose.position.z = 0.0;
+  message.segments[0].linestrings[0].poses[0].position.x = -2.0;
+  message.segments[0].linestrings[0].poses[0].position.y = -0.5;
+  message.segments[0].linestrings[0].poses[0].position.z = 0.0;
+  message.segments[0].linestrings[0].poses[1].position.x = 10.0;
+  message.segments[0].linestrings[0].poses[1].position.y = -0.5;
+  message.segments[0].linestrings[0].poses[1].position.z = 0.0;
 
-  message.lanelets[0].linestrings[1].points[0].pose.position.x = -2.0;
-  message.lanelets[0].linestrings[1].points[0].pose.position.y = 0.5;
-  message.lanelets[0].linestrings[1].points[0].pose.position.z = 0.0;
-  message.lanelets[0].linestrings[1].points[1].pose.position.x = 10.0;
-  message.lanelets[0].linestrings[1].points[1].pose.position.y = 0.5;
-  message.lanelets[0].linestrings[1].points[1].pose.position.z = 0.0;
+  message.segments[0].linestrings[1].poses[0].position.x = -2.0;
+  message.segments[0].linestrings[1].poses[0].position.y = 0.5;
+  message.segments[0].linestrings[1].poses[0].position.z = 0.0;
+  message.segments[0].linestrings[1].poses[1].position.x = 10.0;
+  message.segments[0].linestrings[1].poses[1].position.y = 0.5;
+  message.segments[0].linestrings[1].poses[1].position.z = 0.0;
 
-  message.lanelets[1].linestrings[0].points[0].pose.position.x = 10.0;
-  message.lanelets[1].linestrings[0].points[0].pose.position.y = -0.5;
-  message.lanelets[1].linestrings[0].points[0].pose.position.z = 0.0;
-  message.lanelets[1].linestrings[0].points[1].pose.position.x = 20.0;
-  message.lanelets[1].linestrings[0].points[1].pose.position.y = -0.5;
-  message.lanelets[1].linestrings[0].points[1].pose.position.z = 0.0;
+  message.segments[1].linestrings[0].poses[0].position.x = 10.0;
+  message.segments[1].linestrings[0].poses[0].position.y = -0.5;
+  message.segments[1].linestrings[0].poses[0].position.z = 0.0;
+  message.segments[1].linestrings[0].poses[1].position.x = 20.0;
+  message.segments[1].linestrings[0].poses[1].position.y = -0.5;
+  message.segments[1].linestrings[0].poses[1].position.z = 0.0;
 
-  message.lanelets[1].linestrings[1].points[0].pose.position.x = 10.0;
-  message.lanelets[1].linestrings[1].points[0].pose.position.y = 0.5;
-  message.lanelets[1].linestrings[1].points[0].pose.position.z = 0.0;
-  message.lanelets[1].linestrings[1].points[1].pose.position.x = 20.0;
-  message.lanelets[1].linestrings[1].points[1].pose.position.y = 0.5;
-  message.lanelets[1].linestrings[1].points[1].pose.position.z = 0.0;
+  message.segments[1].linestrings[1].poses[0].position.x = 10.0;
+  message.segments[1].linestrings[1].poses[0].position.y = 0.5;
+  message.segments[1].linestrings[1].poses[0].position.z = 0.0;
+  message.segments[1].linestrings[1].poses[1].position.x = 20.0;
+  message.segments[1].linestrings[1].poses[1].position.y = 0.5;
+  message.segments[1].linestrings[1].poses[1].position.z = 0.0;
 
   // Define connections
-  message.lanelets[0].successor_lanelet_id = {1};
-  message.lanelets[0].neighboring_lanelet_id = {-1, -1};
-  message.lanelets[1].successor_lanelet_id = {-1};
-  message.lanelets[1].neighboring_lanelet_id = {-1, -1};
+  message.segments[0].successor_lanelet_id = {1};
+  message.segments[0].neighboring_lanelet_id = {-1, -1};
+  message.segments[1].successor_lanelet_id = {-1};
+  message.segments[1].neighboring_lanelet_id = {-1, -1};
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
@@ -540,11 +462,7 @@ std::tuple<std::vector<lanelet::Lanelet>, std::vector<LaneletConnection>> Create
   std::vector<LaneletConnection> lanelet_connections;
   std::vector<lanelet::Lanelet> converted_lanelets;
 
-  // Convert message
-  autoware_planning_msgs::msg::RoadSegments road_segments =
-    ConvertLaneletsStamped2RoadSegments(message);
-
-  MissionPlanner.ConvertInput2LaneletFormat(road_segments, converted_lanelets, lanelet_connections);
+  MissionPlanner.ConvertInput2LaneletFormat(message, converted_lanelets, lanelet_connections);
   return std::make_tuple(converted_lanelets, lanelet_connections);
 }
 

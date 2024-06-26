@@ -14,7 +14,6 @@
 #include "autoware_planning_msgs/msg/mission.hpp"
 #include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
 #include "autoware_planning_msgs/msg/visualization_distance.hpp"
-#include "db_msgs/msg/lanelets_stamped.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"

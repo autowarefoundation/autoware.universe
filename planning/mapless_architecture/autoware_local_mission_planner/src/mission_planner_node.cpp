@@ -11,7 +11,6 @@
 #include "autoware_planning_msgs/msg/driving_corridor.hpp"
 #include "autoware_planning_msgs/msg/mission.hpp"
 #include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
-#include "db_msgs/msg/lanelets_stamped.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "visualization_msgs/msg/marker.hpp"

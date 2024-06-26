@@ -33,6 +33,15 @@ private:
    */
   void CallbackLaneletsMessages_(const db_msgs::msg::LaneletsStamped & msg);
 
+  /**
+   * @brief Convert the LaneletsStamped message into a RoadSegments message.
+   *
+   * @param msg The message (db_msgs::msg::LaneletsStamped).
+   * @return autoware_planning_msgs::msg::RoadSegments.
+   */
+  autoware_planning_msgs::msg::RoadSegments ConvertLaneletsStamped2RoadSegments(
+    const db_msgs::msg::LaneletsStamped & msg);
+
   // Declare ROS2 publisher and subscriber
 
   rclcpp::Publisher<autoware_planning_msgs::msg::RoadSegments>::SharedPtr road_publisher_;

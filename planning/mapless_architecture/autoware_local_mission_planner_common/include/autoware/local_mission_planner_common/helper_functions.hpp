@@ -10,7 +10,6 @@
 #include "tf2_ros/transform_listener.h"
 
 #include "autoware_planning_msgs/msg/road_segments.hpp"
-#include "db_msgs/msg/lanelets_stamped.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
@@ -91,15 +90,6 @@ double NormalizePsi(const double psi);
  * @return std::vector<double>
  */
 std::vector<double> GetPsiForPoints(const std::vector<geometry_msgs::msg::Point> & points);
-
-/**
- * @brief Convert the LaneletsStamped message into a RoadSegments message.
- *
- * @param msg The message (db_msgs::msg::LaneletsStamped).
- * @return autoware_planning_msgs::msg::RoadSegments.
- */
-autoware_planning_msgs::msg::RoadSegments ConvertLaneletsStamped2RoadSegments(
-  const db_msgs::msg::LaneletsStamped & msg);
 
 /**
  * @brief Holds

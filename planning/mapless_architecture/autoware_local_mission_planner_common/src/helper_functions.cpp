@@ -6,7 +6,6 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_planning_msgs/msg/road_segments.hpp"
-#include "db_msgs/msg/lanelets_stamped.hpp"
 
 namespace autoware::mapless_architecture
 {
@@ -138,54 +137,6 @@ double GetYawFromQuaternion(const double x, const double y, const double z, cons
   double roll, pitch, yaw;
   m.getRPY(roll, pitch, yaw);
   return yaw;
-}
-
-// Declare a static logger
-static rclcpp::Logger static_logger = rclcpp::get_logger("static_logger");
-
-autoware_planning_msgs::msg::RoadSegments ConvertLaneletsStamped2RoadSegments(
-  const db_msgs::msg::LaneletsStamped & msg)
-{
-  // Initialize road segments message
-  autoware_planning_msgs::msg::RoadSegments road_segments;
-
-  // Fill message header and pose
-  road_segments.header = msg.header;
-  road_segments.pose = msg.pose;
-
-  // Convert lanelets to segments if lanelets are not empty
-  if (!msg.lanelets.empty()) {
-    for (const db_msgs::msg::Lanelet & lanelet : msg.lanelets) {
-      // Initialize a segment
-      autoware_planning_msgs::msg::Segment segment;
-
-      // Fill the segment with basic information
-      segment.id = lanelet.id;
-      segment.successor_lanelet_id = lanelet.successor_lanelet_id;
-      segment.neighboring_lanelet_id = lanelet.neighboring_lanelet_id;
-
-      // Copy linestrings data
-      for (int i = 0; i < 2; ++i) {
-        // Copy points from the original linestring to the new one if points are not empty
-        if (!lanelet.linestrings[i].points.empty()) {
-          segment.linestrings[i].poses.reserve(lanelet.linestrings[i].points.size());
-
-          for (const db_msgs::msg::DBPoint & point : lanelet.linestrings[i].points) {
-            segment.linestrings[i].poses.push_back(point.pose);
-          }
-        } else {
-          RCLCPP_WARN(
-            static_logger,
-            "Linestring does not contain points (ConvertLaneletsStamped2RoadSegments)!");
-        }
-      }
-
-      // Add the filled segment to the road_segments message
-      road_segments.segments.push_back(segment);
-    }
-  }
-
-  return road_segments;
 }
 
 std::vector<std::vector<int>> GetAllSuccessorSequences(
