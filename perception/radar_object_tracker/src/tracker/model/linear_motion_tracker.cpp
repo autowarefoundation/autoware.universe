@@ -137,19 +137,7 @@ LinearMotionTracker::LinearMotionTracker(
   } else {
     P_v_xy = R * P_v_xy_local * R.transpose();
   }
-  // acceleration covariance often written in object frame
-  // if message has acceleration covariance,
-  // ```
-  // const auto ax_cov =
-  //  object.kinematics.acceleration_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
-  //  // This is future update
-  // const auto ay_cov =
-  //  object.kinematics.acceleration_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y];
-  //  // This is future update
-  // Eigen::Matrix2d P_a_xy_local;
-  // P_a_xy_local << ax_cov, 0.0, 0.0, ay_cov;
-  // P_a_xy = R * P_a_xy_local * R.transpose();
-  // ```
+
   P_a_xy = R * P_a_xy_local * R.transpose();
 
   // put value in P matrix
