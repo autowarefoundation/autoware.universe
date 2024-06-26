@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/radar_object_clustering/radar_object_clustering_node.hpp"
+#include "radar_object_clustering_node.hpp"
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
@@ -20,16 +20,17 @@
 
 #include <tf2/utils.h>
 
-#include <cmath>
-#include <memory>
-#include <string>
-#include <vector>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
+
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace
 {
