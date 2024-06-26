@@ -14,7 +14,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
 
-#include "tier4_autoware_utils/ros/parameter.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 
 #include <autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
 #include <rclcpp/node.hpp>
@@ -26,8 +26,8 @@
 
 namespace autoware::behavior_path_planner
 {
+using autoware::universe_utils::getOrDeclareParameter;
 using autoware_perception_msgs::msg::ObjectClassification;
-using tier4_autoware_utils::getOrDeclareParameter;
 
 AvoidanceParameters getParameter(rclcpp::Node * node)
 {
@@ -39,8 +39,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_planning");
     p.resample_interval_for_output =
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
-    p.enable_bound_clipping = getOrDeclareParameter<bool>(*node, ns + "enable_bound_clipping");
-    p.disable_path_update = getOrDeclareParameter<bool>(*node, ns + "disable_path_update");
+    p.path_generation_method =
+      getOrDeclareParameter<std::string>(*node, ns + "path_generation_method");
   }
 
   // drivable area

@@ -30,11 +30,11 @@
 namespace marker_utils
 {
 
+using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObject;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using std_msgs::msg::ColorRGBA;
-using tier4_autoware_utils::Polygon2d;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 

@@ -115,8 +115,8 @@ private:
     const auto ego_idx = planner_data_->findEgoIndex(path.points);
 
     for (const auto & left_shift : left_shift_array_) {
-      const double start_distance =
-        motion_utils::calcSignedArcLength(path.points, ego_idx, left_shift.start_pose.position);
+      const double start_distance = autoware::motion_utils::calcSignedArcLength(
+        path.points, ego_idx, left_shift.start_pose.position);
       const double finish_distance = start_distance + left_shift.relative_longitudinal;
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         left_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
@@ -128,8 +128,8 @@ private:
     }
 
     for (const auto & right_shift : right_shift_array_) {
-      const double start_distance =
-        motion_utils::calcSignedArcLength(path.points, ego_idx, right_shift.start_pose.position);
+      const double start_distance = autoware::motion_utils::calcSignedArcLength(
+        path.points, ego_idx, right_shift.start_pose.position);
       const double finish_distance = start_distance + right_shift.relative_longitudinal;
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         right_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
@@ -435,6 +435,8 @@ private:
   RegisteredShiftLineArray right_shift_array_;
 
   UUID candidate_uuid_;
+
+  ObjectDataArray clip_objects_;
 
   // TODO(Satoshi OTA) create detected object manager.
   ObjectDataArray registered_objects_;

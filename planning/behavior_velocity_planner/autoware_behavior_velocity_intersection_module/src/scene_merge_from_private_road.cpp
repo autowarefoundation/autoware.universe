@@ -18,9 +18,9 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <lanelet2_extension/regulatory_elements/road_marking.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -53,7 +53,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 static std::optional<lanelet::ConstLanelet> getFirstConflictingLanelet(
   const lanelet::ConstLanelets & conflicting_lanelets,
   const InterpolatedPathInfo & interpolated_path_info,
-  const tier4_autoware_utils::LinearRing2d & footprint, const double vehicle_length)
+  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto [lane_start, end] = interpolated_path_info.lane_id_interval.value();
@@ -63,8 +63,8 @@ static std::optional<lanelet::ConstLanelet> getFirstConflictingLanelet(
 
   for (size_t i = start; i <= end; ++i) {
     const auto & pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint =
-      tier4_autoware_utils::transformVector(footprint, tier4_autoware_utils::pose2transform(pose));
+    const auto path_footprint = autoware::universe_utils::transformVector(
+      footprint, autoware::universe_utils::pose2transform(pose));
     for (const auto & conflicting_lanelet : conflicting_lanelets) {
       const auto polygon_2d = conflicting_lanelet.polygon2d().basicPolygon();
       const bool intersects = bg::intersects(polygon_2d, path_footprint);
@@ -159,7 +159,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
 
-    const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
+    const double signed_arc_dist_to_stop_point = autoware::motion_utils::calcSignedArcLength(
       path->points, current_pose.position, path->points.at(stopline_idx).point.pose.position);
 
     if (

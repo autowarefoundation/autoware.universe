@@ -15,18 +15,18 @@
 #include "scene_walkway.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 
 #include <cmath>
 
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
-using motion_utils::calcLongitudinalOffsetPose;
-using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestSegmentIndex;
-using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::getPose;
+using autoware::motion_utils::calcLongitudinalOffsetPose;
+using autoware::motion_utils::calcSignedArcLength;
+using autoware::motion_utils::findNearestSegmentIndex;
+using autoware::universe_utils::createPoint;
+using autoware::universe_utils::getPose;
 
 WalkwayModule::WalkwayModule(
   const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,

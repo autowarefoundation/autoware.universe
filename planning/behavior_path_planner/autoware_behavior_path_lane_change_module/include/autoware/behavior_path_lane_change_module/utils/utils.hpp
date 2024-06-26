@@ -23,7 +23,7 @@
 #include "rclcpp/logger.hpp"
 
 #include <autoware/route_handler/route_handler.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -44,16 +44,16 @@ using autoware::behavior_path_planner::utils::path_safety_checker::
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using autoware::route_handler::Direction;
+using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
-using data::lane_change::LanesPolygon;
-using data::lane_change::PathSafetyStatus;
+using behavior_path_planner::lane_change::LanesPolygon;
+using behavior_path_planner::lane_change::PathSafetyStatus;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using path_safety_checker::CollisionCheckDebugMap;
-using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 double calcLaneChangeResampleInterval(

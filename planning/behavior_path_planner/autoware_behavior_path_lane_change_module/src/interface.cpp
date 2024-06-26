@@ -20,7 +20,7 @@
 #include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -29,7 +29,7 @@
 
 namespace autoware::behavior_path_planner
 {
-using tier4_autoware_utils::appendMarkerArray;
+using autoware::universe_utils::appendMarkerArray;
 using utils::lane_change::assignToCandidate;
 
 LaneChangeInterface::LaneChangeInterface(
@@ -352,9 +352,9 @@ void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & o
 
   const auto current_position = module_type_->getEgoPosition();
   const auto status = module_type_->getLaneChangeStatus();
-  const auto start_distance = motion_utils::calcSignedArcLength(
+  const auto start_distance = autoware::motion_utils::calcSignedArcLength(
     output.path.points, current_position, status.lane_change_path.info.shift_line.start.position);
-  const auto finish_distance = motion_utils::calcSignedArcLength(
+  const auto finish_distance = autoware::motion_utils::calcSignedArcLength(
     output.path.points, current_position, status.lane_change_path.info.shift_line.end.position);
 
   steering_factor_interface_ptr_->updateSteeringFactor(
