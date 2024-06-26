@@ -526,7 +526,7 @@ visualization_msgs::msg::Marker::SharedPtr get_shape_marker_ptr(
       marker_ptr->scale = shape_msg.dimensions;
       marker_ptr->color.a = 0.75f;
     }
-  } else { // including shape_msg.type == Shape::POLYGON
+  } else {  // including shape_msg.type == Shape::POLYGON
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_polygon_line_list(shape_msg, marker_ptr->points);
   }
@@ -559,7 +559,7 @@ visualization_msgs::msg::Marker::SharedPtr get_2d_shape_marker_ptr(
   } else if (shape_msg.type == Shape::CYLINDER) {
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_2d_cylinder_bottom_line_list(shape_msg, marker_ptr->points);
-  } else { // including shape_msg.type == Shape::POLYGON
+  } else {  // including shape_msg.type == Shape::POLYGON
     marker_ptr->type = visualization_msgs::msg::Marker::LINE_LIST;
     calc_2d_polygon_bottom_line_list(shape_msg, marker_ptr->points);
   }
