@@ -11,7 +11,6 @@ if __name__ == "__main__":
         "steer_time_constant",
         "accel_map_scale",
         "acc_scaling",
-        "acc_scaling",
         "steer_scaling",
         "vehicle_type",
     ]
