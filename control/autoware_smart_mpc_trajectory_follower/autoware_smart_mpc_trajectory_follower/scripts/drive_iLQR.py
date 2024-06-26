@@ -519,9 +519,6 @@ class drive_iLQR:
                     D[k][6:, :6] = dhc_dx[:, :6]
                     D[k][6:, 6 + self.h_dim_double :] = dhc_dx[:, 6:]
                     D[k][6:, 6 : 6 + self.h_dim_double] = self.get_dhc_dhc()
-                    # print("dy_dhc",self.get_dy_dhc())
-                    # print("dhc_dx",self.get_dhc_dx())
-                    # print("dhc_dhc",self.get_dhc_dhc())
             else:
                 traj[k + 1], A[k], B[k], previous_error_ = self.F_with_initial_diff(
                     traj[k], inputs[k], previous_error_, k
