@@ -119,9 +119,8 @@ jobs:
 
   clang-tidy-differential:
     needs: build-and-test-differential
-    if: ${{ matrix.container-suffix == '-cuda' }}
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}${{ matrix.container-suffix }}
+    container: ghcr.io/autowarefoundation/autoware:latest-prebuilt-cuda
     steps:
       - name: Checkout PR branch and all PR commits
         uses: actions/checkout@v4
