@@ -135,7 +135,6 @@ class pure_pursuit_gain_updater:
                 best_acc_coef = coef[[1, 2]]
         estimated_acc_scaling = np.clip(-best_acc_coef[1] / best_acc_coef[0], 0.1, 10.0)
 
-        # estimated_acc_scaling = np.clip( (np.abs(acc_array).mean() + 1e-16) / (np.abs(acc_input_array).mean() + 1e-16),0.1,10.0)
 
         return 1 / estimated_acc_scaling
 
