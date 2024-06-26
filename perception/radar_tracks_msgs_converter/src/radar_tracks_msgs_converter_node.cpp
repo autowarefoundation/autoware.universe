@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_radar_tracks_msgs_converter/radar_tracks_msgs_converter_node.hpp"
+#include "radar_tracks_msgs_converter_node.hpp"
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
