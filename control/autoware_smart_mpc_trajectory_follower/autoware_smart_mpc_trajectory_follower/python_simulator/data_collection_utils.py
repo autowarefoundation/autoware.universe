@@ -511,18 +511,6 @@ def get_naive_pure_pursuit_info(
         if (search_range[nearest_index] + i) == (len(aug_trajectory_position_data) - 1):
             break
         i += 1
-    # target_index = np.argmin(
-    #     np.abs(
-    #         (
-    #             (
-    #                 aug_trajectory_position_data[search_range[nearest_index] :]
-    #                 - x_current[:2].reshape(1, 2)
-    #             )
-    #             ** 2
-    #         ).sum(axis=1)
-    #         - lookahead_distance**2
-    #     )
-    # )
     return (
         trajectory_position_data[search_range[nearest_index]],
         trajectory_yaw_data[search_range[nearest_index]],
