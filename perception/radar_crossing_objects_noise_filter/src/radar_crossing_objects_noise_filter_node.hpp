@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__RADAR_CROSSING_OBJECTS_NOISE_FILTER__NODE_HPP_
-#define AUTOWARE__RADAR_CROSSING_OBJECTS_NOISE_FILTER__NODE_HPP_
+#ifndef RADAR_CROSSING_OBJECTS_NOISE_FILTER_NODE_HPP_
+#define RADAR_CROSSING_OBJECTS_NOISE_FILTER_NODE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -65,4 +65,4 @@ public:
 
 }  // namespace autoware::radar_crossing_objects_noise_filter
 
-#endif  // AUTOWARE__RADAR_CROSSING_OBJECTS_NOISE_FILTER__NODE_HPP_
+#endif  // RADAR_CROSSING_OBJECTS_NOISE_FILTER_NODE_HPP_

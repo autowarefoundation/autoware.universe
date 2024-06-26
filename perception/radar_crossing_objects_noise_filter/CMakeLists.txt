@@ -7,7 +7,7 @@ autoware_package()
 
 # Targets
 ament_auto_add_library(${PROJECT_NAME}_node_component SHARED
-  src/node.cpp
+  src/radar_crossing_objects_noise_filter_node.cpp
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_node_component
@@ -26,7 +26,7 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(${PROJECT_NAME} ${test_files})
 
   target_link_libraries(${PROJECT_NAME}
-  ${PROJECT_NAME}_node_component
+    ${PROJECT_NAME}_node_component
   )
 endif()
 
