@@ -293,9 +293,6 @@ public:
     h4.segment(h3.size(), acc_layer_2.size()) = acc_layer_2;
     h4.tail(steer_layer_2.size()) = steer_layer_2;
     // Eigen::VectorXd x_for_polynomial_reg(5);
-    // x_for_polynomial_reg.head(3) = x.head(3);
-    // x_for_polynomial_reg[3] = x[3 + acc_delay_step];
-    // x_for_polynomial_reg[4] = x[3 + acc_ctrl_queue_size + steer_delay_step];
     Eigen::VectorXd x_for_polynomial_reg(9);
     x_for_polynomial_reg.head(3) = x.head(3);
     int acc_start = 3 + std::max(acc_delay_step - 3, 0);
