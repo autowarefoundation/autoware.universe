@@ -444,20 +444,6 @@ class FigureEight:
             return self.v_mid
 
 
-# def get_current_velocity(self,part,achievement_rate):
-#     if (self.previous_circle, part) in [("left_circle","right_circle"),("right_circle","left_circle")]:
-#         self.counter += 1
-#         self.previous_circle = part
-#     if (self.previous_circle, part) in [("left_circle","linear_positive"),("right_circle","linear_negative")]:
-#         self.accel_mode = 1
-#     else:
-#         self.accel_mode = 0
-
-#     periodic_count = get_periodic_count(self.counter, self.split_size)
-#     periodic_count_next = get_periodic_count(self.counter+1, self.split_size)
-#     if self.counter == 2*self.split_size - 1 and part in ["linear_positive","linear_negative"]:
-#         self.break_flag = True
-#     return self.v_min + ((1-self.accel_mode*achievement_rate)*periodic_count+self.accel_mode*achievement_rate*periodic_count_next)*(self.v_max - self.v_min)/ (self.split_size - 1.0)
 
 
 def get_pure_pursuit_info(x_current, trajectory_position_data, trajectory_yaw_data, previous_index):
