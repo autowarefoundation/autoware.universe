@@ -44,19 +44,6 @@ def generate_launch_description():
         # launch_arguments={'node_name': 'bar'}.items()
     )
 
-    local_road_provider_pkg_share_directory = get_package_share_directory(
-        "autoware_local_road_provider"
-    )
-    local_road_provider_file_name = "local_road_provider.launch.py"
-    local_road_provider_path = (
-        Path(local_road_provider_pkg_share_directory) / "launch/" / local_road_provider_file_name
-    )
-
-    local_road_provider = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(str(local_road_provider_path)),
-        # launch_arguments={'node_name': 'bar'}.items()
-    )
-
     local_map_provider_pkg_share_directory = get_package_share_directory(
         "autoware_local_map_provider"
     )
@@ -70,6 +57,4 @@ def generate_launch_description():
         # launch_arguments={'node_name': 'bar'}.items()
     )
 
-    return LaunchDescription(
-        [mission_planner, mission_lane_converter, hmi, local_road_provider, local_map_provider]
-    )
+    return LaunchDescription([mission_planner, mission_lane_converter, hmi, local_map_provider])
