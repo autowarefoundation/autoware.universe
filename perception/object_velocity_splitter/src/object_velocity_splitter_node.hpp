@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBJECT_VELOCITY_SPLITTER__OBJECT_VELOCITY_SPLITTER_NODE_HPP_
-#define AUTOWARE__OBJECT_VELOCITY_SPLITTER__OBJECT_VELOCITY_SPLITTER_NODE_HPP_
+#ifndef OBJECT_VELOCITY_SPLITTER_NODE_HPP_
+#define OBJECT_VELOCITY_SPLITTER_NODE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -64,4 +64,4 @@ private:
 
 }  // namespace autoware::object_velocity_splitter
 
-#endif  // AUTOWARE__OBJECT_VELOCITY_SPLITTER__OBJECT_VELOCITY_SPLITTER_NODE_HPP_
+#endif  // OBJECT_VELOCITY_SPLITTER_NODE_HPP_
