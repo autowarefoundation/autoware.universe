@@ -80,6 +80,7 @@
   <arg name="objects_filter_method" default="lanelet_filter" description="options: `lanelet_filter` or `position_filter`"/>
   <arg name="use_roi_based_cluster" default="true" description="use roi_based_cluster in clustering"/>
   <arg name="use_low_intensity_cluster_filter" default="true" description="use low_intensity_cluster_filter in clustering"/>
+  <arg name="use_image_segmentation_based_filter" default="false" description="use image_segmentation_based_filter in clustering"/>
   <arg
     name="use_empty_dynamic_object_publisher"
     default="false"
