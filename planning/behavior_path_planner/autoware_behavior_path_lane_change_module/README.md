@@ -725,6 +725,7 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `check_objects_on_current_lanes`                         | [-]   | boolean | If true, the lane change module check objects on current lanes when performing collision assessment.                                                                                                       | false         |
 | `check_objects_on_other_lanes`                           | [-]   | boolean | If true, the lane change module include objects on other lanes. when performing collision assessment                                                                                                       | false         |
 | `use_all_predicted_path`                                 | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                                                                     | true          |
+| `safety_check.collision_check_yaw_diff_threshold`        | [rad] | double  | Maximum yaw difference between ego and object when executing rss-based collision checking                                                                                                                  | 3.1416        |
 
 #### safety constraints during lane change path is computed
 
@@ -737,7 +738,6 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `safety_check.execution.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 2.0           |
 | `safety_check.execution.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
 | `safety_check.cancel.longitudinal_velocity_delta_time`       | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
-| `safety_check.collision_check_yaw_diff_threshold`            | [rad]   | double | Maximum yaw difference between ego and object when executing rss-based collision checking                                                                      | 3.1416        |
 
 ##### safety constraints to cancel lane change path
 
