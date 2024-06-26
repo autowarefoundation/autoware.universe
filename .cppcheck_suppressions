@@ -6,7 +6,6 @@ constVariableReference
 // cspell: ignore cstyle
 cstyleCast
 duplicateBranch
-duplicateBreak
 funcArgNamesDifferent
 functionConst
 functionStatic
