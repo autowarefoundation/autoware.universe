@@ -1,0 +1,98 @@
+name: colcon-build-docker
+description: ""
+
+inputs:
+  rosdistro:
+    description: ""
+    required: true
+  target-packages:
+    description: ""
+    required: true
+  build-depends-repos:
+    description: ""
+    required: false
+  cmake-build-type:
+    description: ""
+    required: false
+    default: Release
+  token:
+    description: ""
+    required: false
+    default: ${{ github.token }}
+  include-eol-distros:
+    description: ""
+    required: false
+  cache-build-artifacts:
+    description: "Caches the build and install folders for clang-tidy to use"
+    required: false
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Show target packages
+      run: |
+        echo "target packages: ${{ inputs.target-packages }}"
+      shell: bash
+
+    - name: Install pip for rosdep
+      run: |
+        sudo apt-get -yqq update
+        sudo apt-get -yqq install python3-pip
+      shell: bash
+
+    - name: Set git config
+      if: ${{ inputs.build-depends-repos != '' }}
+      uses: autowarefoundation/autoware-github-actions/set-git-config@v1
+      with:
+        token: ${{ inputs.token }}
+
+    - name: Clone dependency packages
+      if: ${{ inputs.build-depends-repos != '' }}
+      run: |
+        mkdir -p dependency_ws
+        vcs import dependency_ws < ${{ inputs.build-depends-repos }}
+      shell: bash
+
+    - name: Run rosdep install
+      run: |
+        package_paths=$(colcon list -p --packages-above-and-dependencies ${{ inputs.target-packages }} --base-paths . dependency_ws)
+        sudo apt-get -yqq update
+        if [ "${{ inputs.include-eol-distros }}" = "true" ]; then
+            rosdep update --include-eol-distros
+        else
+            rosdep update
+        fi
+        DEBIAN_FRONTEND=noninteractive rosdep install -yqq --from-paths ${package_paths} --ignore-src --rosdistro ${{ inputs.rosdistro }}
+      shell: bash
+
+    - name: Set up colcon-mixin
+      run: |
+        colcon mixin add default https://raw.githubusercontent.com/colcon/colcon-mixin-repository/master/index.yaml || true
+        colcon mixin update default
+      shell: bash
+
+    - name: Build
+      run: |
+        . /opt/ros/${{ inputs.rosdistro }}/setup.sh
+        # Cannot use unshare inside a Docker container, so we just disable
+        # DNS lookups instead.
+        cat /etc/nsswitch.conf
+        sed -e 's#hosts:\(.*\)dns\(.*\)#hosts:\1\2#g' -i.bak /etc/nsswitch.conf
+        cat /etc/nsswitch.conf
+        colcon build --event-handlers console_cohesion+ \
+          --packages-above-and-dependencies ${{ inputs.target-packages }} \
+          --cmake-args -DCMAKE_BUILD_TYPE=${{ inputs.cmake-build-type }} \
+          --mixin coverage-gcc coverage-pytest compile-commands
+        mv /etc/nsswitch.conf.bak /etc/nsswitch.conf
+        cat /etc/nsswitch.conf
+      shell: bash
+
+    - name: Cache build artifacts
+      if: ${{ inputs.cache-build-artifacts == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |
+          ./build
+          ./install
+        key: build-${{ inputs.rosdistro }}-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cmake-build-type }}-${{ github.sha }}
