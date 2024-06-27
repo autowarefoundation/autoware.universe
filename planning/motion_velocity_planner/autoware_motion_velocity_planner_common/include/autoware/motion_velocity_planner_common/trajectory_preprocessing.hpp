@@ -17,6 +17,7 @@
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
+#include <algorithm>
 #include <vector>
 
 namespace autoware::motion_velocity_planner
@@ -31,12 +32,12 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> downsample_trajectory(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
   const size_t start_idx, const size_t end_idx, const int factor)
 {
-  if (factor < 1) {
+  if (factor < 1 || end_idx <= start_idx) {
     return trajectory;
   }
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> downsampled_traj;
   downsampled_traj.reserve((end_idx - start_idx) / factor + 1);
-  for (size_t i = start_idx; i <= end_idx; i += factor) {
+  for (size_t i = start_idx; i < std::min(trajectory.size(), end_idx + 1); i += factor) {
     downsampled_traj.push_back(trajectory[i]);
   }
   return downsampled_traj;
