@@ -429,10 +429,10 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
 void AutowareErrorMonitor::onTimer()
 {
 
-  const auto diag_array_msg = sub_diag_array_.takeNewData();
-  const auto autoware_state_msg = sub_autoware_state_.takeNewData();
-  const auto current_gate_msg = sub_current_gate_mode_.takeNewData();
-  const auto control_mode_msg = sub_control_mode_.takeNewData();
+  auto diag_array_msg = sub_diag_array_.takeNewData();
+  auto autoware_state_msg = sub_autoware_state_.takeNewData();
+  auto current_gate_msg = sub_current_gate_mode_.takeNewData();
+  auto control_mode_msg = sub_control_mode_.takeNewData();
 
   while(diag_array_msg) {
     onDiagArray(diag_array_msg);
