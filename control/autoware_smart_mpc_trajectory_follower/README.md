@@ -380,7 +380,7 @@ In `run_sim.py`, the following parameters can be set:
 
 #### Kernel density estimation of pure pursuit driving data
 
-The distribution of data obtained from pure pursuit runs can be displayed using Kernel density estimation. To do this, run [density_estimation.ipynb](control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator/density_estimation.ipynb).
+The distribution of data obtained from pure pursuit runs can be displayed using Kernel density estimation. To do this, run [density_estimation.ipynb](./autoware_smart_mpc_trajectory_follower/python_simulator/density_estimation.ipynb).
 
 The correlation between the minimum value of the density estimate and the lateral deviation of the run results is low. A scalar indicator that better predicts the value of lateral deviation is under development.
 
