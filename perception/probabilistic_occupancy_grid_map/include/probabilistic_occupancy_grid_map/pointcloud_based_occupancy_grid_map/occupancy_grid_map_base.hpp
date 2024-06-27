@@ -55,6 +55,7 @@
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <nav2_costmap_2d/costmap_2d.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>

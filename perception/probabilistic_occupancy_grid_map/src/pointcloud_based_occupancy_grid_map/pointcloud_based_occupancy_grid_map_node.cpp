@@ -167,7 +167,7 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     occupancy_grid_map_ptr_->setHeightLimit(
       -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
   }
-  
+
   const PointCloud2::ConstSharedPtr input_raw_use =
     is_raw_transformed ? std::make_shared<PointCloud2>(trans_input_raw) : input_raw_msg;
   const PointCloud2::ConstSharedPtr input_obstacle_use =

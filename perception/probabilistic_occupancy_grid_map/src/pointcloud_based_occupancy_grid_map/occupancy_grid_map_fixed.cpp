@@ -176,7 +176,7 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
     obstacle_pointcloud_angle_bins.at(angle_bin_index).emplace_back(range, pt_map[0], pt_map[1]);
     global_offset += obstacle_pointcloud.point_step;
   }
-  
+
   for (auto & obstacle_pointcloud_angle_bin : obstacle_pointcloud_angle_bins) {
     std::sort(
       obstacle_pointcloud_angle_bin.begin(), obstacle_pointcloud_angle_bin.end(),
