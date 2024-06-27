@@ -12,8 +12,10 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: [self-hosted, linux, X64]
-    container: ${{ matrix.container }}${{ matrix.container-suffix }}
+    runs-on: [self-hosted, linux, X64, gpu]
+    container:
+      image: ${{ matrix.container }}${{ matrix.container-suffix }}
+      options: --gpus all
     strategy:
       fail-fast: false
       matrix:

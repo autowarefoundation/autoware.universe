@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-test-daily:
-    runs-on: [self-hosted, linux, X64]
+    runs-on: ${{ matrix.runs-on }}
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
@@ -19,8 +19,15 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
+            container-suffix: ""
             container: ghcr.io/autowarefoundation/autoware:latest-prebuilt
             build-depends-repos: build_depends.repos
+            runs-on: [self-hosted, linux, X64]
+          - rosdistro: humble
+            container-suffix: -cuda
+            container: ghcr.io/autowarefoundation/autoware:latest-prebuilt
+            build-depends-repos: build_depends.repos
+            runs-on: [self-hosted, linux, X64, gpu]
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
