@@ -378,6 +378,12 @@ In `run_sim.py`, the following parameters can be set:
 > [!NOTE]
 > When `run_sim.py` is run, the `use_trained_model_diff` set in `run_sim.py` takes precedence over the `trained_model_parameter:control_application:use_trained_model_diff` set in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml).
 
+#### Kernel density estimation of pure pursuit driving data
+
+The distribution of data obtained from pure pursuit runs can be displayed using Kernel density estimation. To do this, run [density_estimation.ipynb](control/autoware_smart_mpc_trajectory_follower/autoware_smart_mpc_trajectory_follower/python_simulator/density_estimation.ipynb).
+
+The correlation between the minimum value of the density estimate and the lateral deviation of the run results is low. A scalar indicator that better predicts the value of lateral deviation is under development.
+
 ## Change of nominal parameters and their reloading
 
 The nominal parameters of vehicle model can be changed by editing the file [nominal_param.yaml](./autoware_smart_mpc_trajectory_follower/param/nominal_param.yaml).
