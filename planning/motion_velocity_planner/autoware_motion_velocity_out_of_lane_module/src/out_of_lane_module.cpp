@@ -25,6 +25,7 @@
 
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_velocity_planner_common/trajectory_preprocessing.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -57,8 +58,10 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
   virtual_wall_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
-  processing_time_publisher_ = std::make_shared<autoware::universe_utils::ProcessingTimePublisher>(
-    &node, "~/debug/" + ns_ + "/processing_time_ms");
+  processing_diag_publisher_ = std::make_shared<autoware::universe_utils::ProcessingTimePublisher>(
+    &node, "~/debug/" + ns_ + "/processing_time_ms_diag");
+  processing_time_publisher_ = node.create_publisher<tier4_debug_msgs::msg::Float64Stamped>(
+    "~/debug/" + ns_ + "/processing_time_ms", 1);
 }
 void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 {
@@ -158,9 +161,11 @@ VelocityPlanningResult OutOfLaneModule::plan(
   stopwatch.tic();
   out_of_lane::EgoData ego_data;
   ego_data.pose = planner_data->current_odometry.pose.pose;
-  ego_data.trajectory_points = ego_trajectory_points;
-  ego_data.first_trajectory_idx =
+  const auto start_idx =
     autoware::motion_utils::findNearestSegmentIndex(ego_trajectory_points, ego_data.pose.position);
+  ego_data.trajectory_points =
+    downsample_trajectory(ego_trajectory_points, start_idx, ego_trajectory_points.size(), 10);
+  ego_data.first_trajectory_idx = 0;
   ego_data.velocity = planner_data->current_odometry.twist.twist.linear.x;
   ego_data.max_decel = planner_data->velocity_smoother_->getMinDecel();
   stopwatch.tic("calculate_trajectory_footprints");
@@ -306,7 +311,11 @@ VelocityPlanningResult OutOfLaneModule::plan(
   processing_times["calc_slowdown_points"] = calc_slowdown_points_us / 1000;
   processing_times["insert_slowdown_points"] = insert_slowdown_points_us / 1000;
   processing_times["Total"] = total_time_us / 1000;
-  processing_time_publisher_->publish(processing_times);
+  processing_diag_publisher_->publish(processing_times);
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = clock_->now();
+  processing_time_msg.data = processing_times["Total"];
+  processing_time_publisher_->publish(processing_time_msg);
   return result;
 }
 
