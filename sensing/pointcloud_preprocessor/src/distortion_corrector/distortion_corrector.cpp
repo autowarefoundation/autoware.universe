@@ -37,8 +37,9 @@ void DistortionCorrector<Derived>::processTwistMessage(
       rclcpp::Time(twist_queue_.front().header.stamp) <
       rclcpp::Time(twist_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
       twist_queue_.pop_front();
+    } else {
+      break;
     }
-    break;
   }
 }
 
@@ -109,8 +110,9 @@ void DistortionCorrector<Derived>::enqueueIMU(
       rclcpp::Time(angular_velocity_queue_.front().header.stamp) <
       rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
       angular_velocity_queue_.pop_front();
+    } else {
+      break;
     }
-    break;
   }
 }
 
