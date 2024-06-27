@@ -43,6 +43,32 @@ OccupancyGridMapFixedBlindSpot::OccupancyGridMapFixedBlindSpot(
 {
 }
 
+inline bool OccupancyGridMapFixedBlindSpot::isPointValid(const Eigen::Vector4f & pt)
+{
+  // Exclude invalid points
+  if (!std::isfinite(pt[0]) || !std::isfinite(pt[1]) || !std::isfinite(pt[2])) {
+    return false;
+  }
+  // Apply height filter
+  if (pt[2] < min_height_ || max_height_ < pt[2]) {
+    return false;
+  }
+  return true;
+}
+
+// pt -> (pt_map, angle_bin_index, range)
+inline void OccupancyGridMapFixedBlindSpot::transformPointAndCalculate(
+  const Eigen::Vector4f & pt, const Eigen::Matrix4f & matmap, const Eigen::Matrix4f & matscan,
+  Eigen::Vector4f & pt_map, int & angle_bin_index, double & range)
+{
+  // Calculate transformed points
+  pt_map = matmap * pt;
+  Eigen::Vector4f pt_scan(matscan * pt_map);
+  const double angle = atan2(pt_scan[1], pt_scan[0]);
+  angle_bin_index = (angle - min_angle) * angle_increment_inv;
+  range = std::sqrt(pt_scan[1] * pt_scan[1] + pt_scan[0] * pt_scan[0]);
+}
+
 /**
  * @brief update Gridmap with PointCloud
  *
@@ -55,10 +81,6 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   const PointCloud2 & raw_pointcloud, const PointCloud2 & obstacle_pointcloud,
   const Pose & robot_pose, const Pose & scan_origin)
 {
-  constexpr double min_angle = autoware::universe_utils::deg2rad(-180.0);
-  constexpr double max_angle = autoware::universe_utils::deg2rad(180.0);
-  constexpr double angle_increment = autoware::universe_utils::deg2rad(0.1);
-  const auto angle_increment_inv = 1.0 / angle_increment;
   const size_t angle_bin_size = ((max_angle - min_angle) / angle_increment) + size_t(1 /*margin*/);
 
   // Transform Matrix from base_link to map frame
@@ -80,11 +102,13 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
     double wx;
     double wy;
   };
-  std::vector</*angle bin*/ std::vector<BinInfo>> obstacle_pointcloud_angle_bins(angle_bin_size);
-  std::vector</*angle bin*/ std::vector<BinInfo>> raw_pointcloud_angle_bins(angle_bin_size);
   if (!offset_initialized_) {
     setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
   }
+
+  std::vector</*angle bin*/ std::vector<BinInfo>> obstacle_pointcloud_angle_bins(angle_bin_size);
+  std::vector</*angle bin*/ std::vector<BinInfo>> raw_pointcloud_angle_bins(angle_bin_size);
+
   const size_t raw_pointcloud_size = raw_pointcloud.width * raw_pointcloud.height;
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
@@ -94,39 +118,35 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
     raw_pointcloud_angle_bins[i].reserve(raw_reserve_size);
     obstacle_pointcloud_angle_bins[i].reserve(obstacle_reserve_size);
   }
+
+  // Updated every loop inside transformPointAndCalculate()
+  Eigen::Vector4f pt_map;
+  int angle_bin_index;
+  double range;
+
   size_t global_offset = 0;
   for (size_t i = 0; i < raw_pointcloud_size; ++i) {
     Eigen::Vector4f pt(
       *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + x_offset_raw_]),
       *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + y_offset_raw_]),
       *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + z_offset_raw_]), 1);
-    // Exclude invalid points
-    if (!std::isfinite(pt[0]) || !std::isfinite(pt[1]) || !std::isfinite(pt[2])) {
+    if (!isPointValid(pt)) {
       global_offset += raw_pointcloud.point_step;
       continue;
     }
-    // Apply height filter
-    if (pt[2] < min_height_ || max_height_ < pt[2]) {
-      global_offset += raw_pointcloud.point_step;
-      continue;
-    }
-    // Calculate transformed points
-    Eigen::Vector4f pt_map(matmap * pt);
-    Eigen::Vector4f pt_scan(matscan * pt_map);
-    const double angle = atan2(pt_scan[1], pt_scan[0]);
-    const int angle_bin_index = (angle - min_angle) * angle_increment_inv;
-    raw_pointcloud_angle_bins.at(angle_bin_index)
-      .emplace_back(
-        std::sqrt(pt_scan[1] * pt_scan[1] + pt_scan[0] * pt_scan[0]), pt_map[0], pt_map[1]);
+    transformPointAndCalculate(pt, matmap, matscan, pt_map, angle_bin_index, range);
+    raw_pointcloud_angle_bins.at(angle_bin_index).emplace_back(range, pt_map[0], pt_map[1]);
     global_offset += raw_pointcloud.point_step;
   }
+
   for (auto & raw_pointcloud_angle_bin : raw_pointcloud_angle_bins) {
     std::sort(raw_pointcloud_angle_bin.begin(), raw_pointcloud_angle_bin.end(), [](auto a, auto b) {
       return a.range < b.range;
     });
   }
-  global_offset = 0;
+
   // Create obstacle angle bins and sort points by range
+  global_offset = 0;
   for (size_t i = 0; i < obstacle_pointcloud_size; ++i) {
     Eigen::Vector4f pt(
       *reinterpret_cast<const float *>(
@@ -136,22 +156,11 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
       *reinterpret_cast<const float *>(
         &obstacle_pointcloud.data[global_offset + z_offset_obstacle_]),
       1);
-    // Exclude invalid points
-    if (!std::isfinite(pt[0]) || !std::isfinite(pt[1]) || !std::isfinite(pt[2])) {
+    if (!isPointValid(pt)) {
       global_offset += obstacle_pointcloud.point_step;
       continue;
     }
-    // Apply height filter
-    if (pt[2] < min_height_ || max_height_ < pt[2]) {
-      global_offset += obstacle_pointcloud.point_step;
-      continue;
-    }
-    // Calculate transformed points
-    Eigen::Vector4f pt_map(matmap * pt);
-    Eigen::Vector4f pt_scan(matscan * pt_map);
-    const double angle = atan2(pt_scan[1], pt_scan[0]);
-    const int angle_bin_index = (angle - min_angle) * angle_increment_inv;
-    const double range = std::sqrt(pt_scan[1] * pt_scan[1] + pt_scan[0] * pt_scan[0]);
+    transformPointAndCalculate(pt, matmap, matscan, pt_map, angle_bin_index, range);
     // Ignore obstacle points exceed the range of the raw points
     if (raw_pointcloud_angle_bins.at(angle_bin_index).empty()) {
       continue;  // No raw point in this angle bin

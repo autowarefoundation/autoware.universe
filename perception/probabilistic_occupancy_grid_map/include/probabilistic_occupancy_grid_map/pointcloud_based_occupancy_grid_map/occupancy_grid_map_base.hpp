@@ -52,6 +52,7 @@
 #ifndef PROBABILISTIC_OCCUPANCY_GRID_MAP__POINTCLOUD_BASED_OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_BASE_HPP_
 #define PROBABILISTIC_OCCUPANCY_GRID_MAP__POINTCLOUD_BASED_OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_BASE_HPP_
 
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <nav2_costmap_2d/costmap_2d.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -97,6 +98,11 @@ public:
   int y_offset_obstacle_;
   int z_offset_obstacle_;
   bool offset_initialized_;
+
+  const double min_angle = autoware::universe_utils::deg2rad(-180.0);
+  const double max_angle = autoware::universe_utils::deg2rad(180.0);
+  const double angle_increment = autoware::universe_utils::deg2rad(0.1);
+  const double angle_increment_inv = 1.0 / angle_increment;
 
 private:
   bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my) const;

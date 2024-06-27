@@ -36,8 +36,14 @@ public:
     const PointCloud2 & raw_pointcloud, const PointCloud2 & obstacle_pointcloud,
     const Pose & robot_pose, const Pose & scan_origin) override;
 
+  bool isPointValid(const Eigen::Vector4f & pt);
+  void transformPointAndCalculate(
+    const Eigen::Vector4f & pt, const Eigen::Matrix4f & matmap, const Eigen::Matrix4f & matscan,
+    Eigen::Vector4f & pt_map, int & angle_bin_index, double & range);
+
   using OccupancyGridMapInterface::raytrace;
   using OccupancyGridMapInterface::setCellValue;
+  using OccupancyGridMapInterface::setFieldOffsets;
   using OccupancyGridMapInterface::updateOrigin;
 
   void initRosParam(rclcpp::Node & node) override;

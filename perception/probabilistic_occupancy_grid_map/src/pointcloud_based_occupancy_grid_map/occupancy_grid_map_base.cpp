@@ -239,7 +239,7 @@ void OccupancyGridMapInterface::setHeightLimit(const double min_height, const do
   max_height_ = max_height;
 }
 
-inline void OccupancyGridMapInterface::setFieldOffsets(
+void OccupancyGridMapInterface::setFieldOffsets(
   const PointCloud2 & input_raw, const PointCloud2 & input_obstacle)
 {
   x_offset_raw_ = input_raw.fields[pcl::getFieldIndex(input_raw, "x")].offset;
