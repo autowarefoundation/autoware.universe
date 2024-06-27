@@ -559,6 +559,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   const auto & ego_odom = *ego_odom_ptr;
   const auto & acc = *acc_ptr;
+  const auto & objects = objects_ptr ? std::make_optional(*objects_ptr) : std::nullopt;
 
   const auto traj_points = autoware::motion_utils::convertToTrajectoryPointArray(*msg);
   // check if subscribed variables are ready
@@ -578,8 +579,8 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   //    (3) not too far from trajectory
   const auto target_obstacles = [&]() {
     std::vector<Obstacle> target_obstacles;
-    if (objects_ptr) {
-      const auto object_obstacles = convertToObstacles(ego_odom, *objects_ptr, traj_points);
+    if (objects) {
+      const auto object_obstacles = convertToObstacles(ego_odom, *objects, traj_points);
       target_obstacles.insert(
         target_obstacles.end(), object_obstacles.begin(), object_obstacles.end());
     }
@@ -594,7 +595,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   //  2. Determine ego's behavior against each obstacle from stop, cruise and slow down.
   const auto & [stop_obstacles, cruise_obstacles, slow_down_obstacles] =
-    determineEgoBehaviorAgainstObstacles(ego_odom, objects_ptr, traj_points, target_obstacles);
+    determineEgoBehaviorAgainstObstacles(ego_odom, objects, traj_points, target_obstacles);
 
   // 3. Create data for planning
   const auto planner_data = createPlannerData(ego_odom, acc, traj_points);
@@ -949,7 +950,7 @@ bool ObstacleCruisePlannerNode::isFrontCollideObstacle(
 
 std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
 ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
-  const Odometry & odometry, const PredictedObjects::ConstSharedPtr objects_ptr,
+  const Odometry & odometry, const std::optional<PredictedObjects> & objects,
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles)
 {
   stop_watch_.tic(__func__);
@@ -1021,9 +1022,9 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstObstacles(
   }
   slow_down_condition_counter_.removeCounterUnlessUpdated();
 
-  if (objects_ptr) {
+  if (objects) {
     // Check target obstacles' consistency
-    checkConsistency(objects_ptr->header.stamp, *objects_ptr, stop_obstacles);
+    checkConsistency(objects->header.stamp, *objects, stop_obstacles);
   }
 
   // update previous obstacles
