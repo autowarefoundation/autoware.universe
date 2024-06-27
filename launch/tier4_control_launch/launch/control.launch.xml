@@ -164,7 +164,7 @@
           <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)" />
         </composable_node>
 
-        <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_validator_component" />
+        <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component"/>
       </load_composable_node>
     </group>
 
