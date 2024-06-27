@@ -66,14 +66,21 @@ private:
     const std::vector<TrajectoryPoint> & traj_points,
     const std_msgs::msg::Header & traj_header) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
-  determineEgoBehaviorAgainstObstacles(
-    const Odometry & odometry, const std::optional<PredictedObjects> & objects,
+  determineEgoBehaviorAgainstPredictedObjectObstacles(
+    const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
+  std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
+  determineEgoBehaviorAgainstPointCloudObstacles(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<Obstacle> & obstacles);
   std::vector<TrajectoryPoint> decimateTrajectoryPoints(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points) const;
-  std::optional<StopObstacle> createStopObstacle(
+  std::optional<StopObstacle> createStopObstacleForPredictedObject(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const double precise_lateral_dist) const;
+  std::optional<StopObstacle> createStopObstacleForPointCloud(
+    const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
     const double precise_lateral_dist) const;
   bool isStopObstacle(const uint8_t label) const;
   bool isInsideCruiseObstacle(const uint8_t label) const;
@@ -101,8 +108,10 @@ private:
   double calcCollisionTimeMargin(
     const Odometry & odometry, const std::vector<PointWithStamp> & collision_points,
     const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward) const;
-  std::optional<SlowDownObstacle> createSlowDownObstacle(
+  std::optional<SlowDownObstacle> createSlowDownObstacleForPredictedObject(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const Obstacle & obstacle, const double precise_lat_dist);
+  std::optional<SlowDownObstacle> createSlowDownObstacleForPointCloud(
     const Obstacle & obstacle, const double precise_lat_dist);
   PlannerData createPlannerData(
     const Odometry & odometry, const AccelWithCovarianceStamped & acc,
