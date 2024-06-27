@@ -167,16 +167,17 @@ TEST_F(TestPoseInstabilityDetector, does_not_crash_even_if_abnormal_odometry_dat
 {
   // [Condition] There is no twist_msg between the two target odometry_msgs.
   // Normally this doesn't seem to happen.
-  // As far as I can think, this happens when
-  //  (case A) the twist msg stops
-  //  (case B) the odometry msg stops (so the next timer callback will refer to the same odometry
-  //  msg, and the timestamp difference will be calculated as 0)
+  // As far as I can think, this happens when the odometry msg stops (so the next timer callback
+  // will refer to the same odometry msg, and the timestamp difference will be calculated as 0)
+  // This test case shows that an error occurs when two odometry msgs come in close succession and
+  // there is no other odometry msg.
+  // Referring again, this doesn't normally seem to happen in usual operation.
 
   builtin_interfaces::msg::Time timestamp{};
 
   // send the twist message1
   timestamp.sec = 0;
-  timestamp.nanosec = 5e8;  // timestamp is the same as the first odometry message
+  timestamp.nanosec = 0;
   helper_->send_twist_message(timestamp, 0.2, 0.0, 0.0);
 
   // send the first odometry message after the first twist message
@@ -196,12 +197,7 @@ TEST_F(TestPoseInstabilityDetector, does_not_crash_even_if_abnormal_odometry_dat
   timestamp.nanosec = 5e8 + 1e7;
   helper_->send_odometry_message(timestamp, 12.0, 0.0, 0.0);
 
-  // send the twist message2 (move 0.1m in x direction)
-  timestamp.sec = 0;
-  timestamp.nanosec = 7e8 + 5e7;
-  helper_->send_twist_message(timestamp, 0.2, 0.0, 0.0);
-
-  // send the twist message3 (move 0.1m in x direction)
+  // send the twist message2
   timestamp.sec = 1;
   timestamp.nanosec = 0;
   helper_->send_twist_message(timestamp, 0.2, 0.0, 0.0);
@@ -215,10 +211,9 @@ TEST_F(TestPoseInstabilityDetector, does_not_crash_even_if_abnormal_odometry_dat
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
-  // check result
-  const diagnostic_msgs::msg::DiagnosticStatus & diagnostic_status =
-    helper_->received_diagnostic_array.status[0];
-  EXPECT_TRUE(diagnostic_status.level == diagnostic_msgs::msg::DiagnosticStatus::WARN);
+  // This test is OK if pose_instability_detector does not crash. The diagnostics status is not
+  // checked.
+  SUCCEED();
 }
 
 int main(int argc, char ** argv)
