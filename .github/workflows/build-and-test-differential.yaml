@@ -149,7 +149,7 @@ jobs:
 
       - name: Run clang-tidy
         if: ${{ steps.get-modified-files.outputs.changed_files != '' }}
-        uses: autowarefoundation/autoware-github-actions/clang-tidy@v-test-new-cache-keys
+        uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
         with:
           rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
