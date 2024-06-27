@@ -87,10 +87,15 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   PointCloud2 map_raw_pointcloud, map_obstacle_pointcloud;  // point cloud in map frame
   Eigen::Matrix4f mat_map = utils::getTransformMatrix(robot_pose);
 
-  // Transform from map frame to scan frame
   PointCloud2 scan_raw_pointcloud, scan_obstacle_pointcloud;      // point cloud in scan frame
   const auto scan2map_pose = utils::getInversePose(scan_origin);  // scan -> map transform pose
+
+  // Transform from map frame to scan frame
   Eigen::Matrix4f mat_scan = utils::getTransformMatrix(scan2map_pose);
+
+  if (!offset_initialized_) {
+    setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
+  }
 
   // Create angle bins and sort points by range
   struct BinInfo3D
@@ -116,15 +121,15 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
     double projected_wx;
     double projected_wy;
   };
+
   std::vector</*angle bin*/ std::vector<BinInfo3D>> obstacle_pointcloud_angle_bins(angle_bin_size);
   std::vector</*angle bin*/ std::vector<BinInfo3D>> raw_pointcloud_angle_bins(angle_bin_size);
-  if (!offset_initialized_) {
-    setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
-  }
+  
   const size_t raw_pointcloud_size = raw_pointcloud.width * raw_pointcloud.height;
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
   const size_t obstacle_reserve_size = obstacle_pointcloud_size / angle_bin_size;
+
   // Reserve a certain amount of memory in advance for performance reasons
   for (auto & raw_pointcloud_angle_bin : raw_pointcloud_angle_bins) {
     raw_pointcloud_angle_bin.reserve(raw_reserve_size);
@@ -132,11 +137,13 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   for (auto & obstacle_pointcloud_angle_bin : obstacle_pointcloud_angle_bins) {
     obstacle_pointcloud_angle_bin.reserve(obstacle_reserve_size);
   }
-  size_t global_offset = 0;
-  // updated inside filterAndTransform()
+
+  // Updated every loop inside transformPointAndCalculate()
   Eigen::Vector4f pt_map;
   int angle_bin_index;
   double range;
+
+  size_t global_offset = 0;
   for (size_t i = 0; i < raw_pointcloud_size; i++) {
     Eigen::Vector4f pt(
       *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + x_offset_raw_]),
@@ -147,17 +154,20 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       continue;
     }
     transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
+    
     raw_pointcloud_angle_bins.at(angle_bin_index)
       .emplace_back(range, pt_map[0], pt_map[1], pt_map[2]);
     global_offset += raw_pointcloud.point_step;
   }
+
   for (auto & raw_pointcloud_angle_bin : raw_pointcloud_angle_bins) {
     std::sort(raw_pointcloud_angle_bin.begin(), raw_pointcloud_angle_bin.end(), [](auto a, auto b) {
       return a.range < b.range;
     });
   }
-  global_offset = 0;
+
   // Create obstacle angle bins and sort points by range
+  global_offset = 0;
   for (size_t i = 0; i < obstacle_pointcloud_size; i++) {
     Eigen::Vector4f pt(
       *reinterpret_cast<const float *>(
@@ -175,12 +185,14 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
     const double scan_z = scan_origin.position.z - robot_pose.position.z;
     const double obstacle_z = (pt_map[2]) - robot_pose.position.z;
     const double dz = scan_z - obstacle_z;
+
     // Ignore obstacle points exceed the range of the raw points
     if (raw_pointcloud_angle_bins.at(angle_bin_index).empty()) {
       continue;  // No raw point in this angle bin
     } else if (range > raw_pointcloud_angle_bins.at(angle_bin_index).back().range) {
       continue;  // Obstacle point exceeds the range of the raw points
     }
+
     if (dz > projection_dz_threshold_) {
       const double ratio = obstacle_z / dz;
       const double projection_length = range * ratio;
@@ -197,6 +209,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
     }
     global_offset += obstacle_pointcloud.point_step;
   }
+
   for (auto & obstacle_pointcloud_angle_bin : obstacle_pointcloud_angle_bins) {
     std::sort(
       obstacle_pointcloud_angle_bin.begin(), obstacle_pointcloud_angle_bin.end(),

@@ -145,6 +145,7 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   PointCloud2 trans_input_raw{}, trans_input_obstacle{};
   bool is_raw_transformed = false;
   bool is_obstacle_transformed = false;
+
   // Prepare for applying height filter
   if (use_height_filter_) {
     // Make sure that the frame is base_link
@@ -166,6 +167,7 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     occupancy_grid_map_ptr_->setHeightLimit(
       -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
   }
+  
   const PointCloud2::ConstSharedPtr input_raw_use =
     is_raw_transformed ? std::make_shared<PointCloud2>(trans_input_raw) : input_raw_msg;
   const PointCloud2::ConstSharedPtr input_obstacle_use =

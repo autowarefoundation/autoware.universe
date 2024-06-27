@@ -87,8 +87,13 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   Eigen::Matrix4f mat_map = utils::getTransformMatrix(robot_pose);
 
   const auto scan2map_pose = utils::getInversePose(scan_origin);  // scan -> map transform pose
+
   // Transform Matrix from map frame to scan frame
   Eigen::Matrix4f mat_scan = utils::getTransformMatrix(scan2map_pose);
+
+  if (!offset_initialized_) {
+    setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
+  }
 
   // Create angle bins and sort by distance
   struct BinInfo
@@ -102,9 +107,6 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
     double wx;
     double wy;
   };
-  if (!offset_initialized_) {
-    setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
-  }
 
   std::vector</*angle bin*/ std::vector<BinInfo>> obstacle_pointcloud_angle_bins(angle_bin_size);
   std::vector</*angle bin*/ std::vector<BinInfo>> raw_pointcloud_angle_bins(angle_bin_size);
@@ -113,6 +115,7 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
   const size_t obstacle_reserve_size = obstacle_pointcloud_size / angle_bin_size;
+
   // Reserve a certain amount of memory in advance for performance reasons
   for (size_t i = 0; i < angle_bin_size; i++) {
     raw_pointcloud_angle_bins[i].reserve(raw_reserve_size);
@@ -135,6 +138,7 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
       continue;
     }
     transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
+
     raw_pointcloud_angle_bins.at(angle_bin_index).emplace_back(range, pt_map[0], pt_map[1]);
     global_offset += raw_pointcloud.point_step;
   }
@@ -161,15 +165,18 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
       continue;
     }
     transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
+
     // Ignore obstacle points exceed the range of the raw points
     if (raw_pointcloud_angle_bins.at(angle_bin_index).empty()) {
       continue;  // No raw point in this angle bin
     } else if (range > raw_pointcloud_angle_bins.at(angle_bin_index).back().range) {
       continue;  // Obstacle point exceeds the range of the raw points
     }
+
     obstacle_pointcloud_angle_bins.at(angle_bin_index).emplace_back(range, pt_map[0], pt_map[1]);
     global_offset += obstacle_pointcloud.point_step;
   }
+  
   for (auto & obstacle_pointcloud_angle_bin : obstacle_pointcloud_angle_bins) {
     std::sort(
       obstacle_pointcloud_angle_bin.begin(), obstacle_pointcloud_angle_bin.end(),
