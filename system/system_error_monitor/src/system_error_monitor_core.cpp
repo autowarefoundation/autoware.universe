@@ -434,10 +434,6 @@ void AutowareErrorMonitor::onTimer()
   const auto current_gate_msg = sub_current_gate_mode_.takeNewData();
   const auto control_mode_msg = sub_control_mode_.takeNewData();
 
-
-  //timeout判定をちゃんと入れる。
-  //diag_array_はwhileで処理
-
   while(diag_array_msg) {
     onDiagArray(diag_array_msg);
     diag_array_msg = sub_diag_array_.takeNewData();
