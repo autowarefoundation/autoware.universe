@@ -59,12 +59,12 @@ bool OccupancyGridMapProjectiveBlindSpot::isPointValid(const Eigen::Vector4f & p
 
 // pt -> (pt_map, angle_bin_index, range)
 void OccupancyGridMapProjectiveBlindSpot::transformPointAndCalculate(
-  const Eigen::Vector4f & pt, const Eigen::Matrix4f & matmap, const Eigen::Matrix4f & matscan,
+  const Eigen::Vector4f & pt, const Eigen::Matrix4f & mat_map, const Eigen::Matrix4f & mat_scan,
   Eigen::Vector4f & pt_map, int & angle_bin_index, double & range)
 {
   // Calculate transformed points
-  pt_map = matmap * pt;
-  Eigen::Vector4f pt_scan(matscan * pt_map);
+  pt_map = mat_map * pt;
+  Eigen::Vector4f pt_scan(mat_scan * pt_map);
   const double angle = atan2(pt_scan[1], pt_scan[0]);
   angle_bin_index = (angle - min_angle) * angle_increment_inv;
   range = std::sqrt(pt_scan[1] * pt_scan[1] + pt_scan[0] * pt_scan[0]);
@@ -85,12 +85,12 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
 
   // Transform from base_link to map frame
   PointCloud2 map_raw_pointcloud, map_obstacle_pointcloud;  // point cloud in map frame
-  Eigen::Matrix4f matmap = utils::getTransformMatrix(robot_pose);
+  Eigen::Matrix4f mat_map = utils::getTransformMatrix(robot_pose);
 
   // Transform from map frame to scan frame
   PointCloud2 scan_raw_pointcloud, scan_obstacle_pointcloud;      // point cloud in scan frame
   const auto scan2map_pose = utils::getInversePose(scan_origin);  // scan -> map transform pose
-  Eigen::Matrix4f matscan = utils::getTransformMatrix(scan2map_pose);
+  Eigen::Matrix4f mat_scan = utils::getTransformMatrix(scan2map_pose);
 
   // Create angle bins and sort points by range
   struct BinInfo3D
@@ -146,7 +146,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       global_offset += raw_pointcloud.point_step;
       continue;
     }
-    transformPointAndCalculate(pt, matmap, matscan, pt_map, angle_bin_index, range);
+    transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
     raw_pointcloud_angle_bins.at(angle_bin_index)
       .emplace_back(range, pt_map[0], pt_map[1], pt_map[2]);
     global_offset += raw_pointcloud.point_step;
@@ -171,7 +171,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       global_offset += obstacle_pointcloud.point_step;
       continue;
     }
-    transformPointAndCalculate(pt, matmap, matscan, pt_map, angle_bin_index, range);
+    transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
     const double scan_z = scan_origin.position.z - robot_pose.position.z;
     const double obstacle_z = (pt_map[2]) - robot_pose.position.z;
     const double dz = scan_z - obstacle_z;

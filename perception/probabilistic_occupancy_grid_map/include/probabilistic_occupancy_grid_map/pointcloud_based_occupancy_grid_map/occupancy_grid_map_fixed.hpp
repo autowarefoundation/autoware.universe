@@ -34,7 +34,7 @@ public:
 
   bool isPointValid(const Eigen::Vector4f & pt);
   void transformPointAndCalculate(
-    const Eigen::Vector4f & pt, const Eigen::Matrix4f & matmap, const Eigen::Matrix4f & matscan,
+    const Eigen::Vector4f & pt, const Eigen::Matrix4f & mat_map, const Eigen::Matrix4f & mat_scan,
     Eigen::Vector4f & pt_map, int & angle_bin_index, double & range);
 
   using OccupancyGridMapInterface::raytrace;

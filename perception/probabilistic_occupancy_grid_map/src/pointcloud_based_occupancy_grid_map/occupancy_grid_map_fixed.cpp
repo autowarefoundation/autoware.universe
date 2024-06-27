@@ -58,12 +58,12 @@ inline bool OccupancyGridMapFixedBlindSpot::isPointValid(const Eigen::Vector4f &
 
 // pt -> (pt_map, angle_bin_index, range)
 inline void OccupancyGridMapFixedBlindSpot::transformPointAndCalculate(
-  const Eigen::Vector4f & pt, const Eigen::Matrix4f & matmap, const Eigen::Matrix4f & matscan,
+  const Eigen::Vector4f & pt, const Eigen::Matrix4f & mat_map, const Eigen::Matrix4f & mat_scan,
   Eigen::Vector4f & pt_map, int & angle_bin_index, double & range)
 {
   // Calculate transformed points
-  pt_map = matmap * pt;
-  Eigen::Vector4f pt_scan(matscan * pt_map);
+  pt_map = mat_map * pt;
+  Eigen::Vector4f pt_scan(mat_scan * pt_map);
   const double angle = atan2(pt_scan[1], pt_scan[0]);
   angle_bin_index = (angle - min_angle) * angle_increment_inv;
   range = std::sqrt(pt_scan[1] * pt_scan[1] + pt_scan[0] * pt_scan[0]);
@@ -84,11 +84,11 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   const size_t angle_bin_size = ((max_angle - min_angle) / angle_increment) + size_t(1 /*margin*/);
 
   // Transform Matrix from base_link to map frame
-  Eigen::Matrix4f matmap = utils::getTransformMatrix(robot_pose);
+  Eigen::Matrix4f mat_map = utils::getTransformMatrix(robot_pose);
 
   const auto scan2map_pose = utils::getInversePose(scan_origin);  // scan -> map transform pose
   // Transform Matrix from map frame to scan frame
-  Eigen::Matrix4f matscan = utils::getTransformMatrix(scan2map_pose);
+  Eigen::Matrix4f mat_scan = utils::getTransformMatrix(scan2map_pose);
 
   // Create angle bins and sort by distance
   struct BinInfo
@@ -134,7 +134,7 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
       global_offset += raw_pointcloud.point_step;
       continue;
     }
-    transformPointAndCalculate(pt, matmap, matscan, pt_map, angle_bin_index, range);
+    transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
     raw_pointcloud_angle_bins.at(angle_bin_index).emplace_back(range, pt_map[0], pt_map[1]);
     global_offset += raw_pointcloud.point_step;
   }
@@ -160,7 +160,7 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
       global_offset += obstacle_pointcloud.point_step;
       continue;
     }
-    transformPointAndCalculate(pt, matmap, matscan, pt_map, angle_bin_index, range);
+    transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
     // Ignore obstacle points exceed the range of the raw points
     if (raw_pointcloud_angle_bins.at(angle_bin_index).empty()) {
       continue;  // No raw point in this angle bin
