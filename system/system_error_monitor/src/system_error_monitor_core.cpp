@@ -451,8 +451,6 @@ void AutowareErrorMonitor::onTimer()
     onControlMode(control_mode_msg);
   }
 
-  // for Heartbeat
-  current_gate_mode_stamp_ = this->now();
   if (!isDataReady()) {
     if ((this->now() - initialized_time_).seconds() > params_.data_ready_timeout) {
       RCLCPP_WARN_THROTTLE(
