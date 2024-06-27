@@ -16,7 +16,7 @@
 #define SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_
 
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
-#include "universe_utils/ros/polling_subscriber.hpp"
+#include <universe_utils/ros/polling_subscriber.hpp>
 
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
