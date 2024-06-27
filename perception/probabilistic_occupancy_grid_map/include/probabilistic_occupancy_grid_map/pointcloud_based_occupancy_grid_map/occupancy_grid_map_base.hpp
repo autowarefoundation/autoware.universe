@@ -52,8 +52,10 @@
 #ifndef PROBABILISTIC_OCCUPANCY_GRID_MAP__POINTCLOUD_BASED_OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_BASE_HPP_
 #define PROBABILISTIC_OCCUPANCY_GRID_MAP__POINTCLOUD_BASED_OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_BASE_HPP_
 
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <nav2_costmap_2d/costmap_2d.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
@@ -83,11 +85,33 @@ public:
 
   virtual void initRosParam(rclcpp::Node & node) = 0;
 
+  void setHeightLimit(const double min_height, const double max_height);
+
+  double min_height_;
+  double max_height_;
+
+  void setFieldOffsets(const PointCloud2 & input_raw, const PointCloud2 & input_obstacle);
+
+  int x_offset_raw_;
+  int y_offset_raw_;
+  int z_offset_raw_;
+  int x_offset_obstacle_;
+  int y_offset_obstacle_;
+  int z_offset_obstacle_;
+  bool offset_initialized_;
+
+  const double min_angle = autoware::universe_utils::deg2rad(-180.0);
+  const double max_angle = autoware::universe_utils::deg2rad(180.0);
+  const double angle_increment = autoware::universe_utils::deg2rad(0.1);
+  const double angle_increment_inv = 1.0 / angle_increment;
+
 private:
   bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my) const;
 
   rclcpp::Logger logger_{rclcpp::get_logger("pointcloud_based_occupancy_grid_map")};
   rclcpp::Clock clock_{RCL_ROS_TIME};
+
+  double resolution_inv_;
 };
 
 }  // namespace costmap_2d
