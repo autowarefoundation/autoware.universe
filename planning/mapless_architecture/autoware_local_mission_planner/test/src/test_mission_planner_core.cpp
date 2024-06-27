@@ -120,7 +120,7 @@ int TestCalculateDistanceBetweenPointAndLineString()
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
 
   // Run function
-  double distance = MissionPlanner.CalculateDistanceBetweenPointAndLineString_(linestring, point);
+  double distance = MissionPlanner.CalculateDistanceBetweenPointAndLineString(linestring, point);
 
   // Check if distance is near to 1.0 (with allowed error of 0.001)
   EXPECT_NEAR(distance, 1.0, 0.001);
@@ -144,7 +144,7 @@ int TestGetPointOnLane()
 
   // Get a point from the tested function which has the x value 3.0 and lies on
   // the centerline of the lanelets
-  lanelet::BasicPoint2d point = MissionPlanner.GetPointOnLane_({0, 1}, 3.0, lanelets);
+  lanelet::BasicPoint2d point = MissionPlanner.GetPointOnLane({0, 1}, 3.0, lanelets);
 
   // Check if x value of the point is near to 3.0 (with an allowed error of
   // 0.001)
@@ -152,8 +152,8 @@ int TestGetPointOnLane()
 
   // Get a point from the tested function which has the x value 100.0 and lies
   // on the centerline of the lanelets
-  point = MissionPlanner.GetPointOnLane_({0, 1}, 100.0,
-                                         lanelets);  // Far away (100m)
+  point = MissionPlanner.GetPointOnLane({0, 1}, 100.0,
+                                        lanelets);  // Far away (100m)
 
   // Check if x value of the point is near to 10.0 (with an allowed error of
   // 0.001)
@@ -282,8 +282,7 @@ int TestRecenterGoalpoint()
   // TEST 1: point on centerline of origin lanelet
   // define a test point and re-center onto its centerline
   lanelet::BasicPoint2d goal_point(0.0, 0.0);
-  lanelet::BasicPoint2d goal_point_recentered =
-    mission_planner.RecenterGoalPoint(goal_point, converted_lanelets);
+  lanelet::BasicPoint2d goal_point_recentered = RecenterGoalPoint(goal_point, converted_lanelets);
 
   EXPECT_NEAR(goal_point_recentered.x(), 0.0, 1e-5);
   EXPECT_NEAR(goal_point_recentered.y(), 0.0, 1e-5);
@@ -292,7 +291,7 @@ int TestRecenterGoalpoint()
   // define a test point which is not on the centerline
   goal_point.x() = 1.0;
   goal_point.y() = 0.25;
-  goal_point_recentered = mission_planner.RecenterGoalPoint(goal_point, converted_lanelets);
+  goal_point_recentered = RecenterGoalPoint(goal_point, converted_lanelets);
 
   // Expect re-centered point to lie on y coordinate 0
   EXPECT_NEAR(goal_point_recentered.x(), goal_point.x(), 1e-5);
@@ -302,7 +301,7 @@ int TestRecenterGoalpoint()
   // define a test point which is not on the centerline
   goal_point.x() = 8.0;
   goal_point.y() = -0.2;
-  goal_point_recentered = mission_planner.RecenterGoalPoint(goal_point, converted_lanelets);
+  goal_point_recentered = RecenterGoalPoint(goal_point, converted_lanelets);
 
   // Expect re-centered point to lie on y coordinate 0 but with x coord equal to
   // goal_point (removes lateral error/noise)
@@ -314,7 +313,7 @@ int TestRecenterGoalpoint()
   // the centerline
   goal_point.x() = 2.0;
   goal_point.y() = 1.75;
-  goal_point_recentered = mission_planner.RecenterGoalPoint(goal_point, converted_lanelets);
+  goal_point_recentered = RecenterGoalPoint(goal_point, converted_lanelets);
 
   // Expect re-centered point to lie on y coordinate 0 but with x coord equal to
   // goal_point (removes lateral error/noise)
@@ -325,7 +324,7 @@ int TestRecenterGoalpoint()
   // untouched
   goal_point.x() = 11.0;
   goal_point.y() = -2.0;
-  goal_point_recentered = mission_planner.RecenterGoalPoint(goal_point, converted_lanelets);
+  goal_point_recentered = RecenterGoalPoint(goal_point, converted_lanelets);
 
   EXPECT_EQ(goal_point_recentered.x(), goal_point.x());
   EXPECT_EQ(goal_point_recentered.y(), goal_point.y());
@@ -532,8 +531,7 @@ int TestCreateMarkerArray()
   }
 
   // Call function which is tested
-  auto marker_array =
-    MissionPlanner.CreateMarkerArray_(centerlines, left_bounds, right_bounds, message);
+  auto marker_array = CreateMarkerArray(centerlines, left_bounds, right_bounds, message);
 
   // Check if marker_array is empty
   EXPECT_EQ(marker_array.markers.empty(),
@@ -562,7 +560,7 @@ int TestCreateDrivingCorridor()
 
   // Call function which is tested
   autoware_planning_msgs::msg::DrivingCorridor driving_corridor =
-    MissionPlanner.CreateDrivingCorridor_({0, 1}, lanelets);
+    CreateDrivingCorridor({0, 1}, lanelets);
 
   // Check if x value of first point in centerline is -2.0
   EXPECT_EQ(driving_corridor.centerline[0].x, -2.0);

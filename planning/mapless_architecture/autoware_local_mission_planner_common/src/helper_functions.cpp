@@ -399,4 +399,257 @@ int FindEgoOccupiedLaneletID(const std::vector<lanelet::Lanelet> & lanelets)
   return FindOccupiedLaneletID(lanelets, position_ego);
 }
 
+lanelet::BasicPoint2d RecenterGoalPoint(
+  const lanelet::BasicPoint2d & goal_point, const std::vector<lanelet::Lanelet> & road_model)
+{
+  // Return value
+  lanelet::BasicPoint2d projected_goal_point;
+
+  // Get current lanelet index of goal point
+  const int lanelet_idx_goal_point = FindOccupiedLaneletID(road_model, goal_point);
+
+  if (lanelet_idx_goal_point >= 0) {
+    // Get the centerline of the goal point's lanelet
+    lanelet::ConstLineString2d centerline_curr_lanelet =
+      road_model[lanelet_idx_goal_point].centerline2d();
+
+    // Project goal point to the centerline of its lanelet
+    projected_goal_point = lanelet::geometry::project(centerline_curr_lanelet, goal_point);
+  } else {
+    // Return untouched input point if index is not valid
+    projected_goal_point = goal_point;
+  }
+
+  return projected_goal_point;
+}
+
+visualization_msgs::msg::MarkerArray CreateMarkerArray(
+  const std::vector<lanelet::ConstLineString3d> & centerline,
+  const std::vector<lanelet::ConstLineString3d> & left,
+  const std::vector<lanelet::ConstLineString3d> & right,
+  const autoware_planning_msgs::msg::RoadSegments & msg)
+{
+  visualization_msgs::msg::MarkerArray markerArray;
+
+  // Centerline
+  for (size_t i = 0; i < centerline.size(); ++i) {
+    visualization_msgs::msg::Marker marker;  // Create a new marker in each iteration
+
+    // Adding points to the marker
+    for (const auto & point : centerline[i]) {
+      geometry_msgs::msg::Point p;
+
+      p.x = point.x();
+      p.y = point.y();
+      p.z = point.z();
+
+      marker.points.push_back(p);
+    }
+    markerArray.markers.push_back(marker);
+  }
+
+  // Left bound
+  for (size_t i = 0; i < left.size(); ++i) {
+    visualization_msgs::msg::Marker marker;  // Create a new marker in each iteration
+
+    marker.header.frame_id = msg.header.frame_id;  // Adjust frame_id as needed
+    marker.header.stamp = msg.header.stamp;        // rclcpp::Node::now();
+    marker.ns = "linestring";
+    marker.id = i + 1000;
+    marker.type = visualization_msgs::msg::Marker::POINTS;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.pose.orientation.w = 1.0;  // Neutral orientation
+    marker.scale.x = 5.0;
+    marker.color.b = 1.0;  // Blue color
+    marker.color.a = 1.0;  // Full opacity
+
+    // Adding points to the marker
+    for (const auto & point : left[i]) {
+      geometry_msgs::msg::Point p;
+
+      p.x = point.x();
+      p.y = point.y();
+      p.z = point.z();
+
+      marker.points.push_back(p);
+    }
+    markerArray.markers.push_back(marker);
+  }
+
+  // Right bound
+  for (size_t i = 0; i < right.size(); ++i) {
+    visualization_msgs::msg::Marker marker;  // Create a new marker in each iteration
+
+    marker.header.frame_id = msg.header.frame_id;  // Adjust frame_id as needed
+    marker.header.stamp = msg.header.stamp;        // rclcpp::Node::now();
+    marker.ns = "linestring";
+    marker.id = i + 2000;
+    marker.type = visualization_msgs::msg::Marker::POINTS;
+    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.pose.orientation.w = 1.0;  // Neutral orientation
+    marker.scale.x = 5.0;
+    marker.color.b = 1.0;  // Blue color
+    marker.color.a = 1.0;  // Full opacity
+
+    // Adding points to the marker
+    for (const auto & point : right[i]) {
+      geometry_msgs::msg::Point p;
+
+      p.x = point.x();
+      p.y = point.y();
+      p.z = point.z();
+
+      marker.points.push_back(p);
+    }
+    markerArray.markers.push_back(marker);
+  }
+
+  return markerArray;
+}
+
+autoware_planning_msgs::msg::DrivingCorridor CreateDrivingCorridor(
+  const std::vector<int> & lane, const std::vector<lanelet::Lanelet> & converted_lanelets)
+{
+  // Create driving corridor
+  autoware_planning_msgs::msg::DrivingCorridor driving_corridor;
+
+  for (int id : lane) {
+    if (id >= 0) {
+      auto current_lanelet = converted_lanelets.at(id);
+
+      auto centerline = current_lanelet.centerline();
+      auto bound_left = current_lanelet.leftBound();
+      auto bound_right = current_lanelet.rightBound();
+
+      // Adding elements of centerline
+      for (const auto & point : centerline) {
+        geometry_msgs::msg::Point p;
+
+        p.x = point.x();
+        p.y = point.y();
+        p.z = point.z();
+
+        driving_corridor.centerline.push_back(p);
+      }
+
+      // Adding elements of bound_left
+      for (const auto & point : bound_left) {
+        geometry_msgs::msg::Point p;
+
+        p.x = point.x();
+        p.y = point.y();
+        p.z = point.z();
+
+        driving_corridor.bound_left.push_back(p);
+      }
+
+      // Adding elements of bound_right
+      for (const auto & point : bound_right) {
+        geometry_msgs::msg::Point p;
+
+        p.x = point.x();
+        p.y = point.y();
+        p.z = point.z();
+
+        driving_corridor.bound_right.push_back(p);
+      }
+    }
+  }
+  return driving_corridor;
+}
+
+lanelet::LineString2d CreateLineString(const std::vector<geometry_msgs::msg::Point> & points)
+{
+  // Create a Lanelet2 linestring
+  lanelet::LineString2d linestring;
+
+  // Iterate through the vector of points and add them to the linestring
+  for (const auto & point : points) {
+    lanelet::Point2d p(0, point.x,
+                       point.y);  // First argument is ID (set it to 0 for now)
+    linestring.push_back(p);
+  }
+
+  // Return the created linestring
+  return linestring;
+}
+
+std::vector<int> GetAllNeighborsOfLane(
+  const std::vector<int> & lane, const std::vector<LaneletConnection> & lanelet_connections,
+  const int vehicle_side)
+{
+  // Initialize vector
+  std::vector<int> neighbor_lane_idx = {};
+
+  if (!lane.empty()) {
+    // Loop through all the lane indices to get the neighbors
+    int neighbor_tmp;
+
+    for (const int id : lane) {
+      neighbor_tmp = lanelet_connections[id].neighbor_lanelet_ids[vehicle_side];
+      if (neighbor_tmp >= 0) {
+        // Only add neighbor if lanelet does not exist already (avoid having
+        // duplicates)
+        if (
+          std::find(neighbor_lane_idx.begin(), neighbor_lane_idx.end(), neighbor_tmp) ==
+          neighbor_lane_idx.end()) {
+          neighbor_lane_idx.push_back(neighbor_tmp);
+        }
+      } else {
+        // If there is a blind spot in the neighbor sequence, break the loop
+        break;
+      }
+    }
+  }
+
+  return neighbor_lane_idx;
+}
+
+void InsertPredecessorLanelet(
+  std::vector<int> & lane_idx, const std::vector<LaneletConnection> & lanelet_connections)
+{
+  if (!lane_idx.empty()) {
+    // Get index of first lanelet
+    int first_lanelet_index = lane_idx[0];
+
+    if (!lanelet_connections[first_lanelet_index].predecessor_lanelet_ids.empty()) {
+      // Get one predecessor lanelet
+      const int predecessor_lanelet = lanelet_connections[first_lanelet_index]
+                                        .predecessor_lanelet_ids[0];  // Get one of the predecessors
+
+      // Insert predecessor lanelet in lane_idx
+      if (predecessor_lanelet >= 0) {
+        lane_idx.insert(lane_idx.begin(), predecessor_lanelet);
+      }
+    }
+  }
+}
+
+void CalculatePredecessors(std::vector<LaneletConnection> & lanelet_connections)
+{
+  // Determine predecessor information from already known information
+  for (std::size_t id_lanelet = 0; id_lanelet < lanelet_connections.size(); id_lanelet++) {
+    // Write lanelet predecessors (which are the successors of their previous
+    // lanelets)
+    for (std::size_t n_successor = 0;
+         n_successor < lanelet_connections[id_lanelet].successor_lanelet_ids.size();
+         n_successor++) {
+      // Check if current lanelet has a valid successor, otherwise end of
+      // current local environment model has been reached and all the
+      // predecessors have been written with the last iteration
+      if (lanelet_connections[id_lanelet].successor_lanelet_ids[n_successor] > -1) {
+        lanelet_connections[lanelet_connections[id_lanelet].successor_lanelet_ids[n_successor]]
+          .predecessor_lanelet_ids.push_back(id_lanelet);
+      }
+    }
+  }
+
+  // Write -1 to lanelets which have no predecessors
+  for (LaneletConnection lanelet_connection : lanelet_connections) {
+    if (lanelet_connection.predecessor_lanelet_ids.empty()) {
+      lanelet_connection.predecessor_lanelet_ids = {-1};
+    }
+  }
+}
+
 }  // namespace autoware::mapless_architecture
