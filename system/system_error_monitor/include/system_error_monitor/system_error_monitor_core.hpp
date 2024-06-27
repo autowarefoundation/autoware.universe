@@ -100,7 +100,9 @@ private:
   void onTimer();
 
   // Subscriber
-  rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
+  //rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<diagnostic_msgs::msg::DiagnosticArray>
+    sub_diag_array_{this, "~/input/diag_array", rclcpp::QoS(std::numeric_limits<uint32_t>::max())};
   tier4_autoware_utils::InterProcessPollingSubscriber<autoware_system_msgs::msg::AutowareState>
     sub_autoware_state_{this, "~/input/current_gate_mode"};
   tier4_autoware_utils::InterProcessPollingSubscriber<tier4_control_msgs::msg::GateMode>

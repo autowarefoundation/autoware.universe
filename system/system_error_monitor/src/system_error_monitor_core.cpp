@@ -229,9 +229,6 @@ AutowareErrorMonitor::AutowareErrorMonitor(const rclcpp::NodeOptions & options)
 
   using std::placeholders::_1;
   using std::placeholders::_2;
-  // Subscriber
-  sub_diag_array_ = create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
-    "input/diag_array", rclcpp::QoS{1}, std::bind(&AutowareErrorMonitor::onDiagArray, this, _1));
 
   // Publisher
   pub_hazard_status_ = create_publisher<autoware_system_msgs::msg::HazardStatusStamped>(
@@ -431,26 +428,31 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
 
 void AutowareErrorMonitor::onTimer()
 {
-    const auto autoware_state_msg = sub_autoware_state_.takeData();
-  const auto current_gate_msg = sub_current_gate_mode_.takeData();
-  const auto control_mode_msg = sub_control_mode_.takeData();
+
+  const auto diag_array_msg = sub_diag_array_.takeNewData();
+  const auto autoware_state_msg = sub_autoware_state_.takeNewData();
+  const auto current_gate_msg = sub_current_gate_mode_.takeNewData();
+  const auto control_mode_msg = sub_control_mode_.takeNewData();
+
+
+  //timeout判定をちゃんと入れる。
+  //diag_array_はwhileで処理
+
+  while(diag_array_msg) {
+    onDiagArray(diag_array_msg);
+    diag_array_msg = sub_diag_array_.takeNewData();
+  }
 
   if (autoware_state_msg) {
-    autoware_state_ = autoware_state_msg;
-    // for Heartbeat
-    autoware_state_stamp_ = this->now();
+    onAutowareState(autoware_state_msg);
   }
 
   if (current_gate_msg) {
-    current_gate_mode_ = current_gate_msg;
-    // for Heartbeat
-    current_gate_mode_stamp_ = this->now();
+    onCurrentGateMode(current_gate_msg);
   }
 
   if (control_mode_msg) {
-    control_mode_ = control_mode_msg;
-    // for Heartbeat
-    control_mode_stamp_ = this->now();
+    onControlMode(control_mode_msg);
   }
 
   // for Heartbeat
@@ -583,7 +585,7 @@ autoware_system_msgs::msg::HazardStatus AutowareErrorMonitor::judgeHazardStatus(
   }
 
   return hazard_status;
-}durat
+}
 
 void AutowareErrorMonitor::updateHazardStatus()
 {
