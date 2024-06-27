@@ -68,10 +68,3 @@ mpc_parameter:
     max_error_steer: 1e-2
   limit:
     read_limit_file: false
-  to_be_deprecated:
-    tighten_horizon: 20
-    min_tighten_steer_rate: 1.0
-    power_tighten_steer_rate_by_lateral_error: 1
-    threshold_tighten_steer_rate_by_lateral_error: 0.05
-    power_tighten_steer_rate_by_yaw_error: 1
-    threshold_tighten_steer_rate_by_yaw_error: 0.05

@@ -13,10 +13,10 @@ SEED = 44
 if __name__ == "__main__":
     for k in range(100):
         np.random.seed(seed=k + SEED)
-        acc_width_range = np.random.uniform(0.005, 0.1)
+        acc_amp_range = np.random.uniform(0.005, 0.1)
         acc_period_min = np.random.uniform(2.0, 10.0)
         acc_period_max = acc_period_min + np.random.uniform(5.0, 30.0)
-        steer_width_range = np.random.uniform(0.005, 0.1)
+        steer_amp_range = np.random.uniform(0.005, 0.1)
         steer_period_min = np.random.uniform(2.0, 10.0)
         steer_period_max = steer_period_min + np.random.uniform(5.0, 30.0)
         step_response_max_input = np.random.uniform(0.001, 0.1)
@@ -31,10 +31,10 @@ if __name__ == "__main__":
             use_memory_diff_flag = " " + ("--use_memory_diff" if memory == 1 else "")
             str_run = (
                 "python3 test_figure_eight_param.py "
-                + f" --acc_width_range {acc_width_range}"
+                + f" --acc_amp_range {acc_amp_range}"
                 + f" --acc_period_min {acc_period_min}"
                 + f" --acc_period_max {acc_period_max}"
-                + f" --steer_width_range {steer_width_range}"
+                + f" --steer_amp_range {steer_amp_range}"
                 + f" --steer_period_min {steer_period_min}"
                 + f" --steer_period_max {steer_period_max}"
                 + f" --step_response_max_input {step_response_max_input}"

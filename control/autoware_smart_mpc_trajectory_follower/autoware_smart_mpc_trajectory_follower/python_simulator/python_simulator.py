@@ -600,11 +600,11 @@ def drive_sim(
     initial_error=np.zeros(6),
     t_range=[0, 100],
     seed=1,
-    acc_width_range=0.05,
+    acc_amp_range=0.05,
     acc_period_range=[5.0, 20.0],
-    steer_width_range=0.005,
+    steer_amp_range=0.005,
     steer_period_range=[5.0, 30.0],
-    large_steer_width_range=0.00,
+    large_steer_amp_range=0.00,
     large_steer_period_range=[5.0, 20.0],
     start_large_steer_time=40.0,
     acc_max=1.2,
@@ -689,19 +689,19 @@ def drive_sim(
     if control_type != ControlType.mpc:  # feedforward_test:
         (
             t_acc_array,
-            width_acc_array,
+            amp_acc_array,
             t_steer_array,
-            width_steer_array,
+            amp_steer_array,
             t_large_steer_array,
-            width_large_steer_array,
+            amp_large_steer_array,
         ) = data_collection_utils.create_additional_sine_data(
             seed,
             t_range,
-            acc_width_range,
+            acc_amp_range,
             acc_period_range,
-            steer_width_range,
+            steer_amp_range,
             steer_period_range,
-            large_steer_width_range,
+            large_steer_amp_range,
             large_steer_period_range,
             start_large_steer_time,
         )
@@ -736,10 +736,7 @@ def drive_sim(
             )
             x_init[2] = straight_line.v_mid
 
-    #    if control_type in [ControlType.pp_eight, ControlType.pp_straight, ControlType.npp_eight]:
-    #        t_vel_array, width_vel_array = data_collection_utils.create_vel_sine_data(
-    #            seed, t_range, vel_width_range, vel_period_range
-    #        )
+
     x_init += initial_error
 
     x_current = x_init.copy()
@@ -772,11 +769,11 @@ def drive_sim(
                 u_opt = data_collection_utils.get_current_additional_sine(
                     t_eval[i],
                     t_acc_array,
-                    width_acc_array,
+                    amp_acc_array,
                     t_steer_array,
-                    width_steer_array,
+                    amp_steer_array,
                     t_large_steer_array,
-                    width_large_steer_array,
+                    amp_large_steer_array,
                 )
                 u_opt[0] += data_collection_utils.get_feedforward_nominal_input(
                     t_eval[i], trajectory_data
@@ -791,8 +788,6 @@ def drive_sim(
                     x_current, trajectory_position_data, trajectory_yaw_data, previous_pp_index
                 )
                 target_vel = figure_eight.get_current_velocity(t_eval[i])
-                # target_vel = figure_eight.get_current_velocity(parts[previous_pp_index],achievement_rates[previous_pp_index])#data_collection_utils.get_current_vel_sine(t_eval[i], t_vel_array, width_vel_array, v_mid)
-                # target_vel = min(target_vel,data_collection_utils.restrict_target_vel(x_current[5]))
                 target_vel_list.append(np.array([t_eval[i], target_vel]))
                 u_opt = drive_functions.pure_pursuit_control(
                     pos_xy_obs=x_current[:2],
@@ -807,11 +802,11 @@ def drive_sim(
                 u_opt += data_collection_utils.get_current_additional_sine(
                     t_eval[i],
                     t_acc_array,
-                    width_acc_array,
+                    amp_acc_array,
                     t_steer_array,
-                    width_steer_array,
+                    amp_steer_array,
                     t_large_steer_array,
-                    width_large_steer_array,
+                    amp_large_steer_array,
                 )
                 u_opt[1] += data_collection_utils.step_response(
                     t_eval[i],
@@ -825,7 +820,7 @@ def drive_sim(
             elif control_type == ControlType.pp_straight:
                 target_vel = straight_line.get_current_velocity(
                     t_eval[i]
-                )  # data_collection_utils.get_current_vel_sine(t_eval[i], t_vel_array, width_vel_array, v_mid)
+                )  
                 target_vel_list.append(np.array([t_eval[i], target_vel]))
                 target_position = np.array([x_current[0], 0.0])
                 target_yaw = 0.0
@@ -842,11 +837,11 @@ def drive_sim(
                 u_opt += data_collection_utils.get_current_additional_sine(
                     t_eval[i],
                     t_acc_array,
-                    width_acc_array,
+                    amp_acc_array,
                     t_steer_array,
-                    width_steer_array,
+                    amp_steer_array,
                     t_large_steer_array,
-                    width_large_steer_array,
+                    amp_large_steer_array,
                 )
                 u_opt[1] += data_collection_utils.step_response(
                     t_eval[i],
@@ -905,11 +900,11 @@ def drive_sim(
                 u_opt += data_collection_utils.get_current_additional_sine(
                     t_eval[i],
                     t_acc_array,
-                    width_acc_array,
+                    amp_acc_array,
                     t_steer_array,
-                    width_steer_array,
+                    amp_steer_array,
                     t_large_steer_array,
-                    width_large_steer_array,
+                    amp_large_steer_array,
                 )
                 u_opt[1] += data_collection_utils.step_response(
                     t_eval[i],

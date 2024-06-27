@@ -36,11 +36,11 @@ def get_feedforward_nominal_input(t, trajectory_data):
 def create_additional_sine_data(
     seed,
     t_range,
-    acc_width_range,
+    acc_amp_range,
     acc_period_range,
-    steer_width_range,
+    steer_amp_range,
     steer_period_range,
-    large_steer_width_range,
+    large_steer_amp_range,
     large_steer_period_range,
     start_large_steer_time,
 ):
@@ -57,10 +57,10 @@ def create_additional_sine_data(
     t_large_steer_list.append(t_large_steer)
     t_large_steer += start_large_steer_time
     t_large_steer_list.append(t_large_steer)
-    width_acc_list = []
-    width_steer_list = []
-    width_large_steer_list = []
-    width_large_steer_list.append(0)
+    amp_acc_list = []
+    amp_steer_list = []
+    amp_large_steer_list = []
+    amp_large_steer_list.append(0)
     while True:
         if max(t_acc, t_large_steer) >= t_steer:
             period = (
@@ -68,30 +68,30 @@ def create_additional_sine_data(
             ) * np.random.uniform() + steer_period_range[0]
             t_steer += period
             t_steer_list.append(t_steer)
-            width_steer_list.append(steer_width_range * np.random.uniform())
+            amp_steer_list.append(steer_amp_range * np.random.uniform())
         elif t_large_steer >= t_acc:
             period = (
                 acc_period_range[1] - acc_period_range[0]
             ) * np.random.uniform() + acc_period_range[0]
             t_acc += period
             t_acc_list.append(t_acc)
-            width_acc_list.append(acc_width_range * np.random.uniform())
+            amp_acc_list.append(acc_amp_range * np.random.uniform())
         else:
             period = (
                 large_steer_period_range[1] - large_steer_period_range[0]
             ) * np.random.uniform() + large_steer_period_range[0]
             t_large_steer += period
             t_large_steer_list.append(t_large_steer)
-            width_large_steer_list.append(large_steer_width_range * np.random.uniform())
+            amp_large_steer_list.append(large_steer_amp_range * np.random.uniform())
         if t_acc >= t_range[1] and t_steer >= t_range[1] and t_large_steer >= t_range[1]:
             break
     return (
         np.array(t_acc_list),
-        np.array(width_acc_list),
+        np.array(amp_acc_list),
         np.array(t_steer_list),
-        np.array(width_steer_list),
+        np.array(amp_steer_list),
         np.array(t_large_steer_list),
-        np.array(width_large_steer_list),
+        np.array(amp_large_steer_list),
     )
 
 
@@ -100,11 +100,11 @@ def create_additional_sine_data(
 def get_current_additional_sine(
     t,
     t_acc_array,
-    width_acc_array,
+    amp_acc_array,
     t_steer_array,
-    width_steer_array,
+    amp_steer_array,
     t_large_steer_array,
-    width_large_steer_array,
+    amp_large_steer_array,
 ):
     """Calculate current values from already created sine wave data."""
     acc_index = 0
@@ -122,19 +122,19 @@ def get_current_additional_sine(
         if t < t_large_steer_array[i + 1]:
             break
         large_steer_index += 1
-    acc = width_acc_array[acc_index] * np.sin(
+    acc = amp_acc_array[acc_index] * np.sin(
         2
         * np.pi
         * (t - t_acc_array[acc_index])
         / (t_acc_array[acc_index + 1] - t_acc_array[acc_index])
     )
-    steer = width_steer_array[steer_index] * np.sin(
+    steer = amp_steer_array[steer_index] * np.sin(
         2
         * np.pi
         * (t - t_steer_array[steer_index])
         / (t_steer_array[steer_index + 1] - t_steer_array[steer_index])
     )
-    steer += width_large_steer_array[large_steer_index] * np.sin(
+    steer += amp_large_steer_array[large_steer_index] * np.sin(
         2
         * np.pi
         * (t - t_large_steer_array[large_steer_index])

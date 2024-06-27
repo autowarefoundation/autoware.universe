@@ -10,10 +10,10 @@ if __name__ == "__main__":
     batch_size = 5
 
     parser = argparse.ArgumentParser(description="Process some integers.")
-    parser.add_argument("--acc_width_range", type=float)
+    parser.add_argument("--acc_amp_range", type=float)
     parser.add_argument("--acc_period_min", type=float)
     parser.add_argument("--acc_period_max", type=float)
-    parser.add_argument("--steer_width_range", type=float)
+    parser.add_argument("--steer_amp_range", type=float)
     parser.add_argument("--steer_period_min", type=float)
     parser.add_argument("--steer_period_max", type=float)
     parser.add_argument("--step_response_max_input", type=float)
@@ -26,10 +26,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    acc_width_range = args.acc_width_range
+    acc_amp_range = args.acc_amp_range
     acc_period_min = args.acc_period_min
     acc_period_max = args.acc_period_max
-    steer_width_range = args.steer_width_range
+    steer_amp_range = args.steer_amp_range
     steer_period_min = args.steer_period_min
     steer_period_max = args.steer_period_max
     step_response_max_input = args.step_response_max_input
@@ -44,10 +44,10 @@ if __name__ == "__main__":
         os.mkdir(dir_name)
     condition = np.array(
         [
-            acc_width_range,
+            acc_amp_range,
             acc_period_min,
             acc_period_max,
-            steer_width_range,
+            steer_amp_range,
             steer_period_min,
             steer_period_max,
             step_response_max_input,
@@ -67,9 +67,9 @@ if __name__ == "__main__":
             batch_size=batch_size,
             hidden_layer_sizes=test_NN_size[0],
             hidden_layer_lstm=test_NN_size[1][0],
-            acc_width_range=acc_width_range,
+            acc_amp_range=acc_amp_range,
             acc_period_range=[acc_period_min, acc_period_max],
-            steer_width_range=steer_width_range,
+            steer_amp_range=steer_amp_range,
             steer_period_range=[steer_period_min, steer_period_max],
             step_response_max_input=step_response_max_input,
             step_response_max_length=step_response_max_length,
@@ -86,9 +86,9 @@ if __name__ == "__main__":
             batch_size=batch_size,
             hidden_layer_sizes=test_NN_size[0],
             hidden_layer_lstm=test_NN_size[1][0],
-            acc_width_range=acc_width_range,
+            acc_amp_range=acc_amp_range,
             acc_period_range=[acc_period_min, acc_period_max],
-            steer_width_range=steer_width_range,
+            steer_amp_range=steer_amp_range,
             steer_period_range=[steer_period_min, steer_period_max],
             step_response_max_input=step_response_max_input,
             step_response_max_length=step_response_max_length,
