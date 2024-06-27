@@ -101,13 +101,17 @@ private:
   void onTimer();
 
   // Subscriber
-  autoware::universe_autoware_utils::InterProcessPollingSubscriber<diagnostic_msgs::msg::DiagnosticArray>
+  autoware::universe_autoware_utils::InterProcessPollingSubscriber<
+    diagnostic_msgs::msg::DiagnosticArray>
     sub_diag_array_{this, "~/input/diag_array", rclcpp::QoS(std::numeric_limits<uint32_t>::max())};
-  autoware::universe_autoware_utils::InterProcessPollingSubscriber<autoware_system_msgs::msg::AutowareState>
+  autoware::universe_autoware_utils::InterProcessPollingSubscriber<
+    autoware_system_msgs::msg::AutowareState>
     sub_autoware_state_{this, "~/input/current_gate_mode"};
-  autoware::universe_autoware_utils::InterProcessPollingSubscriber<tier4_control_msgs::msg::GateMode>
+  autoware::universe_autoware_utils::InterProcessPollingSubscriber<
+    tier4_control_msgs::msg::GateMode>
     sub_current_gate_mode_{this, "~/input/autoware_state"};
-  autoware::universe_autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport>
+  autoware::universe_autoware_utils::InterProcessPollingSubscriber<
+    autoware_vehicle_msgs::msg::ControlModeReport>
     sub_control_mode_{this, "~/input/control_mode"};
   void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onCurrentGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
