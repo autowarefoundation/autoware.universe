@@ -428,27 +428,10 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
 
 void AutowareErrorMonitor::onTimer()
 {
-  auto diag_array_msg = sub_diag_array_.takeNewData();
-  auto autoware_state_msg = sub_autoware_state_.takeNewData();
-  auto current_gate_msg = sub_current_gate_mode_.takeNewData();
-  auto control_mode_msg = sub_control_mode_.takeNewData();
-
-  while (diag_array_msg) {
-    onDiagArray(diag_array_msg);
-    diag_array_msg = sub_diag_array_.takeNewData();
-  }
-
-  if (autoware_state_msg) {
-    onAutowareState(autoware_state_msg);
-  }
-
-  if (current_gate_msg) {
-    onCurrentGateMode(current_gate_msg);
-  }
-
-  if (control_mode_msg) {
-    onControlMode(control_mode_msg);
-  }
+  handleDiagArray();
+  handleAutowareState();
+  handleCurrentGateMode();
+  handleControlMode();
 
   if (!isDataReady()) {
     if ((this->now() - initialized_time_).seconds() > params_.data_ready_timeout) {
@@ -473,6 +456,39 @@ void AutowareErrorMonitor::onTimer()
 
   updateHazardStatus();
   publishHazardStatus(hazard_status_);
+}
+
+void AutowareErrorMonitor::handleDiagArray()
+{
+  auto diag_array_msg = sub_diag_array_.takeNewData();
+  while (diag_array_msg) {
+    onDiagArray(diag_array_msg);
+    diag_array_msg = sub_diag_array_.takeNewData();
+  }
+}
+
+void AutowareErrorMonitor::handleAutowareState()
+{
+  auto autoware_state_msg = sub_autoware_state_.takeNewData();
+  if (autoware_state_msg) {
+    onAutowareState(autoware_state_msg);
+  }
+}
+
+void AutowareErrorMonitor::handleCurrentGateMode()
+{
+  auto current_gate_msg = sub_current_gate_mode_.takeNewData();
+  if (current_gate_msg) {
+    onCurrentGateMode(current_gate_msg);
+  }
+}
+
+void AutowareErrorMonitor::handleControlMode()
+{
+  auto control_mode_msg = sub_control_mode_.takeNewData();
+  if (control_mode_msg) {
+    onControlMode(control_mode_msg);
+  }
 }
 
 boost::optional<DiagStamped> AutowareErrorMonitor::getLatestDiag(
