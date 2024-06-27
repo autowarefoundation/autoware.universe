@@ -24,8 +24,6 @@
 #include <string>
 #include <vector>
 
-// TODO(mfc): remove this comment before merging this pr, this is just for testing
-
 namespace gnss_poser
 {
 GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
