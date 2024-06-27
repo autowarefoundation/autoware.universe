@@ -58,6 +58,7 @@ jobs:
             build_type_cuda_state=cuda
           fi
           echo "BUILD_TYPE_CUDA_STATE=$build_type_cuda_state" >> "${GITHUB_ENV}"
+          echo "::notice::BUILD_TYPE_CUDA_STATE=$build_type_cuda_state"
         shell: bash
 
       - name: Build
