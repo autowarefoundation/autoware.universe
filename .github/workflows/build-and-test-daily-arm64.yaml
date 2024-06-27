@@ -59,7 +59,7 @@ jobs:
       - name: Test
         if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
         id: test
-        uses: autowarefoundation/autoware-github-actions/colcon-test@v1
+        uses: autowarefoundation/autoware-github-actions/colcon-test@v-test-regex-filter
         with:
           rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
