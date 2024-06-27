@@ -342,6 +342,22 @@ bool RTCInterface::isRTCEnabled(const UUID & uuid) const
   return is_auto_mode_enabled_;
 }
 
+bool RTCInterface::isTerminated(const UUID & uuid) const
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  const auto itr = std::find_if(
+    registered_status_.statuses.begin(), registered_status_.statuses.end(),
+    [uuid](auto & s) { return s.uuid == uuid; });
+
+  if (itr != registered_status_.statuses.end()) {
+    return itr->state.type == State::SUCCEEDED || itr->state.type == State::FAILED;
+  }
+
+  RCLCPP_WARN_STREAM(
+    getLogger(), "[isTerminated] uuid : " << to_string(uuid) << " is not found." << std::endl);
+  return is_auto_mode_enabled_;
+}
+
 void RTCInterface::lockCommandUpdate()
 {
   is_locked_ = true;

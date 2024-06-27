@@ -61,6 +61,7 @@ public:
   bool isActivated(const UUID & uuid) const;
   bool isRegistered(const UUID & uuid) const;
   bool isRTCEnabled(const UUID & uuid) const;
+  bool isTerminated(const UUID & uuid) const;
   void lockCommandUpdate();
   void unlockCommandUpdate();
 
