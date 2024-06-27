@@ -64,6 +64,7 @@ public:
   bool isTerminated(const UUID & uuid) const;
   void lockCommandUpdate();
   void unlockCommandUpdate();
+  void print() const;
 
 private:
   void onCooperateCommandService(
