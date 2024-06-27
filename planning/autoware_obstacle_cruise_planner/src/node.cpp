@@ -558,8 +558,8 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   }
 
   const auto & ego_odom = *ego_odom_ptr;
-  const auto & acc = *acc_ptr;
   const auto & objects = objects_ptr ? std::make_optional(*objects_ptr) : std::nullopt;
+  const auto & acc = *acc_ptr;
 
   const auto traj_points = autoware::motion_utils::convertToTrajectoryPointArray(*msg);
   // check if subscribed variables are ready
@@ -1073,9 +1073,8 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createCruiseObstacle(
     return std::nullopt;
   }
 
-  const auto & p = behavior_determination_param_;
-
   const auto & object_id = obstacle.uuid.substr(0, 4);
+  const auto & p = behavior_determination_param_;
 
   // NOTE: When driving backward, Stop will be planned instead of cruise.
   //       When the obstacle is crossing the ego's trajectory, cruise can be ignored.
@@ -1121,11 +1120,10 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstac
     return std::nullopt;
   }
 
-  const auto & p = behavior_determination_param_;
-
   if (traj_points.empty()) return std::nullopt;
   // check label
   const auto & object_id = obstacle.uuid.substr(0, 4);
+  const auto & p = behavior_determination_param_;
 
   if (!isOutsideCruiseObstacle(obstacle.classification.label)) {
     RCLCPP_INFO_EXPRESSION(
@@ -1409,10 +1407,9 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacle(
   std::optional<std::pair<geometry_msgs::msg::Point, double>> collision_point = std::nullopt;
   if (obstacle.source_type == Obstacle::SourceType::POINTCLOUD) {
     if (obstacle.stop_collision_point) {
-      const auto dist_to_collide_on_traj = autoware::motion_utils::calcSignedArcLength(
-        traj_points, 0, obstacle.stop_collision_point.value());
-      collision_point =
-        std::make_pair(obstacle.stop_collision_point.value(), dist_to_collide_on_traj);
+      const auto dist_to_collide_on_traj =
+        autoware::motion_utils::calcSignedArcLength(traj_points, 0, *obstacle.stop_collision_point);
+      collision_point = std::make_pair(*obstacle.stop_collision_point, dist_to_collide_on_traj);
     }
   } else if (obstacle.source_type == Obstacle::SourceType::PREDICTED_OBJECT) {
     const auto & object_id = obstacle.uuid.substr(0, 4);

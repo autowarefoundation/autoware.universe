@@ -123,7 +123,6 @@ private:
 
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
-  bool enable_slow_down_planning_{false};
   bool use_pointcloud_for_stop_;
   bool use_pointcloud_for_slow_down_;
   double min_behavior_stop_margin_;
@@ -292,6 +291,7 @@ private:
   EgoNearestParam ego_nearest_param_;
 
   bool is_driving_forward_{true};
+  bool enable_slow_down_planning_{false};
   bool use_pointcloud_{false};
 
   std::vector<StopObstacle> prev_closest_stop_obstacles_{};
