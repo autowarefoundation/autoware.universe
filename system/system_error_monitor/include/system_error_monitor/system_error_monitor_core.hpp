@@ -107,7 +107,7 @@ private:
 
   // Subscriber
   autoware::universe_utils::InterProcessPollingSubscriber<diagnostic_msgs::msg::DiagnosticArray>
-    sub_diag_array_{this, "~/input/diag_array", rclcpp::QoS(std::numeric_limits<uint32_t>::max())};
+    sub_diag_array_{this, "~/input/diag_array", rclcpp::QoS(10)};
   autoware::universe_utils::InterProcessPollingSubscriber<autoware_system_msgs::msg::AutowareState>
     sub_autoware_state_{this, "~/input/current_gate_mode"};
   autoware::universe_utils::InterProcessPollingSubscriber<tier4_control_msgs::msg::GateMode>
