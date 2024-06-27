@@ -159,6 +159,9 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     ament_auto_add_gtest(test_nms
       test/test_nms.cpp
     )
+
+    # Temporary disabled, tracked by:
+    # https://github.com/autowarefoundation/autoware.universe/issues/7724
 #    ament_auto_add_gtest(test_voxel_generator
 #      test/test_voxel_generator.cpp
 #    )
