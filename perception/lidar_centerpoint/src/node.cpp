@@ -34,6 +34,8 @@
 #include "lidar_centerpoint/ros_utils.hpp"
 #include "lidar_centerpoint/utils.hpp"
 
+// TODO(mfc): remove this comment line before merging.
+
 namespace centerpoint
 {
 LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_options)
