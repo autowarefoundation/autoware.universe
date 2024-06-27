@@ -202,9 +202,14 @@ TEST_F(TestPoseInstabilityDetector, does_not_crash_even_if_abnormal_odometry_dat
   timestamp.nanosec = 0;
   helper_->send_twist_message(timestamp, 0.2, 0.0, 0.0);
 
-  executor_.spin_some();
-
   // process the above messages (by timer_callback)
+  helper_->received_diagnostic_array_flag = false;
+  while (!helper_->received_diagnostic_array_flag) {
+    executor_.spin_some();
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
+  // provoke timer callback again
   helper_->received_diagnostic_array_flag = false;
   while (!helper_->received_diagnostic_array_flag) {
     executor_.spin_some();
