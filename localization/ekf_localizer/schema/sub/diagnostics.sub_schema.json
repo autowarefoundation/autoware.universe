@@ -25,7 +25,7 @@
           "description": "The threshold at which an ERROR state is triggered due to the Twist Topic update not happening continuously for a certain number of times",
           "default": 100
         },
-        "scale": {
+        "ellipse_scale": {
           "type": "number",
           "description": "The scale factor to apply the error ellipse size",
           "default": 3.0
