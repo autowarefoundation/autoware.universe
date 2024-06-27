@@ -3,8 +3,6 @@
 #ifndef TEST_MISSION_PLANNER_CORE_HPP_
 #define TEST_MISSION_PLANNER_CORE_HPP_
 
-#include "db_msgs/msg/lanelets_stamped.hpp"
-
 namespace autoware::mapless_architecture
 {
 

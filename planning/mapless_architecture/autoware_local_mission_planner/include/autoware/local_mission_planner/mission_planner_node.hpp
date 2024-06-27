@@ -207,7 +207,7 @@ private:
   /**
    * @brief Function for the visualization of lanes.
    *
-   * @param msg The db_msgs::msg::LaneletsStamped message.
+   * @param msg The autoware_planning_msgs::msg::RoadSegments message.
    * @param converted_lanelets The lanelets (std::vector<lanelet::Lanelet>).
    */
   void VisualizeLanes_(
@@ -217,7 +217,7 @@ private:
   /**
    * @brief Function for the visualization of the centerline of a driving corridor.
    *
-   * @param msg The db_msgs::msg::LaneletsStamped message.
+   * @param msg The autoware_planning_msgs::msg::RoadSegments message.
    * @param driving_corridor The considered driving corridor for which the centerline is visualized.
    */
   void VisualizeCenterlineOfDrivingCorridor_(

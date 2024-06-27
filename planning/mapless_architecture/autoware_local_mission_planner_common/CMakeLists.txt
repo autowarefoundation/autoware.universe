@@ -22,7 +22,6 @@ ament_target_dependencies(${PROJECT_NAME}
   tf2
   tf2_ros
   tf2_geometry_msgs
-  db_msgs
   lanelet2_core
   autoware_planning_msgs)
 
@@ -40,7 +39,6 @@ ament_export_dependencies(
   tf2
   tf2_ros
   tf2_geometry_msgs
-  db_msgs
   lanelet2_core
   autoware_planning_msgs)
 
