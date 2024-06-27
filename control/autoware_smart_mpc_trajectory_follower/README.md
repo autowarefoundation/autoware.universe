@@ -142,7 +142,6 @@ To perform a control test on autoware with the nominal model before training, ma
 Record rosbag and train the model in the manner described in "Training of model and reflection in control", and move the generated files `model_for_test_drive.pth` and `polynomial_reg_info.npz` to the home directory.
 Sample models can be obtained at [sample_models/wheel_base_changed](./sample_models/wheel_base_changed/).
 
-
 > [!NOTE]
 > Although the data used for training is small, for the sake of simplicity, we will see how much performance can be improved with this amount of data.
 
