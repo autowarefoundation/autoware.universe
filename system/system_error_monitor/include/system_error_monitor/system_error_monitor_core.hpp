@@ -31,11 +31,13 @@
 #include <boost/optional.hpp>
 
 #include <deque>
+#include <limits> 
 #include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 
 struct DiagStamped
 {
