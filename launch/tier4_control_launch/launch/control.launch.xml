@@ -1,11 +1,11 @@
 <launch>
   <!-- option -->
-  <arg name="enable_obstacle_collision_checker" />
-  <arg name="lateral_controller_mode" />
-  <arg name="longitudinal_controller_mode" />
-  <arg name="enable_autonomous_emergency_braking" />
-  <arg name="check_external_emergency_heartbeat" />
-  <arg name="trajectory_follower_mode" />
+  <arg name="enable_obstacle_collision_checker"/>
+  <arg name="lateral_controller_mode"/>
+  <arg name="longitudinal_controller_mode"/>
+  <arg name="enable_autonomous_emergency_braking"/>
+  <arg name="check_external_emergency_heartbeat"/>
+  <arg name="trajectory_follower_mode" default="trajectory_follower_node"/>
 
   <!-- common param path -->
   <arg name="vehicle_param_file" />
