@@ -16,7 +16,7 @@
 #define SYSTEM_ERROR_MONITOR__SYSTEM_ERROR_MONITOR_CORE_HPP_
 
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
-
+#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -101,9 +101,12 @@ private:
 
   // Subscriber
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
-  rclcpp::Subscription<autoware_system_msgs::msg::AutowareState>::SharedPtr sub_autoware_state_;
-  rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_current_gate_mode_;
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr sub_control_mode_;
+  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_system_msgs::msg::AutowareState>
+    sub_autoware_state_{this, "~/input/current_gate_mode"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<tier4_control_msgs::msg::GateMode>
+    sub_current_gate_mode_{this, "~/input/autoware_state"};
+  tier4_autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport>
+    sub_control_mode_{this, "~/input/control_mode"};
   void onAutowareState(const autoware_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onCurrentGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg);
   void onControlMode(const autoware_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);

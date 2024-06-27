@@ -5,6 +5,7 @@
   <version>0.1.1</version>
   <description>The system_error_monitor package in ROS 2</description>
   <maintainer email="fumihito.ito@tier4.jp">Fumihito Ito</maintainer>
+  <maintainer email="masahiro.kubota@tier4.jp">Masahiro Kubota</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>

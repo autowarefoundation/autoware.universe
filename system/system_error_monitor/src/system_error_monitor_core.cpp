@@ -232,15 +232,6 @@ AutowareErrorMonitor::AutowareErrorMonitor(const rclcpp::NodeOptions & options)
   // Subscriber
   sub_diag_array_ = create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
     "input/diag_array", rclcpp::QoS{1}, std::bind(&AutowareErrorMonitor::onDiagArray, this, _1));
-  sub_current_gate_mode_ = create_subscription<tier4_control_msgs::msg::GateMode>(
-    "~/input/current_gate_mode", rclcpp::QoS{1},
-    std::bind(&AutowareErrorMonitor::onCurrentGateMode, this, _1));
-  sub_autoware_state_ = create_subscription<autoware_system_msgs::msg::AutowareState>(
-    "~/input/autoware_state", rclcpp::QoS{1},
-    std::bind(&AutowareErrorMonitor::onAutowareState, this, _1));
-  sub_control_mode_ = create_subscription<autoware_vehicle_msgs::msg::ControlModeReport>(
-    "~/input/control_mode", rclcpp::QoS{1},
-    std::bind(&AutowareErrorMonitor::onControlMode, this, _1));
 
   // Publisher
   pub_hazard_status_ = create_publisher<autoware_system_msgs::msg::HazardStatusStamped>(
@@ -440,6 +431,30 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
 
 void AutowareErrorMonitor::onTimer()
 {
+    const auto autoware_state_msg = sub_autoware_state_.takeData();
+  const auto current_gate_msg = sub_current_gate_mode_.takeData();
+  const auto control_mode_msg = sub_control_mode_.takeData();
+
+  if (autoware_state_msg) {
+    autoware_state_ = autoware_state_msg;
+    // for Heartbeat
+    autoware_state_stamp_ = this->now();
+  }
+
+  if (current_gate_msg) {
+    current_gate_mode_ = current_gate_msg;
+    // for Heartbeat
+    current_gate_mode_stamp_ = this->now();
+  }
+
+  if (control_mode_msg) {
+    control_mode_ = control_mode_msg;
+    // for Heartbeat
+    control_mode_stamp_ = this->now();
+  }
+
+  // for Heartbeat
+  current_gate_mode_stamp_ = this->now();
   if (!isDataReady()) {
     if ((this->now() - initialized_time_).seconds() > params_.data_ready_timeout) {
       RCLCPP_WARN_THROTTLE(
@@ -568,7 +583,7 @@ autoware_system_msgs::msg::HazardStatus AutowareErrorMonitor::judgeHazardStatus(
   }
 
   return hazard_status;
-}
+}durat
 
 void AutowareErrorMonitor::updateHazardStatus()
 {
