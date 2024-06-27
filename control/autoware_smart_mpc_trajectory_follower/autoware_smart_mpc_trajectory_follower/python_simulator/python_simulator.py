@@ -736,7 +736,6 @@ def drive_sim(
             )
             x_init[2] = straight_line.v_mid
 
-
     x_init += initial_error
 
     x_current = x_init.copy()
@@ -818,9 +817,7 @@ def drive_sim(
                 )
                 break_flag = figure_eight.break_flag
             elif control_type == ControlType.pp_straight:
-                target_vel = straight_line.get_current_velocity(
-                    t_eval[i]
-                )  
+                target_vel = straight_line.get_current_velocity(t_eval[i])
                 target_vel_list.append(np.array([t_eval[i], target_vel]))
                 target_position = np.array([x_current[0], 0.0])
                 target_yaw = 0.0
