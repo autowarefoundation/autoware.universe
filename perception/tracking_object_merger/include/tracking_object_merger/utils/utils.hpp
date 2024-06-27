@@ -17,8 +17,8 @@
 #ifndef TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
 #define TRACKING_OBJECT_MERGER__UTILS__UTILS_HPP_
 
-// #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include "tier4_autoware_utils/geometry/geometry.hpp"
+// #include <autoware/universe_utils/autoware_universe_utils.hpp>
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -93,7 +93,7 @@ TrackedObject linearInterpolationForTrackedObject(
 TrackedObject predictPastOrFutureTrackedObject(const TrackedObject & obj, const double dt);
 
 TrackedObjects predictPastOrFutureTrackedObjects(
-  const TrackedObjects & obj, const std_msgs::msg::Header & header);
+  const TrackedObjects & input_objects, const std_msgs::msg::Header & header);
 
 // predict tracked objects
 TrackedObjects interpolateTrackedObjects(

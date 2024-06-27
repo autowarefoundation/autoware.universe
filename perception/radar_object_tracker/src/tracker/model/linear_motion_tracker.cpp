@@ -20,8 +20,8 @@
 
 #include "radar_object_tracker/utils/utils.hpp"
 
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -137,22 +137,8 @@ LinearMotionTracker::LinearMotionTracker(
   } else {
     P_v_xy = R * P_v_xy_local * R.transpose();
   }
-  // acceleration covariance often written in object frame
-  const bool has_acceleration_covariance =
-    false;  // currently message does not have acceleration covariance
-  if (has_acceleration_covariance) {
-    // const auto ax_cov =
-    //   object.kinematics.acceleration_with_covariance.covariance[utils::MSG_COV_IDX::X_X]; // This
-    //   is future update
-    // const auto ay_cov =
-    //   object.kinematics.acceleration_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y]; // This
-    //   is future update
-    //  Eigen::Matrix2d P_a_xy_local;
-    //  P_a_xy_local << ax_cov, 0.0, 0.0, ay_cov;
-    P_a_xy = R * P_a_xy_local * R.transpose();
-  } else {
-    P_a_xy = R * P_a_xy_local * R.transpose();
-  }
+
+  P_a_xy = R * P_a_xy_local * R.transpose();
 
   // put value in P matrix
   // use block description. This assume x,y,vx,vy,ax,ay in this order
@@ -237,8 +223,8 @@ void LinearMotionTracker::loadDefaultModelParameters(const std::string & path)
   // limitation
   // (TODO): this may be written in another yaml file based on classify result
   const float max_speed_kmph = config["default"]["limit"]["max_speed"].as<float>();  // [km/h]
-  max_vx_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);                          // [m/s]
-  max_vy_ = tier4_autoware_utils::kmph2mps(max_speed_kmph);                          // [rad/s]
+  max_vx_ = autoware::universe_utils::kmph2mps(max_speed_kmph);                      // [m/s]
+  max_vy_ = autoware::universe_utils::kmph2mps(max_speed_kmph);                      // [rad/s]
 }
 
 bool LinearMotionTracker::predict(const rclcpp::Time & time)
@@ -682,7 +668,7 @@ bool LinearMotionTracker::getTrackedObject(
     const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
     const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
     object.shape.footprint =
-      tier4_autoware_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
+      autoware::universe_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
   }
 
   return true;

@@ -16,8 +16,8 @@
 #include "rclcpp/time.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <perception_online_evaluator/perception_online_evaluator_node.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -43,7 +43,7 @@ using ObjectClassification = autoware_perception_msgs::msg::ObjectClassification
 using nav_msgs::msg::Odometry;
 using TFMessage = tf2_msgs::msg::TFMessage;
 
-using tier4_autoware_utils::generateUUID;
+using autoware::universe_utils::generateUUID;
 
 constexpr double epsilon = 1e-6;
 
@@ -141,7 +141,19 @@ protected:
       [=](const DiagnosticArray::ConstSharedPtr msg) {
         const auto it = std::find_if(msg->status.begin(), msg->status.end(), is_target_metric);
         if (it != msg->status.end()) {
-          metric_value_ = boost::lexical_cast<double>(it->values[2].value);
+          const auto mean_it = std::find_if(
+            it->values.begin(), it->values.end(),
+            [](const auto & key_value) { return key_value.key == "mean"; });
+          if (mean_it != it->values.end()) {
+            metric_value_ = boost::lexical_cast<double>(mean_it->value);
+          } else {
+            const auto metric_value_it = std::find_if(
+              it->values.begin(), it->values.end(),
+              [](const auto & key_value) { return key_value.key == "metric_value"; });
+            if (metric_value_it != it->values.end()) {
+              metric_value_ = boost::lexical_cast<double>(metric_value_it->value);
+            }
+          }
           metric_updated_ = true;
         }
       });
