@@ -53,8 +53,8 @@ cv::Mat SemanticSegmentation::convert_blob_to_image(const cv::Mat & blob)
   const int channels = blob.size[1];
   const int height = blob.size[2];
   const int width = blob.size[3];
-  cv::Mat image = cv::Mat(height, width, CV_32FC4); // NOLINT
-                                                    // suppress hicpp-signed-bitwise from OpenCV
+  cv::Mat image = cv::Mat(height, width, CV_32FC4);  // NOLINT
+                                                     // suppress hicpp-signed-bitwise from OpenCV
 
   for (int h = 0; h < height; ++h) {
     for (int w = 0; w < width; ++w) {
@@ -93,8 +93,8 @@ cv::Mat SemanticSegmentation::normalize(const cv::Mat & mask, double score_thres
   for (size_t i = 1; i < masks.size(); ++i) {
     cv::Mat bin_mask;
     cv::threshold(masks[i], bin_mask, score_threshold, 255, cv::THRESH_BINARY_INV);
-    bin_mask.convertTo(bin_mask, CV_8UC1); // NOLINT
-                                           // suppress hicpp-signed-bitwise from OpenCV
+    bin_mask.convertTo(bin_mask, CV_8UC1);  // NOLINT
+                                            // suppress hicpp-signed-bitwise from OpenCV
     bin_masks.push_back(255 - bin_mask);
   }
 

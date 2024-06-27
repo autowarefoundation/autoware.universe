@@ -44,9 +44,10 @@ cv::Mat ProjectorModule::project_image(const cv::Mat & mask_image)
   std::vector<cv::Scalar> colors = {
     cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255)};
 
-  cv::Mat projected_image = cv::Mat::zeros(cv::Size(800, 800), CV_8UC3); // NOLINT
-                                                                  // suppress hicpp-signed-bitwise
-                                                                  // from OpenCV
+  cv::Mat projected_image =
+    cv::Mat::zeros(cv::Size(800, 800), CV_8UC3);  // NOLINT
+                                                  // suppress hicpp-signed-bitwise
+                                                  // from OpenCV
   for (int i = 0; i < 3; i++) {
     std::vector<std::vector<cv::Point> > contours;
     cv::findContours(masks[i], contours, cv::RETR_LIST, cv::CHAIN_APPROX_NONE);

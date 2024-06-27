@@ -59,8 +59,8 @@ void draw_lane(cv::Mat & image, const polygon_t & polygon)
 {
   std::vector<cv::Point> contour;
   for (auto p : polygon.outer()) {
-    cv::Point2i pt = to_cv_point(
-      Eigen::Vector3f(static_cast<float>(p.x()), static_cast<float>(p.y()), 0));
+    cv::Point2i pt =
+      to_cv_point(Eigen::Vector3f(static_cast<float>(p.x()), static_cast<float>(p.y()), 0));
     contour.push_back(pt);
   }
 
@@ -85,9 +85,9 @@ cv::Mat LaneImage::get_image(const Pose & pose)
   const auto xyz = pose.position;
   box_t box(point_t(-20, -20), point_t(20, 20));
 
-  cv::Mat image = cv::Mat::zeros(cv::Size(800, 800), CV_8UC3); // NOLINT
-                                                               // suppress hicpp-signed-bitwise
-                                                               // from OpenCV
+  cv::Mat image = cv::Mat::zeros(cv::Size(800, 800), CV_8UC3);  // NOLINT
+                                                                // suppress hicpp-signed-bitwise
+                                                                // from OpenCV
 
   std::vector<lanelet::Lanelet> joint_lanes;
   for (auto lanelet : map_->laneletLayer) {
@@ -95,7 +95,7 @@ cv::Mat LaneImage::get_image(const Pose & pose)
     for (auto right : lanelet.rightBound2d()) {
       polygon.outer().push_back(point_t(right.x() - xyz.x, right.y() - xyz.y));
     }
-    for (const  auto & left : boost::adaptors::reverse(lanelet.leftBound2d())) {
+    for (const auto & left : boost::adaptors::reverse(lanelet.leftBound2d())) {
       polygon.outer().push_back(point_t(left.x() - xyz.x, left.y() - xyz.y));
     }
 
