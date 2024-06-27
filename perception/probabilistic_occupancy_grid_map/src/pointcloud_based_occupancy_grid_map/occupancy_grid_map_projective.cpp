@@ -84,10 +84,8 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   const size_t angle_bin_size = ((max_angle - min_angle) / angle_increment) + size_t(1 /*margin*/);
 
   // Transform from base_link to map frame
-  PointCloud2 map_raw_pointcloud, map_obstacle_pointcloud;  // point cloud in map frame
   Eigen::Matrix4f mat_map = utils::getTransformMatrix(robot_pose);
 
-  PointCloud2 scan_raw_pointcloud, scan_obstacle_pointcloud;      // point cloud in scan frame
   const auto scan2map_pose = utils::getInversePose(scan_origin);  // scan -> map transform pose
 
   // Transform from map frame to scan frame
@@ -124,18 +122,16 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
 
   std::vector</*angle bin*/ std::vector<BinInfo3D>> obstacle_pointcloud_angle_bins(angle_bin_size);
   std::vector</*angle bin*/ std::vector<BinInfo3D>> raw_pointcloud_angle_bins(angle_bin_size);
-  
+
   const size_t raw_pointcloud_size = raw_pointcloud.width * raw_pointcloud.height;
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
   const size_t obstacle_reserve_size = obstacle_pointcloud_size / angle_bin_size;
 
   // Reserve a certain amount of memory in advance for performance reasons
-  for (auto & raw_pointcloud_angle_bin : raw_pointcloud_angle_bins) {
-    raw_pointcloud_angle_bin.reserve(raw_reserve_size);
-  }
-  for (auto & obstacle_pointcloud_angle_bin : obstacle_pointcloud_angle_bins) {
-    obstacle_pointcloud_angle_bin.reserve(obstacle_reserve_size);
+  for (size_t i = 0; i < angle_bin_size; i++) {
+    raw_pointcloud_angle_bins[i].reserve(raw_reserve_size);
+    obstacle_pointcloud_angle_bins[i].reserve(obstacle_reserve_size);
   }
 
   // Updated every loop inside transformPointAndCalculate()
@@ -154,7 +150,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       continue;
     }
     transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
-    
+
     raw_pointcloud_angle_bins.at(angle_bin_index)
       .emplace_back(range, pt_map[0], pt_map[1], pt_map[2]);
     global_offset += raw_pointcloud.point_step;
