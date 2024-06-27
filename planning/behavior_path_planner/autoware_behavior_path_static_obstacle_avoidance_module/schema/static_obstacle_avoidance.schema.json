@@ -26,7 +26,7 @@
           "type": "string",
           "enum": ["current_lane", "same_direction_lane", "opposite_direction_lane"],
           "description": "Drivable lane configuration.",
-          "default": "true"
+          "default": "opposite_direction_lane"
         },
         "use_hatched_road_markings": {
           "type": "boolean",
