@@ -104,7 +104,6 @@ jobs:
           rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           build-depends-repos: ${{ matrix.build-depends-repos }}
-          cache-key-element: ${{ env.BUILD_TYPE_CUDA_STATE }}
 
       - name: Upload coverage to CodeCov
         if: ${{ steps.test.outputs.coverage-report-files != '' }}
@@ -123,10 +122,14 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/autowarefoundation/autoware:latest-prebuilt-cuda
     steps:
+      - name: Set PR fetch depth
+        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
+
       - name: Checkout PR branch and all PR commits
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
 
       - name: Show disk space before the tasks
         run: df -h
