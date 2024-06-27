@@ -54,44 +54,6 @@ public:
   MissionPlannerNode();
 
   /**
-   * @brief Get a point on the given lane that is x meters away in x direction
-   * (using a projection).
-   *
-   * @param lane The given lane (std::vector<int>) on which the point is
-   * created.
-   * @param x_distance The point is created x_distance meters (float) away from
-   * the vehicle (in x direction using a projection).
-   * @param converted_lanelets The lanelets (std::vector<lanelet::Lanelet>) from
-   * the road model.
-   * @return lanelet::BasicPoint2d
-   */
-  lanelet::BasicPoint2d GetPointOnLane_(
-    const std::vector<int> & lane, const float x_distance,
-    const std::vector<lanelet::Lanelet> & converted_lanelets);
-
-  /**
-   * @brief Calculate the distance between a point and a LineString (Euclidean
-   * distance).
-   *
-   * @param linestring The LineString.
-   * @param point The point.
-   * @return double
-   */
-  double CalculateDistanceBetweenPointAndLineString_(
-    const lanelet::ConstLineString2d & linestring, const lanelet::BasicPoint2d & point);
-
-  /**
-   * @brief Recenter a point in a lanelet to its closest point on the centerline
-   *
-   * @param goal_point The input point which should be re-centered
-   * @param road_model The road model which contains the point to be re-centered
-   * @return lanelet::BasicPoint2d The re-centered point (which lies on the
-   * centerline of its lanelet)
-   */
-  lanelet::BasicPoint2d RecenterGoalPoint(
-    const lanelet::BasicPoint2d & goal_point, const std::vector<lanelet::Lanelet> & road_model);
-
-  /**
     * @brief Function which checks if the vehicle is on the goal lane.
     * This functions returns a bool depending on whether the vehicle is on the
     goal lane or not.
@@ -136,23 +98,6 @@ public:
     std::vector<LaneletConnection> & lanelet_connections);
 
   /**
-    * @brief Function for creating a marker array.
-    * This functions creates a visualization_msgs::msg::MarkerArray from the
-    given input.
-    *
-    * @param centerline The centerline which is a LineString.
-    * @param left The left boundary which is a LineString.
-    * @param right The right boundary which is a LineString.
-    * @param msg The LaneletsStamped message.
-    * @return MarkerArray (visualization_msgs::msg::MarkerArray).
-    */
-  visualization_msgs::msg::MarkerArray CreateMarkerArray_(
-    const std::vector<lanelet::ConstLineString3d> & centerline,
-    const std::vector<lanelet::ConstLineString3d> & left,
-    const std::vector<lanelet::ConstLineString3d> & right,
-    const autoware_planning_msgs::msg::RoadSegments & msg);
-
-  /**
    * @brief Getter for goal_point_
    *
    * @return lanelet::BasicPoint2d
@@ -165,17 +110,6 @@ public:
    * @param goal_point The new value for the goal_point_.
    */
   void goal_point(const lanelet::BasicPoint2d & goal_point);
-
-  /**
-   * @brief Create a DrivingCorridor object.
-   *
-   * @param lane The lane which is a std::vector<int> containing all the indices
-   * of the lane.
-   * @param converted_lanelets The lanelets (std::vector<lanelet::Lanelet>).
-   * @return autoware_planning_msgs::msg::DrivingCorridor
-   */
-  autoware_planning_msgs::msg::DrivingCorridor CreateDrivingCorridor_(
-    const std::vector<int> & lane, const std::vector<lanelet::Lanelet> & converted_lanelets);
 
   /**
    * @brief The callback for the Mission messages.
@@ -203,14 +137,40 @@ public:
     std::vector<lanelet::Lanelet> & out_lanelets,
     std::vector<LaneletConnection> & out_lanelet_connections);
 
-private:
+  /**
+   * @brief Get a point on the given lane that is x meters away in x direction
+   * (using a projection).
+   *
+   * @param lane The given lane (std::vector<int>) on which the point is
+   * created.
+   * @param x_distance The point is created x_distance meters (float) away from
+   * the vehicle (in x direction using a projection).
+   * @param converted_lanelets The lanelets (std::vector<lanelet::Lanelet>) from
+   * the road model.
+   * @return lanelet::BasicPoint2d
+   */
+  lanelet::BasicPoint2d GetPointOnLane(
+    const std::vector<int> & lane, const float x_distance,
+    const std::vector<lanelet::Lanelet> & converted_lanelets);
+
+  /**
+   * @brief Calculate the distance between a point and a LineString (Euclidean
+   * distance).
+   *
+   * @param linestring The LineString.
+   * @param point The point.
+   * @return double
+   */
+  double CalculateDistanceBetweenPointAndLineString(
+    const lanelet::ConstLineString2d & linestring, const lanelet::BasicPoint2d & point);
+
   /**
    * @brief Function for the visualization of lanes.
    *
    * @param msg The autoware_planning_msgs::msg::RoadSegments message.
    * @param converted_lanelets The lanelets (std::vector<lanelet::Lanelet>).
    */
-  void VisualizeLanes_(
+  void VisualizeLanes(
     const autoware_planning_msgs::msg::RoadSegments & msg,
     const std::vector<lanelet::Lanelet> & converted_lanelets);
 
@@ -220,19 +180,11 @@ private:
    * @param msg The autoware_planning_msgs::msg::RoadSegments message.
    * @param driving_corridor The considered driving corridor for which the centerline is visualized.
    */
-  void VisualizeCenterlineOfDrivingCorridor_(
+  void VisualizeCenterlineOfDrivingCorridor(
     const autoware_planning_msgs::msg::RoadSegments & msg,
     const autoware_planning_msgs::msg::DrivingCorridor & driving_corridor);
 
-  /**
-   * @brief Function for creating a lanelet::LineString2d.
-   *
-   * @param points The considered points
-   * (std::vector<geometry_msgs::msg::Point>).
-   * @return lanelet::LineString2d
-   */
-  lanelet::LineString2d CreateLineString_(const std::vector<geometry_msgs::msg::Point> & points);
-
+private:
   /**
    * @brief Callback for the odometry messages.
    *
@@ -248,36 +200,6 @@ private:
    * @param neighboring_lane The neighboring lane.
    */
   void InitiateLaneChange_(const Direction direction, const std::vector<int> & neighboring_lane);
-
-  /**
-   * @brief Get all the neighbor lanelets (neighbor lane) of a specific lane on one side.
-   *
-   * @param lane The considered lane.
-   * @param lanelet_connections The lanelet connections.
-   * @param vehicle_side The side of the vehicle that is considered (enum).
-   * @return std::vector<int>
-   */
-  std::vector<int> GetAllNeighborsOfLane(
-    const std::vector<int> & lane, const std::vector<LaneletConnection> & lanelet_connections,
-    const int vehicle_side);
-
-  /**
-   * @brief Add the predecessor lanelet to a lane.
-   *
-   * @param lane_idx The considered lane. The predecessor lanelet is added to
-   * the front of the lane.
-   * @param lanelet_connections The lanelet connections.
-   *
-   */
-  void InsertPredecessorLanelet(
-    std::vector<int> & lane_idx, const std::vector<LaneletConnection> & lanelet_connections);
-
-  /**
-   * @brief Calculate the predecessors.
-   *
-   * @param lanelet_connections The lanelet connections.
-   */
-  void CalculatePredecessors(std::vector<LaneletConnection> & lanelet_connections);
 
   //  Declare ROS2 publisher and subscriber
   rclcpp::Subscription<autoware_planning_msgs::msg::LocalMap>::SharedPtr mapSubscriber_;

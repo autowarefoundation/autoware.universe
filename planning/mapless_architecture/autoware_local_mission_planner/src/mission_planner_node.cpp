@@ -107,7 +107,7 @@ void MissionPlannerNode::CallbackLocalMapMessages_(
   std::vector<lanelet::Lanelet> converted_lanelets;
 
   ConvertInput2LaneletFormat(msg.road_segments, converted_lanelets, lanelet_connections);
-  MissionPlannerNode::VisualizeLanes_(msg.road_segments, converted_lanelets);
+  VisualizeLanes(msg.road_segments, converted_lanelets);
 
   // Get the lanes
   Lanes result = MissionPlannerNode::CalculateLanes_(converted_lanelets, lanelet_connections);
@@ -163,7 +163,7 @@ void MissionPlannerNode::CallbackLocalMapMessages_(
       // Check if successful lane change
       if (
         IsOnGoalLane_(egoLaneletIndex, goal_point_, converted_lanelets, lanelet_connections) &&
-        CalculateDistanceBetweenPointAndLineString_(
+        CalculateDistanceBetweenPointAndLineString(
           converted_lanelets[egoLaneletIndex].centerline2d(), pointEgo) <=
           distance_to_centerline_threshold_) {
         // Reset mission to lane keeping
@@ -222,27 +222,25 @@ void MissionPlannerNode::CallbackLocalMapMessages_(
                                               // Change this value
 
   // Create driving corridors and add them to the MissionLanesStamped message
-  lanes.ego_lane = MissionPlannerNode::CreateDrivingCorridor_(ego_lane_, converted_lanelets);
-  MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor_(msg.road_segments, lanes.ego_lane);
+  lanes.ego_lane = CreateDrivingCorridor(ego_lane_, converted_lanelets);
+  VisualizeCenterlineOfDrivingCorridor(msg.road_segments, lanes.ego_lane);
 
   // Initialize driving corridor
   autoware_planning_msgs::msg::DrivingCorridor driving_corridor;
 
   if (!left_lanes.empty()) {
     for (const std::vector<int> & lane : left_lanes) {
-      driving_corridor = MissionPlannerNode::CreateDrivingCorridor_(lane, converted_lanelets);
+      driving_corridor = CreateDrivingCorridor(lane, converted_lanelets);
       lanes.drivable_lanes_left.push_back(driving_corridor);
-      MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor_(
-        msg.road_segments, driving_corridor);
+      VisualizeCenterlineOfDrivingCorridor(msg.road_segments, driving_corridor);
     }
   }
 
   if (!right_lanes.empty()) {
     for (const std::vector<int> & lane : right_lanes) {
-      driving_corridor = MissionPlannerNode::CreateDrivingCorridor_(lane, converted_lanelets);
+      driving_corridor = CreateDrivingCorridor(lane, converted_lanelets);
       lanes.drivable_lanes_right.push_back(driving_corridor);
-      MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor_(
-        msg.road_segments, driving_corridor);
+      VisualizeCenterlineOfDrivingCorridor(msg.road_segments, driving_corridor);
     }
   }
 
@@ -429,30 +427,6 @@ void MissionPlannerNode::CallbackOdometryMessages_(const nav_msgs::msg::Odometry
   return;
 }
 
-lanelet::BasicPoint2d MissionPlannerNode::RecenterGoalPoint(
-  const lanelet::BasicPoint2d & goal_point, const std::vector<lanelet::Lanelet> & road_model)
-{
-  // Return value
-  lanelet::BasicPoint2d projected_goal_point;
-
-  // Get current lanelet index of goal point
-  const int lanelet_idx_goal_point = FindOccupiedLaneletID(road_model, goal_point);
-
-  if (lanelet_idx_goal_point >= 0) {
-    // Get the centerline of the goal point's lanelet
-    lanelet::ConstLineString2d centerline_curr_lanelet =
-      road_model[lanelet_idx_goal_point].centerline2d();
-
-    // Project goal point to the centerline of its lanelet
-    projected_goal_point = lanelet::geometry::project(centerline_curr_lanelet, goal_point);
-  } else {
-    // Return untouched input point if index is not valid
-    projected_goal_point = goal_point;
-  }
-
-  return projected_goal_point;
-}
-
 void MissionPlannerNode::CallbackMissionMessages_(const autoware_planning_msgs::msg::Mission & msg)
 {
   // Initialize variables
@@ -509,78 +483,8 @@ void MissionPlannerNode::InitiateLaneChange_(
     mission_ = direction;
     target_lane_ = direction;
     goal_point_ =
-      GetPointOnLane_(neighboring_lane, projection_distance_on_goallane_, current_lanelets_);
+      GetPointOnLane(neighboring_lane, projection_distance_on_goallane_, current_lanelets_);
   }
-}
-
-void MissionPlannerNode::VisualizeLanes_(
-  const autoware_planning_msgs::msg::RoadSegments & msg,
-  const std::vector<lanelet::Lanelet> & converted_lanelets)
-{
-  // Calculate centerlines, left and right bounds
-  std::vector<lanelet::ConstLineString3d> centerlines;
-  std::vector<lanelet::ConstLineString3d> left_bounds;
-  std::vector<lanelet::ConstLineString3d> right_bounds;
-
-  // Go through every lanelet
-  for (const lanelet::Lanelet & l : converted_lanelets) {
-    auto centerline = l.centerline();
-    auto bound_left = l.leftBound();
-    auto bound_right = l.rightBound();
-
-    centerlines.push_back(centerline);
-    left_bounds.push_back(bound_left);
-    right_bounds.push_back(bound_right);
-  }
-
-  auto marker_array =
-    MissionPlannerNode::CreateMarkerArray_(centerlines, left_bounds, right_bounds, msg);
-
-  // Publish centerlines, left and right bounds
-  visualizationPublisher_->publish(marker_array);
-}
-
-void MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor_(
-  const autoware_planning_msgs::msg::RoadSegments & msg,
-  const autoware_planning_msgs::msg::DrivingCorridor & driving_corridor)
-{
-  // Create a marker for the centerline
-  visualization_msgs::msg::Marker centerline_marker;
-  centerline_marker.header.frame_id = msg.header.frame_id;
-  centerline_marker.header.stamp = msg.header.stamp;
-  centerline_marker.ns = "centerline";
-
-  // Unique ID
-  if (centerline_marker_id_ == std::numeric_limits<int>::max()) {
-    // Handle overflow
-    centerline_marker_id_ = 0;
-  } else {
-    centerline_marker.id = centerline_marker_id_++;
-  }
-
-  centerline_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  centerline_marker.action = visualization_msgs::msg::Marker::ADD;
-
-  // Set the scale of the marker
-  centerline_marker.scale.x = 0.1;  // Line width
-
-  // Set the color of the marker (red, green, blue, alpha)
-  centerline_marker.color.r = 1.0;
-  centerline_marker.color.g = 0.0;
-  centerline_marker.color.b = 0.0;
-  centerline_marker.color.a = 1.0;
-
-  // Add points to the marker
-  for (const geometry_msgs::msg::Point & p : driving_corridor.centerline) {
-    centerline_marker.points.push_back(p);
-  }
-
-  // Create a MarkerArray to hold the marker
-  visualization_msgs::msg::MarkerArray marker_array;
-  marker_array.markers.push_back(centerline_marker);
-
-  // Publish the marker array
-  visualization_publisher_centerline_->publish(marker_array);
 }
 
 // Determine the lanes
@@ -668,223 +572,6 @@ Lanes MissionPlannerNode::CalculateLanes_(
   return lanes;
 }
 
-void MissionPlannerNode::InsertPredecessorLanelet(
-  std::vector<int> & lane_idx, const std::vector<LaneletConnection> & lanelet_connections)
-{
-  if (!lane_idx.empty()) {
-    // Get index of first lanelet
-    int first_lanelet_index = lane_idx[0];
-
-    if (!lanelet_connections[first_lanelet_index].predecessor_lanelet_ids.empty()) {
-      // Get one predecessor lanelet
-      const int predecessor_lanelet = lanelet_connections[first_lanelet_index]
-                                        .predecessor_lanelet_ids[0];  // Get one of the predecessors
-
-      // Insert predecessor lanelet in lane_idx
-      if (predecessor_lanelet >= 0) {
-        lane_idx.insert(lane_idx.begin(), predecessor_lanelet);
-      }
-    }
-  }
-}
-
-std::vector<int> MissionPlannerNode::GetAllNeighborsOfLane(
-  const std::vector<int> & lane, const std::vector<LaneletConnection> & lanelet_connections,
-  const int vehicle_side)
-{
-  // Initialize vector
-  std::vector<int> neighbor_lane_idx = {};
-
-  if (!lane.empty()) {
-    // Loop through all the lane indices to get the neighbors
-    int neighbor_tmp;
-
-    for (const int id : lane) {
-      neighbor_tmp = lanelet_connections[id].neighbor_lanelet_ids[vehicle_side];
-      if (neighbor_tmp >= 0) {
-        // Only add neighbor if lanelet does not exist already (avoid having
-        // duplicates)
-        if (
-          std::find(neighbor_lane_idx.begin(), neighbor_lane_idx.end(), neighbor_tmp) ==
-          neighbor_lane_idx.end()) {
-          neighbor_lane_idx.push_back(neighbor_tmp);
-        }
-      } else {
-        // If there is a blind spot in the neighbor sequence, break the loop
-        break;
-      }
-    }
-  }
-
-  return neighbor_lane_idx;
-}
-
-visualization_msgs::msg::MarkerArray MissionPlannerNode::CreateMarkerArray_(
-  const std::vector<lanelet::ConstLineString3d> & centerline,
-  const std::vector<lanelet::ConstLineString3d> & left,
-  const std::vector<lanelet::ConstLineString3d> & right,
-  const autoware_planning_msgs::msg::RoadSegments & msg)
-{
-  visualization_msgs::msg::MarkerArray markerArray;
-
-  // Centerline
-  for (size_t i = 0; i < centerline.size(); ++i) {
-    visualization_msgs::msg::Marker marker;  // Create a new marker in each iteration
-
-    // Adding points to the marker
-    for (const auto & point : centerline[i]) {
-      geometry_msgs::msg::Point p;
-
-      p.x = point.x();
-      p.y = point.y();
-      p.z = point.z();
-
-      marker.points.push_back(p);
-    }
-    markerArray.markers.push_back(marker);
-  }
-
-  // Left bound
-  for (size_t i = 0; i < left.size(); ++i) {
-    visualization_msgs::msg::Marker marker;  // Create a new marker in each iteration
-
-    marker.header.frame_id = msg.header.frame_id;  // Adjust frame_id as needed
-    marker.header.stamp = msg.header.stamp;        // rclcpp::Node::now();
-    marker.ns = "linestring";
-    marker.id = i + 1000;
-    marker.type = visualization_msgs::msg::Marker::POINTS;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    marker.pose.orientation.w = 1.0;  // Neutral orientation
-    marker.scale.x = 5.0;
-    marker.color.b = 1.0;  // Blue color
-    marker.color.a = 1.0;  // Full opacity
-
-    // Adding points to the marker
-    for (const auto & point : left[i]) {
-      geometry_msgs::msg::Point p;
-
-      p.x = point.x();
-      p.y = point.y();
-      p.z = point.z();
-
-      marker.points.push_back(p);
-    }
-    markerArray.markers.push_back(marker);
-  }
-
-  // Right bound
-  for (size_t i = 0; i < right.size(); ++i) {
-    visualization_msgs::msg::Marker marker;  // Create a new marker in each iteration
-
-    marker.header.frame_id = msg.header.frame_id;  // Adjust frame_id as needed
-    marker.header.stamp = msg.header.stamp;        // rclcpp::Node::now();
-    marker.ns = "linestring";
-    marker.id = i + 2000;
-    marker.type = visualization_msgs::msg::Marker::POINTS;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    marker.pose.orientation.w = 1.0;  // Neutral orientation
-    marker.scale.x = 5.0;
-    marker.color.b = 1.0;  // Blue color
-    marker.color.a = 1.0;  // Full opacity
-
-    // Adding points to the marker
-    for (const auto & point : right[i]) {
-      geometry_msgs::msg::Point p;
-
-      p.x = point.x();
-      p.y = point.y();
-      p.z = point.z();
-
-      marker.points.push_back(p);
-    }
-    markerArray.markers.push_back(marker);
-  }
-
-  return markerArray;
-}
-
-autoware_planning_msgs::msg::DrivingCorridor MissionPlannerNode::CreateDrivingCorridor_(
-  const std::vector<int> & lane, const std::vector<lanelet::Lanelet> & converted_lanelets)
-{
-  // Create driving corridor
-  autoware_planning_msgs::msg::DrivingCorridor driving_corridor;
-
-  for (int id : lane) {
-    if (id >= 0) {
-      auto current_lanelet = converted_lanelets.at(id);
-
-      auto centerline = current_lanelet.centerline();
-      auto bound_left = current_lanelet.leftBound();
-      auto bound_right = current_lanelet.rightBound();
-
-      // Adding elements of centerline
-      for (const auto & point : centerline) {
-        geometry_msgs::msg::Point p;
-
-        p.x = point.x();
-        p.y = point.y();
-        p.z = point.z();
-
-        driving_corridor.centerline.push_back(p);
-      }
-
-      // Adding elements of bound_left
-      for (const auto & point : bound_left) {
-        geometry_msgs::msg::Point p;
-
-        p.x = point.x();
-        p.y = point.y();
-        p.z = point.z();
-
-        driving_corridor.bound_left.push_back(p);
-      }
-
-      // Adding elements of bound_right
-      for (const auto & point : bound_right) {
-        geometry_msgs::msg::Point p;
-
-        p.x = point.x();
-        p.y = point.y();
-        p.z = point.z();
-
-        driving_corridor.bound_right.push_back(p);
-      }
-    }
-  }
-  return driving_corridor;
-}
-
-lanelet::BasicPoint2d MissionPlannerNode::GetPointOnLane_(
-  const std::vector<int> & lane, const float x_distance,
-  const std::vector<lanelet::Lanelet> & converted_lanelets)
-{
-  lanelet::BasicPoint2d return_point;  // return value
-
-  if (lane.size() > 0) {
-    lanelet::ConstLineString2d linestring = MissionPlannerNode::CreateLineString_(
-      MissionPlannerNode::CreateDrivingCorridor_(lane, converted_lanelets)
-        .centerline);  // Create linestring for the lane
-
-    // Create point that is float meters in front (x axis)
-    lanelet::BasicPoint2d point(x_distance, 0.0);
-
-    // Get projected point on the linestring
-    lanelet::BasicPoint2d projected_point = lanelet::geometry::project(linestring, point);
-
-    // Overwrite p (return value)
-    return_point.x() = projected_point.x();
-    return_point.y() = projected_point.y();
-  } else {
-    RCLCPP_WARN(
-      this->get_logger(),
-      "Overwriting of point may not have occurred properly. Lane is "
-      "probably empty.");
-  }
-
-  // Return point p
-  return return_point;
-}
-
 bool MissionPlannerNode::IsOnGoalLane_(
   const int ego_lanelet_index, const lanelet::BasicPoint2d & goal_point,
   const std::vector<lanelet::Lanelet> & converted_lanelets,
@@ -916,43 +603,6 @@ bool MissionPlannerNode::IsOnGoalLane_(
   return result;
 }
 
-// Create LineString2d that consists of the given points (x and y)
-lanelet::LineString2d MissionPlannerNode::CreateLineString_(
-  const std::vector<geometry_msgs::msg::Point> & points)
-{
-  // Create a Lanelet2 linestring
-  lanelet::LineString2d linestring;
-
-  // Iterate through the vector of points and add them to the linestring
-  for (const auto & point : points) {
-    lanelet::Point2d p(0, point.x,
-                       point.y);  // First argument is ID (set it to 0 for now)
-    linestring.push_back(p);
-  }
-
-  // Return the created linestring
-  return linestring;
-}
-
-// Function to calculate the shortest distance between a point and a
-// linestring
-double MissionPlannerNode::CalculateDistanceBetweenPointAndLineString_(
-  const lanelet::ConstLineString2d & linestring, const lanelet::BasicPoint2d & point)
-{
-  // Get projected point on the linestring
-  lanelet::BasicPoint2d projected_point = lanelet::geometry::project(linestring, point);
-
-  // Calculate the distance between the two points
-  double distance = lanelet::geometry::distance2d(point, projected_point);
-
-  // Publish distance
-  autoware_planning_msgs::msg::VisualizationDistance d;
-  d.distance = distance;
-  visualizationDistancePublisher_->publish(d);
-
-  return distance;
-}
-
 void MissionPlannerNode::CheckIfGoalPointShouldBeReset_(
   const lanelet::Lanelets & converted_lanelets,
   const std::vector<LaneletConnection> & lanelet_connections)
@@ -967,7 +617,7 @@ void MissionPlannerNode::CheckIfGoalPointShouldBeReset_(
 
     if (goal_index >= 0) {  // Check if -1
       // Reset goal point
-      goal_point_ = GetPointOnLane_(
+      goal_point_ = GetPointOnLane(
         GetAllSuccessorSequences(lanelet_connections, goal_index)[0],
         projection_distance_on_goallane_, converted_lanelets);
     } else {
@@ -1084,35 +734,126 @@ void MissionPlannerNode::ConvertInput2LaneletFormat(
   }
 
   // Fill predecessor field for each lanelet
-  this->CalculatePredecessors(out_lanelet_connections);
+  CalculatePredecessors(out_lanelet_connections);
 
   return;
 }
 
-void MissionPlannerNode::CalculatePredecessors(std::vector<LaneletConnection> & lanelet_connections)
+lanelet::BasicPoint2d MissionPlannerNode::GetPointOnLane(
+  const std::vector<int> & lane, const float x_distance,
+  const std::vector<lanelet::Lanelet> & converted_lanelets)
 {
-  // Determine predecessor information from already known information
-  for (std::size_t id_lanelet = 0; id_lanelet < lanelet_connections.size(); id_lanelet++) {
-    // Write lanelet predecessors (which are the successors of their previous
-    // lanelets)
-    for (std::size_t n_successor = 0;
-         n_successor < lanelet_connections[id_lanelet].successor_lanelet_ids.size();
-         n_successor++) {
-      // Check if current lanelet has a valid successor, otherwise end of
-      // current local environment model has been reached and all the
-      // predecessors have been written with the last iteration
-      if (lanelet_connections[id_lanelet].successor_lanelet_ids[n_successor] > -1) {
-        lanelet_connections[lanelet_connections[id_lanelet].successor_lanelet_ids[n_successor]]
-          .predecessor_lanelet_ids.push_back(id_lanelet);
-      }
-    }
+  lanelet::BasicPoint2d return_point;  // return value
+
+  if (lane.size() > 0) {
+    lanelet::ConstLineString2d linestring =
+      CreateLineString(CreateDrivingCorridor(lane, converted_lanelets)
+                         .centerline);  // Create linestring for the lane
+
+    // Create point that is float meters in front (x axis)
+    lanelet::BasicPoint2d point(x_distance, 0.0);
+
+    // Get projected point on the linestring
+    lanelet::BasicPoint2d projected_point = lanelet::geometry::project(linestring, point);
+
+    // Overwrite p (return value)
+    return_point.x() = projected_point.x();
+    return_point.y() = projected_point.y();
+  } else {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "Overwriting of point may not have occurred properly. Lane is "
+      "probably empty.");
   }
 
-  // Write -1 to lanelets which have no predecessors
-  for (LaneletConnection lanelet_connection : lanelet_connections) {
-    if (lanelet_connection.predecessor_lanelet_ids.empty()) {
-      lanelet_connection.predecessor_lanelet_ids = {-1};
-    }
-  }
+  // Return point p
+  return return_point;
 }
+
+double MissionPlannerNode::CalculateDistanceBetweenPointAndLineString(
+  const lanelet::ConstLineString2d & linestring, const lanelet::BasicPoint2d & point)
+{
+  // Get projected point on the linestring
+  lanelet::BasicPoint2d projected_point = lanelet::geometry::project(linestring, point);
+
+  // Calculate the distance between the two points
+  double distance = lanelet::geometry::distance2d(point, projected_point);
+
+  // Publish distance
+  autoware_planning_msgs::msg::VisualizationDistance d;
+  d.distance = distance;
+  visualizationDistancePublisher_->publish(d);
+
+  return distance;
+}
+
+void MissionPlannerNode::VisualizeLanes(
+  const autoware_planning_msgs::msg::RoadSegments & msg,
+  const std::vector<lanelet::Lanelet> & converted_lanelets)
+{
+  // Calculate centerlines, left and right bounds
+  std::vector<lanelet::ConstLineString3d> centerlines;
+  std::vector<lanelet::ConstLineString3d> left_bounds;
+  std::vector<lanelet::ConstLineString3d> right_bounds;
+
+  // Go through every lanelet
+  for (const lanelet::Lanelet & l : converted_lanelets) {
+    auto centerline = l.centerline();
+    auto bound_left = l.leftBound();
+    auto bound_right = l.rightBound();
+
+    centerlines.push_back(centerline);
+    left_bounds.push_back(bound_left);
+    right_bounds.push_back(bound_right);
+  }
+
+  auto marker_array = CreateMarkerArray(centerlines, left_bounds, right_bounds, msg);
+
+  // Publish centerlines, left and right bounds
+  visualizationPublisher_->publish(marker_array);
+}
+
+void MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor(
+  const autoware_planning_msgs::msg::RoadSegments & msg,
+  const autoware_planning_msgs::msg::DrivingCorridor & driving_corridor)
+{
+  // Create a marker for the centerline
+  visualization_msgs::msg::Marker centerline_marker;
+  centerline_marker.header.frame_id = msg.header.frame_id;
+  centerline_marker.header.stamp = msg.header.stamp;
+  centerline_marker.ns = "centerline";
+
+  // Unique ID
+  if (centerline_marker_id_ == std::numeric_limits<int>::max()) {
+    // Handle overflow
+    centerline_marker_id_ = 0;
+  } else {
+    centerline_marker.id = centerline_marker_id_++;
+  }
+
+  centerline_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  centerline_marker.action = visualization_msgs::msg::Marker::ADD;
+
+  // Set the scale of the marker
+  centerline_marker.scale.x = 0.1;  // Line width
+
+  // Set the color of the marker (red, green, blue, alpha)
+  centerline_marker.color.r = 1.0;
+  centerline_marker.color.g = 0.0;
+  centerline_marker.color.b = 0.0;
+  centerline_marker.color.a = 1.0;
+
+  // Add points to the marker
+  for (const geometry_msgs::msg::Point & p : driving_corridor.centerline) {
+    centerline_marker.points.push_back(p);
+  }
+
+  // Create a MarkerArray to hold the marker
+  visualization_msgs::msg::MarkerArray marker_array;
+  marker_array.markers.push_back(centerline_marker);
+
+  // Publish the marker array
+  visualization_publisher_centerline_->publish(marker_array);
+}
+
 }  // namespace autoware::mapless_architecture

@@ -23,7 +23,8 @@ ament_target_dependencies(${PROJECT_NAME}
   tf2_ros
   tf2_geometry_msgs
   lanelet2_core
-  autoware_planning_msgs)
+  autoware_planning_msgs
+  visualization_msgs)
 
 # include public headers
 target_include_directories(${PROJECT_NAME} PUBLIC
@@ -40,7 +41,8 @@ ament_export_dependencies(
   tf2_ros
   tf2_geometry_msgs
   lanelet2_core
-  autoware_planning_msgs)
+  autoware_planning_msgs
+  visualization_msgs)
 
 # install library
 install(

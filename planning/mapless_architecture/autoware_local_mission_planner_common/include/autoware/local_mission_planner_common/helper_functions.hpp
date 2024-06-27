@@ -9,9 +9,16 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
+#include "autoware_planning_msgs/msg/driving_corridor.hpp"
+#include "autoware_planning_msgs/msg/local_map.hpp"
+#include "autoware_planning_msgs/msg/mission.hpp"
+#include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
 #include "autoware_planning_msgs/msg/road_segments.hpp"
+#include "autoware_planning_msgs/msg/visualization_distance.hpp"
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "visualization_msgs/msg/marker.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 #include <tuple>
 #include <vector>
@@ -260,6 +267,84 @@ int FindOccupiedLaneletID(
  * @return          lanelet ID (returns -1 if no match)
  */
 int FindEgoOccupiedLaneletID(const std::vector<lanelet::Lanelet> & lanelets);
+
+/**
+ * @brief Recenter a point in a lanelet to its closest point on the centerline
+ *
+ * @param goal_point The input point which should be re-centered
+ * @param road_model The road model which contains the point to be re-centered
+ * @return lanelet::BasicPoint2d The re-centered point (which lies on the
+ * centerline of its lanelet)
+ */
+lanelet::BasicPoint2d RecenterGoalPoint(
+  const lanelet::BasicPoint2d & goal_point, const std::vector<lanelet::Lanelet> & road_model);
+
+/**
+  * @brief Function for creating a marker array.
+  * This functions creates a visualization_msgs::msg::MarkerArray from the
+  given input.
+  *
+  * @param centerline The centerline which is a LineString.
+  * @param left The left boundary which is a LineString.
+  * @param right The right boundary which is a LineString.
+  * @param msg The LaneletsStamped message.
+  * @return MarkerArray (visualization_msgs::msg::MarkerArray).
+  */
+visualization_msgs::msg::MarkerArray CreateMarkerArray(
+  const std::vector<lanelet::ConstLineString3d> & centerline,
+  const std::vector<lanelet::ConstLineString3d> & left,
+  const std::vector<lanelet::ConstLineString3d> & right,
+  const autoware_planning_msgs::msg::RoadSegments & msg);
+
+/**
+ * @brief Create a DrivingCorridor object.
+ *
+ * @param lane The lane which is a std::vector<int> containing all the indices
+ * of the lane.
+ * @param converted_lanelets The lanelets (std::vector<lanelet::Lanelet>).
+ * @return autoware_planning_msgs::msg::DrivingCorridor
+ */
+autoware_planning_msgs::msg::DrivingCorridor CreateDrivingCorridor(
+  const std::vector<int> & lane, const std::vector<lanelet::Lanelet> & converted_lanelets);
+
+/**
+ * @brief Function for creating a lanelet::LineString2d.
+ *
+ * @param points The considered points
+ * (std::vector<geometry_msgs::msg::Point>).
+ * @return lanelet::LineString2d
+ */
+lanelet::LineString2d CreateLineString(const std::vector<geometry_msgs::msg::Point> & points);
+
+/**
+ * @brief Get all the neighbor lanelets (neighbor lane) of a specific lane on one side.
+ *
+ * @param lane The considered lane.
+ * @param lanelet_connections The lanelet connections.
+ * @param vehicle_side The side of the vehicle that is considered (enum).
+ * @return std::vector<int>
+ */
+std::vector<int> GetAllNeighborsOfLane(
+  const std::vector<int> & lane, const std::vector<LaneletConnection> & lanelet_connections,
+  const int vehicle_side);
+
+/**
+ * @brief Add the predecessor lanelet to a lane.
+ *
+ * @param lane_idx The considered lane. The predecessor lanelet is added to
+ * the front of the lane.
+ * @param lanelet_connections The lanelet connections.
+ *
+ */
+void InsertPredecessorLanelet(
+  std::vector<int> & lane, const std::vector<LaneletConnection> & lanelet_connections);
+
+/**
+ * @brief Calculate the predecessors.
+ *
+ * @param lanelet_connections The lanelet connections.
+ */
+void CalculatePredecessors(std::vector<LaneletConnection> & lanelet_connections);
 
 }  // namespace autoware::mapless_architecture
 
