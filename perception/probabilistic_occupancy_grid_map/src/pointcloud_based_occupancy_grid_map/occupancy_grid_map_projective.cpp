@@ -98,7 +98,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   std::vector</*angle bin*/ std::vector<BinInfo3D>> obstacle_pointcloud_angle_bins(angle_bin_size);
   std::vector</*angle bin*/ std::vector<BinInfo3D>> raw_pointcloud_angle_bins(angle_bin_size);
   if (!offset_initialized_) {
-    set_field_offsets(raw_pointcloud, obstacle_pointcloud);
+    setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
   }
   const size_t raw_pointcloud_size = raw_pointcloud.width * raw_pointcloud.height;
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;

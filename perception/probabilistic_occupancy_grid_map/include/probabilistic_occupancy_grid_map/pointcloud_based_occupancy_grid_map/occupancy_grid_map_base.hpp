@@ -88,8 +88,7 @@ public:
   double min_height_;
   double max_height_;
 
-  void set_field_offsets(
-    const PointCloud2ConstPtr & input_raw, const PointCloud2ConstPtr & input_obstacle);
+  void setFieldOffsets(const PointCloud2 & input_raw, const PointCloud2 & input_obstacle);
 
   int x_offset_raw_;
   int y_offset_raw_;

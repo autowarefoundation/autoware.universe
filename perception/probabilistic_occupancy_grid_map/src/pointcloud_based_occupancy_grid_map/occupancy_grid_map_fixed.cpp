@@ -83,17 +83,8 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   std::vector</*angle bin*/ std::vector<BinInfo>> obstacle_pointcloud_angle_bins(angle_bin_size);
   std::vector</*angle bin*/ std::vector<BinInfo>> raw_pointcloud_angle_bins(angle_bin_size);
   if (!offset_initialized_) {
-    set_field_offsets(raw_pointcloud, obstacle_pointcloud);
+    setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
   }
-  const int x_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "x")].offset;
-  const int y_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "y")].offset;
-  const int z_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "z")].offset;
-  const int x_offset_obstacle =
-    obstacle_pointcloud.fields[pcl::getFieldIndex(obstacle_pointcloud, "x")].offset;
-  const int y_offset_obstacle =
-    obstacle_pointcloud.fields[pcl::getFieldIndex(obstacle_pointcloud, "y")].offset;
-  const int z_offset_obstacle =
-    obstacle_pointcloud.fields[pcl::getFieldIndex(obstacle_pointcloud, "z")].offset;
   const size_t raw_pointcloud_size = raw_pointcloud.width * raw_pointcloud.height;
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
