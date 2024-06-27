@@ -425,7 +425,7 @@ void EKFLocalizer::publish_diagnostics(
     pose_cov.pose = current_ekf_pose.pose;
     pose_cov.covariance = ekf_module_->get_current_pose_covariance();
     const autoware::localization_util::Ellipse ellipse =
-      autoware::localization_util::calculate_xy_ellipse(pose_cov, params_.scale);
+      autoware::localization_util::calculate_xy_ellipse(pose_cov, params_.ellipse_scale);
     diag_status_array.push_back(check_covariance_ellipse(
       "cov_ellipse_long_axis", ellipse.long_radius, params_.warn_ellipse_size,
       params_.error_ellipse_size));

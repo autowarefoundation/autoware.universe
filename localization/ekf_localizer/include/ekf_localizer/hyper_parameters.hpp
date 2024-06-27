@@ -57,7 +57,7 @@ public:
       node->declare_parameter<int>("diagnostics.twist_no_update_count_threshold_warn")),
     twist_no_update_count_threshold_error(
       node->declare_parameter<int>("diagnostics.twist_no_update_count_threshold_error")),
-    scale(node->declare_parameter<double>("diagnostics.scale")),
+    ellipse_scale(node->declare_parameter<double>("diagnostics.ellipse_scale")),
     error_ellipse_size(node->declare_parameter<double>("diagnostics.error_ellipse_size")),
     warn_ellipse_size(node->declare_parameter<double>("diagnostics.warn_ellipse_size")),
     error_ellipse_size_lateral_direction(
@@ -93,7 +93,7 @@ public:
   const size_t pose_no_update_count_threshold_error;
   const size_t twist_no_update_count_threshold_warn;
   const size_t twist_no_update_count_threshold_error;
-  double scale;
+  double ellipse_scale;
   double error_ellipse_size;
   double warn_ellipse_size;
   double error_ellipse_size_lateral_direction;
