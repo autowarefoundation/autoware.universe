@@ -25,7 +25,6 @@
 
 namespace autoware::motion_utils::trajectory_container::trajectory
 {
-using motion_utils::trajectory_container::detail::ManipulableInterpolatedArray;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 
 /**
@@ -33,9 +32,19 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
  */
 template <>
 class TrajectoryContainer<PathPointWithLaneId>
-: public TrajectoryContainer<PathPoint>, public detail::CropTrajectoryImpl<PathPointWithLaneId>
+: public TrajectoryContainer<PathPoint>,
+  public detail::CropTrajectoryImpl<TrajectoryContainer<PathPointWithLaneId>>,
+  public detail::SetXYZInterpolatorImpl<TrajectoryContainer<PathPointWithLaneId>>,
+  public detail::SetOrientationInterpolatorImpl<TrajectoryContainer<PathPointWithLaneId>>,
+  public detail::SetLongitudinalVelocityInterpolatorImpl<TrajectoryContainer<PathPointWithLaneId>>,
+  public detail::SetLateralVelocityInterpolatorImpl<TrajectoryContainer<PathPointWithLaneId>>,
+  public detail::SetHeadingRateInterpolatorImpl<TrajectoryContainer<PathPointWithLaneId>>,
+  public detail::SetLaneIdsInterpolatorImpl<TrajectoryContainer<PathPointWithLaneId>>
 {
-  friend class CropTrajectoryImpl<PathPointWithLaneId>;
+  friend class detail::CropTrajectoryImpl<TrajectoryContainer<PathPointWithLaneId>>;
+  friend class detail::SetXYZInterpolatorImpl<TrajectoryContainer<PathPointWithLaneId>>;
+  friend class detail::SetOrientationInterpolatorImpl<TrajectoryContainer<PathPointWithLaneId>>;
+
   using BaseClass = TrajectoryContainer<PathPoint>;
 
 public:
@@ -45,85 +54,6 @@ public:
    * @brief Constructor
    */
   TrajectoryContainer();
-  /**
-   * @brief Set interpolator for x and y coordinates
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_xy_interpolator(const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_xy_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set interpolator for z coordinate
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_z_interpolator(const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_z_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set the interpolator for orientation
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-
-  TrajectoryContainer & set_orientation_interpolator(
-    const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_orientation_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set the interpolator for longitudinal velocity
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_longitudinal_velocity_mps_interpolator(
-    const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_longitudinal_velocity_mps_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set the interpolator for lateral velocity
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_lateral_velocity_mps_interpolator(
-    const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_lateral_velocity_mps_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set the interpolator for heading rate
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-  TrajectoryContainer & set_heading_rate_rps_interpolator(
-    const interpolator::Interpolator<double> & interpolator)
-  {
-    BaseClass::set_heading_rate_rps_interpolator(interpolator);
-    return *this;
-  }
-
-  /**
-   * @brief Set the interpolator for lane ids
-   * @param interpolator Interpolator object
-   * @return Reference to this object
-   */
-
-  TrajectoryContainer & set_lane_ids_interpolator(
-    const interpolator::Interpolator<std::vector<int64_t>> & interpolator);
 
   /**
    * @brief Build trajectory from path points with lane ids
@@ -144,6 +74,20 @@ public:
    * @return Vector of path points with lane ids
    */
   std::vector<PathPointWithLaneId> restore() const;
+
+  using detail::CropTrajectoryImpl<TrajectoryContainer<PathPointWithLaneId>>::crop;
+  using detail::SetXYZInterpolatorImpl<
+    TrajectoryContainer<PathPointWithLaneId>>::set_xy_interpolator;
+  using detail::SetXYZInterpolatorImpl<
+    TrajectoryContainer<PathPointWithLaneId>>::set_z_interpolator;
+  using detail::SetOrientationInterpolatorImpl<
+    TrajectoryContainer<PathPointWithLaneId>>::set_orientation_interpolator;
+  using detail::SetLongitudinalVelocityInterpolatorImpl<
+    TrajectoryContainer<PathPointWithLaneId>>::set_longitudinal_velocity_mps_interpolator;
+  using detail::SetLateralVelocityInterpolatorImpl<
+    TrajectoryContainer<PathPointWithLaneId>>::set_lateral_velocity_mps_interpolator;
+  using detail::SetHeadingRateInterpolatorImpl<
+    TrajectoryContainer<PathPointWithLaneId>>::set_heading_rate_rps_interpolator;
 };
 
 }  // namespace autoware::motion_utils::trajectory_container::trajectory

@@ -27,29 +27,6 @@ TrajectoryContainer<PathPoint>::TrajectoryContainer() : BaseClass()
   set_heading_rate_rps_interpolator(interpolator::ZeroOrderHold<double>());
 }
 
-TrajectoryContainer<PathPoint> &
-TrajectoryContainer<PathPoint>::set_longitudinal_velocity_mps_interpolator(
-  const interpolator::Interpolator<double> & interpolator)
-{
-  longitudinal_velocity_mps.set_interpolator(interpolator);
-  return *this;
-}
-
-TrajectoryContainer<PathPoint> &
-TrajectoryContainer<PathPoint>::set_lateral_velocity_mps_interpolator(
-  const interpolator::Interpolator<double> & interpolator)
-{
-  lateral_velocity_mps.set_interpolator(interpolator);
-  return *this;
-}
-
-TrajectoryContainer<PathPoint> & TrajectoryContainer<PathPoint>::set_heading_rate_rps_interpolator(
-  const interpolator::Interpolator<double> & interpolator)
-{
-  heading_rate_rps.set_interpolator(interpolator);
-  return *this;
-}
-
 TrajectoryContainer<PathPoint> & TrajectoryContainer<PathPoint>::build(
   const std::vector<PathPoint> points)
 {

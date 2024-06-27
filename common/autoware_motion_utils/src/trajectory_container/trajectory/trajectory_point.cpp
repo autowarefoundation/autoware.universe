@@ -18,6 +18,8 @@
 #include "autoware/motion_utils/trajectory_container/interpolator/cubic_spline.hpp"
 #include "autoware/motion_utils/trajectory_container/interpolator/linear.hpp"
 
+#include <fmt/format.h>
+
 namespace autoware::motion_utils::trajectory_container::trajectory
 {
 TrajectoryContainer<geometry_msgs::msg::Point>::TrajectoryContainer()
@@ -55,21 +57,12 @@ TrajectoryContainer<geometry_msgs::msg::Point> & TrajectoryContainer<
   return *this;
 }
 
-TrajectoryContainer<geometry_msgs::msg::Point> &
-TrajectoryContainer<geometry_msgs::msg::Point>::set_xy_interpolator(
-  const interpolator::Interpolator<double> & interpolator)
+void TrajectoryContainer<geometry_msgs::msg::Point>::validate_s(const double & s) const
 {
-  x_interpolator_ = std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
-  y_interpolator_ = std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
-  return *this;
-}
-
-TrajectoryContainer<geometry_msgs::msg::Point> &
-TrajectoryContainer<geometry_msgs::msg::Point>::set_z_interpolator(
-  const interpolator::Interpolator<double> & interpolator)
-{
-  z_interpolator_ = std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
-  return *this;
+  if (s < start_ || s > end_) {
+    throw std::out_of_range(
+      fmt::format("The arc length {} is out of the trajectory range [{}, {}]", s, start_, end_));
+  }
 }
 
 double TrajectoryContainer<geometry_msgs::msg::Point>::length() const
@@ -80,6 +73,7 @@ double TrajectoryContainer<geometry_msgs::msg::Point>::length() const
 geometry_msgs::msg::Point TrajectoryContainer<geometry_msgs::msg::Point>::compute(
   const double & s) const
 {
+  validate_s(s);
   geometry_msgs::msg::Point result;
   result.x = x_interpolator_->compute(s + start_);
   result.y = y_interpolator_->compute(s + start_);
@@ -89,6 +83,7 @@ geometry_msgs::msg::Point TrajectoryContainer<geometry_msgs::msg::Point>::comput
 
 double TrajectoryContainer<geometry_msgs::msg::Point>::direction(const double & s) const
 {
+  validate_s(s);
   double dx = x_interpolator_->compute_first_derivative(s + start_);
   double dy = y_interpolator_->compute_first_derivative(s + start_);
   return std::atan2(dy, dx);
@@ -96,6 +91,7 @@ double TrajectoryContainer<geometry_msgs::msg::Point>::direction(const double & 
 
 double TrajectoryContainer<geometry_msgs::msg::Point>::curvature(const double & s) const
 {
+  validate_s(s);
   double dx = x_interpolator_->compute_first_derivative(s + start_);
   double ddx = x_interpolator_->compute_second_derivative(s + start_);
   double dy = y_interpolator_->compute_first_derivative(s + start_);

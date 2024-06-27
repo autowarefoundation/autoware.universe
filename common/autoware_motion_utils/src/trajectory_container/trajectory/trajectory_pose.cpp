@@ -24,20 +24,20 @@ TrajectoryContainer<geometry_msgs::msg::Pose>::TrajectoryContainer() : BaseClass
   set_orientation_interpolator(interpolator::Linear());
 }
 
-TrajectoryContainer<geometry_msgs::msg::Pose> &
-TrajectoryContainer<geometry_msgs::msg::Pose>::set_orientation_interpolator(
-  const interpolator::Interpolator<double> & interpolator)
-{
-  orientation_x_interpolator_ =
-    std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
-  orientation_y_interpolator_ =
-    std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
-  orientation_z_interpolator_ =
-    std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
-  orientation_w_interpolator_ =
-    std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
-  return *this;
-}
+// TrajectoryContainer<geometry_msgs::msg::Pose> &
+// TrajectoryContainer<geometry_msgs::msg::Pose>::set_orientation_interpolator(
+//   const interpolator::Interpolator<double> & interpolator)
+// {
+//   orientation_x_interpolator_ =
+//     std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
+//   orientation_y_interpolator_ =
+//     std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
+//   orientation_z_interpolator_ =
+//     std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
+//   orientation_w_interpolator_ =
+//     std::shared_ptr<interpolator::Interpolator<double>>(interpolator.clone());
+//   return *this;
+// }
 
 TrajectoryContainer<geometry_msgs::msg::Pose> & TrajectoryContainer<
   geometry_msgs::msg::Pose>::build(const std::vector<geometry_msgs::msg::Pose> & points)
