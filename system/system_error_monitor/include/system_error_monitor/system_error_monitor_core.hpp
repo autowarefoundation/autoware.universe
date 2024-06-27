@@ -17,6 +17,7 @@
 
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "universe_utils/ros/polling_subscriber.hpp"
+
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -100,7 +101,7 @@ private:
   void onTimer();
 
   // Subscriber
-  //rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
+  // rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_array_;
   tier4_autoware_utils::InterProcessPollingSubscriber<diagnostic_msgs::msg::DiagnosticArray>
     sub_diag_array_{this, "~/input/diag_array", rclcpp::QoS(std::numeric_limits<uint32_t>::max())};
   tier4_autoware_utils::InterProcessPollingSubscriber<autoware_system_msgs::msg::AutowareState>
