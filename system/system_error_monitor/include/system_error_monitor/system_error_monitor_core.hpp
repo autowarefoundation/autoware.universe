@@ -99,7 +99,8 @@ private:
   bool isDataReady();
   bool isDataHeartbeatTimeout();
   void onTimer();
-  void handleDiagArray() void handleAutowareState();
+  void handleDiagArray();
+  void handleAutowareState();
   void handleCurrentGateMode();
   void handleControlMode();
 
