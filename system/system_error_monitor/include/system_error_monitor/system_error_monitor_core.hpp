@@ -99,11 +99,9 @@ private:
   bool isDataReady();
   bool isDataHeartbeatTimeout();
   void onTimer();
-  void handleDiagArray()
-  void handleAutowareState();
+  void handleDiagArray() void handleAutowareState();
   void handleCurrentGateMode();
   void handleControlMode();
-
 
   // Subscriber
   autoware::universe_utils::InterProcessPollingSubscriber<diagnostic_msgs::msg::DiagnosticArray>
