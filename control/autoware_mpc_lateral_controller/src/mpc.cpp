@@ -75,28 +75,28 @@ bool MPC::calculateMPC(
   // generate mpc matrix : predict equation Xec = Aex * x0 + Bex * Uex + Wex
   const auto mpc_matrix = generateMPCMatrix(mpc_resampled_ref_trajectory, prediction_dt);
 
+  double u_saturated {0.0};
+  double u_filtered {0.0};
+  VectorXd Uex {};
+  bool success_opt {};
+
   static constexpr double vel_epsilon = 1e-3;
   const double current_vel = current_kinematics.twist.twist.linear.x;
   if (std::fabs(current_vel) > vel_epsilon) {
     // solve Optimization problem
-    const auto [success_opt, Uex] =
+    std::tie(success_opt, Uex) =
       executeOptimization(mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_trajectory);
     if (!success_opt) {
       return fail_warn_throttle("optimization failed. Stop MPC.");
     }
     // apply filters for the input limitation and low pass filter
-    const double u_saturated = std::clamp(Uex(0), -m_steer_lim, m_steer_lim);
-    const double u_filtered = m_lpf_steering_cmd.filter(u_saturated);
+    u_saturated = std::clamp(Uex(0), -m_steer_lim, m_steer_lim);
+    u_filtered = m_lpf_steering_cmd.filter(u_saturated);
   } else {
     // if the vehicle is stopped, the steering angle is set to feedforward.
-    VectorXd Uex = MatrixXd::One(m_vehicle_model_ptr->getDimU() * N, 1) * mpc_matrix.Uref_ex(0);
-    const double u_saturated = std::clamp(Uex(0), -m_steer_lim, m_steer_lim);
-    const double u_filtered = u_saturated; // no need to pass through the filter
-    const bool steer_aligned = std::abs(Uex(0) - mpc_data.steer) < static_cast<float>(m_converged_steer_rad)? true : false;
-    // TODO: maintain the current velocity (0)
-    if (!steer_aligned) {
-      // TODO: start the PID controller
-    }
+    Uex = MatrixXd::Ones(m_vehicle_model_ptr->getDimU() * m_param.prediction_horizon, 1) * mpc_matrix.Uref_ex(0);
+    u_saturated = std::clamp(Uex(0), -m_steer_lim, m_steer_lim);
+    u_filtered = u_saturated; // no need to pass through the filter
   }
 
   // set control command
