@@ -85,8 +85,19 @@ public:
 
   void setHeightLimit(const double min_height, const double max_height);
 
-  double min_height_ = -std::numeric_limits<double>::infinity();
-  double max_height_ = std::numeric_limits<double>::infinity();
+  double min_height_;
+  double max_height_;
+
+  void set_field_offsets(
+    const PointCloud2ConstPtr & input_raw, const PointCloud2ConstPtr & input_obstacle);
+
+  int x_offset_raw_;
+  int y_offset_raw_;
+  int z_offset_raw_;
+  int x_offset_obstacle_;
+  int y_offset_obstacle_;
+  int z_offset_obstacle_;
+  bool offset_initialized_;
 
 private:
   bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my) const;

@@ -77,7 +77,10 @@ OccupancyGridMapInterface::OccupancyGridMapInterface(
   const unsigned int cells_size_x, const unsigned int cells_size_y, const float resolution)
 : Costmap2D(cells_size_x, cells_size_y, resolution, 0.f, 0.f, occupancy_cost_value::NO_INFORMATION)
 {
+  min_height_ = -std::numeric_limits<double>::infinity();
+  max_height_ = std::numeric_limits<double>::infinity();
   resolution_inv_ = 1.0 / resolution_;
+  offset_initialized_ = false;
 }
 
 inline bool OccupancyGridMapInterface::worldToMap(
@@ -234,6 +237,18 @@ void OccupancyGridMapInterface::setHeightLimit(const double min_height, const do
 {
   min_height_ = min_height;
   max_height_ = max_height;
+}
+
+inline void ScanGroundFilterComponent::set_field_offsets(
+  const PointCloud2ConstPtr & input_raw, const PointCloud2ConstPtr & input_obstacle)
+{
+  x_offset_raw_ = input_raw->fields[pcl::getFieldIndex(*input_raw, "x")].offset;
+  y_offset_raw_ = input_raw->fields[pcl::getFieldIndex(*input_raw, "y")].offset;
+  z_offset_raw_ = input_raw->fields[pcl::getFieldIndex(*input_raw, "z")].offset;
+  x_offset_obstacle_ = input_obstacle->fields[pcl::getFieldIndex(*input_obstacle, "x")].offset;
+  y_offset_obstacle_ = input_obstacle->fields[pcl::getFieldIndex(*input_obstacle, "y")].offset;
+  z_offset_obstacle_ = input_obstacle->fields[pcl::getFieldIndex(*input_obstacle, "z")].offset;
+  offset_initialized_ = true;
 }
 
 }  // namespace costmap_2d

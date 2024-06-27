@@ -97,15 +97,9 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   };
   std::vector</*angle bin*/ std::vector<BinInfo3D>> obstacle_pointcloud_angle_bins(angle_bin_size);
   std::vector</*angle bin*/ std::vector<BinInfo3D>> raw_pointcloud_angle_bins(angle_bin_size);
-  const int x_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "x")].offset;
-  const int y_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "y")].offset;
-  const int z_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "z")].offset;
-  const int x_offset_obstacle =
-    obstacle_pointcloud.fields[pcl::getFieldIndex(obstacle_pointcloud, "x")].offset;
-  const int y_offset_obstacle =
-    obstacle_pointcloud.fields[pcl::getFieldIndex(obstacle_pointcloud, "y")].offset;
-  const int z_offset_obstacle =
-    obstacle_pointcloud.fields[pcl::getFieldIndex(obstacle_pointcloud, "z")].offset;
+  if (!offset_initialized_) {
+    set_field_offsets(raw_pointcloud, obstacle_pointcloud);
+  }
   const size_t raw_pointcloud_size = raw_pointcloud.width * raw_pointcloud.height;
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
@@ -120,9 +114,9 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   size_t global_offset = 0;
   for (size_t i = 0; i < raw_pointcloud_size; i++) {
     Eigen::Vector4f pt(
-      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + x_offset_raw]),
-      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + y_offset_raw]),
-      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + z_offset_raw]), 1);
+      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + x_offset_raw_]),
+      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + y_offset_raw_]),
+      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + z_offset_raw_]), 1);
     // Exclude invalid points
     if (!std::isfinite(pt[0]) || !std::isfinite(pt[1]) || !std::isfinite(pt[2])) {
       global_offset += raw_pointcloud.point_step;
@@ -154,11 +148,11 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   for (size_t i = 0; i < obstacle_pointcloud_size; i++) {
     Eigen::Vector4f pt(
       *reinterpret_cast<const float *>(
-        &obstacle_pointcloud.data[global_offset + x_offset_obstacle]),
+        &obstacle_pointcloud.data[global_offset + x_offset_obstacle_]),
       *reinterpret_cast<const float *>(
-        &obstacle_pointcloud.data[global_offset + y_offset_obstacle]),
+        &obstacle_pointcloud.data[global_offset + y_offset_obstacle_]),
       *reinterpret_cast<const float *>(
-        &obstacle_pointcloud.data[global_offset + z_offset_obstacle]),
+        &obstacle_pointcloud.data[global_offset + z_offset_obstacle_]),
       1);
     // Exclude invalid points
     if (!std::isfinite(pt[0]) || !std::isfinite(pt[1]) || !std::isfinite(pt[2])) {

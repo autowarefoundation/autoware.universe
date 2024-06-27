@@ -82,6 +82,9 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   };
   std::vector</*angle bin*/ std::vector<BinInfo>> obstacle_pointcloud_angle_bins(angle_bin_size);
   std::vector</*angle bin*/ std::vector<BinInfo>> raw_pointcloud_angle_bins(angle_bin_size);
+  if (!offset_initialized_) {
+    set_field_offsets(raw_pointcloud, obstacle_pointcloud);
+  }
   const int x_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "x")].offset;
   const int y_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "y")].offset;
   const int z_offset_raw = raw_pointcloud.fields[pcl::getFieldIndex(raw_pointcloud, "z")].offset;
@@ -96,18 +99,16 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
   const size_t obstacle_reserve_size = obstacle_pointcloud_size / angle_bin_size;
   // Reserve a certain amount of memory in advance for performance reasons
-  for (auto & raw_pointcloud_angle_bin : raw_pointcloud_angle_bins) {
-    raw_pointcloud_angle_bin.reserve(raw_reserve_size);
-  }
-  for (auto & obstacle_pointcloud_angle_bin : obstacle_pointcloud_angle_bins) {
-    obstacle_pointcloud_angle_bin.reserve(obstacle_reserve_size);
+  for (size_t i = 0; i < angle_bin_size; i++) {
+    raw_pointcloud_angle_bins[i].reserve(raw_reserve_size);
+    obstacle_pointcloud_angle_bins[i].reserve(obstacle_reserve_size);
   }
   size_t global_offset = 0;
   for (size_t i = 0; i < raw_pointcloud_size; ++i) {
     Eigen::Vector4f pt(
-      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + x_offset_raw]),
-      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + y_offset_raw]),
-      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + z_offset_raw]), 1);
+      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + x_offset_raw_]),
+      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + y_offset_raw_]),
+      *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + z_offset_raw_]), 1);
     // Exclude invalid points
     if (!std::isfinite(pt[0]) || !std::isfinite(pt[1]) || !std::isfinite(pt[2])) {
       global_offset += raw_pointcloud.point_step;
@@ -138,11 +139,11 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   for (size_t i = 0; i < obstacle_pointcloud_size; ++i) {
     Eigen::Vector4f pt(
       *reinterpret_cast<const float *>(
-        &obstacle_pointcloud.data[global_offset + x_offset_obstacle]),
+        &obstacle_pointcloud.data[global_offset + x_offset_obstacle_]),
       *reinterpret_cast<const float *>(
-        &obstacle_pointcloud.data[global_offset + y_offset_obstacle]),
+        &obstacle_pointcloud.data[global_offset + y_offset_obstacle_]),
       *reinterpret_cast<const float *>(
-        &obstacle_pointcloud.data[global_offset + z_offset_obstacle]),
+        &obstacle_pointcloud.data[global_offset + z_offset_obstacle_]),
       1);
     // Exclude invalid points
     if (!std::isfinite(pt[0]) || !std::isfinite(pt[1]) || !std::isfinite(pt[2])) {
