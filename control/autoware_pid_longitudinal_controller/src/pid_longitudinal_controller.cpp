@@ -782,7 +782,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     ctrl_cmd_as_pedal_pos.acc = p.acc;  // store brake pedal position corresponding value
 
     m_prev_raw_ctrl_cmd.vel = ctrl_cmd_as_pedal_pos.vel;
-    m_prev_raw_ctrl_cmd.acc = 0.0;  // store accelaration value
+    m_prev_raw_ctrl_cmd.acc = 0.0;  // store acceleration value
 
     RCLCPP_DEBUG(
       logger_, "[Stopped]. vel: %3.3f, acc: %3.3f", ctrl_cmd_as_pedal_pos.vel,
