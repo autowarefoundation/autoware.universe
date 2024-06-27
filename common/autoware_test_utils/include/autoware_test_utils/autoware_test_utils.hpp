@@ -31,6 +31,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <rosgraph_msgs/msg/clock.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
@@ -48,6 +49,7 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace autoware::test_utils
@@ -511,6 +513,81 @@ void publishToTargetNode(
   }
   autoware::test_utils::spinSomeNodes(test_node, target_node, repeat_count);
 }
+
+/**
+ * @brief Manages publishing and subscribing to ROS topics for testing Autoware.
+ *
+ * The AutowareTestManager class provides utility functions to facilitate
+ * the publishing of messages to specified topics and the setting up of
+ * subscribers to listen for messages on specified topics. This class
+ * simplifies the setup of test environments in Autoware.
+ */
+class AutowareTestManager
+{
+public:
+  AutowareTestManager()
+  {
+    test_node_ = std::make_shared<rclcpp::Node>("autoware_test_manager_node");
+    pub_clock_ = test_node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 1);
+  }
+
+  template <typename MessageType>
+  void test_pub_msg(
+    rclcpp::Node::SharedPtr target_node, const std::string & topic_name, MessageType & msg)
+  {
+    if (publishers_.find(topic_name) == publishers_.end()) {
+      auto publisher = test_node_->create_publisher<MessageType>(topic_name, 10);
+      publishers_[topic_name] = std::static_pointer_cast<rclcpp::PublisherBase>(publisher);
+    }
+
+    auto publisher =
+      std::dynamic_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
+
+    autoware::test_utils::publishToTargetNode(test_node_, target_node, topic_name, publisher, msg);
+    RCLCPP_INFO(test_node_->get_logger(), "Published message on topic '%s'", topic_name.c_str());
+  }
+
+  template <typename MessageType>
+  void set_subscriber(
+    const std::string & topic_name,
+    std::function<void(const typename MessageType::ConstSharedPtr)> callback)
+  {
+    if (subscribers_.find(topic_name) == subscribers_.end()) {
+      std::shared_ptr<rclcpp::Subscription<MessageType>> subscriber;
+      autoware::test_utils::createSubscription<MessageType>(
+        test_node_, topic_name, callback, subscriber);
+      subscribers_[topic_name] = std::static_pointer_cast<rclcpp::SubscriptionBase>(subscriber);
+    } else {
+      RCLCPP_WARN(test_node_->get_logger(), "Subscriber %s already set.", topic_name.c_str());
+    }
+  }
+
+  /**
+   * @brief Publishes a ROS Clock message with the specified time.
+   *
+   * This function publishes a ROS Clock message with the specified time.
+   * Be careful when using this function, as it can affect the behavior of
+   * the system under test. Consider using ament_add_ros_isolated_gtest to
+   * isolate the system under test from the ROS clock.
+   *
+   * @param time The time to publish.
+   */
+  void jump_clock(const rclcpp::Time & time)
+  {
+    rosgraph_msgs::msg::Clock clock;
+    clock.clock = time;
+    pub_clock_->publish(clock);
+  }
+
+protected:
+  // Publisher
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::PublisherBase>> publishers_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscribers_;
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr pub_clock_;
+
+  // Node
+  rclcpp::Node::SharedPtr test_node_;
+};  // class AutowareTestManager
 
 }  // namespace autoware::test_utils
 

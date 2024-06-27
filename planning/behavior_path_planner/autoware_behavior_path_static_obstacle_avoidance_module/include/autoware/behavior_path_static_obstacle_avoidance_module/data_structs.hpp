@@ -101,12 +101,8 @@ struct AvoidanceParameters
   // computational cost for latter modules.
   double resample_interval_for_output = 3.0;
 
-  // enable avoidance to be perform only in lane with same direction
-  bool use_adjacent_lane{true};
-
-  // enable avoidance to be perform in opposite lane direction
-  // to use this, enable_avoidance_over_same_direction need to be set to true.
-  bool use_opposite_lane{true};
+  // drivable lane config
+  std::string use_lane_type{"current_lane"};
 
   // if this param is true, it reverts avoidance path when the path is no longer needed.
   bool enable_cancel_maneuver{false};
@@ -119,9 +115,6 @@ struct AvoidanceParameters
 
   // enable yield maneuver.
   bool enable_yield_maneuver_during_shifting{false};
-
-  // disable path update
-  bool disable_path_update{false};
 
   // use hatched road markings for avoidance
   bool use_hatched_road_markings{false};
@@ -226,6 +219,8 @@ struct AvoidanceParameters
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
 
+  double collision_check_yaw_diff_threshold{3.1416};
+
   bool consider_front_overhang{true};
   bool consider_rear_overhang{true};
 
@@ -313,6 +308,9 @@ struct AvoidanceParameters
   // policy
   std::string policy_lateral_margin{"best_effort"};
 
+  // path generation method.
+  std::string path_generation_method{"shift_line_base"};
+
   // target velocity matrix
   std::vector<double> velocity_map;
 
@@ -333,9 +331,6 @@ struct AvoidanceParameters
 
   // rss parameters
   utils::path_safety_checker::RSSparams rss_params{};
-
-  // clip left and right bounds for objects
-  bool enable_bound_clipping{false};
 
   // debug
   bool enable_other_objects_marker{false};
@@ -437,6 +432,9 @@ struct ObjectData  // avoidance target
 
   // is ambiguous stopped vehicle.
   bool is_ambiguous{false};
+
+  // is clip targe.
+  bool is_clip_target{false};
 
   // object direction.
   Direction direction{Direction::NONE};

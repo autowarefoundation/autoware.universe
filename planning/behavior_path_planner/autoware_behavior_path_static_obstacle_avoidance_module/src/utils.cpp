@@ -1690,6 +1690,59 @@ void compensateDetectionLost(
   }
 }
 
+void updateClipObject(ObjectDataArray & clip_objects, AvoidancePlanningData & data)
+{
+  std::for_each(data.target_objects.begin(), data.target_objects.end(), [](auto & o) {
+    if (o.is_avoidable) {
+      o.is_clip_target = true;
+    }
+  });
+
+  const auto itr =
+    std::remove_if(clip_objects.begin(), clip_objects.end(), [&data](const auto & clip_object) {
+      const auto id = clip_object.object.object_id;
+
+      // update target objects
+      {
+        const auto same_id_obj = std::find_if(
+          data.target_objects.begin(), data.target_objects.end(),
+          [&id](const auto & o) { return o.object.object_id == id; });
+        if (same_id_obj != data.target_objects.end()) {
+          same_id_obj->is_clip_target = true;
+          return false;
+        }
+      }
+
+      // update other objects
+      {
+        const auto same_id_obj = std::find_if(
+          data.other_objects.begin(), data.other_objects.end(),
+          [&id](const auto & o) { return o.object.object_id == id; });
+        if (same_id_obj != data.other_objects.end()) {
+          same_id_obj->is_clip_target = true;
+          return false;
+        }
+      }
+
+      return true;
+    });
+
+  clip_objects.erase(itr, clip_objects.end());
+
+  for (const auto & object : data.target_objects) {
+    const auto id = object.object.object_id;
+    const auto same_id_obj = std::find_if(
+      clip_objects.begin(), clip_objects.end(),
+      [&id](const auto & o) { return o.object.object_id == id; });
+
+    if (same_id_obj != clip_objects.end()) {
+      continue;
+    }
+
+    clip_objects.push_back(object);
+  }
+}
+
 void updateRoadShoulderDistance(
   AvoidancePlanningData & data, const std::shared_ptr<const PlannerData> & planner_data,
   const std::shared_ptr<AvoidanceParameters> & parameters)
@@ -2185,14 +2238,16 @@ DrivableLanes generateExpandedDrivableLanes(
   current_drivable_lanes.left_lane = lanelet;
   current_drivable_lanes.right_lane = lanelet;
 
-  if (!parameters->use_adjacent_lane) {
+  if (parameters->use_lane_type == "current_lane") {
     return current_drivable_lanes;
   }
 
+  const auto use_opposite_lane = parameters->use_lane_type == "opposite_direction_lane";
+
   // 1. get left/right side lanes
   const auto update_left_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
-    const auto all_left_lanelets = route_handler->getAllLeftSharedLinestringLanelets(
-      target_lane, parameters->use_opposite_lane, true);
+    const auto all_left_lanelets =
+      route_handler->getAllLeftSharedLinestringLanelets(target_lane, use_opposite_lane, true);
     if (!all_left_lanelets.empty()) {
       current_drivable_lanes.left_lane = all_left_lanelets.back();  // leftmost lanelet
       pushUniqueVector(
@@ -2201,8 +2256,8 @@ DrivableLanes generateExpandedDrivableLanes(
     }
   };
   const auto update_right_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
-    const auto all_right_lanelets = route_handler->getAllRightSharedLinestringLanelets(
-      target_lane, parameters->use_opposite_lane, true);
+    const auto all_right_lanelets =
+      route_handler->getAllRightSharedLinestringLanelets(target_lane, use_opposite_lane, true);
     if (!all_right_lanelets.empty()) {
       current_drivable_lanes.right_lane = all_right_lanelets.back();  // rightmost lanelet
       pushUniqueVector(
