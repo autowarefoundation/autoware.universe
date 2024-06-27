@@ -232,6 +232,12 @@ bool isLowerConsideringHysteresis(
   }
   return false;
 }
+
+template <typename T>
+void concatenate(std::vector<T> & first, const std::vector<T> & last)
+{
+  first.insert(first.end(), last.begin(), last.end());
+}
 }  // namespace
 
 namespace autoware::motion_planning
@@ -588,13 +594,9 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
         determineEgoBehaviorAgainstPredictedObjectObstacles(
           ego_odom, *objects_ptr, traj_points, target_obstacles);
 
-      stop_obstacles.insert(
-        stop_obstacles.end(), stop_object_obstacles.begin(), stop_object_obstacles.end());
-      cruise_obstacles.insert(
-        cruise_obstacles.end(), cruise_object_obstacles.begin(), cruise_object_obstacles.end());
-      slow_down_obstacles.insert(
-        slow_down_obstacles.end(), slow_down_object_obstacles.begin(),
-        slow_down_object_obstacles.end());
+      concatenate(stop_obstacles, stop_object_obstacles);
+      concatenate(cruise_obstacles, cruise_object_obstacles);
+      concatenate(slow_down_obstacles, slow_down_object_obstacles);
     }
     if (pointcloud_ptr && !pointcloud_ptr->data.empty()) {
       const auto target_obstacles =
@@ -603,14 +605,9 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
       const auto & [stop_pointcloud_obstacles, cruise_pointcloud_obstacles, slow_down_pointcloud_obstacles] =
         determineEgoBehaviorAgainstPointCloudObstacles(ego_odom, traj_points, target_obstacles);
 
-      stop_obstacles.insert(
-        stop_obstacles.end(), stop_pointcloud_obstacles.begin(), stop_pointcloud_obstacles.end());
-      cruise_obstacles.insert(
-        cruise_obstacles.end(), cruise_pointcloud_obstacles.begin(),
-        cruise_pointcloud_obstacles.end());
-      slow_down_obstacles.insert(
-        slow_down_obstacles.end(), slow_down_pointcloud_obstacles.begin(),
-        slow_down_pointcloud_obstacles.end());
+      concatenate(stop_obstacles, stop_pointcloud_obstacles);
+      concatenate(cruise_obstacles, cruise_pointcloud_obstacles);
+      concatenate(slow_down_obstacles, slow_down_pointcloud_obstacles);
     }
     return std::make_tuple(stop_obstacles, cruise_obstacles, slow_down_obstacles);
   }();
