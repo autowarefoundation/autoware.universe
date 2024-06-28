@@ -42,8 +42,8 @@
  *  v1.0: amc-nu (abrahammonrroy@yahoo.com)
  */
 
-#ifndef GROUND_SEGMENTATION__RAY_GROUND_FILTER_NODELET_HPP_
-#define GROUND_SEGMENTATION__RAY_GROUND_FILTER_NODELET_HPP_
+#ifndef RAY_GROUND_FILTER__NODE_HPP_
+#define RAY_GROUND_FILTER__NODE_HPP_
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -207,4 +207,4 @@ public:
 };
 }  // namespace autoware::ground_segmentation
 
-#endif  // GROUND_SEGMENTATION__RAY_GROUND_FILTER_NODELET_HPP_
+#endif  // RAY_GROUND_FILTER__NODE_HPP_

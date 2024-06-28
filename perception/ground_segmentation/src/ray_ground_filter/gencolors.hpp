@@ -53,8 +53,8 @@
 //
 //M*/
 
-#ifndef GROUND_SEGMENTATION__GENCOLORS_HPP_
-#define GROUND_SEGMENTATION__GENCOLORS_HPP_
+#ifndef RAY_GROUND_FILTER__GENCOLORS_HPP_
+#define RAY_GROUND_FILTER__GENCOLORS_HPP_
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
@@ -159,4 +159,4 @@ inline void generateColors(std::vector<Scalar> & colors, size_t count, size_t fa
   }
 }
 }  // namespace autoware::ray_ground_filter
-#endif  // GROUND_SEGMENTATION__GENCOLORS_HPP_
+#endif  // RAY_GROUND_FILTER__GENCOLORS_HPP_

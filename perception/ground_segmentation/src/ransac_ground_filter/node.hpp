@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GROUND_SEGMENTATION__RANSAC_GROUND_FILTER_NODELET_HPP_
-#define GROUND_SEGMENTATION__RANSAC_GROUND_FILTER_NODELET_HPP_
+#ifndef RANSAC_GROUND_FILTER__NODE_HPP_
+#define RANSAC_GROUND_FILTER__NODE_HPP_
 
 #include "pointcloud_preprocessor/filter.hpp"
 
@@ -131,4 +131,4 @@ public:
 };
 }  // namespace autoware::ground_segmentation
 
-#endif  // GROUND_SEGMENTATION__RANSAC_GROUND_FILTER_NODELET_HPP_
+#endif  // RANSAC_GROUND_FILTER__NODE_HPP_
