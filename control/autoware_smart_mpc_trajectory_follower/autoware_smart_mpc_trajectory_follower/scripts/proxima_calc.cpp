@@ -234,7 +234,7 @@ public:
     acc_normalize_ = acc_normalize;
     steer_normalize_ = steer_normalize;
   }
-  Eigen::VectorXd error_prediction(const Eigen::VectorXd & x)
+  Eigen::VectorXd error_prediction(const Eigen::VectorXd & x) const
   {
     Eigen::VectorXd acc_sub(acc_ctrl_queue_size_ + 1);
     acc_sub[0] = acc_normalize_ * x[1];
@@ -286,7 +286,7 @@ public:
     y[5] = std::min(std::max(y[5], -max_steer_error_), max_steer_error_);
     return y;
   }
-  Eigen::VectorXd rot_and_d_rot_error_prediction(const Eigen::VectorXd & x)
+  Eigen::VectorXd rot_and_d_rot_error_prediction(const Eigen::VectorXd & x) const
   {
     const int x_dim = x.size();
     const double theta = x[3];
@@ -325,7 +325,7 @@ public:
 
     return coef * rot_and_d_rot_pred;
   }
-  Eigen::MatrixXd error_prediction_with_diff(const Eigen::VectorXd & x)
+  Eigen::MatrixXd error_prediction_with_diff(const Eigen::VectorXd & x) const
   {
     Eigen::VectorXd acc_sub(acc_ctrl_queue_size_ + 1);
     acc_sub[0] = acc_normalize_ * x[1];
@@ -431,7 +431,7 @@ public:
     result.block(0, 1 + steer_start, y.size(), 3) += polynomial_reg_diff.block(0, 6, y.size(), 3);
     return result;
   }
-  Eigen::MatrixXd rot_and_d_rot_error_prediction_with_diff(const Eigen::VectorXd & x)
+  Eigen::MatrixXd rot_and_d_rot_error_prediction_with_diff(const Eigen::VectorXd & x) const
   {
     const int x_dim = x.size();
     const double theta = x[3];
@@ -472,7 +472,7 @@ public:
       rot_pred_with_diff.block(0, 3, 6, x_dim - 6);
     return coef * rot_and_d_rot_pred_with_diff;
   }
-  Eigen::MatrixXd rot_and_d_rot_error_prediction_with_poly_diff(const Eigen::VectorXd & x)
+  Eigen::MatrixXd rot_and_d_rot_error_prediction_with_poly_diff(const Eigen::VectorXd & x) const
   {
     const int x_dim = x.size();
     const double theta = x[3];
@@ -529,7 +529,7 @@ public:
       rot_pred_with_diff.block(0, 3, 6, x_dim - 6);
     return coef * rot_and_d_rot_pred_with_diff;
   }
-  Eigen::VectorXd rotated_error_prediction(const Eigen::VectorXd & x)
+  Eigen::VectorXd rotated_error_prediction(const Eigen::VectorXd & x) const
   {
     const int x_dim = x.size();
     const double theta = x[3];
@@ -554,7 +554,7 @@ public:
     rot_pred.tail(4) = coef * pred.tail(4);
     return rot_pred;
   }
-  Eigen::MatrixXd Rotated_error_prediction(const Eigen::MatrixXd & X)
+  Eigen::MatrixXd Rotated_error_prediction(const Eigen::MatrixXd & X) const
   {
     const int X_cols = X.cols();
     const int x_dim = X.rows();
@@ -705,11 +705,11 @@ public:
       C_.col(i) = c;
     }
   }
-  Eigen::VectorXd get_h() { return h_; }
-  Eigen::VectorXd get_c() { return c_; }
-  Eigen::MatrixXd get_dy_dhc() { return dy_dhc_; }
-  Eigen::MatrixXd get_dhc_dhc() { return dhc_dhc_; }
-  Eigen::MatrixXd get_dhc_dx() { return dhc_dx_; }
+  Eigen::VectorXd get_h() const { return h_; }
+  Eigen::VectorXd get_c() const { return c_; }
+  Eigen::MatrixXd get_dy_dhc() const { return dy_dhc_; }
+  Eigen::MatrixXd get_dhc_dhc() const { return dhc_dhc_; }
+  Eigen::MatrixXd get_dhc_dx() const { return dhc_dx_; }
   Eigen::VectorXd error_prediction(const Eigen::VectorXd & x, const int cell_index)
   {
     Eigen::VectorXd acc_sub(acc_ctrl_queue_size_ + 1);
