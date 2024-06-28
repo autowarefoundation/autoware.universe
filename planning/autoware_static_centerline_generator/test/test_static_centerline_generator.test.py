@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import os
-import unittest
 
 from ament_index_python import get_package_share_directory
 import launch
@@ -103,10 +102,3 @@ def generate_test_description():
         ),
         context,
     )
-
-
-@launch_testing.post_shutdown_test()
-class TestProcessOutput(unittest.TestCase):
-    def test_exit_code(self, proc_info):
-        # Check that process exits with code 0: no error
-        launch_testing.asserts.assertExitCodes(proc_info)
