@@ -172,12 +172,6 @@ class pure_pursuit_gain_updater:
             ]
         )
         for i in range(self.max_input_delay_size):
-            # clf_steer = linear_model.ElasticNet(
-            #    fit_intercept=False, alpha=1e-10, l1_ratio=0.5, max_iter=100000
-            # )
-
-            # clf_steer.fit(np.stack((steer_array[self.max_input_delay_size-1:-1],steer_input_array[self.max_input_delay_size-1-i:len(steer_input_array) -i]),1),steer_dot[self.max_input_delay_size-1:])
-            # steer_error = ((clf_steer.coef_[0]*steer_array[self.max_input_delay_size-1:-1] + clf_steer.coef_[1]*steer_input_array[self.max_input_delay_size-1-i:len(steer_input_array) -i] -steer_dot[self.max_input_delay_size-1:])**2).sum()
             X_steer = np.stack(
                 (
                     steer_array[self.max_input_delay_size - 1 : -1],
