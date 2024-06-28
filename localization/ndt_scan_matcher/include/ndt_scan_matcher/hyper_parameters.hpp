@@ -33,62 +33,64 @@ struct HyperParameters
 {
   struct Frame
   {
-    std::string base_frame;
-    std::string ndt_base_frame;
-    std::string map_frame;
-  } frame;
+    std::string base_frame{};
+    std::string ndt_base_frame{};
+    std::string map_frame{};
+  } frame{};
 
   struct SensorPoints
   {
-    double required_distance;
-  } sensor_points;
+    double timeout_sec{};
+    double required_distance{};
+  } sensor_points{};
 
-  pclomp::NdtParams ndt;
-  bool ndt_regularization_enable;
+  pclomp::NdtParams ndt{};
+  bool ndt_regularization_enable{};
 
   struct InitialPoseEstimation
   {
-    int64_t particles_num;
-    int64_t n_startup_trials;
-  } initial_pose_estimation;
+    int64_t particles_num{};
+    int64_t n_startup_trials{};
+  } initial_pose_estimation{};
 
   struct Validation
   {
-    double lidar_topic_timeout_sec;
-    double initial_pose_timeout_sec;
-    double initial_pose_distance_tolerance_m;
-    double critical_upper_bound_exe_time_ms;
-  } validation;
+    double initial_pose_timeout_sec{};
+    double initial_pose_distance_tolerance_m{};
+    double initial_to_result_distance_tolerance_m{};
+    double critical_upper_bound_exe_time_ms{};
+    int64_t skipping_publish_num{};
+  } validation{};
 
   struct ScoreEstimation
   {
-    ConvergedParamType converged_param_type;
-    double converged_param_transform_probability;
-    double converged_param_nearest_voxel_transformation_likelihood;
+    ConvergedParamType converged_param_type{};
+    double converged_param_transform_probability{};
+    double converged_param_nearest_voxel_transformation_likelihood{};
     struct NoGroundPoints
     {
-      bool enable;
-      double z_margin_for_ground_removal;
-    } no_ground_points;
-  } score_estimation;
+      bool enable{};
+      double z_margin_for_ground_removal{};
+    } no_ground_points{};
+  } score_estimation{};
 
   struct Covariance
   {
-    std::array<double, 36> output_pose_covariance;
+    std::array<double, 36> output_pose_covariance{};
 
     struct CovarianceEstimation
     {
-      bool enable;
-      std::vector<Eigen::Vector2d> initial_pose_offset_model;
-    } covariance_estimation;
-  } covariance;
+      bool enable{};
+      std::vector<Eigen::Vector2d> initial_pose_offset_model{};
+    } covariance_estimation{};
+  } covariance{};
 
   struct DynamicMapLoading
   {
-    double update_distance;
-    double map_radius;
-    double lidar_radius;
-  } dynamic_map_loading;
+    double update_distance{};
+    double map_radius{};
+    double lidar_radius{};
+  } dynamic_map_loading{};
 
 public:
   explicit HyperParameters(rclcpp::Node * node)
@@ -97,6 +99,7 @@ public:
     frame.ndt_base_frame = node->declare_parameter<std::string>("frame.ndt_base_frame");
     frame.map_frame = node->declare_parameter<std::string>("frame.map_frame");
 
+    sensor_points.timeout_sec = node->declare_parameter<double>("sensor_points.timeout_sec");
     sensor_points.required_distance =
       node->declare_parameter<double>("sensor_points.required_distance");
 
@@ -115,14 +118,16 @@ public:
     initial_pose_estimation.n_startup_trials =
       node->declare_parameter<int64_t>("initial_pose_estimation.n_startup_trials");
 
-    validation.lidar_topic_timeout_sec =
-      node->declare_parameter<double>("validation.lidar_topic_timeout_sec");
     validation.initial_pose_timeout_sec =
       node->declare_parameter<double>("validation.initial_pose_timeout_sec");
     validation.initial_pose_distance_tolerance_m =
       node->declare_parameter<double>("validation.initial_pose_distance_tolerance_m");
+    validation.initial_to_result_distance_tolerance_m =
+      node->declare_parameter<double>("validation.initial_to_result_distance_tolerance_m");
     validation.critical_upper_bound_exe_time_ms =
       node->declare_parameter<double>("validation.critical_upper_bound_exe_time_ms");
+    validation.skipping_publish_num =
+      node->declare_parameter<int64_t>("validation.skipping_publish_num");
 
     const int64_t converged_param_type_tmp =
       node->declare_parameter<int64_t>("score_estimation.converged_param_type");

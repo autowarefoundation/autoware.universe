@@ -19,18 +19,16 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__UNKNOWN_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__UNKNOWN_TRACKER_HPP_
 
+#include "kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "multi_object_tracker/tracker/motion_model/cv_motion_model.hpp"
-
-#include <kalman_filter/kalman_filter.hpp>
 
 class UnknownTracker : public Tracker
 {
 private:
-  autoware_auto_perception_msgs::msg::DetectedObject object_;
+  autoware_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
 
-private:
   struct EkfParams
   {
     double r_cov_x;
@@ -41,29 +39,27 @@ private:
 
   double z_;
 
-private:
   CVMotionModel motion_model_;
-  const char DIM = motion_model_.DIM;
   using IDX = CVMotionModel::IDX;
 
 public:
   UnknownTracker(
-    const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-    const geometry_msgs::msg::Transform & self_transform);
+    const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+    const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
+    const uint & channel_index);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;
-  autoware_auto_perception_msgs::msg::DetectedObject getUpdatingObject(
-    const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  autoware_perception_msgs::msg::DetectedObject getUpdatingObject(
+    const autoware_perception_msgs::msg::DetectedObject & object,
     const geometry_msgs::msg::Transform & self_transform);
-  bool measureWithPose(const autoware_auto_perception_msgs::msg::DetectedObject & object);
-  bool measureWithShape(const autoware_auto_perception_msgs::msg::DetectedObject & object);
+  bool measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object);
+  bool measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object);
   bool getTrackedObject(
     const rclcpp::Time & time,
-    autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
-  virtual ~UnknownTracker() {}
+    autoware_perception_msgs::msg::TrackedObject & object) const override;
 };
 
 #endif  // MULTI_OBJECT_TRACKER__TRACKER__MODEL__UNKNOWN_TRACKER_HPP_

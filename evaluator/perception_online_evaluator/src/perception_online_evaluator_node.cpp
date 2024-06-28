@@ -14,12 +14,12 @@
 
 #include "perception_online_evaluator/perception_online_evaluator_node.hpp"
 
+#include "autoware/universe_utils/ros/marker_helper.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 #include "perception_online_evaluator/utils/marker_utils.hpp"
-#include "tier4_autoware_utils/ros/marker_helper.hpp"
-#include "tier4_autoware_utils/ros/parameter.hpp"
-#include "tier4_autoware_utils/ros/update_param.hpp"
 
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 
 #include "boost/lexical_cast.hpp"
 
@@ -69,16 +69,25 @@ void PerceptionOnlineEvaluatorNode::publishMetrics()
 
   // calculate metrics
   for (const Metric & metric : parameters_->metrics) {
-    const auto metric_stat_map = metrics_calculator_.calculate(Metric(metric));
-    if (!metric_stat_map.has_value()) {
+    const auto metric_result = metrics_calculator_.calculate(Metric(metric));
+    if (!metric_result.has_value()) {
       continue;
     }
 
-    for (const auto & [metric, stat] : metric_stat_map.value()) {
-      if (stat.count() > 0) {
-        metrics_msg.status.push_back(generateDiagnosticStatus(metric, stat));
-      }
-    }
+    std::visit(
+      [&metrics_msg, this](auto && arg) {
+        using T = std::decay_t<decltype(arg)>;
+        for (const auto & [metric, value] : arg) {
+          if constexpr (std::is_same_v<T, MetricStatMap>) {
+            if (value.count() > 0) {
+              metrics_msg.status.emplace_back(generateDiagnosticStatus(metric, value));
+            }
+          } else if constexpr (std::is_same_v<T, MetricValueMap>) {
+            metrics_msg.status.emplace_back(generateDiagnosticStatus(metric, value));
+          }
+        }
+      },
+      metric_result.value());
   }
 
   // publish metrics
@@ -111,6 +120,22 @@ DiagnosticStatus PerceptionOnlineEvaluatorNode::generateDiagnosticStatus(
   return status;
 }
 
+DiagnosticStatus PerceptionOnlineEvaluatorNode::generateDiagnosticStatus(
+  const std::string & metric, const double value) const
+{
+  DiagnosticStatus status;
+
+  status.level = status.OK;
+  status.name = metric;
+
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "metric_value";
+  key_value.value = std::to_string(value);
+  status.values.push_back(key_value);
+
+  return status;
+}
+
 void PerceptionOnlineEvaluatorNode::onObjects(const PredictedObjects::ConstSharedPtr objects_msg)
 {
   metrics_calculator_.setPredictedObjects(*objects_msg, *tf_buffer_);
@@ -131,7 +156,7 @@ void PerceptionOnlineEvaluatorNode::publishDebugMarker()
     for (auto & marker : added.markers) {
       marker.lifetime = rclcpp::Duration::from_seconds(1.5);
     }
-    tier4_autoware_utils::appendMarkerArray(added, &marker);
+    autoware::universe_utils::appendMarkerArray(added, &marker);
   };
 
   const auto & p = parameters_->debug_marker_parameters;
@@ -211,7 +236,7 @@ void PerceptionOnlineEvaluatorNode::publishDebugMarker()
 rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParameter(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-  using tier4_autoware_utils::updateParam;
+  using autoware::universe_utils::updateParam;
 
   auto & p = parameters_;
 
@@ -280,8 +305,8 @@ rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParame
 
 void PerceptionOnlineEvaluatorNode::initParameter()
 {
-  using tier4_autoware_utils::getOrDeclareParameter;
-  using tier4_autoware_utils::updateParam;
+  using autoware::universe_utils::getOrDeclareParameter;
+  using autoware::universe_utils::updateParam;
 
   auto & p = parameters_;
 

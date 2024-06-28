@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -35,11 +35,11 @@ class Ll2Decomposer : public rclcpp::Node
 {
 public:
   using Cloud2 = sensor_msgs::msg::PointCloud2;
-  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using LaneletMapBin = autoware_map_msgs::msg::LaneletMapBin;
   using Marker = visualization_msgs::msg::Marker;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
 
-  Ll2Decomposer();
+  explicit Ll2Decomposer(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   rclcpp::Publisher<Cloud2>::SharedPtr pub_road_marking_;
@@ -47,24 +47,25 @@ private:
   rclcpp::Publisher<Cloud2>::SharedPtr pub_bounding_box_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
-  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
   std::set<std::string> road_marking_labels_;
   std::set<std::string> sign_board_labels_;
   std::set<std::string> bounding_box_labels_;
 
-  void on_map(const HADMapBin & msg);
+  void on_map(const LaneletMapBin & msg);
 
-  pcl::PointNormal to_point_normal(
-    const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to) const;
+  static pcl::PointNormal to_point_normal(
+    const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to);
 
-  pcl::PointCloud<pcl::PointNormal> split_line_strings(
+  static pcl::PointCloud<pcl::PointNormal> split_line_strings(
     const lanelet::ConstLineStrings3d & line_strings);
 
   pcl::PointCloud<pcl::PointXYZL> load_bounding_boxes(const lanelet::PolygonLayer & polygons) const;
 
-  lanelet::ConstLineStrings3d extract_specified_line_string(
-    const lanelet::LineStringLayer & line_strings, const std::set<std::string> & visible_labels);
-  lanelet::ConstPolygons3d extract_specified_polygon(
+  static lanelet::ConstLineStrings3d extract_specified_line_string(
+    const lanelet::LineStringLayer & line_string_layer,
+    const std::set<std::string> & visible_labels);
+  static lanelet::ConstPolygons3d extract_specified_polygon(
     const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & visible_labels);
 
   MarkerArray make_sign_marker_msg(

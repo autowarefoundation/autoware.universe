@@ -15,23 +15,24 @@
 //
 // Author: v1.0 Taekjin Lee
 //
+#define EIGEN_MPL2_ONLY
 
 #include "multi_object_tracker/tracker/motion_model/ctrv_motion_model.hpp"
 
+#include "autoware/universe_utils/math/normalization.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
 #include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
 
-#include <tier4_autoware_utils/math/normalization.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
-
-#define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 // cspell: ignore CTRV
 // Constant Turn Rate and constant Velocity (CTRV) motion model
+using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
-CTRVMotionModel::CTRVMotionModel() : MotionModel(), logger_(rclcpp::get_logger("CTRVMotionModel"))
+CTRVMotionModel::CTRVMotionModel() : logger_(rclcpp::get_logger("CTRVMotionModel"))
 {
   // Initialize motion parameters
   setDefaultParams();
@@ -40,17 +41,17 @@ CTRVMotionModel::CTRVMotionModel() : MotionModel(), logger_(rclcpp::get_logger("
 void CTRVMotionModel::setDefaultParams()
 {
   // process noise covariance
-  constexpr double q_stddev_x = 0.5;                                  // [m/s]
-  constexpr double q_stddev_y = 0.5;                                  // [m/s]
-  constexpr double q_stddev_yaw = tier4_autoware_utils::deg2rad(20);  // [rad/s]
-  constexpr double q_stddev_vel = 9.8 * 0.3;                          // [m/(s*s)]
-  constexpr double q_stddev_wz = tier4_autoware_utils::deg2rad(30);   // [rad/(s*s)]
+  constexpr double q_stddev_x = 0.5;                                      // [m/s]
+  constexpr double q_stddev_y = 0.5;                                      // [m/s]
+  constexpr double q_stddev_yaw = autoware::universe_utils::deg2rad(20);  // [rad/s]
+  constexpr double q_stddev_vel = 9.8 * 0.3;                              // [m/(s*s)]
+  constexpr double q_stddev_wz = autoware::universe_utils::deg2rad(30);   // [rad/(s*s)]
 
   setMotionParams(q_stddev_x, q_stddev_y, q_stddev_yaw, q_stddev_vel, q_stddev_wz);
 
   // set motion limitations
-  constexpr double max_vel = tier4_autoware_utils::kmph2mps(10);  // [m/s] maximum velocity
-  constexpr double max_wz = 30.0;                                 // [deg] maximum yaw rate
+  constexpr double max_vel = autoware::universe_utils::kmph2mps(10);  // [m/s] maximum velocity
+  constexpr double max_wz = 30.0;                                     // [deg] maximum yaw rate
   setMotionLimits(max_vel, max_wz);
 
   // set prediction parameters
@@ -63,18 +64,18 @@ void CTRVMotionModel::setMotionParams(
   const double & q_stddev_vel, const double & q_stddev_wz)
 {
   // set process noise covariance parameters
-  motion_params_.q_cov_x = std::pow(q_stddev_x, 2.0);
-  motion_params_.q_cov_y = std::pow(q_stddev_y, 2.0);
-  motion_params_.q_cov_yaw = std::pow(q_stddev_yaw, 2.0);
-  motion_params_.q_cov_vel = std::pow(q_stddev_vel, 2.0);
-  motion_params_.q_cov_wz = std::pow(q_stddev_wz, 2.0);
+  motion_params_.q_cov_x = q_stddev_x * q_stddev_x;
+  motion_params_.q_cov_y = q_stddev_y * q_stddev_y;
+  motion_params_.q_cov_yaw = q_stddev_yaw * q_stddev_yaw;
+  motion_params_.q_cov_vel = q_stddev_vel * q_stddev_vel;
+  motion_params_.q_cov_wz = q_stddev_wz * q_stddev_wz;
 }
 
 void CTRVMotionModel::setMotionLimits(const double & max_vel, const double & max_wz)
 {
   // set motion limitations
   motion_params_.max_vel = max_vel;
-  motion_params_.max_wz = tier4_autoware_utils::deg2rad(max_wz);
+  motion_params_.max_wz = autoware::universe_utils::deg2rad(max_wz);
 }
 
 bool CTRVMotionModel::initialize(
@@ -88,9 +89,9 @@ bool CTRVMotionModel::initialize(
 
   // initialize covariance matrix P
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(DIM, DIM);
-  P(IDX::X, IDX::X) = pose_cov[utils::MSG_COV_IDX::X_X];
-  P(IDX::Y, IDX::Y) = pose_cov[utils::MSG_COV_IDX::Y_Y];
-  P(IDX::YAW, IDX::YAW) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
+  P(IDX::X, IDX::X) = pose_cov[XYZRPY_COV_IDX::X_X];
+  P(IDX::Y, IDX::Y) = pose_cov[XYZRPY_COV_IDX::Y_Y];
+  P(IDX::YAW, IDX::YAW) = pose_cov[XYZRPY_COV_IDX::YAW_YAW];
   P(IDX::VEL, IDX::VEL) = vel_cov;
   P(IDX::WZ, IDX::WZ) = wz_cov;
 
@@ -115,10 +116,10 @@ bool CTRVMotionModel::updateStatePose(
   C(1, IDX::Y) = 1.0;
 
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
-  R(0, 0) = pose_cov[utils::MSG_COV_IDX::X_X];
-  R(0, 1) = pose_cov[utils::MSG_COV_IDX::X_Y];
-  R(1, 0) = pose_cov[utils::MSG_COV_IDX::Y_X];
-  R(1, 1) = pose_cov[utils::MSG_COV_IDX::Y_Y];
+  R(0, 0) = pose_cov[XYZRPY_COV_IDX::X_X];
+  R(0, 1) = pose_cov[XYZRPY_COV_IDX::X_Y];
+  R(1, 0) = pose_cov[XYZRPY_COV_IDX::Y_X];
+  R(1, 1) = pose_cov[XYZRPY_COV_IDX::Y_Y];
 
   return ekf_.update(Y, C, R);
 }
@@ -154,15 +155,15 @@ bool CTRVMotionModel::updateStatePoseHead(
   C(2, IDX::YAW) = 1.0;
 
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
-  R(0, 0) = pose_cov[utils::MSG_COV_IDX::X_X];
-  R(0, 1) = pose_cov[utils::MSG_COV_IDX::X_Y];
-  R(1, 0) = pose_cov[utils::MSG_COV_IDX::Y_X];
-  R(1, 1) = pose_cov[utils::MSG_COV_IDX::Y_Y];
-  R(0, 2) = pose_cov[utils::MSG_COV_IDX::X_YAW];
-  R(1, 2) = pose_cov[utils::MSG_COV_IDX::Y_YAW];
-  R(2, 0) = pose_cov[utils::MSG_COV_IDX::YAW_X];
-  R(2, 1) = pose_cov[utils::MSG_COV_IDX::YAW_Y];
-  R(2, 2) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
+  R(0, 0) = pose_cov[XYZRPY_COV_IDX::X_X];
+  R(0, 1) = pose_cov[XYZRPY_COV_IDX::X_Y];
+  R(1, 0) = pose_cov[XYZRPY_COV_IDX::Y_X];
+  R(1, 1) = pose_cov[XYZRPY_COV_IDX::Y_Y];
+  R(0, 2) = pose_cov[XYZRPY_COV_IDX::X_YAW];
+  R(1, 2) = pose_cov[XYZRPY_COV_IDX::Y_YAW];
+  R(2, 0) = pose_cov[XYZRPY_COV_IDX::YAW_X];
+  R(2, 1) = pose_cov[XYZRPY_COV_IDX::YAW_Y];
+  R(2, 2) = pose_cov[XYZRPY_COV_IDX::YAW_YAW];
 
   return ekf_.update(Y, C, R);
 }
@@ -200,16 +201,16 @@ bool CTRVMotionModel::updateStatePoseHeadVel(
   C(3, IDX::VEL) = 1.0;
 
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
-  R(0, 0) = pose_cov[utils::MSG_COV_IDX::X_X];
-  R(0, 1) = pose_cov[utils::MSG_COV_IDX::X_Y];
-  R(1, 0) = pose_cov[utils::MSG_COV_IDX::Y_X];
-  R(1, 1) = pose_cov[utils::MSG_COV_IDX::Y_Y];
-  R(0, 2) = pose_cov[utils::MSG_COV_IDX::X_YAW];
-  R(1, 2) = pose_cov[utils::MSG_COV_IDX::Y_YAW];
-  R(2, 0) = pose_cov[utils::MSG_COV_IDX::YAW_X];
-  R(2, 1) = pose_cov[utils::MSG_COV_IDX::YAW_Y];
-  R(2, 2) = pose_cov[utils::MSG_COV_IDX::YAW_YAW];
-  R(3, 3) = twist_cov[utils::MSG_COV_IDX::X_X];
+  R(0, 0) = pose_cov[XYZRPY_COV_IDX::X_X];
+  R(0, 1) = pose_cov[XYZRPY_COV_IDX::X_Y];
+  R(1, 0) = pose_cov[XYZRPY_COV_IDX::Y_X];
+  R(1, 1) = pose_cov[XYZRPY_COV_IDX::Y_Y];
+  R(0, 2) = pose_cov[XYZRPY_COV_IDX::X_YAW];
+  R(1, 2) = pose_cov[XYZRPY_COV_IDX::Y_YAW];
+  R(2, 0) = pose_cov[XYZRPY_COV_IDX::YAW_X];
+  R(2, 1) = pose_cov[XYZRPY_COV_IDX::YAW_Y];
+  R(2, 2) = pose_cov[XYZRPY_COV_IDX::YAW_YAW];
+  R(3, 3) = twist_cov[XYZRPY_COV_IDX::X_X];
 
   return ekf_.update(Y, C, R);
 }
@@ -220,7 +221,7 @@ bool CTRVMotionModel::limitStates()
   Eigen::MatrixXd P_t(DIM, DIM);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  X_t(IDX::YAW) = tier4_autoware_utils::normalizeRadian(X_t(IDX::YAW));
+  X_t(IDX::YAW) = autoware::universe_utils::normalizeRadian(X_t(IDX::YAW));
   if (!(-motion_params_.max_vel <= X_t(IDX::VEL) && X_t(IDX::VEL) <= motion_params_.max_vel)) {
     X_t(IDX::VEL) = X_t(IDX::VEL) < 0 ? -motion_params_.max_vel : motion_params_.max_vel;
   }
@@ -295,11 +296,12 @@ bool CTRVMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) cons
   A(IDX::YAW, IDX::WZ) = dt;
 
   // Process noise covariance Q
-  const double q_cov_x = std::pow(0.5 * motion_params_.q_cov_x * dt, 2);
-  const double q_cov_y = std::pow(0.5 * motion_params_.q_cov_y * dt, 2);
-  const double q_cov_yaw = std::pow(motion_params_.q_cov_yaw * dt, 2);
-  const double q_cov_vel = std::pow(motion_params_.q_cov_vel * dt, 2);
-  const double q_cov_wz = std::pow(motion_params_.q_cov_wz * dt, 2);
+  const double dt2 = dt * dt;
+  const double q_cov_x = motion_params_.q_cov_x * dt2;
+  const double q_cov_y = motion_params_.q_cov_y * dt2;
+  const double q_cov_yaw = motion_params_.q_cov_yaw * dt2;
+  const double q_cov_vel = motion_params_.q_cov_vel * dt2;
+  const double q_cov_wz = motion_params_.q_cov_wz * dt2;
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(DIM, DIM);
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.
@@ -355,32 +357,32 @@ bool CTRVMotionModel::getPredictedState(
   constexpr double zz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double rr_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double pp_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  pose_cov[utils::MSG_COV_IDX::X_X] = P(IDX::X, IDX::X);
-  pose_cov[utils::MSG_COV_IDX::X_Y] = P(IDX::X, IDX::Y);
-  pose_cov[utils::MSG_COV_IDX::Y_X] = P(IDX::Y, IDX::X);
-  pose_cov[utils::MSG_COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
-  pose_cov[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
-  pose_cov[utils::MSG_COV_IDX::Z_Z] = zz_cov;
-  pose_cov[utils::MSG_COV_IDX::ROLL_ROLL] = rr_cov;
-  pose_cov[utils::MSG_COV_IDX::PITCH_PITCH] = pp_cov;
+  pose_cov[XYZRPY_COV_IDX::X_X] = P(IDX::X, IDX::X);
+  pose_cov[XYZRPY_COV_IDX::X_Y] = P(IDX::X, IDX::Y);
+  pose_cov[XYZRPY_COV_IDX::Y_X] = P(IDX::Y, IDX::X);
+  pose_cov[XYZRPY_COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
+  pose_cov[XYZRPY_COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
+  pose_cov[XYZRPY_COV_IDX::Z_Z] = zz_cov;
+  pose_cov[XYZRPY_COV_IDX::ROLL_ROLL] = rr_cov;
+  pose_cov[XYZRPY_COV_IDX::PITCH_PITCH] = pp_cov;
 
   // set twist covariance
   constexpr double vy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double vz_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wx_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
   constexpr double wy_cov = 0.1 * 0.1;  // TODO(yukkysaito) Currently tentative
-  twist_cov[utils::MSG_COV_IDX::X_X] = P(IDX::VEL, IDX::VEL);
-  twist_cov[utils::MSG_COV_IDX::X_Y] = 0.0;
-  twist_cov[utils::MSG_COV_IDX::X_YAW] = P(IDX::VEL, IDX::WZ);
-  twist_cov[utils::MSG_COV_IDX::Y_X] = 0.0;
-  twist_cov[utils::MSG_COV_IDX::Y_Y] = vy_cov;
-  twist_cov[utils::MSG_COV_IDX::Y_YAW] = 0.0;
-  twist_cov[utils::MSG_COV_IDX::YAW_X] = P(IDX::WZ, IDX::VEL);
-  twist_cov[utils::MSG_COV_IDX::YAW_Y] = 0.0;
-  twist_cov[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
-  twist_cov[utils::MSG_COV_IDX::Z_Z] = vz_cov;
-  twist_cov[utils::MSG_COV_IDX::ROLL_ROLL] = wx_cov;
-  twist_cov[utils::MSG_COV_IDX::PITCH_PITCH] = wy_cov;
+  twist_cov[XYZRPY_COV_IDX::X_X] = P(IDX::VEL, IDX::VEL);
+  twist_cov[XYZRPY_COV_IDX::X_Y] = 0.0;
+  twist_cov[XYZRPY_COV_IDX::X_YAW] = P(IDX::VEL, IDX::WZ);
+  twist_cov[XYZRPY_COV_IDX::Y_X] = 0.0;
+  twist_cov[XYZRPY_COV_IDX::Y_Y] = vy_cov;
+  twist_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;
+  twist_cov[XYZRPY_COV_IDX::YAW_X] = P(IDX::WZ, IDX::VEL);
+  twist_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;
+  twist_cov[XYZRPY_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
+  twist_cov[XYZRPY_COV_IDX::Z_Z] = vz_cov;
+  twist_cov[XYZRPY_COV_IDX::ROLL_ROLL] = wx_cov;
+  twist_cov[XYZRPY_COV_IDX::PITCH_PITCH] = wy_cov;
 
   return true;
 }

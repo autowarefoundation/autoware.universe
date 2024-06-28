@@ -37,7 +37,7 @@
 class StopFilter : public rclcpp::Node
 {
 public:
-  StopFilter(const std::string & node_name, const rclcpp::NodeOptions & options);
+  explicit StopFilter(const rclcpp::NodeOptions & options);
 
 private:
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pub_odom_;  //!< @brief odom publisher
@@ -52,6 +52,6 @@ private:
   /**
    * @brief set odometry measurement
    */
-  void callbackOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void callback_odometry(const nav_msgs::msg::Odometry::SharedPtr msg);
 };
 #endif  // STOP_FILTER__STOP_FILTER_HPP_

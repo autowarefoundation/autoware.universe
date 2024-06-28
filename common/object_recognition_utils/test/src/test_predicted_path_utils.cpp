@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include <gtest/gtest.h>
 
-using tier4_autoware_utils::Point2d;
-using tier4_autoware_utils::Point3d;
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Point3d;
 
 constexpr double epsilon = 1e-06;
 
 namespace
 {
-using autoware_auto_perception_msgs::msg::PredictedPath;
-using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::createQuaternionFromRPY;
-using tier4_autoware_utils::transformPoint;
+using autoware::universe_utils::createPoint;
+using autoware::universe_utils::createQuaternionFromRPY;
+using autoware::universe_utils::transformPoint;
+using autoware_perception_msgs::msg::PredictedPath;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
@@ -62,10 +62,10 @@ PredictedPath createTestPredictedPath(
 
 TEST(predicted_path_utils, testCalcInterpolatedPose)
 {
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::createQuaternionFromYaw;
+  using autoware::universe_utils::deg2rad;
   using object_recognition_utils::calcInterpolatedPose;
-  using tier4_autoware_utils::createQuaternionFromRPY;
-  using tier4_autoware_utils::createQuaternionFromYaw;
-  using tier4_autoware_utils::deg2rad;
 
   const auto path = createTestPredictedPath(100, 0.1, 1.0);
 
@@ -128,10 +128,10 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
 
 TEST(predicted_path_utils, resamplePredictedPath_by_vector)
 {
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::createQuaternionFromYaw;
+  using autoware::universe_utils::deg2rad;
   using object_recognition_utils::resamplePredictedPath;
-  using tier4_autoware_utils::createQuaternionFromRPY;
-  using tier4_autoware_utils::createQuaternionFromYaw;
-  using tier4_autoware_utils::deg2rad;
 
   const auto path = createTestPredictedPath(10, 1.0, 1.0);
 
@@ -174,7 +174,7 @@ TEST(predicted_path_utils, resamplePredictedPath_by_vector)
     }
   }
 
-  // Resample which exceeds the maximum size
+  // Resample the path with more than 100 points
   {
     std::vector<double> resampling_vec(101);
     for (size_t i = 0; i < 101; ++i) {
@@ -183,10 +183,9 @@ TEST(predicted_path_utils, resamplePredictedPath_by_vector)
 
     const auto resampled_path = resamplePredictedPath(path, resampling_vec);
 
-    EXPECT_EQ(resampled_path.path.size(), resampled_path.path.max_size());
     EXPECT_NEAR(path.confidence, resampled_path.confidence, epsilon);
 
-    for (size_t i = 0; i < resampled_path.path.max_size(); ++i) {
+    for (size_t i = 0; i < resampled_path.path.size(); ++i) {
       EXPECT_NEAR(resampled_path.path.at(i).position.x, resampling_vec.at(i), epsilon);
       EXPECT_NEAR(resampled_path.path.at(i).position.y, 0.0, epsilon);
       EXPECT_NEAR(resampled_path.path.at(i).position.z, 0.0, epsilon);
@@ -206,10 +205,10 @@ TEST(predicted_path_utils, resamplePredictedPath_by_vector)
 
 TEST(predicted_path_utils, resamplePredictedPath_by_sampling_time)
 {
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::createQuaternionFromYaw;
+  using autoware::universe_utils::deg2rad;
   using object_recognition_utils::resamplePredictedPath;
-  using tier4_autoware_utils::createQuaternionFromRPY;
-  using tier4_autoware_utils::createQuaternionFromYaw;
-  using tier4_autoware_utils::deg2rad;
 
   const auto path = createTestPredictedPath(10, 1.0, 1.0);
 

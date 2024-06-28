@@ -15,6 +15,7 @@
 #ifndef TIER4_PLANNING_RVIZ_PLUGIN__PATH__DISPLAY_BASE_HPP_
 #define TIER4_PLANNING_RVIZ_PLUGIN__PATH__DISPLAY_BASE_HPP_
 
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/display_context.hpp>
 #include <rviz_common/frame_manager_iface.hpp>
@@ -25,9 +26,8 @@
 #include <rviz_common/properties/parse_color.hpp>
 #include <rviz_common/validate_floats.hpp>
 #include <rviz_rendering/objects/movable_text.hpp>
-#include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
 
 #include <OgreBillboardSet.h>
 #include <OgreManualObject.h>
@@ -86,8 +86,8 @@ bool validateFloats(const typename T::ConstSharedPtr & msg_ptr)
 {
   for (auto && path_point : msg_ptr->points) {
     if (
-      !rviz_common::validateFloats(tier4_autoware_utils::getPose(path_point)) &&
-      !rviz_common::validateFloats(tier4_autoware_utils::getLongitudinalVelocity(path_point))) {
+      !rviz_common::validateFloats(autoware::universe_utils::getPose(path_point)) &&
+      !rviz_common::validateFloats(autoware::universe_utils::getLongitudinalVelocity(path_point))) {
       return false;
     }
   }
@@ -97,8 +97,8 @@ bool validateFloats(const typename T::ConstSharedPtr & msg_ptr)
 
 namespace rviz_plugins
 {
-using vehicle_info_util::VehicleInfo;
-using vehicle_info_util::VehicleInfoUtil;
+using autoware::vehicle_info_utils::VehicleInfo;
+using autoware::vehicle_info_utils::VehicleInfoUtils;
 template <typename T>
 class AutowarePathBaseDisplay : public rviz_common::MessageFilterDisplay<T>
 {
@@ -316,6 +316,9 @@ protected:
         node->detachAllObjects();
         node->removeAndDestroyAllChildren();
         this->scene_manager_->destroySceneNode(node);
+
+        rviz_rendering::MovableText * text = velocity_texts_.at(i);
+        delete text;
       }
       velocity_texts_.resize(msg_ptr->points.size());
       velocity_text_nodes_.resize(msg_ptr->points.size());
@@ -339,6 +342,9 @@ protected:
         node->detachAllObjects();
         node->removeAndDestroyAllChildren();
         this->scene_manager_->destroySceneNode(node);
+
+        rviz_rendering::MovableText * text = slope_texts_.at(i);
+        delete text;
       }
       slope_texts_.resize(msg_ptr->points.size());
       slope_text_nodes_.resize(msg_ptr->points.size());
@@ -352,8 +358,8 @@ protected:
 
     for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
       const auto & path_point = msg_ptr->points.at(point_idx);
-      const auto & pose = tier4_autoware_utils::getPose(path_point);
-      const auto & velocity = tier4_autoware_utils::getLongitudinalVelocity(path_point);
+      const auto & pose = autoware::universe_utils::getPose(path_point);
+      const auto & velocity = autoware::universe_utils::getLongitudinalVelocity(path_point);
 
       // path
       if (property_path_view_.getBool()) {
@@ -448,9 +454,9 @@ protected:
           (point_idx != msg_ptr->points.size() - 1) ? point_idx + 1 : point_idx;
 
         const auto & prev_path_pos =
-          tier4_autoware_utils::getPose(msg_ptr->points.at(prev_idx)).position;
+          autoware::universe_utils::getPose(msg_ptr->points.at(prev_idx)).position;
         const auto & next_path_pos =
-          tier4_autoware_utils::getPose(msg_ptr->points.at(next_idx)).position;
+          autoware::universe_utils::getPose(msg_ptr->points.at(next_idx)).position;
 
         Ogre::Vector3 position;
         position.x = pose.position.x;
@@ -460,7 +466,8 @@ protected:
         node->setPosition(position);
 
         rviz_rendering::MovableText * text = slope_texts_.at(point_idx);
-        const double slope = tier4_autoware_utils::calcElevationAngle(prev_path_pos, next_path_pos);
+        const double slope =
+          autoware::universe_utils::calcElevationAngle(prev_path_pos, next_path_pos);
 
         std::stringstream ss;
         ss << std::fixed << std::setprecision(2) << slope;
@@ -504,7 +511,7 @@ protected:
 
     for (size_t p_idx = 0; p_idx < msg_ptr->points.size(); p_idx++) {
       const auto & point = msg_ptr->points.at(p_idx);
-      const auto & pose = tier4_autoware_utils::getPose(point);
+      const auto & pose = autoware::universe_utils::getPose(point);
       // footprint
       if (property_footprint_view_.getBool()) {
         Ogre::ColourValue color;
