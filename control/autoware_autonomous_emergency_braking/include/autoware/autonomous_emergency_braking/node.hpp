@@ -181,7 +181,7 @@ public:
     const ObjectData & closest_object, const Path & path, const double current_ego_speed)
   {
     // in case the object comes from predicted objects info, we reuse the speed.
-    if (closest_object.velocity > 0.0) {
+    if (std::abs(closest_object.velocity) > std::numeric_limits<double>::epsilon()) {
       this->setPreviousObjectData(closest_object);
       this->updateVelocityHistory(closest_object.velocity, closest_object.stamp);
       return this->getMedianObstacleVelocity();

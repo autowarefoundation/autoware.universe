@@ -698,7 +698,7 @@ void AEB::createObjectDataUsingPredictedObjects(
         ObjectData obj;
         obj.stamp = stamp;
         obj.position = obj_position;
-        obj.velocity = (obj_tangent_velocity > 0.0) ? obj_tangent_velocity : 0.0;
+        obj.velocity = obj_tangent_velocity;
         obj.distance_to_object = std::abs(dist_ego_to_object);
         object_data_vector.push_back(obj);
         collision_points_added = true;
