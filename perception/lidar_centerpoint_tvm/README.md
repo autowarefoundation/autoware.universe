@@ -36,13 +36,7 @@ It defaults to `llvm`.
 
 ## Parameters
 
-### Core Parameters
-
-| Name                            | Type   | Default Value | Description                                                 |
-| ------------------------------- | ------ | ------------- | ----------------------------------------------------------- |
-| `score_threshold`               | float  | `0.1`         | detected objects with score less than threshold are ignored |
-| `densification_world_frame_id`  | string | `map`         | the world frame id to fuse multi-frame pointcloud           |
-| `densification_num_past_frames` | int    | `1`           | the number of past frames to fuse with the current frame    |
+{{ json_to_markdown("perception/lidar_centerpoint_tvm/schema/centerpoint.schema.json") }}
 
 ### Bounding Box
 
