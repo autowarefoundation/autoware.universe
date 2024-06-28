@@ -116,7 +116,6 @@ std::vector<tensorrt_yolox::Colormap> get_seg_colormap(const std::string & filen
       }
       std::string colormapString = color_list[i];
       tensorrt_yolox::Colormap cmap;
-      std::vector<int> rgb;
       size_t npos = colormapString.find_first_of(',');
       assert(npos != std::string::npos);
       std::string substr = colormapString.substr(0, npos);
@@ -821,7 +820,6 @@ bool TrtYoloX::doInferenceWithRoi(
 bool TrtYoloX::doMultiScaleInference(
   const cv::Mat & image, ObjectArrays & objects, const std::vector<cv::Rect> & rois)
 {
-  std::vector<cv::Mat> images;
   if (!trt_common_->isInitialized()) {
     return false;
   }
@@ -1281,7 +1279,6 @@ void TrtYoloX::getColorizedMask(
   int height = mask.rows;
   if ((cmask.cols != mask.cols) || (cmask.rows != mask.rows)) {
     throw std::runtime_error("input and output image have difference size.");
-    return;
   }
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
