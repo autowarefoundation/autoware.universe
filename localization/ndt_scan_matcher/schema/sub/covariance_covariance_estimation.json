@@ -29,7 +29,12 @@
         }
       },
 
-      "required": ["enable", "covariance_estimation_type", "initial_pose_offset_model_x", "initial_pose_offset_model_y"],
+      "required": [
+        "enable",
+        "covariance_estimation_type",
+        "initial_pose_offset_model_x",
+        "initial_pose_offset_model_y"
+      ],
       "additionalProperties": false
     }
   }
