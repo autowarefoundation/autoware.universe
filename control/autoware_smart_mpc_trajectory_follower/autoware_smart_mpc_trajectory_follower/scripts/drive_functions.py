@@ -578,7 +578,7 @@ def transform_yaw_for_x_current(x_old: np.ndarray, x_current_: np.ndarray) -> np
     return x_current
 
 
-def transform_yaw_for_X_des(x_current: np.ndarray, X_des_: np.ndarray) -> np.ndarray:
+def transform_yaw_for_X_des(x_current: np.ndarray, X_des_: np.ndarray) -> tuple[np.ndarray, float]:
     """Transform the yaw angle with respect to the target trajectory.
 
     X_des[0] is set to the current state.
@@ -1521,9 +1521,7 @@ def acc_prediction_error_compensation(
     predicted_acc = previous_states[4] + acc_time_stamp_interval * (
         previous_error[4] + (actual_acc_input - previous_states[4]) / acc_time_constant
     )
-    prediction_error = (
-        predicted_acc - states[4]
-    )  # np.clip(predicted_acc - states[4], -max_error_acc, max_error_acc)
+    prediction_error = predicted_acc - states[4]
     new_acc_fb_1 = np.exp(-acc_fb_decay) * acc_fb_1 + acc_fb_decay * prediction_error
     new_acc_fb_2 = (
         acc_fb_decay * np.exp(-acc_fb_decay) * acc_fb_1 + np.exp(-acc_fb_decay) * acc_fb_2
@@ -1555,9 +1553,7 @@ def steer_prediction_error_compensation(
     predicted_steer = previous_states[5] + steer_time_stamp_interval * (
         previous_error[5] + delta_diff / steer_time_constant
     )
-    prediction_error = (
-        predicted_steer - states[5]
-    )  # np.clip(predicted_steer - states[5], -max_error_steer, max_error_steer)
+    prediction_error = predicted_steer - states[5]
 
     new_steer_fb_1 = np.exp(-steer_fb_decay) * steer_fb_1 + steer_fb_decay * (prediction_error)
     new_steer_fb_2 = (

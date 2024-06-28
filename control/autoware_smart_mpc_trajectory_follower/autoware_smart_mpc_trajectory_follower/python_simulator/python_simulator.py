@@ -723,10 +723,6 @@ def drive_sim(
                 achievement_rates,
             ) = figure_eight.get_trajectory_points(0.01)
 
-            # curvature_radius = data_collection_utils.compute_curvature_radius_loop_trajectory(
-            #     trajectory_position_data, trajectory_yaw_data
-            # )  # when computing from (smoothed) path
-
             x_init[:2] = trajectory_position_data[0]
             x_init[3] = trajectory_yaw_data[0]
             x_init[2] = figure_eight.v_start
@@ -929,12 +925,7 @@ def drive_sim(
                             * pp_gain_updater.get_steer_gain_scaling()
                         )
 
-                    # print("acc_gain_scaling",acc_gain_scaling)
-                    # print("steer_gain_scaling",steer_gain_scaling)
-
-        if (
-            visualize and (control_type != ControlType.mpc) and (i == t_eval.size - 1 or break_flag)
-        ):  # feedforward_test and (i == t_eval.size - 1 or break_flag):
+        if visualize and (control_type != ControlType.mpc) and (i == t_eval.size - 1 or break_flag):
             X = np.array(log_updater.X_history)
             U = np.array(log_updater.U_history)
 

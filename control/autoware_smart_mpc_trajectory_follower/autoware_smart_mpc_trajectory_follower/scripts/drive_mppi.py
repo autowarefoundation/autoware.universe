@@ -23,7 +23,7 @@ import numpy as np
 index_cost = np.concatenate(
     (
         np.arange(drive_functions.nx_0 + 1),
-        [drive_functions.nx_0 + drive_functions.acc_ctrl_queue_size],
+        np.array([drive_functions.nx_0 + drive_functions.acc_ctrl_queue_size]),
     )
 )
 

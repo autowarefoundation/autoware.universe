@@ -141,26 +141,14 @@ class pure_pursuit_gain_updater:
         if len(self.vel_queue) < self.max_queue_size:
             return 1.0
 
-        # vel_array = np.array(self.vel_queue)
-        # yaw_array = np.array(self.yaw_queue)
         steer_array = np.array(self.steer_queue)
         steer_input_array = np.array(self.steer_input_queue)
 
-        # yaw_dot_error = (yaw_array[1:] - yaw_array[:-1])/drive_functions.ctrl_time_step
-        # yaw_dot_error -= vel_array[:-1] * np.tan(steer_array[:-1])/drive_functions.L
-        # clf = linear_model.ElasticNet(
-        #    fit_intercept=False, alpha=1e-5, l1_ratio=0.5, max_iter=100000
-        # )
-        # clf.fit(vel_array[:-1]*np.tan(steer_array[:-1]).reshape(-1,1), yaw_dot_error)
-
-        # estimated_wheel_base_scaling = 1.0#1 / np.clip(1 + clf.coef_[0]*drive_functions.L , 0.1, 10.0) # 1 / ( (1/L + coef[0])/(1/L) )
         estimated_wheel_base_scaling = 1.0 / np.clip(
             1 + np.linalg.solve(self.A_wheel_base, self.B_wheel_base)[1] * drive_functions.L,
             0.1,
             1.0,
         )
-
-        # print("wheel_base_scaling", estimated_wheel_base_scaling)
 
         steer_dot = (steer_array[1:] - steer_array[:-1]) / drive_functions.ctrl_time_step
 
