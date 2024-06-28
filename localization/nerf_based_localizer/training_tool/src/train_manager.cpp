@@ -52,6 +52,7 @@ TrainManager::TrainManager(const std::string & train_result_dir, const std::stri
   pts_batch_size_ = (int)train_config["pts_batch_size"];
   end_iter_ = (int)train_config["end_iter"];
   vis_freq_ = (int)train_config["vis_freq"];
+  ray_batch_size_ = (int)train_config["ray_batch_size"];
   report_freq_ = (int)train_config["report_freq"];
   save_freq_ = (int)train_config["save_freq"];
   learning_rate_ = (float)train_config["learning_rate"];
@@ -132,9 +133,9 @@ void TrainManager::train()
       const int idx = 0;
       const int H = dataset_->height;
       const int W = dataset_->width;
-      const int ray_batch_size = 8192;
+
       auto [pred_colors, pred_depths] = renderer_->render_image(
-        dataset_->poses[idx], dataset_->intrinsics[idx], H, W, ray_batch_size);
+        dataset_->poses[idx], dataset_->intrinsics[idx], H, W, ray_batch_size_);
 
       Tensor image = dataset_->images[idx].reshape({H, W, 3}).to(torch::kCPU);
       pred_colors = pred_colors.to(torch::kCPU);

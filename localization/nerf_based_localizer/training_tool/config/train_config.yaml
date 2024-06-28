@@ -5,6 +5,7 @@ train:
   end_iter: 20000
   report_freq: 200
   vis_freq: 2500
+  ray_batch_size: 4096
   save_freq: 20000
   validate_freq: 100000
   learning_rate: 1e-2
