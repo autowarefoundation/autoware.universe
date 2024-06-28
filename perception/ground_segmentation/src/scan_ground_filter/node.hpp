@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef GROUND_SEGMENTATION__SCAN_GROUND_FILTER_NODELET_HPP_
-#define GROUND_SEGMENTATION__SCAN_GROUND_FILTER_NODELET_HPP_
+#ifndef SCAN_GROUND_FILTER__NODE_HPP_
+#define SCAN_GROUND_FILTER__NODE_HPP_
 
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
@@ -292,4 +292,4 @@ public:
 };
 }  // namespace autoware::ground_segmentation
 
-#endif  // GROUND_SEGMENTATION__SCAN_GROUND_FILTER_NODELET_HPP_
+#endif  // SCAN_GROUND_FILTER__NODE_HPP_
