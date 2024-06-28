@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "ground_segmentation/ray_ground_filter_nodelet.hpp"
+#include "../src/ray_ground_filter/node.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"

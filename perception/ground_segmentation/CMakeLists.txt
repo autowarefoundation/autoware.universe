@@ -22,9 +22,9 @@ include_directories(
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/ray_ground_filter_nodelet.cpp
-  src/ransac_ground_filter_nodelet.cpp
-  src/scan_ground_filter_nodelet.cpp
+  src/ray_ground_filter/node.cpp
+  src/ransac_ground_filter/node.cpp
+  src/scan_ground_filter/node.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
