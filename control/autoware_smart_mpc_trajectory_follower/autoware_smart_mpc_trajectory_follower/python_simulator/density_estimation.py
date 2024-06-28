@@ -450,5 +450,5 @@ def visualize_speed_steer(
 
     ax.set_xlabel(fst, fontsize=12)
     ax.set_ylabel(snd, fontsize=12)
-    ax.set_title(f"kernel density: min_density={min_val:.4f} at {rounded_min_element}")
+    ax.set_title(f"kernel density: min_density={min_val: .4f} at {rounded_min_element}")
     return fig, ax
