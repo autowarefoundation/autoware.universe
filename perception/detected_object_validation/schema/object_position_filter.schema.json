@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Object Position Filter",
+  "type": "object",
+  "definitions": {
+    "object_position_filter": {
+      "type": "object",
+      "properties": {
+        "upper_bound_x": {
+          "type": "number",
+          "default": 100.0,
+          "description": "Bound for filtering. Only used if filter_by_xy_position is true"
+        },
+        "upper_bound_y": {
+          "type": "number",
+          "default": 50.0,
+          "description": "Bound for filtering. Only used if filter_by_xy_position is true"
+        },
+        "lower_bound_x": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Bound for filtering. Only used if filter_by_xy_position is true"
+        },
+        "lower_bound_y": {
+          "type": "number",
+          "default": -50.0,
+          "description": "Bound for filtering. Only used if filter_by_xy_position is true"
+        },
+        "filter_target_label": {
+          "type": "object",
+          "properties": {
+            "UNKNOWN": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, unknown objects are filtered."
+            },
+            "CAR": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, car objects are filtered."
+            },
+            "TRUCK": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, truck objects are filtered."
+            },
+            "BUS": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, bus objects are filtered."
+            },
+            "TRAILER": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, trailer objects are filtered."
+            },
+            "MOTORCYCLE": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, motorcycle objects are filtered."
+            },
+            "BICYCLE": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, bicycle objects are filtered."
+            },
+            "PEDESTRIAN": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, pedestrian objects are filtered."
+            }
+          },
+          "required": [
+            "UNKNOWN",
+            "CAR",
+            "TRUCK",
+            "BUS",
+            "TRAILER",
+            "MOTORCYCLE",
+            "BICYCLE",
+            "PEDESTRIAN"
+          ]
+        }
+      },
+      "required": [
+        "upper_bound_x",
+        "upper_bound_y",
+        "lower_bound_x",
+        "lower_bound_y",
+        "filter_target_label"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/object_position_filter"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
