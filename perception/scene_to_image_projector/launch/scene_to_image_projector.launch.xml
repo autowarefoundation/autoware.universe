@@ -1,0 +1,23 @@
+<launch>
+  <arg name="objects_type" default="detected" description="must be tracked or detected"/>
+  <arg name="use_objects" default="true" description=""/>
+  <arg name="use_trajectory" default="true" description=""/>
+  <arg name="use_road_boundaries" default="false" description=""/>
+  <arg name="topic_image" default="/sensing/camera/front_tele/image" description="Image topic"/>
+  <arg name="topic_camera_info" default="/sensing/camera/front_tele/camera_info" description="Camera info topic"/>
+  <arg name="topic_objects" default="/perception/object_recognition/detection/apollo/validation/objects" description="Objects topic"/>
+  <arg name="topic_trajectory" default="/planning/scenario_planning/lane_driving/trajectory" description="Trajectory topic"/>
+  <arg name="topic_road_boundaries" default="/planning/scenario_planning/lane_driving/road_boundaries" description="Road boundaries topic"/>
+
+  <node pkg="scene_to_image_projector" exec="scene_to_image_projector_node" name="scene_to_image_projector">
+    <remap from="~/input/image" to="$(var topic_image)"/>                      
+    <remap from="~/input/camera_info" to="$(var topic_camera_info)"/>
+    <remap from="~/input/objects" to="$(var topic_objects)"/>
+    <remap from="~/input/trajectory" to="$(var topic_trajectory)"/>
+    <remap from="~/input/road_boundaries" to="$(var topic_road_boundaries)"/>
+    <param name="use_objects" value="$(var use_objects)"/>
+    <param name="objects_type" value="$(var objects_type)"/>
+    <param name="use_trajectory" value="$(var use_trajectory)"/>
+    <param name="use_road_boundaries" value="$(var use_road_boundaries)"/>
+  </node>
+</launch>

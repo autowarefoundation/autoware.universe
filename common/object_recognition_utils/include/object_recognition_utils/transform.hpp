@@ -104,6 +104,35 @@ bool transformObjects(
   return true;
 }
 template <class T>
+bool transformTrajectory(
+  const T & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
+  T & output_msg)
+{
+  output_msg = input_msg;
+
+  // transform to world coordinate
+  if (input_msg.header.frame_id != target_frame_id) {
+    output_msg.header.frame_id = target_frame_id;
+    tf2::Transform tf_target2objects_world;
+    tf2::Transform tf_target2objects;
+    tf2::Transform tf_objects_world2objects;
+    {
+      const auto ros_target2objects_world = detail::getTransform(
+        tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
+      if (!ros_target2objects_world) {
+        return false;
+      }
+      tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
+    }
+    for (auto & object : output_msg.points) {
+      tf2::fromMsg(object.pose, tf_objects_world2objects);
+      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
+      tf2::toMsg(tf_target2objects, object.pose);
+    }
+  }
+  return true;
+}
+template <class T>
 bool transformObjectsWithFeature(
   const T & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
   T & output_msg)
