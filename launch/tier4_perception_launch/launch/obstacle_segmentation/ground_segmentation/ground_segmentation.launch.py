@@ -353,7 +353,7 @@ class GroundSegmentationPipeline:
         components.append(
             ComposableNode(
                 package="elevation_map_loader",
-                plugin="ElevationMapLoaderNode",
+                plugin="autoware::elevation_map_loader::ElevationMapLoaderNode",
                 name="elevation_map_loader",
                 namespace="elevation_map",
                 remappings=[
