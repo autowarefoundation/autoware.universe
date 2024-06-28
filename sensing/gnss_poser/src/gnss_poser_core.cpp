@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-// TODO(mfc): remove this comment line please.
+// TODO(mfc): remove this comment line please. a
 
 namespace gnss_poser
 {
