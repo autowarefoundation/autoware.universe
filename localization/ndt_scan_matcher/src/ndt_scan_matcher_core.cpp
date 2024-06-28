@@ -839,7 +839,8 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     CovarianceEstimationType::LAPLACE_APPROXIMATION) {
     Eigen::Matrix2d cov_by_la =
       pclomp::estimate_xy_covariance_by_Laplace_approximation(ndt_result.hessian);
-    estimated_cov_2d = pclomp::adjust_diagonal_covariance(cov_by_la, ndt_result.pose, 0.0225, 0.0225);
+    estimated_cov_2d =
+      pclomp::adjust_diagonal_covariance(cov_by_la, ndt_result.pose, 0.0225, 0.0225);
   } else if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT) {
@@ -876,10 +877,10 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     }
     multi_initial_pose_pub_->publish(multi_initial_pose_msg);
   }
-    ndt_covariance[0 + 6 * 0] = estimated_cov_2d(0, 0);
-    ndt_covariance[1 + 6 * 1] = estimated_cov_2d(1, 1);
-    ndt_covariance[1 + 6 * 0] = estimated_cov_2d(1, 0);
-    ndt_covariance[0 + 6 * 1] = estimated_cov_2d(0, 1);
+  ndt_covariance[0 + 6 * 0] = estimated_cov_2d(0, 0);
+  ndt_covariance[1 + 6 * 1] = estimated_cov_2d(1, 1);
+  ndt_covariance[1 + 6 * 0] = estimated_cov_2d(1, 0);
+  ndt_covariance[0 + 6 * 1] = estimated_cov_2d(0, 1);
   return ndt_covariance;
 }
 
