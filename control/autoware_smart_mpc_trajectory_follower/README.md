@@ -140,7 +140,7 @@ To perform a control test on autoware with the nominal model before training, ma
 <p><img src="images/test_route.png" width=712pix></p>
 
 Record rosbag and train the model in the manner described in "Training of model and reflection in control", and move the generated files `model_for_test_drive.pth` and `polynomial_reg_info.npz` to the home directory.
-Sample models can be obtained at [sample_models/wheel_base_changed](./sample_models/wheel_base_changed/).
+Sample models, which work under the condition that`trained_model_parameter:memory_for_training:use_memory_for_training` in [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml) is set to `true`, can be obtained at [sample_models/wheel_base_changed](./sample_models/wheel_base_changed/).
 
 > [!NOTE]
 > Although the data used for training is small, for the sake of simplicity, we will see how much performance can be improved with this amount of data.
@@ -406,7 +406,7 @@ The nominal parameters include the following:
 
 ## Change of control parameters and their reloading
 
-The control parameters can be changed by editing files [mpc_param.yaml](./smart_mpc_trajectory_follower/param/mpc_param.yaml) and [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml).
+The control parameters can be changed by editing files [mpc_param.yaml](./autoware_smart_mpc_trajectory_follower/param/mpc_param.yaml) and [trained_model_param.yaml](./autoware_smart_mpc_trajectory_follower/param/trained_model_param.yaml).
 Although it is possible to reflect parameter changes by restarting autoware, the following command allows us to do so without leaving autoware running:
 
 ```bash
