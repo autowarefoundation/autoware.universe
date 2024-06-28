@@ -120,8 +120,15 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
       continue;
     }
 
-    Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
-      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z));
+    // project, try and catch. if it fails, return
+    Eigen::Vector2d projected_point;
+    try {
+      projected_point = calcRawImageProjectedPoint(
+        pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z));
+    } catch (const std::exception & e) {
+      RCLCPP_WARN_STREAM(this->get_logger(), "Error in projection: " << e.what());
+      return;
+    }
 
     bool is_inside_image = projected_point.x() > 0 && projected_point.x() < camera_info.width &&
                            projected_point.y() > 0 && projected_point.y() < camera_info.height;
