@@ -17,10 +17,7 @@
           "description": "Whether to display debug images or not?"
         }
       },
-      "required": [
-        "mean_threshold",
-        "enable_debug"
-      ],
+      "required": ["mean_threshold", "enable_debug"],
       "additionalProperties": false
     }
   },
