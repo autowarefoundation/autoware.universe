@@ -2,6 +2,9 @@
   <arg name="input/diagnostics" default="/diagnostics"/>
   <arg name="input/odometry" default="/localization/kinematic_state"/>
   <arg name="input/trajectory" default="/planning/scenario_planning/trajectory"/>
+  <arg name="map_topic_name" default="/map/vector_map"/>
+  <arg name="route_topic_name" default="/planning/mission_planning/route"/>
+
   <!-- control evaluator -->
   <group>
     <node name="control_evaluator" exec="control_evaluator" pkg="autoware_control_evaluator">
@@ -10,6 +13,8 @@
       <remap from="~/input/odometry" to="$(var input/odometry)"/>
       <remap from="~/input/trajectory" to="$(var input/trajectory)"/>
       <remap from="~/metrics" to="/diagnostic/control_evaluator/metrics"/>
+      <remap from="~/input/vector_map" to="$(var map_topic_name)"/>
+      <remap from="~/input/route" to="$(var route_topic_name)"/>
     </node>
   </group>
 </launch>

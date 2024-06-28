@@ -27,6 +27,9 @@ namespace control_diagnostics
 controlEvaluatorNode::controlEvaluatorNode(const rclcpp::NodeOptions & node_options)
 : Node("control_evaluator", node_options)
 {
+  tf_buffer_ptr_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
+  tf_listener_ptr_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_ptr_);
+
   using std::placeholders::_1;
   control_diag_sub_ = create_subscription<DiagnosticArray>(
     "~/input/diagnostics", 1, std::bind(&controlEvaluatorNode::onDiagnostics, this, _1));
@@ -38,6 +41,30 @@ controlEvaluatorNode::controlEvaluatorNode(const rclcpp::NodeOptions & node_opti
   using namespace std::literals::chrono_literals;
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&controlEvaluatorNode::onTimer, this));
+}
+
+void controlEvaluatorNode::getRouteData()
+{
+  // route
+  {
+    const auto msg = route_subscriber_.takeNewData();
+    if (msg) {
+      if (msg->segments.empty()) {
+        RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
+      } else {
+        route_handler_.setRoute(*msg);
+        has_received_route_ = true;
+      }
+    }
+  }
+  // map
+  {
+    const auto msg = vector_map_subscriber_.takeNewData();
+    if (msg) {
+      route_handler_.setMap(*msg);
+      has_received_map_ = true;
+    }
+  }
 }
 
 void controlEvaluatorNode::removeOldDiagnostics(const rclcpp::Time & stamp)
@@ -102,11 +129,31 @@ DiagnosticStatus controlEvaluatorNode::generateAEBDiagnosticStatus(const Diagnos
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = "decision";
   const bool is_emergency_brake = (diag.level == DiagnosticStatus::ERROR);
-  key_value.value = (is_emergency_brake) ? "stop" : "none";
+  key_value.value = (is_emergency_brake) ? "deceleration" : "none";
   status.values.push_back(key_value);
-
   return status;
 }
+
+// DiagnosticStatus controlEvaluatorNode::generateLaneletDiagnosticStatus(
+//   const DiagnosticStatus & diag)
+// {
+//   DiagnosticStatus status;
+//   status.level = status.OK;
+//   status.name = diag.name;
+//   diagnostic_msgs::msg::KeyValue key_value;
+//   key_value.key = "start_lane_id";
+//   const bool is_emergency_brake = (diag.level == DiagnosticStatus::ERROR);
+//   key_value.value = (is_emergency_brake) ? "stop" : "none";
+//   status.values.push_back(key_value);
+
+// start_lane_id: 100
+//         start_s: 1.0
+//         start_t: 0.0
+//         end_lane_id: 101
+//         end_s: 3.0
+//         end_t: 3.0
+//   return status;
+// }
 
 DiagnosticStatus controlEvaluatorNode::generateLateralDeviationDiagnosticStatus(
   const Trajectory & traj, const Point & ego_point)
@@ -174,6 +221,40 @@ void controlEvaluatorNode::onTimer()
   metrics_msg.header.stamp = now();
   metrics_pub_->publish(metrics_msg);
 }
+
+geometry_msgs::msg::Pose controlEvaluatorNode::getCurrentEgoPose() const
+{
+  geometry_msgs::msg::TransformStamped tf_current_pose;
+
+  geometry_msgs::msg::Pose p;
+  try {
+    tf_current_pose = tf_buffer_ptr_->lookupTransform(
+      "map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_ERROR(get_logger(), "%s", ex.what());
+    return p;
+  }
+
+  p.orientation = tf_current_pose.transform.rotation;
+  p.position.x = tf_current_pose.transform.translation.x;
+  p.position.y = tf_current_pose.transform.translation.y;
+  p.position.z = tf_current_pose.transform.translation.z;
+
+  return p;
+}
+
+lanelet::ConstLanelet controlEvaluatorNode::getCurrentLane()
+{
+  getRouteData();
+  lanelet::ConstLanelet closest_lanelet;
+  if (!has_received_map_ || !has_received_route_) {
+    return closest_lanelet;
+  }
+  const auto ego_pose = getCurrentEgoPose();
+  route_handler_.getClosestLaneletWithinRoute(ego_pose, &closest_lanelet);
+  return closest_lanelet;
+}
+
 }  // namespace control_diagnostics
 
 #include "rclcpp_components/register_node_macro.hpp"
