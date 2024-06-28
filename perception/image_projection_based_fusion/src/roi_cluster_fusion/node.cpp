@@ -131,8 +131,16 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         continue;
       }
 
-      Eigen::Vector2d projected_point =
-        calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z));
+      // project, try and catch. if it fails, return
+      Eigen::Vector2d projected_point;
+      try {
+        projected_point =
+          calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z));
+      } catch (const std::exception & e) {
+        RCLCPP_WARN_STREAM(this->get_logger(), "Error in projection: " << e.what());
+        return;
+      }
+
       if (
         0 <= static_cast<int>(projected_point.x()) &&
         static_cast<int>(projected_point.x()) <= static_cast<int>(camera_info.width) - 1 &&
