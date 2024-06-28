@@ -61,12 +61,12 @@ struct CloudInfo
     x_datatype(7),
     y_datatype(7),
     z_datatype(7),
-    intensity_datatype(7),
+    intensity_datatype(2),
     x_count(1),
     y_count(1),
     z_count(1),
     intensity_count(1),
-    point_step(16),
+    point_step(32),
     is_bigendian(false)
   {
   }
