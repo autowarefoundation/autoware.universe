@@ -133,7 +133,6 @@ class drive_mppi:
             proceed = False
         return new_inputs, new_inputs[0], new_traj, Traj, proceed
 
-    #        return new_traj, new_inputs, Traj, proceed
 
     def receive_model(self, F_for_candidates: Callable, F):
         """Receive vehicle model for control."""
