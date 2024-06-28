@@ -47,7 +47,7 @@ public:
   unsigned iter_step_ = 0;
   unsigned end_iter_;
   unsigned report_freq_, vis_freq_, save_freq_;
-  unsigned pts_batch_size_;
+  unsigned pts_batch_size_, ray_batch_size_;
 
   int var_loss_start_, var_loss_end_;
   float learning_rate_, learning_rate_alpha_, learning_rate_warm_up_end_iter_;
