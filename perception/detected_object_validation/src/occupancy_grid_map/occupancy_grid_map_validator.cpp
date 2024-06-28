@@ -53,8 +53,8 @@ OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptio
   objects_pub_ = create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
 
-  mean_threshold_ = declare_parameter<float>("mean_threshold", 0.6);
-  enable_debug_ = declare_parameter<bool>("enable_debug", false);
+  mean_threshold_ = declare_parameter<float>("mean_threshold");
+  enable_debug_ = declare_parameter<bool>("enable_debug");
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
