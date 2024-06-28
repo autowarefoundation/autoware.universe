@@ -14,8 +14,8 @@
 
 #include "detected_object_validation/obstacle_pointcloud_based_validator/obstacle_pointcloud_based_validator.hpp"
 
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <object_recognition_utils/object_recognition_utils.hpp>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
 #include <boost/geometry.hpp>
 
@@ -32,8 +32,8 @@
 namespace obstacle_pointcloud_based_validator
 {
 namespace bg = boost::geometry;
-using Shape = autoware_auto_perception_msgs::msg::Shape;
-using Polygon2d = tier4_autoware_utils::Polygon2d;
+using Shape = autoware_perception_msgs::msg::Shape;
+using Polygon2d = autoware::universe_utils::Polygon2d;
 
 Validator::Validator(PointsNumThresholdParam & points_num_threshold_param)
 {
@@ -44,7 +44,7 @@ Validator::Validator(PointsNumThresholdParam & points_num_threshold_param)
 }
 
 size_t Validator::getThresholdPointCloud(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   const auto object_label_id = object.classification.front().label;
   const auto object_distance = std::hypot(
@@ -91,13 +91,13 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr Validator2D::convertToXYZ(
 }
 
 std::optional<size_t> Validator2D::getPointCloudWithinObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const autoware_perception_msgs::msg::DetectedObject & object,
   const pcl::PointCloud<pcl::PointXY>::Ptr pointcloud)
 {
   std::vector<pcl::Vertices> vertices_array;
   pcl::Vertices vertices;
-  Polygon2d poly2d =
-    tier4_autoware_utils::toPolygon2d(object.kinematics.pose_with_covariance.pose, object.shape);
+  Polygon2d poly2d = autoware::universe_utils::toPolygon2d(
+    object.kinematics.pose_with_covariance.pose, object.shape);
   if (bg::is_empty(poly2d)) return std::nullopt;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr poly3d(new pcl::PointCloud<pcl::PointXYZ>);
@@ -119,7 +119,7 @@ std::optional<size_t> Validator2D::getPointCloudWithinObject(
 }
 
 bool Validator2D::validate_object(
-  const autoware_auto_perception_msgs::msg::DetectedObject & transformed_object)
+  const autoware_perception_msgs::msg::DetectedObject & transformed_object)
 {
   // get neighbor_pointcloud of object
   neighbor_pointcloud_.reset(new pcl::PointCloud<pcl::PointXY>);
@@ -148,7 +148,7 @@ bool Validator2D::validate_object(
 }
 
 std::optional<float> Validator2D::getMaxRadius(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   if (object.shape.type == Shape::BOUNDING_BOX || object.shape.type == Shape::CYLINDER) {
     return std::hypot(object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
@@ -182,7 +182,7 @@ bool Validator3D::setKdtreeInputCloud(
   return true;
 }
 std::optional<float> Validator3D::getMaxRadius(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   if (object.shape.type == Shape::BOUNDING_BOX || object.shape.type == Shape::CYLINDER) {
     auto square_radius = (object.shape.dimensions.x * 0.5f) * (object.shape.dimensions.x * 0.5f) +
@@ -202,7 +202,7 @@ std::optional<float> Validator3D::getMaxRadius(
 }
 
 std::optional<size_t> Validator3D::getPointCloudWithinObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const autoware_perception_msgs::msg::DetectedObject & object,
   const pcl::PointCloud<pcl::PointXYZ>::Ptr neighbor_pointcloud)
 {
   std::vector<pcl::Vertices> vertices_array;
@@ -211,8 +211,8 @@ std::optional<size_t> Validator3D::getPointCloudWithinObject(
   auto const object_height = object.shape.dimensions.x;
   auto z_min = object_position.z - object_height / 2.0f;
   auto z_max = object_position.z + object_height / 2.0f;
-  Polygon2d poly2d =
-    tier4_autoware_utils::toPolygon2d(object.kinematics.pose_with_covariance.pose, object.shape);
+  Polygon2d poly2d = autoware::universe_utils::toPolygon2d(
+    object.kinematics.pose_with_covariance.pose, object.shape);
   if (bg::is_empty(poly2d)) return std::nullopt;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr poly3d(new pcl::PointCloud<pcl::PointXYZ>);
@@ -242,7 +242,7 @@ std::optional<size_t> Validator3D::getPointCloudWithinObject(
 }
 
 bool Validator3D::validate_object(
-  const autoware_auto_perception_msgs::msg::DetectedObject & transformed_object)
+  const autoware_perception_msgs::msg::DetectedObject & transformed_object)
 {
   neighbor_pointcloud_.reset(new pcl::PointCloud<pcl::PointXYZ>);
   std::vector<int> indices;
@@ -302,25 +302,26 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
     validator_ = std::make_unique<Validator3D>(points_num_threshold_param_);
   }
 
-  objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  objects_pub_ = create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
-  debug_publisher_ = std::make_unique<tier4_autoware_utils::DebugPublisher>(
+  debug_publisher_ = std::make_unique<autoware::universe_utils::DebugPublisher>(
     this, "obstacle_pointcloud_based_validator");
 
   const bool enable_debugger = declare_parameter<bool>("enable_debugger", false);
   if (enable_debugger) debugger_ = std::make_shared<Debugger>(this);
-  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ =
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
+  const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_obstacle_pointcloud)
 {
-  autoware_auto_perception_msgs::msg::DetectedObjects output, removed_objects;
+  autoware_perception_msgs::msg::DetectedObjects output, removed_objects;
   output.header = input_objects->header;
   removed_objects.header = input_objects->header;
 
   // Transform to pointcloud frame
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+  autoware_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
         *input_objects, input_obstacle_pointcloud->header.frame_id, tf_buffer_,
         transformed_objects)) {

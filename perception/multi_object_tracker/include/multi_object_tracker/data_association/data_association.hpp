@@ -19,19 +19,20 @@
 #ifndef MULTI_OBJECT_TRACKER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
 #define MULTI_OBJECT_TRACKER__DATA_ASSOCIATION__DATA_ASSOCIATION_HPP_
 
-#include <list>
-#include <memory>
-#include <unordered_map>
-#include <vector>
-
 #define EIGEN_MPL2_ONLY
+
 #include "multi_object_tracker/data_association/solver/gnn_solver.hpp"
 #include "multi_object_tracker/tracker/tracker.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include "autoware_perception_msgs/msg/detected_objects.hpp"
+
+#include <list>
+#include <memory>
+#include <unordered_map>
+#include <vector>
 
 class DataAssociation
 {
@@ -55,7 +56,7 @@ public:
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);
   Eigen::MatrixXd calcScoreMatrix(
-    const autoware_auto_perception_msgs::msg::DetectedObjects & measurements,
+    const autoware_perception_msgs::msg::DetectedObjects & measurements,
     const std::list<std::shared_ptr<Tracker>> & trackers);
   virtual ~DataAssociation() {}
 };

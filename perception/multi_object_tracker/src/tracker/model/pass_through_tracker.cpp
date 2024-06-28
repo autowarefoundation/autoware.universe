@@ -15,6 +15,15 @@
 //
 // Author: v1.0 Yutaka Shimizu
 //
+#define EIGEN_MPL2_ONLY
+#include "multi_object_tracker/tracker/model/pass_through_tracker.hpp"
+
+#include "autoware/universe_utils/ros/msg_covariance.hpp"
+#include "multi_object_tracker/utils/utils.hpp"
+#include "object_recognition_utils/object_recognition_utils.hpp"
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -27,23 +36,19 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#define EIGEN_MPL2_ONLY
-#include "multi_object_tracker/tracker/model/pass_through_tracker.hpp"
-#include "multi_object_tracker/utils/utils.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
-
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
 PassThroughTracker::PassThroughTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/)
-: Tracker(time, object.classification),
+  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
+  const uint & channel_index)
+: Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("PassThroughTracker")),
   last_update_time_(time)
 {
   object_ = object;
   prev_observed_object_ = object;
+
+  // initialize existence probability
+  initializeExistenceProbabilities(channel_index, object.existence_probability);
 }
 
 bool PassThroughTracker::predict(const rclcpp::Time & time)
@@ -58,7 +63,7 @@ bool PassThroughTracker::predict(const rclcpp::Time & time)
 }
 
 bool PassThroughTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   prev_observed_object_ = object_;
@@ -80,27 +85,28 @@ bool PassThroughTracker::measure(
 }
 
 bool PassThroughTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
+  using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   object = object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_Y] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_X] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Z_Z] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = 0.0;
-  object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_X] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_Y] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::Y_X] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::Y_Y] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::Z_Z] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::ROLL_ROLL] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::PITCH_PITCH] = 0.0;
+  object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::YAW_YAW] = 0.0;
 
   // twist covariance
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::Z_Z] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::ROLL_ROLL] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::PITCH_PITCH] = 0.0;
-  object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::X_X] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::Y_Y] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::Z_Z] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::ROLL_ROLL] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::PITCH_PITCH] = 0.0;
+  object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::YAW_YAW] = 0.0;
 
   const double dt = (time - last_update_time_).seconds();
   if (0.5 /*500msec*/ < dt) {
