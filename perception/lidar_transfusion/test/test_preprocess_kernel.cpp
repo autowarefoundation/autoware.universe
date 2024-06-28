@@ -23,7 +23,6 @@
 #include <thrust/reduce.h>
 
 #include <cmath>
-#include <memory>
 #include <vector>
 
 namespace lidar_transfusion
