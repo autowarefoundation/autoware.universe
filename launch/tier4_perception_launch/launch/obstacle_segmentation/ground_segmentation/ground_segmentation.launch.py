@@ -203,7 +203,7 @@ class GroundSegmentationPipeline:
         components.append(
             ComposableNode(
                 package="ground_segmentation",
-                plugin="ground_segmentation::RANSACGroundFilterComponent",
+                plugin="autoware::ground_segmentation::RANSACGroundFilterComponent",
                 name="ransac_ground_filter",
                 namespace="plane_fitting",
                 remappings=[

@@ -203,7 +203,7 @@ Eigen::Affine3d RANSACGroundFilterComponent::getPlaneAffine(
   pcl::PointXYZ centroid_point;
   centroid.get(centroid_point);
   Eigen::Translation<double, 3> trans(centroid_point.x, centroid_point.y, centroid_point.z);
-  const ground_segmentation::PlaneBasis basis = getPlaneBasis(plane_normal);
+  const PlaneBasis basis = getPlaneBasis(plane_normal);
   Eigen::Matrix3d rot;
   rot << basis.e_x.x(), basis.e_y.x(), basis.e_z.x(), basis.e_x.y(), basis.e_y.y(), basis.e_z.y(),
     basis.e_x.z(), basis.e_y.z(), basis.e_z.z();
