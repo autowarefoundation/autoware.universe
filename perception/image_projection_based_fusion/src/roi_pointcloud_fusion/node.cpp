@@ -42,14 +42,14 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   cluster_debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
-void RoiPointCloudFusionNode::preprocess(__attribute__((unused))
-                                         sensor_msgs::msg::PointCloud2 & pointcloud_msg)
+void RoiPointCloudFusionNode::preprocess(
+  __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
   return;
 }
 
-void RoiPointCloudFusionNode::postprocess(__attribute__((unused))
-                                          sensor_msgs::msg::PointCloud2 & pointcloud_msg)
+void RoiPointCloudFusionNode::postprocess(
+  __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
   const auto objects_sub_count = pub_objects_ptr_->get_subscription_count() +
                                  pub_objects_ptr_->get_intra_process_subscription_count();
@@ -87,7 +87,7 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   for (const auto & feature_obj : input_roi_msg.feature_objects) {
     if (fuse_unknown_only_) {
       bool is_roi_label_unknown = feature_obj.object.classification.front().label ==
-                                  autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+                                  autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
       if (is_roi_label_unknown) {
         output_objs.push_back(feature_obj);
       }
@@ -101,10 +101,9 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   }
 
   // transform pointcloud to camera optical frame id
-  Eigen::Matrix4d projection;
-  projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2), camera_info.p.at(3),
-    camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6), camera_info.p.at(7),
-    camera_info.p.at(8), camera_info.p.at(9), camera_info.p.at(10), camera_info.p.at(11);
+  image_geometry::PinholeCameraModel pinhole_camera_model;
+  pinhole_camera_model.fromCameraInfo(camera_info);
+
   geometry_msgs::msg::TransformStamped transform_stamped;
   {
     const auto transform_stamped_optional = getTransformStamped(
@@ -143,10 +142,8 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     if (transformed_z <= 0.0) {
       continue;
     }
-    Eigen::Vector4d projected_point =
-      projection * Eigen::Vector4d(transformed_x, transformed_y, transformed_z, 1.0);
-    Eigen::Vector2d normalized_projected_point = Eigen::Vector2d(
-      projected_point.x() / projected_point.z(), projected_point.y() / projected_point.z());
+    Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z));
     for (std::size_t i = 0; i < output_objs.size(); ++i) {
       auto & feature_obj = output_objs.at(i);
       const auto & check_roi = feature_obj.feature.roi;
@@ -156,10 +153,9 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
         continue;
       }
       if (
-        check_roi.x_offset <= normalized_projected_point.x() &&
-        check_roi.y_offset <= normalized_projected_point.y() &&
-        check_roi.x_offset + check_roi.width >= normalized_projected_point.x() &&
-        check_roi.y_offset + check_roi.height >= normalized_projected_point.y()) {
+        check_roi.x_offset <= projected_point.x() && check_roi.y_offset <= projected_point.y() &&
+        check_roi.x_offset + check_roi.width >= projected_point.x() &&
+        check_roi.y_offset + check_roi.height >= projected_point.y()) {
         std::memcpy(
           &cluster.data[clusters_data_size.at(i)], &input_pointcloud_msg.data[offset], point_step);
         clusters_data_size.at(i) += point_step;

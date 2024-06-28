@@ -14,9 +14,9 @@
 
 #include "detected_object_validation/occupancy_grid_based_validator/occupancy_grid_based_validator.hpp"
 
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <object_recognition_utils/object_classification.hpp>
 #include <object_recognition_utils/object_recognition_utils.hpp>
-#include <tier4_autoware_utils/geometry/boost_polygon_utils.hpp>
 
 #include <boost/optional.hpp>
 
@@ -32,8 +32,8 @@
 
 namespace occupancy_grid_based_validator
 {
-using Shape = autoware_auto_perception_msgs::msg::Shape;
-using Polygon2d = tier4_autoware_utils::Polygon2d;
+using Shape = autoware_perception_msgs::msg::Shape;
+using Polygon2d = autoware::universe_utils::Polygon2d;
 
 OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("occupancy_grid_based_validator", node_options),
@@ -47,23 +47,24 @@ OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptio
   using std::placeholders::_2;
   sync_.registerCallback(
     std::bind(&OccupancyGridBasedValidator::onObjectsAndOccGrid, this, _1, _2));
-  objects_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  objects_pub_ = create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
 
   mean_threshold_ = declare_parameter<float>("mean_threshold", 0.6);
   enable_debug_ = declare_parameter<bool>("enable_debug", false);
-  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ =
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void OccupancyGridBasedValidator::onObjectsAndOccGrid(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
+  const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
   const nav_msgs::msg::OccupancyGrid::ConstSharedPtr & input_occ_grid)
 {
-  autoware_auto_perception_msgs::msg::DetectedObjects output;
+  autoware_perception_msgs::msg::DetectedObjects output;
   output.header = input_objects->header;
 
   // Transform to occ grid frame
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+  autoware_perception_msgs::msg::DetectedObjects transformed_objects;
   if (!object_recognition_utils::transformObjects(
         *input_objects, input_occ_grid->header.frame_id, tf_buffer_, transformed_objects))
     return;
@@ -93,7 +94,7 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
 
 std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const autoware_perception_msgs::msg::DetectedObject & object)
 {
   cv::Mat mask = cv::Mat::zeros(occupancy_grid.info.height, occupancy_grid.info.width, CV_8UC1);
   return getMask(occupancy_grid, object, mask);
@@ -101,13 +102,13 @@ std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
 
 std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
   const nav_msgs::msg::OccupancyGrid & occupancy_grid,
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, cv::Mat mask)
+  const autoware_perception_msgs::msg::DetectedObject & object, cv::Mat mask)
 {
   const auto & resolution = occupancy_grid.info.resolution;
   const auto & origin = occupancy_grid.info.origin;
   std::vector<cv::Point> pixel_vertices;
-  Polygon2d poly2d =
-    tier4_autoware_utils::toPolygon2d(object.kinematics.pose_with_covariance.pose, object.shape);
+  Polygon2d poly2d = autoware::universe_utils::toPolygon2d(
+    object.kinematics.pose_with_covariance.pose, object.shape);
 
   bool is_polygon_within_image = true;
   for (const auto & p : poly2d.outer()) {
@@ -145,7 +146,7 @@ cv::Mat OccupancyGridBasedValidator::fromOccupancyGrid(
 
 void OccupancyGridBasedValidator::showDebugImage(
   const nav_msgs::msg::OccupancyGrid & ros_occ_grid,
-  const autoware_auto_perception_msgs::msg::DetectedObjects & objects, const cv::Mat & occ_grid)
+  const autoware_perception_msgs::msg::DetectedObjects & objects, const cv::Mat & occ_grid)
 {
   cv::namedWindow("removed_objects_image", cv::WINDOW_NORMAL);
   cv::namedWindow("passed_objects_image", cv::WINDOW_NORMAL);
