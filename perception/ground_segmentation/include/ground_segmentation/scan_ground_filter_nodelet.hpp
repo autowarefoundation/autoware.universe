@@ -15,10 +15,9 @@
 #ifndef GROUND_SEGMENTATION__SCAN_GROUND_FILTER_NODELET_HPP_
 #define GROUND_SEGMENTATION__SCAN_GROUND_FILTER_NODELET_HPP_
 
+#include "autoware_vehicle_info_utils/vehicle_info.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/transform_info.hpp"
-
-#include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -41,7 +40,7 @@
 
 class ScanGroundFilterTest;
 
-namespace ground_segmentation
+namespace autoware::ground_segmentation
 {
 using autoware::vehicle_info_utils::VehicleInfo;
 
@@ -291,6 +290,6 @@ public:
   // for test
   friend ScanGroundFilterTest;
 };
-}  // namespace ground_segmentation
+}  // namespace autoware::ground_segmentation
 
 #endif  // GROUND_SEGMENTATION__SCAN_GROUND_FILTER_NODELET_HPP_

@@ -54,15 +54,6 @@ Eigen::Vector3d getArbitraryOrthogonalVector(const Eigen::Vector3d & input)
   return unit_vec;
 }
 
-ground_segmentation::PlaneBasis getPlaneBasis(const Eigen::Vector3d & plane_normal)
-{
-  ground_segmentation::PlaneBasis basis;
-  basis.e_z = plane_normal;
-  basis.e_x = getArbitraryOrthogonalVector(plane_normal);
-  basis.e_y = basis.e_x.cross(basis.e_z);
-  return basis;
-}
-
 geometry_msgs::msg::Pose getDebugPose(const Eigen::Affine3d & plane_affine)
 {
   geometry_msgs::msg::Pose debug_pose;
@@ -78,8 +69,17 @@ geometry_msgs::msg::Pose getDebugPose(const Eigen::Affine3d & plane_affine)
 }
 }  // namespace
 
-namespace ground_segmentation
+namespace autoware::ground_segmentation
 {
+PlaneBasis getPlaneBasis(const Eigen::Vector3d & plane_normal)
+{
+  PlaneBasis basis;
+  basis.e_z = plane_normal;
+  basis.e_x = getArbitraryOrthogonalVector(plane_normal);
+  basis.e_y = basis.e_x.cross(basis.e_z);
+  return basis;
+}
+
 using pointcloud_preprocessor::get_param;
 
 RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptions & options)
@@ -396,7 +396,7 @@ rcl_interfaces::msg::SetParametersResult RANSACGroundFilterComponent::paramCallb
   return result;
 }
 
-}  // namespace ground_segmentation
+}  // namespace autoware::ground_segmentation
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(ground_segmentation::RANSACGroundFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ground_segmentation::RANSACGroundFilterComponent)
