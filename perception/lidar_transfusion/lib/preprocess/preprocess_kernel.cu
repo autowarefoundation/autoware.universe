@@ -30,6 +30,7 @@
 
 #include "lidar_transfusion/cuda_utils.hpp"
 #include "lidar_transfusion/preprocess/preprocess_kernel.hpp"
+
 #include <cstdint>
 
 namespace lidar_transfusion
@@ -176,11 +177,11 @@ __global__ void generateSweepPoints_kernel(
   if (point_idx >= points_size) return;
 
   union {
-      uint32_t raw{0};
-      float value;
+    uint32_t raw{0};
+    float value;
   } input_x, input_y, input_z;
 
-  #pragma unroll
+#pragma unroll
   for (int i = 0; i < 4; i++) {  // 4 bytes for float32
     input_x.raw |= input_data[point_idx * input_point_step + i] << i * 8;
     input_y.raw |= input_data[point_idx * input_point_step + i + 4] << i * 8;
@@ -189,15 +190,15 @@ __global__ void generateSweepPoints_kernel(
 
   float input_intensity = static_cast<float>(input_data[point_idx * input_point_step + 12]);
 
-  output_points[point_idx * num_features] = transform_array[0] * input_x.value +
-                                            transform_array[4] * input_y.value +
-                                            transform_array[8] * input_z.value + transform_array[12];
-  output_points[point_idx * num_features + 1] = transform_array[1] * input_x.value +
-                                                transform_array[5] * input_y.value +
-                                                transform_array[9] * input_z.value + transform_array[13];
-  output_points[point_idx * num_features + 2] = transform_array[2] * input_x.value +
-                                                transform_array[6] * input_y.value +
-                                                transform_array[10] * input_z.value + transform_array[14];
+  output_points[point_idx * num_features] =
+    transform_array[0] * input_x.value + transform_array[4] * input_y.value +
+    transform_array[8] * input_z.value + transform_array[12];
+  output_points[point_idx * num_features + 1] =
+    transform_array[1] * input_x.value + transform_array[5] * input_y.value +
+    transform_array[9] * input_z.value + transform_array[13];
+  output_points[point_idx * num_features + 2] =
+    transform_array[2] * input_x.value + transform_array[6] * input_y.value +
+    transform_array[10] * input_z.value + transform_array[14];
   output_points[point_idx * num_features + 3] = input_intensity;
   output_points[point_idx * num_features + 4] = time_lag;
 }

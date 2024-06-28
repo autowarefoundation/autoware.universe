@@ -43,6 +43,6 @@ public:
   cuda::unique_ptr<unsigned int[]> voxel_idxs_d_{nullptr};
 };
 
-}  // namespace lidar_transfusion 
+}  // namespace lidar_transfusion
 
 #endif  // TEST_PREPROCESS_KERNEL_HPP_
