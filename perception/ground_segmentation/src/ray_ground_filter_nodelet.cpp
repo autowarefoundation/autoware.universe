@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-namespace ground_segmentation
+namespace autoware::ground_segmentation
 {
 using pointcloud_preprocessor::get_param;
 
@@ -394,7 +394,7 @@ rcl_interfaces::msg::SetParametersResult RayGroundFilterComponent::paramCallback
   return result;
 }
 
-}  // namespace ground_segmentation
+}  // namespace autoware::ground_segmentation
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(ground_segmentation::RayGroundFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ground_segmentation::RayGroundFilterComponent)

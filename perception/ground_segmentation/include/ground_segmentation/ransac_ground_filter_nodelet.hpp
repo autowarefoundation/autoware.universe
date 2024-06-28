@@ -38,7 +38,7 @@
 #include <string>
 #include <vector>
 
-namespace ground_segmentation
+namespace autoware::ground_segmentation
 {
 struct PlaneBasis
 {
@@ -129,6 +129,6 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   explicit RANSACGroundFilterComponent(const rclcpp::NodeOptions & options);
 };
-}  // namespace ground_segmentation
+}  // namespace autoware::ground_segmentation
 
 #endif  // GROUND_SEGMENTATION__RANSAC_GROUND_FILTER_NODELET_HPP_
