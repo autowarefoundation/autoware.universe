@@ -19,14 +19,14 @@
 #include "pointcloud_preprocessor/utility/utilities.hpp"
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 
 #include <string>
 
-using autoware_universe_utils::MultiPoint2d;
+using autoware::universe_utils::MultiPoint2d;
 
 namespace pointcloud_preprocessor
 {

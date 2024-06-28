@@ -24,7 +24,7 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node, const std::string & frame_
   // initialize debug publishers
   if (debug_settings_.publish_processing_time) {
     processing_time_publisher_ =
-      std::make_unique<autoware_universe_utils::DebugPublisher>(&node_, "multi_object_tracker");
+      std::make_unique<autoware::universe_utils::DebugPublisher>(&node_, "multi_object_tracker");
   }
 
   if (debug_settings_.publish_tentative_objects) {
@@ -98,7 +98,7 @@ void TrackerDebugger::checkDelay(diagnostic_updater::DiagnosticStatusWrapper & s
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Measurement time is not set.");
     return;
   }
-  const double & delay = pipeline_latency_ms_;  // [s]
+  const double & delay = pipeline_latency_ms_ / 1e3;  // [s]
 
   if (delay == 0.0) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Detection delay is not calculated.");

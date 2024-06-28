@@ -15,7 +15,7 @@
 #include "manager.hpp"
 
 #include <autoware/universe_utils/ros/parameter.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 
 #include <tf2/utils.h>
 
@@ -28,7 +28,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_universe_utils::getOrDeclareParameter;
+using autoware::universe_utils::getOrDeclareParameter;
 
 TemplateModuleManager::TemplateModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())

@@ -23,13 +23,14 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -37,7 +38,7 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware_motion_utils::calcSignedArcLength;
+using autoware::motion_utils::calcSignedArcLength;
 using utils::lane_change::calcMinimumLaneChangeLength;
 using utils::lane_change::createLanesPolygon;
 using utils::path_safety_checker::isPolygonOverlapLanelet;
@@ -182,12 +183,12 @@ TurnSignalInfo NormalLaneChange::get_current_turn_signal_info()
 
   const double buffer =
     next_lane_change_buffer + min_length_for_turn_signal_activation + base_to_front;
-  const double path_length = autoware_motion_utils::calcArcLength(path.points);
+  const double path_length = autoware::motion_utils::calcArcLength(path.points);
   const size_t current_nearest_seg_idx =
-    autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
   const double dist_to_terminal = utils::getDistanceToEndOfLane(current_pose, current_lanes);
-  const auto start_pose = autoware_motion_utils::calcLongitudinalOffsetPose(
+  const auto start_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
     path.points, 0, std::max(path_length - buffer, 0.0));
   if (dist_to_terminal - base_to_front < buffer && start_pose) {
     // modify turn signal
@@ -389,10 +390,10 @@ void NormalLaneChange::insertStopPoint(
 
       // calculate distance from path front to the stationary object polygon on the ego lane.
       const auto polygon =
-        autoware_universe_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer();
+        autoware::universe_utils::toPolygon2d(object.initial_pose.pose, object.shape).outer();
       for (const auto & polygon_p : polygon) {
-        const auto p_fp = autoware_universe_utils::toMsg(polygon_p.to_3d());
-        const auto lateral_fp = autoware_motion_utils::calcLateralOffset(path.points, p_fp);
+        const auto p_fp = autoware::universe_utils::toMsg(polygon_p.to_3d());
+        const auto lateral_fp = autoware::motion_utils::calcLateralOffset(path.points, p_fp);
 
         // ignore if the point is around the ego path
         if (std::abs(lateral_fp) > planner_data_->parameters.vehicle_width) {
@@ -442,7 +443,7 @@ void NormalLaneChange::insertStopPoint(
 
         // target_objects includes objects out of target lanes, so filter them out
         if (!boost::geometry::intersects(
-              autoware_universe_utils::toPolygon2d(o.initial_pose.pose, o.shape).outer(),
+              autoware::universe_utils::toPolygon2d(o.initial_pose.pose, o.shape).outer(),
               lanelet::utils::combineLaneletsShape(status_.target_lanes)
                 .polygon2d()
                 .basicPolygon())) {
@@ -467,8 +468,16 @@ void NormalLaneChange::insertStopPoint(
 
 PathWithLaneId NormalLaneChange::getReferencePath() const
 {
-  return utils::getCenterLinePathFromLanelet(
-    status_.lane_change_path.info.target_lanes.front(), planner_data_);
+  lanelet::ConstLanelet closest_lanelet;
+  if (!lanelet::utils::query::getClosestLanelet(
+        status_.lane_change_path.info.target_lanes, getEgoPose(), &closest_lanelet)) {
+    return prev_module_output_.reference_path;
+  }
+  const auto reference_path = utils::getCenterLinePathFromLanelet(closest_lanelet, planner_data_);
+  if (reference_path.points.empty()) {
+    return prev_module_output_.reference_path;
+  }
+  return reference_path;
 }
 
 std::optional<PathWithLaneId> NormalLaneChange::extendPath()
@@ -690,7 +699,7 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
     return false;
   }
 
-  const auto nearest_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  const auto nearest_idx = autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     status_.lane_change_path.path.points, getEgoPose(),
     planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
@@ -729,7 +738,7 @@ bool NormalLaneChange::isAbleToStopSafely() const
     return false;
   }
 
-  const auto nearest_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  const auto nearest_idx = autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     status_.lane_change_path.path.points, getEgoPose(),
     planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
@@ -798,7 +807,7 @@ std::pair<double, double> NormalLaneChange::calcCurrentMinMaxAcceleration() cons
   const auto vehicle_min_acc = std::max(p.min_acc, lane_change_parameters_->min_longitudinal_acc);
   const auto vehicle_max_acc = std::min(p.max_acc, lane_change_parameters_->max_longitudinal_acc);
 
-  const auto ego_seg_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+  const auto ego_seg_idx = autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     prev_module_output_.path.points, getEgoPose(), p.ego_nearest_dist_threshold,
     p.ego_nearest_yaw_threshold);
   const auto max_path_velocity =
@@ -915,7 +924,7 @@ PathWithLaneId NormalLaneChange::getPrepareSegment(
 
   auto prepare_segment = prev_module_output_.path;
   const size_t current_seg_idx =
-    autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       prepare_segment.points, getEgoPose(), 3.0, 1.0);
   utils::clipPathLength(prepare_segment, current_seg_idx, prepare_length, backward_path_length);
 
@@ -992,11 +1001,11 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
   }
 
   const auto is_ahead_of_ego = [&path, &current_pose](const auto & object) {
-    const auto obj_polygon = autoware_universe_utils::toPolygon2d(object).outer();
+    const auto obj_polygon = autoware::universe_utils::toPolygon2d(object).outer();
 
     double max_dist_ego_to_obj = std::numeric_limits<double>::lowest();
     for (const auto & polygon_p : obj_polygon) {
-      const auto obj_p = autoware_universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+      const auto obj_p = autoware::universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
       const auto dist_ego_to_obj = calcSignedArcLength(path.points, current_pose.position, obj_p);
       max_dist_ego_to_obj = std::max(dist_ego_to_obj, max_dist_ego_to_obj);
     }
@@ -1084,11 +1093,11 @@ void NormalLaneChange::filterAheadTerminalObjects(
 
   // ignore object that are ahead of terminal lane change start
   utils::path_safety_checker::filterObjects(objects, [&](const PredictedObject & object) {
-    const auto obj_polygon = autoware_universe_utils::toPolygon2d(object).outer();
+    const auto obj_polygon = autoware::universe_utils::toPolygon2d(object).outer();
     // ignore object that are ahead of terminal lane change start
     auto distance_to_terminal_from_object = std::numeric_limits<double>::max();
     for (const auto & polygon_p : obj_polygon) {
-      const auto obj_p = autoware_universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+      const auto obj_p = autoware::universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
       Pose polygon_pose;
       polygon_pose.position = obj_p;
       polygon_pose.orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
@@ -1668,7 +1677,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
       utils::getDistanceToEndOfLane(route_handler.getGoalPose(), current_lanes);
   }
 
-  const auto lane_changing_start_pose = autoware_motion_utils::calcLongitudinalOffsetPose(
+  const auto lane_changing_start_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
     prev_module_output_.path.points, current_lane_terminal_point,
     -(lane_change_buffer + next_lane_change_buffer + distance_to_terminal_from_goal));
 
@@ -1753,7 +1762,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
     target_lane_reference_path, shift_length);
 
   auto reference_segment = prev_module_output_.path;
-  const double length_to_lane_changing_start = autoware_motion_utils::calcSignedArcLength(
+  const double length_to_lane_changing_start = autoware::motion_utils::calcSignedArcLength(
     reference_segment.points, reference_segment.points.front().point.pose.position,
     lane_changing_start_pose->position);
   utils::clipPathLength(reference_segment, 0, length_to_lane_changing_start, 0.0);
@@ -1895,12 +1904,12 @@ bool NormalLaneChange::calcAbortPath()
       lanelet::utils::getLaneletLength2d(reference_lanelets) - minimum_lane_change_length, 0.0);
 
     const auto ref = route_handler->getCenterLinePath(reference_lanelets, s_start, s_end);
-    return autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       lane_changing_path.points, ref.points.back().point.pose, ego_nearest_dist_threshold,
       ego_nearest_yaw_threshold);
   });
 
-  const auto ego_pose_idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const auto ego_pose_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     lane_changing_path.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
 
   const auto get_abort_idx_and_distance = [&](const double param_time) {
@@ -1982,10 +1991,10 @@ bool NormalLaneChange::calcAbortPath()
     //   reference_lane_segment = terminal_path->path;
     // }
     const auto return_pose = shifted_path.path.points.at(abort_return_idx).point.pose;
-    const auto seg_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    const auto seg_idx = autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       reference_lane_segment.points, return_pose, common_param.ego_nearest_dist_threshold,
       common_param.ego_nearest_yaw_threshold);
-    reference_lane_segment.points = autoware_motion_utils::cropPoints(
+    reference_lane_segment.points = autoware::motion_utils::cropPoints(
       reference_lane_segment.points, return_pose.position, seg_idx,
       common_param.forward_path_length, 0.0);
   }
@@ -2048,6 +2057,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     lane_change_parameters_->lane_expansion_left_offset,
     lane_change_parameters_->lane_expansion_right_offset);
 
+  constexpr double collision_check_yaw_diff_threshold{M_PI};
+
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = utils::path_safety_checker::createObjectDebug(obj);
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
@@ -2056,7 +2067,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     for (const auto & obj_path : obj_predicted_paths) {
       const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
         path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
-        get_max_velocity_for_safety_check(), current_debug_data.second);
+        get_max_velocity_for_safety_check(), collision_check_yaw_diff_threshold,
+        current_debug_data.second);
 
       if (collided_polygons.empty()) {
         utils::path_safety_checker::updateCollisionCheckDebugMap(
@@ -2080,7 +2092,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
       utils::path_safety_checker::updateCollisionCheckDebugMap(
         debug_data, current_debug_data, is_safe);
       const auto & obj_pose = obj.initial_pose.pose;
-      const auto obj_polygon = autoware_universe_utils::toPolygon2d(obj_pose, obj.shape);
+      const auto obj_polygon = autoware::universe_utils::toPolygon2d(obj_pose, obj.shape);
       path_safety_status.is_object_coming_from_rear |=
         !utils::path_safety_checker::isTargetObjectFront(
           path, current_pose, common_parameters.vehicle_info, obj_polygon);

@@ -20,7 +20,7 @@
 #include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 #include <magic_enum.hpp>
 
 #include <boost/format.hpp>
@@ -219,7 +219,7 @@ void PlannerManager::generateCombinedDrivableArea(
   const auto & di = output.drivable_area_info;
   constexpr double epsilon = 1e-3;
 
-  const auto is_driving_forward_opt = autoware_motion_utils::isDrivingForward(output.path.points);
+  const auto is_driving_forward_opt = autoware::motion_utils::isDrivingForward(output.path.points);
   const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
 
   if (epsilon < std::abs(di.drivable_margin)) {
@@ -466,10 +466,10 @@ void PlannerManager::publishDebugRootReferencePath(
 {
   using visualization_msgs::msg::Marker;
   MarkerArray array;
-  Marker m = autoware_universe_utils::createDefaultMarker(
+  Marker m = autoware::universe_utils::createDefaultMarker(
     "map", clock_.now(), "root_reference_path", 0UL, Marker::LINE_STRIP,
-    autoware_universe_utils::createMarkerScale(1.0, 1.0, 1.0),
-    autoware_universe_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0));
+    autoware::universe_utils::createMarkerScale(1.0, 1.0, 1.0),
+    autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0));
   for (const auto & p : reference_path.path.points) m.points.push_back(p.point.pose.position);
   array.markers.push_back(m);
   m.points.clear();

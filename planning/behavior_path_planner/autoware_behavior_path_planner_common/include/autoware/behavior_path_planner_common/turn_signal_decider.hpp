@@ -22,7 +22,7 @@
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
@@ -239,8 +239,8 @@ private:
     const ShiftedPath & path, const ShiftLine & shift_line, const lanelet::ConstLanelets & lanes,
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info) const
   {
-    using autoware_universe_utils::pose2transform;
-    using autoware_universe_utils::transformVector;
+    using autoware::universe_utils::pose2transform;
+    using autoware::universe_utils::transformVector;
     using boost::geometry::intersects;
 
     const auto footprint = vehicle_info.createFootprint();

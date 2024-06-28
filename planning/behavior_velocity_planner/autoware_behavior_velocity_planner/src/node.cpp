@@ -20,7 +20,7 @@
 #include <autoware/universe_utils/ros/wait_for_param.hpp>
 #include <autoware/universe_utils/transform/transforms.hpp>
 #include <autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -130,9 +130,9 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     planner_manager_.launchScenePlugin(*this, name);
   }
 
-  logger_configure_ = std::make_unique<autoware_universe_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ =
-    std::make_unique<autoware_universe_utils::PublishedTimePublisher>(this);
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void BehaviorVelocityPlannerNode::onLoadPlugin(
@@ -194,7 +194,7 @@ void BehaviorVelocityPlannerNode::processNoGroundPointCloud(
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
   if (!pc.empty()) {
-    autoware_universe_utils::transformPointCloud(pc, *pc_transformed, affine);
+    autoware::universe_utils::transformPointCloud(pc, *pc_transformed, affine);
   }
 
   planner_data_.no_ground_pointcloud = pc_transformed;
@@ -379,7 +379,7 @@ autoware_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
   autoware_planning_msgs::msg::Path output_path_msg;
 
   // TODO(someone): support backward path
-  const auto is_driving_forward = autoware_motion_utils::isDrivingForward(input_path_msg->points);
+  const auto is_driving_forward = autoware::motion_utils::isDrivingForward(input_path_msg->points);
   is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
   if (!is_driving_forward_) {
     RCLCPP_WARN_THROTTLE(

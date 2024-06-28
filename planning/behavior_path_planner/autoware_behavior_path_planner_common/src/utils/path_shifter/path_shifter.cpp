@@ -17,8 +17,8 @@
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <interpolation/spline_interpolation.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <string>
 #include <utility>
@@ -51,10 +51,10 @@ std::string toStr(const std::vector<double> & v)
 namespace autoware::behavior_path_planner
 {
 
-using autoware_motion_utils::findNearestIndex;
-using autoware_motion_utils::insertOrientation;
-using autoware_motion_utils::removeFirstInvalidOrientationPoints;
-using autoware_motion_utils::removeOverlapPoints;
+using autoware::motion_utils::findNearestIndex;
+using autoware::motion_utils::insertOrientation;
+using autoware::motion_utils::removeFirstInvalidOrientationPoints;
+using autoware::motion_utils::removeOverlapPoints;
 
 void PathShifter::setPath(const PathWithLaneId & path)
 {

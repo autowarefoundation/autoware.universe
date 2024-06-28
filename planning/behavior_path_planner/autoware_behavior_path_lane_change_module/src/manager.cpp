@@ -36,7 +36,7 @@ void LaneChangeModuleManager::init(rclcpp::Node * node)
 
 void LaneChangeModuleManager::initParams(rclcpp::Node * node)
 {
-  using autoware_universe_utils::getOrDeclareParameter;
+  using autoware::universe_utils::getOrDeclareParameter;
 
   LaneChangeParameters p{};
 
@@ -102,6 +102,8 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
   // safety check
   p.allow_loose_check_for_cancel =
     getOrDeclareParameter<bool>(*node, parameter("safety_check.allow_loose_check_for_cancel"));
+  p.collision_check_yaw_diff_threshold = getOrDeclareParameter<double>(
+    *node, parameter("safety_check.collision_check_yaw_diff_threshold"));
 
   p.rss_params.longitudinal_distance_min_threshold = getOrDeclareParameter<double>(
     *node, parameter("safety_check.execution.longitudinal_distance_min_threshold"));
@@ -281,7 +283,7 @@ std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneMod
 
 void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_universe_utils::updateParam;
+  using autoware::universe_utils::updateParam;
 
   auto p = parameters_;
 

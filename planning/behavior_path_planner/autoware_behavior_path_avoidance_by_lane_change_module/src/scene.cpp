@@ -22,7 +22,7 @@
 
 #include <autoware/behavior_path_lane_change_module/utils/utils.hpp>
 #include <autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/logging.hpp>
 
 #include <boost/geometry/algorithms/centroid.hpp>
@@ -195,9 +195,9 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
 std::optional<ObjectData> AvoidanceByLaneChange::createObjectData(
   const AvoidancePlanningData & data, const PredictedObject & object) const
 {
-  using autoware_motion_utils::findNearestIndex;
-  using autoware_universe_utils::calcDistance2d;
-  using autoware_universe_utils::calcLateralDeviation;
+  using autoware::motion_utils::findNearestIndex;
+  using autoware::universe_utils::calcDistance2d;
+  using autoware::universe_utils::calcLateralDeviation;
   using boost::geometry::return_centroid;
 
   const auto p = std::dynamic_pointer_cast<AvoidanceParameters>(avoidance_parameters_);

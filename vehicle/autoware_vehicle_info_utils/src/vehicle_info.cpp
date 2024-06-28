@@ -16,16 +16,16 @@
 
 namespace autoware::vehicle_info_utils
 {
-autoware_universe_utils::LinearRing2d VehicleInfo::createFootprint(const double margin) const
+autoware::universe_utils::LinearRing2d VehicleInfo::createFootprint(const double margin) const
 {
   return createFootprint(margin, margin);
 }
 
-autoware_universe_utils::LinearRing2d VehicleInfo::createFootprint(
+autoware::universe_utils::LinearRing2d VehicleInfo::createFootprint(
   const double lat_margin, const double lon_margin) const
 {
-  using autoware_universe_utils::LinearRing2d;
-  using autoware_universe_utils::Point2d;
+  using autoware::universe_utils::LinearRing2d;
+  using autoware::universe_utils::Point2d;
 
   const double x_front = front_overhang_m + wheel_base_m + lon_margin;
   const double x_center = wheel_base_m / 2.0;
@@ -85,4 +85,30 @@ VehicleInfo createVehicleInfo(
   };
 }
 
+double VehicleInfo::calcMaxCurvature() const
+{
+  if (std::abs(wheel_base_m) < 1e-6) {
+    throw std::invalid_argument("wheel_base_m is 0.");
+  }
+  if (std::abs(max_steer_angle_rad) < 1e-6) {
+    return std::numeric_limits<double>::max();
+  }
+
+  const double radius = wheel_base_m / std::tan(max_steer_angle_rad);
+  const double curvature = 1.0 / radius;
+  return curvature;
+}
+double VehicleInfo::calcCurvatureFromSteerAngle(const double steer_angle) const
+{
+  if (std::abs(wheel_base_m) < 1e-6) {
+    throw std::invalid_argument("wheel_base_m is 0.");
+  }
+  if (std::abs(steer_angle) < 1e-6) {
+    return std::numeric_limits<double>::max();
+  }
+
+  const double radius = wheel_base_m / std::tan(steer_angle);
+  const double curvature = 1.0 / radius;
+  return curvature;
+}
 }  // namespace autoware::vehicle_info_utils

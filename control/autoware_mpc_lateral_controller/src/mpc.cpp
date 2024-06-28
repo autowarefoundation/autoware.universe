@@ -25,9 +25,9 @@
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::normalizeRadian;
-using autoware_universe_utils::rad2deg;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::normalizeRadian;
+using autoware::universe_utils::rad2deg;
 
 MPC::MPC(rclcpp::Node & node)
 {
@@ -76,9 +76,8 @@ bool MPC::calculateMPC(
   const auto mpc_matrix = generateMPCMatrix(mpc_resampled_ref_trajectory, prediction_dt);
 
   // solve Optimization problem
-  const auto [success_opt, Uex] = executeOptimization(
-    mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_trajectory,
-    current_kinematics.twist.twist.linear.x);
+  const auto [success_opt, Uex] =
+    executeOptimization(mpc_matrix, x0_delayed, prediction_dt, mpc_resampled_ref_trajectory);
   if (!success_opt) {
     return fail_warn_throttle("optimization failed. Stop MPC.");
   }
@@ -167,10 +166,10 @@ void MPC::setReferenceTrajectory(
   const Odometry & current_kinematics)
 {
   const size_t nearest_seg_idx =
-    autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       trajectory_msg.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
       ego_nearest_yaw_threshold);
-  const double ego_offset_to_segment = autoware_motion_utils::calcLongitudinalOffsetToSegment(
+  const double ego_offset_to_segment = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     trajectory_msg.points, nearest_seg_idx, current_kinematics.pose.pose.position);
 
   const auto mpc_traj_raw = MPCUtils::convertToMPCTrajectory(trajectory_msg);
@@ -184,7 +183,7 @@ void MPC::setReferenceTrajectory(
   }
 
   const auto is_forward_shift =
-    autoware_motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
+    autoware::motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
 
   // if driving direction is unknown, use previous value
   m_is_forward_shift = is_forward_shift ? is_forward_shift.value() : m_is_forward_shift;
@@ -244,7 +243,7 @@ void MPC::setReferenceTrajectory(
 
 void MPC::resetPrevResult(const SteeringReport & current_steer)
 {
-  // Consider limit. The prev value larger than limitation brakes the optimization constraint and
+  // Consider limit. The prev value larger than limitation breaks the optimization constraint and
   // results in optimization failure.
   const float steer_lim_f = static_cast<float>(m_steer_lim);
   m_raw_steer_cmd_prev = std::clamp(current_steer.steering_tire_angle, -steer_lim_f, steer_lim_f);
@@ -391,7 +390,7 @@ MPCTrajectory MPC::applyVelocityDynamicsFilter(
   }
 
   const size_t nearest_seg_idx =
-    autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
       ego_nearest_yaw_threshold);
 
@@ -501,7 +500,7 @@ MPCMatrix MPC::generateMPCMatrix(
     // get reference input (feed-forward)
     m_vehicle_model_ptr->setCurvature(ref_smooth_k);
     m_vehicle_model_ptr->calculateReferenceInput(Uref);
-    if (std::fabs(Uref(0, 0)) < autoware_universe_utils::deg2rad(m_param.zero_ff_steer_deg)) {
+    if (std::fabs(Uref(0, 0)) < autoware::universe_utils::deg2rad(m_param.zero_ff_steer_deg)) {
       Uref(0, 0) = 0.0;  // ignore curvature noise
     }
     m.Uref_ex.block(i * DIM_U, 0, DIM_U, 1) = Uref;
@@ -544,8 +543,7 @@ MPCMatrix MPC::generateMPCMatrix(
  * [    -au_lim * dt    ] < [uN-uN-1] < [     au_lim * dt    ] (*N... DIM_U)
  */
 std::pair<bool, VectorXd> MPC::executeOptimization(
-  const MPCMatrix & m, const VectorXd & x0, const double prediction_dt, const MPCTrajectory & traj,
-  const double current_velocity)
+  const MPCMatrix & m, const VectorXd & x0, const double prediction_dt, const MPCTrajectory & traj)
 {
   VectorXd Uex;
 
@@ -578,7 +576,7 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
   VectorXd ub = VectorXd::Constant(DIM_U_N, m_steer_lim);   // max steering angle
 
   // steering angle rate limit
-  VectorXd steer_rate_limits = calcSteerRateLimitOnTrajectory(traj, current_velocity);
+  VectorXd steer_rate_limits = calcSteerRateLimitOnTrajectory(traj);
   VectorXd ubA = steer_rate_limits * prediction_dt;
   VectorXd lbA = -steer_rate_limits * prediction_dt;
   ubA(0) = m_raw_steer_cmd_prev + steer_rate_limits(0) * m_ctrl_period;
@@ -678,7 +676,7 @@ double MPC::getPredictionDeltaTime(
 {
   // Calculate the time min_prediction_length ahead from current_pose
   const auto autoware_traj = MPCUtils::convertToAutowareTrajectory(input);
-  const size_t nearest_idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, current_kinematics.pose.pose, ego_nearest_dist_threshold,
     ego_nearest_yaw_threshold);
   double sum_dist = 0;
@@ -730,8 +728,7 @@ double MPC::calcDesiredSteeringRate(
   return steer_rate;
 }
 
-VectorXd MPC::calcSteerRateLimitOnTrajectory(
-  const MPCTrajectory & trajectory, const double current_velocity) const
+VectorXd MPC::calcSteerRateLimitOnTrajectory(const MPCTrajectory & trajectory) const
 {
   const auto interp = [&](const auto & steer_rate_limit_map, const auto & current) {
     std::vector<double> reference, limits;
@@ -764,12 +761,6 @@ VectorXd MPC::calcSteerRateLimitOnTrajectory(
               << std::endl;
     return reference.back();
   };
-
-  // when the vehicle is stopped, no steering rate limit.
-  const bool is_vehicle_stopped = std::fabs(current_velocity) < 0.01;
-  if (is_vehicle_stopped) {
-    return VectorXd::Zero(m_param.prediction_horizon);
-  }
 
   // calculate steering rate limit
   VectorXd steer_rate_limits = VectorXd::Zero(m_param.prediction_horizon);
