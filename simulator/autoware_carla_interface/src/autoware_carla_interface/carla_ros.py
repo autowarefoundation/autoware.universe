@@ -16,7 +16,6 @@ import json
 import math
 import threading
 
-from autoware_perception_msgs.msg import TrafficLightGroupArray
 from autoware_vehicle_msgs.msg import ControlModeReport
 from autoware_vehicle_msgs.msg import GearReport
 from autoware_vehicle_msgs.msg import SteeringReport
@@ -119,9 +118,6 @@ class carla_ros2_interface(object):
         self.pub_pose_with_cov = self.ros2_node.create_publisher(
             PoseWithCovarianceStamped, "/sensing/gnss/pose_with_covariance", 1
         )
-        self.pub_traffic_signal_info = self.ros2_node.create_publisher(
-            TrafficLightGroupArray, "/perception/traffic_light_recognition/traffic_signals", 1
-        )
         self.pub_vel_state = self.ros2_node.create_publisher(
             VelocityReport, "/vehicle/status/velocity_status", 1
         )
@@ -151,7 +147,7 @@ class carla_ros2_interface(object):
             elif sensor["type"] == "sensor.lidar.ray_cast":
                 if sensor["id"] in self.sensor_frequencies:
                     self.pub_lidar[sensor["id"]] = self.ros2_node.create_publisher(
-                        PointCloud2, "/sensing/lidar/concatenated/pointcloud", 10
+                        PointCloud2, f'/sensing/lidar/{sensor["id"]}/pointcloud', 10
                     )
                 else:
                     self.ros2_node.get_logger().info(
@@ -401,7 +397,6 @@ class carla_ros2_interface(object):
         out_steering_state = SteeringReport()
         out_ctrl_mode = ControlModeReport()
         out_gear_state = GearReport()
-        out_traffic = TrafficLightGroupArray()
         out_actuation_status = ActuationStatusStamped()
 
         out_vel_state.header = self.get_msg_header(frame_id="base_link")
@@ -433,7 +428,6 @@ class carla_ros2_interface(object):
         self.pub_steering_state.publish(out_steering_state)
         self.pub_ctrl_mode.publish(out_ctrl_mode)
         self.pub_gear_state.publish(out_gear_state)
-        self.pub_traffic_signal_info.publish(out_traffic)
 
     def run_step(self, input_data, timestamp):
         self.timestamp = timestamp

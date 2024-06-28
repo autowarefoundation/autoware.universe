@@ -11,8 +11,8 @@
         "pitch": 0.0,
         "yaw": 0.0
       },
-      "image_size_x": 480,
-      "image_size_y": 360,
+      "image_size_x": 1920,
+      "image_size_y": 1080,
       "fov": 90.0
     },
     {
@@ -28,10 +28,10 @@
       },
       "range": 100,
       "channels": 64,
-      "points_per_second": 1200000,
+      "points_per_second": 300000,
       "upper_fov": 10.0,
       "lower_fov": -30.0,
-      "rotation_frequency": 50,
+      "rotation_frequency": 20,
       "noise_stddev": 0.0
     },
     {
