@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ground_segmentation/ransac_ground_filter_nodelet.hpp"
+#include "node.hpp"
 
 #include <pcl_ros/transforms.hpp>
 

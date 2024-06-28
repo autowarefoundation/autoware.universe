@@ -29,7 +29,7 @@
  *  v1.0: amc-nu (abrahammonrroy@yahoo.com)
  */
 
-#include "ground_segmentation/ray_ground_filter_nodelet.hpp"
+#include "node.hpp"
 
 #include <string>
 #include <vector>
