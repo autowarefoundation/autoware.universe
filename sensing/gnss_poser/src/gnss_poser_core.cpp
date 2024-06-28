@@ -24,8 +24,6 @@
 #include <string>
 #include <vector>
 
-// TODO(mfc): remove this comment line please. a
-
 namespace gnss_poser
 {
 GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
