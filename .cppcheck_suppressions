@@ -1,15 +1,11 @@
 *:*/test/*
 
 checkersReport
-constParameterPointer
 constParameterReference
-constVariable
 constVariableReference
-containerOutOfBounds
 // cspell: ignore cstyle
 cstyleCast
 duplicateBranch
-duplicateBreak
 funcArgNamesDifferent
 functionConst
 functionStatic
@@ -23,8 +19,6 @@ noValidConfiguration
 passedByValue
 preprocessorErrorDirective
 redundantInitialization
-returnByReference
-shadowArgument
 shadowFunction
 shadowVariable
 syntaxError
@@ -35,7 +29,6 @@ unmatchedSuppression
 unreadVariable
 unusedFunction
 unusedStructMember
-unusedVariable
 useInitializationList
 useStlAlgorithm
 uselessOverride
