@@ -14,9 +14,9 @@
 
 #include "object_merger/node.hpp"
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "object_merger/utils/utils.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <boost/optional.hpp>
 
@@ -27,13 +27,13 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 namespace
 {
 bool isUnknownObjectOverlapped(
-  const autoware_auto_perception_msgs::msg::DetectedObject & unknown_object,
-  const autoware_auto_perception_msgs::msg::DetectedObject & known_object,
+  const autoware_perception_msgs::msg::DetectedObject & unknown_object,
+  const autoware_perception_msgs::msg::DetectedObject & known_object,
   const double precision_threshold, const double recall_threshold,
   std::map<int, double> distance_threshold_map,
   const std::map<int, double> generalized_iou_threshold_map)
@@ -43,7 +43,7 @@ bool isUnknownObjectOverlapped(
   const double distance_threshold = distance_threshold_map.at(
     object_recognition_utils::getHighestProbLabel(known_object.classification));
   const double sq_distance_threshold = std::pow(distance_threshold, 2.0);
-  const double sq_distance = tier4_autoware_utils::calcSquaredDistance2d(
+  const double sq_distance = autoware::universe_utils::calcSquaredDistance2d(
     unknown_object.kinematics.pose_with_covariance.pose,
     known_object.kinematics.pose_with_covariance.pose);
   if (sq_distance_threshold < sq_distance) return false;
@@ -80,16 +80,14 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
   object1_sub_(this, "input/object1", rclcpp::QoS{1}.get_rmw_qos_profile())
 {
   // Parameters
-  base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
-  priority_mode_ = static_cast<PriorityMode>(
-    declare_parameter<int>("priority_mode", static_cast<int>(PriorityMode::Confidence)));
-  sync_queue_size_ = declare_parameter<int>("sync_queue_size", 20);
-  remove_overlapped_unknown_objects_ =
-    declare_parameter<bool>("remove_overlapped_unknown_objects", true);
+  base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id");
+  priority_mode_ = static_cast<PriorityMode>(declare_parameter<int>("priority_mode"));
+  sync_queue_size_ = declare_parameter<int>("sync_queue_size");
+  remove_overlapped_unknown_objects_ = declare_parameter<bool>("remove_overlapped_unknown_objects");
   overlapped_judge_param_.precision_threshold =
     declare_parameter<double>("precision_threshold_to_judge_overlapped");
   overlapped_judge_param_.recall_threshold =
-    declare_parameter<double>("recall_threshold_to_judge_overlapped", 0.5);
+    declare_parameter<double>("recall_threshold_to_judge_overlapped");
   overlapped_judge_param_.generalized_iou_threshold =
     convertListToClassMap(declare_parameter<std::vector<double>>("generalized_iou_threshold"));
 
@@ -116,21 +114,23 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
   sync_ptr_->registerCallback(
     std::bind(&ObjectAssociationMergerNode::objectsCallback, this, _1, _2));
 
-  merged_object_pub_ = create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
+  merged_object_pub_ = create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
     "output/object", rclcpp::QoS{1});
 
   // Debug publisher
   processing_time_publisher_ =
-    std::make_unique<tier4_autoware_utils::DebugPublisher>(this, "object_association_merger");
-  stop_watch_ptr_ = std::make_unique<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>>();
+    std::make_unique<autoware::universe_utils::DebugPublisher>(this, "object_association_merger");
+  stop_watch_ptr_ =
+    std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
-  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ =
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 void ObjectAssociationMergerNode::objectsCallback(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects0_msg,
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects1_msg)
+  const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects0_msg,
+  const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects1_msg)
 {
   // Guard
   if (merged_object_pub_->get_subscription_count() < 1) {
@@ -139,7 +139,7 @@ void ObjectAssociationMergerNode::objectsCallback(
   stop_watch_ptr_->toc("processing_time", true);
 
   /* transform to base_link coordinate */
-  autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects0, transformed_objects1;
+  autoware_perception_msgs::msg::DetectedObjects transformed_objects0, transformed_objects1;
   if (
     !object_recognition_utils::transformObjects(
       *input_objects0_msg, base_link_frame_id_, tf_buffer_, transformed_objects0) ||
@@ -149,7 +149,7 @@ void ObjectAssociationMergerNode::objectsCallback(
   }
 
   // build output msg
-  autoware_auto_perception_msgs::msg::DetectedObjects output_msg;
+  autoware_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_objects0_msg->header;
 
   /* global nearest neighbor */
@@ -192,7 +192,7 @@ void ObjectAssociationMergerNode::objectsCallback(
 
   // Remove overlapped unknown object
   if (remove_overlapped_unknown_objects_) {
-    std::vector<autoware_auto_perception_msgs::msg::DetectedObject> unknown_objects, known_objects;
+    std::vector<autoware_perception_msgs::msg::DetectedObject> unknown_objects, known_objects;
     unknown_objects.reserve(output_msg.objects.size());
     known_objects.reserve(output_msg.objects.size());
     for (const auto & object : output_msg.objects) {

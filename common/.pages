@@ -3,24 +3,20 @@ nav:
   - 'Testing Libraries':
     - 'autoware_testing': common/autoware_testing/design/autoware_testing-design
     - 'fake_test_node': common/fake_test_node/design/fake_test_node-design
+    - 'Test Utils': common/autoware_test_utils
   - 'Common Libraries':
     - 'autoware_auto_common':
       - 'comparisons': common/autoware_auto_common/design/comparisons
-    - 'autoware_auto_geometry':
-      - 'interval': common/autoware_auto_geometry/design/interval
-      - 'polygon intersection 2d': common/autoware_auto_geometry/design/polygon_intersection_2d-design
-      - 'spatial hash': common/autoware_auto_geometry/design/spatial-hash-design
-    - 'autoware_auto_tf2': common/autoware_auto_tf2/design/autoware-auto-tf2-design
+    - 'autoware_grid_map_utils': common/autoware_grid_map_utils
     - 'autoware_point_types': common/autoware_point_types
     - 'Cuda Utils': common/cuda_utils
     - 'Geography Utils': common/geography_utils
     - 'Global Parameter Loader': common/global_parameter_loader/Readme
     - 'Glog Component': common/glog_component
-    - 'grid_map_utils': common/grid_map_utils
     - 'interpolation': common/interpolation
     - 'Kalman Filter': common/kalman_filter
-    - 'Motion Utils': common/motion_utils
-    - 'Vehicle Utils': common/motion_utils/docs/vehicle/vehicle
+    - 'Motion Utils': common/autoware_motion_utils
+    - 'Vehicle Utils': common/autoware_motion_utils/docs/vehicle/vehicle
     - 'Object Recognition Utils': common/object_recognition_utils
     - 'OSQP Interface': common/osqp_interface/design/osqp_interface-design
     - 'Perception Utils': common/perception_utils
@@ -29,13 +25,13 @@ nav:
       - 'Introduction': common/signal_processing
       - 'Butterworth Filter': common/signal_processing/documentation/ButterworthFilter
     - 'TensorRT Common': common/tensorrt_common
-    - 'tier4_autoware_utils': common/tier4_autoware_utils
+    - 'autoware_universe_utils': common/autoware_universe_utils
     - 'traffic_light_utils': common/traffic_light_utils
     - 'TVM Utility':
       - 'Introduction': common/tvm_utility
       - 'YOLOv2 Tiny Example': common/tvm_utility/tvm-utility-yolo-v2-tiny-tests
   - 'RVIZ2 Plugins':
-    - 'autoware_auto_perception_rviz_plugin': common/autoware_auto_perception_rviz_plugin
+    - 'autoware_perception_rviz_plugin': common/autoware_perception_rviz_plugin
     - 'autoware_overlay_rviz_plugin': common/autoware_overlay_rviz_plugin/autoware_overlay_rviz_plugin
     - 'autoware_mission_details_overlay_rviz_plugin': common/autoware_overlay_rviz_plugin/autoware_mission_details_overlay_rviz_plugin
     - 'bag_time_manager_rviz_plugin': common/bag_time_manager_rviz_plugin
