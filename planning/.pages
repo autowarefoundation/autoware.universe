@@ -72,7 +72,7 @@ nav:
   - 'Scenario Selector': planning/autoware_scenario_selector
   - 'Static Centerline Generator': planning/autoware_static_centerline_generator
   - 'API and Library':
-    - 'Costmap Generator': planning/costmap_generator
+    - 'Costmap Generator': planning/autoware_costmap_generator
     - 'External Velocity Limit Selector': planning/autoware_external_velocity_limit_selector
     - 'Objects of Interest Marker Interface': planning/autoware_objects_of_interest_marker_interface
     - 'Route Handler': planning/autoware_route_handler
