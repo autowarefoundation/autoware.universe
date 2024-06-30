@@ -765,7 +765,7 @@ public:
       bias_lstm_ih_.segment(3 * h_.size(), h_.size()) +
       weight_lstm_hh_.block(3 * h_.size(), 0, h_.size(), h_.size()) * h +
       bias_lstm_hh_.segment(3 * h_.size(), h_.size()));
-    const Eigen::VectorXd c_new = f_new.array() * c_.array() + i_new.array() * g_new.array();
+    const Eigen::VectorXd c_new = f_new.array() * c.array() + i_new.array() * g_new.array();
     const Eigen::VectorXd h_new = o_new.array() * tanh(c_new).array();
 
     Eigen::VectorXd h2(h_new.size() + bias_linear_relu_1_.size());
