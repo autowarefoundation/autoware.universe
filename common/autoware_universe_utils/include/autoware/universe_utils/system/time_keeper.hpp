@@ -29,9 +29,6 @@
 
 namespace autoware::universe_utils
 {
-using DetailedStopWatch = autoware::universe_utils::StopWatch<
-  std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>;
-
 class TimeNode : public std::enable_shared_from_this<TimeNode>
 {
 public:
@@ -73,17 +70,17 @@ public:
   std::shared_ptr<TimeNode> current_time_node{};
 };
 
-class AutomaticStopWatch
+class AutoStopWatch
 {
 public:
-  AutomaticStopWatch(const std::string & func_name, std::shared_ptr<TimeTree> time_tree)
+  AutoStopWatch(const std::string & func_name, std::shared_ptr<TimeTree> time_tree)
   : func_name_(func_name), time_tree_(time_tree)
   {
     const auto new_time_node = time_tree_->current_time_node->add_child(func_name);
     time_tree_->current_time_node = new_time_node;
     stop_watch_.tic(func_name_);
   }
-  ~AutomaticStopWatch()
+  ~AutoStopWatch()
   {
     const double processing_time = stop_watch_.toc(func_name_);
     time_tree_->current_time_node->set_time(processing_time);
@@ -92,7 +89,10 @@ public:
 
 private:
   const std::string func_name_;
-  DetailedStopWatch stop_watch_;
+  autoware::universe_utils::StopWatch<
+    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
+    stop_watch_;
+
   std::shared_ptr<TimeTree> time_tree_;
 };
 
@@ -102,46 +102,54 @@ public:
   explicit TimeKeeper(rclcpp::Node * node)
   {
     processing_time_pub_ =
-      node->create_publisher<std_msgs::msg::String>("~/debug/processing_time_detail", 1);
+      node->create_publisher<std_msgs::msg::String>("~/debug/processing_time_ms_detail", 1);
   }
-  void start_track(const std::string & func_name)
-  {
-    manual_stop_watch_map_.emplace(
-      func_name, std::make_shared<AutomaticStopWatch>(func_name, time_tree_));
-  }
-  void end_track(const std::string & func_name) { manual_stop_watch_map_.erase(func_name); }
+
   void start(const std::string & func_name)
   {
     // init
-    stop_watch_ = std::make_shared<DetailedStopWatch>();
     time_tree_ = std::make_shared<TimeTree>();
     time_tree_->current_time_node = std::make_shared<TimeNode>("root");
 
     // tic
     manual_stop_watch_map_.emplace(
-      func_name, std::make_shared<AutomaticStopWatch>(func_name, time_tree_));
+      func_name, std::make_shared<AutoStopWatch>(func_name, time_tree_));
   }
-  void end(const std::string & func_name)
+  void end(const std::string & func_name, const bool show_on_terminal = false)
   {
     // toc
     manual_stop_watch_map_.erase(func_name);
 
-    // show on the terminal
+    // get result text
+    const auto & root_node = time_tree_->current_time_node;
     std::string processing_time_str;
-    get_child_info(time_tree_->current_time_node, 0, processing_time_str);
+    get_child_info(root_node->get_child_nodes().front(), 0, processing_time_str);
     processing_time_str.pop_back();  // remove last endline.
-    std::cerr << "========================================" << std::endl;
-    std::cerr << processing_time_str;
+
+    // show on the terminal
+    if (show_on_terminal) {
+      std::cerr << "========================================" << std::endl;
+      std::cerr << processing_time_str << std::endl;
+    }
 
     // publish
     std_msgs::msg::String processing_time_msg;
     processing_time_msg.data = processing_time_str;
     processing_time_pub_->publish(processing_time_msg);
   }
-  AutomaticStopWatch track(const std::string & func_name) const
+
+  void start_track(const std::string & func_name)
   {
-    return AutomaticStopWatch{func_name, time_tree_};
+    manual_stop_watch_map_.emplace(
+      func_name, std::make_shared<AutoStopWatch>(func_name, time_tree_));
   }
+  void end_track(const std::string & func_name) { manual_stop_watch_map_.erase(func_name); }
+  AutoStopWatch track(const std::string & func_name) const
+  {
+    return AutoStopWatch{func_name, time_tree_};
+  }
+
+private:
   void get_child_info(
     const std::shared_ptr<TimeNode> time_node, const size_t indent_length,
     std::string & processing_time_str) const
@@ -152,13 +160,9 @@ public:
     }
   }
 
-private:
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr processing_time_pub_;
-
-  std::shared_ptr<DetailedStopWatch> stop_watch_;
   std::shared_ptr<TimeTree> time_tree_;
-
-  std::unordered_map<std::string, std::shared_ptr<AutomaticStopWatch>> manual_stop_watch_map_;
+  std::unordered_map<std::string, std::shared_ptr<AutoStopWatch>> manual_stop_watch_map_;
 };
 }  // namespace autoware::universe_utils
 #endif  // AUTOWARE__UNIVERSE_UTILS__SYSTEM__TIME_KEEPER_HPP_

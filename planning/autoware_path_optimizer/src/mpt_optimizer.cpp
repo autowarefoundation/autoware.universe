@@ -470,7 +470,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 
 std::vector<TrajectoryPoint> MPTOptimizer::optimizeTrajectory(const PlannerData & planner_data)
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const auto & p = planner_data;
   const auto & traj_points = p.traj_points;
@@ -539,7 +539,7 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::getPrevOptimizedTrajec
 std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const auto & p = planner_data;
 
@@ -635,7 +635,7 @@ void MPTOptimizer::updateCurvature(
 
 void MPTOptimizer::updateFixedPoint(std::vector<ReferencePoint> & ref_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   if (!prev_ref_points_ptr_) {
     // no fixed point
@@ -691,7 +691,7 @@ void MPTOptimizer::updateDeltaArcLength(std::vector<ReferencePoint> & ref_points
 
 void MPTOptimizer::updateExtraPoints(std::vector<ReferencePoint> & ref_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   // alpha
   for (size_t i = 0; i < ref_points.size(); ++i) {
@@ -788,7 +788,7 @@ void MPTOptimizer::updateBounds(
   const std::vector<geometry_msgs::msg::Point> & right_bound,
   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const double soft_road_clearance =
     mpt_param_.soft_clearance_from_road + vehicle_info_.vehicle_width_m / 2.0;
@@ -1094,7 +1094,7 @@ void MPTOptimizer::updateVehicleBounds(
   std::vector<ReferencePoint> & ref_points,
   const SplineInterpolationPoints2d & ref_points_spline) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   for (size_t p_idx = 0; p_idx < ref_points.size(); ++p_idx) {
     const auto & ref_point = ref_points.at(p_idx);
@@ -1157,7 +1157,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::calcValueMatrix(
   const std::vector<ReferencePoint> & ref_points,
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -1223,7 +1223,7 @@ MPTOptimizer::ObjectiveMatrix MPTOptimizer::calcObjectiveMatrix(
   [[maybe_unused]] const StateEquationGenerator::Matrix & mpt_mat, const ValueMatrix & val_mat,
   const std::vector<ReferencePoint> & ref_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -1283,7 +1283,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::calcConstraintMatrix(
   const StateEquationGenerator::Matrix & mpt_mat,
   const std::vector<ReferencePoint> & ref_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -1462,7 +1462,7 @@ std::optional<Eigen::VectorXd> MPTOptimizer::calcOptimizedSteerAngles(
   const std::vector<ReferencePoint> & ref_points, const ObjectiveMatrix & obj_mat,
   const ConstraintMatrix & const_mat)
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -1629,7 +1629,7 @@ std::optional<std::vector<TrajectoryPoint>> MPTOptimizer::calcMPTPoints(
   std::vector<ReferencePoint> & ref_points, const Eigen::VectorXd & optimized_variables,
   [[maybe_unused]] const StateEquationGenerator::Matrix & mpt_mat) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const size_t D_x = state_equation_generator_.getDimX();
   const size_t D_u = state_equation_generator_.getDimU();
@@ -1689,7 +1689,7 @@ void MPTOptimizer::publishDebugTrajectories(
   const std_msgs::msg::Header & header, const std::vector<ReferencePoint> & ref_points,
   const std::vector<TrajectoryPoint> & mpt_traj_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   // reference points
   const auto ref_traj = autoware::motion_utils::convertToTrajectory(

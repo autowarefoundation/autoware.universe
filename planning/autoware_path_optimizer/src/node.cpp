@@ -314,7 +314,7 @@ PlannerData PathOptimizer::createPlannerData(
 std::vector<TrajectoryPoint> PathOptimizer::generateOptimizedTrajectory(
   const PlannerData & planner_data)
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const auto & input_traj_points = planner_data.traj_points;
 
@@ -339,7 +339,7 @@ std::vector<TrajectoryPoint> PathOptimizer::generateOptimizedTrajectory(
 
 std::vector<TrajectoryPoint> PathOptimizer::optimizeTrajectory(const PlannerData & planner_data)
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
   const auto & p = planner_data;
 
   // 1. check if replan (= optimization) is required
@@ -384,7 +384,7 @@ void PathOptimizer::applyInputVelocity(
   const std::vector<TrajectoryPoint> & input_traj_points,
   const geometry_msgs::msg::Pose & ego_pose) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   // crop forward for faster calculation
   const auto forward_cropped_input_traj_points = [&]() {
@@ -484,7 +484,7 @@ void PathOptimizer::applyInputVelocity(
 void PathOptimizer::insertZeroVelocityOutsideDrivableArea(
   const PlannerData & planner_data, std::vector<TrajectoryPoint> & optimized_traj_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   if (optimized_traj_points.empty()) {
     return;
@@ -548,7 +548,7 @@ void PathOptimizer::insertZeroVelocityOutsideDrivableArea(
 
 void PathOptimizer::publishVirtualWall(const geometry_msgs::msg::Pose & stop_pose) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   auto virtual_wall_marker = autoware::motion_utils::createStopVirtualWallMarker(
     stop_pose, "outside drivable area", now(), 0, vehicle_info_.max_longitudinal_offset_m);
@@ -563,7 +563,7 @@ void PathOptimizer::publishVirtualWall(const geometry_msgs::msg::Pose & stop_pos
 void PathOptimizer::publishDebugMarkerOfOptimization(
   const std::vector<TrajectoryPoint> & traj_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   if (!enable_pub_debug_marker_) {
     return;
@@ -584,7 +584,7 @@ std::vector<TrajectoryPoint> PathOptimizer::extendTrajectory(
   const std::vector<TrajectoryPoint> & traj_points,
   const std::vector<TrajectoryPoint> & optimized_traj_points) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   const auto & joint_start_pose = optimized_traj_points.back().pose;
 
@@ -645,7 +645,7 @@ std::vector<TrajectoryPoint> PathOptimizer::extendTrajectory(
 
 void PathOptimizer::publishDebugData(const Header & header) const
 {
-  const auto stop_watch(time_keeper_->track(__func__));
+  const auto auto_stop_watch(time_keeper_->track(__func__));
 
   // publish trajectories
   const auto debug_extended_traj =
