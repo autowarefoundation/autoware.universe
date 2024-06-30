@@ -800,18 +800,27 @@ GoalCandidates GoalPlannerModule::generateGoalCandidates() const
 
 BehaviorModuleOutput GoalPlannerModule::plan()
 {
-  if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
-    return planPullOver();
-  }
+  time_keeper_->start(__func__);
 
-  fixed_goal_planner_->setPreviousModuleOutput(getPreviousModuleOutput());
-  return fixed_goal_planner_->plan(planner_data_);
+  const auto output = [&]() {
+    if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
+      return planPullOver();
+    }
+
+    fixed_goal_planner_->setPreviousModuleOutput(getPreviousModuleOutput());
+    return fixed_goal_planner_->plan(planner_data_);
+  }();
+
+  time_keeper_->end(__func__, true);
+  return output;
 }
 
 std::vector<PullOverPath> GoalPlannerModule::sortPullOverPathCandidatesByGoalPriority(
   const std::vector<PullOverPath> & pull_over_path_candidates,
   const GoalCandidates & goal_candidates) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   // ==========================================================================================
   // print path priority for debug
   const auto debugPrintPathPriority =
@@ -960,6 +969,8 @@ std::optional<std::pair<PullOverPath, GoalCandidate>> GoalPlannerModule::selectP
   const std::vector<PullOverPath> & pull_over_path_candidates,
   const GoalCandidates & goal_candidates, const double collision_check_margin) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   const auto & goal_pose = planner_data_->route_handler->getOriginalGoalPose();
   const double backward_length =
     parameters_->backward_goal_search_length + parameters_->decide_path_distance;
@@ -1315,6 +1326,8 @@ BehaviorModuleOutput GoalPlannerModule::planPullOver()
 
 BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate()
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   // if pull over path candidates generation is not finished, use previous module output
   if (thread_safe_data_.get_pull_over_path_candidates().empty()) {
     return getPreviousModuleOutput();
@@ -1345,6 +1358,8 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate()
 
 BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput()
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   // if pull over path candidates generation is not finished, use previous module output
   if (thread_safe_data_.get_pull_over_path_candidates().empty()) {
     return getPreviousModuleOutput();
@@ -1449,6 +1464,8 @@ void GoalPlannerModule::postProcess()
 
 void GoalPlannerModule::updatePreviousData()
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   // for the next loop setOutput().
   // this is used to determine whether to generate a new stop path or keep the current stop path.
   // TODO(Mamoru Sobue): put prev_data_ out of  ThreadSafeData
@@ -1852,6 +1869,8 @@ bool GoalPlannerModule::checkOccupancyGridCollision(
   const PathWithLaneId & path,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   if (!occupancy_grid_map) {
     return false;
   }
@@ -1864,7 +1883,12 @@ bool GoalPlannerModule::checkObjectsCollision(
   const GoalPlannerParameters & parameters, const double collision_check_margin,
   const bool extract_static_objects, const bool update_debug_data) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   const auto target_objects = std::invoke([&]() {
+    const auto auto_stop_watch_for_extract_target_objects(
+      time_keeper_->track("extractTargetObjects"));
+
     const auto & p = parameters;
     const auto & rh = *(planner_data->route_handler);
     const auto objects = *(planner_data->dynamic_object);
@@ -1917,7 +1941,12 @@ bool GoalPlannerModule::checkObjectsCollision(
     debug_data_.ego_polygons_expanded = ego_polygons_expanded;
   }
 
-  return utils::path_safety_checker::checkPolygonsIntersects(ego_polygons_expanded, obj_polygons);
+  time_keeper_->start_track("checkPolygonsIntersects");
+  const auto has_intersection =
+    utils::path_safety_checker::checkPolygonsIntersects(ego_polygons_expanded, obj_polygons);
+  time_keeper_->end_track("checkPolygonsIntersects");
+
+  return has_intersection;
 }
 
 bool GoalPlannerModule::hasEnoughDistance(
@@ -1991,6 +2020,8 @@ double GoalPlannerModule::calcSignedArcLengthFromEgo(
 
 void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   // decelerate before the search area start
   const auto closest_goal_candidate = goal_searcher_->getClosetGoalCandidateAlongLanes(
     thread_safe_data_.get_goal_candidates(), planner_data_);
@@ -2019,6 +2050,8 @@ void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
 
 void GoalPlannerModule::decelerateForTurnSignal(const Pose & stop_pose, PathWithLaneId & path) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   const double time = planner_data_->parameters.turn_signal_search_time;
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
 
@@ -2058,6 +2091,8 @@ void GoalPlannerModule::decelerateForTurnSignal(const Pose & stop_pose, PathWith
 void GoalPlannerModule::decelerateBeforeSearchStart(
   const Pose & search_start_offset_pose, PathWithLaneId & path) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   const double pull_over_velocity = parameters_->pull_over_velocity;
   const Pose & current_pose = planner_data_->self_odometry->pose.pose;
 
@@ -2180,8 +2215,11 @@ static std::vector<utils::path_safety_checker::ExtendedPredictedObject> filterOb
   const std::shared_ptr<const PredictedObjects> & objects,
   const lanelet::ConstLanelets & target_lanes,
   const std::shared_ptr<
-    autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams> & params)
+    autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams> & params,
+  const std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper)
 {
+  const auto auto_stop_watch(time_keeper->track(__func__));
+
   // implanted part of behavior_path_planner::utils::path_safety_checker::filterObjects() and
   // createTargetObjectsOnLane()
 
@@ -2226,6 +2264,8 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
   const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
   const std::shared_ptr<SafetyCheckParams> & safety_check_params) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   if (!thread_safe_data_.get_pull_over_path()) {
     return {false, false};
   }
@@ -2265,6 +2305,8 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
   // should be from the entry of pull_over_lanes
   // ==========================================================================================
   const Pose ego_pose_for_expand = std::invoke([&]() {
+    const auto auto_stop_watch_for_ego_pose_expansion(time_keeper_->track("expandEgoPose"));
+
     // get first road lane in pull over lanes segment
     const auto fist_road_lane = std::invoke([&]() {
       const auto first_pull_over_lane = pull_over_lanes.front();
@@ -2307,7 +2349,7 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
   debug_data_.expanded_pull_over_lane_between_ego = merged_expanded_pull_over_lanes;
 
   const auto filtered_objects = filterObjectsByWithinPolicy(
-    dynamic_object, {merged_expanded_pull_over_lanes}, objects_filtering_params);
+    dynamic_object, {merged_expanded_pull_over_lanes}, objects_filtering_params, time_keeper_);
 
   const auto prev_data = thread_safe_data_.get_prev_data();
   const double hysteresis_factor =
@@ -2315,6 +2357,8 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
 
   CollisionCheckDebugMap collision_check{};
   const bool current_is_safe = std::invoke([&]() {
+    const auto auto_stop_watch_for_safety_check(time_keeper_->track("checkSafety"));
+
     if (parameters.safety_check_params.method == "RSS") {
       return autoware::behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
         pull_over_path, ego_predicted_path, filtered_objects, collision_check,
@@ -2362,6 +2406,8 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
 
 void GoalPlannerModule::setDebugData()
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   debug_marker_.markers.clear();
 
   using autoware::motion_utils::createStopVirtualWallMarker;
@@ -2590,6 +2636,8 @@ bool GoalPlannerModule::needPathUpdate(
   const Pose & current_pose, const double path_update_duration,
   const GoalPlannerParameters & parameters) const
 {
+  const auto auto_stop_watch(time_keeper_->track(__func__));
+
   return !isOnModifiedGoal(current_pose, parameters) &&
          hasEnoughTimePassedSincePathUpdate(path_update_duration);
 }
