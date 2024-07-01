@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace bg = boost::geometry;

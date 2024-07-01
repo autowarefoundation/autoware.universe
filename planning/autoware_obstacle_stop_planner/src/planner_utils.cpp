@@ -21,6 +21,9 @@
 
 #include <diagnostic_msgs/msg/key_value.hpp>
 
+#include <algorithm>
+#include <limits>
+
 #include <boost/format.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
