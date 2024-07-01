@@ -228,17 +228,15 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gtest)
   ament_lint_auto_find_test_dependencies()
+
+
   ament_add_gtest(test_utilities
     test/test_utilities.cpp
   )
-  target_link_libraries(test_utilities pointcloud_preprocessor_filter)
+  ament_add_gtest(distortion_corrector_tests
+    test/test_distortion_corrector.cpp
+  )
 
-  add_ros_test(
-    test/test_distortion_corrector.py
-    TIMEOUT "30"
-  )
-  add_ros_test(
-    test/test_distortion_corrector_use_imu_false.py
-    TIMEOUT "30"
-  )
+  target_link_libraries(test_utilities pointcloud_preprocessor_filter)
+  target_link_libraries(distortion_corrector_tests pointcloud_preprocessor_filter)
 endif()
