@@ -194,7 +194,7 @@ void Controller::callbackTimerControl()
   const auto lat_out = lateral_controller_->run(*input_data);
   publishProcessingTime(stop_watch_.toc("lateral"), pub_processing_time_lat_ms_);
 
-  // 4. sync with each other controllers
+  // 4. sync the longitudinal controller with the lateral controller's output
   longitudinal_controller_->sync(lat_out.sync_data);
 
   // 5. run the longitudinal controller
@@ -202,7 +202,7 @@ void Controller::callbackTimerControl()
   const auto lon_out = longitudinal_controller_->run(*input_data);
   publishProcessingTime(stop_watch_.toc("longitudinal"), pub_processing_time_lon_ms_);
 
-  // 6. sync with each other controllers
+  // 6. sync the lateral controller with the longitudinal controller's output
   lateral_controller_->sync(lon_out.sync_data);
 
   // TODO(Horibe): Think specification. This comes from the old implementation.
