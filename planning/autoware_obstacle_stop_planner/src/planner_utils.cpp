@@ -21,9 +21,6 @@
 
 #include <diagnostic_msgs/msg/key_value.hpp>
 
-#include <algorithm>
-#include <limits>
-
 #include <boost/format.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
@@ -31,6 +28,9 @@
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
+
+#include <algorithm>
+#include <limits>
 
 namespace autoware::motion_planning
 {
