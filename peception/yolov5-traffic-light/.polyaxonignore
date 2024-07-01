@@ -1,0 +1,25 @@
+# git rm -r --cached .
+# git add .
+# git commit -m 'update .gitignore'
+
+#############
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+# C extensions
+*.so
+# Distribution / packaging
+.Python
+./.git
+./.gitignore
+./.idea
+core.*
+#############
+./work_space
+./tools/work_space
+./output
+./libs
+./docker
+./runs
+./classifier

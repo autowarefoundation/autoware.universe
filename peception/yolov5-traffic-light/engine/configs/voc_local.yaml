@@ -1,0 +1,19 @@
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+# 数据路径
+path: ""  # dataset root dir
+train:
+  - "/home/dm/nasdata/dataset/csdn/traffic light/Traffic-Lights-Dataset-Domestic/train.txt"
+  - "/home/dm/nasdata/dataset/csdn/traffic light/Traffic-Lights-Dataset-Foreign/train.txt"
+
+val:
+  - "/home/dm/nasdata/dataset/csdn/traffic light/Traffic-Lights-Dataset-Domestic/val.txt"
+
+test:  # test images (optional)
+data_type: voc
+
+# 1.设置类别个数，和要训练的类别名称，ID号从0开始递增
+nc: 4  # number of classes
+names: { 'red': 0, 'green': 1,  'yellow': 2,'off': 3 }
+# 2.如果你想合并所有类别为一个大类，进行训练： unique表示合并所有类为单独一个类别
+#nc: 1  # number of classes
+#names: { "unique": 0 }

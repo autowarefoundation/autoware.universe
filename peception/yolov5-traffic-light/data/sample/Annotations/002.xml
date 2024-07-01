@@ -1,0 +1,32 @@
+<annotation>
+	<folder>VOC2007</folder>
+	<filename>0a2a53c3-f9f8-4f1b-a626-b80f832cca8e.jpg</filename>
+	<source>
+		<database>The VOC2007 Database</database>
+		<annotation>PASCAL VOC2007</annotation>
+		<image_dict>flickr</image_dict>
+		<flickrid>NULL</flickrid>
+	</source>
+	<owner>
+		<flickrid>NULL</flickrid>
+		<name>pjq</name>
+	</owner>
+	<size>
+		<width>384</width>
+		<height>512</height>
+		<depth>3</depth>
+	</size>
+		<segmented>0</segmented>
+	<object>
+		<name>call</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>188.68412544</xmin>
+			<ymin>170.60826112</ymin>
+			<xmax>251.38650239999998</xmax>
+			<ymax>229.065472</ymax>
+		</bndbox>
+	</object>
+</annotation>

@@ -14,7 +14,7 @@ max_det = 1000  # maximum detections per image
 classes = None  # filter by class
 agnostic_nms = False  # class-agnostic NMS
 
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ckpt = torch.load(MODEL_PATH, map_location=device)
 model = ckpt['ema' if ckpt.get('ema') else 'model'].float().fuse().eval()
@@ -23,7 +23,7 @@ class_names = ['pedestrian-crossing', 'red-light', 'green-light'] # model.names
 stride = int(model.stride.max())
 colors = ((50, 50, 50), (0, 0, 255), (0, 255, 0)) # (gray, red, green)
 
-cap = cv2.VideoCapture('data/sample.mp4')
+cap = cv2.VideoCapture('/home/crp/dora_data/crosswalk-traffic-light-detection-yolov5/VID_20240624_090021.mp4')
 
 fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
 out = cv2.VideoWriter('data/full3.mp4', fourcc, cap.get(cv2.CAP_PROP_FPS), (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))

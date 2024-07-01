@@ -8,6 +8,12 @@ extern "C"
 #include <vector>
 #include <cmath>
 #include <sys/time.h>
+#include <unistd.h> // 在Linux/Mac下需要包含这个头文件
+// 或
+#include <thread>
+#include <chrono>
+#include <mutex>
+ 
 
 #include <Eigen/Dense>
 #include <cstdint>
@@ -41,6 +47,11 @@ using json = nlohmann::json;
 // #include <visualization_msgs/Marker.h>
 // #include <visualization_msgs/MarkerArray.h>
 #include <pcl/console/time.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/filters/filter.h>
+#include <pcl/filters/passthrough.h>
+ #include <pcl/filters/voxel_grid.h>
 #include "tracker.h"
 // #include <message_filters/subscriber.h>
 // #include <message_filters/time_synchronizer.h>
@@ -54,6 +65,11 @@ using json = nlohmann::json;
 // image_transport::Publisher outmap_pub;
 
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
+
+
 using namespace std;
 using PointType = pcl::PointXYZI;
 
@@ -63,17 +79,134 @@ Track *Trackor;
 Eigen::Matrix3f car_pose_;
 cv::Mat obj_image;
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_show(new pcl::PointCloud<pcl::PointXYZRGB>());
+std::mutex mtx_pointcloud_show;
 
 static Vec_uint8_t point_data;
 bool to_exit_process = false;
 uint32_t  local_cnt=0;//节点内部统计接收到数据的帧数量
-
+uint32_t data_seq = 0; //存储接收数据的编号 时间 ID 
+double data_stamp = 0;
+string data_frame_id = " ";
 // std::vector<double> lane_start_sd, lane_end_sd;
+
+
+void* pointcloud_show_pthread(void *dora_context)
+{
+    const int rate = 50;   // 设定频率为 xx HZ
+    const chrono::milliseconds interval((int)(1000/rate));
+    //pcl::visualization::CloudViewer pcl_viewer("viewer");
+    //pcl::visualization::PCLVisualizer::Ptr viewer; // (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+ 
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(new pcl::visualization::PCLVisualizer("Cluster_cloud"));
+    viewer->setBackgroundColor(0, 0, 0);
+    viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE,1, "sample");
+    viewer->addCoordinateSystem(1.0);
+    viewer->initCameraParameters();
+    // 创建可视化对象
+    viewer->addPointCloud<pcl::PointXYZRGB> (cloud_show, "sample");         
+ 
+    while(!viewer->wasStopped())
+    {   
+        viewer->spinOnce(10);
+        this_thread::sleep_for(interval);
+    }
+}
+
+// 发布聚类以后的数据
+int  dora_pub_tracker(custom_msgs::LidarRawObjectArray& LidarRawObjects,void *dora_context)
+{
+    // 创建一个空的 JSON 对象
+    json j;
+    nlohmann::json jsonArray_LidarRawObjects_objs = nlohmann::json::array();
+    for(int n=0;n<LidarRawObjects.objs.size();n++)
+    {
+        custom_msgs::LidarRawObject LidarRawObject = LidarRawObjects.objs[n];
+
+        json obj;
+
+        nlohmann::json jsonArray_bbox_point_x = nlohmann::json::array();
+        nlohmann::json jsonArray_bbox_point_y = nlohmann::json::array();
+        nlohmann::json jsonArray_bbox_point_z = nlohmann::json::array();
+        for(int i = 0; i < 8 ; i++)
+        {
+            jsonArray_bbox_point_x.push_back(LidarRawObject.bbox_point[i].x);
+            jsonArray_bbox_point_y.push_back(LidarRawObject.bbox_point[i].y);
+            jsonArray_bbox_point_z.push_back(LidarRawObject.bbox_point[i].z);
+        }
+
+        obj["bbox_point"]["x"] = jsonArray_bbox_point_x;
+        obj["bbox_point"]["y"] = jsonArray_bbox_point_x;
+        obj["bbox_point"]["z"] = jsonArray_bbox_point_x;
+
+        obj["lwh"]["x"] = LidarRawObject.lwh.x;
+        obj["lwh"]["y"] = LidarRawObject.lwh.y;
+        obj["lwh"]["z"] = LidarRawObject.lwh.z;
+
+        obj["x_pos"] = LidarRawObject.x_pos;
+        obj["y_pos"] = LidarRawObject.x_pos;
+        obj["z_pos"] = LidarRawObject.x_pos;
+
+        jsonArray_LidarRawObjects_objs.push_back(obj);
+    }
+ 
+    j["LidarRawObjects"]["objs"] = jsonArray_LidarRawObjects_objs;
+    j["header"]["frame_id"] = data_frame_id;
+    j["header"]["cnt"] = data_seq;
+    j["header"]["stamp"] = data_stamp*1e-9;
+      
+    // 将 JSON 对象序列化为字符串
+    std::string json_string = j.dump(4); // 参数 4 表示缩进宽度
+    //cout<<"======================================"<<endl;
+    //cout<<json_string<<endl;
+    // std::cout << "x: " << j["x"] << std::endl;
+    // std::cout << "y: " << j["y"] << std::endl;
+    // std::cout << "z: " << j["z"] << std::endl;
+
+
+    // 将字符串转换为 char* 类型
+    char *c_json_string = new char[json_string.length() + 1];
+    strcpy(c_json_string, json_string.c_str());
+    std::string out_id = "LidarRawObject";
+    // std::cout<<json_string;
+    int result = dora_send_output(dora_context, &out_id[0], out_id.length(), c_json_string, std::strlen(c_json_string));
+    if (result != 0)
+    {
+        std::cerr << "LidarRawObject: failed to send output" << std::endl;
+    }
+    //std::cout << "dora_send_output()" << std::endl;
+
+    return result;
+}
+// int dora_pub_pointcloud(const pcl::PointCloud<PointType> &points_msg,void *dora_context)
+// {
+//     size_t all_size = 16 + pub_cloud.size() * 16;
+//     point_data.ptr = new uint8_t[all_size];
+
+     
+//     uint32_t* seq_ptr = (uint32_t*)point_data.ptr;
+//     *seq_ptr = seq;
+//     double* timestamp_ptr = (double*)(point_data.ptr + 8);
+//     *timestamp_ptr = points_msg.header.stamp;
+//     memcpy(point_data.ptr + 16, &pub_cloud.points[0], pub_cloud.size() * 16);
+
+
+//     char *output_data = (char *)point_data.ptr;
+//     size_t output_data_len = ((pub_cloud.size() + 1) * 16);
+//     //size_t output_data_len = 16;
+//     std::string out_id = "pointcloud";
+//     std::cout << "euclidean_cluster output_data_len: " << output_data_len << std::endl;
+//     int resultend = dora_send_output(dora_context, &out_id[0], out_id.length(), output_data, output_data_len);
+//     delete[] point_data.ptr;
+
+//     return resultend;
+// }
 
 int Callback(const pcl::PointCloud<PointType> &points_msg,void *dora_context)
 {
  
-    pcl::console::TicToc tt;
+    //pcl::console::TicToc tt;
+    //tt.tic();
     double frame_time =  static_cast<double>(points_msg.header.stamp) / 1e9;//转化为时间
     std::cout.precision(20);
     uint32_t seq = points_msg.header.seq;
@@ -82,16 +215,14 @@ int Callback(const pcl::PointCloud<PointType> &points_msg,void *dora_context)
 
     // pcl::fromROSMsg(*points_msg, *noground_cloud);
     noground_cloud = points_msg.makeShared();
-
     std::vector<pcl::PointCloud<PointType> > clusters;
-    
-    std::cout<<" flag3 "<<std::endl;
     PolarGridBasor->polarGridCluster(noground_cloud, clusters);
-    std::cout<<" flag4 "<<std::endl;
+  
 
     std::vector<BoundingBoxCalculator::BoundingBox> boxes;
     std::vector<tracker> trackers;
     custom_msgs::LidarRawObjectArray LidarRawObjects;
+
 
     //simple classify the object
     for (int i = 0; i < clusters.size(); ++i)
@@ -112,7 +243,7 @@ int Callback(const pcl::PointCloud<PointType> &points_msg,void *dora_context)
         //boxes.push_back(tmp_box);
         tracker tmp_track;
         tmp_track.kalman_init();
-        tmp_track.num_points = clusters[i].points   .size();
+        tmp_track.num_points = clusters[i].points.size();
         tmp_track.center[0] = tmp_box.center.x;
         tmp_track.center[1] = tmp_box.center.y;
         tmp_track.center[2] = 0;
@@ -146,55 +277,70 @@ int Callback(const pcl::PointCloud<PointType> &points_msg,void *dora_context)
     }
     LidarRawObjects.head = points_msg.header;
 
-    /*****这里需要发布LidarRawObjects，未移植*****/
-    // pub_LidarRawObject.publish(LidarRawObjects);
 
-    std::cout<<" PolarGridBasor->clusterstoColor() "<<frame_time<<std::endl;
-    pcl::PointCloud<pcl::PointXYZRGB> color_cloud;
+ 
+    // step1:  这里需要发布LidarRawObjects 
+    // pub_LidarRawObject.publish(LidarRawObjects);
+    dora_pub_tracker(LidarRawObjects,dora_context);
+    std::cout<<"pub_LidarRawObject:  "<<LidarRawObjects.objs.size()<<std::endl;
+    // for (int i = 0; i < trackers.size(); ++i)
+    // {
+    //     cout<<"ID: "<<i<<" center: "<<trackers[i].center[0]<<" "<<trackers[i].center[1]
+    //         <<" size: "<<trackers[i].size.x<<"  "<<trackers[i].size.y<<"  "<<trackers[i].size.z<<"  "<<endl;
+    // }
+
+
+
+    // step2:  这里需要发布 点云
+    pcl::PointCloud<pcl::PointXYZRGB> color_cloud;   
     PolarGridBasor->clusterstoColor(clusters, color_cloud);
-   
-    std::cout << "publish data: " <<std::endl;
-   
+
+    mtx_pointcloud_show.lock();
+    pcl::copyPointCloud(color_cloud, *cloud_show);
+    mtx_pointcloud_show.unlock();
+
+
+    pcl::PointCloud<pcl::PointXYZI> pub_cloud;    
+    pcl::copyPointCloud(color_cloud, pub_cloud);//转换点云格式
+ 
+    //Color2PointCloud(color_cloud,pub_cloud);
+    //-----------------------------------------------------------------------------------------
+    std::cout <<"pub_data: color_cloud/pub_cloud size():"<<color_cloud.points.size()<<"/"<<pub_cloud.points.size()<<std::endl;
     /*****这里需要发布color_cloud，未移植*****/
     // sensor_msgs::PointCloud2 output_points;
     // pcl::toROSMsg(color_cloud, output_points);
     // output_points.header.frame_id = "rslidar";
     // points_pub.publish(output_points);
 
-    // 发布 去地面以后的点云
-    //// std::vector<Eigen::Vector4f> output_cloud;
-    // std::cout << "output cloud size: " << output_cloud.size() << std::endl;
 
-    size_t all_size = 16 + color_cloud.size() * 16;
+    size_t all_size = 16 + pub_cloud.size() * 16;
     point_data.ptr = new uint8_t[all_size];
-
      
     uint32_t* seq_ptr = (uint32_t*)point_data.ptr;
     *seq_ptr = seq;
     double* timestamp_ptr = (double*)(point_data.ptr + 8);
     *timestamp_ptr = points_msg.header.stamp;
-    memcpy(point_data.ptr + 16, &color_cloud.points[0], color_cloud.size() * 16);
 
+    memcpy(point_data.ptr + 16, &pub_cloud.points[0], pub_cloud.size() * 16);
 
     char *output_data = (char *)point_data.ptr;
-    size_t output_data_len = ((color_cloud.size() + 1) * 16);
-    //size_t output_data_len = 16;
-    std::string out_id = "pointcloud_euclidean_cluster";
+    size_t output_data_len = ((pub_cloud.size() + 1) * 16);
+    std::string out_id = "pointcloud";
     std::cout << "euclidean_cluster output_data_len: " << output_data_len << std::endl;
     int resultend = dora_send_output(dora_context, &out_id[0], out_id.length(), output_data, output_data_len);
     delete[] point_data.ptr;
     if (resultend != 0)
     {
-        std::cerr << "failed to send output" << std::endl;
+        std::cerr << "pointcloud failed to send output" << std::endl;
         return 1;
     }
-//    std::cout << "the cost time of one frame is " << tt.toc() << std::endl;s
+    return resultend;
+    //std::cout << "the cost time of one frame is " << tt.toc() << std::endl;
 
-    std::vector<pcl::PointCloud<pcl::PointXYZI> >().swap(clusters);
-    std::vector<BoundingBoxCalculator::BoundingBox>().swap(boxes);
+    // std::vector<pcl::PointCloud<pcl::PointXYZI> >().swap(clusters);
+    // std::vector<BoundingBoxCalculator::BoundingBox>().swap(boxes);
 }
-
-
+ 
 /***object_cb函数，未移植****/
 // void object_cb(const sensor_msgs::ImageConstPtr &image_msg)
 // {
@@ -252,8 +398,13 @@ int run(void *dora_context)
         fprintf(stderr, "euclidean_cluster: failed to init dora context\n");
         return -1;
     }
-
     printf("euclidean_cluster: [c node] dora context initialized\n");
+
+    PolarGridBasor = new PolarGridBase();
+    Trackor = new Track();
+    boxer = new BoundingBoxCalculator;
+    boxer->init();
+ 
     while(!to_exit_process)
     {
         void *event = dora_next_event(dora_context);
@@ -273,9 +424,7 @@ int run(void *dora_context)
             char *id;
             size_t id_len;
             read_dora_input_id(event, &id, &id_len);
-             cout<<"\033[1;32m" << "id: "  << id
-                    << " id_len:"<<id_len
-                    << "\033[0m"<<endl;
+            cout<<"\033[1;32m" << "id: "  << id << " id_len:"<<id_len << "\033[0m"<<endl;
             if (strcmp(id, "pointcloud") == 0)
             {
                 char *data;
@@ -298,31 +447,42 @@ int run(void *dora_context)
                     tem_point.intensity = *(float*)(data + 16 + 12 + 16 * i);
                     pointcloud.points.push_back(tem_point);
                 }
-                // pointcloud_ptr = pointcloud.makeShared();
+                data_seq = pointcloud.header.seq ; //存储接收数据的编号 时间 ID 
+                data_stamp = pointcloud.header.stamp;
+                data_frame_id = pointcloud.header.frame_id;
+
+               // pointcloud_ptr = pointcloud.makeShared();
+
                 std::cout.precision(20);
-                cout<<"\033[1;32m" << "Euclidean Cluster Node Input PointCloud: " 
+                cout<< "Euclidean Cluster Node Input PointCloud: " 
                     << " seq:"<<pointcloud.header.seq
                     <<"  local_cnt: " <<local_cnt
                     << " stamp:"<<pointcloud.header.stamp/1e9
-                    << " point.size:"<<pointcloud.points.size()<< "\033[0m"<<endl;
+                    << " point.size:"<<pointcloud.points.size()<<endl;
                 
                 local_cnt++;
 
-                Callback(pointcloud,dora_context);
+                int ret_v = Callback(pointcloud,dora_context);
                 pointcloud.clear();
                 // pointcloud_ptr.reset(new pcl::PointCloud<pcl::PointXYZI>);
                 std::cout << "完成计算一次" << std::endl;
-                
+                if (ret_v != 0)
+                {
+                    std::cerr << "failed to send output" << std::endl;
+                    return 1;
+                }
                 free_dora_event(event);
             }
         }
         else if (ty == DoraEventType_Stop)
         {
             printf("euclidean_cluster: [c node] received stop event\n");
+            free_dora_event(event);
         }
         else
         {
             printf("euclidean_cluster: [c node] received unexpected event: %d\n", ty);
+            free_dora_event(event);
         }
       
 
@@ -335,6 +495,16 @@ int main()
     std::cout << "euclidean_cluster for dora " << std::endl; 
 
     auto dora_context = init_dora_context_from_env();
+
+
+    pthread_t id = 0;
+    // 开启点云显示
+    if (pthread_create(&id, nullptr, pointcloud_show_pthread, dora_context) != 0)
+    {
+        std::cerr << "create pointcloud_show_pthread thread fail!" << std::endl;
+        exit(-1);
+    }
+
     auto ret = run(dora_context);
     free_dora_context(dora_context);
 
