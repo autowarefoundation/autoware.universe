@@ -14,6 +14,8 @@
 
 #include "autoware/control_evaluator/control_evaluator_node.hpp"
 
+#include <lanelet2_extension/utility/utilities.hpp>
+
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -134,26 +136,33 @@ DiagnosticStatus controlEvaluatorNode::generateAEBDiagnosticStatus(const Diagnos
   return status;
 }
 
-// DiagnosticStatus controlEvaluatorNode::generateLaneletDiagnosticStatus(
-//   const DiagnosticStatus & diag)
-// {
-//   DiagnosticStatus status;
-//   status.level = status.OK;
-//   status.name = diag.name;
-//   diagnostic_msgs::msg::KeyValue key_value;
-//   key_value.key = "start_lane_id";
-//   const bool is_emergency_brake = (diag.level == DiagnosticStatus::ERROR);
-//   key_value.value = (is_emergency_brake) ? "stop" : "none";
-//   status.values.push_back(key_value);
+DiagnosticStatus controlEvaluatorNode::generateLaneletDiagnosticStatus()
+{
+  DiagnosticStatus status;
+  status.name = "ego_lane_info";
 
-// start_lane_id: 100
-//         start_s: 1.0
-//         start_t: 0.0
-//         end_lane_id: 101
-//         end_s: 3.0
-//         end_t: 3.0
-//   return status;
-// }
+  getRouteData();
+  if (!has_received_map_ || !has_received_route_) {
+    status.level = status.ERROR;
+    return status;
+  }
+  const auto current_lane = getCurrentLane();
+  const auto ego_pose = getCurrentEgoPose();
+  const lanelet::ConstLanelets current_lanelets{current_lane};
+  const auto arc_coordinates = lanelet::utils::getArcCoordinates(current_lanelets, ego_pose);
+  status.level = status.OK;
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "lane_id";
+  key_value.value = std::to_string(current_lane.id());
+  status.values.push_back(key_value);
+  key_value.key = "s";
+  key_value.value = std::to_string(arc_coordinates.length);
+  status.values.push_back(key_value);
+  key_value.key = "t";
+  key_value.value = std::to_string(arc_coordinates.distance);
+  status.values.push_back(key_value);
+  return status;
+}
 
 DiagnosticStatus controlEvaluatorNode::generateLateralDeviationDiagnosticStatus(
   const Trajectory & traj, const Point & ego_point)
@@ -218,6 +227,8 @@ void controlEvaluatorNode::onTimer()
     metrics_msg.status.push_back(generateYawDeviationDiagnosticStatus(*traj, ego_pose));
   }
 
+  metrics_msg.status.push_back(generateLaneletDiagnosticStatus());
+
   metrics_msg.header.stamp = now();
   metrics_pub_->publish(metrics_msg);
 }
@@ -245,7 +256,6 @@ geometry_msgs::msg::Pose controlEvaluatorNode::getCurrentEgoPose() const
 
 lanelet::ConstLanelet controlEvaluatorNode::getCurrentLane()
 {
-  getRouteData();
   lanelet::ConstLanelet closest_lanelet;
   if (!has_received_map_ || !has_received_route_) {
     return closest_lanelet;
@@ -253,6 +263,7 @@ lanelet::ConstLanelet controlEvaluatorNode::getCurrentLane()
   const auto ego_pose = getCurrentEgoPose();
   route_handler_.getClosestLaneletWithinRoute(ego_pose, &closest_lanelet);
   return closest_lanelet;
+  // getRouteLanelets()
 }
 
 }  // namespace control_diagnostics

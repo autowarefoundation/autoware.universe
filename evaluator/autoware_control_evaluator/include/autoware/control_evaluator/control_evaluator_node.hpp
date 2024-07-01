@@ -68,7 +68,7 @@ public:
     const DiagnosticArray & diag, const std::string & function_name);
 
   DiagnosticStatus generateAEBDiagnosticStatus(const DiagnosticStatus & diag);
-  DiagnosticStatus generateLaneletDiagnosticStatus(const DiagnosticStatus & diag);
+  DiagnosticStatus generateLaneletDiagnosticStatus();
 
   void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
   void onTimer();
