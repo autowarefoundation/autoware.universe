@@ -292,7 +292,7 @@ void RANSACGroundFilterComponent::filter(
   no_ground_cloud_msg_ptr->header = input->header;
   no_ground_cloud_msg_ptr->fields = input->fields;
   no_ground_cloud_msg_ptr->point_step = point_step;
-  no_ground_cloud_msg_ptr.data.resize(input->data.size());
+  no_ground_cloud_msg_ptr->data.resize(input->data.size());
   size_t output_size = 0;
   // use not downsampled pointcloud for extract pointcloud that higher than height threshold
   for (size_t global_size = 0; global_size < input->data.size(); global_size += point_step) {
