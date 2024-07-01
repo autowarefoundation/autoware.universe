@@ -334,8 +334,10 @@ bool isWithinIntersection(
   const auto polygon =
     route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(area_id.c_str()));
 
+  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
   return boost::geometry::within(
-    object_polygon, utils::toPolygon2d(lanelet::utils::to2D(polygon.basicPolygon())));
+    lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+    lanelet::utils::to2D(polygon.basicPolygon()));
 }
 
 bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
