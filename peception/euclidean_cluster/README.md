@@ -4,7 +4,7 @@
 
 问题描述：雷达数据丢包严重
 
-![figure1](/home/crp/autoware.universe/peception/euclidean_cluster/fig/figure1.jpg)
+![figure1](fig/figure1.jpg)
 
 注：seq是雷达驱动距离的数据包编号，local_cnt是节点记录的接收到数据包的个数。
 
@@ -21,7 +21,7 @@ dora start dataflow_euclidean_cluster_detect.yml --name test
 
  step2：启动rviz2，即可看到如下现象
 
-![figure2](/home/crp/autoware.universe/peception/euclidean_cluster/fig/figure2.gif)
+![figure2](fig/figure2.gif)
 
 
 
