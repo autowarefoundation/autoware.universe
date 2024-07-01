@@ -30,9 +30,6 @@ namespace control_diagnostics
 controlEvaluatorNode::controlEvaluatorNode(const rclcpp::NodeOptions & node_options)
 : Node("control_evaluator", node_options)
 {
-  tf_buffer_ptr_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
-  tf_listener_ptr_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_ptr_);
-
   using std::placeholders::_1;
   control_diag_sub_ = create_subscription<DiagnosticArray>(
     "~/input/diagnostics", 1, std::bind(&controlEvaluatorNode::onDiagnostics, this, _1));

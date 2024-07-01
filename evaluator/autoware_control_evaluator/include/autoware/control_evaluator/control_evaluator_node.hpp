@@ -108,8 +108,6 @@ private:
   std::deque<std::pair<DiagnosticStatus, rclcpp::Time>> diag_queue_;
   const std::vector<std::string> target_functions_ = {"autonomous_emergency_braking"};
 
-  std::unique_ptr<tf2_ros::Buffer> tf_buffer_ptr_;
-  std::unique_ptr<tf2_ros::TransformListener> tf_listener_ptr_;
   autoware::route_handler::RouteHandler route_handler_;
   rclcpp::TimerBase::SharedPtr timer_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
