@@ -30,7 +30,7 @@
 
 namespace autoware::behavior_path_planner
 {
-PlannerManager::PlannerManager(rclcpp::Node & node, const size_t max_iteration_num)
+PlannerManager::PlannerManager(rclcpp::Node & node)
 : plugin_loader_(
     "autoware_behavior_path_planner",
     "autoware::behavior_path_planner::SceneModuleManagerInterface"),
