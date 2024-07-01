@@ -254,7 +254,7 @@ geometry_msgs::msg::Pose controlEvaluatorNode::getCurrentEgoPose() const
   return p;
 }
 
-lanelet::ConstLanelet controlEvaluatorNode::getCurrentLane()
+lanelet::ConstLanelet controlEvaluatorNode::getCurrentLane() const
 {
   lanelet::ConstLanelet closest_lanelet;
   if (!has_received_map_ || !has_received_route_) {
@@ -263,7 +263,6 @@ lanelet::ConstLanelet controlEvaluatorNode::getCurrentLane()
   const auto ego_pose = getCurrentEgoPose();
   route_handler_.getClosestLaneletWithinRoute(ego_pose, &closest_lanelet);
   return closest_lanelet;
-  // getRouteLanelets()
 }
 
 }  // namespace control_diagnostics

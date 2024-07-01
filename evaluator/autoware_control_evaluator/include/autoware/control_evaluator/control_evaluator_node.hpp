@@ -72,9 +72,9 @@ public:
 
   void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
   void onTimer();
-  lanelet::ConstLanelet getCurrentLane();
-  void getRouteData();
+  lanelet::ConstLanelet getCurrentLane() const;
   geometry_msgs::msg::Pose getCurrentEgoPose() const;
+  void getRouteData();
 
 private:
   // The diagnostics cycle is faster than timer, and each node publishes diagnostic separately.
