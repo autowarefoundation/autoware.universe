@@ -96,6 +96,7 @@ bool MPC::calculateMPC(
     // if the vehicle is stopped, the steering angle is set to feedforward.
     Uex = MatrixXd::Ones(m_vehicle_model_ptr->getDimU() * m_param.prediction_horizon, 1) * mpc_matrix.Uref_ex(0);
     u_saturated = std::clamp(Uex(0), -m_steer_lim, m_steer_lim);
+    u_filtered = m_lpf_steering_cmd.filter(u_saturated); // a fake low pass filter, tracking the member attributes
     u_filtered = u_saturated; // no need to pass through the filter
   }
 
