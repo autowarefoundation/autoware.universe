@@ -151,16 +151,6 @@ void MaxUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-void ShortCircuitMaxUnit::update_status()
-{
-  // TODO(Takagi, Isamu): update link flags.
-  DiagnosticLevel level = DiagnosticStatus::OK;
-  for (const auto & link : links_) {
-    level = std::max(level, link->child()->level());
-  }
-  status_.level = std::min(level, DiagnosticStatus::ERROR);
-}
-
 MinUnit::MinUnit(const UnitLoader & unit) : NodeUnit(unit)
 {
   links_ = unit.children();

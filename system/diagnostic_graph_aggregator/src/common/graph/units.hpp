@@ -137,9 +137,6 @@ class ShortCircuitMaxUnit : public MaxUnit
 public:
   using MaxUnit::MaxUnit;
   std::string type() const override { return unit_name::short_circuit_max; }
-
-private:
-  void update_status() override;
 };
 
 class MinUnit : public NodeUnit
