@@ -63,6 +63,9 @@ SignalDisplay::SignalDisplay()
   property_dark_limit_color_ = new rviz_common::properties::ColorProperty(
     "Dark Traffic Color", QColor(255, 51, 51), "Color of the signal arrows", this,
     SLOT(updateOverlayColor()));
+  property_handle_angle_scale_ = new rviz_common::properties::FloatProperty(
+    "Handle Angle Scale", 17.0, "Scale of the steering wheel handle angle", this,
+    SLOT(updateOverlaySize()));
 
   // Initialize the component displays
   steering_wheel_display_ = std::make_unique<SteeringWheelDisplay>();
@@ -301,7 +304,8 @@ void SignalDisplay::drawWidget(QImage & hud)
   }
 
   if (steering_wheel_display_) {
-    steering_wheel_display_->drawSteeringWheel(painter, backgroundRect);
+    steering_wheel_display_->drawSteeringWheel(
+      painter, backgroundRect, property_handle_angle_scale_->getFloat());
   }
 
   if (speed_display_) {
