@@ -21,13 +21,13 @@
 #include "autoware/pid_longitudinal_controller/pid.hpp"
 #include "autoware/pid_longitudinal_controller/smooth_stop.hpp"
 #include "autoware/trajectory_follower_base/longitudinal_controller_base.hpp"
+#include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
-#include "tier4_autoware_utils/ros/marker_helper.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -50,10 +50,10 @@
 
 namespace autoware::motion::control::pid_longitudinal_controller
 {
+using autoware::universe_utils::createDefaultMarker;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerScale;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
-using tier4_autoware_utils::createDefaultMarker;
-using tier4_autoware_utils::createMarkerColor;
-using tier4_autoware_utils::createMarkerScale;
 using visualization_msgs::msg::Marker;
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
@@ -64,7 +64,8 @@ class PidLongitudinalController : public trajectory_follower::LongitudinalContro
 {
 public:
   /// \param node Reference to the node used only for the component and parameter initialization.
-  explicit PidLongitudinalController(rclcpp::Node & node);
+  explicit PidLongitudinalController(
+    rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater);
 
 private:
   struct Motion
@@ -236,8 +237,8 @@ private:
   std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(clock_->now())};
 
   // Diagnostic
-
-  diagnostic_updater::Updater diagnostic_updater_;
+  std::shared_ptr<diagnostic_updater::Updater>
+    diag_updater_{};  // Diagnostic updater for publishing diagnostic data.
   struct DiagnosticData
   {
     double trans_deviation{0.0};  // translation deviation between nearest point and current_pose

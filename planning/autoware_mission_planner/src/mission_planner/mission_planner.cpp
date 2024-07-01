@@ -16,10 +16,10 @@
 
 #include "service_utils.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/route_checker.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/route_checker.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -78,7 +78,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   const auto period = rclcpp::Rate(10).period();
   data_check_timer_ = create_wall_timer(period, [this] { check_initialization(); });
 
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 }
 
 void MissionPlanner::publish_pose_log(const Pose & pose, const std::string & pose_type)

@@ -14,31 +14,31 @@
 
 #include "scene.hpp"
 
-#include <motion_utils/marker/marker_helper.hpp>
-#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <tier4_autoware_utils/math/constants.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
-using motion_utils::createStopVirtualWallMarker;
-using tier4_autoware_utils::appendMarkerArray;
-using tier4_autoware_utils::createDefaultMarker;
-using tier4_autoware_utils::createMarkerColor;
-using tier4_autoware_utils::createMarkerOrientation;
-using tier4_autoware_utils::createMarkerPosition;
-using tier4_autoware_utils::createMarkerScale;
-using tier4_autoware_utils::toMsg;
+#include <autoware/motion_utils/marker/marker_helper.hpp>
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
+using autoware::motion_utils::createStopVirtualWallMarker;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::createDefaultMarker;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerOrientation;
+using autoware::universe_utils::createMarkerPosition;
+using autoware::universe_utils::createMarkerScale;
+using autoware::universe_utils::toMsg;
 using namespace std::literals::string_literals;
 
 namespace autoware::behavior_velocity_planner
 {
 namespace
 {
-[[maybe_unused]] tier4_autoware_utils::LinearRing3d createCircle(
-  const tier4_autoware_utils::Point3d & p, const double radius, const size_t num_points = 50)
+[[maybe_unused]] autoware::universe_utils::LinearRing3d createCircle(
+  const autoware::universe_utils::Point3d & p, const double radius, const size_t num_points = 50)
 {
-  tier4_autoware_utils::LinearRing3d ring;  // clockwise and closed
+  autoware::universe_utils::LinearRing3d ring;  // clockwise and closed
 
   for (size_t i = 0; i < num_points; ++i) {
-    const double theta = i * (2 * tier4_autoware_utils::pi / num_points);
+    const double theta = i * (2 * autoware::universe_utils::pi / num_points);
     const double x = p.x() + radius * std::sin(theta);
     const double y = p.y() + radius * std::cos(theta);
     ring.emplace_back(x, y, p.z());
@@ -51,13 +51,13 @@ namespace
 }
 }  // namespace
 
-motion_utils::VirtualWalls VirtualTrafficLightModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls VirtualTrafficLightModule::createVirtualWalls()
 {
-  motion_utils::VirtualWalls virtual_walls;
-  motion_utils::VirtualWall wall;
+  autoware::motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWall wall;
   wall.text = "virtual_traffic_light";
   wall.ns = std::to_string(module_id_) + "_";
-  wall.style = motion_utils::VirtualWallType::stop;
+  wall.style = autoware::motion_utils::VirtualWallType::stop;
   const auto & d = module_data_;
   // virtual_wall_stop_line
   std::vector<geometry_msgs::msg::Pose> wall_poses;

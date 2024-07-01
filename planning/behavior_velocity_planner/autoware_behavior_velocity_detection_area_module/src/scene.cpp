@@ -16,7 +16,7 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
@@ -33,8 +33,8 @@
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
-using motion_utils::calcLongitudinalOffsetPose;
-using motion_utils::calcSignedArcLength;
+using autoware::motion_utils::calcLongitudinalOffsetPose;
+using autoware::motion_utils::calcSignedArcLength;
 
 DetectionAreaModule::DetectionAreaModule(
   const int64_t module_id, const int64_t lane_id,
@@ -83,7 +83,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
 
   // Get stop point
   const auto stop_point = arc_lane_utils::createTargetPoint(
-    original_path, stop_line, lane_id_, planner_param_.stop_margin,
+    original_path, stop_line, planner_param_.stop_margin,
     planner_data_->vehicle_info_.max_longitudinal_offset_m);
   if (!stop_point) {
     return true;
@@ -128,7 +128,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   if (planner_param_.use_dead_line) {
     // Use '-' for margin because it's the backward distance from stop line
     const auto dead_line_point = arc_lane_utils::createTargetPoint(
-      original_path, stop_line, lane_id_, -planner_param_.dead_line_margin,
+      original_path, stop_line, -planner_param_.dead_line_margin,
       planner_data_->vehicle_info_.max_longitudinal_offset_m);
 
     if (dead_line_point) {
@@ -288,7 +288,7 @@ std::vector<geometry_msgs::msg::Point> DetectionAreaModule::getObstaclePoints() 
                                   (circle.first.y() - p.y) * (circle.first.y() - p.y);
       if (squared_dist <= circle.second) {
         if (bg::within(Point2d{p.x, p.y}, poly.basicPolygon())) {
-          obstacle_points.push_back(tier4_autoware_utils::createPoint(p.x, p.y, p.z));
+          obstacle_points.push_back(autoware::universe_utils::createPoint(p.x, p.y, p.z));
           // get all obstacle point becomes high computation cost so skip if any point is found
           break;
         }

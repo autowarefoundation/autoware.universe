@@ -14,8 +14,8 @@
 
 #include "scene.hpp"
 
-#include "motion_utils/trajectory/trajectory.hpp"
-// #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+// #include "autoware/universe_utils/autoware_universe_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -36,9 +36,9 @@ visualization_msgs::msg::MarkerArray TemplateModule::createDebugMarkerArray()
   return ma;
 };
 
-motion_utils::VirtualWalls TemplateModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls TemplateModule::createVirtualWalls()
 {
-  motion_utils::VirtualWalls vw;
+  autoware::motion_utils::VirtualWalls vw;
   return vw;
 }
 

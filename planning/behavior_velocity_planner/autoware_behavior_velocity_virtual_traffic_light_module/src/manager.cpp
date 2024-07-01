@@ -14,12 +14,12 @@
 
 #include "manager.hpp"
 
-#include "tier4_autoware_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
-#include <tier4_autoware_utils/ros/parameter.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/parameter.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/intersects.hpp>
 
@@ -33,9 +33,8 @@
 
 namespace autoware::behavior_velocity_planner
 {
+using autoware::universe_utils::getOrDeclareParameter;
 using lanelet::autoware::VirtualTrafficLight;
-using tier4_autoware_utils::getOrDeclareParameter;
-namespace planning_utils = autoware::behavior_velocity_planner::planning_utils;
 
 VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
@@ -49,7 +48,7 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
     p.dead_line_margin = getOrDeclareParameter<double>(node, ns + ".dead_line_margin");
     p.hold_stop_margin_distance =
       getOrDeclareParameter<double>(node, ns + ".hold_stop_margin_distance");
-    p.max_yaw_deviation_rad = tier4_autoware_utils::deg2rad(
+    p.max_yaw_deviation_rad = autoware::universe_utils::deg2rad(
       getOrDeclareParameter<double>(node, ns + ".max_yaw_deviation_deg"));
     p.check_timeout_after_stop_line =
       getOrDeclareParameter<bool>(node, ns + ".check_timeout_after_stop_line");
@@ -59,10 +58,10 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
 void VirtualTrafficLightModuleManager::launchNewModules(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
-  tier4_autoware_utils::LineString2d ego_path_linestring;
+  autoware::universe_utils::LineString2d ego_path_linestring;
   for (const auto & path_point : path.points) {
     ego_path_linestring.push_back(
-      tier4_autoware_utils::fromMsg(path_point.point.pose.position).to_2d());
+      autoware::universe_utils::fromMsg(path_point.point.pose.position).to_2d());
   }
 
   for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(

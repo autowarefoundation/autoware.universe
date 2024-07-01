@@ -15,13 +15,13 @@
 #include "elevation_map_loader/elevation_map_loader_node.hpp"
 
 #include <autoware_grid_map_utils/polygon_iterator.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_cv/InpaintFilter.hpp>
 #include <grid_map_pcl/GridMapPclLoader.hpp>
 #include <grid_map_pcl/helpers.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/logger.hpp>
 
 #include <grid_map_msgs/msg/grid_map.hpp>
@@ -356,7 +356,7 @@ void ElevationMapLoaderNode::inpaintElevationMap(const float radius)
   // Convert elevation layer to OpenCV image to fill in holes.
   // Get the inpaint mask (nonzero pixels indicate where values need to be filled in).
   namespace bg = boost::geometry;
-  using tier4_autoware_utils::Point2d;
+  using autoware::universe_utils::Point2d;
 
   elevation_map_.add("inpaint_mask", 0.0);
 

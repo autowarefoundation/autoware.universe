@@ -20,7 +20,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_side_shift_module/utils.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -28,12 +28,12 @@
 
 namespace autoware::behavior_path_planner
 {
+using autoware::motion_utils::calcSignedArcLength;
+using autoware::motion_utils::findNearestIndex;
+using autoware::motion_utils::findNearestSegmentIndex;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::getPoint;
 using geometry_msgs::msg::Point;
-using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestIndex;
-using motion_utils::findNearestSegmentIndex;
-using tier4_autoware_utils::calcDistance2d;
-using tier4_autoware_utils::getPoint;
 
 SideShiftModule::SideShiftModule(
   const std::string & name, rclcpp::Node & node,
@@ -195,7 +195,8 @@ void SideShiftModule::updateData()
   const auto longest_dist_to_shift_line = [&]() {
     double max_dist = 0.0;
     for (const auto & pnt : path_shifter_.getShiftLines()) {
-      max_dist = std::max(max_dist, tier4_autoware_utils::calcDistance2d(getEgoPose(), pnt.start));
+      max_dist =
+        std::max(max_dist, autoware::universe_utils::calcDistance2d(getEgoPose(), pnt.start));
     }
     return max_dist;
   }();
@@ -372,7 +373,8 @@ double SideShiftModule::getClosestShiftLength() const
   }
 
   const auto ego_point = planner_data_->self_odometry->pose.pose.position;
-  const auto closest = motion_utils::findNearestIndex(prev_output_.path.points, ego_point);
+  const auto closest =
+    autoware::motion_utils::findNearestIndex(prev_output_.path.points, ego_point);
   return prev_output_.shift_length.at(closest);
 }
 
@@ -395,7 +397,7 @@ BehaviorModuleOutput SideShiftModule::adjustDrivableArea(const ShiftedPath & pat
   auto output_path = path.path;
   const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(output_path.points);
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
-  output_path.points = motion_utils::cropPoints(
+  output_path.points = autoware::motion_utils::cropPoints(
     output_path.points, current_pose.position, current_seg_idx, p.forward_path_length,
     p.backward_path_length + p.input_path_interval);
 
@@ -467,7 +469,7 @@ void SideShiftModule::setDebugMarkersVisualization() const
   debug_marker_.markers.clear();
 
   const auto add = [this](const MarkerArray & added) {
-    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
+    autoware::universe_utils::appendMarkerArray(added, &debug_marker_);
   };
 
   const auto add_shift_line_marker = [this, add](

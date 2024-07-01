@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -109,10 +109,10 @@ std::optional<PathIndexWithOffset> findOffsetSegment(
 
 std::optional<PathIndexWithPose> createTargetPoint(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-  const size_t lane_id, const double margin, const double vehicle_offset)
+  const double margin, const double vehicle_offset)
 {
   // Find collision segment
-  const auto collision_segment = findCollisionSegment(path, stop_line, lane_id);
+  const auto collision_segment = findCollisionSegment(path, stop_line);
   if (!collision_segment) {
     // No collision
     return {};

@@ -40,6 +40,7 @@ using autoware::behavior_path_planner::utils::path_safety_checker::CollisionChec
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugPair;
 using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects;
+using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
 using geometry_msgs::msg::Point;
@@ -48,7 +49,6 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::Vector3;
 using std_msgs::msg::ColorRGBA;
-using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;

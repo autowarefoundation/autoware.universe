@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "motion_utils/trajectory/conversion.hpp"
+#include "autoware/motion_utils/trajectory/conversion.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager_utils.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 namespace autoware::planning_test_manager
 {
@@ -296,7 +296,7 @@ void PlanningInterfaceTestManager::publishNominalPath(
 {
   autoware::test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, normal_path_pub_,
-    motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
+    autoware::motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
       autoware::test_utils::loadPathWithLaneIdInYaml()),
     5);
 }

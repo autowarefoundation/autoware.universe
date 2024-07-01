@@ -14,7 +14,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_STATIC_OBSTACLE_AVOIDANCE_MODULE__PARAMETER_HELPER_HPP_
 
-#include "tier4_autoware_utils/ros/parameter.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 
 #include <autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
 #include <rclcpp/node.hpp>
@@ -26,8 +26,8 @@
 
 namespace autoware::behavior_path_planner
 {
+using autoware::universe_utils::getOrDeclareParameter;
 using autoware_perception_msgs::msg::ObjectClassification;
-using tier4_autoware_utils::getOrDeclareParameter;
 
 AvoidanceParameters getParameter(rclcpp::Node * node)
 {
@@ -39,15 +39,14 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_planning");
     p.resample_interval_for_output =
       getOrDeclareParameter<double>(*node, ns + "resample_interval_for_output");
-    p.enable_bound_clipping = getOrDeclareParameter<bool>(*node, ns + "enable_bound_clipping");
-    p.disable_path_update = getOrDeclareParameter<bool>(*node, ns + "disable_path_update");
+    p.path_generation_method =
+      getOrDeclareParameter<std::string>(*node, ns + "path_generation_method");
   }
 
   // drivable area
   {
     const std::string ns = "avoidance.";
-    p.use_adjacent_lane = getOrDeclareParameter<bool>(*node, ns + "use_adjacent_lane");
-    p.use_opposite_lane = getOrDeclareParameter<bool>(*node, ns + "use_opposite_lane");
+    p.use_lane_type = getOrDeclareParameter<std::string>(*node, ns + "use_lane_type");
     p.use_intersection_areas = getOrDeclareParameter<bool>(*node, ns + "use_intersection_areas");
     p.use_hatched_road_markings =
       getOrDeclareParameter<bool>(*node, ns + "use_hatched_road_markings");
@@ -199,6 +198,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       getOrDeclareParameter<double>(*node, ns + "hysteresis_factor_expand_rate");
     p.hysteresis_factor_safe_count =
       getOrDeclareParameter<int>(*node, ns + "hysteresis_factor_safe_count");
+    p.collision_check_yaw_diff_threshold =
+      getOrDeclareParameter<double>(*node, ns + "collision_check_yaw_diff_threshold");
   }
 
   // safety check predicted path params

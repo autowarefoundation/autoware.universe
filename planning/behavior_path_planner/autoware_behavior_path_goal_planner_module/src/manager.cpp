@@ -15,7 +15,7 @@
 #include "autoware/behavior_path_goal_planner_module/manager.hpp"
 
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
-#include "tier4_autoware_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -357,6 +357,8 @@ void GoalPlannerModuleManager::init(rclcpp::Node * node)
     p.safety_check_params.method = node->declare_parameter<std::string>(safety_check_ns + "method");
     p.safety_check_params.hysteresis_factor_expand_rate =
       node->declare_parameter<double>(safety_check_ns + "hysteresis_factor_expand_rate");
+    p.safety_check_params.collision_check_yaw_diff_threshold =
+      node->declare_parameter<double>(safety_check_ns + "collision_check_yaw_diff_threshold");
     p.safety_check_params.backward_path_length =
       node->declare_parameter<double>(safety_check_ns + "backward_path_length");
     p.safety_check_params.forward_path_length =
@@ -428,7 +430,7 @@ void GoalPlannerModuleManager::updateModuleParams(
   // object_recognition_collision_check_hard_margins, maximum_deceleration, shift_sampling_num or
   // parking_policy, there seems to be a problem when we use a temp value to check these values.
 
-  using tier4_autoware_utils::updateParam;
+  using autoware::universe_utils::updateParam;
 
   auto & p = parameters_;
 
@@ -778,6 +780,9 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, safety_check_ns + "hysteresis_factor_expand_rate",
       p->safety_check_params.hysteresis_factor_expand_rate);
+    updateParam<double>(
+      parameters, safety_check_ns + "collision_check_yaw_diff_threshold",
+      p->safety_check_params.collision_check_yaw_diff_threshold);
     updateParam<double>(
       parameters, safety_check_ns + "backward_path_length",
       p->safety_check_params.backward_path_length);

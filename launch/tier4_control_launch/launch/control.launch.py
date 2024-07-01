@@ -148,6 +148,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/velocity", "/vehicle/status/velocity_status"),
             ("~/input/imu", "/sensing/imu/imu_data"),
             ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/input/objects", "/perception/object_recognition/objects"),
             (
                 "~/input/predicted_trajectory",
                 "/control/trajectory_follower/lateral/predicted_trajectory",
@@ -443,7 +444,7 @@ def launch_setup(context, *args, **kwargs):
     smart_mpc_trajectory_follower = Node(
         package="autoware_smart_mpc_trajectory_follower",
         executable="pympc_trajectory_follower.py",
-        name="pympc_trajectory_follower",
+        name="controller_node_exe",
     )
     if trajectory_follower_mode == "trajectory_follower_node":
         return [group, control_validator_group]

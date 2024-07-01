@@ -15,16 +15,16 @@
 #ifndef AUTOWARE__PATH_SMOOTHER__ELASTIC_BAND_SMOOTHER_HPP_
 #define AUTOWARE__PATH_SMOOTHER__ELASTIC_BAND_SMOOTHER_HPP_
 
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/path_smoother/common_structs.hpp"
 #include "autoware/path_smoother/elastic_band.hpp"
 #include "autoware/path_smoother/replan_checker.hpp"
 #include "autoware/path_smoother/type_alias.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
-#include "tier4_autoware_utils/ros/polling_subscriber.hpp"
 
-#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/ros/published_time_publisher.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -49,7 +49,7 @@ private:
   public:
     bool isDrivingForward(const std::vector<PathPoint> & path_points)
     {
-      const auto is_driving_forward = motion_utils::isDrivingForward(path_points);
+      const auto is_driving_forward = autoware::motion_utils::isDrivingForward(path_points);
       is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
       return is_driving_forward_;
     }
@@ -82,7 +82,8 @@ private:
 
   // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
-  tier4_autoware_utils::InterProcessPollingSubscriber<Odometry> odom_sub_{this, "~/input/odometry"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> odom_sub_{
+    this, "~/input/odometry"};
 
   // debug publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;
@@ -112,9 +113,9 @@ private:
     const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<TrajectoryPoint> & optimized_points) const;
 
-  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
-  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace autoware::path_smoother
 

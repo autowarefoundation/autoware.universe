@@ -15,9 +15,9 @@
 #include "scene.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -26,9 +26,9 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using tier4_autoware_utils::appendMarkerArray;
-using tier4_autoware_utils::createMarkerColor;
-using tier4_autoware_utils::createMarkerScale;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerScale;
 
 namespace
 {
@@ -96,16 +96,16 @@ visualization_msgs::msg::MarkerArray StopLineModule::createDebugMarkerArray()
   return debug_marker_array;
 }
 
-motion_utils::VirtualWalls StopLineModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls StopLineModule::createVirtualWalls()
 {
-  motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWalls virtual_walls;
 
   if (debug_data_.stop_pose && (state_ == State::APPROACH || state_ == State::STOPPED)) {
-    motion_utils::VirtualWall wall;
+    autoware::motion_utils::VirtualWall wall;
     wall.text = "stopline";
-    wall.style = motion_utils::VirtualWallType::stop;
+    wall.style = autoware::motion_utils::VirtualWallType::stop;
     wall.ns = std::to_string(module_id_) + "_";
-    wall.pose = tier4_autoware_utils::calcOffsetPose(
+    wall.pose = autoware::universe_utils::calcOffsetPose(
       *debug_data_.stop_pose, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }

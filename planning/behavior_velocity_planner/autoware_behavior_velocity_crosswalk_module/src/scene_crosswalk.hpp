@@ -18,10 +18,10 @@
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
-#include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/boost_geometry.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -49,14 +49,14 @@
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+using autoware::universe_utils::Polygon2d;
+using autoware::universe_utils::StopWatch;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::TrafficLightElement;
 using lanelet::autoware::Crosswalk;
 using tier4_api_msgs::msg::CrosswalkStatus;
-using tier4_autoware_utils::Polygon2d;
-using tier4_autoware_utils::StopWatch;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace
@@ -263,8 +263,8 @@ public:
 
       const bool is_object_away_from_path =
         !attention_area.outer().empty() &&
-        boost::geometry::distance(tier4_autoware_utils::fromMsg(position).to_2d(), attention_area) >
-          0.5;
+        boost::geometry::distance(
+          autoware::universe_utils::fromMsg(position).to_2d(), attention_area) > 0.5;
 
       // add new object
       if (objects.count(uuid) == 0) {
@@ -327,7 +327,7 @@ public:
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  motion_utils::VirtualWalls createVirtualWalls() override;
+  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
 
 private:
   // main functions

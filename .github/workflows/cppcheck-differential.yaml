@@ -8,58 +8,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Set PR fetch depth
+        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
+
+      - name: Checkout PR branch and all PR commits
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake git libpcre3-dev
+          sudo apt-get install -y git
 
-      # cppcheck from apt does not yet support --check-level args, and thus install from source
-      - name: Install Cppcheck from source
+      # cppcheck from apt does not yet support --check-level args, and thus install from snap
+      - name: Install Cppcheck from snap
         run: |
-          mkdir /tmp/cppcheck
-          git clone https://github.com/danmar/cppcheck.git /tmp/cppcheck
-          cd /tmp/cppcheck
-          git checkout 2.14.1
-          mkdir build
-          cd build
-          cmake ..
-          make -j $(nproc)
-          sudo make install
+          sudo snap install cppcheck
 
-      - name: Get changed files
-        id: changed-files
+      - name: Fetch the base branch with enough history for a common merge-base commit
+        run: git fetch origin ${{ github.base_ref }}
+        shell: bash
+
+      - name: Get changed files (existing files only)
+        id: get-changed-files
         run: |
-          git fetch origin ${{ github.base_ref }} --depth=1
-          git diff --name-only FETCH_HEAD ${{ github.sha }} > changed_files.txt
-          cat changed_files.txt
+          echo "changed-files=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD | grep -E '\.(cpp|hpp)$' | while read -r file; do [ -e "$file" ] && echo -n "$file "; done)" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Run Cppcheck on changed files
+        if: ${{ steps.get-changed-files.outputs.changed-files != '' }}
         continue-on-error: true
         id: cppcheck
         run: |
-          files=$(cat changed_files.txt | grep -E '\.(cpp|hpp)$' || true)
-          if [ -n "$files" ]; then
-            echo "Running Cppcheck on changed files: $files"
-            cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions $files 2> cppcheck-report.txt
-          else
-            echo "No C++ files changed."
-            touch cppcheck-report.txt
-          fi
+          echo "Running Cppcheck on changed files: ${{ steps.get-changed-files.outputs.changed-files }}"
+          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions ${{ steps.get-changed-files.outputs.changed-files }} 2> cppcheck-report.txt
         shell: bash
 
       - name: Show cppcheck-report result
+        if: ${{ steps.get-changed-files.outputs.changed-files != '' }}
         run: |
           cat cppcheck-report.txt
 
       - name: Upload Cppcheck report
+        if: ${{ steps.get-changed-files.outputs.changed-files != '' }}
         uses: actions/upload-artifact@v2
         with:
           name: cppcheck-report
           path: cppcheck-report.txt
 
       - name: Fail the job if Cppcheck failed
-        if: steps.cppcheck.outcome == 'failure'
+        if: ${{ steps.get-changed-files.outputs.changed-files != '' && steps.cppcheck.outcome == 'failure' }}
         run: exit 1
