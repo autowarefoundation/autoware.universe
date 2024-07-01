@@ -25,9 +25,9 @@
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -2319,8 +2319,10 @@ std::pair<bool, bool> GoalPlannerModule::isSafePath(
       return autoware::behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS(
         pull_over_path, ego_predicted_path, filtered_objects, collision_check,
         planner_data->parameters, safety_check_params->rss_params,
-        objects_filtering_params->use_all_predicted_path, hysteresis_factor);
-    } else if (parameters.safety_check_params.method == "integral_predicted_polygon") {
+        objects_filtering_params->use_all_predicted_path, hysteresis_factor,
+        safety_check_params->collision_check_yaw_diff_threshold);
+    }
+    if (parameters.safety_check_params.method == "integral_predicted_polygon") {
       return utils::path_safety_checker::checkSafetyWithIntegralPredictedPolygon(
         ego_predicted_path, vehicle_info_, filtered_objects,
         objects_filtering_params->check_all_predicted_path,
