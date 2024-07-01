@@ -245,6 +245,8 @@ FreespacePlannerNode::FreespacePlannerNode(const rclcpp::NodeOptions & node_opti
       autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
     vehicle_shape_.length = vehicle_info.vehicle_length_m;
     vehicle_shape_.width = vehicle_info.vehicle_width_m;
+    vehicle_shape_.base_length = vehicle_info.wheel_base_m;
+    vehicle_shape_.max_steering = vehicle_info.max_steer_angle_rad;
     vehicle_shape_.base2back = vehicle_info.rear_overhang_m;
   }
 
@@ -306,8 +308,11 @@ PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
   p.angle_goal_range = declare_parameter<double>("angle_goal_range");
   p.curve_weight = declare_parameter<double>("curve_weight");
   p.reverse_weight = declare_parameter<double>("reverse_weight");
+  p.direction_change_weight = declare_parameter<double>("direction_change_weight");
   p.lateral_goal_range = declare_parameter<double>("lateral_goal_range");
   p.longitudinal_goal_range = declare_parameter<double>("longitudinal_goal_range");
+  p.max_turning_ratio = declare_parameter<double>("max_turning_ratio");
+  p.turning_steps = declare_parameter<int>("turning_steps");
 
   // costmap configs
   p.obstacle_threshold = declare_parameter<int>("obstacle_threshold");
@@ -517,7 +522,13 @@ void FreespacePlannerNode::planTrajectory()
 
   // execute planning
   const rclcpp::Time start = get_clock()->now();
-  const bool result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
+  std::string error_msg;
+  bool result = false;
+  try {
+    result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
+  } catch (const std::exception& e) {
+    error_msg = e.what();
+  }
   const rclcpp::Time end = get_clock()->now();
 
   RCLCPP_DEBUG(get_logger(), "Freespace planning: %f [s]", (end - start).seconds());
@@ -532,7 +543,7 @@ void FreespacePlannerNode::planTrajectory()
       getNextTargetIndex(trajectory_.points.size(), reversing_indices_, prev_target_index_);
 
   } else {
-    RCLCPP_INFO(get_logger(), "Can't find goal...");
+    RCLCPP_INFO_STREAM(get_logger(), "Can't find goal: " << error_msg);
     reset();
   }
 }

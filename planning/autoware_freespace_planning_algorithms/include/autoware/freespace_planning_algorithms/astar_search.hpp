@@ -40,7 +40,8 @@ struct AstarParam
 {
   // base configs
   bool only_behind_solutions;  // solutions should be behind the goal
-  bool use_back;               // backward search
+  bool use_back;         // backward search
+  double expansion_distance;
 
   // search configs
   double distance_heuristic_weight;  // obstacle threshold on grid [0,255]
@@ -54,6 +55,7 @@ struct AstarNode
   double theta;                          // theta
   double gc = 0;                         // actual cost
   double hc = 0;                         // heuristic cost
+  int steering_index;                    // steering index
   bool is_back;                          // true if the current direction of the vehicle is back
   AstarNode * parent = nullptr;          // parent node
 
@@ -74,7 +76,7 @@ struct NodeUpdate
   double shift_y;
   double shift_theta;
   double distance;
-  bool is_curve;
+  int steering_index;
   bool is_back;
 
   NodeUpdate rotated(const double theta) const
@@ -120,6 +122,7 @@ public:
       AstarParam{
         node.declare_parameter<bool>("astar.only_behind_solutions"),
         node.declare_parameter<bool>("astar.use_back"),
+        node.declare_parameter<double>("astar.expansion_distance"),
         node.declare_parameter<double>("astar.distance_heuristic_weight")})
   {
   }
@@ -133,11 +136,13 @@ public:
 
   inline int getKey(const IndexXYT & index)
   {
-    return (index.theta + (index.y * x_scale_ + index.x) * y_scale_);
+    return indexToId(index) * planner_common_param_.theta_size + index.theta;
   }
 
 private:
+  void setTransitionTable();
   bool search();
+  void expandNodes(AstarNode & current_node);
   void clearNodes();
   void setPath(const AstarNode & goal);
   bool setStartNode();
@@ -166,8 +171,8 @@ private:
   // distance metric option (removed when the reeds_shepp gets stable)
   bool use_reeds_shepp_;
 
-  int x_scale_;
-  int y_scale_;
+  double steering_resolution_;
+  double heading_resolution_;
 };
 }  // namespace autoware::freespace_planning_algorithms
 

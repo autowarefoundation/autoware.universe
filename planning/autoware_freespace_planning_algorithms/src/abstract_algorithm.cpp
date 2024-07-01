@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/freespace_planning_algorithms/abstract_algorithm.hpp"
+#include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
@@ -35,16 +36,16 @@ geometry_msgs::msg::Pose transformPose(
 
 int discretizeAngle(const double theta, const int theta_size)
 {
-  const double one_angle_range = 2.0 * M_PI / theta_size;
-  return static_cast<int>(std::rint(normalizeRadian(theta, 0.0) / one_angle_range)) % theta_size;
+  const double angle_resolution = 2.0 * M_PI / theta_size;
+  return static_cast<int>(std::rint(normalizeRadian(theta, 0.0) / angle_resolution)) % theta_size;
 }
 
 IndexXYT pose2index(
   const nav_msgs::msg::OccupancyGrid & costmap, const geometry_msgs::msg::Pose & pose_local,
   const int theta_size)
 {
-  const int index_x = pose_local.position.x / costmap.info.resolution;
-  const int index_y = pose_local.position.y / costmap.info.resolution;
+  const int index_x = std::rint(pose_local.position.x / costmap.info.resolution);
+  const int index_y = std::rint(pose_local.position.y / costmap.info.resolution);
   const int index_theta = discretizeAngle(tf2::getYaw(pose_local.orientation), theta_size);
   return {index_x, index_y, index_theta};
 }
@@ -57,8 +58,8 @@ geometry_msgs::msg::Pose index2pose(
   pose_local.position.x = index.x * costmap.info.resolution;
   pose_local.position.y = index.y * costmap.info.resolution;
 
-  const double one_angle_range = 2.0 * M_PI / theta_size;
-  const double yaw = index.theta * one_angle_range;
+  const double angle_resolution = 2.0 * M_PI / theta_size;
+  const double yaw = index.theta * angle_resolution;
   pose_local.orientation = createQuaternionFromYaw(yaw);
 
   return pose_local;
@@ -105,20 +106,15 @@ double PlannerWaypoints::compute_length() const
 void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 {
   costmap_ = costmap;
-  const auto height = costmap_.info.height;
-  const auto width = costmap_.info.width;
 
+  uint32_t nb_of_cells = costmap_.data.size();
   // Initialize status
-  std::vector<std::vector<bool>> is_obstacle_table;
-  is_obstacle_table.resize(height);
-  for (uint32_t i = 0; i < height; i++) {
-    is_obstacle_table.at(i).resize(width);
-    for (uint32_t j = 0; j < width; j++) {
-      const int cost = costmap_.data[i * width + j];
-
-      if (cost < 0 || planner_common_param_.obstacle_threshold <= cost) {
-        is_obstacle_table[i][j] = true;
-      }
+  std::vector<bool> is_obstacle_table;
+  is_obstacle_table.resize(nb_of_cells);
+  for (uint32_t i = 0; i < nb_of_cells; ++i) {
+    const int cost = costmap_.data[i];
+    if (cost < 0 || planner_common_param_.obstacle_threshold <= cost) {
+      is_obstacle_table[i] = true;
     }
   }
   is_obstacle_table_ = is_obstacle_table;
@@ -201,16 +197,11 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
   addIndex2d(back, left, vertex_indexes_2d);
 }
 
-bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) const
+bool AbstractPlanningAlgorithm::detectBoundaryExit(const IndexXYT & base_index) const
 {
-  if (coll_indexes_table_.empty()) {
-    std::cerr << "[abstract_algorithm] setMap has not yet been done." << std::endl;
-    return false;
-  }
-
   const auto & vertex_indexes_2d = vertex_indexes_table_[base_index.theta];
   for (const auto & vertex_index_2d : vertex_indexes_2d) {
-    IndexXYT vertex_index{vertex_index_2d.x, vertex_index_2d.y, 0};
+    IndexXY vertex_index{vertex_index_2d.x, vertex_index_2d.y};
     // must slide to current base position
     vertex_index.x += base_index.x;
     vertex_index.y += base_index.y;
@@ -218,11 +209,21 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
       return true;
     }
   }
+  return false;
+}
+
+bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) const
+{
+  if (coll_indexes_table_.empty()) {
+    std::cerr << "[abstract_algorithm] setMap has not yet been done." << std::endl;
+    return false;
+  }
+
+  if (detectBoundaryExit(base_index)) return true;
 
   const auto & coll_indexes_2d = coll_indexes_table_[base_index.theta];
   for (const auto & coll_index_2d : coll_indexes_2d) {
-    int idx_theta = 0;  // whatever. Yaw is nothing to do with collision detection between grids.
-    IndexXYT coll_index{coll_index_2d.x, coll_index_2d.y, idx_theta};
+    IndexXY coll_index{coll_index_2d.x, coll_index_2d.y};
     // must slide to current base position
     coll_index.x += base_index.x;
     coll_index.y += base_index.y;

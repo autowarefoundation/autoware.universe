@@ -29,6 +29,8 @@ RRTStar::RRTStar(
     planner_common_param, VehicleShape(
                             original_vehicle_shape.length + 2 * rrtstar_param.margin,
                             original_vehicle_shape.width + 2 * rrtstar_param.margin,
+                            original_vehicle_shape.base_length,
+                            original_vehicle_shape.max_steering,
                             original_vehicle_shape.base2back + rrtstar_param.margin)),
   rrtstar_param_(rrtstar_param),
   original_vehicle_shape_(original_vehicle_shape)

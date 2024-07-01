@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/freespace_planning_algorithms/astar_search.hpp"
+#include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
@@ -62,55 +63,6 @@ geometry_msgs::msg::Pose calcRelativePose(
   return transformed.pose;
 }
 
-AstarSearch::TransitionTable createTransitionTable(
-  const double minimum_turning_radius, const double maximum_turning_radius,
-  const int turning_radius_size, const double theta_size, const bool use_back)
-{
-  // Vehicle moving for each angle
-  AstarSearch::TransitionTable transition_table;
-  transition_table.resize(theta_size);
-
-  const double dtheta = 2.0 * M_PI / theta_size;
-
-  // Minimum moving distance with one state update
-  // arc  = r * theta
-  const auto & R_min = minimum_turning_radius;
-  const auto & R_max = maximum_turning_radius;
-  const double step_min = R_min * dtheta;
-  const double dR = (R_max - R_min) / std::max(turning_radius_size - 1, 1);
-
-  // NodeUpdate actions
-  std::vector<NodeUpdate> forward_node_candidates;
-  const NodeUpdate forward_straight{step_min, 0.0, 0.0, step_min, false, false};
-  forward_node_candidates.push_back(forward_straight);
-  for (int i = 0; i < turning_radius_size; ++i) {
-    double R = R_min + i * dR;
-    double step = R * dtheta;
-    const double shift_x = R * sin(dtheta);
-    const double shift_y = R * (1 - cos(dtheta));
-    const NodeUpdate forward_left{shift_x, shift_y, dtheta, step, true, false};
-    const NodeUpdate forward_right = forward_left.flipped();
-    forward_node_candidates.push_back(forward_left);
-    forward_node_candidates.push_back(forward_right);
-  }
-
-  for (int i = 0; i < theta_size; i++) {
-    const double theta = dtheta * i;
-
-    for (const auto & nu : forward_node_candidates) {
-      transition_table[i].push_back(nu.rotated(theta));
-    }
-
-    if (use_back) {
-      for (const auto & nu : forward_node_candidates) {
-        transition_table[i].push_back(nu.reversed().rotated(theta));
-      }
-    }
-  }
-
-  return transition_table;
-}
-
 AstarSearch::AstarSearch(
   const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
   const AstarParam & astar_param)
@@ -119,12 +71,39 @@ AstarSearch::AstarSearch(
   goal_node_(nullptr),
   use_reeds_shepp_(true)
 {
-  transition_table_ = createTransitionTable(
-    planner_common_param_.minimum_turning_radius, planner_common_param_.maximum_turning_radius,
-    planner_common_param_.turning_radius_size, planner_common_param_.theta_size,
-    astar_param_.use_back);
+  steering_resolution_ = collision_vehicle_shape_.max_steering / planner_common_param_.turning_steps;
+  heading_resolution_ = 2.0 * M_PI / planner_common_param_.theta_size;
 
-  y_scale_ = planner_common_param.theta_size;
+  setTransitionTable();
+}
+
+void AstarSearch::setTransitionTable()
+{
+  const double distance = astar_param_.expansion_distance;
+  transition_table_.resize(planner_common_param_.theta_size);
+
+  std::vector<NodeUpdate> forward_transitions;
+  int steering_ind = -1 * planner_common_param_.turning_steps;
+  for (; steering_ind <= planner_common_param_.turning_steps; ++steering_ind) {
+    const double steering = static_cast<double>(steering_ind) * steering_resolution_;
+    geometry_msgs::msg::Pose shift_pose =
+      kinematic_bicycle_model::getPoseShift(0.0, collision_vehicle_shape_.base_length, steering, distance);
+    forward_transitions.push_back(
+      {shift_pose.position.x, shift_pose.position.y, tf2::getYaw(shift_pose.orientation), distance, steering_ind, false});
+  }
+
+  for (int i = 0; i < planner_common_param_.theta_size; ++i) {
+    const double theta = static_cast<double>(i) * heading_resolution_;
+    for (const auto & transition : forward_transitions) {
+      transition_table_[i].push_back(transition.rotated(theta));
+    }
+
+    if (astar_param_.use_back) {
+      for (const auto & transition : forward_transitions) {
+        transition_table_[i].push_back(transition.reversed().rotated(theta));
+      }
+    }
+  }
 }
 
 void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
@@ -133,8 +112,9 @@ void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 
   clearNodes();
 
-  x_scale_ = costmap_.info.height;
-  graph_.reserve(100000);
+  int total_astar_node_count =
+    costmap_.info.width * costmap_.info.height * planner_common_param_.theta_size;
+  graph_.reserve(total_astar_node_count);
 }
 
 bool AstarSearch::makePlan(
@@ -144,14 +124,20 @@ bool AstarSearch::makePlan(
   goal_pose_ = global2local(costmap_, goal_pose);
 
   if (!setStartNode()) {
+    throw std::logic_error("Invalid start pose");
     return false;
   }
 
   if (!setGoalNode()) {
+    throw std::logic_error("Invalid goal pose");
     return false;
   }
 
-  return search();
+  if (!search()) {
+    throw std::logic_error("HA* failed to find path to goal");
+    return false;
+  }
+  return true;
 }
 
 void AstarSearch::clearNodes()
@@ -178,6 +164,7 @@ bool AstarSearch::setStartNode()
   start_node->theta = 2.0 * M_PI / planner_common_param_.theta_size * index.theta;
   start_node->gc = 0;
   start_node->hc = estimateCost(start_pose_);
+  start_node->steering_index = 0;
   start_node->is_back = false;
   start_node->status = NodeStatus::Open;
   start_node->parent = nullptr;
@@ -232,6 +219,7 @@ bool AstarSearch::search()
     // Expand minimum cost node
     AstarNode * current_node = openlist_.top();
     openlist_.pop();
+    if (current_node->status == NodeStatus::Closed) continue;
     current_node->status = NodeStatus::Closed;
 
     if (isGoal(*current_node)) {
@@ -240,42 +228,52 @@ bool AstarSearch::search()
       return true;
     }
 
-    // Transit
-    const auto index_theta = discretizeAngle(current_node->theta, planner_common_param_.theta_size);
-    for (const auto & transition : transition_table_[index_theta]) {
-      const bool is_turning_point = transition.is_back != current_node->is_back;
+    expandNodes(*current_node);
+  }
 
-      const double move_cost = is_turning_point
-                                 ? planner_common_param_.reverse_weight * transition.distance
-                                 : transition.distance;
+  // Failed to find path
+  return false;
+}
 
-      // Calculate index of the next state
-      geometry_msgs::msg::Pose next_pose;
-      next_pose.position.x = current_node->x + transition.shift_x;
-      next_pose.position.y = current_node->y + transition.shift_y;
-      setYaw(&next_pose.orientation, current_node->theta + transition.shift_theta);
-      const auto next_index = pose2index(costmap_, next_pose, planner_common_param_.theta_size);
+void AstarSearch::expandNodes(AstarNode & current_node)
+{
+  const auto index_theta = discretizeAngle(current_node.theta, planner_common_param_.theta_size);
+  for (const auto & transition : transition_table_[index_theta]) {
+    // Calculate index of the next state
+    geometry_msgs::msg::Pose next_pose;
+    next_pose.position.x = current_node.x + transition.shift_x;
+    next_pose.position.y = current_node.y + transition.shift_y;
+    setYaw(&next_pose.orientation, current_node.theta + transition.shift_theta);
+    const auto next_index = pose2index(costmap_, next_pose, planner_common_param_.theta_size);
 
-      if (detectCollision(next_index)) {
-        continue;
-      }
+    if (isOutOfRange(next_index)) continue;
+    if (isObs(next_index)) continue;
 
-      // Compare cost
-      AstarNode * next_node = getNodeRef(next_index);
-      if (next_node->status == NodeStatus::None) {
-        next_node->status = NodeStatus::Open;
-        next_node->x = next_pose.position.x;
-        next_node->y = next_pose.position.y;
-        next_node->theta = tf2::getYaw(next_pose.orientation);
-        next_node->gc = current_node->gc + move_cost;
-        next_node->hc = estimateCost(next_pose);
-        next_node->is_back = transition.is_back;
-        next_node->parent = current_node;
-        openlist_.push(next_node);
-        continue;
-      }
+    AstarNode * next_node = getNodeRef(next_index);
+    if (next_node->status == NodeStatus::Closed) continue;
+    if (detectCollision(next_index)) continue;
+
+    const bool is_direction_switch = transition.is_back != current_node.is_back;
+    double weights_sum = transition.is_back ? planner_common_param_.reverse_weight : 1.0;
+    weights_sum += is_direction_switch ? planner_common_param_.direction_change_weight : 0.0;
+
+    double move_cost = current_node.gc + weights_sum * transition.distance;
+    double hc = estimateCost(next_pose);
+    // Compare cost
+    if (next_node->status == NodeStatus::None || next_node->cost() > (move_cost + hc)) {
+      next_node->status = NodeStatus::Open;
+      next_node->x = next_pose.position.x;
+      next_node->y = next_pose.position.y;
+      next_node->theta = tf2::getYaw(next_pose.orientation);
+      next_node->gc = move_cost;
+      next_node->hc = hc;
+      next_node->is_back = transition.is_back;
+      next_node->parent = &current_node;
+      openlist_.push(next_node);
+      continue;
     }
   }
+}
 
   // Failed to find path
   return false;
