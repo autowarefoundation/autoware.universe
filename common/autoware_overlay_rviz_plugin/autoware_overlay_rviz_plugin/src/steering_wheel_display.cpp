@@ -108,11 +108,11 @@ void SteeringWheelDisplay::drawSteeringWheel(
   QString steeringAngleString = QString::fromStdString(steering_angle_ss.str());
 
   // Draw the steering angle text
-  QFont steeringFont("Quicksand", 9, QFont::Bold);
+  QFont steeringFont("Quicksand", 8, QFont::Bold);
   painter.setFont(steeringFont);
   painter.setPen(QColor(0, 0, 0, 255));
   QRect steeringRect(
-    wheelCenterX - wheelImage.width() / 2, wheelCenterY - wheelImage.height() / 2,
+    wheelCenterX - wheelImage.width() / 2 + 1, wheelCenterY - wheelImage.height() / 2,
     wheelImage.width(), wheelImage.height());
   painter.drawText(steeringRect, Qt::AlignCenter, steeringAngleString);
 }
