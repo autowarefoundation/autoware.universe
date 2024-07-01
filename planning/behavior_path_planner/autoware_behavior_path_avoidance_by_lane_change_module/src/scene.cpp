@@ -42,6 +42,8 @@ using autoware::behavior_path_planner::Point2d;
 using autoware::behavior_path_planner::utils::lane_change::debug::createExecutionArea;
 namespace utils = autoware::behavior_path_planner::utils;
 
+// TODO(veqcc): remove this comment line.
+
 AvoidanceByLaneChange::AvoidanceByLaneChange(
   const std::shared_ptr<LaneChangeParameters> & parameters,
   std::shared_ptr<AvoidanceByLCParameters> avoidance_parameters)
