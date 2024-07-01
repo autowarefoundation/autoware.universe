@@ -172,10 +172,8 @@ DiagnosticStatus controlEvaluatorNode::generateKinematicStateDiagnosticStatus(
   key_value.key = "acc";
   const auto & acc = accel_stamped.accel.accel.linear.x;
   key_value.value = std::to_string(acc);
-
   status.values.push_back(key_value);
   key_value.key = "jerk";
-
   const auto jerk = [&]() {
     if (!prev_acc_stamped_.has_value()) {
       prev_acc_stamped_ = accel_stamped;
