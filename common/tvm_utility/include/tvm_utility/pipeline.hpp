@@ -93,6 +93,7 @@ public:
    * @return The output of the pipeline
    */
   virtual OutputType schedule(const InputType & input) = 0;
+  virtual ~PipelineStage() {}
   InputType input_type_indicator_;
   OutputType output_type_indicator_;
 };
