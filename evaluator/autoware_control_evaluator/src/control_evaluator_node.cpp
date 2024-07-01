@@ -189,8 +189,8 @@ DiagnosticStatus controlEvaluatorNode::generateKinematicStateDiagnosticStatus(
     const auto prev_t = static_cast<double>(prev_acc_stamped_.value().header.stamp.sec) +
                         static_cast<double>(prev_acc_stamped_.value().header.stamp.nanosec) * 1e-9;
     const auto dt = t - prev_t;
-
     if (dt < std::numeric_limits<double>::epsilon()) return 0.0;
+
     const auto prev_acc = prev_acc_stamped_.value().accel.accel.linear.x;
     prev_acc_stamped_ = accel_stamped;
     return (acc - prev_acc) / dt;
