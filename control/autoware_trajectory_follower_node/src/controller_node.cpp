@@ -189,30 +189,33 @@ void Controller::callbackTimerControl()
     return;
   }
 
-  // 3. run controllers
+  // 3. run the lateral controller
   stop_watch_.tic("lateral");
   const auto lat_out = lateral_controller_->run(*input_data);
   publishProcessingTime(stop_watch_.toc("lateral"), pub_processing_time_lat_ms_);
 
+  // 4. sync with each other controllers
+  longitudinal_controller_->sync(lat_out.sync_data);
+
+  // 5. run the longitudinal controller
   stop_watch_.tic("longitudinal");
   const auto lon_out = longitudinal_controller_->run(*input_data);
   publishProcessingTime(stop_watch_.toc("longitudinal"), pub_processing_time_lon_ms_);
 
-  // 4. sync with each other controllers
-  longitudinal_controller_->sync(lat_out.sync_data);
+  // 6. sync with each other controllers
   lateral_controller_->sync(lon_out.sync_data);
 
   // TODO(Horibe): Think specification. This comes from the old implementation.
   if (isTimeOut(lon_out, lat_out)) return;
 
-  // 5. publish control command
+  // 7. publish control command
   autoware_control_msgs::msg::Control out;
   out.stamp = this->now();
   out.lateral = lat_out.control_cmd;
   out.longitudinal = lon_out.control_cmd;
   control_cmd_pub_->publish(out);
 
-  // 6. publish debug
+  // 8. publish debug
   published_time_publisher_->publish_if_subscribed(control_cmd_pub_, out.stamp);
   publishDebugMarker(*input_data, lat_out);
 }
