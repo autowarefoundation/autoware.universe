@@ -21,9 +21,9 @@
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/is_valid.hpp>
 
@@ -734,12 +734,11 @@ double getDistanceToCrosswalk(
           boost::geometry::intersection(centerline, polygon, points_intersection);
 
           for (const auto & point : points_intersection) {
-            lanelet::ConstLanelets lanelets = {llt};
             Pose pose_point;
             pose_point.position.x = point.x();
             pose_point.position.y = point.y();
             const lanelet::ArcCoordinates & arc_crosswalk =
-              lanelet::utils::getArcCoordinates(lanelets, pose_point);
+              lanelet::utils::getArcCoordinates({llt}, pose_point);
 
             const double distance_to_crosswalk = arc_crosswalk.length;
             if (distance_to_crosswalk < min_distance_to_crosswalk) {

@@ -119,7 +119,6 @@ perception/lidar_apollo_instance_segmentation/** yukihiro.saito@tier4.jp
 perception/lidar_apollo_segmentation_tvm/** ambroise.vincent@arm.com xinyu.wang@tier4.jp
 perception/lidar_apollo_segmentation_tvm_nodes/** ambroise.vincent@arm.com xinyu.wang@tier4.jp
 perception/lidar_centerpoint/** kenzo.lobos@tier4.jp koji.minoda@tier4.jp
-perception/lidar_centerpoint_tvm/** carl.liu@autocore.ai xinyu.wang@tier4.jp
 perception/lidar_transfusion/** amadeusz.szymko.2@tier4.jp kenzo.lobos@tier4.jp satoshi.tanaka@tier4.jp
 perception/multi_object_tracker/** taekjin.lee@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/object_merger/** taekjin.lee@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
@@ -185,12 +184,12 @@ planning/behavior_velocity_planner/autoware_behavior_velocity_occlusion_spot_mod
 planning/behavior_velocity_planner/autoware_behavior_velocity_planner/** kosuke.takeuchi@tier4.jp kyoichi.sugahara@tier4.jp makoto.kurihara@tier4.jp mamoru.sobue@tier4.jp maxime.clement@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp taiki.tanaka@tier4.jp takayuki.murooka@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp
 planning/behavior_velocity_planner/autoware_behavior_velocity_planner_common/** fumiya.watanabe@tier4.jp isamu.takagi@tier4.jp mamoru.sobue@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 planning/behavior_velocity_planner/autoware_behavior_velocity_run_out_module/** kosuke.takeuchi@tier4.jp makoto.kurihara@tier4.jp shumpei.wakabayashi@tier4.jp takayuki.murooka@tier4.jp tomohito.ando@tier4.jp tomoya.kimura@tier4.jp
+planning/behavior_velocity_planner/autoware_behavior_velocity_speed_bump_module/** mdogru@leodrive.ai shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 planning/behavior_velocity_planner/autoware_behavior_velocity_stop_line_module/** fumiya.watanabe@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp zhe.shen@tier4.jp
 planning/behavior_velocity_planner/autoware_behavior_velocity_template_module/** daniel.sanchez@tier4.jp
 planning/behavior_velocity_planner/autoware_behavior_velocity_traffic_light_module/** mamoru.sobue@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 planning/behavior_velocity_planner/autoware_behavior_velocity_virtual_traffic_light_module/** kosuke.takeuchi@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 planning/behavior_velocity_planner/autoware_behavior_velocity_walkway_module/** satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp takayuki.murooka@tier4.jp tomoya.kimura@tier4.jp
-planning/behavior_velocity_planner/behavior_velocity_speed_bump_module/** mdogru@leodrive.ai shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 planning/motion_velocity_planner/autoware_motion_velocity_dynamic_obstacle_stop_module/** mamoru.sobue@tier4.jp maxime.clement@tier4.jp
 planning/motion_velocity_planner/autoware_motion_velocity_obstacle_velocity_limiter_module/** maxime.clement@tier4.jp
 planning/motion_velocity_planner/autoware_motion_velocity_out_of_lane_module/** maxime.clement@tier4.jp shumpei.wakabayashi@tier4.jp takayuki.murooka@tier4.jp tomoya.kimura@tier4.jp
