@@ -106,6 +106,11 @@ void SteeringWheelDisplay::drawSteeringWheel(
   }
 
   QString steeringAngleString = QString::fromStdString(steering_angle_ss.str());
+  // if the string doesn't have a negative sign, add a space to the front of the string
+  // to align the text in both cases (negative and positive)
+  if (steeringAngleString[0] != '-') {
+    steeringAngleString = " " + steeringAngleString;
+  }
 
   // Draw the steering angle text
   QFont steeringFont("Quicksand", 8, QFont::Bold);
