@@ -100,7 +100,7 @@ void SteeringWheelDisplay::drawSteeringWheel(
     steering_angle_ss << std::fixed << std::setprecision(1) << steering_angle_ * 180.0 / M_PI
                       << "°";
   } else {
-    steering_angle_ss << "Not received";
+    steering_angle_ss << "0.0°";
   }
 
   QString steeringAngleString = QString::fromStdString(steering_angle_ss.str());
