@@ -361,6 +361,12 @@ void PredictedObjectsDisplay::processPointCloud(
   // Create Kd-tree to search neighbor pointcloud to reduce cost.
   pcl::search::Search<pcl::PointXYZRGB>::Ptr kdtree =
     pcl::make_shared<pcl::search::KdTree<pcl::PointXYZRGB>>(false);
+
+  // check if the pointcloud is empty to not call setInputCloud with an empty pointcloud
+  if (colored_cloud->empty()) {
+    return;
+  }
+
   kdtree->setInputCloud(colored_cloud);
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr out_cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
