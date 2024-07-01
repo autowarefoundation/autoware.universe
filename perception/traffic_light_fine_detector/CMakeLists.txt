@@ -99,6 +99,27 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE traffic_light_fine_detector_node
   )
 
+  if(BUILD_TESTING)
+    ament_auto_add_gtest(traffic_light_fine_detector_tests
+      test/test_nodelet.cpp
+    )
+
+    target_include_directories(traffic_light_fine_detector_tests PUBLIC
+      lib/include
+    )
+
+    target_link_libraries(traffic_light_fine_detector_tests
+      ${NVINFER}
+      ${NVONNXPARSER}
+      ${NVINFER_PLUGIN}
+      ${CUDA_LIBRARIES}
+      ${CUBLAS_LIBRARIES}
+      ${CUDNN_LIBRARY}
+      ${OpenCV_LIB}
+      stdc++fs
+    )
+  endif()
+
   ament_auto_package(INSTALL_TO_SHARE
     launch
     config
