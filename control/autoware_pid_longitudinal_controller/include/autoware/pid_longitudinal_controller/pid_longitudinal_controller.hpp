@@ -227,8 +227,8 @@ private:
   Shift m_prev_shift{Shift::Forward};
 
   // diff limit
-  Motion m_prev_ctrl_cmd{};      // with slope compensation
   Motion m_prev_raw_ctrl_cmd{};  // without slope compensation
+  Motion m_prev_ctrl_cmd{};      // with slope compensation
   std::vector<std::pair<rclcpp::Time, double>> m_vel_hist;
 
   // debug values
