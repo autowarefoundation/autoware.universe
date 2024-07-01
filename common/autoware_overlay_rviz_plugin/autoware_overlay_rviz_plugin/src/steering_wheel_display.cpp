@@ -59,6 +59,8 @@ void SteeringWheelDisplay::updateSteeringData(
   const autoware_vehicle_msgs::msg::SteeringReport::ConstSharedPtr & msg)
 {
   try {
+    last_msg_ptr_ = msg;
+
     steering_angle_ = msg->steering_tire_angle;
   } catch (const std::exception & e) {
     // Log the error
@@ -96,11 +98,11 @@ void SteeringWheelDisplay::drawSteeringWheel(
   painter.drawImage(drawPoint.x(), drawPoint.y(), rotatedWheel);
 
   std::ostringstream steering_angle_ss;
-  if (steering_angle_) {
+  if (last_msg_ptr_) {
     steering_angle_ss << std::fixed << std::setprecision(1) << steering_angle_ * 180.0 / M_PI
                       << "°";
   } else {
-    steering_angle_ss << "0.0°";
+    steering_angle_ss << "N/A";
   }
 
   QString steeringAngleString = QString::fromStdString(steering_angle_ss.str());

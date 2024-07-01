@@ -47,6 +47,7 @@ private:
   QImage wheelImage;
   QImage scaledWheelImage;
   QImage coloredImage(const QImage & source, const QColor & color);
+  autoware_vehicle_msgs::msg::SteeringReport::ConstSharedPtr last_msg_ptr_;
 };
 
 }  // namespace autoware_overlay_rviz_plugin
