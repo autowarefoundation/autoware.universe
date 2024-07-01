@@ -23,6 +23,7 @@
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -30,6 +31,7 @@
 #include <array>
 #include <deque>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -45,6 +47,7 @@ using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
 using LaneletMapBin = autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
+using geometry_msgs::msg::AccelWithCovarianceStamped;
 
 /**
  * @brief Node for control evaluation
@@ -68,13 +71,12 @@ public:
     const DiagnosticArray & diag, const std::string & function_name);
 
   DiagnosticStatus generateAEBDiagnosticStatus(const DiagnosticStatus & diag);
-  DiagnosticStatus generateLaneletDiagnosticStatus();
+  DiagnosticStatus generateLaneletDiagnosticStatus(const Pose & ego_pose) const;
+  DiagnosticStatus generateKinematicStateDiagnosticStatus(
+    const Odometry & odom, const AccelWithCovarianceStamped & accel_stamped);
 
   void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
   void onTimer();
-  lanelet::ConstLanelet getCurrentLane() const;
-  geometry_msgs::msg::Pose getCurrentEgoPose() const;
-  void getRouteData();
 
 private:
   // The diagnostics cycle is faster than timer, and each node publishes diagnostic separately.
@@ -84,6 +86,8 @@ private:
 
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{
     this, "~/input/odometry"};
+  autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
+    this, "/localization/acceleration"};
   autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
     this, "~/input/trajectory"};
   autoware::universe_utils::InterProcessPollingSubscriber<LaneletRoute> route_subscriber_{
@@ -92,6 +96,9 @@ private:
     this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
 
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
+
+  // update Route Handler
+  void getRouteData();
 
   // Calculator
   // Metrics
@@ -105,8 +112,7 @@ private:
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_ptr_;
   autoware::route_handler::RouteHandler route_handler_;
   rclcpp::TimerBase::SharedPtr timer_;
-  bool has_received_route_{false};
-  bool has_received_map_{false};
+  std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
 }  // namespace control_diagnostics
 

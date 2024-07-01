@@ -18,6 +18,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <string>
@@ -55,16 +56,15 @@ void controlEvaluatorNode::getRouteData()
         RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
       } else {
         route_handler_.setRoute(*msg);
-        has_received_route_ = true;
       }
     }
   }
+
   // map
   {
     const auto msg = vector_map_subscriber_.takeNewData();
     if (msg) {
       route_handler_.setMap(*msg);
-      has_received_map_ = true;
     }
   }
 }
@@ -136,20 +136,18 @@ DiagnosticStatus controlEvaluatorNode::generateAEBDiagnosticStatus(const Diagnos
   return status;
 }
 
-DiagnosticStatus controlEvaluatorNode::generateLaneletDiagnosticStatus()
+DiagnosticStatus controlEvaluatorNode::generateLaneletDiagnosticStatus(const Pose & ego_pose) const
 {
-  DiagnosticStatus status;
-  status.name = "ego_lane_info";
-
-  getRouteData();
-  if (!has_received_map_ || !has_received_route_) {
-    status.level = status.ERROR;
-    return status;
-  }
-  const auto current_lane = getCurrentLane();
-  const auto ego_pose = getCurrentEgoPose();
+  const auto current_lane = [&]() {
+    lanelet::ConstLanelet closest_lanelet;
+    route_handler_.getClosestLaneletWithinRoute(ego_pose, &closest_lanelet);
+    return closest_lanelet;
+  }();
   const lanelet::ConstLanelets current_lanelets{current_lane};
   const auto arc_coordinates = lanelet::utils::getArcCoordinates(current_lanelets, ego_pose);
+
+  DiagnosticStatus status;
+  status.name = "ego_lane_info";
   status.level = status.OK;
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = "lane_id";
@@ -160,6 +158,44 @@ DiagnosticStatus controlEvaluatorNode::generateLaneletDiagnosticStatus()
   status.values.push_back(key_value);
   key_value.key = "t";
   key_value.value = std::to_string(arc_coordinates.distance);
+  status.values.push_back(key_value);
+  return status;
+}
+
+DiagnosticStatus controlEvaluatorNode::generateKinematicStateDiagnosticStatus(
+  const Odometry & odom, const AccelWithCovarianceStamped & accel_stamped)
+{
+  DiagnosticStatus status;
+  status.name = "kinematic_state";
+  status.level = status.OK;
+  diagnostic_msgs::msg::KeyValue key_value;
+  key_value.key = "vel";
+  key_value.value = std::to_string(odom.twist.twist.linear.x);
+  status.values.push_back(key_value);
+  key_value.key = "acc";
+  const auto & acc = accel_stamped.accel.accel.linear.x;
+  key_value.value = std::to_string(acc);
+
+  status.values.push_back(key_value);
+  key_value.key = "jerk";
+
+  const auto jerk = [&]() {
+    if (!prev_acc_stamped_.has_value()) {
+      prev_acc_stamped_ = accel_stamped;
+      return 0.0;
+    }
+    const auto t = static_cast<double>(accel_stamped.header.stamp.sec) +
+                   static_cast<double>(accel_stamped.header.stamp.nanosec) * 1e-9;
+    const auto prev_t = static_cast<double>(prev_acc_stamped_.value().header.stamp.sec) +
+                        static_cast<double>(prev_acc_stamped_.value().header.stamp.nanosec) * 1e-9;
+    const auto dt = t - prev_t;
+
+    if (dt < std::numeric_limits<double>::epsilon()) return 0.0;
+    const auto prev_acc = prev_acc_stamped_.value().accel.accel.linear.x;
+    prev_acc_stamped_ = accel_stamped;
+    return (acc - prev_acc) / dt;
+  }();
+  key_value.value = std::to_string(jerk);
   status.values.push_back(key_value);
   return status;
 }
@@ -201,6 +237,7 @@ void controlEvaluatorNode::onTimer()
   DiagnosticArray metrics_msg;
   const auto traj = traj_sub_.takeData();
   const auto odom = odometry_sub_.takeData();
+  const auto acc = accel_sub_.takeData();
 
   // generate decision diagnostics from input diagnostics
   for (const auto & function : target_functions_) {
@@ -227,44 +264,19 @@ void controlEvaluatorNode::onTimer()
     metrics_msg.status.push_back(generateYawDeviationDiagnosticStatus(*traj, ego_pose));
   }
 
-  metrics_msg.status.push_back(generateLaneletDiagnosticStatus());
+  getRouteData();
+  if (odom && route_handler_.isHandlerReady()) {
+    const Pose ego_pose = odom->pose.pose;
+    metrics_msg.status.push_back(generateLaneletDiagnosticStatus(ego_pose));
+  }
+
+  if (odom && acc) {
+    metrics_msg.status.push_back(generateKinematicStateDiagnosticStatus(*odom, *acc));
+  }
 
   metrics_msg.header.stamp = now();
   metrics_pub_->publish(metrics_msg);
 }
-
-geometry_msgs::msg::Pose controlEvaluatorNode::getCurrentEgoPose() const
-{
-  geometry_msgs::msg::TransformStamped tf_current_pose;
-
-  geometry_msgs::msg::Pose p;
-  try {
-    tf_current_pose = tf_buffer_ptr_->lookupTransform(
-      "map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(get_logger(), "%s", ex.what());
-    return p;
-  }
-
-  p.orientation = tf_current_pose.transform.rotation;
-  p.position.x = tf_current_pose.transform.translation.x;
-  p.position.y = tf_current_pose.transform.translation.y;
-  p.position.z = tf_current_pose.transform.translation.z;
-
-  return p;
-}
-
-lanelet::ConstLanelet controlEvaluatorNode::getCurrentLane() const
-{
-  lanelet::ConstLanelet closest_lanelet;
-  if (!has_received_map_ || !has_received_route_) {
-    return closest_lanelet;
-  }
-  const auto ego_pose = getCurrentEgoPose();
-  route_handler_.getClosestLaneletWithinRoute(ego_pose, &closest_lanelet);
-  return closest_lanelet;
-}
-
 }  // namespace control_diagnostics
 
 #include "rclcpp_components/register_node_macro.hpp"
