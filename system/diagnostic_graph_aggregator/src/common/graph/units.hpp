@@ -152,7 +152,7 @@ public:
 protected:
   std::vector<UnitLink *> links_;
 
-// TODO: delete after test
+  // TODO: delete after test
 private:
   void update_status() override;
 };
