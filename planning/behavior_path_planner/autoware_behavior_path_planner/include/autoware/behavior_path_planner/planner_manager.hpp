@@ -96,7 +96,7 @@ struct SceneModuleStatus
 class PlannerManager
 {
 public:
-  explicit PlannerManager(rclcpp::Node & node);
+  PlannerManager(rclcpp::Node & node, const size_t max_iteration_num);
 
   /**
    * @brief run all candidate and approved modules.
