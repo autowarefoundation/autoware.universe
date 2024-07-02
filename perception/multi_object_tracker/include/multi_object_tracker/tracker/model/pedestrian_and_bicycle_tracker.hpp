@@ -19,7 +19,7 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_AND_BICYCLE_TRACKER_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_AND_BICYCLE_TRACKER_HPP_
 
-#include "kalman_filter/kalman_filter.hpp"
+#include "autoware_kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/model/bicycle_tracker.hpp"
 #include "multi_object_tracker/tracker/model/pedestrian_tracker.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"

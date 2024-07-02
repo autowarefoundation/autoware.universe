@@ -19,7 +19,7 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__MOTION_MODEL_BASE_HPP_
 
-#include "kalman_filter/kalman_filter.hpp"
+#include "autoware_kalman_filter/kalman_filter.hpp"
 
 #include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
@@ -30,6 +30,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 #include <geometry_msgs/msg/twist.hpp>
+
+using autoware::kalman_filter::KalmanFilter;
 
 class MotionModel
 {
