@@ -2005,4 +2005,19 @@ TEST(geometry, disjoint)
     EXPECT_TRUE(result);
     EXPECT_FALSE(*result);
   }
+
+  {  // Two polygons share a vertex
+    const auto p1 = createPoint(1.0, 1.0, 0.0);
+    const auto p2 = createPoint(1.0, -1.0, 0.0);
+    const auto p3 = createPoint(-1.0, -1.0, 0.0);
+    const auto p4 = createPoint(-1.0, 1.0, 0.0);
+    const auto p5 = createPoint(2.0, 2.0, 0.0);
+    const auto p6 = createPoint(2.0, 1.0, 0.0);
+    const auto p7 = createPoint(1.0, 1.0, 0.0);
+    const auto p8 = createPoint(1.0, 2.0, 0.0);
+    const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
+
+    EXPECT_TRUE(result);
+    EXPECT_FALSE(*result);
+  }
 }
