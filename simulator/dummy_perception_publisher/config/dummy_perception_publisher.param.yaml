@@ -1,0 +1,12 @@
+/**:
+  ros__parameters:
+    adaptive_noise:
+      enable_adaptive_success_rate: True
+      enable_adaptive_noise: True
+      ellipse_normalized_x_radius: 0.4
+      ellipse_normalized_y_radius: 1.0
+      ellipse_radius_keys: [10.0, 20.0, 40.0, 60.0, 80.0, 120.0, 150.0, 180.0, 1000.0]
+      ellipse_success_rate_values: [0.922, 0.862, 0.795, 0.682, 0.611, 0.416, 0.207, 0.113, 0.005]
+      ellipse_xy_noise_values: [0.0, 0.01, 1.1, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0]
+      ellipse_yaw_noise_values: [0.0, 0.001, 0.1, 0.001, 0.002, 0.002, 0.002, 0.002, 0.002]
+

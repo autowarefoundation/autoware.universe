@@ -137,6 +137,27 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
     static_cast<unsigned int>(this->declare_parameter("random_seed", 0));
   const bool use_fixed_random_seed = this->declare_parameter("use_fixed_random_seed", false);
 
+  // adaptive noise
+  {
+    const std::string ns = "adaptive_noise.";
+    const std::vector<double> empty_v{};
+    enable_adaptive_success_rate_ = declare_parameter(ns + "enable_adaptive_success_rate", false);
+    enable_adaptive_noise_ = declare_parameter(ns + "enable_adaptive_noise", false);
+    ellipse_normalized_x_radius_ = declare_parameter(ns + "ellipse_normalized_x_radius", 1.0);
+    ellipse_normalized_y_radius_ = declare_parameter(ns + "ellipse_normalized_y_radius", 1.0);
+    ellipse_radius_keys_ = declare_parameter(ns + "ellipse_radius_keys", empty_v);
+    ellipse_success_rate_values_ = declare_parameter(ns + "ellipse_success_rate_values", empty_v);
+    ellipse_xy_noise_values_ = declare_parameter(ns + "ellipse_xy_noise_values", empty_v);
+    ellipse_yaw_noise_values_ = declare_parameter(ns + "ellipse_yaw_noise_values", empty_v);
+
+    const auto s = ellipse_radius_keys_.size();
+    if (
+      s != ellipse_success_rate_values_.size() || s != ellipse_xy_noise_values_.size() ||
+      s != ellipse_yaw_noise_values_.size()) {
+      throw std::invalid_argument("adaptive noise key-value size does not match");
+    }
+  }
+
   if (object_centric_pointcloud) {
     pointcloud_creator_ =
       std::unique_ptr<PointCloudCreator>(new ObjectCentricPointCloudCreator(enable_ray_tracing_));
@@ -216,10 +237,15 @@ void DummyPerceptionPublisherNode::timerCallback()
   std::vector<ObjectInfo> obj_infos;
   static std::uniform_real_distribution<> detection_successful_random(0.0, 1.0);
   for (size_t i = 0; i < objects_.size(); ++i) {
-    if (detection_successful_rate_ >= detection_successful_random(random_generator_)) {
+    const auto obj_info = ObjectInfo(objects_.at(i), current_time);
+    const auto tf_base_link_to_object = tf_base_link2map * obj_info.tf_map2moved_object;
+
+    // true positive rate
+    const auto success_rate = getSuccessRate(tf_base_link_to_object.getOrigin());
+
+    if (success_rate >= detection_successful_random(random_generator_)) {
       selected_indices.push_back(i);
     }
-    const auto obj_info = ObjectInfo(objects_.at(i), current_time);
     obj_infos.push_back(obj_info);
   }
 
@@ -263,10 +289,16 @@ void DummyPerceptionPublisherNode::timerCallback()
       const size_t selected_idx = selected_indices[i];
       const auto & object = objects_.at(selected_idx);
       const auto object_info = ObjectInfo(object, current_time);
+
+      // get noise
+      const auto tf_base_link_to_object = tf_base_link2map * object_info.tf_map2moved_object;
+      const auto [stddev_x, stddev_y, stddev_yaw] =
+        getNoiseStdDev(object_info, tf_base_link_to_object.getOrigin());
+
       // dynamic object
-      std::normal_distribution<> x_random(0.0, object_info.std_dev_x);
-      std::normal_distribution<> y_random(0.0, object_info.std_dev_y);
-      std::normal_distribution<> yaw_random(0.0, object_info.std_dev_yaw);
+      std::normal_distribution<> x_random(0.0, stddev_x);
+      std::normal_distribution<> y_random(0.0, stddev_y);
+      std::normal_distribution<> yaw_random(0.0, stddev_yaw);
       tf2::Quaternion noised_quat;
       noised_quat.setRPY(0, 0, yaw_random(random_generator_));
       tf2::Transform tf_moved_object2noised_moved_object(
@@ -326,6 +358,54 @@ void DummyPerceptionPublisherNode::timerCallback()
   if (publish_ground_truth_objects_) {
     ground_truth_objects_pub_->publish(output_ground_truth_objects_msg);
   }
+}
+
+std::tuple<double, double, double> DummyPerceptionPublisherNode::getNoiseStdDev(
+  const ObjectInfo & object_info, const tf2::Vector3 & tf_base_link_to_object) const
+{
+  // constant noise
+  if (!enable_adaptive_noise_) {
+    return {object_info.std_dev_x, object_info.std_dev_y, object_info.std_dev_yaw};
+  }
+
+  // adaptive noise
+  const auto x_by_a = tf_base_link_to_object.getX() / ellipse_normalized_x_radius_;
+  const auto y_by_b = tf_base_link_to_object.getY() / ellipse_normalized_y_radius_;
+  const auto ellipse_radius = std::sqrt(x_by_a * x_by_a + y_by_b * y_by_b);
+
+  auto xy_noise = ellipse_xy_noise_values_.back();
+  auto yaw_noise = ellipse_yaw_noise_values_.back();
+  for (size_t i = 0; i < ellipse_radius_keys_.size(); ++i) {
+    if (ellipse_radius < ellipse_radius_keys_.at(i)) {
+      xy_noise = ellipse_xy_noise_values_.at(i);
+      yaw_noise = ellipse_yaw_noise_values_.at(i);
+      break;
+    }
+  }
+  return {xy_noise, xy_noise, yaw_noise};
+}
+
+double DummyPerceptionPublisherNode::getSuccessRate(
+  const tf2::Vector3 & tf_base_link_to_object) const
+{
+  // constant success rate
+  if (!enable_adaptive_success_rate_) {
+    return detection_successful_rate_;
+  }
+
+  // adaptive success rate
+  const auto x_by_a = tf_base_link_to_object.getX() / ellipse_normalized_x_radius_;
+  const auto y_by_b = tf_base_link_to_object.getY() / ellipse_normalized_y_radius_;
+  const auto ellipse_radius = std::sqrt(x_by_a * x_by_a + y_by_b * y_by_b);
+
+  auto success_rate = ellipse_success_rate_values_.back();
+  for (size_t i = 0; i < ellipse_radius_keys_.size(); ++i) {
+    if (ellipse_radius < ellipse_radius_keys_.at(i)) {
+      success_rate = ellipse_success_rate_values_.at(i);
+      break;
+    }
+  }
+  return success_rate;
 }
 
 void DummyPerceptionPublisherNode::objectCallback(
