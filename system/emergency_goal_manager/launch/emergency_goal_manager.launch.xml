@@ -1,0 +1,9 @@
+<launch>
+  <arg name="input_emergency_goals" default="/system/mrm/pull_over_manager/emergency_goals"/>
+  <arg name="input_goals_clear_command" default="/system/mrm/pull_over_manager/goals_clear_command"/>
+
+  <node pkg="emergency_goal_manager" exec="emergency_goal_manager" name="emergency_goal_manager" output="screen">
+    <remap from="~/input/emergency_goals" to="$(var input_emergency_goals)"/>
+    <remap from="~/input/emergency_goals_clear_command" to="$(var input_goals_clear_command)"/>
+  </node>
+</launch>
