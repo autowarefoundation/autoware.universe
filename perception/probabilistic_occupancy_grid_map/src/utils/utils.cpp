@@ -18,6 +18,35 @@
 
 #include <string>
 
+namespace
+{
+/**
+ * @brief Hash function for voxel keys.
+ * Utilizes prime numbers to calculate a unique hash for each voxel key.
+ */
+struct VoxelKeyHash
+{
+  std::size_t operator()(const std::array<int, 3> & k) const
+  {
+    // Primes based on the following paper: 'Investigating the Use of Primes in Hashing for
+    // Volumetric Data'.
+    return (k[0] * 73856093 ^ k[1] * 19349663 ^ k[2] * 83492791);
+  }
+};
+
+/**
+ * @brief Equality function for voxel keys.
+ * Checks if two voxel keys are equal.
+ */
+struct VoxelKeyEqual
+{
+  bool operator()(const std::array<int, 3> & a, const std::array<int, 3> & b) const
+  {
+    return a == b;
+  }
+};
+}  // namespace
+
 namespace utils
 {
 
@@ -178,6 +207,116 @@ bool extractCommonPointCloud(
   }
   pcl::toROSMsg(*pcl_output, output_obstacle_pc);
   output_obstacle_pc.header = obstacle_pc.header;
+
+  return true;
+}
+
+/**
+ * @brief extract Common Pointcloud between obstacle pc and raw pc
+ * @param obstacle_pc
+ * @param raw_pc
+ * @param voxel_size
+ * @param output_obstacle_pc
+ */
+bool extractApproximateCommonPointCloud(
+  const sensor_msgs::msg::PointCloud2 & obstacle_pc, const sensor_msgs::msg::PointCloud2 & raw_pc,
+  const float voxel_size, sensor_msgs::msg::PointCloud2 & output_obstacle_pc)
+{
+  using VoxelKey = std::array<int, 3>;
+  std::unordered_map<VoxelKey, size_t, VoxelKeyHash, VoxelKeyEqual> obstacle_voxel_map;
+  std::unordered_map<VoxelKey, size_t, VoxelKeyHash, VoxelKeyEqual> raw_voxel_map;
+
+  constexpr float large_num_offset = 100000.0;
+  const float & voxel_size_x = voxel_size;
+  const float & voxel_size_y = voxel_size;
+  const float & voxel_size_z = voxel_size;
+  const float inverse_voxel_size_x = 1.0 / voxel_size_x;
+  const float inverse_voxel_size_y = 1.0 / voxel_size_y;
+  const float inverse_voxel_size_z = 1.0 / voxel_size_z;
+
+  {
+    const int x_offset = raw_pc.fields[pcl::getFieldIndex(raw_pc, "x")].offset;
+    const int y_offset = raw_pc.fields[pcl::getFieldIndex(raw_pc, "y")].offset;
+    const int z_offset = raw_pc.fields[pcl::getFieldIndex(raw_pc, "z")].offset;
+
+    // Process each point in the point cloud
+    for (size_t global_offset = 0; global_offset + raw_pc.point_step <= raw_pc.data.size();
+         global_offset += raw_pc.point_step) {
+      const float & x = *reinterpret_cast<const float *>(&raw_pc.data[global_offset + x_offset]);
+      const float & y = *reinterpret_cast<const float *>(&raw_pc.data[global_offset + y_offset]);
+      const float & z = *reinterpret_cast<const float *>(&raw_pc.data[global_offset + z_offset]);
+
+      // The reason for adding a large value is that when converting from float to int, values
+      // around -1 to 1 are all rounded down to 0. Therefore, to prevent the numbers from becoming
+      // negative, a large value is added. It has been tuned to reduce computational costs, and
+      // deliberately avoids using round or floor functions.
+      VoxelKey key = {
+        static_cast<int>((x + large_num_offset) * inverse_voxel_size_x),
+        static_cast<int>((y + large_num_offset) * inverse_voxel_size_y),
+        static_cast<int>((z + large_num_offset) * inverse_voxel_size_z)};
+
+      if (raw_voxel_map.find(key) == raw_voxel_map.end()) {
+        raw_voxel_map[key] = global_offset;
+      }
+    }
+  }
+  {
+    const int x_offset = obstacle_pc.fields[pcl::getFieldIndex(obstacle_pc, "x")].offset;
+    const int y_offset = obstacle_pc.fields[pcl::getFieldIndex(obstacle_pc, "y")].offset;
+    const int z_offset = obstacle_pc.fields[pcl::getFieldIndex(obstacle_pc, "z")].offset;
+
+    for (size_t global_offset = 0;
+         global_offset + obstacle_pc.point_step <= obstacle_pc.data.size();
+         global_offset += obstacle_pc.point_step) {
+      const float & x =
+        *reinterpret_cast<const float *>(&obstacle_pc.data[global_offset + x_offset]);
+      const float & y =
+        *reinterpret_cast<const float *>(&obstacle_pc.data[global_offset + y_offset]);
+      const float & z =
+        *reinterpret_cast<const float *>(&obstacle_pc.data[global_offset + z_offset]);
+
+      // The reason for adding a large value is that when converting from float to int, values
+      // around -1 to 1 are all rounded down to 0. Therefore, to prevent the numbers from becoming
+      // negative, a large value is added. It has been tuned to reduce computational costs, and
+      // deliberately avoids using round or floor functions.
+      VoxelKey key = {
+        static_cast<int>((x + large_num_offset) * inverse_voxel_size_x),
+        static_cast<int>((y + large_num_offset) * inverse_voxel_size_y),
+        static_cast<int>((z + large_num_offset) * inverse_voxel_size_z)};
+
+      if (raw_voxel_map.find(key) == raw_voxel_map.end()) {
+        obstacle_voxel_map[key] = global_offset;
+      }
+    }
+
+    // Populate the output point cloud
+    size_t output_global_offset = 0;
+    output_obstacle_pc.data.resize(obstacle_voxel_map.size() * obstacle_pc.point_step);
+    for (const auto & kv : obstacle_voxel_map) {
+      std::memcpy(
+        &output_obstacle_pc.data[output_global_offset + x_offset],
+        &obstacle_pc.data[kv.second + x_offset], sizeof(float));
+      std::memcpy(
+        &output_obstacle_pc.data[output_global_offset + y_offset],
+        &obstacle_pc.data[kv.second + y_offset], sizeof(float));
+      std::memcpy(
+        &output_obstacle_pc.data[output_global_offset + z_offset],
+        &obstacle_pc.data[kv.second + z_offset], sizeof(float));
+      output_global_offset += obstacle_pc.point_step;
+    }
+
+    // Set the output point cloud metadata
+    output_obstacle_pc.header.frame_id = obstacle_pc.header.frame_id;
+    output_obstacle_pc.height = 1;
+    output_obstacle_pc.fields = obstacle_pc.fields;
+    output_obstacle_pc.is_bigendian = obstacle_pc.is_bigendian;
+    output_obstacle_pc.point_step = obstacle_pc.point_step;
+    output_obstacle_pc.is_dense = obstacle_pc.is_dense;
+    output_obstacle_pc.width = static_cast<uint32_t>(
+      output_obstacle_pc.data.size() / output_obstacle_pc.height / output_obstacle_pc.point_step);
+    output_obstacle_pc.row_step =
+      static_cast<uint32_t>(output_obstacle_pc.data.size() / output_obstacle_pc.height);
+  }
 
   return true;
 }
