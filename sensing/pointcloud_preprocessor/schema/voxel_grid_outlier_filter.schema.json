@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "voxel_grid_outlier_filter",
+  "title": "Parameter for voxel grid outlier filter",
   "type": "object",
   "definitions": {
     "voxel_grid_outlier_filter": {

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "blockage_diag",
+  "title": "Parameter for blockage diag filter",
   "type": "object",
   "definitions": {
     "blockage_diag": {

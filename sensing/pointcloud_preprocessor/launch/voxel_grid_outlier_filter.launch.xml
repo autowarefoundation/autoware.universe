@@ -3,8 +3,8 @@
   <arg name="output_topic_name" default="/pointcloud_filtered"/>
   <arg name="input_frame" default="velodyne"/>
   <arg name="output_frame" default="velodyne"/>
-  <arg name="voxel_grid_outlier_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/voxel_grid_outlier_filter_param_file.yaml"/>
-  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.yaml"/>
+  <arg name="voxel_grid_outlier_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/voxel_grid_outlier_filter_param_file.param.yaml"/>
+  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.param.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="voxel_grid_outlier_filter_node" name="voxel_grid_outlier_filter">
     <remap from="input" to="$(var input_topic_name)"/>
     <remap from="output" to="$(var output_topic_name)"/>

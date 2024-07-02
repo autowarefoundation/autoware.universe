@@ -5,8 +5,8 @@
   <arg name="angle_range" default="[0.0, 360.0]"/>
   <arg name="vertical_bins" default="40"/>
   <arg name="is_channel_order_top2down" default="true"/>
-  <arg name="blockage_diagnostics_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/blockage_diagnostics_param_file.yaml"/>
-  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.yaml"/>
+  <arg name="blockage_diagnostics_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/blockage_diagnostics_param_file.param.yaml"/>
+  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.param.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="blockage_diag_node" name="blockage_diag">
     <remap from="input" to="$(var input_topic_name)"/>
     <remap from="output" to="$(var output_topic_name)"/>

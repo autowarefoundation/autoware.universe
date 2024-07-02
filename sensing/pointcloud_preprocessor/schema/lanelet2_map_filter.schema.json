@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "lanelet2_map_filter",
+  "title": "Parameter for lanelet2 map filter",
   "type": "object",
   "definitions": {
     "lanelet2_map_filter": {
@@ -8,12 +8,12 @@
       "properties": {
         "voxel_size_x": {
           "type": "number",
-          "description": "voxel size",
+          "description": "voxel size along x-axis [m]",
           "default": "0.04"
         },
         "voxel_size_y": {
           "type": "number",
-          "description": "voxel size",
+          "description": "voxel size along y-axis [m]",
           "default": "0.04"
         }
       },

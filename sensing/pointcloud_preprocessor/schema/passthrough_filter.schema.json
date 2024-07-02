@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "passthrough_filter",
+  "title": "Parameter for passthrough filter",
   "type": "object",
   "definitions": {
     "passthrough_filter": {

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "distortion_corrector",
+  "title": "Parameter for distortion corrector",
   "type": "object",
   "definitions": {
     "distortion_corrector": {

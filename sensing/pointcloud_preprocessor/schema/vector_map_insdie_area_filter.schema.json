@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "vector_map_inside_area_filter",
+  "title": "Parameter for vector map inside area filter",
   "type": "object",
   "definitions": {
     "vector_map_inside_area_filter": {
