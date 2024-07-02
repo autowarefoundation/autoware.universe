@@ -577,6 +577,21 @@ std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4);
 
+std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
+  const std::vector<geometry_msgs::msg::Point> & poly1,
+  const std::vector<geometry_msgs::msg::Point> & poly2);
+
+std::optional<bool> within(
+  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly);
+
+std::optional<bool> within(
+  const std::vector<geometry_msgs::msg::Point> & poly_contained,
+  const std::vector<geometry_msgs::msg::Point> & poly_containing);
+
+std::optional<bool> disjoint(
+  const std::vector<geometry_msgs::msg::Point> & poly1,
+  const std::vector<geometry_msgs::msg::Point> & poly2);
+
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GEOMETRY_HPP_

@@ -383,4 +383,98 @@ std::optional<geometry_msgs::msg::Point> intersect(
   return intersect_point;
 }
 
+std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
+  const std::vector<geometry_msgs::msg::Point> & poly1,
+  const std::vector<geometry_msgs::msg::Point> & poly2)
+{
+  if (poly1.size() < 3 || poly2.size() < 3) {
+    return std::nullopt;
+  }
+
+  // check if all edges of poly1 do not intersect with those of poly2
+  std::vector<geometry_msgs::msg::Point> intersect_points;
+  for (size_t i = 0; i < poly1.size(); ++i) {
+    const auto & p1 = poly1.at(i);
+    const auto & p2 = poly1.at((i + 1) % poly1.size());
+    for (size_t j = 0; j < poly2.size(); ++j) {
+      const auto & q1 = poly2.at(j);
+      const auto & q2 = poly2.at((j + 1) % poly2.size());
+      const auto intersect_point = intersect(p1, p2, q1, q2);
+      if (intersect_point) {
+        intersect_points.push_back(*intersect_point);
+      }
+    }
+  }
+
+  const auto unique_points_itr = std::unique(
+    intersect_points.begin(), intersect_points.end(),
+    [](const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b) {
+      return std::hypot(a.x - b.x, a.y - b.y) < 1e-6;
+    });
+  intersect_points.erase(unique_points_itr, intersect_points.end());
+
+  return intersect_points;
+}
+
+std::optional<bool> within(
+  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly)
+{
+  // check if the polygon is valid
+  if (poly.size() < 3) {
+    return std::nullopt;
+  }
+
+  long winding_number = 0;
+  for (size_t i = 0; i < poly.size(); ++i) {
+    const auto & p1 = poly.at(i);
+    const auto & p2 = poly.at((i + 1) % poly.size());
+
+    // check if the point is to the left of the edge
+    auto x_dist_to_edge = [&]() {
+      return p1.x + (p2.x - p1.x) / (p2.y - p1.y) * (point.y - p1.y) - point.x;
+    };
+
+    if (p1.y <= point.y && p2.y > point.y) {  // upward edge
+      if (x_dist_to_edge() >= 0) {
+        winding_number++;
+      }
+    } else if (p1.y > point.y && p2.y <= point.y) {  // downward edge
+      if (x_dist_to_edge() >= 0) {
+        winding_number--;
+      }
+    }
+  }
+
+  return winding_number != 0;
+}
+
+std::optional<bool> within(
+  const std::vector<geometry_msgs::msg::Point> & poly_contained,
+  const std::vector<geometry_msgs::msg::Point> & poly_containing)
+{
+  // check if all points of poly_contained are within poly_containing
+  for (const auto & point : poly_contained) {
+    const auto is_point_within = within(point, poly_containing);
+    if (!is_point_within) {
+      return std::nullopt;
+    } else if (!*is_point_within) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+std::optional<bool> disjoint(
+  const std::vector<geometry_msgs::msg::Point> & poly1,
+  const std::vector<geometry_msgs::msg::Point> & poly2)
+{
+  const auto intersect_points = intersect(poly1, poly2);
+  if (intersect_points) {
+    return intersect_points->empty();
+  } else {
+    return std::nullopt;
+  };
+}
+
 }  // namespace autoware::universe_utils
