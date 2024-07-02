@@ -1373,7 +1373,7 @@ private:
     Iter & operator++() noexcept
     {
       mInfo++;
-      mKeyVals++;
+      ++mKeyVals;
       fastForward();
       return *this;
     }
