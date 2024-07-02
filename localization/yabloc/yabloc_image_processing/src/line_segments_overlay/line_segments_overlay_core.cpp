@@ -18,7 +18,11 @@
 #include <yabloc_common/cv_decompress.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
-#include <cv_bridge/cv_bridge.h>
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>  // for ROS 2 Jazzy or newer
+#else
+#include <cv_bridge/cv_bridge.h>  // for ROS 2 Humble or older
+#endif
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace yabloc::line_segments_overlay
@@ -30,11 +34,11 @@ LineSegmentsOverlay::LineSegmentsOverlay(const rclcpp::NodeOptions & options)
   using std::placeholders::_1;
 
   auto cb_image = std::bind(&LineSegmentsOverlay::on_image, this, _1);
-  auto cb_line_segments_ = std::bind(&LineSegmentsOverlay::on_line_segments, this, _1);
+  auto cb_line_segments = std::bind(&LineSegmentsOverlay::on_line_segments, this, _1);
 
   sub_image_ = create_subscription<Image>("~/input/image_raw", 10, cb_image);
   sub_line_segments_ =
-    create_subscription<PointCloud2>("~/input/line_segments", 10, cb_line_segments_);
+    create_subscription<PointCloud2>("~/input/line_segments", 10, cb_line_segments);
 
   pub_debug_image_ = create_publisher<Image>("~/debug/image_with_colored_line_segments", 10);
 }
@@ -73,8 +77,7 @@ void LineSegmentsOverlay::on_line_segments(const PointCloud2::ConstSharedPtr & l
   LineSegments line_segments_cloud;
   pcl::fromROSMsg(*line_segments_msg, line_segments_cloud);
 
-  for (size_t index = 0; index < line_segments_cloud.size(); ++index) {
-    const LineSegment & pn = line_segments_cloud.at(index);
+  for (auto & pn : line_segments_cloud) {
     Eigen::Vector3f xy1 = pn.getVector3fMap();
     Eigen::Vector3f xy2 = pn.getNormalVector3fMap();
 
@@ -83,7 +86,9 @@ void LineSegmentsOverlay::on_line_segments(const PointCloud2::ConstSharedPtr & l
       color = cv::Scalar(0, 0, 255);  // Red
     }
 
-    cv::line(image, cv::Point(xy1(0), xy1(1)), cv::Point(xy2(0), xy2(1)), color, 2);
+    cv::line(
+      image, cv::Point(static_cast<int>(xy1(0)), static_cast<int>(xy1(1))),
+      cv::Point(static_cast<int>(xy2(0)), static_cast<int>(xy2(1))), color, 2);
   }
 
   common::publish_image(*pub_debug_image_, image, stamp);

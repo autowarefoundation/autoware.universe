@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_path_optimizer/node.hpp"
+#include "autoware/path_optimizer/node.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
-#include <planning_test_utils/planning_test_utils.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 
 #include <gtest/gtest.h>
 
@@ -26,23 +26,24 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
 {
   rclcpp::init(0, nullptr);
 
-  auto test_manager = std::make_shared<planning_test_utils::PlanningInterfaceTestManager>();
+  auto test_manager =
+    std::make_shared<autoware::planning_test_manager::PlanningInterfaceTestManager>();
 
   auto node_options = rclcpp::NodeOptions{};
 
-  const auto planning_test_utils_dir =
-    ament_index_cpp::get_package_share_directory("planning_test_utils");
+  const auto autoware_test_utils_dir =
+    ament_index_cpp::get_package_share_directory("autoware_test_utils");
   const auto path_optimizer_dir =
     ament_index_cpp::get_package_share_directory("autoware_path_optimizer");
 
   node_options.arguments(
     {"--ros-args", "--params-file",
-     planning_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
-     planning_test_utils_dir + "/config/test_common.param.yaml", "--params-file",
-     planning_test_utils_dir + "/config/test_nearest_search.param.yaml", "--params-file",
+     autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml", "--params-file",
+     autoware_test_utils_dir + "/config/test_common.param.yaml", "--params-file",
+     autoware_test_utils_dir + "/config/test_nearest_search.param.yaml", "--params-file",
      path_optimizer_dir + "/config/path_optimizer.param.yaml"});
 
-  auto test_target_node = std::make_shared<autoware_path_optimizer::PathOptimizer>(node_options);
+  auto test_target_node = std::make_shared<autoware::path_optimizer::PathOptimizer>(node_options);
 
   // publish necessary topics from test_manager
   test_manager->publishOdometry(test_target_node, "path_optimizer/input/odometry");

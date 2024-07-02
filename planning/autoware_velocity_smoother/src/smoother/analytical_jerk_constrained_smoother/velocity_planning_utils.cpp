@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_velocity_smoother/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.hpp"
+#include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.hpp"
 
 #include "interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <vector>
 
-namespace autoware_velocity_smoother
+namespace autoware::velocity_smoother
 {
 namespace analytical_velocity_planning_utils
 {
@@ -225,8 +225,8 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   std::vector<double> distances;
   distances.push_back(distance);
   for (size_t i = start_index; i < output_trajectory.size() - 1; ++i) {
-    distance +=
-      tier4_autoware_utils::calcDistance2d(output_trajectory.at(i), output_trajectory.at(i + 1));
+    distance += autoware::universe_utils::calcDistance2d(
+      output_trajectory.at(i), output_trajectory.at(i + 1));
     if (distance > xs.back()) {
       break;
     }
@@ -353,4 +353,4 @@ double integ_a(double a0, double j0, double t)
 }
 
 }  // namespace analytical_velocity_planning_utils
-}  // namespace autoware_velocity_smoother
+}  // namespace autoware::velocity_smoother
