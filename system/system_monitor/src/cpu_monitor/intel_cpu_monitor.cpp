@@ -22,6 +22,8 @@
 #include "system_monitor/msr_reader/msr_reader.hpp"
 #include "system_monitor/system_monitor_utility.hpp"
 
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/filesystem.hpp>
@@ -37,7 +39,10 @@
 
 namespace fs = boost::filesystem;
 
-CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options) : CPUMonitorBase("cpu_monitor", options)
+CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options)
+: CPUMonitorBase("cpu_monitor", options),
+  throttle_timeout_(declare_parameter<int>("throttle_timeout", 5)),
+  throttle_elapsed_ms_(0)
 {
   msr_reader_port_ = declare_parameter<int>("msr_reader_port", 7634);
 
@@ -47,15 +52,49 @@ CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options) : CPUMonitorBase("cp
 
 void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::string error_str;
+  std::vector<int> vector;
+  double elapsed_ms;
 
+  {
+    std::lock_guard<std::mutex> lock(throttle_mutex_);
+    error_str = throttle_error_str_;
+    vector = throttle_vector_;
+    elapsed_ms = throttle_elapsed_ms_;
+  }
+
+  if (!error_str.empty()) {
+    stat.summary(DiagStatus::ERROR, "read throttling error");
+    stat.add("read throttling", error_str);
+    return;
+  }
+
+  int whole_level = DiagStatus::OK;
+  int index = 0;
+  for (auto itr = vector.begin(); itr != vector.end(); ++itr, ++index) {
+    stat.add(fmt::format("CPU {}: Pkg Thermal Status", index), thermal_dict_.at(*itr));
+    whole_level = std::max(whole_level, *itr);
+  }
+
+  if (whole_level == DiagStatus::ERROR) {
+    stat.summary(whole_level, thermal_dict_.at(whole_level));
+  } else if (elapsed_ms == 0.0) {
+    stat.summary(DiagStatus::WARN, "read throttling error");
+  } else if (elapsed_ms > throttle_timeout_ * 1000) {
+    stat.summary(DiagStatus::WARN, "read throttling timeout");
+  } else {
+    stat.summary(whole_level, thermal_dict_.at(whole_level));
+  }
+
+  stat.addf("execution time", "%f ms", elapsed_ms);
+}
+
+std::string CPUMonitor::executeReadThrottling(std::vector<int> & vector)
+{
   // Create a new socket
   int sock = socket(AF_INET, SOCK_STREAM, 0);
   if (sock < 0) {
-    stat.summary(DiagStatus::ERROR, "socket error");
-    stat.add("socket", strerror(errno));
-    return;
+    return "socket error: " + std::string(strerror(errno));
   }
 
   // Specify the receiving timeouts until reporting an error
@@ -64,10 +103,8 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   tv.tv_usec = 0;
   int ret = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
   if (ret < 0) {
-    stat.summary(DiagStatus::ERROR, "setsockopt error");
-    stat.add("setsockopt", strerror(errno));
     close(sock);
-    return;
+    return "setsockopt error: " + std::string(strerror(errno));
   }
 
   // Connect the socket referred to by the file descriptor
@@ -78,35 +115,27 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
   if (ret < 0) {
-    stat.summary(DiagStatus::ERROR, "connect error");
-    stat.add("connect", strerror(errno));
     close(sock);
-    return;
+    return "connect error: " + std::string(strerror(errno));
   }
 
   // Receive messages from a socket
   char buf[1024] = "";
   ret = recv(sock, buf, sizeof(buf) - 1, 0);
   if (ret < 0) {
-    stat.summary(DiagStatus::ERROR, "recv error");
-    stat.add("recv", strerror(errno));
     close(sock);
-    return;
+    return "recv error: " + std::string(strerror(errno));
   }
   // No data received
   if (ret == 0) {
-    stat.summary(DiagStatus::ERROR, "recv error");
-    stat.add("recv", "No data received");
     close(sock);
-    return;
+    return "recv error: " + std::string("No data received");
   }
 
   // Close the file descriptor FD
   ret = close(sock);
   if (ret < 0) {
-    stat.summary(DiagStatus::ERROR, "close error");
-    stat.add("close", strerror(errno));
-    return;
+    return "close error: " + std::string(strerror(errno));
   }
 
   // Restore MSR information
@@ -117,22 +146,16 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     boost::archive::text_iarchive oa(iss);
     oa >> info;
   } catch (const std::exception & e) {
-    stat.summary(DiagStatus::ERROR, "recv error");
-    stat.add("recv", e.what());
-    return;
+    return "recv error: " + std::string(e.what());
   }
 
   // msr_reader returns an error
   if (info.error_code_ != 0) {
-    stat.summary(DiagStatus::ERROR, "msr_reader error");
-    stat.add("msr_reader", strerror(info.error_code_));
-    return;
+    return "msr_reader error: " + std::string(strerror(info.error_code_));
   }
 
   int level = DiagStatus::OK;
-  int whole_level = DiagStatus::OK;
   int index = 0;
-
   for (auto itr = info.pkg_thermal_status_.begin(); itr != info.pkg_thermal_status_.end();
        ++itr, ++index) {
     if (*itr) {
@@ -141,15 +164,33 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
       level = DiagStatus::OK;
     }
 
-    stat.add(fmt::format("CPU {}: Pkg Thermal Status", index), thermal_dict_.at(level));
-
-    whole_level = std::max(whole_level, level);
+    vector.push_back(level);
   }
+  return "";
+}
 
-  stat.summary(whole_level, thermal_dict_.at(whole_level));
+void CPUMonitor::onTimer()
+{
+  CPUMonitorBase::onTimer();
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+  // Remember start time to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  {
+    stop_watch.tic("execution_time");
+
+    std::string error_str;
+    std::vector<int> vector;
+
+    error_str = this->executeReadThrottling(vector);
+    // Measure elapsed time since start time and report
+    const double elapsed_ms = stop_watch.toc("execution_time");
+    {
+      std::lock_guard<std::mutex> lock(throttle_mutex_);
+      throttle_error_str_ = error_str;
+      throttle_vector_ = vector;
+      throttle_elapsed_ms_ = elapsed_ms;
+    }
+  }
 }
 
 void CPUMonitor::getTempNames()

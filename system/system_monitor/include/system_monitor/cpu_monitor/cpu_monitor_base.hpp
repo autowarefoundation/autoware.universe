@@ -54,6 +54,31 @@ typedef struct cpu_freq_info
   cpu_freq_info(int index, const std::string & path) : index_(index), path_(path) {}
 } cpu_freq_info;
 
+/**
+ * @brief CPU usage information
+ */
+typedef struct cpu_usage_info
+{
+  std::string cpu_name_;  //!< @brief cpu name
+  int usr_;               //!< @brief usr usage [jiffies]
+  int nice_;              //!< @brief nice usage [jiffies]
+  int sys_;               //!< @brief sys usage [jiffies]
+  int idle_;              //!< @brief idle usage [jiffies]
+  int iowait_;            //!< @brief iowait usage [jiffies]
+  int irq_;               //!< @brief irq usage [jiffies]
+  int soft_;              //!< @brief soft usage [jiffies]
+  int steal_;             //!< @brief steal usage [jiffies]
+
+  cpu_usage_info()
+  : usr_(-1), nice_(-1), sys_(-1), idle_(-1), iowait_(-1), irq_(-1), soft_(-1), steal_(-1)
+  {
+  }
+
+  int totalTime() const { return usr_ + nice_ + sys_ + idle_ + iowait_ + irq_ + soft_ + steal_; }
+
+  int totalActiveTime() const { return usr_ + nice_ + sys_ + irq_ + soft_ + steal_; }
+} cpu_usage_info;
+
 class CPUMonitorBase : public rclcpp::Node
 {
 public:
@@ -74,6 +99,7 @@ public:
 
 protected:
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
+  using CpuStatus = tier4_external_api_msgs::msg::CpuStatus;
 
   /**
    * @brief constructor
@@ -133,12 +159,42 @@ protected:
   virtual void checkFrequency(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
+  /**
+   * @brief Timer callback to execute all checks
+   */
+  virtual void onTimer();
+
+  /**
+   * @brief execute reading temperature
+   */
+  virtual std::string executeReadTemp(std::map<std::string, float> & map);
+
+  /**
+   * @brief execute reading usage
+   */
+  virtual std::string executeReadUsage(std::map<std::string, CpuStatus> & map);
+
+  /**
+   * @brief execute reading load
+   */
+  virtual std::string executeReadLoad(double (&avg)[3]);
+
+  /**
+   * @brief execute reading frequency
+   */
+  virtual std::string executeReadFrequency(std::map<int, float> & map);
+
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
-  char hostname_[HOST_NAME_MAX + 1];        //!< @brief host name
-  int num_cores_;                           //!< @brief number of cores
-  std::vector<cpu_temp_info> temps_;        //!< @brief CPU list for temperature
-  std::vector<cpu_freq_info> freqs_;        //!< @brief CPU list for frequency
+  rclcpp::TimerBase::SharedPtr timer_;                     //!< @brief Timer to execute onTempTimer
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
+
+  char hostname_[HOST_NAME_MAX + 1];         //!< @brief host name
+  int num_cores_;                            //!< @brief number of cores
+  std::vector<cpu_temp_info> temps_;         //!< @brief CPU list for temperature
+  std::vector<cpu_freq_info> freqs_;         //!< @brief CPU list for frequency
+  std::vector<cpu_usage_info> prev_usages_;  //!< @brief CPU list for usage
+
   std::vector<int> usage_warn_check_cnt_;   //!< @brief CPU list for usage over warn check counter
   std::vector<int> usage_error_check_cnt_;  //!< @brief CPU list for usage over error check counter
   bool mpstat_exists_;                      //!< @brief flag if mpstat exists
@@ -148,6 +204,32 @@ protected:
   int usage_warn_count_;   //!< @brief continuous count over usage_warn_ to generate warning
   int usage_error_count_;  //!< @brief continuous count over usage_error_ to generate error
   bool usage_avg_;         //!< @brief Check CPU usage calculated as averages among all processors
+
+  int temp_timeout_;   //!< @brief Timeout duration for reading temperature
+  int usage_timeout_;  //!< @brief Timeout duration for reading usage
+  int load_timeout_;   //!< @brief Timeout duration for reading load
+  int freq_timeout_;   //!< @brief Timeout duration for reading frequency
+
+  std::mutex temp_mutex_;                  //!< @brief Mutex for output from reading temperature
+  std::string temp_error_str_;             //!< @brief Error string
+  std::map<std::string, float> temp_map_;  //!< @brief CPU temperature map
+  double temp_elapsed_ms_;                 //!< @brief Execution time of reading temperature
+
+  std::mutex usage_mutex_;                      //!< @brief Mutex for output from reading usage
+  std::string usage_error_str_;                 //!< @brief Error string
+  std::map<std::string, CpuStatus> usage_map_;  //!< @brief CPU usage map
+  double usage_elapsed_ms_;                     //!< @brief Execution time of reading usage
+
+  std::mutex load_mutex_;       //!< @brief Mutex for output from reading load
+  std::string load_error_str_;  //!< @brief Error string
+  double load_avg_[3];          //!< @brief CPU load average
+  double load_elapsed_ms_;      //!< @brief Execution time of reading load
+
+  std::mutex freq_mutex_;          //!< @brief Mutex for output from reading frequency
+  std::string freq_error_str_;     //!< @brief Error string
+  std::map<int, float> freq_map_;  //!< @brief CPU frequency vector
+  double freq_elapsed_ms_;         //!< @brief Execution time of reading frequency
+  rclcpp::TimerBase::SharedPtr freq_timeout_timer_;  //!< @brief Timeout for reading frequency
 
   /**
    * @brief CPU temperature status messages

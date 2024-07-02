@@ -23,6 +23,7 @@
 #include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
 
 #include <string>
+#include <vector>
 
 class CPUMonitor : public CPUMonitorBase
 {
@@ -44,6 +45,16 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
 
   /**
+   * @brief check CPU information
+   */
+  void onTimer() override;
+
+  /**
+   * @brief execute read throttling
+   */
+  std::string executeReadThrottling(std::vector<int> & vector);
+
+  /**
    * @brief get names for core temperature files
    */
   void getTempNames() override;
@@ -53,7 +64,13 @@ protected:
    */
   void modprobeMSR();
 
-  int msr_reader_port_;  //!< @brief port number to connect to msr_reader
+  int msr_reader_port_;   //!< @brief port number to connect to msr_reader
+  int throttle_timeout_;  //!< @brief Timeout for reading thermal throttling
+
+  std::mutex throttle_mutex_;         //!< @brief Mutex for output from reading thermal throttling
+  std::string throttle_error_str_;    //!< @brief Error string
+  std::vector<int> throttle_vector_;  //!< @brief Vector of core id and thermal throttling status
+  double throttle_elapsed_ms_;        //!< @brief Execution time of reading thermal throttling
 };
 
 #endif  // SYSTEM_MONITOR__CPU_MONITOR__INTEL_CPU_MONITOR_HPP_
