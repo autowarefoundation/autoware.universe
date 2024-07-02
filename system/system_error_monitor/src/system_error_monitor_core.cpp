@@ -229,18 +229,6 @@ AutowareErrorMonitor::AutowareErrorMonitor(const rclcpp::NodeOptions & options)
 
   using std::placeholders::_1;
   using std::placeholders::_2;
-  // Subscriber
-  sub_diag_array_ = create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
-    "input/diag_array", rclcpp::QoS{1}, std::bind(&AutowareErrorMonitor::onDiagArray, this, _1));
-  sub_current_gate_mode_ = create_subscription<tier4_control_msgs::msg::GateMode>(
-    "~/input/current_gate_mode", rclcpp::QoS{1},
-    std::bind(&AutowareErrorMonitor::onCurrentGateMode, this, _1));
-  sub_autoware_state_ = create_subscription<autoware_system_msgs::msg::AutowareState>(
-    "~/input/autoware_state", rclcpp::QoS{1},
-    std::bind(&AutowareErrorMonitor::onAutowareState, this, _1));
-  sub_control_mode_ = create_subscription<autoware_vehicle_msgs::msg::ControlModeReport>(
-    "~/input/control_mode", rclcpp::QoS{1},
-    std::bind(&AutowareErrorMonitor::onControlMode, this, _1));
 
   // Publisher
   pub_hazard_status_ = create_publisher<autoware_system_msgs::msg::HazardStatusStamped>(
@@ -440,6 +428,11 @@ bool AutowareErrorMonitor::isDataHeartbeatTimeout()
 
 void AutowareErrorMonitor::onTimer()
 {
+  handleDiagArray();
+  handleAutowareState();
+  handleCurrentGateMode();
+  handleControlMode();
+
   if (!isDataReady()) {
     if ((this->now() - initialized_time_).seconds() > params_.data_ready_timeout) {
       RCLCPP_WARN_THROTTLE(
@@ -463,6 +456,39 @@ void AutowareErrorMonitor::onTimer()
 
   updateHazardStatus();
   publishHazardStatus(hazard_status_);
+}
+
+void AutowareErrorMonitor::handleDiagArray()
+{
+  auto diag_array_msg = sub_diag_array_.takeNewData();
+  while (diag_array_msg) {
+    onDiagArray(diag_array_msg);
+    diag_array_msg = sub_diag_array_.takeNewData();
+  }
+}
+
+void AutowareErrorMonitor::handleAutowareState()
+{
+  auto autoware_state_msg = sub_autoware_state_.takeNewData();
+  if (autoware_state_msg) {
+    onAutowareState(autoware_state_msg);
+  }
+}
+
+void AutowareErrorMonitor::handleCurrentGateMode()
+{
+  auto current_gate_msg = sub_current_gate_mode_.takeNewData();
+  if (current_gate_msg) {
+    onCurrentGateMode(current_gate_msg);
+  }
+}
+
+void AutowareErrorMonitor::handleControlMode()
+{
+  auto control_mode_msg = sub_control_mode_.takeNewData();
+  if (control_mode_msg) {
+    onControlMode(control_mode_msg);
+  }
 }
 
 boost::optional<DiagStamped> AutowareErrorMonitor::getLatestDiag(
