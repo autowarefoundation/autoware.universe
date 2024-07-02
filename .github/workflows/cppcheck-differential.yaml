@@ -42,15 +42,24 @@ jobs:
         id: get-modified-packages
         uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
 
+      - name: Get full paths of modified packages
+        id: get-full-paths
+        run: |
+          modified_packages="${{ steps.get-modified-packages.outputs.modified-packages }}"
+          paths=""
+          for pkg in $modified_packages; do
+            path=$(colcon list --packages-select $pkg | awk '{print $2}' | xargs realpath)
+            paths="$paths $path"
+          done
+          echo "::set-output name=full-paths::$paths"
+
       - name: Run Cppcheck on modified packages
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
         continue-on-error: true
         id: cppcheck
         run: |
           echo "Running Cppcheck on modified packages: ${{ steps.get-modified-packages.outputs.modified-packages }}"
-          modified-packages-with-full-path=$( for pkg in ${{ steps.get-modified-packages.outputs.modified-packages }}; do colcon list --packages-select $pkg | awk '{print $2}' | xargs -I {} realpath {}; done | tr '\n' ' ' )
-          echo "$modified-packages-with-full-path"
-          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions --inline-suppr $modified-packages-with-full-path 2> cppcheck-report.txt
+          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions --inline-suppr ${{ steps.get-full-paths.outputs.full-paths }} 2> cppcheck-report.txt
         shell: bash
 
       - name: Show cppcheck-report result
