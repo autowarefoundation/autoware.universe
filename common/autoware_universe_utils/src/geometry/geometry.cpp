@@ -383,6 +383,39 @@ std::optional<geometry_msgs::msg::Point> intersect(
   return intersect_point;
 }
 
+std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
+  const std::vector<geometry_msgs::msg::Point> & poly1,
+  const std::vector<geometry_msgs::msg::Point> & poly2)
+{
+  if (poly1.size() < 3 || poly2.size() < 3) {
+    return std::nullopt;
+  }
+
+  // check if all edges of poly1 do not intersect with those of poly2
+  std::vector<geometry_msgs::msg::Point> intersect_points;
+  for (size_t i = 0; i < poly1.size(); ++i) {
+    const auto & p1 = poly1.at(i);
+    const auto & p2 = poly1.at((i + 1) % poly1.size());
+    for (size_t j = 0; j < poly2.size(); ++j) {
+      const auto & q1 = poly2.at(j);
+      const auto & q2 = poly2.at((j + 1) % poly2.size());
+      const auto intersect_point = intersect(p1, p2, q1, q2);
+      if (intersect_point) {
+        intersect_points.push_back(*intersect_point);
+      }
+    }
+  }
+
+  const auto unique_points_itr = std::unique(
+    intersect_points.begin(), intersect_points.end(),
+    [](const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b) {
+      return std::hypot(a.x - b.x, a.y - b.y) < 1e-6;
+    });
+  intersect_points.erase(unique_points_itr, intersect_points.end());
+
+  return intersect_points;
+}
+
 std::optional<bool> within(
   const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly)
 {
