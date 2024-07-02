@@ -20,9 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git
-          sudo apt update
-          sudo apt install python3-colcon-common-extensions
+          sudo apt-get install -y git python3-colcon-common-extensions
 
       # cppcheck from apt does not yet support --check-level args, and thus install from snap
       - name: Install Cppcheck from snap
