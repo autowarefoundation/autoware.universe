@@ -31,6 +31,7 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -97,7 +98,8 @@ public:
     objects_of_interest_marker_interface_ptr_map_(
       std::move(objects_of_interest_marker_interface_ptr_map)),
     steering_factor_interface_ptr_(
-      std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
+      std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name))),
+    time_keeper_(std::make_shared<autoware::universe_utils::TimeKeeper>(&node))
   {
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
       uuid_map_.emplace(module_name, generateUUID());
@@ -641,6 +643,8 @@ protected:
   mutable MarkerArray debug_marker_;
 
   mutable MarkerArray drivable_lanes_marker_;
+
+  mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
 };
 
 }  // namespace autoware::behavior_path_planner
