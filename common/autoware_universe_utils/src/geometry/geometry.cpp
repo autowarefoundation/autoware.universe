@@ -421,7 +421,10 @@ std::optional<bool> within(
 {
   // check if all points of poly_contained are within poly_containing
   for (const auto & point : poly_contained) {
-    if (!within(point, poly_containing).value_or(true)) {
+    const auto is_point_within = within(point, poly_containing);
+    if (!is_point_within) {
+      return std::nullopt;
+    } else if (!*is_point_within) {
       return false;
     }
   }
