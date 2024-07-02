@@ -63,7 +63,6 @@ nav_msgs::msg::Odometry to_odometry(
     0.0, ego_pitch_angle, vehicle_model_ptr->getYaw());
   odometry.twist.twist.linear.x = vehicle_model_ptr->getVx();
   odometry.twist.twist.angular.z = vehicle_model_ptr->getWz();
-  int a;
 
   return odometry;
 }
