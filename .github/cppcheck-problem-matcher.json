@@ -1,10 +1,8 @@
 {
-  "problemMatcher":
-  [
+  "problemMatcher": [
     {
       "owner": "cppcheck",
-      "pattern":
-      [
+      "pattern": [
         {
           "regexp": "^([^:]+):(\\d+):(\\d*):\\s(style|performance|warning|error):\\s(.*)$",
           "file": 1,
