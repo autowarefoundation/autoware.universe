@@ -1,0 +1,8 @@
+/mission_planner:
+  mission_planner:
+    ros__parameters:
+      distance_to_centerline_threshold:
+        0.25 # [m] threshold to determine if lane change mission was successful
+        # if ego is in proximity to the goal centerline
+      projection_distance_on_goallane: 20.0 # [m] projection distance of goal point of a mission
+      retrigger_attempts_max: 10 # Number of attempts for triggering a lane change

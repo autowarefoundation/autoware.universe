@@ -1,0 +1,4 @@
+/mission_planner:
+  mission_lane_converter:
+    ros__parameters:
+      target_speed: 3.2 # [mps] constant target speed of the mission trajectories

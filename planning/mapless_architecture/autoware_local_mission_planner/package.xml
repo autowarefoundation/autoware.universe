@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>autoware_local_mission_planner</name>
+  <version>0.0.1</version>
+  <description>Mission Planner</description>
+  <maintainer email="simon.eisenmann@driveblocks.ai">driveblocks</maintainer>
+  <license>driveblocks proprietary license</license>
+
+  <buildtool_depend>autoware_cmake</buildtool_depend>
+
+  <exec_depend>ros2launch</exec_depend>
+
+  <depend>autoware_local_mission_planner_common</depend>
+  <depend>autoware_planning_msgs</depend>
+  <depend>builtin_interfaces</depend>
+  <depend>geometry_msgs</depend>
+  <depend>lanelet2_core</depend>
+  <depend>rclcpp</depend>
+  <depend>tf2</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>visualization_msgs</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>autoware_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
