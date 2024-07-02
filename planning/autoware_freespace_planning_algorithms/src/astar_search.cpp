@@ -74,6 +74,9 @@ AstarSearch::AstarSearch(
   steering_resolution_ = collision_vehicle_shape_.max_steering / planner_common_param_.turning_steps;
   heading_resolution_ = 2.0 * M_PI / planner_common_param_.theta_size;
 
+  double avg_steering = steering_resolution_ + (collision_vehicle_shape_.max_steering - steering_resolution_) / 2.0;
+  avg_turning_radius_ = kinematic_bicycle_model::getTurningRadius(collision_vehicle_shape_.base_length, avg_steering);
+
   setTransitionTable();
 }
 
@@ -191,11 +194,8 @@ double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose) const
   double total_cost = 0.0;
   // Temporarily, until reeds_shepp gets stable.
   if (use_reeds_shepp_) {
-    const double radius = kinematic_bicycle_model::getTurningRadius(
-      collision_vehicle_shape_.base_length, collision_vehicle_shape_.max_steering);
-
     total_cost +=
-      calcReedsSheppDistance(pose, goal_pose_, radius) * astar_param_.distance_heuristic_weight;
+      calcReedsSheppDistance(pose, goal_pose_, avg_turning_radius_) * astar_param_.distance_heuristic_weight;
   } else {
     total_cost += autoware::universe_utils::calcDistance2d(pose, goal_pose_) *
                   astar_param_.distance_heuristic_weight;

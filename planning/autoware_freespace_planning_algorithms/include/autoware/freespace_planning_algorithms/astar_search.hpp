@@ -168,6 +168,7 @@ private:
 
   double steering_resolution_;
   double heading_resolution_;
+  double avg_turning_radius_;
 };
 }  // namespace autoware::freespace_planning_algorithms
 
