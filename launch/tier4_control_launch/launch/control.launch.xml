@@ -246,6 +246,6 @@
   </group>
 
   <group if="$(eval &quot;'$(var trajectory_follower_mode)' == 'smart_mpc_trajectory_follower'&quot;)">
-    <node pkg="autoware_smart_mpc_trajectory_follower" exec="pympc_trajectory_follower.py" name="pympc_trajectory_follower"/>
+    <node pkg="autoware_smart_mpc_trajectory_follower" exec="pympc_trajectory_follower.py" name="controller_node_exe"/>
   </group>
 </launch>
