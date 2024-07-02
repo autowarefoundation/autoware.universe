@@ -42,13 +42,13 @@ jobs:
         id: get-modified-packages
         uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
 
-      - name: Run Cppcheck on changed packages
+      - name: Run Cppcheck on modified packages
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
         continue-on-error: true
         id: cppcheck
         run: |
-          echo "Running Cppcheck on changed packages: ${{ steps.get-changed-packages.outputs.changed-packages }}"
-          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions --inline-suppr ${{ steps.get-changed-packages.outputs.changed-packages }} 2> cppcheck-report.txt
+          echo "Running Cppcheck on modified packages: ${{ steps.get-modified-packages.outputs.modified-packages }}"
+          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions --inline-suppr ${{ steps.get-modified-packages.outputs.modified-packages }} 2> cppcheck-report.txt
         shell: bash
 
       - name: Show cppcheck-report result
