@@ -1,0 +1,27 @@
+nodes:
+  - id: rust_send
+    custom:
+      build: cargo build -p sender
+      source: target/debug/sender
+      inputs:
+        tick: dora/timer/millis/20
+      outputs:
+        - data
+
+  - id: rust_send2
+    custom:
+      build: cargo build -p rust-send2
+      source: target/debug/rust-send2
+      inputs:
+        tick: dora/timer/millis/50
+      outputs:
+        - data2
+
+  - id: rust_receive
+    custom:
+      build: cargo build -p receive
+      source: target/debug/receive
+      inputs:
+        data: rust_send/data
+        data2: rust_send2/data2
+

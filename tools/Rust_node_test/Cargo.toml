@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+    "sender/",
+    "send2/",
+    "receive/",
+]
+
+resolver = "2"
