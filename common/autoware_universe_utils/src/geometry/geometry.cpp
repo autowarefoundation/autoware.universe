@@ -462,19 +462,6 @@ std::optional<bool> within(
     }
   }
 
-  // check if all edges of poly_contained do not intersect with those of poly_containing
-  for (size_t i = 0; i < poly_contained.size(); ++i) {
-    const auto & p1 = poly_contained.at(i);
-    const auto & p2 = poly_contained.at((i + 1) % poly_contained.size());
-    for (size_t j = 0; j < poly_containing.size(); ++j) {
-      const auto & q1 = poly_containing.at(j);
-      const auto & q2 = poly_containing.at((j + 1) % poly_containing.size());
-      if (intersect(p1, p2, q1, q2).has_value()) {
-        return false;
-      }
-    }
-  }
-
   return true;
 }
 
