@@ -602,12 +602,12 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
       const auto target_obstacles =
         convertToObstacles(ego_odom, *pointcloud_ptr, traj_points, msg->header);
 
-      const auto & [stop_pointcloud_obstacles, cruise_pointcloud_obstacles, slow_down_pointcloud_obstacles] =
+      const auto & [stop_pc_obstacles, cruise_pc_obstacles, slow_down_pc_obstacles] =
         determineEgoBehaviorAgainstPointCloudObstacles(ego_odom, traj_points, target_obstacles);
 
-      concatenate(stop_obstacles, stop_pointcloud_obstacles);
-      concatenate(cruise_obstacles, cruise_pointcloud_obstacles);
-      concatenate(slow_down_obstacles, slow_down_pointcloud_obstacles);
+      concatenate(stop_obstacles, stop_pc_obstacles);
+      concatenate(cruise_obstacles, cruise_pc_obstacles);
+      concatenate(slow_down_obstacles, slow_down_pc_obstacles);
     }
     return std::make_tuple(stop_obstacles, cruise_obstacles, slow_down_obstacles);
   }();
