@@ -329,7 +329,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
   }
 }
 
-TEST_F(DistortionCorrectorTest, TestTestUndistortPointCloudWithEmptyPointCloud)
+TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyPointCloud)
 {
   rclcpp::Time timestamp = node_->get_clock()->now();
   // Generate and process multiple twist messages
