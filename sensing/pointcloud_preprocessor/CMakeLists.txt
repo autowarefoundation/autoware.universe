@@ -24,11 +24,13 @@ include_directories(
 
 add_library(pointcloud_preprocessor_filter_base SHARED
   src/filter.cpp
+  src/utility/memory.cpp
 )
 
 target_include_directories(pointcloud_preprocessor_filter_base PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+  ${autoware_point_types_INCLUDE_DIRS}
 )
 
 ament_target_dependencies(pointcloud_preprocessor_filter_base
@@ -39,6 +41,7 @@ ament_target_dependencies(pointcloud_preprocessor_filter_base
   tf2_ros
   autoware_universe_utils
   pcl_ros
+  autoware_point_types
 )
 
 add_library(faster_voxel_grid_downsample_filter SHARED
@@ -57,7 +60,6 @@ ament_target_dependencies(faster_voxel_grid_downsample_filter
 )
 
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED
-  src/utility/utilities.cpp
   src/concatenate_data/concatenate_and_time_sync_nodelet.cpp
   src/concatenate_data/concatenate_pointclouds.cpp
   src/time_synchronizer/time_synchronizer_nodelet.cpp
@@ -79,6 +81,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/blockage_diag/blockage_diag_nodelet.cpp
   src/polygon_remover/polygon_remover.cpp
   src/vector_map_filter/vector_map_inside_area_filter.cpp
+  src/utility/geometry.cpp
 )
 
 target_link_libraries(pointcloud_preprocessor_filter
