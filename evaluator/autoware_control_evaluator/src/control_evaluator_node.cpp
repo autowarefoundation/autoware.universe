@@ -14,8 +14,11 @@
 
 #include "autoware/control_evaluator/control_evaluator_node.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
+#include "autoware_lanelet2_extension/utility/query.hpp"
 
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -135,13 +138,18 @@ DiagnosticStatus controlEvaluatorNode::generateAEBDiagnosticStatus(const Diagnos
 
 DiagnosticStatus controlEvaluatorNode::generateLaneletDiagnosticStatus(const Pose & ego_pose) const
 {
-  const auto current_lane = [&]() {
-    lanelet::ConstLanelet closest_lanelet;
-    route_handler_.getClosestLaneletWithinRoute(ego_pose, &closest_lanelet);
-    return closest_lanelet;
+  const auto current_lanelets = [&]() {
+    lanelet::ConstLanelet closest_route_lanelet;
+    route_handler_.getClosestLaneletWithinRoute(ego_pose, &closest_route_lanelet);
+    const auto shoulder_lanelets = route_handler_.getShoulderLaneletsAtPose(ego_pose);
+    lanelet::ConstLanelets closest_lanelets{closest_route_lanelet};
+    closest_lanelets.insert(
+      closest_lanelets.end(), shoulder_lanelets.begin(), shoulder_lanelets.end());
+    return closest_lanelets;
   }();
-  const lanelet::ConstLanelets current_lanelets{current_lane};
   const auto arc_coordinates = lanelet::utils::getArcCoordinates(current_lanelets, ego_pose);
+  lanelet::ConstLanelet current_lane;
+  lanelet::utils::query::getClosestLanelet(current_lanelets, ego_pose, &current_lane);
 
   DiagnosticStatus status;
   status.name = "ego_lane_info";
