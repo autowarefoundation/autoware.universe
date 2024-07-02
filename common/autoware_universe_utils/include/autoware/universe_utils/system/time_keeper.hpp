@@ -103,8 +103,6 @@ private:
   std::vector<std::shared_ptr<TimeNode>> child_nodes_;
 };
 
-class ScopedStopWatch;
-
 /**
  * @brief Class for tracking and reporting the processing time of various functions
  */
@@ -138,14 +136,6 @@ public:
    * @param func_name Name of the function to end tracking
    */
   void end_track(const std::string & func_name);
-
-  /**
-   * @brief Create a ScopedStopWatch object to track the processing time of a function
-   *
-   * @param func_name Name of the function to be tracked
-   * @return ScopedStopWatch ScopedStopWatch object for tracking the function
-   */
-  ScopedStopWatch track(const std::string & func_name);
 
 private:
   rclcpp::Publisher<tier4_debug_msgs::msg::TimeTree>::SharedPtr

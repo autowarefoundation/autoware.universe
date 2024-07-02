@@ -133,9 +133,4 @@ ScopedStopWatch::~ScopedStopWatch()
   time_keepr_.end_track(func_name_);
 }
 
-inline ScopedStopWatch TimeKeeper::track(const std::string & func_name)
-{
-  return ScopedStopWatch(func_name, *this);
-}
-
 }  // namespace autoware::universe_utils
