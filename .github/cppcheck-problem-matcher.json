@@ -4,7 +4,7 @@
       "owner": "cppcheck",
       "pattern": [
         {
-          "regexp": "^([^:]+):(\\d+):(\\d*):\\s(style|performance|warning|error):\\s(.*)$",
+          "regexp": "^([^:]+):(\\d+):(\\d*):\\s(style|portability|performance|warning|error):\\s(.*)$",
           "file": 1,
           "line": 2,
           "column": 3,
