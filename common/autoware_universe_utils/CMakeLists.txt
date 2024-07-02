@@ -6,6 +6,8 @@ autoware_package()
 
 find_package(Boost REQUIRED)
 
+find_package(fmt REQUIRED)
+
 ament_auto_add_library(autoware_universe_utils SHARED
   src/geometry/geometry.cpp
   src/geometry/pose_deviation.cpp
@@ -16,6 +18,11 @@ ament_auto_add_library(autoware_universe_utils SHARED
   src/ros/marker_helper.cpp
   src/ros/logger_level_configure.cpp
   src/system/backtrace.cpp
+  src/system/time_keeper.cpp
+)
+
+target_link_libraries(autoware_universe_utils
+  fmt::fmt
 )
 
 if(BUILD_TESTING)
