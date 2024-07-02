@@ -584,6 +584,10 @@ std::optional<bool> within(
   const std::vector<geometry_msgs::msg::Point> & poly_contained,
   const std::vector<geometry_msgs::msg::Point> & poly_containing);
 
+std::optional<bool> disjoint(
+  const std::vector<geometry_msgs::msg::Point> & poly1,
+  const std::vector<geometry_msgs::msg::Point> & poly2);
+
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GEOMETRY_HPP_

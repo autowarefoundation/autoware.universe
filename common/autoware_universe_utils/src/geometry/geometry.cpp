@@ -445,4 +445,24 @@ std::optional<bool> within(
   return true;
 }
 
+std::optional<bool> disjoint(
+  const std::vector<geometry_msgs::msg::Point> & poly1,
+  const std::vector<geometry_msgs::msg::Point> & poly2)
+{
+  if (poly1.size() < 3) {
+    return std::nullopt;
+  }
+
+  for (const auto & point : poly1) {
+    const auto is_point_within = within(point, poly2);
+    if (!is_point_within) {
+      return std::nullopt;
+    } else if (*is_point_within) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 }  // namespace autoware::universe_utils
