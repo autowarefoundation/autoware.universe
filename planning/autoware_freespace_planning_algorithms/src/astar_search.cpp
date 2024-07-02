@@ -275,10 +275,6 @@ void AstarSearch::expandNodes(AstarNode & current_node)
   }
 }
 
-  // Failed to find path
-  return false;
-}
-
 void AstarSearch::setPath(const AstarNode & goal_node)
 {
   std_msgs::msg::Header header;
