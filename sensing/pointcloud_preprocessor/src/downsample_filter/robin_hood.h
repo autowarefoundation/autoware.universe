@@ -2026,41 +2026,6 @@ public:
     return emplace(std::move(keyval)).first;
   }
 
-  // Returns 1 if key is found, 0 otherwise.
-  size_t count(const key_type & key) const
-  {  // NOLINT (modernize-use-nodiscard)
-    ROBIN_HOOD_TRACE(this)
-    auto kv = mKeyVals + findIdx(key);
-    if (kv != reinterpret_cast_no_cast_align_warning<Node *>(mInfo)) {
-      return 1;
-    }
-    return 0;
-  }
-
-  template <typename OtherKey, typename Self_ = Self>
-  // NOLINTNEXTLINE (modernize-use-nodiscard)
-  typename std::enable_if<Self_::is_transparent, size_t>::type count(const OtherKey & key) const
-  {
-    ROBIN_HOOD_TRACE(this)
-    auto kv = mKeyVals + findIdx(key);
-    if (kv != reinterpret_cast_no_cast_align_warning<Node *>(mInfo)) {
-      return 1;
-    }
-    return 0;
-  }
-
-  bool contains(const key_type & key) const
-  {  // NOLINT (modernize-use-nodiscard)
-    return 1U == count(key);
-  }
-
-  template <typename OtherKey, typename Self_ = Self>
-  // NOLINTNEXTLINE (modernize-use-nodiscard)
-  typename std::enable_if<Self_::is_transparent, bool>::type contains(const OtherKey & key) const
-  {
-    return 1U == count(key);
-  }
-
   // Returns a reference to the value found for key.
   // Throws std::out_of_range if element cannot be found
   template <typename Q = mapped_type>
