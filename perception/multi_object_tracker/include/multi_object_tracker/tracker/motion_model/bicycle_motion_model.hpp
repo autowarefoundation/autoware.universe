@@ -19,7 +19,7 @@
 #ifndef MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
 #define MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__BICYCLE_MOTION_MODEL_HPP_
 
-#include "kalman_filter/kalman_filter.hpp"
+#include "autoware_kalman_filter/kalman_filter.hpp"
 #include "multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 
 #include <Eigen/Core>
