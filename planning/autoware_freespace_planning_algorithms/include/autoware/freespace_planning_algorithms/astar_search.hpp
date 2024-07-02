@@ -151,17 +151,12 @@ private:
   bool isGoal(const AstarNode & node) const;
   geometry_msgs::msg::Pose node2pose(const AstarNode & node) const;
 
-  AstarNode * getNodeRef(const IndexXYT & index)
-  {
-    return &(graph_.emplace(getKey(index), AstarNode()).first->second);
-  }
-
   // Algorithm specific param
   AstarParam astar_param_;
 
   // hybrid astar variables
   TransitionTable transition_table_;
-  std::unordered_map<uint, AstarNode> graph_;
+  std::vector<AstarNode> graph_;
 
   std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison> openlist_;
 

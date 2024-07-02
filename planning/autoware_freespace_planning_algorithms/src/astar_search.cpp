@@ -114,7 +114,7 @@ void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 
   int total_astar_node_count =
     costmap_.info.width * costmap_.info.height * planner_common_param_.theta_size;
-  graph_.reserve(total_astar_node_count);
+  graph_.resize(total_astar_node_count);
 }
 
 bool AstarSearch::makePlan(
@@ -146,7 +146,7 @@ void AstarSearch::clearNodes()
   // point to deleted node.
   openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
 
-  graph_ = std::unordered_map<uint, AstarNode>();
+  graph_.clear();
 }
 
 bool AstarSearch::setStartNode()
@@ -158,7 +158,7 @@ bool AstarSearch::setStartNode()
   }
 
   // Set start node
-  AstarNode * start_node = getNodeRef(index);
+  AstarNode * start_node = &graph_[getKey(index)];
   start_node->x = start_pose_.position.x;
   start_node->y = start_pose_.position.y;
   start_node->theta = 2.0 * M_PI / planner_common_param_.theta_size * index.theta;
@@ -249,7 +249,7 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     if (isOutOfRange(next_index)) continue;
     if (isObs(next_index)) continue;
 
-    AstarNode * next_node = getNodeRef(next_index);
+    AstarNode * next_node = &graph_[getKey(next_index)];
     if (next_node->status == NodeStatus::Closed) continue;
     if (detectCollision(next_index)) continue;
 
