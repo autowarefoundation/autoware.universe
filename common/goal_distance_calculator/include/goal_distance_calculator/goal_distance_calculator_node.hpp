@@ -17,9 +17,10 @@
 
 #include "goal_distance_calculator/goal_distance_calculator.hpp"
 
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -44,25 +45,18 @@ public:
 
 private:
   // Subscriber
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr sub_initial_pose_;
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_;
-  rclcpp::Subscription<autoware_planning_msgs::msg::LaneletRoute>::SharedPtr sub_route_;
-
-  // Data Buffer
-  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
-  autoware_planning_msgs::msg::LaneletRoute::SharedPtr route_;
-
-  // Callback
-  void onRoute(const autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr & msg);
+  autoware::universe_utils::SelfPoseListener self_pose_listener_;
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::LaneletRoute>
+    sub_route_{this, "/planning/mission_planning/route"};
 
   // Publisher
-  tier4_autoware_utils::DebugPublisher debug_publisher_;
+  autoware::universe_utils::DebugPublisher debug_publisher_;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
 
-  bool isDataReady();
-  bool isDataTimeout();
+  bool tryGetCurrentPose(geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose);
+  bool tryGetRoute(autoware_planning_msgs::msg::LaneletRoute::ConstSharedPtr route);
   void onTimer();
 
   // Parameter
@@ -70,8 +64,6 @@ private:
   Param param_;
 
   // Core
-  Input input_;
-  Output output_;
   std::unique_ptr<GoalDistanceCalculator> goal_distance_calculator_;
 };
 }  // namespace goal_distance_calculator

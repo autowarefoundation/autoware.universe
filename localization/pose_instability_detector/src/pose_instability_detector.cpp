@@ -14,7 +14,7 @@
 
 #include "autoware/pose_instability_detector/pose_instability_detector.hpp"
 
-#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
@@ -118,21 +118,21 @@ void PoseInstabilityDetector::callback_timer()
   prev_pose->header = prev_odometry_->header;
   prev_pose->pose = prev_odometry_->pose.pose;
 
-  Pose::SharedPtr DR_pose = std::make_shared<Pose>();
-  dead_reckon(prev_pose, latest_odometry_time, twist_buffer_, DR_pose);
+  Pose::SharedPtr dr_pose = std::make_shared<Pose>();
+  dead_reckon(prev_pose, latest_odometry_time, twist_buffer_, dr_pose);
 
   // compare dead reckoning pose and latest_odometry_
   const Pose latest_ekf_pose = latest_odometry_->pose.pose;
-  const Pose ekf_to_DR = tier4_autoware_utils::inverseTransformPose(*DR_pose, latest_ekf_pose);
-  const geometry_msgs::msg::Point pos = ekf_to_DR.position;
-  const auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_DR.orientation);
+  const Pose ekf_to_dr = autoware::universe_utils::inverseTransformPose(*dr_pose, latest_ekf_pose);
+  const geometry_msgs::msg::Point pos = ekf_to_dr.position;
+  const auto [ang_x, ang_y, ang_z] = quat_to_rpy(ekf_to_dr.orientation);
   const std::vector<double> values = {pos.x, pos.y, pos.z, ang_x, ang_y, ang_z};
 
   // publish diff_pose for debug
   PoseStamped diff_pose;
   diff_pose.header.stamp = latest_odometry_time;
   diff_pose.header.frame_id = "base_link";
-  diff_pose.pose = ekf_to_DR;
+  diff_pose.pose = ekf_to_dr;
   diff_pose_pub_->publish(diff_pose);
 
   // publish diagnostics
@@ -178,7 +178,7 @@ void PoseInstabilityDetector::callback_timer()
 }
 
 PoseInstabilityDetector::ThresholdValues PoseInstabilityDetector::calculate_threshold(
-  double interval_sec)
+  double interval_sec) const
 {
   // Calculate maximum longitudinal difference
   const double longitudinal_difference =
@@ -229,7 +229,7 @@ PoseInstabilityDetector::ThresholdValues PoseInstabilityDetector::calculate_thre
   const double yaw_difference = roll_difference;
 
   // Set thresholds
-  ThresholdValues result_values;
+  ThresholdValues result_values{};
   result_values.position_x = longitudinal_difference + pose_estimator_longitudinal_tolerance_;
   result_values.position_y = lateral_difference + pose_estimator_lateral_tolerance_;
   result_values.position_z = vertical_difference + pose_estimator_vertical_tolerance_;
@@ -354,6 +354,9 @@ PoseInstabilityDetector::clip_out_necessary_twist(
     start_twist.header.stamp = start_time;
     result_deque.push_front(start_twist);
   } else {
+    if (result_deque.size() < 2) {
+      return result_deque;
+    }
     // If the first element is earlier than start_time, interpolate the first element
     rclcpp::Time time0 = rclcpp::Time(result_deque[0].header.stamp);
     rclcpp::Time time1 = rclcpp::Time(result_deque[1].header.stamp);
@@ -380,6 +383,9 @@ PoseInstabilityDetector::clip_out_necessary_twist(
     end_twist.header.stamp = end_time;
     result_deque.push_back(end_twist);
   } else {
+    if (result_deque.size() < 2) {
+      return result_deque;
+    }
     // If the last element is later than end_time, interpolate the last element
     rclcpp::Time time0 = rclcpp::Time(result_deque[result_deque.size() - 2].header.stamp);
     rclcpp::Time time1 = rclcpp::Time(result_deque[result_deque.size() - 1].header.stamp);

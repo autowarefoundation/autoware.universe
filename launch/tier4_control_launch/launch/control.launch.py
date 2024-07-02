@@ -53,7 +53,8 @@ def launch_setup(context, *args, **kwargs):
     with open(LaunchConfiguration("control_validator_param_path").perform(context), "r") as f:
         control_validator_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(
-        LaunchConfiguration("operation_mode_transition_manager_param_path").perform(context), "r"
+        LaunchConfiguration("operation_mode_transition_manager_param_path").perform(context),
+        "r",
     ) as f:
         operation_mode_transition_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
     with open(LaunchConfiguration("shift_decider_param_path").perform(context), "r") as f:
@@ -69,7 +70,7 @@ def launch_setup(context, *args, **kwargs):
     trajectory_follower_mode = LaunchConfiguration("trajectory_follower_mode").perform(context)
 
     controller_component = ComposableNode(
-        package="trajectory_follower_node",
+        package="autoware_trajectory_follower_node",
         plugin="autoware::motion::control::trajectory_follower_node::Controller",
         name="controller_node_exe",
         namespace="trajectory_follower",
@@ -122,9 +123,9 @@ def launch_setup(context, *args, **kwargs):
 
     # shift decider
     shift_decider_component = ComposableNode(
-        package="shift_decider",
-        plugin="ShiftDecider",
-        name="shift_decider",
+        package="autoware_shift_decider",
+        plugin="autoware::shift_decider::ShiftDecider",
+        name="autoware_shift_decider",
         remappings=[
             ("input/control_cmd", "/control/trajectory_follower/control_cmd"),
             ("input/state", "/autoware/state"),
@@ -147,6 +148,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/velocity", "/vehicle/status/velocity_status"),
             ("~/input/imu", "/sensing/imu/imu_data"),
             ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/input/objects", "/perception/object_recognition/objects"),
             (
                 "~/input/predicted_trajectory",
                 "/control/trajectory_follower/lateral/predicted_trajectory",
@@ -245,10 +247,10 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # operation mode transition manager
-    operation_mode_transition_manager_component = ComposableNode(
-        package="operation_mode_transition_manager",
-        plugin="operation_mode_transition_manager::OperationModeTransitionManager",
-        name="operation_mode_transition_manager",
+    autoware_operation_mode_transition_manager_component = ComposableNode(
+        package="autoware_operation_mode_transition_manager",
+        plugin="autoware::operation_mode_transition_manager::OperationModeTransitionManager",
+        name="autoware_operation_mode_transition_manager",
         remappings=[
             # input
             ("kinematics", "/localization/kinematic_state"),
@@ -347,7 +349,7 @@ def launch_setup(context, *args, **kwargs):
                 lane_departure_component,
                 shift_decider_component,
                 vehicle_cmd_gate_component,
-                operation_mode_transition_manager_component,
+                autoware_operation_mode_transition_manager_component,
                 glog_component,
             ],
         )
@@ -362,7 +364,7 @@ def launch_setup(context, *args, **kwargs):
                 lane_departure_component,
                 shift_decider_component,
                 vehicle_cmd_gate_component,
-                operation_mode_transition_manager_component,
+                autoware_operation_mode_transition_manager_component,
                 glog_component,
             ],
         )
@@ -373,12 +375,17 @@ def launch_setup(context, *args, **kwargs):
 
     # control evaluator
     control_evaluator_component = ComposableNode(
-        package="control_evaluator",
+        package="autoware_control_evaluator",
         plugin="control_diagnostics::controlEvaluatorNode",
         name="control_evaluator",
         remappings=[
             ("~/input/diagnostics", "/diagnostics"),
-            ("~/output/metrics", "~/metrics"),
+            ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/input/acceleration", "/localization/acceleration"),
+            ("~/input/trajectory", "/planning/scenario_planning/trajectory"),
+            ("~/metrics", "/diagnostic/control_evaluator/metrics"),
+            ("~/input/vector_map", "/map/vector_map"),
+            ("~/input/route", "/planning/mission_planning/route"),
         ],
     )
 
@@ -440,7 +447,7 @@ def launch_setup(context, *args, **kwargs):
     smart_mpc_trajectory_follower = Node(
         package="autoware_smart_mpc_trajectory_follower",
         executable="pympc_trajectory_follower.py",
-        name="pympc_trajectory_follower",
+        name="controller_node_exe",
     )
     if trajectory_follower_mode == "trajectory_follower_node":
         return [group, control_validator_group]

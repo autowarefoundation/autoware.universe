@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
+#include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
 
-#include "autoware_velocity_smoother/trajectory_utils.hpp"
-#include "motion_utils/resample/resample.hpp"
-#include "motion_utils/trajectory/conversion.hpp"
+#include "autoware/motion_utils/resample/resample.hpp"
+#include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/velocity_smoother/trajectory_utils.hpp"
 
 #include <algorithm>
 #include <string>
@@ -252,7 +252,7 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::resampleTrajectory(
     const auto tp1 = input.at(i + 1);
 
     const double dist_thr = 0.001;  // 1mm
-    const double dist_tp0_tp1 = tier4_autoware_utils::calcDistance2d(tp0, tp1);
+    const double dist_tp0_tp1 = autoware::universe_utils::calcDistance2d(tp0, tp1);
     if (std::fabs(dist_tp0_tp1) < dist_thr) {
       output.push_back(input.at(i));
       continue;
@@ -298,9 +298,9 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
     for (double s = 0; s < in_arclength.back(); s += points_interval) {
       out_arclength.push_back(s);
     }
-    const auto output_traj =
-      motion_utils::resampleTrajectory(motion_utils::convertToTrajectory(input), out_arclength);
-    output = motion_utils::convertToTrajectoryPointArray(output_traj);
+    const auto output_traj = autoware::motion_utils::resampleTrajectory(
+      autoware::motion_utils::convertToTrajectory(input), out_arclength);
+    output = autoware::motion_utils::convertToTrajectoryPointArray(output_traj);
     output.back() = input.back();  // keep the final speed.
   } else {
     output = input;
@@ -355,7 +355,7 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
     }
 
     if (
-      tier4_autoware_utils::calcDistance2d(output.at(end_index), output.at(index)) <
+      autoware::universe_utils::calcDistance2d(output.at(end_index), output.at(index)) <
       dist_threshold) {
       end_index = index;
       min_latacc_velocity = std::min(
@@ -441,7 +441,7 @@ bool AnalyticalJerkConstrainedSmoother::applyForwardJerkFilter(
   for (size_t i = start_index + 1; i < base_trajectory.size(); ++i) {
     const double prev_vel = output_trajectory.at(i - 1).longitudinal_velocity_mps;
     const double ds =
-      tier4_autoware_utils::calcDistance2d(base_trajectory.at(i - 1), base_trajectory.at(i));
+      autoware::universe_utils::calcDistance2d(base_trajectory.at(i - 1), base_trajectory.at(i));
     const double dt = ds / std::max(prev_vel, 1.0);
 
     const double prev_acc = output_trajectory.at(i - 1).acceleration_mps2;
@@ -487,8 +487,8 @@ bool AnalyticalJerkConstrainedSmoother::applyBackwardDecelFilter(
       }
     }
     for (size_t i = decel_target_index; i > start_index; --i) {
-      dist +=
-        tier4_autoware_utils::calcDistance2d(output_trajectory.at(i - 1), output_trajectory.at(i));
+      dist += autoware::universe_utils::calcDistance2d(
+        output_trajectory.at(i - 1), output_trajectory.at(i));
       dist_to_target.at(i - 1) = dist;
     }
 

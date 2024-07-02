@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_velocity_smoother/trajectory_utils.hpp"
+#include "autoware/velocity_smoother/trajectory_utils.hpp"
 
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "interpolation/linear_interpolation.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
-#include "tier4_autoware_utils/geometry/geometry.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -34,7 +34,7 @@ inline void convertEulerAngleToMonotonic(std::vector<double> & a)
 {
   for (unsigned int i = 1; i < a.size(); ++i) {
     const double da = a[i] - a[i - 1];
-    a[i] = a[i - 1] + tier4_autoware_utils::normalizeRadian(da);
+    a[i] = a[i - 1] + autoware::universe_utils::normalizeRadian(da);
   }
 }
 
@@ -87,7 +87,7 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
   {
     const auto & seg_pt = trajectory.at(seg_idx);
     const auto & next_pt = trajectory.at(seg_idx + 1);
-    traj_p.pose = tier4_autoware_utils::calcInterpolatedPose(seg_pt.pose, next_pt.pose, prop);
+    traj_p.pose = autoware::universe_utils::calcInterpolatedPose(seg_pt.pose, next_pt.pose, prop);
     traj_p.longitudinal_velocity_mps = interpolation::lerp(
       seg_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, prop);
     traj_p.acceleration_mps2 =
@@ -110,7 +110,7 @@ TrajectoryPoints extractPathAroundIndex(
   {
     double dist_sum = 0.0;
     for (size_t i = index; i < trajectory.size() - 1; ++i) {
-      dist_sum += tier4_autoware_utils::calcDistance2d(trajectory.at(i), trajectory.at(i + 1));
+      dist_sum += autoware::universe_utils::calcDistance2d(trajectory.at(i), trajectory.at(i + 1));
       if (dist_sum > ahead_length) {
         ahead_index = i + 1;
         break;
@@ -123,7 +123,7 @@ TrajectoryPoints extractPathAroundIndex(
   {
     double dist_sum{0.0};
     for (size_t i = index; i != 0; --i) {
-      dist_sum += tier4_autoware_utils::calcDistance2d(trajectory.at(i), trajectory[i - 1]);
+      dist_sum += autoware::universe_utils::calcDistance2d(trajectory.at(i), trajectory[i - 1]);
       if (dist_sum > behind_length) {
         behind_index = i - 1;
         break;
@@ -152,7 +152,7 @@ std::vector<double> calcArclengthArray(const TrajectoryPoints & trajectory)
   for (unsigned int i = 1; i < trajectory.size(); ++i) {
     const TrajectoryPoint tp = trajectory.at(i);
     const TrajectoryPoint tp_prev = trajectory.at(i - 1);
-    dist += tier4_autoware_utils::calcDistance2d(tp.pose, tp_prev.pose);
+    dist += autoware::universe_utils::calcDistance2d(tp.pose, tp_prev.pose);
     arclength.at(i) = dist;
   }
   return arclength;
@@ -164,7 +164,7 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
   for (unsigned int i = 1; i < trajectory.size(); ++i) {
     const TrajectoryPoint tp = trajectory.at(i);
     const TrajectoryPoint tp_prev = trajectory.at(i - 1);
-    const double dist = tier4_autoware_utils::calcDistance2d(tp.pose, tp_prev.pose);
+    const double dist = autoware::universe_utils::calcDistance2d(tp.pose, tp_prev.pose);
     intervals.push_back(dist);
   }
   return intervals;
@@ -173,8 +173,8 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
 std::vector<double> calcTrajectoryCurvatureFrom3Points(
   const TrajectoryPoints & trajectory, size_t idx_dist)
 {
-  using tier4_autoware_utils::calcCurvature;
-  using tier4_autoware_utils::getPoint;
+  using autoware::universe_utils::calcCurvature;
+  using autoware::universe_utils::getPoint;
 
   if (trajectory.size() < 3) {
     const std::vector<double> k_arr(trajectory.size(), 0.0);
@@ -300,7 +300,6 @@ bool calcStopDistWithJerkConstraints(
   }
 
   double x, v, a, j;
-  std::tuple<double, double, double, double> state;
 
   switch (type) {
     case AccelerationType::TRAPEZOID: {
@@ -596,7 +595,7 @@ std::vector<double> calcVelocityProfileWithConstantJerkAndAccelerationLimit(
 
 double calcStopDistance(const TrajectoryPoints & trajectory, const size_t closest)
 {
-  const auto idx = motion_utils::searchZeroVelocityIndex(trajectory);
+  const auto idx = autoware::motion_utils::searchZeroVelocityIndex(trajectory);
 
   if (!idx) {
     return std::numeric_limits<double>::max();  // stop point is located far away
@@ -604,7 +603,7 @@ double calcStopDistance(const TrajectoryPoints & trajectory, const size_t closes
 
   // TODO(Horibe): use arc length distance
   const double stop_dist =
-    tier4_autoware_utils::calcDistance2d(trajectory.at(*idx), trajectory.at(closest));
+    autoware::universe_utils::calcDistance2d(trajectory.at(*idx), trajectory.at(closest));
 
   return stop_dist;
 }

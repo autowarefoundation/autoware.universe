@@ -15,11 +15,12 @@
 #ifndef AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__NODE_HPP_
 #define AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__NODE_HPP_
 
+#include "autoware/universe_utils/ros/logger_level_configure.hpp"
+#include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware_raw_vehicle_cmd_converter/accel_map.hpp"
 #include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
 #include "autoware_raw_vehicle_cmd_converter/pid.hpp"
 #include "autoware_raw_vehicle_cmd_converter/steer_map.hpp"
-#include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -74,12 +75,13 @@ public:
 
   //!< @brief topic publisher for low level vehicle command
   rclcpp::Publisher<ActuationCommandStamped>::SharedPtr pub_actuation_cmd_;
-  //!< @brief subscriber for current velocity
-  rclcpp::Subscription<Odometry>::SharedPtr sub_velocity_;
   //!< @brief subscriber for vehicle command
   rclcpp::Subscription<Control>::SharedPtr sub_control_cmd_;
-  //!< @brief subscriber for steering
-  rclcpp::Subscription<Steering>::SharedPtr sub_steering_;
+  // polling subscribers
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_odometry_{
+    this, "~/input/odometry"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Steering> sub_steering_{
+    this, "~/input/steering"};
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -109,15 +111,13 @@ public:
     const double current_velocity, const double desired_acc, bool & accel_cmd_is_zero);
   double calculateBrakeMap(const double current_velocity, const double desired_acc);
   double calculateSteer(const double vel, const double steering, const double steer_rate);
-  void onSteering(const Steering::ConstSharedPtr msg);
   void onControlCmd(const Control::ConstSharedPtr msg);
-  void onVelocity(const Odometry::ConstSharedPtr msg);
   void publishActuationCmd();
   // for debugging
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_pub_steer_pid_;
   DebugValues debug_steer_;
 
-  std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace autoware::raw_vehicle_cmd_converter
 

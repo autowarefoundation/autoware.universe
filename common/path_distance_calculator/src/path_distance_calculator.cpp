@@ -14,7 +14,7 @@
 
 #include "path_distance_calculator.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -25,15 +25,12 @@
 PathDistanceCalculator::PathDistanceCalculator(const rclcpp::NodeOptions & options)
 : Node("path_distance_calculator", options), self_pose_listener_(this)
 {
-  sub_path_ = create_subscription<autoware_planning_msgs::msg::Path>(
-    "~/input/path", rclcpp::QoS(1),
-    [this](const autoware_planning_msgs::msg::Path::SharedPtr msg) { path_ = msg; });
   pub_dist_ =
     create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/output/distance", rclcpp::QoS(1));
 
   using std::chrono_literals::operator""s;
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, [this]() {
-    const auto path = path_;
+    const auto path = sub_path_.takeData();
     const auto pose = self_pose_listener_.getCurrentPose();
     if (!pose) {
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "no pose");
@@ -48,8 +45,8 @@ PathDistanceCalculator::PathDistanceCalculator(const rclcpp::NodeOptions & optio
       return;
     }
 
-    const double distance =
-      motion_utils::calcSignedArcLength(path->points, pose->pose.position, path->points.size() - 1);
+    const double distance = autoware::motion_utils::calcSignedArcLength(
+      path->points, pose->pose.position, path->points.size() - 1);
 
     tier4_debug_msgs::msg::Float64Stamped msg;
     msg.stamp = pose->header.stamp;

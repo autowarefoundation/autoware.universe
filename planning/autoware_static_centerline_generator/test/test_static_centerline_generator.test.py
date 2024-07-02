@@ -38,7 +38,7 @@ def generate_test_description():
         output="screen",
         parameters=[
             {"lanelet2_map_path": lanelet2_map_path},
-            {"run_background": False},
+            {"mode": "AUTO"},
             {"rviz": False},
             {"centerline_source": "optimization_trajectory_base"},
             {"lanelet2_input_file_path": lanelet2_map_path},
@@ -55,7 +55,7 @@ def generate_test_description():
                 "config/static_centerline_generator.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("behavior_path_planner"),
+                get_package_share_directory("autoware_behavior_path_planner"),
                 "config/behavior_path_planner.param.yaml",
             ),
             os.path.join(

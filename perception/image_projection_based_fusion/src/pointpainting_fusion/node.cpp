@@ -16,6 +16,8 @@
 
 #include "autoware_point_types/types.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 #include <lidar_centerpoint/centerpoint_config.hpp>
@@ -23,8 +25,6 @@
 #include <lidar_centerpoint/ros_utils.hpp>
 #include <lidar_centerpoint/utils.hpp>
 #include <pcl_ros/transforms.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/constants.hpp>
 
 #include <omp.h>
 
@@ -300,9 +300,9 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   const auto class_offset = painted_pointcloud_msg.fields.at(4).offset;
   const auto p_step = painted_pointcloud_msg.point_step;
   // projection matrix
-  Eigen::Matrix3f camera_projection;  // use only x,y,z
-  camera_projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2),
-    camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6);
+  image_geometry::PinholeCameraModel pinhole_camera_model;
+  pinhole_camera_model.fromCameraInfo(camera_info);
+
   Eigen::Vector3f point_lidar, point_camera;
   /** dc : don't care
 
@@ -335,7 +335,9 @@ dc   | dc dc dc  dc ||zc|
       continue;
     }
     // project
-    Eigen::Vector3f projected_point = camera_projection * Eigen::Vector3f(p_x, p_y, p_z);
+    Eigen::Vector2d projected_point =
+      calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(p_x, p_y, p_z));
+
     // iterate 2d bbox
     for (const auto & feature_object : objects) {
       sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
