@@ -383,4 +383,63 @@ std::optional<geometry_msgs::msg::Point> intersect(
   return intersect_point;
 }
 
+std::optional<bool> within(
+  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly)
+{
+  // check if the polygon is valid
+  if (poly.size() < 3) {
+    return std::nullopt;
+  }
+
+  long winding_number = 0;
+  for (size_t i = 0; i < poly.size(); ++i) {
+    const auto & p1 = poly.at(i);
+    const auto & p2 = poly.at((i + 1) % poly.size());
+
+    // check if the point is to the left of the edge
+    auto x_dist_to_edge = [&]() {
+      return p1.x + (p2.x - p1.x) / (p2.y - p1.y) * (point.y - p1.y) - point.x;
+    };
+
+    if (p1.y <= point.y && p2.y > point.y) {  // upward edge
+      if (x_dist_to_edge() >= 0) {
+        winding_number++;
+      }
+    } else if (p1.y > point.y && p2.y <= point.y) {  // downward edge
+      if (x_dist_to_edge() >= 0) {
+        winding_number--;
+      }
+    }
+  }
+
+  return winding_number != 0;
+}
+
+std::optional<bool> within(
+  const std::vector<geometry_msgs::msg::Point> & poly_contained,
+  const std::vector<geometry_msgs::msg::Point> & poly_containing)
+{
+  // check if all points of poly_contained are within poly_containing
+  for (const auto & point : poly_contained) {
+    if (!within(point, poly_containing).value_or(true)) {
+      return false;
+    }
+  }
+
+  // check if all edges of poly_contained do not intersect with those of poly_containing
+  for (size_t i = 0; i < poly_contained.size(); ++i) {
+    const auto & p1 = poly_contained.at(i);
+    const auto & p2 = poly_contained.at((i + 1) % poly_contained.size());
+    for (size_t j = 0; j < poly_containing.size(); ++j) {
+      const auto & q1 = poly_containing.at(j);
+      const auto & q2 = poly_containing.at((j + 1) % poly_containing.size());
+      if (intersect(p1, p2, q1, q2).has_value()) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 }  // namespace autoware::universe_utils
