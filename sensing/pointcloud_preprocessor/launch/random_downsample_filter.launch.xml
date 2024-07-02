@@ -4,8 +4,8 @@
   <arg name="sample_num" default="1500"/>
   <arg name="input_frame" default=""/>
   <arg name="output_frame" default="base_link"/>
-  <arg name="random_downsample_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/random_downsample_filter_param_file.yaml"/>
-  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.yaml"/>
+  <arg name="random_downsample_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/random_downsample_filter_param_file.param.yaml"/>
+  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.param.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="random_downsample_filter_node" name="random_downsample_filter">
     <remap from="input" to="$(var input_topic_name)"/>
     <remap from="output" to="$(var output_topic_name)"/>

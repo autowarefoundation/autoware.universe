@@ -3,8 +3,8 @@
   <arg name="output_topic_name" default="/sensing/lidar/top/pointcloud_accumulated"/>
   <arg name="input_frame" default=""/>
   <arg name="output_frame" default="base_link"/>
-  <arg name="pointcloud_accumulator_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/pointcloud_accumulator_param_file.yaml"/>
-  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.yaml"/>
+  <arg name="pointcloud_accumulator_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/pointcloud_accumulator_param_file.param.yaml"/>
+  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.param.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="pointcloud_accumulator_node" name="pointcloud_accumulator">
     <remap from="input" to="$(var input_topic_name)"/>
     <remap from="output" to="$(var output_topic_name)"/>

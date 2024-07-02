@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ring_outlier_filter",
+  "title": "Parameter for ring outlier filter",
   "type": "object",
   "definitions": {
     "ring_outlier_filter": {
@@ -17,17 +17,17 @@
           "default": "0.1"
         },
         "num_points_threshold": {
-          "type": "number",
+          "type": "integer",
           "description": "number points threshold",
           "default": "4"
         },
         "max_rings_num": {
-          "type": "number",
+          "type": "integer",
           "description": "max rings number",
           "default": "128"
         },
         "max_points_num_per_ring": {
-          "type": "number",
+          "type": "integer",
           "description": "maximum points number per ring",
           "default": "4000"
         },
@@ -52,17 +52,17 @@
           "default": "12.0"
         },
         "vertical_bins": {
-          "type": "number",
+          "type": "integer",
           "description": "vertical bins",
           "default": "128"
         },
         "horizontal_bins": {
-          "type": "number",
+          "type": "integer",
           "description": "horizontal bins",
           "default": "36"
         },
         "noise_threshold": {
-          "type": "number",
+          "type": "integer",
           "description": "noise threshold",
           "default": "2"
         }

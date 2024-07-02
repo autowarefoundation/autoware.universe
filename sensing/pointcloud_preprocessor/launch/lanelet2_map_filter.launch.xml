@@ -1,5 +1,5 @@
 <launch>
-  <arg name="lanelet2_map_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/lanelet2_map_filter_param_file.yaml"/>
+  <arg name="lanelet2_map_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/lanelet2_map_filter_param_file.param.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="vector_map_filter_node" name="lanelet2_map_filter">
     <param from="$(var lanelet2_map_filter_param_file)"/>
   </node>
