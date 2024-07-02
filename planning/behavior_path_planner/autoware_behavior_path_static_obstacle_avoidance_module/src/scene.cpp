@@ -24,8 +24,8 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/debug.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -781,7 +781,8 @@ bool StaticObstacleAvoidanceModule::isSafePath(
     for (const auto & obj_path : obj_predicted_paths) {
       if (!utils::path_safety_checker::checkCollision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
-            hysteresis_factor, current_debug_data.second)) {
+            hysteresis_factor, parameters_->collision_check_yaw_diff_threshold,
+            current_debug_data.second)) {
         utils::path_safety_checker::updateCollisionCheckDebugMap(
           debug.collision_check, current_debug_data, false);
 

@@ -16,6 +16,7 @@
 
 # cspell: ignore interp
 
+from enum import Enum
 import time
 
 from autoware_adapi_v1_msgs.msg import OperationModeState
@@ -26,10 +27,15 @@ from autoware_smart_mpc_trajectory_follower.scripts import drive_controller
 from autoware_smart_mpc_trajectory_follower.scripts import drive_functions
 from autoware_vehicle_msgs.msg import SteeringReport
 from builtin_interfaces.msg import Duration
+from diagnostic_msgs.msg import DiagnosticStatus
+import diagnostic_updater
+from diagnostic_updater import DiagnosticStatusWrapper
 from geometry_msgs.msg import AccelWithCovarianceStamped
+from geometry_msgs.msg import Point
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 import numpy as np
+from rcl_interfaces.msg import ParameterDescriptor
 import rclpy
 from rclpy.node import Node
 import scipy
@@ -40,6 +46,15 @@ from std_msgs.msg import String
 from tier4_debug_msgs.msg import BoolStamped
 from tier4_debug_msgs.msg import Float32MultiArrayStamped
 from tier4_debug_msgs.msg import Float32Stamped
+from visualization_msgs.msg import Marker
+from visualization_msgs.msg import MarkerArray
+
+
+class ControlStatus(Enum):
+    DRIVE = 0
+    STOPPING = 1
+    STOPPED = 2
+    EMERGENCY = 3
 
 
 def getYaw(orientation_xyzw):
@@ -55,6 +70,13 @@ class PyMPCTrajectoryFollower(Node):
 
         # ROS 2
         super().__init__("pympc_trajectory_follower")
+
+        self.declare_parameter(
+            "plot_sampling_paths",
+            False,
+            ParameterDescriptor(description="Publish MPPI sampling paths as MarkerArray."),
+        )
+
         self.sub_trajectory_ = self.create_subscription(
             Trajectory,
             "/planning/scenario_planning/trajectory",
@@ -110,14 +132,6 @@ class PyMPCTrajectoryFollower(Node):
             1,
         )
         self.sub_goal_pose_
-
-        self.sub_step_response_trigger_ = self.create_subscription(
-            String,
-            "/pympc_step_response_trigger",
-            self.onStepResponseTrigger,
-            1,
-        )
-        self.sub_step_response_trigger_
 
         self.sub_reload_mpc_param_trigger_ = self.create_subscription(
             String,
@@ -253,6 +267,12 @@ class PyMPCTrajectoryFollower(Node):
             1,
         )
 
+        self.debug_mpc_sampling_paths_marker_array_ = self.create_publisher(
+            MarkerArray,
+            "/debug_mpc_sampling_paths_marker_array",
+            1,
+        )
+
         self._present_trajectory = None
         self._present_kinematic_state = None
         self._present_acceleration = None
@@ -265,12 +285,13 @@ class PyMPCTrajectoryFollower(Node):
 
         self.emergency_stop_mode_flag = False
         self.stop_mode_reset_request = False
-        self.step_response_flag = False
-        self.step_response_trigger = False
-        self.step_response_time_step = 0
         self.last_acc_cmd = 0.0
         self.last_steer_cmd = 0.0
         self.past_control_trajectory_mode = 1
+
+        self.diagnostic_updater = diagnostic_updater.Updater(self)
+        self.setup_diagnostic_updater()
+        self.control_state = ControlStatus.STOPPED
 
     def onTrajectory(self, msg):
         self._present_trajectory = msg
@@ -289,15 +310,10 @@ class PyMPCTrajectoryFollower(Node):
 
     def onStopModeResetRequest(self, msg):
         self.stop_mode_reset_request = True
-        self.step_response_flag = False
         self.get_logger().info("receive stop mode reset request")
 
     def onGoalPose(self, msg):
         self._goal_pose = msg
-
-    def onStepResponseTrigger(self, msg):
-        self.step_response_trigger = True
-        self.get_logger().info("receive step response trigger")
 
     def onReloadMpcParamTrigger(self, msg):
         self.get_logger().info("receive reload mpc param trigger")
@@ -421,12 +437,14 @@ class PyMPCTrajectoryFollower(Node):
         orientation_deviation_threshold = 60 * np.pi / 180.0
 
         # The moment the threshold is exceeded, it enters emergency stop mode.
+        control_state = self.control_state
         if is_applying_control:
             if (
                 position_deviation > position_deviation_threshold
                 or orientation_deviation > orientation_deviation_threshold
             ):
                 self.emergency_stop_mode_flag = True
+                control_state = ControlStatus.EMERGENCY
 
             # Normal return from emergency stop mode when within the threshold value and a request to cancel the stop mode has been received.
             if (
@@ -443,42 +461,7 @@ class PyMPCTrajectoryFollower(Node):
             self.stop_mode_reset_request = False
 
         # [3] Control logic calculation
-        # [3-1] pure pursuit
-        # [3-1-1] compute pure pursuit acc cmd
-        longitudinal_vel_err = (
-            present_linear_velocity - trajectory_longitudinal_velocity[nearestIndex]
-        )
-        acc_kp = 0.5
-        acc_lim = 2.0
-        pure_pursuit_acc_cmd = np.clip(-acc_kp * longitudinal_vel_err, -acc_lim, acc_lim)[0]
-
-        # [3-1-2] compute pure pursuit steer cmd
-        nearest_trajectory_point_yaw = getYaw(trajectory_orientation[nearestIndex])
-        cos_yaw = np.cos(nearest_trajectory_point_yaw)
-        sin_yaw = np.sin(nearest_trajectory_point_yaw)
-        diff_position = present_position - trajectory_position[nearestIndex]
-        lat_err = -sin_yaw * diff_position[0] + cos_yaw * diff_position[1]
-        yaw_err = getYaw(present_orientation) - nearest_trajectory_point_yaw
-        while True:
-            if yaw_err > np.pi:
-                yaw_err -= 2.0 * np.pi
-            if yaw_err < (-np.pi):
-                yaw_err += 2.0 * np.pi
-            if np.abs(yaw_err) < np.pi:
-                break
-        wheel_base = drive_functions.L  # 4.0
-        lookahead_time = 3.0
-        min_lookahead = 3.0
-        lookahead = min_lookahead + lookahead_time * np.abs(present_linear_velocity[0])
-        steer_kp = 2.0 * wheel_base / (lookahead * lookahead)
-        steer_kd = 2.0 * wheel_base / lookahead
-        steer_lim = 0.6
-        pure_pursuit_steer_cmd = np.clip(
-            -steer_kp * lat_err - steer_kd * yaw_err, -steer_lim, steer_lim
-        )[0]
-
-        # [3-2] MPC control logic calculation
-        # [3-2-1] State variables in the MPC
+        # [3-1] State variables in the MPC
         present_mpc_x = np.array(
             [
                 present_position[0],
@@ -490,7 +473,7 @@ class PyMPCTrajectoryFollower(Node):
             ]
         )
 
-        # [3-2-2] resampling trajectory by time (except steer angle).
+        # [3-2] resampling trajectory by time (except steer angle).
         X_des = np.zeros((drive_functions.N + 1, 8))
         dist = np.sqrt(((trajectory_position[1:] - trajectory_position[:-1]) ** 2).sum(axis=1))
         timestamp_from_start = [0.0]
@@ -532,7 +515,7 @@ class PyMPCTrajectoryFollower(Node):
         X_des[:, 4] = acceleration_interpolate(timestamp_mpc)
         X_des[:, 6] = 1 * X_des[:, 4]
 
-        # [3-2-3] resampling trajectory by time (steer angle)
+        # [3-3] resampling trajectory by time (steer angle)
         previous_des_steer = 0.0
         steer_trajectory2 = np.zeros(len(timestamp_mpc))
         downsampling = 5
@@ -621,9 +604,17 @@ class PyMPCTrajectoryFollower(Node):
         X_des[:, 5] = steer_trajectory2
         X_des[:, 7] = 1 * X_des[:, 5]
 
-        # [3-2-4] mpc computation
+        # [3-4] (optimal) control computation
         U_des = np.zeros((drive_functions.N, 2))
         start_calc_u_opt = time.time()
+        acc_time_stamp = (
+            self._present_acceleration.header.stamp.sec
+            + 1e-9 * self._present_acceleration.header.stamp.nanosec
+        )
+        steer_time_stamp = (
+            self._present_steering_status.stamp.sec
+            + 1e-9 * self._present_steering_status.stamp.nanosec
+        )
         u_opt = self.controller.update_input_queue_and_get_optimal_control(
             self.control_cmd_time_stamp_list,
             self.control_cmd_acc_list,
@@ -631,12 +622,14 @@ class PyMPCTrajectoryFollower(Node):
             present_mpc_x,
             X_des,
             U_des,
+            acc_time_stamp,
+            steer_time_stamp,
         )
         end_calc_u_opt = time.time()
         mpc_acc_cmd = u_opt[0]
         mpc_steer_cmd = u_opt[1]
 
-        # [3-3] Enter goal stop mode (override command value) to maintain stop at goal
+        # [3-5] Enter goal stop mode (override command value) to maintain stop at goal
         self.goal_stop_mode_flag = False
         if self._goal_pose is not None:
             goal_position = np.array(
@@ -652,39 +645,13 @@ class PyMPCTrajectoryFollower(Node):
             if distance_from_goal < goal_distance_threshold:
                 self.goal_stop_mode_flag = True
 
-        # [3-4] Override when doing step response
-        if self.step_response_trigger:
-            self.step_response_time_step = 0
-            self.step_response_flag = True
-            self.step_response_trigger = False
-
-        if self.step_response_flag:
-            step_response_elapsed_time = self.step_response_time_step * self.timer_period_callback
-            mpc_acc_cmd = 1.0 * self.last_acc_cmd
-            if step_response_elapsed_time < 3.0:
-                mpc_steer_cmd = 0.0
-            else:
-                mpc_steer_cmd = -0.005
-            self.get_logger().info(
-                "step_response_elapsed_time: "
-                + str(step_response_elapsed_time)
-                + ", mpc_steer_cmd: "
-                + str(mpc_steer_cmd)
-            )
-            self.step_response_time_step += 1
-
-        # [3-5] Determine the control logic to be finally applied and publish it
+        # [3-6] Determine the control logic to be finally applied and publish it
         acc_cmd = 0.0
         steer_cmd = 0.0
         if (not self.emergency_stop_mode_flag) and (not self.goal_stop_mode_flag):
             # in normal mode
             acc_cmd = mpc_acc_cmd
             steer_cmd = mpc_steer_cmd
-
-            overwrite_cmd_by_pure_pursuit_flag = False
-            if overwrite_cmd_by_pure_pursuit_flag:
-                steer_cmd = pure_pursuit_steer_cmd
-                acc_cmd = pure_pursuit_acc_cmd
         else:
             # in stop mode
             acc_cmd_decrease_limit = 5.0 * self.timer_period_callback  # lon_jerk_lim
@@ -698,12 +665,13 @@ class PyMPCTrajectoryFollower(Node):
                 steer_cmd = self.last_steer_cmd + steer_cmd_decrease_limit
             else:
                 steer_cmd = 0.0
+            control_state = ControlStatus.STOPPING
 
         cmd_msg = Control()
         cmd_msg.stamp = cmd_msg.lateral.stamp = cmd_msg.longitudinal.stamp = (
             self.get_clock().now().to_msg()
         )
-        cmd_msg.longitudinal.speed = trajectory_longitudinal_velocity[nearestIndex]
+        cmd_msg.longitudinal.velocity = trajectory_longitudinal_velocity[nearestIndex]
         cmd_msg.longitudinal.acceleration = acc_cmd
         cmd_msg.lateral.steering_tire_angle = steer_cmd
 
@@ -721,6 +689,15 @@ class PyMPCTrajectoryFollower(Node):
                 self.control_cmd_time_stamp_list.pop(0)
                 self.control_cmd_steer_list.pop(0)
                 self.control_cmd_acc_list.pop(0)
+
+        # [3-7] Update control state
+        if control_state != ControlStatus.EMERGENCY:
+            stopped_velocity_threshold = 0.1
+            if present_linear_velocity[0] <= stopped_velocity_threshold:
+                control_state = ControlStatus.STOPPED
+            elif control_state != ControlStatus.STOPPING:
+                control_state = ControlStatus.DRIVE
+        self.control_state = control_state
 
         # [4] Update MPC internal variables
         if not is_applying_control:
@@ -842,6 +819,56 @@ class PyMPCTrajectoryFollower(Node):
                     data=(end_ctrl_time - start_ctrl_time),
                 )
             )
+            if self.controller.mode == "mppi" or self.controller.mode == "mppi_ilqr":
+                if self.get_parameter("plot_sampling_paths").get_parameter_value().bool_value:
+                    marker_array = MarkerArray()
+                    for i in range(self.controller.mppi_candidates.shape[0]):
+                        marker = Marker()
+                        marker.type = marker.LINE_STRIP
+                        marker.header.stamp = cmd_msg.stamp
+                        marker.header.frame_id = "map"
+                        marker.id = i
+                        marker.action = marker.ADD
+
+                        marker.scale.x = 0.05
+                        marker.scale.y = 0.0
+                        marker.scale.z = 0.0
+
+                        marker.color.a = 1.0
+                        marker.color.r = np.random.uniform()
+                        marker.color.g = np.random.uniform()
+                        marker.color.b = np.random.uniform()
+
+                        marker.lifetime.nanosec = 500000000
+                        marker.frame_locked = True
+
+                        marker.points = []
+
+                        for j in range(self.controller.mppi_candidates.shape[1]):
+                            tmp_point = Point()
+                            tmp_point.x = self.controller.mppi_candidates[i, j, 0]
+                            tmp_point.y = self.controller.mppi_candidates[i, j, 1]
+                            tmp_point.z = self._present_kinematic_state.pose.pose.position.z
+                            marker.points.append(tmp_point)
+                        marker_array.markers.append(marker)
+                    self.debug_mpc_sampling_paths_marker_array_.publish(marker_array)
+
+            self.diagnostic_updater.force_update()
+
+    def setup_diagnostic_updater(self):
+        self.diagnostic_updater.setHardwareID("pympc_trajectory_follower")
+        self.diagnostic_updater.add("control_state", self.check_control_state)
+
+    def check_control_state(self, stat: DiagnosticStatusWrapper):
+        msg = "emergency occurred" if self.control_state == ControlStatus.EMERGENCY else "OK"
+        level = (
+            DiagnosticStatus.ERROR
+            if self.control_state == ControlStatus.EMERGENCY
+            else DiagnosticStatus.OK
+        )
+        stat.summary(level, msg)
+        stat.add("control_state", str(self.control_state))
+        return stat
 
 
 def main(args=None):
