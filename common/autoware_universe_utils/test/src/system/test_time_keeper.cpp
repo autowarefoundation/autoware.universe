@@ -14,6 +14,7 @@
 
 #include "autoware/universe_utils/system/time_keeper.hpp"
 
+#include <rclcpp/node.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <gtest/gtest.h>
@@ -23,25 +24,29 @@
 
 TEST(system, TimeKeeper)
 {
+  using autoware::universe_utils::ScopedStopWatch;
   using autoware::universe_utils::TimeKeeper;
 
-  TimeKeeper time_keeper(rclcpp::Node{"sample_node"});
+  rclcpp::Node node{"sample_node"};
 
-  time_keeper.start("main_func");
+  TimeKeeper time_keeper(&node);
+
+  time_keeper.start_track("main_func");
 
   {  // funcA
-    const auto auto_stop_watch{time_keeper.track("funcA")};
+    ScopedStopWatch ss{"funcA", time_keeper};
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 
   {  // funcB
-    const auto auto_stop_watch{time_keeper.track("funcB")};
+    ScopedStopWatch ss{"funcB", time_keeper};
     std::this_thread::sleep_for(std::chrono::seconds(1));
     {  // funcC
-      const auto auto_stop_watch{time_keeper.track("funcC")};
+      ScopedStopWatch ss{"funcC", time_keeper};
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
 
-  ASSERT_ANY_THROW(time_keeper.end("main_func"));
+  time_keeper.end_track("main_func");
+  ASSERT_ANY_THROW(time_keeper.report(true));
 }

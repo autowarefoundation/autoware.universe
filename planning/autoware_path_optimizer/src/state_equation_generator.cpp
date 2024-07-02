@@ -23,7 +23,7 @@ namespace autoware::path_optimizer
 StateEquationGenerator::Matrix StateEquationGenerator::calcMatrix(
   const std::vector<ReferencePoint> & ref_points) const
 {
-  const auto auto_stop_watch(time_keeper_->track(__func__));
+  autoware::universe_utils::ScopedStopWatch ss(__func__, *time_keeper_);
 
   const size_t D_x = vehicle_model_ptr_->getDimX();
   const size_t D_u = vehicle_model_ptr_->getDimU();

@@ -19,150 +19,168 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "std_msgs/msg/string.hpp"
+#include <tier4_debug_msgs/msg/time_node.hpp>
+#include <tier4_debug_msgs/msg/time_tree.hpp>
+
+#include <fmt/format.h>
 
 #include <memory>
-#include <sstream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 namespace autoware::universe_utils
 {
+/**
+ * @brief Class representing a node in the time tracking tree
+ */
 class TimeNode : public std::enable_shared_from_this<TimeNode>
 {
 public:
-  explicit TimeNode(const std::string & name) : name_(name) {}
+  /**
+   * @brief Construct a new Time Node object
+   *
+   * @param name Name of the node
+   */
+  explicit TimeNode(const std::string & name);
 
-  std::shared_ptr<TimeNode> add_child(const std::string & name)
-  {
-    auto new_child_node = std::make_shared<TimeNode>(name);
+  /**
+   * @brief Add a child node
+   *
+   * @param name Name of the child node
+   * @return std::shared_ptr<TimeNode> Shared pointer to the newly added child node
+   */
+  std::shared_ptr<TimeNode> add_child(const std::string & name);
 
-    // connect to each other of parent/child
-    new_child_node->parent_node_ = shared_from_this();
-    child_nodes_.push_back(new_child_node);
+  /**
+   * @brief Get the result string representing the node and its children in a tree structure
+   *
+   * @param prefix Prefix for the node (used for indentation)
+   * @return std::string Result string representing the node and its children
+   */
+  std::string get_result_str(const std::string & prefix = "") const;
 
-    return new_child_node;
-  }
+  /**
+   * @brief Construct a TimeTree message from the node and its children
+   *
+   * @param time_tree_msg Reference to the TimeTree message to be constructed
+   * @param parent_id ID of the parent node
+   */
+  void construct_time_tree_msg(
+    tier4_debug_msgs::msg::TimeTree & time_tree_msg, const int parent_id = -1);
 
-  std::string get_result_text() const
-  {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(2) << processing_time_;
-    return name_ + ":= " + ss.str() + " [ms]";
-  }
-  std::shared_ptr<TimeNode> get_parent_node() const { return parent_node_; }
-  std::vector<std::shared_ptr<TimeNode>> get_child_nodes() const { return child_nodes_; }
+  /**
+   * @brief Get the parent node
+   *
+   * @return std::shared_ptr<TimeNode> Shared pointer to the parent node
+   */
+  std::shared_ptr<TimeNode> get_parent_node() const;
 
-  void set_time(const double processing_time) { processing_time_ = processing_time; }
+  /**
+   * @brief Get the child nodes
+   *
+   * @return std::vector<std::shared_ptr<TimeNode>> Vector of shared pointers to the child nodes
+   */
+  std::vector<std::shared_ptr<TimeNode>> get_child_nodes() const;
+
+  /**
+   * @brief Set the processing time for the node
+   *
+   * @param processing_time Processing time to be set
+   */
+  void set_time(const double processing_time);
+
+  /**
+   * @brief Get the name of the node
+   *
+   * @return std::string Name of the node
+   */
+  std::string get_name() const;
 
 private:
-  const std::string name_{""};
+  const std::string name_;
   double processing_time_{0.0};
   std::shared_ptr<TimeNode> parent_node_{nullptr};
-  std::vector<std::shared_ptr<TimeNode>> child_nodes_{};
+  std::vector<std::shared_ptr<TimeNode>> child_nodes_;
 };
 
-// TODO(murooka) has to be refactored
-class TimeTree
-{
-public:
-  std::shared_ptr<TimeNode> current_time_node{};
-};
+class ScopedStopWatch;
 
-class AutoStopWatch
-{
-public:
-  AutoStopWatch(const std::string & func_name, std::shared_ptr<TimeTree> time_tree)
-  : func_name_(func_name), time_tree_(time_tree)
-  {
-    const auto new_time_node = time_tree_->current_time_node->add_child(func_name);
-    time_tree_->current_time_node = new_time_node;
-    stop_watch_.tic(func_name_);
-  }
-  ~AutoStopWatch()
-  {
-    const double processing_time = stop_watch_.toc(func_name_);
-    time_tree_->current_time_node->set_time(processing_time);
-    time_tree_->current_time_node = time_tree_->current_time_node->get_parent_node();
-  }
-
-private:
-  const std::string func_name_;
-  autoware::universe_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
-
-  std::shared_ptr<TimeTree> time_tree_;
-};
-
+/**
+ * @brief Class for tracking and reporting the processing time of various functions
+ */
 class TimeKeeper
 {
 public:
-  explicit TimeKeeper(rclcpp::Node * node)
-  {
-    processing_time_pub_ =
-      node->create_publisher<std_msgs::msg::String>("~/debug/processing_time_ms_detail", 1);
-  }
+  /**
+   * @brief Construct a new TimeKeeper object
+   *
+   * @param node Pointer to the ROS2 node
+   */
+  explicit TimeKeeper(rclcpp::Node * node);
 
-  void start(const std::string & func_name)
-  {
-    // init
-    time_tree_ = std::make_shared<TimeTree>();
-    time_tree_->current_time_node = std::make_shared<TimeNode>("root");
+  /**
+   * @brief Report the processing times and optionally show them on the terminal
+   *
+   * @param show_on_terminal Flag indicating whether to show the results on the terminal
+   */
+  void report(const bool show_on_terminal = false);
 
-    // tic
-    manual_stop_watch_map_.emplace(
-      func_name, std::make_shared<AutoStopWatch>(func_name, time_tree_));
-  }
-  void end(const std::string & func_name, const bool show_on_terminal = false)
-  {
-    // toc
-    manual_stop_watch_map_.erase(func_name);
+  /**
+   * @brief Start tracking the processing time of a function
+   *
+   * @param func_name Name of the function to be tracked
+   */
+  void start_track(const std::string & func_name);
 
-    // get result text
-    const auto & root_node = time_tree_->current_time_node;
-    std::string processing_time_str;
-    get_child_info(root_node->get_child_nodes().front(), 0, processing_time_str);
-    processing_time_str.pop_back();  // remove last endline.
+  /**
+   * @brief End tracking the processing time of a function
+   *
+   * @param func_name Name of the function to end tracking
+   */
+  void end_track(const std::string & func_name);
 
-    // show on the terminal
-    if (show_on_terminal) {
-      std::cerr << "========================================" << std::endl;
-      std::cerr << processing_time_str << std::endl;
-    }
-
-    // publish
-    std_msgs::msg::String processing_time_msg;
-    processing_time_msg.data = processing_time_str;
-    processing_time_pub_->publish(processing_time_msg);
-  }
-
-  void start_track(const std::string & func_name)
-  {
-    manual_stop_watch_map_.emplace(
-      func_name, std::make_shared<AutoStopWatch>(func_name, time_tree_));
-  }
-  void end_track(const std::string & func_name) { manual_stop_watch_map_.erase(func_name); }
-  AutoStopWatch track(const std::string & func_name) const
-  {
-    return AutoStopWatch{func_name, time_tree_};
-  }
+  /**
+   * @brief Create a ScopedStopWatch object to track the processing time of a function
+   *
+   * @param func_name Name of the function to be tracked
+   * @return ScopedStopWatch ScopedStopWatch object for tracking the function
+   */
+  ScopedStopWatch track(const std::string & func_name);
 
 private:
-  void get_child_info(
-    const std::shared_ptr<TimeNode> time_node, const size_t indent_length,
-    std::string & processing_time_str) const
-  {
-    processing_time_str += std::string(indent_length, ' ') + time_node->get_result_text() + '\n';
-    for (const auto & child_time_node : time_node->get_child_nodes()) {
-      get_child_info(child_time_node, indent_length + 1, processing_time_str);
-    }
-  }
-
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr processing_time_pub_;
-  std::shared_ptr<TimeTree> time_tree_;
-  std::unordered_map<std::string, std::shared_ptr<AutoStopWatch>> manual_stop_watch_map_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::TimeTree>::SharedPtr
+    processing_time_pub_;                        //!< Publisher for the processing time message
+  std::shared_ptr<TimeNode> current_time_node_;  //!< Shared pointer to the current time node
+  std::shared_ptr<TimeNode> root_node_;          //!< Shared pointer to the root time node
+  autoware::universe_utils::StopWatch<
+    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
+    stop_watch_;  //!< StopWatch object for tracking the processing time
 };
+
+/**
+ * @brief Class for automatically tracking the processing time of a function within a scope
+ */
+class ScopedStopWatch
+{
+public:
+  /**
+   * @brief Construct a new ScopedStopWatch object
+   *
+   * @param func_name Name of the function to be tracked
+   * @param time_keepr Reference to the TimeKeeper object
+   */
+  ScopedStopWatch(const std::string & func_name, TimeKeeper & time_keepr);
+
+  /**
+   * @brief Destroy the ScopedStopWatch object, ending the tracking of the function
+   */
+  ~ScopedStopWatch();
+
+private:
+  const std::string func_name_;
+  TimeKeeper & time_keepr_;
+};
+
 }  // namespace autoware::universe_utils
+
 #endif  // AUTOWARE__UNIVERSE_UTILS__SYSTEM__TIME_KEEPER_HPP_
