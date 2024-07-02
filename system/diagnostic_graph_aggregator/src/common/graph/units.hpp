@@ -154,7 +154,7 @@ protected:
 
   // TODO: delete after test
 private:
-  void update_status() override;
+  void update_status() override; // cppcheck-suppress uselessOverride
 };
 
 class RemapUnit : public NodeUnit
