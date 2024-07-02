@@ -138,7 +138,6 @@ public:
   using MaxUnit::MaxUnit;
   std::string type() const override { return unit_name::short_circuit_max; }
 
-  // TODO: delete after test
 private:
   void update_status() override;
 };
