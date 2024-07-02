@@ -1,5 +1,8 @@
 /**:
   ros__parameters:
+    network_list_timeout: 5
+    nethogs_timeout: 5
+    reassemble_timeout: 5
     devices: ["*"]
     monitor_program: "greengrass"
     crc_error_check_duration: 1

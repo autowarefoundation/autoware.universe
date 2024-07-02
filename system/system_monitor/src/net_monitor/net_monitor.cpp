@@ -22,6 +22,8 @@
 #include "system_monitor/system_monitor_utility.hpp"
 #include "system_monitor/traffic_reader/traffic_reader_common.hpp"
 
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -49,7 +51,10 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   reassembles_failed_check_duration_(
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
   reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
-  reassembles_failed_column_index_(0)
+  reassembles_failed_column_index_(0),
+  network_list_timeout_(declare_parameter<int>("network_timeout", 5)),
+  nethogs_timeout_(declare_parameter<int>("nethogs_timeout", 5)),
+  reassembles_timeout_(declare_parameter<int>("reassembles_timeout", 5))
 {
   if (monitor_program_.empty()) {
     monitor_program_ = "*";
@@ -74,14 +79,17 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 
   // Update list of network information
   update_network_list();
-  using namespace std::literals::chrono_literals;
-  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this));
 
   // Get column index of IP packet reassembles failed from `/proc/net/snmp`
   get_reassembles_failed_column_index();
 
   // Send request to start nethogs
   send_start_nethogs_request();
+
+  using namespace std::literals::chrono_literals;
+  timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this), timer_callback_group_);
 }
 
 NetMonitor::~NetMonitor()
@@ -91,16 +99,24 @@ NetMonitor::~NetMonitor()
 
 void NetMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & status)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  int tmp_getifaddrs_error_code;
+  std::vector<NetworkInfomation> tmp_network_list;
+  double tmp_elapsed_time;
+
+  {
+    std::lock_guard<std::mutex> lock(network_list_mutex_);
+    tmp_getifaddrs_error_code = getifaddrs_error_code_;
+    tmp_network_list = network_list_;
+    tmp_elapsed_time = network_list_elapsed_time_;
+  }
 
   if (device_params_.empty()) {
     status.summary(DiagStatus::ERROR, "invalid device parameter");
     return;
   }
-  if (getifaddrs_error_code_ != 0) {
+  if (tmp_getifaddrs_error_code != 0) {
     status.summary(DiagStatus::ERROR, "getifaddrs error");
-    status.add("getifaddrs", strerror(getifaddrs_error_code_));
+    status.add("getifaddrs", strerror(tmp_getifaddrs_error_code));
     return;
   }
 
@@ -108,7 +124,7 @@ void NetMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & 
   int whole_level = DiagStatus::OK;
   std::string error_message;
 
-  for (const auto & network : network_list_) {
+  for (const auto & network : tmp_network_list) {
     if (network.is_invalid) {
       make_invalid_diagnostic_status(network, index, status, error_message);
     } else {
@@ -125,10 +141,10 @@ void NetMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & 
 
     // Check if device exists in detected networks
     const auto object = std::find_if(
-      network_list_.begin(), network_list_.end(),
+      tmp_network_list.begin(), tmp_network_list.end(),
       [&device](const auto & network) { return network.interface_name == device; });
 
-    if (object == network_list_.end()) {
+    if (object == tmp_network_list.end()) {
       whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
       error_message = "no such device";
       status.add(
@@ -139,25 +155,39 @@ void NetMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & 
     ++index;
   }
 
-  if (!error_message.empty()) {
-    status.summary(whole_level, error_message);
-  } else {
+  if (whole_level == DiagStatus::ERROR) {
+    if (error_message.empty()) {
+      status.summary(DiagStatus::ERROR, connection_messages_.at(whole_level));
+    } else {
+      status.summary(DiagStatus::ERROR, error_message);
+    }
+  } else if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > network_list_timeout_ * 1000) {
+    status.summary(DiagStatus::WARN, "reading network status timeout expired");
+  } else if (error_message.empty()) {
     status.summary(whole_level, connection_messages_.at(whole_level));
+  } else {
+    status.summary(whole_level, error_message);
   }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, status);
+  status.addf("execution time", "%f ms", tmp_elapsed_time);
 }
 
 void NetMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & status)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::vector<NetworkInfomation> tmp_network_list;
+  double tmp_elapsed_time;
+  {
+    std::lock_guard<std::mutex> lock(network_list_mutex_);
+    tmp_network_list = network_list_;
+    tmp_elapsed_time = network_list_elapsed_time_;
+  }
 
   int level = DiagStatus::OK;
   int index = 0;
 
-  for (const auto & network : network_list_) {
+  for (const auto & network : tmp_network_list) {
     // Skip if network is not supported
     if (network.is_invalid) continue;
 
@@ -180,26 +210,38 @@ void NetMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & statu
     ++index;
   }
 
-  status.summary(DiagStatus::OK, "OK");
+  if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > network_list_timeout_ * 1000) {
+    status.summary(DiagStatus::WARN, "reading network status timeout expired");
+  } else {
+    status.summary(DiagStatus::OK, "OK");
+  }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, status);
+  status.addf("execution time", "%f ms", tmp_elapsed_time);
 }
 
 void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & status)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  std::vector<NetworkInfomation> tmp_network_list;
+  std::map<std::string, CrcErrors> tmp_crc_errors_;
+  double tmp_elapsed_time;
+  {
+    std::lock_guard<std::mutex> lock(network_list_mutex_);
+    tmp_network_list = network_list_;
+    tmp_crc_errors_ = crc_errors_;
+    tmp_elapsed_time = network_list_elapsed_time_;
+  }
 
   int whole_level = DiagStatus::OK;
   int index = 0;
   std::string error_message;
 
-  for (const auto & network : network_list_) {
+  for (const auto & network : tmp_network_list) {
     // Skip if network is not supported
     if (network.is_invalid) continue;
 
-    CrcErrors & crc_errors = crc_errors_[network.interface_name];
+    CrcErrors & crc_errors = tmp_crc_errors_[network.interface_name];
     unsigned int unit_rx_crc_errors = 0;
 
     for (auto errors : crc_errors.errors_queue) {
@@ -219,36 +261,46 @@ void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & s
     ++index;
   }
 
-  if (!error_message.empty()) {
+  if (whole_level == DiagStatus::ERROR) {
+    status.summary(DiagStatus::ERROR, error_message);
+  } else if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > network_list_timeout_ * 1000) {
+    status.summary(DiagStatus::WARN, "reading network status timeout expired");
+  } else if (!error_message.empty()) {
     status.summary(whole_level, error_message);
   } else {
     status.summary(whole_level, "OK");
   }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, status);
+  status.addf("execution time", "%f ms", tmp_elapsed_time);
 }
 
 void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & status)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
-
-  // Get result of nethogs
-  traffic_reader_service::Result result;
-  get_nethogs_result(result);
+  traffic_reader_service::Result tmp_result;
+  double tmp_elapsed_time;
+  {
+    std::lock_guard<std::mutex> lock(nethogs_mutex_);
+    tmp_result = traffic_result_;
+    tmp_elapsed_time = nethogs_elapsed_time_;
+  }
 
   // traffic_reader result to output
-  if (result.error_code != EXIT_SUCCESS) {
+  if (tmp_result.error_code != EXIT_SUCCESS) {
     status.summary(DiagStatus::ERROR, "traffic_reader error");
-    status.add("error", result.output);
+    status.add("error", tmp_result.output);
+  } else if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > nethogs_timeout_ * 1000) {
+    status.summary(DiagStatus::WARN, "nethogs timeout expired");
   } else {
     status.summary(DiagStatus::OK, "OK");
 
-    if (result.output.empty()) {
+    if (tmp_result.output.empty()) {
       status.add("nethogs: result", fmt::format("No data monitored: {}", monitor_program_));
     } else {
-      std::stringstream lines{result.output};
+      std::stringstream lines{tmp_result.output};
       std::string line;
       std::vector<std::string> list;
       int index = 0;
@@ -268,14 +320,48 @@ void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & s
     }
   }
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, status);
+  status.addf("execution time", "%f ms", tmp_elapsed_time);
 }
 
 void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWrapper & status)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  int tmp_reassembles_whole_level;
+  std::string tmp_reassembles_error_message;
+  uint64_t tmp_total_reassembles_failed;
+  uint64_t tmp_unit_reassembles_failed;
+  double tmp_elapsed_time;
+  {
+    std::lock_guard<std::mutex> lock(reassembles_mutex_);
+    tmp_reassembles_whole_level = reassembles_whole_level_;
+    tmp_reassembles_error_message = reassembles_error_message_;
+    tmp_total_reassembles_failed = total_reassembles_failed_;
+    tmp_unit_reassembles_failed = unit_reassembles_failed_;
+    tmp_elapsed_time = reassembles_elapsed_time_;
+  }
+
+  if (tmp_reassembles_whole_level == DiagStatus::ERROR) {
+    status.summary(DiagStatus::ERROR, tmp_reassembles_error_message);
+  } else if (tmp_elapsed_time == 0.0) {
+    status.summary(DiagStatus::WARN, "read voltage error");
+  } else if (tmp_elapsed_time > reassembles_timeout_ * 1000) {
+    status.summary(DiagStatus::WARN, "reading /proc/net/snmp timeout expired");
+  } else if (tmp_reassembles_whole_level == DiagStatus::WARN) {
+    status.add("total packet reassembles failed", tmp_total_reassembles_failed);
+    status.add("packet reassembles failed per unit time", tmp_unit_reassembles_failed);
+    status.summary(DiagStatus::WARN, tmp_reassembles_error_message);
+  } else {
+    status.add("total packet reassembles failed", tmp_total_reassembles_failed);
+    status.add("packet reassembles failed per unit time", tmp_unit_reassembles_failed);
+    status.summary(DiagStatus::OK, "OK");
+  }
+
+  status.addf("execution time", "%f ms", tmp_elapsed_time);
+}
+
+void NetMonitor::judge_reassembles_failed()
+{
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
 
   int whole_level = DiagStatus::OK;
   std::string error_message;
@@ -292,9 +378,6 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
       unit_reassembles_failed += reassembles_failed;
     }
 
-    status.add(fmt::format("total packet reassembles failed"), total_reassembles_failed);
-    status.add(fmt::format("packet reassembles failed per unit time"), unit_reassembles_failed);
-
     if (unit_reassembles_failed >= reassembles_failed_check_count_) {
       whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
       error_message = "reassembles failed";
@@ -307,20 +390,27 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
     error_message = "failed to read /proc/net/snmp";
   }
 
-  if (!error_message.empty()) {
-    status.summary(whole_level, error_message);
-  } else {
-    status.summary(whole_level, "OK");
-  }
+  double elapsed_ms = stop_watch.toc("execution_time");
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, status);
+  {
+    std::lock_guard<std::mutex> lock(reassembles_mutex_);
+    reassembles_whole_level_ = whole_level;
+    reassembles_error_message_ = error_message;
+    total_reassembles_failed_ = total_reassembles_failed;
+    unit_reassembles_failed_ = unit_reassembles_failed;
+    reassembles_elapsed_time_ = elapsed_ms;
+  }
 }
 
 void NetMonitor::on_timer()
 {
   // Update list of network information
   update_network_list();
+
+  // Get result of nethogs
+  get_nethogs_result();
+
+  judge_reassembles_failed();
 }
 
 void NetMonitor::shutdown_nl80211()
@@ -364,10 +454,23 @@ void NetMonitor::make_invalid_diagnostic_status(
 
 void NetMonitor::update_network_list()
 {
+  // Update list of network information
+  // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
+
+  std::vector<NetworkInfomation> tmp_network_list;
+  std::map<std::string, CrcErrors> tmp_crc_errors;
+  {
+    std::lock_guard<std::mutex> lock(network_list_mutex_);
+    tmp_network_list = network_list_;
+    tmp_crc_errors = crc_errors_;
+  }
+
   rclcpp::Duration duration = this->now() - last_update_time_;
 
   struct ifaddrs * interfaces = {};
-  network_list_.clear();
+  tmp_network_list.clear();
 
   // Get network interfaces
   if (getifaddrs(&interfaces) < 0) {
@@ -404,14 +507,23 @@ void NetMonitor::update_network_list()
     update_network_information_by_socket(network);
 
     // Update network information using routing netlink stats
-    update_network_information_by_routing_netlink(network, interface->ifa_data, duration);
+    update_network_information_by_routing_netlink(
+      network, interface->ifa_data, duration, tmp_crc_errors);
 
-    network_list_.emplace_back(network);
+    tmp_network_list.emplace_back(network);
   }
 
   freeifaddrs(interfaces);
-
   last_update_time_ = this->now();
+
+  double elapsed_ms = stop_watch.toc("execution_time");
+
+  {
+    std::lock_guard<std::mutex> lock(network_list_mutex_);
+    network_list_ = tmp_network_list;
+    crc_errors_ = tmp_crc_errors;
+    network_list_elapsed_time_ = elapsed_ms;
+  }
 }
 
 void NetMonitor::update_network_information_by_socket(NetworkInfomation & network)
@@ -469,13 +581,14 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int socket
 }
 
 void NetMonitor::update_network_information_by_routing_netlink(
-  NetworkInfomation & network, void * data, const rclcpp::Duration & duration)
+  NetworkInfomation & network, void * data, const rclcpp::Duration & duration,
+  std::map<std::string, CrcErrors> & crc_errors)
 {
   auto * stats = static_cast<struct rtnl_link_stats *>(data);
 
   update_traffic(network, stats, duration);
 
-  update_crc_error(network, stats);
+  update_crc_error(network, stats, crc_errors);
 }
 
 void NetMonitor::update_traffic(
@@ -503,10 +616,12 @@ void NetMonitor::update_traffic(
   bytes_[network.interface_name].tx_bytes = stats->tx_bytes;
 }
 
-void NetMonitor::update_crc_error(NetworkInfomation & network, const struct rtnl_link_stats * stats)
+void NetMonitor::update_crc_error(
+  NetworkInfomation & network, const struct rtnl_link_stats * stats,
+  std::map<std::string, CrcErrors> & tmp_crc_errors)
 {
   // Get the count of CRC errors
-  CrcErrors & crc_errors = crc_errors_[network.interface_name];
+  CrcErrors & crc_errors = tmp_crc_errors[network.interface_name];
   crc_errors.errors_queue.push_back(stats->rx_crc_errors - crc_errors.last_rx_crc_errors);
   while (crc_errors.errors_queue.size() > crc_error_check_duration_) {
     crc_errors.errors_queue.pop_front();
@@ -624,8 +739,14 @@ void NetMonitor::send_start_nethogs_request()
   close_connection();
 }
 
-void NetMonitor::get_nethogs_result(traffic_reader_service::Result & result)
+void NetMonitor::get_nethogs_result()
 {
+  // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
+
+  traffic_reader_service::Result tmp_result;
+
   // Connect to traffic-reader service
   if (!connect_service()) {
     close_connection();
@@ -639,10 +760,17 @@ void NetMonitor::get_nethogs_result(traffic_reader_service::Result & result)
   }
 
   // Receive data from traffic-reader service
-  receive_data(result);
+  receive_data(tmp_result);
 
   // Close connection with traffic-reader service
   close_connection();
+
+  double elapsed_ms = stop_watch.toc("execution_time");
+  {
+    std::lock_guard<std::mutex> lock(nethogs_mutex_);
+    traffic_result_ = tmp_result;
+    nethogs_elapsed_time_ = elapsed_ms;
+  }
 }
 
 bool NetMonitor::connect_service()
