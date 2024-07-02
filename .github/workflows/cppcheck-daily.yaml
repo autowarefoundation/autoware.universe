@@ -18,6 +18,9 @@ jobs:
         run: |
           sudo snap install cppcheck
 
+      - name: Setup problem matchers for cppcheck
+        run: echo "::add-matcher::.github/cppcheck-problem-matcher.json"
+
       - name: Run Cppcheck on all files
         continue-on-error: true
         id: cppcheck
