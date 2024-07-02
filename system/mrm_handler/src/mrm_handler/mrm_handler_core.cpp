@@ -396,13 +396,13 @@ void MrmHandler::updateMrmState()
   }
 
   // Get mode
-  const bool is_auto_mode = isAutonomous();
-  const bool is_operation_mode_auto_mode = isOperationModeAutonomous();
+  const bool is_control_mode_autonomous = isControlModeAutonomous();
+  const bool is_operation_mode_autonomous = isOperationModeAutonomous();
 
   // State Machine
   switch (mrm_state_.state) {
     case MrmState::NORMAL:
-      if (is_auto_mode && is_operation_mode_auto_mode) {
+      if (is_control_mode_autonomous && is_operation_mode_autonomous) {
         transitionTo(MrmState::MRM_OPERATING);
       }
       return;
