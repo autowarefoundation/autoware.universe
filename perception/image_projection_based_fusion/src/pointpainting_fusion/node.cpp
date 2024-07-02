@@ -341,9 +341,16 @@ dc   | dc dc dc  dc ||zc|
     if (p_z <= 0.0 || p_x > (tan_h_.at(image_id) * p_z) || p_x < (-tan_h_.at(image_id) * p_z)) {
       continue;
     }
-    // project
-    Eigen::Vector2d projected_point =
-      calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(p_x, p_y, p_z));
+
+    // project, try and catch. if it fails, return
+    Eigen::Vector2d projected_point;
+    try {
+      projected_point =
+        calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(p_x, p_y, p_z));
+    } catch (const cv::Exception & e) {
+      RCLCPP_WARN_STREAM(this->get_logger(), "Error in projection: " << e.what());
+      continue;
+    }
 
     // iterate 2d bbox
     for (const auto & feature_object : objects) {

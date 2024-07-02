@@ -146,8 +146,15 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
         continue;
       }
 
-      Eigen::Vector2d proj_point = calcRawImageProjectedPoint(
-        pinhole_camera_model, cv::Point3d(point.x(), point.y(), point.z()));
+      // project, try and catch. if it fails, return
+      Eigen::Vector2d proj_point;
+      try {
+        proj_point = calcRawImageProjectedPoint(
+          pinhole_camera_model, cv::Point3d(point.x(), point.y(), point.z()));
+      } catch (const std::exception & e) {
+        RCLCPP_WARN_STREAM(this->get_logger(), "Error in projection: " << e.what());
+        return object_roi_map;
+      }
 
       min_x = std::min(proj_point.x(), min_x);
       min_y = std::min(proj_point.y(), min_y);
