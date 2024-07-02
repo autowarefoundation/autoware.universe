@@ -397,11 +397,12 @@ void MrmHandler::updateMrmState()
 
   // Get mode
   const bool is_auto_mode = isAutonomous();
+  const bool is_operation_mode_auto_mode = isOperationModeAutonomous();
 
   // State Machine
   switch (mrm_state_.state) {
     case MrmState::NORMAL:
-      if (is_auto_mode) {
+      if (is_auto_mode && is_operation_mode_auto_mode) {
         transitionTo(MrmState::MRM_OPERATING);
       }
       return;
@@ -543,6 +544,14 @@ bool MrmHandler::isAutonomous()
   auto mode = sub_control_mode_.takeData();
   if (mode == nullptr) return false;
   return mode->mode == ControlModeReport::AUTONOMOUS;
+}
+
+bool MrmHandler::isOperationModeAutonomous()
+{
+  using autoware_adapi_v1_msgs::msg::OperationModeState;
+  auto state = sub_operation_mode_state_.takeData();
+  if (state == nullptr) return false;
+  return state->mode == OperationModeState::AUTONOMOUS;
 }
 
 bool MrmHandler::isPullOverStatusAvailable()
