@@ -51,7 +51,7 @@ jobs:
             path=$(colcon list --packages-select $pkg | awk '{print $2}' | xargs realpath)
             paths="$paths $path"
           done
-          echo "::set-output name=full-paths::$paths"
+          echo "{full-paths}={$paths}" >> $GITHUB_OUTPUT
 
       - name: Run Cppcheck on modified packages
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
