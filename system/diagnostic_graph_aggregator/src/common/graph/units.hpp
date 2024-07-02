@@ -139,7 +139,7 @@ public:
   std::string type() const override { return unit_name::short_circuit_max; }
 
 private:
-  void update_status() override;  // cppcheck-suppress uselessOverride
+  void update_status() override;
 };
 
 class MinUnit : public NodeUnit

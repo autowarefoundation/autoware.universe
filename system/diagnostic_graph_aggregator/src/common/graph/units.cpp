@@ -151,7 +151,6 @@ void MaxUnit::update_status()
   status_.level = std::min(level, DiagnosticStatus::ERROR);
 }
 
-// TODO: delete after test
 void ShortCircuitMaxUnit::update_status()
 {
   // TODO(Takagi, Isamu): update link flags.
