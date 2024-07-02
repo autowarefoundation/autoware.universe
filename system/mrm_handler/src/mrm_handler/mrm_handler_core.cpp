@@ -538,7 +538,7 @@ bool MrmHandler::isEmergency() const
          is_operation_mode_availability_timeout;
 }
 
-bool MrmHandler::isAutonomous()
+bool MrmHandler::isControlModeAutonomous()
 {
   using autoware_vehicle_msgs::msg::ControlModeReport;
   auto mode = sub_control_mode_.takeData();
