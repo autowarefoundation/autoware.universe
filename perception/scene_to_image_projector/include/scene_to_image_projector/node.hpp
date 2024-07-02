@@ -49,47 +49,28 @@ class SceneToImageProjectorNode : public rclcpp::Node
 public:
   explicit SceneToImageProjectorNode(const rclcpp::NodeOptions & options);
 
-  template <typename T>
-  void ImageObjectCallback(
-    const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
-    const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg,
-    const typename T::ConstSharedPtr & objects_msg);
+  void image_callback(
+    const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg);
+  
+  void detected_objects_callback(
+    const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & msg);
 
-  void TrajectoryCallback(
-    const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg,
-    const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg,
-    const typename autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr & msg);
+  void camera_info_callback(
+    const sensor_msgs::msg::CameraInfo::ConstSharedPtr & msg);
 
 private:
-  image_transport::SubscriberFilter image_sub_;
-  message_filters::Subscriber<sensor_msgs::msg::CameraInfo> camera_info_sub_;
-
-  message_filters::Subscriber<autoware_auto_perception_msgs::msg::TrackedObjects>
-tracked_objects_sub_;
-  using ApproximateSyncPolicyTracked = message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image, sensor_msgs::msg::CameraInfo,
-    autoware_auto_perception_msgs::msg::TrackedObjects>;
-  using ApproximateSyncTracked = message_filters::Synchronizer<ApproximateSyncPolicyTracked>;
-  std::shared_ptr<ApproximateSyncTracked> sync_tracked_;
-
-  message_filters::Subscriber<autoware_auto_perception_msgs::msg::DetectedObjects>
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
+  rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_objects_sub_;
-  using ApproximateSyncPolicyDetected = message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image, sensor_msgs::msg::CameraInfo,
-    autoware_auto_perception_msgs::msg::DetectedObjects>;
-  using ApproximateSyncDetected = message_filters::Synchronizer<ApproximateSyncPolicyDetected>;
-  std::shared_ptr<ApproximateSyncDetected> sync_detected_;
+  
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_{};
 
-  message_filters::Subscriber<autoware_auto_planning_msgs::msg::Trajectory> trajectory_sub_;
-  using ApproximateSyncPolicyTrajectory = message_filters::sync_policies::ApproximateTime<
-    sensor_msgs::msg::Image, sensor_msgs::msg::CameraInfo,
-    autoware_auto_planning_msgs::msg::Trajectory>;
-  using ApproximateSyncTrajectory = message_filters::Synchronizer<ApproximateSyncPolicyTrajectory>;
-  std::shared_ptr<ApproximateSyncTrajectory> sync_trajectory_;
+  std::shared_ptr<autoware_auto_perception_msgs::msg::DetectedObjects> latest_detected_objects_;
+  bool latest_detected_objects_received_ = false;
 
-  image_transport::Publisher image_pub_;
-
-  std::deque<autoware_auto_planning_msgs::msg::TrajectoryPoint> trajectory_points_;
+  std::shared_ptr<sensor_msgs::msg::CameraInfo> latest_camera_info_;
+  bool camera_info_received_ = false;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
