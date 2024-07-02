@@ -48,7 +48,8 @@ jobs:
         id: cppcheck
         run: |
           echo "Running Cppcheck on modified packages: ${{ steps.get-modified-packages.outputs.modified-packages }}"
-          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions --inline-suppr ${{ steps.get-modified-packages.outputs.modified-packages }} 2> cppcheck-report.txt
+          modified-packages-with-full-path = ${{ colcon list --packages-select ${{ steps.get-modified-packages.outputs.modified-packages }} | awk '{print $2}' | xargs -I {} realpath {} }}
+          cppcheck --enable=all --inconclusive --check-level=exhaustive --error-exitcode=1 --suppressions-list=.cppcheck_suppressions --inline-suppr $modified-packages-with-full-path 2> cppcheck-report.txt
         shell: bash
 
       - name: Show cppcheck-report result
