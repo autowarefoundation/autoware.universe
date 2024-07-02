@@ -14,6 +14,7 @@
 
 #include "yabloc_common/color.hpp"
 
+// TODO(veqcc): delete after test
 namespace yabloc::common::color_scale
 {
 Color rainbow(float value)
