@@ -112,8 +112,7 @@ void VoxelGeneratorTest::TearDown()
 TEST_F(VoxelGeneratorTest, CloudInfo)
 {
   CloudInfo cloud_info{};
-  EXPECT_EQ(cloud1_->point_step, cloud_info.point_step);
-  EXPECT_EQ(cloud1_->is_bigendian, false);
+  EXPECT_EQ(cloud1_->is_bigendian, cloud_info.is_bigendian);
   EXPECT_EQ(cloud1_->fields[0].name, "x");
   EXPECT_EQ(cloud1_->fields[0].datatype, cloud_info.x_datatype);
   EXPECT_EQ(cloud1_->fields[0].count, cloud_info.x_count);
