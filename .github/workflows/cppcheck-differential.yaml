@@ -53,6 +53,7 @@ jobs:
           done
           echo "full-paths=$paths" >> $GITHUB_OUTPUT
 
+      # cspell: ignore suppr
       - name: Run Cppcheck on modified packages
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
         continue-on-error: true
