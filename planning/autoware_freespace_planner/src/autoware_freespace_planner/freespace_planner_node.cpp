@@ -298,11 +298,6 @@ PlannerCommonParam FreespacePlannerNode::getPlannerCommonParam()
 
   // search configs
   p.time_limit = declare_parameter<double>("time_limit");
-  p.minimum_turning_radius = declare_parameter<double>("minimum_turning_radius");
-  p.maximum_turning_radius = declare_parameter<double>("maximum_turning_radius");
-  p.turning_radius_size = declare_parameter<int>("turning_radius_size");
-  p.maximum_turning_radius = std::max(p.maximum_turning_radius, p.minimum_turning_radius);
-  p.turning_radius_size = std::max(p.turning_radius_size, 1);
 
   p.theta_size = declare_parameter<int>("theta_size");
   p.angle_goal_range = declare_parameter<double>("angle_goal_range");

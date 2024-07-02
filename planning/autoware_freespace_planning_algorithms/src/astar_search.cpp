@@ -191,9 +191,9 @@ double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose) const
   double total_cost = 0.0;
   // Temporarily, until reeds_shepp gets stable.
   if (use_reeds_shepp_) {
-    const double radius = (planner_common_param_.minimum_turning_radius +
-                           planner_common_param_.maximum_turning_radius) *
-                          0.5;
+    const double radius = kinematic_bicycle_model::getTurningRadius(
+      collision_vehicle_shape_.base_length, collision_vehicle_shape_.max_steering);
+
     total_cost +=
       calcReedsSheppDistance(pose, goal_pose_, radius) * astar_param_.distance_heuristic_weight;
   } else {

@@ -122,15 +122,6 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
       p, "PlannerCommonParam", py::dynamic_attr())
       .def(py::init<>())
       .def_readwrite("time_limit", &freespace_planning_algorithms::PlannerCommonParam::time_limit)
-      .def_readwrite(
-        "minimum_turning_radius",
-        &freespace_planning_algorithms::PlannerCommonParam::minimum_turning_radius)
-      .def_readwrite(
-        "maximum_turning_radius",
-        &freespace_planning_algorithms::PlannerCommonParam::maximum_turning_radius)
-      .def_readwrite(
-        "turning_radius_size",
-        &freespace_planning_algorithms::PlannerCommonParam::turning_radius_size)
       .def_readwrite("theta_size", &freespace_planning_algorithms::PlannerCommonParam::theta_size)
       .def_readwrite(
         "max_turning_ratio", &freespace_planning_algorithms::PlannerCommonParam::max_turning_ratio)

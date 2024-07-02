@@ -173,11 +173,8 @@ fpa::PlannerCommonParam get_default_planner_params()
 {
   // set problem configuration
   const double time_limit = 10 * 1000.0;
-  const double minimum_turning_radius = 9.0;
-  const double maximum_turning_radius = 9.0;
   const double max_turning_ratio = 0.5;
   const int turning_steps = 1;
-  const int turning_radius_size = 1;
 
   const int theta_size = 144;
 
@@ -193,9 +190,6 @@ fpa::PlannerCommonParam get_default_planner_params()
 
   return fpa::PlannerCommonParam{
     time_limit,
-    minimum_turning_radius,
-    maximum_turning_radius,
-    turning_radius_size,
     theta_size,
     curve_weight,
     reverse_weight,
@@ -212,8 +206,7 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi)
 {
   auto planner_common_param = get_default_planner_params();
   if (use_multi) {
-    planner_common_param.maximum_turning_radius = 14.0;
-    planner_common_param.turning_radius_size = 3;
+    planner_common_param.turning_steps = 3;
   }
 
   // configure astar param

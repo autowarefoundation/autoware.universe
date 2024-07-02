@@ -86,11 +86,6 @@ struct PlannerCommonParam
   // base configs
   double time_limit;  // planning time limit [msec]
 
-  // robot configs
-  double minimum_turning_radius;  // [m]
-  double maximum_turning_radius;  // [m]
-  int turning_radius_size;        // discretized turning radius table size [-]
-
   // search configs
   int theta_size;                  // discretized angle table size [-]
   double curve_weight;             // curve moving cost [-]

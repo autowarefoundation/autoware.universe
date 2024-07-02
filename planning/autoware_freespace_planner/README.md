@@ -59,8 +59,6 @@ None
 | Parameter                 | Type   | Description                                        |
 | ------------------------- | ------ | -------------------------------------------------- |
 | `time_limit`              | double | time limit of planning                             |
-| `minimum_turning_radius`  | double | minimum turning radius of robot                    |
-| `maximum_turning_radius`  | double | maximum turning radius of robot                    |
 | `maximum_turning_ratio`   | double | max ratio of actual turning range to use           |
 | `turning_steps`           | double | number of turning steps within turning range       |
 | `theta_size`              | double | the number of angle's discretization               |

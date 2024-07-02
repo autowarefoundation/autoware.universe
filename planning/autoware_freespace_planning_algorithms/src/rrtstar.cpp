@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/freespace_planning_algorithms/rrtstar.hpp"
+#include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
 
 namespace autoware::freespace_planning_algorithms
 {
@@ -38,9 +39,6 @@ RRTStar::RRTStar(
   if (rrtstar_param_.margin <= 0) {
     throw std::invalid_argument("rrt's collision margin must be greater than 0");
   }
-  if (planner_common_param_.maximum_turning_radius != planner_common_param.minimum_turning_radius) {
-    throw std::invalid_argument("Currently supports only single radius in rrtstar.");
-  }
 }
 
 bool RRTStar::makePlan(
@@ -62,7 +60,8 @@ bool RRTStar::makePlan(
   const rrtstar_core::Pose hi{
     costmap_.info.resolution * costmap_.info.width, costmap_.info.resolution * costmap_.info.height,
     M_PI};
-  const double radius = planner_common_param_.minimum_turning_radius;
+  const double radius = kinematic_bicycle_model::getTurningRadius(
+      collision_vehicle_shape_.base_length, collision_vehicle_shape_.max_steering);
   const auto cspace = rrtstar_core::CSpace(lo, hi, radius, is_obstacle_free);
   const auto x_start = poseMsgToPose(start_pose_);
   const auto x_goal = poseMsgToPose(goal_pose_);

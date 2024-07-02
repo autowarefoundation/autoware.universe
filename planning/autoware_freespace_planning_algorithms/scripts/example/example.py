@@ -28,14 +28,11 @@ vehicle_shape.base2back = 1.0
 planner_param = fp.PlannerCommonParam()
 # base configs
 planner_param.time_limit = 30000.0
-planner_param.minimum_turning_radius = 9.0
-planner_param.maximum_turning_radius = 9.0
-planner_param.turning_radius_size = 1
+planner_param.max_turning_ratio = 0.5
+planner_param.turning_steps = 1
 # search configs
 planner_param.theta_size = 144
 planner_param.angle_goal_range = 6.0
-planner_param.max_turning_ratio = 0.5
-planner_param.turning_steps = 1
 planner_param.curve_weight = 1.2
 planner_param.reverse_weight = 1.0
 planner_param.direction_change_weight = 2.0
