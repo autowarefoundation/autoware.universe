@@ -14,6 +14,8 @@
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 
+#include "autoware/universe_utils/geometry/gjk_2d.hpp"
+
 #include <Eigen/Geometry>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -381,6 +383,11 @@ std::optional<geometry_msgs::msg::Point> intersect(
   intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
   intersect_point.z = t * p1.z + (1.0 - t) * p2.z;
   return intersect_point;
+}
+
+bool intersect(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
+{
+  return gjk::intersect(convex_polygon1, convex_polygon2);
 }
 
 }  // namespace autoware::universe_utils

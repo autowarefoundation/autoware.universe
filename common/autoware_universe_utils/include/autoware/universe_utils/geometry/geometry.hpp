@@ -20,7 +20,10 @@
 #include "autoware/universe_utils/math/normalization.hpp"
 #include "autoware/universe_utils/ros/msg_covariance.hpp"
 
+#include <boost/geometry/arithmetic/dot_product.hpp>
+
 #include <exception>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -576,6 +579,12 @@ bool isTwistCovarianceValid(const geometry_msgs::msg::TwistWithCovariance & twis
 std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4);
+
+/**
+ * @brief Check if 2 convex polygons intersect using the GJK algorithm
+ * @details much faster than boost::geometry::intersects()
+ */
+bool intersect(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
 
 }  // namespace autoware::universe_utils
 
