@@ -30,6 +30,5 @@ unusedFunction
 unusedStructMember
 useInitializationList
 useStlAlgorithm
-uselessOverride
 variableScope
 virtualCallInConstructor
