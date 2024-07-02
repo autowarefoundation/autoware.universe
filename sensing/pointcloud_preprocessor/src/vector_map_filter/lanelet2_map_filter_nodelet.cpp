@@ -39,8 +39,8 @@ Lanelet2MapFilterComponent::Lanelet2MapFilterComponent(const rclcpp::NodeOptions
 
   // Set parameters
   {
-    voxel_size_x_ = declare_parameter("voxel_size_x", 0.04);
-    voxel_size_y_ = declare_parameter("voxel_size_y", 0.04);
+    voxel_size_x_ = declare_parameter<double>("voxel_size_x");
+    voxel_size_y_ = declare_parameter<double>("voxel_size_y");
   }
 
   // Set publisher
