@@ -55,6 +55,14 @@ protected:
   void checkVoltage(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
   /**
+   * @brief Timer callback to execute sensors command
+   */
+
+  void readVoltageStatus(
+    float & tmp_voltage, std::string & tmp_sensors_error_str, std::string & tmp_format_error_str,
+    std::string & tmp_pipe2_err_str);
+
+  /**
    * @brief check CMOS battery
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
@@ -62,11 +70,39 @@ protected:
    */
   void checkBatteryStatus(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
+  /**
+   * @brief Timer callback to reading battery status
+   */
+  void readBatteryStatus(bool & tmp_status, std::string & tmp_ifstream_error_str);
+
+  /**
+   * @brief Timer callback
+   */
+  void onTimer();
 
   float voltage_warn_;
   float voltage_error_;
   std::string voltage_string_;
   std::regex voltage_regex_;
+
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::CallbackGroup::SharedPtr timer_callback_group_;
+
+  std::mutex voltage_mutex_;
+  float voltage_;
+  int voltage_timeout_;
+  std::string sensors_error_str_;
+  std::string format_error_str_;
+  std::string pipe2_err_str_;
+  double voltage_elapsed_ms_;
+
+  std::mutex battery_mutex_;
+  bool status_;
+  int battery_timeout_;
+  std::string ifstream_error_str_;
+  double battery_elapsed_ms_;
+
+  bool sensors_exists_;
 };
 
 #endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
