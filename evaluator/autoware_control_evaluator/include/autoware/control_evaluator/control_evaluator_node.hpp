@@ -26,9 +26,7 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
-#include <array>
 #include <deque>
-#include <memory>
 #include <optional>
 #include <string>
 #include <utility>
