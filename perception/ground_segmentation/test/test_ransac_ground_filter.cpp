@@ -12,18 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <experimental/random>
-
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
-
-#include <gtest/gtest.h>
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
+#include <experimental/random>
 #include <ground_segmentation/ransac_ground_filter_nodelet.hpp>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <gtest/gtest.h>
@@ -83,7 +79,6 @@ public:
 
     output_pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
       "/test_ransac_ground_filter/output_cloud", 1);
-
   }
 
   ~RansacGroundFilterTest() {}
@@ -97,7 +92,8 @@ public:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr output_pointcloud_pub_;
 };
 
-void convertPCL2PointCloud2(const pcl::PointCloud<pcl::PointXYZI> & pcl_cloud, sensor_msgs::msg::PointCloud2 & cloud)
+void convertPCL2PointCloud2(
+  const pcl::PointCloud<pcl::PointXYZI> & pcl_cloud, sensor_msgs::msg::PointCloud2 & cloud)
 {
   cloud.height = 1;
   cloud.width = pcl_cloud.size();
@@ -124,10 +120,15 @@ void convertPCL2PointCloud2(const pcl::PointCloud<pcl::PointXYZI> & pcl_cloud, s
   cloud.fields[3].count = 1;
   cloud.data.resize(cloud.row_step * cloud.height);
   for (size_t i = 0; i < pcl_cloud.size(); ++i) {
-    memcpy(&cloud.data[i * cloud.point_step + cloud.fields[0].offset], &pcl_cloud[i].x, sizeof(float));
-    memcpy(&cloud.data[i * cloud.point_step + cloud.fields[1].offset], &pcl_cloud[i].y, sizeof(float));
-    memcpy(&cloud.data[i * cloud.point_step + cloud.fields[2].offset], &pcl_cloud[i].z, sizeof(float));
-    memcpy(&cloud.data[i * cloud.point_step + cloud.fields[3].offset], &pcl_cloud[i].intensity, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[0].offset], &pcl_cloud[i].x, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[1].offset], &pcl_cloud[i].y, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[2].offset], &pcl_cloud[i].z, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[3].offset], &pcl_cloud[i].intensity,
+      sizeof(float));
   }
 }
 
@@ -194,7 +195,7 @@ TEST_F(RansacGroundFilterTestSuite, TestCase1)
   node_options.parameter_overrides(parameters);
   auto ransac_ground_filter_test = std::make_shared<RansacGroundFilterTest>(node_options);
   ransac_ground_filter_test->input_pointcloud_pub_->publish(*input_msg_ptr);
-  
+
   sensor_msgs::msg::PointCloud2 out_cloud;
   ransac_ground_filter_test->filter(input_msg_ptr, nullptr, out_cloud);
   ransac_ground_filter_test->output_pointcloud_pub_->publish(out_cloud);
