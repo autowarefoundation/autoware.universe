@@ -293,8 +293,7 @@ bool isWithinCrosswalk(
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
 
-  const auto & p = object.object.kinematics.initial_pose_with_covariance.pose.position;
-  const Point p_object{p.x, p.y};
+  const Point p_object{object.getPosition().x, object.getPosition().y};
 
   // get conflicting crosswalk crosswalk
   constexpr int PEDESTRIAN_GRAPH_ID = 1;
@@ -334,17 +333,17 @@ bool isWithinIntersection(
   const auto polygon =
     route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(area_id.c_str()));
 
-  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
   return boost::geometry::within(
-    lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+    lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+      .basicPoint(),
     lanelet::utils::to2D(polygon.basicPolygon()));
 }
 
 bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
 {
-  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
   if (boost::geometry::within(
-        lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+        lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+          .basicPoint(),
         object.overhang_lanelet.polygon2d().basicPolygon())) {
     return true;
   }
@@ -353,7 +352,8 @@ bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> 
   lanelet::ConstLanelets prev_lanelet;
   if (route_handler->getPreviousLaneletsWithinRoute(object.overhang_lanelet, &prev_lanelet)) {
     if (boost::geometry::within(
-          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+            .basicPoint(),
           prev_lanelet.front().polygon2d().basicPolygon())) {
       return true;
     }
@@ -363,7 +363,8 @@ bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> 
   lanelet::ConstLanelet next_lanelet;
   if (route_handler->getNextLaneletWithinRoute(object.overhang_lanelet, &next_lanelet)) {
     if (boost::geometry::within(
-          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+            .basicPoint(),
           next_lanelet.polygon2d().basicPolygon())) {
       return true;
     }
@@ -374,20 +375,18 @@ bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> 
 
 bool isParallelToEgoLane(const ObjectData & object, const double threshold)
 {
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto closest_pose =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
-  const auto yaw_deviation = std::abs(calcYawDeviation(closest_pose, object_pose));
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition());
+  const auto yaw_deviation = std::abs(calcYawDeviation(closest_pose, object.getPose()));
 
   return yaw_deviation < threshold || yaw_deviation > M_PI - threshold;
 }
 
 bool isMergingToEgoLane(const ObjectData & object)
 {
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto closest_pose =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
-  const auto yaw_deviation = calcYawDeviation(closest_pose, object_pose);
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition());
+  const auto yaw_deviation = calcYawDeviation(closest_pose, object.getPose());
 
   if (isOnRight(object)) {
     if (yaw_deviation < 0.0 && -1.0 * M_PI_2 < yaw_deviation) {
@@ -424,9 +423,8 @@ bool isParkedVehicle(
     return false;
   }
 
-  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
   const auto centerline_pos =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pos).position;
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition()).position;
 
   bool is_left_side_parked_vehicle = false;
   if (!isOnRight(object)) {
@@ -459,7 +457,7 @@ bool isParkedVehicle(
     if (sub_type == "road_shoulder") {
       // assuming it's parked vehicle if its CoG is within road shoulder lanelet.
       if (boost::geometry::within(
-            to2D(toLaneletPoint(object_pos)).basicPoint(),
+            to2D(toLaneletPoint(object.getPosition())).basicPoint(),
             most_left_lanelet.polygon2d().basicPolygon())) {
         return true;
       }
@@ -470,7 +468,7 @@ bool isParkedVehicle(
 
     const auto arc_coordinates = toArcCoordinates(
       to2D(object.overhang_lanelet.centerline().basicLineString()),
-      to2D(toLaneletPoint(object_pos)).basicPoint());
+      to2D(toLaneletPoint(object.getPosition())).basicPoint());
     object.shiftable_ratio = arc_coordinates.distance / object_shiftable_distance;
 
     is_left_side_parked_vehicle = object.shiftable_ratio > parameters->object_check_shiftable_ratio;
@@ -507,7 +505,7 @@ bool isParkedVehicle(
     if (sub_type == "road_shoulder") {
       // assuming it's parked vehicle if its CoG is within road shoulder lanelet.
       if (boost::geometry::within(
-            to2D(toLaneletPoint(object_pos)).basicPoint(),
+            to2D(toLaneletPoint(object.getPosition())).basicPoint(),
             most_right_lanelet.polygon2d().basicPolygon())) {
         return true;
       }
@@ -518,7 +516,7 @@ bool isParkedVehicle(
 
     const auto arc_coordinates = toArcCoordinates(
       to2D(object.overhang_lanelet.centerline().basicLineString()),
-      to2D(toLaneletPoint(object_pos)).basicPoint());
+      to2D(toLaneletPoint(object.getPosition())).basicPoint());
     object.shiftable_ratio = -1.0 * arc_coordinates.distance / object_shiftable_distance;
 
     is_right_side_parked_vehicle =
@@ -529,9 +527,8 @@ bool isParkedVehicle(
     return false;
   }
 
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   object.to_centerline =
-    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object.getPose()).distance;
   if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
     return false;
   }
@@ -546,13 +543,13 @@ bool isCloseToStopFactor(
 {
   const auto & rh = planner_data->route_handler;
   const auto & ego_pose = planner_data->self_odometry->pose.pose;
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
 
   // force avoidance for stopped vehicle
   bool is_close_to_stop_factor = false;
 
   // check traffic light
-  const auto to_traffic_light = getDistanceToNextTrafficLight(object_pose, data.extend_lanelets);
+  const auto to_traffic_light =
+    getDistanceToNextTrafficLight(object.getPose(), data.extend_lanelets);
   {
     is_close_to_stop_factor =
       to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
@@ -794,9 +791,8 @@ bool isSatisfiedWithNonVehicleCondition(
   }
 
   // Object is on center line -> ignore.
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   object.to_centerline =
-    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object.getPose()).distance;
   if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
     object.info = ObjectInfo::TOO_NEAR_TO_CENTERLINE;
     return false;
@@ -846,9 +842,8 @@ bool isSatisfiedWithVehicleCondition(
     return false;
   }
 
-  const auto & current_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto is_moving_distance_longer_than_threshold =
-    calcDistance2d(object.init_pose, current_pose) >
+    calcDistance2d(object.init_pose, object.getPose()) >
     parameters->distance_threshold_for_ambiguous_vehicle;
   if (is_moving_distance_longer_than_threshold) {
     object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
@@ -946,9 +941,8 @@ double getRoadShoulderDistance(
   using autoware::universe_utils::Point2d;
   using lanelet::utils::to2D;
 
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto object_closest_index =
-    autoware::motion_utils::findNearestIndex(data.reference_path.points, object_pose.position);
+    autoware::motion_utils::findNearestIndex(data.reference_path.points, object.getPosition());
   const auto object_closest_pose = data.reference_path.points.at(object_closest_index).point.pose;
 
   const auto rh = planner_data->route_handler;
@@ -959,7 +953,7 @@ double getRoadShoulderDistance(
   std::vector<std::tuple<double, Point, Point>> intersects;
   for (const auto & p1 : object.overhang_points) {
     const auto centerline_pose =
-      lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
+      lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition());
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(p1.second).orientation(centerline_pose.orientation);
 
@@ -1328,8 +1322,7 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
       object.avoid_margin.value() - object_parameter.envelope_buffer_margin - vehicle_width / 2.0;
     const auto obj_poly =
       autoware::universe_utils::expandPolygon(object.envelope_poly, diff_poly_buffer);
-    obstacles_for_drivable_area.push_back(
-      {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly, !isOnRight(object)});
+    obstacles_for_drivable_area.push_back({object.getPose(), obj_poly, !isOnRight(object)});
   }
   return obstacles_for_drivable_area;
 }
@@ -1497,7 +1490,7 @@ void fillObjectMovingTime(
     object_data.last_stop = now;
     object_data.move_time = 0.0;
     if (is_new_object) {
-      object_data.init_pose = object_data.object.kinematics.initial_pose_with_covariance.pose;
+      object_data.init_pose = object_data.getPose();
       object_data.stop_time = 0.0;
       object_data.last_move = now;
       stopped_objects.push_back(object_data);
@@ -1512,7 +1505,7 @@ void fillObjectMovingTime(
   }
 
   if (is_new_object) {
-    object_data.init_pose = object_data.object.kinematics.initial_pose_with_covariance.pose;
+    object_data.init_pose = object_data.getPose();
     object_data.move_time = std::numeric_limits<double>::infinity();
     object_data.stop_time = 0.0;
     object_data.last_move = now;
@@ -1522,7 +1515,7 @@ void fillObjectMovingTime(
   object_data.last_stop = same_id_obj->last_stop;
   object_data.move_time = (now - same_id_obj->last_stop).seconds();
   object_data.stop_time = 0.0;
-  object_data.init_pose = object_data.object.kinematics.initial_pose_with_covariance.pose;
+  object_data.init_pose = object_data.getPose();
 
   if (object_data.move_time > object_parameter.moving_time_threshold) {
     stopped_objects.erase(same_id_obj);
@@ -1619,9 +1612,9 @@ void updateRegisteredObject(
     }
 
     constexpr auto POS_THR = 1.5;
-    const auto r_pos = registered_object.object.kinematics.initial_pose_with_covariance.pose;
+    const auto r_pos = registered_object.getPose();
     const auto similar_pos_obj = std::find_if(n.begin(), n.end(), [&](const auto & o) {
-      return calcDistance2d(r_pos, o.object.kinematics.initial_pose_with_covariance.pose) < POS_THR;
+      return calcDistance2d(r_pos, o.getPose()) < POS_THR;
     });
 
     // same id object is not detected, but object is found around registered. update registered.
