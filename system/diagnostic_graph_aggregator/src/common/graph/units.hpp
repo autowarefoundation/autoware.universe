@@ -139,7 +139,7 @@ public:
   std::string type() const override { return unit_name::short_circuit_max; }
 
 private:
-  void update_status() override;
+  void update_status() override;  // cppcheck-suppress uselessOverride
 };
 
 class MinUnit : public NodeUnit
@@ -152,9 +152,8 @@ public:
 protected:
   std::vector<UnitLink *> links_;
 
-  // TODO: delete after test
 private:
-  void update_status() override; // cppcheck-suppress uselessOverride
+  void update_status() override;
 };
 
 class RemapUnit : public NodeUnit
