@@ -28,6 +28,7 @@
 #include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
 #include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
@@ -58,11 +59,24 @@ public:
   void camera_info_callback(
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr & msg);
 
+  void tracked_objects_callback(
+    const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & msg);
+  
+  void trajectory_callback(
+    const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr & msg);
+
+  void path_callback(
+    const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr & msg);
+
 private:
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_objects_sub_;
+  rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrackedObjects>::SharedPtr
+    tracked_objects_sub_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_sub_;
+  rclcpp::Subscription<autoware_auto_planning_msgs::msg::Path>::SharedPtr path_sub_;
   
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_{};
 
@@ -71,6 +85,15 @@ private:
 
   std::shared_ptr<sensor_msgs::msg::CameraInfo> latest_camera_info_;
   bool camera_info_received_ = false;
+
+  std::shared_ptr<autoware_auto_perception_msgs::msg::TrackedObjects> latest_tracked_objects_;
+  bool latest_tracked_objects_received_ = false;
+
+  std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> latest_trajectory_;
+  bool latest_trajectory_received_ = false;
+
+  std::shared_ptr<autoware_auto_planning_msgs::msg::Path> latest_path_;
+  bool latest_path_received_ = false;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
@@ -81,6 +104,10 @@ private:
   bool out_of_image(
     const geometry_msgs::msg::Pose & center_pose, const sensor_msgs::msg::CameraInfo & camera_info,
     const Eigen::Matrix4d & projection);
+
+  bool out_of_image(
+  const geometry_msgs::msg::Point & center_pose, const sensor_msgs::msg::CameraInfo & camera_info,
+  const Eigen::Matrix4d & projection);
 
   template <typename T>
   static void calculate_bbox_corners(
