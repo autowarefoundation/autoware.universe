@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(radar_object_tracker)
+project(autoware_radar_object_tracker)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -41,6 +41,9 @@ target_link_libraries(${PROJECT_NAME}
   glog::glog
   ${PROJECT_NAME}_utils
 )
+
+target_include_directories(${PROJECT_NAME}
+  PRIVATE src)
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::radar_object_tracker::RadarObjectTrackerNode"

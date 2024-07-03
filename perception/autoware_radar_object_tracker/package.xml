@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>radar_object_tracker</name>
+  <name>autoware_radar_object_tracker</name>
   <version>0.0.0</version>
   <description>Do tracking radar object</description>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>

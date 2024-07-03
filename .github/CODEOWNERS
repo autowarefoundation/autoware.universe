@@ -105,6 +105,7 @@ map/map_tf_generator/** anh.nguyen.2@tier4.jp kento.yabuuchi.2@tier4.jp masahiro
 map/util/lanelet2_map_preprocessor/** anh.nguyen.2@tier4.jp kento.yabuuchi.2@tier4.jp masahiro.sakamoto@tier4.jp ryu.yamamoto@tier4.jp shintaro.sakoda@tier4.jp taiki.yamada@tier4.jp yamato.ando@tier4.jp
 perception/autoware_crosswalk_traffic_light_estimator/** satoshi.ota@tier4.jp shunsuke.miura@tier4.jp tao.zhong@tier4.jp
 perception/autoware_map_based_prediction/** kotaro.uetake@tier4.jp kyoichi.sugahara@tier4.jp takayuki.murooka@tier4.jp tomoya.kimura@tier4.jp yoshi.ri@tier4.jp
+perception/autoware_radar_object_tracker/** satoshi.tanaka@tier4.jp taekjin.lee@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/bytetrack/** manato.hirabayashi@tier4.jp yoshi.ri@tier4.jp
 perception/cluster_merger/** dai.nguyen@tier4.jp shunsuke.miura@tier4.jp yukihiro.saito@tier4.jp
 perception/compare_map_segmentation/** abrahammonrroy@yahoo.com dai.nguyen@tier4.jp yukihiro.saito@tier4.jp
@@ -129,7 +130,6 @@ perception/probabilistic_occupancy_grid_map/** mamoru.sobue@tier4.jp yoshi.ri@ti
 perception/radar_crossing_objects_noise_filter/** satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp taekjin.lee@tier4.jp yoshi.ri@tier4.jp
 perception/radar_fusion_to_detected_object/** satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp taekjin.lee@tier4.jp yoshi.ri@tier4.jp
 perception/radar_object_clustering/** satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp taekjin.lee@tier4.jp yoshi.ri@tier4.jp
-perception/radar_object_tracker/** satoshi.tanaka@tier4.jp taekjin.lee@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/radar_tracks_msgs_converter/** satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp taekjin.lee@tier4.jp yoshi.ri@tier4.jp
 perception/raindrop_cluster_filter/** dai.nguyen@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/shape_estimation/** yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
