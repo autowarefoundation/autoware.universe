@@ -29,42 +29,33 @@
 #include <string>
 #include <vector>
 
-#define CHECK_OFFSET(structure1, structure2, field)             \
-  static_assert(                                                \
-    offsetof(structure1, field) == offsetof(structure2, field), \
-    "Offset of " #field " in " #structure1 " does not match expected offset.")
-#define CHECK_TYPE(structure1, structure2, field)                                  \
-  static_assert(                                                                   \
-    std::is_same<decltype(structure1::field), decltype(structure2::field)>::value, \
-    "Type of " #field " in " #structure1 " does not match expected type.")
-#define CHECK_FIELD(structure1, structure2, field) \
-  CHECK_OFFSET(structure1, structure2, field);     \
-  CHECK_TYPE(structure1, structure2, field)
+#define CHECK_OFFSET(offset, structure, field) \
+  static_assert(                               \
+    offsetof(structure, field) == offset,      \
+    "Offset of " #field " in " #structure " does not match expected offset.")
+#define CHECK_TYPE(type, structure, field)                 \
+  static_assert(                                           \
+    std::is_same<decltype(structure::field), type>::value, \
+    "Type of " #field " in " #structure " does not match expected type.")
+#define CHECK_FIELD(offset, type, structure, field) \
+  CHECK_OFFSET(offset, structure, field);           \
+  CHECK_TYPE(type, structure, field)
 
 namespace lidar_transfusion
 {
 using sensor_msgs::msg::PointField;
 
-struct TransfusionInput
-{
-  float x;
-  float y;
-  float z;
-  uint8_t intensity;
-};
-
-CHECK_FIELD(TransfusionInput, autoware_point_types::PointXYZIRCAEDT, x);
-CHECK_FIELD(TransfusionInput, autoware_point_types::PointXYZIRCAEDT, y);
-CHECK_FIELD(TransfusionInput, autoware_point_types::PointXYZIRCAEDT, z);
-CHECK_FIELD(TransfusionInput, autoware_point_types::PointXYZIRCAEDT, intensity);
+CHECK_FIELD(0, float, autoware_point_types::PointXYZIRCAEDT, x);
+CHECK_FIELD(4, float, autoware_point_types::PointXYZIRCAEDT, y);
+CHECK_FIELD(8, float, autoware_point_types::PointXYZIRCAEDT, z);
+CHECK_FIELD(12, uint8_t, autoware_point_types::PointXYZIRCAEDT, intensity);
 
 struct CloudInfo
 {
   uint32_t x_offset{0};
-  uint32_t y_offset{sizeof(TransfusionInput::x)};
-  uint32_t z_offset{sizeof(TransfusionInput::x) + sizeof(TransfusionInput::y)};
-  uint32_t intensity_offset{
-    sizeof(TransfusionInput::x) + sizeof(TransfusionInput::y) + sizeof(TransfusionInput::z)};
+  uint32_t y_offset{sizeof(float)};
+  uint32_t z_offset{sizeof(float) * 2};
+  uint32_t intensity_offset{sizeof(float) * 3};
   uint8_t x_datatype{PointField::FLOAT32};
   uint8_t y_datatype{PointField::FLOAT32};
   uint8_t z_datatype{PointField::FLOAT32};
