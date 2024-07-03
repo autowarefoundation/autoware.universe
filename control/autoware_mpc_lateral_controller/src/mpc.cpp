@@ -75,10 +75,10 @@ bool MPC::calculateMPC(
   // generate mpc matrix : predict equation Xec = Aex * x0 + Bex * Uex + Wex
   const auto mpc_matrix = generateMPCMatrix(mpc_resampled_ref_trajectory, prediction_dt);
 
-  double u_saturated {0.0};
-  double u_filtered {0.0};
-  VectorXd Uex {};
-  bool success_opt {};
+  double u_saturated{0.0};
+  double u_filtered{0.0};
+  VectorXd Uex{};
+  bool success_opt{};
 
   static constexpr double vel_epsilon = 1e-3;
   const double current_vel = current_kinematics.twist.twist.linear.x;
@@ -94,10 +94,12 @@ bool MPC::calculateMPC(
     u_filtered = m_lpf_steering_cmd.filter(u_saturated);
   } else {
     // if the vehicle is stopped, the steering angle is set to feedforward.
-    Uex = MatrixXd::Ones(m_vehicle_model_ptr->getDimU() * m_param.prediction_horizon, 1) * mpc_matrix.Uref_ex(0);
+    Uex = MatrixXd::Ones(m_vehicle_model_ptr->getDimU() * m_param.prediction_horizon, 1) *
+          mpc_matrix.Uref_ex(0);
     u_saturated = std::clamp(Uex(0), -m_steer_lim, m_steer_lim);
-    u_filtered = m_lpf_steering_cmd.filter(u_saturated); // a fake low pass filter, tracking the member attributes
-    u_filtered = u_saturated; // no need to pass through the filter
+    u_filtered = m_lpf_steering_cmd.filter(
+      u_saturated);            // a fake low pass filter, tracking the member attributes
+    u_filtered = u_saturated;  // no need to pass through the filter
   }
 
   // set control command
