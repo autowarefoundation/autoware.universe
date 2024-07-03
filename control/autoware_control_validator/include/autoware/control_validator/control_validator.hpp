@@ -52,6 +52,7 @@ public:
   void onPredictedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   bool checkValidMaxDistanceDeviation(const Trajectory & predicted_trajectory);
+  bool checkValidVelocityDeviation(const Trajectory & reference_trajectory, const Odometry & kinematics);
 
 private:
   void setupDiag();
@@ -60,7 +61,9 @@ private:
 
   bool isDataReady();
 
-  void validate(const Trajectory & trajectory);
+  void validate(
+    const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory,
+    const Odometry & kinematics);
 
   void publishPredictedTrajectory();
   void publishDebugInfo();
@@ -84,6 +87,10 @@ private:
 
   ControlValidatorStatus validation_status_;
   ValidationParams validation_params_;  // for thresholds
+
+  // ego nearest index search
+  double ego_nearest_dist_threshold_;
+  double ego_nearest_yaw_threshold_;
 
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 

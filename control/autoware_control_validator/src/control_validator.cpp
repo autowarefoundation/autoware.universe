@@ -15,6 +15,8 @@
 #include "autoware/control_validator/control_validator.hpp"
 
 #include "autoware/control_validator/utils.hpp"
+#include "autoware/motion_utils/trajectory/interpolation.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 
 #include <memory>
 #include <string>
@@ -88,6 +90,11 @@ void ControlValidator::setupDiag()
       stat, validation_status_.is_valid_max_distance_deviation,
       "control output is deviated from trajectory");
   });
+  d.add(ns + "velocity_deviation", [&](auto & stat) {
+    setStatus(
+      stat, validation_status_.is_valid_velocity_deviation,
+      "currnet velocity is deviated from the desired velocity");
+  });
 }
 
 bool ControlValidator::isDataReady()
@@ -119,7 +126,7 @@ void ControlValidator::onPredictedTrajectory(const Trajectory::ConstSharedPtr ms
 
   debug_pose_publisher_->clearMarkers();
 
-  validate(*current_predicted_trajectory_);
+  validate(*current_predicted_trajectory_, *current_reference_trajectory_, *current_kinematics_);
 
   diag_updater_.force_update();
 
@@ -142,7 +149,9 @@ void ControlValidator::publishDebugInfo()
   debug_pose_publisher_->publish();
 }
 
-void ControlValidator::validate(const Trajectory & predicted_trajectory)
+void ControlValidator::validate(
+  const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory,
+  const Odometry & kinematics)
 {
   if (predicted_trajectory.points.size() < 2) {
     RCLCPP_ERROR_THROTTLE(
@@ -154,6 +163,7 @@ void ControlValidator::validate(const Trajectory & predicted_trajectory)
   auto & s = validation_status_;
 
   s.is_valid_max_distance_deviation = checkValidMaxDistanceDeviation(predicted_trajectory);
+  s.is_valid_velocity_deviation = checkValidVelocityDeviation(reference_trajectory, kinematics);
 
   s.invalid_count = isAllValid(s) ? 0 : s.invalid_count + 1;
 }
@@ -170,9 +180,40 @@ bool ControlValidator::checkValidMaxDistanceDeviation(const Trajectory & predict
   return true;
 }
 
+bool ControlValidator::checkValidVelocityDeviation(
+  const Trajectory & reference_trajectory, const Odometry & kinematics)
+{
+  // get current vel
+  const double current_vel = kinematics.twist.twist.linear.x;
+
+  // get desired vel
+  if (reference_trajectory.points.size() < 2) return true;
+  const double desired_vel =
+    autoware::motion_utils::calcInterpolatedPoint(reference_trajectory, kinematics.pose.pose)
+      .longitudinal_velocity_mps;
+
+  constexpr double reverse_vel_th = 0.1;
+  constexpr double over_vel_ratio = 0.1;
+
+  const bool is_over_velociay =
+    std::abs(current_vel) > std::abs(desired_vel) * (1.0 + over_vel_ratio) + reverse_vel_th;
+  const bool is_reverse_velocity =
+    std::signbit(current_vel * desired_vel) && std::abs(current_vel) > reverse_vel_th;
+
+  std::cerr << "current_vel: " << current_vel << ", " << "desired_vel: " << desired_vel
+            << std::endl;
+
+  if (is_over_velociay || is_reverse_velocity) {
+    std::cerr << "is_over_velociay: " << is_over_velociay << ", "
+              << "is_reverse_velocity: " << is_reverse_velocity << std::endl;
+  }
+
+  return !(is_over_velociay || is_reverse_velocity);
+}
+
 bool ControlValidator::isAllValid(const ControlValidatorStatus & s)
 {
-  return s.is_valid_max_distance_deviation;
+  return s.is_valid_max_distance_deviation && s.is_valid_velocity_deviation;
 }
 
 void ControlValidator::displayStatus()
