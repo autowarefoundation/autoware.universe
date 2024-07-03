@@ -20,8 +20,8 @@
 
 namespace pointcloud_preprocessor
 {
-template <class Derived>
-void DistortionCorrector<Derived>::processTwistMessage(
+template <class T>
+void DistortionCorrector<T>::processTwistMessage(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg)
 {
   geometry_msgs::msg::TwistStamped msg;
@@ -43,8 +43,8 @@ void DistortionCorrector<Derived>::processTwistMessage(
   }
 }
 
-template <class Derived>
-void DistortionCorrector<Derived>::processIMUMessage(
+template <class T>
+void DistortionCorrector<T>::processIMUMessage(
   const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
   geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr =
@@ -53,8 +53,8 @@ void DistortionCorrector<Derived>::processIMUMessage(
   enqueueIMU(imu_msg, geometry_imu_to_base_link_ptr);
 }
 
-template <class Derived>
-void DistortionCorrector<Derived>::getIMUTransformation(
+template <class T>
+void DistortionCorrector<T>::getIMUTransformation(
   const std::string & base_frame, const std::string & imu_frame,
   geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr)
 {
@@ -87,8 +87,9 @@ void DistortionCorrector<Derived>::getIMUTransformation(
     tf2::toMsg(tf2_imu_to_base_link.getRotation());
 }
 
-template <class Derived>
-void DistortionCorrector<Derived>::enqueueIMU(
+template <class T>
+void DistortionCorrector<T>::enqueueIMU(
+
   const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg,
   geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr)
 {
@@ -116,8 +117,9 @@ void DistortionCorrector<Derived>::enqueueIMU(
   }
 }
 
-template <class Derived>
-void DistortionCorrector<Derived>::getTwistAndIMUIterator(
+template <class T>
+void DistortionCorrector<T>::getTwistAndIMUIterator(
+
   bool use_imu, double first_point_time_stamp_sec,
   std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
   std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu)
@@ -140,8 +142,8 @@ void DistortionCorrector<Derived>::getTwistAndIMUIterator(
   }
 }
 
-template <class Derived>
-bool DistortionCorrector<Derived>::isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud)
+template <class T>
+bool DistortionCorrector<T>::isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   if (pointcloud.data.empty() || twist_queue_.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -162,8 +164,8 @@ bool DistortionCorrector<Derived>::isInputValid(sensor_msgs::msg::PointCloud2 & 
   return true;
 }
 
-template <class Derived>
-void DistortionCorrector<Derived>::undistortPointCloud(
+template <class T>
+void DistortionCorrector<T>::undistortPointCloud(
   bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud)
 {
   if (!isInputValid(pointcloud)) return;
@@ -233,8 +235,8 @@ void DistortionCorrector<Derived>::undistortPointCloud(
   warnIfTimestampIsTooLate(is_twist_time_stamp_too_late, is_imu_time_stamp_too_late);
 }
 
-template <class Derived>
-void DistortionCorrector<Derived>::warnIfTimestampIsTooLate(
+template <class T>
+void DistortionCorrector<T>::warnIfTimestampIsTooLate(
   bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late)
 {
   if (is_twist_time_stamp_too_late) {
