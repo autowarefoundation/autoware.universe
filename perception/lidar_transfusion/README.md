@@ -61,18 +61,6 @@ ros2 launch lidar_transfusion lidar_transfusion.launch.xml log_level:=debug
 
 This library operates on raw cloud data (bytes). It is assumed that the input pointcloud message has following format:
 
-```cpp
-struct TransfusionInput
-{
-  float x;
-  float y;
-  float z;
-  uint8_t intensity;
-};
-```
-
-In ROS 2 context it is expressed as:
-
 ```python
 [
   sensor_msgs.msg.PointField(name='x', offset=0, datatype=7, count=1),
