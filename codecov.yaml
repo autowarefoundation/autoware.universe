@@ -24,3 +24,6 @@ flag_management:
       - name_prefix: patch-
         type: patch
         target: auto
+
+ignore:
+  - "**/test/**/*"
