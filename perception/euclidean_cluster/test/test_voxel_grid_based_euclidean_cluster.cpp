@@ -95,7 +95,7 @@ TEST(VoxelGridBasedEuclideanClusterTest, testcase1)
     std::cout << "cluster success" << std::endl;
   } else {
     std::cout << "cluster failed" << std::endl;
-  };
+  }
   std::cout << "number of output clusters " << output.feature_objects.size() << std::endl;
   std::cout << "number points of first cluster: " << output.feature_objects[0].feature.cluster.width
             << std::endl;
@@ -129,7 +129,7 @@ TEST(VoxelGridBasedEuclideanClusterTest, testcase2)
     std::cout << "cluster success" << std::endl;
   } else {
     std::cout << "cluster failed" << std::endl;
-  };
+  }
   std::cout << "number of output clusters " << output.feature_objects.size() << std::endl;
   // the output clusters should be empty
   EXPECT_EQ(output.feature_objects.size(), 0);
@@ -159,7 +159,7 @@ TEST(VoxelGridBasedEuclideanClusterTest, testcase3)
     std::cout << "cluster success" << std::endl;
   } else {
     std::cout << "cluster failed" << std::endl;
-  };
+  }
   std::cout << "number of output clusters " << output.feature_objects.size() << std::endl;
   // the output clusters should be emtpy
   EXPECT_EQ(output.feature_objects.size(), 0);
