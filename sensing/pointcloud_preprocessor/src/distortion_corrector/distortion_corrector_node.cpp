@@ -37,8 +37,13 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   use_3d_distortion_correction_ = declare_parameter<bool>("use_3d_distortion_correction");
 
   // Publisher
-  undistorted_pointcloud_pub_ =
-    this->create_publisher<PointCloud2>("~/output/pointcloud", rclcpp::SensorDataQoS());
+  {
+    rclcpp::PublisherOptions pub_options;
+    pub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
+    // Publisher
+    undistorted_pointcloud_pub_ = this->create_publisher<PointCloud2>(
+      "~/output/pointcloud", rclcpp::SensorDataQoS(), pub_options);
+  }
 
   // Subscriber
   twist_sub_ = this->create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
