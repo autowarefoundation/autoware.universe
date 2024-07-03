@@ -326,8 +326,8 @@ Tensor Localizer::calc_average_pose(const std::vector<Particle> & particles)
 torch::Tensor Localizer::camera2nerf(const torch::Tensor & pose_in_world)
 {
   torch::Tensor x = pose_in_world;
-  // x = torch::mm(x, axis_convert_mat_);
-  // x = torch::mm(axis_convert_mat_.t(), x);
+  x = torch::mm(x, axis_convert_mat_);
+  x = torch::mm(axis_convert_mat_.t(), x);
 
   // normalize t
   Tensor t = x.index({Slc(0, 3), 3}).clone();
