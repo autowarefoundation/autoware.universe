@@ -78,6 +78,7 @@ None
 | `use_back`                  | bool   | whether using backward trajectory                       |
 | `expansion_distance`        | double | length of expansion for node transitions                |
 | `distance_heuristic_weight` | double | heuristic weight for estimating node's cost             |
+| `steering_change_weight`    | double | heuristic weight for estimating node's cost             |
 
 #### RRT\* search parameters
 

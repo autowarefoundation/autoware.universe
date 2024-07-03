@@ -240,7 +240,7 @@ void AstarSearch::expandNodes(AstarNode & current_node)
   const auto index_theta = discretizeAngle(current_node.theta, planner_common_param_.theta_size);
   for (const auto & transition : transition_table_[index_theta]) {
     // skip transition back to parent
-    // skip transitions resulting in frequent direction change
+    // skip transition resulting in frequent direction change
     if (transition.is_back != current_node.is_back) {
       if (transition.steering_index == current_node.steering_index ||
           current_node.dir_distance < min_dir_change_dist_)
@@ -264,6 +264,8 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     const bool is_direction_switch = (current_node.parent != nullptr) && (transition.is_back != current_node.is_back);
     double weights_sum = transition.is_back ? planner_common_param_.reverse_weight : 1.0;
     weights_sum += is_direction_switch ? planner_common_param_.direction_change_weight : 0.0;
+    weights_sum += getSteeringCost(transition.steering_index);
+    weights_sum += getSteeringChangeCost(transition.steering_index, current_node.steering_index);
 
     double move_cost = current_node.gc + weights_sum * transition.distance;
     double hc = estimateCost(next_pose);
@@ -283,6 +285,17 @@ void AstarSearch::expandNodes(AstarNode & current_node)
       continue;
     }
   }
+}
+
+double AstarSearch::getSteeringCost(const int steering_index) const
+{
+  return planner_common_param_.curve_weight * (abs(steering_index) / planner_common_param_.turning_steps);
+}
+
+double AstarSearch::getSteeringChangeCost(const int steering_index, const int prev_steering_index) const
+{
+  double steering_index_diff = abs(steering_index - prev_steering_index);
+  return astar_param_.steering_change_weight * steering_index_diff / (2.0 * planner_common_param_.turning_steps);
 }
 
 void AstarSearch::setPath(const AstarNode & goal_node)

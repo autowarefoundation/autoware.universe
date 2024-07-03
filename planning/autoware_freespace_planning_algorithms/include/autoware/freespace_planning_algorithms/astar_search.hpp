@@ -45,6 +45,7 @@ struct AstarParam
 
   // search configs
   double distance_heuristic_weight;  // obstacle threshold on grid [0,255]
+  double steering_change_weight;
 };
 
 struct AstarNode
@@ -124,7 +125,8 @@ public:
         node.declare_parameter<bool>("astar.only_behind_solutions"),
         node.declare_parameter<bool>("astar.use_back"),
         node.declare_parameter<double>("astar.expansion_distance"),
-        node.declare_parameter<double>("astar.distance_heuristic_weight")})
+        node.declare_parameter<double>("astar.distance_heuristic_weight"),
+        node.declare_parameter<double>("astar.steering_change_weight")})
   {
   }
 
@@ -151,6 +153,9 @@ private:
   double estimateCost(const geometry_msgs::msg::Pose & pose) const;
   bool isGoal(const AstarNode & node) const;
   geometry_msgs::msg::Pose node2pose(const AstarNode & node) const;
+
+  double getSteeringCost(const int steering_index) const;
+  double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
 
   // Algorithm specific param
   AstarParam astar_param_;
