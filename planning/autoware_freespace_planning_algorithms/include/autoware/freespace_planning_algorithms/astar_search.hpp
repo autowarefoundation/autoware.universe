@@ -55,6 +55,7 @@ struct AstarNode
   double theta;                          // theta
   double gc = 0;                         // actual cost
   double hc = 0;                         // heuristic cost
+  double dir_distance = 0;               // distance travelled from last direction change
   int steering_index;                    // steering index
   bool is_back;                          // true if the current direction of the vehicle is back
   AstarNode * parent = nullptr;          // parent node
@@ -169,6 +170,9 @@ private:
   double steering_resolution_;
   double heading_resolution_;
   double avg_turning_radius_;
+
+  // threshold for minimum distance between direction switches
+  static constexpr double min_dir_change_dist_ = 1.5;
 };
 }  // namespace autoware::freespace_planning_algorithms
 

@@ -239,6 +239,14 @@ void AstarSearch::expandNodes(AstarNode & current_node)
 {
   const auto index_theta = discretizeAngle(current_node.theta, planner_common_param_.theta_size);
   for (const auto & transition : transition_table_[index_theta]) {
+    // skip transition back to parent
+    // skip transitions resulting in frequent direction change
+    if (transition.is_back != current_node.is_back) {
+      if (transition.steering_index == current_node.steering_index ||
+          current_node.dir_distance < min_dir_change_dist_)
+          continue;
+    }
+
     // Calculate index of the next state
     geometry_msgs::msg::Pose next_pose;
     next_pose.position.x = current_node.x + transition.shift_x;
@@ -253,7 +261,7 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     if (next_node->status == NodeStatus::Closed) continue;
     if (detectCollision(next_index)) continue;
 
-    const bool is_direction_switch = transition.is_back != current_node.is_back;
+    const bool is_direction_switch = (current_node.parent != nullptr) && (transition.is_back != current_node.is_back);
     double weights_sum = transition.is_back ? planner_common_param_.reverse_weight : 1.0;
     weights_sum += is_direction_switch ? planner_common_param_.direction_change_weight : 0.0;
 
@@ -267,6 +275,8 @@ void AstarSearch::expandNodes(AstarNode & current_node)
       next_node->theta = tf2::getYaw(next_pose.orientation);
       next_node->gc = move_cost;
       next_node->hc = hc;
+      next_node->dir_distance = transition.distance + (is_direction_switch ? 0.0 : current_node.dir_distance);
+      next_node->steering_index = transition.steering_index;
       next_node->is_back = transition.is_back;
       next_node->parent = &current_node;
       openlist_.push(next_node);
@@ -292,10 +302,7 @@ void AstarSearch::setPath(const AstarNode & goal_node)
   pose.header = header;
   pose.pose = local2global(costmap_, goal_pose_);
 
-  PlannerWaypoint pw;
-  pw.pose = pose;
-  pw.is_back = node->is_back;
-  waypoints_.waypoints.push_back(pw);
+  waypoints_.waypoints.push_back({pose, node->is_back});
 
   // push astar nodes poses
   while (node != nullptr) {
@@ -303,11 +310,7 @@ void AstarSearch::setPath(const AstarNode & goal_node)
     pose.header = header;
     pose.pose = local2global(costmap_, node2pose(*node));
 
-    // PlannerWaypoint
-    PlannerWaypoint pw;
-    pw.pose = pose;
-    pw.is_back = node->is_back;
-    waypoints_.waypoints.push_back(pw);
+    waypoints_.waypoints.push_back({pose, node->is_back});
 
     // To the next node
     node = node->parent;
