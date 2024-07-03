@@ -697,15 +697,15 @@ void MissionPlannerNode::ConvertInput2LaneletFormat(
 
     // Get successor/neighbor lanelet information
     // Write lanelet neighbors
-    for (std::size_t i = 0; i < msg.segments[idx_segment].neighboring_lanelet_id.size(); i++) {
+    for (std::size_t i = 0; i < msg.segments[idx_segment].neighboring_segment_id.size(); i++) {
       out_lanelet_connections[idx_segment].neighbor_lanelet_ids.push_back(
-        msg.segments[idx_segment].neighboring_lanelet_id[i]);
+        msg.segments[idx_segment].neighboring_segment_id[i]);
     }
 
     // Write lanelet successors
-    for (std::size_t i = 0; i < msg.segments[idx_segment].successor_lanelet_id.size(); i++) {
+    for (std::size_t i = 0; i < msg.segments[idx_segment].successor_segment_id.size(); i++) {
       out_lanelet_connections[idx_segment].successor_lanelet_ids.push_back(
-        msg.segments[idx_segment].successor_lanelet_id[i]);
+        msg.segments[idx_segment].successor_segment_id[i]);
     }
 
     // The goal_information is not needed in this context, we set it to true for now
@@ -713,12 +713,12 @@ void MissionPlannerNode::ConvertInput2LaneletFormat(
   }
 
   // Define lambda function to replace old id with a new one
-  auto ReplaceAndWarnIfNotFound = [&](auto & lanelet_ids) {
-    for (auto & lanelet_id : lanelet_ids) {
-      if (lanelet_id >= 0) {
-        auto it = map_original_to_new.find(lanelet_id);
+  auto ReplaceAndWarnIfNotFound = [&](auto & segment_ids) {
+    for (auto & segment_id : segment_ids) {
+      if (segment_id >= 0) {
+        auto it = map_original_to_new.find(segment_id);
         if (it != map_original_to_new.end()) {
-          lanelet_id = it->second;
+          segment_id = it->second;
         } else {
           // Key %i seems to be not present in the provided lanelet.
         }

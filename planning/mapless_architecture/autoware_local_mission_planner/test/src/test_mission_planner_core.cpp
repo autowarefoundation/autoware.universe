@@ -88,12 +88,12 @@ autoware_planning_msgs::msg::RoadSegments CreateSegments()
   message.segments[2].linestrings[1].poses[1].position.z = 0.0;
 
   // Define connections
-  message.segments[0].neighboring_lanelet_id = {0, 1};
-  message.segments[1].neighboring_lanelet_id = {0, 1};
-  message.segments[2].neighboring_lanelet_id = {-1, -1};
-  message.segments[0].successor_lanelet_id = {2};
-  message.segments[1].successor_lanelet_id = {-1};
-  message.segments[2].successor_lanelet_id = {-1};
+  message.segments[0].neighboring_segment_id = {0, 1};
+  message.segments[1].neighboring_segment_id = {0, 1};
+  message.segments[2].neighboring_segment_id = {-1, -1};
+  message.segments[0].successor_segment_id = {2};
+  message.segments[1].successor_segment_id = {-1};
+  message.segments[2].successor_segment_id = {-1};
 
   return message;
 }
@@ -257,9 +257,9 @@ autoware_planning_msgs::msg::RoadSegments GetTestRoadModelForRecenterTests()
 
   int32_t neigh_1 = 1;
   std::vector<int32_t> neighboring_ids = {neigh_1};
-  message.segments[0].neighboring_lanelet_id = neighboring_ids;
+  message.segments[0].neighboring_segment_id = neighboring_ids;
   std::vector<int32_t> neighboring_ids_2 = {};
-  message.segments[1].neighboring_lanelet_id = neighboring_ids_2;
+  message.segments[1].neighboring_segment_id = neighboring_ids_2;
 
   return message;
 }
@@ -449,10 +449,10 @@ std::tuple<std::vector<lanelet::Lanelet>, std::vector<LaneletConnection>> Create
   message.segments[1].linestrings[1].poses[1].position.z = 0.0;
 
   // Define connections
-  message.segments[0].successor_lanelet_id = {1};
-  message.segments[0].neighboring_lanelet_id = {-1, -1};
-  message.segments[1].successor_lanelet_id = {-1};
-  message.segments[1].neighboring_lanelet_id = {-1, -1};
+  message.segments[0].successor_segment_id = {1};
+  message.segments[0].neighboring_segment_id = {-1, -1};
+  message.segments[1].successor_segment_id = {-1};
+  message.segments[1].neighboring_segment_id = {-1, -1};
 
   // Initialize MissionPlannerNode
   MissionPlannerNode MissionPlanner = MissionPlannerNode();
