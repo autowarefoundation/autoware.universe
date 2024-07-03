@@ -70,7 +70,8 @@ public:
    * @brief callback on receiving a trajectory
    * @param [in] traj_msg received trajectory message
    */
-  void onTrajectory(const Trajectory::ConstSharedPtr traj_msg);
+  void onTrajectory(
+    const Trajectory::ConstSharedPtr traj_msg, const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
    * @brief callback on receiving a reference trajectory
@@ -113,12 +114,27 @@ private:
   // update Route Handler
   void getRouteData();
 
+  /**
+   * @brief fetch data and publish diagnostics
+   */
+  void onTimer();
+
+  /**
+   * @brief fetch topic data
+   */
+  void fetchData();
+
   // ROS
-  rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  rclcpp::Subscription<Trajectory>::SharedPtr ref_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
-  rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr modified_goal_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+  autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
+    this, "~/input/trajectory"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> ref_sub_{
+    this, "~/input/reference_trajectory"};
+  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
+    this, "~/input/objects"};
+  autoware::universe_utils::InterProcessPollingSubscriber<PoseWithUuidStamped> modified_goal_sub_{
+    this, "~/input/modified_goal"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{
+    this, "~/input/odometry"};
   autoware::universe_utils::InterProcessPollingSubscriber<LaneletRoute> route_subscriber_{
     this, "~/input/route", rclcpp::QoS{1}.transient_local()};
   autoware::universe_utils::InterProcessPollingSubscriber<LaneletMapBin> vector_map_subscriber_{
@@ -131,6 +147,7 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   autoware::route_handler::RouteHandler route_handler_;
 
+  DiagnosticArray metrics_msg_;
   // Parameters
   std::string output_file_str_;
   std::string ego_frame_str_;
@@ -142,7 +159,7 @@ private:
   std::deque<rclcpp::Time> stamps_;
   std::array<std::deque<Stat<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
 
-  Odometry::ConstSharedPtr ego_state_ptr_;
+  rclcpp::TimerBase::SharedPtr timer_;
   PoseWithUuidStamped::ConstSharedPtr modified_goal_ptr_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
