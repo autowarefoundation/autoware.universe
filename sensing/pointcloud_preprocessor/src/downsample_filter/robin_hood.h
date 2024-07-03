@@ -465,22 +465,6 @@ public:
     mHead = obj;
   }
 
-  // Adds an already allocated block of memory to the allocator. This allocator is from now on
-  // responsible for freeing the data (with free()). If the provided data is not large enough to
-  // make use of, it is immediately freed. Otherwise it is reused and freed in the destructor.
-  void addOrFree(void * ptr, const size_t numBytes) noexcept
-  {
-    // calculate number of available elements in ptr
-    if (numBytes < ALIGNMENT + ALIGNED_SIZE) {
-      // not enough data for at least one element. Free and return.
-      ROBIN_HOOD_LOG("std::free")
-      std::free(ptr);
-    } else {
-      ROBIN_HOOD_LOG("add to buffer")
-      add(ptr, numBytes);
-    }
-  }
-
   void swap(BulkPoolAllocator<T, MinNumAllocs, MaxNumAllocs> & other) noexcept
   {
     using std::swap;
