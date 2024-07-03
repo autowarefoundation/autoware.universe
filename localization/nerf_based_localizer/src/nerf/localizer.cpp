@@ -177,7 +177,7 @@ std::vector<Tensor> Localizer::optimize_pose_by_differential(
 Tensor Localizer::render_image(const Tensor & pose)
 {
   auto [image, _] =
-    renderer_->render_image(pose, intrinsic_, infer_height_, infer_width_, (1 << 16));
+    renderer_->render_image(pose, intrinsic_, infer_height_, infer_width_, param_.ray_batch_size);
   return image;
 }
 
