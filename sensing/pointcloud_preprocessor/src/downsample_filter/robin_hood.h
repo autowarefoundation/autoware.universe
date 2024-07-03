@@ -427,14 +427,6 @@ public:
     return *this;
   }
 
-  BulkPoolAllocator &
-  // NOLINTNEXTLINE (bugprone-unhandled-self-assignment,cert-oop54-cpp)
-  operator=(const BulkPoolAllocator & ROBIN_HOOD_UNUSED(o) /*unused*/) noexcept
-  {
-    // does not do anything
-    return *this;
-  }
-
   ~BulkPoolAllocator() noexcept { reset(); }
 
   // Deallocates all allocated memory.
