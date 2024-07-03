@@ -54,21 +54,19 @@ struct AstarNode
   double x;                              // x
   double y;                              // y
   double theta;                          // theta
-  double gc = 0;                         // actual cost
-  double hc = 0;                         // heuristic cost
+  double gc = 0;                         // actual motion cost
+  double fc = 0;                         // total node cost
   double dir_distance = 0;               // distance travelled from last direction change
   int steering_index;                    // steering index
   bool is_back;                          // true if the current direction of the vehicle is back
   AstarNode * parent = nullptr;          // parent node
-
-  double cost() const { return gc + hc; }
 };
 
 struct NodeComparison
 {
   bool operator()(const AstarNode * lhs, const AstarNode * rhs)
   {
-    return lhs->cost() > rhs->cost();
+    return lhs->fc > rhs->fc;
   }
 };
 

@@ -166,7 +166,7 @@ bool AstarSearch::setStartNode()
   start_node->y = start_pose_.position.y;
   start_node->theta = 2.0 * M_PI / planner_common_param_.theta_size * index.theta;
   start_node->gc = 0;
-  start_node->hc = estimateCost(start_pose_);
+  start_node->fc = estimateCost(start_pose_);
   start_node->steering_index = 0;
   start_node->is_back = false;
   start_node->status = NodeStatus::Open;
@@ -268,15 +268,15 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     weights_sum += getSteeringChangeCost(transition.steering_index, current_node.steering_index);
 
     double move_cost = current_node.gc + weights_sum * transition.distance;
-    double hc = estimateCost(next_pose);
+    double total_cost = move_cost + estimateCost(next_pose);
     // Compare cost
-    if (next_node->status == NodeStatus::None || next_node->cost() > (move_cost + hc)) {
+    if (next_node->status == NodeStatus::None || next_node->fc > total_cost) {
       next_node->status = NodeStatus::Open;
       next_node->x = next_pose.position.x;
       next_node->y = next_pose.position.y;
       next_node->theta = tf2::getYaw(next_pose.orientation);
       next_node->gc = move_cost;
-      next_node->hc = hc;
+      next_node->fc = total_cost;
       next_node->dir_distance = transition.distance + (is_direction_switch ? 0.0 : current_node.dir_distance);
       next_node->steering_index = transition.steering_index;
       next_node->is_back = transition.is_back;
