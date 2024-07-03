@@ -57,6 +57,13 @@ public:
       node->declare_parameter<int>("diagnostics.twist_no_update_count_threshold_warn")),
     twist_no_update_count_threshold_error(
       node->declare_parameter<int>("diagnostics.twist_no_update_count_threshold_error")),
+    ellipse_scale(node->declare_parameter<double>("diagnostics.ellipse_scale")),
+    error_ellipse_size(node->declare_parameter<double>("diagnostics.error_ellipse_size")),
+    warn_ellipse_size(node->declare_parameter<double>("diagnostics.warn_ellipse_size")),
+    error_ellipse_size_lateral_direction(
+      node->declare_parameter<double>("diagnostics.error_ellipse_size_lateral_direction")),
+    warn_ellipse_size_lateral_direction(
+      node->declare_parameter<double>("diagnostics.warn_ellipse_size_lateral_direction")),
     threshold_observable_velocity_mps(
       node->declare_parameter<double>("misc.threshold_observable_velocity_mps"))
   {
@@ -68,14 +75,14 @@ public:
   const double tf_rate_;
   const bool publish_tf_;
   const bool enable_yaw_bias_estimation;
-  const int extend_state_step;
+  const size_t extend_state_step;
   const std::string pose_frame_id;
   const double pose_additional_delay;
   const double pose_gate_dist;
-  const int pose_smoothing_steps;
+  const size_t pose_smoothing_steps;
   const double twist_additional_delay;
   const double twist_gate_dist;
-  const int twist_smoothing_steps;
+  const size_t twist_smoothing_steps;
   const double proc_stddev_vx_c;   //!< @brief  vx process noise
   const double proc_stddev_wz_c;   //!< @brief  wz process noise
   const double proc_stddev_yaw_c;  //!< @brief  yaw process noise
@@ -86,6 +93,12 @@ public:
   const size_t pose_no_update_count_threshold_error;
   const size_t twist_no_update_count_threshold_warn;
   const size_t twist_no_update_count_threshold_error;
+  double ellipse_scale;
+  double error_ellipse_size;
+  double warn_ellipse_size;
+  double error_ellipse_size_lateral_direction;
+  double warn_ellipse_size_lateral_direction;
+
   const double threshold_observable_velocity_mps;
 };
 

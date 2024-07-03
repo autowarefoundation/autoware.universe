@@ -15,15 +15,15 @@
 #ifndef MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
 #define MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
 
+#include "autoware/universe_utils/ros/uuid_helper.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include "unique_identifier_msgs/msg/uuid.hpp"
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include "autoware_perception_msgs/msg/detected_objects.hpp"
+#include "autoware_perception_msgs/msg/tracked_objects.hpp"
 #include <geometry_msgs/msg/point.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <boost/functional/hash.hpp>
@@ -87,7 +87,7 @@ public:
   void collect(
     const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
     const uint & channel_index,
-    const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+    const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
     const std::unordered_map<int, int> & direct_assignment,
     const std::unordered_map<int, int> & reverse_assignment);
 

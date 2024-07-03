@@ -24,12 +24,12 @@ TrackerDebugger::TrackerDebugger(rclcpp::Node & node, const std::string & frame_
   // initialize debug publishers
   if (debug_settings_.publish_processing_time) {
     processing_time_publisher_ =
-      std::make_unique<tier4_autoware_utils::DebugPublisher>(&node_, "multi_object_tracker");
+      std::make_unique<autoware::universe_utils::DebugPublisher>(&node_, "multi_object_tracker");
   }
 
   if (debug_settings_.publish_tentative_objects) {
     debug_tentative_objects_pub_ =
-      node_.create_publisher<autoware_auto_perception_msgs::msg::TrackedObjects>(
+      node_.create_publisher<autoware_perception_msgs::msg::TrackedObjects>(
         "~/debug/tentative_objects", rclcpp::QoS{1});
   }
 
@@ -83,7 +83,7 @@ void TrackerDebugger::setupDiagnostics()
 // Object publishing functions
 
 void TrackerDebugger::publishTentativeObjects(
-  const autoware_auto_perception_msgs::msg::TrackedObjects & tentative_objects) const
+  const autoware_perception_msgs::msg::TrackedObjects & tentative_objects) const
 {
   if (debug_settings_.publish_tentative_objects) {
     debug_tentative_objects_pub_->publish(tentative_objects);
@@ -98,7 +98,7 @@ void TrackerDebugger::checkDelay(diagnostic_updater::DiagnosticStatusWrapper & s
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Measurement time is not set.");
     return;
   }
-  const double & delay = pipeline_latency_ms_;  // [s]
+  const double & delay = pipeline_latency_ms_ / 1e3;  // [s]
 
   if (delay == 0.0) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Detection delay is not calculated.");
@@ -181,7 +181,7 @@ void TrackerDebugger::endPublishTime(const rclcpp::Time & now, const rclcpp::Tim
 void TrackerDebugger::collectObjectInfo(
   const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
   const uint & channel_index,
-  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects,
+  const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
   const std::unordered_map<int, int> & direct_assignment,
   const std::unordered_map<int, int> & reverse_assignment)
 {

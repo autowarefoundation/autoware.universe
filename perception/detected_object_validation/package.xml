@@ -17,10 +17,12 @@
 
   <build_depend>libopencv-dev</build_depend>
 
-  <depend>autoware_auto_mapping_msgs</depend>
-  <depend>autoware_auto_perception_msgs</depend>
+  <depend>autoware_lanelet2_extension</depend>
+  <depend>autoware_map_msgs</depend>
+  <depend>autoware_perception_msgs</depend>
+  <depend>autoware_test_utils</depend>
+  <depend>autoware_universe_utils</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2_extension</depend>
   <depend>message_filters</depend>
   <depend>nav_msgs</depend>
   <depend>object_recognition_utils</depend>
@@ -30,7 +32,6 @@
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>tier4_autoware_utils</depend>
   <depend>tier4_perception_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

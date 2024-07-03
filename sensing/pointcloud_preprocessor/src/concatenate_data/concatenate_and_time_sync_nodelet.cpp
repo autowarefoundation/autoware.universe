@@ -75,8 +75,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 {
   // initialize debug tool
   {
-    using tier4_autoware_utils::DebugPublisher;
-    using tier4_autoware_utils::StopWatch;
+    using autoware::universe_utils::DebugPublisher;
+    using autoware::universe_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "concatenate_data_synchronizer");
     stop_watch_ptr_->tic("cyclic_time");
@@ -149,7 +149,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   {
     RCLCPP_DEBUG_STREAM(
       get_logger(), "Subscribing to " << input_topics_.size() << " user given topics as inputs:");
-    for (auto & input_topic : input_topics_) {
+    for (const auto & input_topic : input_topics_) {
       RCLCPP_DEBUG_STREAM(get_logger(), " - " << input_topic);
     }
 

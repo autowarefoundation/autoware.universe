@@ -15,12 +15,12 @@
 #ifndef IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
 #define IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
 
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <image_projection_based_fusion/debugger.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/debug_publisher.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
-#include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -46,15 +46,15 @@
 
 namespace image_projection_based_fusion
 {
-using autoware_auto_perception_msgs::msg::DetectedObject;
-using autoware_auto_perception_msgs::msg::DetectedObjects;
+using autoware_perception_msgs::msg::DetectedObject;
+using autoware_perception_msgs::msg::DetectedObjects;
 using sensor_msgs::msg::CameraInfo;
 using sensor_msgs::msg::Image;
 using sensor_msgs::msg::PointCloud2;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-using autoware_auto_perception_msgs::msg::ObjectClassification;
+using autoware_perception_msgs::msg::ObjectClassification;
 
 template <class TargetMsg3D, class ObjType, class Msg2D>
 class FusionNode : public rclcpp::Node
@@ -138,8 +138,8 @@ protected:
   float filter_scope_max_z_;
 
   /** \brief processing time publisher. **/
-  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
-  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
+  std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
 };
 
 }  // namespace image_projection_based_fusion

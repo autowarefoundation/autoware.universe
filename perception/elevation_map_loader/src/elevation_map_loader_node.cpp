@@ -14,14 +14,14 @@
 
 #include "elevation_map_loader/elevation_map_loader_node.hpp"
 
+#include <autoware_grid_map_utils/polygon_iterator.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_cv/InpaintFilter.hpp>
 #include <grid_map_pcl/GridMapPclLoader.hpp>
 #include <grid_map_pcl/helpers.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
-#include <grid_map_utils/polygon_iterator.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/logger.hpp>
 
 #include <grid_map_msgs/msg/grid_map.hpp>
@@ -93,7 +93,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   sub_map_hash_ = create_subscription<tier4_external_api_msgs::msg::MapHash>(
     "/api/autoware/get/map/info/hash", durable_qos,
     std::bind(&ElevationMapLoaderNode::onMapHash, this, _1));
-  sub_vector_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  sub_vector_map_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "input/vector_map", durable_qos, std::bind(&ElevationMapLoaderNode::onVectorMap, this, _1));
   if (use_sequential_load) {
     {
@@ -237,7 +237,7 @@ void ElevationMapLoaderNode::onPointCloudMapMetaData(
 }
 
 void ElevationMapLoaderNode::onVectorMap(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr vector_map)
+  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr vector_map)
 {
   RCLCPP_INFO(this->get_logger(), "subscribe vector_map");
   data_manager_.lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
@@ -356,7 +356,7 @@ void ElevationMapLoaderNode::inpaintElevationMap(const float radius)
   // Convert elevation layer to OpenCV image to fill in holes.
   // Get the inpaint mask (nonzero pixels indicate where values need to be filled in).
   namespace bg = boost::geometry;
-  using tier4_autoware_utils::Point2d;
+  using autoware::universe_utils::Point2d;
 
   elevation_map_.add("inpaint_mask", 0.0);
 
@@ -382,8 +382,8 @@ void ElevationMapLoaderNode::inpaintElevationMap(const float radius)
       for (const auto & p : lane_polygon) {
         polygon.addVertex(grid_map::Position(p[0], p[1]));
       }
-      for (grid_map_utils::PolygonIterator iterator(elevation_map_, polygon); !iterator.isPastEnd();
-           ++iterator) {
+      for (autoware::grid_map_utils::PolygonIterator iterator(elevation_map_, polygon);
+           !iterator.isPastEnd(); ++iterator) {
         if (!elevation_map_.isValid(*iterator, layer_name_)) {
           elevation_map_.at("inpaint_mask", *iterator) = 1.0;
         }

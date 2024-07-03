@@ -106,7 +106,7 @@ bool VoxelGridBasedEuclideanCluster::cluster(
     temporary_cluster.height = pointcloud_msg->height;
     temporary_cluster.fields = pointcloud_msg->fields;
     temporary_cluster.point_step = point_step;
-    temporary_cluster.data.resize(max_cluster_size_ * point_step);
+    temporary_cluster.data.resize(cluster.indices.size() * point_step);
     clusters_data_size.push_back(0);
   }
 
@@ -124,6 +124,10 @@ bool VoxelGridBasedEuclideanCluster::cluster(
         &temporary_clusters.at(map[index]).data[cluster_data_size],
         &pointcloud_msg->data[i * point_step], point_step);
       cluster_data_size += point_step;
+      if (cluster_data_size == temporary_clusters.at(map[index]).data.size()) {
+        temporary_clusters.at(map[index])
+          .data.resize(temporary_clusters.at(map[index]).data.size() * 2);
+      }
     }
   }
 
@@ -149,8 +153,8 @@ bool VoxelGridBasedEuclideanCluster::cluster(
 
       feature_object.object.kinematics.pose_with_covariance.pose.position =
         getCentroid(feature_object.feature.cluster);
-      autoware_auto_perception_msgs::msg::ObjectClassification classification;
-      classification.label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+      autoware_perception_msgs::msg::ObjectClassification classification;
+      classification.label = autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
       classification.probability = 1.0f;
       feature_object.object.classification.emplace_back(classification);
 

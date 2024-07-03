@@ -16,9 +16,9 @@
 #include "pose_estimator_arbiter/rule_helper/pcd_occupancy.hpp"
 #include "pose_estimator_arbiter/rule_helper/pose_estimator_area.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 
 #include <boost/geometry/geometry.hpp>
 
@@ -28,10 +28,10 @@
 
 #include <unordered_set>
 
-class MockNode : public ::testing::Test
+class RuleHelperMockNode : public ::testing::Test
 {
 protected:
-  virtual void SetUp()
+  void SetUp() override
   {
     rclcpp::init(0, nullptr);
     node = std::make_shared<rclcpp::Node>("test_node");
@@ -39,10 +39,10 @@ protected:
 
   std::shared_ptr<rclcpp::Node> node{nullptr};
 
-  virtual void TearDown() { rclcpp::shutdown(); }
+  void TearDown() override { rclcpp::shutdown(); }
 };
 
-TEST_F(MockNode, poseEstimatorArea)
+TEST_F(RuleHelperMockNode, poseEstimatorArea)
 {
   auto create_polygon3d = []() -> lanelet::Polygon3d {
     lanelet::Polygon3d polygon;
@@ -59,7 +59,7 @@ TEST_F(MockNode, poseEstimatorArea)
   lanelet::LaneletMapPtr lanelet_map(new lanelet::LaneletMap);
   lanelet_map->add(create_polygon3d());
 
-  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using HADMapBin = autoware_map_msgs::msg::LaneletMapBin;
   using Point = geometry_msgs::msg::Point;
   HADMapBin msg;
   lanelet::utils::conversion::toBinMsg(lanelet_map, &msg);
@@ -73,7 +73,7 @@ TEST_F(MockNode, poseEstimatorArea)
   EXPECT_FALSE(pose_estimator_area.within(Point().set__x(-5).set__y(-5).set__z(0), "yabloc"));
 }
 
-TEST_F(MockNode, pcdOccupancy)
+TEST_F(RuleHelperMockNode, pcdOccupancy)
 {
   using pose_estimator_arbiter::rule_helper::PcdOccupancy;
   const int pcd_density_upper_threshold = 20;
@@ -89,7 +89,7 @@ TEST_F(MockNode, pcdOccupancy)
   EXPECT_FALSE(pcd_occupancy.ndt_can_operate(point, &message));
 }
 
-TEST_F(MockNode, gridKey)
+TEST_F(RuleHelperMockNode, gridKey)
 {
   using pose_estimator_arbiter::rule_helper::GridKey;
   EXPECT_TRUE(GridKey(10., -5.) == GridKey(10., -10.));

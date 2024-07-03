@@ -33,13 +33,13 @@
 
 #include "map_loader/lanelet2_map_visualization_node.hpp"
 
-#include <lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -73,7 +73,7 @@ Lanelet2MapVisualizationNode::Lanelet2MapVisualizationNode(const rclcpp::NodeOpt
 
   viz_lanelets_centerline_ = true;
 
-  sub_map_bin_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  sub_map_bin_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
     "input/lanelet2_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&Lanelet2MapVisualizationNode::onMapBin, this, _1));
 
@@ -82,7 +82,7 @@ Lanelet2MapVisualizationNode::Lanelet2MapVisualizationNode(const rclcpp::NodeOpt
 }
 
 void Lanelet2MapVisualizationNode::onMapBin(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg)
 {
   lanelet::LaneletMapPtr viz_lanelet_map(new lanelet::LaneletMap);
 
@@ -153,8 +153,8 @@ void Lanelet2MapVisualizationNode::onMapBin(
   setColor(&cl_speed_bumps, 0.56, 0.40, 0.27, 0.5);
   setColor(&cl_crosswalks, 0.80, 0.80, 0.0, 0.5);
   setColor(&cl_obstacle_polygons, 0.4, 0.27, 0.27, 0.5);
-  setColor(&cl_parking_lots, 0.5, 0.5, 0.0, 0.3);
-  setColor(&cl_parking_spaces, 1.0, 0.647, 0.0, 0.6);
+  setColor(&cl_parking_lots, 1.0, 1.0, 1.0, 0.2);
+  setColor(&cl_parking_spaces, 1.0, 1.0, 1.0, 0.3);
   setColor(&cl_lanelet_id, 0.5, 0.5, 0.5, 0.999);
   setColor(&cl_no_obstacle_segmentation_area, 0.37, 0.37, 0.27, 0.5);
   setColor(&cl_no_obstacle_segmentation_area_for_run_out, 0.37, 0.7, 0.27, 0.5);

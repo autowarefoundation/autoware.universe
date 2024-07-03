@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tracking_object_merger/utils/utils.hpp"
+#include "autoware_tracking_object_merger/utils/utils.hpp"
 
-#include <autoware_auto_perception_msgs/msg/shape.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_object.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include "autoware_perception_msgs/msg/shape.hpp"
+#include "autoware_perception_msgs/msg/tracked_object.hpp"
+#include "autoware_perception_msgs/msg/tracked_objects.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <string>
 #include <unordered_map>
 
-using autoware_auto_perception_msgs::msg::TrackedObject;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
-namespace utils
+using autoware_perception_msgs::msg::TrackedObject;
+using autoware_perception_msgs::msg::TrackedObjects;
+namespace autoware::tracking_object_merger::utils
 {
 
 /**
@@ -92,14 +92,14 @@ TrackedObject linearInterpolationForTrackedObject(
   if (shape1.type != shape2.type) {
     // if shape type is different, return obj1
   } else {
-    if (shape1.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    if (shape1.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
       auto & output_shape = output.shape;
       output_shape.dimensions.x = shape1.dimensions.x * (1 - weight) + shape2.dimensions.x * weight;
       output_shape.dimensions.y = shape1.dimensions.y * (1 - weight) + shape2.dimensions.y * weight;
       output_shape.dimensions.z = shape1.dimensions.z * (1 - weight) + shape2.dimensions.z * weight;
-    } else if (shape1.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+    } else if (shape1.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
       // (TODO) implement
-    } else if (shape1.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    } else if (shape1.type == autoware_perception_msgs::msg::Shape::POLYGON) {
       // (TODO) implement
     } else {
       // when type is unknown, print warning and do nothing
@@ -153,20 +153,20 @@ TrackedObject predictPastOrFutureTrackedObject(const TrackedObject & obj, const 
 /**
  * @brief predict past or future tracked objects
  *
- * @param obj
+ * @param input_objects
  * @param header
  * @return TrackedObjects
  */
 TrackedObjects predictPastOrFutureTrackedObjects(
-  const TrackedObjects & obj, const std_msgs::msg::Header & header)
+  const TrackedObjects & input_objects, const std_msgs::msg::Header & header)
 {
   // for each object, predict past or future
   TrackedObjects output_objects;
-  output_objects.header = obj.header;
+  output_objects.header = input_objects.header;
   output_objects.header.stamp = header.stamp;
 
-  const auto dt = (rclcpp::Time(header.stamp) - rclcpp::Time(obj.header.stamp)).seconds();
-  for (const auto & obj : obj.objects) {
+  const auto dt = (rclcpp::Time(header.stamp) - rclcpp::Time(input_objects.header.stamp)).seconds();
+  for (const auto & obj : input_objects.objects) {
     output_objects.objects.push_back(predictPastOrFutureTrackedObject(obj, dt));
   }
   return output_objects;
@@ -243,9 +243,9 @@ TrackedObjects interpolateTrackedObjects(
   return output_objects;
 }
 
-}  // namespace utils
+}  // namespace autoware::tracking_object_merger::utils
 
-namespace merger_utils
+namespace autoware::tracking_object_merger::merger_utils
 {
 
 double mean(const double a, const double b)
@@ -280,7 +280,7 @@ bool objectsHaveSameMotionDirections(const TrackedObject & main_obj, const Track
   // diff of motion yaw angle
   const auto motion_yaw_diff = std::fabs(main_motion_yaw - sub_motion_yaw);
   const auto normalized_motion_yaw_diff =
-    tier4_autoware_utils::normalizeRadian(motion_yaw_diff);  // -pi ~ pi
+    autoware::universe_utils::normalizeRadian(motion_yaw_diff);  // -pi ~ pi
   // evaluate if motion yaw angle is same
   constexpr double yaw_threshold = M_PI / 4.0;  // 45 deg
   if (std::abs(normalized_motion_yaw_diff) < yaw_threshold) {
@@ -305,7 +305,7 @@ bool objectsYawIsReverted(const TrackedObject & main_obj, const TrackedObject & 
   const auto sub_yaw = tf2::getYaw(sub_obj.kinematics.pose_with_covariance.pose.orientation);
   // calc yaw diff
   const auto yaw_diff = std::fabs(main_yaw - sub_yaw);
-  const auto normalized_yaw_diff = tier4_autoware_utils::normalizeRadian(yaw_diff);  // -pi ~ pi
+  const auto normalized_yaw_diff = autoware::universe_utils::normalizeRadian(yaw_diff);  // -pi ~ pi
   // evaluate if yaw is reverted
   constexpr double yaw_threshold = M_PI / 2.0;  // 90 deg
   if (std::abs(normalized_yaw_diff) >= yaw_threshold) {
@@ -317,10 +317,10 @@ bool objectsYawIsReverted(const TrackedObject & main_obj, const TrackedObject & 
 
 // object kinematics merger
 // currently only support velocity fusion
-autoware_auto_perception_msgs::msg::TrackedObjectKinematics objectKinematicsVXMerger(
+autoware_perception_msgs::msg::TrackedObjectKinematics objectKinematicsVXMerger(
   const TrackedObject & main_obj, const TrackedObject & sub_obj, const MergePolicy policy)
 {
-  autoware_auto_perception_msgs::msg::TrackedObjectKinematics output_kinematics;
+  autoware_perception_msgs::msg::TrackedObjectKinematics output_kinematics;
   // copy main object at first
   output_kinematics = main_obj.kinematics;
   auto sub_obj_ = sub_obj;
@@ -425,11 +425,11 @@ float probabilityMerger(const float main_prob, const float sub_prob, const Merge
 }
 
 // shape merger
-autoware_auto_perception_msgs::msg::Shape shapeMerger(
-  const autoware_auto_perception_msgs::msg::Shape & main_obj_shape,
-  const autoware_auto_perception_msgs::msg::Shape & sub_obj_shape, const MergePolicy policy)
+autoware_perception_msgs::msg::Shape shapeMerger(
+  const autoware_perception_msgs::msg::Shape & main_obj_shape,
+  const autoware_perception_msgs::msg::Shape & sub_obj_shape, const MergePolicy policy)
 {
-  autoware_auto_perception_msgs::msg::Shape output_shape;
+  autoware_perception_msgs::msg::Shape output_shape;
   // copy main object at first
   output_shape = main_obj_shape;
 
@@ -444,17 +444,17 @@ autoware_auto_perception_msgs::msg::Shape shapeMerger(
     return sub_obj_shape;
   } else if (policy == MergePolicy::FUSION) {
     // write down fusion method for each shape type
-    if (main_obj_shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    if (main_obj_shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
       // if shape type is bounding box, merge bounding box
       output_shape.dimensions.x = mean(main_obj_shape.dimensions.x, sub_obj_shape.dimensions.x);
       output_shape.dimensions.y = mean(main_obj_shape.dimensions.y, sub_obj_shape.dimensions.y);
       output_shape.dimensions.z = mean(main_obj_shape.dimensions.z, sub_obj_shape.dimensions.z);
       return output_shape;
-    } else if (main_obj_shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+    } else if (main_obj_shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
       // if shape type is cylinder, merge cylinder
       // (TODO) implement
       return output_shape;
-    } else if (main_obj_shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    } else if (main_obj_shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
       // if shape type is polygon, merge polygon
       // (TODO)
       return output_shape;
@@ -513,4 +513,4 @@ void updateWholeTrackedObject(TrackedObject & main_obj, const TrackedObject & su
   main_obj = sub_obj;
 }
 
-}  // namespace merger_utils
+}  // namespace autoware::tracking_object_merger::merger_utils

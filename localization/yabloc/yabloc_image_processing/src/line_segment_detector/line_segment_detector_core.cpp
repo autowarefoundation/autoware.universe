@@ -14,8 +14,8 @@
 
 #include "yabloc_image_processing/line_segment_detector/line_segment_detector.hpp"
 
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 #include <yabloc_common/cv_decompress.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
@@ -23,7 +23,8 @@
 
 namespace yabloc::line_segment_detector
 {
-LineSegmentDetector::LineSegmentDetector() : Node("line_detector")
+LineSegmentDetector::LineSegmentDetector(const rclcpp::NodeOptions & options)
+: Node("line_detector", options)
 {
   using std::placeholders::_1;
 
@@ -52,7 +53,7 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
 
   cv::Mat lines;
   {
-    tier4_autoware_utils::StopWatch stop_watch;
+    autoware::universe_utils::StopWatch stop_watch;
     line_segment_detector_->detect(gray_image, lines);
     if (lines.size().width != 0) {
       line_segment_detector_->drawSegments(gray_image, lines);
@@ -66,7 +67,8 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
   std::vector<cv::Mat> filtered_lines = remove_too_outer_elements(lines, image.size());
 
   for (const cv::Mat & xy_xy : filtered_lines) {
-    Eigen::Vector3f xy1, xy2;
+    Eigen::Vector3f xy1;
+    Eigen::Vector3f xy2;
     xy1 << xy_xy.at<float>(0), xy_xy.at<float>(1), 0;
     xy2 << xy_xy.at<float>(2), xy_xy.at<float>(3), 0;
     pcl::PointNormal pn;
@@ -78,7 +80,7 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
 }
 
 std::vector<cv::Mat> LineSegmentDetector::remove_too_outer_elements(
-  const cv::Mat & lines, const cv::Size & size) const
+  const cv::Mat & lines, const cv::Size & size)
 {
   std::vector<cv::Rect2i> rect_vector;
   rect_vector.emplace_back(0, 0, size.width, 3);
@@ -106,3 +108,6 @@ std::vector<cv::Mat> LineSegmentDetector::remove_too_outer_elements(
 }
 
 }  // namespace yabloc::line_segment_detector
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(yabloc::line_segment_detector::LineSegmentDetector)
