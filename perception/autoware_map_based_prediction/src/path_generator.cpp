@@ -462,8 +462,7 @@ FrenetPoint PathGenerator::getFrenetPoint(
     // assume it will continue accelerating (reckless driving)
     const bool object_has_surpassed_limit_already = v > speed_limit;
     if (terminal_velocity < speed_limit || object_has_surpassed_limit_already)
-      return v + a * (1.0 / lambda) +
-             (a / (t_h * std::pow(lambda, 2))) * std::expm1(-lambda * t_h);
+      return v + a * (1.0 / lambda) + (a / (t_h * std::pow(lambda, 2))) * std::expm1(-lambda * t_h);
 
     // It is assumed the vehicle accelerates until final_speed is reached and
     // then continues at constant speed for the rest of the time horizon
