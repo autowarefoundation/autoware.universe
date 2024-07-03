@@ -443,8 +443,8 @@ FrenetPoint PathGenerator::getFrenetPoint(
       // if the velocities don't have the same sign, calculate when the vehicle reaches 0 speed ->
       // time t_stop
 
-      // 0 = Vo + acc(1/lambda)(1-e^(-lambdat_stop))
-      // e^(-lambdat_stop) = 1 - (-Vo* lambda)/acc
+      // 0 = Vo + acc(1/lambda)(1-e^(-lambda t_stop))
+      // e^(-lambda t_stop) = 1 - (-Vo* lambda)/acc
       // t_stop = (-1/lambda)*ln(1 - (-Vo* lambda)/acc)
       // t_stop = (-1/lambda)*ln(1 + (Vo* lambda)/acc)
       auto t_stop = (-1.0 / lambda) * std::log(1 + (v * lambda / a));
