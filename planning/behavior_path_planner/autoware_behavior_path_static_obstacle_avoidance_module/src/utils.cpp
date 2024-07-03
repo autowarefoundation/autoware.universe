@@ -368,6 +368,15 @@ bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> 
           next_lanelet.polygon2d().basicPolygon())) {
       return true;
     }
+  } else {
+    for (const auto & lane : route_handler->getNextLanelets(object.overhang_lanelet)) {
+      if (boost::geometry::within(
+            lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+              .basicPoint(),
+            lane.polygon2d().basicPolygon())) {
+        return true;
+      }
+    }
   }
 
   return false;
