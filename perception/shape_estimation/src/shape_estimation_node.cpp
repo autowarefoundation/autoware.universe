@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "shape_estimation/shape_estimator.hpp"
+#include "shape_estimation_node.hpp"
 
-#include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <node.hpp>
+#include "autoware/shape_estimation/shape_estimator.hpp"
+#include "autoware/universe_utils/math/unit_conversion.hpp"
 
-#include <autoware_perception_msgs/msg/object_classification.hpp>
+#include "autoware_perception_msgs/msg/object_classification.hpp"
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -31,6 +31,9 @@
 
 #include <memory>
 #include <string>
+
+namespace autoware::shape_estimation
+{
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
@@ -143,6 +146,7 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
   processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
 }
+}  // namespace autoware::shape_estimation
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(ShapeEstimationNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::shape_estimation::ShapeEstimationNode)

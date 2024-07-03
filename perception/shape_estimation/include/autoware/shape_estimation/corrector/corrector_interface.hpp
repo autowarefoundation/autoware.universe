@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__CORRECTOR__CORRECTOR_INTERFACE_HPP_
-#define SHAPE_ESTIMATION__CORRECTOR__CORRECTOR_INTERFACE_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__CORRECTOR_INTERFACE_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__CORRECTOR_INTERFACE_HPP_
 
 #include <autoware_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <string>
-
+namespace autoware::shape_estimation
+{
+namespace corrector
+{
 class ShapeEstimationCorrectorInterface
 {
 public:
@@ -31,4 +34,7 @@ public:
     autoware_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose) = 0;
 };
 
-#endif  // SHAPE_ESTIMATION__CORRECTOR__CORRECTOR_INTERFACE_HPP_
+}  // namespace corrector
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__CORRECTOR_INTERFACE_HPP_

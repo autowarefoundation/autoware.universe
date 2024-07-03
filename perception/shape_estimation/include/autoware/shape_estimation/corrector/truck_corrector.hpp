@@ -12,28 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__CORRECTOR__BUS_CORRECTOR_HPP_
-#define SHAPE_ESTIMATION__CORRECTOR__BUS_CORRECTOR_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__TRUCK_CORRECTOR_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__TRUCK_CORRECTOR_HPP_
 
-#include "shape_estimation/corrector/vehicle_corrector.hpp"
+#include "autoware/shape_estimation/corrector/vehicle_corrector.hpp"
 #include "utils.hpp"
 
-class BusCorrector : public VehicleCorrector
+namespace autoware::shape_estimation
+{
+namespace corrector
+{
+
+class TruckCorrector : public VehicleCorrector
 {
 public:
-  explicit BusCorrector(const bool use_reference_yaw = false) : VehicleCorrector(use_reference_yaw)
+  explicit TruckCorrector(const bool use_reference_yaw = false)
+  : VehicleCorrector(use_reference_yaw)
   {
     corrector_utils::CorrectionBBParameters params;
-    params.min_width = 2.0;
-    params.max_width = 3.2;
+    params.min_width = 1.5;
+    params.max_width = 3.5;
     params.default_width = (params.min_width + params.max_width) * 0.5;
-    params.min_length = 5.0;
-    params.max_length = 17.0;
-    params.default_length = 7.0;
+    params.min_length = 4.0;
+    params.max_length = 18.0;
+    params.default_length = 7.0;  // 7m is the most common length of a truck in Japan
     setParams(params);
   }
 
-  ~BusCorrector() = default;
+  ~TruckCorrector() = default;
 };
 
-#endif  // SHAPE_ESTIMATION__CORRECTOR__BUS_CORRECTOR_HPP_
+}  // namespace corrector
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__TRUCK_CORRECTOR_HPP_

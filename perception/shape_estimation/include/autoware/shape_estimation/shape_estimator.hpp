@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__SHAPE_ESTIMATOR_HPP_
-#define SHAPE_ESTIMATION__SHAPE_ESTIMATOR_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__SHAPE_ESTIMATOR_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__SHAPE_ESTIMATOR_HPP_
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
@@ -26,6 +26,9 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <string>
+
+namespace autoware::shape_estimation
+{
 
 struct ReferenceYawInfo
 {
@@ -75,5 +78,6 @@ public:
     const boost::optional<ReferenceShapeSizeInfo> & ref_shape_size_info,
     autoware_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output);
 };
+}  // namespace autoware::shape_estimation
 
-#endif  // SHAPE_ESTIMATION__SHAPE_ESTIMATOR_HPP_
+#endif  // AUTOWARE__SHAPE_ESTIMATION__SHAPE_ESTIMATOR_HPP_

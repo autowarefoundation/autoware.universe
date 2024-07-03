@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__CORRECTOR__BICYCLE_CORRECTOR_HPP_
-#define SHAPE_ESTIMATION__CORRECTOR__BICYCLE_CORRECTOR_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__BICYCLE_CORRECTOR_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__BICYCLE_CORRECTOR_HPP_
 
-#include "shape_estimation/corrector/vehicle_corrector.hpp"
+#include "autoware/shape_estimation/corrector/vehicle_corrector.hpp"
 #include "utils.hpp"
+
+namespace autoware::shape_estimation
+{
+namespace corrector
+{
 
 class BicycleCorrector : public VehicleCorrector
 {
@@ -37,4 +42,7 @@ public:
   ~BicycleCorrector() = default;
 };
 
-#endif  // SHAPE_ESTIMATION__CORRECTOR__BICYCLE_CORRECTOR_HPP_
+}  // namespace corrector
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__BICYCLE_CORRECTOR_HPP_

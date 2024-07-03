@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__FILTER__CAR_FILTER_HPP_
-#define SHAPE_ESTIMATION__FILTER__CAR_FILTER_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__FILTER__CAR_FILTER_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__FILTER__CAR_FILTER_HPP_
 
-#include "shape_estimation/filter/filter_interface.hpp"
+#include "autoware/shape_estimation/filter/filter_interface.hpp"
 #include "utils.hpp"
 
+namespace autoware::shape_estimation
+{
+namespace filter
+{
 class CarFilter : public ShapeEstimationFilterInterface
 {
 public:
@@ -30,4 +34,7 @@ public:
     const geometry_msgs::msg::Pose & pose) override;
 };
 
-#endif  // SHAPE_ESTIMATION__FILTER__CAR_FILTER_HPP_
+}  // namespace filter
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__FILTER__CAR_FILTER_HPP_

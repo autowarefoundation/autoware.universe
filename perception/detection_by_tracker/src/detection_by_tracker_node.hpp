@@ -15,12 +15,12 @@
 #ifndef DETECTION_BY_TRACKER_NODE_HPP_
 #define DETECTION_BY_TRACKER_NODE_HPP_
 
+#include "autoware/shape_estimation/shape_estimator.hpp"
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
 #include "debugger/debugger.hpp"
 #include "euclidean_cluster/euclidean_cluster.hpp"
 #include "euclidean_cluster/utils.hpp"
 #include "euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
-#include "shape_estimation/shape_estimator.hpp"
 #include "utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -80,7 +80,7 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   TrackerHandler tracker_handler_;
-  std::shared_ptr<ShapeEstimator> shape_estimator_;
+  std::shared_ptr<autoware::shape_estimation::ShapeEstimator> shape_estimator_;
   std::shared_ptr<euclidean_cluster::EuclideanClusterInterface> cluster_;
   std::shared_ptr<Debugger> debugger_;
   std::map<uint8_t, int> max_search_distance_for_merger_;

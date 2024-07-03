@@ -56,24 +56,26 @@ autoware_perception_msgs::msg::Shape extendShape(
   return output;
 }
 
-boost::optional<ReferenceYawInfo> getReferenceYawInfo(const uint8_t label, const float yaw)
+boost::optional<autoware::shape_estimation::ReferenceYawInfo> getReferenceYawInfo(
+  const uint8_t label, const float yaw)
 {
   const bool is_vehicle =
     Label::CAR == label || Label::TRUCK == label || Label::BUS == label || Label::TRAILER == label;
   if (is_vehicle) {
-    return ReferenceYawInfo{yaw, autoware::universe_utils::deg2rad(30)};
+    return autoware::shape_estimation::ReferenceYawInfo{yaw, autoware::universe_utils::deg2rad(30)};
   } else {
     return boost::none;
   }
 }
 
-boost::optional<ReferenceShapeSizeInfo> getReferenceShapeSizeInfo(
+boost::optional<autoware::shape_estimation::ReferenceShapeSizeInfo> getReferenceShapeSizeInfo(
   const uint8_t label, const autoware_perception_msgs::msg::Shape & shape)
 {
   const bool is_vehicle =
     Label::CAR == label || Label::TRUCK == label || Label::BUS == label || Label::TRAILER == label;
   if (is_vehicle) {
-    return ReferenceShapeSizeInfo{shape, ReferenceShapeSizeInfo::Mode::Min};
+    return autoware::shape_estimation::ReferenceShapeSizeInfo{
+      shape, autoware::shape_estimation::ReferenceShapeSizeInfo::Mode::Min};
   } else {
     return boost::none;
   }
@@ -176,7 +178,7 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
   // set maximum search setting for merger/divider
   setMaxSearchRange();
 
-  shape_estimator_ = std::make_shared<ShapeEstimator>(true, true);
+  shape_estimator_ = std::make_shared<autoware::shape_estimation::ShapeEstimator>(true, true);
   cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
     false, 10, 10000, 0.7, 0.3, 0);
   debugger_ = std::make_shared<Debugger>(this);

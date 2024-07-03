@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__MODEL__BOUNDING_BOX_HPP_
-#define SHAPE_ESTIMATION__MODEL__BOUNDING_BOX_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__MODEL__BOUNDING_BOX_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__MODEL__BOUNDING_BOX_HPP_
 
-#include "shape_estimation/model/model_interface.hpp"
-#include "shape_estimation/shape_estimator.hpp"
+#include "autoware/shape_estimation/model/model_interface.hpp"
+#include "autoware/shape_estimation/shape_estimator.hpp"
 
 #include <vector>
+
+namespace autoware::shape_estimation
+{
+namespace model
+{
 
 class BoundingBoxShapeModel : public ShapeEstimationModelInterface
 {
@@ -47,4 +52,7 @@ public:
     geometry_msgs::msg::Pose & pose_output) override;
 };
 
-#endif  // SHAPE_ESTIMATION__MODEL__BOUNDING_BOX_HPP_
+}  // namespace model
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__MODEL__BOUNDING_BOX_HPP_

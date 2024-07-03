@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE_HPP_
-#define NODE_HPP_
+#ifndef SHAPE_ESTIMATION_NODE_HPP_
+#define SHAPE_ESTIMATION_NODE_HPP_
 
-#include "shape_estimation/shape_estimator.hpp"
+#include "autoware/shape_estimation/shape_estimator.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
@@ -26,6 +26,9 @@
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <memory>
+
+namespace autoware::shape_estimation
+{
 
 using autoware_perception_msgs::msg::DetectedObjects;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
@@ -51,5 +54,6 @@ private:
 public:
   explicit ShapeEstimationNode(const rclcpp::NodeOptions & node_options);
 };
+}  // namespace autoware::shape_estimation
 
-#endif  // NODE_HPP_
+#endif  // SHAPE_ESTIMATION_NODE_HPP_

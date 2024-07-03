@@ -12,22 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__MODEL__CONVEX_HULL_HPP_
-#define SHAPE_ESTIMATION__MODEL__CONVEX_HULL_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__MODEL__MODEL_INTERFACE_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__MODEL__MODEL_INTERFACE_HPP_
 
-#include "shape_estimation/model/model_interface.hpp"
+#include <autoware_perception_msgs/msg/shape.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
-class ConvexHullShapeModel : public ShapeEstimationModelInterface
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+#include <string>
+
+namespace autoware::shape_estimation
+{
+namespace model
+{
+
+class ShapeEstimationModelInterface
 {
 public:
-  ConvexHullShapeModel() {}
+  ShapeEstimationModelInterface() {}
 
-  ~ConvexHullShapeModel() {}
+  virtual ~ShapeEstimationModelInterface() {}
 
-  bool estimate(
+  virtual bool estimate(
     const pcl::PointCloud<pcl::PointXYZ> & cluster,
     autoware_perception_msgs::msg::Shape & shape_output,
-    geometry_msgs::msg::Pose & pose_output) override;
+    geometry_msgs::msg::Pose & pose_output) = 0;
 };
 
-#endif  // SHAPE_ESTIMATION__MODEL__CONVEX_HULL_HPP_
+}  // namespace model
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__MODEL__MODEL_INTERFACE_HPP_

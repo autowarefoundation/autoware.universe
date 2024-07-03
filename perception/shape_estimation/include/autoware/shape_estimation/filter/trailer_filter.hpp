@@ -12,21 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__CORRECTOR__NO_CORRECTOR_HPP_
-#define SHAPE_ESTIMATION__CORRECTOR__NO_CORRECTOR_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__FILTER__TRAILER_FILTER_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__FILTER__TRAILER_FILTER_HPP_
 
-#include "shape_estimation/corrector/corrector_interface.hpp"
+#include "autoware/shape_estimation/filter/filter_interface.hpp"
 #include "utils.hpp"
 
-class NoCorrector : public ShapeEstimationCorrectorInterface
+namespace autoware::shape_estimation
+{
+namespace filter
+{
+class TrailerFilter : public ShapeEstimationFilterInterface
 {
 public:
-  NoCorrector() {}
+  TrailerFilter() = default;
 
-  ~NoCorrector() {}
+  ~TrailerFilter() = default;
 
-  bool correct(
-    autoware_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose) override;
+  bool filter(
+    const autoware_perception_msgs::msg::Shape & shape,
+    const geometry_msgs::msg::Pose & pose) override;
 };
+}  // namespace filter
+}  // namespace autoware::shape_estimation
 
-#endif  // SHAPE_ESTIMATION__CORRECTOR__NO_CORRECTOR_HPP_
+#endif  // AUTOWARE__SHAPE_ESTIMATION__FILTER__TRAILER_FILTER_HPP_

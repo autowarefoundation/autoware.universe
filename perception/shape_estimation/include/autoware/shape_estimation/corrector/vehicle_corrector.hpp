@@ -12,12 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__CORRECTOR__VEHICLE_CORRECTOR_HPP_
-#define SHAPE_ESTIMATION__CORRECTOR__VEHICLE_CORRECTOR_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__VEHICLE_CORRECTOR_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__VEHICLE_CORRECTOR_HPP_
 
-#include "shape_estimation/corrector/corrector_interface.hpp"
-#include "shape_estimation/shape_estimator.hpp"
+#include "autoware/shape_estimation/corrector/corrector_interface.hpp"
+#include "autoware/shape_estimation/shape_estimator.hpp"
 #include "utils.hpp"
+
+namespace autoware::shape_estimation
+{
+namespace corrector
+{
 
 class VehicleCorrector : public ShapeEstimationCorrectorInterface
 {
@@ -47,4 +52,7 @@ public:
   void setParams(const corrector_utils::CorrectionBBParameters & params) { params_ = params; }
 };
 
-#endif  // SHAPE_ESTIMATION__CORRECTOR__VEHICLE_CORRECTOR_HPP_
+}  // namespace corrector
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__VEHICLE_CORRECTOR_HPP_

@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_
-#define SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_
 
-#include "shape_estimation/shape_estimator.hpp"
+#include "autoware/shape_estimation/shape_estimator.hpp"
 
 #include <autoware_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+
+namespace autoware::shape_estimation
+{
 
 namespace corrector_utils
 {
@@ -46,4 +49,6 @@ bool correctWithReferenceYaw(
 
 }  // namespace corrector_utils
 
-#endif  // SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_

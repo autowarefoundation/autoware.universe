@@ -12,22 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__FILTER__BUS_FILTER_HPP_
-#define SHAPE_ESTIMATION__FILTER__BUS_FILTER_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__MODEL__MODEL_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__MODEL__MODEL_HPP_
 
-#include "shape_estimation/filter/filter_interface.hpp"
-#include "utils.hpp"
+#include "autoware/shape_estimation/model/bounding_box.hpp"
+#include "autoware/shape_estimation/model/convex_hull.hpp"
+#include "autoware/shape_estimation/model/cylinder.hpp"
+#include "autoware/shape_estimation/model/model_interface.hpp"
 
-class BusFilter : public ShapeEstimationFilterInterface
-{
-public:
-  BusFilter() = default;
-
-  ~BusFilter() = default;
-
-  bool filter(
-    const autoware_perception_msgs::msg::Shape & shape_output,
-    const geometry_msgs::msg::Pose & pose_output) override;
-};
-
-#endif  // SHAPE_ESTIMATION__FILTER__BUS_FILTER_HPP_
+#endif  // AUTOWARE__SHAPE_ESTIMATION__MODEL__MODEL_HPP_

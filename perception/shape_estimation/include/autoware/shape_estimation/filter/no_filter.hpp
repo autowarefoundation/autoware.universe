@@ -12,22 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__FILTER__TRUCK_FILTER_HPP_
-#define SHAPE_ESTIMATION__FILTER__TRUCK_FILTER_HPP_
+#ifndef AUTOWARE__SHAPE_ESTIMATION__FILTER__NO_FILTER_HPP_
+#define AUTOWARE__SHAPE_ESTIMATION__FILTER__NO_FILTER_HPP_
 
-#include "shape_estimation/filter/filter_interface.hpp"
-#include "utils.hpp"
+#include "autoware/shape_estimation/filter/filter_interface.hpp"
 
-class TruckFilter : public ShapeEstimationFilterInterface
+namespace autoware::shape_estimation
+{
+namespace filter
+{
+
+class NoFilter : public ShapeEstimationFilterInterface
 {
 public:
-  TruckFilter() = default;
+  NoFilter() = default;
 
-  ~TruckFilter() = default;
+  ~NoFilter() = default;
 
   bool filter(
-    const autoware_perception_msgs::msg::Shape & shape,
-    const geometry_msgs::msg::Pose & pose) override;
+    [[maybe_unused]] const autoware_perception_msgs::msg::Shape & shape,
+    [[maybe_unused]] const geometry_msgs::msg::Pose & pose) override
+  {
+    return true;
+  }
 };
 
-#endif  // SHAPE_ESTIMATION__FILTER__TRUCK_FILTER_HPP_
+}  // namespace filter
+}  // namespace autoware::shape_estimation
+
+#endif  // AUTOWARE__SHAPE_ESTIMATION__FILTER__NO_FILTER_HPP_

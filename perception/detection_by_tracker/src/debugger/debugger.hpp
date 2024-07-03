@@ -15,12 +15,12 @@
 #ifndef DEBUGGER__DEBUGGER_HPP_
 #define DEBUGGER__DEBUGGER_HPP_
 
+#include "autoware/shape_estimation/shape_estimator.hpp"
 #include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 #include "euclidean_cluster/euclidean_cluster.hpp"
 #include "euclidean_cluster/utils.hpp"
 #include "euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
-#include "shape_estimation/shape_estimator.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
