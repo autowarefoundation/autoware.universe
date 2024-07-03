@@ -53,6 +53,8 @@ void ControlValidator::setupParameters()
     auto & p = validation_params_;
     const std::string t = "thresholds.";
     p.max_distance_deviation_threshold = declare_parameter<double>(t + "max_distance_deviation");
+    p.max_reverse_velocity_threshold = declare_parameter<double>(t + "reverse_velocity");
+    p.max_over_velocity_ratio_threshold = declare_parameter<double>(t + "over_velocity_ratio");
   }
 
   try {
@@ -192,21 +194,13 @@ bool ControlValidator::checkValidVelocityDeviation(
     autoware::motion_utils::calcInterpolatedPoint(reference_trajectory, kinematics.pose.pose)
       .longitudinal_velocity_mps;
 
-  constexpr double reverse_vel_th = 0.1;
-  constexpr double over_vel_ratio = 0.1;
-
   const bool is_over_velociay =
-    std::abs(current_vel) > std::abs(desired_vel) * (1.0 + over_vel_ratio) + reverse_vel_th;
+    std::abs(current_vel) >
+    std::abs(desired_vel) * (1.0 + validation_params_.max_over_velocity_ratio_threshold) +
+      validation_params_.max_reverse_velocity_threshold;
   const bool is_reverse_velocity =
-    std::signbit(current_vel * desired_vel) && std::abs(current_vel) > reverse_vel_th;
-
-  std::cerr << "current_vel: " << current_vel << ", " << "desired_vel: " << desired_vel
-            << std::endl;
-
-  if (is_over_velociay || is_reverse_velocity) {
-    std::cerr << "is_over_velociay: " << is_over_velociay << ", "
-              << "is_reverse_velocity: " << is_reverse_velocity << std::endl;
-  }
+    std::signbit(current_vel * desired_vel) &&
+    std::abs(current_vel) > validation_params_.max_reverse_velocity_threshold;
 
   return !(is_over_velociay || is_reverse_velocity);
 }

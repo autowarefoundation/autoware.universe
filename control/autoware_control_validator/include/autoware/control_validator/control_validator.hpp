@@ -42,6 +42,8 @@ using nav_msgs::msg::Odometry;
 struct ValidationParams
 {
   double max_distance_deviation_threshold;
+  double max_reverse_velocity_threshold;
+  double max_over_velocity_ratio_threshold;
 };
 
 class ControlValidator : public rclcpp::Node
