@@ -262,10 +262,12 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     if (detectCollision(next_index)) continue;
 
     const bool is_direction_switch = (current_node.parent != nullptr) && (transition.is_back != current_node.is_back);
-    double weights_sum = transition.is_back ? planner_common_param_.reverse_weight : 1.0;
+    double weights_sum = 1.0;
     weights_sum += is_direction_switch ? planner_common_param_.direction_change_weight : 0.0;
     weights_sum += getSteeringCost(transition.steering_index);
     weights_sum += getSteeringChangeCost(transition.steering_index, current_node.steering_index);
+    
+    weights_sum *= transition.is_back ? planner_common_param_.reverse_weight : 1.0;
 
     double move_cost = current_node.gc + weights_sum * transition.distance;
     double total_cost = move_cost + estimateCost(next_pose);
