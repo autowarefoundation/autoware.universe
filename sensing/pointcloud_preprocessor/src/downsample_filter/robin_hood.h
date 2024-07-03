@@ -123,6 +123,13 @@ static Counts & counts()
 // mark unused members with this macro
 #define ROBIN_HOOD_UNUSED(identifier)
 
+// bitness
+#if SIZE_MAX == UINT32_MAX
+#define ROBIN_HOOD_PRIVATE_DEFINITION_BITNESS() 32
+#else
+#define ROBIN_HOOD_PRIVATE_DEFINITION_BITNESS() 64
+#endif
+
 // endianess
 #ifdef _MSC_VER
 #define ROBIN_HOOD_PRIVATE_DEFINITION_LITTLE_ENDIAN() 1
