@@ -20,7 +20,6 @@ preprocessorErrorDirective
 redundantInitialization
 shadowFunction
 shadowVariable
-syntaxError
 // cspell: ignore uninit
 uninitMemberVar
 unknownMacro
