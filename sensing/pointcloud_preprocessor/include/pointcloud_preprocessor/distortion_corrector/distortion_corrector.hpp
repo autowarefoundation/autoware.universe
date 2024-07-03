@@ -58,7 +58,7 @@ public:
   virtual void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) = 0;
 };
 
-template <class Derived>
+template <class T>
 class DistortionCorrector : public DistortionCorrectorBase
 {
 public:
@@ -102,7 +102,7 @@ public:
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu, float const & time_offset,
     const bool & is_twist_valid, const bool & is_imu_valid)
   {
-    static_cast<Derived *>(this)->undistortPointImplementation(
+    static_cast<T *>(this)->undistortPointImplementation(
       it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
   };
 };
