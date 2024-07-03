@@ -47,10 +47,8 @@
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
 #include "visualization_msgs/msg/marker_array.hpp"
 
-#include <iostream>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
