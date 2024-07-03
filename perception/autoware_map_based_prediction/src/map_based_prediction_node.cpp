@@ -1775,7 +1775,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
   auto get_search_distance_with_decaying_acc = [&]() -> double {
     const double acceleration_distance =
-      obj_acc * (1.0 / lambda) * t_h + obj_acc * (1.0 / std::pow(lambda, 2)) * (std::exp(-lambda * t_h) - 1);
+      obj_acc * (1.0 / lambda) * t_h +
+      obj_acc * (1.0 / std::pow(lambda, 2)) * (std::exp(-lambda * t_h) - 1);
     double search_dist = acceleration_distance + obj_vel * t_h;
     return search_dist;
   };
@@ -1792,8 +1793,8 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     // then continues at constant speed for the rest of the time horizon
     const double search_dist =
       // Distance covered while accelerating
-      obj_acc * (1.0 / lambda) * t_f + obj_acc * (1.0 / std::pow(lambda, 2)) * (std::exp(-lambda * t_f) - 1) +
-      obj_vel * t_f +
+      obj_acc * (1.0 / lambda) * t_f +
+      obj_acc * (1.0 / std::pow(lambda, 2)) * (std::exp(-lambda * t_f) - 1) + obj_vel * t_f +
       // Distance covered at constant speed
       final_speed * (t_h - t_f);
     return search_dist;

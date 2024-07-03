@@ -451,7 +451,8 @@ FrenetPoint PathGenerator::getFrenetPoint(
 
       // Calculate the distance traveled until stopping
       auto distance_to_reach_zero_speed =
-        v * t_stop + a * t_stop * (1.0 / lambda) + a * (1.0 / std::pow(lambda, 2)) * (std::exp(-lambda * t_h) - 1);
+        v * t_stop + a * t_stop * (1.0 / lambda) +
+        a * (1.0 / std::pow(lambda, 2)) * (std::exp(-lambda * t_h) - 1);
       // Output an equivalent constant speed
       return distance_to_reach_zero_speed / t_h;
     }
@@ -461,7 +462,8 @@ FrenetPoint PathGenerator::getFrenetPoint(
     // assume it will continue accelerating (reckless driving)
     const bool object_has_surpassed_limit_already = v > speed_limit;
     if (terminal_velocity < speed_limit || object_has_surpassed_limit_already)
-      return v + a * (1.0 / lambda) + (a / (t_h * std::pow(lambda, 2))) * (std::exp(-lambda * t_h) - 1);
+      return v + a * (1.0 / lambda) +
+             (a / (t_h * std::pow(lambda, 2))) * (std::exp(-lambda * t_h) - 1);
 
     // It is assumed the vehicle accelerates until final_speed is reached and
     // then continues at constant speed for the rest of the time horizon
@@ -471,7 +473,8 @@ FrenetPoint PathGenerator::getFrenetPoint(
     const double t_f = (-1.0 / lambda) * std::log(1 - ((speed_limit - v) * lambda) / a);
     const double distance_covered =
       // Distance covered while accelerating
-      a * (1.0 / lambda) * t_f + a * (1.0 / std::pow(lambda, 2)) * (std::exp(-lambda * t_f) - 1) + v * t_f +
+      a * (1.0 / lambda) * t_f + a * (1.0 / std::pow(lambda, 2)) * (std::exp(-lambda * t_f) - 1) +
+      v * t_f +
       // Distance covered at constant speed for the rest of the horizon time
       speed_limit * (t_h - t_f);
     return distance_covered / t_h;
