@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "../src/ray_ground_filter/node.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "tf2_ros/transform_broadcaster.h"
-
-#include <ground_segmentation/ray_ground_filter_nodelet.hpp>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -37,7 +36,7 @@ protected:
   void TearDown() { (void)rclcpp::shutdown(); }
 };  // sanity_check
 
-class RayGroundFilterComponentTest : public ground_segmentation::RayGroundFilterComponent
+class RayGroundFilterComponentTest : public autoware::ground_segmentation::RayGroundFilterComponent
 {
 public:
   explicit RayGroundFilterComponentTest(const rclcpp::NodeOptions & options)
@@ -61,6 +60,46 @@ public:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr output_pointcloud_pub_;
 };
 
+void convertPCL2PointCloud2(
+  const pcl::PointCloud<pcl::PointXYZI> & pcl_cloud, sensor_msgs::msg::PointCloud2 & cloud)
+{
+  cloud.height = 1;
+  cloud.width = pcl_cloud.size();
+  cloud.is_dense = true;
+  cloud.is_bigendian = false;
+  cloud.point_step = 16;
+  cloud.row_step = cloud.point_step * cloud.width;
+  cloud.fields.resize(4);
+  cloud.fields[0].name = "x";
+  cloud.fields[0].offset = 0;
+  cloud.fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
+  cloud.fields[0].count = 1;
+  cloud.fields[1].name = "y";
+  cloud.fields[1].offset = 4;
+  cloud.fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
+  cloud.fields[1].count = 1;
+  cloud.fields[2].name = "z";
+  cloud.fields[2].offset = 8;
+  cloud.fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
+  cloud.fields[2].count = 1;
+  cloud.fields[3].name = "intensity";
+  cloud.fields[3].offset = 12;
+  cloud.fields[3].datatype = sensor_msgs::msg::PointField::FLOAT32;
+  cloud.fields[3].count = 1;
+  cloud.data.resize(cloud.row_step * cloud.height);
+  for (size_t i = 0; i < pcl_cloud.size(); ++i) {
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[0].offset], &pcl_cloud[i].x, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[1].offset], &pcl_cloud[i].y, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[2].offset], &pcl_cloud[i].z, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[3].offset], &pcl_cloud[i].intensity,
+      sizeof(float));
+  }
+}
+
 TEST_F(RayGroundFilterComponentTestSuite, TestCase1)
 {
   const auto share_dir = ament_index_cpp::get_package_share_directory("ground_segmentation");
@@ -83,11 +122,11 @@ TEST_F(RayGroundFilterComponentTestSuite, TestCase1)
   double reclass_distance_threshold_ = params["reclass_distance_threshold"].as<float>();
 
   const auto pcd_path = share_dir + "/data/test.pcd";
-  pcl::PointCloud<pcl::PointXYZ> cloud;
-  pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_path, cloud);
+  pcl::PointCloud<pcl::PointXYZI> cloud;
+  pcl::io::loadPCDFile<pcl::PointXYZI>(pcd_path, cloud);
 
   sensor_msgs::msg::PointCloud2::SharedPtr origin_input_msg_ptr(new sensor_msgs::msg::PointCloud2);
-  pcl::toROSMsg(cloud, *origin_input_msg_ptr);
+  convertPCL2PointCloud2(cloud, *origin_input_msg_ptr);
   origin_input_msg_ptr->header.frame_id = "velodyne_top";
 
   // input cloud frame MUST be base_link
@@ -141,8 +180,8 @@ TEST_F(RayGroundFilterComponentTestSuite, TestCase1)
   int total_num = 0;
   const float min_no_ground_point_z = 0.1;  // z in base_frame
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(out_cloud, "x"), iter_y(out_cloud, "y"),
-       iter_z(out_cloud, "z");
-       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+       iter_z(out_cloud, "z"), iter_intensity(out_cloud, "intensity");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++iter_intensity) {
     const float z = *iter_z;
     total_num += 1;
     if (z > min_no_ground_point_z) {
