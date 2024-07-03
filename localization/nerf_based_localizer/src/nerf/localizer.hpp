@@ -37,6 +37,7 @@ struct LocalizerParam
   float noise_rotation_z = 2.5f;
   int32_t resize_factor = 1;
   int32_t sample_num_per_ray = 1024;
+  int32_t ray_batch_size = (1 << 8);
 };
 
 class Localizer

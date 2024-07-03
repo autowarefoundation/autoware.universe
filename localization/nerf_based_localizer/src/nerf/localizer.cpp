@@ -177,7 +177,7 @@ std::vector<Tensor> Localizer::optimize_pose_by_differential(
 Tensor Localizer::render_image(const Tensor & pose)
 {
   auto [image, _] =
-    renderer_->render_image(pose, intrinsic_, infer_height_, infer_width_, (1 << 16));
+    renderer_->render_image(pose, intrinsic_, infer_height_, infer_width_, param_.ray_batch_size);
   return image;
 }
 
@@ -326,8 +326,8 @@ Tensor Localizer::calc_average_pose(const std::vector<Particle> & particles)
 torch::Tensor Localizer::camera2nerf(const torch::Tensor & pose_in_world)
 {
   torch::Tensor x = pose_in_world;
-  x = torch::mm(x, axis_convert_mat_);
-  x = torch::mm(axis_convert_mat_.t(), x);
+  // x = torch::mm(x, axis_convert_mat_);
+  // x = torch::mm(axis_convert_mat_.t(), x);
 
   // normalize t
   Tensor t = x.index({Slc(0, 3), 3}).clone();
