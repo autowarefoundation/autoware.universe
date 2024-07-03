@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__GNN_SOLVER_HPP_
-#define AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__GNN_SOLVER_HPP_
+#ifndef ASSOCIATION__SOLVER__GNN_SOLVER_HPP_
+#define ASSOCIATION__SOLVER__GNN_SOLVER_HPP_
 
 #include "autoware_radar_object_tracker/association/solver/gnn_solver_interface.hpp"
 #include "autoware_radar_object_tracker/association/solver/mu_ssp.hpp"
 #include "autoware_radar_object_tracker/association/solver/ssp.hpp"
 
-#endif  // AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__GNN_SOLVER_HPP_
+#endif  // ASSOCIATION__SOLVER__GNN_SOLVER_HPP_

@@ -16,8 +16,8 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#ifndef AUTOWARE_RADAR_OBJECT_TRACKER__TRACKER__MODEL__TRACKER_BASE_HPP_
-#define AUTOWARE_RADAR_OBJECT_TRACKER__TRACKER__MODEL__TRACKER_BASE_HPP_
+#ifndef TRACKER__MODEL__TRACKER_BASE_HPP_
+#define TRACKER__MODEL__TRACKER_BASE_HPP_
 
 #define EIGEN_MPL2_ONLY
 #include "autoware_radar_object_tracker/utils/utils.hpp"
@@ -95,4 +95,4 @@ public:
   virtual bool predict(const rclcpp::Time & time) = 0;
 };
 }  // namespace autoware::radar_object_tracker
-#endif  // AUTOWARE_RADAR_OBJECT_TRACKER__TRACKER__MODEL__TRACKER_BASE_HPP_
+#endif  // TRACKER__MODEL__TRACKER_BASE_HPP_

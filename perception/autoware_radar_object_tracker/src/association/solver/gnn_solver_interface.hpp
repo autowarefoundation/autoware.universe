@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_
-#define AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_
+#ifndef ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_
+#define ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_
 
 #include <unordered_map>
 #include <vector>
@@ -32,4 +32,4 @@ public:
 };
 }  // namespace autoware::radar_object_tracker::gnn_solver
 
-#endif  // AUTOWARE_RADAR_OBJECT_TRACKER__ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_
+#endif  // ASSOCIATION__SOLVER__GNN_SOLVER_INTERFACE_HPP_

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_RADAR_OBJECT_TRACKER__TRACKER__TRACKER_HPP_
-#define AUTOWARE_RADAR_OBJECT_TRACKER__TRACKER__TRACKER_HPP_
+#ifndef TRACKER__TRACKER_HPP_
+#define TRACKER__TRACKER_HPP_
 
 #include "model/constant_turn_rate_motion_tracker.hpp"
 #include "model/linear_motion_tracker.hpp"
 #include "model/tracker_base.hpp"
 
-#endif  // AUTOWARE_RADAR_OBJECT_TRACKER__TRACKER__TRACKER_HPP_
+#endif  // TRACKER__TRACKER_HPP_
