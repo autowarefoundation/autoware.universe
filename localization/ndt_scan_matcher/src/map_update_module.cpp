@@ -247,7 +247,7 @@ bool MapUpdateModule::update_ndt(
     auto cloud = pcl::make_shared<pcl::PointCloud<PointTarget>>();
 
     pcl::fromROSMsg(map.pointcloud, *cloud);
-    ndt.addTarget(cloud, map.cell_id);
+    ndt.addTarget(cloud, map.metadata.cell_id);
   }
 
   // Remove pcd

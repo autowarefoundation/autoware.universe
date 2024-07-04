@@ -68,6 +68,6 @@ autoware_map_msgs::msg::PointCloudMapCellWithID PartialMapLoaderModule::loadPoin
   }
   autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id;
   pointcloud_map_cell_with_id.pointcloud = pcd;
-  pointcloud_map_cell_with_id.cell_id = map_id;
+  pointcloud_map_cell_with_id.metadata.cell_id = map_id;
   return pointcloud_map_cell_with_id;
 }

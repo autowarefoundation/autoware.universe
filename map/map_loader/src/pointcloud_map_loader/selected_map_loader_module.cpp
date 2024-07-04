@@ -29,14 +29,14 @@ autoware_map_msgs::msg::PointCloudMapMetaData createMetadata(
     // assume that the map ID = map path (for now)
     std::string map_id = path;
 
-    autoware_map_msgs::msg::PointCloudMapCellMetaDataWithID cell_metadata_with_id;
-    cell_metadata_with_id.cell_id = map_id;
-    cell_metadata_with_id.metadata.min_x = metadata.min.x;
-    cell_metadata_with_id.metadata.min_y = metadata.min.y;
-    cell_metadata_with_id.metadata.max_x = metadata.max.x;
-    cell_metadata_with_id.metadata.max_y = metadata.max.y;
+    autoware_map_msgs::msg::PointCloudMapCellMetaData cell_metadata;
+    cell_metadata.cell_id = map_id;
+    cell_metadata.min_x = metadata.min.x;
+    cell_metadata.min_y = metadata.min.y;
+    cell_metadata.max_x = metadata.max.x;
+    cell_metadata.max_y = metadata.max.y;
 
-    metadata_msg.metadata_list.push_back(cell_metadata_with_id);
+    metadata_msg.metadata_list.push_back(cell_metadata);
   }
 
   return metadata_msg;
@@ -102,6 +102,6 @@ SelectedMapLoaderModule::loadPointCloudMapCellWithID(
   }
   autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id;
   pointcloud_map_cell_with_id.pointcloud = pcd;
-  pointcloud_map_cell_with_id.cell_id = map_id;
+  pointcloud_map_cell_with_id.metadata.cell_id = map_id;
   return pointcloud_map_cell_with_id;
 }

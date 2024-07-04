@@ -61,7 +61,7 @@ private:
     }
 
     autoware_map_msgs::msg::PointCloudMapCellWithID pcd_map_cell_with_id;
-    pcd_map_cell_with_id.cell_id = "0";
+    pcd_map_cell_with_id.metadata.cell_id = "0";
     pcl::PointCloud<pcl::PointXYZ> cloud = make_sample_half_cubic_pcd();
     for (auto & point : cloud.points) {
       point.x += offset_x;
