@@ -266,6 +266,7 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     weights_sum += is_direction_switch ? planner_common_param_.direction_change_weight : 0.0;
     weights_sum += getSteeringCost(transition.steering_index);
     weights_sum += getSteeringChangeCost(transition.steering_index, current_node.steering_index);
+    weights_sum += getObstacleDistanceCost(next_index);
     
     weights_sum *= transition.is_back ? planner_common_param_.reverse_weight : 1.0;
 
@@ -298,6 +299,12 @@ double AstarSearch::getSteeringChangeCost(const int steering_index, const int pr
 {
   double steering_index_diff = abs(steering_index - prev_steering_index);
   return astar_param_.steering_change_weight * steering_index_diff / (2.0 * planner_common_param_.turning_steps);
+}
+
+double AstarSearch::getObstacleDistanceCost(const IndexXYT& index) const
+{
+  double distance_to_obs = getObstacleEDT(index);
+  return astar_param_.obstacle_distance_weight / (1.0 + distance_to_obs);
 }
 
 void AstarSearch::setPath(const AstarNode & goal_node)

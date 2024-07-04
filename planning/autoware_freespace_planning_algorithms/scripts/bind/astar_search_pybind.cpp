@@ -119,7 +119,10 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
         &freespace_planning_algorithms::AstarParam::distance_heuristic_weight)
       .def_readwrite(
         "steering_change_weight",
-        &freespace_planning_algorithms::AstarParam::steering_change_weight);
+        &freespace_planning_algorithms::AstarParam::steering_change_weight)
+      .def_readwrite(
+        "obstacle_distance_weight",
+        &freespace_planning_algorithms::AstarParam::obstacle_distance_weight);
   auto pyPlannerCommonParam =
     py::class_<freespace_planning_algorithms::PlannerCommonParam>(
       p, "PlannerCommonParam", py::dynamic_attr())

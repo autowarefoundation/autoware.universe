@@ -46,6 +46,7 @@ struct AstarParam
   // search configs
   double distance_heuristic_weight;  // obstacle threshold on grid [0,255]
   double steering_change_weight;
+  double obstacle_distance_weight;
 };
 
 struct AstarNode
@@ -124,7 +125,8 @@ public:
         node.declare_parameter<bool>("astar.use_back"),
         node.declare_parameter<double>("astar.expansion_distance"),
         node.declare_parameter<double>("astar.distance_heuristic_weight"),
-        node.declare_parameter<double>("astar.steering_change_weight")})
+        node.declare_parameter<double>("astar.steering_change_weight"),
+        node.declare_parameter<double>("astar.obstacle_distance_weight")})
   {
   }
 
@@ -154,6 +156,7 @@ private:
 
   double getSteeringCost(const int steering_index) const;
   double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
+  double getObstacleDistanceCost(const IndexXYT& index) const;
 
   // Algorithm specific param
   AstarParam astar_param_;
