@@ -250,7 +250,6 @@ void PlanningEvaluatorNode::onTrajectory(
     stamps_.push_back(traj_msg->header.stamp);
   }
 
-  ;
   for (Metric metric : metrics_) {
     const auto metric_stat = metrics_calculator_.calculate(Metric(metric), *traj_msg);
     if (!metric_stat) {
