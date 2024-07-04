@@ -163,11 +163,12 @@ static Counts & counts()
 #endif
 #include <intrin.h>
 #pragma intrinsic(ROBIN_HOOD(BITSCANFORWARD))
-#define ROBIN_HOOD_COUNT_TRAILING_ZEROES(x)                                   \
-  [](size_t mask) noexcept -> int {                                           \
-    unsigned long index;                                                      \  // NOLINT
-    return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) ? static_cast<int>(index) \  // cppcheck-suppress syntaxError
-                                                    : ROBIN_HOOD(BITNESS);    \  // cppcheck-suppress syntaxError
+#define ROBIN_HOOD_COUNT_TRAILING_ZEROES(x)         \
+  [](size_t mask) noexcept -> int {                 \
+    unsigned long index;                            \  // NOLINT
+    return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) \  // NOLINT
+    ? static_cast<int>(index)                       \  // cppcheck-suppress syntaxError
+    : ROBIN_HOOD(BITNESS);                          \  // cppcheck-suppress syntaxError
   }(x)  // cppcheck-suppress syntaxError
 #else
 #if ROBIN_HOOD(BITNESS) == 32
