@@ -31,7 +31,6 @@ double dot_product(const Point2d & p1, const Point2d & p2)
   return p1.x() * p2.x() + p1.y() * p2.y();
 }
 
-/// @brief return the polygon polygon that is the furthest away from a direction vector
 size_t furthest_vertex_idx(const Polygon2d & poly, const Point2d & direction)
 {
   auto furthest_distance = std::numeric_limits<double>::lowest();
@@ -67,11 +66,8 @@ Point2d cross_product(const Point2d & p1, const Point2d & p2, const Point2d & p3
   return Point2d(-p3.y() * tmp, p3.x() * tmp);
 }
 }  // namespace
-/**
- * @brief Check if 2 convex polygons intersect using the GJK algorithm
- * @details much faster than boost::geometry::intersects()
- */
-bool intersect(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
+
+bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
 {
   if (convex_polygon1.outer().empty() || convex_polygon2.outer().empty()) {
     return false;

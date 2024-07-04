@@ -14,7 +14,6 @@
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/geometry/gjk_2d.hpp"
 #include "autoware/universe_utils/geometry/random_convex_polygon.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
@@ -1850,7 +1849,7 @@ TEST(geometry, intersectPolygon)
     poly2.outer().emplace_back(0, 1);
     boost::geometry::correct(poly1);
     boost::geometry::correct(poly2);
-    EXPECT_TRUE(autoware::universe_utils::intersect(poly1, poly2));
+    EXPECT_TRUE(autoware::universe_utils::intersects(poly1, poly2));
   }
   {  // 2 triangles with no intersection (but they share an edge)
     autoware::universe_utils::Polygon2d poly1, poly2;
@@ -1862,7 +1861,7 @@ TEST(geometry, intersectPolygon)
     poly2.outer().emplace_back(2, 2);
     boost::geometry::correct(poly1);
     boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersect(poly1, poly2));
+    EXPECT_FALSE(autoware::universe_utils::intersects(poly1, poly2));
   }
   {  // 2 triangles with no intersection (but they share a point)
     autoware::universe_utils::Polygon2d poly1, poly2;
@@ -1874,7 +1873,7 @@ TEST(geometry, intersectPolygon)
     poly2.outer().emplace_back(2, 2);
     boost::geometry::correct(poly1);
     boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersect(poly1, poly2));
+    EXPECT_FALSE(autoware::universe_utils::intersects(poly1, poly2));
   }
   {  // 2 triangles with no intersection and no touching
     autoware::universe_utils::Polygon2d poly1, poly2;
@@ -1886,7 +1885,7 @@ TEST(geometry, intersectPolygon)
     poly2.outer().emplace_back(3, 5);
     boost::geometry::correct(poly1);
     boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersect(poly1, poly2));
+    EXPECT_FALSE(autoware::universe_utils::intersects(poly1, poly2));
   }
   {  // triangle and quadrilateral with intersection
     autoware::universe_utils::Polygon2d poly1, poly2;
@@ -1899,7 +1898,7 @@ TEST(geometry, intersectPolygon)
     poly2.outer().emplace_back(12, 7);
     boost::geometry::correct(poly1);
     boost::geometry::correct(poly2);
-    EXPECT_TRUE(autoware::universe_utils::intersect(poly1, poly2));
+    EXPECT_TRUE(autoware::universe_utils::intersects(poly1, poly2));
   }
 }
 
@@ -1922,7 +1921,7 @@ TEST(geometry, intersectPolygonRand)
       const auto ground_truth = boost::geometry::intersects(polygons[i], polygons[j]);
       ground_truth_ns += sw.toc();
       sw.tic();
-      const auto gjk = autoware::universe_utils::gjk::intersect(polygons[i], polygons[j]);
+      const auto gjk = autoware::universe_utils::intersects(polygons[i], polygons[j]);
       gjk_ns += sw.toc();
       if (ground_truth != gjk) {
         std::cout << "Failed for the 2 polygons: ";

@@ -31,9 +31,9 @@ Point2d cross_product(const Point2d & p1, const Point2d & p2, const Point2d & p3
 }  // namespace
 /**
  * @brief Check if 2 convex polygons intersect using the GJK algorithm
- * @details much faster than boost::geometry::intersects()
+ * @details much faster than boost::geometry::overlaps() but limited to convex polygons
  */
-bool intersect(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
+bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
 }  // namespace autoware::universe_utils::gjk
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GJK_2D_HPP_
