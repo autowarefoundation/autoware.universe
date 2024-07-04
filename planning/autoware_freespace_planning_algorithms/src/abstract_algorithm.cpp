@@ -119,6 +119,8 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
   }
   is_obstacle_table_ = is_obstacle_table;
 
+  computeEDTMap();
+
   // construct collision indexes table
   if (is_collision_table_initialized == false) {
     for (int i = 0; i < planner_common_param_.theta_size; i++) {
@@ -129,6 +131,79 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
     }
     is_collision_table_initialized = true;
   }
+}
+
+void AbstractPlanningAlgorithm::computeEDTMap()
+{
+  if (is_obstacle_table_.empty()) return;
+
+  const int height = costmap_.info.height;
+  const int width = costmap_.info.width;
+  const double resolution_m = costmap_.info.resolution;
+  const double length_m = resolution_m * height;
+  const double width_m = resolution_m * width;
+  const double diagonal_m = sqrt(length_m * length_m + width_m * width_m);
+  std::vector<double> edt_map;
+  edt_map.reserve(height * width);
+
+  std::vector<double> temporary_storage;
+  temporary_storage.resize(costmap_.info.width);
+
+  // scan rows
+  for (int i = 0; i < height; ++i) {
+    double distance = resolution_m;
+    bool found_obstacle = false;
+    // forward scan
+    for (int j = 0; j < width; ++j) {
+      if (isObs(IndexXY{j,i})) {
+        temporary_storage[j] = 0.0;
+        distance = resolution_m;
+        found_obstacle = true;
+      } else if (found_obstacle) {
+        temporary_storage[j] = distance;
+        distance += resolution_m;
+      } else {
+        temporary_storage[j] = diagonal_m;
+      }
+    }
+
+    distance = resolution_m;
+    found_obstacle = false;
+    // backward scan
+    for (int j = width - 1; j >= 0; --j) {
+      if (isObs(IndexXY{j,i})) {
+        distance = resolution_m;
+        found_obstacle = true;
+      } else if (found_obstacle && temporary_storage[j] > distance) {
+        temporary_storage[j] = distance;
+        distance += resolution_m;
+      }
+    }
+    edt_map.insert(edt_map.end(), temporary_storage.begin(), temporary_storage.end());
+  }
+
+  temporary_storage.clear();
+  temporary_storage.resize(height);
+  // scan columns;
+  for (int j = 0; j < width; ++j) {
+    for (int i = 0; i < height; ++i) {
+      int id = indexToId(IndexXY{j, i});
+      double min_value = edt_map[id] * edt_map[id];
+      for (int k = 0; k < height; k++) {
+        id = indexToId(IndexXY{j, k});
+        double dist = resolution_m * (static_cast<double>(i - k));
+        double value = edt_map[id] * edt_map[id] + dist * dist;
+        if (value < min_value){
+            min_value = value;
+        }
+      }
+      temporary_storage[i] = sqrt(min_value);
+    }
+    for(int i = 0; i < height; ++i) {
+        edt_map[indexToId(IndexXY{j, i})] = temporary_storage[i];
+    }
+  }
+  edt_map_ = edt_map;
 }
 
 void AbstractPlanningAlgorithm::computeCollisionIndexes(

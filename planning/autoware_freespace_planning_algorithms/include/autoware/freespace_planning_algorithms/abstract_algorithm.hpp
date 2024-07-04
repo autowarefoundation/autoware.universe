@@ -171,6 +171,9 @@ protected:
     // So, basically .at() is not necessary.
     return is_obstacle_table_[indexToId(index)];
   }
+
+  void computeEDTMap();
+  
   // compute single dimensional grid cell index from 2 dimensional index
   template <typename IndexType>
   inline int indexToId(const IndexType & index) const
@@ -192,6 +195,9 @@ protected:
 
   // is_obstacle's table
   std::vector<bool> is_obstacle_table_;
+
+  // Euclidean distance transform map (distance to nearest obstacle cell)
+  std::vector<double> edt_map_;
 
   // pose in costmap frame
   geometry_msgs::msg::Pose start_pose_;
