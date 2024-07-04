@@ -105,6 +105,8 @@ public:
   const double angle_increment = autoware::universe_utils::deg2rad(0.1);
   const double angle_increment_inv = 1.0 / angle_increment;
 
+  Eigen::Matrix4f mat_map, mat_scan;
+
 private:
   bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my) const;
 

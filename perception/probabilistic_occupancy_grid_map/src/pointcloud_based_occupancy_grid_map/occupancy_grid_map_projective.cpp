@@ -53,8 +53,7 @@ inline bool OccupancyGridMapProjectiveBlindSpot::isPointValid(const Eigen::Vecto
 
 // Transform pt to (pt_map, pt_scan), then calculate angle_bin_index and range
 inline void OccupancyGridMapProjectiveBlindSpot::transformPointAndCalculate(
-  const Eigen::Vector4f & pt, const Eigen::Matrix4f & mat_map, const Eigen::Matrix4f & mat_scan,
-  Eigen::Vector4f & pt_map, int & angle_bin_index, double & range)
+  const Eigen::Vector4f & pt, Eigen::Vector4f & pt_map, int & angle_bin_index, double & range)
 {
   pt_map = mat_map * pt;
   Eigen::Vector4f pt_scan(mat_scan * pt_map);
@@ -78,12 +77,12 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   const size_t angle_bin_size = ((max_angle - min_angle) / angle_increment) + size_t(1 /*margin*/);
 
   // Transform from base_link to map frame
-  Eigen::Matrix4f mat_map = utils::getTransformMatrix(robot_pose);
+  mat_map = utils::getTransformMatrix(robot_pose);
 
   const auto scan2map_pose = utils::getInversePose(scan_origin);  // scan -> map transform pose
 
   // Transform from map frame to scan frame
-  Eigen::Matrix4f mat_scan = utils::getTransformMatrix(scan2map_pose);
+  mat_scan = utils::getTransformMatrix(scan2map_pose);
 
   if (!offset_initialized_) {
     setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
@@ -135,7 +134,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       global_offset += raw_pointcloud.point_step;
       continue;
     }
-    transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
+    transformPointAndCalculate(pt, pt_map, angle_bin_index, range);
 
     raw_pointcloud_angle_bins.at(angle_bin_index)
       .emplace_back(range, pt_map[0], pt_map[1], pt_map[2]);
@@ -163,7 +162,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       global_offset += obstacle_pointcloud.point_step;
       continue;
     }
-    transformPointAndCalculate(pt, mat_map, mat_scan, pt_map, angle_bin_index, range);
+    transformPointAndCalculate(pt, pt_map, angle_bin_index, range);
     const double scan_z = scan_origin.position.z - robot_pose.position.z;
     const double obstacle_z = (pt_map[2]) - robot_pose.position.z;
     const double dz = scan_z - obstacle_z;
