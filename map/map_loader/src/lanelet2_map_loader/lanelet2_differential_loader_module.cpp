@@ -201,7 +201,7 @@ Lanelet2DifferentialLoaderModule::getLaneletMapMetaDataMsg(
   autoware_map_msgs::msg::LaneletMapMetaData metadata;
   for (const auto & file : lanelet2_file_metadata_dict_) {
     autoware_map_msgs::msg::LaneletMapTileMetaData tile_msg;
-    tile_msg.tile_id = file.second.id;
+    tile_msg.cell_id = file.second.id;
     tile_msg.min_x = file.second.min_x;
     tile_msg.min_y = file.second.min_y;
     tile_msg.max_x = file.second.min_x + x_res;

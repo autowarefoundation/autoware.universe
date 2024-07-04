@@ -82,7 +82,7 @@ DynamicLaneletProviderNode::DynamicLaneletProviderNode(const rclcpp::NodeOptions
     [this](const autoware_map_msgs::msg::LaneletMapMetaData::SharedPtr msg) {
       for (const auto & data : msg->metadata_list) {
         Lanelet2FileMetaData metadata;
-        metadata.id = data.tile_id;
+        metadata.id = data.cell_id;
         metadata.min_x = data.min_x;
         metadata.max_x = data.max_x;
         metadata.min_y = data.min_y;
