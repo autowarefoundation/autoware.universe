@@ -5,6 +5,13 @@
     "covariance_estimation": {
       "type": "object",
       "properties": {
+        "covariance_estimation_type": {
+          "type": "number",
+          "description": "2D Real-time Converged estimation type. 0=FIXED_VALUE, 1=LAPLACE_APPROXIMATION, 2=MULTI_NDT, 3=MULTI_NDT_SCORE (FIXED_VALUE mode does not perform 2D Real-time Converged estimation)",
+          "default": 0,
+          "minimum": 0,
+          "maximum": 3
+        },
         "initial_pose_offset_model_x": {
           "type": "array",
           "description": "Offset arrangement in covariance estimation [m]. initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.",
@@ -15,12 +22,10 @@
           "description": "Offset arrangement in covariance estimation [m]. initial_pose_offset_model_x & initial_pose_offset_model_y must have the same number of elements.",
           "default": [0.5, -0.5, 0.0, 0.0, 0.0, 0.0]
         },
-        "covariance_estimation_type": {
+        "temperature": {
           "type": "number",
-          "description": "2D Real-time Converged estimation type. 0=FIXED_VALUE, 1=LAPLACE_APPROXIMATION, 2=MULTI_NDT, 3=MULTI_NDT_SCORE (FIXED_VALUE mode does not perform 2D Real-time Converged estimation)",
-          "default": 0,
-          "minimum": 0,
-          "maximum": 3
+          "description": "In MULTI_NDT_SCORE, the parameter that adjusts the estimated 2D covariance",
+          "default": 0.1
         }
       },
 
