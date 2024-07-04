@@ -96,8 +96,7 @@ TEST_F(FakeNodeFixture, Test)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-  FakeNodeFixtureTests, FakeNodeFixtureParametrized,
-  ::testing::Values(-5, 0, 42));
+  FakeNodeFixtureTests, FakeNodeFixtureParametrized, ::testing::Values(-5, 0, 42));
 
 /// @test Test that we can use a parametrized test.
 TEST_P(FakeNodeFixtureParametrized, Test)
