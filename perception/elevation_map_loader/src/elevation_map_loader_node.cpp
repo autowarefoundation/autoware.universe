@@ -293,8 +293,8 @@ void ElevationMapLoaderNode::receiveMap()
 
 void ElevationMapLoaderNode::concatenatePointCloudMaps(
   sensor_msgs::msg::PointCloud2 & pointcloud_map,
-  const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithMetaData> & new_pointcloud_cells_with_metadata)
-  const
+  const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithMetaData> &
+    new_pointcloud_cells_with_metadata) const
 {
   for (const auto & new_pointcloud_cell : new_pointcloud_cells_with_metadata) {
     if (pointcloud_map.width == 0) {

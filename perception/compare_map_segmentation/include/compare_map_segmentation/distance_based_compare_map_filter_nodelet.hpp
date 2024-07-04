@@ -95,7 +95,8 @@ public:
 
     // add
     (*mutex_ptr_).lock();
-    current_voxel_grid_dict_.insert({map_cell_to_add.metadata.cell_id, current_voxel_grid_list_item});
+    current_voxel_grid_dict_.insert(
+      {map_cell_to_add.metadata.cell_id, current_voxel_grid_list_item});
     (*mutex_ptr_).unlock();
   }
 };

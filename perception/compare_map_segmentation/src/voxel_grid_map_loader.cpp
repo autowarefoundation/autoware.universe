@@ -456,7 +456,8 @@ void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Poi
       result.get()->ids_to_remove.size() == 0) {
       return;
     }
-    updateDifferentialMapCells(result.get()->new_pointcloud_cells_with_metadata, result.get()->ids_to_remove);
+    updateDifferentialMapCells(
+      result.get()->new_pointcloud_cells_with_metadata, result.get()->ids_to_remove);
     if (debug_) {
       publish_downsampled_map(getCurrentDownsampledMapPc());
     }

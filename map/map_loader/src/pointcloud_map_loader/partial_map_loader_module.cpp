@@ -59,7 +59,8 @@ bool PartialMapLoaderModule::onServiceGetPartialPointCloudMap(
   return true;
 }
 
-autoware_map_msgs::msg::PointCloudMapCellWithMetaData PartialMapLoaderModule::loadPointCloudMapCellWithMetaData(
+autoware_map_msgs::msg::PointCloudMapCellWithMetaData
+PartialMapLoaderModule::loadPointCloudMapCellWithMetaData(
   const std::string & path, const std::string & map_id) const
 {
   sensor_msgs::msg::PointCloud2 pcd;
