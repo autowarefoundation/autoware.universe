@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2021 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,28 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILS__UTILS_HPP_
-#define UTILS__UTILS_HPP_
+#ifndef TRACKER__TRACKER_HANDLER_HPP_
+#define TRACKER__TRACKER_HANDLER_HPP_
 
-#include <cstdint>
+#include <rclcpp/rclcpp.hpp>
+
+#include "autoware_perception_msgs/msg/tracked_objects.hpp"
+
+#include <deque>
 
 namespace autoware::detection_by_tracker
 {
-namespace utils
+
+class TrackerHandler
 {
-struct TrackerIgnoreLabel
-{
-  bool UNKNOWN;
-  bool CAR;
-  bool TRUCK;
-  bool BUS;
-  bool TRAILER;
-  bool MOTORCYCLE;
-  bool BICYCLE;
-  bool PEDESTRIAN;
-  bool isIgnore(const uint8_t label) const;
-};  // struct TrackerIgnoreLabel
-}  // namespace utils
+private:
+  std::deque<autoware_perception_msgs::msg::TrackedObjects> objects_buffer_;
+
+public:
+  TrackerHandler() = default;
+  void onTrackedObjects(
+    const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr input_objects_msg);
+  bool estimateTrackedObjects(
+    const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObjects & output);
+};
+
 }  // namespace autoware::detection_by_tracker
 
-#endif  // UTILS__UTILS_HPP_
+#endif  // TRACKER__TRACKER_HANDLER_HPP_
