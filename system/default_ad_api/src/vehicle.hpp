@@ -25,7 +25,6 @@
 #include <autoware_adapi_v1_msgs/msg/hazard_lights.hpp>
 #include <autoware_adapi_v1_msgs/msg/turn_indicators.hpp>
 
-#include <optional>
 #include <unordered_map>
 
 // This file should be included after messages.
@@ -61,7 +60,6 @@ private:
   vehicle_interface::HazardLightStatus::Message::ConstSharedPtr hazard_light_status_msgs_;
   vehicle_interface::EnergyStatus::Message::ConstSharedPtr energy_status_msgs_;
   map_interface::MapProjectorInfo::Message::ConstSharedPtr map_projector_info_;
-  std::optional<autoware_ad_api::vehicle::VehicleStatus::Message> prev_vehicle_status_;
 
   void kinematic_state(
     const localization_interface::KinematicState::Message::ConstSharedPtr msg_ptr);
