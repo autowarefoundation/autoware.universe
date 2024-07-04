@@ -14,6 +14,8 @@
 
 #include "vehicle.hpp"
 
+#include "utils/topics.hpp"
+
 #include <geography_utils/height.hpp>
 #include <geography_utils/projection.hpp>
 
@@ -178,7 +180,10 @@ void VehicleNode::publish_status()
     mapping(turn_indicator_type_, turn_indicator_status_msgs_->report, ApiTurnIndicator::UNKNOWN);
   vehicle_status.hazard_lights.status =
     mapping(hazard_light_type_, hazard_light_status_msgs_->report, ApiHazardLight::UNKNOWN);
-  pub_status_->publish(vehicle_status);
+
+  utils::notify(
+    pub_status_, prev_vehicle_status_, vehicle_status,
+    utils::ignore_stamp<autoware_ad_api::vehicle::VehicleStatus::Message>);
 }
 
 void VehicleNode::on_timer()
