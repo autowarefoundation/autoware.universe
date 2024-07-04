@@ -1,0 +1,26 @@
+name: sync-awf-latest
+
+on:
+  schedule:
+    - cron: 50 */1 * * * # every 1 hour (**:50)
+  workflow_dispatch:
+
+jobs:
+  sync-awf-latest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.TOKEN_TO_MODIFY_WOKFLOW  }}
+          fetch-depth: 0
+      - name: Commit Results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git checkout awf-latest
+          git remote add awf https://github.com/autowarefoundation/autoware.universe
+          git fetch awf main
+          git rebase awf/main
+
+          git push origin awf-latest --force
