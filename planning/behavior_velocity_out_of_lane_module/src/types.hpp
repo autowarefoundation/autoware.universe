@@ -39,6 +39,8 @@ struct PlannerParam
   std::string mode;                  // mode used to consider a conflict with an object
   bool skip_if_already_overlapping;  // if true, do not run the module when ego already overlaps
                                      // another lane
+  bool ignore_overlaps_over_lane_changeable_lanelets;  // if true, overlaps on lane changeable
+                                                       // lanelets are ignored
 
   double time_threshold;        // [s](mode="threshold") objects time threshold
   double intervals_ego_buffer;  // [s](mode="intervals") buffer to extend the ego time range
@@ -47,8 +49,10 @@ struct PlannerParam
   double ego_min_velocity;  // [m/s] minimum velocity of ego used to calculate its ttc or time range
 
   bool objects_use_predicted_paths;  // whether to use the objects' predicted paths
-  double objects_min_vel;            // [m/s] objects lower than this velocity will be ignored
-  double objects_min_confidence;     // minimum confidence to consider a predicted path
+  bool objects_cut_predicted_paths_beyond_red_lights;  // whether to cut predicted paths beyond red
+                                                       // lights' stop lines
+  double objects_min_vel;         // [m/s] objects lower than this velocity will be ignored
+  double objects_min_confidence;  // minimum confidence to consider a predicted path
   double objects_dist_buffer;  // [m] distance buffer used to determine if a collision will occur in
                                // the other lane
 

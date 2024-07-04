@@ -74,6 +74,7 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
     "/planning/velocity_factors/blind_spot",
     "/planning/velocity_factors/crosswalk",
     "/planning/velocity_factors/detection_area",
+    "/planning/velocity_factors/dynamic_obstacle_stop",
     "/planning/velocity_factors/intersection",
     "/planning/velocity_factors/merge_from_private",
     "/planning/velocity_factors/no_stopping_area",
@@ -84,7 +85,8 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
     "/planning/velocity_factors/surround_obstacle",
     "/planning/velocity_factors/traffic_light",
     "/planning/velocity_factors/virtual_traffic_light",
-    "/planning/velocity_factors/walkway"};
+    "/planning/velocity_factors/walkway",
+    "/planning/velocity_factors/motion_velocity_planner"};
 
   std::vector<std::string> steering_factor_topics = {
     "/planning/steering_factor/avoidance", "/planning/steering_factor/intersection",

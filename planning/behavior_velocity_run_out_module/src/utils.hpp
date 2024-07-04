@@ -15,17 +15,20 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+
 #include <behavior_velocity_planner_common/planner_data.hpp>
 #include <behavior_velocity_planner_common/utilization/util.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <string>
 #include <vector>
-
 namespace behavior_velocity_planner
 {
 namespace run_out_utils
@@ -53,12 +56,19 @@ struct CommonParam
 struct RunOutParam
 {
   std::string detection_method;
+  std::vector<std::string> target_obstacle_types;
   bool use_partition_lanelet;
   bool suppress_on_crosswalk;
   bool specify_decel_jerk;
+  bool use_ego_cut_line;
+  bool exclude_obstacles_already_in_path;
   double stop_margin;
   double passing_margin;
   double deceleration_jerk;
+  double ego_cut_line_length;
+  double ego_footprint_extra_margin;
+  double keep_obstacle_on_path_time_threshold;
+  double keep_stop_point_time;
   float detection_distance;
   float detection_span;
   float min_vel_ego_kmph;
@@ -182,6 +192,7 @@ struct DynamicObstacle
   std::vector<ObjectClassification> classifications;
   Shape shape;
   std::vector<PredictedPath> predicted_paths;
+  unique_identifier_msgs::msg::UUID uuid;
 };
 
 struct DynamicObstacleData
@@ -193,6 +204,10 @@ struct DynamicObstacleData
 };
 
 Polygon2d createBoostPolyFromMsg(const std::vector<geometry_msgs::msg::Point> & input_poly);
+
+bool pathIntersectsEgoCutLine(
+  const std::vector<geometry_msgs::msg::Pose> & path, const geometry_msgs::msg::Pose & ego_pose,
+  const double half_line_length, std::vector<geometry_msgs::msg::Point> & ego_cut_line);
 
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 

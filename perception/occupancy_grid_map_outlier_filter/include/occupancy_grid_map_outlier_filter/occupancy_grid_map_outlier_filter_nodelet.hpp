@@ -19,6 +19,7 @@
 
 #include <pcl/common/impl/common.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -45,18 +46,16 @@ using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 using sensor_msgs::msg::PointCloud2;
 using std_msgs::msg::Header;
-using PclPointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
 class RadiusSearch2dFilter
 {
 public:
   explicit RadiusSearch2dFilter(rclcpp::Node & node);
   void filter(
-    const PclPointCloud & input, const Pose & pose, PclPointCloud & output,
-    PclPointCloud & outlier);
+    const PointCloud2 & input, const Pose & pose, PointCloud2 & output, PointCloud2 & outlier);
   void filter(
-    const PclPointCloud & high_conf_input, const PclPointCloud & low_conf_input, const Pose & pose,
-    PclPointCloud & output, PclPointCloud & outlier);
+    const PointCloud2 & high_conf_input, const PointCloud2 & low_conf_input, const Pose & pose,
+    PointCloud2 & output, PointCloud2 & outlier);
 
 private:
   float search_radius_;
@@ -78,22 +77,25 @@ private:
     const PointCloud2::ConstSharedPtr & input_pointcloud);
   void filterByOccupancyGridMap(
     const OccupancyGrid & occupancy_grid_map, const PointCloud2 & pointcloud,
-    PclPointCloud & high_confidence, PclPointCloud & low_confidence, PclPointCloud & out_ogm);
+    PointCloud2 & high_confidence, PointCloud2 & low_confidence, PointCloud2 & out_ogm);
   void splitPointCloudFrontBack(
     const PointCloud2::ConstSharedPtr & input_pc, PointCloud2 & front_pc, PointCloud2 & behind_pc);
+  void initializerPointCloud2(const PointCloud2 & input, PointCloud2 & output);
+  void finalizePointCloud2(const PointCloud2 & input, PointCloud2 & output);
+  void concatPointCloud2(PointCloud2 & output, const PointCloud2 & input);
 
 private:
   class Debugger
   {
   public:
     explicit Debugger(OccupancyGridMapOutlierFilterComponent & node);
-    void publishOutlier(const PclPointCloud & input, const Header & header);
-    void publishHighConfidence(const PclPointCloud & input, const Header & header);
-    void publishLowConfidence(const PclPointCloud & input, const Header & header);
+    void publishOutlier(const PointCloud2 & input, const Header & header);
+    void publishHighConfidence(const PointCloud2 & input, const Header & header);
+    void publishLowConfidence(const PointCloud2 & input, const Header & header);
 
   private:
     void transformToBaseLink(
-      const PclPointCloud & input, const Header & header, PointCloud2 & output);
+      const PointCloud2 & input, const Header & header, PointCloud2 & output);
     rclcpp::Publisher<PointCloud2>::SharedPtr outlier_pointcloud_pub_;
     rclcpp::Publisher<PointCloud2>::SharedPtr low_confidence_pointcloud_pub_;
     rclcpp::Publisher<PointCloud2>::SharedPtr high_confidence_pointcloud_pub_;
@@ -120,6 +122,7 @@ private:
   std::shared_ptr<Debugger> debugger_ptr_;
   std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // ROS Parameters
   std::string map_frame_;

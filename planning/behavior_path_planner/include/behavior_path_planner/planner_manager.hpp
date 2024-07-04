@@ -96,7 +96,7 @@ struct SceneModuleStatus
 class PlannerManager
 {
 public:
-  PlannerManager(rclcpp::Node & node, const size_t max_iteration_num, const bool verbose);
+  PlannerManager(rclcpp::Node & node, const size_t max_iteration_num);
 
   /**
    * @brief run all candidate and approved modules.
@@ -137,7 +137,7 @@ public:
     std::for_each(manager_ptrs_.begin(), manager_ptrs_.end(), [](const auto & m) { m->reset(); });
     approved_module_ptrs_.clear();
     candidate_module_ptrs_.clear();
-    root_lanelet_ = std::nullopt;
+    current_route_lanelet_ = std::nullopt;
     resetProcessingTime();
   }
 
@@ -240,13 +240,6 @@ public:
   bool hasCandidateModules() const { return !candidate_module_ptrs_.empty(); }
 
   /**
-   * @brief reset root lanelet. if there are approved modules, don't reset root lanelet.
-   * @param planner data.
-   * @details this function is called only when it is in disengage and drive by manual.
-   */
-  void resetRootLanelet(const std::shared_ptr<PlannerData> & data);
-
-  /**
    * @brief show planner manager internal condition.
    */
   void print() const;
@@ -260,6 +253,18 @@ public:
    * @brief visit each module and get debug information.
    */
   std::shared_ptr<SceneModuleVisitor> getDebugMsg();
+
+  /**
+   * @brief reset the current route lanelet to be the closest lanelet within the route
+   * @param planner data.
+   */
+  void resetCurrentRouteLanelet(const std::shared_ptr<PlannerData> & data)
+  {
+    lanelet::ConstLanelet ret{};
+    data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
+    RCLCPP_DEBUG(logger_, "update current route lanelet. id:%ld", ret.id());
+    current_route_lanelet_ = ret;
+  }
 
 private:
   /**
@@ -285,8 +290,6 @@ private:
 
     module_ptr->updateCurrentState();
 
-    module_ptr->publishRTCStatus();
-
     module_ptr->publishSteeringFactor();
 
     module_ptr->publishObjectsOfInterestMarker();
@@ -300,11 +303,16 @@ private:
     BehaviorModuleOutput & output, const std::shared_ptr<PlannerData> & data) const;
 
   /**
-   * @brief get reference path from root_lanelet_ centerline.
+   * @brief get reference path from current_route_lanelet_ centerline.
    * @param planner data.
    * @return reference path.
    */
-  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data) const;
+  BehaviorModuleOutput getReferencePath(const std::shared_ptr<PlannerData> & data);
+
+  /**
+   * @brief publish the root reference path and current route lanelet
+   */
+  void publishDebugRootReferencePath(const BehaviorModuleOutput & reference_path);
 
   /**
    * @brief stop and unregister the module from manager.
@@ -313,7 +321,6 @@ private:
   void deleteExpiredModules(SceneModulePtr & module_ptr) const
   {
     module_ptr->onExit();
-    module_ptr->publishRTCStatus();
     module_ptr->publishObjectsOfInterestMarker();
     module_ptr.reset();
   }
@@ -359,19 +366,6 @@ private:
       deleteExpiredModules(m);
     });
     candidate_module_ptrs_.clear();
-  }
-
-  /**
-   * @brief get current root lanelet. the lanelet is used for reference path generation.
-   * @param planner data.
-   * @return root lanelet.
-   */
-  lanelet::ConstLanelet updateRootLanelet(const std::shared_ptr<PlannerData> & data) const
-  {
-    lanelet::ConstLanelet ret{};
-    data->route_handler->getClosestLaneletWithinRoute(data->self_odometry->pose.pose, &ret);
-    RCLCPP_DEBUG(logger_, "update start lanelet. id:%ld", ret.id());
-    return ret;
   }
 
   /**
@@ -447,7 +441,7 @@ private:
 
   static std::string getNames(const std::vector<SceneModulePtr> & modules);
 
-  std::optional<lanelet::ConstLanelet> root_lanelet_{std::nullopt};
+  std::optional<lanelet::ConstLanelet> current_route_lanelet_{std::nullopt};
 
   std::vector<SceneModuleManagerPtr> manager_ptrs_;
 
@@ -474,8 +468,6 @@ private:
   mutable std::shared_ptr<SceneModuleVisitor> debug_msg_ptr_;
 
   size_t max_iteration_num_{100};
-
-  bool verbose_{false};
 };
 }  // namespace behavior_path_planner
 

@@ -20,6 +20,7 @@
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
+  <maintainer email="go.sakayori@tier4.jp">Go Sakayori</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -41,6 +42,7 @@
   <depend>autoware_auto_tf2</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>autoware_perception_msgs</depend>
+  <depend>autoware_planning_test_manager</depend>
   <depend>behavior_path_planner_common</depend>
   <depend>freespace_planning_algorithms</depend>
   <depend>frenet_planner</depend>
@@ -54,7 +56,6 @@
   <depend>motion_utils</depend>
   <depend>object_recognition_utils</depend>
   <depend>path_sampler</depend>
-  <depend>planning_test_utils</depend>
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

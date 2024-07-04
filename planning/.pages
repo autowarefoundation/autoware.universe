@@ -18,7 +18,7 @@ nav:
         - 'Side Shift': planning/behavior_path_side_shift_module
         - 'Start Planner': planning/behavior_path_start_planner_module
   - 'Behavior Velocity Planner':
-    - 'About Behavior Velocity': planning/behavior_velocity_planner
+    - 'About Behavior Velocity': planning/autoware_behavior_velocity_planner
     - 'Template for Custom Module': planning/behavior_velocity_template_module
     - 'Available Module':
         - 'Blind Spot': planning/behavior_velocity_blind_spot_module
@@ -63,11 +63,15 @@ nav:
     - 'Surround Obstacle Checker':
       - 'About Surround Obstacle Checker': planning/surround_obstacle_checker
       - 'About Surround Obstacle Checker (Japanese)': planning/surround_obstacle_checker/surround_obstacle_checker-design.ja
+    - 'Motion Velocity Planner':
+      - 'About Motion Velocity Planner': planning/autoware_motion_velocity_planner_node/
+      - 'Available Modules':
+        - 'Out of Lane': planning/autoware_motion_velocity_planner_out_of_lane_module/
     - 'Motion Velocity Smoother':
       - 'About Motion Velocity Smoother': planning/motion_velocity_smoother
       - 'About Motion Velocity Smoother (Japanese)': planning/motion_velocity_smoother/README.ja
   - 'Scenario Selector': planning/scenario_selector
-  - 'Static Centerline Optimizer': planning/static_centerline_optimizer
+  - 'Static Centerline Generator': planning/autoware_static_centerline_generator
   - 'API and Library':
     - 'Costmap Generator': planning/costmap_generator
     - 'External Velocity Limit Selector': planning/external_velocity_limit_selector
@@ -80,5 +84,6 @@ nav:
       - 'About Planning Debug Tools': https://github.com/autowarefoundation/autoware_tools/tree/main/planning/planning_debug_tools
       - 'Stop Reason Visualizer': https://github.com/autowarefoundation/autoware_tools/blob/main/planning/planning_debug_tools/doc-stop-reason-visualizer.md
     - 'Planning Test Utils': planning/planning_test_utils
+    - 'Planning Test Manager': planning/autoware_planning_test_manager
     - 'Planning Topic Converter': planning/planning_topic_converter
     - 'Planning Validator': planning/planning_validator

@@ -14,13 +14,13 @@
 
 #include "behavior_path_avoidance_by_lane_change_module/scene.hpp"
 
-#include "behavior_path_avoidance_module/utils.hpp"
+#include "autoware_behavior_path_static_obstacle_avoidance_module/utils.hpp"
 #include "behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "behavior_path_planner_common/utils/path_utils.hpp"
 #include "behavior_path_planner_common/utils/utils.hpp"
 
-#include <behavior_path_avoidance_module/data_structs.hpp>
+#include <autoware_behavior_path_static_obstacle_avoidance_module/data_structs.hpp>
 #include <behavior_path_lane_change_module/utils/utils.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/logging.hpp>
@@ -29,6 +29,7 @@
 #include <boost/geometry/strategies/cartesian/centroid_bashein_detmer.hpp>
 
 #include <limits>
+#include <optional>
 #include <utility>
 
 namespace behavior_path_planner
@@ -81,6 +82,9 @@ bool AvoidanceByLaneChange::specialRequiredCheck() const
     getCommonParam().vehicle_info, getEgoPose(),
     std::max(minimum_lane_change_length, minimum_avoid_length), calcLateralOffset());
 
+  RCLCPP_DEBUG(
+    logger_, "Conditions ? %f, %f, %f", nearest_object.longitudinal, minimum_lane_change_length,
+    minimum_avoid_length);
   return nearest_object.longitudinal > std::max(minimum_lane_change_length, minimum_avoid_length);
 }
 
@@ -99,13 +103,14 @@ void AvoidanceByLaneChange::updateSpecialData()
   if (avoidance_data_.target_objects.empty()) {
     direction_ = Direction::NONE;
   } else {
-    direction_ = utils::avoidance::isOnRight(avoidance_data_.target_objects.front())
+    direction_ = utils::static_obstacle_avoidance::isOnRight(avoidance_data_.target_objects.front())
                    ? Direction::LEFT
                    : Direction::RIGHT;
   }
 
-  utils::avoidance::updateRegisteredObject(registered_objects_, avoidance_data_.target_objects, p);
-  utils::avoidance::compensateDetectionLost(
+  utils::static_obstacle_avoidance::updateRegisteredObject(
+    registered_objects_, avoidance_data_.target_objects, p);
+  utils::static_obstacle_avoidance::compensateDetectionLost(
     registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
 
   std::sort(
@@ -121,30 +126,13 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
   // reference pose
   data.reference_pose = getEgoPose();
 
-  data.reference_path_rough = prev_module_path_;
+  data.reference_path_rough = prev_module_output_.path;
 
   const auto resample_interval = avoidance_parameters_->resample_interval_for_planning;
   data.reference_path = utils::resamplePathWithSpline(data.reference_path_rough, resample_interval);
 
   data.current_lanelets = getCurrentLanes();
 
-  // expand drivable lanes
-  std::for_each(
-    data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
-      data.drivable_lanes.push_back(utils::avoidance::generateExpandedDrivableLanes(
-        lanelet, planner_data_, avoidance_parameters_));
-    });
-
-  // calc drivable bound
-  const auto shorten_lanes =
-    utils::cutOverlappedLanes(data.reference_path_rough, data.drivable_lanes);
-  data.left_bound = utils::calcBound(
-    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, true);
-  data.right_bound = utils::calcBound(
-    data.reference_path_rough, planner_data_, shorten_lanes, false, false, false, false);
-
-  // get related objects from dynamic_objects, and then separates them as target objects and non
-  // target objects
   fillAvoidanceTargetObjects(data, debug);
 
   return data;
@@ -158,7 +146,9 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
   const auto [object_within_target_lane, object_outside_target_lane] =
     utils::path_safety_checker::separateObjectsByLanelets(
       *planner_data_->dynamic_object, data.current_lanelets,
-      utils::path_safety_checker::isPolygonOverlapLanelet);
+      [](const auto & obj, const auto & lane) {
+        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane);
+      });
 
   // Assume that the maximum allocation for data.other object is the sum of
   // objects_within_target_lane and object_outside_target_lane. The maximum allocation for
@@ -177,26 +167,26 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
       [](const auto & object) {
         ObjectData other_object;
         other_object.object = object;
-        other_object.reason = "OutOfTargetArea";
+        other_object.info = ObjectInfo::OUT_OF_TARGET_AREA;
         return other_object;
       });
   }
 
   ObjectDataArray target_lane_objects;
   target_lane_objects.reserve(object_within_target_lane.objects.size());
-  {
-    const auto & objects = object_within_target_lane.objects;
-    std::transform(
-      objects.cbegin(), objects.cend(), std::back_inserter(target_lane_objects),
-      [&](const auto & object) { return createObjectData(data, object); });
+  for (const auto & obj : object_within_target_lane.objects) {
+    const auto target_lane_object = createObjectData(data, obj);
+    if (!target_lane_object) {
+      continue;
+    }
+
+    target_lane_objects.push_back(*target_lane_object);
   }
 
-  utils::avoidance::filterTargetObjects(
-    target_lane_objects, data, avoidance_parameters_->object_check_max_forward_distance,
-    planner_data_, p);
+  data.target_objects = target_lane_objects;
 }
 
-ObjectData AvoidanceByLaneChange::createObjectData(
+std::optional<ObjectData> AvoidanceByLaneChange::createObjectData(
   const AvoidancePlanningData & data, const PredictedObject & object) const
 {
   using boost::geometry::return_centroid;
@@ -214,6 +204,15 @@ ObjectData AvoidanceByLaneChange::createObjectData(
   const auto & object_parameter = avoidance_parameters_->object_parameters.at(t);
 
   ObjectData object_data{};
+  // Calc lateral deviation from path to target object.
+  object_data.to_centerline =
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+
+  if (
+    std::abs(object_data.to_centerline) <
+    avoidance_parameters_->threshold_distance_object_is_on_center) {
+    return std::nullopt;
+  }
 
   object_data.object = object;
 
@@ -224,30 +223,30 @@ ObjectData AvoidanceByLaneChange::createObjectData(
   object_data.distance_factor = object_parameter.max_expand_ratio * clamp + 1.0;
 
   // Calc envelop polygon.
-  utils::avoidance::fillObjectEnvelopePolygon(
+  utils::static_obstacle_avoidance::fillObjectEnvelopePolygon(
     object_data, registered_objects_, object_closest_pose, p);
 
   // calc object centroid.
   object_data.centroid = return_centroid<Point2d>(object_data.envelope_poly);
 
   // Calc moving time.
-  utils::avoidance::fillObjectMovingTime(object_data, stopped_objects_, p);
+  utils::static_obstacle_avoidance::fillObjectMovingTime(object_data, stopped_objects_, p);
 
-  // Calc lateral deviation from path to target object.
-  object_data.to_centerline =
-    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
   object_data.direction = calcLateralDeviation(object_closest_pose, object_pose.position) > 0.0
                             ? Direction::LEFT
                             : Direction::RIGHT;
 
   // Find the footprint point closest to the path, set to object_data.overhang_distance.
-  object_data.overhang_points =
-    utils::avoidance::calcEnvelopeOverhangDistance(object_data, data.reference_path);
+  object_data.overhang_points = utils::static_obstacle_avoidance::calcEnvelopeOverhangDistance(
+    object_data, data.reference_path);
 
   // Check whether the the ego should avoid the object.
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  utils::avoidance::fillAvoidanceNecessity(object_data, registered_objects_, vehicle_width, p);
+  utils::static_obstacle_avoidance::fillAvoidanceNecessity(
+    object_data, registered_objects_, vehicle_width, p);
 
+  utils::static_obstacle_avoidance::fillLongitudinalAndLengthByClosestEnvelopeFootprint(
+    data.reference_path_rough, getEgoPosition(), object_data);
   return object_data;
 }
 
@@ -265,7 +264,7 @@ double AvoidanceByLaneChange::calcMinAvoidanceLength(const ObjectData & nearest_
 
   avoidance_helper_->setData(planner_data_);
   const auto shift_length = avoidance_helper_->getShiftLength(
-    nearest_object, utils::avoidance::isOnRight(nearest_object), avoid_margin);
+    nearest_object, utils::static_obstacle_avoidance::isOnRight(nearest_object), avoid_margin);
 
   return avoidance_helper_->getMinAvoidanceDistance(shift_length);
 }
@@ -278,12 +277,8 @@ double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
     return std::numeric_limits<double>::infinity();
   }
 
-  // get minimum lane change distance
-  const auto shift_intervals =
-    getRouteHandler()->getLateralIntervalsToPreferredLane(current_lanes.back(), direction_);
   return utils::lane_change::calcMinimumLaneChangeLength(
-    *lane_change_parameters_, shift_intervals,
-    lane_change_parameters_->backward_length_buffer_for_end_of_lane);
+    getRouteHandler(), current_lanes.back(), *lane_change_parameters_, direction_);
 }
 
 double AvoidanceByLaneChange::calcLateralOffset() const

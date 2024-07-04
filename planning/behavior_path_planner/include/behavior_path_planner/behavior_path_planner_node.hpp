@@ -21,6 +21,8 @@
 #include "behavior_path_planner_common/interface/steering_factor_interface.hpp"
 #include "tier4_autoware_utils/ros/logger_level_configure.hpp"
 
+#include <tier4_autoware_utils/ros/published_time_publisher.hpp>
+
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -38,6 +40,7 @@
 #include <tier4_planning_msgs/msg/reroute_availability.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <map>
@@ -101,6 +104,8 @@ private:
   rclcpp::Publisher<PoseWithUuidStamped>::SharedPtr modified_goal_publisher_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_publisher_;
   rclcpp::Publisher<RerouteAvailability>::SharedPtr reroute_availability_publisher_;
+  rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr
+    external_limit_max_velocity_subscriber_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_candidate_publishers_;
@@ -140,6 +145,9 @@ private:
   void onRoute(const LaneletRoute::ConstSharedPtr route_msg);
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
   void onLateralOffset(const LateralOffset::ConstSharedPtr msg);
+  void on_external_velocity_limiter(
+    const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
+
   SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
   OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
@@ -215,6 +223,8 @@ private:
     const std::shared_ptr<PlannerData> & planner_data);
 
   std::unique_ptr<tier4_autoware_utils::LoggerLevelConfigure> logger_configure_;
+
+  std::unique_ptr<tier4_autoware_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace behavior_path_planner
 

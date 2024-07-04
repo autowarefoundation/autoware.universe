@@ -71,6 +71,7 @@ struct StartPlannerParameters
   behavior_path_planner::utils::path_safety_checker::ObjectTypesToCheck
     object_types_to_check_for_path_generation{};
   double center_line_path_interval{0.0};
+  double lane_departure_check_expansion_margin{0.0};
 
   // shift pull out
   bool enable_shift_pull_out{false};
@@ -84,6 +85,7 @@ struct StartPlannerParameters
   double minimum_lateral_acc{0.0};
   double maximum_curvature{0.0};  // maximum curvature considered in the path generation
   double deceleration_interval{0.0};
+  double maximum_longitudinal_deviation{0.0};
   // geometric pull out
   bool enable_geometric_pull_out{false};
   double geometric_collision_check_distance_from_end;

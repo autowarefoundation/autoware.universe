@@ -309,6 +309,7 @@ ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(
 
   const bool enable_debugger = declare_parameter<bool>("enable_debugger", false);
   if (enable_debugger) debugger_ = std::make_shared<Debugger>(this);
+  published_time_publisher_ = std::make_unique<tier4_autoware_utils::PublishedTimePublisher>(this);
 }
 void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
@@ -326,15 +327,19 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
     // objects_pub_->publish(*input_objects);
     return;
   }
+  bool validation_is_ready = true;
   if (!validator_->setKdtreeInputCloud(input_obstacle_pointcloud)) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "cannot receive pointcloud");
-    return;
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 5,
+      "obstacle pointcloud is empty! Can not validate objects.");
+    validation_is_ready = false;
   }
 
   for (size_t i = 0; i < transformed_objects.objects.size(); ++i) {
     const auto & transformed_object = transformed_objects.objects.at(i);
     const auto & object = input_objects->objects.at(i);
-    const auto validated = validator_->validate_object(transformed_object);
+    const auto validated =
+      validation_is_ready ? validator_->validate_object(transformed_object) : false;
     if (debugger_) {
       debugger_->addNeighborPointcloud(validator_->getDebugNeighborPointCloud());
       debugger_->addPointcloudWithinPolygon(validator_->getDebugPointCloudWithinObject());
@@ -347,6 +352,7 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
   }
 
   objects_pub_->publish(output);
+  published_time_publisher_->publish_if_subscribed(objects_pub_, output.header.stamp);
   if (debugger_) {
     debugger_->publishRemovedObjects(removed_objects);
     debugger_->publishNeighborPointcloud(input_obstacle_pointcloud->header);

@@ -41,11 +41,13 @@
 #include <tier4_planning_msgs/msg/stop_factor.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
+#include <tier4_rtc_msgs/msg/state.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
 
 #include <algorithm>
 #include <any>
+#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -67,6 +69,7 @@ using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_planning_msgs::msg::StopReasonArray;
+using tier4_rtc_msgs::msg::State;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
@@ -141,7 +144,13 @@ public:
   virtual BehaviorModuleOutput run()
   {
     updateData();
-    return isWaitingApproval() ? planWaitingApproval() : plan();
+    const auto output = isWaitingApproval() ? planWaitingApproval() : plan();
+    try {
+      motion_utils::validateNonEmpty(output.path.points);
+    } catch (const std::exception & ex) {
+      throw std::invalid_argument("[" + name_ + "]" + ex.what());
+    }
+    return output;
   }
 
   /**
@@ -178,9 +187,11 @@ public:
   {
     RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
 
+    if (getCurrentStatus() == ModuleStatus::SUCCESS) {
+      updateRTCStatusForSuccess();
+    }
+
     clearWaitingApproval();
-    removeRTCStatus();
-    publishRTCStatus();
     unlockNewModuleLaunch();
     unlockOutputPath();
     steering_factor_interface_ptr_->clearSteeringFactors();
@@ -188,18 +199,6 @@ public:
     stop_reason_ = StopReason();
 
     processOnExit();
-  }
-
-  /**
-   * @brief Publish status if the module is requested to run
-   */
-  void publishRTCStatus()
-  {
-    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
-      if (ptr) {
-        ptr->publishCooperateStatus(clock_->now());
-      }
-    }
   }
 
   void publishObjectsOfInterestMarker()
@@ -259,7 +258,7 @@ public:
     return is_waiting_approval_ || current_state_ == ModuleStatus::WAITING_APPROVAL;
   }
 
-  virtual bool isRootLaneletToBeUpdated() const { return false; }
+  virtual bool isCurrentRouteLaneletToBeReset() const { return false; }
 
   bool isLockedNewModuleLaunch() const { return is_locked_new_module_launch_; }
 
@@ -497,9 +496,24 @@ protected:
   {
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
       if (ptr) {
+        const auto state = isWaitingApproval() ? State::WAITING_FOR_EXECUTION : State::RUNNING;
         ptr->updateCooperateStatus(
-          uuid_map_.at(module_name), isExecutionReady(), start_distance, finish_distance,
+          uuid_map_.at(module_name), isExecutionReady(), state, start_distance, finish_distance,
           clock_->now());
+      }
+    }
+  }
+
+  void updateRTCStatusForSuccess()
+  {
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      if (ptr) {
+        if (ptr->isRegistered(uuid_map_.at(module_name))) {
+          ptr->updateCooperateStatus(
+            uuid_map_.at(module_name), true, State::SUCCEEDED,
+            std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(),
+            clock_->now());
+        }
       }
     }
   }

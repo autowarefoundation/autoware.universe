@@ -43,8 +43,10 @@ PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(
 {
   using std::placeholders::_1;
 
-  google::InitGoogleLogging("perception_online_evaluator_node");
-  google::InstallFailureSignalHandler();
+  if (!google::IsGoogleLoggingInitialized()) {
+    google::InitGoogleLogging("perception_online_evaluator_node");
+    google::InstallFailureSignalHandler();
+  }
 
   objects_sub_ = create_subscription<PredictedObjects>(
     "~/input/objects", 1, std::bind(&PerceptionOnlineEvaluatorNode::onObjects, this, _1));
@@ -111,7 +113,7 @@ DiagnosticStatus PerceptionOnlineEvaluatorNode::generateDiagnosticStatus(
 
 void PerceptionOnlineEvaluatorNode::onObjects(const PredictedObjects::ConstSharedPtr objects_msg)
 {
-  metrics_calculator_.setPredictedObjects(*objects_msg);
+  metrics_calculator_.setPredictedObjects(*objects_msg, *tf_buffer_);
   publishMetrics();
 }
 
@@ -132,50 +134,74 @@ void PerceptionOnlineEvaluatorNode::publishDebugMarker()
     tier4_autoware_utils::appendMarkerArray(added, &marker);
   };
 
-  const auto history_path_map = metrics_calculator_.getHistoryPathMap();
   const auto & p = parameters_->debug_marker_parameters;
 
-  for (const auto & [uuid, history_path] : history_path_map) {
-    {
-      const auto c = createColorFromString(uuid + "_raw");
-      if (p.show_history_path) {
-        add(createPointsMarkerArray(history_path.first, "history_path_" + uuid, 0, c.r, c.g, c.b));
+  // visualize history path
+  {
+    const auto history_path_map = metrics_calculator_.getHistoryPathMap();
+    int32_t history_path_first_id = 0;
+    int32_t smoothed_history_path_first_id = 0;
+    size_t i = 0;
+    for (const auto & [uuid, history_path] : history_path_map) {
+      {
+        const auto c = createColorFromString(uuid + "_raw");
+        if (p.show_history_path) {
+          add(createPointsMarkerArray(history_path.first, "history_path", i, c.r, c.g, c.b));
+        }
+        if (p.show_history_path_arrows) {
+          add(createPosesMarkerArray(
+            history_path.first, "history_path_arrows", history_path_first_id, c.r, c.g, c.b, 0.1,
+            0.05, 0.05));
+          history_path_first_id += history_path.first.size();
+        }
       }
-      if (p.show_history_path_arrows) {
-        add(createPosesMarkerArray(
-          history_path.first, "history_path_arrows_" + uuid, c.r, c.g, c.b, 0.1, 0.05, 0.05));
+      {
+        const auto c = createColorFromString(uuid);
+        if (p.show_smoothed_history_path) {
+          add(createPointsMarkerArray(
+            history_path.second, "smoothed_history_path", i, c.r, c.g, c.b));
+        }
+        if (p.show_smoothed_history_path_arrows) {
+          add(createPosesMarkerArray(
+            history_path.second, "smoothed_history_path_arrows", smoothed_history_path_first_id,
+            c.r, c.g, c.b, 0.1, 0.05, 0.05));
+          smoothed_history_path_first_id += history_path.second.size();
+        }
       }
-    }
-    {
-      const auto c = createColorFromString(uuid);
-      if (p.show_smoothed_history_path) {
-        add(createPointsMarkerArray(
-          history_path.second, "smoothed_history_path_" + uuid, 0, c.r, c.g, c.b));
-      }
-      if (p.show_smoothed_history_path_arrows) {
-        add(createPosesMarkerArray(
-          history_path.second, "smoothed_history_path_arrows_" + uuid, c.r, c.g, c.b, 0.1, 0.05,
-          0.05));
-      }
+      i++;
     }
   }
-  const auto object_data_map = metrics_calculator_.getDebugObjectData();
-  for (const auto & [uuid, object_data] : object_data_map) {
-    const auto c = createColorFromString(uuid);
-    const auto predicted_path = object_data.getPredictedPath();
-    const auto history_path = object_data.getHistoryPath();
-    if (p.show_predicted_path) {
-      add(createPosesMarkerArray(predicted_path, "predicted_path_" + uuid, 0, 0, 1));
-    }
-    if (p.show_predicted_path_gt) {
-      add(createPosesMarkerArray(history_path, "predicted_path_gt_" + uuid, 1, 0, 0));
-    }
-    if (p.show_deviation_lines) {
-      add(createDeviationLines(predicted_path, history_path, "deviation_lines_" + uuid, 1, 1, 1));
-    }
-    if (p.show_object_polygon) {
-      add(createObjectPolygonMarkerArray(
-        object_data.object, "object_polygon_" + uuid, 0, c.r, c.g, c.b));
+
+  // visualize predicted path of past objects
+  {
+    int32_t predicted_path_first_id = 0;
+    int32_t history_path_first_id = 0;
+    int32_t deviation_lines_first_id = 0;
+    size_t i = 0;
+    const auto object_data_map = metrics_calculator_.getDebugObjectData();
+    for (const auto & [uuid, object_data] : object_data_map) {
+      const auto c = createColorFromString(uuid);
+      const auto predicted_path = object_data.getPredictedPath();
+      const auto history_path = object_data.getHistoryPath();
+      if (p.show_predicted_path) {
+        add(createPosesMarkerArray(
+          predicted_path, "predicted_path", predicted_path_first_id, 0, 0, 1));
+        predicted_path_first_id += predicted_path.size();
+      }
+      if (p.show_predicted_path_gt) {
+        add(createPosesMarkerArray(
+          history_path, "predicted_path_gt", history_path_first_id, 1, 0, 0));
+        history_path_first_id += history_path.size();
+      }
+      if (p.show_deviation_lines) {
+        add(createDeviationLines(
+          predicted_path, history_path, "deviation_lines", deviation_lines_first_id, 1, 1, 1));
+        deviation_lines_first_id += predicted_path.size();
+      }
+      if (p.show_object_polygon) {
+        add(createObjectPolygonMarkerArray(object_data.object, "object_polygon", i, c.r, c.g, c.b));
+      }
+      i++;
     }
   }
 
@@ -190,55 +216,37 @@ rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParame
   auto & p = parameters_;
 
   updateParam<size_t>(parameters, "smoothing_window_size", p->smoothing_window_size);
-
-  // update metrics
-  {
-    std::vector<std::string> metrics_str;
-    updateParam<std::vector<std::string>>(parameters, "selected_metrics", metrics_str);
-    std::vector<Metric> metrics;
-    for (const std::string & selected_metric : metrics_str) {
-      const Metric metric = str_to_metric.at(selected_metric);
-      metrics.push_back(metric);
-    }
-    p->metrics = metrics;
-  }
+  updateParam<double>(parameters, "stopped_velocity_threshold", p->stopped_velocity_threshold);
+  updateParam<double>(
+    parameters, "detection_count_purge_seconds", p->detection_count_purge_seconds);
+  updateParam<double>(parameters, "objects_count_window_seconds", p->objects_count_window_seconds);
 
   // update parameters for each object class
-  {
-    const auto get_object_param = [&](std::string && ns) -> std::optional<ObjectParameter> {
-      ObjectParameter param{};
-      if (updateParam<bool>(parameters, ns + "check_deviation", param.check_deviation)) {
-        return param;
-      }
-      return std::nullopt;
-    };
-
-    const std::string ns = "target_object.";
-    if (const auto new_param = get_object_param(ns + "car.")) {
-      p->object_parameters.at(ObjectClassification::CAR) = *new_param;
-    }
-    if (const auto new_param = get_object_param(ns + "truck.")) {
-      p->object_parameters.at(ObjectClassification::TRUCK) = *new_param;
-    }
-    if (const auto new_param = get_object_param(ns + "bus.")) {
-      p->object_parameters.at(ObjectClassification::BUS) = *new_param;
-    }
-    if (const auto new_param = get_object_param(ns + "trailer.")) {
-      p->object_parameters.at(ObjectClassification::TRAILER) = *new_param;
-    }
-    if (const auto new_param = get_object_param(ns + "bicycle.")) {
-      p->object_parameters.at(ObjectClassification::BICYCLE) = *new_param;
-    }
-    if (const auto new_param = get_object_param(ns + "motorcycle.")) {
-      p->object_parameters.at(ObjectClassification::MOTORCYCLE) = *new_param;
-    }
-    if (const auto new_param = get_object_param(ns + "pedestrian.")) {
-      p->object_parameters.at(ObjectClassification::PEDESTRIAN) = *new_param;
-    }
-    if (const auto new_param = get_object_param(ns + "unknown.")) {
-      p->object_parameters.at(ObjectClassification::UNKNOWN) = *new_param;
-    }
-  }
+  const auto update_object_param = [&p, &parameters](
+                                     const auto & semantic, const std::string & ns) {
+    auto & config = p->object_parameters.at(semantic);
+    updateParam<bool>(parameters, ns + "check_lateral_deviation", config.check_lateral_deviation);
+    updateParam<bool>(parameters, ns + "check_yaw_deviation", config.check_yaw_deviation);
+    updateParam<bool>(
+      parameters, ns + "check_predicted_path_deviation", config.check_predicted_path_deviation);
+    updateParam<bool>(parameters, ns + "check_yaw_rate", config.check_yaw_rate);
+    updateParam<bool>(
+      parameters, ns + "check_total_objects_count", config.check_total_objects_count);
+    updateParam<bool>(
+      parameters, ns + "check_average_objects_count", config.check_average_objects_count);
+    updateParam<bool>(
+      parameters, ns + "check_interval_average_objects_count",
+      config.check_interval_average_objects_count);
+  };
+  const std::string ns = "target_object.";
+  update_object_param(ObjectClassification::MOTORCYCLE, ns + "motorcycle.");
+  update_object_param(ObjectClassification::CAR, ns + "car.");
+  update_object_param(ObjectClassification::TRUCK, ns + "truck.");
+  update_object_param(ObjectClassification::TRAILER, ns + "trailer.");
+  update_object_param(ObjectClassification::BUS, ns + "bus.");
+  update_object_param(ObjectClassification::PEDESTRIAN, ns + "pedestrian.");
+  update_object_param(ObjectClassification::BICYCLE, ns + "bicycle.");
+  update_object_param(ObjectClassification::UNKNOWN, ns + "unknown.");
 
   // update debug marker parameters
   {
@@ -280,6 +288,16 @@ void PerceptionOnlineEvaluatorNode::initParameter()
   p->smoothing_window_size = getOrDeclareParameter<int>(*this, "smoothing_window_size");
   p->prediction_time_horizons =
     getOrDeclareParameter<std::vector<double>>(*this, "prediction_time_horizons");
+  p->stopped_velocity_threshold =
+    getOrDeclareParameter<double>(*this, "stopped_velocity_threshold");
+  p->detection_radius_list =
+    getOrDeclareParameter<std::vector<double>>(*this, "detection_radius_list");
+  p->detection_height_list =
+    getOrDeclareParameter<std::vector<double>>(*this, "detection_height_list");
+  p->detection_count_purge_seconds =
+    getOrDeclareParameter<double>(*this, "detection_count_purge_seconds");
+  p->objects_count_window_seconds =
+    getOrDeclareParameter<double>(*this, "objects_count_window_seconds");
 
   // set metrics
   const auto selected_metrics =
@@ -293,7 +311,18 @@ void PerceptionOnlineEvaluatorNode::initParameter()
   {
     const auto get_object_param = [&](std::string && ns) -> ObjectParameter {
       ObjectParameter param{};
-      param.check_deviation = getOrDeclareParameter<bool>(*this, ns + "check_deviation");
+      param.check_lateral_deviation =
+        getOrDeclareParameter<bool>(*this, ns + "check_lateral_deviation");
+      param.check_yaw_deviation = getOrDeclareParameter<bool>(*this, ns + "check_yaw_deviation");
+      param.check_predicted_path_deviation =
+        getOrDeclareParameter<bool>(*this, ns + "check_predicted_path_deviation");
+      param.check_yaw_rate = getOrDeclareParameter<bool>(*this, ns + "check_yaw_rate");
+      param.check_total_objects_count =
+        getOrDeclareParameter<bool>(*this, ns + "check_total_objects_count");
+      param.check_average_objects_count =
+        getOrDeclareParameter<bool>(*this, ns + "check_average_objects_count");
+      param.check_interval_average_objects_count =
+        getOrDeclareParameter<bool>(*this, ns + "check_interval_average_objects_count");
       return param;
     };
 

@@ -1,18 +1,18 @@
 # Autoware Installation on Jetson Orin Nano and F1tenth Record-Replay Demo
 
-This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Orin Nano hardware and software systems. This F1tenth branch supports `JetPack 6` on `Ubuntu 22.04`. It runs `ROS2 humble` on an slightly modified version of Autoware's main branch from early March, 2024 (f1tenth_humble branch). The original [Autoware installation documentation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/) from main branch, and the [F1tenth build documentation](https://f1tenth.readthedocs.io/en/foxy_test/index.html)(running ROS2 foxy) are here for your reference.
+This tutorial provides step-by-step instructions for installing and setting up the Autoware development environment on the F1tenth car. The Autoware installation process in this branch is modified from the main one to adapt to the Jetson Orin Nano hardware and software systems. This F1tenth branch supports `JetPack 6` on `Ubuntu 22.04`. It runs `ROS2 humble` on an slightly modified version of Autoware's release/2024.06 branch (f1tenth_humble branch). The original [Autoware installation documentation](https://autowarefoundation.github.io/autoware-documentation/main/installation/autoware/source-installation/) from main branch, and the [F1tenth build documentation](https://f1tenth.readthedocs.io/en/foxy_test/index.html)(running ROS2 foxy) are here for your reference.
 
 This repo also includes a F1tenth Record-Replay demo. This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework. Instructions for installing the F1tenth gym simulator are provided. The approximate time investments listed are based on running Jetson Orin Nano on the default`15W` power mode.
 
 ## Flash JetPack6 to Jetson Orin Nano
 (Approximate time investment: 1-1.5 hours)
 
-There are multiple ways to install JetPack on a Jetson as described in [Jetpack 6 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-60dp). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 6. Other JetPack versions may also work but have not yet been tested.
+There are multiple ways to install JetPack on a Jetson as described in [Jetpack 6 Documentation](https://developer.nvidia.com/embedded/jetpack-sdk-60). The recommended ways to install are via the `NVIDIA SDK Manager Method` or the `SD Card Image Method`. This repo was tested on JetPack 6. Other JetPack versions may also work but have not yet been tested.
 
 ### NVIDIA SDK Manager Method:
 This method requires a Linux host computer running Ubuntu Linux x64 version `22.04` with `~40GB` of disk space
 
-This method you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson Orin Nano via a `USB-C cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Orin Nano. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the F1tenth car's Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
+This method you will first install `NVIDIA SDK Manager` on your host machine, connect the host machine to the Jetson Orin Nano via a `USB-C` cable, download all of the necessary JetPack components using the SDK Manager, and then flash the JetPack to the target Jetson Orin Nano. This method allows you to directly flash the JetPack to the `SD Card` or to the `NVME SSD drive` on the F1tenth car's Jetson. You may need to create an NVIDIA account to download the NVIDIA SDK manager.
 
 1. Download and install [SDK Manager](https://developer.nvidia.com/sdk-manager) on your host machine.
 
@@ -24,7 +24,7 @@ This method you will first install `NVIDIA SDK Manager` on your host machine, co
 ### SD Card Image Method:
 This method requires a computer with Internet connection and the ability to read and write SD cards
 
-1. Download [JetPack 6](https://developer.nvidia.com/downloads/embedded/l4t/r36_release_v2.0/jp60dp-orin-nano-sd-card-image.zip)
+1. Download [JetPack 6](https://developer.nvidia.com/downloads/embedded/l4t/r36_release_v3.0/jp60-orin-nano-sd-card-image.zip)
 
 2. If you have not previously run a JetPack 6 release on your Jetson Orin Nano Developer kit, you must first update its QSPI before using this JetPack 6 SD Card image. See the [SD Card Image Method](https://developer.nvidia.com/embedded/jetpack-sdk-511) section for more information.
 
@@ -33,12 +33,6 @@ This method requires a computer with Internet connection and the ability to read
 3. Insert your microSD card to the Jetson.
 
 Once the JetPack is successfully flashed to the Jetson NX, boot the system and the Ubuntu desktop environment should launch
-
-
-## Install ROS2 humble 
-(Approximate time investment: 0.5 hour)
-
-1. Follow the [ROS2 instructions](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html#) to install ROS2 humble
 
 
 ## Set up Autoware development environment 
@@ -125,13 +119,8 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 
 ## Install f1tenth_gym simulator dependencies
 (Approximate time investment: 10 minutes)
-
-1. Install `onnx` and roll back `setuptools` to version 65.5.0
-   ```bash
-   pip3 install onnx setuptools==65.5.0
-   ```
-   
-2. The f1tenth_gym_ros simulator is used in this case, click [here](https://github.com/f1tenth/f1tenth_gym_ros) for details.
+  
+1. The f1tenth_gym_ros simulator is used in this case, click [here](https://github.com/f1tenth/f1tenth_gym_ros) for details.
 
    ```bash
    cd autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/f1tenth_gym
@@ -155,8 +144,6 @@ Install `slam_toolbox`
 
 ```(bash)
 # Terminal 1
-source /opt/ros/humble/setup.bash
-cd autoware && . install/setup.bash
 ros2 launch f1tenth_stack bringup_launch.py
 ```
 
@@ -164,14 +151,12 @@ ros2 launch f1tenth_stack bringup_launch.py
 
 ```(bash)
 # Terminal 2
-source /opt/ros/humble/setup.bash
-cd autoware && . install/setup.bash
 ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/<username>/autoware/src/universe/autoware.universe/f1tenth/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
 ```
 
 3. Launch rviz2. Add `/map` by topic. Add `/graph_visualization` by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you run slam_toolbox.
 
-[![SLAM demo](https://img.youtube.com/vi/bgrxjXlJbhI/maxresdefault.jpg)](https://youtu.be/bgrxjXlJbhI)
+[![SLAM demo](https://img.youtube.com/vi/bgrxjXlJbhI/hqdefault.jpg)](https://youtu.be/bgrxjXlJbhI)
 
 ### Create a map without an F1tenth car
 
@@ -187,7 +172,7 @@ Navigate to /home/autoware/install/f1tenth_gym_ros/share/f1tenth_gym_ros/config.
 
 ```(bash)
 # Terminal 1
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
@@ -200,7 +185,7 @@ rviz2 should launch automatically with the target map loaded (black markers). Af
 
 ```(bash)
 # Terminal 2
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
@@ -210,12 +195,12 @@ The default path for the recording is set to `"/tmp/path"`. This recording will 
 
 ```(bash)
 # Terminal 3
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
 ```
 
-[![record trajectory sim demo](https://img.youtube.com/vi/gJ8JWyzbRf8/maxresdefault.jpg)](https://www.youtube.com/watch?v=gJ8JWyzbRf8)
+[![record trajectory sim demo](https://img.youtube.com/vi/gJ8JWyzbRf8/hqdefault.jpg)](https://www.youtube.com/watch?v=gJ8JWyzbRf8)
 
 ## How to replay a trajectory (simulation)
 
@@ -223,7 +208,7 @@ ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/act
 
 ```(bash)
 # Terminal 1
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
@@ -232,71 +217,85 @@ ros2 launch launch_autoware_f1tenth demo_launch.py
 
 ```(bash)
 # Terminal 2
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
 ```
 
-[![replay trajectory sim demo](https://img.youtube.com/vi/fxg8eQYiIrw/maxresdefault.jpg)](https://youtu.be/fxg8eQYiIrw)
+3. Add `/wp_marker` by topic in rviz2 to show the recorded trajectory
+
+[![replay trajectory sim demo](https://img.youtube.com/vi/fxg8eQYiIrw/hqdefault.jpg)](https://youtu.be/fxg8eQYiIrw)
 
 ## How to record a trajectory (real car)
 
-1. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
+1. Update the recordreplay_planner_nodes param file at ~autoware/src/universe/autoware.universe/planning/recordreplay_planner_nodes/param/defaults.param.yaml
+
+change the `vehicle_state` from `/ego_racecar/odom` to `/pf/pose/odom` so it will use the data from particle fileter
+
+2. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
 # Terminal 1
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth realcar_launch.py
 ```
 
-2. Launch the `particle_filter` node for localization. You need the library `range_libc` to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
+3. Launch the `particle_filter` node for localization. You need the library `range_libc` to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_humble/f1tenth/particle_filter).
 
 ```(bash)
 # Terminal 2
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch particle_filter localize_launch.py
 ```
 
-3. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved. 
+4. Record a trajectory and save at your preferred path. To stop recording, `Ctrl + C` and your path will be automatically saved. 
 The default path for the recording is is set to `"/tmp/path"`. This recording will be automatically erased after system reboot.
 
 ```(bash)
 # Terminal 3
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/recordtrajectory autoware_auto_planning_msgs/action/RecordTrajectory "{record_path: "/tmp/path"}" --feedback
 ```
 
 ## How to replay a trajectory (real car)
 
-1. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
+1. Update the trajectory_follower_f1tenth launch file ~/autoware/src/universe/autoware.universe/f1tenth/trajectory_follower_f1tenth/launch/trajectory_follower_f1tenth.launch.xml
+
+update `<remap from="input/kinematics" to="/ego_racecar/odom"/>` to `<remap from="input/kinematics" to="/pf/pose/odom"/>`
+
+2. Use the `realcar_launch` launch file to launch `f1tenth_stack`, `recordreplay_planner`, and `trajectory_follower_f1tenth` nodes.
 
 ```(bash)
 # Terminal 1
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth realcar_launch.py
 ```
 
-2. Launch the `particle_filter` node for localization. You need the library range_libc to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/particle_filter).
+3. Launch the `particle_filter` node for localization. You need the library range_libc to utilize the GPU. For instructions on setup, see [particle_filter](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_humble/f1tenth/particle_filter).
 
 ```(bash)
 # Terminal 2
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 launch particle_filter localize_launch.py
 ```
 
-3. Replay a trajectory from your previously saved file
+4. Replay a trajectory from your previously saved file
 
 ```(bash)
 # Terminal 3
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 cd autoware && . install/setup.bash
 ros2 action send_goal /planning/replaytrajectory autoware_auto_planning_msgs/action/ReplayTrajectory "{replay_path: "/tmp/path"}" --feedback
 ```
+
+5. Add `/wp_marker` by topic in rviz2 to show the recorded trajectory
+
+[![replay trajectory realcar demo](https://img.youtube.com/vi/NJmm76bREcY/hqdefault.jpg)](https://www.youtube.com/watch?v=NJmm76bREcY)
 
 # Troubleshooting/Tips
 

@@ -88,6 +88,8 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   p.minimum_lateral_acc = node->declare_parameter<double>(ns + "minimum_lateral_acc");
   p.maximum_curvature = node->declare_parameter<double>(ns + "maximum_curvature");
   p.deceleration_interval = node->declare_parameter<double>(ns + "deceleration_interval");
+  p.maximum_longitudinal_deviation =
+    node->declare_parameter<double>(ns + "maximum_longitudinal_deviation");
   // geometric pull out
   p.enable_geometric_pull_out = node->declare_parameter<bool>(ns + "enable_geometric_pull_out");
   p.geometric_collision_check_distance_from_end =
@@ -99,6 +101,8 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
     node->declare_parameter<double>(ns + "arc_path_interval");
   p.parallel_parking_parameters.pull_out_lane_departure_margin =
     node->declare_parameter<double>(ns + "lane_departure_margin");
+  p.lane_departure_check_expansion_margin =
+    node->declare_parameter<double>(ns + "lane_departure_check_expansion_margin");
   p.parallel_parking_parameters.pull_out_max_steer_angle =
     node->declare_parameter<double>(ns + "pull_out_max_steer_angle");  // 15deg
   p.parallel_parking_parameters.center_line_path_interval =
@@ -424,6 +428,8 @@ void StartPlannerModuleManager::updateModuleParams(
     updateParam<double>(parameters, ns + "minimum_lateral_acc", p->minimum_lateral_acc);
     updateParam<double>(parameters, ns + "maximum_curvature", p->maximum_curvature);
     updateParam<double>(parameters, ns + "deceleration_interval", p->deceleration_interval);
+    updateParam<double>(
+      parameters, ns + "maximum_longitudinal_deviation", p->maximum_longitudinal_deviation);
     updateParam<bool>(parameters, ns + "enable_geometric_pull_out", p->enable_geometric_pull_out);
     updateParam<bool>(parameters, ns + "divide_pull_out_path", p->divide_pull_out_path);
     updateParam<double>(
@@ -431,6 +437,9 @@ void StartPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "lane_departure_margin",
       p->parallel_parking_parameters.pull_out_lane_departure_margin);
+    updateParam<double>(
+      parameters, ns + "lane_departure_check_expansion_margin",
+      p->lane_departure_check_expansion_margin);
     updateParam<double>(
       parameters, ns + "pull_out_max_steer_angle",
       p->parallel_parking_parameters.pull_out_max_steer_angle);

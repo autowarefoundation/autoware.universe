@@ -16,8 +16,8 @@
   <depend>autoware_auto_perception_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>eigen</depend>
+  <depend>glog</depend>
   <depend>kalman_filter</depend>
-  <depend>libgoogle-glog-dev</depend>
   <depend>mussp</depend>
   <depend>object_recognition_utils</depend>
   <depend>rclcpp</depend>
@@ -25,7 +25,6 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
-  <depend>tier4_perception_msgs</depend>
   <depend>unique_identifier_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

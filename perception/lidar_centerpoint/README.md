@@ -30,20 +30,22 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ### Core Parameters
 
-| Name                            | Type         | Default Value | Description                                                   |
-| ------------------------------- | ------------ | ------------- | ------------------------------------------------------------- |
-| `score_threshold`               | float        | `0.4`         | detected objects with score less than threshold are ignored   |
-| `densification_world_frame_id`  | string       | `map`         | the world frame id to fuse multi-frame pointcloud             |
-| `densification_num_past_frames` | int          | `1`           | the number of past frames to fuse with the current frame      |
-| `trt_precision`                 | string       | `fp16`        | TensorRT inference precision: `fp32` or `fp16`                |
-| `encoder_onnx_path`             | string       | `""`          | path to VoxelFeatureEncoder ONNX file                         |
-| `encoder_engine_path`           | string       | `""`          | path to VoxelFeatureEncoder TensorRT Engine file              |
-| `head_onnx_path`                | string       | `""`          | path to DetectionHead ONNX file                               |
-| `head_engine_path`              | string       | `""`          | path to DetectionHead TensorRT Engine file                    |
-| `nms_iou_target_class_names`    | list[string] | -             | target classes for IoU-based Non Maximum Suppression          |
-| `nms_iou_search_distance_2d`    | double       | -             | If two objects are farther than the value, NMS isn't applied. |
-| `nms_iou_threshold`             | double       | -             | IoU threshold for the IoU-based Non Maximum Suppression       |
-| `build_only`                    | bool         | `false`       | shutdown the node after TensorRT engine file is built         |
+| Name                                             | Type         | Default Value             | Description                                                   |
+| ------------------------------------------------ | ------------ | ------------------------- | ------------------------------------------------------------- |
+| `encoder_onnx_path`                              | string       | `""`                      | path to VoxelFeatureEncoder ONNX file                         |
+| `encoder_engine_path`                            | string       | `""`                      | path to VoxelFeatureEncoder TensorRT Engine file              |
+| `head_onnx_path`                                 | string       | `""`                      | path to DetectionHead ONNX file                               |
+| `head_engine_path`                               | string       | `""`                      | path to DetectionHead TensorRT Engine file                    |
+| `build_only`                                     | bool         | `false`                   | shutdown the node after TensorRT engine file is built         |
+| `trt_precision`                                  | string       | `fp16`                    | TensorRT inference precision: `fp32` or `fp16`                |
+| `post_process_params.score_threshold`            | double       | `0.4`                     | detected objects with score less than threshold are ignored   |
+| `post_process_params.yaw_norm_thresholds`        | list[double] | [0.3, 0.3, 0.3, 0.3, 0.0] | An array of distance threshold values of norm of yaw [rad].   |
+| `post_process_params.iou_nms_target_class_names` | list[string] | -                         | target classes for IoU-based Non Maximum Suppression          |
+| `post_process_params.iou_nms_search_distance_2d` | double       | -                         | If two objects are farther than the value, NMS isn't applied. |
+| `post_process_params.iou_nms_threshold`          | double       | -                         | IoU threshold for the IoU-based Non Maximum Suppression       |
+| `post_process_params.has_twist`                  | boolean      | false                     | Indicates whether the model outputs twist value.              |
+| `densification_params.world_frame_id`            | string       | `map`                     | the world frame id to fuse multi-frame pointcloud             |
+| `densification_params.num_past_frames`           | int          | `1`                       | the number of past frames to fuse with the current frame      |
 
 ### The `build_only` option
 
@@ -67,18 +69,6 @@ You can download the onnx format of trained models by clicking on the links belo
 
 `Centerpoint` was trained in `nuScenes` (~28k lidar frames) [8] and TIER IV's internal database (~11k lidar frames) for 60 epochs.
 `Centerpoint tiny` was trained in `Argoverse 2` (~110k lidar frames) [9] and TIER IV's internal database (~11k lidar frames) for 20 epochs.
-
-## Standalone inference and visualization
-
-In addition to its use as a standard ROS node, `lidar_centerpoint` can also be used to perform inferences in an isolated manner.
-To do so, execute the following launcher, where `pcd_path` is the path of the pointcloud to be used for inference.
-
-```bash
-ros2 launch lidar_centerpoint single_inference_lidar_centerpoint.launch.xml pcd_path:=test_pointcloud.pcd detections_path:=test_detections.ply
-```
-
-`lidar_centerpoint` generates a `ply` file in the provided `detections_path`, which contains the detections as triangle meshes.
-These detections can be visualized by most 3D tools, but we also integrate a visualization UI using `Open3D` which is launched alongside `lidar_centerpoint`.
 
 ### Changelog
 

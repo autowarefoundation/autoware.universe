@@ -16,42 +16,16 @@
 
 namespace perception_diagnostics
 {
-ObjectTypesToCheck getDeviationCheckObjectTypes(
-  const std::unordered_map<uint8_t, ObjectParameter> & params)
+namespace filter
 {
-  ObjectTypesToCheck object_types_to_check;
-  for (const auto & [object_class, object_param] : params) {
-    switch (object_class) {
-      case ObjectClassification::CAR:
-        object_types_to_check.check_car = object_param.check_deviation;
-        break;
-      case ObjectClassification::TRUCK:
-        object_types_to_check.check_truck = object_param.check_deviation;
-        break;
-      case ObjectClassification::BUS:
-        object_types_to_check.check_bus = object_param.check_deviation;
-        break;
-      case ObjectClassification::TRAILER:
-        object_types_to_check.check_trailer = object_param.check_deviation;
-        break;
-      case ObjectClassification::BICYCLE:
-        object_types_to_check.check_bicycle = object_param.check_deviation;
-        break;
-      case ObjectClassification::MOTORCYCLE:
-        object_types_to_check.check_motorcycle = object_param.check_deviation;
-        break;
-      case ObjectClassification::PEDESTRIAN:
-        object_types_to_check.check_pedestrian = object_param.check_deviation;
-        break;
-      case ObjectClassification::UNKNOWN:
-        object_types_to_check.check_unknown = object_param.check_deviation;
-        break;
-      default:
-        break;
-    }
-  }
-  return object_types_to_check;
+bool velocity_filter(const PredictedObject & object, double velocity_threshold, double max_velocity)
+{
+  const auto v_norm = std::hypot(
+    object.kinematics.initial_twist_with_covariance.twist.linear.x,
+    object.kinematics.initial_twist_with_covariance.twist.linear.y);
+  return (velocity_threshold < v_norm && v_norm < max_velocity);
 }
+}  // namespace filter
 
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification)
 {
@@ -104,11 +78,25 @@ void filterObjectsByClass(
   filterObjects(objects, filter);
 }
 
-void filterDeviationCheckObjects(
-  PredictedObjects & objects, const std::unordered_map<uint8_t, ObjectParameter> & params)
+PredictedObjects filterObjectsByVelocity(
+  const PredictedObjects & objects, const double velocity_threshold,
+  const bool remove_above_threshold)
 {
-  const auto object_types = getDeviationCheckObjectTypes(params);
-  filterObjectsByClass(objects, object_types);
+  if (remove_above_threshold) {
+    return filterObjectsByVelocity(objects, -velocity_threshold, velocity_threshold);
+  }
+  return filterObjectsByVelocity(objects, velocity_threshold, std::numeric_limits<double>::max());
 }
 
+PredictedObjects filterObjectsByVelocity(
+  const PredictedObjects & objects, double velocity_threshold, double max_velocity)
+{
+  const auto filter = [&](const auto & object) {
+    return filter::velocity_filter(object, velocity_threshold, max_velocity);
+  };
+
+  auto filtered = objects;
+  filterObjects(filtered, filter);
+  return filtered;
+}
 }  // namespace perception_diagnostics
