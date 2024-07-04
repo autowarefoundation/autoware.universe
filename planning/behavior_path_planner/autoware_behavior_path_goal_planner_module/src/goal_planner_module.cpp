@@ -962,7 +962,7 @@ std::vector<PullOverPath> GoalPlannerModule::sortPullOverPathCandidatesByGoalPri
       [&](const PullOverPath & a, const PullOverPath & b) {
         // if both are soft margin or both are same hard margin, prioritize the path with lower
         // curvature.
-          if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
+        if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
           return !isHighCurvature(a) && isHighCurvature(b);
         }
         // otherwise, keep the order based on the margin.
