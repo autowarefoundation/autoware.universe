@@ -48,10 +48,10 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <optional>
 
 namespace autoware::test_utils
 {
@@ -451,7 +451,7 @@ template <typename T>
 void createSubscription(
   rclcpp::Node::SharedPtr test_node, const std::string & topic_name,
   std::function<void(const typename T::ConstSharedPtr)> callback,
-  std::shared_ptr<rclcpp::Subscription<T>> & subscriber, 
+  std::shared_ptr<rclcpp::Subscription<T>> & subscriber,
   std::optional<rclcpp::QoS> qos = std::nullopt)
 {
   if (!qos.has_value()) {
@@ -483,7 +483,8 @@ void setSubscriber(
   std::optional<rclcpp::QoS> qos = std::nullopt)
 {
   createSubscription(
-    test_node, topic_name, [&count](const typename T::ConstSharedPtr) { count++; }, subscriber, qos);
+    test_node, topic_name, [&count](const typename T::ConstSharedPtr) { count++; }, subscriber,
+    qos);
 }
 
 /**
@@ -568,7 +569,8 @@ public:
   template <typename MessageType>
   void set_subscriber(
     const std::string & topic_name,
-    std::function<void(const typename MessageType::ConstSharedPtr)> callback, std::optional<rclcpp::QoS> qos = std::nullopt)
+    std::function<void(const typename MessageType::ConstSharedPtr)> callback,
+    std::optional<rclcpp::QoS> qos = std::nullopt)
   {
     if (subscribers_.find(topic_name) == subscribers_.end()) {
       std::shared_ptr<rclcpp::Subscription<MessageType>> subscriber;
