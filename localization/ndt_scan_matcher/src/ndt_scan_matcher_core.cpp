@@ -836,10 +836,13 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
 
   std::vector<double> initial_pose_offset_model_x;
   std::vector<double> initial_pose_offset_model_y;
-  const size_t offset_size = param_.covariance.covariance_estimation.initial_pose_offset_model.size();
+  const size_t offset_size =
+    param_.covariance.covariance_estimation.initial_pose_offset_model.size();
   for (size_t i = 0; i < offset_size; i++) {
-    initial_pose_offset_model_x.push_back(param_.covariance.covariance_estimation.initial_pose_offset_model[i].x());
-    initial_pose_offset_model_y.push_back(param_.covariance.covariance_estimation.initial_pose_offset_model[i].y());
+    initial_pose_offset_model_x.push_back(
+      param_.covariance.covariance_estimation.initial_pose_offset_model[i].x());
+    initial_pose_offset_model_y.push_back(
+      param_.covariance.covariance_estimation.initial_pose_offset_model[i].y());
   }
 
   if (
