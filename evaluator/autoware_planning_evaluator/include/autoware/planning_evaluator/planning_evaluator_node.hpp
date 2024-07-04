@@ -89,7 +89,9 @@ public:
    * @brief callback on receiving a modified goal
    * @param [in] modified_goal_msg received modified goal message
    */
-  void onModifiedGoal(const PoseWithUuidStamped::ConstSharedPtr modified_goal_msg);
+  void onModifiedGoal(
+    const PoseWithUuidStamped::ConstSharedPtr modified_goal_msg,
+    const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
    * @brief publish the given metric statistic
@@ -100,18 +102,20 @@ public:
   /**
    * @brief publish current ego lane info
    */
-  DiagnosticStatus generateLaneletDiagnosticStatus();
+  DiagnosticStatus generateLaneletDiagnosticStatus(const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
    * @brief publish current ego kinematic state
    */
   DiagnosticStatus generateKinematicStateDiagnosticStatus(
-    const AccelWithCovarianceStamped & accel_stamped);
+    const AccelWithCovarianceStamped & accel_stamped, const Odometry::ConstSharedPtr ego_state_ptr);
 
 private:
   static bool isFinite(const TrajectoryPoint & p);
-  void publishModifiedGoalDeviationMetrics();
-  // update Route Handler
+
+  /**
+   * @brief update route handler data
+   */
   void getRouteData();
 
   /**
