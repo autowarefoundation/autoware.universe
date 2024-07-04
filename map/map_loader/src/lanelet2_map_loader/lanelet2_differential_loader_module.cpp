@@ -200,14 +200,14 @@ Lanelet2DifferentialLoaderModule::getLaneletMapMetaDataMsg(
 
   autoware_map_msgs::msg::LaneletMapMetaData metadata;
   for (const auto & file : lanelet2_file_metadata_dict_) {
-    autoware_map_msgs::msg::LaneletMapTileMetaData tile_msg;
-    tile_msg.cell_id = file.second.id;
-    tile_msg.min_x = file.second.min_x;
-    tile_msg.min_y = file.second.min_y;
-    tile_msg.max_x = file.second.min_x + x_res;
-    tile_msg.max_y = file.second.min_y + y_res;
+    autoware_map_msgs::msg::LaneletMapCellMetaData cell_msg;
+    cell_msg.cell_id = file.second.id;
+    cell_msg.min_x = file.second.min_x;
+    cell_msg.min_y = file.second.min_y;
+    cell_msg.max_x = file.second.min_x + x_res;
+    cell_msg.max_y = file.second.min_y + y_res;
 
-    metadata.metadata_list.push_back(tile_msg);
+    metadata.metadata_list.push_back(cell_msg);
   }
   metadata.header.frame_id = "map";
   metadata.header.stamp = clock_->now();
