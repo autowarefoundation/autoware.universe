@@ -14,6 +14,8 @@
 
 #include "autoware/planning_evaluator/planning_evaluator_node.hpp"
 
+#include "autoware/evaluator_utils/evaluator_utils.hpp"
+
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
@@ -55,6 +57,9 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
   output_file_str_ = declare_parameter<std::string>("output_file");
   ego_frame_str_ = declare_parameter<std::string>("ego_frame");
 
+  planning_diag_sub_ = create_subscription<DiagnosticArray>(
+    "~/input/diagnostics", 1, std::bind(&PlanningEvaluatorNode::onDiagnostics, this, _1));
+
   // List of metrics to calculate and publish
   metrics_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
   for (const std::string & selected_metric :
@@ -94,6 +99,14 @@ PlanningEvaluatorNode::~PlanningEvaluatorNode()
       f << std::endl;
     }
     f.close();
+  }
+}
+
+void PlanningEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg)
+{
+  // add target diagnostics to the queue and remove old ones
+  for (const auto & function : target_functions_) {
+    autoware::evaluator_utils::updateDiagnosticQueue(*diag_msg, function, now(), diag_queue_);
   }
 }
 

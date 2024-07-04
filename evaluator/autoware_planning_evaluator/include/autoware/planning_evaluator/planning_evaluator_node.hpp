@@ -37,8 +37,8 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
-
 namespace planning_diagnostics
 {
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -94,6 +94,11 @@ public:
     const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
+   * @brief obtain diagnostics information
+   */
+  void onDiagnostics(const DiagnosticArray::ConstSharedPtr diag_msg);
+
+  /**
    * @brief publish the given metric statistic
    */
   DiagnosticStatus generateDiagnosticStatus(
@@ -127,6 +132,10 @@ private:
    * @brief fetch topic data
    */
   void fetchData();
+  // The diagnostics cycle is faster than timer, and each node publishes diagnostic separately.
+  // takeData() in onTimer() with a polling subscriber will miss a topic, so save all topics with
+  // onDiagnostics().
+  rclcpp::Subscription<DiagnosticArray>::SharedPtr planning_diag_sub_;
 
   // ROS
   autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
@@ -164,6 +173,9 @@ private:
   std::array<std::deque<Stat<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+  // queue for diagnostics and time stamp
+  std::deque<std::pair<DiagnosticStatus, rclcpp::Time>> diag_queue_;
+  const std::vector<std::string> target_functions_ = {"obstacle_cruise_planner"};
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
 }  // namespace planning_diagnostics
