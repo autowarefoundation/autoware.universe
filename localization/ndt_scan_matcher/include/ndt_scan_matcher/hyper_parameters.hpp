@@ -30,9 +30,10 @@ enum class ConvergedParamType {
 };
 
 enum class CovarianceEstimationType {
-  LAPLACE_APPROXIMATION = 0,
-  MULTI_NDT = 1,
-  MULTI_NDT_SCORE = 2,
+  FIXED_VALUE = 0,
+  LAPLACE_APPROXIMATION = 1,
+  MULTI_NDT = 2,
+  MULTI_NDT_SCORE = 3,
 };
 
 struct HyperParameters
@@ -86,7 +87,6 @@ struct HyperParameters
 
     struct CovarianceEstimation
     {
-      bool enable{};
       CovarianceEstimationType covariance_estimation_type{};
       std::vector<Eigen::Vector2d> initial_pose_offset_model{};
       double temperature{};
@@ -156,35 +156,31 @@ public:
     for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
       covariance.output_pose_covariance[i] = output_pose_covariance[i];
     }
-    covariance.covariance_estimation.enable =
-      node->declare_parameter<bool>("covariance.covariance_estimation.enable");
-    if (covariance.covariance_estimation.enable) {
-      const int64_t covariance_estimation_type_tmp = node->declare_parameter<int64_t>(
-        "covariance.covariance_estimation.covariance_estimation_type");
-      covariance.covariance_estimation.covariance_estimation_type =
-        static_cast<CovarianceEstimationType>(covariance_estimation_type_tmp);
-      std::vector<double> initial_pose_offset_model_x =
-        node->declare_parameter<std::vector<double>>(
-          "covariance.covariance_estimation.initial_pose_offset_model_x");
-      std::vector<double> initial_pose_offset_model_y =
-        node->declare_parameter<std::vector<double>>(
-          "covariance.covariance_estimation.initial_pose_offset_model_y");
-      if (initial_pose_offset_model_x.size() == initial_pose_offset_model_y.size()) {
-        const size_t size = initial_pose_offset_model_x.size();
-        covariance.covariance_estimation.initial_pose_offset_model.resize(size);
-        for (size_t i = 0; i < size; i++) {
-          covariance.covariance_estimation.initial_pose_offset_model[i].x() =
-            initial_pose_offset_model_x[i];
-          covariance.covariance_estimation.initial_pose_offset_model[i].y() =
-            initial_pose_offset_model_y[i];
-        }
-      } else {
-        std::stringstream message;
-        message << "Invalid initial pose offset model parameters."
-                << "Please make sure that the number of elements in "
-                << "initial_pose_offset_model_x and initial_pose_offset_model_y are the same.";
-        throw std::runtime_error(message.str());
+    const int64_t covariance_estimation_type_tmp = node->declare_parameter<int64_t>(
+      "covariance.covariance_estimation.covariance_estimation_type");
+    covariance.covariance_estimation.covariance_estimation_type =
+      static_cast<CovarianceEstimationType>(covariance_estimation_type_tmp);
+    std::vector<double> initial_pose_offset_model_x =
+      node->declare_parameter<std::vector<double>>(
+        "covariance.covariance_estimation.initial_pose_offset_model_x");
+    std::vector<double> initial_pose_offset_model_y =
+      node->declare_parameter<std::vector<double>>(
+        "covariance.covariance_estimation.initial_pose_offset_model_y");
+    if (initial_pose_offset_model_x.size() == initial_pose_offset_model_y.size()) {
+      const size_t size = initial_pose_offset_model_x.size();
+      covariance.covariance_estimation.initial_pose_offset_model.resize(size);
+      for (size_t i = 0; i < size; i++) {
+        covariance.covariance_estimation.initial_pose_offset_model[i].x() =
+          initial_pose_offset_model_x[i];
+        covariance.covariance_estimation.initial_pose_offset_model[i].y() =
+          initial_pose_offset_model_y[i];
       }
+    } else {
+      std::stringstream message;
+      message << "Invalid initial pose offset model parameters."
+              << "Please make sure that the number of elements in "
+              << "initial_pose_offset_model_x and initial_pose_offset_model_y are the same.";
+      throw std::runtime_error(message.str());
     }
     covariance.covariance_estimation.temperature =
       node->declare_parameter<double>("covariance.covariance_estimation.temperature");
