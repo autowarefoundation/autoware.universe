@@ -69,7 +69,7 @@ tier4_debug_msgs::msg::ProcessingTimeTree ProcessingTimeNode::to_msg() const
       tier4_debug_msgs::msg::ProcessingTimeNode time_node_msg;
       time_node_msg.name = node.name_;
       time_node_msg.processing_time = node.processing_time_;
-      time_node_msg.id = tree_msg.nodes.size();
+      time_node_msg.id = tree_msg.nodes.size() + 1;
       time_node_msg.parent_id = parent_id;
       tree_msg.nodes.emplace_back(time_node_msg);
 

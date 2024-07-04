@@ -277,7 +277,7 @@ void PathOptimizer::onPath(const Path::ConstSharedPtr path_ptr)
   published_time_publisher_->publish_if_subscribed(traj_pub_, output_traj_msg.header.stamp);
 
   time_keeper_->end_track(__func__);
-  time_keeper_->report(true);
+  time_keeper_->report();
 }
 
 bool PathOptimizer::checkInputPath(const Path & path, rclcpp::Clock clock) const
