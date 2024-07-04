@@ -45,23 +45,16 @@ OccupancyGridMapFixedBlindSpot::OccupancyGridMapFixedBlindSpot(
 
 inline bool OccupancyGridMapFixedBlindSpot::isPointValid(const Eigen::Vector4f & pt)
 {
-  // Exclude invalid points
-  if (!std::isfinite(pt[0]) || !std::isfinite(pt[1]) || !std::isfinite(pt[2])) {
-    return false;
-  }
-  // Apply height filter
-  if (pt[2] < min_height_ || max_height_ < pt[2]) {
-    return false;
-  }
-  return true;
+  // Apply height filter and exclude invalid points
+  return min_height_ < pt[2] && pt[2] < max_height_ && std::isfinite(pt[0]) &&
+         std::isfinite(pt[1]) && std::isfinite(pt[2]);
 }
 
-// pt -> (pt_map, angle_bin_index, range)
+// Transform pt to (pt_map, pt_scan), then calculate angle_bin_index and range
 inline void OccupancyGridMapFixedBlindSpot::transformPointAndCalculate(
   const Eigen::Vector4f & pt, const Eigen::Matrix4f & mat_map, const Eigen::Matrix4f & mat_scan,
   Eigen::Vector4f & pt_map, int & angle_bin_index, double & range)
 {
-  // Calculate transformed points
   pt_map = mat_map * pt;
   Eigen::Vector4f pt_scan(mat_scan * pt_map);
   const double angle = atan2(pt_scan[1], pt_scan[0]);
