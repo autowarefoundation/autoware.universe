@@ -956,12 +956,13 @@ std::vector<PullOverPath> GoalPlannerModule::sortPullOverPathCandidatesByGoalPri
              std::abs(path_id_to_margin_map[a.id] - path_id_to_margin_map[b.id]) < 0.01;
     };
 
+    // NOTE: this is just partition sort based on curvature threshold within each sub partitions
     std::stable_sort(
       sorted_pull_over_path_candidates.begin(), sorted_pull_over_path_candidates.end(),
       [&](const PullOverPath & a, const PullOverPath & b) {
         // if both are soft margin or both are same hard margin, prioritize the path with lower
         // curvature.
-        if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
+          if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
           return !isHighCurvature(a) && isHighCurvature(b);
         }
         // otherwise, keep the order based on the margin.
