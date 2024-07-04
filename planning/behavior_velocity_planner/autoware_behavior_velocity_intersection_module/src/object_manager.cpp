@@ -137,8 +137,7 @@ bool ObjectInfo::can_stop_before_stopline(const double brake_deceleration) const
   if (!dist_to_stopline_opt) {
     return false;
   }
-  const double velocity =
-    predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
+  const double velocity = predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
   const double dist_to_stopline = dist_to_stopline_opt.value();
   const double braking_distance = (velocity * velocity) / (2.0 * brake_deceleration);
   return dist_to_stopline > braking_distance;
@@ -152,8 +151,7 @@ bool ObjectInfo::can_stop_before_ego_lane(
     return false;
   }
   const double dist_to_stopline = dist_to_stopline_opt.value();
-  const double velocity =
-    predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
+  const double velocity = predicted_object_.kinematics.initial_twist_with_covariance.twist.linear.x;
   const double braking_distance = (velocity * velocity) / (2.0 * brake_deceleration);
   if (dist_to_stopline > braking_distance) {
     return false;
