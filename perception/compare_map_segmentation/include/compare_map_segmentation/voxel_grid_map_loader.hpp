@@ -221,7 +221,7 @@ public:
     return current_map_ids;
   }
   inline void updateDifferentialMapCells(
-    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & map_cells_to_add,
+    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithMetaData> & map_cells_to_add,
     std::vector<std::string> map_cell_ids_to_remove)
   {
     for (const auto & map_cell_to_add : map_cells_to_add) {
@@ -277,7 +277,7 @@ public:
   }
 
   virtual inline void addMapCellAndFilter(
-    const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
+    const autoware_map_msgs::msg::PointCloudMapCellWithMetaData & map_cell_to_add)
   {
     map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
     map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;

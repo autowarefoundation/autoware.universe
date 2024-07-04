@@ -52,7 +52,7 @@ private:
   void differentialAreaLoad(
     const autoware_map_msgs::msg::AreaInfo & area_info, const std::vector<std::string> & cached_ids,
     GetDifferentialPointCloudMap::Response::SharedPtr & response) const;
-  autoware_map_msgs::msg::PointCloudMapCellWithID loadPointCloudMapCellWithID(
+  autoware_map_msgs::msg::PointCloudMapCellWithMetaData loadPointCloudMapCellWithMetaData(
     const std::string & path, const std::string & map_id) const;
 };
 
