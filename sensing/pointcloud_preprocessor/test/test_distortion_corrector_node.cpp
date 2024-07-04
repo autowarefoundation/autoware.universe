@@ -234,7 +234,7 @@ protected:
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
   
   // for debugging or regenerating the ground truth point cloud
-  bool show_output_pointcloud_ = true;
+  bool show_output_pointcloud_ = false;
 };
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
