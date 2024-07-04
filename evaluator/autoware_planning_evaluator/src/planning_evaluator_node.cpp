@@ -211,8 +211,8 @@ void PlanningEvaluatorNode::onTimer()
 {
   metrics_msg_.header.stamp = now();
 
-  const auto ego_state_ptr = std::make_shared<Odometry>(odometry_sub_.takeData());
-  const auto traj_msg = std::make_shared<Trajectory>(traj_sub_.takeData());
+  const auto ego_state_ptr = std::make_shared<Odometry>(odometry_sub_.takeNewData());
+  const auto traj_msg = std::make_shared<Trajectory>(traj_sub_.takeNewData());
   onTrajectory(traj_msg, ego_state_ptr);
 
   const auto ref_traj_msg = std::make_shared<Trajectory>(ref_sub_.takeNewData());
@@ -221,6 +221,9 @@ void PlanningEvaluatorNode::onTimer()
   if (!metrics_msg_.status.empty()) {
     metrics_pub_->publish(metrics_msg_);
   }
+
+  const auto modified_goal_msg =
+    std::make_shared<PoseWithUuidStamped>(modified_goal_sub_.takeNewData());
 }
 
 void PlanningEvaluatorNode::onTrajectory(

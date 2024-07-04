@@ -160,7 +160,6 @@ private:
   std::array<std::deque<Stat<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
 
   rclcpp::TimerBase::SharedPtr timer_;
-  PoseWithUuidStamped::ConstSharedPtr modified_goal_ptr_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
 }  // namespace planning_diagnostics
