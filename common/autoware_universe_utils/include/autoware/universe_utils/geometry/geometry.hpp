@@ -18,14 +18,8 @@
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware/universe_utils/math/constants.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"
-#include "autoware/universe_utils/ros/msg_covariance.hpp"
 
-#include <boost/geometry/arithmetic/dot_product.hpp>
-
-#include <exception>
-#include <limits>
 #include <string>
-#include <vector>
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
