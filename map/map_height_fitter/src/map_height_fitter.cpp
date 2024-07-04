@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "map_height_fitter/map_height_fitter.hpp"
+#include "memory"
 
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
@@ -107,7 +108,7 @@ MapHeightFitter::Impl::Impl(rclcpp::Node * node) : tf2_listener_(tf2_buffer_), n
 void MapHeightFitter::Impl::on_pcd_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)
 {
   map_frame_ = msg->header.frame_id;
-  map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  map_cloud_ = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   pcl::fromROSMsg(*msg, *map_cloud_);
 }
 
@@ -125,8 +126,8 @@ bool MapHeightFitter::Impl::get_partial_point_cloud_map(const Point & point)
   }
 
   const auto req = std::make_shared<autoware_map_msgs::srv::GetPartialPointCloudMap::Request>();
-  req->area.center_x = point.x;
-  req->area.center_y = point.y;
+  req->area.center_x = static_cast<float>(point.x);
+  req->area.center_y = static_cast<float>(point.y);
   req->area.radius = 50;
 
   RCLCPP_DEBUG(logger, "Send request to map_loader");
@@ -157,7 +158,7 @@ bool MapHeightFitter::Impl::get_partial_point_cloud_map(const Point & point)
     }
   }
   map_frame_ = res->header.frame_id;
-  map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  map_cloud_ = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   pcl::fromROSMsg(pcd_msg, *map_cloud_);
   return true;
 }
@@ -276,9 +277,7 @@ MapHeightFitter::MapHeightFitter(rclcpp::Node * node)
   impl_ = std::make_unique<Impl>(node);
 }
 
-MapHeightFitter::~MapHeightFitter()
-{
-}
+MapHeightFitter::~MapHeightFitter() = default;
 
 std::optional<Point> MapHeightFitter::fit(const Point & position, const std::string & frame)
 {
