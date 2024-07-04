@@ -119,14 +119,6 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
 
   const size_t raw_pointcloud_size = raw_pointcloud.width * raw_pointcloud.height;
   const size_t obstacle_pointcloud_size = obstacle_pointcloud.width * obstacle_pointcloud.height;
-  const size_t raw_reserve_size = raw_pointcloud_size / angle_bin_size;
-  const size_t obstacle_reserve_size = obstacle_pointcloud_size / angle_bin_size;
-
-  // Reserve a certain amount of memory in advance for performance reasons
-  for (size_t i = 0; i < angle_bin_size; i++) {
-    raw_pointcloud_angle_bins[i].reserve(raw_reserve_size);
-    obstacle_pointcloud_angle_bins[i].reserve(obstacle_reserve_size);
-  }
 
   // Updated every loop inside transformPointAndCalculate()
   Eigen::Vector4f pt_map;
