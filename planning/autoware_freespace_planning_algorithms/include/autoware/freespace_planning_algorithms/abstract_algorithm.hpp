@@ -62,12 +62,14 @@ struct VehicleShape
   double base_length;
   double max_steering;
   double base2back;  // base_link to rear [m]
+  double half_diagonal;
 
   VehicleShape() = default;
 
   VehicleShape(double length, double width, double base_length, double max_steering, double base2back)
   : length(length), width(width), base_length(base_length), max_steering(max_steering), base2back(base2back)
   {
+    setHalfDiagonal();
   }
 
   explicit VehicleShape(
@@ -78,6 +80,12 @@ struct VehicleShape
     max_steering(vehicle_info.max_steer_angle_rad),
     base2back(vehicle_info.rear_overhang_m + margin / 2.0)
   {
+    setHalfDiagonal();
+  }
+
+  void setHalfDiagonal()
+  {
+    half_diagonal = 0.5 * sqrt(length * length + width * width);
   }
 };
 
@@ -170,6 +178,13 @@ protected:
     // Also, boundary check is already done in isOutOfRange before calling this function.
     // So, basically .at() is not necessary.
     return is_obstacle_table_[indexToId(index)];
+  }
+
+  template <typename IndexType>
+  inline double getObstacleEDT(const IndexType & index) const
+  {
+    if (edt_map_.empty()) return std::numeric_limits<double>::max();
+    return edt_map_[indexToId(index)];
   }
 
   void computeEDTMap();

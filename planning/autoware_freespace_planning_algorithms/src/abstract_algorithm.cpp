@@ -296,6 +296,17 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
 
   if (detectBoundaryExit(base_index)) return true;
 
+  const auto base_pose = index2pose(costmap_, base_index, planner_common_param_.theta_size);
+  const auto center_pose = kinematic_bicycle_model::getPose(
+    base_pose, collision_vehicle_shape_.base_length, 0.0, 0.5 * collision_vehicle_shape_.base_length);
+  const auto center_index = pose2index(costmap_, center_pose, planner_common_param_.theta_size);
+  double obstacle_edt = getObstacleEDT(center_index);
+
+  // if distance to nearest obstacle is more than half diagonal, no collision is guaranteed
+  // if distance to nearest obstacle is less then half width, collision is guaranteed
+  if (obstacle_edt > collision_vehicle_shape_.half_diagonal) return false;
+  if (obstacle_edt < 0.5 * collision_vehicle_shape_.width) return true;
+
   const auto & coll_indexes_2d = coll_indexes_table_[base_index.theta];
   for (const auto & coll_index_2d : coll_indexes_2d) {
     IndexXY coll_index{coll_index_2d.x, coll_index_2d.y};
