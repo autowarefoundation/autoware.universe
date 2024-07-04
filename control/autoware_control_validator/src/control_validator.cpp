@@ -95,7 +95,7 @@ void ControlValidator::setupDiag()
   d.add(ns + "velocity_deviation", [&](auto & stat) {
     setStatus(
       stat, validation_status_.is_valid_velocity_deviation,
-      "currnet velocity is deviated from the desired velocity");
+      "current velocity is deviated from the desired velocity");
   });
 }
 
@@ -194,7 +194,7 @@ bool ControlValidator::checkValidVelocityDeviation(
     autoware::motion_utils::calcInterpolatedPoint(reference_trajectory, kinematics.pose.pose)
       .longitudinal_velocity_mps;
 
-  const bool is_over_velociay =
+  const bool is_over_velocity =
     std::abs(current_vel) >
     std::abs(desired_vel) * (1.0 + validation_params_.max_over_velocity_ratio_threshold) +
       validation_params_.max_reverse_velocity_threshold;
@@ -202,7 +202,7 @@ bool ControlValidator::checkValidVelocityDeviation(
     std::signbit(current_vel * desired_vel) &&
     std::abs(current_vel) > validation_params_.max_reverse_velocity_threshold;
 
-  return !(is_over_velociay || is_reverse_velocity);
+  return !(is_over_velocity || is_reverse_velocity);
 }
 
 bool ControlValidator::isAllValid(const ControlValidatorStatus & s)
