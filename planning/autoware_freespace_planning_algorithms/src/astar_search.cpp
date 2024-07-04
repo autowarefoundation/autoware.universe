@@ -130,7 +130,7 @@ AstarSearch::AstarSearch(
 void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 {
   AbstractPlanningAlgorithm::setMap(costmap);
-  
+
   x_scale_ = costmap_.info.height;
 }
 
