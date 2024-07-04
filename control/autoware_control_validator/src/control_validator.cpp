@@ -185,14 +185,14 @@ bool ControlValidator::checkValidMaxDistanceDeviation(const Trajectory & predict
 bool ControlValidator::checkValidVelocityDeviation(
   const Trajectory & reference_trajectory, const Odometry & kinematics)
 {
-  // get current vel
   const double current_vel = kinematics.twist.twist.linear.x;
-
-  // get desired vel
   if (reference_trajectory.points.size() < 2) return true;
   const double desired_vel =
     autoware::motion_utils::calcInterpolatedPoint(reference_trajectory, kinematics.pose.pose)
       .longitudinal_velocity_mps;
+
+  validation_status_.current_velocity = current_vel;
+  validation_status_.desired_velocity = desired_vel;
 
   const bool is_over_velocity =
     std::abs(current_vel) >
