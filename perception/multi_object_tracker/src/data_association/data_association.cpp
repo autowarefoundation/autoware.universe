@@ -176,7 +176,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
 
         bool passed_gate = true;
         // dist gate
-        { // passed_gate is always true
+        {  // passed_gate is always true
           if (max_dist < dist) passed_gate = false;
         }
         // area gate
