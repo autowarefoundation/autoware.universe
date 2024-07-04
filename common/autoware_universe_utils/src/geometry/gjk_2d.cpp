@@ -18,8 +18,6 @@
 
 #include <boost/geometry/algorithms/equals.hpp>
 
-#include <limits>
-
 namespace autoware::universe_utils::gjk
 {
 
@@ -33,9 +31,9 @@ double dot_product(const Point2d & p1, const Point2d & p2)
 
 size_t furthest_vertex_idx(const Polygon2d & poly, const Point2d & direction)
 {
-  auto furthest_distance = std::numeric_limits<double>::lowest();
-  size_t furthest_idx;
-  for (auto i = 0UL; i < poly.outer().size(); ++i) {
+  auto furthest_distance = dot_product(poly.outer()[0], direction);
+  size_t furthest_idx = 0UL;
+  for (auto i = 1UL; i < poly.outer().size(); ++i) {
     const auto distance = dot_product(poly.outer()[i], direction);
     if (distance > furthest_distance) {
       furthest_distance = distance;
