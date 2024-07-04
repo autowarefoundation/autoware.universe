@@ -516,8 +516,7 @@ void TrtYoloX::preprocess(const std::vector<cv::Mat> & images)
     cv::resize(image, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
     const auto bottom = input_height - dst_image.rows;
     const auto right = input_width - dst_image.cols;
-    copyMakeBorder(
-      dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
+    copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
     dst_images.emplace_back(dst_image);
   }
   const auto chw_images = cv::dnn::blobFromImages(
@@ -650,8 +649,7 @@ void TrtYoloX::preprocessWithRoi(
     cv::resize(cropped, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
     const auto bottom = input_height - dst_image.rows;
     const auto right = input_width - dst_image.cols;
-    copyMakeBorder(
-      dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
+    copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
     dst_images.emplace_back(dst_image);
     b++;
   }
