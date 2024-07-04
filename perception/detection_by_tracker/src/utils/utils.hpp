@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TOOL__UTILS_HPP_
-#define TOOL__UTILS_HPP_
+#ifndef UTILS__UTILS_HPP_
+#define UTILS__UTILS_HPP_
 
 #include "autoware_perception_msgs/msg/object_classification.hpp"
 
@@ -47,4 +47,4 @@ struct TrackerIgnoreLabel
 }  // namespace utils
 }  // namespace autoware::detection_by_tracker
 
-#endif  // TOOL__UTILS_HPP_
+#endif  // UTILS__UTILS_HPP_

@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE__DETECTION_BY_TRACKER_NODE_HPP_
-#define NODE__DETECTION_BY_TRACKER_NODE_HPP_
+#ifndef DETECTION_BY_TRACKER_NODE_HPP_
+#define DETECTION_BY_TRACKER_NODE_HPP_
 
-#include "../tool/debugger.hpp"
-#include "../tool/utils.hpp"
-#include "../tracker/tracker_handler.hpp"
 #include "autoware/shape_estimation/shape_estimator.hpp"
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
+#include "debugger/debugger.hpp"
 #include "euclidean_cluster/euclidean_cluster.hpp"
 #include "euclidean_cluster/utils.hpp"
 #include "euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
+#include "tracker/tracker_handler.hpp"
+#include "utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -102,4 +102,4 @@ private:
 };
 }  // namespace autoware::detection_by_tracker
 
-#endif  // NODE__DETECTION_BY_TRACKER_NODE_HPP_
+#endif  // DETECTION_BY_TRACKER_NODE_HPP_

@@ -24,7 +24,7 @@ include_directories(
 )
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/node/detection_by_tracker_node.cpp
+  src/detection_by_tracker_node.cpp
   src/tracker/tracker_handler.cpp
 )
 

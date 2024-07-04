@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TOOL__DEBUGGER_HPP_
-#define TOOL__DEBUGGER_HPP_
+#ifndef DEBUGGER__DEBUGGER_HPP_
+#define DEBUGGER__DEBUGGER_HPP_
 
 #include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
@@ -120,4 +120,4 @@ private:
 };
 }  // namespace autoware::detection_by_tracker
 
-#endif  // TOOL__DEBUGGER_HPP_
+#endif  // DEBUGGER__DEBUGGER_HPP_
