@@ -6,10 +6,10 @@
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
+// Unlest required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either exprest or implied.
+// See the License for the specific language governing permistions and
 // limitations under the License.
 
 #include "autoware/universe_utils/system/time_keeper.hpp"
@@ -24,7 +24,7 @@
 
 TEST(system, TimeKeeper)
 {
-  using autoware::universe_utils::ScopedStopWatch;
+  using autoware::universe_utils::ScopedTimeTrack;
   using autoware::universe_utils::TimeKeeper;
 
   rclcpp::Node node{"sample_node"};
@@ -34,15 +34,15 @@ TEST(system, TimeKeeper)
   time_keeper.start_track("main_func");
 
   {  // funcA
-    ScopedStopWatch ss{"funcA", time_keeper};
+    ScopedTimeTrack st{"funcA", time_keeper};
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 
   {  // funcB
-    ScopedStopWatch ss{"funcB", time_keeper};
+    ScopedTimeTrack st{"funcB", time_keeper};
     std::this_thread::sleep_for(std::chrono::seconds(1));
     {  // funcC
-      ScopedStopWatch ss{"funcC", time_keeper};
+      ScopedTimeTrack st{"funcC", time_keeper};
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }

@@ -14,70 +14,95 @@
 
 #include "autoware/universe_utils/system/time_keeper.hpp"
 
+#include <fmt/format.h>
+
 #include <iostream>
 #include <stdexcept>
 
 namespace autoware::universe_utils
 {
 
-TimeNode::TimeNode(const std::string & name) : name_(name)
+ProcessingTimeNode::ProcessingTimeNode(const std::string & name) : name_(name)
 {
 }
 
-std::shared_ptr<TimeNode> TimeNode::add_child(const std::string & name)
+std::shared_ptr<ProcessingTimeNode> ProcessingTimeNode::add_child(const std::string & name)
 {
-  auto new_child_node = std::make_shared<TimeNode>(name);
+  auto new_child_node = std::make_shared<ProcessingTimeNode>(name);
   new_child_node->parent_node_ = shared_from_this();
   child_nodes_.push_back(new_child_node);
   return new_child_node;
 }
 
-std::string TimeNode::get_result_str(const std::string & prefix) const
+std::string ProcessingTimeNode::to_string() const
 {
+  std::function<void(
+    const ProcessingTimeNode &, std::ostringstream &, const std::string &, bool, bool)>
+    construct_string = [&](
+                         const ProcessingTimeNode & node, std::ostringstream & oss,
+                         const std::string & prefix, bool is_last, bool is_root) {
+      if (!is_root) {
+        oss << prefix << (is_last ? "└── " : "├── ");
+      }
+      oss << node.name_ << " (" << node.processing_time_ << "ms)\n";
+      for (size_t i = 0; i < node.child_nodes_.size(); ++i) {
+        const auto & child = node.child_nodes_[i];
+        construct_string(
+          *child, oss, prefix + (is_last ? "    " : "│   "), i == node.child_nodes_.size() - 1,
+          false);
+      }
+    };
+
   std::ostringstream oss;
-  oss << prefix << name_ << " (" << processing_time_ << "ms)\n";
-  for (const auto & child : child_nodes_) {
-    oss << child->get_result_str(prefix + "  ");
-  }
+  construct_string(*this, oss, "", true, true);
   return oss.str();
 }
 
-void TimeNode::construct_time_tree_msg(
-  tier4_debug_msgs::msg::TimeTree & time_tree_msg, const int parent_id)
+tier4_debug_msgs::msg::ProcessingTimeTree ProcessingTimeNode::to_msg() const
 {
-  auto time_node_msg = std::make_shared<tier4_debug_msgs::msg::TimeNode>();
-  time_node_msg->name = name_;
-  time_node_msg->processing_time = processing_time_;
-  time_node_msg->id = time_tree_msg.nodes.size();
-  time_node_msg->parent_id = parent_id;
-  time_tree_msg.nodes.push_back(*time_node_msg);
+  tier4_debug_msgs::msg::ProcessingTimeTree time_tree_msg;
 
-  for (const auto & child : child_nodes_) {
-    child->construct_time_tree_msg(time_tree_msg, time_node_msg->id);
-  }
+  std::function<void(const ProcessingTimeNode &, tier4_debug_msgs::msg::ProcessingTimeTree &, int)>
+    construct_msg = [&](
+                      const ProcessingTimeNode & node,
+                      tier4_debug_msgs::msg::ProcessingTimeTree & tree_msg, int parent_id) {
+      tier4_debug_msgs::msg::ProcessingTimeNode time_node_msg;
+      time_node_msg.name = node.name_;
+      time_node_msg.processing_time = node.processing_time_;
+      time_node_msg.id = tree_msg.nodes.size();
+      time_node_msg.parent_id = parent_id;
+      tree_msg.nodes.emplace_back(time_node_msg);
+
+      for (const auto & child : node.child_nodes_) {
+        construct_msg(*child, tree_msg, time_node_msg.id);
+      }
+    };
+  construct_msg(*this, time_tree_msg, 0);
+
+  return time_tree_msg;
 }
 
-std::shared_ptr<TimeNode> TimeNode::get_parent_node() const
+std::shared_ptr<ProcessingTimeNode> ProcessingTimeNode::get_parent_node() const
 {
   return parent_node_;
 }
-std::vector<std::shared_ptr<TimeNode>> TimeNode::get_child_nodes() const
+std::vector<std::shared_ptr<ProcessingTimeNode>> ProcessingTimeNode::get_child_nodes() const
 {
   return child_nodes_;
 }
-void TimeNode::set_time(const double processing_time)
+void ProcessingTimeNode::set_time(const double processing_time)
 {
   processing_time_ = processing_time;
 }
-std::string TimeNode::get_name() const
+std::string ProcessingTimeNode::get_name() const
 {
   return name_;
 }
 
 TimeKeeper::TimeKeeper(rclcpp::Node * node) : current_time_node_(nullptr)
 {
-  processing_time_pub_ =
-    node->create_publisher<tier4_debug_msgs::msg::TimeTree>("~/debug/processing_time_ms_detail", 1);
+  processing_time_pub_ = node->create_publisher<tier4_debug_msgs::msg::ProcessingTimeTree>(
+    "~/debug/processing_time_ms_detail", 1);
 }
 
 void TimeKeeper::report(const bool show_on_terminal)
@@ -88,12 +113,10 @@ void TimeKeeper::report(const bool show_on_terminal)
   }
   if (show_on_terminal) {
     std::cerr << "========================================" << std::endl;
-    std::cerr << root_node_->get_result_str() << std::endl;
+    std::cerr << root_node_->to_string() << std::endl;
   }
 
-  tier4_debug_msgs::msg::TimeTree time_tree_msg;
-  root_node_->construct_time_tree_msg(time_tree_msg);
-  processing_time_pub_->publish(time_tree_msg);
+  processing_time_pub_->publish(root_node_->to_msg());
 
   current_time_node_.reset();
   root_node_.reset();
@@ -102,7 +125,7 @@ void TimeKeeper::report(const bool show_on_terminal)
 void TimeKeeper::start_track(const std::string & func_name)
 {
   if (current_time_node_ == nullptr) {
-    current_time_node_ = std::make_shared<TimeNode>(func_name);
+    current_time_node_ = std::make_shared<ProcessingTimeNode>(func_name);
     root_node_ = current_time_node_;
   } else {
     current_time_node_ = current_time_node_->add_child(func_name);
@@ -122,13 +145,13 @@ void TimeKeeper::end_track(const std::string & func_name)
   current_time_node_ = current_time_node_->get_parent_node();
 }
 
-ScopedStopWatch::ScopedStopWatch(const std::string & func_name, TimeKeeper & time_keepr)
+ScopedTimeTrack::ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keepr)
 : func_name_(func_name), time_keepr_(time_keepr)
 {
   time_keepr_.start_track(func_name_);
 }
 
-ScopedStopWatch::~ScopedStopWatch()
+ScopedTimeTrack::~ScopedTimeTrack()
 {
   time_keepr_.end_track(func_name_);
 }
