@@ -36,7 +36,9 @@ std::map<std::string, Lanelet2FileMetaData> loadLanelet2Metadata(
     auto key = node.first.as<std::string>();
 
     Lanelet2FileMetaData metadata;
-    std::stringstream(node.first.as<std::string>().substr(0, node.first.as<std::string>().find('.'))) >> metadata.id;
+    std::stringstream(
+      node.first.as<std::string>().substr(0, node.first.as<std::string>().find('.'))) >>
+      metadata.id;
     metadata.min_x = node.second.as<std::vector<double>>()[0];
     metadata.min_y = node.second.as<std::vector<double>>()[1];
 

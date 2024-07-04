@@ -18,13 +18,13 @@
 #include "autoware_lanelet2_extension/io/autoware_multi_osm_parser.hpp"
 #include "map_loader/utils.hpp"
 
-#include <component_interface_specs/map.hpp>
-#include <component_interface_utils/rclcpp.hpp>
-#include <geography_utils/lanelet2_projector.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <component_interface_specs/map.hpp>
+#include <component_interface_utils/rclcpp.hpp>
+#include <geography_utils/lanelet2_projector.hpp>
 #include <pugixml.hpp>
 #include <rclcpp/rclcpp.hpp>
 

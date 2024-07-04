@@ -142,16 +142,14 @@ void DynamicLaneletProviderNode::updateMap(const geometry_msgs::msg::Point & pos
   }
 
   auto request = std::make_shared<autoware_map_msgs::srv::GetSelectedLanelet2Map::Request>();
-  request->cell_ids.insert(
-    request->cell_ids.end(), cache_ids.begin(), cache_ids.end());
+  request->cell_ids.insert(request->cell_ids.end(), cache_ids.begin(), cache_ids.end());
 
   while (!map_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for lanelet loader service");
   }
 
   auto result{map_loader_client_->async_send_request(
-    request,
-    [](rclcpp::Client<autoware_map_msgs::srv::GetSelectedLanelet2Map>::SharedFuture) {})};
+    request, [](rclcpp::Client<autoware_map_msgs::srv::GetSelectedLanelet2Map>::SharedFuture) {})};
 
   std::future_status status = result.wait_for(std::chrono::seconds(0));
   while (status != std::future_status::ready) {
