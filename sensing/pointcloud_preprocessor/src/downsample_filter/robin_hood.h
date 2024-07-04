@@ -166,7 +166,7 @@ static Counts & counts()
 #define ROBIN_HOOD_COUNT_TRAILING_ZEROES(x)                                   \
   [](size_t mask) noexcept -> int {                                           \
     unsigned long index;                                                      \  // NOLINT
-    return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) ? static_cast<int>(index) \
+    return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) ? static_cast<int>(index) \  // cppcheck-suppress syntaxError
                                                     : ROBIN_HOOD(BITNESS);    \
   }(x)
 #else
