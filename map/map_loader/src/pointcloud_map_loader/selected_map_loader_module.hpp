@@ -39,7 +39,7 @@ class SelectedMapLoaderModule
 
 public:
   explicit SelectedMapLoaderModule(
-    rclcpp::Node * node, std::map<std::string, PCDFileMetadata>  pcd_file_metadata_dict);
+    rclcpp::Node * node, std::map<std::string, PCDFileMetadata> pcd_file_metadata_dict);
 
 private:
   rclcpp::Logger logger_;

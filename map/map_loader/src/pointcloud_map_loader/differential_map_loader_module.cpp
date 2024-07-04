@@ -17,7 +17,7 @@
 #include <utility>
 
 DifferentialMapLoaderModule::DifferentialMapLoaderModule(
-  rclcpp::Node * node, std::map<std::string, PCDFileMetadata>  pcd_file_metadata_dict)
+  rclcpp::Node * node, std::map<std::string, PCDFileMetadata> pcd_file_metadata_dict)
 : logger_(node->get_logger()), all_pcd_file_metadata_dict_(std::move(pcd_file_metadata_dict))
 {
   get_differential_pcd_maps_service_ = node->create_service<GetDifferentialPointCloudMap>(
@@ -38,7 +38,7 @@ void DifferentialMapLoaderModule::differential_area_load(
     PCDFileMetadata metadata = ele.second;
 
     // assume that the map ID = map path (for now)
-    const std::string& map_id = path;
+    const std::string & map_id = path;
 
     // skip if the pcd file is not within the queried area
     if (!is_grid_within_queried_area(area_info, metadata)) continue;

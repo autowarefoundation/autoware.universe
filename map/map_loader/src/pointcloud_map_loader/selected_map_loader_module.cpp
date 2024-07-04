@@ -28,7 +28,7 @@ autoware_map_msgs::msg::PointCloudMapMetaData create_metadata(
     PCDFileMetadata metadata = ele.second;
 
     // assume that the map ID = map path (for now)
-    const std::string& map_id = ele.first;
+    const std::string & map_id = ele.first;
 
     autoware_map_msgs::msg::PointCloudMapCellMetaDataWithID cell_metadata_with_id;
     cell_metadata_with_id.cell_id = map_id;
@@ -45,12 +45,13 @@ autoware_map_msgs::msg::PointCloudMapMetaData create_metadata(
 }  // namespace
 
 SelectedMapLoaderModule::SelectedMapLoaderModule(
-  rclcpp::Node * node, std::map<std::string, PCDFileMetadata>  pcd_file_metadata_dict)
+  rclcpp::Node * node, std::map<std::string, PCDFileMetadata> pcd_file_metadata_dict)
 : logger_(node->get_logger()), all_pcd_file_metadata_dict_(std::move(pcd_file_metadata_dict))
 {
   get_selected_pcd_maps_service_ = node->create_service<GetSelectedPointCloudMap>(
     "service/get_selected_pcd_map",
-    std::bind(&SelectedMapLoaderModule::on_service_get_selected_point_cloud_map, this,
+    std::bind(
+      &SelectedMapLoaderModule::on_service_get_selected_point_cloud_map, this,
       std::placeholders::_1, std::placeholders::_2));
 
   // publish the map metadata
@@ -77,7 +78,7 @@ bool SelectedMapLoaderModule::on_service_get_selected_point_cloud_map(
 
     const std::string path = requested_selected_map_iterator->first;
     // assume that the map ID = map path (for now)
-    const std::string& map_id = path;
+    const std::string & map_id = path;
     PCDFileMetadata metadata = requested_selected_map_iterator->second;
 
     autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id =

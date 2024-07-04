@@ -27,7 +27,6 @@
 #include <memory>
 #include <string>
 
-
 class Lanelet2MapLoaderNode : public rclcpp::Node
 {
 public:

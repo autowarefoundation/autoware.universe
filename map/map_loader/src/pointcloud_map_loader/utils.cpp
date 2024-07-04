@@ -93,7 +93,7 @@ bool cylinder_and_box_overlap_exists(
   const double dy1 = center_y - box_max_point.y;
 
   return std::hypot(dx0, dy0) <= radius || std::hypot(dx1, dy0) <= radius ||
-    std::hypot(dx0, dy1) <= radius || std::hypot(dx1, dy1) <= radius;
+         std::hypot(dx0, dy1) <= radius || std::hypot(dx1, dy1) <= radius;
 }
 
 bool is_grid_within_queried_area(
