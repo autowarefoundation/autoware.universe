@@ -127,17 +127,19 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
         "Ego is out of route, no module is running. Skip running scene modules.");
       return output;
     }
+    std::vector<SceneModulePtr>
+      deleted_modules;  // store the scene modules deleted from approved modules
 
     for (size_t itr_num = 1;; ++itr_num) {
       /**
        * STEP1: get approved modules' output
        */
-      auto approved_modules_output = runApprovedModules(data);
+      auto approved_modules_output = runApprovedModules(data, deleted_modules);
 
       /**
        * STEP2: check modules that need to be launched
        */
-      const auto request_modules = getRequestModules(approved_modules_output);
+      const auto request_modules = getRequestModules(approved_modules_output, deleted_modules);
 
       /**
        * STEP3: if there is no module that need to be launched, return approved modules' output
@@ -250,7 +252,8 @@ void PlannerManager::generateCombinedDrivableArea(
 }
 
 std::vector<SceneModulePtr> PlannerManager::getRequestModules(
-  const BehaviorModuleOutput & previous_module_output) const
+  const BehaviorModuleOutput & previous_module_output,
+  const std::vector<SceneModulePtr> & deleted_modules) const
 {
   if (previous_module_output.path.points.empty()) {
     RCLCPP_ERROR_STREAM(
@@ -268,6 +271,18 @@ std::vector<SceneModulePtr> PlannerManager::getRequestModules(
 
   for (const auto & manager_ptr : manager_ptrs_) {
     stop_watch_.tic(manager_ptr->name());
+    /**
+     * skip the module that is already deleted.
+     */
+    {
+      const auto name = manager_ptr->name();
+      const auto find_deleted_module = [&name](const auto & m) { return m->name() == name; };
+      const auto itr =
+        std::find_if(deleted_modules.begin(), deleted_modules.end(), find_deleted_module);
+      if (itr != deleted_modules.end()) {
+        continue;
+      }
+    }
 
     /**
      * determine the execution capability of modules based on existing approved modules.
@@ -655,7 +670,8 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> PlannerManager::runRequestModule
   return std::make_pair(module_ptr, results.at(module_ptr->name()));
 }
 
-BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<PlannerData> & data)
+BehaviorModuleOutput PlannerManager::runApprovedModules(
+  const std::shared_ptr<PlannerData> & data, std::vector<SceneModulePtr> & deleted_modules)
 {
   std::unordered_map<std::string, BehaviorModuleOutput> results;
   BehaviorModuleOutput output = getReferencePath(data);
@@ -771,6 +787,9 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
     const auto itr = std::find_if(
       approved_module_ptrs_.begin(), approved_module_ptrs_.end(),
       [](const auto & m) { return m->getCurrentStatus() == ModuleStatus::FAILURE; });
+    if (itr != approved_module_ptrs_.end()) {
+      deleted_modules.push_back(*itr);
+    }
 
     std::for_each(itr, approved_module_ptrs_.end(), [this](auto & m) {
       debug_info_.emplace_back(m, Action::DELETE, "From Approved");
@@ -841,6 +860,9 @@ BehaviorModuleOutput PlannerManager::runApprovedModules(const std::shared_ptr<Pl
           return m->isCurrentRouteLaneletToBeReset();
         }))
       resetCurrentRouteLanelet(data);
+
+    std::copy_if(
+      itr, approved_module_ptrs_.end(), std::back_inserter(deleted_modules), success_module_cond);
 
     std::for_each(itr, approved_module_ptrs_.end(), [&](auto & m) {
       debug_info_.emplace_back(m, Action::DELETE, "From Approved");
