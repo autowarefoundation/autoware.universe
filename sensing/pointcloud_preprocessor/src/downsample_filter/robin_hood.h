@@ -167,7 +167,7 @@ static Counts & counts()
   [](size_t mask) noexcept -> int {                                           \
     unsigned long index;                                                      \  // NOLINT
     return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) ? static_cast<int>(index) \  // cppcheck-suppress syntaxError
-                                                    : ROBIN_HOOD(BITNESS);    \
+                                                    : ROBIN_HOOD(BITNESS);    \  // cppcheck-suppress syntaxError
   }(x)
 #else
 #if ROBIN_HOOD(BITNESS) == 32
