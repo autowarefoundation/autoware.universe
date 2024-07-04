@@ -834,6 +834,14 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
   Eigen::Matrix2d estimated_cov_2d = Eigen::Matrix2d::Zero();
   estimated_cov_2d.diagonal() << ndt_covariance[0 + 6 * 0], ndt_covariance[1 + 6 * 1];
 
+  std::vector<double> initial_pose_offset_model_x;
+  std::vector<double> initial_pose_offset_model_y;
+  const size_t offset_size = param_.covariance.covariance_estimation.initial_pose_offset_model.size();
+  for (size_t i = 0; i < offset_size; i++) {
+    initial_pose_offset_model_x.push_back(param_.covariance.covariance_estimation.initial_pose_offset_model[i].x());
+    initial_pose_offset_model_y.push_back(param_.covariance.covariance_estimation.initial_pose_offset_model[i].y());
+  }
+
   if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::LAPLACE_APPROXIMATION) {
@@ -845,8 +853,7 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT) {
     const std::vector<Eigen::Matrix4f> poses_to_search = pclomp::propose_poses_to_search(
-      ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x,
-      param_.covariance.covariance_estimation.initial_pose_offset_model_y);
+      ndt_result, initial_pose_offset_model_x, initial_pose_offset_model_y);
     const pclomp::ResultOfMultiNdtCovarianceEstimation result_of_multi_ndt_covariance_estimation =
       estimate_xy_covariance_by_multi_ndt(ndt_result, ndt_ptr_, poses_to_search);
     estimated_cov_2d = pclomp::adjust_diagonal_covariance(
@@ -865,8 +872,7 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
     CovarianceEstimationType::MULTI_NDT_SCORE) {
     const double temperature = 0.1;
     const std::vector<Eigen::Matrix4f> poses_to_search = pclomp::propose_poses_to_search(
-      ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x,
-      param_.covariance.covariance_estimation.initial_pose_offset_model_y);
+      ndt_result, initial_pose_offset_model_x, initial_pose_offset_model_y);
     const pclomp::ResultOfMultiNdtCovarianceEstimation
       result_of_multi_ndt_score_covariance_estimation = estimate_xy_covariance_by_multi_ndt_score(
         ndt_result, ndt_ptr_, poses_to_search, temperature);
