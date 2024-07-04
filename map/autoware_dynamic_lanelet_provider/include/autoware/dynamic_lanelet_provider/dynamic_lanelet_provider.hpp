@@ -17,8 +17,6 @@
 
 #include <component_interface_specs/map.hpp>
 #include <component_interface_utils/rclcpp.hpp>
-#include <geography_utils/lanelet2_projector.hpp>
-#include <lanelet2_extension/projection/mgrs_projector.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "autoware_map_msgs/msg/lanelet_map_meta_data.hpp"
