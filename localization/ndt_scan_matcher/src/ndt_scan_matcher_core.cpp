@@ -827,13 +827,14 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
     std::stringstream message;
     message << "Error in Eigen solver: " << e.what();
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, message.str());
+    return Eigen::Matrix2d::Identity() * param_.covariance.output_pose_covariance[0 + 6 * 0];
   }
 
   geometry_msgs::msg::PoseArray multi_ndt_result_msg;
   geometry_msgs::msg::PoseArray multi_initial_pose_msg;
   multi_ndt_result_msg.header.stamp = sensor_ros_time;
-  multi_initial_pose_msg.header.stamp = sensor_ros_time;
   multi_ndt_result_msg.header.frame_id = param_.frame.map_frame;
+  multi_initial_pose_msg.header.stamp = sensor_ros_time;
   multi_initial_pose_msg.header.frame_id = param_.frame.map_frame;
   multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(ndt_result.pose));
   multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(initial_pose_matrix));
