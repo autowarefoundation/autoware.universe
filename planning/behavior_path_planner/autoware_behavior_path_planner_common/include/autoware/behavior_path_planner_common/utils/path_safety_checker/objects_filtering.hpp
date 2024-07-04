@@ -56,6 +56,7 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
  *
  * @param objects The predicted objects to filter.
  * @param lanelet
+ * @param yaw_threshold
  * @return result.
  */
 bool isCentroidWithinLanelet(
@@ -67,6 +68,7 @@ bool isCentroidWithinLanelet(
  *
  * @param objects The predicted objects to filter.
  * @param lanelet
+ * @param yaw_threshold
  * @return result.
  */
 bool isPolygonOverlapLanelet(
@@ -174,7 +176,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanel
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets,
   const std::function<bool(const PredictedObject, const lanelet::ConstLanelet, const double)> &
     condition,
-  const double yaw_threshold = M_PI_2);
+  const double yaw_threshold = M_PI);
 
 /**
  * @brief Separate the objects into two part based on whether the object is within lanelet.
@@ -184,7 +186,7 @@ std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets,
   const std::function<bool(const PredictedObject, const lanelet::ConstLanelet, const double)> &
     condition,
-  const double yaw_threshold = M_PI_2);
+  const double yaw_threshold = M_PI);
 
 /**
  * @brief Get the predicted path from an object.
