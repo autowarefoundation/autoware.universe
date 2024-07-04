@@ -52,6 +52,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <optional>
 
 namespace autoware::test_utils
 {
@@ -412,7 +413,7 @@ void createPublisherWithQoS(
     qos.transient_local();
     publisher = rclcpp::create_publisher<T>(test_node, topic_name, qos);
   } else {
-    publisher = rclcpp::create_publisher<T>(test_node, topic_name, 1);
+    // publisher is already created. Do nothing
   }
 }
 
