@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "map_height_fitter/map_height_fitter.hpp"
+
 #include "memory"
 
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>

@@ -33,10 +33,10 @@ class MapHeightFitter final
 public:
   explicit MapHeightFitter(rclcpp::Node * node);
   ~MapHeightFitter();
-  MapHeightFitter(const MapHeightFitter&) = delete;
-  MapHeightFitter& operator=(const MapHeightFitter&) = delete;
-  MapHeightFitter(MapHeightFitter&&) = delete;
-  MapHeightFitter& operator=(MapHeightFitter&&) = delete;
+  MapHeightFitter(const MapHeightFitter &) = delete;
+  MapHeightFitter & operator=(const MapHeightFitter &) = delete;
+  MapHeightFitter(MapHeightFitter &&) = delete;
+  MapHeightFitter & operator=(MapHeightFitter &&) = delete;
   std::optional<Point> fit(const Point & position, const std::string & frame);
 
 private:
