@@ -14,8 +14,6 @@
 
 #include "map_height_fitter/map_height_fitter.hpp"
 
-#include <memory>
-
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 
@@ -30,6 +28,8 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2_ros/transform_listener.h>
+
+#include <memory>
 
 namespace map_height_fitter
 {
