@@ -128,7 +128,7 @@ bool Lanelet2DifferentialLoaderModule::differentialLanelet2Load(
 {
   // check osm ids
   std::vector<std::string> lanelet2_paths;
-  for (const auto & id : request->vector_map_file_ids) {
+  for (const auto & id : request->cell_ids) {
     auto it = std::find_if(
       lanelet2_file_metadata_dict_.begin(), lanelet2_file_metadata_dict_.end(),
       [&id](const auto & file) { return file.second.id == id; });

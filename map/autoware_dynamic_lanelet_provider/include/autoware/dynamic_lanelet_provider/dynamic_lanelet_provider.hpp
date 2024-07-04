@@ -36,7 +36,7 @@ namespace dynamic_lanelet_provider
 
 struct Lanelet2FileMetaData
 {
-  int id;
+  std::string id;
   double min_x;
   double max_x;
   double min_y;

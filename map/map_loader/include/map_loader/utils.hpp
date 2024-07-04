@@ -21,7 +21,7 @@
 
 struct Lanelet2FileMetaData
 {
-  int id;
+  std::string id;
   double min_x;
   double min_y;
 };

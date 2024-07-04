@@ -124,7 +124,7 @@ void DynamicLaneletProviderNode::mapUpdateTimerCallback()
 
 void DynamicLaneletProviderNode::updateMap(const geometry_msgs::msg::Point & pose)
 {
-  std::vector<int> cache_ids;
+  std::vector<std::string> cache_ids;
   for (const auto & metadata : lanelet_map_meta_data_list_) {
     geometry_msgs::msg::Point point;
     point.x = (metadata.min_x + metadata.max_x) / 2;
@@ -142,8 +142,8 @@ void DynamicLaneletProviderNode::updateMap(const geometry_msgs::msg::Point & pos
   }
 
   auto request = std::make_shared<autoware_map_msgs::srv::GetSelectedLanelet2Map::Request>();
-  request->vector_map_file_ids.insert(
-    request->vector_map_file_ids.end(), cache_ids.begin(), cache_ids.end());
+  request->cell_ids.insert(
+    request->cell_ids.end(), cache_ids.begin(), cache_ids.end());
 
   while (!map_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for lanelet loader service");
