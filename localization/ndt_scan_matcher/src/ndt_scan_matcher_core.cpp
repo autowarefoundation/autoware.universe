@@ -569,17 +569,16 @@ bool NDTScanMatcher::callback_sensor_points_main(
     rotate_covariance(param_.covariance.output_pose_covariance, map_to_base_link_rotation);
   if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
-      CovarianceEstimationType::FIXED_VALUE) {
-  }
-  else {
-      const Eigen::Matrix2d estimated_covariance_2d =
-        estimate_covariance(ndt_result, initial_pose_matrix, sensor_ros_time);
-      const Eigen::Matrix2d estimated_covariance_2d_adj = pclomp::adjust_diagonal_covariance(
-        estimated_covariance_2d, ndt_result.pose, 0.0225, 0.0225);
-      ndt_covariance[0 + 6 * 0] = estimated_covariance_2d_adj(0, 0);
-      ndt_covariance[1 + 6 * 1] = estimated_covariance_2d_adj(1, 1);
-      ndt_covariance[1 + 6 * 0] = estimated_covariance_2d_adj(1, 0);
-      ndt_covariance[0 + 6 * 1] = estimated_covariance_2d_adj(0, 1);
+    CovarianceEstimationType::FIXED_VALUE) {
+  } else {
+    const Eigen::Matrix2d estimated_covariance_2d =
+      estimate_covariance(ndt_result, initial_pose_matrix, sensor_ros_time);
+    const Eigen::Matrix2d estimated_covariance_2d_adj =
+      pclomp::adjust_diagonal_covariance(estimated_covariance_2d, ndt_result.pose, 0.0225, 0.0225);
+    ndt_covariance[0 + 6 * 0] = estimated_covariance_2d_adj(0, 0);
+    ndt_covariance[1 + 6 * 1] = estimated_covariance_2d_adj(1, 1);
+    ndt_covariance[1 + 6 * 0] = estimated_covariance_2d_adj(1, 0);
+    ndt_covariance[0 + 6 * 1] = estimated_covariance_2d_adj(0, 1);
   }
 
   // check distance_initial_to_result
@@ -884,7 +883,7 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
     }
     multi_initial_pose_pub_->publish(multi_initial_pose_msg);
     return result_of_multi_ndt_score_covariance_estimation.covariance;
-  } else{
+  } else {
     return Eigen::Matrix2d::Identity() * param_.covariance.output_pose_covariance[0 + 6 * 0];
   }
 }

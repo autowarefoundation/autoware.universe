@@ -160,12 +160,10 @@ public:
       "covariance.covariance_estimation.covariance_estimation_type");
     covariance.covariance_estimation.covariance_estimation_type =
       static_cast<CovarianceEstimationType>(covariance_estimation_type_tmp);
-    std::vector<double> initial_pose_offset_model_x =
-      node->declare_parameter<std::vector<double>>(
-        "covariance.covariance_estimation.initial_pose_offset_model_x");
-    std::vector<double> initial_pose_offset_model_y =
-      node->declare_parameter<std::vector<double>>(
-        "covariance.covariance_estimation.initial_pose_offset_model_y");
+    std::vector<double> initial_pose_offset_model_x = node->declare_parameter<std::vector<double>>(
+      "covariance.covariance_estimation.initial_pose_offset_model_x");
+    std::vector<double> initial_pose_offset_model_y = node->declare_parameter<std::vector<double>>(
+      "covariance.covariance_estimation.initial_pose_offset_model_y");
     if (initial_pose_offset_model_x.size() == initial_pose_offset_model_y.size()) {
       const size_t size = initial_pose_offset_model_x.size();
       covariance.covariance_estimation.initial_pose_offset_model.resize(size);
