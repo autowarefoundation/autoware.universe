@@ -168,7 +168,7 @@ static Counts & counts()
     unsigned long index;                                                      \  // NOLINT
     return ROBIN_HOOD(BITSCANFORWARD)(&index, mask) ? static_cast<int>(index) \  // cppcheck-suppress syntaxError
                                                     : ROBIN_HOOD(BITNESS);    \  // cppcheck-suppress syntaxError
-  }(x)
+  }(x)  // cppcheck-suppress syntaxError
 #else
 #if ROBIN_HOOD(BITNESS) == 32
 #define ROBIN_HOOD_PRIVATE_DEFINITION_CTZ() __builtin_ctzl
