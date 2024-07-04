@@ -451,7 +451,8 @@ bool isParkedVehicle(
         return same_direction_lane;
       }
 
-      return static_cast<lanelet::ConstLanelet>(opposite_lanes.front().invert());
+      return static_cast<lanelet::ConstLanelet>(
+        route_handler->getMostRightLanelet(opposite_lanes.front()).invert());
     }();
 
     const auto center_to_left_boundary = distance2d(
@@ -499,7 +500,8 @@ bool isParkedVehicle(
         return same_direction_lane;
       }
 
-      return static_cast<lanelet::ConstLanelet>(opposite_lanes.front().invert());
+      return static_cast<lanelet::ConstLanelet>(
+        route_handler->getMostLeftLanelet(opposite_lanes.front()).invert());
     }();
 
     const auto center_to_right_boundary = distance2d(
