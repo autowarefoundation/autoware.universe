@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 // Note: To regenerate the ground truth (GT) for the expected undistorted point cloud values,
 // set the "show_output_pointcloud_" value to true to display the point cloud values. Then,
 // replace the expected values with the newly displayed undistorted point cloud values.
@@ -26,10 +25,9 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
-#include <tf2_ros/static_transform_broadcaster.h>
 
 #include <gtest/gtest.h>
-
+#include <tf2_ros/static_transform_broadcaster.h>
 
 class DistortionCorrectorTest : public ::testing::Test
 {
@@ -179,11 +177,10 @@ protected:
         generatePointTimestamps(is_generate_points, stamp, number_of_points);
 
       sensor_msgs::PointCloud2Modifier modifier(pointcloud_msg);
-      modifier.setPointCloud2Fields(4,
-                                    "x", 1, sensor_msgs::msg::PointField::FLOAT32,
-                                    "y", 1, sensor_msgs::msg::PointField::FLOAT32,
-                                    "z", 1, sensor_msgs::msg::PointField::FLOAT32,
-                                    "time_stamp", 1, sensor_msgs::msg::PointField::FLOAT64);
+      modifier.setPointCloud2Fields(
+        4, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
+        sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
+        "time_stamp", 1, sensor_msgs::msg::PointField::FLOAT64);
       modifier.resize(number_of_points);
 
       sensor_msgs::PointCloud2Iterator<float> iter_x(pointcloud_msg, "x");
@@ -209,7 +206,6 @@ protected:
     return pointcloud_msg;
   }
 
-
   std::vector<double> generatePointTimestamps(
     bool is_generate_points, rclcpp::Time pointcloud_timestamp, size_t number_of_points)
   {
@@ -232,7 +228,7 @@ protected:
   std::shared_ptr<pointcloud_preprocessor::DistortionCorrector2D> distortion_corrector_2d_;
   std::shared_ptr<pointcloud_preprocessor::DistortionCorrector3D> distortion_corrector_3d_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
-  
+
   // for debugging or regenerating the ground truth point cloud
   bool show_output_pointcloud_ = false;
 };
@@ -299,7 +295,6 @@ TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithMissingFrame)
   EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed_);
 }
 
-
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
 {
   rclcpp::Time timestamp = node_->get_clock()->now();
@@ -332,11 +327,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
     EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], 5e-5);
   }
 
-  if(show_output_pointcloud_) {
+  if (show_output_pointcloud_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
-
 
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyPointCloud)
 {
@@ -399,7 +393,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
     EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], 5e-5);
   }
 
-  if(show_output_pointcloud_) {
+  if (show_output_pointcloud_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -450,7 +444,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
     EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], 5e-5);
   }
 
-  if(show_output_pointcloud_) {
+  if (show_output_pointcloud_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -480,7 +474,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
-  
+
   // Expected undistorted point cloud values
   std::vector<std::array<float, 3>> expected_pointcloud = {
     {10.0f, -1.77636e-15f, -4.44089e-16f}, {-2.66454e-15f, 10.0f, -8.88178e-16f},
@@ -502,7 +496,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
     EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], 5e-5);
   }
 
-  if(show_output_pointcloud_) {
+  if (show_output_pointcloud_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -548,7 +542,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
     EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], 5e-5);
   }
 
-  if(show_output_pointcloud_) {
+  if (show_output_pointcloud_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -605,7 +599,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
     EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], 5e-5);
   }
 
-  if(show_output_pointcloud_) {
+  if (show_output_pointcloud_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -635,7 +629,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
   sensor_msgs::PointCloud2ConstIterator<float> iter_x(pointcloud, "x");
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
-  
+
   // Expected undistorted point cloud values
   std::vector<std::array<float, 3>> expected_pointcloud = {
     {10.0f, 0.0f, 0.0f},
@@ -662,7 +656,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
     EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], 5e-5);
   }
 
-  if(show_output_pointcloud_) {
+  if (show_output_pointcloud_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
