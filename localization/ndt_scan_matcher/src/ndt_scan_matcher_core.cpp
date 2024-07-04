@@ -873,12 +873,11 @@ std::array<double, 36> NDTScanMatcher::estimate_covariance(
   } else if (
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT_SCORE) {
-    const double temperature = 0.1;
     const std::vector<Eigen::Matrix4f> poses_to_search = pclomp::propose_poses_to_search(
       ndt_result, initial_pose_offset_model_x, initial_pose_offset_model_y);
     const pclomp::ResultOfMultiNdtCovarianceEstimation
       result_of_multi_ndt_score_covariance_estimation = estimate_xy_covariance_by_multi_ndt_score(
-        ndt_result, ndt_ptr_, poses_to_search, temperature);
+        ndt_result, ndt_ptr_, poses_to_search, param_.covariance.covariance_estimation.temperature);
     estimated_cov_2d = pclomp::adjust_diagonal_covariance(
       result_of_multi_ndt_score_covariance_estimation.covariance, ndt_result.pose, 0.0225, 0.0225);
     for (const auto & sub_initial_pose_matrix : poses_to_search) {

@@ -89,6 +89,7 @@ struct HyperParameters
       bool enable{};
       CovarianceEstimationType covariance_estimation_type{};
       std::vector<Eigen::Vector2d> initial_pose_offset_model{};
+      double temperature{};
     } covariance_estimation{};
   } covariance{};
 
@@ -185,6 +186,8 @@ public:
         throw std::runtime_error(message.str());
       }
     }
+    covariance.covariance_estimation.temperature =
+      node->declare_parameter<double>("covariance.covariance_estimation.temperature");
 
     dynamic_map_loading.update_distance =
       node->declare_parameter<double>("dynamic_map_loading.update_distance");
