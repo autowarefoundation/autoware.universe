@@ -24,6 +24,12 @@ rclcpp_components_register_node(elevation_map_loader_node
   EXECUTABLE elevation_map_loader
 )
 
+if(BUILD_TESTING)
+  ament_auto_add_gtest(elevation_map_loader_node_test
+    test/test_elevation_map_loader_node.cpp
+  )
+endif()
+
 ament_auto_package(INSTALL_TO_SHARE
   launch
   config
