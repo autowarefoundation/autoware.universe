@@ -1,0 +1,22 @@
+nodes:
+  #rslidar driver   node
+  - id: rslidar_driver
+    custom:
+      source: rslidar_driver/build/rslidar_driver_pcap
+      inputs:
+        tick: dora/timer/millis/100
+      outputs:
+        - pointcloud
+
+# 去地面
+  - id: ground_filter
+    custom:
+      source: ground_filter/build/demo
+      # source: dynamic
+      inputs:
+        # tick: dora/timer/millis/50
+        pointcloud: 
+          source: rslidar_driver/pointcloud 
+          queue_size: 1000
+      # outputs:
+        # - pointcloud_no_ground
