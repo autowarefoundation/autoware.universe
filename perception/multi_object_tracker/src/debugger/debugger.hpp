@@ -33,6 +33,9 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware::multi_object_tracker
+{
+
 /**
  * @brief Debugger class for multi object tracker
  * @details This class is used to publish debug information of multi object tracker
@@ -103,5 +106,7 @@ public:
     const std::unordered_map<int, int> & reverse_assignment);
   void publishObjectsMarkers();
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // DEBUGGER__DEBUGGER_HPP_

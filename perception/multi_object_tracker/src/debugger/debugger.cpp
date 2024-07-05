@@ -16,6 +16,8 @@
 
 #include <memory>
 
+namespace autoware::multi_object_tracker
+{
 TrackerDebugger::TrackerDebugger(rclcpp::Node & node, const std::string & frame_id)
 : node_(node), diagnostic_updater_(&node), object_debugger_(frame_id)
 {
@@ -207,3 +209,5 @@ void TrackerDebugger::publishObjectsMarkers()
   // reset object data
   object_debugger_.reset();
 }
+
+}  // namespace autoware::multi_object_tracker

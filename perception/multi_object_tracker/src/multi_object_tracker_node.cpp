@@ -21,7 +21,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <rclcpp_components/register_node_macro.hpp>
 
 #include <boost/optional.hpp>
 
@@ -66,7 +65,7 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
 
 }  // namespace
 
-namespace multi_object_tracker
+namespace autoware::multi_object_tracker
 {
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
@@ -358,6 +357,8 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   debugger_->publishObjectsMarkers();
 }
 
-}  // namespace multi_object_tracker
+}  // namespace autoware::multi_object_tracker
 
-RCLCPP_COMPONENTS_REGISTER_NODE(multi_object_tracker::MultiObjectTracker)
+#include <rclcpp_components/register_node_macro.hpp>
+
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::multi_object_tracker::MultiObjectTracker)

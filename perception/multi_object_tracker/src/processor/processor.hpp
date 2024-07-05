@@ -29,6 +29,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware::multi_object_tracker
+{
 class TrackerProcessor
 {
 public:
@@ -77,5 +79,7 @@ private:
     const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const;
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // PROCESSOR__PROCESSOR_HPP_

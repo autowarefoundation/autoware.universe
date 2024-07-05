@@ -37,6 +37,9 @@
 #include <unordered_set>
 #include <vector>
 
+namespace autoware::multi_object_tracker
+{
+
 struct ObjectData
 {
   rclcpp::Time time;
@@ -98,5 +101,7 @@ public:
   void process();
   void getMessage(visualization_msgs::msg::MarkerArray & marker_array) const;
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // DEBUGGER__DEBUG_OBJECT_HPP_

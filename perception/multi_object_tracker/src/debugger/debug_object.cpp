@@ -48,6 +48,9 @@ int32_t uuidToInt(const boost::uuids::uuid & uuid)
 }
 }  // namespace
 
+namespace autoware::multi_object_tracker
+{
+
 TrackerObjectDebugger::TrackerObjectDebugger(std::string frame_id)
 {
   // set frame id
@@ -391,3 +394,5 @@ void TrackerObjectDebugger::getMessage(visualization_msgs::msg::MarkerArray & ma
 
   return;
 }
+
+}  // namespace autoware::multi_object_tracker

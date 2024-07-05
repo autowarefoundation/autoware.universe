@@ -21,6 +21,9 @@
 
 #include <iterator>
 
+namespace autoware::multi_object_tracker
+{
+
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 TrackerProcessor::TrackerProcessor(
@@ -248,3 +251,5 @@ void TrackerProcessor::getTentativeObjects(
     }
   }
 }
+
+}  // namespace autoware::multi_object_tracker

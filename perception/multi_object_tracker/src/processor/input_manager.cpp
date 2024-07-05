@@ -16,7 +16,7 @@
 
 #include <cassert>
 
-namespace multi_object_tracker
+namespace autoware::multi_object_tracker
 {
 ///////////////////////////
 /////// InputStream ///////
@@ -368,4 +368,4 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
   return is_any_object;
 }
 
-}  // namespace multi_object_tracker
+}  // namespace autoware::multi_object_tracker

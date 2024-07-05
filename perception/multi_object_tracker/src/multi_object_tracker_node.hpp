@@ -52,7 +52,7 @@
 #include <utility>
 #include <vector>
 
-namespace multi_object_tracker
+namespace autoware::multi_object_tracker
 {
 
 using DetectedObject = autoware_perception_msgs::msg::DetectedObject;
@@ -103,6 +103,6 @@ private:
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
 };
 
-}  // namespace multi_object_tracker
+}  // namespace autoware::multi_object_tracker
 
 #endif  // MULTI_OBJECT_TRACKER_NODE_HPP_

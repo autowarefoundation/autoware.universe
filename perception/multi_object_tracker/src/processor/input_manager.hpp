@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace multi_object_tracker
+namespace autoware::multi_object_tracker
 {
 using DetectedObjects = autoware_perception_msgs::msg::DetectedObjects;
 using ObjectsList = std::vector<std::pair<uint, DetectedObjects>>;
@@ -155,6 +155,6 @@ private:
   void optimizeTimings();
 };
 
-}  // namespace multi_object_tracker
+}  // namespace autoware::multi_object_tracker
 
 #endif  // PROCESSOR__INPUT_MANAGER_HPP_
