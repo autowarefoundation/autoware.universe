@@ -1861,8 +1861,7 @@ TEST(geometry, intersect)
     const auto p8 = createPoint(2.0, 3.0, 0.0);
     const auto result = intersect({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
-    EXPECT_TRUE(result);
-    EXPECT_EQ(result->size(), 0);
+    EXPECT_FALSE(result);
   }
 
   {  // Two polygons share a vertex

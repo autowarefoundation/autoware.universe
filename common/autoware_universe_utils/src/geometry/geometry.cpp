@@ -406,6 +406,10 @@ std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
     }
   }
 
+  if (intersect_points.empty()) {
+    return std::nullopt;
+  }
+
   const auto unique_points_itr = std::unique(
     intersect_points.begin(), intersect_points.end(),
     [](const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b) {
@@ -469,12 +473,11 @@ std::optional<bool> disjoint(
   const std::vector<geometry_msgs::msg::Point> & poly1,
   const std::vector<geometry_msgs::msg::Point> & poly2)
 {
-  const auto intersect_points = intersect(poly1, poly2);
-  if (intersect_points) {
-    return intersect_points->empty();
-  } else {
+  if (poly1.size() < 3 || poly2.size() < 3) {
     return std::nullopt;
-  };
+  }
+
+  return !intersect(poly1, poly2).has_value();
 }
 
 }  // namespace autoware::universe_utils
