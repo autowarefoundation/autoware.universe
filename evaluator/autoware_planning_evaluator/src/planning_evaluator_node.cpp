@@ -23,6 +23,7 @@
 
 #include "boost/lexical_cast.hpp"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -108,6 +109,21 @@ void PlanningEvaluatorNode::onDiagnostics(const DiagnosticArray::ConstSharedPtr 
   for (const auto & function : target_functions_) {
     autoware::evaluator_utils::updateDiagnosticQueue(*diag_msg, function, now(), diag_queue_);
   }
+}
+
+DiagnosticStatus PlanningEvaluatorNode::generateDiagnosticEvaluationStatus(
+  const DiagnosticStatus & diag)
+{
+  DiagnosticStatus status;
+  status.name = diag.name;
+
+  const auto it = std::find_if(diag.values.begin(), diag.values.end(), [](const auto & key_value) {
+    return key_value.key.find("decision") != std::string::npos;
+  });
+  const bool found = it != diag.values.end();
+  status.level = (found) ? status.OK : status.ERROR;
+  status.values.push_back((found) ? *it : diagnostic_msgs::msg::KeyValue{});
+  return status;
 }
 
 void PlanningEvaluatorNode::getRouteData()
@@ -245,6 +261,23 @@ void PlanningEvaluatorNode::onTimer()
     const auto modified_goal_msg = modified_goal_sub_.takeData();
     onModifiedGoal(modified_goal_msg, ego_state_ptr);
   }
+
+  {
+    // generate decision diagnostics from input diagnostics
+    for (const auto & function : target_functions_) {
+      const auto it = std::find_if(
+        diag_queue_.begin(), diag_queue_.end(),
+        [&function](const std::pair<diagnostic_msgs::msg::DiagnosticStatus, rclcpp::Time> & p) {
+          return p.first.name.find(function) != std::string::npos;
+        });
+      if (it == diag_queue_.end()) {
+        continue;
+      }
+      // generate each decision diagnostics
+      metrics_msg_.status.push_back(generateDiagnosticEvaluationStatus(it->first));
+    }
+  }
+
   if (!metrics_msg_.status.empty()) {
     metrics_pub_->publish(metrics_msg_);
   }

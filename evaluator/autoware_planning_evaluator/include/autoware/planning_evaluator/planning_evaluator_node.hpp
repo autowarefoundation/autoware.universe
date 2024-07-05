@@ -32,6 +32,7 @@
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <diagnostic_msgs/msg/detail/diagnostic_status__struct.hpp>
 
 #include <array>
 #include <deque>
@@ -103,6 +104,11 @@ public:
    */
   DiagnosticStatus generateDiagnosticStatus(
     const Metric & metric, const Stat<double> & metric_stat) const;
+
+  /**
+   * @brief publish current ego lane info
+   */
+  DiagnosticStatus generateDiagnosticEvaluationStatus(const DiagnosticStatus & diag);
 
   /**
    * @brief publish current ego lane info
