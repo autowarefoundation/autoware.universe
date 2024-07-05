@@ -15,7 +15,7 @@
 #ifndef PROBABILISTIC_OCCUPANCY_GRID_MAP__FUSION__SINGLE_FRAME_FUSION_POLICY_HPP_
 #define PROBABILISTIC_OCCUPANCY_GRID_MAP__FUSION__SINGLE_FRAME_FUSION_POLICY_HPP_
 
-#include "probabilistic_occupancy_grid_map/cost_value.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
 
 #include <cmath>
 #include <iostream>

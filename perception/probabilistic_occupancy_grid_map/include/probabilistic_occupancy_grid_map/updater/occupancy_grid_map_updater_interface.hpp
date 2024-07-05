@@ -15,7 +15,7 @@
 #ifndef PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_UPDATER_INTERFACE_HPP_
 #define PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_UPDATER_INTERFACE_HPP_
 
-#include "probabilistic_occupancy_grid_map/cost_value.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
 
 #include <nav2_costmap_2d/costmap_2d.hpp>
 #include <rclcpp/node.hpp>
@@ -27,8 +27,7 @@ class OccupancyGridMapUpdaterInterface : public nav2_costmap_2d::Costmap2D
 public:
   OccupancyGridMapUpdaterInterface(
     const unsigned int cells_size_x, const unsigned int cells_size_y, const float resolution)
-  : Costmap2D(
-      cells_size_x, cells_size_y, resolution, 0.f, 0.f, occupancy_cost_value::NO_INFORMATION)
+  : Costmap2D(cells_size_x, cells_size_y, resolution, 0.f, 0.f, cost_value::NO_INFORMATION)
   {
   }
   virtual ~OccupancyGridMapUpdaterInterface() = default;

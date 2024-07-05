@@ -48,12 +48,12 @@
  * Author: Eitan Marder-Eppstein
  *********************************************************************/
 
-#ifndef PROBABILISTIC_OCCUPANCY_GRID_MAP__COST_VALUE_HPP_
-#define PROBABILISTIC_OCCUPANCY_GRID_MAP__COST_VALUE_HPP_
+#ifndef AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__COST_VALUE__COST_VALUE_HPP_
+#define AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__COST_VALUE__COST_VALUE_HPP_
 
 #include <algorithm>
 
-namespace occupancy_cost_value
+namespace cost_value
 {
 static const unsigned char NO_INFORMATION = 128;  // 0.5 * 255
 static const unsigned char LETHAL_OBSTACLE = 255;
@@ -101,6 +101,6 @@ struct InverseCostTranslationTable
 
 static const CostTranslationTable cost_translation_table;
 static const InverseCostTranslationTable inverse_cost_translation_table;
-}  // namespace occupancy_cost_value
+}  // namespace cost_value
 
-#endif  // PROBABILISTIC_OCCUPANCY_GRID_MAP__COST_VALUE_HPP_
+#endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__COST_VALUE__COST_VALUE_HPP_

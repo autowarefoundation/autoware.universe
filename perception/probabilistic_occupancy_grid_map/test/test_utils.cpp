@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // autoware
-#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 #include <gtest/gtest.h>
 

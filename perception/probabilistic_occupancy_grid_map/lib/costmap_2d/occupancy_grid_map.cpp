@@ -49,38 +49,25 @@
  *         David V. Lu!!
  *********************************************************************/
 
-#include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_base.hpp"
+#include "probabilistic_occupancy_grid_map/laserscan_based_occupancy_grid_map/occupancy_grid_map.hpp"
 
-#include "probabilistic_occupancy_grid_map/cost_value.hpp"
-#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
-
-#include <grid_map_costmap_2d/grid_map_costmap_2d.hpp>
-#include <pcl_ros/transforms.hpp>
+#include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
-#else
-#include <tf2_eigen/tf2_eigen.hpp>
-
-#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
-#endif
-
 #include <algorithm>
+
 namespace costmap_2d
 {
 using sensor_msgs::PointCloud2ConstIterator;
 
-OccupancyGridMapInterface::OccupancyGridMapInterface(
+OccupancyGridMap::OccupancyGridMap(
   const unsigned int cells_size_x, const unsigned int cells_size_y, const float resolution)
-: Costmap2D(cells_size_x, cells_size_y, resolution, 0.f, 0.f, occupancy_cost_value::NO_INFORMATION)
+: Costmap2D(cells_size_x, cells_size_y, resolution, 0.f, 0.f, cost_value::NO_INFORMATION)
 {
 }
 
-bool OccupancyGridMapInterface::worldToMap(
-  double wx, double wy, unsigned int & mx, unsigned int & my) const
+bool OccupancyGridMap::worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my) const
 {
   if (wx < origin_x_ || wy < origin_y_) {
     return false;
@@ -96,7 +83,7 @@ bool OccupancyGridMapInterface::worldToMap(
   return false;
 }
 
-void OccupancyGridMapInterface::updateOrigin(double new_origin_x, double new_origin_y)
+void OccupancyGridMap::updateOrigin(double new_origin_x, double new_origin_y)
 {
   // project the new origin into the grid
   int cell_ox{static_cast<int>(std::floor((new_origin_x - origin_x_) / resolution_))};
@@ -147,29 +134,59 @@ void OccupancyGridMapInterface::updateOrigin(double new_origin_x, double new_ori
   delete[] local_map;
 }
 
-void OccupancyGridMapInterface::setCellValue(
-  const double wx, const double wy, const unsigned char cost)
+void OccupancyGridMap::raytrace2D(const PointCloud2 & pointcloud, const Pose & robot_pose)
 {
-  MarkCell marker(costmap_, cost);
-  unsigned int mx{};
-  unsigned int my{};
-  if (!worldToMap(wx, wy, mx, my)) {
-    RCLCPP_DEBUG(logger_, "Computing map coords failed");
-    return;
+  // freespace
+  raytraceFreespace(pointcloud, robot_pose);
+
+  // occupied
+  MarkCell marker(costmap_, cost_value::LETHAL_OBSTACLE);
+  for (PointCloud2ConstIterator<float> iter_x(pointcloud, "x"), iter_y(pointcloud, "y");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y) {
+    unsigned int mx, my;
+    if (!worldToMap(*iter_x, *iter_y, mx, my)) {
+      RCLCPP_DEBUG(logger_, "Computing map coords failed");
+      continue;
+    }
+    const unsigned int index = getIndex(mx, my);
+    marker(index);
   }
-  const unsigned int index = getIndex(mx, my);
-  marker(index);
 }
 
-void OccupancyGridMapInterface::raytrace(
-  const double source_x, const double source_y, const double target_x, const double target_y,
-  const unsigned char cost)
+void OccupancyGridMap::updateFreespaceCells(const PointCloud2 & pointcloud)
+{
+  updateCellsByPointCloud(pointcloud, cost_value::FREE_SPACE);
+}
+
+void OccupancyGridMap::updateOccupiedCells(const PointCloud2 & pointcloud)
+{
+  updateCellsByPointCloud(pointcloud, cost_value::LETHAL_OBSTACLE);
+}
+
+void OccupancyGridMap::updateCellsByPointCloud(
+  const PointCloud2 & pointcloud, const unsigned char cost)
+{
+  MarkCell marker(costmap_, cost);
+  for (PointCloud2ConstIterator<float> iter_x(pointcloud, "x"), iter_y(pointcloud, "y");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y) {
+    unsigned int mx{};
+    unsigned int my{};
+    if (!worldToMap(*iter_x, *iter_y, mx, my)) {
+      RCLCPP_DEBUG(logger_, "Computing map coords failed");
+      continue;
+    }
+    const unsigned int index = getIndex(mx, my);
+    marker(index);
+  }
+}
+
+void OccupancyGridMap::raytraceFreespace(const PointCloud2 & pointcloud, const Pose & robot_pose)
 {
   unsigned int x0{};
   unsigned int y0{};
-  const double ox{source_x};
-  const double oy{source_y};
-  if (!worldToMap(ox, oy, x0, y0)) {
+  const double ox{robot_pose.position.x};
+  const double oy{robot_pose.position.y};
+  if (!worldToMap(robot_pose.position.x, robot_pose.position.y, x0, y0)) {
     RCLCPP_DEBUG(
       logger_,
       "The origin for the sensor at (%.2f, %.2f) is out of map bounds. So, the costmap cannot "
@@ -183,50 +200,53 @@ void OccupancyGridMapInterface::raytrace(
   const double map_end_x = origin_x + size_x_ * resolution_;
   const double map_end_y = origin_y + size_y_ * resolution_;
 
-  double wx = target_x;
-  double wy = target_y;
+  for (PointCloud2ConstIterator<float> iter_x(pointcloud, "x"), iter_y(pointcloud, "y");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y) {
+    double wx = *iter_x;
+    double wy = *iter_y;
 
-  // now we also need to make sure that the endpoint we're ray-tracing
-  // to isn't off the costmap and scale if necessary
-  const double a = wx - ox;
-  const double b = wy - oy;
+    // now we also need to make sure that the endpoint we're ray-tracing
+    // to isn't off the costmap and scale if necessary
+    const double a = wx - ox;
+    const double b = wy - oy;
 
-  // the minimum value to raytrace from is the origin
-  if (wx < origin_x) {
-    const double t = (origin_x - ox) / a;
-    wx = origin_x;
-    wy = oy + b * t;
+    // the minimum value to raytrace from is the origin
+    if (wx < origin_x) {
+      const double t = (origin_x - ox) / a;
+      wx = origin_x;
+      wy = oy + b * t;
+    }
+    if (wy < origin_y) {
+      const double t = (origin_y - oy) / b;
+      wx = ox + a * t;
+      wy = origin_y;
+    }
+
+    // the maximum value to raytrace to is the end of the map
+    if (wx > map_end_x) {
+      const double t = (map_end_x - ox) / a;
+      wx = map_end_x - .001;
+      wy = oy + b * t;
+    }
+    if (wy > map_end_y) {
+      const double t = (map_end_y - oy) / b;
+      wx = ox + a * t;
+      wy = map_end_y - .001;
+    }
+
+    // now that the vector is scaled correctly... we'll get the map coordinates of its endpoint
+    unsigned int x1{};
+    unsigned int y1{};
+
+    // check for legality just in case
+    if (!worldToMap(wx, wy, x1, y1)) {
+      continue;
+    }
+
+    constexpr unsigned int cell_raytrace_range = 10000;  // large number to ignore range threshold
+    MarkCell marker(costmap_, cost_value::FREE_SPACE);
+    raytraceLine(marker, x0, y0, x1, y1, cell_raytrace_range);
   }
-  if (wy < origin_y) {
-    const double t = (origin_y - oy) / b;
-    wx = ox + a * t;
-    wy = origin_y;
-  }
-
-  // the maximum value to raytrace to is the end of the map
-  if (wx > map_end_x) {
-    const double t = (map_end_x - ox) / a;
-    wx = map_end_x - .001;
-    wy = oy + b * t;
-  }
-  if (wy > map_end_y) {
-    const double t = (map_end_y - oy) / b;
-    wx = ox + a * t;
-    wy = map_end_y - .001;
-  }
-
-  // now that the vector is scaled correctly... we'll get the map coordinates of its endpoint
-  unsigned int x1{};
-  unsigned int y1{};
-
-  // check for legality just in case
-  if (!worldToMap(wx, wy, x1, y1)) {
-    return;
-  }
-
-  constexpr unsigned int cell_raytrace_range = 10000;  // large number to ignore range threshold
-  MarkCell marker(costmap_, cost);
-  raytraceLine(marker, x0, y0, x1, y1, cell_raytrace_range);
 }
 
 }  // namespace costmap_2d

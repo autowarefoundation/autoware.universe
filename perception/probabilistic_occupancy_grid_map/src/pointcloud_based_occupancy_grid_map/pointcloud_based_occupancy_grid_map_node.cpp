@@ -14,10 +14,10 @@
 
 #include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/pointcloud_based_occupancy_grid_map_node.hpp"
 
-#include "probabilistic_occupancy_grid_map/cost_value.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/utils/utils.hpp"
 #include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_fixed.hpp"
 #include "probabilistic_occupancy_grid_map/pointcloud_based_occupancy_grid_map/occupancy_grid_map_projective.hpp"
-#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -250,7 +250,7 @@ OccupancyGrid::UniquePtr PointcloudBasedOccupancyGridMapNode::OccupancyGridMapTo
 
   unsigned char * data = occupancy_grid_map.getCharMap();
   for (unsigned int i = 0; i < msg_ptr->data.size(); ++i) {
-    msg_ptr->data[i] = occupancy_cost_value::cost_translation_table[data[i]];
+    msg_ptr->data[i] = cost_value::cost_translation_table[data[i]];
   }
   return msg_ptr;
 }

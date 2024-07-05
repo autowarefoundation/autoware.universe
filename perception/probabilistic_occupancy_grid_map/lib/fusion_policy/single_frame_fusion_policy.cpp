@@ -61,9 +61,9 @@ namespace overwrite_fusion
  */
 State getApproximateState(const unsigned char & occupancy)
 {
-  if (occupancy >= occupancy_cost_value::OCCUPIED_THRESHOLD) {
+  if (occupancy >= cost_value::OCCUPIED_THRESHOLD) {
     return State::OCCUPIED;
-  } else if (occupancy <= occupancy_cost_value::FREE_THRESHOLD) {
+  } else if (occupancy <= cost_value::FREE_THRESHOLD) {
     return State::FREE;
   } else {
     return State::UNKNOWN;

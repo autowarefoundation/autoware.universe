@@ -15,9 +15,9 @@
 #ifndef PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_LOG_ODDS_BAYES_FILTER_UPDATER_HPP_
 #define PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_LOG_ODDS_BAYES_FILTER_UPDATER_HPP_
 
+#include "autoware/probabilistic_occupancy_grid_map/utils/utils.hpp"
 #include "probabilistic_occupancy_grid_map/fusion/single_frame_fusion_policy.hpp"
 #include "probabilistic_occupancy_grid_map/updater/occupancy_grid_map_updater_interface.hpp"
-#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>

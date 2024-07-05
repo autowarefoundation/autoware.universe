@@ -14,8 +14,8 @@
 
 #include "probabilistic_occupancy_grid_map/fusion/synchronized_grid_map_fusion_node.hpp"
 
-#include "probabilistic_occupancy_grid_map/cost_value.hpp"
-#include "probabilistic_occupancy_grid_map/utils/utils.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/utils/utils.hpp"
 
 // cspell: ignore LOBF
 
@@ -404,7 +404,7 @@ nav2_costmap_2d::Costmap2D GridMapFusionNode::OccupancyGridMsgToCostmap2D(
     for (unsigned int j = 0; j < occupancy_grid_map.info.height; j++) {
       const unsigned int index = i + j * occupancy_grid_map.info.width;
       costmap2d.setCost(
-        i, j, occupancy_cost_value::inverse_cost_translation_table[occupancy_grid_map.data[index]]);
+        i, j, cost_value::inverse_cost_translation_table[occupancy_grid_map.data[index]]);
     }
   }
 
@@ -424,7 +424,7 @@ OccupancyGridMapFixedBlindSpot GridMapFusionNode::OccupancyGridMsgToGridMap(
     for (unsigned int j = 0; j < occupancy_grid_map.info.height; j++) {
       const unsigned int index = i + j * occupancy_grid_map.info.width;
       gridmap.setCost(
-        i, j, occupancy_cost_value::inverse_cost_translation_table[occupancy_grid_map.data[index]]);
+        i, j, cost_value::inverse_cost_translation_table[occupancy_grid_map.data[index]]);
     }
   }
   return gridmap;
@@ -455,7 +455,7 @@ nav_msgs::msg::OccupancyGrid::UniquePtr GridMapFusionNode::OccupancyGridMapToMsg
 
   unsigned char * data = occupancy_grid_map.getCharMap();
   for (unsigned int i = 0; i < msg_ptr->data.size(); ++i) {
-    msg_ptr->data[i] = occupancy_cost_value::cost_translation_table[data[i]];
+    msg_ptr->data[i] = cost_value::cost_translation_table[data[i]];
   }
   return msg_ptr;
 }
