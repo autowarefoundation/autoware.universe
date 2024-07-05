@@ -17,21 +17,27 @@ skinparam monochrome true
 title modifyPathVelocity
 start
 :getPathEndPointsOnCrosswalk;
-:applySlowDownByLanleet2Map;
-:applySlowDownByOcclusion;
-:getStaticStopPose;
-:resamplePath;
-:checkStopForCrosswalkUsers;
-:checkStopForStuckVehicles;
-:getNearestStopFactor;
-:setSafe;
-:setDistanceToStop;
+group apply slow down
+  :applySlowDownByLanleet2Map;
+  :applySlowDownByOcclusion;
+end group
+group calculate stop pose
+  :getStaticStopPose;
+  :resamplePath;
+  :checkStopForCrosswalkUsers;
+  :checkStopForStuckVehicles;
+end group
+group apply stop
+  :getNearestStopFactor;
+  :setSafe;
+  :setDistanceToStop;
 
-if (isActivated() is True?) then (yes)
-  :planGo;
-else (yes)
-  :planStop;
-endif
+  if (isActivated() is True?) then (yes)
+    :planGo;
+  else (no)
+    :planStop;
+  endif
+end group
 
 stop
 @enduml
