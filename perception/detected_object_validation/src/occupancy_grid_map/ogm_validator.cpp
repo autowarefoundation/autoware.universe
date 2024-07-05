@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "detected_object_validation/occupancy_grid_based_validator/occupancy_grid_based_validator.hpp"
+#define EIGEN_MPL2_ONLY
+
+#include "ogm_validator.hpp"
 
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <object_recognition_utils/object_classification.hpp>
@@ -26,7 +28,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 

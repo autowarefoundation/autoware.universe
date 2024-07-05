@@ -15,7 +15,7 @@
 #ifndef DETECTED_OBJECT_VALIDATION__DETECTED_OBJECT_FILTER__OBJECT_POSITION_FILTER_HPP_
 #define DETECTED_OBJECT_VALIDATION__DETECTED_OBJECT_FILTER__OBJECT_POSITION_FILTER_HPP_
 
-#include "detected_object_validation/utils/utils.hpp"
+#include "../utils/utils.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>

@@ -17,7 +17,7 @@
 // NOLINTNEXTLINE(whitespace/line_length)
 #define DETECTED_OBJECT_VALIDATION__OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
 
-#include "detected_object_validation/obstacle_pointcloud_based_validator/debugger.hpp"
+#include "debugger.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
