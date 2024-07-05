@@ -34,34 +34,21 @@ inline double getTurningRadius(const double base_length, const double steering_a
   return base_length / tan(steering_angle);
 }
 
-inline geometry_msgs::msg::Pose getStraightMotionShift(const double yaw, const double distance)
-{
-  geometry_msgs::msg::Pose pose;
-  pose.position.x = distance * cos(yaw);
-  pose.position.y = distance * sin(yaw);
-  return pose;
-}
-
-inline geometry_msgs::msg::Pose getTurningMotionShift(
+inline geometry_msgs::msg::Pose getPoseShift(
   const double yaw, const double base_length, const double steering_angle, const double distance)
 {
+  geometry_msgs::msg::Pose pose;
+  if (abs(steering_angle) < eps) {
+    pose.position.x = distance * cos(yaw);
+    pose.position.y = distance * sin(yaw);
+    return pose;
+  }
   double R = getTurningRadius(base_length, steering_angle);
   double beta = distance / R;
-
-  geometry_msgs::msg::Pose pose;
   pose.position.x = R * sin(yaw + beta) - R * sin(yaw);
   pose.position.y = R * cos(yaw) - R * cos(yaw + beta);
   pose.orientation = autoware::universe_utils::createQuaternionFromYaw(beta);
   return pose;
-}
-
-inline geometry_msgs::msg::Pose getPoseShift(
-  const double yaw, const double base_length, const double steering_angle, const double distance)
-{
-  if (abs(steering_angle) > eps) {
-    return getTurningMotionShift(yaw, base_length, steering_angle, distance);
-  }
-  return getStraightMotionShift(yaw, distance);
 }
 
 inline geometry_msgs::msg::Pose getPose(
