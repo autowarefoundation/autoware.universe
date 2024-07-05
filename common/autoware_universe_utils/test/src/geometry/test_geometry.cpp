@@ -2020,3 +2020,77 @@ TEST(geometry, disjoint)
     EXPECT_FALSE(*result);
   }
 }
+
+TEST(geometry, distance)
+{
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::distance;
+
+  {  // Normal setting
+    const auto p = createPoint(0.0, 1.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 1.0, epsilon);
+  }
+
+  {
+    // The point is out of range of the segment to the start point side
+    const auto p = createPoint(-2.0, 1.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, std::sqrt(2), epsilon);
+  }
+
+  {
+    // The point is out of range of the segment to the end point side
+    const auto p = createPoint(2.0, 1.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, std::sqrt(2), epsilon);
+  }
+
+  {
+    // The point is on the segment
+    const auto p = createPoint(0.0, 0.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+
+  {
+    // The point is the start point of the segment
+    const auto p = createPoint(-1.0, 0.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+
+  {
+    // The point is the end point of the segment
+    const auto p = createPoint(1.0, 0.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+
+  {  // The segment is a point
+    const auto p = createPoint(0.0, 0.0, 0.0);
+    const auto p1 = createPoint(1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 1.0, epsilon);
+  }
+}

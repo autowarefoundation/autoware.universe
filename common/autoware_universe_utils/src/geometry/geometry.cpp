@@ -480,4 +480,25 @@ std::optional<bool> disjoint(
   return !intersect(poly1, poly2).has_value();
 }
 
+double distance(
+  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & seg_start,
+  const geometry_msgs::msg::Point & seg_end)
+{
+  const double seg_vec_x = seg_end.x - seg_start.x;
+  const double seg_vec_y = seg_end.y - seg_start.y;
+  const double point_vec_x = point.x - seg_start.x;
+  const double point_vec_y = point.y - seg_start.y;
+
+  const double seg_vec_norm = std::hypot(seg_vec_x, seg_vec_y);
+  const double seg_point_dot = seg_vec_x * point_vec_x + seg_vec_y * point_vec_y;
+
+  if (seg_vec_norm < std::numeric_limits<double>::epsilon() || seg_point_dot < 0) {
+    return calcDistance2d(point, seg_start);
+  } else if (seg_point_dot > std::pow(seg_vec_norm, 2)) {
+    return calcDistance2d(point, seg_end);
+  } else {
+    return std::abs(seg_vec_x * point_vec_y - seg_vec_y * point_vec_x) / seg_vec_norm;
+  }
+}
+
 }  // namespace autoware::universe_utils
