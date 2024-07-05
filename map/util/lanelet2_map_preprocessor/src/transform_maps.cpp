@@ -46,8 +46,8 @@ bool load_lanelet_map(
 }
 
 bool load_pcd_map(
-  const std::string & pcd_map_path, pcl::PointCloud<pcl::PointXYZ>::Ptr & pcd_map_ptr
-) {
+  const std::string & pcd_map_path, pcl::PointCloud<pcl::PointXYZ>::Ptr & pcd_map_ptr)
+{
   if (pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_map_path, *pcd_map_ptr) == -1) {  //* load the file
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("loadPCDMap"), "Couldn't read file: " << pcd_map_path);
     return false;
@@ -59,8 +59,7 @@ bool load_pcd_map(
 
 void transform_maps(
   const pcl::PointCloud<pcl::PointXYZ>::Ptr & pcd_map_ptr,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr,
-  const Eigen::Affine3d& affine)
+  const lanelet::LaneletMapPtr & lanelet_map_ptr, const Eigen::Affine3d & affine)
 {
   {
     for (lanelet::Point3d & pt : lanelet_map_ptr->pointLayer) {

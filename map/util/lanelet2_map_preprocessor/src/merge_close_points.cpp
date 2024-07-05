@@ -47,10 +47,8 @@ lanelet::Points3d convert_points_layer_to_points(const lanelet::LaneletMapPtr & 
 {
   lanelet::Points3d points;
   std::copy(
-    lanelet_map_ptr->pointLayer.begin(),
-    lanelet_map_ptr->pointLayer.end(),
-    std::back_inserter(points)
-  );
+    lanelet_map_ptr->pointLayer.begin(), lanelet_map_ptr->pointLayer.end(),
+    std::back_inserter(points));
   return points;
 }
 

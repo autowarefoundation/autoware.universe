@@ -49,10 +49,8 @@ lanelet::Lanelets convert_to_vector(const lanelet::LaneletMapPtr & lanelet_map_p
 {
   lanelet::Lanelets lanelets;
   std::copy(
-    lanelet_map_ptr->laneletLayer.begin(),
-    lanelet_map_ptr->laneletLayer.end(),
-    std::back_inserter(lanelets)
-  );
+    lanelet_map_ptr->laneletLayer.begin(), lanelet_map_ptr->laneletLayer.end(),
+    std::back_inserter(lanelets));
   return lanelets;
 }
 void fix_tags(lanelet::LaneletMapPtr & lanelet_map_ptr)

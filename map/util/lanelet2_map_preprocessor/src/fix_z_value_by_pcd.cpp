@@ -46,8 +46,8 @@ bool load_lanelet_map(
 }
 
 bool load_pcd_map(
-  const std::string & pcd_map_path, pcl::PointCloud<pcl::PointXYZ>::Ptr & pcd_map_ptr
-) {
+  const std::string & pcd_map_path, pcl::PointCloud<pcl::PointXYZ>::Ptr & pcd_map_ptr)
+{
   if (pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_map_path, *pcd_map_ptr) == -1) {  //* load the file
     RCLCPP_ERROR_STREAM(rclcpp::get_logger("loadPCDMap"), "Couldn't read file: " << pcd_map_path);
     return false;
@@ -93,8 +93,8 @@ double get_min_height_around_point(
 
 void adjust_height(
   const pcl::PointCloud<pcl::PointXYZ>::Ptr & pcd_map_ptr,
-  const lanelet::LaneletMapPtr & lanelet_map_ptr
-) {
+  const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
   std::unordered_set<lanelet::Id> done;
   double search_radius2d = 0.5;
   double search_radius3d = 10;

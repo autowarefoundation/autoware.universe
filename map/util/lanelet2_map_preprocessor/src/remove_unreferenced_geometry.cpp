@@ -47,29 +47,25 @@ lanelet::Points3d convert_points_layer_to_points(const lanelet::LaneletMapPtr & 
 {
   lanelet::Points3d points;
   std::copy(
-    lanelet_map_ptr->pointLayer.begin(),
-    lanelet_map_ptr->pointLayer.end(),
-    std::back_inserter(points)
-  );
+    lanelet_map_ptr->pointLayer.begin(), lanelet_map_ptr->pointLayer.end(),
+    std::back_inserter(points));
   return points;
 }
 
 lanelet::LineStrings3d convert_line_layer_to_line_strings(
-  const lanelet::LaneletMapPtr & lanelet_map_ptr
-) {
+  const lanelet::LaneletMapPtr & lanelet_map_ptr)
+{
   lanelet::LineStrings3d lines;
   std::copy(
-    lanelet_map_ptr->lineStringLayer.begin(),
-    lanelet_map_ptr->lineStringLayer.end(),
-    std::back_inserter(lines)
-  );
+    lanelet_map_ptr->lineStringLayer.begin(), lanelet_map_ptr->lineStringLayer.end(),
+    std::back_inserter(lines));
   return lines;
 }
 
 void remove_unreferenced_geometry(lanelet::LaneletMapPtr & lanelet_map_ptr)
 {
   lanelet::LaneletMapPtr new_map(new lanelet::LaneletMap);
-  for (const auto& llt : lanelet_map_ptr->laneletLayer) {
+  for (const auto & llt : lanelet_map_ptr->laneletLayer) {
     new_map->add(llt);
   }
   lanelet_map_ptr = new_map;
