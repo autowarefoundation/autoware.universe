@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "multi_object_tracker/debugger/debugger.hpp"
+#include "debugger.hpp"
 
 #include <memory>
 

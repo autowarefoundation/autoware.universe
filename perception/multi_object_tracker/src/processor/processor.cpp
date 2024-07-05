@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "multi_object_tracker/processor/processor.hpp"
+#include "processor.hpp"
 
 #include "multi_object_tracker/tracker/tracker.hpp"
 #include "object_recognition_utils/object_recognition_utils.hpp"

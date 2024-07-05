@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "multi_object_tracker/processor/input_manager.hpp"
+#include "input_manager.hpp"
 
 #include <cassert>
 

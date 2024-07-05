@@ -15,7 +15,7 @@
 //
 #define EIGEN_MPL2_ONLY
 
-#include "multi_object_tracker/multi_object_tracker_core.hpp"
+#include "multi_object_tracker_node.hpp"
 
 #include "multi_object_tracker/utils/utils.hpp"
 

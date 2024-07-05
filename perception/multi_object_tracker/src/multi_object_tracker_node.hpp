@@ -16,14 +16,14 @@
 // Author: v1.0 Yukihiro Saito
 ///
 
-#ifndef MULTI_OBJECT_TRACKER__MULTI_OBJECT_TRACKER_CORE_HPP_
-#define MULTI_OBJECT_TRACKER__MULTI_OBJECT_TRACKER_CORE_HPP_
+#ifndef MULTI_OBJECT_TRACKER_NODE_HPP_
+#define MULTI_OBJECT_TRACKER_NODE_HPP_
 
+#include "debugger/debugger.hpp"
 #include "multi_object_tracker/data_association/data_association.hpp"
-#include "multi_object_tracker/debugger/debugger.hpp"
-#include "multi_object_tracker/processor/input_manager.hpp"
-#include "multi_object_tracker/processor/processor.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
+#include "processor/input_manager.hpp"
+#include "processor/processor.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -105,4 +105,4 @@ private:
 
 }  // namespace multi_object_tracker
 
-#endif  // MULTI_OBJECT_TRACKER__MULTI_OBJECT_TRACKER_CORE_HPP_
+#endif  // MULTI_OBJECT_TRACKER_NODE_HPP_

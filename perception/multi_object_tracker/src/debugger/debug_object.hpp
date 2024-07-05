@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
-#define MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
+#ifndef DEBUGGER__DEBUG_OBJECT_HPP_
+#define DEBUGGER__DEBUG_OBJECT_HPP_
 
 #include "autoware/universe_utils/ros/uuid_helper.hpp"
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
@@ -99,4 +99,4 @@ public:
   void getMessage(visualization_msgs::msg::MarkerArray & marker_array) const;
 };
 
-#endif  // MULTI_OBJECT_TRACKER__DEBUGGER__DEBUG_OBJECT_HPP_
+#endif  // DEBUGGER__DEBUG_OBJECT_HPP_

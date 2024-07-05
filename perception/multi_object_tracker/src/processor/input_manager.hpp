@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MULTI_OBJECT_TRACKER__PROCESSOR__INPUT_MANAGER_HPP_
-#define MULTI_OBJECT_TRACKER__PROCESSOR__INPUT_MANAGER_HPP_
+#ifndef PROCESSOR__INPUT_MANAGER_HPP_
+#define PROCESSOR__INPUT_MANAGER_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -157,4 +157,4 @@ private:
 
 }  // namespace multi_object_tracker
 
-#endif  // MULTI_OBJECT_TRACKER__PROCESSOR__INPUT_MANAGER_HPP_
+#endif  // PROCESSOR__INPUT_MANAGER_HPP_

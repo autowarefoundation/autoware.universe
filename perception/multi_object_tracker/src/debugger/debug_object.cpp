@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "multi_object_tracker/debugger/debug_object.hpp"
+#include "debug_object.hpp"
 
 #include "autoware_perception_msgs/msg/tracked_object.hpp"
 

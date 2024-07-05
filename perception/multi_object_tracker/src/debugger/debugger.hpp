@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
-#define MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
+#ifndef DEBUGGER__DEBUGGER_HPP_
+#define DEBUGGER__DEBUGGER_HPP_
 
 #include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
-#include "multi_object_tracker/debugger/debug_object.hpp"
+#include "debug_object.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/publisher.hpp>
@@ -104,4 +104,4 @@ public:
   void publishObjectsMarkers();
 };
 
-#endif  // MULTI_OBJECT_TRACKER__DEBUGGER__DEBUGGER_HPP_
+#endif  // DEBUGGER__DEBUGGER_HPP_

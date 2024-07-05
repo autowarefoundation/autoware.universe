@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_
-#define MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_
+#ifndef PROCESSOR__PROCESSOR_HPP_
+#define PROCESSOR__PROCESSOR_HPP_
 
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
@@ -78,4 +78,4 @@ private:
     const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const;
 };
 
-#endif  // MULTI_OBJECT_TRACKER__PROCESSOR__PROCESSOR_HPP_
+#endif  // PROCESSOR__PROCESSOR_HPP_
