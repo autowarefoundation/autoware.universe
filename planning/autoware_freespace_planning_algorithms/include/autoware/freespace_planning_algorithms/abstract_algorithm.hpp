@@ -24,6 +24,7 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 namespace autoware::freespace_planning_algorithms
