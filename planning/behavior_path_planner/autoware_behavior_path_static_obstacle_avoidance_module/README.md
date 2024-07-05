@@ -676,6 +676,7 @@ else (\n no)
 if(are there adjacent lanes on left side of ego lane?) then (yes)
 #00FFB1 :return false;
 stop
+else (\n no)
 endif
 endif
 
