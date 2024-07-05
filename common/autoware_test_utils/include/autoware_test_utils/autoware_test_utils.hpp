@@ -412,7 +412,7 @@ void createPublisherWithQoS(
     qos.transient_local();
     publisher = rclcpp::create_publisher<T>(test_node, topic_name, qos);
   } else {
-    // publisher is already created. Do nothing
+    publisher = rclcpp::create_publisher<T>(test_node, topic_name, 1);
   }
 }
 
@@ -562,7 +562,9 @@ public:
     auto publisher =
       std::dynamic_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
 
-    autoware::test_utils::publishToTargetNode(test_node_, target_node, topic_name, publisher, msg);
+    publisher->publish(msg);
+    const int repeat_count = 3;
+    autoware::test_utils::spinSomeNodes(test_node_, target_node, repeat_count);
     RCLCPP_INFO(test_node_->get_logger(), "Published message on topic '%s'", topic_name.c_str());
   }
 
