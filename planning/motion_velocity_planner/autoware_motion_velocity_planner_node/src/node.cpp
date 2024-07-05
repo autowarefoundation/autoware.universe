@@ -83,6 +83,8 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   velocity_factor_publisher_ =
     this->create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
       "~/output/velocity_factors", 1);
+  processing_diag_publisher_ = autoware::universe_utils::ProcessingTimePublisher(
+    this, "~/debug/total_time/processing_time_ms_diag");
   processing_time_publisher_ = this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>(
     "~/debug/total_time/processing_time_ms", 1);
 
