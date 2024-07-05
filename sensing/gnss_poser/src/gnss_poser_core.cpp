@@ -41,8 +41,7 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   // Subscribe to map_projector_info topic
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_sub(
-    sub_map_projector_info_,
-    [this](const MapProjectorInfo::Message::ConstSharedPtr msg) {
+    sub_map_projector_info_, [this](const MapProjectorInfo::Message::ConstSharedPtr msg) {
       callback_map_projector_info(msg);
     });
 
@@ -117,8 +116,7 @@ void GNSSPoser::callback_nav_sat_fix(
   gps_point.latitude = nav_sat_fix_msg_ptr->latitude;
   gps_point.longitude = nav_sat_fix_msg_ptr->longitude;
   gps_point.altitude = nav_sat_fix_msg_ptr->altitude;
-  geometry_msgs::msg::Point position =
-    geography_utils::project_forward(gps_point, projector_info_);
+  geometry_msgs::msg::Point position = geography_utils::project_forward(gps_point, projector_info_);
   position.z = geography_utils::convert_height(
     position.z, gps_point.latitude, gps_point.longitude, MapProjectorInfo::Message::WGS84,
     projector_info_.vertical_datum);
@@ -138,8 +136,8 @@ void GNSSPoser::callback_nav_sat_fix(
       return;
     }
     // publish average pose or median pose of position buffer
-    gnss_antenna_pose.position =
-      (gnss_pose_pub_method_ == 1) ? get_average_position(position_buffer_)
+    gnss_antenna_pose.position = (gnss_pose_pub_method_ == 1)
+                                   ? get_average_position(position_buffer_)
                                    : get_median_position(position_buffer_);
   }
 
