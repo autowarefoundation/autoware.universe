@@ -22,12 +22,3 @@
 
     # the maximum distance of pointcloud to be applied filter
     filter_distance_threshold: 60.0
-
-    # debug
-    debug_mode: false
-    filter_scope_min_x: -100.0
-    filter_scope_max_x: 100.0
-    filter_scope_min_y: -100.0
-    filter_scope_max_y: 100.0
-    filter_scope_min_z: -100.0
-    filter_scope_max_z: 100.0
