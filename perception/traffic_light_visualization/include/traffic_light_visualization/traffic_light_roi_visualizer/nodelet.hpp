@@ -23,7 +23,11 @@
 #include <tier4_perception_msgs/msg/traffic_light_array.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
-#include <cv_bridge/cv_bridge.h>
+#if __has_include(<cv_bridge/cv_bridge.hpp>)
+#include <cv_bridge/cv_bridge.hpp>  // for ROS 2 Jazzy or newer
+#else
+#include <cv_bridge/cv_bridge.h>  // for ROS 2 Humble or older
+#endif
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
@@ -80,6 +84,20 @@ private:
     // other
     {tier4_perception_msgs::msg::TrafficLightElement::UNKNOWN, "unknown"},
   };
+
+  std::string extractShapeName(const std::string & label)
+  {
+    size_t start_pos = label.find('-');
+    if (start_pos != std::string::npos) {
+      start_pos++;                                  // Start after the hyphen
+      size_t end_pos = label.find(',', start_pos);  // Find the next comma after the hyphen
+      if (end_pos == std::string::npos) {  // If no comma is found, take the rest of the string
+        end_pos = label.length();
+      }
+      return label.substr(start_pos, end_pos - start_pos);
+    }
+    return "unknown";  // Return "unknown" if no hyphen is found
+  }
 
   bool createRect(
     cv::Mat & image, const tier4_perception_msgs::msg::TrafficLightRoi & tl_roi,
