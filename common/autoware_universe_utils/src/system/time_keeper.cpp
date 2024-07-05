@@ -14,8 +14,6 @@
 
 #include "autoware/universe_utils/system/time_keeper.hpp"
 
-#include <fmt/format.h>
-
 #include <iostream>
 #include <stdexcept>
 
@@ -99,28 +97,11 @@ std::string ProcessingTimeNode::get_name() const
   return name_;
 }
 
-TimeKeeper::TimeKeeper(rclcpp::Node * node) : current_time_node_(nullptr)
+TimeKeeper::TimeKeeper() : current_time_node_(nullptr)
 {
-  processing_time_pub_ = node->create_publisher<tier4_debug_msgs::msg::ProcessingTimeTree>(
-    "~/debug/processing_time_ms_detail", 1);
 }
 
-void TimeKeeper::report(const bool show_on_terminal)
-{
-  if (current_time_node_ != nullptr) {
-    throw std::runtime_error(fmt::format(
-      "You must call end_track({}) first, but report() is called", current_time_node_->get_name()));
-  }
-  if (show_on_terminal) {
-    std::cerr << "========================================" << std::endl;
-    std::cerr << root_node_->to_string() << std::endl;
-  }
-
-  processing_time_pub_->publish(root_node_->to_msg());
-
-  current_time_node_.reset();
-  root_node_.reset();
-}
+// void TimeKeeper::report_to
 
 void TimeKeeper::start_track(const std::string & func_name)
 {

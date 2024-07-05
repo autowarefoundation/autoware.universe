@@ -87,7 +87,7 @@ PathOptimizer::PathOptimizer(const rclcpp::NodeOptions & node_options)
 : Node("path_optimizer", node_options),
   vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo()),
   debug_data_ptr_(std::make_shared<DebugData>()),
-  time_keeper_(std::make_shared<autoware::universe_utils::TimeKeeper>(this))
+  time_keeper_(std::make_shared<autoware::universe_utils::TimeKeeper>())
 {
   // interface publisher
   traj_pub_ = create_publisher<Trajectory>("~/output/path", 1);
@@ -103,6 +103,9 @@ PathOptimizer::PathOptimizer(const rclcpp::NodeOptions & node_options)
   debug_calculation_time_str_pub_ = create_publisher<StringStamped>("~/debug/calculation_time", 1);
   debug_calculation_time_float_pub_ =
     create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
+  debug_processing_time_detail_pub_ =
+    create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+      "~/debug/processing_time_detail_ms", 1);
 
   {  // parameters
     // parameter for option
@@ -277,7 +280,7 @@ void PathOptimizer::onPath(const Path::ConstSharedPtr path_ptr)
   published_time_publisher_->publish_if_subscribed(traj_pub_, output_traj_msg.header.stamp);
 
   time_keeper_->end_track(__func__);
-  time_keeper_->report();
+  time_keeper_->report(debug_processing_time_detail_pub_);
 }
 
 bool PathOptimizer::checkInputPath(const Path & path, rclcpp::Clock clock) const

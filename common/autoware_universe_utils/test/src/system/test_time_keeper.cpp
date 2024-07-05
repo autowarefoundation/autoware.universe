@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <iostream>
 #include <thread>
 
 TEST(system, TimeKeeper)
@@ -29,7 +30,10 @@ TEST(system, TimeKeeper)
 
   rclcpp::Node node{"sample_node"};
 
-  TimeKeeper time_keeper(&node);
+  auto publisher = node.create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+    "~/debug/processing_time_tree", 1);
+
+  TimeKeeper time_keeper;
 
   time_keeper.start_track("main_func");
 
@@ -48,5 +52,5 @@ TEST(system, TimeKeeper)
   }
 
   time_keeper.end_track("main_func");
-  ASSERT_NO_THROW(time_keeper.report(true));
+  ASSERT_NO_THROW(time_keeper.report(&std::cerr, publisher));
 }

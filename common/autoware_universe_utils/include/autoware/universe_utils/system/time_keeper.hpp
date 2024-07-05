@@ -21,7 +21,10 @@
 #include <tier4_debug_msgs/msg/processing_time_node.hpp>
 #include <tier4_debug_msgs/msg/processing_time_tree.hpp>
 
+#include <fmt/format.h>
+
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -99,6 +102,9 @@ private:
     child_nodes_;  //!< Vector of shared pointers to the child nodes
 };
 
+using ProcessingTimeDetail =
+  tier4_debug_msgs::msg::ProcessingTimeTree;  //!< Alias for the ProcessingTimeTree message
+
 /**
  * @brief Class for tracking and reporting the processing time of various functions
  */
@@ -107,17 +113,34 @@ class TimeKeeper
 public:
   /**
    * @brief Construct a new TimeKeeper object
-   *
-   * @param node Pointer to the ROS2 node
    */
-  explicit TimeKeeper(rclcpp::Node * node);
+  TimeKeeper();
 
   /**
    * @brief Report the processing times and optionally show them on the terminal
    *
-   * @param show_on_terminal Flag indicating whether to show the results on the terminal
+   * This function takes a variable number of arguments. If an argument is of type `std::ostream*`,
+   * it will output the processing times to the given stream. If an argument is of type
+   * `rclcpp::Publisher<tier4_debug_msgs::msg::ProcessingTimeTree>::SharedPtr`, it will publish
+   * the processing times to the given ROS2 topic.
+   *
+   * @tparam Args Types of the arguments
+   * @param args Variable number of arguments
+   * @throws std::runtime_error if called before ending the tracking of the current function
    */
-  void report(const bool show_on_terminal = false);
+  template <typename... Args>
+  void report(Args... args)
+  {
+    if (current_time_node_ != nullptr) {
+      throw std::runtime_error(fmt::format(
+        "You must call end_track({}) first, but report() is called",
+        current_time_node_->get_name()));
+    }
+
+    (report_to(args), ...);
+    current_time_node_.reset();
+    root_node_.reset();
+  }
 
   /**
    * @brief Start tracking the processing time of a function
@@ -134,8 +157,16 @@ public:
   void end_track(const std::string & func_name);
 
 private:
-  rclcpp::Publisher<tier4_debug_msgs::msg::ProcessingTimeTree>::SharedPtr
-    processing_time_pub_;  //!< Publisher for the processing time message
+  void report_to(std::ostream * output) const
+  {
+    *output << "========================================" << std::endl;
+    *output << root_node_->to_string();
+  }
+  void report_to(rclcpp::Publisher<tier4_debug_msgs::msg::ProcessingTimeTree>::SharedPtr pub) const
+  {
+    pub->publish(root_node_->to_msg());
+  }
+
   std::shared_ptr<ProcessingTimeNode>
     current_time_node_;                            //!< Shared pointer to the current time node
   std::shared_ptr<ProcessingTimeNode> root_node_;  //!< Shared pointer to the root time node
