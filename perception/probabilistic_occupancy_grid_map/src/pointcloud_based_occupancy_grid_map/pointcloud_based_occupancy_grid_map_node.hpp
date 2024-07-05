@@ -38,7 +38,7 @@
 #include <memory>
 #include <string>
 
-namespace occupancy_grid_map
+namespace autoware::occupancy_grid_map
 {
 using builtin_interfaces::msg::Time;
 using costmap_2d::OccupancyGridMapInterface;
@@ -93,6 +93,6 @@ private:
   bool filter_obstacle_pointcloud_by_raw_pointcloud_;
 };
 
-}  // namespace occupancy_grid_map
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // POINTCLOUD_BASED_OCCUPANCY_GRID_MAP__POINTCLOUD_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_

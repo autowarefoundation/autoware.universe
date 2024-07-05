@@ -40,7 +40,7 @@
 #include <memory>
 #include <string>
 
-namespace occupancy_grid_map
+namespace autoware::occupancy_grid_map
 {
 using costmap_2d::OccupancyGridMapBBFUpdater;
 using costmap_2d::OccupancyGridMapFixedBlindSpot;
@@ -255,7 +255,7 @@ OccupancyGrid::UniquePtr PointcloudBasedOccupancyGridMapNode::OccupancyGridMapTo
   return msg_ptr;
 }
 
-}  // namespace occupancy_grid_map
+}  // namespace autoware::occupancy_grid_map
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(occupancy_grid_map::PointcloudBasedOccupancyGridMapNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::occupancy_grid_map::PointcloudBasedOccupancyGridMapNode)

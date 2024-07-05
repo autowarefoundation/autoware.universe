@@ -19,7 +19,7 @@
 
 // cspell: ignore LOBF
 
-namespace synchronized_grid_map_fusion
+namespace autoware::occupancy_grid_map
 {
 using costmap_2d::OccupancyGridMapFixedBlindSpot;
 using costmap_2d::OccupancyGridMapLOBFUpdater;
@@ -460,7 +460,7 @@ nav_msgs::msg::OccupancyGrid::UniquePtr GridMapFusionNode::OccupancyGridMapToMsg
   return msg_ptr;
 }
 
-}  // namespace synchronized_grid_map_fusion
+}  // namespace autoware::occupancy_grid_map
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(synchronized_grid_map_fusion::GridMapFusionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::occupancy_grid_map::GridMapFusionNode)

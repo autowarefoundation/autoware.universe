@@ -45,7 +45,7 @@
 
 // cspell: ignore LOBF
 
-namespace synchronized_grid_map_fusion
+namespace autoware::occupancy_grid_map
 {
 
 using costmap_2d::OccupancyGridMapFixedBlindSpot;
@@ -124,6 +124,6 @@ private:
   fusion_policy::FusionMethod fusion_method_;
 };
 
-}  // namespace synchronized_grid_map_fusion
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // FUSION__SYNCHRONIZED_GRID_MAP_FUSION_NODE_HPP_

@@ -36,7 +36,7 @@
 #include <memory>
 #include <string>
 
-namespace occupancy_grid_map
+namespace autoware::occupancy_grid_map
 {
 using builtin_interfaces::msg::Time;
 using costmap_2d::OccupancyGridMapUpdaterInterface;
@@ -100,6 +100,6 @@ private:
   bool enable_single_frame_mode_;
 };
 
-}  // namespace occupancy_grid_map
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // LASERSCAN_BASED_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_

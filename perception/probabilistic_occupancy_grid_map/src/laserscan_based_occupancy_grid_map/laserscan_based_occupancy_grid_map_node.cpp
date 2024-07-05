@@ -35,7 +35,7 @@
 #include <memory>
 #include <string>
 
-namespace occupancy_grid_map
+namespace autoware::occupancy_grid_map
 {
 using costmap_2d::OccupancyGridMap;
 using costmap_2d::OccupancyGridMapBBFUpdater;
@@ -234,7 +234,7 @@ OccupancyGrid::UniquePtr LaserscanBasedOccupancyGridMapNode::OccupancyGridMapToM
   return msg_ptr;
 }
 
-}  // namespace occupancy_grid_map
+}  // namespace autoware::occupancy_grid_map
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(occupancy_grid_map::LaserscanBasedOccupancyGridMapNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::occupancy_grid_map::LaserscanBasedOccupancyGridMapNode)

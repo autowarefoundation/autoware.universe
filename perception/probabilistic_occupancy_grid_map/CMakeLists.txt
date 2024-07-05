@@ -35,7 +35,7 @@ target_link_libraries(pointcloud_based_occupancy_grid_map
 )
 
 rclcpp_components_register_node(pointcloud_based_occupancy_grid_map
-  PLUGIN "occupancy_grid_map::PointcloudBasedOccupancyGridMapNode"
+  PLUGIN "autoware::occupancy_grid_map::PointcloudBasedOccupancyGridMapNode"
   EXECUTABLE pointcloud_based_occupancy_grid_map_node
 )
 
@@ -51,7 +51,7 @@ target_link_libraries(laserscan_based_occupancy_grid_map
 )
 
 rclcpp_components_register_node(laserscan_based_occupancy_grid_map
-  PLUGIN "occupancy_grid_map::LaserscanBasedOccupancyGridMapNode"
+  PLUGIN "autoware::occupancy_grid_map::LaserscanBasedOccupancyGridMapNode"
   EXECUTABLE laserscan_based_occupancy_grid_map_node
 )
 
@@ -69,7 +69,7 @@ target_link_libraries(synchronized_grid_map_fusion
 )
 
 rclcpp_components_register_node(synchronized_grid_map_fusion
-  PLUGIN "synchronized_grid_map_fusion::GridMapFusionNode"
+  PLUGIN "autoware::occupancy_grid_map::GridMapFusionNode"
   EXECUTABLE synchronized_grid_map_fusion_node
 )
 
