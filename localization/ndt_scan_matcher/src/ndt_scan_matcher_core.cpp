@@ -568,9 +568,9 @@ bool NDTScanMatcher::callback_sensor_points_main(
   std::array<double, 36> ndt_covariance =
     rotate_covariance(param_.covariance.output_pose_covariance, map_to_base_link_rotation);
   if (
-    param_.covariance.covariance_estimation.covariance_estimation_type ==
-    CovarianceEstimationType::FIXED_VALUE) {
-  } else {
+    param_.covariance.covariance_estimation.covariance_estimation_type !=
+    CovarianceEstimationType::FIXED_VALUE
+  ) {
     const Eigen::Matrix2d estimated_covariance_2d =
       estimate_covariance(ndt_result, initial_pose_matrix, sensor_ros_time);
     const Eigen::Matrix2d estimated_covariance_2d_adj =
@@ -861,12 +861,9 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
       ndt_result, initial_pose_offset_model_x, initial_pose_offset_model_y);
     const pclomp::ResultOfMultiNdtCovarianceEstimation result_of_multi_ndt_covariance_estimation =
       estimate_xy_covariance_by_multi_ndt(ndt_result, ndt_ptr_, poses_to_search);
-    for (const auto & sub_initial_pose_matrix : poses_to_search) {
-      auto sub_output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-      ndt_ptr_->align(*sub_output_cloud, sub_initial_pose_matrix);
-      const Eigen::Matrix4f sub_ndt_result = ndt_ptr_->getResult().pose;
-      multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(sub_ndt_result));
-      multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(sub_initial_pose_matrix));
+    for (size_t i =0; i < result_of_multi_ndt_covariance_estimation.ndt_initial_poses.size(); i++) {
+      multi_ndt_result_msg.poses.push_back(matrix4f_to_pose(result_of_multi_ndt_covariance_estimation.ndt_results[i].pose));
+      multi_initial_pose_msg.poses.push_back(matrix4f_to_pose(result_of_multi_ndt_covariance_estimation.ndt_initial_poses[i]));
     }
     multi_ndt_pose_pub_->publish(multi_ndt_result_msg);
     multi_initial_pose_pub_->publish(multi_initial_pose_msg);
