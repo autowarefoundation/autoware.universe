@@ -14,9 +14,14 @@
           "type": "string",
           "description": "Parent frame_id of EKF output pose",
           "default": "map"
+        },
+        "use_imu": {
+          "type": "boolean",
+          "description": "Use IMU data instead of 1D Filter for roll,pitch, position Z estimation",
+          "default": false
         }
       },
-      "required": ["threshold_observable_velocity_mps", "pose_frame_id"],
+      "required": ["threshold_observable_velocity_mps", "pose_frame_id", "use_imu"],
       "additionalProperties": false
     }
   }

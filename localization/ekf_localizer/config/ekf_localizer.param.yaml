@@ -49,3 +49,4 @@
       # for velocity measurement limitation (Set 0.0 if you want to ignore)
       threshold_observable_velocity_mps: 0.0 # [m/s]
       pose_frame_id: "map"
+      use_imu: false

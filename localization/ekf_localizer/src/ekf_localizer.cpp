@@ -18,12 +18,15 @@
 #include "ekf_localizer/string.hpp"
 #include "ekf_localizer/warning_message.hpp"
 #include "localization_util/covariance_ellipse.hpp"
+#include "tf2/LinearMath/Quaternion.h"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware/universe_utils/ros/msg_covariance.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
+
+#include "tf2_geometry_msgs/tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 
 #include <fmt/core.h>
 
@@ -87,6 +90,12 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   sub_twist_with_cov_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "in_twist_with_covariance", 1,
     std::bind(&EKFLocalizer::callback_twist_with_covariance, this, _1));
+  if (params_.use_imu) {
+    sub_imu_ = create_subscription<sensor_msgs::msg::Imu>(
+      "/sensing/gnss/sbg/ros/imu/data", 1, std::bind(&EKFLocalizer::callback_imu, this, _1));
+    tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  }
   service_trigger_node_ = create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
     std::bind(
@@ -102,6 +111,8 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   z_filter_.set_proc_dev(params_.z_filter_proc_dev);
   roll_filter_.set_proc_dev(params_.roll_filter_proc_dev);
   pitch_filter_.set_proc_dev(params_.pitch_filter_proc_dev);
+
+  std::cout << "*********************** use_imu: " << params_.use_imu << std::endl;
 }
 
 /*
@@ -230,19 +241,65 @@ void EKFLocalizer::timer_callback()
   }
   twist_diag_info_.no_update_count = twist_is_updated ? 0 : (twist_diag_info_.no_update_count + 1);
 
-  const double z = z_filter_.get_x();
-  const double roll = roll_filter_.get_x();
-  const double pitch = pitch_filter_.get_x();
-  const geometry_msgs::msg::PoseStamped current_ekf_pose =
-    ekf_module_->get_current_pose(current_time, z, roll, pitch, false);
-  const geometry_msgs::msg::PoseStamped current_biased_ekf_pose =
-    ekf_module_->get_current_pose(current_time, z, roll, pitch, true);
+  RollPitchHeightStruct roll_pitch_height = get_roll_pitch_height(current_time);
+
+  const geometry_msgs::msg::PoseStamped current_ekf_pose = ekf_module_->get_current_pose(
+    current_time, roll_pitch_height.z, roll_pitch_height.roll, roll_pitch_height.pitch, false);
+  const geometry_msgs::msg::PoseStamped current_biased_ekf_pose = ekf_module_->get_current_pose(
+    current_time, roll_pitch_height.z, roll_pitch_height.roll, roll_pitch_height.pitch, true);
   const geometry_msgs::msg::TwistStamped current_ekf_twist =
     ekf_module_->get_current_twist(current_time);
 
   /* publish ekf result */
   publish_estimate_result(current_ekf_pose, current_biased_ekf_pose, current_ekf_twist);
   publish_diagnostics(current_ekf_pose, current_time);
+}
+
+/*
+ * find_closest_imu_msg
+ */
+sensor_msgs::msg::Imu EKFLocalizer::find_closest_imu_msg(const rclcpp::Time & current_time)
+{
+  sensor_msgs::msg::Imu closest_imu_msg;
+  uint64_t min_time_diff = std::numeric_limits<uint64_t>::max();
+  const int64_t pose_time_ns = current_time.nanoseconds();
+
+  for (const auto & imu_msg : imu_msg_deque_) {
+    const int64_t imu_time_ns = imu_msg.header.stamp.sec * 1e9 + imu_msg.header.stamp.nanosec;
+    uint64_t time_diff = std::abs(pose_time_ns - imu_time_ns);
+    if (time_diff < min_time_diff) {
+      min_time_diff = time_diff;
+      closest_imu_msg = imu_msg;
+    }
+  }
+  return closest_imu_msg;
+}
+
+/*
+ * get_roll_pitch_height
+ */
+EKFLocalizer::RollPitchHeightStruct EKFLocalizer::get_roll_pitch_height(
+  const rclcpp::Time current_time)
+{
+  RollPitchHeightStruct roll_pitch_height;
+
+  if (params_.use_imu && !imu_msg_deque_.empty() && imu_dt_ > 0.0) {  //???
+    sensor_msgs::msg::Imu new_imu_msg = find_closest_imu_msg(current_time);
+    roll_pitch_height.z =
+      z_filter_.get_x() + new_imu_msg.linear_acceleration.z * imu_dt_ * imu_dt_ / 2.0;
+    const auto rpy = autoware::universe_utils::getRPY(new_imu_msg.orientation);
+    roll_pitch_height.roll = rpy.x;
+    roll_pitch_height.pitch = rpy.y;
+  } else {
+    if (params_.use_imu && imu_msg_deque_.empty()) {
+      RCLCPP_WARN(this->get_logger(), "IMU data is expected but the deque is empty.");
+    }
+    roll_pitch_height.z = z_filter_.get_x();
+    roll_pitch_height.roll = roll_filter_.get_x();
+    roll_pitch_height.pitch = pitch_filter_.get_x();
+  }
+
+  return roll_pitch_height;
 }
 
 /*
@@ -258,15 +315,15 @@ void EKFLocalizer::timer_tf_callback()
     return;
   }
 
-  const double z = z_filter_.get_x();
-  const double roll = roll_filter_.get_x();
-  const double pitch = pitch_filter_.get_x();
-
   const rclcpp::Time current_time = this->now();
+
+  RollPitchHeightStruct roll_pitch_height = get_roll_pitch_height(current_time);
 
   geometry_msgs::msg::TransformStamped transform_stamped;
   transform_stamped = autoware::universe_utils::pose2transform(
-    ekf_module_->get_current_pose(current_time, z, roll, pitch, false), "base_link");
+    ekf_module_->get_current_pose(
+      current_time, roll_pitch_height.z, roll_pitch_height.roll, roll_pitch_height.pitch, false),
+    "base_link");
   transform_stamped.header.stamp = current_time;
   tf_br_->sendTransform(transform_stamped);
 }
@@ -338,6 +395,51 @@ void EKFLocalizer::callback_twist_with_covariance(
     msg->twist.covariance[0 * 6 + 0] = 10000.0;
   }
   twist_queue_.push(msg);
+}
+
+/*
+ * callback_imu
+ */
+void EKFLocalizer::callback_imu(sensor_msgs::msg::Imu::SharedPtr msg)
+{
+  sensor_msgs::msg::Imu imu_data = *msg;
+
+  geometry_msgs::msg::TransformStamped imu_to_base_link_transform;
+  try {
+    imu_to_base_link_transform =
+      tf_buffer_->lookupTransform("base_link", imu_data.header.frame_id, tf2::TimePointZero);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN(this->get_logger(), "Transform Error: %s", ex.what());
+    return;
+  }
+
+  tf2::Quaternion imu_quat;
+  tf2::fromMsg(imu_data.orientation, imu_quat);
+
+  tf2::Quaternion transformed_quat = tf2::Transform(tf2::Quaternion(
+                                       imu_to_base_link_transform.transform.rotation.x,
+                                       imu_to_base_link_transform.transform.rotation.y,
+                                       imu_to_base_link_transform.transform.rotation.z,
+                                       imu_to_base_link_transform.transform.rotation.w)) *
+                                     imu_quat;
+
+  geometry_msgs::msg::Quaternion new_orientation = tf2::toMsg(transformed_quat);
+
+  sensor_msgs::msg::Imu new_imu_msg;
+  new_imu_msg = imu_data;
+  new_imu_msg.orientation = new_orientation;
+  imu_msg_deque_.push_back(new_imu_msg);
+
+  while (imu_msg_deque_.size() > 15) {
+    imu_msg_deque_.pop_front();
+  }
+  if (start == 1) {
+    imu_dt_ = std::abs((last_imu_time_ - msg->header.stamp).seconds());
+    start = 0;
+  }
+  start = 1;
+
+  last_imu_time_ = msg->header.stamp;
 }
 
 /*

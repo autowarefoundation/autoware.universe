@@ -65,7 +65,8 @@ public:
     warn_ellipse_size_lateral_direction(
       node->declare_parameter<double>("diagnostics.warn_ellipse_size_lateral_direction")),
     threshold_observable_velocity_mps(
-      node->declare_parameter<double>("misc.threshold_observable_velocity_mps"))
+      node->declare_parameter<double>("misc.threshold_observable_velocity_mps")),
+    use_imu(node->declare_parameter<bool>("misc.use_imu"))
   {
   }
 
@@ -100,6 +101,7 @@ public:
   double warn_ellipse_size_lateral_direction;
 
   const double threshold_observable_velocity_mps;
+  const bool use_imu;
 };
 
 #endif  // EKF_LOCALIZER__HYPER_PARAMETERS_HPP_

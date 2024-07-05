@@ -33,16 +33,19 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
+#include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <chrono>
+#include <deque>
 #include <iostream>
 #include <memory>
 #include <queue>
@@ -129,6 +132,8 @@ private:
   //!< @brief measurement twist with covariance subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     sub_twist_with_cov_;
+  //!< @brief imu subscriber
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
   //!< @brief time for ekf calculation callback
   rclcpp::TimerBase::SharedPtr timer_control_;
   //!< @brief last predict time
@@ -154,12 +159,37 @@ private:
 
   double ekf_dt_;
 
+  //////////////////////////////////////////////////////////////////////////////
+
   /* process noise variance for discrete model */
   double proc_cov_yaw_d_;  //!< @brief  discrete yaw process noise
   double proc_cov_vx_d_;   //!< @brief  discrete process noise in d_vx=0
   double proc_cov_wz_d_;   //!< @brief  discrete process noise in d_wz=0
 
   bool is_activated_;
+
+  double imu_dt_;
+  bool start = 0;
+  rclcpp::Time last_imu_time_ = rclcpp::Time(0, 0);
+  std::deque<sensor_msgs::msg::Imu> imu_msg_deque_;
+  sensor_msgs::msg::Imu find_closest_imu_msg(const rclcpp::Time & current_time);
+
+  builtin_interfaces::msg::Time pose_time_;
+
+  std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+  struct RollPitchHeightStruct
+  {
+    double roll;
+    double pitch;
+    double z;
+  };
+
+  RollPitchHeightStruct get_roll_pitch_height(const rclcpp::Time current_time);
+
+  rclcpp::Time prev_time_;
+  double imu_counter = 0;
+  //////////////////////////////////////////////////////////////////////////////
 
   EKFDiagnosticInfo pose_diag_info_;
   EKFDiagnosticInfo twist_diag_info_;
@@ -187,7 +217,10 @@ private:
    */
   void callback_twist_with_covariance(
     geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr msg);
-
+  /**
+   * @brief get imu data
+   */
+  void callback_imu(sensor_msgs::msg::Imu::SharedPtr msg);
   /**
    * @brief set initial_pose to current EKF pose
    */
