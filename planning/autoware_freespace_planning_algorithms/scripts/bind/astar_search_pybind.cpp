@@ -137,7 +137,8 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
       .def_readwrite(
         "reverse_weight", &freespace_planning_algorithms::PlannerCommonParam::reverse_weight)
       .def_readwrite(
-        "direction_change_weight", &freespace_planning_algorithms::PlannerCommonParam::direction_change_weight)
+        "direction_change_weight",
+        &freespace_planning_algorithms::PlannerCommonParam::direction_change_weight)
       .def_readwrite(
         "lateral_goal_range",
         &freespace_planning_algorithms::PlannerCommonParam::lateral_goal_range)

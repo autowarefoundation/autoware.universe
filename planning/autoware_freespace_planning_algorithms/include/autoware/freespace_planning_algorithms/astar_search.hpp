@@ -40,7 +40,7 @@ struct AstarParam
 {
   // base configs
   bool only_behind_solutions;  // solutions should be behind the goal
-  bool use_back;         // backward search
+  bool use_back;               // backward search
   double expansion_distance;
 
   // search configs
@@ -64,10 +64,7 @@ struct AstarNode
 
 struct NodeComparison
 {
-  bool operator()(const AstarNode * lhs, const AstarNode * rhs)
-  {
-    return lhs->fc > rhs->fc;
-  }
+  bool operator()(const AstarNode * lhs, const AstarNode * rhs) { return lhs->fc > rhs->fc; }
 };
 
 struct NodeUpdate

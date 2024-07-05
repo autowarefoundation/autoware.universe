@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/freespace_planning_algorithms/astar_search.hpp"
+
 #include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -71,11 +72,14 @@ AstarSearch::AstarSearch(
   goal_node_(nullptr),
   use_reeds_shepp_(true)
 {
-  steering_resolution_ = collision_vehicle_shape_.max_steering / planner_common_param_.turning_steps;
+  steering_resolution_ =
+    collision_vehicle_shape_.max_steering / planner_common_param_.turning_steps;
   heading_resolution_ = 2.0 * M_PI / planner_common_param_.theta_size;
 
-  double avg_steering = steering_resolution_ + (collision_vehicle_shape_.max_steering - steering_resolution_) / 2.0;
-  avg_turning_radius_ = kinematic_bicycle_model::getTurningRadius(collision_vehicle_shape_.base_length, avg_steering);
+  double avg_steering =
+    steering_resolution_ + (collision_vehicle_shape_.max_steering - steering_resolution_) / 2.0;
+  avg_turning_radius_ =
+    kinematic_bicycle_model::getTurningRadius(collision_vehicle_shape_.base_length, avg_steering);
 
   setTransitionTable();
 }
@@ -89,10 +93,11 @@ void AstarSearch::setTransitionTable()
   int steering_ind = -1 * planner_common_param_.turning_steps;
   for (; steering_ind <= planner_common_param_.turning_steps; ++steering_ind) {
     const double steering = static_cast<double>(steering_ind) * steering_resolution_;
-    geometry_msgs::msg::Pose shift_pose =
-      kinematic_bicycle_model::getPoseShift(0.0, collision_vehicle_shape_.base_length, steering, distance);
+    geometry_msgs::msg::Pose shift_pose = kinematic_bicycle_model::getPoseShift(
+      0.0, collision_vehicle_shape_.base_length, steering, distance);
     forward_transitions.push_back(
-      {shift_pose.position.x, shift_pose.position.y, tf2::getYaw(shift_pose.orientation), distance, steering_ind, false});
+      {shift_pose.position.x, shift_pose.position.y, tf2::getYaw(shift_pose.orientation), distance,
+       steering_ind, false});
   }
 
   for (int i = 0; i < planner_common_param_.theta_size; ++i) {
@@ -197,8 +202,8 @@ double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose) const
   double total_cost = 0.0;
   // Temporarily, until reeds_shepp gets stable.
   if (use_reeds_shepp_) {
-    total_cost +=
-      calcReedsSheppDistance(pose, goal_pose_, avg_turning_radius_) * astar_param_.distance_heuristic_weight;
+    total_cost += calcReedsSheppDistance(pose, goal_pose_, avg_turning_radius_) *
+                  astar_param_.distance_heuristic_weight;
   } else {
     total_cost += autoware::universe_utils::calcDistance2d(pose, goal_pose_) *
                   astar_param_.distance_heuristic_weight;
@@ -245,9 +250,10 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     // skip transition back to parent
     // skip transition resulting in frequent direction change
     if (transition.is_back != current_node.is_back) {
-      if (transition.steering_index == current_node.steering_index ||
-          current_node.dir_distance < min_dir_change_dist_)
-          continue;
+      if (
+        transition.steering_index == current_node.steering_index ||
+        current_node.dir_distance < min_dir_change_dist_)
+        continue;
     }
 
     // Calculate index of the next state
@@ -264,12 +270,13 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     if (next_node->status == NodeStatus::Closed) continue;
     if (detectCollision(next_index)) continue;
 
-    const bool is_direction_switch = (current_node.parent != nullptr) && (transition.is_back != current_node.is_back);
+    const bool is_direction_switch =
+      (current_node.parent != nullptr) && (transition.is_back != current_node.is_back);
     double weights_sum = 1.0;
     weights_sum += is_direction_switch ? planner_common_param_.direction_change_weight : 0.0;
     weights_sum += getSteeringCost(transition.steering_index);
     weights_sum += getSteeringChangeCost(transition.steering_index, current_node.steering_index);
-    
+
     weights_sum *= transition.is_back ? planner_common_param_.reverse_weight : 1.0;
 
     double move_cost = current_node.gc + weights_sum * transition.distance;
@@ -282,7 +289,8 @@ void AstarSearch::expandNodes(AstarNode & current_node)
       next_node->theta = tf2::getYaw(next_pose.orientation);
       next_node->gc = move_cost;
       next_node->fc = total_cost;
-      next_node->dir_distance = transition.distance + (is_direction_switch ? 0.0 : current_node.dir_distance);
+      next_node->dir_distance =
+        transition.distance + (is_direction_switch ? 0.0 : current_node.dir_distance);
       next_node->steering_index = transition.steering_index;
       next_node->is_back = transition.is_back;
       next_node->parent = &current_node;
@@ -294,13 +302,16 @@ void AstarSearch::expandNodes(AstarNode & current_node)
 
 double AstarSearch::getSteeringCost(const int steering_index) const
 {
-  return planner_common_param_.curve_weight * (abs(steering_index) / planner_common_param_.turning_steps);
+  return planner_common_param_.curve_weight *
+         (abs(steering_index) / planner_common_param_.turning_steps);
 }
 
-double AstarSearch::getSteeringChangeCost(const int steering_index, const int prev_steering_index) const
+double AstarSearch::getSteeringChangeCost(
+  const int steering_index, const int prev_steering_index) const
 {
   double steering_index_diff = abs(steering_index - prev_steering_index);
-  return astar_param_.steering_change_weight * steering_index_diff / (2.0 * planner_common_param_.turning_steps);
+  return astar_param_.steering_change_weight * steering_index_diff /
+         (2.0 * planner_common_param_.turning_steps);
 }
 
 void AstarSearch::setPath(const AstarNode & goal_node)

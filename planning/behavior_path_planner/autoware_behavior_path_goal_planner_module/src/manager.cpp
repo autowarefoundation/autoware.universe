@@ -583,7 +583,8 @@ void GoalPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "time_limit", p->freespace_parking_common_parameters.time_limit);
     updateParam<double>(
-      parameters, ns + "max_turning_ratio", p->freespace_parking_common_parameters.max_turning_ratio);
+      parameters, ns + "max_turning_ratio",
+      p->freespace_parking_common_parameters.max_turning_ratio);
     updateParam<int>(
       parameters, ns + "turning_steps", p->freespace_parking_common_parameters.turning_steps);
   }
