@@ -111,6 +111,11 @@ bool checkRegulatoryElementExistence(const lanelet::LaneletMapPtr & lanelet_map_
   return !lanelet::utils::query::crosswalks(all_lanelets).empty();
 }
 
+/**
+ * @brief Calculate path end (= first and last) points on the crosswalk
+ *
+ * @return first and last path points on the crosswalk
+ */
 std::optional<std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
 getPathEndPointsOnCrosswalk(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
