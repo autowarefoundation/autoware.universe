@@ -17,12 +17,13 @@
 #include "ekf_localizer/diagnostics.hpp"
 #include "ekf_localizer/string.hpp"
 #include "ekf_localizer/warning_message.hpp"
+#include "localization_util/covariance_ellipse.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/msg_covariance.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/unit_conversion.hpp>
-#include <tier4_autoware_utils/ros/msg_covariance.hpp>
 
 #include <fmt/core.h>
 
@@ -96,7 +97,7 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
     std::shared_ptr<rclcpp::Node>(this, [](auto) {}));
 
   ekf_module_ = std::make_unique<EKFModule>(warning_, params_);
-  logger_configure_ = std::make_unique<tier4_autoware_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 
   z_filter_.set_proc_dev(params_.z_filter_proc_dev);
   roll_filter_.set_proc_dev(params_.roll_filter_proc_dev);
@@ -148,7 +149,7 @@ void EKFLocalizer::timer_callback()
   if (!is_activated_) {
     warning_->warn_throttle(
       "The node is not activated. Provide initial pose to pose_initializer", 2000);
-    publish_diagnostics(current_time);
+    publish_diagnostics(geometry_msgs::msg::PoseStamped{}, current_time);
     return;
   }
 
@@ -241,7 +242,7 @@ void EKFLocalizer::timer_callback()
 
   /* publish ekf result */
   publish_estimate_result(current_ekf_pose, current_biased_ekf_pose, current_ekf_twist);
-  publish_diagnostics(current_time);
+  publish_diagnostics(current_ekf_pose, current_time);
 }
 
 /*
@@ -264,7 +265,7 @@ void EKFLocalizer::timer_tf_callback()
   const rclcpp::Time current_time = this->now();
 
   geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped = tier4_autoware_utils::pose2transform(
+  transform_stamped = autoware::universe_utils::pose2transform(
     ekf_module_->get_current_pose(current_time, z, roll, pitch, false), "base_link");
   transform_stamped.header.stamp = current_time;
   tf_br_->sendTransform(transform_stamped);
@@ -390,7 +391,8 @@ void EKFLocalizer::publish_estimate_result(
   pub_odom_->publish(odometry);
 }
 
-void EKFLocalizer::publish_diagnostics(const rclcpp::Time & current_time)
+void EKFLocalizer::publish_diagnostics(
+  const geometry_msgs::msg::PoseStamped & current_ekf_pose, const rclcpp::Time & current_time)
 {
   std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
 
@@ -418,6 +420,18 @@ void EKFLocalizer::publish_diagnostics(const rclcpp::Time & current_time)
     diag_status_array.push_back(check_measurement_mahalanobis_gate(
       "twist", twist_diag_info_.is_passed_mahalanobis_gate, twist_diag_info_.mahalanobis_distance,
       params_.twist_gate_dist));
+
+    geometry_msgs::msg::PoseWithCovariance pose_cov;
+    pose_cov.pose = current_ekf_pose.pose;
+    pose_cov.covariance = ekf_module_->get_current_pose_covariance();
+    const autoware::localization_util::Ellipse ellipse =
+      autoware::localization_util::calculate_xy_ellipse(pose_cov, params_.ellipse_scale);
+    diag_status_array.push_back(check_covariance_ellipse(
+      "cov_ellipse_long_axis", ellipse.long_radius, params_.warn_ellipse_size,
+      params_.error_ellipse_size));
+    diag_status_array.push_back(check_covariance_ellipse(
+      "cov_ellipse_lateral_direction", ellipse.size_lateral_direction,
+      params_.warn_ellipse_size_lateral_direction, params_.error_ellipse_size_lateral_direction));
   }
 
   diagnostic_msgs::msg::DiagnosticStatus diag_merged_status;
@@ -436,9 +450,9 @@ void EKFLocalizer::update_simple_1d_filters(
 {
   double z = pose.pose.pose.position.z;
 
-  const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
+  const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
 
-  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using COV_IDX = autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z] * static_cast<double>(smoothing_step);
   double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL] * static_cast<double>(smoothing_step);
   double pitch_dev =
@@ -454,9 +468,9 @@ void EKFLocalizer::init_simple_1d_filters(
 {
   double z = pose.pose.pose.position.z;
 
-  const auto rpy = tier4_autoware_utils::getRPY(pose.pose.pose.orientation);
+  const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
 
-  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using COV_IDX = autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
   double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL];
   double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];

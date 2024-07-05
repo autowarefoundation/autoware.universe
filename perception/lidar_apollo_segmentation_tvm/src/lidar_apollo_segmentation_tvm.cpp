@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <autoware/universe_utils/transform/transforms.hpp>
 #include <baidu_cnn/inference_engine_tvm_config.hpp>
 #include <lidar_apollo_segmentation_tvm/feature_map.hpp>
 #include <lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
-#include <tier4_autoware_utils/transform/transforms.hpp>
 #include <tvm_utility/pipeline.hpp>
 
 #include <memory>
@@ -109,12 +109,7 @@ ApolloLidarSegmentation::ApolloLidarSegmentation(
   int32_t range, float score_threshold, bool use_intensity_feature, bool use_constant_feature,
   float z_offset, float min_height, float max_height, float objectness_thresh, int32_t min_pts_num,
   float height_thresh, const std::string & data_path)
-: range_(range),
-  score_threshold_(score_threshold),
-  z_offset_(z_offset),
-  objectness_thresh_(objectness_thresh),
-  min_pts_num_(min_pts_num),
-  height_thresh_(height_thresh),
+: z_offset_(z_offset),
   pcl_pointcloud_ptr_(new pcl::PointCloud<pcl::PointXYZI>),
   PreP(std::make_shared<PrePT>(
     config, range, use_intensity_feature, use_constant_feature, min_height, max_height)),
@@ -147,7 +142,7 @@ void ApolloLidarSegmentation::transformCloud(
         tf_buffer_->lookupTransform(target_frame_, input.header.frame_id, time_point);
       Eigen::Matrix4f affine_matrix =
         tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
-      tier4_autoware_utils::transformPointCloud(
+      autoware::universe_utils::transformPointCloud(
         in_cluster, transformed_cloud_cluster, affine_matrix);
       transformed_cloud_cluster.header.frame_id = target_frame_;
     } else {
@@ -158,7 +153,7 @@ void ApolloLidarSegmentation::transformCloud(
     if (z_offset != 0) {
       Eigen::Affine3f z_up_translation(Eigen::Translation3f(0, 0, z_offset));
       Eigen::Matrix4f z_up_transform = z_up_translation.matrix();
-      tier4_autoware_utils::transformPointCloud(
+      autoware::universe_utils::transformPointCloud(
         transformed_cloud_cluster, transformed_cloud_cluster, z_up_transform);
     }
 

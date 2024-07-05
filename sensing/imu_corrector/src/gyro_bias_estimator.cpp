@@ -14,7 +14,7 @@
 
 #include "gyro_bias_estimator.hpp"
 
-#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -51,15 +51,15 @@ GyroBiasEstimator::GyroBiasEstimator(const rclcpp::NodeOptions & options)
     [this](const Odometry::ConstSharedPtr msg) { callback_odom(msg); });
   gyro_bias_pub_ = create_publisher<Vector3Stamped>("~/output/gyro_bias", rclcpp::SensorDataQoS());
 
-  auto timer_callback = std::bind(&GyroBiasEstimator::timer_callback, this);
+  auto bound_timer_callback = std::bind(&GyroBiasEstimator::timer_callback, this);
   auto period_control = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(timer_callback_interval_sec_));
-  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(timer_callback)>>(
-    this->get_clock(), period_control, std::move(timer_callback),
+  timer_ = std::make_shared<rclcpp::GenericTimer<decltype(bound_timer_callback)>>(
+    this->get_clock(), period_control, std::move(bound_timer_callback),
     this->get_node_base_interface()->get_context());
   this->get_node_timers_interface()->add_timer(timer_, nullptr);
 
-  transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
+  transform_listener_ = std::make_shared<autoware::universe_utils::TransformListener>(this);
 
   // initialize diagnostics_info_
   {
@@ -150,10 +150,10 @@ void GyroBiasEstimator::timer_callback()
 
   // Check if the vehicle is moving straight
   const geometry_msgs::msg::Vector3 rpy_0 =
-    tier4_autoware_utils::getRPY(pose_buf.front().pose.orientation);
+    autoware::universe_utils::getRPY(pose_buf.front().pose.orientation);
   const geometry_msgs::msg::Vector3 rpy_1 =
-    tier4_autoware_utils::getRPY(pose_buf.back().pose.orientation);
-  const double yaw_diff = std::abs(tier4_autoware_utils::normalizeRadian(rpy_1.z - rpy_0.z));
+    autoware::universe_utils::getRPY(pose_buf.back().pose.orientation);
+  const double yaw_diff = std::abs(autoware::universe_utils::normalizeRadian(rpy_1.z - rpy_0.z));
   const double time_diff = (t1_rclcpp_time - t0_rclcpp_time).seconds();
   const double yaw_vel = yaw_diff / time_diff;
   const bool is_straight = (yaw_vel < straight_motion_ang_vel_upper_limit_);

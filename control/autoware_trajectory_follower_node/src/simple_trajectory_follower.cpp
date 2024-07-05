@@ -12,19 +12,19 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include "autoware_trajectory_follower_node/simple_trajectory_follower.hpp"
+#include "autoware/trajectory_follower_node/simple_trajectory_follower.hpp"
 
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/pose_deviation.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 
 #include <algorithm>
 
 namespace simple_trajectory_follower
 {
 
-using motion_utils::findNearestIndex;
-using tier4_autoware_utils::calcLateralDeviation;
-using tier4_autoware_utils::calcYawDeviation;
+using autoware::motion_utils::findNearestIndex;
+using autoware::universe_utils::calcLateralDeviation;
+using autoware::universe_utils::calcYawDeviation;
 
 SimpleTrajectoryFollower::SimpleTrajectoryFollower(const rclcpp::NodeOptions & options)
 : Node("simple_trajectory_follower", options)

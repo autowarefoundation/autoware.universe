@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_velocity_smoother/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.hpp"
+#include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.hpp"
 
 #include "interpolation/linear_interpolation.hpp"
 
@@ -225,8 +225,8 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   std::vector<double> distances;
   distances.push_back(distance);
   for (size_t i = start_index; i < output_trajectory.size() - 1; ++i) {
-    distance +=
-      tier4_autoware_utils::calcDistance2d(output_trajectory.at(i), output_trajectory.at(i + 1));
+    distance += autoware::universe_utils::calcDistance2d(
+      output_trajectory.at(i), output_trajectory.at(i + 1));
     if (distance > xs.back()) {
       break;
     }

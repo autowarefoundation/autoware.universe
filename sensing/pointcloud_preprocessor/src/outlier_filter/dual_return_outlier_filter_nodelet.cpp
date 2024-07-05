@@ -72,9 +72,12 @@ DualReturnOutlierFilterComponent::DualReturnOutlierFilterComponent(
     image_transport::create_publisher(this, "dual_return_outlier_filter/debug/frequency_image");
   visibility_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "dual_return_outlier_filter/debug/visibility", rclcpp::SensorDataQoS());
-  noise_cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-    "dual_return_outlier_filter/debug/pointcloud_noise", rclcpp::SensorDataQoS());
-
+  {
+    rclcpp::PublisherOptions pub_options;
+    pub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
+    noise_cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
+      "dual_return_outlier_filter/debug/pointcloud_noise", rclcpp::SensorDataQoS(), pub_options);
+  }
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&DualReturnOutlierFilterComponent::paramCallback, this, _1));
@@ -85,28 +88,17 @@ void DualReturnOutlierFilterComponent::onVisibilityChecker(DiagnosticStatusWrapp
   // Add values
   stat.add("value", std::to_string(visibility_));
 
-  // Judge level
   auto level = DiagnosticStatus::OK;
+  std::string msg = "OK";
   if (visibility_ < 0) {
     level = DiagnosticStatus::STALE;
+    msg = "STALE";
   } else if (visibility_ < visibility_error_threshold_) {
     level = DiagnosticStatus::ERROR;
+    msg = "ERROR: low visibility in dual outlier filter";
   } else if (visibility_ < visibility_warn_threshold_) {
     level = DiagnosticStatus::WARN;
-  } else {
-    level = DiagnosticStatus::OK;
-  }
-
-  // Set message
-  std::string msg;
-  if (level == DiagnosticStatus::OK) {
-    msg = "OK";
-  } else if (level == DiagnosticStatus::WARN) {
     msg = "WARNING: low visibility in dual outlier filter";
-  } else if (level == DiagnosticStatus::ERROR) {
-    msg = "ERROR: low visibility in dual outlier filter";
-  } else if (level == DiagnosticStatus::STALE) {
-    msg = "STALE";
   }
   stat.summary(level, msg);
 }
@@ -231,10 +223,10 @@ void DualReturnOutlierFilterComponent::filter(
       if (deleted_azimuths.size() == 0) {
         continue;
       }
-      while ((uint)deleted_azimuths[current_deleted_index] <
+      while (current_deleted_index < deleted_azimuths.size() &&
+             (uint)deleted_azimuths[current_deleted_index] <
                ((i + static_cast<uint>(min_azimuth / horizontal_resolution) + 1) *
-                horizontal_resolution) &&
-             current_deleted_index < (deleted_azimuths.size() - 1)) {
+                horizontal_resolution)) {
         noise_frequency[i] = noise_frequency[i] + 1;
         current_deleted_index++;
       }

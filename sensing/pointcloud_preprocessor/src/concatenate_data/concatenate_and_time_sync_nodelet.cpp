@@ -75,8 +75,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 {
   // initialize debug tool
   {
-    using tier4_autoware_utils::DebugPublisher;
-    using tier4_autoware_utils::StopWatch;
+    using autoware::universe_utils::DebugPublisher;
+    using autoware::universe_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, "concatenate_data_synchronizer");
     stop_watch_ptr_->tic("cyclic_time");
@@ -141,15 +141,17 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Output Publishers
   {
+    rclcpp::PublisherOptions pub_options;
+    pub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
     pub_output_ = this->create_publisher<PointCloud2>(
-      "output", rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
+      "output", rclcpp::SensorDataQoS().keep_last(maximum_queue_size_), pub_options);
   }
 
   // Subscribers
   {
     RCLCPP_DEBUG_STREAM(
       get_logger(), "Subscribing to " << input_topics_.size() << " user given topics as inputs:");
-    for (auto & input_topic : input_topics_) {
+    for (const auto & input_topic : input_topics_) {
       RCLCPP_DEBUG_STREAM(get_logger(), " - " << input_topic);
     }
 
@@ -192,10 +194,13 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Transformed Raw PointCloud2 Publisher to publish the transformed pointcloud
   if (publish_synchronized_pointcloud_) {
+    rclcpp::PublisherOptions pub_options;
+    pub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
+
     for (auto & topic : input_topics_) {
       std::string new_topic = replaceSyncTopicNamePostfix(topic, synchronized_pointcloud_postfix_);
       auto publisher = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-        new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
+        new_topic, rclcpp::SensorDataQoS().keep_last(maximum_queue_size_), pub_options);
       transformed_raw_pc_publisher_map_.insert({topic, publisher});
     }
   }

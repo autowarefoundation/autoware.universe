@@ -21,19 +21,20 @@
 #include "parameters.hpp"
 #include "trajectory_preprocessing.hpp"
 
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/ros/update_param.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
-#include <tier4_autoware_utils/ros/update_param.hpp>
-#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <boost/geometry.hpp>
 
 #include <algorithm>
 #include <chrono>
+#include <map>
 
 namespace autoware::motion_velocity_planner
 {
@@ -46,12 +47,16 @@ void ObstacleVelocityLimiterModule::init(rclcpp::Node & node, const std::string 
   projection_params_ = obstacle_velocity_limiter::ProjectionParameters(node);
   obstacle_params_ = obstacle_velocity_limiter::ObstacleParameters(node);
   velocity_params_ = obstacle_velocity_limiter::VelocityParameters(node);
-  velocity_factor_interface_.init(motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
+  velocity_factor_interface_.init(autoware::motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
   virtual_wall_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
+  processing_diag_publisher_ = std::make_shared<autoware::universe_utils::ProcessingTimePublisher>(
+    &node, "~/debug/" + ns_ + "/processing_time_ms_diag");
+  processing_time_publisher_ = node.create_publisher<tier4_debug_msgs::msg::Float64Stamped>(
+    "~/debug/" + ns_ + "/processing_time_ms", 1);
 
   const auto vehicle_info = vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   vehicle_lateral_offset_ = static_cast<double>(vehicle_info.max_lateral_offset_m);
@@ -132,12 +137,12 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
-  tier4_autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
+  autoware::universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
   VelocityPlanningResult result;
   stopwatch.tic("preprocessing");
-  const auto ego_idx =
-    motion_utils::findNearestIndex(ego_trajectory_points, planner_data->current_odometry.pose.pose);
+  const auto ego_idx = autoware::motion_utils::findNearestIndex(
+    ego_trajectory_points, planner_data->current_odometry.pose.pose);
   if (!ego_idx) {
     RCLCPP_WARN_THROTTLE(
       logger_, *clock_, rcutils_duration_value_t(1000),
@@ -183,7 +188,7 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
       obstacle_params_);
   }
   const auto obstacles_us = stopwatch.toc("obstacles");
-  motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWalls virtual_walls;
   stopwatch.tic("slowdowns");
   result.slowdown_intervals = obstacle_velocity_limiter::calculate_slowdown_intervals(
     downsampled_traj_points,
@@ -195,7 +200,7 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   for (auto & wall : virtual_walls) {
     wall.longitudinal_offset = vehicle_front_offset_;
     wall.text = ns_;
-    wall.style = motion_utils::VirtualWallType::slowdown;
+    wall.style = autoware::motion_utils::VirtualWallType::slowdown;
   }
   virtual_wall_marker_creator.add_virtual_walls(virtual_walls);
   virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
@@ -218,6 +223,16 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
       safe_footprint_polygons, obstacle_masks,
       planner_data->current_odometry.pose.pose.position.z));
   }
+  std::map<std::string, double> processing_times;
+  processing_times["preprocessing"] = preprocessing_us / 1000;
+  processing_times["obstacles"] = obstacles_us / 1000;
+  processing_times["slowdowns"] = slowdowns_us / 1000;
+  processing_times["Total"] = total_us / 1000;
+  processing_diag_publisher_->publish(processing_times);
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = clock_->now();
+  processing_time_msg.data = processing_times["Total"];
+  processing_time_publisher_->publish(processing_time_msg);
   return result;
 }
 }  // namespace autoware::motion_velocity_planner

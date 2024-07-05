@@ -14,9 +14,9 @@
 
 #include "map_based_prediction/path_generator.hpp"
 
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <interpolation/spline_interpolation.hpp>
-#include <motion_utils/trajectory/trajectory.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
 
 #include <algorithm>
 
@@ -49,8 +49,9 @@ PredictedPath PathGenerator::generatePathToTargetPoint(
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
   const auto pedestrian_to_entry_point_normalized = pedestrian_to_entry_point.normalized();
-  const auto pedestrian_to_entry_point_orientation = tier4_autoware_utils::createQuaternionFromYaw(
-    std::atan2(pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
+  const auto pedestrian_to_entry_point_orientation =
+    autoware::universe_utils::createQuaternionFromYaw(std::atan2(
+      pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
 
   for (double dt = 0.0; dt < arrival_time + ep; dt += sampling_time_interval_) {
     geometry_msgs::msg::Pose world_frame_pose;
@@ -92,10 +93,11 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
   const auto pedestrian_to_entry_point_normalized = pedestrian_to_entry_point.normalized();
-  const auto pedestrian_to_entry_point_orientation = tier4_autoware_utils::createQuaternionFromYaw(
-    std::atan2(pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
+  const auto pedestrian_to_entry_point_orientation =
+    autoware::universe_utils::createQuaternionFromYaw(std::atan2(
+      pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
   const auto entry_to_exit_point_normalized = entry_to_exit_point.normalized();
-  const auto entry_to_exit_point_orientation = tier4_autoware_utils::createQuaternionFromYaw(
+  const auto entry_to_exit_point_orientation = autoware::universe_utils::createQuaternionFromYaw(
     std::atan2(entry_to_exit_point_normalized.y(), entry_to_exit_point_normalized.x()));
 
   for (double dt = 0.0; dt < duration + ep; dt += sampling_time_interval_) {
@@ -172,7 +174,7 @@ PredictedPath PathGenerator::generateStraightPath(
   path.time_step = rclcpp::Duration::from_seconds(sampling_time_interval_);
   path.path.reserve(static_cast<size_t>((duration) / sampling_time_interval_));
   for (double dt = 0.0; dt < duration; dt += sampling_time_interval_) {
-    const auto future_obj_pose = tier4_autoware_utils::calcOffsetPose(
+    const auto future_obj_pose = autoware::universe_utils::calcOffsetPose(
       object_pose, object_twist.linear.x * dt, object_twist.linear.y * dt, 0.0);
     path.path.push_back(future_obj_pose);
   }
@@ -185,7 +187,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const double lateral_duration, const double speed_limit) const
 {
   // Get current Frenet Point
-  const double ref_path_len = motion_utils::calcArcLength(ref_path);
+  const double ref_path_len = autoware::motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path, speed_limit, duration);
 
   // Step1. Set Target Frenet Point
@@ -317,7 +319,7 @@ PosePath PathGenerator::interpolateReferencePath(
     base_path_y.at(i) = base_path.at(i).position.y;
     base_path_z.at(i) = base_path.at(i).position.z;
     if (i > 0) {
-      base_path_s.at(i) = base_path_s.at(i - 1) + tier4_autoware_utils::calcDistance2d(
+      base_path_s.at(i) = base_path_s.at(i - 1) + autoware::universe_utils::calcDistance2d(
                                                     base_path.at(i - 1), base_path.at(i));
     }
   }
@@ -342,16 +344,16 @@ PosePath PathGenerator::interpolateReferencePath(
   for (size_t i = 0; i < interpolate_num - 1; ++i) {
     geometry_msgs::msg::Pose interpolated_pose;
     const auto current_point =
-      tier4_autoware_utils::createPoint(spline_ref_path_x.at(i), spline_ref_path_y.at(i), 0.0);
-    const auto next_point = tier4_autoware_utils::createPoint(
+      autoware::universe_utils::createPoint(spline_ref_path_x.at(i), spline_ref_path_y.at(i), 0.0);
+    const auto next_point = autoware::universe_utils::createPoint(
       spline_ref_path_x.at(i + 1), spline_ref_path_y.at(i + 1), 0.0);
-    const double yaw = tier4_autoware_utils::calcAzimuthAngle(current_point, next_point);
-    interpolated_pose.position = tier4_autoware_utils::createPoint(
+    const double yaw = autoware::universe_utils::calcAzimuthAngle(current_point, next_point);
+    interpolated_pose.position = autoware::universe_utils::createPoint(
       spline_ref_path_x.at(i), spline_ref_path_y.at(i), spline_ref_path_z.at(i));
-    interpolated_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+    interpolated_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
     interpolated_path.at(i) = interpolated_pose;
   }
-  interpolated_path.back().position = tier4_autoware_utils::createPoint(
+  interpolated_path.back().position = autoware::universe_utils::createPoint(
     spline_ref_path_x.back(), spline_ref_path_y.back(), spline_ref_path_z.back());
   interpolated_path.back().orientation = interpolated_path.at(interpolate_num - 2).orientation;
 
@@ -373,14 +375,15 @@ PredictedPath PathGenerator::convertToPredictedPath(
     const auto & frenet_point = frenet_predicted_path.at(i);
 
     // Converted Pose
-    auto predicted_pose = tier4_autoware_utils::calcOffsetPose(ref_pose, 0.0, frenet_point.d, 0.0);
+    auto predicted_pose =
+      autoware::universe_utils::calcOffsetPose(ref_pose, 0.0, frenet_point.d, 0.0);
     predicted_pose.position.z = object.kinematics.pose_with_covariance.pose.position.z;
     if (i == 0) {
       predicted_pose.orientation = object.kinematics.pose_with_covariance.pose.orientation;
     } else {
-      const double yaw = tier4_autoware_utils::calcAzimuthAngle(
+      const double yaw = autoware::universe_utils::calcAzimuthAngle(
         predicted_path.path.at(i - 1).position, predicted_pose.position);
-      predicted_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+      predicted_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
     }
     predicted_path.path.at(i) = predicted_pose;
   }
@@ -395,9 +398,10 @@ FrenetPoint PathGenerator::getFrenetPoint(
   FrenetPoint frenet_point;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
 
-  const size_t nearest_segment_idx = motion_utils::findNearestSegmentIndex(ref_path, obj_point);
-  const double l =
-    motion_utils::calcLongitudinalOffsetToSegment(ref_path, nearest_segment_idx, obj_point);
+  const size_t nearest_segment_idx =
+    autoware::motion_utils::findNearestSegmentIndex(ref_path, obj_point);
+  const double l = autoware::motion_utils::calcLongitudinalOffsetToSegment(
+    ref_path, nearest_segment_idx, obj_point);
   const float vx = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.x);
   const float vy = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.y);
   const float obj_yaw =
@@ -417,7 +421,7 @@ FrenetPoint PathGenerator::getFrenetPoint(
 
   // Using a decaying acceleration model. Consult the README for more information about the model.
   const double t_h = duration;
-  const float λ = std::log(2) / acceleration_exponential_half_life_;
+  const float lambda = std::log(2) / acceleration_exponential_half_life_;
 
   auto have_same_sign = [](double a, double b) -> bool {
     return (a >= 0.0 && b >= 0.0) || (a < 0.0 && b < 0.0);
@@ -430,7 +434,7 @@ FrenetPoint PathGenerator::getFrenetPoint(
       return v;
     }
     // Get velocity after time horizon
-    const auto terminal_velocity = v + a * (1.0 / λ) * (1 - std::exp(-λ * t_h));
+    const auto terminal_velocity = v + a * (1.0 / lambda) * (1 - std::exp(-lambda * t_h));
 
     // If vehicle is decelerating, make sure its speed does not change signs (we assume it will, at
     // most stop, not reverse its direction)
@@ -439,15 +443,16 @@ FrenetPoint PathGenerator::getFrenetPoint(
       // if the velocities don't have the same sign, calculate when the vehicle reaches 0 speed ->
       // time t_stop
 
-      // 0 = Vo + acc(1/λ)(1-e^(-λt_stop))
-      // e^(-λt_stop) = 1 - (-Vo* λ)/acc
-      // t_stop = (-1/λ)*ln(1 - (-Vo* λ)/acc)
-      // t_stop = (-1/λ)*ln(1 + (Vo* λ)/acc)
-      auto t_stop = (-1.0 / λ) * std::log(1 + (v * λ / a));
+      // 0 = Vo + acc(1/lambda)(1-e^(-lambda t_stop))
+      // e^(-lambda t_stop) = 1 - (-Vo* lambda)/acc
+      // t_stop = (-1/lambda)*ln(1 - (-Vo* lambda)/acc)
+      // t_stop = (-1/lambda)*ln(1 + (Vo* lambda)/acc)
+      auto t_stop = (-1.0 / lambda) * std::log1p(v * lambda / a);
 
       // Calculate the distance traveled until stopping
       auto distance_to_reach_zero_speed =
-        v * t_stop + a * t_stop * (1.0 / λ) + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_h) - 1);
+        v * t_stop + a * t_stop * (1.0 / lambda) +
+        a * (1.0 / std::pow(lambda, 2)) * std::expm1(-lambda * t_h);
       // Output an equivalent constant speed
       return distance_to_reach_zero_speed / t_h;
     }
@@ -457,17 +462,18 @@ FrenetPoint PathGenerator::getFrenetPoint(
     // assume it will continue accelerating (reckless driving)
     const bool object_has_surpassed_limit_already = v > speed_limit;
     if (terminal_velocity < speed_limit || object_has_surpassed_limit_already)
-      return v + a * (1.0 / λ) + (a / (t_h * std::pow(λ, 2))) * (std::exp(-λ * t_h) - 1);
+      return v + a * (1.0 / lambda) + (a / (t_h * std::pow(lambda, 2))) * std::expm1(-lambda * t_h);
 
     // It is assumed the vehicle accelerates until final_speed is reached and
     // then continues at constant speed for the rest of the time horizon
     // So, we calculate the time it takes to reach the speed limit and compute how far the vehicle
     // would go if it accelerated until reaching the speed limit, and then continued at a constant
     // speed.
-    const double t_f = (-1.0 / λ) * std::log(1 - ((speed_limit - v) * λ) / a);
+    const double t_f = (-1.0 / lambda) * std::log(1 - ((speed_limit - v) * lambda) / a);
     const double distance_covered =
       // Distance covered while accelerating
-      a * (1.0 / λ) * t_f + a * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_f) - 1) + v * t_f +
+      a * (1.0 / lambda) * t_f + a * (1.0 / std::pow(lambda, 2)) * std::expm1(-lambda * t_f) +
+      v * t_f +
       // Distance covered at constant speed for the rest of the horizon time
       speed_limit * (t_h - t_f);
     return distance_covered / t_h;
@@ -476,8 +482,9 @@ FrenetPoint PathGenerator::getFrenetPoint(
   const float acceleration_adjusted_velocity_x = get_acceleration_adjusted_velocity(vx, ax);
   const float acceleration_adjusted_velocity_y = get_acceleration_adjusted_velocity(vy, ay);
 
-  frenet_point.s = motion_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
-  frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
+  frenet_point.s =
+    autoware::motion_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
+  frenet_point.d = autoware::motion_utils::calcLateralOffset(ref_path, obj_point);
   frenet_point.s_vel = acceleration_adjusted_velocity_x * std::cos(delta_yaw) -
                        acceleration_adjusted_velocity_y * std::sin(delta_yaw);
   frenet_point.d_vel = acceleration_adjusted_velocity_x * std::sin(delta_yaw) +

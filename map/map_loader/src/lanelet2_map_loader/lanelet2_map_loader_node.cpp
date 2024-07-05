@@ -36,12 +36,12 @@
 #include "lanelet2_local_projector.hpp"
 
 #include <ament_index_cpp/get_package_prefix.hpp>
+#include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
+#include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
+#include <autoware_lanelet2_extension/projection/transverse_mercator_projector.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <geography_utils/lanelet2_projector.hpp>
-#include <lanelet2_extension/io/autoware_osm_parser.hpp>
-#include <lanelet2_extension/projection/mgrs_projector.hpp>
-#include <lanelet2_extension/projection/transverse_mercator_projector.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -65,6 +65,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
   declare_parameter<bool>("allow_unsupported_version");
   declare_parameter<std::string>("lanelet2_map_path");
   declare_parameter<double>("center_line_resolution");
+  declare_parameter<bool>("use_waypoints");
 }
 
 void Lanelet2MapLoaderNode::on_map_projector_info(
@@ -73,6 +74,7 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   const auto allow_unsupported_version = get_parameter("allow_unsupported_version").as_bool();
   const auto lanelet2_filename = get_parameter("lanelet2_map_path").as_string();
   const auto center_line_resolution = get_parameter("center_line_resolution").as_double();
+  const auto use_waypoints = get_parameter("use_waypoints").as_bool();
 
   // load map from file
   const auto map = load_map(lanelet2_filename, *msg);
@@ -111,7 +113,11 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   RCLCPP_INFO(get_logger(), "Loaded map format_version: %s", format_version.c_str());
 
   // overwrite centerline
-  lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
+  if (use_waypoints) {
+    lanelet::utils::overwriteLaneletsCenterlineWithWaypoints(map, center_line_resolution, false);
+  } else {
+    lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution, false);
+  }
 
   // create map bin msg
   const auto map_bin_msg = create_map_bin_msg(map, lanelet2_filename, now());

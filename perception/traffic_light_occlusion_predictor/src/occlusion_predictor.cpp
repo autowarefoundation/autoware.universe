@@ -102,7 +102,7 @@ void CloudOcclusionPredictor::predict(
   pcl::PointCloud<pcl::PointXYZ> cloud_camera;
   // points within roi
   pcl::PointCloud<pcl::PointXYZ> cloud_roi;
-  tier4_autoware_utils::transformPointCloudFromROSMsg(*cloud_msg, cloud_camera, camera2cloud);
+  autoware::universe_utils::transformPointCloudFromROSMsg(*cloud_msg, cloud_camera, camera2cloud);
 
   filterCloud(cloud_camera, roi_tls, roi_brs, cloud_roi);
 
@@ -211,7 +211,9 @@ uint32_t CloudOcclusionPredictor::predict(
 {
   const uint32_t horizontal_sample_num = 20;
   const uint32_t vertical_sample_num = 20;
-  static_assert(horizontal_sample_num > 1 && vertical_sample_num > 1);
+  static_assert(horizontal_sample_num > 1);
+  static_assert(vertical_sample_num > 1);
+
   const float min_dist_from_occlusion_to_tl = 5.0f;
 
   pcl::PointCloud<pcl::PointXYZ> tl_sample_cloud;

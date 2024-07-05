@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_control_validator/debug_marker.hpp"
+#include "autoware/control_validator/debug_marker.hpp"
 
-#include <motion_utils/marker/marker_helper.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
+#include <autoware/motion_utils/marker/marker_helper.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 
 #include <memory>
 #include <string>
@@ -48,7 +48,7 @@ void ControlValidatorDebugMarkerPublisher::pushPoseMarker(
 void ControlValidatorDebugMarkerPublisher::pushPoseMarker(
   const geometry_msgs::msg::Pose & pose, const std::string & ns, int id)
 {
-  using tier4_autoware_utils::createMarkerColor;
+  using autoware::universe_utils::createMarkerColor;
 
   // append arrow marker
   std_msgs::msg::ColorRGBA color;
@@ -64,9 +64,9 @@ void ControlValidatorDebugMarkerPublisher::pushPoseMarker(
   {
     color = createMarkerColor(0.0, 0.0, 1.0, 0.999);
   }
-  Marker marker = tier4_autoware_utils::createDefaultMarker(
+  Marker marker = autoware::universe_utils::createDefaultMarker(
     "map", node_->get_clock()->now(), ns, getMarkerId(ns), Marker::ARROW,
-    tier4_autoware_utils::createMarkerScale(0.2, 0.1, 0.3), color);
+    autoware::universe_utils::createMarkerScale(0.2, 0.1, 0.3), color);
   marker.lifetime = rclcpp::Duration::from_seconds(0.2);
   marker.pose = pose;
 
@@ -76,10 +76,10 @@ void ControlValidatorDebugMarkerPublisher::pushPoseMarker(
 void ControlValidatorDebugMarkerPublisher::pushWarningMsg(
   const geometry_msgs::msg::Pose & pose, const std::string & msg)
 {
-  visualization_msgs::msg::Marker marker = tier4_autoware_utils::createDefaultMarker(
+  visualization_msgs::msg::Marker marker = autoware::universe_utils::createDefaultMarker(
     "map", node_->get_clock()->now(), "warning_msg", 0, Marker::TEXT_VIEW_FACING,
-    tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0),
-    tier4_autoware_utils::createMarkerColor(1.0, 0.1, 0.1, 0.999));
+    autoware::universe_utils::createMarkerScale(0.0, 0.0, 1.0),
+    autoware::universe_utils::createMarkerColor(1.0, 0.1, 0.1, 0.999));
   marker.lifetime = rclcpp::Duration::from_seconds(0.2);
   marker.pose = pose;
   marker.text = msg;
@@ -90,8 +90,8 @@ void ControlValidatorDebugMarkerPublisher::pushVirtualWall(const geometry_msgs::
 {
   const auto now = node_->get_clock()->now();
   const auto stop_wall_marker =
-    motion_utils::createStopVirtualWallMarker(pose, "control_validator", now, 0);
-  tier4_autoware_utils::appendMarkerArray(stop_wall_marker, &marker_array_virtual_wall_, now);
+    autoware::motion_utils::createStopVirtualWallMarker(pose, "control_validator", now, 0);
+  autoware::universe_utils::appendMarkerArray(stop_wall_marker, &marker_array_virtual_wall_, now);
 }
 
 void ControlValidatorDebugMarkerPublisher::publish()

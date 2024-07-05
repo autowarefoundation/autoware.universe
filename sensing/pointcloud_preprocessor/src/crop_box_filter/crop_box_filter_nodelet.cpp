@@ -62,8 +62,8 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
 {
   // initialize debug tool
   {
-    using tier4_autoware_utils::DebugPublisher;
-    using tier4_autoware_utils::StopWatch;
+    using autoware::universe_utils::DebugPublisher;
+    using autoware::universe_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<DebugPublisher>(this, this->get_name());
     stop_watch_ptr_->tic("cyclic_time");
@@ -87,8 +87,10 @@ CropBoxFilterComponent::CropBoxFilterComponent(const rclcpp::NodeOptions & optio
 
   // set additional publishers
   {
-    crop_box_polygon_pub_ =
-      this->create_publisher<geometry_msgs::msg::PolygonStamped>("~/crop_box_polygon", 10);
+    rclcpp::PublisherOptions pub_options;
+    pub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
+    crop_box_polygon_pub_ = this->create_publisher<geometry_msgs::msg::PolygonStamped>(
+      "~/crop_box_polygon", 10, pub_options);
   }
 
   // set parameter service callback
