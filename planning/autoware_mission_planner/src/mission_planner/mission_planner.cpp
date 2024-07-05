@@ -230,14 +230,15 @@ void MissionPlanner::on_set_lanelet_route(
     throw service_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
-  if (!operation_mode_state_) {
+  if (is_reroute && !operation_mode_state_) {
     throw service_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "Operation mode state is not received.");
   }
 
   const bool is_autonomous_driving =
-    operation_mode_state_->mode == OperationModeState::AUTONOMOUS &&
-    operation_mode_state_->is_autoware_control_enabled;
+    operation_mode_state_ ? operation_mode_state_->mode == OperationModeState::AUTONOMOUS &&
+                              operation_mode_state_->is_autoware_control_enabled
+                          : false;
 
   if (is_reroute && is_autonomous_driving) {
     const auto reroute_availability = sub_reroute_availability_.takeData();
@@ -291,14 +292,15 @@ void MissionPlanner::on_set_waypoint_route(
     throw service_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
-  if (!operation_mode_state_) {
+  if (is_reroute && !operation_mode_state_) {
     throw service_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "Operation mode state is not received.");
   }
 
   const bool is_autonomous_driving =
-    operation_mode_state_->mode == OperationModeState::AUTONOMOUS &&
-    operation_mode_state_->is_autoware_control_enabled;
+    operation_mode_state_ ? operation_mode_state_->mode == OperationModeState::AUTONOMOUS &&
+                              operation_mode_state_->is_autoware_control_enabled
+                          : false;
 
   if (is_reroute && is_autonomous_driving) {
     const auto reroute_availability = sub_reroute_availability_.takeData();
