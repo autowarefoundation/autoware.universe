@@ -41,7 +41,7 @@ private:
   std::vector<std::pair<std::string, bool>> filter_semantic_label_target_list_ = {
     {"UNKNOWN", false},       {"BUILDING", false},     {"WALL", false},       {"OBSTACLE", false},
     {"TRAFFIC_LIGHT", false}, {"TRAFFIC_SIGN", false}, {"PERSON", false},     {"VEHICLE", false},
-    {"BIKE", false},          {"ROAD", false},         {"SIDEWALK", false},   {"ROADPAINT", false},
+    {"BIKE", false},          {"ROAD", false},         {"SIDEWALK", false},   {"ROAD_PAINT", false},
     {"CURBSTONE", false},     {"CROSSWALK", false},    {"VEGETATION", false}, {"SKY", false}};
 
 public:

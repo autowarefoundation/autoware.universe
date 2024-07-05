@@ -14,7 +14,7 @@
       BIKE: false
       ROAD: true
       SIDEWALK: false
-      ROADPAINT: false
+      ROAD_PAINT: false
       CURBSTONE: false
       CROSSWALK: false
       VEGETATION: true

@@ -64,9 +64,9 @@
               "description": "If true, SIDEWALK class of semantic will be filtered.",
               "default": false
             },
-            "ROADPAINT": {
+            "ROAD_PAINT": {
               "type": "boolean",
-              "description": "If true, ROADPAINT class of semantic will be filtered.",
+              "description": "If true, ROAD_PAINT class of semantic will be filtered.",
               "default": false
             },
             "CURBSTONE": {
@@ -102,7 +102,7 @@
             "BIKE",
             "ROAD",
             "SIDEWALK",
-            "ROADPAINT",
+            "ROAD_PAINT",
             "CURBSTONE",
             "CROSSWALK",
             "VEGETATION",
