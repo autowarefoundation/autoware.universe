@@ -111,35 +111,26 @@ using ProcessingTimeDetail =
 class TimeKeeper
 {
 public:
-  /**
-   * @brief Construct a new TimeKeeper object
-   */
-  TimeKeeper();
-
-  /**
-   * @brief Report the processing times and optionally show them on the terminal
-   *
-   * This function takes a variable number of arguments. If an argument is of type `std::ostream*`,
-   * it will output the processing times to the given stream. If an argument is of type
-   * `rclcpp::Publisher<tier4_debug_msgs::msg::ProcessingTimeTree>::SharedPtr`, it will publish
-   * the processing times to the given ROS2 topic.
-   *
-   * @tparam Args Types of the arguments
-   * @param args Variable number of arguments
-   * @throws std::runtime_error if called before ending the tracking of the current function
-   */
-  template <typename... Args>
-  void report(Args... args)
+  template <typename... Reporters>
+  explicit TimeKeeper(Reporters... reporters) : current_time_node_(nullptr), root_node_(nullptr)
   {
-    if (current_time_node_ != nullptr) {
-      throw std::runtime_error(fmt::format(
-        "You must call end_track({}) first, but report() is called",
-        current_time_node_->get_name()));
-    }
+    reporters_.reserve(sizeof...(Reporters));
+    (add_reporter(reporters), ...);
+  }
 
-    (report_to(args), ...);
-    current_time_node_.reset();
-    root_node_.reset();
+  void add_reporter(std::ostream * os)
+  {
+    reporters_.emplace_back([os](const std::shared_ptr<ProcessingTimeNode> & node) {
+      *os << "==========================" << std::endl;
+      *os << node->to_string() << std::endl;
+    });
+  }
+
+  void add_reporter(rclcpp::Publisher<ProcessingTimeDetail>::SharedPtr publisher)
+  {
+    reporters_.emplace_back([publisher](const std::shared_ptr<ProcessingTimeNode> & node) {
+      publisher->publish(node->to_msg());
+    });
   }
 
   /**
@@ -157,14 +148,18 @@ public:
   void end_track(const std::string & func_name);
 
 private:
-  void report_to(std::ostream * output) const
+  void report()
   {
-    *output << "========================================" << std::endl;
-    *output << root_node_->to_string();
-  }
-  void report_to(rclcpp::Publisher<tier4_debug_msgs::msg::ProcessingTimeTree>::SharedPtr pub) const
-  {
-    pub->publish(root_node_->to_msg());
+    if (current_time_node_ != nullptr) {
+      throw std::runtime_error(fmt::format(
+        "You must call end_track({}) first, but report() is called",
+        current_time_node_->get_name()));
+    }
+    for (const auto & reporter : reporters_) {
+      reporter(root_node_);
+    }
+    current_time_node_.reset();
+    root_node_.reset();
   }
 
   std::shared_ptr<ProcessingTimeNode>
@@ -173,6 +168,9 @@ private:
   autoware::universe_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
     stop_watch_;  //!< StopWatch object for tracking the processing time
+
+  std::vector<std::function<void(const std::shared_ptr<ProcessingTimeNode> &)>>
+    reporters_;  //!< Vector of functions for reporting the processing times
 };
 
 /**

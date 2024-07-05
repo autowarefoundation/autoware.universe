@@ -97,12 +97,6 @@ std::string ProcessingTimeNode::get_name() const
   return name_;
 }
 
-TimeKeeper::TimeKeeper() : current_time_node_(nullptr)
-{
-}
-
-// void TimeKeeper::report_to
-
 void TimeKeeper::start_track(const std::string & func_name)
 {
   if (current_time_node_ == nullptr) {
@@ -124,6 +118,10 @@ void TimeKeeper::end_track(const std::string & func_name)
   const double processing_time = stop_watch_.toc(func_name);
   current_time_node_->set_time(processing_time);
   current_time_node_ = current_time_node_->get_parent_node();
+
+  if (current_time_node_ == nullptr) {
+    report();
+  }
 }
 
 ScopedTimeTrack::ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keepr)

@@ -33,9 +33,9 @@ TEST(system, TimeKeeper)
   auto publisher = node.create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
     "~/debug/processing_time_tree", 1);
 
-  TimeKeeper time_keeper;
+  TimeKeeper time_keeper(&std::cerr, publisher);
 
-  time_keeper.start_track("main_func");
+  ScopedTimeTrack st{"main_func", time_keeper};
 
   {  // funcA
     ScopedTimeTrack st{"funcA", time_keeper};
@@ -50,7 +50,4 @@ TEST(system, TimeKeeper)
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
-
-  time_keeper.end_track("main_func");
-  ASSERT_NO_THROW(time_keeper.report(&std::cerr, publisher));
 }
