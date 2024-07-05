@@ -161,11 +161,14 @@ public:
       "covariance.covariance_estimation.covariance_estimation_type");
     covariance.covariance_estimation.covariance_estimation_type =
       static_cast<CovarianceEstimationType>(covariance_estimation_type_tmp);
-    covariance.covariance_estimation.initial_pose_offset_model_x = node->declare_parameter<std::vector<double>>(
-      "covariance.covariance_estimation.initial_pose_offset_model_x");
-    covariance.covariance_estimation.initial_pose_offset_model_y = node->declare_parameter<std::vector<double>>(
-      "covariance.covariance_estimation.initial_pose_offset_model_y");
-    if (covariance.covariance_estimation.initial_pose_offset_model_x.size() !=
+    covariance.covariance_estimation.initial_pose_offset_model_x =
+      node->declare_parameter<std::vector<double>>(
+        "covariance.covariance_estimation.initial_pose_offset_model_x");
+    covariance.covariance_estimation.initial_pose_offset_model_y =
+      node->declare_parameter<std::vector<double>>(
+        "covariance.covariance_estimation.initial_pose_offset_model_y");
+    if (
+      covariance.covariance_estimation.initial_pose_offset_model_x.size() !=
       covariance.covariance_estimation.initial_pose_offset_model_y.size()) {
       std::stringstream message;
       message << "Invalid initial pose offset model parameters."

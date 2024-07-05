@@ -846,7 +846,8 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT) {
     const std::vector<Eigen::Matrix4f> poses_to_search = pclomp::propose_poses_to_search(
-      ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x, param_.covariance.covariance_estimation.initial_pose_offset_model_y);
+      ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x,
+      param_.covariance.covariance_estimation.initial_pose_offset_model_y);
     const pclomp::ResultOfMultiNdtCovarianceEstimation result_of_multi_ndt_covariance_estimation =
       estimate_xy_covariance_by_multi_ndt(ndt_result, ndt_ptr_, poses_to_search);
     for (size_t i = 0; i < result_of_multi_ndt_covariance_estimation.ndt_initial_poses.size();
@@ -863,7 +864,8 @@ Eigen::Matrix2d NDTScanMatcher::estimate_covariance(
     param_.covariance.covariance_estimation.covariance_estimation_type ==
     CovarianceEstimationType::MULTI_NDT_SCORE) {
     const std::vector<Eigen::Matrix4f> poses_to_search = pclomp::propose_poses_to_search(
-      ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x, param_.covariance.covariance_estimation.initial_pose_offset_model_y);
+      ndt_result, param_.covariance.covariance_estimation.initial_pose_offset_model_x,
+      param_.covariance.covariance_estimation.initial_pose_offset_model_y);
     const pclomp::ResultOfMultiNdtCovarianceEstimation
       result_of_multi_ndt_score_covariance_estimation = estimate_xy_covariance_by_multi_ndt_score(
         ndt_result, ndt_ptr_, poses_to_search, param_.covariance.covariance_estimation.temperature);
