@@ -75,7 +75,7 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   // Create angle bins and sort points by range
   struct BinInfo3D
   {
-    BinInfo3D(
+    explicit BinInfo3D(
       const double _range = 0.0, const double _wx = 0.0, const double _wy = 0.0,
       const double _wz = 0.0, const double _projection_length = 0.0,
       const double _projected_wx = 0.0, const double _projected_wy = 0.0)
@@ -225,11 +225,9 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
 
       if (dist_index + 1 == obstacle_pointcloud_angle_bin.size()) {
         const auto & source = obstacle_pointcloud_angle_bin.at(dist_index);
-        if (!no_visible_point_beyond) {
-          raytrace(
-            source.wx, source.wy, source.projected_wx, source.projected_wy,
-            occupancy_cost_value::NO_INFORMATION);
-        }
+        raytrace(
+          source.wx, source.wy, source.projected_wx, source.projected_wy,
+          occupancy_cost_value::NO_INFORMATION);
         continue;
       }
 
@@ -237,11 +235,6 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
         obstacle_pointcloud_angle_bin.at(dist_index + 1).range -
         obstacle_pointcloud_angle_bin.at(dist_index).range);
       if (next_obstacle_point_distance <= obstacle_separation_threshold_) {
-        continue;
-      } else if (no_visible_point_beyond) {
-        const auto & source = obstacle_pointcloud_angle_bin.at(dist_index);
-        const auto & target = obstacle_pointcloud_angle_bin.at(dist_index + 1);
-        raytrace(source.wx, source.wy, target.wx, target.wy, occupancy_cost_value::NO_INFORMATION);
         continue;
       }
 

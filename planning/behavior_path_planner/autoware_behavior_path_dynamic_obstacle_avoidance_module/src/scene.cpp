@@ -20,7 +20,7 @@
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
@@ -1471,7 +1471,7 @@ DynamicObstacleAvoidanceModule::calcMinMaxLateralOffsetToAvoidRegulatedObject(
     return prev_object->lat_offset_to_avoid->min_value;
   }();
   const double filtered_min_bound_lat_offset =
-    (prev_min_lat_avoid_to_offset.has_value() & enable_lowpass_filter)
+    (prev_min_lat_avoid_to_offset.has_value() && enable_lowpass_filter)
       ? signal_processing::lowpassFilter(
           min_bound_lat_offset, *prev_min_lat_avoid_to_offset,
           parameters_->lpf_gain_for_lat_avoid_to_offset)
@@ -1556,7 +1556,7 @@ DynamicObstacleAvoidanceModule::calcMinMaxLateralOffsetToAvoidUnregulatedObject(
     return prev_object->lat_offset_to_avoid->min_value;
   }();
   const double filtered_min_bound_pos =
-    (prev_min_lat_avoid_to_offset.has_value() & enable_lowpass_filter)
+    (prev_min_lat_avoid_to_offset.has_value() && enable_lowpass_filter)
       ? signal_processing::lowpassFilter(
           bound_pos.min_value, *prev_min_lat_avoid_to_offset,
           parameters_->lpf_gain_for_lat_avoid_to_offset)

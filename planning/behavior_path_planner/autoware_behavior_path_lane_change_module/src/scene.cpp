@@ -23,13 +23,14 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <utility>
@@ -467,8 +468,16 @@ void NormalLaneChange::insertStopPoint(
 
 PathWithLaneId NormalLaneChange::getReferencePath() const
 {
-  return utils::getCenterLinePathFromLanelet(
-    status_.lane_change_path.info.target_lanes.front(), planner_data_);
+  lanelet::ConstLanelet closest_lanelet;
+  if (!lanelet::utils::query::getClosestLanelet(
+        status_.lane_change_path.info.target_lanes, getEgoPose(), &closest_lanelet)) {
+    return prev_module_output_.reference_path;
+  }
+  const auto reference_path = utils::getCenterLinePathFromLanelet(closest_lanelet, planner_data_);
+  if (reference_path.points.empty()) {
+    return prev_module_output_.reference_path;
+  }
+  return reference_path;
 }
 
 std::optional<PathWithLaneId> NormalLaneChange::extendPath()
@@ -2048,6 +2057,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     lane_change_parameters_->lane_expansion_left_offset,
     lane_change_parameters_->lane_expansion_right_offset);
 
+  constexpr double collision_check_yaw_diff_threshold{M_PI};
+
   for (const auto & obj : collision_check_objects) {
     auto current_debug_data = utils::path_safety_checker::createObjectDebug(obj);
     const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
@@ -2056,7 +2067,8 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
     for (const auto & obj_path : obj_predicted_paths) {
       const auto collided_polygons = utils::path_safety_checker::getCollidedPolygons(
         path, ego_predicted_path, obj, obj_path, common_parameters, rss_params, 1.0,
-        get_max_velocity_for_safety_check(), current_debug_data.second);
+        get_max_velocity_for_safety_check(), collision_check_yaw_diff_threshold,
+        current_debug_data.second);
 
       if (collided_polygons.empty()) {
         utils::path_safety_checker::updateCollisionCheckDebugMap(

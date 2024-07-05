@@ -19,9 +19,9 @@
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/is_valid.hpp>
 
@@ -745,9 +745,9 @@ std::vector<DrivableLanes> cutOverlappedLanes(
   }
 
   // Step2. pick up only path points within drivable lanes
-  for (const auto & lanes : shorten_lanes) {
+  for (const auto & drivable_lanes : shorten_lanes) {
     for (size_t i = start_point_idx; i < original_points.size(); ++i) {
-      if (is_point_in_drivable_lanes(lanes, original_points.at(i))) {
+      if (is_point_in_drivable_lanes(drivable_lanes, original_points.at(i))) {
         path.points.push_back(original_points.at(i));
         continue;
       }
