@@ -40,6 +40,9 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+namespace autoware::multi_object_tracker
+{
+
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 NormalVehicleTracker::NormalVehicleTracker(
@@ -399,3 +402,5 @@ bool NormalVehicleTracker::getTrackedObject(
 
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

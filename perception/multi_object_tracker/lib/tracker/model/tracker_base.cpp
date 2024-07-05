@@ -40,6 +40,9 @@ float decayProbability(const float & prior, const float & delta_time)
 }
 }  // namespace
 
+namespace autoware::multi_object_tracker
+{
+
 Tracker::Tracker(
   const rclcpp::Time & time,
   const std::vector<autoware_perception_msgs::msg::ObjectClassification> & classification,
@@ -202,3 +205,5 @@ geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
   getTrackedObject(time, object);
   return object.kinematics.pose_with_covariance;
 }
+
+}  // namespace autoware::multi_object_tracker

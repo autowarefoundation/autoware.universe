@@ -22,6 +22,9 @@
 #include "kalman_filter/kalman_filter.hpp"
 #include "tracker_base.hpp"
 
+namespace autoware::multi_object_tracker
+{
+
 class PassThroughTracker : public Tracker
 {
 private:
@@ -43,5 +46,7 @@ public:
     const rclcpp::Time & time,
     autoware_perception_msgs::msg::TrackedObject & object) const override;
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__PASS_THROUGH_TRACKER_HPP_

@@ -46,6 +46,9 @@ constexpr T kmph2mps(const T kmph)
 
 }  // namespace
 
+namespace autoware::multi_object_tracker
+{
+
 namespace object_model
 {
 
@@ -301,5 +304,6 @@ static const ObjectModel bicycle(ObjectModelType::Bicycle);
 static const ObjectModel pedestrian(ObjectModelType::Pedestrian);
 
 }  // namespace object_model
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__OBJECT_MODEL__OBJECT_MODEL_HPP_

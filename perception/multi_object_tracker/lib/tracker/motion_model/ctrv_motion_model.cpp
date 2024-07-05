@@ -28,6 +28,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+namespace autoware::multi_object_tracker
+{
 // cspell: ignore CTRV
 // Constant Turn Rate and constant Velocity (CTRV) motion model
 using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
@@ -386,3 +388,5 @@ bool CTRVMotionModel::getPredictedState(
 
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

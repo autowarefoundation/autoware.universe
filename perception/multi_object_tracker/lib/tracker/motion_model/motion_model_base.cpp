@@ -18,6 +18,9 @@
 
 #include "autoware/multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
 
+namespace autoware::multi_object_tracker
+{
+
 MotionModel::MotionModel() : last_update_time_(rclcpp::Time(0, 0))
 {
 }
@@ -90,3 +93,5 @@ bool MotionModel::getPredictedState(
   tmp_ekf_for_no_update.getP(P);
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

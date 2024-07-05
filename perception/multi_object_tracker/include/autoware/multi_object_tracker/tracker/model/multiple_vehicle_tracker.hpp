@@ -26,6 +26,9 @@
 
 #include <rclcpp/time.hpp>
 
+namespace autoware::multi_object_tracker
+{
+
 class MultipleVehicleTracker : public Tracker
 {
 private:
@@ -47,5 +50,7 @@ public:
     autoware_perception_msgs::msg::TrackedObject & object) const override;
   virtual ~MultipleVehicleTracker() {}
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__MULTIPLE_VEHICLE_TRACKER_HPP_

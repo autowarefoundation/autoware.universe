@@ -36,6 +36,9 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+namespace autoware::multi_object_tracker
+{
+
 PassThroughTracker::PassThroughTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
@@ -117,3 +120,5 @@ bool PassThroughTracker::getTrackedObject(
 
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

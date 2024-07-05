@@ -32,8 +32,10 @@
 #endif
 #include <geometry_msgs/msg/twist.hpp>
 
-// cspell: ignore CTRV
+namespace autoware::multi_object_tracker
+{
 
+// cspell: ignore CTRV
 class CTRVMotionModel : public MotionModel
 {
 private:
@@ -91,5 +93,7 @@ public:
     const rclcpp::Time & time, geometry_msgs::msg::Pose & pose, std::array<double, 36> & pose_cov,
     geometry_msgs::msg::Twist & twist, std::array<double, 36> & twist_cov) const override;
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MOTION_MODEL__CTRV_MOTION_MODEL_HPP_

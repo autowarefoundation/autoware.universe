@@ -24,6 +24,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware::multi_object_tracker
+{
 namespace gnn_solver
 {
 void MuSSP::maximizeLinearAssignment(
@@ -39,3 +41,5 @@ void MuSSP::maximizeLinearAssignment(
   solve_muSSP(cost, direct_assignment, reverse_assignment);
 }
 }  // namespace gnn_solver
+
+}  // namespace autoware::multi_object_tracker

@@ -36,6 +36,9 @@
 #endif
 #include "object_recognition_utils/object_recognition_utils.hpp"
 
+namespace autoware::multi_object_tracker
+{
+
 UnknownTracker::UnknownTracker(
   const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
@@ -234,3 +237,5 @@ bool UnknownTracker::getTrackedObject(
 
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

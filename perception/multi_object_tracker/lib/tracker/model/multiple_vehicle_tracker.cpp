@@ -18,6 +18,9 @@
 
 #include "autoware/multi_object_tracker/tracker/model/multiple_vehicle_tracker.hpp"
 
+namespace autoware::multi_object_tracker
+{
+
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 MultipleVehicleTracker::MultipleVehicleTracker(
@@ -65,3 +68,5 @@ bool MultipleVehicleTracker::getTrackedObject(
   object.classification = getClassification();
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

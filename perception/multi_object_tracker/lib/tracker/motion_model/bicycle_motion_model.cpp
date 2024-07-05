@@ -28,6 +28,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+namespace autoware::multi_object_tracker
+{
+
 // cspell: ignore CTRV
 // Bicycle CTRV motion model
 // CTRV : Constant Turn Rate and constant Velocity
@@ -487,3 +490,5 @@ bool BicycleMotionModel::getPredictedState(
 
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

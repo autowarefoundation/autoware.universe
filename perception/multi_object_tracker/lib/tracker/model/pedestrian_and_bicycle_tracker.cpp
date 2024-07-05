@@ -18,6 +18,9 @@
 
 #include "autoware/multi_object_tracker/tracker/model/pedestrian_and_bicycle_tracker.hpp"
 
+namespace autoware::multi_object_tracker
+{
+
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 PedestrianAndBicycleTracker::PedestrianAndBicycleTracker(
@@ -65,3 +68,5 @@ bool PedestrianAndBicycleTracker::getTrackedObject(
   object.classification = getClassification();
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

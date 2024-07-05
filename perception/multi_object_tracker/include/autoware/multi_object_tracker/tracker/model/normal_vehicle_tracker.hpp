@@ -24,6 +24,9 @@
 #include "autoware/multi_object_tracker/tracker/object_model/object_model.hpp"
 #include "kalman_filter/kalman_filter.hpp"
 
+namespace autoware::multi_object_tracker
+{
+
 class NormalVehicleTracker : public Tracker
 {
 private:
@@ -69,5 +72,7 @@ private:
     const autoware_perception_msgs::msg::DetectedObject & object,
     const geometry_msgs::msg::Transform & self_transform);
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_

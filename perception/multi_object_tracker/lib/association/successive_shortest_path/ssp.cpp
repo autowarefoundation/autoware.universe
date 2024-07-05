@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+namespace autoware::multi_object_tracker
+{
 namespace gnn_solver
 {
 struct ResidualEdge
@@ -368,3 +370,5 @@ void SSP::maximizeLinearAssignment(
 #endif
 }
 }  // namespace gnn_solver
+
+}  // namespace autoware::multi_object_tracker

@@ -20,6 +20,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware::multi_object_tracker
+{
 namespace gnn_solver
 {
 class SSP : public GnnSolverInterface
@@ -32,6 +34,8 @@ public:
     const std::vector<std::vector<double>> & cost, std::unordered_map<int, int> * direct_assignment,
     std::unordered_map<int, int> * reverse_assignment) override;
 };
+
 }  // namespace gnn_solver
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__ASSOCIATION__SOLVER__SSP_HPP_

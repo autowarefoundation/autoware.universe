@@ -30,6 +30,8 @@
 
 #include <tf2/utils.h>
 
+namespace autoware::multi_object_tracker
+{
 // cspell: ignore CV
 // Constant Velocity (CV) motion model
 using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
@@ -306,3 +308,5 @@ bool CVMotionModel::getPredictedState(
 
   return true;
 }
+
+}  // namespace autoware::multi_object_tracker

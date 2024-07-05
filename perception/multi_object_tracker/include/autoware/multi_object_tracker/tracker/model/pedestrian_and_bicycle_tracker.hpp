@@ -24,6 +24,9 @@
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "kalman_filter/kalman_filter.hpp"
 
+namespace autoware::multi_object_tracker
+{
+
 class PedestrianAndBicycleTracker : public Tracker
 {
 private:
@@ -45,5 +48,7 @@ public:
     autoware_perception_msgs::msg::TrackedObject & object) const override;
   virtual ~PedestrianAndBicycleTracker() {}
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_AND_BICYCLE_TRACKER_HPP_

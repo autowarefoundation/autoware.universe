@@ -34,6 +34,8 @@
 #include <unordered_map>
 #include <vector>
 
+namespace autoware::multi_object_tracker
+{
 class DataAssociation
 {
 private:
@@ -60,5 +62,7 @@ public:
     const std::list<std::shared_ptr<Tracker>> & trackers);
   virtual ~DataAssociation() {}
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__ASSOCIATION__ASSOCIATION_HPP_

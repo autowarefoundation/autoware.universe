@@ -23,6 +23,9 @@
 #include "autoware/multi_object_tracker/tracker/motion_model/cv_motion_model.hpp"
 #include "kalman_filter/kalman_filter.hpp"
 
+namespace autoware::multi_object_tracker
+{
+
 class UnknownTracker : public Tracker
 {
 private:
@@ -61,5 +64,7 @@ public:
     const rclcpp::Time & time,
     autoware_perception_msgs::msg::TrackedObject & object) const override;
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__UNKNOWN_TRACKER_HPP_

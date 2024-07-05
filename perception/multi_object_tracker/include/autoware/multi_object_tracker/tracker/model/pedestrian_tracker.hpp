@@ -24,7 +24,8 @@
 #include "autoware/multi_object_tracker/tracker/object_model/object_model.hpp"
 #include "kalman_filter/kalman_filter.hpp"
 
-// cspell: ignore CTRV
+namespace autoware::multi_object_tracker
+{
 
 class PedestrianTracker : public Tracker
 {
@@ -49,7 +50,7 @@ private:
   };
   BoundingBox bounding_box_;
   Cylinder cylinder_;
-
+  // cspell: ignore CTRV
   CTRVMotionModel motion_model_;
   using IDX = CTRVMotionModel::IDX;
 
@@ -74,5 +75,7 @@ private:
     const autoware_perception_msgs::msg::DetectedObject & object,
     const geometry_msgs::msg::Transform & self_transform) const;
 };
+
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__PEDESTRIAN_TRACKER_HPP_
