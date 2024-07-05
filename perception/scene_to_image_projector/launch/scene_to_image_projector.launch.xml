@@ -7,6 +7,13 @@
   <arg name="topic_objects" default="/perception/object_recognition/tracking/objects" description="Objects topic"/>
   <arg name="topic_trajectory" default="/planning/scenario_planning/lane_driving/trajectory" description="Trajectory topic"/>
   <arg name="topic_path" default="/planning/scenario_planning/lane_driving/behavior_planning/path" description="Road boundaries topic"/>
+  <arg name="show_pedestrian" default="true" description="Show pedestrian"/>
+  <arg name="show_bicycle" default="true" description="Show bicycle"/>
+  <arg name="show_motorcycle" default="true" description="Show motorcycle"/>
+  <arg name="show_trailer" default="true" description="Show trailer"/>
+  <arg name="show_bus" default="true" description="Show bus"/>
+  <arg name="show_truck" default="true" description="Show truck"/>
+  <arg name="show_car" default="true" description="Show car"/>
 
   <node pkg="scene_to_image_projector" exec="scene_to_image_projector_node" name="scene_to_image_projector">
     <remap from="~/input/image" to="$(var topic_image)"/>                      
@@ -17,5 +24,12 @@
     <param name="objects_type" value="$(var objects_type)"/>
     <param name="use_trajectory" value="$(var use_trajectory)"/>
     <param name="use_road_boundaries" value="$(var use_road_boundaries)"/>
+    <param name="show_pedestrian" value="$(var show_pedestrian)"/>
+    <param name="show_bicycle" value="$(var show_bicycle)"/>
+    <param name="show_motorcycle" value="$(var show_motorcycle)"/>
+    <param name="show_trailer" value="$(var show_trailer)"/>
+    <param name="show_bus" value="$(var show_bus)"/>
+    <param name="show_truck" value="$(var show_truck)"/>
+    <param name="show_car" value="$(var show_car)"/>
   </node>
 </launch>

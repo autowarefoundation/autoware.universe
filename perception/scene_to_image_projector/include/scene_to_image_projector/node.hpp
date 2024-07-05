@@ -98,16 +98,16 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
+  bool show_pedestrian;
+  bool show_bicycle;
+  bool show_motorcycle;
+  bool show_trailer;
+  bool show_bus;
+  bool show_truck;
+  bool show_car;
+
   template <typename T>
   std::optional<std::vector<Eigen::Vector3d>> detected_object_corners(const T & detected_object);
-
-  bool out_of_image(
-    const geometry_msgs::msg::Pose & center_pose, const sensor_msgs::msg::CameraInfo & camera_info,
-    const Eigen::Matrix4d & projection);
-
-  bool out_of_image(
-  const geometry_msgs::msg::Point & center_pose, const sensor_msgs::msg::CameraInfo & camera_info,
-  const Eigen::Matrix4d & projection);
 
   template <typename T>
   static void calculate_bbox_corners(
@@ -115,13 +115,16 @@ private:
 
   void draw_bounding_box(
     const std::vector<Eigen::Vector3d> & corners, cv::Mat & image,
-    const Eigen::Matrix4d & projection_matrix);
+    const Eigen::Matrix4d & projection_matrix,
+    std::vector<std::vector<cv::Point2f>> & previous_polygons);
 
   Eigen::Matrix4d get_projection_matrix(const sensor_msgs::msg::CameraInfo & camera_info_msg);
 
   bool project_point(
     const Eigen::Vector3d & point, const Eigen::Matrix4d & projection_matrix,
-    cv::Point2d & projected_point_out);
+    cv::Point2f & projected_point_out);
+  
+  bool projectable(const geometry_msgs::msg::Point & point, const Eigen::Matrix4d & projection_matrix);
 };
 
 }  // namespace scene_to_image_projector
