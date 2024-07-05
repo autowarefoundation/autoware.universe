@@ -143,7 +143,7 @@ double findReachTime(
     return j * t * t * t / 6.0 + a * t * t / 2.0 + v * t - d;
   };
   if (f(min, j, a, v, d) > 0 || f(max, j, a, v, d) < 0) {
-    std::logic_error("[obstacle_cruise_planner](findReachTime): search range is invalid");
+    throw std::logic_error("[obstacle_cruise_planner](findReachTime): search range is invalid");
   }
   const double eps = 1e-5;
   const int warn_iter = 100;
@@ -175,7 +175,7 @@ double calcDecelerationVelocityFromDistanceToTarget(
   const double current_velocity, const double distance_to_target)
 {
   if (max_slowdown_jerk > 0 || max_slowdown_accel > 0) {
-    std::logic_error("max_slowdown_jerk and max_slowdown_accel should be negative");
+    throw std::logic_error("max_slowdown_jerk and max_slowdown_accel should be negative");
   }
   // case0: distance to target is behind ego
   if (distance_to_target <= 0) return current_velocity;
@@ -439,7 +439,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 double PlannerInterface::calculateMarginFromObstacleOnCurve(
   const PlannerData & planner_data, const StopObstacle & stop_obstacle) const
 {
-  if (!enable_approaching_on_curve_) {
+  if (!enable_approaching_on_curve_ || use_pointcloud_) {
     return longitudinal_info_.safe_distance_margin;
   }
 
@@ -598,8 +598,9 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
         obstacle.uuid.c_str());
       continue;
     }
-    const auto [dist_to_slow_down_start, dist_to_slow_down_end, feasible_slow_down_vel] =
-      *dist_vec_to_slow_down;
+    const auto dist_to_slow_down_start = std::get<0>(*dist_vec_to_slow_down);
+    const auto dist_to_slow_down_end = std::get<1>(*dist_vec_to_slow_down);
+    const auto feasible_slow_down_vel = std::get<2>(*dist_vec_to_slow_down);
 
     // calculate slow down end distance, and insert slow down velocity
     // NOTE: slow_down_start_idx will not be wrong since inserted back point is after inserted
@@ -622,9 +623,9 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     }();
 
     // insert slow down velocity between slow start and end
-    for (size_t i = (slow_down_start_idx ? *slow_down_start_idx : 0); i <= *slow_down_end_idx;
-         ++i) {
-      auto & traj_point = slow_down_traj_points.at(i);
+    for (size_t j = (slow_down_start_idx ? *slow_down_start_idx : 0); j <= *slow_down_end_idx;
+         ++j) {
+      auto & traj_point = slow_down_traj_points.at(j);
       traj_point.longitudinal_velocity_mps =
         std::min(traj_point.longitudinal_velocity_mps, static_cast<float>(stable_slow_down_vel));
     }
@@ -636,7 +637,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
     slow_down_debug_multi_array_.data.push_back(feasible_slow_down_vel);
     slow_down_debug_multi_array_.data.push_back(stable_slow_down_vel);
     slow_down_debug_multi_array_.data.push_back(slow_down_start_idx ? *slow_down_start_idx : -1.0);
-    slow_down_debug_multi_array_.data.push_back(slow_down_end_idx ? *slow_down_end_idx : -1.0);
+    slow_down_debug_multi_array_.data.push_back(*slow_down_end_idx);
 
     // add virtual wall
     if (slow_down_start_idx && slow_down_end_idx) {

@@ -97,15 +97,17 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
 
   // Output Publishers
   {
+    rclcpp::PublisherOptions pub_options;
+    pub_options.qos_overriding_options = rclcpp::QosOverridingOptions::with_default_policies();
     pub_output_ = this->create_publisher<PointCloud2>(
-      "output", rclcpp::SensorDataQoS().keep_last(maximum_queue_size_));
+      "output", rclcpp::SensorDataQoS().keep_last(maximum_queue_size_), pub_options);
   }
 
   // Subscribers
   {
     RCLCPP_INFO_STREAM(
       get_logger(), "Subscribing to " << input_topics_.size() << " user given topics as inputs:");
-    for (auto & input_topic : input_topics_) {
+    for (const auto & input_topic : input_topics_) {
       RCLCPP_INFO_STREAM(get_logger(), " - " << input_topic);
     }
 

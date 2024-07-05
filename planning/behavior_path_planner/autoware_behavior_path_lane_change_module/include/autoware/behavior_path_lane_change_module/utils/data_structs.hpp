@@ -190,13 +190,6 @@ struct LaneChangeInfo
   double terminal_lane_changing_velocity{0.0};
 };
 
-struct LaneChangeTargetObjectIndices
-{
-  std::vector<size_t> current_lane{};
-  std::vector<size_t> target_lane{};
-  std::vector<size_t> other_lane{};
-};
-
 struct LaneChangeLanesFilteredObjects
 {
   utils::path_safety_checker::ExtendedPredictedObjects current_lane{};
@@ -211,7 +204,7 @@ enum class LaneChangeModuleType {
 };
 }  // namespace autoware::behavior_path_planner
 
-namespace autoware::behavior_path_planner::data::lane_change
+namespace autoware::behavior_path_planner::lane_change
 {
 struct PathSafetyStatus
 {
@@ -225,6 +218,6 @@ struct LanesPolygon
   std::optional<lanelet::BasicPolygon2d> target;
   std::vector<lanelet::BasicPolygon2d> target_backward;
 };
-}  // namespace autoware::behavior_path_planner::data::lane_change
+}  // namespace autoware::behavior_path_planner::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DATA_STRUCTS_HPP_
