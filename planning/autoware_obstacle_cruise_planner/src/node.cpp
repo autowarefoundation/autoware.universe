@@ -1083,7 +1083,7 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstPointCloudObstacles(
   std::vector<StopObstacle> past_stop_obstacles;
   for (auto itr = stop_pc_obstacle_history_.begin(); itr != stop_pc_obstacle_history_.end();) {
     const double elapsed_time = (rclcpp::Time(odometry.header.stamp) - itr->stamp).seconds();
-    if (elapsed_time >= behavior_determination_param_.stop_obstacle_hold_time_threshold) {
+    if (elapsed_time >= p.stop_obstacle_hold_time_threshold) {
       itr = stop_pc_obstacle_history_.erase(itr);
       continue;
     }
