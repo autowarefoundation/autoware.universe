@@ -21,7 +21,7 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 
 #include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
@@ -293,8 +293,7 @@ bool isWithinCrosswalk(
 {
   using Point = boost::geometry::model::d2::point_xy<double>;
 
-  const auto & p = object.object.kinematics.initial_pose_with_covariance.pose.position;
-  const Point p_object{p.x, p.y};
+  const Point p_object{object.getPosition().x, object.getPosition().y};
 
   // get conflicting crosswalk crosswalk
   constexpr int PEDESTRIAN_GRAPH_ID = 1;
@@ -335,14 +334,16 @@ bool isWithinIntersection(
     route_handler->getLaneletMapPtr()->polygonLayer.get(std::atoi(area_id.c_str()));
 
   return boost::geometry::within(
-    object_polygon, utils::toPolygon2d(lanelet::utils::to2D(polygon.basicPolygon())));
+    lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+      .basicPoint(),
+    lanelet::utils::to2D(polygon.basicPolygon()));
 }
 
 bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
 {
-  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
   if (boost::geometry::within(
-        lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+        lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+          .basicPoint(),
         object.overhang_lanelet.polygon2d().basicPolygon())) {
     return true;
   }
@@ -351,7 +352,8 @@ bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> 
   lanelet::ConstLanelets prev_lanelet;
   if (route_handler->getPreviousLaneletsWithinRoute(object.overhang_lanelet, &prev_lanelet)) {
     if (boost::geometry::within(
-          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+            .basicPoint(),
           prev_lanelet.front().polygon2d().basicPolygon())) {
       return true;
     }
@@ -361,9 +363,19 @@ bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> 
   lanelet::ConstLanelet next_lanelet;
   if (route_handler->getNextLaneletWithinRoute(object.overhang_lanelet, &next_lanelet)) {
     if (boost::geometry::within(
-          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object_pos)).basicPoint(),
+          lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+            .basicPoint(),
           next_lanelet.polygon2d().basicPolygon())) {
       return true;
+    }
+  } else {
+    for (const auto & lane : route_handler->getNextLanelets(object.overhang_lanelet)) {
+      if (boost::geometry::within(
+            lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+              .basicPoint(),
+            lane.polygon2d().basicPolygon())) {
+        return true;
+      }
     }
   }
 
@@ -372,20 +384,18 @@ bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> 
 
 bool isParallelToEgoLane(const ObjectData & object, const double threshold)
 {
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto closest_pose =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
-  const auto yaw_deviation = std::abs(calcYawDeviation(closest_pose, object_pose));
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition());
+  const auto yaw_deviation = std::abs(calcYawDeviation(closest_pose, object.getPose()));
 
   return yaw_deviation < threshold || yaw_deviation > M_PI - threshold;
 }
 
 bool isMergingToEgoLane(const ObjectData & object)
 {
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto closest_pose =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
-  const auto yaw_deviation = calcYawDeviation(closest_pose, object_pose);
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition());
+  const auto yaw_deviation = calcYawDeviation(closest_pose, object.getPose());
 
   if (isOnRight(object)) {
     if (yaw_deviation < 0.0 && -1.0 * M_PI_2 < yaw_deviation) {
@@ -422,9 +432,8 @@ bool isParkedVehicle(
     return false;
   }
 
-  const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
   const auto centerline_pos =
-    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pos).position;
+    lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition()).position;
 
   bool is_left_side_parked_vehicle = false;
   if (!isOnRight(object)) {
@@ -442,7 +451,8 @@ bool isParkedVehicle(
         return same_direction_lane;
       }
 
-      return static_cast<lanelet::ConstLanelet>(opposite_lanes.front().invert());
+      return static_cast<lanelet::ConstLanelet>(
+        route_handler->getMostRightLanelet(opposite_lanes.front()).invert());
     }();
 
     const auto center_to_left_boundary = distance2d(
@@ -457,7 +467,7 @@ bool isParkedVehicle(
     if (sub_type == "road_shoulder") {
       // assuming it's parked vehicle if its CoG is within road shoulder lanelet.
       if (boost::geometry::within(
-            to2D(toLaneletPoint(object_pos)).basicPoint(),
+            to2D(toLaneletPoint(object.getPosition())).basicPoint(),
             most_left_lanelet.polygon2d().basicPolygon())) {
         return true;
       }
@@ -468,7 +478,7 @@ bool isParkedVehicle(
 
     const auto arc_coordinates = toArcCoordinates(
       to2D(object.overhang_lanelet.centerline().basicLineString()),
-      to2D(toLaneletPoint(object_pos)).basicPoint());
+      to2D(toLaneletPoint(object.getPosition())).basicPoint());
     object.shiftable_ratio = arc_coordinates.distance / object_shiftable_distance;
 
     is_left_side_parked_vehicle = object.shiftable_ratio > parameters->object_check_shiftable_ratio;
@@ -490,7 +500,8 @@ bool isParkedVehicle(
         return same_direction_lane;
       }
 
-      return static_cast<lanelet::ConstLanelet>(opposite_lanes.front().invert());
+      return static_cast<lanelet::ConstLanelet>(
+        route_handler->getMostLeftLanelet(opposite_lanes.front()).invert());
     }();
 
     const auto center_to_right_boundary = distance2d(
@@ -505,7 +516,7 @@ bool isParkedVehicle(
     if (sub_type == "road_shoulder") {
       // assuming it's parked vehicle if its CoG is within road shoulder lanelet.
       if (boost::geometry::within(
-            to2D(toLaneletPoint(object_pos)).basicPoint(),
+            to2D(toLaneletPoint(object.getPosition())).basicPoint(),
             most_right_lanelet.polygon2d().basicPolygon())) {
         return true;
       }
@@ -516,7 +527,7 @@ bool isParkedVehicle(
 
     const auto arc_coordinates = toArcCoordinates(
       to2D(object.overhang_lanelet.centerline().basicLineString()),
-      to2D(toLaneletPoint(object_pos)).basicPoint());
+      to2D(toLaneletPoint(object.getPosition())).basicPoint());
     object.shiftable_ratio = -1.0 * arc_coordinates.distance / object_shiftable_distance;
 
     is_right_side_parked_vehicle =
@@ -527,9 +538,8 @@ bool isParkedVehicle(
     return false;
   }
 
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   object.to_centerline =
-    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object.getPose()).distance;
   if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
     return false;
   }
@@ -544,13 +554,13 @@ bool isCloseToStopFactor(
 {
   const auto & rh = planner_data->route_handler;
   const auto & ego_pose = planner_data->self_odometry->pose.pose;
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
 
   // force avoidance for stopped vehicle
   bool is_close_to_stop_factor = false;
 
   // check traffic light
-  const auto to_traffic_light = getDistanceToNextTrafficLight(object_pose, data.extend_lanelets);
+  const auto to_traffic_light =
+    getDistanceToNextTrafficLight(object.getPose(), data.extend_lanelets);
   {
     is_close_to_stop_factor =
       to_traffic_light < parameters->object_ignore_section_traffic_light_in_front_distance;
@@ -792,11 +802,49 @@ bool isSatisfiedWithNonVehicleCondition(
   }
 
   // Object is on center line -> ignore.
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   object.to_centerline =
-    lanelet::utils::getArcCoordinates(data.current_lanelets, object_pose).distance;
+    lanelet::utils::getArcCoordinates(data.current_lanelets, object.getPose()).distance;
   if (std::abs(object.to_centerline) < parameters->threshold_distance_object_is_on_center) {
     object.info = ObjectInfo::TOO_NEAR_TO_CENTERLINE;
+    return false;
+  }
+
+  if (object.is_within_intersection) {
+    RCLCPP_DEBUG(
+      rclcpp::get_logger(logger_namespace),
+      "object is within intersection. don't have to avoid it.");
+    return false;
+  }
+
+  const auto right_lane =
+    planner_data->route_handler->getRightLanelet(object.overhang_lanelet, true, true);
+  if (right_lane.has_value() && isOnRight(object)) {
+    RCLCPP_DEBUG(
+      rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+    return false;
+  }
+
+  const auto left_lane =
+    planner_data->route_handler->getLeftLanelet(object.overhang_lanelet, true, true);
+  if (left_lane.has_value() && !isOnRight(object)) {
+    RCLCPP_DEBUG(
+      rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+    return false;
+  }
+
+  const auto right_opposite_lanes =
+    planner_data->route_handler->getRightOppositeLanelets(object.overhang_lanelet);
+  if (!right_opposite_lanes.empty() && isOnRight(object)) {
+    RCLCPP_DEBUG(
+      rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
+    return false;
+  }
+
+  const auto left_opposite_lanes =
+    planner_data->route_handler->getLeftOppositeLanelets(object.overhang_lanelet);
+  if (!left_opposite_lanes.empty() && !isOnRight(object)) {
+    RCLCPP_DEBUG(
+      rclcpp::get_logger(logger_namespace), "object isn't on the edge lane. never avoid it.");
     return false;
   }
 
@@ -844,9 +892,8 @@ bool isSatisfiedWithVehicleCondition(
     return false;
   }
 
-  const auto & current_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto is_moving_distance_longer_than_threshold =
-    calcDistance2d(object.init_pose, current_pose) >
+    calcDistance2d(object.init_pose, object.getPose()) >
     parameters->distance_threshold_for_ambiguous_vehicle;
   if (is_moving_distance_longer_than_threshold) {
     object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
@@ -944,9 +991,8 @@ double getRoadShoulderDistance(
   using autoware::universe_utils::Point2d;
   using lanelet::utils::to2D;
 
-  const auto & object_pose = object.object.kinematics.initial_pose_with_covariance.pose;
   const auto object_closest_index =
-    autoware::motion_utils::findNearestIndex(data.reference_path.points, object_pose.position);
+    autoware::motion_utils::findNearestIndex(data.reference_path.points, object.getPosition());
   const auto object_closest_pose = data.reference_path.points.at(object_closest_index).point.pose;
 
   const auto rh = planner_data->route_handler;
@@ -957,7 +1003,7 @@ double getRoadShoulderDistance(
   std::vector<std::tuple<double, Point, Point>> intersects;
   for (const auto & p1 : object.overhang_points) {
     const auto centerline_pose =
-      lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object_pose.position);
+      lanelet::utils::getClosestCenterPose(object.overhang_lanelet, object.getPosition());
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(p1.second).orientation(centerline_pose.orientation);
 
@@ -1326,8 +1372,7 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
       object.avoid_margin.value() - object_parameter.envelope_buffer_margin - vehicle_width / 2.0;
     const auto obj_poly =
       autoware::universe_utils::expandPolygon(object.envelope_poly, diff_poly_buffer);
-    obstacles_for_drivable_area.push_back(
-      {object.object.kinematics.initial_pose_with_covariance.pose, obj_poly, !isOnRight(object)});
+    obstacles_for_drivable_area.push_back({object.getPose(), obj_poly, !isOnRight(object)});
   }
   return obstacles_for_drivable_area;
 }
@@ -1495,7 +1540,7 @@ void fillObjectMovingTime(
     object_data.last_stop = now;
     object_data.move_time = 0.0;
     if (is_new_object) {
-      object_data.init_pose = object_data.object.kinematics.initial_pose_with_covariance.pose;
+      object_data.init_pose = object_data.getPose();
       object_data.stop_time = 0.0;
       object_data.last_move = now;
       stopped_objects.push_back(object_data);
@@ -1510,7 +1555,7 @@ void fillObjectMovingTime(
   }
 
   if (is_new_object) {
-    object_data.init_pose = object_data.object.kinematics.initial_pose_with_covariance.pose;
+    object_data.init_pose = object_data.getPose();
     object_data.move_time = std::numeric_limits<double>::infinity();
     object_data.stop_time = 0.0;
     object_data.last_move = now;
@@ -1520,7 +1565,7 @@ void fillObjectMovingTime(
   object_data.last_stop = same_id_obj->last_stop;
   object_data.move_time = (now - same_id_obj->last_stop).seconds();
   object_data.stop_time = 0.0;
-  object_data.init_pose = object_data.object.kinematics.initial_pose_with_covariance.pose;
+  object_data.init_pose = object_data.getPose();
 
   if (object_data.move_time > object_parameter.moving_time_threshold) {
     stopped_objects.erase(same_id_obj);
@@ -1617,9 +1662,9 @@ void updateRegisteredObject(
     }
 
     constexpr auto POS_THR = 1.5;
-    const auto r_pos = registered_object.object.kinematics.initial_pose_with_covariance.pose;
+    const auto r_pos = registered_object.getPose();
     const auto similar_pos_obj = std::find_if(n.begin(), n.end(), [&](const auto & o) {
-      return calcDistance2d(r_pos, o.object.kinematics.initial_pose_with_covariance.pose) < POS_THR;
+      return calcDistance2d(r_pos, o.getPose()) < POS_THR;
     });
 
     // same id object is not detected, but object is found around registered. update registered.
@@ -1834,6 +1879,8 @@ void filterTargetObjects(
         continue;
       }
     } else {
+      o.is_within_intersection =
+        filtering_utils::isWithinIntersection(o, planner_data->route_handler);
       o.is_parked = false;
       o.avoid_margin = filtering_utils::getAvoidMargin(o, planner_data, parameters);
 
@@ -1987,6 +2034,17 @@ lanelet::ConstLanelets getAdjacentLane(
       lanes.push_back(opt_right_lane.value());
     }
 
+    const auto left_opposite_lanes = rh->getLeftOppositeLanelets(lane);
+    if (!is_right_shift && !left_opposite_lanes.empty()) {
+      lanes.push_back(left_opposite_lanes.front());
+
+      for (const auto & prev_lane : rh->getPreviousLanelets(left_opposite_lanes.front())) {
+        if (!exist(prev_lane.id())) {
+          lanes.push_back(prev_lane);
+        }
+      }
+    }
+
     const auto right_opposite_lanes = rh->getRightOppositeLanelets(lane);
     if (is_right_shift && !right_opposite_lanes.empty()) {
       lanes.push_back(right_opposite_lanes.front());
@@ -2064,21 +2122,35 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
     return {};
   }
 
+  const auto is_moving = [&parameters](const auto & object) {
+    const auto & object_twist = object.kinematics.initial_twist_with_covariance.twist;
+    const auto object_vel_norm = std::hypot(object_twist.linear.x, object_twist.linear.y);
+    const auto object_parameter =
+      parameters->object_parameters.at(utils::getHighestProbLabel(object.classification));
+    return object_vel_norm > object_parameter.moving_speed_threshold;
+  };
+
+  const auto filter =
+    [&is_moving](const auto & object, const auto & lanelet, [[maybe_unused]] const auto unused) {
+      // filter by yaw deviation only when the object is moving because the head direction is not
+      // reliable while object is stopping.
+      const auto yaw_threshold = is_moving(object) ? M_PI_2 : M_PI;
+      return utils::path_safety_checker::isCentroidWithinLanelet(object, lanelet, yaw_threshold);
+    };
+
   // check right lanes
   if (check_right_lanes) {
     const auto check_lanes = getAdjacentLane(closest_lanelet, planner_data, p, true);
 
     if (p->check_other_object) {
       const auto [targets, others] = utils::path_safety_checker::separateObjectsByLanelets(
-        to_predicted_objects(data.other_objects), check_lanes,
-        utils::path_safety_checker::isCentroidWithinLanelet);
+        to_predicted_objects(data.other_objects), check_lanes, filter);
       append(targets);
     }
 
     if (p->check_unavoidable_object) {
       const auto [targets, others] = utils::path_safety_checker::separateObjectsByLanelets(
-        to_predicted_objects(unavoidable_objects), check_lanes,
-        utils::path_safety_checker::isCentroidWithinLanelet);
+        to_predicted_objects(unavoidable_objects), check_lanes, filter);
       append(targets);
     }
 
@@ -2092,15 +2164,13 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 
     if (p->check_other_object) {
       const auto [targets, others] = utils::path_safety_checker::separateObjectsByLanelets(
-        to_predicted_objects(data.other_objects), check_lanes,
-        utils::path_safety_checker::isCentroidWithinLanelet);
+        to_predicted_objects(data.other_objects), check_lanes, filter);
       append(targets);
     }
 
     if (p->check_unavoidable_object) {
       const auto [targets, others] = utils::path_safety_checker::separateObjectsByLanelets(
-        to_predicted_objects(unavoidable_objects), check_lanes,
-        utils::path_safety_checker::isCentroidWithinLanelet);
+        to_predicted_objects(unavoidable_objects), check_lanes, filter);
       append(targets);
     }
 
@@ -2114,15 +2184,13 @@ std::vector<ExtendedPredictedObject> getSafetyCheckTargetObjects(
 
     if (p->check_other_object) {
       const auto [targets, others] = utils::path_safety_checker::separateObjectsByLanelets(
-        to_predicted_objects(data.other_objects), check_lanes,
-        utils::path_safety_checker::isCentroidWithinLanelet);
+        to_predicted_objects(data.other_objects), check_lanes, filter);
       append(targets);
     }
 
     if (p->check_unavoidable_object) {
       const auto [targets, others] = utils::path_safety_checker::separateObjectsByLanelets(
-        to_predicted_objects(unavoidable_objects), check_lanes,
-        utils::path_safety_checker::isCentroidWithinLanelet);
+        to_predicted_objects(unavoidable_objects), check_lanes, filter);
       append(targets);
     }
 
@@ -2238,14 +2306,16 @@ DrivableLanes generateExpandedDrivableLanes(
   current_drivable_lanes.left_lane = lanelet;
   current_drivable_lanes.right_lane = lanelet;
 
-  if (!parameters->use_adjacent_lane) {
+  if (parameters->use_lane_type == "current_lane") {
     return current_drivable_lanes;
   }
 
+  const auto use_opposite_lane = parameters->use_lane_type == "opposite_direction_lane";
+
   // 1. get left/right side lanes
   const auto update_left_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
-    const auto all_left_lanelets = route_handler->getAllLeftSharedLinestringLanelets(
-      target_lane, parameters->use_opposite_lane, true);
+    const auto all_left_lanelets =
+      route_handler->getAllLeftSharedLinestringLanelets(target_lane, use_opposite_lane, true);
     if (!all_left_lanelets.empty()) {
       current_drivable_lanes.left_lane = all_left_lanelets.back();  // leftmost lanelet
       pushUniqueVector(
@@ -2254,8 +2324,8 @@ DrivableLanes generateExpandedDrivableLanes(
     }
   };
   const auto update_right_lanelets = [&](const lanelet::ConstLanelet & target_lane) {
-    const auto all_right_lanelets = route_handler->getAllRightSharedLinestringLanelets(
-      target_lane, parameters->use_opposite_lane, true);
+    const auto all_right_lanelets =
+      route_handler->getAllRightSharedLinestringLanelets(target_lane, use_opposite_lane, true);
     if (!all_right_lanelets.empty()) {
       current_drivable_lanes.right_lane = all_right_lanelets.back();  // rightmost lanelet
       pushUniqueVector(
