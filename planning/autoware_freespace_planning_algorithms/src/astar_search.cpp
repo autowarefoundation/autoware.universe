@@ -126,6 +126,9 @@ bool AstarSearch::makePlan(
   start_pose_ = global2local(costmap_, start_pose);
   goal_pose_ = global2local(costmap_, goal_pose);
 
+  clearNodes();
+  graph_.reserve(100000);
+
   if (!setStartNode()) {
     throw std::logic_error("Invalid start pose");
     return false;
