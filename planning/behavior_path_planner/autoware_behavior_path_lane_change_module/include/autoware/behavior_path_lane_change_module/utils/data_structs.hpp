@@ -161,6 +161,9 @@ struct Parameters
 
   // debug marker
   bool publish_debug_marker{false};
+
+  // print process time
+  bool print_processing_time{false};
 };
 
 enum class States {

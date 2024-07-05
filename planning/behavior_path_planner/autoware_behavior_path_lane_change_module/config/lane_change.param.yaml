@@ -113,3 +113,5 @@
 
       # debug
       publish_debug_marker: false
+
+      print_processing_time: true

@@ -230,6 +230,9 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
   // debug marker
   p.publish_debug_marker = getOrDeclareParameter<bool>(*node, parameter("publish_debug_marker"));
 
+  // print processing time
+  p.print_processing_time = getOrDeclareParameter<bool>(*node, parameter("print_processing_time"));
+
   // validation of parameters
   if (p.longitudinal_acc_sampling_num < 1 || p.lateral_acc_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
@@ -275,10 +278,13 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
 
 std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
 {
+  auto time_keepr = std::make_shared<autoware::universe_utils::TimeKeeper>();
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
     objects_of_interest_marker_interface_ptr_map_,
-    std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
+    std::make_unique<NormalLaneChange>(
+      parameters_, LaneChangeModuleType::NORMAL, direction_, time_keepr),
+    time_keepr);
 }
 
 void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Parameter> & parameters)

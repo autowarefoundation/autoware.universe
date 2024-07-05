@@ -23,6 +23,7 @@
 #include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -46,6 +47,14 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 class LaneChangeInterface : public SceneModuleInterface
 {
 public:
+  LaneChangeInterface(
+    const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
+    const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+      objects_of_interest_marker_interface_ptr_map,
+    std::unique_ptr<LaneChangeBase> && module_type,
+    std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper);
+
   LaneChangeInterface(
     const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
@@ -108,6 +117,7 @@ protected:
     const double start_distance, const double finish_distance, const bool safe,
     const uint8_t & state)
   {
+    autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
       if (ptr) {
         ptr->updateCooperateStatus(
@@ -132,6 +142,8 @@ protected:
   bool is_abort_path_approved_{false};
 
   bool is_abort_approval_requested_{false};
+
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 };
 }  // namespace autoware::behavior_path_planner
 

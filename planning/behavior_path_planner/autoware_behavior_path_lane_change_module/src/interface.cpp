@@ -18,11 +18,11 @@
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 
-#include <algorithm>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -37,18 +37,33 @@ LaneChangeInterface::LaneChangeInterface(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
     objects_of_interest_marker_interface_ptr_map,
-  std::unique_ptr<LaneChangeBase> && module_type)
+  std::unique_ptr<LaneChangeBase> && module_type,
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{std::move(parameters)},
   module_type_{std::move(module_type)},
-  prev_approved_path_{std::make_unique<PathWithLaneId>()}
+  prev_approved_path_{std::make_unique<PathWithLaneId>()},
+  time_keeper_(time_keeper)
 {
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, name);
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
 }
 
+LaneChangeInterface::LaneChangeInterface(
+  const std::string & name, rclcpp::Node & node, std::shared_ptr<LaneChangeParameters> parameters,
+  const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
+  std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
+    objects_of_interest_marker_interface_ptr_map,
+  std::unique_ptr<LaneChangeBase> && module_type)
+: LaneChangeInterface(
+    name, node, parameters, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map,
+    std::move(module_type), std::make_shared<autoware::universe_utils::TimeKeeper>())
+{
+}
+
 void LaneChangeInterface::processOnExit()
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   module_type_->resetParameters();
   debug_marker_.markers.clear();
   post_process_safety_status_ = {};
@@ -57,6 +72,7 @@ void LaneChangeInterface::processOnExit()
 
 bool LaneChangeInterface::isExecutionRequested() const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   if (getCurrentStatus() == ModuleStatus::RUNNING) {
     return true;
   }
@@ -66,11 +82,13 @@ bool LaneChangeInterface::isExecutionRequested() const
 
 bool LaneChangeInterface::isExecutionReady() const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   return module_type_->isSafe() && !module_type_->isAbortState();
 }
 
 void LaneChangeInterface::updateData()
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
   module_type_->updateSpecialData();
 
@@ -84,6 +102,7 @@ void LaneChangeInterface::updateData()
 
 void LaneChangeInterface::postProcess()
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   if (getCurrentStatus() == ModuleStatus::RUNNING) {
     const auto safety_status = module_type_->isApprovedPathSafe();
     post_process_safety_status_ =
@@ -94,6 +113,7 @@ void LaneChangeInterface::postProcess()
 
 BehaviorModuleOutput LaneChangeInterface::plan()
 {
+  time_keeper_->start_track(__PRETTY_FUNCTION__);
   resetPathCandidate();
   resetPathReference();
 
@@ -124,6 +144,12 @@ BehaviorModuleOutput LaneChangeInterface::plan()
       State::RUNNING);
   }
 
+  time_keeper_->end_track(__PRETTY_FUNCTION__);
+  if (parameters_->print_processing_time) {
+    time_keeper_->report(&std::cerr);
+  } else {
+    time_keeper_->report();
+  }
   return output;
 }
 
@@ -165,6 +191,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 
 CandidateOutput LaneChangeInterface::planCandidate() const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
+
   const auto selected_path = module_type_->getLaneChangePath();
 
   if (selected_path.path.points.empty()) {
@@ -190,6 +218,7 @@ void LaneChangeInterface::setData(const std::shared_ptr<const PlannerData> & dat
 
 bool LaneChangeInterface::canTransitSuccessState()
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   auto log_debug_throttled = [&](std::string_view message) -> void {
     RCLCPP_DEBUG(getLogger(), "%s", message.data());
   };
@@ -214,6 +243,7 @@ bool LaneChangeInterface::canTransitSuccessState()
 
 bool LaneChangeInterface::canTransitFailureState()
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   auto log_debug_throttled = [&](std::string_view message) -> void {
     RCLCPP_DEBUG(getLogger(), "%s", message.data());
   };
@@ -305,6 +335,7 @@ bool LaneChangeInterface::canTransitFailureState()
 
 void LaneChangeInterface::updateDebugMarker() const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   debug_marker_.markers.clear();
   if (!parameters_->publish_debug_marker) {
     return;
@@ -315,6 +346,7 @@ void LaneChangeInterface::updateDebugMarker() const
 
 MarkerArray LaneChangeInterface::getModuleVirtualWall()
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   using marker_utils::lane_change_markers::createLaneChangingVirtualWallMarker;
   MarkerArray marker;
 
@@ -340,6 +372,7 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
 
 void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & output)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   const auto steering_factor_direction = std::invoke([&]() {
     if (module_type_->getDirection() == Direction::LEFT) {
       return SteeringFactor::LEFT;
@@ -366,6 +399,7 @@ void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & o
 void LaneChangeInterface::updateSteeringFactorPtr(
   const CandidateOutput & output, const LaneChangePath & selected_path) const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__PRETTY_FUNCTION__, *time_keeper_);
   const uint16_t steering_factor_direction = std::invoke([&output]() {
     if (output.lateral_shift > 0.0) {
       return SteeringFactor::LEFT;

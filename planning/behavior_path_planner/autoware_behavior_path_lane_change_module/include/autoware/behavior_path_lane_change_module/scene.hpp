@@ -16,6 +16,7 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/base_class.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
+#include "autoware/universe_utils/system/time_keeper.hpp"
 
 #include <memory>
 #include <utility>
@@ -41,6 +42,10 @@ using utils::path_safety_checker::ExtendedPredictedObjects;
 class NormalLaneChange : public LaneChangeBase
 {
 public:
+  NormalLaneChange(
+    const std::shared_ptr<LaneChangeParameters> & parameters, LaneChangeModuleType type,
+    Direction direction, std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper);
+
   NormalLaneChange(
     const std::shared_ptr<LaneChangeParameters> & parameters, LaneChangeModuleType type,
     Direction direction);
@@ -204,6 +209,8 @@ protected:
   double getStopTime() const { return stop_time_; }
 
   double stop_time_{0.0};
+
+  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
 };
 }  // namespace autoware::behavior_path_planner
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
