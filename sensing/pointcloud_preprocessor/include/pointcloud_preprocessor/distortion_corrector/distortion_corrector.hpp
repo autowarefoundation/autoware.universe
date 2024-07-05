@@ -48,6 +48,11 @@ namespace pointcloud_preprocessor
 class DistortionCorrectorBase
 {
 public:
+  virtual bool get_pointcloud_transform_exists() = 0;
+  virtual bool get_pointcloud_transform_needed() = 0;
+  virtual std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue() = 0;
+  virtual std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue() = 0;
+
   virtual void processTwistMessage(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) = 0;
   virtual void processIMUMessage(
@@ -61,10 +66,10 @@ public:
 template <class T>
 class DistortionCorrector : public DistortionCorrectorBase
 {
-public:
-  bool pointcloud_transform_needed_{false};
-  bool pointcloud_transform_exists_{false};
+protected:
   bool imu_transform_exists_{false};
+  bool pointcloud_transform_exists_{false};
+  bool pointcloud_transform_needed_{false};
   rclcpp::Node * node_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
@@ -72,10 +77,17 @@ public:
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
+public:
   explicit DistortionCorrector(rclcpp::Node * node)
   : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
   {
   }
+
+  bool get_pointcloud_transform_exists();
+  bool get_pointcloud_transform_needed();
+  std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
+  std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue();
+
   void processTwistMessage(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
 

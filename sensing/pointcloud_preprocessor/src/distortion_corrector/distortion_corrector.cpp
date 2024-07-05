@@ -20,6 +20,31 @@
 
 namespace pointcloud_preprocessor
 {
+
+template <class T>
+bool DistortionCorrector<T>::get_pointcloud_transform_exists()
+{
+  return pointcloud_transform_exists_;
+}
+
+template <class T>
+bool DistortionCorrector<T>::get_pointcloud_transform_needed()
+{
+  return pointcloud_transform_needed_;
+}
+
+template <class T>
+std::deque<geometry_msgs::msg::TwistStamped> DistortionCorrector<T>::get_twist_queue()
+{
+  return twist_queue_;
+}
+
+template <class T>
+std::deque<geometry_msgs::msg::Vector3Stamped> DistortionCorrector<T>::get_angular_velocity_queue()
+{
+  return angular_velocity_queue_;
+}
+
 template <class T>
 void DistortionCorrector<T>::processTwistMessage(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg)

@@ -238,9 +238,9 @@ TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
   auto twist_msg = generateTwistMsg(1.0, 0.5, node_->get_clock()->now());
   distortion_corrector_2d_->processTwistMessage(twist_msg);
 
-  ASSERT_FALSE(distortion_corrector_2d_->twist_queue_.empty());
-  EXPECT_EQ(distortion_corrector_2d_->twist_queue_.front().twist.linear.x, 1.0);
-  EXPECT_EQ(distortion_corrector_2d_->twist_queue_.front().twist.angular.z, 0.5);
+  ASSERT_FALSE(distortion_corrector_2d_->get_twist_queue().empty());
+  EXPECT_EQ(distortion_corrector_2d_->get_twist_queue().front().twist.linear.x, 1.0);
+  EXPECT_EQ(distortion_corrector_2d_->get_twist_queue().front().twist.angular.z, 0.5);
 }
 
 TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
@@ -248,8 +248,9 @@ TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
   auto imu_msg = generateImuMsg(0.5, 0.3, 0.1, node_->get_clock()->now());
   distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
 
-  ASSERT_FALSE(distortion_corrector_2d_->angular_velocity_queue_.empty());
-  EXPECT_NEAR(distortion_corrector_2d_->angular_velocity_queue_.front().vector.z, 0.0443032, 5e-5);
+  ASSERT_FALSE(distortion_corrector_2d_->get_angular_velocity_queue().empty());
+  EXPECT_NEAR(
+    distortion_corrector_2d_->get_angular_velocity_queue().front().vector.z, 0.0443032, 5e-5);
 }
 
 TEST_F(DistortionCorrectorTest, TestIsInputValid)
@@ -277,22 +278,22 @@ TEST_F(DistortionCorrectorTest, TestIsInputValid)
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithBaseLink)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_exists_);
-  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed_);
+  EXPECT_TRUE(distortion_corrector_2d_->get_pointcloud_transform_exists());
+  EXPECT_FALSE(distortion_corrector_2d_->get_pointcloud_transform_needed());
 }
 
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithLidarFrame)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
-  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_exists_);
-  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_needed_);
+  EXPECT_TRUE(distortion_corrector_2d_->get_pointcloud_transform_exists());
+  EXPECT_TRUE(distortion_corrector_2d_->get_pointcloud_transform_needed());
 }
 
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithMissingFrame)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "missing_lidar_frame");
-  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_exists_);
-  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed_);
+  EXPECT_FALSE(distortion_corrector_2d_->get_pointcloud_transform_exists());
+  EXPECT_FALSE(distortion_corrector_2d_->get_pointcloud_transform_needed());
 }
 
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
