@@ -130,7 +130,13 @@ Once the JetPack is successfully flashed to the Jetson NX, boot the system and t
 # F1tenth Record-Replay Demo
 This demo allows the user to first build a map, record a trajectory by manually driving the F1tenth car, and then perform trajectory following in the `F1tenth gym simulator` or in `real-world` running Autoware framework.
 
-## How to create a map
+## Create a map without an F1tenth car
+
+If you do not have an F1tenth car. You can use the maps provided in the f1tenth_gym_ros simulation folder under `/maps` directory. By default the `pennovation` map is used. See `Change map in the F1tenth simulator` below to update and ensure the map file path correctly reflects to the system.
+
+You can also draw your own map and save as .png files. Make sure you set the corresponding .yaml file correctly. You can also use the map provided in the f1tenth_gym_ros simulation folder under /maps directory.
+
+## Create a map with an F1tenth car
 
 This part assumes that you have a fully built and properly tuned F1tenth car. For instructions on how to configure an F1tenth car, see [f1tenth_system](https://github.com/autowarefoundation/autoware.universe/tree/f1tenth_galactic/f1tenth/f1tenth_system).
 
@@ -154,17 +160,23 @@ ros2 launch f1tenth_stack bringup_launch.py
 ros2 launch slam_toolbox online_async_launch.py slam_params_file:=/home/<username>/autoware/src/universe/autoware.universe/f1tenth/f1tenth_system/f1tenth_stack/config/f1tenth_online_async.yaml
 ```
 
-3. Launch rviz2. Add `/map` by topic. Add `/graph_visualization` by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map. Map will be saved in whichever directory you run slam_toolbox.
+3. Launch rviz2. Add `/map` by topic. Add `/graph_visualization` by topic. On the top left corner of rviz, panels – add new panel – add SlamToolBoxPlugin panel. Once you’re done mapping, save the map using the plugin. You can give it a name in the text box next to Save Map, or manually modify the `.png` and `.yaml` file names afterward. The map files will be saved in whichever directory you run slam_toolbox (/autoware).
+
+4. Open the generated `.yaml` file and ensure/update `image:` such that it matches the map file name.
+
+5. To use the map in the F1tenth simulator, copy the `.png` and `.yaml` map files to the `maps` directory under `f1tenth_gym_ros`: /home/autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/maps
+
+6. To use the map on a real F1tenth car, copy the `.png` and `.yaml` files to the `maps` directory under `particle_filter`: /home/autoware/autoware/src/universe/autoware.universe/f1tenth/particle_filter/maps
 
 [![SLAM demo](https://img.youtube.com/vi/bgrxjXlJbhI/hqdefault.jpg)](https://youtu.be/bgrxjXlJbhI)
 
-### Create a map without an F1tenth car
-
-If you do not have an F1tenth car, You can draw your own map and save as .png files. Make sure you set the corresponding .yaml file correctly. You can also use the map provided in the f1tenth simulation folder under /map directory.
-
 ### Change map in the F1tenth simulator
 
-Navigate to /home/autoware/install/f1tenth_gym_ros/share/f1tenth_gym_ros/config. In `sim.yaml`, update the map file path (absulote path) and save.
+Navigate to autoware/src/universe/autoware.universe/f1tenth/f1tenth_gym_ros/config. In `sim.yaml`, update the map file path (absulote path) and save.
+
+### Change map on a F1tenth car
+
+Navigate to autoware/src/universe/autoware.universe/f1tenth/particle_filter/config. In `localize.yaml`, update the map name and save.
 
 ## How to record a trajectory (simulation)
 
@@ -177,7 +189,7 @@ cd autoware && . install/setup.bash
 ros2 launch launch_autoware_f1tenth demo_launch.py
 ```
 
-rviz2 should launch automatically with the target map loaded (black markers). After a short peroid of time the simulated Lidar data (colored markers) and the car model should be overlaid on top of the map indicating the simulator is running correctly. It can take up to `5 minutes` for the Lidar data to show up if the simulator is launched the first time. You may use your mouse's left/right buttons and scroll wheel in rviz2 to adjust the camera position and angle for better map view.
+rviz2 should launch automatically with the target map loaded (black markers). After a short peroid of time the simulated Lidar data (colored markers) and the car model should be overlaid on top of the map indicating the simulator is running correctly. It can take up to `5 minutes` for the Lidar data to show up if the simulator is launched the first time. You may use your mouse's left/right buttons and scroll wheel in rviz2 to adjust the camera position and angle for better a map view (top-down view).
 
 ![rviz image](./images/simulator_rviz.jpg)
 
