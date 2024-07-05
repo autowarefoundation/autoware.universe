@@ -163,7 +163,7 @@ bool Lanelet2DifferentialLoaderModule::differentialLanelet2Load(
     const auto map_bin_msg = Lanelet2MapLoaderNode::create_lanelet_map_bin_msg(
       map, lanelet2_paths[0], rclcpp::Clock().now());
 
-    response->differential_map = map_bin_msg;
+    response->lanelet2_cells = map_bin_msg;
   } else {
     const lanelet::projection::LocalProjector projector;
     lanelet::ErrorMessages errors{};
@@ -181,7 +181,7 @@ bool Lanelet2DifferentialLoaderModule::differentialLanelet2Load(
     const auto map_bin_msg = Lanelet2MapLoaderNode::create_lanelet_map_bin_msg(
       map, lanelet2_paths[0], rclcpp::Clock().now());
 
-    response->differential_map = map_bin_msg;
+    response->lanelet2_cells = map_bin_msg;
   }
 
   return true;

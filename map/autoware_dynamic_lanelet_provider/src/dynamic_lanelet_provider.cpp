@@ -171,7 +171,7 @@ void DynamicLaneletProviderNode::updateMap(const geometry_msgs::msg::Point & pos
     status = result.wait_for(std::chrono::seconds(1));
   }
 
-  dynamic_map_pub_->publish(result.get()->differential_map);
+  dynamic_map_pub_->publish(result.get()->lanelet2_cells);
 }
 
 void DynamicLaneletProviderNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr & msg)
