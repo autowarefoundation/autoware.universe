@@ -27,6 +27,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <algorithm>
 #include <vector>
 
 namespace autoware::freespace_planning_algorithms
@@ -81,6 +82,9 @@ AstarSearch::AstarSearch(
   avg_turning_radius_ =
     kinematic_bicycle_model::getTurningRadius(collision_vehicle_shape_.base_length, avg_steering);
 
+  search_method_ =
+    astar_param.search_method == "backward" ? SearchMethod::Backward : SearchMethod::Forward;
+
   setTransitionTable();
 }
 
@@ -95,9 +99,10 @@ void AstarSearch::setTransitionTable()
     const double steering = static_cast<double>(steering_ind) * steering_resolution_;
     geometry_msgs::msg::Pose shift_pose = kinematic_bicycle_model::getPoseShift(
       0.0, collision_vehicle_shape_.base_length, steering, distance);
+    bool is_back = search_method_ == SearchMethod::Backward ? true : false;
     forward_transitions.push_back(
       {shift_pose.position.x, shift_pose.position.y, tf2::getYaw(shift_pose.orientation), distance,
-       steering_ind, false});
+       steering_ind, is_back});
   }
 
   for (int i = 0; i < planner_common_param_.theta_size; ++i) {
@@ -128,8 +133,13 @@ void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 bool AstarSearch::makePlan(
   const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose)
 {
-  start_pose_ = global2local(costmap_, start_pose);
-  goal_pose_ = global2local(costmap_, goal_pose);
+  if (search_method_ == SearchMethod::Backward) {
+    start_pose_ = global2local(costmap_, goal_pose);
+    goal_pose_ = global2local(costmap_, start_pose);
+  } else {
+    start_pose_ = global2local(costmap_, start_pose);
+    goal_pose_ = global2local(costmap_, goal_pose);
+  }
 
   clearNodes();
   graph_.reserve(100000);
@@ -249,7 +259,7 @@ void AstarSearch::expandNodes(AstarNode & current_node)
   for (const auto & transition : transition_table_[index_theta]) {
     // skip transition back to parent
     // skip transition resulting in frequent direction change
-    if (transition.is_back != current_node.is_back) {
+    if (current_node.parent != nullptr && transition.is_back != current_node.is_back) {
       if (
         transition.steering_index == current_node.steering_index ||
         current_node.dir_distance < min_dir_change_dist_)
@@ -320,37 +330,46 @@ void AstarSearch::setPath(const AstarNode & goal_node)
   header.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
   header.frame_id = costmap_.header.frame_id;
 
-  waypoints_.header = header;
-  waypoints_.waypoints.clear();
-
   // From the goal node to the start node
   const AstarNode * node = &goal_node;
+
+  std::vector<PlannerWaypoint> waypoints;
 
   // push exact goal pose first
   geometry_msgs::msg::PoseStamped pose;
   pose.header = header;
   pose.pose = local2global(costmap_, goal_pose_);
-
-  waypoints_.waypoints.push_back({pose, node->is_back});
+  waypoints.push_back({pose, node->is_back});
 
   // push astar nodes poses
   while (node != nullptr) {
-    geometry_msgs::msg::PoseStamped pose;
-    pose.header = header;
     pose.pose = local2global(costmap_, node2pose(*node));
-
-    waypoints_.waypoints.push_back({pose, node->is_back});
-
+    waypoints.push_back({pose, node->is_back});
     // To the next node
     node = node->parent;
   }
 
-  // Reverse the vector to be start to goal order
-  std::reverse(waypoints_.waypoints.begin(), waypoints_.waypoints.end());
+  if (waypoints.size() > 1) {
+    waypoints.back().is_back = waypoints.rbegin()[1].is_back;
+  }
 
-  // Update first point direction
-  if (waypoints_.waypoints.size() > 1) {
-    waypoints_.waypoints.at(0).is_back = waypoints_.waypoints.at(1).is_back;
+  if (search_method_ != SearchMethod::Backward) {
+    // Reverse the vector to be start to goal order
+    std::reverse(waypoints.begin(), waypoints.end());
+  }
+
+  waypoints_.header = header;
+  waypoints_.waypoints.clear();
+  auto it = waypoints.begin();
+  for (; it < waypoints.end() - 1; ++it) {
+    auto next_it = it + 1;
+    waypoints_.waypoints.push_back(*it);
+    if (it->is_back == next_it->is_back) continue;
+    if (search_method_ == SearchMethod::Backward) {
+      waypoints_.waypoints.push_back({next_it->pose, it->is_back});
+    } else {
+      waypoints_.waypoints.push_back({it->pose, next_it->is_back});
+    }
   }
 }
 

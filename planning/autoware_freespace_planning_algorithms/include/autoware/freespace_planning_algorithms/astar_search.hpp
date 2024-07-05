@@ -36,9 +36,12 @@ namespace autoware::freespace_planning_algorithms
 {
 enum class NodeStatus : uint8_t { None, Open, Closed };
 
+enum class SearchMethod : uint8_t { Forward, Backward };
+
 struct AstarParam
 {
   // base configs
+  std::string search_method;
   bool only_behind_solutions;  // solutions should be behind the goal
   bool use_back;               // backward search
   double expansion_distance;
@@ -117,6 +120,7 @@ public:
   : AstarSearch(
       planner_common_param, collision_vehicle_shape,
       AstarParam{
+        node.declare_parameter<std::string>("astar.search_method"),
         node.declare_parameter<bool>("astar.only_behind_solutions"),
         node.declare_parameter<bool>("astar.use_back"),
         node.declare_parameter<double>("astar.expansion_distance"),
@@ -170,6 +174,8 @@ private:
   double steering_resolution_;
   double heading_resolution_;
   double avg_turning_radius_;
+
+  SearchMethod search_method_;
 
   // threshold for minimum distance between direction switches
   static constexpr double min_dir_change_dist_ = 1.5;
