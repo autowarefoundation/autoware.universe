@@ -8,7 +8,7 @@
       "properties": {
         "chattering_threshold": {
           "type": "number",
-          "description": "INSERT_DESCRIeven if the obstacle disappears, the stop judgment continues for chattering_threshold [s]PTION",
+          "description": "even if the obstacle disappears, the stop judgment continues for chattering_threshold [s]PTION",
           "default": "0.5"
         },
         "max_velocity": {
