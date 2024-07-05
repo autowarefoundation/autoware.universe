@@ -15,9 +15,9 @@
 #ifndef MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 #define MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 
+#include <autoware_lanelet2_extension/version.hpp>
 #include <component_interface_specs/map.hpp>
 #include <component_interface_utils/rclcpp.hpp>
-#include <lanelet2_extension/version.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
