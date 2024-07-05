@@ -23,6 +23,8 @@
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
@@ -33,6 +35,8 @@
 #include <utility>
 #include <vector>
 
+using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
+using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
 class PlannerInterface
 {
 public:
@@ -52,6 +56,7 @@ public:
       node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_cruise", 1);
     stop_speed_exceeded_pub_ =
       node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
+    diagnostics_pub_ = node.create_publisher<DiagnosticArray>("/diagnostics", 10);
 
     moving_object_speed_threshold =
       node.declare_parameter<double>("slow_down.moving_object_speed_threshold");
@@ -63,12 +68,13 @@ public:
 
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
-    const double min_behavior_stop_margin, const double enable_approaching_on_curve,
-    const double additional_safe_distance_margin_on_curve,
+    const bool use_pointcloud, const double min_behavior_stop_margin,
+    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
     const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
   {
     enable_debug_info_ = enable_debug_info;
     enable_calculation_time_info_ = enable_calculation_time_info;
+    use_pointcloud_ = use_pointcloud;
     min_behavior_stop_margin_ = min_behavior_stop_margin;
     enable_approaching_on_curve_ = enable_approaching_on_curve;
     additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
@@ -117,6 +123,7 @@ protected:
   // Parameters
   bool enable_debug_info_{false};
   bool enable_calculation_time_info_{false};
+  bool use_pointcloud_{false};
   LongitudinalInfo longitudinal_info_;
   double min_behavior_stop_margin_;
   bool enable_approaching_on_curve_;
@@ -133,6 +140,7 @@ protected:
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reasons_pub_;
   rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
+  rclcpp::Publisher<DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   // Vehicle Parameters
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
