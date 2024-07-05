@@ -108,7 +108,7 @@
       # 2D Real-time covariance estimation with multiple searches (output_pose_covariance is the minimum value)
       covariance_estimation:
         # Covariance estimation type
-        # 0=LAPLACE_APPROXIMATION, 1=MULTI_NDT, 2=MULTI_NDT_SCORE
+        # 0=FIXED_VALUE, 1=LAPLACE_APPROXIMATION, 2=MULTI_NDT, 3=MULTI_NDT_SCORE
         covariance_estimation_type: 0
 
         # Offset arrangement in covariance estimation [m]
