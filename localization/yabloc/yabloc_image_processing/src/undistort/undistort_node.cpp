@@ -56,7 +56,8 @@ public:
     sub_image_ = create_subscription<Image>(
       "~/input/image_raw", qos, std::bind(&UndistortNode::on_image, this, _1));
     sub_compressed_image_ = create_subscription<CompressedImage>(
-      "~/input/image_raw/compressed", qos, std::bind(&UndistortNode::on_compressed_image, this, _1));
+      "~/input/image_raw/compressed", qos,
+      std::bind(&UndistortNode::on_compressed_image, this, _1));
     sub_info_ = create_subscription<CameraInfo>(
       "~/input/camera_info", qos, std::bind(&UndistortNode::on_info, this, _1));
 
