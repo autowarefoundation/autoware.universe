@@ -29,12 +29,12 @@
         "enable_slow_down": {
           "type": "boolean",
           "description": "whether to use slow down planner [-]",
-          "default": "False"
+          "default": "false"
         },
         "enable_z_axis_obstacle_filtering": {
           "type": "boolean",
           "description": "filter obstacles in z axis (height) [-]",
-          "default": "True"
+          "default": "true"
         },
         "z_axis_filtering_buffer": {
           "type": "number",
@@ -59,12 +59,12 @@
         "use_predicted_objects": {
           "type": "boolean",
           "description": "whether to use predicted objects [-]",
-          "default": "False"
+          "default": "false"
         },
         "publish_obstacle_polygon": {
           "type": "boolean",
           "description": "whether to publish obstacle polygon [-]",
-          "default": "False"
+          "default": "false"
         },
         "predicted_object_filtering_threshold": {
           "type": "number",
@@ -136,7 +136,7 @@
                 "enable_stop_behind_goal_for_obstacle": {
                   "type": "boolean",
                   "description": "enable extend trajectory after goal lane for obstacle detection",
-                  "default": "True"
+                  "default": "true"
                 }
               },
               "required": [
@@ -222,7 +222,7 @@
                 "max_slow_down_velocity": {
                   "type": "number",
                   "description": "max slow down velocity (use this param if consider_constraints is False)[m/s]",
-                  "default": "1.38 "
+                  "default": "1.38"
                 },
                 "min_slow_down_velocity": {
                   "type": "number",
@@ -261,7 +261,7 @@
             "consider_constraints": {
               "type": "boolean",
               "description": "set 'True', if no decel plan found under jerk/dec constrains, relax target slow down vel [-]",
-              "default": "False"
+              "default": "false"
             },
             "velocity_threshold_decel_complete": {
               "type": "number",
