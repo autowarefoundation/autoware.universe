@@ -23,6 +23,7 @@
 
 #include <tf2/utils.h>
 
+#include <algorithm>
 #include <vector>
 
 namespace autoware::freespace_planning_algorithms
