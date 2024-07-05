@@ -48,5 +48,5 @@ TEST(system, TimeKeeper)
   }
 
   time_keeper.end_track("main_func");
-  ASSERT_ANY_THROW(time_keeper.report(true));
+  ASSERT_NO_THROW(time_keeper.report(true));
 }
