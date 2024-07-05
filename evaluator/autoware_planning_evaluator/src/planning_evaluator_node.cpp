@@ -229,7 +229,7 @@ void PlanningEvaluatorNode::onTimer()
     onTrajectory(traj_msg, ego_state_ptr);
   }
   {
-    const auto modified_goal_msg = modified_goal_sub_.takeNewData();
+    const auto modified_goal_msg = modified_goal_sub_.takeData();
     onModifiedGoal(modified_goal_msg, ego_state_ptr);
   }
   if (!metrics_msg_.status.empty()) {
