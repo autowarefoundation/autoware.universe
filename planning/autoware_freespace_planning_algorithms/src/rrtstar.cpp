@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/freespace_planning_algorithms/rrtstar.hpp"
+
 #include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
 
 namespace autoware::freespace_planning_algorithms
@@ -30,8 +31,7 @@ RRTStar::RRTStar(
     planner_common_param, VehicleShape(
                             original_vehicle_shape.length + 2 * rrtstar_param.margin,
                             original_vehicle_shape.width + 2 * rrtstar_param.margin,
-                            original_vehicle_shape.base_length,
-                            original_vehicle_shape.max_steering,
+                            original_vehicle_shape.base_length, original_vehicle_shape.max_steering,
                             original_vehicle_shape.base2back + rrtstar_param.margin)),
   rrtstar_param_(rrtstar_param),
   original_vehicle_shape_(original_vehicle_shape)
@@ -61,7 +61,7 @@ bool RRTStar::makePlan(
     costmap_.info.resolution * costmap_.info.width, costmap_.info.resolution * costmap_.info.height,
     M_PI};
   const double radius = kinematic_bicycle_model::getTurningRadius(
-      collision_vehicle_shape_.base_length, collision_vehicle_shape_.max_steering);
+    collision_vehicle_shape_.base_length, collision_vehicle_shape_.max_steering);
   const auto cspace = rrtstar_core::CSpace(lo, hi, radius, is_obstacle_free);
   const auto x_start = poseMsgToPose(start_pose_);
   const auto x_goal = poseMsgToPose(goal_pose_);

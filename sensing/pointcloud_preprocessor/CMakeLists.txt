@@ -9,6 +9,7 @@ set(CGAL_DATA_DIR ".")
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(Sophus REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
@@ -19,6 +20,7 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${Sophus_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
@@ -76,6 +78,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/pointcloud_accumulator/pointcloud_accumulator_nodelet.cpp
   src/vector_map_filter/lanelet2_map_filter_nodelet.cpp
   src/distortion_corrector/distortion_corrector.cpp
+  src/distortion_corrector/distortion_corrector_node.cpp
   src/blockage_diag/blockage_diag_nodelet.cpp
   src/polygon_remover/polygon_remover.cpp
   src/vector_map_filter/vector_map_inside_area_filter.cpp
@@ -86,6 +89,7 @@ target_link_libraries(pointcloud_preprocessor_filter
   faster_voxel_grid_downsample_filter
   ${Boost_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${Sophus_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
@@ -227,14 +231,12 @@ if(BUILD_TESTING)
   ament_add_gtest(test_utilities
     test/test_utilities.cpp
   )
-  target_link_libraries(test_utilities pointcloud_preprocessor_filter)
+  ament_add_gtest(distortion_corrector_node_tests
+  test/test_distortion_corrector_node.cpp
+  )
 
-  add_ros_test(
-    test/test_distortion_corrector.py
-    TIMEOUT "30"
-  )
-  add_ros_test(
-    test/test_distortion_corrector_use_imu_false.py
-    TIMEOUT "30"
-  )
+  target_link_libraries(test_utilities pointcloud_preprocessor_filter)
+  target_link_libraries(distortion_corrector_node_tests pointcloud_preprocessor_filter)
+
+
 endif()

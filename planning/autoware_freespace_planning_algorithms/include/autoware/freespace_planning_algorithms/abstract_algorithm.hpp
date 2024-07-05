@@ -57,8 +57,8 @@ geometry_msgs::msg::Pose local2global(
 
 struct VehicleShape
 {
-  double length;     // X [m]
-  double width;      // Y [m]
+  double length;  // X [m]
+  double width;   // Y [m]
   double base_length;
   double max_steering;
   double base2back;  // base_link to rear [m]
@@ -66,8 +66,13 @@ struct VehicleShape
 
   VehicleShape() = default;
 
-  VehicleShape(double length, double width, double base_length, double max_steering, double base2back)
-  : length(length), width(width), base_length(base_length), max_steering(max_steering), base2back(base2back)
+  VehicleShape(
+    double length, double width, double base_length, double max_steering, double base2back)
+  : length(length),
+    width(width),
+    base_length(base_length),
+    max_steering(max_steering),
+    base2back(base2back)
   {
     setHalfDiagonal();
   }
@@ -83,10 +88,7 @@ struct VehicleShape
     setHalfDiagonal();
   }
 
-  void setHalfDiagonal()
-  {
-    half_diagonal = 0.5 * sqrt(length * length + width * width);
-  }
+  void setHalfDiagonal() { half_diagonal = 0.5 * sqrt(length * length + width * width); }
 };
 
 struct PlannerCommonParam
@@ -188,12 +190,12 @@ protected:
   }
 
   void computeEDTMap();
-  
+
   // compute single dimensional grid cell index from 2 dimensional index
   template <typename IndexType>
   inline int indexToId(const IndexType & index) const
   {
-    return index.y*costmap_.info.width + index.x;
+    return index.y * costmap_.info.width + index.x;
   }
 
   PlannerCommonParam planner_common_param_;

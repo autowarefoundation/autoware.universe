@@ -521,7 +521,7 @@ void FreespacePlannerNode::planTrajectory()
   bool result = false;
   try {
     result = algo_->makePlan(current_pose_in_costmap_frame, goal_pose_in_costmap_frame);
-  } catch (const std::exception& e) {
+  } catch (const std::exception & e) {
     error_msg = e.what();
   }
   const rclcpp::Time end = get_clock()->now();

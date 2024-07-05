@@ -40,7 +40,7 @@ struct AstarParam
 {
   // base configs
   bool only_behind_solutions;  // solutions should be behind the goal
-  bool use_back;         // backward search
+  bool use_back;               // backward search
   double expansion_distance;
 
   // search configs
@@ -65,10 +65,7 @@ struct AstarNode
 
 struct NodeComparison
 {
-  bool operator()(const AstarNode * lhs, const AstarNode * rhs)
-  {
-    return lhs->fc > rhs->fc;
-  }
+  bool operator()(const AstarNode * lhs, const AstarNode * rhs) { return lhs->fc > rhs->fc; }
 };
 
 struct NodeUpdate
@@ -156,7 +153,7 @@ private:
 
   double getSteeringCost(const int steering_index) const;
   double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
-  double getObstacleDistanceCost(const IndexXYT& index) const;
+  double getObstacleDistanceCost(const IndexXYT & index) const;
 
   // Algorithm specific param
   AstarParam astar_param_;

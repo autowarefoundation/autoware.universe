@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/freespace_planning_algorithms/abstract_algorithm.hpp"
+
 #include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -155,7 +156,7 @@ void AbstractPlanningAlgorithm::computeEDTMap()
     bool found_obstacle = false;
     // forward scan
     for (int j = 0; j < width; ++j) {
-      if (isObs(IndexXY{j,i})) {
+      if (isObs(IndexXY{j, i})) {
         temporary_storage[j] = 0.0;
         distance = resolution_m;
         found_obstacle = true;
@@ -171,7 +172,7 @@ void AbstractPlanningAlgorithm::computeEDTMap()
     found_obstacle = false;
     // backward scan
     for (int j = width - 1; j >= 0; --j) {
-      if (isObs(IndexXY{j,i})) {
+      if (isObs(IndexXY{j, i})) {
         distance = resolution_m;
         found_obstacle = true;
       } else if (found_obstacle && temporary_storage[j] > distance) {
@@ -193,14 +194,14 @@ void AbstractPlanningAlgorithm::computeEDTMap()
         id = indexToId(IndexXY{j, k});
         double dist = resolution_m * (static_cast<double>(i - k));
         double value = edt_map[id] * edt_map[id] + dist * dist;
-        if (value < min_value){
-            min_value = value;
+        if (value < min_value) {
+          min_value = value;
         }
       }
       temporary_storage[i] = sqrt(min_value);
     }
-    for(int i = 0; i < height; ++i) {
-        edt_map[indexToId(IndexXY{j, i})] = temporary_storage[i];
+    for (int i = 0; i < height; ++i) {
+      edt_map[indexToId(IndexXY{j, i})] = temporary_storage[i];
     }
   }
   edt_map_ = edt_map;
@@ -298,7 +299,8 @@ bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) con
 
   const auto base_pose = index2pose(costmap_, base_index, planner_common_param_.theta_size);
   const auto center_pose = kinematic_bicycle_model::getPose(
-    base_pose, collision_vehicle_shape_.base_length, 0.0, 0.5 * collision_vehicle_shape_.base_length);
+    base_pose, collision_vehicle_shape_.base_length, 0.0,
+    0.5 * collision_vehicle_shape_.base_length);
   const auto center_index = pose2index(costmap_, center_pose, planner_common_param_.theta_size);
   double obstacle_edt = getObstacleEDT(center_index);
 
