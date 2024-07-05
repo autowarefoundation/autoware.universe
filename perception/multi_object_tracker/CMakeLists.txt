@@ -28,8 +28,8 @@ set(${PROJECT_NAME}_src
   src/processor/input_manager.cpp
 )
 set(${PROJECT_NAME}_lib
-  lib/data_association/data_association.cpp
-  lib/data_association/mu_successive_shortest_path/mu_successive_shortest_path_wrapper.cpp
+  lib/association/association.cpp
+  lib/association/mu_successive_shortest_path/mu_ssp.cpp
   lib/tracker/motion_model/motion_model_base.cpp
   lib/tracker/motion_model/bicycle_motion_model.cpp
   # cspell: ignore ctrv

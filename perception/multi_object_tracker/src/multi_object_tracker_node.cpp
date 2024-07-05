@@ -17,7 +17,7 @@
 
 #include "multi_object_tracker_node.hpp"
 
-#include "multi_object_tracker/utils/utils.hpp"
+#include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -191,7 +191,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     const auto max_rad_matrix = this->declare_parameter<std::vector<double>>("max_rad_matrix");
     const auto min_iou_matrix = this->declare_parameter<std::vector<double>>("min_iou_matrix");
 
-    data_association_ = std::make_unique<DataAssociation>(
+    association_ = std::make_unique<DataAssociation>(
       can_assign_matrix, max_dist_matrix, max_area_matrix, min_area_matrix, max_rad_matrix,
       min_iou_matrix);
   }
@@ -294,9 +294,9 @@ void MultiObjectTracker::runProcess(
     const auto & list_tracker = processor_->getListTracker();
     const auto & detected_objects = transformed_objects;
     // global nearest neighbor
-    Eigen::MatrixXd score_matrix = data_association_->calcScoreMatrix(
+    Eigen::MatrixXd score_matrix = association_->calcScoreMatrix(
       detected_objects, list_tracker);  // row : tracker, col : measurement
-    data_association_->assign(score_matrix, direct_assignment, reverse_assignment);
+    association_->assign(score_matrix, direct_assignment, reverse_assignment);
 
     // Collect debug information - tracker list, existence probabilities, association results
     debugger_->collectObjectInfo(

@@ -19,9 +19,9 @@
 #ifndef MULTI_OBJECT_TRACKER_NODE_HPP_
 #define MULTI_OBJECT_TRACKER_NODE_HPP_
 
+#include "autoware/multi_object_tracker/association/association.hpp"
+#include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "debugger/debugger.hpp"
-#include "multi_object_tracker/data_association/data_association.hpp"
-#include "multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "processor/input_manager.hpp"
 #include "processor/processor.hpp"
 
@@ -82,7 +82,7 @@ private:
 
   // internal states
   std::string world_frame_id_;  // tracking frame
-  std::unique_ptr<DataAssociation> data_association_;
+  std::unique_ptr<DataAssociation> association_;
   std::unique_ptr<TrackerProcessor> processor_;
 
   // input manager
