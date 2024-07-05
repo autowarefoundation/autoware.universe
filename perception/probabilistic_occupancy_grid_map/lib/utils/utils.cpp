@@ -18,6 +18,8 @@
 
 #include <string>
 
+namespace autoware::occupancy_grid_map
+{
 namespace utils
 {
 
@@ -199,3 +201,4 @@ unsigned char getApproximateOccupancyState(const unsigned char & value)
 }
 
 }  // namespace utils
+}  // namespace autoware::occupancy_grid_map

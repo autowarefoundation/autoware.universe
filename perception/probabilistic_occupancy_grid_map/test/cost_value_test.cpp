@@ -17,8 +17,8 @@
 #include <gtest/gtest.h>
 
 // Test the CostTranslationTable and InverseCostTranslationTable functions
-using cost_value::cost_translation_table;
-using cost_value::inverse_cost_translation_table;
+using autoware::occupancy_grid_map::cost_value::cost_translation_table;
+using autoware::occupancy_grid_map::cost_value::inverse_cost_translation_table;
 
 TEST(CostTranslationTableTest, TestRange)
 {

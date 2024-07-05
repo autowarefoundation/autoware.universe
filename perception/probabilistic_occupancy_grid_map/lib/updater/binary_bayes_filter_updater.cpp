@@ -18,6 +18,8 @@
 
 #include <algorithm>
 
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 
@@ -79,3 +81,4 @@ bool OccupancyGridMapBBFUpdater::update(const Costmap2D & single_frame_occupancy
 }
 
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map

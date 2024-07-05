@@ -20,6 +20,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 class OccupancyGridMapBBFUpdater : public OccupancyGridMapUpdaterInterface
@@ -38,5 +40,6 @@ private:
 };
 
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__BINARY_BAYES_FILTER_UPDATER_HPP_

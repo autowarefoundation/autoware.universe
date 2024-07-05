@@ -33,6 +33,9 @@
 #endif
 
 #include <algorithm>
+
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 using sensor_msgs::PointCloud2ConstIterator;
@@ -228,3 +231,4 @@ void OccupancyGridMapFixedBlindSpot::initRosParam(rclcpp::Node & node)
 }
 
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map

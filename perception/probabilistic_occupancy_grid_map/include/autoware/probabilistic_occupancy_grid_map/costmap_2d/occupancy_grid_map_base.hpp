@@ -59,6 +59,8 @@
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 using geometry_msgs::msg::Pose;
@@ -91,5 +93,6 @@ private:
 };
 
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__COSTMAP_2D__OCCUPANCY_GRID_MAP_BASE_HPP_

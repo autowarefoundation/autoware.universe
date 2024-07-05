@@ -53,6 +53,8 @@
 
 #include <algorithm>
 
+namespace autoware::occupancy_grid_map
+{
 namespace cost_value
 {
 static const unsigned char NO_INFORMATION = 128;  // 0.5 * 255
@@ -101,6 +103,8 @@ struct InverseCostTranslationTable
 
 static const CostTranslationTable cost_translation_table;
 static const InverseCostTranslationTable inverse_cost_translation_table;
+
 }  // namespace cost_value
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__COST_VALUE__COST_VALUE_HPP_

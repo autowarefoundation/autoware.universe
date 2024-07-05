@@ -45,6 +45,8 @@
 #include <cmath>
 #include <vector>
 
+namespace autoware::occupancy_grid_map
+{
 namespace utils
 {
 
@@ -117,6 +119,8 @@ bool extractCommonPointCloud(
   sensor_msgs::msg::PointCloud2 & output_obstacle_pc);
 
 unsigned char getApproximateOccupancyState(const unsigned char & value);
+
 }  // namespace utils
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UTILS__UTILS_HPP_

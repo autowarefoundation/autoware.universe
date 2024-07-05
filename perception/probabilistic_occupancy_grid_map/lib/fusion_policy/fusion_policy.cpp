@@ -14,6 +14,8 @@
 
 #include "autoware/probabilistic_occupancy_grid_map/fusion_policy/fusion_policy.hpp"
 
+namespace autoware::occupancy_grid_map
+{
 namespace fusion_policy
 {
 
@@ -320,3 +322,4 @@ unsigned char singleFrameOccupancyFusion(
 }
 
 }  // namespace fusion_policy
+}  // namespace autoware::occupancy_grid_map

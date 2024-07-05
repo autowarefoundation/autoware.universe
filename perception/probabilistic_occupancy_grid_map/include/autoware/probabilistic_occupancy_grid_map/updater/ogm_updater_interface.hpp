@@ -20,6 +20,8 @@
 #include <nav2_costmap_2d/costmap_2d.hpp>
 #include <rclcpp/node.hpp>
 
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 class OccupancyGridMapUpdaterInterface : public nav2_costmap_2d::Costmap2D
@@ -36,5 +38,6 @@ public:
 };
 
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__OGM_UPDATER_INTERFACE_HPP_

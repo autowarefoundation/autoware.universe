@@ -20,6 +20,8 @@
 
 // cspell: ignore LOBF
 
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 
@@ -68,4 +70,6 @@ bool OccupancyGridMapLOBFUpdater::update(const Costmap2D & single_frame_occupanc
   }
   return true;
 }
+
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map

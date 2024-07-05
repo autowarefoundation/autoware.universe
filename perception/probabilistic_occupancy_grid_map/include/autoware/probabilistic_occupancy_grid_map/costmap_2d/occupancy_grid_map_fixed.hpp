@@ -17,6 +17,8 @@
 
 #include "autoware/probabilistic_occupancy_grid_map/costmap_2d/occupancy_grid_map_base.hpp"
 
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 using geometry_msgs::msg::Pose;
@@ -43,5 +45,6 @@ private:
 };
 
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__COSTMAP_2D__OCCUPANCY_GRID_MAP_FIXED_HPP_

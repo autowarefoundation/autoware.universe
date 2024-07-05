@@ -57,6 +57,8 @@
 
 #include <algorithm>
 
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 using sensor_msgs::PointCloud2ConstIterator;
@@ -250,3 +252,4 @@ void OccupancyGridMap::raytraceFreespace(const PointCloud2 & pointcloud, const P
 }
 
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map

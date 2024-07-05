@@ -25,6 +25,8 @@
 // LOBF means: Log Odds Bayes Filter
 // cspell: ignore LOBF
 
+namespace autoware::occupancy_grid_map
+{
 namespace costmap_2d
 {
 class OccupancyGridMapLOBFUpdater : public OccupancyGridMapUpdaterInterface
@@ -45,5 +47,6 @@ private:
 };
 
 }  // namespace costmap_2d
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__LOG_ODDS_BAYES_FILTER_UPDATER_HPP_

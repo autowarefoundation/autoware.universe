@@ -25,6 +25,8 @@
 /*min and max prob threshold to prevent log-odds to diverge*/
 #define EPSILON_PROB 0.03
 
+namespace autoware::occupancy_grid_map
+{
 namespace fusion_policy
 {
 enum class FusionMethod { OVERWRITE, LOG_ODDS, DEMPSTER_SHAFER };
@@ -61,6 +63,8 @@ unsigned char singleFrameOccupancyFusion(
 unsigned char singleFrameOccupancyFusion(
   const std::vector<unsigned char> & occupancy, FusionMethod method,
   const std::vector<double> & reliability);
+
 }  // namespace fusion_policy
+}  // namespace autoware::occupancy_grid_map
 
 #endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__FUSION_POLICY__FUSION_POLICY_HPP_
