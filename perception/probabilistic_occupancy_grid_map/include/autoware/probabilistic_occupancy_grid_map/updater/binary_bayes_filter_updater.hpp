@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_BINARY_BAYES_FILTER_UPDATER_HPP_
-#define PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_BINARY_BAYES_FILTER_UPDATER_HPP_
+#ifndef AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__BINARY_BAYES_FILTER_UPDATER_HPP_
+#define AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__BINARY_BAYES_FILTER_UPDATER_HPP_
 
-#include "probabilistic_occupancy_grid_map/updater/occupancy_grid_map_updater_interface.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/updater/ogm_updater_interface.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -39,4 +39,4 @@ private:
 
 }  // namespace costmap_2d
 
-#endif  // PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__OCCUPANCY_GRID_MAP_BINARY_BAYES_FILTER_UPDATER_HPP_
+#endif  // AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__BINARY_BAYES_FILTER_UPDATER_HPP_

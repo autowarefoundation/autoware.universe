@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/probabilistic_occupancy_grid_map/fusion_policy/fusion_policy.hpp"
+
 #include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
-#include "probabilistic_occupancy_grid_map/fusion/single_frame_fusion_policy.hpp"
 
 #include <gtest/gtest.h>
 

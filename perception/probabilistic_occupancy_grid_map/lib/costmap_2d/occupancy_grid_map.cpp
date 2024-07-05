@@ -49,7 +49,7 @@
  *         David V. Lu!!
  *********************************************************************/
 
-#include "probabilistic_occupancy_grid_map/laserscan_based_occupancy_grid_map/occupancy_grid_map.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/costmap_2d/occupancy_grid_map.hpp"
 
 #include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
 

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PROBABILISTIC_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_
-#define PROBABILISTIC_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_
+#ifndef LASERSCAN_BASED_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_
+#define LASERSCAN_BASED_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_
 
-#include "probabilistic_occupancy_grid_map/laserscan_based_occupancy_grid_map/occupancy_grid_map.hpp"
-#include "probabilistic_occupancy_grid_map/updater/occupancy_grid_map_binary_bayes_filter_updater.hpp"
-#include "probabilistic_occupancy_grid_map/updater/occupancy_grid_map_updater_interface.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/costmap_2d/occupancy_grid_map.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/updater/binary_bayes_filter_updater.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/updater/ogm_updater_interface.hpp"
 
 #include <builtin_interfaces/msg/time.hpp>
 #include <laser_geometry/laser_geometry.hpp>
@@ -102,4 +102,4 @@ private:
 
 }  // namespace occupancy_grid_map
 
-#endif  // PROBABILISTIC_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_
+#endif  // LASERSCAN_BASED_OCCUPANCY_GRID_MAP__LASERSCAN_BASED_OCCUPANCY_GRID_MAP_NODE_HPP_

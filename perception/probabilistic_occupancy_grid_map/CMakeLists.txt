@@ -14,7 +14,7 @@ include_directories(
 )
 
 ament_auto_add_library(${PROJECT_NAME}_common SHARED
-  lib/updater/occupancy_grid_map_binary_bayes_filter_updater.cpp
+  lib/updater/binary_bayes_filter_updater.cpp
   lib/utils/utils.cpp
 )
 target_link_libraries(${PROJECT_NAME}_common
@@ -58,9 +58,9 @@ rclcpp_components_register_node(laserscan_based_occupancy_grid_map
 # GridMapFusionNode
 ament_auto_add_library(synchronized_grid_map_fusion SHARED
   src/fusion/synchronized_grid_map_fusion_node.cpp
-  lib/fusion_policy/single_frame_fusion_policy.cpp
+  lib/fusion_policy/fusion_policy.cpp
   lib/costmap_2d/occupancy_grid_map_fixed.cpp
-  lib/updater/occupancy_grid_map_log_odds_bayes_filter_updater.cpp
+  lib/updater/log_odds_bayes_filter_updater.cpp
   lib/utils/utils.cpp
 )
 
@@ -95,7 +95,7 @@ if(BUILD_TESTING)
   )
   ament_add_gtest(fusion_policy_unit_tests
     test/fusion_policy_test.cpp
-    lib/fusion_policy/single_frame_fusion_policy.cpp
+    lib/fusion_policy/fusion_policy.cpp
   )
   target_link_libraries(test_utils
     ${PCL_LIBRARIES}
