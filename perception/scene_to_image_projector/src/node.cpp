@@ -93,12 +93,12 @@ SceneToImageProjectorNode::SceneToImageProjectorNode(const rclcpp::NodeOptions &
     std::bind(&SceneToImageProjectorNode::camera_info_callback, this, std::placeholders::_1));
 
   if(objects_type == "detected"){
-    detected_objects_sub_ = this->create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
+    detected_objects_sub_ = this->create_subscription<autoware_perception_msgs::msg::DetectedObjects>(
     "~/input/objects", 10,
     std::bind(&SceneToImageProjectorNode::detected_objects_callback, this, std::placeholders::_1));
     }
   else if(objects_type == "tracked"){
-    tracked_objects_sub_ = this->create_subscription<autoware_auto_perception_msgs::msg::TrackedObjects>(
+    tracked_objects_sub_ = this->create_subscription<autoware_perception_msgs::msg::TrackedObjects>(
     "~/input/objects", 10,
     std::bind(&SceneToImageProjectorNode::tracked_objects_callback, this, std::placeholders::_1));
   }
@@ -107,13 +107,13 @@ SceneToImageProjectorNode::SceneToImageProjectorNode(const rclcpp::NodeOptions &
   }
 
   if(use_trajectory){
-    trajectory_sub_ = this->create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
+    trajectory_sub_ = this->create_subscription<autoware_planning_msgs::msg::Trajectory>(
     "~/input/trajectory", 10,
     std::bind(&SceneToImageProjectorNode::trajectory_callback, this, std::placeholders::_1));
   }
 
   if(use_road_boundaries){
-    path_sub_ = this->create_subscription<autoware_auto_planning_msgs::msg::Path>(
+    path_sub_ = this->create_subscription<autoware_planning_msgs::msg::Path>(
     "~/input/path", 10,
     std::bind(&SceneToImageProjectorNode::path_callback, this, std::placeholders::_1));
   }
@@ -127,30 +127,30 @@ void SceneToImageProjectorNode::camera_info_callback(
 }
 
 void SceneToImageProjectorNode::detected_objects_callback(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr & msg)
+  const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & msg)
 {
-  latest_detected_objects_ = std::make_shared<autoware_auto_perception_msgs::msg::DetectedObjects>(*msg);
+  latest_detected_objects_ = std::make_shared<autoware_perception_msgs::msg::DetectedObjects>(*msg);
   latest_detected_objects_received_ = true;
 }
 
 void SceneToImageProjectorNode::tracked_objects_callback(
-  const autoware_auto_perception_msgs::msg::TrackedObjects::ConstSharedPtr & msg)
+  const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr & msg)
 {
-  latest_tracked_objects_ = std::make_shared<autoware_auto_perception_msgs::msg::TrackedObjects>(*msg);
+  latest_tracked_objects_ = std::make_shared<autoware_perception_msgs::msg::TrackedObjects>(*msg);
   latest_tracked_objects_received_ = true;
 }
 
 void SceneToImageProjectorNode::trajectory_callback(
-  const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr & msg)
+  const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr & msg)
 {
-  latest_trajectory_ = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
+  latest_trajectory_ = std::make_shared<autoware_planning_msgs::msg::Trajectory>(*msg);
   latest_trajectory_received_ = true;
 }
 
 void SceneToImageProjectorNode::path_callback(
-  const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr & msg)
+  const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg)
 {
-  latest_path_ = std::make_shared<autoware_auto_planning_msgs::msg::Path>(*msg);
+  latest_path_ = std::make_shared<autoware_planning_msgs::msg::Path>(*msg);
   latest_path_received_ = true;
 }
 
@@ -171,7 +171,7 @@ void SceneToImageProjectorNode::image_callback(
       }
 
       /* transform to world coordinate */
-      autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
+      autoware_perception_msgs::msg::DetectedObjects transformed_objects;
       if (!object_recognition_utils::transformObjects(
             *latest_detected_objects_, latest_camera_info_->header.frame_id, tf_buffer_, transformed_objects)) {
         return;
@@ -193,49 +193,49 @@ void SceneToImageProjectorNode::image_callback(
       for (const auto & object : objects) {
         if (
           object.classification.front().label ==
-          autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+          autoware_perception_msgs::msg::ObjectClassification::UNKNOWN) {
           continue;
         }
 
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN) &&
+            autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN) &&
           !show_pedestrian) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) &&
+            autoware_perception_msgs::msg::ObjectClassification::BICYCLE) &&
           !show_bicycle) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) &&
+            autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE) &&
           !show_motorcycle) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER) &&
+            autoware_perception_msgs::msg::ObjectClassification::TRAILER) &&
           !show_trailer) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::BUS) &&
+            autoware_perception_msgs::msg::ObjectClassification::BUS) &&
           !show_bus) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) &&
+            autoware_perception_msgs::msg::ObjectClassification::TRUCK) &&
           !show_truck) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::CAR) &&
+            autoware_perception_msgs::msg::ObjectClassification::CAR) &&
           !show_car) {
           continue;
         }
@@ -260,7 +260,7 @@ void SceneToImageProjectorNode::image_callback(
       }
 
       /* transform to world coordinate */
-      autoware_auto_perception_msgs::msg::TrackedObjects transformed_objects;
+      autoware_perception_msgs::msg::TrackedObjects transformed_objects;
       if (!object_recognition_utils::transformObjects(
             *latest_tracked_objects_, latest_camera_info_->header.frame_id, tf_buffer_, transformed_objects)) {
         return;
@@ -282,48 +282,48 @@ void SceneToImageProjectorNode::image_callback(
       for (const auto & object : objects) {
         if (
           object.classification.front().label ==
-          autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN) {
+          autoware_perception_msgs::msg::ObjectClassification::UNKNOWN) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN) &&
+            autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN) &&
           !show_pedestrian) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::BICYCLE) &&
+            autoware_perception_msgs::msg::ObjectClassification::BICYCLE) &&
           !show_bicycle) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::MOTORCYCLE) &&
+            autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE) &&
           !show_motorcycle) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::TRAILER) &&
+            autoware_perception_msgs::msg::ObjectClassification::TRAILER) &&
           !show_trailer) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::BUS) &&
+            autoware_perception_msgs::msg::ObjectClassification::BUS) &&
           !show_bus) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::TRUCK) &&
+            autoware_perception_msgs::msg::ObjectClassification::TRUCK) &&
           !show_truck) {
           continue;
         }
         if (
           (object.classification.front().label ==
-            autoware_auto_perception_msgs::msg::ObjectClassification::CAR) &&
+            autoware_perception_msgs::msg::ObjectClassification::CAR) &&
           !show_car) {
           continue;
         }
@@ -348,7 +348,7 @@ void SceneToImageProjectorNode::image_callback(
       }
 
       /* transform to world coordinate */
-      autoware_auto_planning_msgs::msg::Trajectory transformed_trajectory;
+      autoware_planning_msgs::msg::Trajectory transformed_trajectory;
       if (!object_recognition_utils::transformTrajectory(
             *latest_trajectory_, latest_camera_info_->header.frame_id, tf_buffer_, transformed_trajectory)) {
         RCLCPP_WARN(get_logger(), "There was a problem with transforming the trajectory");
@@ -394,7 +394,7 @@ void SceneToImageProjectorNode::image_callback(
       }
 
       /* transform to world coordinate */
-      autoware_auto_planning_msgs::msg::Path transformed_path;
+      autoware_planning_msgs::msg::Path transformed_path;
       if (!object_recognition_utils::transformPath(
             *latest_path_, latest_camera_info_->header.frame_id, tf_buffer_, transformed_path)) {
         RCLCPP_WARN(get_logger(), "There was a problem with transforming the trajectory");
@@ -469,7 +469,7 @@ std::optional<std::vector<Eigen::Vector3d>> SceneToImageProjectorNode::detected_
   const T & detected_object)
 {
   std::vector<Eigen::Vector3d> corners;
-  if (detected_object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (detected_object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     calculate_bbox_corners(detected_object, corners);
     return corners;
   }
@@ -570,13 +570,13 @@ void SceneToImageProjectorNode::draw_bounding_box(
     if(!project_point( point_on_image_1_3d, projection_matrix, point_on_image_1) && !project_point( point_on_image_2_3d, projection_matrix, point_on_image_2)) continue; // two of them are not in the projectable area
     
     while(!project_point( point_on_image_1_3d , projection_matrix, point_on_image_1)){
-      point_on_image_1_3d  = 0.9 *  point_on_image_1_3d  + 0.1 *  point_on_image_2_3d;
+      point_on_image_1_3d  = 0.99 *  point_on_image_1_3d  + 0.01 *  point_on_image_2_3d;
     }
 
     points[edge.at(0)] = point_on_image_1;
     
     while(!project_point( point_on_image_2_3d, projection_matrix, point_on_image_2)){
-      point_on_image_2_3d = 0.9 * point_on_image_2_3d + 0.1 *  point_on_image_1_3d ;
+      point_on_image_2_3d = 0.99 * point_on_image_2_3d + 0.01 *  point_on_image_1_3d ;
     }
 
     points[edge.at(1)] = point_on_image_2;    
