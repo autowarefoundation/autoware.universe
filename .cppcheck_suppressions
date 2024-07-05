@@ -14,13 +14,10 @@ missingInclude
 missingIncludeSystem
 noConstructor
 noExplicitConstructor
-noValidConfiguration
 passedByValue
-preprocessorErrorDirective
 redundantInitialization
 shadowFunction
 shadowVariable
-syntaxError
 // cspell: ignore uninit
 uninitMemberVar
 unknownMacro
@@ -30,6 +27,5 @@ unusedFunction
 unusedStructMember
 useInitializationList
 useStlAlgorithm
-uselessOverride
 variableScope
 virtualCallInConstructor

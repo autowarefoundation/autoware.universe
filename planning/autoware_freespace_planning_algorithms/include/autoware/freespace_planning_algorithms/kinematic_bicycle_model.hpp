@@ -29,45 +29,35 @@ namespace kinematic_bicycle_model
 
 static constexpr double eps = 0.001;
 
-inline double getTurningRadius(
-  const double base_length,
-  const double steering_angle
-) {
+inline double getTurningRadius(const double base_length, const double steering_angle)
+{
   return base_length / tan(steering_angle);
 }
 
-inline geometry_msgs::msg::Pose getStraightMotionShift(
-  const double yaw,
-  const double distance
-){
+inline geometry_msgs::msg::Pose getStraightMotionShift(const double yaw, const double distance)
+{
   geometry_msgs::msg::Pose pose;
-  pose.position.x = distance*cos(yaw);
-  pose.position.y = distance*sin(yaw);
+  pose.position.x = distance * cos(yaw);
+  pose.position.y = distance * sin(yaw);
   return pose;
 }
 
 inline geometry_msgs::msg::Pose getTurningMotionShift(
-  const double yaw,
-  const double base_length,
-  const double steering_angle,
-  const double distance
-) {
+  const double yaw, const double base_length, const double steering_angle, const double distance)
+{
   double R = getTurningRadius(base_length, steering_angle);
   double beta = distance / R;
 
   geometry_msgs::msg::Pose pose;
-  pose.position.x = R*sin(yaw + beta) - R*sin(yaw);
-  pose.position.y = R*cos(yaw) - R*cos(yaw + beta);
+  pose.position.x = R * sin(yaw + beta) - R * sin(yaw);
+  pose.position.y = R * cos(yaw) - R * cos(yaw + beta);
   pose.orientation = autoware::universe_utils::createQuaternionFromYaw(beta);
   return pose;
 }
 
 inline geometry_msgs::msg::Pose getPoseShift(
-  const double yaw,
-  const double base_length,
-  const double steering_angle,
-  const double distance
-) {
+  const double yaw, const double base_length, const double steering_angle, const double distance)
+{
   if (abs(steering_angle) > eps) {
     return getTurningMotionShift(yaw, base_length, steering_angle, distance);
   }
@@ -75,19 +65,17 @@ inline geometry_msgs::msg::Pose getPoseShift(
 }
 
 inline geometry_msgs::msg::Pose getPose(
-  const geometry_msgs::msg::Pose& current_pose,
-  const double base_length,
-  const double steering_angle,
-  const double distance
-) {
+  const geometry_msgs::msg::Pose & current_pose, const double base_length,
+  const double steering_angle, const double distance)
+{
   const double current_yaw = tf2::getYaw(current_pose.orientation);
   const auto shift = getPoseShift(current_yaw, base_length, steering_angle, distance);
   auto pose = current_pose;
   pose.position.x += shift.position.x;
   pose.position.y += shift.position.y;
   if (abs(steering_angle) > eps) {
-    pose.orientation =
-      autoware::universe_utils::createQuaternionFromYaw(current_yaw + tf2::getYaw(shift.orientation));
+    pose.orientation = autoware::universe_utils::createQuaternionFromYaw(
+      current_yaw + tf2::getYaw(shift.orientation));
   }
   return pose;
 }
