@@ -58,22 +58,22 @@ ament_auto_add_library(object_position_filter SHARED
 )
 
 rclcpp_components_register_node(obstacle_pointcloud_based_validator
-  PLUGIN "obstacle_pointcloud_based_validator::ObstaclePointCloudBasedValidator"
+  PLUGIN "autoware::detected_object_validation::obstacle_pointcloud::ObstaclePointCloudBasedValidator"
   EXECUTABLE obstacle_pointcloud_based_validator_node
 )
 
 rclcpp_components_register_node(object_lanelet_filter
-  PLUGIN "object_lanelet_filter::ObjectLaneletFilterNode"
+  PLUGIN "autoware::detected_object_validation::lanelet_filter::ObjectLaneletFilterNode"
   EXECUTABLE object_lanelet_filter_node
 )
 
 rclcpp_components_register_node(object_position_filter
-  PLUGIN "object_position_filter::ObjectPositionFilterNode"
+  PLUGIN "autoware::detected_object_validation::position_filter::ObjectPositionFilterNode"
   EXECUTABLE object_position_filter_node
 )
 
 rclcpp_components_register_node(occupancy_grid_based_validator
-  PLUGIN "occupancy_grid_based_validator::OccupancyGridBasedValidator"
+  PLUGIN "autoware::detected_object_validation::occupancy_grid_map::OccupancyGridBasedValidator"
   EXECUTABLE occupancy_grid_based_validator_node
 )
 

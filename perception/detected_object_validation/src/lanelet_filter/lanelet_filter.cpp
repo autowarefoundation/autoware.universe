@@ -25,7 +25,9 @@
 
 #include <lanelet2_core/geometry/Polygon.h>
 
-namespace object_lanelet_filter
+namespace autoware::detected_object_validation
+{
+namespace lanelet_filter
 {
 ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & node_options)
 : Node("object_lanelet_filter_node", node_options),
@@ -309,7 +311,9 @@ bool ObjectLaneletFilterNode::isSameDirectionWithLanelets(
   return false;
 }
 
-}  // namespace object_lanelet_filter
+}  // namespace lanelet_filter
+}  // namespace autoware::detected_object_validation
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(object_lanelet_filter::ObjectLaneletFilterNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::detected_object_validation::lanelet_filter::ObjectLaneletFilterNode)

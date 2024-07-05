@@ -31,7 +31,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-namespace occupancy_grid_based_validator
+namespace autoware::detected_object_validation
+{
+namespace occupancy_grid_map
 {
 using Shape = autoware_perception_msgs::msg::Shape;
 using Polygon2d = autoware::universe_utils::Polygon2d;
@@ -174,7 +176,9 @@ void OccupancyGridBasedValidator::showDebugImage(
   cv::waitKey(2);
 }
 
-}  // namespace occupancy_grid_based_validator
+}  // namespace occupancy_grid_map
+}  // namespace autoware::detected_object_validation
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(occupancy_grid_based_validator::OccupancyGridBasedValidator)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::detected_object_validation::occupancy_grid_map::OccupancyGridBasedValidator)

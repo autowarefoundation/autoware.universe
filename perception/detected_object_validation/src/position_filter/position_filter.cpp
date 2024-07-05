@@ -14,7 +14,9 @@
 
 #include "position_filter.hpp"
 
-namespace object_position_filter
+namespace autoware::detected_object_validation
+{
+namespace position_filter
 {
 ObjectPositionFilterNode::ObjectPositionFilterNode(const rclcpp::NodeOptions & node_options)
 : Node("object_position_filter_node", node_options),
@@ -78,7 +80,9 @@ bool ObjectPositionFilterNode::isObjectInBounds(
          position.y > lower_bound_y_ && position.y < upper_bound_y_;
 }
 
-}  // namespace object_position_filter
+}  // namespace position_filter
+}  // namespace autoware::detected_object_validation
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(object_position_filter::ObjectPositionFilterNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::detected_object_validation::position_filter::ObjectPositionFilterNode)

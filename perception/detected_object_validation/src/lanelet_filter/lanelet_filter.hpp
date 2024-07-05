@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DETECTED_OBJECT_VALIDATION__DETECTED_OBJECT_FILTER__OBJECT_LANELET_FILTER_HPP_
-#define DETECTED_OBJECT_VALIDATION__DETECTED_OBJECT_FILTER__OBJECT_LANELET_FILTER_HPP_
+#ifndef LANELET_FILTER__LANELET_FILTER_HPP_
+#define LANELET_FILTER__LANELET_FILTER_HPP_
 
 #include "../utils/utils.hpp"
 
@@ -33,7 +33,9 @@
 #include <memory>
 #include <string>
 
-namespace object_lanelet_filter
+namespace autoware::detected_object_validation
+{
+namespace lanelet_filter
 {
 using autoware::universe_utils::LinearRing2d;
 using autoware::universe_utils::MultiPoint2d;
@@ -92,6 +94,7 @@ private:
   std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 };
 
-}  // namespace object_lanelet_filter
+}  // namespace lanelet_filter
+}  // namespace autoware::detected_object_validation
 
-#endif  // DETECTED_OBJECT_VALIDATION__DETECTED_OBJECT_FILTER__OBJECT_LANELET_FILTER_HPP_
+#endif  // LANELET_FILTER__LANELET_FILTER_HPP_

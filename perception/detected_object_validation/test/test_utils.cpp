@@ -18,11 +18,12 @@
 
 #include <gtest/gtest.h>
 
+using autoware::detected_object_validation::utils::FilterTargetLabel;
 using AutowareLabel = autoware_perception_msgs::msg::ObjectClassification;
 
-utils::FilterTargetLabel createFilterTargetAll()
+FilterTargetLabel createFilterTargetAll()
 {
-  utils::FilterTargetLabel filter;
+  FilterTargetLabel filter;
   filter.UNKNOWN = true;
   filter.CAR = true;
   filter.TRUCK = true;
@@ -34,9 +35,9 @@ utils::FilterTargetLabel createFilterTargetAll()
   return filter;
 }
 
-utils::FilterTargetLabel createFilterTargetVehicle()
+FilterTargetLabel createFilterTargetVehicle()
 {
-  utils::FilterTargetLabel filter;
+  FilterTargetLabel filter;
   filter.UNKNOWN = false;
   filter.CAR = true;
   filter.TRUCK = true;

@@ -13,9 +13,9 @@
 // limitations under the License.
 
 // NOLINTNEXTLINE(whitespace/line_length)
-#ifndef DETECTED_OBJECT_VALIDATION__OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
+#ifndef OBSTACLE_POINTCLOUD__PCL_VALIDATOR_HPP_
 // NOLINTNEXTLINE(whitespace/line_length)
-#define DETECTED_OBJECT_VALIDATION__OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
+#define OBSTACLE_POINTCLOUD__PCL_VALIDATOR_HPP_
 
 #include "debugger.hpp"
 
@@ -42,7 +42,10 @@
 #include <memory>
 #include <optional>
 #include <vector>
-namespace obstacle_pointcloud_based_validator
+
+namespace autoware::detected_object_validation
+{
+namespace obstacle_pointcloud
 {
 
 struct PointsNumThresholdParam
@@ -154,7 +157,9 @@ private:
     const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & input_objects,
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_obstacle_pointcloud);
 };
-}  // namespace obstacle_pointcloud_based_validator
+
+}  // namespace obstacle_pointcloud
+}  // namespace autoware::detected_object_validation
 
 // NOLINTNEXTLINE(whitespace/line_length)
-#endif  // DETECTED_OBJECT_VALIDATION__OBSTACLE_POINTCLOUD_BASED_VALIDATOR__OBSTACLE_POINTCLOUD_BASED_VALIDATOR_HPP_
+#endif  // OBSTACLE_POINTCLOUD__PCL_VALIDATOR_HPP_

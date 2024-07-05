@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DETECTED_OBJECT_VALIDATION__OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
-#define DETECTED_OBJECT_VALIDATION__OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
+#ifndef OCCUPANCY_GRID_MAP__OGM_VALIDATOR_HPP_
+#define OCCUPANCY_GRID_MAP__OGM_VALIDATOR_HPP_
 
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -30,7 +30,9 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-namespace occupancy_grid_based_validator
+namespace autoware::detected_object_validation
+{
+namespace occupancy_grid_map
 {
 class OccupancyGridBasedValidator : public rclcpp::Node
 {
@@ -68,6 +70,8 @@ private:
     const nav_msgs::msg::OccupancyGrid & ros_occ_grid,
     const autoware_perception_msgs::msg::DetectedObjects & objects, const cv::Mat & occ_grid);
 };
-}  // namespace occupancy_grid_based_validator
 
-#endif  // DETECTED_OBJECT_VALIDATION__OCCUPANCY_GRID_BASED_VALIDATOR__OCCUPANCY_GRID_BASED_VALIDATOR_HPP_
+}  // namespace occupancy_grid_map
+}  // namespace autoware::detected_object_validation
+
+#endif  // OCCUPANCY_GRID_MAP__OGM_VALIDATOR_HPP_
