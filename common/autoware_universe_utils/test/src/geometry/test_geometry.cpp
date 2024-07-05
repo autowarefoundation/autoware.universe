@@ -2094,3 +2094,45 @@ TEST(geometry, distance)
     EXPECT_NEAR(result, 1.0, epsilon);
   }
 }
+
+TEST(geometry, coveredBy)
+{
+  using autoware::universe_utils::coveredBy;
+  using autoware::universe_utils::createPoint;
+
+  {  // The point is within the polygon
+    const auto point = createPoint(0.0, 0.0, 0.0);
+    const auto p1 = createPoint(1.0, 1.0, 0.0);
+    const auto p2 = createPoint(1.0, -1.0, 0.0);
+    const auto p3 = createPoint(-1.0, -1.0, 0.0);
+    const auto p4 = createPoint(-1.0, 1.0, 0.0);
+    const auto result = coveredBy(point, {p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(*result);
+  }
+
+  {  // The point is outside the polygon
+    const auto point = createPoint(0.0, 0.0, 0.0);
+    const auto p1 = createPoint(2.0, 2.0, 0.0);
+    const auto p2 = createPoint(2.0, 1.0, 0.0);
+    const auto p3 = createPoint(1.0, 1.0, 0.0);
+    const auto p4 = createPoint(1.0, 2.0, 0.0);
+    const auto result = coveredBy(point, {p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_FALSE(*result);
+  }
+
+  {  // The point is on the edge of the polygon
+    const auto point = createPoint(0.0, 0.0, 0.0);
+    const auto p1 = createPoint(2.0, 1.0, 0.0);
+    const auto p2 = createPoint(2.0, -1.0, 0.0);
+    const auto p3 = createPoint(0.0, -1.0, 0.0);
+    const auto p4 = createPoint(0.0, 1.0, 0.0);
+    const auto result = coveredBy(point, {p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(*result);
+  }
+}

@@ -501,4 +501,25 @@ double distance(
   }
 }
 
+std::optional<bool> coveredBy(
+  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly)
+{
+  const auto is_point_within = within(point, poly);
+  if (!is_point_within) {
+    return std::nullopt;
+  } else if (*is_point_within) {
+    return true;
+  }
+
+  for (size_t i = 0; i < poly.size(); ++i) {
+    const auto & p1 = poly.at(i);
+    const auto & p2 = poly.at((i + 1) % poly.size());
+    if (distance(point, p1, p2) < std::numeric_limits<double>::epsilon()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 }  // namespace autoware::universe_utils
