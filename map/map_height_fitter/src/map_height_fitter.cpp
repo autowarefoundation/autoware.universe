@@ -143,10 +143,10 @@ bool MapHeightFitter::Impl::get_partial_point_cloud_map(const Point & point)
   const auto res = future.get();
   RCLCPP_DEBUG(
     logger, "Loaded partial pcd map from map_loader (grid size: %lu)",
-    res->new_pointcloud_cells_with_metadata.size());
+    res->new_pointcloud_cells.size());
 
   sensor_msgs::msg::PointCloud2 pcd_msg;
-  for (const auto & pcd_cell : res->new_pointcloud_cells_with_metadata) {
+  for (const auto & pcd_cell : res->new_pointcloud_cells) {
     if (pcd_msg.width == 0) {
       pcd_msg = pcd_cell.pointcloud;
     } else {

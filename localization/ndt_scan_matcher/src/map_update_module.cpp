@@ -229,7 +229,7 @@ bool MapUpdateModule::update_ndt(
   }
   diagnostics_ptr->add_key_value("is_succeed_call_pcd_loader", true);
 
-  auto & maps_to_add = result.get()->new_pointcloud_cells_with_metadata;
+  auto & maps_to_add = result.get()->new_pointcloud_cells;
   auto & map_ids_to_remove = result.get()->ids_to_remove;
 
   diagnostics_ptr->add_key_value("maps_to_add_size", maps_to_add.size());

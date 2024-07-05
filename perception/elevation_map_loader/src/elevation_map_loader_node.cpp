@@ -283,7 +283,7 @@ void ElevationMapLoaderNode::receiveMap()
     }
 
     // concatenate maps
-    concatenatePointCloudMaps(pointcloud_map, result.get()->new_pointcloud_cells_with_metadata);
+    concatenatePointCloudMaps(pointcloud_map, result.get()->new_pointcloud_cells);
   }
   RCLCPP_DEBUG(this->get_logger(), "finish receiving");
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
@@ -294,9 +294,9 @@ void ElevationMapLoaderNode::receiveMap()
 void ElevationMapLoaderNode::concatenatePointCloudMaps(
   sensor_msgs::msg::PointCloud2 & pointcloud_map,
   const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithMetaData> &
-    new_pointcloud_cells_with_metadata) const
+    new_pointcloud_cells) const
 {
-  for (const auto & new_pointcloud_cell : new_pointcloud_cells_with_metadata) {
+  for (const auto & new_pointcloud_cell : new_pointcloud_cells) {
     if (pointcloud_map.width == 0) {
       pointcloud_map = new_pointcloud_cell.pointcloud;
     } else {

@@ -46,7 +46,7 @@ void PartialMapLoaderModule::partialAreaLoad(
     pointcloud_map_cell.metadata.max_x = metadata.max.x;
     pointcloud_map_cell.metadata.max_y = metadata.max.y;
 
-    response->new_pointcloud_cells_with_metadata.push_back(pointcloud_map_cell);
+    response->new_pointcloud_cells.push_back(pointcloud_map_cell);
   }
 }
 

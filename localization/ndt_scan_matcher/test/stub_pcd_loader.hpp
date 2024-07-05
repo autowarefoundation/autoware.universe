@@ -79,7 +79,7 @@ private:
     }
     RCLCPP_INFO_STREAM(get_logger(), "cloud size: " << cloud.size());
     pcl::toROSMsg(cloud, pcd_map_cell.pointcloud);
-    res->new_pointcloud_cells_with_metadata.push_back(pcd_map_cell);
+    res->new_pointcloud_cells.push_back(pcd_map_cell);
     res->header.frame_id = "map";
     return true;
   }

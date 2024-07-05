@@ -86,7 +86,7 @@ bool SelectedMapLoaderModule::onServiceGetSelectedPointCloudMap(
     pointcloud_map_cell.metadata.max_x = metadata.max.x;
     pointcloud_map_cell.metadata.max_y = metadata.max.y;
 
-    res->new_pointcloud_cells_with_metadata.push_back(pointcloud_map_cell);
+    res->new_pointcloud_cells.push_back(pointcloud_map_cell);
   }
   res->header.frame_id = "map";
   return true;
