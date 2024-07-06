@@ -28,13 +28,16 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ## Parameters
 
-### Core Parameters
+### Core Parameters for base methods
+
+{{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_base.schema.json") }}
+
+### Core Parameters for ML methods
 
 {{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_ml_package.schema.json") }}
-{{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_sigma_ml_package.schema.json") }}
-{{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_tiny_ml_package.schema.json") }}
-{{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_tiny.schema.json") }}
-{{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint.schema.json") }}
+
+### Remapper
+
 {{ json_to_markdown("perception/lidar_centerpoint/schema/detection_class_remapper.schema.json") }}
 
 ### The `build_only` option
