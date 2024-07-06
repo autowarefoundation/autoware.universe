@@ -3,6 +3,7 @@ nodes:
   - id: rslidar_driver
     custom:
       source: ../../dora-hardware/vendors/lidar/build/rslidar_driver_pcap
+      # source: ../../dora-hardware/dora_to_ros2/lidar/build/rslidar_driver_pcap
       inputs:
         tick: dora/timer/millis/100
       outputs:
@@ -39,3 +40,10 @@ nodes:
         python: lidar_to_ros2.py
         inputs:
           pointcloud: euclidean_cluster/pointcloud
+          
+  - id: show_LidarRawObject_euclidean_cluster
+    operator:
+        # python: lidar_to_ros2_euclidean_cluster_detect.py
+        python: lidar_raw_to_ros2.py
+        inputs:
+          pointcloud: euclidean_cluster/LidarRawObject
