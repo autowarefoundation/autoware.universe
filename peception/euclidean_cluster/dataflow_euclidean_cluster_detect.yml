@@ -9,6 +9,11 @@ nodes:
       outputs:
         - pointcloud
 
+  # - id: show_input_pointcloud
+  #   operator:
+  #       python: ../../dora-hardware/vendors/lidar/lidar_to_ros2.py
+  #       inputs:
+  #         pointcloud: rslidar_driver/pointcloud 
 # 去地面
   - id: ground_filter
     custom:
@@ -18,11 +23,11 @@ nodes:
       outputs:
         - pointcloud_no_ground
 
-  # - id: show_pointcloud_no_ground
-  #   operator:
-  #       python: ../patchwork-plusplus-ros-master/lidar_to_ros2.py
-  #       inputs:
-  #         pointcloud: ground_filter/pointcloud_no_ground
+  - id: show_pointcloud_no_ground
+    operator:
+        python: ../patchwork-plusplus-ros-master/lidar_to_ros2.py
+        inputs:
+          pointcloud: ground_filter/pointcloud_no_ground
           
   # 聚类
   - id: euclidean_cluster
@@ -32,18 +37,18 @@ nodes:
         pointcloud: ground_filter/pointcloud_no_ground
       outputs:
         - LidarRawObject
-        - pointcloud
+        - rgb_pointcloud
 
   - id: show_pointcloud_euclidean_cluster
     operator:
         # python: lidar_to_ros2_euclidean_cluster_detect.py
-        python: lidar_to_ros2.py
+        python: rgb_pointcloud_to_ros2.py
         inputs:
-          pointcloud: euclidean_cluster/pointcloud
+          pointcloud: euclidean_cluster/rgb_pointcloud
           
-  - id: show_LidarRawObject_euclidean_cluster
+  - id: show_LidarRawObject
     operator:
         # python: lidar_to_ros2_euclidean_cluster_detect.py
-        python: lidar_raw_to_ros2.py
+        python: LidarRawObject_to_ros2.py
         inputs:
           pointcloud: euclidean_cluster/LidarRawObject

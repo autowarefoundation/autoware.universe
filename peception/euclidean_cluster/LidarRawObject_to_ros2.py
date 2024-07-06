@@ -7,6 +7,8 @@ import pyarrow as pa
 import numpy as np
 from typing import Dict, List
 import time
+
+
 new_header={
                 "frame_id": "map",
                  "stamp": {"sec": np.int32(111), "nanosec": np.uint32(222)}
@@ -31,9 +33,12 @@ marks = {
 #                 "position": {"x": np.float64(0), "y": np.float64(0), "z": np.float64(0)}
 #             }]}
 class ROS2Marks:
+
+
     def __init__(self, header: Dict, poses: List):
         self.header = header
         self.poses = poses
+        self.counter = 0
 
     def to_ros_format(self) -> Dict:
         # 将Python对象转换为ROS2兼容的格式
@@ -84,6 +89,7 @@ class ROS2Marks:
 
         markers = []
         for pose in self.poses:
+            self.counter = self.counter+1
             marker = {
                 'header': {
                     # 'frame_id': self.header['frame_id'],
@@ -94,7 +100,7 @@ class ROS2Marks:
                     }
                 },
                 'ns': 'lidar_objects',
-                'id': np.int32(pose.get('id', 0)),  # 假设每个pose有唯一的id
+                'id': np.int32(self.counter),  # 假设每个pose有唯一的id
                 'type': np.int32(1),  # Assuming type as CUBE
                 'action': np.int32(0),  # Assuming action as ADD
                 'pose': {
@@ -115,7 +121,7 @@ class ROS2Marks:
                     'b': np.float32(0),
                     'a': np.float32(1.0),
                 },
-                'lifetime': {'sec': np.int32(0), 'nanosec': np.uint32(0)},
+                'lifetime': {'sec': np.int32(1), 'nanosec': np.uint32(0)},
                 'frame_locked': False,
                 'points': [],
                 # 'colors': [],
@@ -146,7 +152,7 @@ class Operator:
          # Create a ROS2 Context
         self.ros2_context = dora.experimental.ros2_bridge.Ros2Context()
         self.ros2_node = self.ros2_context.new_node(
-            "path2ros",
+            "MarkerArray2ros",
             "/ros2_bridge",
             dora.experimental.ros2_bridge.Ros2NodeOptions(rosout=True),
         )
@@ -157,7 +163,7 @@ class Operator:
         )
 
         self.path_data_topic = self.ros2_node.create_topic(
-            "/ros2_bridge/Path_data", "visualization_msgs::MarkerArray", self.topic_qos
+            "/ros2_bridge/MarkerArray", "visualization_msgs::MarkerArray", self.topic_qos
         )
 
         self.path_data_publisher = self.ros2_node.create_publisher(self.path_data_topic)

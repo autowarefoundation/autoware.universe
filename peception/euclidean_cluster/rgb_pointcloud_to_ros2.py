@@ -4,6 +4,7 @@ from dora import DoraStatus
 import dora
 import numpy as np
 import time
+
 class Operator:
     def __init__(self) -> None:
         self.ros2_context = dora.experimental.ros2_bridge.Ros2Context()
@@ -19,7 +20,7 @@ class Operator:
         )
         # create ros2 topic
         self.lidar_data_topic = self.ros2_node.create_topic(
-            "/ros2_bridge/euclidean_cluster_detect/euclidean_cluster_detect",
+            "/ros2_bridge/euclidean_cluster_detect/cluster_pointcloud",
             "sensor_msgs::PointCloud2",
             self.topic_qos
         )
@@ -81,11 +82,13 @@ class Operator:
                 "fields":[{"name": "x", "offset": np.uint32(0), "datatype": np.uint8(7), "count": np.uint32(1)}, 
                           {"name": "y", "offset": np.uint32(4), "datatype": np.uint8(7), "count": np.uint32(1)},
                           {"name": "z", "offset": np.uint32(8), "datatype": np.uint8(7), "count": np.uint32(1)},
-                          {"name": "i", "offset": np.uint32(12), "datatype": np.uint8(7), "count": np.uint32(1)},],
+                          #{"name": "i", "offset": np.uint32(12),"datatype": np.uint8(7), "count": np.uint32(1)},
+                          {"name": "rgba", "offset": np.uint32(12), "datatype": np.uint8(6), "count": np.uint32(1)},
+                          ],
                 "is_bigendian": False,
                 "point_step": np.uint32(16),
                 "row_step": np.uint32(len(points)),
-                "data": points.ravel().view(np.uint8),#np.asarray(points, np.float32).ravel().view(np.uint8),
+                "data": points.ravel().view(np.uint8),#np.asarray(points, np.float32).ravel().view(np.uint8), 
                 "is_dense": False,
             }
             # print(pa.array([lidar_data_dict]))
