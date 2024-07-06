@@ -40,13 +40,6 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;
 
-  auto declare_parameter_with_description =
-    [this](std::string name, auto default_val, std::string description = "") {
-      auto param_desc = rcl_interfaces::msg::ParameterDescriptor{};
-      param_desc.description = description;
-      return this->declare_parameter(name, default_val, param_desc);
-    };
-
   const std::string model_path = this->declare_parameter<std::string>("model_path");
   const std::string label_path = this->declare_parameter<std::string>("label_path");
   const std::string precision = this->declare_parameter<std::string>("precision");
@@ -55,17 +48,17 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   const float nms_threshold = static_cast<float>(this->declare_parameter<double>("nms_threshold"));
   const std::string calibration_algorithm =
     this->declare_parameter<std::string>("calibration_algorithm");
-  const int dla_core_id = static_cast<std::size_t>(this->declare_parameter<int>("dla_core_id"));
+  const int dla_core_id = this->declare_parameter<int>("dla_core_id");
   const bool quantize_first_layer = this->declare_parameter<bool>("quantize_first_layer");
   const bool quantize_last_layer = this->declare_parameter<bool>("quantize_last_layer");
   const bool profile_per_layer = this->declare_parameter<bool>("profile_per_layer");
-  const double clip_value = static_cast<float>(this->declare_parameter<double>("clip_value"));
+  const double clip_value = this->declare_parameter<double>("clip_value");
   const bool preprocess_on_gpu = this->declare_parameter<bool>("preprocess_on_gpu");
   const std::string calibration_image_list_path =
     this->declare_parameter<std::string>("calibration_image_list_path");
 
-  std::string color_map_path = declare_parameter_with_description(
-    "color_map_path", "", ("Path to a file which contains path to color map."));
+  std::string color_map_path = this->declare_parameter<std::string>("color_map_path");
+
   if (!readLabelFile(label_path)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find label file");
     rclcpp::shutdown();
