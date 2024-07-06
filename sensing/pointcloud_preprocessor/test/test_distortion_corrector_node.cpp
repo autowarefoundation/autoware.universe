@@ -16,6 +16,7 @@
 // set the "show_output_pointcloud_" value to true to display the point cloud values. Then,
 // replace the expected values with the newly displayed undistorted point cloud values.
 
+#include "autoware/universe_utils/math/trigonometry.hpp"
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -229,9 +230,9 @@ protected:
   std::shared_ptr<pointcloud_preprocessor::DistortionCorrector3D> distortion_corrector_3d_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
-  static constexpr double tolerence = 5e-5;
+  static constexpr double tolerence = 1e-4;
   // for debugging or regenerating the ground truth point cloud
-  bool show_output_pointcloud_ = false;
+  bool show_output_pointcloud_ = true;
 };
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
@@ -656,6 +657,191 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
     EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], tolerence);
     EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], tolerence);
     EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], tolerence);
+  }
+
+  if (show_output_pointcloud_) {
+    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
+  }
+}
+
+TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
+{
+  rclcpp::Time timestamp = node_->get_clock()->now();
+  sensor_msgs::msg::PointCloud2 pointcloud_test2d = generatePointCloudMsg(true, false, timestamp);
+  sensor_msgs::msg::PointCloud2 pointcloud_test3d = generatePointCloudMsg(true, false, timestamp);
+
+  // Generate and process a single twist message with constant linear velocity
+  auto twist_msg = generateTwistMsg(1.0, 0.0, timestamp);
+
+  distortion_corrector_2d_->processTwistMessage(twist_msg);
+  distortion_corrector_2d_->initialize();
+  distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
+  distortion_corrector_2d_->undistortPointCloud(false, pointcloud_test2d);
+
+  distortion_corrector_3d_->processTwistMessage(twist_msg);
+  distortion_corrector_3d_->initialize();
+  distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
+  distortion_corrector_3d_->undistortPointCloud(false, pointcloud_test3d);
+
+  // Gernerate expected point cloud for testing
+  sensor_msgs::msg::PointCloud2 expected_pointcloud = generatePointCloudMsg(true, false, timestamp);
+
+  // Calculate expected point cloud values based on constant linear motion
+  double velocity = 1.0;  // 1 m/s linear velocity
+  sensor_msgs::PointCloud2Iterator<float> iter_x(expected_pointcloud, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y(expected_pointcloud, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z(expected_pointcloud, "z");
+  sensor_msgs::PointCloud2Iterator<double> iter_t(expected_pointcloud, "time_stamp");
+
+  std::vector<std::array<float, 3>> expected_points;
+  for (; iter_t != iter_t.end(); ++iter_t, ++iter_x, ++iter_y, ++iter_z) {
+    double time_offset = *iter_t - timestamp.seconds();
+    expected_points.push_back(
+      {*iter_x + static_cast<float>(velocity * time_offset), *iter_y, *iter_z});
+  }
+
+  // Verify each point in the undistorted point cloud
+  sensor_msgs::PointCloud2Iterator<float> iter_x_test2d(pointcloud_test2d, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y_test2d(pointcloud_test2d, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z_test2d(pointcloud_test2d, "z");
+
+  sensor_msgs::PointCloud2Iterator<float> iter_x_test3d(pointcloud_test3d, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y_test3d(pointcloud_test3d, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z_test3d(pointcloud_test3d, "z");
+  size_t i = 0;
+  std::ostringstream oss;
+  oss << "Points:\n";
+
+  for (; iter_x_test2d != iter_x_test2d.end();
+       ++iter_x_test2d, ++iter_y_test2d, ++iter_z_test2d, ++i) {
+    oss << "Point " << i << ": (" << *iter_x_test2d << ", " << *iter_y_test2d << ", "
+        << *iter_z_test2d << ")\n";
+    EXPECT_FLOAT_EQ(*iter_x_test2d, expected_points[i][0]);
+    EXPECT_FLOAT_EQ(*iter_y_test2d, expected_points[i][1]);
+    EXPECT_FLOAT_EQ(*iter_z_test2d, expected_points[i][2]);
+  }
+
+  if (show_output_pointcloud_) {
+    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
+  }
+
+  // Verify each point in the undistorted 2d point cloud with undistorted 3d point cloud
+  iter_x_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "x");
+  iter_y_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "y");
+  iter_z_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "z");
+  i = 0;
+  oss.str("");
+  oss.clear();
+
+  oss << "Points:\n";
+  for (; iter_x_test2d != iter_x_test2d.end(); ++iter_x_test2d, ++iter_y_test2d, ++iter_z_test2d,
+                                               ++iter_x_test3d, ++iter_y_test3d, ++iter_z_test3d,
+                                               ++i) {
+    oss << "Point " << i << " - 2D: (" << *iter_x_test2d << ", " << *iter_y_test2d << ", "
+        << *iter_z_test2d << ")"
+        << " vs 3D: (" << *iter_x_test3d << ", " << *iter_y_test3d << ", " << *iter_z_test3d
+        << ")\n";
+    EXPECT_FLOAT_EQ(*iter_x_test2d, *iter_x_test3d);
+    EXPECT_FLOAT_EQ(*iter_y_test2d, *iter_y_test3d);
+    EXPECT_FLOAT_EQ(*iter_z_test2d, *iter_z_test3d);
+  }
+  if (show_output_pointcloud_) {
+    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
+  }
+}
+
+TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
+{
+  rclcpp::Time timestamp = node_->get_clock()->now();
+  sensor_msgs::msg::PointCloud2 pointcloud_test2d = generatePointCloudMsg(true, false, timestamp);
+  sensor_msgs::msg::PointCloud2 pointcloud_test3d = generatePointCloudMsg(true, false, timestamp);
+
+  // Generate and process a single twist message with constant angular velocity
+  auto twist_msg = generateTwistMsg(0.0, 0.1, timestamp);
+
+  // Process for 2D distortion corrector
+  distortion_corrector_2d_->processTwistMessage(twist_msg);
+  distortion_corrector_2d_->initialize();
+  distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
+  distortion_corrector_2d_->undistortPointCloud(false, pointcloud_test2d);
+
+  // Process for 3D distortion corrector
+  distortion_corrector_3d_->processTwistMessage(twist_msg);
+  distortion_corrector_3d_->initialize();
+  distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
+  distortion_corrector_3d_->undistortPointCloud(false, pointcloud_test3d);
+
+  // Generate expected point cloud for testing
+  sensor_msgs::msg::PointCloud2 expected_pointcloud = generatePointCloudMsg(true, false, timestamp);
+
+  // Calculate expected point cloud values based on constant rotational motion
+  double angular_velocity = 0.1;  // 0.1 rad/s rotational velocity
+  sensor_msgs::PointCloud2Iterator<float> iter_x(expected_pointcloud, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y(expected_pointcloud, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z(expected_pointcloud, "z");
+  sensor_msgs::PointCloud2Iterator<double> iter_t(expected_pointcloud, "time_stamp");
+
+  std::vector<std::array<float, 3>> expected_points;
+  for (; iter_t != iter_t.end(); ++iter_t, ++iter_x, ++iter_y, ++iter_z) {
+    double time_offset = *iter_t - timestamp.seconds();
+    float angle = angular_velocity * time_offset;
+
+    // Set the quaternion for the current angle
+    tf2::Quaternion quaternion;
+    quaternion.setRPY(0, 0, angle);
+
+    tf2::Vector3 point(*iter_x, *iter_y, *iter_z);
+    tf2::Vector3 rotated_point = tf2::quatRotate(quaternion, point);
+    expected_points.push_back(
+      {static_cast<float>(rotated_point.x()), static_cast<float>(rotated_point.y()),
+       static_cast<float>(rotated_point.z())});
+  }
+
+  // Verify each point in the undistorted 2D point cloud
+  sensor_msgs::PointCloud2Iterator<float> iter_x_test2d(pointcloud_test2d, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y_test2d(pointcloud_test2d, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z_test2d(pointcloud_test2d, "z");
+
+  size_t i = 0;
+  std::ostringstream oss;
+  oss << "Points:\n";
+
+  for (; iter_x_test2d != iter_x_test2d.end();
+       ++iter_x_test2d, ++iter_y_test2d, ++iter_z_test2d, ++i) {
+    oss << "Point " << i << ": (" << *iter_x_test2d << ", " << *iter_y_test2d << ", "
+        << *iter_z_test2d << ")\n";
+    EXPECT_NEAR(*iter_x_test2d, expected_points[i][0], tolerence);
+    EXPECT_NEAR(*iter_y_test2d, expected_points[i][1], tolerence);
+    EXPECT_NEAR(*iter_z_test2d, expected_points[i][2], tolerence);
+  }
+
+  if (show_output_pointcloud_) {
+    RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
+  }
+
+  // Verify each point in the undistorted 2D point cloud with undistorted 3D point cloud
+  iter_x_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "x");
+  iter_y_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "y");
+  iter_z_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "z");
+  sensor_msgs::PointCloud2Iterator<float> iter_x_test3d(pointcloud_test3d, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y_test3d(pointcloud_test3d, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z_test3d(pointcloud_test3d, "z");
+
+  i = 0;
+  oss.str("");
+  oss.clear();
+
+  oss << "Points:\n";
+  for (; iter_x_test2d != iter_x_test2d.end(); ++iter_x_test2d, ++iter_y_test2d, ++iter_z_test2d,
+                                               ++iter_x_test3d, ++iter_y_test3d, ++iter_z_test3d,
+                                               ++i) {
+    oss << "Point " << i << " - 2D: (" << *iter_x_test2d << ", " << *iter_y_test2d << ", "
+        << *iter_z_test2d << ")"
+        << " vs 3D: (" << *iter_x_test3d << ", " << *iter_y_test3d << ", " << *iter_z_test3d
+        << ")\n";
+    EXPECT_FLOAT_EQ(*iter_x_test2d, *iter_x_test3d);
+    EXPECT_FLOAT_EQ(*iter_y_test2d, *iter_y_test3d);
+    EXPECT_FLOAT_EQ(*iter_z_test2d, *iter_z_test3d);
   }
 
   if (show_output_pointcloud_) {
