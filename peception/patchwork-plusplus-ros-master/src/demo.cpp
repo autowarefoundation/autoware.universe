@@ -139,8 +139,20 @@ int run(void *dora_context)
                 point_data.ptr = new uint8_t[all_size];
 
                 memcpy(point_data.ptr, data, 16);
-                memcpy(point_data.ptr + 16, &pc_non_ground.points[0], pc_non_ground.size() * 16);
+                //memcpy(point_data.ptr + 16, &pc_non_ground.points[0], pc_non_ground.size() * 16);
 
+                for(int i=0;i<pc_non_ground.points.size();i++)
+                {
+                    float* data_float = (float*)(point_data.ptr + 16+16*i);
+                    *data_float = pc_non_ground.points[i].x;
+                    data_float = (float*)(point_data.ptr + 16+4+16*i);
+                    *data_float = pc_non_ground.points[i].y;
+                    data_float = (float*)(point_data.ptr + 16+8+16*i);
+                    *data_float = pc_non_ground.points[i].z;
+                    data_float = (float*)(point_data.ptr + 16+12+16*i);
+                    *data_float =pc_non_ground.points[i].intensity;
+                }
+    
 
                 char *output_data = (char *)point_data.ptr;
                 size_t output_data_len = ((pc_non_ground.size() + 1) * 16);

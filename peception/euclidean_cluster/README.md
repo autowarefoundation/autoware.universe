@@ -21,19 +21,17 @@ dora start dataflow_euclidean_cluster_detect.yml --name test
 
  step2：启动rviz2，即可看到如下现象
 
-![figure2](fig/figure2.gif)
-
-
+![euclidean_cluster](fig/euclidean_cluster.gif)
 
 
 ## 节点说明
 
 该配置文件包含4个节点
 
-rslidar_driver: 从pcap数据文件中读取点云并发布
+- rslidar_driver: 从pcap数据文件中读取点云并发布
 
-ground_filter: 点云去地面节点，去除点云中地面部分
+- ground_filter: 点云去地面节点，去除点云中地面部分
 
-euclidean_cluster: 点云聚类节点
+- euclidean_cluster: 点云聚类节点
 
-show_pointcloud_euclidean_cluster: 点云显示节点  显示聚类以后的点云
+- show_pointcloud_euclidean_cluster: 点云显示节点  显示聚类以后的点云
