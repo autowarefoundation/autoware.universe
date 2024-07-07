@@ -232,6 +232,7 @@ protected:
 
   static constexpr double standard_tolerance = 1e-4;
   static constexpr double coarse_tolerance = 1e-3;
+
   // for debugging or regenerating the ground truth point cloud
   bool debug = false;
 };
