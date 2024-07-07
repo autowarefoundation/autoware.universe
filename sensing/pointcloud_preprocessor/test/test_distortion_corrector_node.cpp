@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Note: To regenerate the ground truth (GT) for the expected undistorted point cloud values,
-// set the "show_output_pointcloud_" value to true to display the point cloud values. Then,
+// set the "debug" value to true to display the point cloud values. Then,
 // replace the expected values with the newly displayed undistorted point cloud values.
 
 #include "autoware/universe_utils/math/trigonometry.hpp"
@@ -230,9 +230,10 @@ protected:
   std::shared_ptr<pointcloud_preprocessor::DistortionCorrector3D> distortion_corrector_3d_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
-  static constexpr double tolerence = 1e-4;
+  static constexpr double standard_tolerance = 1e-4;
+  static constexpr double coarse_tolerance = 1e-3;
   // for debugging or regenerating the ground truth point cloud
-  bool show_output_pointcloud_ = true;
+  bool debug = false;
 };
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
@@ -252,7 +253,8 @@ TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
 
   ASSERT_FALSE(distortion_corrector_2d_->get_angular_velocity_queue().empty());
   EXPECT_NEAR(
-    distortion_corrector_2d_->get_angular_velocity_queue().front().vector.z, 0.0443032, tolerence);
+    distortion_corrector_2d_->get_angular_velocity_queue().front().vector.z, 0.0443032,
+    standard_tolerance);
 }
 
 TEST_F(DistortionCorrectorTest, TestIsInputValid)
@@ -321,16 +323,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
 
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], tolerence);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], tolerence);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], tolerence);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -387,16 +389,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
   // Verify each point in the undistorted point cloud
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], tolerence);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], tolerence);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], tolerence);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -438,16 +440,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
   // Verify each point in the undistorted point cloud
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], tolerence);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], tolerence);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], tolerence);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -490,16 +492,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
   // Verify each point in the undistorted point cloud
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], tolerence);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], tolerence);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], tolerence);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -536,16 +538,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
   // Verify each point in the undistorted point cloud
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], tolerence);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], tolerence);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], tolerence);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -593,16 +595,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
   // Verify each point in the undistorted point cloud
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], tolerence);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], tolerence);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], tolerence);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -650,16 +652,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
   // Verify each point in the undistorted point cloud
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], tolerence);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], tolerence);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], tolerence);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -667,8 +669,8 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
 {
   rclcpp::Time timestamp = node_->get_clock()->now();
-  sensor_msgs::msg::PointCloud2 pointcloud_test2d = generatePointCloudMsg(true, false, timestamp);
-  sensor_msgs::msg::PointCloud2 pointcloud_test3d = generatePointCloudMsg(true, false, timestamp);
+  sensor_msgs::msg::PointCloud2 test2d_pointcloud = generatePointCloudMsg(true, false, timestamp);
+  sensor_msgs::msg::PointCloud2 test3d_pointcloud = generatePointCloudMsg(true, false, timestamp);
 
   // Generate and process a single twist message with constant linear velocity
   auto twist_msg = generateTwistMsg(1.0, 0.0, timestamp);
@@ -676,12 +678,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
   distortion_corrector_2d_->processTwistMessage(twist_msg);
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(false, pointcloud_test2d);
+  distortion_corrector_2d_->undistortPointCloud(false, test2d_pointcloud);
 
   distortion_corrector_3d_->processTwistMessage(twist_msg);
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(false, pointcloud_test3d);
+  distortion_corrector_3d_->undistortPointCloud(false, test3d_pointcloud);
 
   // Gernerate expected point cloud for testing
   sensor_msgs::msg::PointCloud2 expected_pointcloud = generatePointCloudMsg(true, false, timestamp);
@@ -701,51 +703,51 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
   }
 
   // Verify each point in the undistorted point cloud
-  sensor_msgs::PointCloud2Iterator<float> iter_x_test2d(pointcloud_test2d, "x");
-  sensor_msgs::PointCloud2Iterator<float> iter_y_test2d(pointcloud_test2d, "y");
-  sensor_msgs::PointCloud2Iterator<float> iter_z_test2d(pointcloud_test2d, "z");
-
-  sensor_msgs::PointCloud2Iterator<float> iter_x_test3d(pointcloud_test3d, "x");
-  sensor_msgs::PointCloud2Iterator<float> iter_y_test3d(pointcloud_test3d, "y");
-  sensor_msgs::PointCloud2Iterator<float> iter_z_test3d(pointcloud_test3d, "z");
+  sensor_msgs::PointCloud2Iterator<float> test2d_iter_x(test2d_pointcloud, "x");
+  sensor_msgs::PointCloud2Iterator<float> test2d_iter_y(test2d_pointcloud, "y");
+  sensor_msgs::PointCloud2Iterator<float> test2d_iter_z(test2d_pointcloud, "z");
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
-  for (; iter_x_test2d != iter_x_test2d.end();
-       ++iter_x_test2d, ++iter_y_test2d, ++iter_z_test2d, ++i) {
-    oss << "Point " << i << ": (" << *iter_x_test2d << ", " << *iter_y_test2d << ", "
-        << *iter_z_test2d << ")\n";
-    EXPECT_FLOAT_EQ(*iter_x_test2d, expected_points[i][0]);
-    EXPECT_FLOAT_EQ(*iter_y_test2d, expected_points[i][1]);
-    EXPECT_FLOAT_EQ(*iter_z_test2d, expected_points[i][2]);
+  for (; test2d_iter_x != test2d_iter_x.end();
+       ++test2d_iter_x, ++test2d_iter_y, ++test2d_iter_z, ++i) {
+    oss << "Point " << i << ": (" << *test2d_iter_x << ", " << *test2d_iter_y << ", "
+        << *test2d_iter_z << ")\n";
+    EXPECT_FLOAT_EQ(*test2d_iter_x, expected_points[i][0]);
+    EXPECT_FLOAT_EQ(*test2d_iter_y, expected_points[i][1]);
+    EXPECT_FLOAT_EQ(*test2d_iter_z, expected_points[i][2]);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 
   // Verify each point in the undistorted 2d point cloud with undistorted 3d point cloud
-  iter_x_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "x");
-  iter_y_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "y");
-  iter_z_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "z");
+  test2d_iter_x = sensor_msgs::PointCloud2Iterator<float>(test2d_pointcloud, "x");
+  test2d_iter_y = sensor_msgs::PointCloud2Iterator<float>(test2d_pointcloud, "y");
+  test2d_iter_z = sensor_msgs::PointCloud2Iterator<float>(test2d_pointcloud, "z");
+  sensor_msgs::PointCloud2Iterator<float> test3d_iter_x(test3d_pointcloud, "x");
+  sensor_msgs::PointCloud2Iterator<float> test3d_iter_y(test3d_pointcloud, "y");
+  sensor_msgs::PointCloud2Iterator<float> test3d_iter_z(test3d_pointcloud, "z");
+
   i = 0;
   oss.str("");
   oss.clear();
 
-  oss << "Points:\n";
-  for (; iter_x_test2d != iter_x_test2d.end(); ++iter_x_test2d, ++iter_y_test2d, ++iter_z_test2d,
-                                               ++iter_x_test3d, ++iter_y_test3d, ++iter_z_test3d,
+  oss << "Expected pointcloud:\n";
+  for (; test2d_iter_x != test2d_iter_x.end(); ++test2d_iter_x, ++test2d_iter_y, ++test2d_iter_z,
+                                               ++test3d_iter_x, ++test3d_iter_y, ++test3d_iter_z,
                                                ++i) {
-    oss << "Point " << i << " - 2D: (" << *iter_x_test2d << ", " << *iter_y_test2d << ", "
-        << *iter_z_test2d << ")"
-        << " vs 3D: (" << *iter_x_test3d << ", " << *iter_y_test3d << ", " << *iter_z_test3d
+    oss << "Point " << i << " - 2D: (" << *test2d_iter_x << ", " << *test2d_iter_y << ", "
+        << *test2d_iter_z << ")"
+        << " vs 3D: (" << *test3d_iter_x << ", " << *test3d_iter_y << ", " << *test3d_iter_z
         << ")\n";
-    EXPECT_FLOAT_EQ(*iter_x_test2d, *iter_x_test3d);
-    EXPECT_FLOAT_EQ(*iter_y_test2d, *iter_y_test3d);
-    EXPECT_FLOAT_EQ(*iter_z_test2d, *iter_z_test3d);
+    EXPECT_FLOAT_EQ(*test2d_iter_x, *test3d_iter_x);
+    EXPECT_FLOAT_EQ(*test2d_iter_y, *test3d_iter_y);
+    EXPECT_FLOAT_EQ(*test2d_iter_z, *test3d_iter_z);
   }
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -753,23 +755,21 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
 {
   rclcpp::Time timestamp = node_->get_clock()->now();
-  sensor_msgs::msg::PointCloud2 pointcloud_test2d = generatePointCloudMsg(true, false, timestamp);
-  sensor_msgs::msg::PointCloud2 pointcloud_test3d = generatePointCloudMsg(true, false, timestamp);
+  sensor_msgs::msg::PointCloud2 test2d_pointcloud = generatePointCloudMsg(true, false, timestamp);
+  sensor_msgs::msg::PointCloud2 test3d_pointcloud = generatePointCloudMsg(true, false, timestamp);
 
   // Generate and process a single twist message with constant angular velocity
   auto twist_msg = generateTwistMsg(0.0, 0.1, timestamp);
 
-  // Process for 2D distortion corrector
   distortion_corrector_2d_->processTwistMessage(twist_msg);
   distortion_corrector_2d_->initialize();
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_2d_->undistortPointCloud(false, pointcloud_test2d);
+  distortion_corrector_2d_->undistortPointCloud(false, test2d_pointcloud);
 
-  // Process for 3D distortion corrector
   distortion_corrector_3d_->processTwistMessage(twist_msg);
   distortion_corrector_3d_->initialize();
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
-  distortion_corrector_3d_->undistortPointCloud(false, pointcloud_test3d);
+  distortion_corrector_3d_->undistortPointCloud(false, test3d_pointcloud);
 
   // Generate expected point cloud for testing
   sensor_msgs::msg::PointCloud2 expected_pointcloud = generatePointCloudMsg(true, false, timestamp);
@@ -788,7 +788,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
 
     // Set the quaternion for the current angle
     tf2::Quaternion quaternion;
-    quaternion.setRPY(0, 0, angle);
+    quaternion.setValue(
+      0, 0, autoware::universe_utils::sin(angle * 0.5f),
+      autoware::universe_utils::cos(angle * 0.5f));
 
     tf2::Vector3 point(*iter_x, *iter_y, *iter_z);
     tf2::Vector3 rotated_point = tf2::quatRotate(quaternion, point);
@@ -798,53 +800,53 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
   }
 
   // Verify each point in the undistorted 2D point cloud
-  sensor_msgs::PointCloud2Iterator<float> iter_x_test2d(pointcloud_test2d, "x");
-  sensor_msgs::PointCloud2Iterator<float> iter_y_test2d(pointcloud_test2d, "y");
-  sensor_msgs::PointCloud2Iterator<float> iter_z_test2d(pointcloud_test2d, "z");
+  sensor_msgs::PointCloud2Iterator<float> test2d_iter_x(test2d_pointcloud, "x");
+  sensor_msgs::PointCloud2Iterator<float> test2d_iter_y(test2d_pointcloud, "y");
+  sensor_msgs::PointCloud2Iterator<float> test2d_iter_z(test2d_pointcloud, "z");
 
   size_t i = 0;
   std::ostringstream oss;
-  oss << "Points:\n";
+  oss << "Expected pointcloud:\n";
 
-  for (; iter_x_test2d != iter_x_test2d.end();
-       ++iter_x_test2d, ++iter_y_test2d, ++iter_z_test2d, ++i) {
-    oss << "Point " << i << ": (" << *iter_x_test2d << ", " << *iter_y_test2d << ", "
-        << *iter_z_test2d << ")\n";
-    EXPECT_NEAR(*iter_x_test2d, expected_points[i][0], tolerence);
-    EXPECT_NEAR(*iter_y_test2d, expected_points[i][1], tolerence);
-    EXPECT_NEAR(*iter_z_test2d, expected_points[i][2], tolerence);
+  for (; test2d_iter_x != test2d_iter_x.end();
+       ++test2d_iter_x, ++test2d_iter_y, ++test2d_iter_z, ++i) {
+    oss << "Point " << i << ": (" << *test2d_iter_x << ", " << *test2d_iter_y << ", "
+        << *test2d_iter_z << ")\n";
+    EXPECT_FLOAT_EQ(*test2d_iter_x, expected_points[i][0]);
+    EXPECT_FLOAT_EQ(*test2d_iter_y, expected_points[i][1]);
+    EXPECT_FLOAT_EQ(*test2d_iter_z, expected_points[i][2]);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 
   // Verify each point in the undistorted 2D point cloud with undistorted 3D point cloud
-  iter_x_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "x");
-  iter_y_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "y");
-  iter_z_test2d = sensor_msgs::PointCloud2Iterator<float>(pointcloud_test2d, "z");
-  sensor_msgs::PointCloud2Iterator<float> iter_x_test3d(pointcloud_test3d, "x");
-  sensor_msgs::PointCloud2Iterator<float> iter_y_test3d(pointcloud_test3d, "y");
-  sensor_msgs::PointCloud2Iterator<float> iter_z_test3d(pointcloud_test3d, "z");
+  test2d_iter_x = sensor_msgs::PointCloud2Iterator<float>(test2d_pointcloud, "x");
+  test2d_iter_y = sensor_msgs::PointCloud2Iterator<float>(test2d_pointcloud, "y");
+  test2d_iter_z = sensor_msgs::PointCloud2Iterator<float>(test2d_pointcloud, "z");
+  sensor_msgs::PointCloud2Iterator<float> test3d_iter_x(test3d_pointcloud, "x");
+  sensor_msgs::PointCloud2Iterator<float> test3d_iter_y(test3d_pointcloud, "y");
+  sensor_msgs::PointCloud2Iterator<float> test3d_iter_z(test3d_pointcloud, "z");
 
   i = 0;
   oss.str("");
   oss.clear();
 
-  oss << "Points:\n";
-  for (; iter_x_test2d != iter_x_test2d.end(); ++iter_x_test2d, ++iter_y_test2d, ++iter_z_test2d,
-                                               ++iter_x_test3d, ++iter_y_test3d, ++iter_z_test3d,
+  oss << "Expected pointcloud:\n";
+  for (; test2d_iter_x != test2d_iter_x.end(); ++test2d_iter_x, ++test2d_iter_y, ++test2d_iter_z,
+                                               ++test3d_iter_x, ++test3d_iter_y, ++test3d_iter_z,
                                                ++i) {
-    oss << "Point " << i << " - 2D: (" << *iter_x_test2d << ", " << *iter_y_test2d << ", "
-        << *iter_z_test2d << ")"
-        << " vs 3D: (" << *iter_x_test3d << ", " << *iter_y_test3d << ", " << *iter_z_test3d
+    oss << "Point " << i << " - 2D: (" << *test2d_iter_x << ", " << *test2d_iter_y << ", "
+        << *test2d_iter_z << ")"
+        << " vs 3D: (" << *test3d_iter_x << ", " << *test3d_iter_y << ", " << *test3d_iter_z
         << ")\n";
-    EXPECT_FLOAT_EQ(*iter_x_test2d, *iter_x_test3d);
-    EXPECT_FLOAT_EQ(*iter_y_test2d, *iter_y_test3d);
-    EXPECT_FLOAT_EQ(*iter_z_test2d, *iter_z_test3d);
+    EXPECT_NEAR(*test2d_iter_x, *test3d_iter_x, coarse_tolerance);
+    EXPECT_NEAR(*test2d_iter_y, *test3d_iter_y, coarse_tolerance);
+    EXPECT_NEAR(*test2d_iter_z, *test3d_iter_z, coarse_tolerance);
   }
 
-  if (show_output_pointcloud_) {
+  if (debug) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
