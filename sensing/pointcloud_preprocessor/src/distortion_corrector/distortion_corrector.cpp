@@ -377,7 +377,9 @@ inline void DistortionCorrector2D::undistortPointImplementation(
   theta_ += w * time_offset;
   baselink_quat_.setValue(
     0, 0, autoware::universe_utils::sin(theta_ * 0.5f),
-    autoware::universe_utils::cos(theta_ * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
+    autoware::universe_utils::cos(
+      theta_ *
+      0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta); (Note that the value is slightly different)
   const float dis = v * time_offset;
   x_ += dis * autoware::universe_utils::cos(theta_);
   y_ += dis * autoware::universe_utils::sin(theta_);
