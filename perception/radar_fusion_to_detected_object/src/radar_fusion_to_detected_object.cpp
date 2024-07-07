@@ -13,10 +13,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "radar_fusion_to_detected_object/radar_fusion_to_detected_object.hpp"
+#include "include/radar_fusion_to_detected_object.hpp"
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/math/normalization.hpp>
+#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/math/normalization.hpp"
 
 #include <boost/geometry.hpp>
 
@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace radar_fusion_to_detected_object
+namespace autoware::radar_fusion_to_detected_object
 {
 using autoware::universe_utils::LinearRing2d;
 using autoware::universe_utils::Point2d;
@@ -95,6 +95,8 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
     for (auto & split_object : split_objects) {
       // set radars within objects
       std::shared_ptr<std::vector<RadarInput>> radars_within_split_object;
+
+      // cppcheck-suppress knownConditionTrueFalse
       if (split_objects.size() == 1) {
         // If object is not split, radar data within object is same
         radars_within_split_object = radars_within_object;
@@ -358,4 +360,4 @@ LinearRing2d RadarFusionToDetectedObject::createObject2dWithMargin(
 
   return box;
 }
-}  // namespace radar_fusion_to_detected_object
+}  // namespace autoware::radar_fusion_to_detected_object

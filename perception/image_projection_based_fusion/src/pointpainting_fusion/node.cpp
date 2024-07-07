@@ -45,13 +45,6 @@ Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
 namespace image_projection_based_fusion
 {
 
-inline bool isInsideBbox(
-  float proj_x, float proj_y, sensor_msgs::msg::RegionOfInterest roi, float zc)
-{
-  return proj_x >= roi.x_offset * zc && proj_x <= (roi.x_offset + roi.width) * zc &&
-         proj_y >= roi.y_offset * zc && proj_y <= (roi.y_offset + roi.height) * zc;
-}
-
 inline bool isVehicle(int label2d)
 {
   return label2d == autoware_perception_msgs::msg::ObjectClassification::CAR ||
@@ -307,9 +300,9 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   const auto class_offset = painted_pointcloud_msg.fields.at(4).offset;
   const auto p_step = painted_pointcloud_msg.point_step;
   // projection matrix
-  Eigen::Matrix3f camera_projection;  // use only x,y,z
-  camera_projection << camera_info.p.at(0), camera_info.p.at(1), camera_info.p.at(2),
-    camera_info.p.at(4), camera_info.p.at(5), camera_info.p.at(6);
+  image_geometry::PinholeCameraModel pinhole_camera_model;
+  pinhole_camera_model.fromCameraInfo(camera_info);
+
   Eigen::Vector3f point_lidar, point_camera;
   /** dc : don't care
 
@@ -342,15 +335,15 @@ dc   | dc dc dc  dc ||zc|
       continue;
     }
     // project
-    Eigen::Vector3f normalized_projected_point = camera_projection * Eigen::Vector3f(p_x, p_y, p_z);
+    Eigen::Vector2d projected_point =
+      calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(p_x, p_y, p_z));
+
     // iterate 2d bbox
     for (const auto & feature_object : objects) {
       sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
       // paint current point if it is inside bbox
       int label2d = feature_object.object.classification.front().label;
-      if (
-        !isUnknown(label2d) &&
-        isInsideBbox(normalized_projected_point.x(), normalized_projected_point.y(), roi, p_z)) {
+      if (!isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, p_z)) {
         data = &painted_pointcloud_msg.data[0];
         auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
         for (const auto & cls : isClassTable_) {
@@ -361,7 +354,7 @@ dc   | dc dc dc  dc ||zc|
 #if 0
       // Parallelizing loop don't support push_back
       if (debugger_) {
-        debug_image_points.push_back(normalized_projected_point);
+        debug_image_points.push_back(projected_point);
       }
 #endif
     }

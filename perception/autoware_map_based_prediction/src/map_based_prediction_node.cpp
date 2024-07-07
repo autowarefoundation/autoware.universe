@@ -20,10 +20,10 @@
 #include <autoware/universe_utils/math/constants.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <interpolation/linear_interpolation.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
 
@@ -1309,10 +1309,14 @@ std::string MapBasedPredictionNode::tryMatchNewObjectToDisappeared(
 
 bool MapBasedPredictionNode::doesPathCrossAnyFence(const PredictedPath & predicted_path)
 {
-  const lanelet::ConstLineStrings3d & all_fences =
-    lanelet::utils::query::getAllFences(lanelet_map_ptr_);
-  for (const auto & fence_line : all_fences) {
-    if (doesPathCrossFence(predicted_path, fence_line)) {
+  lanelet::BasicLineString2d predicted_path_ls;
+  for (const auto & p : predicted_path.path)
+    predicted_path_ls.emplace_back(p.position.x, p.position.y);
+  const auto candidates =
+    lanelet_map_ptr_->lineStringLayer.search(lanelet::geometry::boundingBox2d(predicted_path_ls));
+  for (const auto & candidate : candidates) {
+    const std::string type = candidate.attributeOr(lanelet::AttributeName::Type, "none");
+    if (type == "fence" && doesPathCrossFence(predicted_path, candidate)) {
       return true;
     }
   }
@@ -1771,11 +1775,12 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
                                object.kinematics.acceleration_with_covariance.accel.linear.y)
                            : 0.0;
   const double t_h = time_horizon;
-  const double λ = std::log(2) / acceleration_exponential_half_life_;
+  const double lambda = std::log(2) / acceleration_exponential_half_life_;
 
   auto get_search_distance_with_decaying_acc = [&]() -> double {
     const double acceleration_distance =
-      obj_acc * (1.0 / λ) * t_h + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_h) - 1);
+      obj_acc * (1.0 / lambda) * t_h +
+      obj_acc * (1.0 / std::pow(lambda, 2)) * std::expm1(-lambda * t_h);
     double search_dist = acceleration_distance + obj_vel * t_h;
     return search_dist;
   };
@@ -1787,13 +1792,13 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
       return obj_vel * t_h;
     }
     // Time to reach final speed
-    const double t_f = (-1.0 / λ) * std::log(1 - ((final_speed - obj_vel) * λ) / obj_acc);
+    const double t_f = (-1.0 / lambda) * std::log(1 - ((final_speed - obj_vel) * lambda) / obj_acc);
     // It is assumed the vehicle accelerates until final_speed is reached and
     // then continues at constant speed for the rest of the time horizon
     const double search_dist =
       // Distance covered while accelerating
-      obj_acc * (1.0 / λ) * t_f + obj_acc * (1.0 / std::pow(λ, 2)) * (std::exp(-λ * t_f) - 1) +
-      obj_vel * t_f +
+      obj_acc * (1.0 / lambda) * t_f +
+      obj_acc * (1.0 / std::pow(lambda, 2)) * std::expm1(-lambda * t_f) + obj_vel * t_f +
       // Distance covered at constant speed
       final_speed * (t_h - t_f);
     return search_dist;
@@ -1807,7 +1812,7 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     const double legal_speed_limit = static_cast<double>(limit.speedLimit.value());
 
     double final_speed_after_acceleration =
-      obj_vel + obj_acc * (1.0 / λ) * (1.0 - std::exp(-λ * t_h));
+      obj_vel + obj_acc * (1.0 / lambda) * (1.0 - std::exp(-lambda * t_h));
 
     const double final_speed_limit = legal_speed_limit * speed_limit_multiplier_;
     const bool final_speed_surpasses_limit = final_speed_after_acceleration > final_speed_limit;
