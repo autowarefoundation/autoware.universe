@@ -274,15 +274,10 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     // Compare cost
     if (next_node->status == NodeStatus::None || next_node->fc > total_cost) {
       next_node->status = NodeStatus::Open;
-      next_node->x = next_pose.position.x;
-      next_node->y = next_pose.position.y;
-      next_node->theta = tf2::getYaw(next_pose.orientation);
-      next_node->gc = move_cost;
-      next_node->fc = total_cost;
+      next_node->set(
+        next_pose, move_cost, total_cost, transition.steering_index, transition.is_back);
       next_node->dir_distance =
         transition.distance + (is_direction_switch ? 0.0 : current_node.dir_distance);
-      next_node->steering_index = transition.steering_index;
-      next_node->is_back = transition.is_back;
       next_node->parent = &current_node;
       openlist_.push(next_node);
       continue;
