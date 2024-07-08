@@ -103,6 +103,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   mask_pub_ = image_transport::create_publisher(this, "~/out/mask");
   color_mask_pub_ = image_transport::create_publisher(this, "~/out/color_mask");
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
+  str_pub_ = this->create_publisher<std_msgs::msg::String>("~/out/mask_string", 10);
 
   if (declare_parameter("build_only", false)) {
     RCLCPP_INFO(this->get_logger(), "TensorRT engine file is built and exit.");
@@ -124,6 +125,25 @@ void TrtYoloXNode::onConnect()
       this, "~/in/image", std::bind(&TrtYoloXNode::onImage, this, _1), "raw",
       rmw_qos_profile_sensor_data);
   }
+}
+
+std::vector<std::pair<uint8_t, int>> TrtYoloXNode::rle_compress(const cv::Mat & image)
+{
+  std::vector<std::pair<uint8_t, int>> compressed_data;
+  const int rows = image.rows;
+  const int cols = image.cols;
+  compressed_data.emplace_back(image.at<uint8_t>(0, 0), 0);
+  for (int i = 0; i < rows; ++i) {
+    for (int j = 0; j < cols; ++j) {
+      uint8_t current_value = image.at<uint8_t>(i, j);
+      if (compressed_data.back().first == current_value) {
+        ++compressed_data.back().second;
+      } else {
+        compressed_data.emplace_back(current_value, 1);
+      }
+    }
+  }
+  return compressed_data;
 }
 
 void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
@@ -183,6 +203,17 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
         .toImageMsg();
     out_mask_msg->header = msg->header;
+
+    std::vector<std::pair<uint8_t, int>> compressed_data = TrtYoloXNode::rle_compress(mask);
+    int step = sizeof(uint8_t) + sizeof(int);
+    out_mask_msg->data.resize(static_cast<int>(compressed_data.size()) * step);
+    for (size_t i = 0; i < compressed_data.size(); ++i) {
+      std::memcpy(&compressed_data.at(i).first, &out_mask_msg->data[i * step], sizeof(uint8_t));
+      std::memcpy(
+        &compressed_data.at(i).second, &out_mask_msg->data[i * step + sizeof(uint8_t)],
+        sizeof(int));
+    }
+    out_mask_msg->step = step;
     mask_pub_.publish(out_mask_msg);
   }
   image_pub_.publish(in_image_ptr->toImageMsg());
