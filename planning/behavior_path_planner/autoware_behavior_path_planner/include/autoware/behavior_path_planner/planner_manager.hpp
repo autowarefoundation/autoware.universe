@@ -112,6 +112,13 @@ public:
   void launchScenePlugin(rclcpp::Node & node, const std::string & name);
 
   /**
+   * @brief set max iteration numbers
+   * @param number of scene module
+   *
+   */
+  void calculateMaxIterationNum(const size_t scene_module_num);
+
+  /**
    * @brief unregister managers.
    * @param node.
    * @param plugin name.

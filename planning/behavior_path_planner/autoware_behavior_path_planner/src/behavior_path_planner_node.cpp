@@ -73,13 +73,16 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     const auto & p = planner_data_->parameters;
     planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num);
 
+    size_t scene_module_num = 0;
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
       // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
       if (name == "") {
         break;
       }
       planner_manager_->launchScenePlugin(*this, name);
+      scene_module_num++;
     }
+    planner_manager_->calculateMaxIterationNum(scene_module_num);
 
     for (const auto & manager : planner_manager_->getSceneModuleManagers()) {
       path_candidate_publishers_.emplace(
