@@ -2,9 +2,9 @@
   ros__parameters:
     input_offset_ms: [61.67, 111.67, 45.0, 28.33, 78.33, 95.0]
     timeout_ms: 70.0
-    match_threshold_ms: 50.0
+    match_threshold_ms: 150.0
     image_buffer_size: 15
-    debug_mode: false
+    debug_mode: true
     filter_scope_min_x: -100.0
     filter_scope_min_y: -100.0
     filter_scope_min_z: -100.0

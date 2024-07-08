@@ -219,6 +219,7 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
   pcd_modifier.clear();
   pcd_modifier.reserve(tmp.width);
   painted_pointcloud_msg.width = tmp.width;
+  painted_pointcloud_msg.height = tmp.height;
   constexpr int num_fields = 5;
   pcd_modifier.setPointCloud2Fields(
     num_fields, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
