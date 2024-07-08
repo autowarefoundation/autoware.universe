@@ -325,13 +325,9 @@ void AstarSearch::setPath(const AstarNode & goal_node)
 
   std::vector<PlannerWaypoint> waypoints;
 
-  // push exact goal pose first
+  // push astar nodes poses
   geometry_msgs::msg::PoseStamped pose;
   pose.header = header;
-  pose.pose = local2global(costmap_, goal_pose_);
-  waypoints.push_back({pose, node->is_back});
-
-  // push astar nodes poses
   while (node != nullptr) {
     pose.pose = local2global(costmap_, node2pose(*node));
     waypoints.push_back({pose, node->is_back});
@@ -339,9 +335,7 @@ void AstarSearch::setPath(const AstarNode & goal_node)
     node = node->parent;
   }
 
-  if (waypoints.size() > 1) {
-    waypoints.back().is_back = waypoints.rbegin()[1].is_back;
-  }
+  if (waypoints.size() > 1) waypoints.back().is_back = waypoints.rbegin()[1].is_back;
 
   if (search_method_ != SearchMethod::Backward) {
     // Reverse the vector to be start to goal order
