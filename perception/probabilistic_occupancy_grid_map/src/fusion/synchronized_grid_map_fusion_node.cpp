@@ -453,7 +453,7 @@ nav_msgs::msg::OccupancyGrid::UniquePtr GridMapFusionNode::OccupancyGridMapToMsg
 
   msg_ptr->data.resize(msg_ptr->info.width * msg_ptr->info.height);
 
-  unsigned char * data = occupancy_grid_map.getCharMap();
+  const unsigned char * data = occupancy_grid_map.getCharMap();
   for (unsigned int i = 0; i < msg_ptr->data.size(); ++i) {
     msg_ptr->data[i] = cost_value::cost_translation_table[data[i]];
   }
