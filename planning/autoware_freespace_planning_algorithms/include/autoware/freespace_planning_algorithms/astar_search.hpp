@@ -125,7 +125,6 @@ public:
   {
   }
 
-  void setMap(const nav_msgs::msg::OccupancyGrid & costmap) override;
   bool makePlan(
     const geometry_msgs::msg::Pose & start_pose,
     const geometry_msgs::msg::Pose & goal_pose) override;
@@ -141,7 +140,7 @@ private:
   void setTransitionTable();
   bool search();
   void expandNodes(AstarNode & current_node);
-  void clearNodes();
+  void resetData();
   void setPath(const AstarNode & goal);
   bool setStartNode();
   bool setGoalNode();
