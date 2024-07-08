@@ -82,7 +82,7 @@ void TrackerObjectDebugger::collect(
   const std::unordered_map<int, int> & direct_assignment,
   const std::unordered_map<int, int> & /*reverse_assignment*/)
 {
-  if (!is_initialized_) is_initialized_ = true;
+  is_initialized_ = true;
 
   message_time_ = message_time;
 
