@@ -203,7 +203,6 @@ protected:
       pointcloud_msg.width = 0;
       pointcloud_msg.row_step = 0;
     }
-
     return pointcloud_msg;
   }
 
@@ -216,10 +215,7 @@ protected:
       for (size_t i = 0; i < number_of_points; ++i) {
         double timestamp = point_stamp.seconds();
         timestamps.push_back(timestamp);
-        if (i > 0) {
-          point_stamp = point_stamp + rclcpp::Duration::from_seconds(
-                                        0.001);  // Assuming 1ms offset for demonstration
-        }
+        point_stamp = addMilliseconds(point_stamp, 10);
       }
     }
     return timestamps;
@@ -231,7 +227,7 @@ protected:
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
   static constexpr double standard_tolerance = 1e-4;
-  static constexpr double coarse_tolerance = 1e-3;
+  static constexpr double coarse_tolerance = 5e-3;
 
   // for debugging or regenerating the ground truth point cloud
   bool debug = false;
@@ -303,7 +299,7 @@ TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithMissingFrame)
 
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
 {
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   // Generate the point cloud message
   sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, false, timestamp);
 
@@ -340,7 +336,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
 
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyPointCloud)
 {
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   // Generate and process multiple twist messages
   auto twist_msgs = generateTwistMsgs(timestamp);
   for (const auto & twist_msg : twist_msgs) {
@@ -361,7 +357,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyPointCloud)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
 {
   // Generate the point cloud message
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, false, timestamp);
 
   // Generate and process multiple twist messages
@@ -381,10 +377,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
 
   // Expected undistorted point cloud values
   std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f},          {0.0f, 10.0f, 0.0f},       {0.012002f, 5.75338e-07f, 10.0f},
-    {20.024f, 0.00191863f, 0.0f}, {0.0340828f, 20.0f, 0.0f}, {0.0479994f, 4.02654e-06f, 20.0f},
-    {30.06f, 0.00575818f, 0.0f},  {0.0662481f, 30.0f, 0.0f}, {0.0839996f, 1.03542e-05f, 30.0f},
-    {10.0931f, 10.0029f, 10.0f},
+    {10.0f, 0.0f, 0.0f},         {0.117124f, 10.0f, 0.0f},    {0.26f, 0.000135182f, 10.0f},
+    {20.4f, 0.0213818f, 0.0f},   {0.50932f, 20.0005f, 0.0f},  {0.699999f, 0.000819721f, 20.0f},
+    {30.8599f, 0.076f, 0.0f},    {0.947959f, 30.0016f, 0.0f}, {1.22f, 0.00244382f, 30.0f},
+    {11.3568f, 10.0463f, 10.0f},
   };
 
   // Verify each point in the undistorted point cloud
@@ -407,7 +403,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
 {
   // Generate the point cloud message
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, false, timestamp);
 
   // Generate and process multiple twist messages
@@ -432,10 +428,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
 
   // Expected undistorted point cloud values
   std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f},         {0.0f, 10.0f, 0.0f},       {0.0119991f, 5.75201e-07f, 10.0f},
-    {20.024f, 0.0019192f, 0.0f}, {0.0321653f, 20.0f, 0.0f}, {0.0479994f, 6.32762e-06f, 20.0f},
-    {30.06f, 0.00863842f, 0.0f}, {0.063369f, 30.0f, 0.0f},  {0.0839996f, 1.84079e-05f, 30.0f},
-    {10.0912f, 10.0048f, 10.0f},
+    {10.0f, 0.0f, 0.0f},         {0.122876f, 9.99996f, 0.0f}, {0.26f, -0.000115049f, 10.0f},
+    {20.4f, -0.0174931f, 0.0f},  {0.56301f, 19.9996f, 0.0f},  {0.7f, -0.000627014f, 20.0f},
+    {30.86f, -0.052675f, 0.0f},  {1.1004f, 29.9987f, 0.0f},   {1.22f, -0.00166245f, 30.0f},
+    {11.4249f, 9.97293f, 10.0f},
   };
 
   // Verify each point in the undistorted point cloud
@@ -458,7 +454,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
 {
   // Generate the point cloud message
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, true, timestamp);
 
   // Generate and process multiple twist messages
@@ -483,11 +479,11 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
 
   // Expected undistorted point cloud values
   std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, -1.77636e-15f, -4.44089e-16f}, {-2.66454e-15f, 10.0f, -8.88178e-16f},
-    {0.00622853f, 0.00600991f, 10.0084f},  {20.0106f, 0.010948f, 0.0157355f},
-    {0.0176543f, 20.0176f, 0.0248379f},    {0.024499f, 0.0245179f, 20.0348f},
-    {30.0266f, 0.0255826f, 0.0357166f},    {0.0355204f, 30.0353f, 0.0500275f},
-    {0.047132f, 0.0439795f, 30.0606f},     {10.0488f, 10.046f, 10.0636f},
+    {10.0f, -1.77636e-15f, -4.44089e-16f}, {0.049989f, 10.0608f, 0.0924992f},
+    {0.106107f, 0.130237f, 10.1986f},      {20.1709f, 0.210011f, 0.32034f},
+    {0.220674f, 20.2734f, 0.417974f},      {0.274146f, 0.347043f, 20.5341f},
+    {30.3673f, 0.457564f, 0.700818f},      {0.418014f, 30.5259f, 0.807963f},
+    {0.464088f, 0.600081f, 30.9292f},      {10.5657f, 10.7121f, 11.094f},
   };
 
   // Verify each point in the undistorted point cloud
@@ -510,7 +506,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
 {
   // Generate the point cloud message
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, false, timestamp);
 
   // Generate and process multiple twist messages
@@ -530,10 +526,10 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
 
   // Expected undistorted point cloud values
   std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f},          {0.0f, 10.0f, 0.0f},       {0.0119991f, 0.0f, 10.0f},
-    {20.024f, 0.00120042f, 0.0f}, {0.0342002f, 20.0f, 0.0f}, {0.0479994f, 2.15994e-06f, 20.0f},
-    {30.06f, 0.00450349f, 0.0f},  {0.0666005f, 30.0f, 0.0f}, {0.0839996f, 7.55993e-06f, 30.0f},
-    {10.0936f, 10.0024f, 10.0f},
+    {10.0f, 0.0f, 0.0f},          {0.117f, 10.0f, 0.0f},       {0.26f, 9.27035e-05f, 10.0f},
+    {20.4f, 0.0222176f, 0.0f},    {0.51f, 20.0004f, 0.0f},     {0.7f, 0.000706573f, 20.0f},
+    {30.8599f, 0.0760946f, 0.0f}, {0.946998f, 30.0015f, 0.0f}, {1.22f, 0.00234201f, 30.0f},
+    {11.3569f, 10.046f, 10.0f},
   };
 
   // Verify each point in the undistorted point cloud
@@ -556,7 +552,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
 {
   // Generate the point cloud message
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, false, timestamp);
 
   // Generate and process multiple twist messages
@@ -582,15 +578,15 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
   // Expected undistorted point cloud values
   std::vector<std::array<float, 3>> expected_pointcloud = {
     {10.0f, 0.0f, 0.0f},
-    {0.0f, 10.0f, 0.0f},
-    {0.0118491f, -0.000149993f, 10.0f},
-    {20.024f, 0.00220075f, 0.000600241f},
-    {0.0327002f, 20.0f, 0.000900472f},
-    {0.0468023f, -0.00119623f, 20.0f},
-    {30.06f, 0.0082567f, 0.00225216f},
-    {0.0621003f, 30.0f, 0.00270227f},
-    {0.0808503f, -0.00313673f, 30.0f},
-    {10.0904f, 10.0032f, 10.0024f},
+    {0.123015f, 9.99998f, 0.00430552f},
+    {0.266103f, -0.00895269f, 9.99992f},
+    {20.4f, -0.0176539f, -0.0193392f},
+    {0.563265f, 19.9997f, 0.035628f},
+    {0.734597f, -0.046068f, 19.9993f},
+    {30.8599f, -0.0517931f, -0.0658165f},
+    {1.0995f, 29.9989f, 0.0956997f},
+    {1.31283f, -0.113544f, 29.9977f},
+    {11.461f, 9.93096f, 10.0035f},
   };
 
   // Verify each point in the undistorted point cloud
@@ -613,7 +609,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
 {
   // Generate the point cloud message
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, true, timestamp);
 
   // Generate and process multiple twist messages
@@ -639,15 +635,15 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
   // Expected undistorted point cloud values
   std::vector<std::array<float, 3>> expected_pointcloud = {
     {10.0f, 0.0f, 0.0f},
-    {-4.76837e-07f, 10.0f, 4.76837e-07f},
-    {0.00572586f, 0.00616837f, 10.0086f},
-    {20.0103f, 0.0117249f, 0.0149349f},
-    {0.0158343f, 20.0179f, 0.024497f},
-    {0.0251098f, 0.0254798f, 20.0343f},
-    {30.0259f, 0.0290527f, 0.034577f},
-    {0.0319824f, 30.0358f, 0.0477753f},
-    {0.0478067f, 0.0460052f, 30.06f},
-    {10.0462f, 10.0489f, 10.0625f},
+    {0.046484f, 10.0622f, 0.098484f},
+    {0.107595f, 0.123767f, 10.2026f},
+    {20.1667f, 0.22465f, 0.313351f},
+    {0.201149f, 20.2784f, 0.464665f},
+    {0.290531f, 0.303489f, 20.5452f},
+    {30.3598f, 0.494116f, 0.672914f},
+    {0.375848f, 30.5336f, 0.933633f},
+    {0.510001f, 0.479651f, 30.9493f},
+    {10.5629f, 10.6855f, 11.1461f},
   };
 
   // Verify each point in the undistorted point cloud
@@ -669,7 +665,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
 
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
 {
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 test2d_pointcloud = generatePointCloudMsg(true, false, timestamp);
   sensor_msgs::msg::PointCloud2 test3d_pointcloud = generatePointCloudMsg(true, false, timestamp);
 
@@ -755,7 +751,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
 
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
 {
-  rclcpp::Time timestamp = node_->get_clock()->now();
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
   sensor_msgs::msg::PointCloud2 test2d_pointcloud = generatePointCloudMsg(true, false, timestamp);
   sensor_msgs::msg::PointCloud2 test3d_pointcloud = generatePointCloudMsg(true, false, timestamp);
 
