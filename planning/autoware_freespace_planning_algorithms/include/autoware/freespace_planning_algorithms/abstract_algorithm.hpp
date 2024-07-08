@@ -162,6 +162,7 @@ protected:
     std::vector<IndexXY> & vertex_indexes_2d) const;
   bool detectBoundaryExit(const IndexXYT & base_index) const;
   bool detectCollision(const IndexXYT & base_index) const;
+  void computeEDTMap();
 
   template <typename IndexType>
   inline bool isOutOfRange(const IndexType & index) const
@@ -173,6 +174,22 @@ protected:
       return true;
     }
     return false;
+  }
+
+  template <typename IndexType>
+  inline bool isWithinMargin(const IndexType & index) const
+  {
+    if (
+      index.x < nb_of_margin_cells_ ||
+      static_cast<int>(costmap_.info.width) - index.x < nb_of_margin_cells_) {
+      return false;
+    }
+    if (
+      index.y < nb_of_margin_cells_ ||
+      static_cast<int>(costmap_.info.height) - index.y < nb_of_margin_cells_) {
+      return false;
+    }
+    return true;
   }
 
   template <typename IndexType>
@@ -190,8 +207,6 @@ protected:
     if (edt_map_.empty()) return std::numeric_limits<double>::max();
     return edt_map_[indexToId(index)];
   }
-
-  void computeEDTMap();
 
   // compute single dimensional grid cell index from 2 dimensional index
   template <typename IndexType>
@@ -227,6 +242,8 @@ protected:
 
   // result path
   PlannerWaypoints waypoints_;
+
+  int nb_of_margin_cells_;
 };
 
 }  // namespace autoware::freespace_planning_algorithms
