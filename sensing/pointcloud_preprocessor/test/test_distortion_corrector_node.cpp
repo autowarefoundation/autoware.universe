@@ -682,7 +682,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
   distortion_corrector_3d_->setPointCloudTransform("base_link", "base_link");
   distortion_corrector_3d_->undistortPointCloud(false, test3d_pointcloud);
 
-  // Gernerate expected point cloud for testing
+  // Generate expected point cloud for testing
   sensor_msgs::msg::PointCloud2 expected_pointcloud = generatePointCloudMsg(true, false, timestamp);
 
   // Calculate expected point cloud values based on constant linear motion
