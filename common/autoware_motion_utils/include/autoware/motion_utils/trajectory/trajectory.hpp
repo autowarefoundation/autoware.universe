@@ -996,6 +996,7 @@ std::vector<std::pair<double, std::pair<double, double>>> calcCurvatureAndSegmen
 {
   // segment length is pair of segment length between {p1, p2} and {p2, p3}
   std::vector<std::pair<double, std::pair<double, double>>> curvature_and_segment_length_vec;
+  curvature_and_segment_length_vec.reserve(points.size());
   curvature_and_segment_length_vec.emplace_back(0.0, std::make_pair(0.0, 0.0));
   for (size_t i = 1; i < points.size() - 1; ++i) {
     const auto p1 = autoware::universe_utils::getPoint(points.at(i - 1));
