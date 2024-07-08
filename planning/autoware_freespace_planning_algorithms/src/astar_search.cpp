@@ -96,10 +96,9 @@ void AstarSearch::setTransitionTable()
     const double steering = static_cast<double>(steering_ind) * steering_resolution_;
     geometry_msgs::msg::Pose shift_pose = kinematic_bicycle_model::getPoseShift(
       0.0, collision_vehicle_shape_.base_length, steering, distance);
-    bool is_back = search_method_ == SearchMethod::Backward ? true : false;
     forward_transitions.push_back(
       {shift_pose.position.x, shift_pose.position.y, tf2::getYaw(shift_pose.orientation), distance,
-       steering_ind, is_back});
+       steering_ind, false});
   }
 
   for (int i = 0; i < planner_common_param_.theta_size; ++i) {
@@ -280,9 +279,13 @@ void AstarSearch::expandNodes(AstarNode & current_node)
 {
   const auto index_theta = discretizeAngle(current_node.theta, planner_common_param_.theta_size);
   for (const auto & transition : transition_table_[index_theta]) {
+    // flip is_back flag in case of backward search
+    bool is_back =
+      search_method_ == SearchMethod::Backward ? !transition.is_back : transition.is_back;
+
     // skip transition back to parent
     // skip transition resulting in frequent direction change
-    if (current_node.parent != nullptr && transition.is_back != current_node.is_back) {
+    if (current_node.parent != nullptr && is_back != current_node.is_back) {
       if (
         transition.steering_index == current_node.steering_index ||
         current_node.dir_distance < min_dir_change_dist_)
@@ -304,13 +307,13 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     if (detectCollision(next_index)) continue;
 
     const bool is_direction_switch =
-      (current_node.parent != nullptr) && (transition.is_back != current_node.is_back);
+      (current_node.parent != nullptr) && (is_back != current_node.is_back);
     double weights_sum = 1.0;
     weights_sum += is_direction_switch ? planner_common_param_.direction_change_weight : 0.0;
     weights_sum += getSteeringCost(transition.steering_index);
     weights_sum += getSteeringChangeCost(transition.steering_index, current_node.steering_index);
 
-    weights_sum *= transition.is_back ? planner_common_param_.reverse_weight : 1.0;
+    weights_sum *= is_back ? planner_common_param_.reverse_weight : 1.0;
 
     double move_cost = current_node.gc + weights_sum * transition.distance;
     double total_cost = move_cost + estimateCost(next_pose);
@@ -325,7 +328,7 @@ void AstarSearch::expandNodes(AstarNode & current_node)
       next_node->dir_distance =
         transition.distance + (is_direction_switch ? 0.0 : current_node.dir_distance);
       next_node->steering_index = transition.steering_index;
-      next_node->is_back = transition.is_back;
+      next_node->is_back = is_back;
       next_node->parent = &current_node;
       openlist_.push(next_node);
       continue;
