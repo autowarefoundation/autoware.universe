@@ -1012,7 +1012,7 @@ std::vector<std::pair<double, std::pair<double, double>>> calcCurvatureAndSegmen
         autoware::universe_utils::calcDistance2d(p1, p2);
     }
 
-    // The second_segment_length of the previous point and the first segmentlength of the current
+    // The second_segment_length of the previous point and the first segment length of the current
     // point are equal.
     const std::pair<double, double> arc_length{
       curvature_and_segment_length_vec.back().second.second,
