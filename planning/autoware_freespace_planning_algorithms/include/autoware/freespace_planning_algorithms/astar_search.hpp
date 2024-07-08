@@ -61,6 +61,19 @@ struct AstarNode
   int steering_index;                    // steering index
   bool is_back;                          // true if the current direction of the vehicle is back
   AstarNode * parent = nullptr;          // parent node
+
+  inline void set(
+    const geometry_msgs::msg::Pose & pose, const double move_cost, const double total_cost,
+    const double steer_ind, const bool backward)
+  {
+    x = pose.position.x;
+    y = pose.position.y;
+    theta = tf2::getYaw(pose.orientation);
+    gc = move_cost;
+    fc = total_cost;
+    steering_index = steer_ind;
+    is_back = backward;
+  }
 };
 
 struct NodeComparison
