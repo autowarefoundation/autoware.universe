@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(radar_fusion_to_detected_object)
+project(autoware_radar_fusion_to_detected_object)
 
 # Dependencies
 find_package(autoware_cmake REQUIRED)
