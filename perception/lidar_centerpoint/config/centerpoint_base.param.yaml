@@ -1,10 +1,10 @@
 /**:
   ros__parameters:
     # weight files
-    encoder_onnx_path: "$(var model_path)/pts_voxel_encoder_centerpoint.onnx"
-    encoder_engine_path: "$(var model_path)/pts_voxel_encoder_centerpoint.engine"
-    head_onnx_path: "$(var model_path)/pts_backbone_neck_head_centerpoint.onnx"
-    head_engine_path: "$(var model_path)/pts_backbone_neck_head_centerpoint.engine"
+    encoder_onnx_path: "$(var model_path)/pts_voxel_encoder_$(var model_name).onnx"
+    encoder_engine_path: "$(var model_path)/pts_voxel_encoder_$(var model_name).engine"
+    head_onnx_path: "$(var model_path)/pts_backbone_neck_head_$(var model_name).onnx"
+    head_engine_path: "$(var model_path)/pts_backbone_neck_head_$(var model_name).engine"
     trt_precision: fp16
     post_process_params:
       # post-process params
