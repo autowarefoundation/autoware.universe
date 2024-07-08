@@ -49,6 +49,32 @@ void SegmentPointCloudFusionNode::postprocess(__attribute__((unused)) PointCloud
 {
   return;
 }
+cv::Mat SegmentPointCloudFusionNode::rle_decompress(
+  const std::vector<uint8_t> & rle_data, const int rows, const int cols)
+{
+  cv::Mat mask(rows, cols, CV_8UC1, cv::Scalar(0));
+  int idx = 0;
+  int step = sizeof(uint8_t) + sizeof(int);
+  int nb_pixels = 0;
+  for (size_t i = 0; i < rle_data.size(); i += step) {
+    uint8_t value;
+    int length;
+    std::memcpy(&value, &rle_data[i], sizeof(uint8_t));
+    std::memcpy(&length, &rle_data[i + sizeof(uint8_t)], sizeof(int));
+    nb_pixels += length;
+    for (int j = 0; j < length; ++j) {
+      int row_idx = static_cast<int>(idx / cols);
+      int col_idx = static_cast<int>(idx % cols);
+      mask.at<uint8_t>(row_idx, col_idx) = value;
+      idx++;
+      if (idx > rows * cols) {
+        RCLCPP_ERROR(this->get_logger(), "RLE decompression error: idx out of bound");
+        break;
+      }
+    }
+  }
+  return mask;
+}
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
   const PointCloud2 & input_pointcloud_msg, __attribute__((unused)) const std::size_t image_id,
   [[maybe_unused]] const Image & input_mask, __attribute__((unused)) const CameraInfo & camera_info,
@@ -57,19 +83,12 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   if (input_pointcloud_msg.data.empty()) {
     return;
   }
-  cv_bridge::CvImagePtr in_image_ptr;
-  try {
-    in_image_ptr = cv_bridge::toCvCopy(
-      std::make_shared<sensor_msgs::msg::Image>(input_mask), input_mask.encoding);
-  } catch (const std::exception & e) {
-    RCLCPP_ERROR(this->get_logger(), "cv_bridge exception:%s", e.what());
+  if (input_mask.height == 0 || input_mask.width == 0) {
     return;
   }
+  cv::Mat mask = SegmentPointCloudFusionNode::rle_decompress(
+    input_mask.data, input_mask.height, input_mask.width);
 
-  cv::Mat mask = in_image_ptr->image;
-  if (mask.cols == 0 || mask.rows == 0) {
-    return;
-  }
   const int orig_width = camera_info.width;
   const int orig_height = camera_info.height;
   // resize mask to the same size as the camera image
