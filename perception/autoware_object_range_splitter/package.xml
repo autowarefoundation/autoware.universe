@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>object_range_splitter</name>
+  <name>autoware_object_range_splitter</name>
   <version>0.1.0</version>
-  <description>The object_range_splitter package</description>
+  <description>The autoware_object_range_splitter package</description>
   <maintainer email="yukihiro.saito@tier4.jp">Yukihiro Saito</maintainer>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
   <license>Apache License 2.0</license>

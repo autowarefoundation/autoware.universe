@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(object_range_splitter)
+project(autoware_object_range_splitter)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()

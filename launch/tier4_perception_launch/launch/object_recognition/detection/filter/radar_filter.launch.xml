@@ -26,7 +26,7 @@
     <arg name="param_path" value="$(var object_velocity_splitter_param_path)"/>
   </include>
 
-  <include file="$(find-pkg-share object_range_splitter)/launch/object_range_splitter.launch.xml">
+  <include file="$(find-pkg-share autoware_object_range_splitter)/launch/object_range_splitter.launch.xml">
     <arg name="input/object" value="high_speed_objects"/>
     <arg name="output/long_range_object" value="far_high_speed_objects"/>
     <arg name="output/short_range_object" value="near_high_speed_objects"/>
