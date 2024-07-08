@@ -71,8 +71,6 @@ protected:
   bool pointcloud_transform_needed_{false};
   bool pointcloud_transform_exists_{false};
   bool imu_transform_exists_{false};
-  bool pointcloud_transform_exists_{false};
-  bool pointcloud_transform_needed_{false};
   rclcpp::Node * node_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
