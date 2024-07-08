@@ -21,7 +21,7 @@
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("time_keeper_example");
+  auto node = std::make_shared<rclcpp::Node>("scoped_time_track_example");
 
   auto time_keeper = std::make_shared<autoware::universe_utils::TimeKeeper>();
 
@@ -37,23 +37,20 @@ int main(int argc, char ** argv)
   time_keeper->add_reporter(publisher_str);
 
   auto funcA = [&time_keeper]() {
-    time_keeper->start_track("funcA");
+    autoware::universe_utils::ScopedTimeTrack st("funcA", *time_keeper);
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    time_keeper->end_track("funcA");
   };
 
   auto funcB = [&time_keeper, &funcA]() {
-    time_keeper->start_track("funcB");
+    autoware::universe_utils::ScopedTimeTrack st("funcB", *time_keeper);
     std::this_thread::sleep_for(std::chrono::seconds(2));
     funcA();
-    time_keeper->end_track("funcB");
   };
 
   auto funcC = [&time_keeper, &funcB]() {
-    time_keeper->start_track("funcC");
+    autoware::universe_utils::ScopedTimeTrack st("funcC", *time_keeper);
     std::this_thread::sleep_for(std::chrono::seconds(3));
     funcB();
-    time_keeper->end_track("funcC");
   };
 
   funcC();
