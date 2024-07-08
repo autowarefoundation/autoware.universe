@@ -61,7 +61,8 @@ public:
 template <class T>
 class DistortionCorrector : public DistortionCorrectorBase
 {
-public:
+protected:
+  geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr_;
   bool pointcloud_transform_needed_{false};
   bool pointcloud_transform_exists_{false};
   bool imu_transform_exists_{false};
@@ -72,6 +73,7 @@ public:
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
+public:
   explicit DistortionCorrector(rclcpp::Node * node)
   : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
   {
@@ -81,12 +83,8 @@ public:
 
   void processIMUMessage(
     const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
-  void getIMUTransformation(
-    const std::string & base_frame, const std::string & imu_frame,
-    geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
-  void enqueueIMU(
-    const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg,
-    geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr);
+  void getIMUTransformation(const std::string & base_frame, const std::string & imu_frame);
+  void enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
 
   bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
   void getTwistAndIMUIterator(
