@@ -36,14 +36,19 @@ namespace autoware::freespace_planning_algorithms
 {
 enum class NodeStatus : uint8_t { None, Open, Closed };
 
+enum class SearchMethod : uint8_t { Forward, Backward };
+
 struct AstarParam
 {
   // base configs
+  std::string search_method;
   bool only_behind_solutions;  // solutions should be behind the goal
   bool use_back;               // backward search
+  double expansion_distance;
 
   // search configs
   double distance_heuristic_weight;  // obstacle threshold on grid [0,255]
+  double steering_change_weight;
 };
 
 struct AstarNode
@@ -52,20 +57,17 @@ struct AstarNode
   double x;                              // x
   double y;                              // y
   double theta;                          // theta
-  double gc = 0;                         // actual cost
-  double hc = 0;                         // heuristic cost
+  double gc = 0;                         // actual motion cost
+  double fc = 0;                         // total node cost
+  double dir_distance = 0;               // distance travelled from last direction change
+  int steering_index;                    // steering index
   bool is_back;                          // true if the current direction of the vehicle is back
   AstarNode * parent = nullptr;          // parent node
-
-  double cost() const { return gc + hc; }
 };
 
 struct NodeComparison
 {
-  bool operator()(const AstarNode * lhs, const AstarNode * rhs)
-  {
-    return lhs->cost() > rhs->cost();
-  }
+  bool operator()(const AstarNode * lhs, const AstarNode * rhs) { return lhs->fc > rhs->fc; }
 };
 
 struct NodeUpdate
@@ -74,7 +76,7 @@ struct NodeUpdate
   double shift_y;
   double shift_theta;
   double distance;
-  bool is_curve;
+  int steering_index;
   bool is_back;
 
   NodeUpdate rotated(const double theta) const
@@ -118,13 +120,15 @@ public:
   : AstarSearch(
       planner_common_param, collision_vehicle_shape,
       AstarParam{
+        node.declare_parameter<std::string>("astar.search_method"),
         node.declare_parameter<bool>("astar.only_behind_solutions"),
         node.declare_parameter<bool>("astar.use_back"),
-        node.declare_parameter<double>("astar.distance_heuristic_weight")})
+        node.declare_parameter<double>("astar.expansion_distance"),
+        node.declare_parameter<double>("astar.distance_heuristic_weight"),
+        node.declare_parameter<double>("astar.steering_change_weight")})
   {
   }
 
-  void setMap(const nav_msgs::msg::OccupancyGrid & costmap) override;
   bool makePlan(
     const geometry_msgs::msg::Pose & start_pose,
     const geometry_msgs::msg::Pose & goal_pose) override;
@@ -133,12 +137,14 @@ public:
 
   inline int getKey(const IndexXYT & index)
   {
-    return (index.theta + (index.y * x_scale_ + index.x) * y_scale_);
+    return indexToId(index) * planner_common_param_.theta_size + index.theta;
   }
 
 private:
+  void setTransitionTable();
   bool search();
-  void clearNodes();
+  void expandNodes(AstarNode & current_node);
+  void resetData();
   void setPath(const AstarNode & goal);
   bool setStartNode();
   bool setGoalNode();
@@ -146,17 +152,15 @@ private:
   bool isGoal(const AstarNode & node) const;
   geometry_msgs::msg::Pose node2pose(const AstarNode & node) const;
 
-  AstarNode * getNodeRef(const IndexXYT & index)
-  {
-    return &(graph_.emplace(getKey(index), AstarNode()).first->second);
-  }
+  double getSteeringCost(const int steering_index) const;
+  double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
 
   // Algorithm specific param
   AstarParam astar_param_;
 
   // hybrid astar variables
   TransitionTable transition_table_;
-  std::unordered_map<uint, AstarNode> graph_;
+  std::vector<AstarNode> graph_;
 
   std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison> openlist_;
 
@@ -166,8 +170,14 @@ private:
   // distance metric option (removed when the reeds_shepp gets stable)
   bool use_reeds_shepp_;
 
-  int x_scale_;
-  int y_scale_;
+  double steering_resolution_;
+  double heading_resolution_;
+  double avg_turning_radius_;
+
+  SearchMethod search_method_;
+
+  // threshold for minimum distance between direction switches
+  static constexpr double min_dir_change_dist_ = 1.5;
 };
 }  // namespace autoware::freespace_planning_algorithms
 
