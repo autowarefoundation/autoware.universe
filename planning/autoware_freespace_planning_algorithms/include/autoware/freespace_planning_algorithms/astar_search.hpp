@@ -133,6 +133,10 @@ public:
     const geometry_msgs::msg::Pose & start_pose,
     const geometry_msgs::msg::Pose & goal_pose) override;
 
+  bool makePlan(
+    const geometry_msgs::msg::Pose & start_pose,
+    const std::vector<geometry_msgs::msg::Pose> & goal_candidates);
+
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
 
   inline int getKey(const IndexXYT & index)

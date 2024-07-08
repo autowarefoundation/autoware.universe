@@ -82,9 +82,6 @@ AstarSearch::AstarSearch(
   avg_turning_radius_ =
     kinematic_bicycle_model::getTurningRadius(collision_vehicle_shape_.base_length, avg_steering);
 
-  search_method_ =
-    astar_param.search_method == "backward" ? SearchMethod::Backward : SearchMethod::Forward;
-
   setTransitionTable();
 }
 
@@ -122,6 +119,10 @@ void AstarSearch::setTransitionTable()
 bool AstarSearch::makePlan(
   const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose)
 {
+  resetData();
+  search_method_ =
+    astar_param_.search_method == "backward" ? SearchMethod::Backward : SearchMethod::Forward;
+
   if (search_method_ == SearchMethod::Backward) {
     start_pose_ = global2local(costmap_, goal_pose);
     goal_pose_ = global2local(costmap_, start_pose);
@@ -130,13 +131,45 @@ bool AstarSearch::makePlan(
     goal_pose_ = global2local(costmap_, goal_pose);
   }
 
-  resetData();
-
   if (!setStartNode()) {
     throw std::logic_error("Invalid start pose");
     return false;
   }
 
+  if (!setGoalNode()) {
+    throw std::logic_error("Invalid goal pose");
+    return false;
+  }
+
+  if (!search()) {
+    throw std::logic_error("HA* failed to find path to goal");
+    return false;
+  }
+  return true;
+}
+
+bool AstarSearch::makePlan(
+  const geometry_msgs::msg::Pose & start_pose,
+  const std::vector<geometry_msgs::msg::Pose> & goal_candidates)
+{
+  if (goal_candidates.size() == 1) {
+    return makePlan(start_pose, goal_candidates.front());
+  }
+
+  resetData();
+  search_method_ = SearchMethod::Backward;
+
+  if (std::none_of(
+        goal_candidates.begin(), goal_candidates.end(),
+        [this](const geometry_msgs::msg::Pose & pose) {
+          start_pose_ = global2local(costmap_, pose);
+          return setStartNode();
+        })) {
+    throw std::logic_error("Invalid start pose");
+    return false;
+  }
+
+  goal_pose_ = global2local(costmap_, start_pose);
   if (!setGoalNode()) {
     throw std::logic_error("Invalid goal pose");
     return false;
