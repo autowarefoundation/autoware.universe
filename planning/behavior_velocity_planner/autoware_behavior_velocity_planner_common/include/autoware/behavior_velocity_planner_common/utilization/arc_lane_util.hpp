@@ -61,9 +61,20 @@ std::optional<geometry_msgs::msg::Point> checkCollision(
 template <class T>
 std::optional<PathIndexWithPoint> findCollisionSegment(
   const T & path, const geometry_msgs::msg::Point & stop_line_p1,
-  const geometry_msgs::msg::Point & stop_line_p2)
+  const geometry_msgs::msg::Point & stop_line_p2, const size_t target_lane_id)
 {
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
+    const auto & prev_lane_ids = path.points.at(i).lane_ids;
+    const auto & next_lane_ids = path.points.at(i + 1).lane_ids;
+
+    const bool is_target_lane_in_prev_lane =
+      std::find(prev_lane_ids.begin(), prev_lane_ids.end(), target_lane_id) != prev_lane_ids.end();
+    const bool is_target_lane_in_next_lane =
+      std::find(next_lane_ids.begin(), next_lane_ids.end(), target_lane_id) != next_lane_ids.end();
+    if (!is_target_lane_in_prev_lane && !is_target_lane_in_next_lane) {
+      continue;
+    }
+
     const auto & p1 =
       autoware::universe_utils::getPoint(path.points.at(i));  // Point before collision point
     const auto & p2 =
@@ -81,12 +92,12 @@ std::optional<PathIndexWithPoint> findCollisionSegment(
 
 template <class T>
 std::optional<PathIndexWithPoint> findCollisionSegment(
-  const T & path, const LineString2d & stop_line)
+  const T & path, const LineString2d & stop_line, const size_t target_lane_id)
 {
   const auto stop_line_p1 = convertToGeomPoint(stop_line.at(0));
   const auto stop_line_p2 = convertToGeomPoint(stop_line.at(1));
 
-  return findCollisionSegment(path, stop_line_p1, stop_line_p2);
+  return findCollisionSegment(path, stop_line_p1, stop_line_p2, target_lane_id);
 }
 
 template <class T>
@@ -183,7 +194,7 @@ geometry_msgs::msg::Pose calcTargetPose(const T & path, const PathIndexWithOffse
 
 std::optional<PathIndexWithPose> createTargetPoint(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-  const double margin, const double vehicle_offset);
+  const size_t lane_id, const double margin, const double vehicle_offset);
 
 }  // namespace arc_lane_utils
 }  // namespace autoware::behavior_velocity_planner
