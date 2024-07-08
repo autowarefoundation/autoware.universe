@@ -94,14 +94,14 @@ public:
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr convertToXYZ(
     const pcl::PointCloud<pcl::PointXY>::Ptr & pointcloud_xy);
-  inline pcl::PointCloud<pcl::PointXYZ>::Ptr getDebugNeighborPointCloud()
+  inline pcl::PointCloud<pcl::PointXYZ>::Ptr getDebugNeighborPointCloud() override
   {
     return convertToXYZ(neighbor_pointcloud_);
   }
 
-  bool setKdtreeInputCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud);
-  bool validate_object(const autoware_perception_msgs::msg::DetectedObject & transformed_object);
-  std::optional<float> getMaxRadius(const autoware_perception_msgs::msg::DetectedObject & object);
+  bool setKdtreeInputCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud) override;
+  bool validate_object(const autoware_perception_msgs::msg::DetectedObject & transformed_object) override;
+  std::optional<float> getMaxRadius(const autoware_perception_msgs::msg::DetectedObject & object) override;
   std::optional<size_t> getPointCloudWithinObject(
     const autoware_perception_msgs::msg::DetectedObject & object,
     const pcl::PointCloud<pcl::PointXY>::Ptr neighbor_pointcloud);
@@ -115,13 +115,13 @@ private:
 
 public:
   explicit Validator3D(PointsNumThresholdParam & points_num_threshold_param);
-  inline pcl::PointCloud<pcl::PointXYZ>::Ptr getDebugNeighborPointCloud()
+  inline pcl::PointCloud<pcl::PointXYZ>::Ptr getDebugNeighborPointCloud() override
   {
     return neighbor_pointcloud_;
   }
-  bool setKdtreeInputCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud);
-  bool validate_object(const autoware_perception_msgs::msg::DetectedObject & transformed_object);
-  std::optional<float> getMaxRadius(const autoware_perception_msgs::msg::DetectedObject & object);
+  bool setKdtreeInputCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud) override;
+  bool validate_object(const autoware_perception_msgs::msg::DetectedObject & transformed_object) override;
+  std::optional<float> getMaxRadius(const autoware_perception_msgs::msg::DetectedObject & object) override;
   std::optional<size_t> getPointCloudWithinObject(
     const autoware_perception_msgs::msg::DetectedObject & object,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr neighbor_pointcloud);
