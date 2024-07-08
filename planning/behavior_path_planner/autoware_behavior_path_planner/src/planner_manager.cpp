@@ -69,7 +69,6 @@ void PlannerManager::launchScenePlugin(rclcpp::Node & node, const std::string & 
 void PlannerManager::calculateMaxIterationNum(const size_t scene_module_num)
 {
   max_iteration_num_ = scene_module_num * (scene_module_num + 1) / 2;
-
 }
 
 void PlannerManager::removeScenePlugin(rclcpp::Node & node, const std::string & name)
