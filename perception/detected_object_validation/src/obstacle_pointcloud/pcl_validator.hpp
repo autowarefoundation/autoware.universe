@@ -99,9 +99,12 @@ public:
     return convertToXYZ(neighbor_pointcloud_);
   }
 
-  bool setKdtreeInputCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud) override;
-  bool validate_object(const autoware_perception_msgs::msg::DetectedObject & transformed_object) override;
-  std::optional<float> getMaxRadius(const autoware_perception_msgs::msg::DetectedObject & object) override;
+  bool setKdtreeInputCloud(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud) override;
+  bool validate_object(
+    const autoware_perception_msgs::msg::DetectedObject & transformed_object) override;
+  std::optional<float> getMaxRadius(
+    const autoware_perception_msgs::msg::DetectedObject & object) override;
   std::optional<size_t> getPointCloudWithinObject(
     const autoware_perception_msgs::msg::DetectedObject & object,
     const pcl::PointCloud<pcl::PointXY>::Ptr neighbor_pointcloud);
@@ -119,9 +122,12 @@ public:
   {
     return neighbor_pointcloud_;
   }
-  bool setKdtreeInputCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud) override;
-  bool validate_object(const autoware_perception_msgs::msg::DetectedObject & transformed_object) override;
-  std::optional<float> getMaxRadius(const autoware_perception_msgs::msg::DetectedObject & object) override;
+  bool setKdtreeInputCloud(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud) override;
+  bool validate_object(
+    const autoware_perception_msgs::msg::DetectedObject & transformed_object) override;
+  std::optional<float> getMaxRadius(
+    const autoware_perception_msgs::msg::DetectedObject & object) override;
   std::optional<size_t> getPointCloudWithinObject(
     const autoware_perception_msgs::msg::DetectedObject & object,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr neighbor_pointcloud);
