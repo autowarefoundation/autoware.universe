@@ -18,6 +18,8 @@
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
+#include <lanelet2_core/Forward.h>
+
 #include <cstdint>
 
 namespace autoware::behavior_velocity_planner
@@ -49,12 +51,19 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
 
   // Calculate stop pose and insert index
+
+  // Due to the resampling of PathWithLaneId, lane_id mismatches can occur at intersections near the
+  // ends of lanes. Therefore, the system now accepts the next and previous lane_ids in addition to
+  // the intended lane_id. See more details in the following link:
+  // https://github.com/autowarefoundation/autoware.universe/pull/7896#issue-2395067667
   auto lane = this->planner_data_->route_handler_->getLaneletsFromId(lane_id_);
-  auto next_lanes = this->planner_data_->route_handler_->getNextLanelets(lane);
   std::vector<int64_t> search_lane_ids;
   search_lane_ids.push_back(lane_id_);
-  for (const auto & next_lane : next_lanes) {
+  for (const auto & next_lane : this->planner_data_->route_handler_->getNextLanelets(lane)) {
     search_lane_ids.push_back(next_lane.id());
+  }
+  for (const auto & prev_lane : this->planner_data_->route_handler_->getPreviousLanelets(lane)) {
+    search_lane_ids.push_back(prev_lane.id());
   }
   const auto stop_point = arc_lane_utils::createTargetPoint(
     *path, stop_line, search_lane_ids, planner_param_.stop_margin,
