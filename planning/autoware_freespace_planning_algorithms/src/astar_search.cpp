@@ -119,17 +119,6 @@ void AstarSearch::setTransitionTable()
   }
 }
 
-void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
-{
-  AbstractPlanningAlgorithm::setMap(costmap);
-
-  clearNodes();
-
-  int total_astar_node_count =
-    costmap_.info.width * costmap_.info.height * planner_common_param_.theta_size;
-  graph_.resize(total_astar_node_count);
-}
-
 bool AstarSearch::makePlan(
   const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose)
 {
@@ -141,8 +130,7 @@ bool AstarSearch::makePlan(
     goal_pose_ = global2local(costmap_, goal_pose);
   }
 
-  clearNodes();
-  graph_.reserve(100000);
+  resetData();
 
   if (!setStartNode()) {
     throw std::logic_error("Invalid start pose");
@@ -161,13 +149,15 @@ bool AstarSearch::makePlan(
   return true;
 }
 
-void AstarSearch::clearNodes()
+void AstarSearch::resetData()
 {
   // clearing openlist is necessary because otherwise remaining elements of openlist
   // point to deleted node.
   openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
-
   graph_.clear();
+  int total_astar_node_count =
+    costmap_.info.width * costmap_.info.height * planner_common_param_.theta_size;
+  graph_.resize(total_astar_node_count);
 }
 
 bool AstarSearch::setStartNode()
