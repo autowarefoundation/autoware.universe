@@ -12,7 +12,7 @@
   <arg name="output/objects"/>
 
   <!-- Radar filter pipeline -->
-  <include file="$(find-pkg-share radar_crossing_objects_noise_filter)/launch/radar_crossing_objects_noise_filter.launch.xml">
+  <include file="$(find-pkg-share autoware_radar_crossing_objects_noise_filter)/launch/radar_crossing_objects_noise_filter.launch.xml">
     <arg name="input/objects" value="$(var input/radar)"/>
     <arg name="output/noise_objects" value="noise_objects"/>
     <arg name="output/filtered_objects" value="noise_filtered_objects"/>
