@@ -146,4 +146,13 @@ Polygon2d convertObjToPolygon(const PredictedObject & obj)
   }
   return object_polygon;
 }
+
+Pose shiftPose(const Pose & pose, double longitudinal)
+{
+  Pose shifted_pose = pose;
+  const auto yaw = tf2::getYaw(pose.orientation);
+  shifted_pose.position.x += std::cos(yaw) * longitudinal;
+  shifted_pose.position.y += std::sin(yaw) * longitudinal;
+  return shifted_pose;
+}
 }  // namespace autoware::motion::control::autonomous_emergency_braking::utils
