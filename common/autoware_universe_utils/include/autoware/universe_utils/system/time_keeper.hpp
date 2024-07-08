@@ -16,8 +16,10 @@
 
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
+#include <rclcpp/publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <std_msgs/msg/string.hpp>
 #include <tier4_debug_msgs/msg/processing_time_node.hpp>
 #include <tier4_debug_msgs/msg/processing_time_tree.hpp>
 
@@ -130,6 +132,15 @@ public:
   {
     reporters_.emplace_back([publisher](const std::shared_ptr<ProcessingTimeNode> & node) {
       publisher->publish(node->to_msg());
+    });
+  }
+
+  void add_reporter(rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher)
+  {
+    reporters_.emplace_back([publisher](const std::shared_ptr<ProcessingTimeNode> & node) {
+      std_msgs::msg::String msg;
+      msg.data = node->to_string();
+      publisher->publish(msg);
     });
   }
 
