@@ -1,8 +1,8 @@
-# object_range_splitter
+# `autoware_object_range_splitter`
 
 ## Purpose
 
-object_range_splitter is a package to divide detected objects into two messages by the distance from the origin.
+autoware_object_range_splitter is a package to divide detected objects into two messages by the distance from the origin.
 
 ## Inner-workings / Algorithms
 

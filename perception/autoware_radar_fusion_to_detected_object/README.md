@@ -1,4 +1,4 @@
-# radar_fusion_to_detected_object
+# `autoware_radar_fusion_to_detected_object`
 
 This package contains a sensor fusion module for radar-detected objects and 3D detected objects.
 
@@ -94,7 +94,7 @@ If the probability of an output object is lower than this parameter, and the out
 This parameter is the flag to use probability compensation.
 If this parameter is true, compensate probability of objects to threshold probability.
 
-## Interface for radar_object_fusion_to_detected_object
+## Interface for `autoware_radar_object_fusion_to_detected_object`
 
 Sensor fusion with radar objects and a detected object.
 
@@ -105,7 +105,7 @@ Sensor fusion with radar objects and a detected object.
 ### How to launch
 
 ```sh
-ros2 launch radar_fusion_to_detected_object radar_object_to_detected_object.launch.xml
+ros2 launch autoware_radar_fusion_to_detected_object radar_object_to_detected_object.launch.xml
 ```
 
 ### Input

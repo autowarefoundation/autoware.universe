@@ -1,4 +1,4 @@
-# radar_crossing_objects_noise_filter
+# autoware_radar_crossing_objects_noise_filter
 
 This package contains a radar noise filter module for [autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.idl).
 This package can filter the noise objects which cross to the ego vehicle.

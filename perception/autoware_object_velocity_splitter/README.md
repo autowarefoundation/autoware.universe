@@ -1,4 +1,4 @@
-# object_velocity_splitter
+# autoware_object_velocity_splitter
 
 This package contains a object filter module for [autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.idl).
 This package can split DetectedObjects into two messages by object's speed.

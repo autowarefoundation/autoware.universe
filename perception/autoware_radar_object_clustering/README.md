@@ -1,4 +1,4 @@
-# radar_object_clustering
+# `autoware_radar_object_clustering`
 
 This package contains a radar object clustering for [autoware_perception_msgs/msg/DetectedObject](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_perception_msgs/msg/DetectedObject.idl) input.
 
