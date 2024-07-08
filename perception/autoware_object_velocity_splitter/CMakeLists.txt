@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(object_velocity_splitter)
+project(autoware_object_velocity_splitter)
 
 # Dependencies
 find_package(autoware_cmake REQUIRED)

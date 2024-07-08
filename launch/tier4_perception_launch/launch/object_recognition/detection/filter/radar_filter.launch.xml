@@ -19,7 +19,7 @@
     <arg name="param_path" value="$(var radar_crossing_objects_noise_filter_param_path)"/>
   </include>
 
-  <include file="$(find-pkg-share object_velocity_splitter)/launch/object_velocity_splitter.launch.xml">
+  <include file="$(find-pkg-share autoware_object_velocity_splitter)/launch/object_velocity_splitter.launch.xml">
     <arg name="input/objects" value="noise_filtered_objects"/>
     <arg name="output/low_speed_objects" value="low_speed_objects"/>
     <arg name="output/high_speed_objects" value="high_speed_objects"/>

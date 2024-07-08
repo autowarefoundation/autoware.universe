@@ -123,7 +123,7 @@ perception/lidar_transfusion/** amadeusz.szymko.2@tier4.jp kenzo.lobos@tier4.jp 
 perception/multi_object_tracker/** taekjin.lee@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/object_merger/** taekjin.lee@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/object_range_splitter/** yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
-perception/object_velocity_splitter/** satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp yoshi.ri@tier4.jp
+perception/autoware_object_velocity_splitter/** satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp yoshi.ri@tier4.jp
 perception/occupancy_grid_map_outlier_filter/** abrahammonrroy@yahoo.com yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/probabilistic_occupancy_grid_map/** mamoru.sobue@tier4.jp yoshi.ri@tier4.jp yukihiro.saito@tier4.jp
 perception/autoware_radar_crossing_objects_noise_filter/** satoshi.tanaka@tier4.jp shunsuke.miura@tier4.jp taekjin.lee@tier4.jp yoshi.ri@tier4.jp
