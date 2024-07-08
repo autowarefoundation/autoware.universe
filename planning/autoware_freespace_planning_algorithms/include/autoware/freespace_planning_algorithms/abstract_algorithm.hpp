@@ -170,6 +170,22 @@ protected:
   }
 
   template <typename IndexType>
+  inline bool isWithinMargin(const IndexType & index) const
+  {
+    if (
+      index.x < nb_of_margin_cells_ ||
+      static_cast<int>(costmap_.info.width) - index.x < nb_of_margin_cells_) {
+      return false;
+    }
+    if (
+      index.y < nb_of_margin_cells_ ||
+      static_cast<int>(costmap_.info.height) - index.y < nb_of_margin_cells_) {
+      return false;
+    }
+    return true;
+  }
+
+  template <typename IndexType>
   inline bool isObs(const IndexType & index) const
   {
     // NOTE: Accessing by .at() instead makes 1.2 times slower here.
@@ -177,6 +193,7 @@ protected:
     // So, basically .at() is not necessary.
     return is_obstacle_table_[indexToId(index)];
   }
+
   // compute single dimensional grid cell index from 2 dimensional index
   template <typename IndexType>
   inline int indexToId(const IndexType & index) const
@@ -208,6 +225,8 @@ protected:
 
   // result path
   PlannerWaypoints waypoints_;
+
+  int nb_of_margin_cells_;
 };
 
 }  // namespace autoware::freespace_planning_algorithms

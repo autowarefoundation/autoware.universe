@@ -130,6 +130,10 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
     }
     is_collision_table_initialized = true;
   }
+
+  const double base2front = collision_vehicle_shape_.length - collision_vehicle_shape_.base2back;
+  nb_of_margin_cells_ =
+    std::ceil(std::hypot(collision_vehicle_shape_.width, base2front) / costmap_.info.resolution);
 }
 
 void AbstractPlanningAlgorithm::computeCollisionIndexes(
@@ -200,6 +204,7 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
 
 bool AbstractPlanningAlgorithm::detectBoundaryExit(const IndexXYT & base_index) const
 {
+  if (isWithinMargin(base_index)) return false;
   const auto & vertex_indexes_2d = vertex_indexes_table_[base_index.theta];
   for (const auto & vertex_index_2d : vertex_indexes_2d) {
     IndexXY vertex_index{vertex_index_2d.x, vertex_index_2d.y};
