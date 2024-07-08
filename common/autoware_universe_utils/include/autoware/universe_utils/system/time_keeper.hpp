@@ -209,20 +209,20 @@ private:
   TimeKeeper & time_keeper_;     //!< Reference to the TimeKeeper object
 };
 
-class TimeKeeperManager
-{
-public:
-  static std::shared_ptr<TimeKeeper> bring_time_keeper(const std::string & time_keeper_name)
-  {
-    if (time_keeper_map_.find(time_keeper_name) == time_keeper_map_.end()) {
-      time_keeper_map_[time_keeper_name] = std::make_shared<TimeKeeper>();
-    }
-    return time_keeper_map_[time_keeper_name];
-  }
+// class TimeKeeperManager
+// {
+// public:
+//   static std::shared_ptr<TimeKeeper> bring_time_keeper(const std::string & time_keeper_name)
+//   {
+//     if (time_keeper_map_.find(time_keeper_name) == time_keeper_map_.end()) {
+//       time_keeper_map_[time_keeper_name] = std::make_shared<TimeKeeper>();
+//     }
+//     return time_keeper_map_[time_keeper_name];
+//   }
 
-private:
-  static std::map<std::string, std::shared_ptr<TimeKeeper>> time_keeper_map_;
-};
+// private:
+//   static std::map<std::string, std::shared_ptr<TimeKeeper>> time_keeper_map_;
+// };
 
 }  // namespace autoware::universe_utils
 
