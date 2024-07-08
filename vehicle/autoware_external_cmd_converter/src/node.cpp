@@ -179,7 +179,7 @@ void ExternalCmdConverterNode::check_topic_status(
 {
   using diagnostic_msgs::msg::DiagnosticStatus;
   DiagnosticStatus status;
-  
+
   current_gate_mode_ = gate_mode_sub_.takeData();
 
   if (!check_emergency_stop_topic_timeout()) {
