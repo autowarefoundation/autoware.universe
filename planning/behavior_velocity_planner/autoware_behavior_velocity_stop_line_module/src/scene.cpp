@@ -18,12 +18,10 @@
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
-#include <algorithm>
-#include <vector>
+#include <cstdint>
 
 namespace autoware::behavior_velocity_planner
 {
-namespace bg = boost::geometry;
 
 StopLineModule::StopLineModule(
   const int64_t module_id, const size_t lane_id, const lanelet::ConstLineString3d & stop_line,
@@ -51,8 +49,15 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
 
   // Calculate stop pose and insert index
+  auto lane = this->planner_data_->route_handler_->getLaneletsFromId(lane_id_);
+  auto next_lanes = this->planner_data_->route_handler_->getNextLanelets(lane);
+  std::vector<int64_t> search_lane_ids;
+  search_lane_ids.push_back(lane_id_);
+  for (const auto & next_lane : next_lanes) {
+    search_lane_ids.push_back(next_lane.id());
+  }
   const auto stop_point = arc_lane_utils::createTargetPoint(
-    *path, stop_line, lane_id_, planner_param_.stop_margin,
+    *path, stop_line, search_lane_ids, planner_param_.stop_margin,
     planner_data_->vehicle_info_.max_longitudinal_offset_m);
 
   // If no collision found, do nothing
