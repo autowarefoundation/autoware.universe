@@ -25,7 +25,6 @@
 
 #include <fmt/format.h>
 
-#include <map>
 #include <memory>
 #include <ostream>
 #include <string>
