@@ -124,15 +124,15 @@ void TimeKeeper::end_track(const std::string & func_name)
   }
 }
 
-ScopedTimeTrack::ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keepr)
-: func_name_(func_name), time_keepr_(time_keepr)
+ScopedTimeTrack::ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keeper)
+: func_name_(func_name), time_keeper_(time_keeper)
 {
-  time_keepr_.start_track(func_name_);
+  time_keeper_.start_track(func_name_);
 }
 
 ScopedTimeTrack::~ScopedTimeTrack()
 {
-  time_keepr_.end_track(func_name_);
+  time_keeper_.end_track(func_name_);
 }
 
 }  // namespace autoware::universe_utils

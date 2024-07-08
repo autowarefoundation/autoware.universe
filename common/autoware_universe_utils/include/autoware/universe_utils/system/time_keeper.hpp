@@ -25,6 +25,7 @@
 
 #include <fmt/format.h>
 
+#include <map>
 #include <memory>
 #include <ostream>
 #include <string>
@@ -194,9 +195,9 @@ public:
    * @brief Construct a new ScopedTimeTrack object
    *
    * @param func_name Name of the function to be tracked
-   * @param time_keepr Reference to the TimeKeeper object
+   * @param time_keeper Reference to the TimeKeeper object
    */
-  ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keepr);
+  ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keeper);
 
   /**
    * @brief Destroy the ScopedTimeTrack object, ending the tracking of the function
@@ -205,7 +206,22 @@ public:
 
 private:
   const std::string func_name_;  //!< Name of the function being tracked
-  TimeKeeper & time_keepr_;      //!< Reference to the TimeKeeper object
+  TimeKeeper & time_keeper_;     //!< Reference to the TimeKeeper object
+};
+
+class TimeKeeperManager
+{
+public:
+  static std::shared_ptr<TimeKeeper> bring_time_keeper(const std::string & time_keeper_name)
+  {
+    if (time_keeper_map_.find(time_keeper_name) == time_keeper_map_.end()) {
+      time_keeper_map_[time_keeper_name] = std::make_shared<TimeKeeper>();
+    }
+    return time_keeper_map_[time_keeper_name];
+  }
+
+private:
+  static std::map<std::string, std::shared_ptr<TimeKeeper>> time_keeper_map_;
 };
 
 }  // namespace autoware::universe_utils
