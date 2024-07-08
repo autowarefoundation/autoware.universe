@@ -120,29 +120,27 @@ public:
     (add_reporter(reporters), ...);
   }
 
-  void add_reporter(std::ostream * os)
-  {
-    reporters_.emplace_back([os](const std::shared_ptr<ProcessingTimeNode> & node) {
-      *os << "==========================" << std::endl;
-      *os << node->to_string() << std::endl;
-    });
-  }
+  /**
+   * @brief Add a reporter to output processing times to an ostream
+   *
+   * @param os Pointer to the ostream object
+   */
+  void add_reporter(std::ostream * os);
 
-  void add_reporter(rclcpp::Publisher<ProcessingTimeDetail>::SharedPtr publisher)
-  {
-    reporters_.emplace_back([publisher](const std::shared_ptr<ProcessingTimeNode> & node) {
-      publisher->publish(node->to_msg());
-    });
-  }
+  /**
+   * @brief Add a reporter to publish processing times to an rclcpp publisher
+   *
+   * @param publisher Shared pointer to the rclcpp publisher
+   */
+  void add_reporter(rclcpp::Publisher<ProcessingTimeDetail>::SharedPtr publisher);
 
-  void add_reporter(rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher)
-  {
-    reporters_.emplace_back([publisher](const std::shared_ptr<ProcessingTimeNode> & node) {
-      std_msgs::msg::String msg;
-      msg.data = node->to_string();
-      publisher->publish(msg);
-    });
-  }
+  /**
+   * @brief Add a reporter to publish processing times to an rclcpp publisher with
+   * std_msgs::msg::String
+   *
+   * @param publisher Shared pointer to the rclcpp publisher
+   */
+  void add_reporter(rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher);
 
   /**
    * @brief Start tracking the processing time of a function
@@ -159,19 +157,10 @@ public:
   void end_track(const std::string & func_name);
 
 private:
-  void report()
-  {
-    if (current_time_node_ != nullptr) {
-      throw std::runtime_error(fmt::format(
-        "You must call end_track({}) first, but report() is called",
-        current_time_node_->get_name()));
-    }
-    for (const auto & reporter : reporters_) {
-      reporter(root_node_);
-    }
-    current_time_node_.reset();
-    root_node_.reset();
-  }
+  /**
+   * @brief Report the processing times to all registered reporters
+   */
+  void report();
 
   std::shared_ptr<ProcessingTimeNode>
     current_time_node_;                            //!< Shared pointer to the current time node

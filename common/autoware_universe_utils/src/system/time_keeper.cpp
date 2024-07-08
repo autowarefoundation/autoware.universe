@@ -97,6 +97,30 @@ std::string ProcessingTimeNode::get_name() const
   return name_;
 }
 
+void TimeKeeper::add_reporter(std::ostream * os)
+{
+  reporters_.emplace_back([os](const std::shared_ptr<ProcessingTimeNode> & node) {
+    *os << "==========================" << std::endl;
+    *os << node->to_string() << std::endl;
+  });
+}
+
+void TimeKeeper::add_reporter(rclcpp::Publisher<ProcessingTimeDetail>::SharedPtr publisher)
+{
+  reporters_.emplace_back([publisher](const std::shared_ptr<ProcessingTimeNode> & node) {
+    publisher->publish(node->to_msg());
+  });
+}
+
+void TimeKeeper::add_reporter(rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher)
+{
+  reporters_.emplace_back([publisher](const std::shared_ptr<ProcessingTimeNode> & node) {
+    std_msgs::msg::String msg;
+    msg.data = node->to_string();
+    publisher->publish(msg);
+  });
+}
+
 void TimeKeeper::start_track(const std::string & func_name)
 {
   if (current_time_node_ == nullptr) {
@@ -122,6 +146,19 @@ void TimeKeeper::end_track(const std::string & func_name)
   if (current_time_node_ == nullptr) {
     report();
   }
+}
+
+void TimeKeeper::report()
+{
+  if (current_time_node_ != nullptr) {
+    throw std::runtime_error(fmt::format(
+      "You must call end_track({}) first, but report() is called", current_time_node_->get_name()));
+  }
+  for (const auto & reporter : reporters_) {
+    reporter(root_node_);
+  }
+  current_time_node_.reset();
+  root_node_.reset();
 }
 
 ScopedTimeTrack::ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keeper)
