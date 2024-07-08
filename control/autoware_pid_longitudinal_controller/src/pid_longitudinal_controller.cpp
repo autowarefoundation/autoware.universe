@@ -721,6 +721,9 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
       const bool current_keep_stopped_condition = std::fabs(current_vel) < vel_epsilon &&
                                                   m_enable_keep_stopped_until_steer_convergence &&
                                                   !lateral_sync_data_.is_steer_converged;
+      // NOTE: Dry steering is considered unnecessary when the steering is converged twice in a
+      //       row. This is because lateral_sync_data_.is_steer_converged is not the current but
+      //       the previous value due to the order controllers' run and sync functions.
       const bool keep_stopped_condition =
         !m_prev_keep_stopped_condition ||
         (current_keep_stopped_condition || *m_prev_keep_stopped_condition);

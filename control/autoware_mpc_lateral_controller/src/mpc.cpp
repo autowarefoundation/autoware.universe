@@ -765,7 +765,7 @@ VectorXd MPC::calcSteerRateLimitOnTrajectory(
     return reference.back();
   };
 
-  // when the vehicle is stopped, no steering rate limit.
+  // When the vehicle is stopped, a large steer rate limit is used for the dry steering.
   constexpr double steer_rate_lim = 100.0;
   const bool is_vehicle_stopped = std::fabs(current_velocity) < 0.01;
   if (is_vehicle_stopped) {
