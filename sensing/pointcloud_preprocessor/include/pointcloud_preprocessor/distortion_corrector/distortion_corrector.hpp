@@ -73,25 +73,12 @@ protected:
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
-public:
-  explicit DistortionCorrector(rclcpp::Node * node)
-  : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
-  {
-  }
-  void processTwistMessage(
-    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
-
-  void processIMUMessage(
-    const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
   void getIMUTransformation(const std::string & base_frame, const std::string & imu_frame);
   void enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
-
-  bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
   void getTwistAndIMUIterator(
     bool use_imu, double first_point_time_stamp_sec,
     std::deque<geometry_msgs::msg::TwistStamped>::iterator & it_twist,
     std::deque<geometry_msgs::msg::Vector3Stamped>::iterator & it_imu);
-  void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) override;
   void warnIfTimestampIsTooLate(bool is_twist_time_stamp_too_late, bool is_imu_time_stamp_too_late);
   void undistortPoint(
     sensor_msgs::PointCloud2Iterator<float> & it_x, sensor_msgs::PointCloud2Iterator<float> & it_y,
@@ -103,6 +90,19 @@ public:
     static_cast<T *>(this)->undistortPointImplementation(
       it_x, it_y, it_z, it_twist, it_imu, time_offset, is_twist_valid, is_imu_valid);
   };
+
+public:
+  explicit DistortionCorrector(rclcpp::Node * node)
+  : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
+  {
+  }
+  void processTwistMessage(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg) override;
+
+  void processIMUMessage(
+    const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg) override;
+  void undistortPointCloud(bool use_imu, sensor_msgs::msg::PointCloud2 & pointcloud) override;
+  bool isInputValid(sensor_msgs::msg::PointCloud2 & pointcloud);
 };
 
 class DistortionCorrector2D : public DistortionCorrector<DistortionCorrector2D>
