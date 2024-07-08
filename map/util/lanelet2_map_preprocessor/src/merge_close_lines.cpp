@@ -54,7 +54,7 @@ lanelet::LineStrings3d convert_line_layer_to_line_strings(
   return lines;
 }
 
-lanelet::ConstPoint3d get3_d_point_from2_d_arc_length(
+lanelet::ConstPoint3d get3d_point_from2d_arc_length(
   const lanelet::ConstLineString3d & line, const double s)
 {
   double accumulated_distance2d = 0;
@@ -114,7 +114,7 @@ lanelet::BasicPoint3d get_closest_point_on_line(
   auto arc_coordinate = lanelet::geometry::toArcCoordinates(
     lanelet::utils::to2D(line), lanelet::utils::to2D(search_point));
   std::cout << arc_coordinate.length << " " << arc_coordinate.distance << std::endl;
-  return get3_d_point_from2_d_arc_length(line, arc_coordinate.length).basicPoint();
+  return get3d_point_from2d_arc_length(line, arc_coordinate.length).basicPoint();
 }
 
 lanelet::LineString3d merge_two_lines(
@@ -135,9 +135,7 @@ void copy_data(lanelet::LineString3d & dst, const lanelet::LineString3d & src)
 {
   dst.clear();
   for (const lanelet::ConstPoint3d & pt : src) {
-    lanelet::Point3d pt_casted;
-    pt_casted = static_cast<lanelet::Point3d>(pt);
-    dst.push_back(pt_casted);
+    dst.push_back(static_cast<lanelet::Point3d>(pt));
   }
 }
 
