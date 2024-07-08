@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef OCCUPANCY_GRID_MAP__OGM_VALIDATOR_HPP_
-#define OCCUPANCY_GRID_MAP__OGM_VALIDATOR_HPP_
+#ifndef OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_VALIDATOR_HPP_
+#define OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_VALIDATOR_HPP_
 
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
 
@@ -75,4 +75,4 @@ private:
 }  // namespace occupancy_grid_map
 }  // namespace autoware::detected_object_validation
 
-#endif  // OCCUPANCY_GRID_MAP__OGM_VALIDATOR_HPP_
+#endif  // OCCUPANCY_GRID_MAP__OCCUPANCY_GRID_MAP_VALIDATOR_HPP_

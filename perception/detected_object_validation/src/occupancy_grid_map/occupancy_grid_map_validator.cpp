@@ -14,7 +14,7 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include "ogm_validator.hpp"
+#include "occupancy_grid_map_validator.hpp"
 
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "object_recognition_utils/object_classification.hpp"

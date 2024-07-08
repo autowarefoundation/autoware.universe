@@ -14,7 +14,7 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include "pcl_validator.hpp"
+#include "obstacle_pointcloud_validator.hpp"
 
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <object_recognition_utils/object_recognition_utils.hpp>

@@ -29,7 +29,7 @@ include_directories(
 
 # Generate occupancy grid based validator exe file
 ament_auto_add_library(occupancy_grid_based_validator SHARED
-  src/occupancy_grid_map/ogm_validator.cpp
+  src/occupancy_grid_map/occupancy_grid_map_validator.cpp
 )
 
 target_link_libraries(occupancy_grid_based_validator
@@ -39,7 +39,7 @@ target_link_libraries(occupancy_grid_based_validator
 
 # Generate obstacle pointcloud based validator exe file
 ament_auto_add_library(obstacle_pointcloud_based_validator SHARED
-  src/obstacle_pointcloud/pcl_validator.cpp
+  src/obstacle_pointcloud/obstacle_pointcloud_validator.cpp
 )
 
 target_link_libraries(obstacle_pointcloud_based_validator

@@ -13,9 +13,9 @@
 // limitations under the License.
 
 // NOLINTNEXTLINE(whitespace/line_length)
-#ifndef OBSTACLE_POINTCLOUD__PCL_VALIDATOR_HPP_
+#ifndef OBSTACLE_POINTCLOUD__OBSTACLE_POINTCLOUD_VALIDATOR_HPP_
 // NOLINTNEXTLINE(whitespace/line_length)
-#define OBSTACLE_POINTCLOUD__PCL_VALIDATOR_HPP_
+#define OBSTACLE_POINTCLOUD__OBSTACLE_POINTCLOUD_VALIDATOR_HPP_
 
 #include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
@@ -168,4 +168,4 @@ private:
 }  // namespace autoware::detected_object_validation
 
 // NOLINTNEXTLINE(whitespace/line_length)
-#endif  // OBSTACLE_POINTCLOUD__PCL_VALIDATOR_HPP_
+#endif  // OBSTACLE_POINTCLOUD__OBSTACLE_POINTCLOUD_VALIDATOR_HPP_
