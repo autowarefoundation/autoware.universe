@@ -51,24 +51,3 @@ TEST(system, TimeKeeper)
     }
   }
 }
-
-// TEST(system, TimeKeeperManager)
-// {
-//   using autoware::universe_utils::ScopedTimeTrack;
-//   using autoware::universe_utils::TimeKeeperManager;
-
-//   auto time_keepr = TimeKeeperManager::bring_time_keeper("sample");
-//   time_keepr->add_reporter(&std::cerr);
-
-//   ScopedTimeTrack st("main_func", *time_keepr);
-
-//   {
-//     auto time_keepr = TimeKeeperManager::bring_time_keeper("sample");
-//     ScopedTimeTrack st("sub_func", *time_keepr);
-
-//     {
-//       auto time_keepr = TimeKeeperManager::bring_time_keeper("sample");
-//       ScopedTimeTrack st("sub_sub_func", *time_keepr);
-//     }
-//   }
-// }
