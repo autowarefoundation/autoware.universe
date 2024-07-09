@@ -95,7 +95,13 @@ QImage TileField::getTileFieldImage()
       auto tile_key = QString("%1/%2/%3.png").arg(zoom_).arg(x_tile).arg(y_tile).toStdString();
 
       float lon = tile_x_to_long(x_tile, zoom_);
+      // Round the longitude to 2 decimal places
+      lon = std::round(lon * 100) / 100;
       float lat = tile_y_to_lat(y_tile, zoom_);
+      // Round the latitude to 2 decimal places
+      lat = std::round(lat * 100) / 100;
+
+      QString tile_text = QString("Lat: %1\nLon: %2").arg(lat).arg(lon);
 
       auto tile_it = tiles_.find(tile_key);
       if (tile_it != tiles_.end() && !tile_it->second->getImage().isNull()) {
@@ -103,9 +109,7 @@ QImage TileField::getTileFieldImage()
         QRectF source(0, 0, 256, 256);
         painter.drawImage(target, tile_it->second->getImage(), source);
         // Draw the latitude and longitude on the tile
-        painter.drawText(
-          target, Qt::AlignCenter,
-          QString::fromStdString(std::to_string(lat) + ", " + std::to_string(lon)));
+        painter.drawText(target, Qt::AlignCenter, tile_text);
       }
     }
   }
