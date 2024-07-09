@@ -134,7 +134,7 @@ protected:
     std::vector<std::shared_ptr<geometry_msgs::msg::TwistWithCovarianceStamped>> twist_msgs;
     rclcpp::Time twist_stamp = subtractMilliseconds(pointcloud_timestamp, 5);
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < number_of_twist_msgs_; ++i) {
       auto twist_msg = generateTwistMsg(10.0 + i * 2, 0.02 + i * 0.01, twist_stamp);
       twist_msgs.push_back(twist_msg);
 
@@ -150,7 +150,7 @@ protected:
     std::vector<std::shared_ptr<sensor_msgs::msg::Imu>> imu_msgs;
     rclcpp::Time imu_stamp = subtractMilliseconds(pointcloud_timestamp, 10);
 
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < number_of_imu_msgs_; ++i) {
       auto imu_msg =
         generateImuMsg(0.01 + i * 0.005, -0.02 + i * 0.005, 0.05 + i * 0.005, imu_stamp);
       imu_msgs.push_back(imu_msg);
@@ -235,11 +235,13 @@ protected:
   std::shared_ptr<pointcloud_preprocessor::DistortionCorrector3D> distortion_corrector_3d_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
-  static constexpr double standard_tolerance_ = 1e-4;
-  static constexpr double coarse_tolerance_ = 5e-3;
+  static constexpr double standard_tolerance_{1e-4};
+  static constexpr double coarse_tolerance_{5e-3};
+  static constexpr int number_of_twist_msgs_{6};
+  static constexpr int number_of_imu_msgs_{6};
 
   // for debugging or regenerating the ground truth point cloud
-  bool debug_ = false;
+  bool debug_{false};
 };
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
