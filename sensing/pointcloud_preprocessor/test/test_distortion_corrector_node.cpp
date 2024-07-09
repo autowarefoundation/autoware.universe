@@ -175,8 +175,7 @@ protected:
       };
 
       size_t number_of_points = points.size() / 3;
-      std::vector<double> timestamps =
-        generatePointTimestamps(is_generate_points, stamp, number_of_points);
+      std::vector<double> timestamps = generatePointTimestamps(stamp, number_of_points);
 
       sensor_msgs::PointCloud2Modifier modifier(pointcloud_msg);
       modifier.setPointCloud2Fields(
@@ -208,17 +207,16 @@ protected:
   }
 
   std::vector<double> generatePointTimestamps(
-    bool is_generate_points, rclcpp::Time pointcloud_timestamp, size_t number_of_points)
+    rclcpp::Time pointcloud_timestamp, size_t number_of_points)
   {
     std::vector<double> timestamps;
-    if (is_generate_points) {
-      rclcpp::Time point_stamp = pointcloud_timestamp;
-      for (size_t i = 0; i < number_of_points; ++i) {
-        double timestamp = point_stamp.seconds();
-        timestamps.push_back(timestamp);
-        point_stamp = addMilliseconds(point_stamp, 10);
-      }
+    rclcpp::Time point_stamp = pointcloud_timestamp;
+    for (size_t i = 0; i < number_of_points; ++i) {
+      double timestamp = point_stamp.seconds();
+      timestamps.push_back(timestamp);
+      point_stamp = addMilliseconds(point_stamp, 10);
     }
+
     return timestamps;
   }
 
