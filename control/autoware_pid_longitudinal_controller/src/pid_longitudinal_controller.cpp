@@ -718,9 +718,8 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
 
     if (departure_condition_from_stopped) {
       // Let vehicle start after the steering is converged for dry steering
-      const bool current_keep_stopped_condition = std::fabs(current_vel) < vel_epsilon &&
-                                                  m_enable_keep_stopped_until_steer_convergence &&
-                                                  !lateral_sync_data_.is_steer_converged;
+      const bool current_keep_stopped_condition =
+        std::fabs(current_vel) < vel_epsilon && !lateral_sync_data_.is_steer_converged;
       // NOTE: Dry steering is considered unnecessary when the steering is converged twice in a
       //       row. This is because lateral_sync_data_.is_steer_converged is not the current but
       //       the previous value due to the order controllers' run and sync functions.
@@ -728,7 +727,7 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
         !m_prev_keep_stopped_condition ||
         (current_keep_stopped_condition || *m_prev_keep_stopped_condition);
       m_prev_keep_stopped_condition = current_keep_stopped_condition;
-      if (keep_stopped_condition) {
+      if (m_enable_keep_stopped_until_steer_convergence && keep_stopped_condition) {
         // debug print
         if (has_nonzero_target_vel) {
           debug_msg_once("target speed > 0, but keep stop condition is met. Keep STOPPED.");
