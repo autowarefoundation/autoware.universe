@@ -8,7 +8,7 @@ This is a rule-based avoidance module, which is running based on perception outp
 
 ![fig](./images/purpose/avoidance.png)
 
-This module has [RTC interface](../autoware_rtc_interface/README.md), and user can select operation mode from MANUAL/AUTO depending on the vehicle sensor performance. If user selects MANUAL mode, this module outputs avoidance path as candidate and waits operator approval. In the case where the sensor/perception performance is not enough and false positive maybe occurs, we recommend to use this module with MANUAL mode in order to prevent unnecessary avoidance maneuver.
+This module has [RTC interface](../../autoware_rtc_interface/README.md), and user can select operation mode from MANUAL/AUTO depending on the vehicle sensor performance. If user selects MANUAL mode, this module outputs avoidance path as candidate and waits operator approval. In the case where the sensor/perception performance is not enough and false positive maybe occurs, we recommend to use this module with MANUAL mode in order to prevent unnecessary avoidance maneuver.
 
 On the other hand, if user selects AUTO mode, this module modifies current following path without operator approval. If the sensor/perception performance is good enough, user can use this module with AUTO mode.
 
@@ -83,7 +83,7 @@ partition fillEgoStatus() {
 note right
   This module has following status:
   - RUNNING: target object is still remaining. Or, the ego hasn't returned original lane.
-  - CANCEL: taget obejct has gone. And, the ego hasn't initiated avoidance maneuver.
+  - CANCEL: target object has gone. And, the ego hasn't initiated avoidance maneuver.
   - SUCCEEDED: the ego finishes avoiding all objects and returns original lane.
 end note
 
@@ -122,7 +122,7 @@ if (Is there object that is potentially avoidable?) then (yes)
 :return true;
 note right
   Sometimes, we meet the situation where there is enough space to avoid
-  but ego speed is to high to avoid target obejct under lateral jerk constraints.
+  but ego speed is to high to avoid target object under lateral jerk constraints.
   This module keeps running in this case in order to decelerate ego speed.
 end note
 stop
@@ -485,11 +485,6 @@ title Filtering flow for vehicle type objects
 start
 
 partition isSatisfiedWithVehicleCodition() {
-if(object is force avoidance target ?) then (yes)
-#FF006C :return true;
-stop
-else (\n no)
-
 if(isNeverAvoidanceTarget()) then (yes)
 #00FFB1 :return false;
 stop
@@ -534,7 +529,6 @@ endif
 
 endif
 }
-endif
 endif
 endif
 endif
@@ -665,6 +659,27 @@ if(isWithinCrosswalk()) then (yes)
 stop
 else (\n no)
 endif
+
+if(is object within intersection?) then (yes)
+#00FFB1 :return false;
+stop
+else (\n no)
+endif
+
+if(is object on right side of the ego path?) then (yes)
+if(are there adjacent lanes on right side of ego lane?) then (yes)
+#00FFB1 :return false;
+stop
+else (\n no)
+endif
+else (\n no)
+if(are there adjacent lanes on left side of ego lane?) then (yes)
+#00FFB1 :return false;
+stop
+else (\n no)
+endif
+endif
+
 #FF006C :return true;
 stop
 }
@@ -747,6 +762,59 @@ The longitudinal positions depends on envelope polygon, ego vehicle specificatio
 
 ![fig](./images/path_generation/margin.png)
 
+### Lateral margin
+
+As mentioned above, user can adjust lateral margin by changing following two types parameter. The `soft_margin` is a soft constraint parameter for lateral margin. The `hard_margin` and `hard_margin_for_parked_vehicle` are hard constraint parameter.
+
+```yaml
+        car:
+          ...
+          lateral_margin:
+            soft_margin: 0.3                            # [m]
+            hard_margin: 0.2                            # [m]
+            hard_margin_for_parked_vehicle: 0.7         # [m]
+```
+
+Basically, this module tries to generate avoidance path in order to keep lateral distance, which is sum of `soft_margin` and `hard_margin`/`hard_margin_for_parked_vehicle`, from avoidance target object.
+
+![fig](./images/path_generation/soft_hard.png)
+
+But if there isn't enough space to keep `soft_margin` distance, this module shortens soft constraint lateral margin. The parameter `soft_margin` is a maximum value of soft constraint, and actual soft margin can be a value between 0.0 and `soft_margin`. On the other hand, this module definitely keeps `hard_margin` or `hard_margin_for_parked_vehicle` depending on the situation. Thus, the minimum value of total lateral margin is `hard_margin`/`hard_margin_for_parked_vehicle`, and the maximum value is the sum of `hard_margin`/`hard_margin_for_parked_vehicle` and `soft_margin`.
+
+Following figure shows the situation where this module shortens lateral soft constraint in order not to drive opposite direction lane when user set a parameter `use_lane_type` to `same_direction_lane`.
+
+![fig](./images/path_generation/adjust_margin.png)
+
+This module avoids not only parked vehicle but also non-parked vehicle which stops temporarily for some reason (e.g. waiting for traffic light to change red to green.). Additionally, this module has two types hard margin parameters, `hard_margin` and `hard_margin_for_parked_vehicle` and judges if it's a parked vehicle or not for each vehicles because it takes the risk of vehicle doors opening suddenly and people getting out from parked vehicle into consideration.
+
+Basically, user had better make `hard_margin_for_parked_vehicle` larger than `hard_margin` to prevent collision with doors or people who suddenly get out from vehicle.
+
+On the other hand, this module has only one parameter `soft_margin` for soft lateral margin constraint.
+
+![fig](./images/path_generation/hard_margin.png)
+
+As the hard margin parameters the distance which the user definitely want to keep, they are used in the logic to check whether the ego can pass side of the target object without avoidance maneuver as well.
+
+If the lateral distance is less than `hard_margin`/`hard_margin_for_parked_vehicle` when assuming that the ego follows current lane without avoidance maneuver, this module thinks the ego can not pass the side of the object safely and the ego must avoid it. In this case, this module inserts stop point until the avoidance maneuver is allowed to execute so that the ego can avoid the object after approval. (e.g. The ego keeps stopping in front of such a object until operator approves avoidance maneuver if user uses this module in MANUAL mode.)
+
+![fig](./images/path_generation/must_avoid.png)
+
+On the other hand, if the lateral distance is larger than `hard_margin`/`hard_margin_for_parked_vehicle`, this module doesn't insert stop point even when it's waiting approval because it thinks it's possible to pass the side of the object safely.
+
+![fig](./images/path_generation/pass_through.png)
+
+### When there is not enough space
+
+This module inserts stop point only when the ego can potentially avoid the object. So, if it is not able to keep distance more than `hard_margin`/`hard_margin_for_parked_vehicle`, this module does nothing. Following figure shows the situation where this module is not able to keep enough lateral distance when user set a parameter `use_lane_type` to `same_direction_lane`.
+
+![fig](./images/path_generation/do_nothing.png)
+
+!!! info
+
+    In this situation, obstacle stop feature in [obstacle_cruise_planner](../../autoware_obstacle_cruise_planner/README.md) is responsible for ego vehicle safety.
+
+![fig](./images/path_generation/insufficient_drivable_space.png)
+
 ### Shift length calculation
 
 The lateral shift length is sum of `overhang_distance`, lateral margin, whose value is set in config file, and the half of ego vehicle width defined in `vehicle_info.param.yaml`. On the other hand, the module limits the shift length depending on the space which the module can use for avoidance maneuver and the parameters `soft_drivable_bound_margin` `hard_drivable_bound_margin`. Basically, the shift length is limited so that the ego doesn't get closer than `soft_drivable_bound_margin` to drivable boundary. But it allows to relax the threshold `soft_drivable_bound_margin` to `hard_drivable_bound_margin` when the road is narrow.
@@ -757,15 +825,19 @@ Usable lane for avoidance module can be selected by config file.
 
 ```yaml
       ...
-      use_adjacent_lane: true
-      use_opposite_lane: true
+      # drivable lane setting. this module is able to use not only current lane but also right/left lane
+      # if the current lane(=lanelt::Lanelet) and the rignt/left lane share the boundary(=lanelet::Linestring) in HDMap.
+      # "current_lane"           : use only current lane. this module doesn't use adjacent lane to avoid object.
+      # "same_direction_lane"    : this module uses same direction lane to avoid object if need.
+      # "opposite_direction_lane": this module uses both same direction and opposite direction lane.
+      use_lane_type: "opposite_direction_lane"
 ```
 
-When user set parameter both `use_adjacent_lane` and `use_opposite_lane` to `true`, it is possible to use opposite lane.
+When user set parameter `use_lane_type` to `opposite_direction_lane`, it is possible to use opposite lane.
 
 ![fig](./images/path_generation/opposite_direction.png)
 
-When user only set parameter `use_adjacent_lane` to `true`, the module doesn't create path that overlaps opposite lane.
+When user set parameter `use_lane_type` to `same_direction_lane`, the module doesn't create path that overlaps opposite lane.
 
 ![fig](./images/path_generation/same_direction.png)
 
@@ -803,6 +875,34 @@ longitudinal:
 The `prepare_length` is calculated as the product of ego speed and `max_prepare_time`. (When the ego speed is zero, `min_prepare_distance` is used.)
 
 ![fig](./images/path_generation/shift_line.png)
+
+## Planning at RED traffic light
+
+This module takes traffic light information into account so that the ego can behave properly. Sometimes, the ego straddles lane boundary but we want to prevent the ego from stopping in front of red traffic signal in such a situation. This is because the ego will block adjacent lane and it's inconvenient for other vehicles.
+
+![fig](./images/traffic_light/traffic_light.png)
+
+So, this module controls shift length and shift start/end point in order to prevent above situation.
+
+### Control shift length
+
+At first, if the ego hasn't initiated avoidance maneuver yet, this module limits maximum shift length and uses **ONLY** current lane during red traffic signal. This prevents the ego from blocking other vehicles even if this module executes avoidance maneuver and the ego is caught by red traffic signal.
+
+![fig](./images/traffic_light/limit_shift_length.png)
+
+### Control avoidance shift start point
+
+Additionally, if the target object is farther than stop line for traffic light, this module set avoidance shift start point on the stop line in order to prevent the ego from stopping by red traffic signal in middle of avoidance maneuver.
+
+![fig](./images/traffic_light/shift_from_current_pos.png)
+![fig](./images/traffic_light/shift_from_stop_line.png)
+
+### Control return shift end point
+
+If the ego has already initiated avoidance maneuver, this module tries to set return shift end point on the stop line.
+
+![fig](./images/traffic_light/return_after_stop_line.png)
+![fig](./images/traffic_light/return_before_stop_line.png)
 
 ## Safety check
 
@@ -897,32 +997,27 @@ This module supports drivable area expansion for following polygons defined in H
 Please set the flags to `true` when user wants to make it possible to use those areas in avoidance maneuver.
 
 ```yaml
+# drivable lane setting. this module is able to use not only current lane but also right/left lane
+# if the current lane(=lanelt::Lanelet) and the rignt/left lane share the boundary(=lanelet::Linestring) in HDMap.
+# "current_lane"           : use only current lane. this module doesn't use adjacent lane to avoid object.
+# "same_direction_lane"    : this module uses same direction lane to avoid object if need.
+# "opposite_direction_lane": this module uses both same direction and opposite direction lane.
+use_lane_type: "opposite_direction_lane"
 # drivable area setting
-use_adjacent_lane: true
-use_opposite_lane: true
 use_intersection_areas: true
 use_hatched_road_markings: true
 use_freespace_areas: true
 ```
 
-|                       |                                                            |                                                                                                                                                                                                                     |
-| --------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| adjacent lane         | ![fig](./images/advanced/avoidance_same_direction.png)     |                                                                                                                                                                                                                     |
-| opposite lane         | ![fig](./images/advanced/avoidance_opposite_direction.png) |                                                                                                                                                                                                                     |
-| intersection area     | ![fig](./images/advanced/avoidance_intersection.png)       | The intersection area is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md)                               |
-| hatched road markings | ![fig](./images/advanced/avoidance_zebra.png)              | The hatched road marking is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md#hatched-road-markings-area) |
-| freespace area        | ![fig](./images/advanced/avoidance_freespace.png)          | The freespace area is defined on Lanelet map. (unstable)                                                                                                                                                            |
+|                                        |                                                            |                                                                                                                                                                                                                     |
+| -------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| use_lane_type: same_direction_lane     | ![fig](./images/advanced/avoidance_same_direction.png)     |                                                                                                                                                                                                                     |
+| use_lane_type: opposite_direction_lane | ![fig](./images/advanced/avoidance_opposite_direction.png) |                                                                                                                                                                                                                     |
+| intersection area                      | ![fig](./images/advanced/avoidance_intersection.png)       | The intersection area is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md)                               |
+| hatched road markings                  | ![fig](./images/advanced/avoidance_zebra.png)              | The hatched road marking is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md#hatched-road-markings-area) |
+| freespace area                         | ![fig](./images/advanced/avoidance_freespace.png)          | The freespace area is defined on Lanelet map. (unstable)                                                                                                                                                            |
 
 ## Future extensions / Unimplemented parts
-
-- **Planning on the intersection**
-  - If it is known that the ego vehicle is going to stop in the middle of avoidance execution (for example, at a red traffic light), sometimes the avoidance should not be executed until the vehicle is ready to move. This is because it is impossible to predict how the environment will change during the stop. This is especially important at intersections.
-
-![fig](./images/intersection_problem.drawio.svg)
-
-- **Safety Check**
-
-  - In the current implementation, it is only the jerk limit that permits the avoidance execution. It is needed to consider the collision with other vehicles when change the path shape.
 
 - **Consideration of the speed of the avoidance target**
 
@@ -1146,4 +1241,4 @@ The shift points are modified by a filtering process in order to get the expecte
 
 The avoidance specific parameter configuration file can be located at `src/autoware/launcher/planning_launch/config/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/autoware_behavior_path_static_obstacle_avoidance_module/static_obstacle_avoidance.param.yaml`.
 
-{{ json_to_markdown("planning/autoware_behavior_path_static_obstacle_avoidance_module/schema/static_obstacle_avoidance.schema.json") }}
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_static_obstacle_avoidance_module/schema/static_obstacle_avoidance.schema.json") }}
