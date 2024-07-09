@@ -17,13 +17,21 @@ namespace autoware_minimap_overlay_rviz_plugin
 VehicleMapDisplay::VehicleMapDisplay() : rviz_common::Display(), overlay_(nullptr)
 {
   property_width_ = new rviz_common::properties::IntProperty(
-    "Width", 256, "Width of the overlay", this, SLOT(updateOverlaySize()));
+    "Width", 256, "Width of the overlay max:500", this, SLOT(updateOverlaySize()));
+
+  property_width_->setMax(500);
+  property_width_->setShouldBeSaved(true);
+
   property_height_ = new rviz_common::properties::IntProperty(
-    "Height", 256, "Height of the overlay", this, SLOT(updateOverlaySize()));
+    "Height", 256, "Height of the overlay max:500", this, SLOT(updateOverlaySize()));
+
+  property_height_->setMax(500);
+  property_height_->setShouldBeSaved(true);
+
   property_left_ = new rviz_common::properties::IntProperty(
-    "Left", 15, "Left position of the overlay", this, SLOT(updateOverlayPosition()));
+    "Left", 10, "Left position of the overlay", this, SLOT(updateOverlayPosition()));
   property_top_ = new rviz_common::properties::IntProperty(
-    "Top", 15, "Top position of the overlay", this, SLOT(updateOverlayPosition()));
+    "Top", 10, "Top position of the overlay", this, SLOT(updateOverlayPosition()));
 
   alpha_property_ = new rviz_common::properties::FloatProperty(
     "Alpha", 0, "Amount of transparency to apply to the overlay.", this, SLOT(updateOverlaySize()));
@@ -33,26 +41,31 @@ VehicleMapDisplay::VehicleMapDisplay() : rviz_common::Display(), overlay_(nullpt
     SLOT(updateOverlaySize()));
 
   property_zoom_ = new rviz_common::properties::IntProperty(
-    "Zoom", 15, "Zoom level of the map", this, SLOT(updateZoomLevel()));
+    "Zoom", 15, "Zoom level of the map 15-18", this, SLOT(updateZoomLevel()));
 
   property_zoom_->setMin(15);
   property_zoom_->setMax(18);
   property_zoom_->setShouldBeSaved(true);
 
   property_latitude_ = new rviz_common::properties::FloatProperty(
-    "Latitude", 0.0, "Latitude of the center position", this, SLOT(updateLatitude()));
+    "Latitude", 0.0, "Latitude of the ego", this, SLOT(updateLatitude()));
 
   property_longitude_ = new rviz_common::properties::FloatProperty(
-    "Longitude", 0.0, "Longitude of the center position", this, SLOT(updateLongitude()));
+    "Longitude", 0.0, "Longitude of the ego", this, SLOT(updateLongitude()));
 
-  property_topic_ = new rviz_common::properties::StringProperty(
-    "Topic", "fix", "NavSatFix topic to subscribe to", this, SLOT(updateTopic()));
+  property_goal_lat = new rviz_common::properties::FloatProperty(
+    "Goal Latitude", 0.0, "Goal pose Latitude", this, SLOT(updateGoalPose()));
 
-  property_goal_x_ = new rviz_common::properties::FloatProperty(
-    "Goal X", 0.0, "Goal X position in local coordinates", this, SLOT(updateGoalPose()));
+  property_goal_lon = new rviz_common::properties::FloatProperty(
+    "Goal Longitude", 0.0, "Goal pose Longitude", this, SLOT(updateGoalPose()));
 
-  property_goal_y_ = new rviz_common::properties::FloatProperty(
-    "Goal Y", 0.0, "Goal Y position in local coordinates", this, SLOT(updateGoalPose()));
+  property_origin_lat_ = new rviz_common::properties::FloatProperty(
+    "Map Origin Latitude", 35.23808753540768, "Latitude of the map origin position", this,
+    SLOT(updateLatitude()));
+
+  property_origin_lon_ = new rviz_common::properties::FloatProperty(
+    "Map Origin Longitude", 139.9009591876285, "Longitude of the map origin position", this,
+    SLOT(updateLongitude()));
 
   zoom_ = property_zoom_->getInt();
 
@@ -79,7 +92,6 @@ void VehicleMapDisplay::onInitialize()
   updateOverlayPosition();
 
   node_ = context_->getRosNodeAbstraction().lock()->get_raw_node();
-  updateTopic();
 
   // Initialize the goal pose subscriber
   goal_pose_sub_ = node_->create_subscription<geometry_msgs::msg::PoseStamped>(
@@ -176,7 +188,10 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
   painter.setBrush(colorFromHSV);
 
   // Define the visible rectangle
-  QRectF visibleRect(backgroundRect.width() / 2 - 128, backgroundRect.height() / 2 - 128, 256, 256);
+  QRectF visibleRect(
+    backgroundRect.width() / 2 - property_width_->getInt() / 2,
+    backgroundRect.height() / 2 - property_height_->getInt() / 2, property_width_->getInt(),
+    property_height_->getInt());
 
   // Define the circular clipping path
   QPainterPath path;
@@ -278,12 +293,10 @@ void VehicleMapDisplay::updateMapPosition()
 
 void VehicleMapDisplay::updateGoalPose()
 {
-  double goal_x = property_goal_x_->getFloat();
-  double goal_y = property_goal_y_->getFloat();
-  double origin_lat = 35.23808753540768;
-  // double origin_lat = 41.02119576228221;
-  double origin_lon = 139.9009591876285;
-  // double origin_lon = 28.897920380148957;
+  double goal_x = property_goal_lat->getFloat();
+  double goal_y = property_goal_lon->getFloat();
+  double origin_lat = property_origin_lat_->getFloat();
+  double origin_lon = property_origin_lon_->getFloat();
   goal_pose_.setGoalPosition(goal_x, goal_y, origin_lat, origin_lon);
   if (!goal_pose_msg_) {
     return;
@@ -321,17 +334,15 @@ void VehicleMapDisplay::goalPoseCallback(const geometry_msgs::msg::PoseStamped::
 {
   goal_pose_msg_ = msg;
 
-  double origin_lat = 35.23808753540768;
-  // double origin_lat = 41.02119576228221;
-  double origin_lon = 139.9009591876285;
-  // double origin_lon = 28.897920380148957;
+  double origin_lat = property_origin_lat_->getFloat();
+  double origin_lon = property_origin_lon_->getFloat();
   goal_pose_.setGoalPosition(msg->pose.position.x, msg->pose.position.y, origin_lat, origin_lon);
 
   // Set the vehicle position in the goal pose (in case it was not set yet)
   goal_pose_.setVehiclePosition(latitude_, longitude_);
 
-  property_goal_x_->setFloat(goal_pose_.getGoalLatitude());
-  property_goal_y_->setFloat(goal_pose_.getGoalLongitude());
+  property_goal_lat->setFloat(goal_pose_.getGoalLatitude());
+  property_goal_lon->setFloat(goal_pose_.getGoalLongitude());
   queueRender();
 }
 
@@ -339,10 +350,8 @@ std::pair<double, double> VehicleMapDisplay::localXYZToLatLon(double x, double y
 {
   int zone;
   bool northp;
-  double origin_lat = 35.23808753540768;
-  // double origin_lat = 41.02119576228221;
-  double origin_lon = 139.9009591876285;
-  // double origin_lon = 28.897920380148957;
+  double origin_lat = property_origin_lat_->getFloat();
+  double origin_lon = property_origin_lon_->getFloat();
   double origin_x, origin_y, gamma, k;
 
   // Convert origin to UTM coordinates

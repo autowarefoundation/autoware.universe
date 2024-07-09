@@ -61,7 +61,6 @@ protected Q_SLOTS:
   void updateZoomLevel();
   void updateLatitude();
   void updateLongitude();
-  void updateTopic();
   void updateGoalPose();
   void updateMapPosition();
 
@@ -91,9 +90,10 @@ private:
   rviz_common::properties::ColorProperty * background_color_property_;
   rviz_common::properties::FloatProperty * property_latitude_;
   rviz_common::properties::FloatProperty * property_longitude_;
-  rviz_common::properties::StringProperty * property_topic_;
-  rviz_common::properties::FloatProperty * property_goal_x_;
-  rviz_common::properties::FloatProperty * property_goal_y_;
+  rviz_common::properties::FloatProperty * property_goal_lat;
+  rviz_common::properties::FloatProperty * property_goal_lon;
+  rviz_common::properties::FloatProperty * property_origin_lat_;
+  rviz_common::properties::FloatProperty * property_origin_lon_;
 
   int zoom_;
 
