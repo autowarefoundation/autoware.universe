@@ -8,12 +8,12 @@
   <license>TODO: License declaration</license>
 
   <depend>angles</depend>
+  <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rcpputils</depend>
   <depend>rviz_common</depend>
   <depend>rviz_default_plugins</depend>
   <depend>sensor_msgs</depend>
-  <depend>nav_msgs</depend>
   <depend>tf2_ros</depend>
 
   <build_depend>qtbase5-dev</build_depend>
