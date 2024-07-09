@@ -72,8 +72,9 @@ protected:
     const std::string & parent_frame, const std::string & child_frame, double x, double y, double z,
     double qx, double qy, double qz, double qw)
   {
+    rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
     geometry_msgs::msg::TransformStamped tf_msg;
-    tf_msg.header.stamp = node_->get_clock()->now();
+    tf_msg.header.stamp = timestamp;
     tf_msg.header.frame_id = parent_frame;
     tf_msg.child_frame_id = child_frame;
     tf_msg.transform.translation.x = x;
@@ -235,7 +236,8 @@ protected:
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
 {
-  auto twist_msg = generateTwistMsg(1.0, 0.5, node_->get_clock()->now());
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
+  auto twist_msg = generateTwistMsg(1.0, 0.5, timestamp);
   distortion_corrector_2d_->processTwistMessage(twist_msg);
 
   ASSERT_FALSE(distortion_corrector_2d_->get_twist_queue().empty());
@@ -245,7 +247,8 @@ TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
 
 TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
 {
-  auto imu_msg = generateImuMsg(0.5, 0.3, 0.1, node_->get_clock()->now());
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
+  auto imu_msg = generateImuMsg(0.5, 0.3, 0.1, timestamp);
   distortion_corrector_2d_->processIMUMessage("base_link", imu_msg);
 
   ASSERT_FALSE(distortion_corrector_2d_->get_angular_velocity_queue().empty());
@@ -256,22 +259,23 @@ TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
 
 TEST_F(DistortionCorrectorTest, TestIsInputValid)
 {
+  rclcpp::Time timestamp(10, 100000000, RCL_ROS_TIME);
+
   // input normal pointcloud without twist
-  sensor_msgs::msg::PointCloud2 pointcloud =
-    generatePointCloudMsg(true, false, node_->get_clock()->now());
+  sensor_msgs::msg::PointCloud2 pointcloud = generatePointCloudMsg(true, false, timestamp);
   bool result = distortion_corrector_2d_->isInputValid(pointcloud);
   EXPECT_FALSE(result);
 
   // input normal pointcloud with valid twist
-  auto twist_msg = generateTwistMsg(1.0, 0.5, node_->get_clock()->now());
+  auto twist_msg = generateTwistMsg(1.0, 0.5, timestamp);
   distortion_corrector_2d_->processTwistMessage(twist_msg);
 
-  pointcloud = generatePointCloudMsg(true, false, node_->get_clock()->now());
+  pointcloud = generatePointCloudMsg(true, false, timestamp);
   result = distortion_corrector_2d_->isInputValid(pointcloud);
   EXPECT_TRUE(result);
 
   // input empty pointcloud
-  pointcloud = generatePointCloudMsg(false, false, node_->get_clock()->now());
+  pointcloud = generatePointCloudMsg(false, false, timestamp);
   result = distortion_corrector_2d_->isInputValid(pointcloud);
   EXPECT_FALSE(result);
 }
