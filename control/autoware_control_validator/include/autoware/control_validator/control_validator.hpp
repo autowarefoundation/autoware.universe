@@ -54,7 +54,8 @@ public:
   void onPredictedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   bool checkValidMaxDistanceDeviation(const Trajectory & predicted_trajectory);
-  bool checkValidVelocityDeviation(const Trajectory & reference_trajectory, const Odometry & kinematics);
+  bool checkValidVelocityDeviation(
+    const Trajectory & reference_trajectory, const Odometry & kinematics);
 
 private:
   void setupDiag();
