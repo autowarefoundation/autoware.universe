@@ -151,7 +151,7 @@ protected:
   }
 
   sensor_msgs::msg::PointCloud2 generatePointCloudMsg(
-    bool is_generate_points, bool is_lidar_frame, rclcpp::Time stamp)
+    bool generate_points, bool is_lidar_frame, rclcpp::Time stamp)
   {
     sensor_msgs::msg::PointCloud2 pointcloud_msg;
     pointcloud_msg.header.stamp = stamp;
@@ -160,7 +160,7 @@ protected:
     pointcloud_msg.is_dense = true;
     pointcloud_msg.is_bigendian = false;
 
-    if (is_generate_points) {
+    if (generate_points) {
       std::vector<float> points = {
         10.0f, 0.0f,  0.0f,   // point 1
         0.0f,  10.0f, 0.0f,   // point 2
