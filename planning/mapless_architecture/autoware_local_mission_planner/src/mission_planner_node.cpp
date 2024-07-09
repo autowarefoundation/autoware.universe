@@ -97,6 +97,9 @@ MissionPlannerNode::MissionPlannerNode() : Node("mission_planner_node")
   RCLCPP_INFO(
     this->get_logger(), "Number of attempts for triggering a lane change: %d",
     retrigger_attempts_max_);
+
+  local_map_frame_ = declare_parameter<std::string>("local_map_frame", "map");
+  RCLCPP_INFO(this->get_logger(), "Local map frame identifier: %s", local_map_frame_.c_str());
 }
 
 void MissionPlannerNode::CallbackLocalMapMessages_(
@@ -250,111 +253,37 @@ void MissionPlannerNode::CallbackLocalMapMessages_(
 
 void MissionPlannerNode::CallbackOdometryMessages_(const nav_msgs::msg::Odometry & msg)
 {
-  // NOTE: We assume that the odometry message is the GNSS signal
-
   // Construct raw odometry pose
-  geometry_msgs::msg::PoseStamped odometry_pose_raw, pose_base_link_in_odom_frame,
-    pose_base_link_in_map_frame;
+  geometry_msgs::msg::PoseStamped odometry_pose_raw;
   odometry_pose_raw.header = msg.header;
   odometry_pose_raw.pose = msg.pose.pose;
 
   // If the incoming odometry signal is properly filled, i.e. if the frame ids
-  // are given and report an odometry signal , do nothing, else we assume the
+  // are given and report an odometry signal, do nothing, else we assume the
   // odometry signal stems from the GNSS (and is therefore valid in the odom
   // frame)
-  if (msg.header.frame_id == "map" && msg.child_frame_id == "base_link") {
-    pose_base_link_in_map_frame = odometry_pose_raw;
-  } else {
-    if (!b_global_odometry_deprecation_warning_) {
-      RCLCPP_WARN(
+  if (!(msg.header.frame_id == local_map_frame_ && msg.child_frame_id == "base_link")) {
+    if (!b_input_odom_frame_error_) {
+      RCLCPP_ERROR(
         this->get_logger(),
         "Your odometry signal doesn't match the expectation to be a "
-        "transformation from frame <map> to <base_link>! We assume the "
-        "input "
-        "signal to be a GNSS raw signal being a transform from <map> to "
-        "<odom>. The support for this feature will be deprecated in a "
-        "future "
-        "release, please check you odometry signal or use a driveblocks "
-        "local odometry signal instead! This warning is printed only "
-        "once.");
-      b_global_odometry_deprecation_warning_ = true;
+        "transformation from frame <%s> to <base_link>! The node will continue spinning but the "
+        "odometry signal should be checked! This error is printed only "
+        "once.",
+        local_map_frame_.c_str());
+      b_input_odom_frame_error_ = true;
     }
-    // Prepare map to odom transform
-    // TODO(thomas.herrmann@driveblocks.ai): Can be removed when the state
-    // estimator publishes this information in the correct frames
-    geometry_msgs::msg::TransformStamped trafo_map2odom;
-    trafo_map2odom.header.stamp = msg.header.stamp;
-    trafo_map2odom.header.frame_id = "map";
-    trafo_map2odom.child_frame_id = "odom";
-    trafo_map2odom.transform.translation.x = msg.pose.pose.position.x;
-    trafo_map2odom.transform.translation.y = msg.pose.pose.position.y;
-    trafo_map2odom.transform.translation.z = msg.pose.pose.position.z;
-    trafo_map2odom.transform.rotation.x = msg.pose.pose.orientation.x;
-    trafo_map2odom.transform.rotation.y = msg.pose.pose.orientation.y;
-    trafo_map2odom.transform.rotation.z = msg.pose.pose.orientation.z;
-    trafo_map2odom.transform.rotation.w = msg.pose.pose.orientation.w;
-
-    geometry_msgs::msg::TransformStamped trafo_base_link_in_odom_frame;
-    try {
-      // constant trafo from gnss receiver to base_link
-      trafo_base_link_in_odom_frame =
-        tf_buffer_->lookupTransform("odom", "base_link", tf2::TimePointZero);
-    } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN(this->get_logger(), "Transform not yet available from <odom> to <base_link>");
-    }
-
-    // Extract the trafo from the odom frame to the base_link frame
-    pose_base_link_in_odom_frame.header.frame_id = "odom";
-    pose_base_link_in_odom_frame.pose.position.x =
-      trafo_base_link_in_odom_frame.transform.translation.x;
-    pose_base_link_in_odom_frame.pose.position.y =
-      trafo_base_link_in_odom_frame.transform.translation.y;
-    pose_base_link_in_odom_frame.pose.position.z =
-      trafo_base_link_in_odom_frame.transform.translation.z;
-    pose_base_link_in_odom_frame.pose.orientation.x =
-      trafo_base_link_in_odom_frame.transform.rotation.x;
-    pose_base_link_in_odom_frame.pose.orientation.y =
-      trafo_base_link_in_odom_frame.transform.rotation.y;
-    pose_base_link_in_odom_frame.pose.orientation.z =
-      trafo_base_link_in_odom_frame.transform.rotation.z;
-    pose_base_link_in_odom_frame.pose.orientation.w =
-      trafo_base_link_in_odom_frame.transform.rotation.w;
-
-    // Transform base_link origin from odom frame to map frame
-    tf2::doTransform(pose_base_link_in_odom_frame, pose_base_link_in_map_frame, trafo_map2odom);
   }
 
   // Calculate yaw for received pose
-  double psi_cur_corrected = GetYawFromQuaternion(
-    pose_base_link_in_map_frame.pose.orientation.x, pose_base_link_in_map_frame.pose.orientation.y,
-    pose_base_link_in_map_frame.pose.orientation.z, pose_base_link_in_map_frame.pose.orientation.w);
-
-  RCLCPP_DEBUG(
-    this->get_logger(),
-    "GNSS pose raw: x,y,z | quaternion: %.3f, %.3f, %.3f | %.3f, %.3f, "
-    "%.3f, "
-    "%.3f\t "
-    "GNSS pose in base_link: x,y,z | quaternion: %.3f, %.3f, %.3f | %.3f, "
-    "%.3f, "
-    "%.3f, %.3f",
-    odometry_pose_raw.pose.position.x, odometry_pose_raw.pose.position.y,
-    odometry_pose_raw.pose.position.z, odometry_pose_raw.pose.orientation.x,
-    odometry_pose_raw.pose.orientation.y, odometry_pose_raw.pose.orientation.z,
-    odometry_pose_raw.pose.orientation.w, pose_base_link_in_map_frame.pose.position.x,
-    pose_base_link_in_map_frame.pose.position.y, pose_base_link_in_map_frame.pose.position.z,
-    pose_base_link_in_map_frame.pose.orientation.x, pose_base_link_in_map_frame.pose.orientation.y,
-    pose_base_link_in_map_frame.pose.orientation.z, pose_base_link_in_map_frame.pose.orientation.w);
-
-  RCLCPP_DEBUG(
-    this->get_logger(), "Received pose (x: %.2f, y: %.2f, psi %.2f)",
-    pose_base_link_in_map_frame.pose.position.x, pose_base_link_in_map_frame.pose.position.y,
-    psi_cur_corrected);
+  double psi_cur = GetYawFromQuaternion(
+    odometry_pose_raw.pose.orientation.x, odometry_pose_raw.pose.orientation.y,
+    odometry_pose_raw.pose.orientation.z, odometry_pose_raw.pose.orientation.w);
 
   if (pose_prev_init_) {
     // Calculate and forward relative motion update to driving corridor model
     const Pose2D pose_cur(
-      pose_base_link_in_map_frame.pose.position.x, pose_base_link_in_map_frame.pose.position.y,
-      psi_cur_corrected);
+      odometry_pose_raw.pose.position.x, odometry_pose_raw.pose.position.y, psi_cur);
     const Pose2D d_pose = TransformToNewCosy2D(pose_prev_, pose_cur);
 
     // Transform the target pose into the new cosy which is given in relation
@@ -369,9 +298,6 @@ void MissionPlannerNode::CallbackOdometryMessages_(const nav_msgs::msg::Odometry
     // Re-center updated goal point to lie on centerline (to get rid of issues
     // with a less accurate odometry update which could lead to loosing the
     // goal lane)
-    // TODO(thomas.herrmann@driveblocks.ai): Reduction of calling
-    // frequency of this method (since not needed at a high frequency and
-    // probably computationally expensive)
     const lanelet::BasicPoint2d target_point_2d = RecenterGoalPoint(goal_point_, current_lanelets_);
 
     // Overwrite goal point
@@ -418,9 +344,9 @@ void MissionPlannerNode::CallbackOdometryMessages_(const nav_msgs::msg::Odometry
   }
 
   // Update pose storage for next iteration
-  pose_prev_.set_x(pose_base_link_in_map_frame.pose.position.x);
-  pose_prev_.set_y(pose_base_link_in_map_frame.pose.position.y);
-  pose_prev_.set_psi(psi_cur_corrected);
+  pose_prev_.set_x(odometry_pose_raw.pose.position.x);
+  pose_prev_.set_y(odometry_pose_raw.pose.position.y);
+  pose_prev_.set_psi(psi_cur);
 
   received_motion_update_once_ = true;
 

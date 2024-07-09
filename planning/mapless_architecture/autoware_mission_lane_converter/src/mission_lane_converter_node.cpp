@@ -87,8 +87,8 @@ void MissionLaneConverterNode::TimedStartupTrajectoryCallback()
     autoware_auto_planning_msgs::msg::Trajectory trj_msg =
       autoware_auto_planning_msgs::msg::Trajectory();
 
-    // Frame id must be "map" for Autoware controller
-    trj_msg.header.frame_id = "map";
+    // Frame id
+    trj_msg.header.frame_id = local_map_frame_;
     trj_msg.header.stamp = rclcpp::Node::now();
 
     for (int idx_point = 0; idx_point < 100; idx_point++) {
@@ -219,9 +219,8 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
   // Fill output trajectory header
   trj_msg.header = msg.header;
   path_msg.header = msg.header;
-  // Frame id must be "map" for Autoware controller
-  trj_msg.header.frame_id = "map";
-  path_msg.header.frame_id = "map";
+  trj_msg.header.frame_id = local_map_frame_;
+  path_msg.header.frame_id = local_map_frame_;
 
   switch (msg.target_lane) {
     case 0:
@@ -492,32 +491,32 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
 {
   // Define output message
   T msg_output = msg_input;
-  msg_output.header.frame_id = "map";
+  msg_output.header.frame_id = local_map_frame_;
 
   // Construct raw odometry pose
-  geometry_msgs::msg::PoseStamped odometry_pose_raw, pose_base_link_in_odom_frame,
-    pose_base_link_in_map_frame;
+  geometry_msgs::msg::PoseStamped odometry_pose_raw;
   odometry_pose_raw.header = last_odom_msg_.header;
   odometry_pose_raw.pose = last_odom_msg_.pose.pose;
 
-  // If the incoming odometry signal is properly filled, i.e. if the frame ids
-  // are given and report an odometry signal , do nothing, else we assume the
-  // odometry signal stems from the GNSS (and is therefore valid in the odom
-  // frame)
-  if (last_odom_msg_.header.frame_id == "map" && last_odom_msg_.child_frame_id == "base_link") {
-    pose_base_link_in_map_frame = odometry_pose_raw;
-  } else {
-    if (!b_global_odometry_deprecation_warning_) {
-      RCLCPP_WARN(
-        this->get_logger(),
-        "Your odometry signal doesn't match the expectation to be a "
-        "transformation from frame <map> to <base_link>! Check your odometry frames or provide a "
-        "proper conversion!");
-      b_global_odometry_deprecation_warning_ = true;
-    }
-  }
-
   if (received_motion_update_once_) {
+    // If the incoming odometry signal is properly filled, i.e. if the frame ids
+    // are given and report an odometry signal, do nothing, else we assume the
+    // odometry signal stems from the GNSS (and is therefore valid in the odom
+    // frame)
+    if (!(last_odom_msg_.header.frame_id == local_map_frame_ &&
+          last_odom_msg_.child_frame_id == "base_link")) {
+      if (!b_input_odom_frame_error_) {
+        RCLCPP_ERROR(
+          this->get_logger(),
+          "Your odometry signal doesn't match the expectation to be a "
+          "transformation from frame <%s> to <base_link>! The node will continue spinning but the "
+          "odometry signal should be checked! This error is printed only "
+          "once.",
+          local_map_frame_.c_str());
+        b_input_odom_frame_error_ = true;
+      }
+    }
+
     const double psi_initial = GetYawFromQuaternion(
       initial_odom_msg_.pose.pose.orientation.x, initial_odom_msg_.pose.pose.orientation.y,
       initial_odom_msg_.pose.pose.orientation.z, initial_odom_msg_.pose.pose.orientation.w);

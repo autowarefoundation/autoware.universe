@@ -231,7 +231,7 @@ private:
   // Initialize some variables
   Pose2D pose_prev_;
   bool pose_prev_init_ = false;
-  bool b_global_odometry_deprecation_warning_ = false;
+  bool b_input_odom_frame_error_ = false;
   bool received_motion_update_once_ = false;
   Direction target_lane_ = stay;
   Direction mission_ = stay;
@@ -249,6 +249,7 @@ private:
   float distance_to_centerline_threshold_;
   float projection_distance_on_goallane_;
   int retrigger_attempts_max_;
+  std::string local_map_frame_;
 
   // Unique ID for each marker
   int centerline_marker_id_ = 0;

@@ -178,8 +178,8 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
 
-  // Switch to print a warning about wrongly configured odometry frames
-  bool b_global_odometry_deprecation_warning_ = false;
+  // Switch to print an error about wrongly configured odometry frames
+  bool b_input_odom_frame_error_ = false;
   bool received_motion_update_once_ = false;
 
   // Store initial and last available odom messages
@@ -190,6 +190,7 @@ private:
 
   // ROS parameters
   float target_speed_;
+  std::string local_map_frame_;
 };
 }  // namespace autoware::mapless_architecture
 
