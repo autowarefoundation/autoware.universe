@@ -112,7 +112,11 @@ public:
   void launchScenePlugin(rclcpp::Node & node, const std::string & name);
 
   /**
-   * @brief calculate max iteration numbers
+   * @brief calculate max iteration numbers.
+   * Let N be the number of scene modules. The maximum number of iterations executed in a loop is N,
+   * but after that, if there are any modules that have succeeded or failed, the approve_modules of
+   * all modules are cleared, and the loop is executed for N-1 modules. As this process repeats, it
+   * becomes N + (N-1) + (N-2) + … + 1, therefore the maximum number of iterations is N(N+1)/2.
    * @param number of scene module
    *
    */
