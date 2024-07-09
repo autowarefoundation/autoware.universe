@@ -250,14 +250,14 @@ calcCurvature<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points);
 
 //
-template std::vector<std::pair<double, double>>
-calcCurvatureAndArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
+template std::vector<std::pair<double, std::pair<double, double>>>
+calcCurvatureAndSegmentLength<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & points);
-template std::vector<std::pair<double, double>>
-calcCurvatureAndArcLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
+template std::vector<std::pair<double, std::pair<double, double>>>
+calcCurvatureAndSegmentLength<std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId>>(
   const std::vector<autoware_auto_planning_msgs::msg::PathPointWithLaneId> & points);
-template std::vector<std::pair<double, double>>
-calcCurvatureAndArcLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
+template std::vector<std::pair<double, std::pair<double, double>>>
+calcCurvatureAndSegmentLength<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points);
 
 //
