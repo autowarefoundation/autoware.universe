@@ -33,8 +33,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <vector>
-
 namespace autoware::motion::control::autonomous_emergency_braking::utils
 {
 using autoware::universe_utils::Polygon2d;
@@ -82,8 +80,6 @@ Polygon2d convertBoundingBoxObjectToGeometryPolygon(
  * @param obj the object
  */
 Polygon2d convertObjToPolygon(const PredictedObject & obj);
-
-Pose shiftPose(const Pose & pose, double longitudinal);
 }  // namespace autoware::motion::control::autonomous_emergency_braking::utils
 
 #endif  // AUTOWARE__AUTONOMOUS_EMERGENCY_BRAKING__UTILS_HPP_

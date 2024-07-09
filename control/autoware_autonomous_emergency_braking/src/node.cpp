@@ -923,8 +923,9 @@ void AEB::addCollisionMarker(const ObjectData & data, MarkerArray & debug_marker
   });
 
   if (ego_map_pose.has_value()) {
-    const double base_to_front_offset = vehicle_info_.front_overhang_m + vehicle_info_.wheel_base_m;
-    const auto ego_front_pose = utils::shiftPose(ego_map_pose.value(), base_to_front_offset);
+    const double base_to_front_offset = vehicle_info_.max_longitudinal_offset_m;
+    const auto ego_front_pose = autoware::universe_utils::calcOffsetPose(
+      ego_map_pose.value(), base_to_front_offset, 0.0, 0.0, 0.0);
     const auto virtual_stop_wall = autoware::motion_utils::createStopVirtualWallMarker(
       ego_front_pose, "autonomous_emergency_braking", this->now(), 0);
     autoware::universe_utils::appendMarkerArray(virtual_stop_wall, &debug_markers);
