@@ -30,6 +30,8 @@
 #include <gtest/gtest.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 
+#include <cassert>
+
 class DistortionCorrectorTest : public ::testing::Test
 {
 protected:
@@ -58,12 +60,14 @@ protected:
 
   rclcpp::Time addMilliseconds(rclcpp::Time stamp, int ms)
   {
+    assert(ms < 1000 && "input ms should be less than a second.");
     auto ms_in_ns = rclcpp::Duration(0, ms * 1000000);
     return stamp + ms_in_ns;
   }
 
   rclcpp::Time subtractMilliseconds(rclcpp::Time stamp, int ms)
   {
+    assert(ms < 1000 && "input ms should be less than a second.");
     auto ms_in_ns = rclcpp::Duration(0, ms * 1000000);
     return stamp - ms_in_ns;
   }
