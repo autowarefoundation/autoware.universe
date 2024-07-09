@@ -14,6 +14,9 @@
 
 #include "node.hpp"
 
+#include "autoware/universe_utils/ros/debug_publisher.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
+
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/segmentation/segment_differences.h>
