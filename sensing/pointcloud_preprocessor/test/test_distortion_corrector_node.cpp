@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Note: To regenerate the ground truth (GT) for the expected undistorted point cloud values,
-// set the "debug" value to true to display the point cloud values. Then,
+// set the "debug_" value to true to display the point cloud values. Then,
 // replace the expected values with the newly displayed undistorted point cloud values.
 
 #include "autoware/universe_utils/math/trigonometry.hpp"
@@ -225,11 +225,11 @@ protected:
   std::shared_ptr<pointcloud_preprocessor::DistortionCorrector3D> distortion_corrector_3d_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
-  static constexpr double standard_tolerance = 1e-4;
-  static constexpr double coarse_tolerance = 5e-3;
+  static constexpr double standard_tolerance_ = 1e-4;
+  static constexpr double coarse_tolerance_ = 5e-3;
 
   // for debugging or regenerating the ground truth point cloud
-  bool debug = false;
+  bool debug_ = false;
 };
 
 TEST_F(DistortionCorrectorTest, TestProcessTwistMessage)
@@ -252,7 +252,7 @@ TEST_F(DistortionCorrectorTest, TestProcessIMUMessage)
   ASSERT_FALSE(distortion_corrector_2d_->get_angular_velocity_queue().empty());
   EXPECT_NEAR(
     distortion_corrector_2d_->get_angular_velocity_queue().front().vector.z, 0.0443032,
-    standard_tolerance);
+    standard_tolerance_);
 }
 
 TEST_F(DistortionCorrectorTest, TestIsInputValid)
@@ -326,12 +326,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -392,12 +392,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -443,12 +443,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -495,12 +495,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -541,12 +541,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -598,12 +598,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -655,12 +655,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -718,7 +718,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
     EXPECT_FLOAT_EQ(*test2d_iter_z, expected_points[i][2]);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 
@@ -746,7 +746,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
     EXPECT_FLOAT_EQ(*test2d_iter_y, *test3d_iter_y);
     EXPECT_FLOAT_EQ(*test2d_iter_z, *test3d_iter_z);
   }
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
@@ -816,7 +816,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
     EXPECT_FLOAT_EQ(*test2d_iter_z, expected_points[i][2]);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 
@@ -840,12 +840,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
         << *test2d_iter_z << ")"
         << " vs 3D: (" << *test3d_iter_x << ", " << *test3d_iter_y << ", " << *test3d_iter_z
         << ")\n";
-    EXPECT_NEAR(*test2d_iter_x, *test3d_iter_x, coarse_tolerance);
-    EXPECT_NEAR(*test2d_iter_y, *test3d_iter_y, coarse_tolerance);
-    EXPECT_NEAR(*test2d_iter_z, *test3d_iter_z, coarse_tolerance);
+    EXPECT_NEAR(*test2d_iter_x, *test3d_iter_x, coarse_tolerance_);
+    EXPECT_NEAR(*test2d_iter_y, *test3d_iter_y, coarse_tolerance_);
+    EXPECT_NEAR(*test2d_iter_z, *test3d_iter_z, coarse_tolerance_);
   }
 
-  if (debug) {
+  if (debug_) {
     RCLCPP_INFO(node_->get_logger(), "%s", oss.str().c_str());
   }
 }
