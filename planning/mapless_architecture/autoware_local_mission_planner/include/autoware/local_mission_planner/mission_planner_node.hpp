@@ -248,8 +248,10 @@ private:
   Direction target_lane_ = stay;
   Direction mission_ = stay;
   int retry_attempts_ = 0;
+  int recenter_counter_ = 0;
   bool lane_change_trigger_success_ = true;
   Direction lane_change_direction_ = stay;
+  float deadline_target_lane_ = 1000;
 
   lanelet::BasicPoint2d goal_point_;
   std::vector<int> ego_lane_;
@@ -262,9 +264,10 @@ private:
   float projection_distance_on_goallane_;
   int retrigger_attempts_max_;
   std::string local_map_frame_;
+  int recenter_period_;
 
   // Unique ID for each marker
-  int centerline_marker_id_ = 0;
+  ID centerline_marker_id_;
 };
 }  // namespace autoware::mapless_architecture
 

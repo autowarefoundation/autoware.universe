@@ -229,8 +229,6 @@ std::vector<int> GetRelevantAdjacentLanelets(
     ids_relevant_successors = ids_adjacent_lanelets;
   }
 
-  // FIXME: avoid that list is empty -> has to be -1 if no relevant lanelet
-  // exists, this fixes an issue that originates in the lanelet converter; should be fixed there!
   if (ids_relevant_successors.empty()) {
     ids_relevant_successors.push_back(-1);
   }
@@ -662,6 +660,15 @@ void CalculatePredecessors(std::vector<LaneletConnection> & lanelet_connections)
       lanelet_connection.predecessor_lanelet_ids = {-1};
     }
   }
+}
+
+unsigned int ID::ReturnIDAndIncrement()
+{
+  if (value_ == std::numeric_limits<unsigned int>::max()) {
+    RCLCPP_WARN(rclcpp::get_logger("ID"), "ID overflow");
+    value_ = 0;  // Reset value_ to 0
+  }
+  return value_++;
 }
 
 }  // namespace autoware::mapless_architecture

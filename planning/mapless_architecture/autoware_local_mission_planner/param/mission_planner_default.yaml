@@ -5,3 +5,4 @@
       projection_distance_on_goallane: 20.0 # [m] projection distance of goal point
       retrigger_attempts_max: 10 # number of attempts for triggering a lane change
       local_map_frame: map # Identifier of local map frame. Currently, there is no way to set global ROS params https://github.com/ros2/ros2cli/issues/778 -> This param has to be set in the mission converter also!
+      recenter_period: 10 # recenter goal point after 10 odometry updates

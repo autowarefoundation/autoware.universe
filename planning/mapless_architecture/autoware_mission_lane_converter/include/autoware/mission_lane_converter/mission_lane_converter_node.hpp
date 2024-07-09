@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__MISSION_LANE_CONVERTER__MISSION_LANE_CONVERTER_NODE_HPP_
 #define AUTOWARE__MISSION_LANE_CONVERTER__MISSION_LANE_CONVERTER_NODE_HPP_
 
+#include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_planning_msgs/msg/mission_lanes_stamped.hpp"
@@ -201,6 +202,9 @@ private:
   // ROS parameters
   float target_speed_;
   std::string local_map_frame_;
+
+  // Unique ID for each marker
+  ID marker_id_;
 };
 }  // namespace autoware::mapless_architecture
 

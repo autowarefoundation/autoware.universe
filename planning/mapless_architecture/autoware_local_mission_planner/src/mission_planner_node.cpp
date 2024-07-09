@@ -93,7 +93,7 @@ MissionPlannerNode::MissionPlannerNode(const rclcpp::NodeOptions & options)
   tf_listener_ = std::make_unique<tf2_ros::TransformListener>(*tf_buffer_);
 
   // Set ros parameters (DEFAULT values will be overwritten by external
-  // parameter file if exists)
+  // parameter file)
   distance_to_centerline_threshold_ =
     declare_parameter<float>("distance_to_centerline_threshold", 0.2);
   RCLCPP_INFO(
@@ -113,6 +113,13 @@ MissionPlannerNode::MissionPlannerNode(const rclcpp::NodeOptions & options)
 
   local_map_frame_ = declare_parameter<std::string>("local_map_frame", "map");
   RCLCPP_INFO(this->get_logger(), "Local map frame identifier: %s", local_map_frame_.c_str());
+
+  recenter_period_ = declare_parameter<int>("recenter_period", 10);
+  RCLCPP_INFO(
+    this->get_logger(),
+    "After this number of odometry updates the goal point (used for lane change) is recentered (on "
+    "the centerline): %d",
+    recenter_period_);
 }
 
 void MissionPlannerNode::CallbackLocalMapMessages_(
@@ -233,9 +240,7 @@ void MissionPlannerNode::CallbackLocalMapMessages_(
       break;
   }
 
-  lanes.deadline_target_lane =
-    std::numeric_limits<double>::infinity();  // TODO(simon.eisenmann@driveblocks.ai):
-                                              // Change this value
+  lanes.deadline_target_lane = deadline_target_lane_;
 
   // Create driving corridors and add them to the MissionLanesStamped message
   lanes.ego_lane = CreateDrivingCorridor(ego_lane_, converted_lanelets);
@@ -308,14 +313,22 @@ void MissionPlannerNode::CallbackOdometryMessages_(const nav_msgs::msg::Odometry
     goal_point_.x() = target_pose.get_x();
     goal_point_.y() = target_pose.get_y();
 
-    // Re-center updated goal point to lie on centerline (to get rid of issues
+    // Recenter updated goal point to lie on centerline (to get rid of issues
     // with a less accurate odometry update which could lead to loosing the
-    // goal lane)
-    const lanelet::BasicPoint2d target_point_2d = RecenterGoalPoint(goal_point_, current_lanelets_);
+    // goal lane), recenter only after a certain number of steps (recenter_period_) to reduce the
+    // calling frequency
+    if (recenter_counter_ >= recenter_period_) {
+      const lanelet::BasicPoint2d target_point_2d =
+        RecenterGoalPoint(goal_point_, current_lanelets_);
 
-    // Overwrite goal point
-    goal_point_.x() = target_point_2d.x();
-    goal_point_.y() = target_point_2d.y();
+      // Overwrite goal point
+      goal_point_.x() = target_point_2d.x();
+      goal_point_.y() = target_point_2d.y();
+
+      recenter_counter_ = 0;
+    } else {
+      recenter_counter_++;
+    }
 
     // --- Start of debug visualization
     // Create marker and publish it
@@ -404,6 +417,8 @@ void MissionPlannerNode::CallbackMissionMessages_(const autoware_planning_msgs::
       // Nothing happens if mission does not match!
       RCLCPP_INFO(this->get_logger(), "Mission does not match.");
   }
+
+  deadline_target_lane_ = msg.deadline;
 
   return;
 }
@@ -548,8 +563,7 @@ void MissionPlannerNode::CheckIfGoalPointShouldBeReset_(
 {
   // Check if goal point should be reset: If the x value of the goal point is
   // negative, then the point is behind the vehicle and must be therefore reset.
-  if (goal_point_.x() < 0 && mission_ != stay) {  // TODO(simon.eisenmann@driveblocks.ai): Maybe
-                                                  // remove condition mission_ != stay
+  if (goal_point_.x() < 0 && mission_ != stay) {
     // Find the index of the lanelet containing the goal point
     int goal_index =
       FindOccupiedLaneletID(converted_lanelets, goal_point_);  // Returns -1 if no match
@@ -763,12 +777,7 @@ void MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor(
   centerline_marker.ns = "centerline";
 
   // Unique ID
-  if (centerline_marker_id_ == std::numeric_limits<int>::max()) {
-    // Handle overflow
-    centerline_marker_id_ = 0;
-  } else {
-    centerline_marker.id = centerline_marker_id_++;
-  }
+  centerline_marker.id = centerline_marker_id_.ReturnIDAndIncrement();
 
   centerline_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   centerline_marker.action = visualization_msgs::msg::Marker::ADD;

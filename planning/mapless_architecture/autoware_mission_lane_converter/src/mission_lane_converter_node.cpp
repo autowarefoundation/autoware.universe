@@ -161,7 +161,6 @@ void MissionLaneConverterNode::MissionLanesCallback_(
   path_publisher_->publish(path_msg);
   path_publisher_global_->publish(path_msg_global);
 
-  // TODO(thomas.herrmann@driveblocks.ai): outsource this to a separate method
   // Clear all markers in scene
   visualization_msgs::msg::Marker msg_marker;
   msg_marker.header = msg_mission.header;
@@ -239,8 +238,12 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
         trj_msg, path_msg, trj_vis, path_center_vis, msg.ego_lane.centerline);
 
       // Fill path bounds left and right
-      CreatePathBound_(path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left, 1);
-      CreatePathBound_(path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right, 2);
+      CreatePathBound_(
+        path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left,
+        marker_id_.ReturnIDAndIncrement());
+      CreatePathBound_(
+        path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right,
+        marker_id_.ReturnIDAndIncrement());
       break;
     case -1:
       // Lane change to the left
@@ -249,8 +252,11 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
 
       // Fill path bounds left and right
       CreatePathBound_(
-        path_msg.left_bound, path_left_vis, msg.drivable_lanes_left[0].bound_left, 1);
-      CreatePathBound_(path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right, 2);
+        path_msg.left_bound, path_left_vis, msg.drivable_lanes_left[0].bound_left,
+        marker_id_.ReturnIDAndIncrement());
+      CreatePathBound_(
+        path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right,
+        marker_id_.ReturnIDAndIncrement());
       break;
     case 1:
       // Lane change to the right
@@ -258,9 +264,12 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
         trj_msg, path_msg, trj_vis, path_center_vis, msg.drivable_lanes_right[0].centerline);
 
       // Fill path bounds left and right
-      CreatePathBound_(path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left, 1);
       CreatePathBound_(
-        path_msg.right_bound, path_right_vis, msg.drivable_lanes_right[0].bound_right, 2);
+        path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left,
+        marker_id_.ReturnIDAndIncrement());
+      CreatePathBound_(
+        path_msg.right_bound, path_right_vis, msg.drivable_lanes_right[0].bound_right,
+        marker_id_.ReturnIDAndIncrement());
       break;
     case -2:
       // Take exit left
@@ -269,8 +278,11 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
 
       // Fill path bounds left and right
       CreatePathBound_(
-        path_msg.left_bound, path_left_vis, msg.drivable_lanes_left.back().bound_left, 1);
-      CreatePathBound_(path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right, 2);
+        path_msg.left_bound, path_left_vis, msg.drivable_lanes_left.back().bound_left,
+        marker_id_.ReturnIDAndIncrement());
+      CreatePathBound_(
+        path_msg.right_bound, path_right_vis, msg.ego_lane.bound_right,
+        marker_id_.ReturnIDAndIncrement());
       break;
     case 2:
       // Take exit right
@@ -278,9 +290,12 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
         trj_msg, path_msg, trj_vis, path_center_vis, msg.drivable_lanes_right.back().centerline);
 
       // Fill path bounds left and right
-      CreatePathBound_(path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left, 1);
       CreatePathBound_(
-        path_msg.right_bound, path_right_vis, msg.drivable_lanes_right.back().bound_right, 2);
+        path_msg.left_bound, path_left_vis, msg.ego_lane.bound_left,
+        marker_id_.ReturnIDAndIncrement());
+      CreatePathBound_(
+        path_msg.right_bound, path_right_vis, msg.drivable_lanes_right.back().bound_right,
+        marker_id_.ReturnIDAndIncrement());
       break;
 
     default:
@@ -374,7 +389,6 @@ void MissionLaneConverterNode::CreatePathBound_(
     }
 
     // Add last added point to a marker message for debugging
-    // FIXME: probably no unique ids for multiple calls?
     AddPointVisualizationMarker_(path_vis, bound_path.back().x, bound_path.back().y, id_marker);
   }
 
@@ -456,8 +470,6 @@ void MissionLaneConverterNode::AddHeadingToTrajectory_(
   return;
 }
 
-// TODO(thomas.herrmann@driveblocks.ai): store the latest odometry message here and then re-use in
-// the output conversion
 void MissionLaneConverterNode::CallbackOdometryMessages_(const nav_msgs::msg::Odometry & msg)
 {
   // Store current odometry information

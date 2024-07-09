@@ -83,8 +83,8 @@ void HMINode::PublishMission_(std::string mission)
     missionMessage.mission_type = autoware_planning_msgs::msg::Mission::TAKE_NEXT_EXIT_RIGHT;
   }
 
-  // TODO(simon.eisenmann@driveblocks.ai): Change deadline parameter
-  missionMessage.deadline = 1000;
+  missionMessage.deadline = 1000;  // This parameter can be changed if needed (it will be set by the
+                                   // software in the future).
 
   mission_publisher_->publish(missionMessage);
 }
