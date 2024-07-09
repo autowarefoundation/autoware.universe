@@ -48,8 +48,8 @@ namespace pointcloud_preprocessor
 class DistortionCorrectorBase
 {
 public:
-  virtual bool get_pointcloud_transform_exists() = 0;
-  virtual bool get_pointcloud_transform_needed() = 0;
+  virtual bool pointcloud_transform_exists() = 0;
+  virtual bool pointcloud_transform_needed() = 0;
   virtual std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue() = 0;
   virtual std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue() = 0;
 
@@ -101,8 +101,8 @@ public:
   : node_(node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
   {
   }
-  bool get_pointcloud_transform_exists();
-  bool get_pointcloud_transform_needed();
+  bool pointcloud_transform_exists();
+  bool pointcloud_transform_needed();
   std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
   std::deque<geometry_msgs::msg::Vector3Stamped> get_angular_velocity_queue();
   void processTwistMessage(

@@ -22,13 +22,13 @@ namespace pointcloud_preprocessor
 {
 
 template <class T>
-bool DistortionCorrector<T>::get_pointcloud_transform_exists()
+bool DistortionCorrector<T>::pointcloud_transform_exists()
 {
   return pointcloud_transform_exists_;
 }
 
 template <class T>
-bool DistortionCorrector<T>::get_pointcloud_transform_needed()
+bool DistortionCorrector<T>::pointcloud_transform_needed()
 {
   return pointcloud_transform_needed_;
 }

@@ -283,22 +283,22 @@ TEST_F(DistortionCorrectorTest, TestIsInputValid)
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithBaseLink)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "base_link");
-  EXPECT_TRUE(distortion_corrector_2d_->get_pointcloud_transform_exists());
-  EXPECT_FALSE(distortion_corrector_2d_->get_pointcloud_transform_needed());
+  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_exists());
+  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed());
 }
 
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithLidarFrame)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "lidar_top");
-  EXPECT_TRUE(distortion_corrector_2d_->get_pointcloud_transform_exists());
-  EXPECT_TRUE(distortion_corrector_2d_->get_pointcloud_transform_needed());
+  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_exists());
+  EXPECT_TRUE(distortion_corrector_2d_->pointcloud_transform_needed());
 }
 
 TEST_F(DistortionCorrectorTest, TestSetPointCloudTransformWithMissingFrame)
 {
   distortion_corrector_2d_->setPointCloudTransform("base_link", "missing_lidar_frame");
-  EXPECT_FALSE(distortion_corrector_2d_->get_pointcloud_transform_exists());
-  EXPECT_FALSE(distortion_corrector_2d_->get_pointcloud_transform_needed());
+  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_exists());
+  EXPECT_FALSE(distortion_corrector_2d_->pointcloud_transform_needed());
 }
 
 TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
