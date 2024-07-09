@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_
-#define COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_
+#ifndef VOXEL_GRID_MAP_LOADER__VOXEL_GRID_MAP_LOADER_HPP_
+#define VOXEL_GRID_MAP_LOADER__VOXEL_GRID_MAP_LOADER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -321,6 +321,6 @@ public:
   }
 };
 
-}
+}  // namespace autoware::compare_map_segmentation
 
-#endif  // COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_
+#endif  // VOXEL_GRID_MAP_LOADER__VOXEL_GRID_MAP_LOADER_HPP_

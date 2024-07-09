@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPARE_MAP_SEGMENTATION__DISTANCE_BASED_COMPARE_MAP_FILTER_NODELET_HPP_
-#define COMPARE_MAP_SEGMENTATION__DISTANCE_BASED_COMPARE_MAP_FILTER_NODELET_HPP_
+#ifndef DISTANCE_BASED_COMPARE_MAP_FILTER__NODE_HPP_
+#define DISTANCE_BASED_COMPARE_MAP_FILTER__NODE_HPP_
 
+#include "../voxel_grid_map_loader/voxel_grid_map_loader.hpp"
 #include "pointcloud_preprocessor/filter.hpp"
-#include "voxel_grid_map_loader.hpp"
 
 #include <pcl/common/point_tests.h>  // for pcl::isFinite
 #include <pcl/filters/voxel_grid.h>
@@ -114,8 +114,8 @@ public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
   explicit DistanceBasedCompareMapFilterComponent(const rclcpp::NodeOptions & options);
 };
-}  // namespace compare_map_segmentation
+}  // namespace autoware::compare_map_segmentation
 
 // clang-format off
-#endif  // COMPARE_MAP_SEGMENTATION__DISTANCE_BASED_COMPARE_MAP_FILTER_NODELET_HPP_  // NOLINT
+#endif  // DISTANCE_BASED_COMPARE_MAP_FILTER__NODE_HPP_  // NOLINT
 // clang-format on

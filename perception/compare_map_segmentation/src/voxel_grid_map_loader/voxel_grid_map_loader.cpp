@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "compare_map_segmentation/voxel_grid_map_loader.hpp"
+#include "voxel_grid_map_loader.hpp"
 
 namespace autoware::compare_map_segmentation
 {
@@ -465,4 +465,4 @@ void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Poi
   }
 }
 
-}
+}  // namespace autoware::compare_map_segmentation

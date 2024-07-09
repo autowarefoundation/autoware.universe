@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "compare_map_segmentation/voxel_distance_based_compare_map_filter_nodelet.hpp"
+#include "node.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
@@ -174,7 +174,7 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
       "debug/processing_time_ms", processing_time_ms);
   }
 }
-}  // namespace compare_map_segmentation
+}  // namespace autoware::compare_map_segmentation
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
