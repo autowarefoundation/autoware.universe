@@ -14,6 +14,7 @@ class GoalPose
 public:
   GoalPose();
   void setGoalPosition(double local_x, double local_y, double origin_lat, double origin_lon);
+  void setVehiclePosition(double lat, double lon);
   void draw(QPainter & painter, const QRectF & backgroundRect, int zoom);
   // Getter methods for the goal latitude and longitude
   double getGoalLatitude() const;
@@ -22,6 +23,8 @@ public:
 private:
   double goal_lat_;
   double goal_lon_;
+  double vehicle_lat_;
+  double vehicle_lon_;
   QImage goal_image_;
 
   std::pair<double, double> localToGeographic(
