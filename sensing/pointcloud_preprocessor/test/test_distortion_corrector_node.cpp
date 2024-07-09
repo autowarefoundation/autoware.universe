@@ -329,11 +329,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
   sensor_msgs::PointCloud2ConstIterator<float> iter_y(pointcloud, "y");
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
-  std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f}, {0.0f, 10.0f, 0.0f},   {0.0f, 0.0f, 10.0f}, {20.0f, 0.0f, 0.0f},
-    {0.0f, 20.0f, 0.0f}, {0.0f, 0.0f, 20.0f},   {30.0f, 0.0f, 0.0f}, {0.0f, 30.0f, 0.0f},
-    {0.0f, 0.0f, 30.0f}, {10.0f, 10.0f, 10.0f},
-  };
+  std::array<Eigen::Vector3f, number_of_points_> expected_pointcloud = {
+    {Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.0f, 10.0f, 0.0f),
+     Eigen::Vector3f(0.0f, 0.0f, 10.0f), Eigen::Vector3f(20.0f, 0.0f, 0.0f),
+     Eigen::Vector3f(0.0f, 20.0f, 0.0f), Eigen::Vector3f(0.0f, 0.0f, 20.0f),
+     Eigen::Vector3f(30.0f, 0.0f, 0.0f), Eigen::Vector3f(0.0f, 30.0f, 0.0f),
+     Eigen::Vector3f(0.0f, 0.0f, 30.0f), Eigen::Vector3f(10.0f, 10.0f, 10.0f)}};
 
   size_t i = 0;
   std::ostringstream oss;
@@ -341,9 +342,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithEmptyTwist)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i].x(), standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i].y(), standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i].z(), standard_tolerance_);
   }
 
   if (debug_) {
@@ -393,12 +394,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f},         {0.117124f, 10.0f, 0.0f},    {0.26f, 0.000135182f, 10.0f},
-    {20.4f, 0.0213818f, 0.0f},   {0.50932f, 20.0005f, 0.0f},  {0.699999f, 0.000819721f, 20.0f},
-    {30.8599f, 0.076f, 0.0f},    {0.947959f, 30.0016f, 0.0f}, {1.22f, 0.00244382f, 30.0f},
-    {11.3568f, 10.0463f, 10.0f},
-  };
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.117124f, 10.0f, 0.0f),
+     Eigen::Vector3f(0.26f, 0.000135182f, 10.0f), Eigen::Vector3f(20.4f, 0.0213818f, 0.0f),
+     Eigen::Vector3f(0.50932f, 20.0005f, 0.0f), Eigen::Vector3f(0.699999f, 0.000819721f, 20.0f),
+     Eigen::Vector3f(30.8599f, 0.076f, 0.0f), Eigen::Vector3f(0.947959f, 30.0016f, 0.0f),
+     Eigen::Vector3f(1.22f, 0.00244382f, 30.0f), Eigen::Vector3f(11.3568f, 10.0463f, 10.0f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -407,9 +408,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithoutImuInBaseLink)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i].x(), standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i].y(), standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i].z(), standard_tolerance_);
   }
 
   if (debug_) {
@@ -444,12 +445,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f},         {0.122876f, 9.99996f, 0.0f}, {0.26f, -0.000115049f, 10.0f},
-    {20.4f, -0.0174931f, 0.0f},  {0.56301f, 19.9996f, 0.0f},  {0.7f, -0.000627014f, 20.0f},
-    {30.86f, -0.052675f, 0.0f},  {1.1004f, 29.9987f, 0.0f},   {1.22f, -0.00166245f, 30.0f},
-    {11.4249f, 9.97293f, 10.0f},
-  };
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.122876f, 9.99996f, 0.0f),
+     Eigen::Vector3f(0.26f, -0.000115049f, 10.0f), Eigen::Vector3f(20.4f, -0.0174931f, 0.0f),
+     Eigen::Vector3f(0.56301f, 19.9996f, 0.0f), Eigen::Vector3f(0.7f, -0.000627014f, 20.0f),
+     Eigen::Vector3f(30.86f, -0.052675f, 0.0f), Eigen::Vector3f(1.1004f, 29.9987f, 0.0f),
+     Eigen::Vector3f(1.22f, -0.00166245f, 30.0f), Eigen::Vector3f(11.4249f, 9.97293f, 10.0f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -458,9 +459,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInBaseLink)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i].x(), standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i].y(), standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i].z(), standard_tolerance_);
   }
 
   if (debug_) {
@@ -495,13 +496,17 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, -1.77636e-15f, -4.44089e-16f}, {0.049989f, 10.0608f, 0.0924992f},
-    {0.106107f, 0.130237f, 10.1986f},      {20.1709f, 0.210011f, 0.32034f},
-    {0.220674f, 20.2734f, 0.417974f},      {0.274146f, 0.347043f, 20.5341f},
-    {30.3673f, 0.457564f, 0.700818f},      {0.418014f, 30.5259f, 0.807963f},
-    {0.464088f, 0.600081f, 30.9292f},      {10.5657f, 10.7121f, 11.094f},
-  };
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(10.0f, -1.77636e-15f, -4.44089e-16f),
+     Eigen::Vector3f(0.049989f, 10.0608f, 0.0924992f),
+     Eigen::Vector3f(0.106107f, 0.130237f, 10.1986f),
+     Eigen::Vector3f(20.1709f, 0.210011f, 0.32034f),
+     Eigen::Vector3f(0.220674f, 20.2734f, 0.417974f),
+     Eigen::Vector3f(0.274146f, 0.347043f, 20.5341f),
+     Eigen::Vector3f(30.3673f, 0.457564f, 0.700818f),
+     Eigen::Vector3f(0.418014f, 30.5259f, 0.807963f),
+     Eigen::Vector3f(0.464088f, 0.600081f, 30.9292f),
+     Eigen::Vector3f(10.5657f, 10.7121f, 11.094f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -510,9 +515,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud2dWithImuInLidarFrame)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i].x(), standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i].y(), standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i].z(), standard_tolerance_);
   }
 
   if (debug_) {
@@ -542,12 +547,12 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f},          {0.117f, 10.0f, 0.0f},       {0.26f, 9.27035e-05f, 10.0f},
-    {20.4f, 0.0222176f, 0.0f},    {0.51f, 20.0004f, 0.0f},     {0.7f, 0.000706573f, 20.0f},
-    {30.8599f, 0.0760946f, 0.0f}, {0.946998f, 30.0015f, 0.0f}, {1.22f, 0.00234201f, 30.0f},
-    {11.3569f, 10.046f, 10.0f},
-  };
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.117f, 10.0f, 0.0f),
+     Eigen::Vector3f(0.26f, 9.27035e-05f, 10.0f), Eigen::Vector3f(20.4f, 0.0222176f, 0.0f),
+     Eigen::Vector3f(0.51f, 20.0004f, 0.0f), Eigen::Vector3f(0.7f, 0.000706573f, 20.0f),
+     Eigen::Vector3f(30.8599f, 0.0760946f, 0.0f), Eigen::Vector3f(0.946998f, 30.0015f, 0.0f),
+     Eigen::Vector3f(1.22f, 0.00234201f, 30.0f), Eigen::Vector3f(11.3569f, 10.046f, 10.0f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -556,9 +561,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithoutImuInBaseLink)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i].x(), standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i].y(), standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i].z(), standard_tolerance_);
   }
 
   if (debug_) {
@@ -593,18 +598,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f},
-    {0.123015f, 9.99998f, 0.00430552f},
-    {0.266103f, -0.00895269f, 9.99992f},
-    {20.4f, -0.0176539f, -0.0193392f},
-    {0.563265f, 19.9997f, 0.035628f},
-    {0.734597f, -0.046068f, 19.9993f},
-    {30.8599f, -0.0517931f, -0.0658165f},
-    {1.0995f, 29.9989f, 0.0956997f},
-    {1.31283f, -0.113544f, 29.9977f},
-    {11.461f, 9.93096f, 10.0035f},
-  };
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.123015f, 9.99998f, 0.00430552f),
+     Eigen::Vector3f(0.266103f, -0.00895269f, 9.99992f),
+     Eigen::Vector3f(20.4f, -0.0176539f, -0.0193392f),
+     Eigen::Vector3f(0.563265f, 19.9997f, 0.035628f),
+     Eigen::Vector3f(0.734597f, -0.046068f, 19.9993f),
+     Eigen::Vector3f(30.8599f, -0.0517931f, -0.0658165f),
+     Eigen::Vector3f(1.0995f, 29.9989f, 0.0956997f),
+     Eigen::Vector3f(1.31283f, -0.113544f, 29.9977f),
+     Eigen::Vector3f(11.461f, 9.93096f, 10.0035f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -613,9 +616,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInBaseLink)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i].x(), standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i].y(), standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i].z(), standard_tolerance_);
   }
 
   if (debug_) {
@@ -650,18 +653,16 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
   sensor_msgs::PointCloud2ConstIterator<float> iter_z(pointcloud, "z");
 
   // Expected undistorted point cloud values
-  std::vector<std::array<float, 3>> expected_pointcloud = {
-    {10.0f, 0.0f, 0.0f},
-    {0.046484f, 10.0622f, 0.098484f},
-    {0.107595f, 0.123767f, 10.2026f},
-    {20.1667f, 0.22465f, 0.313351f},
-    {0.201149f, 20.2784f, 0.464665f},
-    {0.290531f, 0.303489f, 20.5452f},
-    {30.3598f, 0.494116f, 0.672914f},
-    {0.375848f, 30.5336f, 0.933633f},
-    {0.510001f, 0.479651f, 30.9493f},
-    {10.5629f, 10.6855f, 11.1461f},
-  };
+  std::array<Eigen::Vector3f, 10> expected_pointcloud = {
+    {Eigen::Vector3f(10.0f, 0.0f, 0.0f), Eigen::Vector3f(0.046484f, 10.0622f, 0.098484f),
+     Eigen::Vector3f(0.107595f, 0.123767f, 10.2026f),
+     Eigen::Vector3f(20.1667f, 0.22465f, 0.313351f),
+     Eigen::Vector3f(0.201149f, 20.2784f, 0.464665f),
+     Eigen::Vector3f(0.290531f, 0.303489f, 20.5452f),
+     Eigen::Vector3f(30.3598f, 0.494116f, 0.672914f),
+     Eigen::Vector3f(0.375848f, 30.5336f, 0.933633f),
+     Eigen::Vector3f(0.510001f, 0.479651f, 30.9493f),
+     Eigen::Vector3f(10.5629f, 10.6855f, 11.1461f)}};
 
   // Verify each point in the undistorted point cloud
   size_t i = 0;
@@ -670,9 +671,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloud3dWithImuInLidarFrame)
 
   for (; iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z, ++i) {
     oss << "Point " << i << ": (" << *iter_x << ", " << *iter_y << ", " << *iter_z << ")\n";
-    EXPECT_NEAR(*iter_x, expected_pointcloud[i][0], standard_tolerance_);
-    EXPECT_NEAR(*iter_y, expected_pointcloud[i][1], standard_tolerance_);
-    EXPECT_NEAR(*iter_z, expected_pointcloud[i][2], standard_tolerance_);
+    EXPECT_NEAR(*iter_x, expected_pointcloud[i].x(), standard_tolerance_);
+    EXPECT_NEAR(*iter_y, expected_pointcloud[i].y(), standard_tolerance_);
+    EXPECT_NEAR(*iter_z, expected_pointcloud[i].z(), standard_tolerance_);
   }
 
   if (debug_) {
@@ -700,20 +701,21 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
   distortion_corrector_3d_->undistortPointCloud(false, test3d_pointcloud);
 
   // Generate expected point cloud for testing
-  sensor_msgs::msg::PointCloud2 expected_pointcloud = generatePointCloudMsg(true, false, timestamp);
+  sensor_msgs::msg::PointCloud2 expected_pointcloud_msg =
+    generatePointCloudMsg(true, false, timestamp);
 
   // Calculate expected point cloud values based on constant linear motion
   double velocity = 1.0;  // 1 m/s linear velocity
-  sensor_msgs::PointCloud2Iterator<float> iter_x(expected_pointcloud, "x");
-  sensor_msgs::PointCloud2Iterator<float> iter_y(expected_pointcloud, "y");
-  sensor_msgs::PointCloud2Iterator<float> iter_z(expected_pointcloud, "z");
-  sensor_msgs::PointCloud2Iterator<double> iter_t(expected_pointcloud, "time_stamp");
+  sensor_msgs::PointCloud2Iterator<float> iter_x(expected_pointcloud_msg, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y(expected_pointcloud_msg, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z(expected_pointcloud_msg, "z");
+  sensor_msgs::PointCloud2Iterator<double> iter_t(expected_pointcloud_msg, "time_stamp");
 
-  std::vector<std::array<float, 3>> expected_points;
+  std::vector<Eigen::Vector3f> expected_points;
   for (; iter_t != iter_t.end(); ++iter_t, ++iter_x, ++iter_y, ++iter_z) {
     double time_offset = *iter_t - timestamp.seconds();
-    expected_points.push_back(
-      {*iter_x + static_cast<float>(velocity * time_offset), *iter_y, *iter_z});
+    expected_points.emplace_back(
+      *iter_x + static_cast<float>(velocity * time_offset), *iter_y, *iter_z);
   }
 
   // Verify each point in the undistorted point cloud
@@ -728,9 +730,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureLinearMotion)
        ++test2d_iter_x, ++test2d_iter_y, ++test2d_iter_z, ++i) {
     oss << "Point " << i << ": (" << *test2d_iter_x << ", " << *test2d_iter_y << ", "
         << *test2d_iter_z << ")\n";
-    EXPECT_FLOAT_EQ(*test2d_iter_x, expected_points[i][0]);
-    EXPECT_FLOAT_EQ(*test2d_iter_y, expected_points[i][1]);
-    EXPECT_FLOAT_EQ(*test2d_iter_z, expected_points[i][2]);
+    EXPECT_FLOAT_EQ(*test2d_iter_x, expected_points[i].x());
+    EXPECT_FLOAT_EQ(*test2d_iter_y, expected_points[i].y());
+    EXPECT_FLOAT_EQ(*test2d_iter_z, expected_points[i].z());
   }
 
   if (debug_) {
@@ -786,16 +788,17 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
   distortion_corrector_3d_->undistortPointCloud(false, test3d_pointcloud);
 
   // Generate expected point cloud for testing
-  sensor_msgs::msg::PointCloud2 expected_pointcloud = generatePointCloudMsg(true, false, timestamp);
+  sensor_msgs::msg::PointCloud2 expected_pointcloud_msg =
+    generatePointCloudMsg(true, false, timestamp);
 
   // Calculate expected point cloud values based on constant rotational motion
   double angular_velocity = 0.1;  // 0.1 rad/s rotational velocity
-  sensor_msgs::PointCloud2Iterator<float> iter_x(expected_pointcloud, "x");
-  sensor_msgs::PointCloud2Iterator<float> iter_y(expected_pointcloud, "y");
-  sensor_msgs::PointCloud2Iterator<float> iter_z(expected_pointcloud, "z");
-  sensor_msgs::PointCloud2Iterator<double> iter_t(expected_pointcloud, "time_stamp");
+  sensor_msgs::PointCloud2Iterator<float> iter_x(expected_pointcloud_msg, "x");
+  sensor_msgs::PointCloud2Iterator<float> iter_y(expected_pointcloud_msg, "y");
+  sensor_msgs::PointCloud2Iterator<float> iter_z(expected_pointcloud_msg, "z");
+  sensor_msgs::PointCloud2Iterator<double> iter_t(expected_pointcloud_msg, "time_stamp");
 
-  std::vector<std::array<float, 3>> expected_points;
+  std::vector<Eigen::Vector3f> expected_pointcloud;
   for (; iter_t != iter_t.end(); ++iter_t, ++iter_x, ++iter_y, ++iter_z) {
     double time_offset = *iter_t - timestamp.seconds();
     float angle = angular_velocity * time_offset;
@@ -808,9 +811,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
 
     tf2::Vector3 point(*iter_x, *iter_y, *iter_z);
     tf2::Vector3 rotated_point = tf2::quatRotate(quaternion, point);
-    expected_points.push_back(
-      {static_cast<float>(rotated_point.x()), static_cast<float>(rotated_point.y()),
-       static_cast<float>(rotated_point.z())});
+    expected_pointcloud.emplace_back(
+      static_cast<float>(rotated_point.x()), static_cast<float>(rotated_point.y()),
+      static_cast<float>(rotated_point.z()));
   }
 
   // Verify each point in the undistorted 2D point cloud
@@ -826,9 +829,9 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointCloudWithPureRotationalMotion)
        ++test2d_iter_x, ++test2d_iter_y, ++test2d_iter_z, ++i) {
     oss << "Point " << i << ": (" << *test2d_iter_x << ", " << *test2d_iter_y << ", "
         << *test2d_iter_z << ")\n";
-    EXPECT_FLOAT_EQ(*test2d_iter_x, expected_points[i][0]);
-    EXPECT_FLOAT_EQ(*test2d_iter_y, expected_points[i][1]);
-    EXPECT_FLOAT_EQ(*test2d_iter_z, expected_points[i][2]);
+    EXPECT_FLOAT_EQ(*test2d_iter_x, expected_pointcloud[i].x());
+    EXPECT_FLOAT_EQ(*test2d_iter_y, expected_pointcloud[i].y());
+    EXPECT_FLOAT_EQ(*test2d_iter_z, expected_pointcloud[i].z());
   }
 
   if (debug_) {
