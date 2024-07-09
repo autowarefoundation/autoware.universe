@@ -67,16 +67,18 @@ protected:
 
   void TearDown() override {}
 
+  void checkInput(int ms) { ASSERT_LT(ms, 1000) << "ms should be less than a second."; }
+
   rclcpp::Time addMilliseconds(rclcpp::Time stamp, int ms)
   {
-    assert(ms < 1000 && "input ms should be less than a second.");
+    checkInput(ms);
     auto ms_in_ns = rclcpp::Duration(0, ms * 1000000);
     return stamp + ms_in_ns;
   }
 
   rclcpp::Time subtractMilliseconds(rclcpp::Time stamp, int ms)
   {
-    assert(ms < 1000 && "input ms should be less than a second.");
+    checkInput(ms);
     auto ms_in_ns = rclcpp::Duration(0, ms * 1000000);
     return stamp - ms_in_ns;
   }
@@ -220,6 +222,7 @@ protected:
       pointcloud_msg.width = 0;
       pointcloud_msg.row_step = 0;
     }
+
     return pointcloud_msg;
   }
 
