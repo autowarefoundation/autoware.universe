@@ -108,9 +108,8 @@ void AvoidanceByLaneChange::updateSpecialData()
                    : Direction::RIGHT;
   }
 
-  utils::avoidance::updateRegisteredObject(registered_objects_, avoidance_data_.target_objects, p);
-  utils::avoidance::compensateDetectionLost(
-    registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
+  utils::avoidance::compensateLostTargetObjects(
+    registered_objects_, avoidance_data_, clock_.now(), planner_data_, p);
 
   std::sort(
     avoidance_data_.target_objects.begin(), avoidance_data_.target_objects.end(),
