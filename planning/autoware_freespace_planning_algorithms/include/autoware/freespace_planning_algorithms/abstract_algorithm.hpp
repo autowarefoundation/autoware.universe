@@ -24,6 +24,7 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 namespace autoware::freespace_planning_algorithms
@@ -63,6 +64,7 @@ struct VehicleShape
   double base_length;
   double max_steering;
   double base2back;  // base_link to rear [m]
+  double half_diagonal;
 
   VehicleShape() = default;
 
@@ -74,6 +76,7 @@ struct VehicleShape
     max_steering(max_steering),
     base2back(base2back)
   {
+    setHalfDiagonal();
   }
 
   explicit VehicleShape(
@@ -84,7 +87,10 @@ struct VehicleShape
     max_steering(vehicle_info.max_steer_angle_rad),
     base2back(vehicle_info.rear_overhang_m + margin / 2.0)
   {
+    setHalfDiagonal();
   }
+
+  void setHalfDiagonal() { half_diagonal = 0.5 * sqrt(length * length + width * width); }
 };
 
 struct PlannerCommonParam
@@ -156,6 +162,7 @@ protected:
     std::vector<IndexXY> & vertex_indexes_2d) const;
   bool detectBoundaryExit(const IndexXYT & base_index) const;
   bool detectCollision(const IndexXYT & base_index) const;
+  void computeEDTMap();
 
   template <typename IndexType>
   inline bool isOutOfRange(const IndexType & index) const
@@ -194,6 +201,13 @@ protected:
     return is_obstacle_table_[indexToId(index)];
   }
 
+  template <typename IndexType>
+  inline double getObstacleEDT(const IndexType & index) const
+  {
+    if (edt_map_.empty()) return std::numeric_limits<double>::max();
+    return edt_map_[indexToId(index)];
+  }
+
   // compute single dimensional grid cell index from 2 dimensional index
   template <typename IndexType>
   inline int indexToId(const IndexType & index) const
@@ -215,6 +229,9 @@ protected:
 
   // is_obstacle's table
   std::vector<bool> is_obstacle_table_;
+
+  // Euclidean distance transform map (distance to nearest obstacle cell)
+  std::vector<double> edt_map_;
 
   // pose in costmap frame
   geometry_msgs::msg::Pose start_pose_;

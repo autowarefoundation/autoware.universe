@@ -47,9 +47,11 @@ astar_param = fp.AstarParam()
 astar_param.search_method = "forward"
 astar_param.only_behind_solutions = False
 astar_param.use_back = True
+astar_param.adapt_expansion_distance = True
 astar_param.expansion_distance = 0.4
 astar_param.distance_heuristic_weight = 1.0
 astar_param.steering_change_weight = 1.0
+astar_param.obstacle_distance_weight = 1.0
 
 astar = fp.AstarSearch(planner_param, vehicle_shape, astar_param)
 
