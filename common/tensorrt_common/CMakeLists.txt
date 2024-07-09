@@ -13,6 +13,7 @@ find_package(TENSORRT)
 
 if(NOT (CUDAToolkit_FOUND AND CUDNN_FOUND AND TENSORRT_FOUND))
   message(WARNING "cuda, cudnn, tensorrt libraries are not found")
+  ament_package()
   return()
 endif()
 
