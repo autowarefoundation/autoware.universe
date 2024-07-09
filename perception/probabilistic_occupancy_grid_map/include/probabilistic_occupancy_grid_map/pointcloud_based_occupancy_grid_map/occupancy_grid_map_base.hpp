@@ -100,10 +100,9 @@ public:
   int z_offset_obstacle_;
   bool offset_initialized_;
 
-  const double min_angle = autoware::universe_utils::deg2rad(-180.0);
-  const double max_angle = autoware::universe_utils::deg2rad(180.0);
-  const double angle_increment = autoware::universe_utils::deg2rad(0.1);
-  const double angle_increment_inv = 1.0 / angle_increment;
+  const double min_angle_ = autoware::universe_utils::deg2rad(-180.0);
+  const double max_angle_ = autoware::universe_utils::deg2rad(180.0);
+  const double angle_increment_inv_ = 1.0 / autoware::universe_utils::deg2rad(0.1);
 
   Eigen::Matrix4f mat_map, mat_scan;
 

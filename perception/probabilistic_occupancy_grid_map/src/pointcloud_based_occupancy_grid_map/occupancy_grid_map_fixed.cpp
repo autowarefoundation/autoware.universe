@@ -57,7 +57,7 @@ inline void OccupancyGridMapFixedBlindSpot::transformPointAndCalculate(
   pt_map = mat_map * pt;
   Eigen::Vector4f pt_scan(mat_scan * pt_map);
   const double angle = atan2(pt_scan[1], pt_scan[0]);
-  angle_bin_index = (angle - min_angle) * angle_increment_inv;
+  angle_bin_index = (angle - min_angle_) * angle_increment_inv;
   range = std::sqrt(pt_scan[1] * pt_scan[1] + pt_scan[0] * pt_scan[0]);
 }
 
@@ -73,7 +73,7 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   const PointCloud2 & raw_pointcloud, const PointCloud2 & obstacle_pointcloud,
   const Pose & robot_pose, const Pose & scan_origin)
 {
-  const size_t angle_bin_size = ((max_angle - min_angle) / angle_increment) + size_t(1 /*margin*/);
+  const size_t angle_bin_size = ((max_angle_ - min_angle_) * angle_increment_inv_) + size_t(1 /*margin*/);
 
   // Transform Matrix from base_link to map frame
   mat_map = utils::getTransformMatrix(robot_pose);
