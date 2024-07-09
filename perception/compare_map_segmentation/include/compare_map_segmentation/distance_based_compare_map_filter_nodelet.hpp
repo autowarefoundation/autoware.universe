@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace compare_map_segmentation
+namespace autoware::compare_map_segmentation
 {
 
 typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;

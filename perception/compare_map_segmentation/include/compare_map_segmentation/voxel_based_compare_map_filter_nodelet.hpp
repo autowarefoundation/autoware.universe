@@ -24,7 +24,7 @@
 #include <memory>
 #include <vector>
 
-namespace compare_map_segmentation
+namespace autoware::compare_map_segmentation
 {
 class VoxelBasedCompareMapFilterComponent : public pointcloud_preprocessor::Filter
 {

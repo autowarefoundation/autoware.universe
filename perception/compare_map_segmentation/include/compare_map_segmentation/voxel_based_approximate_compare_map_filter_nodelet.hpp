@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace compare_map_segmentation
+namespace autoware::compare_map_segmentation
 {
 
 class VoxelBasedApproximateStaticMapLoader : public VoxelGridStaticMapLoader

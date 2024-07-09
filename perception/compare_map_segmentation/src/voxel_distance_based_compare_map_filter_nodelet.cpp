@@ -20,7 +20,7 @@
 
 #include <vector>
 
-namespace compare_map_segmentation
+namespace autoware::compare_map_segmentation
 {
 
 void VoxelDistanceBasedStaticMapLoader::onMapCallback(
@@ -178,4 +178,4 @@ void VoxelDistanceBasedCompareMapFilterComponent::filter(
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent)
+  autoware::compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent)

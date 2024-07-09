@@ -33,6 +33,8 @@
 #include <utility>
 #include <vector>
 
+namespace autoware::compare_map_segmentation
+{
 template <typename T, typename U>
 double distance3D(const T p1, const U p2)
 {
@@ -318,5 +320,7 @@ public:
     (*mutex_ptr_).unlock();
   }
 };
+
+}
 
 #endif  // COMPARE_MAP_SEGMENTATION__VOXEL_GRID_MAP_LOADER_HPP_

@@ -14,6 +14,8 @@
 
 #include "compare_map_segmentation/voxel_grid_map_loader.hpp"
 
+namespace autoware::compare_map_segmentation
+{
 VoxelGridMapLoader::VoxelGridMapLoader(
   rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
   std::string * tf_map_input_frame, std::mutex * mutex)
@@ -461,4 +463,6 @@ void VoxelGridDynamicMapLoader::request_update_map(const geometry_msgs::msg::Poi
       publish_downsampled_map(getCurrentDownsampledMapPc());
     }
   }
+}
+
 }

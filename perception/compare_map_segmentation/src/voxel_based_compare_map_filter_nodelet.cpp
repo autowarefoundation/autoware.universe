@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace compare_map_segmentation
+namespace autoware::compare_map_segmentation
 {
 using pointcloud_preprocessor::get_param;
 
@@ -109,4 +109,4 @@ void VoxelBasedCompareMapFilterComponent::filter(
 }  // namespace compare_map_segmentation
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(compare_map_segmentation::VoxelBasedCompareMapFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::compare_map_segmentation::VoxelBasedCompareMapFilterComponent)

@@ -20,7 +20,7 @@
 
 #include <vector>
 
-namespace compare_map_segmentation
+namespace autoware::compare_map_segmentation
 {
 
 bool VoxelBasedApproximateStaticMapLoader::is_close_to_map(
@@ -149,4 +149,4 @@ void VoxelBasedApproximateCompareMapFilterComponent::filter(
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  compare_map_segmentation::VoxelBasedApproximateCompareMapFilterComponent)
+  autoware::compare_map_segmentation::VoxelBasedApproximateCompareMapFilterComponent)
