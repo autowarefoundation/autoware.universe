@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "../src/scan_ground_filter/node.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "tf2_ros/transform_broadcaster.h"
-
-#include <ground_segmentation/scan_ground_filter_nodelet.hpp>
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
@@ -31,6 +30,45 @@
 
 #include <yaml-cpp/yaml.h>
 
+void convertPCL2PointCloud2(
+  const pcl::PointCloud<pcl::PointXYZI> & pcl_cloud, sensor_msgs::msg::PointCloud2 & cloud)
+{
+  cloud.height = 1;
+  cloud.width = pcl_cloud.size();
+  cloud.is_dense = true;
+  cloud.is_bigendian = false;
+  cloud.point_step = 16;
+  cloud.row_step = cloud.point_step * cloud.width;
+  cloud.fields.resize(4);
+  cloud.fields[0].name = "x";
+  cloud.fields[0].offset = 0;
+  cloud.fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
+  cloud.fields[0].count = 1;
+  cloud.fields[1].name = "y";
+  cloud.fields[1].offset = 4;
+  cloud.fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
+  cloud.fields[1].count = 1;
+  cloud.fields[2].name = "z";
+  cloud.fields[2].offset = 8;
+  cloud.fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
+  cloud.fields[2].count = 1;
+  cloud.fields[3].name = "intensity";
+  cloud.fields[3].offset = 12;
+  cloud.fields[3].datatype = sensor_msgs::msg::PointField::FLOAT32;
+  cloud.fields[3].count = 1;
+  cloud.data.resize(cloud.row_step * cloud.height);
+  for (size_t i = 0; i < pcl_cloud.size(); ++i) {
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[0].offset], &pcl_cloud[i].x, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[1].offset], &pcl_cloud[i].y, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[2].offset], &pcl_cloud[i].z, sizeof(float));
+    memcpy(
+      &cloud.data[i * cloud.point_step + cloud.fields[3].offset], &pcl_cloud[i].intensity,
+      sizeof(float));
+  }
+}
 class ScanGroundFilterTest : public ::testing::Test
 {
 protected:
@@ -87,16 +125,17 @@ protected:
 
     options.parameter_overrides(parameters);
 
-    scan_ground_filter_ = std::make_shared<ground_segmentation::ScanGroundFilterComponent>(options);
+    scan_ground_filter_ =
+      std::make_shared<autoware::ground_segmentation::ScanGroundFilterComponent>(options);
 
     // read pcd to pointcloud
     sensor_msgs::msg::PointCloud2::SharedPtr origin_input_msg_ptr =
       std::make_shared<sensor_msgs::msg::PointCloud2>();
     const auto share_dir = ament_index_cpp::get_package_share_directory("ground_segmentation");
     const auto pcd_path = share_dir + "/data/test.pcd";
-    pcl::PointCloud<pcl::PointXYZ> cloud;
-    pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_path, cloud);
-    pcl::toROSMsg(cloud, *origin_input_msg_ptr);
+    pcl::PointCloud<pcl::PointXYZI> cloud;
+    pcl::io::loadPCDFile<pcl::PointXYZI>(pcd_path, cloud);
+    convertPCL2PointCloud2(cloud, *origin_input_msg_ptr);
     origin_input_msg_ptr->header.frame_id = "velodyne_top";
 
     // input cloud frame MUST be base_link
@@ -122,7 +161,7 @@ protected:
   ~ScanGroundFilterTest() override { rclcpp::shutdown(); }
 
 public:
-  std::shared_ptr<ground_segmentation::ScanGroundFilterComponent> scan_ground_filter_;
+  std::shared_ptr<autoware::ground_segmentation::ScanGroundFilterComponent> scan_ground_filter_;
   rclcpp::Node::SharedPtr dummy_node_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr input_pointcloud_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr output_pointcloud_pub_;
