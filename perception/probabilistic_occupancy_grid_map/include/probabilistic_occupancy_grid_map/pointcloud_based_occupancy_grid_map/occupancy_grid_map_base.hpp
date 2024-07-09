@@ -104,7 +104,25 @@ public:
   const double max_angle_ = autoware::universe_utils::deg2rad(180.0);
   const double angle_increment_inv_ = 1.0 / autoware::universe_utils::deg2rad(0.1);
 
-  Eigen::Matrix4f mat_map, mat_scan;
+  Eigen::Matrix4f mat_map_, mat_scan_;
+
+  bool isPointValid(const Eigen::Vector4f & pt) const
+  {
+    // Apply height filter and exclude invalid points
+    return min_height_ < pt[2] && pt[2] < max_height_ && std::isfinite(pt[0]) &&
+           std::isfinite(pt[1]) && std::isfinite(pt[2]);
+  }
+  // Transform pt to (pt_map, pt_scan), then calculate angle_bin_index and range
+  void transformPointAndCalculate(
+    const Eigen::Vector4f & pt, Eigen::Vector4f & pt_map, int & angle_bin_index,
+    double & range) const
+  {
+    pt_map = mat_map_ * pt;
+    Eigen::Vector4f pt_scan(mat_scan_ * pt_map);
+    const double angle = atan2(pt_scan[1], pt_scan[0]);
+    angle_bin_index = (angle - min_angle_) * angle_increment_inv_;
+    range = std::sqrt(pt_scan[1] * pt_scan[1] + pt_scan[0] * pt_scan[0]);
+  }
 
 private:
   bool worldToMap(double wx, double wy, unsigned int & mx, unsigned int & my) const;

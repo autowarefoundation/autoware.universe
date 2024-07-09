@@ -44,24 +44,6 @@ OccupancyGridMapProjectiveBlindSpot::OccupancyGridMapProjectiveBlindSpot(
 {
 }
 
-inline bool OccupancyGridMapProjectiveBlindSpot::isPointValid(const Eigen::Vector4f & pt)
-{
-  // Apply height filter and exclude invalid points
-  return min_height_ < pt[2] && pt[2] < max_height_ && std::isfinite(pt[0]) &&
-         std::isfinite(pt[1]) && std::isfinite(pt[2]);
-}
-
-// Transform pt to (pt_map, pt_scan), then calculate angle_bin_index and range
-inline void OccupancyGridMapProjectiveBlindSpot::transformPointAndCalculate(
-  const Eigen::Vector4f & pt, Eigen::Vector4f & pt_map, int & angle_bin_index, double & range)
-{
-  pt_map = mat_map * pt;
-  Eigen::Vector4f pt_scan(mat_scan * pt_map);
-  const double angle = atan2(pt_scan[1], pt_scan[0]);
-  angle_bin_index = (angle - min_angle_) * angle_increment_inv;
-  range = std::sqrt(pt_scan[1] * pt_scan[1] + pt_scan[0] * pt_scan[0]);
-}
-
 /**
  * @brief update Gridmap with PointCloud in 3D manner
  *
@@ -75,15 +57,15 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
   const Pose & robot_pose, const Pose & scan_origin)
 {
   const size_t angle_bin_size =
-    ((max_angle_ - min_angle_) / angle_increment_inv_) + size_t(1 /*margin*/);
+    ((max_angle_ - min_angle_) * angle_increment_inv_) + size_t(1 /*margin*/);
 
   // Transform from base_link to map frame
-  mat_map = utils::getTransformMatrix(robot_pose);
+  mat_map_ = utils::getTransformMatrix(robot_pose);
 
   const auto scan2map_pose = utils::getInversePose(scan_origin);  // scan -> map transform pose
 
   // Transform from map frame to scan frame
-  mat_scan = utils::getTransformMatrix(scan2map_pose);
+  mat_scan_ = utils::getTransformMatrix(scan2map_pose);
 
   if (!offset_initialized_) {
     setFieldOffsets(raw_pointcloud, obstacle_pointcloud);
@@ -131,15 +113,14 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + x_offset_raw_]),
       *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + y_offset_raw_]),
       *reinterpret_cast<const float *>(&raw_pointcloud.data[global_offset + z_offset_raw_]), 1);
+    global_offset += raw_pointcloud.point_step;
     if (!isPointValid(pt)) {
-      global_offset += raw_pointcloud.point_step;
       continue;
     }
     transformPointAndCalculate(pt, pt_map, angle_bin_index, range);
 
     raw_pointcloud_angle_bins.at(angle_bin_index)
       .emplace_back(range, pt_map[0], pt_map[1], pt_map[2]);
-    global_offset += raw_pointcloud.point_step;
   }
 
   for (auto & raw_pointcloud_angle_bin : raw_pointcloud_angle_bins) {
@@ -159,8 +140,8 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
       *reinterpret_cast<const float *>(
         &obstacle_pointcloud.data[global_offset + z_offset_obstacle_]),
       1);
+    global_offset += obstacle_pointcloud.point_step;
     if (!isPointValid(pt)) {
-      global_offset += obstacle_pointcloud.point_step;
       continue;
     }
     transformPointAndCalculate(pt, pt_map, angle_bin_index, range);
@@ -189,7 +170,6 @@ void OccupancyGridMapProjectiveBlindSpot::updateWithPointCloud(
           range, pt_map[0], pt_map[1], pt_map[2], std::numeric_limits<double>::infinity(),
           std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
     }
-    global_offset += obstacle_pointcloud.point_step;
   }
 
   for (auto & obstacle_pointcloud_angle_bin : obstacle_pointcloud_angle_bins) {
