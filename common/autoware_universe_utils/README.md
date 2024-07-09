@@ -49,122 +49,17 @@ explicit TimeKeeper(Reporters... reporters);
   - Ends tracking the processing time of a function.
   - `func_name`: Name of the function to end tracking.
 
-##### Example
+##### Note
 
-```cpp
-#include "autoware/universe_utils/system/time_keeper.hpp"
+- It's possible to start and end time measurements using `start_track` and `end_track` as shown below:
 
-#include <rclcpp/rclcpp.hpp>
-
-#include <iostream>
-#include <memory>
-
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  auto node = std::make_shared<rclcpp::Node>("time_keeper_example");
-
-  auto time_keeper = std::make_shared<autoware::universe_utils::TimeKeeper>();
-
-  time_keeper->add_reporter(&std::cout);
-
-  auto publisher =
-    node->create_publisher<autoware::universe_utils::ProcessingTimeDetail>("processing_time", 10);
-
-  time_keeper->add_reporter(publisher);
-
-  auto publisher_str = node->create_publisher<std_msgs::msg::String>("processing_time_str", 10);
-
-  time_keeper->add_reporter(publisher_str);
-
-  auto funcA = [&time_keeper]() {
-    time_keeper->start_track("funcA");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    time_keeper->end_track("funcA");
-  };
-
-  auto funcB = [&time_keeper, &funcA]() {
-    time_keeper->start_track("funcB");
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    funcA();
-    time_keeper->end_track("funcB");
-  };
-
-  auto funcC = [&time_keeper, &funcB]() {
-    time_keeper->start_track("funcC");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    funcB();
-    time_keeper->end_track("funcC");
-  };
-
-  funcC();
-
-  rclcpp::spin(node);
-  rclcpp::shutdown();
-  return 0;
-}
-```
-
-- Output (console)
-
-  ```text
-  ==========================
-  funcC (6000.7ms)
-      └── funcB (3000.44ms)
-          └── funcA (1000.19ms)
+  ```cpp
+  time_keeper.start_track("example_function");
+  // Your function code here
+  time_keeper.end_track("example_function");
   ```
 
-- Output (`ros2 topic echo /processing_time`)
-
-  ```text
-  nodes:
-  - id: 1
-    name: funcC
-    processing_time: 6000.659
-    parent_id: 0
-  - id: 2
-    name: funcB
-    processing_time: 3000.415
-    parent_id: 1
-  - id: 3
-    name: funcA
-    processing_time: 1000.181
-    parent_id: 2
-  ---
-  ```
-
-- Output (`ros2 topic echo /processing_time_str --field data`)
-
-  ```text
-  funcC (6000.67ms)
-    └── funcB (3000.42ms)
-        └── funcA (1000.19ms)
-
-  ---
-  ```
-
-#### `autoware::universe_utils::ScopedTimeTrack`
-
-##### Description
-
-Class for automatically tracking the processing time of a function within a scope.
-
-##### Constructor
-
-```cpp
-ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keeper);
-```
-
-- `func_name`: Name of the function to be tracked.
-- `time_keeper`: Reference to the `TimeKeeper` object.
-
-##### Destructor
-
-```cpp
-~ScopedTimeTrack();
-```
-
-- Destroys the `ScopedTimeTrack` object, ending the tracking of the function.
+- For safety and to ensure proper tracking, it is recommended to use `ScopedTimeTrack`.
 
 ##### Example
 
@@ -256,3 +151,26 @@ int main(int argc, char ** argv)
 
   ---
   ```
+
+#### `autoware::universe_utils::ScopedTimeTrack`
+
+##### Description
+
+Class for automatically tracking the processing time of a function within a scope.
+
+##### Constructor
+
+```cpp
+ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keeper);
+```
+
+- `func_name`: Name of the function to be tracked.
+- `time_keeper`: Reference to the `TimeKeeper` object.
+
+##### Destructor
+
+```cpp
+~ScopedTimeTrack();
+```
+
+- Destroys the `ScopedTimeTrack` object, ending the tracking of the function.
