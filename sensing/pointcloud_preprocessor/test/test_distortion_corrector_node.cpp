@@ -171,38 +171,38 @@ protected:
     pointcloud_msg.is_bigendian = false;
 
     if (generate_points) {
-      std::vector<float> points = {
-        10.0f, 0.0f,  0.0f,   // point 1
-        0.0f,  10.0f, 0.0f,   // point 2
-        0.0f,  0.0f,  10.0f,  // point 3
-        20.0f, 0.0f,  0.0f,   // point 4
-        0.0f,  20.0f, 0.0f,   // point 5
-        0.0f,  0.0f,  20.0f,  // point 6
-        30.0f, 0.0f,  0.0f,   // point 7
-        0.0f,  30.0f, 0.0f,   // point 8
-        0.0f,  0.0f,  30.0f,  // point 9
-        10.0f, 10.0f, 10.0f   // point 10
-      };
+      std::array<Eigen::Vector3f, number_of_points_> points = {{
+        Eigen::Vector3f(10.0f, 0.0f, 0.0f),   // point 1
+        Eigen::Vector3f(0.0f, 10.0f, 0.0f),   // point 2
+        Eigen::Vector3f(0.0f, 0.0f, 10.0f),   // point 3
+        Eigen::Vector3f(20.0f, 0.0f, 0.0f),   // point 4
+        Eigen::Vector3f(0.0f, 20.0f, 0.0f),   // point 5
+        Eigen::Vector3f(0.0f, 0.0f, 20.0f),   // point 6
+        Eigen::Vector3f(30.0f, 0.0f, 0.0f),   // point 7
+        Eigen::Vector3f(0.0f, 30.0f, 0.0f),   // point 8
+        Eigen::Vector3f(0.0f, 0.0f, 30.0f),   // point 9
+        Eigen::Vector3f(10.0f, 10.0f, 10.0f)  // point 10
+      }};
 
-      size_t number_of_points = points.size() / 3;
-      std::vector<double> timestamps = generatePointTimestamps(stamp, number_of_points);
+      // Generate timestamps for the points
+      std::vector<double> timestamps = generatePointTimestamps(stamp, number_of_points_);
 
       sensor_msgs::PointCloud2Modifier modifier(pointcloud_msg);
       modifier.setPointCloud2Fields(
         4, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
         sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
         "time_stamp", 1, sensor_msgs::msg::PointField::FLOAT64);
-      modifier.resize(number_of_points);
+      modifier.resize(number_of_points_);
 
       sensor_msgs::PointCloud2Iterator<float> iter_x(pointcloud_msg, "x");
       sensor_msgs::PointCloud2Iterator<float> iter_y(pointcloud_msg, "y");
       sensor_msgs::PointCloud2Iterator<float> iter_z(pointcloud_msg, "z");
       sensor_msgs::PointCloud2Iterator<double> iter_t(pointcloud_msg, "time_stamp");
 
-      for (size_t i = 0; i < number_of_points; ++i) {
-        *iter_x = points[i * 3];
-        *iter_y = points[i * 3 + 1];
-        *iter_z = points[i * 3 + 2];
+      for (size_t i = 0; i < number_of_points_; ++i) {
+        *iter_x = points[i].x();
+        *iter_y = points[i].y();
+        *iter_z = points[i].z();
         *iter_t = timestamps[i];
         ++iter_x;
         ++iter_y;
@@ -239,6 +239,7 @@ protected:
   static constexpr double coarse_tolerance_{5e-3};
   static constexpr int number_of_twist_msgs_{6};
   static constexpr int number_of_imu_msgs_{6};
+  static constexpr size_t number_of_points_{10};
 
   // for debugging or regenerating the ground truth point cloud
   bool debug_{false};
