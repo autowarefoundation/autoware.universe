@@ -21,6 +21,31 @@
 
 namespace pointcloud_preprocessor
 {
+
+template <class T>
+bool DistortionCorrector<T>::pointcloud_transform_exists()
+{
+  return pointcloud_transform_exists_;
+}
+
+template <class T>
+bool DistortionCorrector<T>::pointcloud_transform_needed()
+{
+  return pointcloud_transform_needed_;
+}
+
+template <class T>
+std::deque<geometry_msgs::msg::TwistStamped> DistortionCorrector<T>::get_twist_queue()
+{
+  return twist_queue_;
+}
+
+template <class T>
+std::deque<geometry_msgs::msg::Vector3Stamped> DistortionCorrector<T>::get_angular_velocity_queue()
+{
+  return angular_velocity_queue_;
+}
+
 template <class T>
 void DistortionCorrector<T>::processTwistMessage(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg)
@@ -48,20 +73,19 @@ template <class T>
 void DistortionCorrector<T>::processIMUMessage(
   const std::string & base_frame, const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
-  geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr =
-    std::make_shared<geometry_msgs::msg::TransformStamped>();
-  getIMUTransformation(base_frame, imu_msg->header.frame_id, geometry_imu_to_base_link_ptr);
-  enqueueIMU(imu_msg, geometry_imu_to_base_link_ptr);
+  getIMUTransformation(base_frame, imu_msg->header.frame_id);
+  enqueueIMU(imu_msg);
 }
 
 template <class T>
 void DistortionCorrector<T>::getIMUTransformation(
-  const std::string & base_frame, const std::string & imu_frame,
-  geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr)
+  const std::string & base_frame, const std::string & imu_frame)
 {
   if (imu_transform_exists_) {
     return;
   }
+
+  geometry_imu_to_base_link_ptr_ = std::make_shared<geometry_msgs::msg::TransformStamped>();
 
   tf2::Transform tf2_imu_to_base_link;
   if (base_frame == imu_frame) {
@@ -84,20 +108,18 @@ void DistortionCorrector<T>::getIMUTransformation(
     }
   }
 
-  geometry_imu_to_base_link_ptr->transform.rotation =
+  geometry_imu_to_base_link_ptr_->transform.rotation =
     tf2::toMsg(tf2_imu_to_base_link.getRotation());
 }
 
 template <class T>
-void DistortionCorrector<T>::enqueueIMU(
-  const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg,
-  geometry_msgs::msg::TransformStamped::SharedPtr geometry_imu_to_base_link_ptr)
+void DistortionCorrector<T>::enqueueIMU(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
   geometry_msgs::msg::Vector3Stamped angular_velocity;
   angular_velocity.vector = imu_msg->angular_velocity;
 
   geometry_msgs::msg::Vector3Stamped transformed_angular_velocity;
-  tf2::doTransform(angular_velocity, transformed_angular_velocity, *geometry_imu_to_base_link_ptr);
+  tf2::doTransform(angular_velocity, transformed_angular_velocity, *geometry_imu_to_base_link_ptr_);
   transformed_angular_velocity.header = imu_msg->header;
   angular_velocity_queue_.push_back(transformed_angular_velocity);
 
@@ -375,7 +397,9 @@ inline void DistortionCorrector2D::undistortPointImplementation(
   theta_ += w * time_offset;
   baselink_quat_.setValue(
     0, 0, autoware::universe_utils::sin(theta_ * 0.5f),
-    autoware::universe_utils::cos(theta_ * 0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta);
+    autoware::universe_utils::cos(
+      theta_ *
+      0.5f));  // baselink_quat.setRPY(0.0, 0.0, theta); (Note that the value is slightly different)
   const float dis = v * time_offset;
   x_ += dis * autoware::universe_utils::cos(theta_);
   y_ += dis * autoware::universe_utils::sin(theta_);
