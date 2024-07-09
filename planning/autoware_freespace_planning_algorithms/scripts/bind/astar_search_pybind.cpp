@@ -115,6 +115,9 @@ PYBIND11_MODULE(autoware_freespace_planning_algorithms_pybind, p)
         "only_behind_solutions", &freespace_planning_algorithms::AstarParam::only_behind_solutions)
       .def_readwrite("use_back", &freespace_planning_algorithms::AstarParam::use_back)
       .def_readwrite(
+        "adapt_expansion_distance",
+        &freespace_planning_algorithms::AstarParam::adapt_expansion_distance)
+      .def_readwrite(
         "expansion_distance", &freespace_planning_algorithms::AstarParam::expansion_distance)
       .def_readwrite(
         "distance_heuristic_weight",

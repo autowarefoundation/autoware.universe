@@ -46,6 +46,7 @@ planner_param.obstacle_threshold = 100
 astar_param = fp.AstarParam()
 astar_param.only_behind_solutions = False
 astar_param.use_back = True
+astar_param.adapt_expansion_distance = True
 astar_param.expansion_distance = 0.4
 astar_param.distance_heuristic_weight = 1.0
 astar_param.steering_change_weight = 1.0

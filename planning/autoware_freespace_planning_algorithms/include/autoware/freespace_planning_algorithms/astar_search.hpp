@@ -41,6 +41,7 @@ struct AstarParam
   // base configs
   bool only_behind_solutions;  // solutions should be behind the goal
   bool use_back;               // backward search
+  bool adapt_expansion_distance;
   double expansion_distance;
 
   // search configs
@@ -55,9 +56,11 @@ struct AstarNode
   double x;                              // x
   double y;                              // y
   double theta;                          // theta
-  double gc = 0;                         // actual motion cost
-  double fc = 0;                         // total node cost
-  double dir_distance = 0;               // distance travelled from last direction change
+  double gc = 0.0;                       // actual motion cost
+  double fc = 0.0;                       // total node cost
+  double dir_distance = 0.0;             // distance travelled from last direction change
+  double dist_to_goal = 0.0;             // euclidean distance to goal pose
+  double dist_to_obs = 0.0;              // euclidean distance to nearest obstacle
   int steering_index;                    // steering index
   bool is_back;                          // true if the current direction of the vehicle is back
   AstarNode * parent = nullptr;          // parent node
@@ -81,46 +84,9 @@ struct NodeComparison
   bool operator()(const AstarNode * lhs, const AstarNode * rhs) { return lhs->fc > rhs->fc; }
 };
 
-struct NodeUpdate
-{
-  double shift_x;
-  double shift_y;
-  double shift_theta;
-  double distance;
-  int steering_index;
-  bool is_back;
-
-  NodeUpdate rotated(const double theta) const
-  {
-    NodeUpdate result = *this;
-    result.shift_x = std::cos(theta) * this->shift_x - std::sin(theta) * this->shift_y;
-    result.shift_y = std::sin(theta) * this->shift_x + std::cos(theta) * this->shift_y;
-    return result;
-  }
-
-  NodeUpdate flipped() const
-  {
-    NodeUpdate result = *this;
-    result.shift_y = -result.shift_y;
-    result.shift_theta = -result.shift_theta;
-    return result;
-  }
-
-  NodeUpdate reversed() const
-  {
-    NodeUpdate result = *this;
-    result.shift_x = -result.shift_x;
-    result.shift_theta = -result.shift_theta;
-    result.is_back = !result.is_back;
-    return result;
-  }
-};
-
 class AstarSearch : public AbstractPlanningAlgorithm
 {
 public:
-  using TransitionTable = std::vector<std::vector<NodeUpdate>>;
-
   AstarSearch(
     const PlannerCommonParam & planner_common_param, const VehicleShape & collision_vehicle_shape,
     const AstarParam & astar_param);
@@ -133,6 +99,7 @@ public:
       AstarParam{
         node.declare_parameter<bool>("astar.only_behind_solutions"),
         node.declare_parameter<bool>("astar.use_back"),
+        node.declare_parameter<bool>("astar.adapt_expansion_distance"),
         node.declare_parameter<double>("astar.expansion_distance"),
         node.declare_parameter<double>("astar.distance_heuristic_weight"),
         node.declare_parameter<double>("astar.steering_change_weight"),
@@ -152,9 +119,8 @@ public:
   }
 
 private:
-  void setTransitionTable();
   bool search();
-  void expandNodes(AstarNode & current_node);
+  void expandNodes(AstarNode & current_node, const bool is_back = false);
   void resetData();
   void setPath(const AstarNode & goal);
   bool setStartNode();
@@ -163,17 +129,15 @@ private:
   bool isGoal(const AstarNode & node) const;
   geometry_msgs::msg::Pose node2pose(const AstarNode & node) const;
 
+  double getExpansionDistance(const AstarNode & current_node) const;
   double getSteeringCost(const int steering_index) const;
   double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
-  double getObstacleDistanceCost(const IndexXYT & index) const;
 
   // Algorithm specific param
   AstarParam astar_param_;
 
   // hybrid astar variables
-  TransitionTable transition_table_;
   std::vector<AstarNode> graph_;
-
   std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison> openlist_;
 
   // goal node, which may helpful in testing and debugging
@@ -185,9 +149,16 @@ private:
   double steering_resolution_;
   double heading_resolution_;
   double avg_turning_radius_;
+  double min_expansion_dist_;
+  double max_expansion_dist_;
 
   // threshold for minimum distance between direction switches
   static constexpr double min_dir_change_dist_ = 1.5;
+
+  // expansion distance factors
+  static constexpr double base_length_max_expansion_factor_ = 0.5;
+  static constexpr double dist_to_goal_expansion_factor_ = 0.15;
+  static constexpr double dist_to_obs_expansion_factor_ = 0.3;
 };
 }  // namespace autoware::freespace_planning_algorithms
 

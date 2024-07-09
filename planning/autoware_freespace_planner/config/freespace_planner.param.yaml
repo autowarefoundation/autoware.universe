@@ -32,6 +32,7 @@
     astar:
       only_behind_solutions: false
       use_back: true
+      adapt_expansion_distance: true
       expansion_distance: 0.4
       distance_heuristic_weight: 1.0
       steering_change_weight: 0.0
