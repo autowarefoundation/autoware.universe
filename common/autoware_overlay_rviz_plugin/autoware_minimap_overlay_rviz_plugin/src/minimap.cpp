@@ -36,7 +36,7 @@ VehicleMapDisplay::VehicleMapDisplay() : rviz_common::Display(), overlay_(nullpt
     "Zoom", 15, "Zoom level of the map", this, SLOT(updateZoomLevel()));
 
   property_zoom_->setMin(15);
-  property_zoom_->setMax(19);
+  property_zoom_->setMax(18);
   property_zoom_->setShouldBeSaved(true);
 
   property_latitude_ = new rviz_common::properties::FloatProperty(
@@ -86,8 +86,9 @@ void VehicleMapDisplay::onInitialize()
     "/planning/mission_planning/echo_back_goal_pose", 10,
     std::bind(&VehicleMapDisplay::goalPoseCallback, this, std::placeholders::_1));
 
-  pose_sub_ = node_->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "/initialpose", 10, std::bind(&VehicleMapDisplay::poseCallback, this, std::placeholders::_1));
+  pose_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
+    "/localization/kinematic_state", 10,
+    std::bind(&VehicleMapDisplay::poseCallback, this, std::placeholders::_1));
 }
 
 void VehicleMapDisplay::reset()
@@ -175,13 +176,12 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
   painter.setBrush(colorFromHSV);
 
   // Define the visible rectangle
-  QRectF visibleRect(
-    backgroundRect.width() / 2 - 112.5, backgroundRect.height() / 2 - 112.5, 225, 225);
+  QRectF visibleRect(backgroundRect.width() / 2 - 128, backgroundRect.height() / 2 - 128, 256, 256);
 
   // Define the circular clipping path
   QPainterPath path;
   path.addEllipse(visibleRect);
-  // painter.setClipPath(path);
+  painter.setClipPath(path);
 
   // Draw the background
   painter.setPen(Qt::NoPen);
@@ -209,10 +209,10 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
     ament_index_cpp::get_package_share_directory("autoware_minimap_overlay_rviz_plugin");
   std::string image_path = package_path + "/icons/pos.png";
   QImage pos_image = QImage(image_path.c_str());
-  pos_image = pos_image.scaled(30, 30, Qt::KeepAspectRatio);
+  pos_image = pos_image.scaled(20, 20, Qt::KeepAspectRatio);
 
   QPointF positionInOverlay =
-    backgroundRect.center() - QPointF(pos_image.width() / 2, pos_image.height() / 2);
+    backgroundRect.center() - QPointF(pos_image.width() / 2, pos_image.height() - 10);
 
   painter.drawImage(positionInOverlay, pos_image);
 
@@ -231,6 +231,16 @@ void VehicleMapDisplay::updateZoomLevel()
 {
   zoom_ = property_zoom_->getInt();  // Update the zoom level
   tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
+
+  // Update the map position based on the new zoom level
+  if (pose_msg_) {
+    poseCallback(pose_msg_);
+  }
+
+  if (goal_pose_msg_) {
+    goalPoseCallback(goal_pose_msg_);
+  }
+
   queueRender();  // Request re-rendering
 }
 
@@ -266,74 +276,73 @@ void VehicleMapDisplay::updateMapPosition()
   queueRender();
 }
 
-void VehicleMapDisplay::updateTopic()
-{
-  std::string topic = property_topic_->getStdString();
-  if (!topic.empty()) {
-    nav_sat_fix_sub_ = node_->create_subscription<sensor_msgs::msg::NavSatFix>(
-      topic, 10, std::bind(&VehicleMapDisplay::navSatFixCallback, this, std::placeholders::_1));
-  }
-}
-
 void VehicleMapDisplay::updateGoalPose()
 {
   double goal_x = property_goal_x_->getFloat();
   double goal_y = property_goal_y_->getFloat();
-  /* origin
-      latitude: 35.23808753540768
-      longitude: 139.9009591876285
-*/
   double origin_lat = 35.23808753540768;
+  // double origin_lat = 41.02119576228221;
   double origin_lon = 139.9009591876285;
+  // double origin_lon = 28.897920380148957;
   goal_pose_.setGoalPosition(goal_x, goal_y, origin_lat, origin_lon);
+  if (!goal_pose_msg_) {
+    return;
+  }
+  goalPoseCallback(goal_pose_msg_);
 
   queueRender();
 }
 
-void VehicleMapDisplay::poseCallback(
-  const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
+void VehicleMapDisplay::poseCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-  // Assuming you have a method to convert from local xyz to GPS coordinates
+  pose_msg_ = msg;
+
   std::pair<double, double> lat_lon =
     localXYZToLatLon(msg->pose.pose.position.x, msg->pose.pose.position.y);
+
+  // TODO: Uncomment this after the autoware_adapi_v1_msgs::msg::VehicleKinematics message is
+  // available
+  // latitude_ = msg->geographic_pose.position.latitude;
+  // longitude_ = msg->geographic_pose.position.longitude;
+
   latitude_ = lat_lon.first;
   longitude_ = lat_lon.second;
+
+  property_longitude_->setFloat(longitude_);
+  property_latitude_->setFloat(latitude_);
+
+  // Set the vehicle position in the goal pose (in case it was not set yet)
+  goal_pose_.setVehiclePosition(latitude_, longitude_);
 
   updateMapPosition();  // Method to update map position based on new latitude and longitude
 }
 
 void VehicleMapDisplay::goalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
+  goal_pose_msg_ = msg;
+
   double origin_lat = 35.23808753540768;
+  // double origin_lat = 41.02119576228221;
   double origin_lon = 139.9009591876285;
+  // double origin_lon = 28.897920380148957;
   goal_pose_.setGoalPosition(msg->pose.position.x, msg->pose.position.y, origin_lat, origin_lon);
+
+  // Set the vehicle position in the goal pose (in case it was not set yet)
+  goal_pose_.setVehiclePosition(latitude_, longitude_);
+
+  property_goal_x_->setFloat(goal_pose_.getGoalLatitude());
+  property_goal_y_->setFloat(goal_pose_.getGoalLongitude());
   queueRender();
-}
-
-void VehicleMapDisplay::navSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
-{
-  // Convert GPS coordinates to tile coordinates
-  latitude_ = msg->latitude;
-  longitude_ = msg->longitude;
-
-  property_longitude_->setFloat(longitude_);
-  property_latitude_->setFloat(latitude_);
-
-  int new_center_x_tile = tile_field_->long_to_tile_x(longitude_, zoom_);
-  int new_center_y_tile = tile_field_->lat_to_tile_y(latitude_, zoom_);
-
-  center_x_tile_ = new_center_x_tile;
-  center_y_tile_ = new_center_y_tile;
-
-  tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
 }
 
 std::pair<double, double> VehicleMapDisplay::localXYZToLatLon(double x, double y)
 {
   int zone;
   bool northp;
-  double origin_lat = 35.23808753540768;  // Example origin latitude
-  double origin_lon = 139.9009591876285;  // Example origin longitude
+  double origin_lat = 35.23808753540768;
+  // double origin_lat = 41.02119576228221;
+  double origin_lon = 139.9009591876285;
+  // double origin_lon = 28.897920380148957;
   double origin_x, origin_y, gamma, k;
 
   // Convert origin to UTM coordinates

@@ -24,7 +24,10 @@
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+// #include <tier4_planning_msgs/msg/route_state.hpp>
+// #include <autoware_adapi_v1_msgs/msg/vehicle_kinematics.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
@@ -69,9 +72,8 @@ protected:
 private:
   void drawWidget(QImage & hud);
   void drawCircle(QPainter & painter, const QRectF & backgroundRect);
-  void navSatFixCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
   void goalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
-  void poseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
+  void poseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
   std::pair<double, double> localXYZToLatLon(double local_x, double local_y);
 
   rviz_satellite::OverlayObject::SharedPtr overlay_;
@@ -105,8 +107,19 @@ private:
   double latitude_;
   double longitude_;
 
+  // subscription ptr and msg ptr
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
-  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_sub_;
+  geometry_msgs::msg::PoseStamped::SharedPtr goal_pose_msg_;
+
+  // TODO: use this after autoware_adapi_v1_msgs::msg::VehicleKinematics is available
+  // subscription ptr and msg ptr
+  // rclcpp::Subscription<autoware_adapi_v1_msgs::msg::VehicleKinematics>::SharedPtr pose_sub_;
+  // autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr pose_msg_;
+
+  // subscription ptr and msg ptr
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr pose_sub_;
+  nav_msgs::msg::Odometry::SharedPtr pose_msg_;
+
   GoalPose goal_pose_;
 
   void drawGoalPose(QPainter & painter, const QRectF & backgroundRect);
