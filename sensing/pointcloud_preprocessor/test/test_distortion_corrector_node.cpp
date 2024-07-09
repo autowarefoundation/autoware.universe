@@ -143,7 +143,7 @@ protected:
         twist_angular_z_ + i * twist_angular_z_increment_, twist_stamp);
       twist_msgs.push_back(twist_msg);
 
-      twist_stamp = addMilliseconds(twist_stamp, twist_msgs_interval_);
+      twist_stamp = addMilliseconds(twist_stamp, twist_msgs_interval_ms_);
     }
 
     return twist_msgs;
@@ -161,7 +161,7 @@ protected:
         imu_angular_y_ + i * imu_angular_y_increment_,
         imu_angular_z_ + i * imu_angular_z_increment_, imu_stamp);
       imu_msgs.push_back(imu_msg);
-      imu_stamp = addMilliseconds(imu_stamp, imu_msgs_interval_);
+      imu_stamp = addMilliseconds(imu_stamp, imu_msgs_interval_ms_);
     }
 
     return imu_msgs;
@@ -231,7 +231,7 @@ protected:
     for (size_t i = 0; i < number_of_points; ++i) {
       double timestamp = point_stamp.seconds();
       timestamps.push_back(timestamp);
-      point_stamp = addMilliseconds(point_stamp, points_interval_);
+      point_stamp = addMilliseconds(point_stamp, points_interval_ms_);
     }
 
     return timestamps;
@@ -262,9 +262,9 @@ protected:
   static constexpr double imu_angular_y_increment_{0.005};
   static constexpr double imu_angular_z_increment_{0.005};
 
-  static constexpr int points_interval_{10};
-  static constexpr int twist_msgs_interval_{24};
-  static constexpr int imu_msgs_interval_{27};
+  static constexpr int points_interval_ms_{10};
+  static constexpr int twist_msgs_interval_ms_{24};
+  static constexpr int imu_msgs_interval_ms_{27};
 
   // for debugging or regenerating the ground truth point cloud
   bool debug_{false};
