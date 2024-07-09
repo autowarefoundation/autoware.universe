@@ -103,7 +103,6 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   mask_pub_ = image_transport::create_publisher(this, "~/out/mask");
   color_mask_pub_ = image_transport::create_publisher(this, "~/out/color_mask");
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
-  str_pub_ = this->create_publisher<std_msgs::msg::String>("~/out/mask_string", 10);
 
   if (declare_parameter("build_only", false)) {
     RCLCPP_INFO(this->get_logger(), "TensorRT engine file is built and exit.");
@@ -197,7 +196,7 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       overlapSegmentByRoi(yolox_object, mask, width, height);
     }
   }
-  // TODO(badai-nguyen): consider to change to 4bits data transfer
+  // Compress mask to RLE format
   if (trt_yolox_->getMultitaskNum() > 0) {
     sensor_msgs::msg::Image::SharedPtr out_mask_msg =
       cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
@@ -208,12 +207,11 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     int step = sizeof(uint8_t) + sizeof(int);
     out_mask_msg->data.resize(static_cast<int>(compressed_data.size()) * step);
     for (size_t i = 0; i < compressed_data.size(); ++i) {
-      std::memcpy(&compressed_data.at(i).first, &out_mask_msg->data[i * step], sizeof(uint8_t));
+      std::memcpy(&out_mask_msg->data[i * step], &compressed_data.at(i).first, sizeof(uint8_t));
       std::memcpy(
-        &compressed_data.at(i).second, &out_mask_msg->data[i * step + sizeof(uint8_t)],
+        &out_mask_msg->data[i * step + sizeof(uint8_t)], &compressed_data.at(i).second,
         sizeof(int));
     }
-    out_mask_msg->step = step;
     mask_pub_.publish(out_mask_msg);
   }
   image_pub_.publish(in_image_ptr->toImageMsg());

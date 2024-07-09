@@ -34,13 +34,13 @@
 #else
 #include <cv_bridge/cv_bridge.h>
 #endif
-#include <std_msgs/msg/string.hpp>
 
 #include <chrono>
 #include <fstream>
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::tensorrt_yolox
@@ -83,8 +83,6 @@ private:
   int mapRoiLabel2SegLabel(const int32_t roi_label_index);
   image_transport::Publisher image_pub_;
   image_transport::Publisher mask_pub_;
-  // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr mask_pub_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr str_pub_;
 
   image_transport::Publisher color_mask_pub_;
 
