@@ -60,7 +60,7 @@ std::string toString(const uint8_t state)
 }
 }  // namespace
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 class SingleImageDebugInferenceNode : public rclcpp::Node
 {
@@ -159,7 +159,7 @@ private:
   cv::Mat image_;
   std::unique_ptr<ClassifierInterface> classifier_ptr_;
 };
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::SingleImageDebugInferenceNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::SingleImageDebugInferenceNode)

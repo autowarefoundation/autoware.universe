@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeOptions & options)
 : Node("traffic_light_classifier_node", options)
@@ -169,8 +169,8 @@ bool TrafficLightClassifierNodelet::is_harsh_backlight(const cv::Mat & img) cons
   return backlight_threshold_ <= intensity;
 }
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #include <rclcpp_components/register_node_macro.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::TrafficLightClassifierNodelet)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightClassifierNodelet)

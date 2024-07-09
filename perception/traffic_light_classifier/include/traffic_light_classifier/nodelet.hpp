@@ -51,7 +51,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 class TrafficLightClassifierNodelet : public rclcpp::Node
 {
@@ -93,6 +93,6 @@ private:
   bool is_harsh_backlight(const cv::Mat & img) const;
 };
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #endif  // TRAFFIC_LIGHT_CLASSIFIER__NODELET_HPP_

@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 ColorClassifier::ColorClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
 {
@@ -255,4 +255,4 @@ rcl_interfaces::msg::SetParametersResult ColorClassifier::parametersCallback(
   return result;
 }
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light

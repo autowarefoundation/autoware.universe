@@ -32,7 +32,7 @@
 
 #include <vector>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 struct HSVConfig
 {
@@ -93,6 +93,6 @@ private:
   cv::Scalar max_hsv_red_;
 };
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #endif  // TRAFFIC_LIGHT_CLASSIFIER__COLOR_CLASSIFIER_HPP_

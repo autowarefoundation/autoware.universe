@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
 {
@@ -207,4 +207,4 @@ bool CNNClassifier::isColorLabel(const std::string label)
   return false;
 }
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light

@@ -22,7 +22,7 @@
 
 #include <vector>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 class ClassifierInterface
 {
@@ -31,6 +31,6 @@ public:
     const std::vector<cv::Mat> & input_image,
     tier4_perception_msgs::msg::TrafficLightArray & traffic_signals) = 0;
 };
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #endif  // TRAFFIC_LIGHT_CLASSIFIER__CLASSIFIER_INTERFACE_HPP_

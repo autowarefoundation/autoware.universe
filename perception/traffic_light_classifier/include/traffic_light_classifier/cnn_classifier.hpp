@@ -41,7 +41,7 @@
 #include <string>
 #include <vector>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 
 using cuda_utils::CudaUniquePtr;
@@ -118,6 +118,6 @@ private:
   std::vector<float> std_;
 };
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #endif  // TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
