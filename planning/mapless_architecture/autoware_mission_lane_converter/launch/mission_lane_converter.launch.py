@@ -29,7 +29,7 @@ def generate_launch_description():
             # mission lane converter executable
             Node(
                 package="autoware_mission_lane_converter",
-                executable="autoware_mission_lane_converter",
+                executable="autoware_mission_lane_converter_exe",
                 name="autoware_mission_lane_converter",
                 namespace="mapless_architecture",
                 remappings=[

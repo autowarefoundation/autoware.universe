@@ -29,7 +29,7 @@ def generate_launch_description():
             # mission_planner executable
             Node(
                 package="autoware_local_mission_planner",
-                executable="autoware_local_mission_planner",
+                executable="autoware_local_mission_planner_exe",
                 name="autoware_local_mission_planner",
                 namespace="mapless_architecture",
                 remappings=[
@@ -55,7 +55,6 @@ def generate_launch_description():
                     LaunchConfiguration("mission_planner_param_file"),
                 ],
                 output="screen",
-                # prefix="gdbserver localhost:5000",
             ),
         ]
     )

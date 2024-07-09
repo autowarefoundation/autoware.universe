@@ -15,3 +15,15 @@ Interact with this node by changing the ROS parameters. For a lane change to the
 ```bash
 ros2 param set /mission_planner/hmi mission LANE_CHANGE_RIGHT
 ```
+
+## Output topics
+
+| Name                      | Type                                 | Description |
+| ------------------------- | ------------------------------------ | ----------- |
+| `hmi_node/output/mission` | autoware_planning_msgs::msg::Mission | mission     |
+
+## Node parameters
+
+| Parameter | Type   | Description                                    |
+| --------- | ------ | ---------------------------------------------- |
+| `mission` | string | the mission (LANE_KEEP, LANE_CHANGE_LEFT, ...) |

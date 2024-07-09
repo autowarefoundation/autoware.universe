@@ -5,18 +5,18 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
-find_package(autoware_cmake REQUIRED)  # automatically find dependencies
+# Find dependencies
+find_package(autoware_cmake REQUIRED)
 ament_auto_find_build_dependencies()
 autoware_package()
 
-# add library to be exported
+# Add library to be exported
 add_library(${PROJECT_NAME} SHARED
   src/helper_functions.cpp)
 
 include_directories(include)
 
-# add dependent libraries
+# Add dependent libraries
 ament_target_dependencies(${PROJECT_NAME}
   geometry_msgs
   tf2
@@ -26,15 +26,15 @@ ament_target_dependencies(${PROJECT_NAME}
   autoware_planning_msgs
   visualization_msgs)
 
-# include public headers
+# Include public headers
 target_include_directories(${PROJECT_NAME} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-# export library
+# Export library
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
-# export dependent libraries
+# Export dependent libraries
 ament_export_dependencies(
   geometry_msgs
   tf2
@@ -44,7 +44,7 @@ ament_export_dependencies(
   autoware_planning_msgs
   visualization_msgs)
 
-# install library
+# Install library
 install(
   DIRECTORY include/
   DESTINATION include
@@ -59,22 +59,18 @@ install(
   INCLUDES DESTINATION include
 )
 
-# configure clang format -----------------------------------------------------------------------------------------------
-set(ament_cmake_clang_format_CONFIG_FILE ../../.clang-format)
-
-# testing --------------------------------------------------------------------------------------------------------------
+# Testing
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   find_package(ament_lint_auto REQUIRED)
 
   ament_auto_add_gtest(${PROJECT_NAME}_tests
-    # MAIN
     test/gtest_main.cpp
-    #
     src/helper_functions.cpp)
 
   ament_lint_auto_find_test_dependencies()
   target_include_directories(${PROJECT_NAME}_tests PRIVATE test/include)
 endif()
 
+# Ensure all packages are correctly installed
 ament_package()

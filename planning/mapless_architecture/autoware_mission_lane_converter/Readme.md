@@ -2,6 +2,24 @@
 
 Converts the selected mission lane to an autoware trajectory.
 
-## Build
+## Input topics
 
-In order to build the code, clone the TIER IV version of the autoware ROS messages from <https://github.com/tier4/autoware_auto_msgs/tree/tier4/main> and include in your build.
+| Name                                         | Type                                             | Description   |
+| -------------------------------------------- | ------------------------------------------------ | ------------- |
+| `mission_lane_converter/input/odometry`      | nav_msgs::msg::Odometry                          | odometry      |
+| `mission_lane_converter/input/mission_lanes` | autoware_planning_msgs::msg::MissionLanesStamped | mission lanes |
+
+## Output topics
+
+| Name                                              | Type                                    | Description       |
+| ------------------------------------------------- | --------------------------------------- | ----------------- |
+| `mission_lane_converter/output/trajectory`        | autoware_planning_msgs::msg::Trajectory | trajectory        |
+| `mission_lane_converter/output/global_trajectory` | autoware_planning_msgs::msg::Trajectory | global trajectory |
+| `mission_lane_converter/output/path`              | autoware_planning_msgs::msg::Path       | path              |
+| `mission_lane_converter/output/global_path`       | autoware_planning_msgs::msg::Path       | global path       |
+
+## Node parameters
+
+| Parameter      | Type  | Description  |
+| -------------- | ----- | ------------ |
+| `target_speed` | float | target speed |

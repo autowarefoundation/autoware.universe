@@ -6,10 +6,10 @@
 #include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "autoware_auto_planning_msgs/msg/path.hpp"
-#include "autoware_auto_planning_msgs/msg/path_point.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
+#include "autoware_planning_msgs/msg/path.hpp"
+#include "autoware_planning_msgs/msg/path_point.hpp"
+#include "autoware_planning_msgs/msg/trajectory.hpp"
+#include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
@@ -20,7 +20,8 @@ namespace autoware::mapless_architecture
 {
 using std::placeholders::_1;
 
-MissionLaneConverterNode::MissionLaneConverterNode() : Node("mission_lane_converter_node")
+MissionLaneConverterNode::MissionLaneConverterNode(const rclcpp::NodeOptions & options)
+: Node("mission_lane_converter_node", options)
 {
   // Set quality of service to best effort (if transmission fails, do not try to
   // resend but rather use new sensor data)
@@ -41,22 +42,22 @@ MissionLaneConverterNode::MissionLaneConverterNode() : Node("mission_lane_conver
       std::bind(&MissionLaneConverterNode::MissionLanesCallback_, this, _1));
 
   // Initialize publisher
-  trajectory_publisher_ = this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
+  trajectory_publisher_ = this->create_publisher<autoware_planning_msgs::msg::Trajectory>(
     "mission_lane_converter/output/trajectory", qos_reliability);
 
-  trajectory_publisher_global_ =
-    this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-      "mission_lane_converter/output/global_trajectory", qos_reliability);
+  trajectory_publisher_global_ = this->create_publisher<autoware_planning_msgs::msg::Trajectory>(
+    "mission_lane_converter/output/global_trajectory", qos_reliability);
 
-  // Artificial publisher to test the trajectory generation
-  publisher_ = this->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
+  // Artificial publisher to test the trajectory generation, TODO(simon.eisenmann@driveblocks.ai):
+  // Remove this publisher later, it is needed to get the vehicle started
+  publisher_ = this->create_publisher<autoware_planning_msgs::msg::Trajectory>(
     "mission_lane_converter/output/global_trajectory", qos_reliability);
 
   // Path publisher
-  path_publisher_ = create_publisher<autoware_auto_planning_msgs::msg::Path>(
+  path_publisher_ = create_publisher<autoware_planning_msgs::msg::Path>(
     "mission_lane_converter/output/path", qos_reliability);
 
-  path_publisher_global_ = create_publisher<autoware_auto_planning_msgs::msg::Path>(
+  path_publisher_global_ = create_publisher<autoware_planning_msgs::msg::Path>(
     "mission_lane_converter/output/global_path", qos_reliability);
 
   timer_ = this->create_wall_timer(
@@ -84,8 +85,7 @@ void MissionLaneConverterNode::TimedStartupTrajectoryCallback()
 {
   if (!mission_lanes_available_once_) {
     // Empty trajectory for controller
-    autoware_auto_planning_msgs::msg::Trajectory trj_msg =
-      autoware_auto_planning_msgs::msg::Trajectory();
+    autoware_planning_msgs::msg::Trajectory trj_msg = autoware_planning_msgs::msg::Trajectory();
 
     // Frame id
     trj_msg.header.frame_id = local_map_frame_;
@@ -125,19 +125,19 @@ void MissionLaneConverterNode::MissionLanesCallback_(
   }
 
   std::tuple<
-    autoware_auto_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
-    autoware_auto_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
+    autoware_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
+    autoware_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
     mission_to_trj = ConvertMissionToTrajectory(msg_mission);
 
-  autoware_auto_planning_msgs::msg::Trajectory trj_msg = std::get<0>(mission_to_trj);
+  autoware_planning_msgs::msg::Trajectory trj_msg = std::get<0>(mission_to_trj);
   visualization_msgs::msg::Marker trj_vis = std::get<1>(mission_to_trj);
-  autoware_auto_planning_msgs::msg::Path path_msg = std::get<2>(mission_to_trj);
+  autoware_planning_msgs::msg::Path path_msg = std::get<2>(mission_to_trj);
   visualization_msgs::msg::MarkerArray path_area = std::get<3>(mission_to_trj);
 
-  autoware_auto_planning_msgs::msg::Trajectory trj_msg_global =
-    TransformToGlobalFrame<autoware_auto_planning_msgs::msg::Trajectory>(trj_msg);
-  autoware_auto_planning_msgs::msg::Path path_msg_global =
-    TransformToGlobalFrame<autoware_auto_planning_msgs::msg::Path>(path_msg);
+  autoware_planning_msgs::msg::Trajectory trj_msg_global =
+    TransformToGlobalFrame<autoware_planning_msgs::msg::Trajectory>(trj_msg);
+  autoware_planning_msgs::msg::Path path_msg_global =
+    TransformToGlobalFrame<autoware_planning_msgs::msg::Path>(path_msg);
 
   visualization_msgs::msg::Marker trj_vis_global = GetGlobalTrjVisualization_(trj_msg_global);
   vis_trajectory_publisher_global_->publish(trj_vis_global);
@@ -171,16 +171,15 @@ void MissionLaneConverterNode::MissionLanesCallback_(
 }
 
 std::tuple<
-  autoware_auto_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
-  autoware_auto_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
+  autoware_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
+  autoware_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
 MissionLaneConverterNode::ConvertMissionToTrajectory(
   const autoware_planning_msgs::msg::MissionLanesStamped & msg)
 {
   // Empty trajectory for controller
-  autoware_auto_planning_msgs::msg::Trajectory trj_msg =
-    autoware_auto_planning_msgs::msg::Trajectory();
+  autoware_planning_msgs::msg::Trajectory trj_msg = autoware_planning_msgs::msg::Trajectory();
 
-  autoware_auto_planning_msgs::msg::Path path_msg = autoware_auto_planning_msgs::msg::Path();
+  autoware_planning_msgs::msg::Path path_msg = autoware_planning_msgs::msg::Path();
 
   // Empty trajectory visualization message
   visualization_msgs::msg::Marker trj_vis, path_center_vis, path_left_vis, path_right_vis;
@@ -290,9 +289,8 @@ MissionLaneConverterNode::ConvertMissionToTrajectory(
 }
 
 void MissionLaneConverterNode::CreateMotionPlannerInput_(
-  autoware_auto_planning_msgs::msg::Trajectory & trj_msg,
-  autoware_auto_planning_msgs::msg::Path & path_msg, visualization_msgs::msg::Marker & trj_vis,
-  visualization_msgs::msg::Marker & path_vis,
+  autoware_planning_msgs::msg::Trajectory & trj_msg, autoware_planning_msgs::msg::Path & path_msg,
+  visualization_msgs::msg::Marker & trj_vis, visualization_msgs::msg::Marker & path_vis,
   const std::vector<geometry_msgs::msg::Point> & centerline_mission_lane)
 {
   // Add a mission lane's centerline to the output trajectory and path messages
@@ -373,11 +371,10 @@ void MissionLaneConverterNode::CreatePathBound_(
 }
 
 void MissionLaneConverterNode::AddPathPoint_(
-  autoware_auto_planning_msgs::msg::Path & pth_msg, const double x, const double y,
-  const double v_x)
+  autoware_planning_msgs::msg::Path & pth_msg, const double x, const double y, const double v_x)
 {
   // Add a trajectory point
-  pth_msg.points.push_back(autoware_auto_planning_msgs::msg::PathPoint());
+  pth_msg.points.push_back(autoware_planning_msgs::msg::PathPoint());
 
   // Fill trajectory points with meaningful data
   pth_msg.points.back().pose.position.x = x;
@@ -390,11 +387,11 @@ void MissionLaneConverterNode::AddPathPoint_(
 }
 
 void MissionLaneConverterNode::AddTrajectoryPoint_(
-  autoware_auto_planning_msgs::msg::Trajectory & trj_msg, const double x, const double y,
+  autoware_planning_msgs::msg::Trajectory & trj_msg, const double x, const double y,
   const double v_x)
 {
   // Add a trajectory point
-  trj_msg.points.push_back(autoware_auto_planning_msgs::msg::TrajectoryPoint());
+  trj_msg.points.push_back(autoware_planning_msgs::msg::TrajectoryPoint());
 
   // Fill trajectory points with meaningful data
   trj_msg.points.back().pose.position.x = x;
@@ -420,7 +417,7 @@ void MissionLaneConverterNode::AddPointVisualizationMarker_(
 }
 
 void MissionLaneConverterNode::AddHeadingToTrajectory_(
-  autoware_auto_planning_msgs::msg::Trajectory & trj_msg)
+  autoware_planning_msgs::msg::Trajectory & trj_msg)
 {
   std::vector<geometry_msgs::msg::Point> points;
 
@@ -549,7 +546,7 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
     }
 
     // Convert the path area's bounds
-    if constexpr (std::is_same<T, autoware_auto_planning_msgs::msg::Path>::value) {
+    if constexpr (std::is_same<T, autoware_planning_msgs::msg::Path>::value) {
       for (size_t ib = 0; ib < 2; ib++) {
         std::vector<geometry_msgs::msg::Point> bound;
         if (ib == 0)
@@ -575,7 +572,7 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
     }
 
     // Add heading if type is a trajectory
-    if constexpr (std::is_same<T, autoware_auto_planning_msgs::msg::Trajectory>::value)
+    if constexpr (std::is_same<T, autoware_planning_msgs::msg::Trajectory>::value)
       AddHeadingToTrajectory_(msg_output);
   }
 
@@ -583,7 +580,7 @@ T MissionLaneConverterNode::TransformToGlobalFrame(const T & msg_input)
 }
 
 visualization_msgs::msg::Marker MissionLaneConverterNode::GetGlobalTrjVisualization_(
-  const autoware_auto_planning_msgs::msg::Trajectory & trj_msg)
+  const autoware_planning_msgs::msg::Trajectory & trj_msg)
 {
   // Empty trajectory visualization message
   visualization_msgs::msg::Marker trj_vis_global;
@@ -608,3 +605,7 @@ visualization_msgs::msg::Marker MissionLaneConverterNode::GetGlobalTrjVisualizat
   return trj_vis_global;
 }
 }  // namespace autoware::mapless_architecture
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::mapless_architecture::MissionLaneConverterNode)

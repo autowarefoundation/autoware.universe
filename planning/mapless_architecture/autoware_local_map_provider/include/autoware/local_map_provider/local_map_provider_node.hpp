@@ -23,7 +23,7 @@ public:
    * Initializes the publisher and subscriber with appropriate topics and QoS
    * settings.
    */
-  LocalMapProviderNode();
+  explicit LocalMapProviderNode(const rclcpp::NodeOptions & options);
 
 private:
   /**

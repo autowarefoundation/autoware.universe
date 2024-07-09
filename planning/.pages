@@ -39,7 +39,12 @@ nav:
       - 'About Freespace Planner': planning/autoware_freespace_planner
       - 'Algorithm': planning/autoware_freespace_planning_algorithms
       - 'RRT*': planning/autoware_freespace_planning_algorithms/rrtstar
-  - 'Mission Planner': planning/autoware_mission_planner
+  - 'Mapless Architecture': planning/mapless_architecture
+    - 'Human Machine Interface': planning/mapless_architecture/autoware_hmi
+    - 'Local Map Provider': planning/mapless_architecture/autoware_local_map_provider
+    - 'Local Mission Planner': planning/mapless_architecture/autoware_local_mission_planner
+    - 'Local Mission Planner Library': planning/mapless_architecture/autoware_local_mission_planner_common
+    - 'Mission Lane Converter': planning/mapless_architecture/autoware_mission_lane_converter
   - 'Local Mission Planner': planning/mapless_architecture
   - 'Motion Planning':
     - 'Path Optimizer':

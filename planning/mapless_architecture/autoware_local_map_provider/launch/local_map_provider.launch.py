@@ -10,7 +10,7 @@ def generate_launch_description():
             # autoware_local_map_provider executable
             Node(
                 package="autoware_local_map_provider",
-                executable="autoware_local_map_provider",
+                executable="autoware_local_map_provider_exe",
                 name="autoware_local_map_provider",
                 namespace="mapless_architecture",
                 remappings=[

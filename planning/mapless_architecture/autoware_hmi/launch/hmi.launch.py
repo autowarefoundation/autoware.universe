@@ -10,7 +10,7 @@ def generate_launch_description():
             # hmi executable
             Node(
                 package="autoware_hmi",
-                executable="autoware_hmi",
+                executable="autoware_hmi_exe",
                 name="autoware_hmi",
                 namespace="mapless_architecture",
                 remappings=[

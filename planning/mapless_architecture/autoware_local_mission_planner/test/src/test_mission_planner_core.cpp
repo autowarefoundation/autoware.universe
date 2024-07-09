@@ -4,6 +4,7 @@
 #include "autoware/local_mission_planner/mission_planner_node.hpp"
 #include "autoware/local_mission_planner_common/helper_functions.hpp"
 #include "gtest/gtest.h"
+#include "rclcpp/rclcpp.hpp"
 
 #include "geometry_msgs/msg/pose.hpp"
 
@@ -117,7 +118,8 @@ int TestCalculateDistanceBetweenPointAndLineString()
   lanelet::BasicPoint2d point(1.0, 1.0);
 
   // Initialize MissionPlannerNode
-  MissionPlannerNode MissionPlanner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode MissionPlanner = MissionPlannerNode(options);
 
   // Run function
   double distance = MissionPlanner.CalculateDistanceBetweenPointAndLineString(linestring, point);
@@ -134,7 +136,8 @@ int TestGetPointOnLane()
   autoware_planning_msgs::msg::RoadSegments road_segments = CreateSegments();
 
   // Initialize MissionPlannerNode
-  MissionPlannerNode MissionPlanner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode MissionPlanner = MissionPlannerNode(options);
 
   // Convert road model
   std::vector<LaneletConnection> lanelet_connections;
@@ -168,7 +171,8 @@ int TestIsOnGoalLane()
   autoware_planning_msgs::msg::RoadSegments road_segments = CreateSegments();
 
   // Initialize MissionPlannerNode
-  MissionPlannerNode MissionPlanner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode MissionPlanner = MissionPlannerNode(options);
 
   // Convert road model
   std::vector<LaneletConnection> lanelet_connections;
@@ -267,7 +271,8 @@ autoware_planning_msgs::msg::RoadSegments GetTestRoadModelForRecenterTests()
 int TestRecenterGoalpoint()
 {
   // Create a mission planner
-  MissionPlannerNode mission_planner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode mission_planner = MissionPlannerNode(options);
 
   // Get a local road model for testing
   autoware_planning_msgs::msg::RoadSegments road_segments = GetTestRoadModelForRecenterTests();
@@ -341,7 +346,8 @@ int TestCheckIfGoalPointShouldBeReset()
   local_map.road_segments = road_segments;
 
   // Initialize MissionPlannerNode
-  MissionPlannerNode MissionPlanner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode MissionPlanner = MissionPlannerNode(options);
 
   // Convert road model
   std::vector<LaneletConnection> lanelet_connections;
@@ -455,7 +461,8 @@ std::tuple<std::vector<lanelet::Lanelet>, std::vector<LaneletConnection>> Create
   message.segments[1].neighboring_segment_id = {-1, -1};
 
   // Initialize MissionPlannerNode
-  MissionPlannerNode MissionPlanner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode MissionPlanner = MissionPlannerNode(options);
 
   // Output
   std::vector<LaneletConnection> lanelet_connections;
@@ -474,7 +481,8 @@ int TestCalculateLanes()
   std::vector<LaneletConnection> lanelet_connections = std::get<1>(tuple);
 
   // Initialize MissionPlannerNode
-  MissionPlannerNode MissionPlanner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode MissionPlanner = MissionPlannerNode(options);
 
   // Call function which is tested
   Lanes result = MissionPlanner.CalculateLanes_(lanelets, lanelet_connections);
@@ -510,7 +518,8 @@ int TestCreateMarkerArray()
   std::vector<LaneletConnection> lanelet_connections = std::get<1>(tuple);
 
   // Initialize MissionPlannerNode
-  MissionPlannerNode MissionPlanner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode MissionPlanner = MissionPlannerNode(options);
 
   // Create empty message
   autoware_planning_msgs::msg::RoadSegments message;
@@ -556,7 +565,8 @@ int TestCreateDrivingCorridor()
   std::vector<LaneletConnection> lanelet_connections = std::get<1>(tuple);
 
   // Initialize MissionPlannerNode
-  MissionPlannerNode MissionPlanner = MissionPlannerNode();
+  rclcpp::NodeOptions options;
+  MissionPlannerNode MissionPlanner = MissionPlannerNode(options);
 
   // Call function which is tested
   autoware_planning_msgs::msg::DrivingCorridor driving_corridor =

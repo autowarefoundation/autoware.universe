@@ -24,7 +24,7 @@ public:
    * Initializes the publisher and subscriber with appropriate topics and QoS
    * settings.
    */
-  HMINode();
+  explicit HMINode(const rclcpp::NodeOptions & options);
 
 private:
   /**

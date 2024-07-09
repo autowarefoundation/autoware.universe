@@ -3,6 +3,7 @@
 
 #include "autoware/mission_lane_converter/mission_lane_converter_node.hpp"
 #include "gtest/gtest.h"
+#include "rclcpp/rclcpp.hpp"
 
 #include "geometry_msgs/msg/point.hpp"
 
@@ -11,7 +12,8 @@ namespace autoware::mapless_architecture
 
 int TestMissionToTrajectory()
 {
-  MissionLaneConverterNode mission_converter = MissionLaneConverterNode();
+  rclcpp::NodeOptions options;
+  MissionLaneConverterNode mission_converter = MissionLaneConverterNode(options);
 
   autoware_planning_msgs::msg::MissionLanesStamped mission_msg;
 
@@ -28,12 +30,12 @@ int TestMissionToTrajectory()
 
   // Get converted trajectory
   std::tuple<
-    autoware_auto_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
-    autoware_auto_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
+    autoware_planning_msgs::msg::Trajectory, visualization_msgs::msg::Marker,
+    autoware_planning_msgs::msg::Path, visualization_msgs::msg::MarkerArray>
     mission_to_trj = mission_converter.ConvertMissionToTrajectory(mission_msg);
 
   // Extract trajectory
-  autoware_auto_planning_msgs::msg::Trajectory trj_msg = std::get<0>(mission_to_trj);
+  autoware_planning_msgs::msg::Trajectory trj_msg = std::get<0>(mission_to_trj);
 
   EXPECT_EQ(trj_msg.points.back().pose.position.x, mission_msg.ego_lane.centerline.back().x);
   EXPECT_EQ(trj_msg.points.back().pose.position.y, mission_msg.ego_lane.centerline.back().y);

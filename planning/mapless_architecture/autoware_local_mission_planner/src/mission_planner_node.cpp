@@ -30,7 +30,8 @@ namespace autoware::mapless_architecture
 {
 using std::placeholders::_1;
 
-MissionPlannerNode::MissionPlannerNode() : Node("mission_planner_node")
+MissionPlannerNode::MissionPlannerNode(const rclcpp::NodeOptions & options)
+: Node("mission_planner_node", options)
 {
   // Set quality of service to best effort (if transmission fails, do not try to
   // resend but rather use new sensor data)
@@ -783,3 +784,7 @@ void MissionPlannerNode::VisualizeCenterlineOfDrivingCorridor(
 }
 
 }  // namespace autoware::mapless_architecture
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::mapless_architecture::MissionPlannerNode)

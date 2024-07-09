@@ -11,7 +11,7 @@ namespace autoware::mapless_architecture
 {
 using std::placeholders::_1;
 
-HMINode::HMINode() : Node("hmi_node")
+HMINode::HMINode(const rclcpp::NodeOptions & options) : Node("hmi_node", options)
 {
   // Set quality of service to best effort (if transmission fails, do not try to
   // resend but rather use new sensor data)
@@ -78,3 +78,7 @@ void HMINode::PublishMission_(std::string mission)
   mission_publisher_->publish(missionMessage);
 }
 }  // namespace autoware::mapless_architecture
+
+#include "rclcpp_components/register_node_macro.hpp"
+
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::mapless_architecture::HMINode)

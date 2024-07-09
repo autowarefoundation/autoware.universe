@@ -51,7 +51,7 @@ struct Lanes
 class MissionPlannerNode : public rclcpp::Node
 {
 public:
-  MissionPlannerNode();
+  explicit MissionPlannerNode(const rclcpp::NodeOptions & options);
 
   /**
     * @brief Function which checks if the vehicle is on the goal lane.
