@@ -198,7 +198,11 @@ void ExternalCmdConverterNode::check_topic_status(
 
 bool ExternalCmdConverterNode::check_emergency_stop_topic_timeout()
 {
-  if (current_gate_mode_ && current_gate_mode_->data == tier4_control_msgs::msg::GateMode::AUTO) {
+  if (!current_gate_mode_) {
+    return true;
+  }  
+
+  if (current_gate_mode_->data == tier4_control_msgs::msg::GateMode::AUTO) {
     latest_emergency_stop_heartbeat_received_time_ = nullptr;
   }
 
