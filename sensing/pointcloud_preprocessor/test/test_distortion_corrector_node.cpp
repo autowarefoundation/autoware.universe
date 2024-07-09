@@ -15,6 +15,13 @@
 // Note: To regenerate the ground truth (GT) for the expected undistorted point cloud values,
 // set the "debug_" value to true to display the point cloud values. Then,
 // replace the expected values with the newly displayed undistorted point cloud values.
+//
+// Also, make sure the point stamp, twist stamp, and imu stamp are not identical.
+// In the current hardcoded design, timestamp of pointcloud, twist, and imu msg are listed below
+// pointcloud (1 msgs, 10
+// points): 10.10, 10.11, 10.12, 10.13, 10.14, 10.15, 10.16, 10.17, 10.18, 10.19 twist (6
+// msgs): 10.095, 10.119, 10.143, 10.167, 10.191, 10.215 imu (6
+// msgs): 10.09, 10.117, 10.144, 10.171, 10.198, 10.225
 
 #include "autoware/universe_utils/math/trigonometry.hpp"
 #include "pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
@@ -130,7 +137,7 @@ protected:
     for (int i = 0; i < 6; ++i) {
       auto twist_msg = generateTwistMsg(10.0 + i * 2, 0.02 + i * 0.01, twist_stamp);
       twist_msgs.push_back(twist_msg);
-      // Make sure the twist stamp is not identical to any point stamp, and imu stamp
+
       twist_stamp = addMilliseconds(twist_stamp, 24);
     }
 
@@ -147,7 +154,6 @@ protected:
       auto imu_msg =
         generateImuMsg(0.01 + i * 0.005, -0.02 + i * 0.005, 0.05 + i * 0.005, imu_stamp);
       imu_msgs.push_back(imu_msg);
-      // Make sure the imu stamp is not identical to any point stamp, and twist stamp
       imu_stamp = addMilliseconds(imu_stamp, 27);
     }
 
