@@ -12,11 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "shape_estimation/filter/no_filter.hpp"
-
-bool NoFilter::filter(
-  [[maybe_unused]] const autoware_perception_msgs::msg::Shape & shape,
-  [[maybe_unused]] const geometry_msgs::msg::Pose & pose)
-{
-  return true;
-}
+#include "autoware/shape_estimation/filter/no_filter.hpp"
