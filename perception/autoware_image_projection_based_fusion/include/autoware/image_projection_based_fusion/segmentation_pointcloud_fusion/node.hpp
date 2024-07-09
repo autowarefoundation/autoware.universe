@@ -48,7 +48,6 @@ public:
   explicit SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-
   cv::Mat rle_decompress(const std::vector<uint8_t> & rle_data, const int rows, const int cols);
   void preprocess(PointCloud2 & pointcloud_msg) override;
 
