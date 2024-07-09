@@ -115,7 +115,9 @@ autoware_perception_msgs::msg::PredictedObjects filter_predicted_objects(
       motion_utils::calcSignedArcLength(
         ego_data.trajectory_points, ego_data.first_trajectory_idx,
         object.kinematics.initial_pose_with_covariance.pose.position) < 0.0;
-    if (is_coming_from_behind) continue;
+    if (params.objects_ignore_behind_ego && is_coming_from_behind) {
+      continue;
+    }
 
     auto filtered_object = object;
     const auto is_invalid_predicted_path = [&](const auto & predicted_path) {
