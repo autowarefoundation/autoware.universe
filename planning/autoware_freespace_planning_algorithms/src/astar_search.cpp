@@ -31,8 +31,7 @@
 
 namespace autoware::freespace_planning_algorithms
 {
-double calcReedsSheppDistance(
-  const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, double radius)
+double calcReedsSheppDistance(const Pose & p1, const Pose & p2, double radius)
 {
   const auto rs_space = ReedsSheppStateSpace(radius);
   const ReedsSheppStateSpace::StateXYT pose0{
@@ -47,8 +46,7 @@ void setYaw(geometry_msgs::msg::Quaternion * orientation, const double yaw)
   *orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
 }
 
-geometry_msgs::msg::Pose calcRelativePose(
-  const geometry_msgs::msg::Pose & base_pose, const geometry_msgs::msg::Pose & pose)
+Pose calcRelativePose(const Pose & base_pose, const Pose & pose)
 {
   tf2::Transform tf_transform;
   tf2::convert(base_pose, tf_transform);
@@ -93,7 +91,7 @@ void AstarSearch::setTransitionTable()
   int steering_ind = -1 * planner_common_param_.turning_steps;
   for (; steering_ind <= planner_common_param_.turning_steps; ++steering_ind) {
     const double steering = static_cast<double>(steering_ind) * steering_resolution_;
-    geometry_msgs::msg::Pose shift_pose = kinematic_bicycle_model::getPoseShift(
+    Pose shift_pose = kinematic_bicycle_model::getPoseShift(
       0.0, collision_vehicle_shape_.base_length, steering, distance);
     forward_transitions.push_back(
       {shift_pose.position.x, shift_pose.position.y, tf2::getYaw(shift_pose.orientation), distance,
@@ -114,8 +112,7 @@ void AstarSearch::setTransitionTable()
   }
 }
 
-bool AstarSearch::makePlan(
-  const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose)
+bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
 {
   start_pose_ = global2local(costmap_, start_pose);
   goal_pose_ = global2local(costmap_, goal_pose);
@@ -187,7 +184,7 @@ bool AstarSearch::setGoalNode()
   return true;
 }
 
-double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose) const
+double AstarSearch::estimateCost(const Pose & pose) const
 {
   double total_cost = 0.0;
   // Temporarily, until reeds_shepp gets stable.
@@ -247,7 +244,7 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     }
 
     // Calculate index of the next state
-    geometry_msgs::msg::Pose next_pose;
+    Pose next_pose;
     next_pose.position.x = current_node.x + transition.shift_x;
     next_pose.position.y = current_node.y + transition.shift_y;
     setYaw(&next_pose.orientation, current_node.theta + transition.shift_theta);
@@ -359,9 +356,9 @@ bool AstarSearch::isGoal(const AstarNode & node) const
   return true;
 }
 
-geometry_msgs::msg::Pose AstarSearch::node2pose(const AstarNode & node) const
+Pose AstarSearch::node2pose(const AstarNode & node) const
 {
-  geometry_msgs::msg::Pose pose_local;
+  Pose pose_local;
 
   pose_local.position.x = node.x;
   pose_local.position.y = node.y;
