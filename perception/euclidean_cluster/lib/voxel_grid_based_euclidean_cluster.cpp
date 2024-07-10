@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
+#include "autoware/euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
 
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 
 #include <unordered_map>
 
-namespace euclidean_cluster
+namespace autoware::euclidean_cluster
 {
 VoxelGridBasedEuclideanCluster::VoxelGridBasedEuclideanCluster()
 {
@@ -117,7 +117,7 @@ bool VoxelGridBasedEuclideanCluster::cluster(
       voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(point.x, point.y, point.z));
     if (map.find(index) != map.end()) {
       auto & cluster_data_size = clusters_data_size.at(map[index]);
-      if (cluster_data_size + point_step > std::size_t(max_cluster_size_ * point_step)) {
+      if (cluster_data_size > std::size_t(max_cluster_size_ * point_step)) {
         continue;
       }
       std::memcpy(
@@ -166,4 +166,4 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   return true;
 }
 
-}  // namespace euclidean_cluster
+}  // namespace autoware::euclidean_cluster

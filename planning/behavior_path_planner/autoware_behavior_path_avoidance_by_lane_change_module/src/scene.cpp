@@ -113,10 +113,8 @@ void AvoidanceByLaneChange::updateSpecialData()
                    : Direction::RIGHT;
   }
 
-  utils::static_obstacle_avoidance::updateRegisteredObject(
-    registered_objects_, avoidance_data_.target_objects, p);
-  utils::static_obstacle_avoidance::compensateDetectionLost(
-    registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
+  utils::static_obstacle_avoidance::compensateLostTargetObjects(
+    registered_objects_, avoidance_data_, clock_.now(), planner_data_, p);
 
   std::sort(
     avoidance_data_.target_objects.begin(), avoidance_data_.target_objects.end(),
@@ -151,8 +149,8 @@ void AvoidanceByLaneChange::fillAvoidanceTargetObjects(
   const auto [object_within_target_lane, object_outside_target_lane] =
     utils::path_safety_checker::separateObjectsByLanelets(
       *planner_data_->dynamic_object, data.current_lanelets,
-      [](const auto & obj, const auto & lane) {
-        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane);
+      [](const auto & obj, const auto & lane, const auto yaw_threshold) {
+        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane, yaw_threshold);
       });
 
   // Assume that the maximum allocation for data.other object is the sum of
