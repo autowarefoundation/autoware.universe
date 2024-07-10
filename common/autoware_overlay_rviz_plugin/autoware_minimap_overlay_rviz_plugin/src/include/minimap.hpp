@@ -22,12 +22,12 @@
 #include <rviz_common/window_manager_interface.hpp>
 #include <rviz_rendering/render_window.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/vehicle_kinematics.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-// #include <tier4_planning_msgs/msg/route_state.hpp>
-// #include <autoware_adapi_v1_msgs/msg/vehicle_kinematics.hpp>
+#include <tier4_planning_msgs/msg/route_state.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
@@ -72,7 +72,8 @@ private:
   void drawWidget(QImage & hud);
   void drawCircle(QPainter & painter, const QRectF & backgroundRect);
   void goalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
-  void poseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+  // void poseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void poseCallback(const autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr msg);
   std::pair<double, double> localXYZToLatLon(double local_x, double local_y);
 
   rviz_satellite::OverlayObject::SharedPtr overlay_;
@@ -111,14 +112,13 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pose_sub_;
   geometry_msgs::msg::PoseStamped::SharedPtr goal_pose_msg_;
 
-  // TODO: use this after autoware_adapi_v1_msgs::msg::VehicleKinematics is available
   // subscription ptr and msg ptr
-  // rclcpp::Subscription<autoware_adapi_v1_msgs::msg::VehicleKinematics>::SharedPtr pose_sub_;
-  // autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr pose_msg_;
+  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::VehicleKinematics>::SharedPtr pose_sub_;
+  autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr pose_msg_;
 
   // subscription ptr and msg ptr
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr pose_sub_;
-  nav_msgs::msg::Odometry::SharedPtr pose_msg_;
+  // rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr pose_sub_;
+  // nav_msgs::msg::Odometry::SharedPtr pose_msg_;
 
   GoalPose goal_pose_;
 

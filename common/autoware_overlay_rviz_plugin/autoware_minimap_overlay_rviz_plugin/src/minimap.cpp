@@ -98,8 +98,12 @@ void VehicleMapDisplay::onInitialize()
     "/planning/mission_planning/echo_back_goal_pose", 10,
     std::bind(&VehicleMapDisplay::goalPoseCallback, this, std::placeholders::_1));
 
-  pose_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
-    "/localization/kinematic_state", 10,
+  // pose_sub_ = node_->create_subscription<nav_msgs::msg::Odometry>(
+  //   "/localization/kinematic_state", 10,
+  //   std::bind(&VehicleMapDisplay::poseCallback, this, std::placeholders::_1));
+
+  pose_sub_ = node_->create_subscription<autoware_adapi_v1_msgs::msg::VehicleKinematics>(
+    "/api/vehicle/kinematics", 10,
     std::bind(&VehicleMapDisplay::poseCallback, this, std::placeholders::_1));
 }
 
@@ -306,20 +310,21 @@ void VehicleMapDisplay::updateGoalPose()
   queueRender();
 }
 
-void VehicleMapDisplay::poseCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
+// void VehicleMapDisplay::poseCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
+void VehicleMapDisplay::poseCallback(
+  const autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr msg)
 {
   pose_msg_ = msg;
 
-  std::pair<double, double> lat_lon =
-    localXYZToLatLon(msg->pose.pose.position.x, msg->pose.pose.position.y);
+  // std::pair<double, double> lat_lon =
+  // localXYZToLatLon(msg->pose.pose.position.x, msg->pose.pose.position.y);
 
-  // TODO: Uncomment this after the autoware_adapi_v1_msgs::msg::VehicleKinematics message is
-  // available
-  // latitude_ = msg->geographic_pose.position.latitude;
-  // longitude_ = msg->geographic_pose.position.longitude;
+  // TODO: test if the conversion is correct
+  latitude_ = msg->geographic_pose.position.latitude;
+  longitude_ = msg->geographic_pose.position.longitude;
 
-  latitude_ = lat_lon.first;
-  longitude_ = lat_lon.second;
+  // latitude_ = lat_lon.first;
+  // longitude_ = lat_lon.second;
 
   property_longitude_->setFloat(longitude_);
   property_latitude_->setFloat(latitude_);
