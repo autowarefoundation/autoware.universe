@@ -432,12 +432,12 @@ bool TrtCommon::buildEngineFromOnnx(
             auto inner_layer_type = inner_layer->getType();
             std::string inner_name = inner_layer->getName();
             if (inner_layer_type == nvinfer1::LayerType::kCONVOLUTION) {
-              layer->setPrecision(nvinfer1::DataType::kHALF);
+              inner_layer->setPrecision(nvinfer1::DataType::kHALF);
               std::cout << "Set kHALF in " << inner_name << std::endl;
               break;
             }
             if (inner_layer_type == nvinfer1::LayerType::kMATRIX_MULTIPLY) {
-              layer->setPrecision(nvinfer1::DataType::kHALF);
+              inner_layer->setPrecision(nvinfer1::DataType::kHALF);
               std::cout << "Set kHALF in " << inner_name << std::endl;
               break;
             }
