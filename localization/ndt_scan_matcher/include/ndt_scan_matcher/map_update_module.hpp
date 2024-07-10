@@ -93,7 +93,7 @@ private:
   bool need_rebuild_;
   std::mutex last_update_pos_mtx_;
   // A copy of last update position, used for checking map range
-  std::optional<geometry_msgs::msg::Point> last_update_pos_;  
+  std::optional<geometry_msgs::msg::Point> last_update_pos_;
 };
 
 #endif  // NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
