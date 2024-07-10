@@ -171,7 +171,7 @@ protected:
     const LaneChangePath & lane_change_path,
     const lane_change::TargetObjects & collision_check_objects,
     const utils::path_safety_checker::RSSparams & rss_params,
-    CollisionCheckDebugMap & debug_data) const;
+    const size_t deceleration_sampling_num, CollisionCheckDebugMap & debug_data) const;
 
   //! @brief Check if the ego vehicle is in stuck by a stationary obstacle.
   //! @param obstacle_check_distance Distance to check ahead for any objects that might be
