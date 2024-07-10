@@ -33,8 +33,7 @@ namespace autoware::freespace_planning_algorithms
 {
 using autoware::universe_utils::calcDistance2d;
 
-double calcReedsSheppDistance(
-  const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, double radius)
+double calcReedsSheppDistance(const Pose & p1, const Pose & p2, double radius)
 {
   const auto rs_space = ReedsSheppStateSpace(radius);
   const ReedsSheppStateSpace::StateXYT pose0{
@@ -49,8 +48,7 @@ void setYaw(geometry_msgs::msg::Quaternion * orientation, const double yaw)
   *orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
 }
 
-geometry_msgs::msg::Pose calcRelativePose(
-  const geometry_msgs::msg::Pose & base_pose, const geometry_msgs::msg::Pose & pose)
+Pose calcRelativePose(const Pose & base_pose, const Pose & pose)
 {
   tf2::Transform tf_transform;
   tf2::convert(base_pose, tf_transform);
@@ -88,8 +86,7 @@ AstarSearch::AstarSearch(
     collision_vehicle_shape_.base_length * base_length_max_expansion_factor_, min_expansion_dist_);
 }
 
-bool AstarSearch::makePlan(
-  const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose)
+bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
 {
   start_pose_ = global2local(costmap_, start_pose);
   goal_pose_ = global2local(costmap_, goal_pose);
@@ -163,7 +160,7 @@ bool AstarSearch::setGoalNode()
   return true;
 }
 
-double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose) const
+double AstarSearch::estimateCost(const Pose & pose) const
 {
   double total_cost = 0.0;
   // Temporarily, until reeds_shepp gets stable.
@@ -364,9 +361,9 @@ bool AstarSearch::isGoal(const AstarNode & node) const
   return true;
 }
 
-geometry_msgs::msg::Pose AstarSearch::node2pose(const AstarNode & node) const
+Pose AstarSearch::node2pose(const AstarNode & node) const
 {
-  geometry_msgs::msg::Pose pose_local;
+  Pose pose_local;
 
   pose_local.position.x = node.x;
   pose_local.position.y = node.y;

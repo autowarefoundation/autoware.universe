@@ -34,6 +34,8 @@
 
 namespace autoware::freespace_planning_algorithms
 {
+using geometry_msgs::msg::Pose;
+
 enum class NodeStatus : uint8_t { None, Open, Closed };
 
 struct AstarParam
@@ -66,8 +68,8 @@ struct AstarNode
   AstarNode * parent = nullptr;          // parent node
 
   inline void set(
-    const geometry_msgs::msg::Pose & pose, const double move_cost, const double total_cost,
-    const double steer_ind, const bool backward)
+    const Pose & pose, const double move_cost, const double total_cost, const double steer_ind,
+    const bool backward)
   {
     x = pose.position.x;
     y = pose.position.y;
@@ -107,9 +109,7 @@ public:
   {
   }
 
-  bool makePlan(
-    const geometry_msgs::msg::Pose & start_pose,
-    const geometry_msgs::msg::Pose & goal_pose) override;
+  bool makePlan(const Pose & start_pose, const Pose & goal_pose) override;
 
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
 
@@ -125,9 +125,9 @@ private:
   void setPath(const AstarNode & goal);
   bool setStartNode();
   bool setGoalNode();
-  double estimateCost(const geometry_msgs::msg::Pose & pose) const;
+  double estimateCost(const Pose & pose) const;
   bool isGoal(const AstarNode & node) const;
-  geometry_msgs::msg::Pose node2pose(const AstarNode & node) const;
+  Pose node2pose(const AstarNode & node) const;
 
   double getExpansionDistance(const AstarNode & current_node) const;
   double getSteeringCost(const int steering_index) const;
