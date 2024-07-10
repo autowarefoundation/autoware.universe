@@ -45,13 +45,6 @@ Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
 namespace image_projection_based_fusion
 {
 
-inline bool isInsideBbox(
-  float proj_x, float proj_y, sensor_msgs::msg::RegionOfInterest roi, float zc)
-{
-  return proj_x >= roi.x_offset * zc && proj_x <= (roi.x_offset + roi.width) * zc &&
-         proj_y >= roi.y_offset * zc && proj_y <= (roi.y_offset + roi.height) * zc;
-}
-
 inline bool isVehicle(int label2d)
 {
   return label2d == autoware_perception_msgs::msg::ObjectClassification::CAR ||
@@ -296,13 +289,13 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   // tf2::doTransform(painted_pointcloud_msg, transformed_pointcloud, transform_stamped);
 
   const auto x_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::X))
+    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointXYZIRCIndex::X))
       .offset;
   const auto y_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Y))
+    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointXYZIRCIndex::Y))
       .offset;
   const auto z_offset =
-    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointIndex::Z))
+    painted_pointcloud_msg.fields.at(static_cast<size_t>(autoware_point_types::PointXYZIRCIndex::Z))
       .offset;
   const auto class_offset = painted_pointcloud_msg.fields.at(4).offset;
   const auto p_step = painted_pointcloud_msg.point_step;

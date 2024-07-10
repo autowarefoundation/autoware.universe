@@ -13,12 +13,8 @@ knownConditionTrueFalse
 missingInclude
 missingIncludeSystem
 noConstructor
-noExplicitConstructor
-noValidConfiguration
 passedByValue
-preprocessorErrorDirective
 redundantInitialization
-shadowFunction
 shadowVariable
 // cspell: ignore uninit
 uninitMemberVar
