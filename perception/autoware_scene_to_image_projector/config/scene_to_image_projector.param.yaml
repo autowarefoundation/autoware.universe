@@ -1,0 +1,12 @@
+/**:
+  ros__parameters:
+    use_trajectory: true
+    use_road_boundaries: true
+    show_pedestrian: true
+    show_bicycle: true
+    show_motorcycle: true
+    show_trailer: true
+    show_bus: true
+    show_truck: true
+    show_car: true
+    objects_type: tracked # detected or tracked

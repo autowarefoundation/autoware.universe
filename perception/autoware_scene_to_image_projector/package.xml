@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>scene_to_image_projector</name>
+  <name>autoware_scene_to_image_projector</name>
   <version>0.1.0</version>
-  <description>The scene_to_image_projector package</description>
+  <description>The autoware_scene_to_image_projector package</description>
   <maintainer email="kcolak@leodrive.ai">Kaan Colak</maintainer>
+  <maintainer email="palas21@itu.edu.tr">Safak Ozkan Pala</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
@@ -14,9 +15,7 @@
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>
   <depend>cv_bridge</depend>
-  <depend>image_transport</depend>
   <depend>libboost-filesystem-dev</depend>
-  <depend>message_filters</depend>
   <depend>perception_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

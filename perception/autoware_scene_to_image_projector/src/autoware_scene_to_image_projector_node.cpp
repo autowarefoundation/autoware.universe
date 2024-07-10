@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene_to_image_projector/node.hpp"
+#include "autoware_scene_to_image_projector_node.hpp"
 #include <object_recognition_utils/object_recognition_utils.hpp>
 #include <boost/optional.hpp>
 
@@ -23,7 +23,7 @@
 
 namespace
 {
-boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
+boost::optional<geometry_msgs::msg::Transform> get_transform_anonymous(
   const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
   const std::string & target_frame_id, const rclcpp::Time & time)
 {
@@ -46,7 +46,7 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
   }
 }
 
-bool isPolygonContained(const std::vector<cv::Point2f>& containee, const std::vector<std::vector<cv::Point2f>>& container) {   
+bool is_polygon_contained(const std::vector<cv::Point2f>& containee, const std::vector<std::vector<cv::Point2f>>& container) {   
     for(auto const& poly : container) {
         size_t counter = 0; 
         std::vector<cv::Point2f> contour;
@@ -61,16 +61,16 @@ bool isPolygonContained(const std::vector<cv::Point2f>& containee, const std::ve
 
 }  // namespace
 
-namespace scene_to_image_projector
+namespace autoware::scene_to_image_projector
 {
 SceneToImageProjectorNode::SceneToImageProjectorNode(const rclcpp::NodeOptions & options)
-: Node("scene_to_image_projector_node", options),
+: Node("scene_to_image_projector", options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_)
 {
   RCLCPP_INFO(this->get_logger(), "SceneToImageProjectorNode::SceneToImageProjectorNode");
 
-  auto objects_type = declare_parameter<std::string>("objects_type", "None");
+  auto objects_type = declare_parameter<std::string>("objects_type", "detected");
   auto use_trajectory = declare_parameter<bool>("use_trajectory", false);
   auto use_road_boundaries = declare_parameter<bool>("use_road_boundaries", false);
 
@@ -162,7 +162,7 @@ void SceneToImageProjectorNode::image_callback(
     Eigen::Matrix4d projection = get_projection_matrix(*latest_camera_info_);
 
     if(latest_detected_objects_received_){
-      const auto self_transform = getTransformAnonymous(
+      const auto self_transform = get_transform_anonymous(
         tf_buffer_, latest_detected_objects_->header.frame_id, latest_camera_info_->header.frame_id,
         latest_detected_objects_->header.stamp);
 
@@ -251,7 +251,7 @@ void SceneToImageProjectorNode::image_callback(
       }      
     }
     if(latest_tracked_objects_received_){
-      const auto self_transform = getTransformAnonymous(
+      const auto self_transform = get_transform_anonymous(
         tf_buffer_, latest_tracked_objects_->header.frame_id, latest_camera_info_->header.frame_id,
         latest_tracked_objects_->header.stamp);
 
@@ -339,11 +339,11 @@ void SceneToImageProjectorNode::image_callback(
       }
     }
     if(latest_trajectory_received_){
-      const auto self_transform = getTransformAnonymous(
+      const auto self_transform = get_transform_anonymous(
         tf_buffer_, latest_trajectory_->header.frame_id, latest_camera_info_->header.frame_id, latest_trajectory_->header.stamp);
 
       if (!self_transform) {
-        RCLCPP_ERROR(this->get_logger(), "Transform is not possible!");
+        RCLCPP_WARN(this->get_logger(), "Transform is not possible!");
         return;
       }
 
@@ -385,11 +385,11 @@ void SceneToImageProjectorNode::image_callback(
       }
     }
     if(latest_path_received_){
-      const auto self_transform = getTransformAnonymous(
+      const auto self_transform = get_transform_anonymous(
         tf_buffer_, latest_path_->header.frame_id, latest_camera_info_->header.frame_id, latest_path_->header.stamp);
 
       if (!self_transform) {  
-        RCLCPP_ERROR(this->get_logger(), "Transform is not possible!");
+        RCLCPP_WARN(this->get_logger(), "Transform is not possible!");
         return;
       }
 
@@ -584,14 +584,14 @@ void SceneToImageProjectorNode::draw_bounding_box(
     cv::line(image_copy, point_on_image_1, point_on_image_2, cv::Scalar(0, 0, 255), 8);
   }
 
-  if (!isPolygonContained(points, previous_polygons)){
+  if (!is_polygon_contained(points, previous_polygons)){
     previous_polygons.push_back(points);
     image = image_copy.clone();
   }
 }
 
-}  // namespace scene_to_image_projector
+}  // namespace autoware::scene_to_image_projector
 
 #include <rclcpp_components/register_node_macro.hpp>
 
-RCLCPP_COMPONENTS_REGISTER_NODE(scene_to_image_projector::SceneToImageProjectorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::scene_to_image_projector::SceneToImageProjectorNode)

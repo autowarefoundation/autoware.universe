@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_
-#define SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_
+#ifndef AUTOWARE_SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_
+#define AUTOWARE_SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <image_transport/image_transport.hpp>
-#include <image_transport/subscriber_filter.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -33,17 +31,13 @@
 #include <sensor_msgs/msg/image.hpp>
 
 #include <cv_bridge/cv_bridge.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/time_synchronizer.h>
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-namespace scene_to_image_projector
+namespace autoware::scene_to_image_projector
 {
 class SceneToImageProjectorNode : public rclcpp::Node
 {
@@ -127,6 +121,6 @@ private:
   bool projectable(const geometry_msgs::msg::Point & point, const Eigen::Matrix4d & projection_matrix);
 };
 
-}  // namespace scene_to_image_projector
+}  // namespace autoware::scene_to_image_projector
 
-#endif  // SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_
+#endif  // AUTOWARE::SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_

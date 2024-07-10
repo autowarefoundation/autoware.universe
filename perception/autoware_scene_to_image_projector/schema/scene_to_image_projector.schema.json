@@ -1,0 +1,78 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Parameters for Scene to Image Projectory Node",
+    "type": "object",
+    "definitions": {
+      "scene_to_image_projectory_node": {
+        "type": "object",
+        "properties": {
+          "use_trajectory": {
+            "type": "boolean",
+            "description": "Enable or disable the use of trajectory",
+            "default": true
+          },
+          "use_road_boundaries": {
+            "type": "boolean",
+            "description": "Enable or disable the use of road boundaries",
+            "default": true
+          },
+          "show_pedestrian": {
+            "type": "boolean",
+            "description": "Show or hide pedestrian objects",
+            "default": true
+          },
+          "show_bicycle": {
+            "type": "boolean",
+            "description": "Show or hide bicycle objects",
+            "default": true
+          },
+          "show_motorcycle": {
+            "type": "boolean",
+            "description": "Show or hide motorcycle objects",
+            "default": true
+            },
+        "show_trailer": {
+            "type": "boolean",
+            "description": "Show or hide trailer objects",
+            "default": true
+          },
+          "show_bus": {
+            "type": "boolean",
+            "description": "Show or hide bus objects",
+            "default": true
+          },
+          "show_truck": {
+            "type": "boolean",
+            "description": "Show or hide truck objects",
+            "default": true
+          },
+          "show_car": {
+            "type": "boolean",
+            "description": "Show or hide car objects",
+            "default": true
+            },
+          "objects_type": {
+            "type": "string",
+            "description": "Tracked or detected objects",
+            "default": "tracked"
+          }
+        },
+        "required": ["use_trajectory", "use_road_boundaries", "show_pedestrian", "show_bicycle", "show_motorcycle", "show_trailer", "show_bus", "show_truck", "show_car", "objects_type"],
+        "additionalProperties": false
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "$ref": "#/definitions/scene_to_image_projectory_node"
+          }
+        },
+        "required": ["ros__parameters"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["/**"],
+    "additionalProperties": false
+  }

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(scene_to_image_projector)
+project(autoware_scene_to_image_projector)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -16,20 +16,20 @@ include_directories(
         ${EIGEN3_INCLUDE_DIRS}
 )
 
-ament_auto_add_library(scene_to_image_projector SHARED
-        src/node.cpp
+ament_auto_add_library(${PROJECT_NAME}_node SHARED
+        src/autoware_scene_to_image_projector_node.cpp
         )
-target_link_libraries(scene_to_image_projector
+target_link_libraries(${PROJECT_NAME}_node
         ${OpenCV_LIBRARIES}
         ${EIGEN3_LIBRARIES}
         )
 
-rclcpp_components_register_node(scene_to_image_projector
-        PLUGIN "scene_to_image_projector::SceneToImageProjectorNode"
-        EXECUTABLE scene_to_image_projector_node
+rclcpp_components_register_node(${PROJECT_NAME}_node
+        PLUGIN "autoware::scene_to_image_projector::SceneToImageProjectorNode"
+        EXECUTABLE ${PROJECT_NAME}
         )
-
 
 ament_auto_package(INSTALL_TO_SHARE
         launch
+        config
         )
