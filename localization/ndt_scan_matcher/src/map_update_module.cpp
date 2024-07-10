@@ -109,12 +109,19 @@ bool MapUpdateModule::should_update_map(
 
 bool MapUpdateModule::out_of_map_range(const geometry_msgs::msg::Point & position)
 {
-  if (last_update_position_ == std::nullopt) {
+  last_update_pos_mtx_.lock();
+
+  if (last_update_pos_ == std::nullopt) {
+    last_update_pos_mtx_.unlock();
+
     return true;
   }
 
-  const double dx = position.x - last_update_position_.value().x;
-  const double dy = position.y - last_update_position_.value().y;
+  const double dx = position.x - last_update_pos_.value().x;
+  const double dy = position.y - last_update_pos_.value().y;
+
+  last_update_pos_mtx_.unlock();
+
   const double distance = std::hypot(dx, dy);
 
   // check distance_last_update_position_to_current_position
@@ -156,6 +163,11 @@ void MapUpdateModule::update_map(
       RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1000, message.str());
       last_update_position_ = position;
       ndt_ptr_mutex_->unlock();
+
+      last_update_pos_mtx_.lock();
+      last_update_pos_ = last_update_position_;
+      last_update_pos_mtx_.unlock();
+
       return;
     }
 
@@ -174,6 +186,11 @@ void MapUpdateModule::update_map(
     diagnostics_ptr->add_key_value("is_updated_map", updated);
     if (!updated) {
       last_update_position_ = position;
+
+      last_update_pos_mtx_.lock();
+      last_update_pos_ = last_update_position_;
+      last_update_pos_mtx_.unlock();
+
       return;
     }
 
@@ -194,6 +211,10 @@ void MapUpdateModule::update_map(
 
   // Memorize the position of the last update
   last_update_position_ = position;
+
+  last_update_pos_mtx_.lock();
+  last_update_pos_ = last_update_position_;
+  last_update_pos_mtx_.unlock();
 
   // Publish the new ndt maps
   publish_partial_pcd_map();
