@@ -33,7 +33,8 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
   const auto point_cloud_range =
     this->declare_parameter<std::vector<double>>("point_cloud_range", descriptor);
   const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size", descriptor);
-  const int num_proposals = (this->declare_parameter<int>("num_proposals", descriptor));
+  const std::size_t num_proposals =
+    this->declare_parameter<std::int64_t>("num_proposals", descriptor);
   const std::string onnx_path = this->declare_parameter<std::string>("onnx_path", descriptor);
   const std::string engine_path = this->declare_parameter<std::string>("engine_path", descriptor);
 

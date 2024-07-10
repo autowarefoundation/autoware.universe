@@ -27,7 +27,7 @@ public:
   TransfusionConfig(
     const std::size_t cloud_capacity, const std::vector<int64_t> & voxels_num,
     const std::vector<double> & point_cloud_range, const std::vector<double> & voxel_size,
-    const int num_proposals, const float circle_nms_dist_threshold,
+    const std::size_t num_proposals, const float circle_nms_dist_threshold,
     const std::vector<double> & yaw_norm_thresholds, const float score_threshold)
   {
     cloud_capacity_ = cloud_capacity;
