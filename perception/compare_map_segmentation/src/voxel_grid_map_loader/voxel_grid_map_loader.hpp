@@ -140,7 +140,7 @@ public:
     rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
     std::string * tf_map_input_frame, std::mutex * mutex);
   virtual void onMapCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr map);
-  virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
+  bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
 };
 
 class VoxelGridDynamicMapLoader : public VoxelGridMapLoader
@@ -201,7 +201,7 @@ public:
   void timer_callback();
   bool should_update_map() const;
   void request_update_map(const geometry_msgs::msg::Point & position);
-  virtual bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold);
+  bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
   /** \brief Check if point close to map pointcloud in the */
   bool is_close_to_next_map_grid(
     const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold);
