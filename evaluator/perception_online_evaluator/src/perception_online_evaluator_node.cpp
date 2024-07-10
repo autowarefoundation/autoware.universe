@@ -279,7 +279,8 @@ rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParame
     updateParam<bool>(
       parameters, name_space + "history_path", p->debug_marker_parameters.show_history_path);
     updateParam<bool>(
-      parameters, name_space + "history_path_arrows", p->debug_marker_parameters.show_history_path_arrows);
+      parameters, name_space + "history_path_arrows",
+      p->debug_marker_parameters.show_history_path_arrows);
     updateParam<bool>(
       parameters, name_space + "smoothed_history_path",
       p->debug_marker_parameters.show_smoothed_history_path);
@@ -289,7 +290,8 @@ rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParame
     updateParam<bool>(
       parameters, name_space + "predicted_path", p->debug_marker_parameters.show_predicted_path);
     updateParam<bool>(
-      parameters, name_space + "predicted_path_gt", p->debug_marker_parameters.show_predicted_path_gt);
+      parameters, name_space + "predicted_path_gt",
+      p->debug_marker_parameters.show_predicted_path_gt);
     updateParam<bool>(
       parameters, name_space + "deviation_lines", p->debug_marker_parameters.show_deviation_lines);
     updateParam<bool>(
