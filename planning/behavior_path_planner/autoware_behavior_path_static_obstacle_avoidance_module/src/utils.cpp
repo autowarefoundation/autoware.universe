@@ -1842,17 +1842,19 @@ void filterTargetObjects(
       utils::static_obstacle_avoidance::calcEnvelopeOverhangDistance(o, data.reference_path);
     o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
 
-    // TODO(Satoshi Ota) parametrize stop time threshold if need.
-    constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
     if (filtering_utils::isUnknownTypeObject(o)) {
+      // TARGET: UNKNOWN
+
+      // TODO(Satoshi Ota) parametrize stop time threshold if need.
+      constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
       if (o.stop_time < STOP_TIME_THRESHOLD) {
         o.info = ObjectInfo::UNSTABLE_OBJECT;
         data.other_objects.push_back(o);
         continue;
       }
-    }
+    } else if (filtering_utils::isVehicleTypeObject(o)) {
+      // TARGET: CAR, TRUCK, BUS, TRAILER, MOTORCYCLE
 
-    if (filtering_utils::isVehicleTypeObject(o)) {
       o.is_within_intersection =
         filtering_utils::isWithinIntersection(o, planner_data->route_handler);
       o.is_parked =
@@ -1869,6 +1871,8 @@ void filterTargetObjects(
         continue;
       }
     } else {
+      // TARGET: PEDESTRIAN, BICYCLE
+
       o.is_within_intersection =
         filtering_utils::isWithinIntersection(o, planner_data->route_handler);
       o.is_parked = false;
