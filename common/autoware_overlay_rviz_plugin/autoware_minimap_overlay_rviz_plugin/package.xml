@@ -7,6 +7,7 @@
   <maintainer email="khalil@leodrive.ai">khalil</maintainer>
   <license>TODO: License declaration</license>
 
+  <depend>autoware_cmake</depend>
   <depend>GeographicLib</depend>
   <depend>OGRE</depend>
   <depend>Qt5Network</depend>

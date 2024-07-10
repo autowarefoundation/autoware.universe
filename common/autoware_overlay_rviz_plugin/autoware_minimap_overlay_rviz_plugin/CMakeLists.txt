@@ -1,20 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
 project(autoware_minimap_overlay_rviz_plugin)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wunused)
-endif()
-
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
-
-
 
 set(
     headers_to_moc
