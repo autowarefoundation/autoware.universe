@@ -11,20 +11,9 @@ endif()
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
 
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(rviz_common REQUIRED)
-find_package(rviz_default_plugins REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(nav_msgs REQUIRED)
-find_package(tf2_ros REQUIRED)
-find_package(pluginlib REQUIRED)
-find_package(angles REQUIRED)
-find_package(Qt5 COMPONENTS Network REQUIRED)
-find_package(OGRE REQUIRED)
-find_package(GeographicLib REQUIRED)
+find_package(autoware_cmake REQUIRED)
+autoware_package()
+
 
 
 set(

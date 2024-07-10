@@ -15,6 +15,12 @@
   <depend>rviz_default_plugins</depend>
   <depend>sensor_msgs</depend>
   <depend>tf2_ros</depend>
+  <depend>pluginlib</depend>
+  <depend>Qt5Network</depend>
+  <depend>OGRE</depend>
+  <depend>GeographicLib</depend>
+  <depend>autoware_adapi_v1_msgs</depend>
+  <depend>tier4_planning_msgs</depend>
 
   <build_depend>qtbase5-dev</build_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
