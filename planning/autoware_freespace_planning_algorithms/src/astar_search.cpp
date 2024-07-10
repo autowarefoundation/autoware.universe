@@ -31,6 +31,8 @@
 
 namespace autoware::freespace_planning_algorithms
 {
+using autoware::universe_utils::calcDistance2d;
+
 double calcReedsSheppDistance(
   const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Pose & p2, double radius)
 {
@@ -137,7 +139,7 @@ bool AstarSearch::setStartNode()
   start_node->theta = 2.0 * M_PI / planner_common_param_.theta_size * index.theta;
   start_node->gc = 0;
   start_node->fc = estimateCost(start_pose_);
-  start_node->dist_to_goal = autoware::universe_utils::calcDistance2d(start_pose_, goal_pose_);
+  start_node->dist_to_goal = calcDistance2d(start_pose_, goal_pose_);
   start_node->dist_to_obs = getObstacleEDT(index);
   start_node->steering_index = 0;
   start_node->is_back = false;
@@ -169,8 +171,7 @@ double AstarSearch::estimateCost(const geometry_msgs::msg::Pose & pose) const
     total_cost += calcReedsSheppDistance(pose, goal_pose_, avg_turning_radius_) *
                   astar_param_.distance_heuristic_weight;
   } else {
-    total_cost += autoware::universe_utils::calcDistance2d(pose, goal_pose_) *
-                  astar_param_.distance_heuristic_weight;
+    total_cost += calcDistance2d(pose, goal_pose_) * astar_param_.distance_heuristic_weight;
   }
   return total_cost;
 }
@@ -254,7 +255,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
       next_node->set(next_pose, move_cost, total_cost, steering_index, is_back);
       next_node->dir_distance =
         std::abs(distance) + (is_direction_switch ? 0.0 : current_node.dir_distance);
-      next_node->dist_to_goal = autoware::universe_utils::calcDistance2d(next_pose, goal_pose_);
+      next_node->dist_to_goal = calcDistance2d(next_pose, goal_pose_);
       next_node->dist_to_obs = distance_to_obs;
       next_node->parent = &current_node;
       openlist_.push(next_node);
@@ -300,10 +301,27 @@ void AstarSearch::setPath(const AstarNode & goal_node)
 
   geometry_msgs::msg::PoseStamped pose;
   pose.header = header;
+
+  const auto interpolate = [this, &pose](const AstarNode & node) {
+    if (node.parent == nullptr || !astar_param_.adapt_expansion_distance) return;
+    const auto parent_pose = node2pose(*node.parent);
+    const double distance_2d = calcDistance2d(node2pose(node), parent_pose);
+    int n = static_cast<int>(distance_2d / min_expansion_dist_);
+    for (int i = 1; i < n; ++i) {
+      double dist = ((distance_2d * i) / n) * (node.is_back ? -1.0 : 1.0);
+      double steering = node.steering_index * steering_resolution_;
+      auto local_pose = kinematic_bicycle_model::getPose(
+        parent_pose, collision_vehicle_shape_.base_length, steering, dist);
+      pose.pose = local2global(costmap_, local_pose);
+      waypoints_.waypoints.push_back({pose, node.is_back});
+    }
+  };
+
   // push astar nodes poses
   while (node != nullptr) {
     pose.pose = local2global(costmap_, node2pose(*node));
     waypoints_.waypoints.push_back({pose, node->is_back});
+    interpolate(*node);
     // To the next node
     node = node->parent;
   }
