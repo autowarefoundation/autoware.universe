@@ -181,10 +181,10 @@ bool LidarApolloInstanceSegmentation::detectDynamicObjects(
     score_threshold_, height_thresh, min_pts_num, output, transformed_cloud.header);
 
   // move down pointcloud z_offset in z axis
-  for (std::size_t i = 0; i < output.feature_objects.size(); i++) {
+  for (auto & feature_object : output.feature_objects) {
     sensor_msgs::msg::PointCloud2 updated_cloud;
-    transformCloud(output.feature_objects.at(i).feature.cluster, updated_cloud, -z_offset_);
-    output.feature_objects.at(i).feature.cluster = updated_cloud;
+    transformCloud(feature_object.feature.cluster, updated_cloud, -z_offset_);
+    feature_object.feature.cluster = updated_cloud;
   }
 
   output.header = transformed_cloud.header;
