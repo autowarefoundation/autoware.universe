@@ -219,7 +219,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
 {
   const auto current_pose = node2pose(current_node);
   double direction = is_back ? -1.0 : 1.0;
-  if (search_method_ == SearchMethod::Backward) std::negate(direction);
+  if (search_method_ == SearchMethod::Backward) direction*= -1.0;
   double distance = getExpansionDistance(current_node) * direction;
   int steering_index = -1 * planner_common_param_.turning_steps;
   for (; steering_index <= planner_common_param_.turning_steps; ++steering_index) {
@@ -316,6 +316,7 @@ void AstarSearch::setPath(const AstarNode & goal_node)
     int n = static_cast<int>(distance_2d / min_expansion_dist_);
     for (int i = 1; i < n; ++i) {
       double dist = ((distance_2d * i) / n) * (node.is_back ? -1.0 : 1.0);
+      if (search_method_ == SearchMethod::Backward) dist *= -1.0;
       double steering = node.steering_index * steering_resolution_;
       auto local_pose = kinematic_bicycle_model::getPose(
         parent_pose, collision_vehicle_shape_.base_length, steering, dist);
@@ -323,12 +324,12 @@ void AstarSearch::setPath(const AstarNode & goal_node)
       waypoints.push_back({pose, node.is_back});
     }
   };
-
+  
   // push astar nodes poses
   while (node != nullptr) {
     pose.pose = local2global(costmap_, node2pose(*node));
     waypoints.push_back({pose, node->is_back});
-    interpolate(node)
+    interpolate(*node);
     // To the next node
     node = node->parent;
   }
