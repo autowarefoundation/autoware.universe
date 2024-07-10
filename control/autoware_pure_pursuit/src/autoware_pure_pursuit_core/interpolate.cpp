@@ -229,8 +229,8 @@ bool SplineInterpolate::interpolate(
   generateSpline(base_value);
 
   // interpolate by spline  with normalized index
-  for (int i = 0; i < static_cast<int>(normalized_idx.size()); ++i) {
-    return_value.push_back(getValue(normalized_idx[i]));
+  for (int j = 0; j < static_cast<int>(normalized_idx.size()); ++j) {
+    return_value.push_back(getValue(normalized_idx[j]));
   }
   return true;
 }
