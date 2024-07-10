@@ -27,6 +27,8 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names", descriptor);
   const std::string trt_precision =
     this->declare_parameter<std::string>("trt_precision", descriptor);
+  const std::size_t cloud_capacity =
+    this->declare_parameter<std::int64_t>("cloud_capacity", descriptor);
   const auto voxels_num = this->declare_parameter<std::vector<int64_t>>("voxels_num", descriptor);
   const auto point_cloud_range =
     this->declare_parameter<std::vector<double>>("point_cloud_range", descriptor);
@@ -73,8 +75,8 @@ LidarTransfusionNode::LidarTransfusionNode(const rclcpp::NodeOptions & options)
   DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   TransfusionConfig config(
-    voxels_num, point_cloud_range, voxel_size, circle_nms_dist_threshold, yaw_norm_thresholds,
-    score_threshold);
+    cloud_capacity, voxels_num, point_cloud_range, voxel_size, circle_nms_dist_threshold,
+    yaw_norm_thresholds, score_threshold);
 
   const auto allow_remapping_by_area_matrix =
     this->declare_parameter<std::vector<int64_t>>("allow_remapping_by_area_matrix", descriptor);
