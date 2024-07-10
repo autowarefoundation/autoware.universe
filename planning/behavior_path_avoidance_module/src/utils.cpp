@@ -879,7 +879,7 @@ bool isSatisfiedWithVehicleCondition(
 
   // from here, filtering for ambiguous vehicle.
 
-  if (!parameters->enable_avoidance_for_ambiguous_vehicle) {
+  if (parameters->policy_ambiguous_vehicle == "ignore") {
     object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
     return false;
   }
@@ -888,6 +888,7 @@ bool isSatisfiedWithVehicleCondition(
     object.stop_time > parameters->time_threshold_for_ambiguous_vehicle;
   if (!stop_time_longer_than_threshold) {
     object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
+    object.is_ambiguous = false;
     return false;
   }
 
@@ -896,6 +897,7 @@ bool isSatisfiedWithVehicleCondition(
     parameters->distance_threshold_for_ambiguous_vehicle;
   if (is_moving_distance_longer_than_threshold) {
     object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
+    object.is_ambiguous = false;
     return false;
   }
 
@@ -906,22 +908,9 @@ bool isSatisfiedWithVehicleCondition(
       return true;
     }
   } else {
-    if (object.behavior == ObjectData::Behavior::MERGING) {
-      object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
-      object.is_ambiguous = true;
-      return true;
-    }
-
-    if (object.behavior == ObjectData::Behavior::DEVIATING) {
-      object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
-      object.is_ambiguous = true;
-      return true;
-    }
-
-    if (object.behavior == ObjectData::Behavior::NONE) {
-      object.is_ambiguous = false;
-      return true;
-    }
+    object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
+    object.is_ambiguous = true;
+    return true;
   }
 
   object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
