@@ -598,7 +598,7 @@ TEST_F(FakeNodeFixture, longitudinal_check_steer_converged)
 
     ASSERT_TRUE(tester.received_control_command);
     // Keep stopped state when the lateral control is not converged.
-    EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 0.0f);
+    EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.speed, 0.0f);
   }
 
   {  // Check if the ego can keep stopped after the following sequence
@@ -613,6 +613,6 @@ TEST_F(FakeNodeFixture, longitudinal_check_steer_converged)
 
     ASSERT_TRUE(tester.received_control_command);
     // Keep stopped state when the lateral control is not converged.
-    EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 0.0f);
+    EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.speed, 0.0f);
   }
 }
