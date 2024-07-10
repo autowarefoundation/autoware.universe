@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
+#include "autoware/euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
 
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 
 #include <unordered_map>
 
-namespace euclidean_cluster
+namespace autoware::euclidean_cluster
 {
 VoxelGridBasedEuclideanCluster::VoxelGridBasedEuclideanCluster()
 {
@@ -106,7 +106,7 @@ bool VoxelGridBasedEuclideanCluster::cluster(
     temporary_cluster.height = pointcloud_msg->height;
     temporary_cluster.fields = pointcloud_msg->fields;
     temporary_cluster.point_step = point_step;
-    temporary_cluster.data.resize(max_cluster_size_ * point_step);
+    temporary_cluster.data.resize(cluster.indices.size() * point_step);
     clusters_data_size.push_back(0);
   }
 
@@ -117,13 +117,17 @@ bool VoxelGridBasedEuclideanCluster::cluster(
       voxel_grid_.getCentroidIndexAt(voxel_grid_.getGridCoordinates(point.x, point.y, point.z));
     if (map.find(index) != map.end()) {
       auto & cluster_data_size = clusters_data_size.at(map[index]);
-      if (cluster_data_size + point_step > std::size_t(max_cluster_size_ * point_step)) {
+      if (cluster_data_size > std::size_t(max_cluster_size_ * point_step)) {
         continue;
       }
       std::memcpy(
         &temporary_clusters.at(map[index]).data[cluster_data_size],
         &pointcloud_msg->data[i * point_step], point_step);
       cluster_data_size += point_step;
+      if (cluster_data_size == temporary_clusters.at(map[index]).data.size()) {
+        temporary_clusters.at(map[index])
+          .data.resize(temporary_clusters.at(map[index]).data.size() * 2);
+      }
     }
   }
 
@@ -162,4 +166,4 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   return true;
 }
 
-}  // namespace euclidean_cluster
+}  // namespace autoware::euclidean_cluster
