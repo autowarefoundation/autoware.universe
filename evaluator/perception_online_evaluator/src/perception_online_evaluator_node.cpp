@@ -275,25 +275,25 @@ rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParame
 
   // update debug marker parameters
   {
-    const std::string ns = "debug_marker.";
+    const std::string name_space = "debug_marker.";
     updateParam<bool>(
-      parameters, ns + "history_path", p->debug_marker_parameters.show_history_path);
+      parameters, name_space + "history_path", p->debug_marker_parameters.show_history_path);
     updateParam<bool>(
-      parameters, ns + "history_path_arrows", p->debug_marker_parameters.show_history_path_arrows);
+      parameters, name_space + "history_path_arrows", p->debug_marker_parameters.show_history_path_arrows);
     updateParam<bool>(
-      parameters, ns + "smoothed_history_path",
+      parameters, name_space + "smoothed_history_path",
       p->debug_marker_parameters.show_smoothed_history_path);
     updateParam<bool>(
-      parameters, ns + "smoothed_history_path_arrows",
+      parameters, name_space + "smoothed_history_path_arrows",
       p->debug_marker_parameters.show_smoothed_history_path_arrows);
     updateParam<bool>(
-      parameters, ns + "predicted_path", p->debug_marker_parameters.show_predicted_path);
+      parameters, name_space + "predicted_path", p->debug_marker_parameters.show_predicted_path);
     updateParam<bool>(
-      parameters, ns + "predicted_path_gt", p->debug_marker_parameters.show_predicted_path_gt);
+      parameters, name_space + "predicted_path_gt", p->debug_marker_parameters.show_predicted_path_gt);
     updateParam<bool>(
-      parameters, ns + "deviation_lines", p->debug_marker_parameters.show_deviation_lines);
+      parameters, name_space + "deviation_lines", p->debug_marker_parameters.show_deviation_lines);
     updateParam<bool>(
-      parameters, ns + "object_polygon", p->debug_marker_parameters.show_object_polygon);
+      parameters, name_space + "object_polygon", p->debug_marker_parameters.show_object_polygon);
   }
 
   rcl_interfaces::msg::SetParametersResult result;
