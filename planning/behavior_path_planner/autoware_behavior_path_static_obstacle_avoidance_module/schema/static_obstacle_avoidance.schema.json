@@ -16,25 +16,17 @@
           "description": "Path resample interval for output path. Too short interval increases computational cost for latter modules.",
           "default": "4.0"
         },
-        "enable_bound_clipping": {
-          "type": "boolean",
-          "description": "Enable clipping left and right bound of drivable area when obstacles are in the drivable area.",
-          "default": "false"
+        "path_generation_method": {
+          "type": "string",
+          "enum": ["shift_line_base", "optimization_base", "both"],
+          "description": "Path generation method.",
+          "default": "shift_line_base"
         },
-        "disable_path_update": {
-          "type": "boolean",
-          "description": "Disable path update.",
-          "default": "false"
-        },
-        "use_adjacent_lane": {
-          "type": "boolean",
-          "description": "Extend avoidance trajectory to adjacent lanes that has same direction. If false, avoidance only happen in current lane.",
-          "default": "true"
-        },
-        "use_opposite_lane": {
-          "type": "boolean",
-          "description": "Extend avoidance trajectory to opposite direction lane. `use_adjacent_lane` must be `true` to take effects.",
-          "default": "true"
+        "use_lane_type": {
+          "type": "string",
+          "enum": ["current_lane", "same_direction_lane", "opposite_direction_lane"],
+          "description": "Drivable lane configuration.",
+          "default": "opposite_direction_lane"
         },
         "use_hatched_road_markings": {
           "type": "boolean",
@@ -1450,9 +1442,8 @@
       "required": [
         "resample_interval_for_planning",
         "resample_interval_for_output",
-        "enable_bound_clipping",
-        "use_adjacent_lane",
-        "use_opposite_lane",
+        "path_generation_method",
+        "use_lane_type",
         "use_hatched_road_markings",
         "use_intersection_areas",
         "use_freespace_areas",

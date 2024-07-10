@@ -34,7 +34,8 @@ using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVeloc
 using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 
 static constexpr const char * logger_namespace =
-  "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.avoidance.utils";
+  "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.static_obstacle_"
+  "avoidance.utils";
 
 bool isOnRight(const ObjectData & obj);
 
@@ -120,6 +121,8 @@ void fillObjectStoppableJudge(
 void updateRegisteredObject(
   ObjectDataArray & registered_objects, const ObjectDataArray & now_objects,
   const std::shared_ptr<AvoidanceParameters> & parameters);
+
+void updateClipObject(ObjectDataArray & clip_objects, AvoidancePlanningData & data);
 
 void compensateDetectionLost(
   const ObjectDataArray & registered_objects, ObjectDataArray & now_objects,

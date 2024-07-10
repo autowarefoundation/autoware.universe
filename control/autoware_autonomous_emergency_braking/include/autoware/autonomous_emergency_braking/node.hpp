@@ -23,6 +23,7 @@
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_system_msgs/msg/autoware_state.hpp>
 #include <autoware_vehicle_msgs/msg/velocity_report.hpp>
@@ -59,7 +60,6 @@ using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::Imu;
 using sensor_msgs::msg::PointCloud2;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using diagnostic_updater::DiagnosticStatusWrapper;
@@ -68,6 +68,9 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using Path = std::vector<geometry_msgs::msg::Pose>;
 using Vector3 = geometry_msgs::msg::Vector3;
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjects;
+
 struct ObjectData
 {
   rclcpp::Time stamp;
@@ -116,12 +119,12 @@ public:
     return this->checkObjectDataExpired(prev_closest_object_, previous_obstacle_keep_time_);
   }
 
-  ObjectData get() const
+  [[nodiscard]] ObjectData get() const
   {
     return (closest_object_.has_value()) ? closest_object_.value() : ObjectData();
   }
 
-  ObjectData getPreviousObjectData() const
+  [[nodiscard]] ObjectData getPreviousObjectData() const
   {
     return (prev_closest_object_.has_value()) ? prev_closest_object_.value() : ObjectData();
   }
@@ -152,20 +155,21 @@ public:
         }),
       obstacle_velocity_history_.end());
     obstacle_velocity_history_.emplace_back(
-      std::make_pair(current_object_velocity, current_object_velocity_time_stamp));
+      current_object_velocity, current_object_velocity_time_stamp);
   }
 
-  std::optional<double> getMedianObstacleVelocity() const
+  [[nodiscard]] std::optional<double> getMedianObstacleVelocity() const
   {
     if (obstacle_velocity_history_.empty()) return std::nullopt;
     std::vector<double> raw_velocities;
+    raw_velocities.reserve(obstacle_velocity_history_.size());
     for (const auto & vel_time_pair : obstacle_velocity_history_) {
       raw_velocities.emplace_back(vel_time_pair.first);
     }
 
     const size_t med1 = (raw_velocities.size() % 2 == 0) ? (raw_velocities.size()) / 2 - 1
-                                                         : (raw_velocities.size()) / 2.0;
-    const size_t med2 = (raw_velocities.size()) / 2.0;
+                                                         : (raw_velocities.size()) / 2;
+    const size_t med2 = (raw_velocities.size()) / 2;
     std::nth_element(raw_velocities.begin(), raw_velocities.begin() + med1, raw_velocities.end());
     const double vel1 = raw_velocities.at(med1);
     std::nth_element(raw_velocities.begin(), raw_velocities.begin() + med2, raw_velocities.end());
@@ -176,6 +180,13 @@ public:
   std::optional<double> calcObjectSpeedFromHistory(
     const ObjectData & closest_object, const Path & path, const double current_ego_speed)
   {
+    // in case the object comes from predicted objects info, we reuse the speed.
+    if (std::abs(closest_object.velocity) > std::numeric_limits<double>::epsilon()) {
+      this->setPreviousObjectData(closest_object);
+      this->updateVelocityHistory(closest_object.velocity, closest_object.stamp);
+      return this->getMedianObstacleVelocity();
+    }
+
     if (this->checkPreviousObjectDataExpired()) {
       this->setPreviousObjectData(closest_object);
       this->resetVelocityHistory();
@@ -207,7 +218,7 @@ public:
         p_vel * std::cos(p_yaw - traj_yaw) + std::abs(current_ego_speed);
 
       // Current RSS distance calculation does not account for negative velocities
-      return (estimated_velocity > 0.0) ? estimated_velocity : 0.0;
+      return estimated_velocity;
     });
 
     if (!estimated_velocity_opt.has_value()) {
@@ -243,6 +254,8 @@ public:
   autoware::universe_utils::InterProcessPollingSubscriber<Imu> sub_imu_{this, "~/input/imu"};
   autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_traj_{
     this, "~/input/predicted_trajectory"};
+  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> predicted_objects_sub_{
+    this, "~/input/objects"};
   autoware::universe_utils::InterProcessPollingSubscriber<AutowareState> sub_autoware_state_{
     this, "/autoware/state"};
   // publisher
@@ -275,6 +288,10 @@ public:
     std::vector<ObjectData> & objects,
     const pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr);
 
+  void createObjectDataUsingPredictedObjects(
+    const Path & ego_path, const std::vector<Polygon2d> & ego_polys,
+    std::vector<ObjectData> & objects);
+
   void cropPointCloudWithEgoFootprintPath(
     const std::vector<Polygon2d> & ego_polys, pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_objects);
 
@@ -298,6 +315,7 @@ public:
   VelocityReport::ConstSharedPtr current_velocity_ptr_{nullptr};
   Vector3::SharedPtr angular_velocity_ptr_{nullptr};
   Trajectory::ConstSharedPtr predicted_traj_ptr_{nullptr};
+  PredictedObjects::ConstSharedPtr predicted_objects_ptr_{nullptr};
   AutowareState::ConstSharedPtr autoware_state_{nullptr};
 
   tf2_ros::Buffer tf_buffer_{get_clock()};
@@ -313,6 +331,8 @@ public:
   bool publish_debug_pointcloud_;
   bool use_predicted_trajectory_;
   bool use_imu_path_;
+  bool use_pointcloud_data_;
+  bool use_predicted_object_data_;
   bool use_object_velocity_calculation_;
   double path_footprint_extra_margin_;
   double detection_range_min_height_;
@@ -327,6 +347,7 @@ public:
   double a_ego_min_;
   double a_obj_min_;
   double cluster_tolerance_;
+  double cluster_minimum_height_;
   int minimum_cluster_size_;
   int maximum_cluster_size_;
   double imu_prediction_time_horizon_;
