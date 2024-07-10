@@ -22,54 +22,60 @@
 
 namespace autoware::universe_utils
 {
+namespace
+{
+struct VectorsWithMin
+{
+  std::vector<double> vectors;
+  double min;
+};
+
+VectorsWithMin prepare_coordinate_vectors(
+  const size_t nb_vertices, std::uniform_real_distribution<double> & random_double,
+  std::uniform_int_distribution<int> & random_bool, std::default_random_engine & random_engine)
+{
+  std::vector<double> v;
+  for (auto i = 0UL; i < nb_vertices; ++i) {
+    v.push_back(random_double(random_engine));
+  }
+  std::sort(v.begin(), v.end());
+  const auto min_v = v.front();
+  const auto max_v = v.back();
+  std::vector<double> v1;
+  v1.push_back(min_v);
+  std::vector<double> v2;
+  v2.push_back(min_v);
+  for (auto i = 1UL; i + 1 < v.size(); ++i) {
+    if (random_bool(random_engine) == 0) {
+      v1.push_back((v[i]));
+    } else {
+      v2.push_back((v[i]));
+    }
+  }
+  v1.push_back(max_v);
+  v2.push_back(max_v);
+  std::vector<double> diffs;
+  for (auto i = 0UL; i + 1 < v1.size(); ++i) {
+    diffs.push_back(v1[i + 1] - v1[i]);
+  }
+  for (auto i = 0UL; i + 1 < v2.size(); ++i) {
+    diffs.push_back(v2[i] - v2[i + 1]);
+  }
+  VectorsWithMin vectors;
+  vectors.vectors = diffs;
+  vectors.min = min_v;
+  return vectors;
+}
+}  // namespace
 Polygon2d random_convex_polygon(const size_t vertices, const double max)
 {
-  struct VectorsWithMin
-  {
-    std::vector<double> vectors;
-    double min;
-  };
-
   std::random_device r;
-  std::default_random_engine e1(r());
+  std::default_random_engine random_engine(r());
   std::uniform_real_distribution<double> uniform_dist(-max, max);
   std::uniform_int_distribution random_bool(0, 1);
-  const auto prepare_coordinate_vectors = [&]() {
-    std::vector<double> v;
-    for (auto i = 0UL; i < vertices; ++i) {
-      v.push_back(uniform_dist(e1));
-    }
-    std::sort(v.begin(), v.end());
-    const auto min_v = v.front();
-    const auto max_v = v.back();
-    std::vector<double> v1;
-    v1.push_back(min_v);
-    std::vector<double> v2;
-    v2.push_back(min_v);
-    for (auto i = 1UL; i + 1 < v.size(); ++i) {
-      if (random_bool(e1) == 0) {
-        v1.push_back((v[i]));
-      } else {
-        v2.push_back((v[i]));
-      }
-    }
-    v1.push_back(max_v);
-    v2.push_back(max_v);
-    std::vector<double> diffs;
-    for (auto i = 0UL; i + 1 < v1.size(); ++i) {
-      diffs.push_back(v1[i + 1] - v1[i]);
-    }
-    for (auto i = 0UL; i + 1 < v2.size(); ++i) {
-      diffs.push_back(v2[i] - v2[i + 1]);
-    }
-    VectorsWithMin vectors;
-    vectors.vectors = diffs;
-    vectors.min = min_v;
-    return vectors;
-  };
-  auto xs = prepare_coordinate_vectors();
-  auto ys = prepare_coordinate_vectors();
-  std::shuffle(ys.vectors.begin(), ys.vectors.end(), e1);
+  auto xs = prepare_coordinate_vectors(vertices, uniform_dist, random_bool, random_engine);
+  auto ys = prepare_coordinate_vectors(vertices, uniform_dist, random_bool, random_engine);
+  std::shuffle(ys.vectors.begin(), ys.vectors.end(), random_engine);
   LinearRing2d vectors;
   for (auto i = 0UL; i < xs.vectors.size(); ++i) {
     vectors.emplace_back(xs.vectors[i], ys.vectors[i]);

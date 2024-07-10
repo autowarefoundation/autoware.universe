@@ -24,11 +24,13 @@ namespace autoware::universe_utils::gjk
 namespace
 {
 
+/// @brief calculate the dot product between 2 points
 double dot_product(const Point2d & p1, const Point2d & p2)
 {
   return p1.x() * p2.x() + p1.y() * p2.y();
 }
 
+/// @brief calculate the index of the furthest polygon vertex in the given direction
 size_t furthest_vertex_idx(const Polygon2d & poly, const Point2d & direction)
 {
   auto furthest_distance = dot_product(poly.outer()[0], direction);
@@ -43,6 +45,7 @@ size_t furthest_vertex_idx(const Polygon2d & poly, const Point2d & direction)
   return furthest_idx;
 }
 
+/// @brief calculate the next Minkowski difference vertex in the given direction
 Point2d support_vertex(const Polygon2d & poly1, const Polygon2d & poly2, const Point2d & direction)
 {
   const auto opposite_direction = Point2d(-direction.x(), -direction.y());
@@ -53,11 +56,13 @@ Point2d support_vertex(const Polygon2d & poly1, const Polygon2d & poly2, const P
     poly1.outer()[idx1].y() - poly2.outer()[idx2].y());
 }
 
+/// @brief return true if both points are in the same direction
 bool same_direction(const Point2d & p1, const Point2d & p2)
 {
   return dot_product(p1, p2) > 0.0;
 }
 
+/// @brief return the triple cross product of the given points
 Point2d cross_product(const Point2d & p1, const Point2d & p2, const Point2d & p3)
 {
   const auto tmp = p1.x() * p2.y() - p1.y() * p2.x();
@@ -65,6 +70,9 @@ Point2d cross_product(const Point2d & p1, const Point2d & p2, const Point2d & p3
 }
 }  // namespace
 
+/// @brief return true if the two given polygons intersect
+/// @details if the intersection area is 0 (e.g., only one point or one edge intersect), the return
+/// value is false
 bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
 {
   if (convex_polygon1.outer().empty() || convex_polygon2.outer().empty()) {
@@ -81,9 +89,6 @@ bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_poly
   if (dot_product(b, direction) <= 0.0) {
     return false;
   }
-  if (a.isZero() || b.isZero()) {  // the 2 polygons intersect at a vertex
-    return true;
-  }
   Point2d ab = {b.x() - a.x(), b.y() - a.y()};
   Point2d ao = {-a.x(), -a.y()};
   // Prepare loop variables to not recreate them at each iteration
@@ -96,9 +101,6 @@ bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_poly
   direction = cross_product(ab, ao, ab);
   while (true) {
     c = support_vertex(convex_polygon1, convex_polygon2, direction);
-    if (c.isZero()) {  // the 2 polygons intersect at a vertex
-      return true;
-    }
     if (!same_direction(c, direction)) {
       return false;
     }
