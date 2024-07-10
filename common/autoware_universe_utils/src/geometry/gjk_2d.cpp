@@ -23,6 +23,21 @@ namespace autoware::universe_utils::gjk
 
 namespace
 {
+/// @brief structure with all variables updated during the GJK loop
+/// @details for performance we only want to reserve their space in memory once
+struct SimplexSearch
+{
+  // current triangle simplex
+  Point2d a;
+  Point2d b;
+  Point2d c;
+  Point2d co;                // vector from C to the origin
+  Point2d ca;                // vector from C to A
+  Point2d cb;                // vector from C to B
+  Point2d ca_perpendicular;  // perpendicular to CA
+  Point2d cb_perpendicular;  // perpendicular to CB
+  Point2d direction;         // current search direction
+};
 
 /// @brief calculate the dot product between 2 points
 double dot_product(const Point2d & p1, const Point2d & p2)
@@ -68,6 +83,34 @@ Point2d cross_product(const Point2d & p1, const Point2d & p2, const Point2d & p3
   const auto tmp = p1.x() * p2.y() - p1.y() * p2.x();
   return Point2d(-p3.y() * tmp, p3.x() * tmp);
 }
+
+/// @brief update the search simplex and search direction to try to surround the origin
+bool update_search_simplex_and_direction(SimplexSearch & search)
+{
+  bool continue_search = false;
+  search.co.x() = -search.c.x();
+  search.co.y() = -search.c.y();
+  search.ca.x() = search.a.x() - search.c.x();
+  search.ca.y() = search.a.y() - search.c.y();
+  search.cb.x() = search.b.x() - search.c.x();
+  search.cb.y() = search.b.y() - search.c.y();
+  search.ca_perpendicular = cross_product(search.cb, search.ca, search.ca);
+  search.cb_perpendicular = cross_product(search.ca, search.cb, search.cb);
+  if (same_direction(search.ca_perpendicular, search.co)) {
+    search.b.x() = search.c.x();
+    search.b.y() = search.c.y();
+    search.direction.x() = search.ca_perpendicular.x();
+    search.direction.y() = search.ca_perpendicular.y();
+    continue_search = true;
+  } else if (same_direction(search.cb_perpendicular, search.co)) {
+    search.a.x() = search.c.x();
+    search.a.y() = search.c.y();
+    search.direction.x() = search.cb_perpendicular.x();
+    search.direction.y() = search.cb_perpendicular.y();
+    continue_search = true;
+  }
+  return continue_search;
+}
 }  // namespace
 
 /// @brief return true if the two given polygons intersect
@@ -82,49 +125,25 @@ bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_poly
     return true;
   }
 
-  Point2d direction = {1.0, 0.0};
-  Point2d a = support_vertex(convex_polygon1, convex_polygon2, direction);
-  direction = {-a.x(), -a.y()};
-  Point2d b = support_vertex(convex_polygon1, convex_polygon2, direction);
-  if (dot_product(b, direction) <= 0.0) {
-    return false;
+  SimplexSearch search;
+  search.direction = {1.0, 0.0};
+  search.a = support_vertex(convex_polygon1, convex_polygon2, search.direction);
+  search.direction = {-search.a.x(), -search.a.y()};
+  search.b = support_vertex(convex_polygon1, convex_polygon2, search.direction);
+  if (dot_product(search.b, search.direction) <= 0.0) {  // the Minkowski difference does not cross
+                                                         // the origin
+    return false;                                        // no collision
   }
-  Point2d ab = {b.x() - a.x(), b.y() - a.y()};
-  Point2d ao = {-a.x(), -a.y()};
-  // Prepare loop variables to not recreate them at each iteration
-  Point2d c;
-  Point2d co;
-  Point2d ca;
-  Point2d cb;
-  Point2d ca_perpendicular;
-  Point2d cb_perpendicular;
-  direction = cross_product(ab, ao, ab);
-  while (true) {
-    c = support_vertex(convex_polygon1, convex_polygon2, direction);
-    if (!same_direction(c, direction)) {
-      return false;
+  Point2d ab = {search.b.x() - search.a.x(), search.b.y() - search.a.y()};
+  Point2d ao = {-search.a.x(), -search.a.y()};
+  search.direction = cross_product(ab, ao, ab);
+  bool continue_search = true;
+  while (continue_search) {
+    search.c = support_vertex(convex_polygon1, convex_polygon2, search.direction);
+    if (!same_direction(search.c, search.direction)) {  // no more vertex in the search direction
+      return false;                                     // no collision
     }
-    co.x() = -c.x();
-    co.y() = -c.y();
-    ca.x() = a.x() - c.x();
-    ca.y() = a.y() - c.y();
-    cb.x() = b.x() - c.x();
-    cb.y() = b.y() - c.y();
-    ca_perpendicular = cross_product(cb, ca, ca);
-    cb_perpendicular = cross_product(ca, cb, cb);
-    if (same_direction(ca_perpendicular, co)) {
-      b.x() = c.x();
-      b.y() = c.y();
-      direction.x() = ca_perpendicular.x();
-      direction.y() = ca_perpendicular.y();
-    } else if (same_direction(cb_perpendicular, co)) {
-      a.x() = c.x();
-      a.y() = c.y();
-      direction.x() = cb_perpendicular.x();
-      direction.y() = cb_perpendicular.y();
-    } else {
-      return true;
-    }
+    continue_search = update_search_simplex_and_direction(search);
   }
   return true;
 }
