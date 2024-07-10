@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp"
+
 #include <autoware_point_types/types.hpp>
-#include <euclidean_cluster/voxel_grid_based_euclidean_cluster.hpp>
 #include <experimental/random>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -81,14 +82,14 @@ TEST(VoxelGridBasedEuclideanClusterTest, testcase1)
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_msg =
     std::make_shared<sensor_msgs::msg::PointCloud2>(pointcloud);
   tier4_perception_msgs::msg::DetectedObjectsWithFeature output;
-  std::shared_ptr<euclidean_cluster::VoxelGridBasedEuclideanCluster> cluster_;
+  std::shared_ptr<autoware::euclidean_cluster::VoxelGridBasedEuclideanCluster> cluster_;
   float tolerance = 0.7;
   float voxel_leaf_size = 0.3;
   int min_points_number_per_voxel = 1;
   int min_cluster_size = 1;
   int max_cluster_size = 100;
   bool use_height = false;
-  cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
+  cluster_ = std::make_shared<autoware::euclidean_cluster::VoxelGridBasedEuclideanCluster>(
     use_height, min_cluster_size, max_cluster_size, tolerance, voxel_leaf_size,
     min_points_number_per_voxel);
   if (cluster_->cluster(pointcloud_msg, output)) {
@@ -115,14 +116,14 @@ TEST(VoxelGridBasedEuclideanClusterTest, testcase2)
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_msg =
     std::make_shared<sensor_msgs::msg::PointCloud2>(pointcloud);
   tier4_perception_msgs::msg::DetectedObjectsWithFeature output;
-  std::shared_ptr<euclidean_cluster::VoxelGridBasedEuclideanCluster> cluster_;
+  std::shared_ptr<autoware::euclidean_cluster::VoxelGridBasedEuclideanCluster> cluster_;
   float tolerance = 0.7;
   float voxel_leaf_size = 0.3;
   int min_points_number_per_voxel = 1;
   int min_cluster_size = 2;
   int max_cluster_size = 100;
   bool use_height = false;
-  cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
+  cluster_ = std::make_shared<autoware::euclidean_cluster::VoxelGridBasedEuclideanCluster>(
     use_height, min_cluster_size, max_cluster_size, tolerance, voxel_leaf_size,
     min_points_number_per_voxel);
   if (cluster_->cluster(pointcloud_msg, output)) {
@@ -145,14 +146,14 @@ TEST(VoxelGridBasedEuclideanClusterTest, testcase3)
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_msg =
     std::make_shared<sensor_msgs::msg::PointCloud2>(pointcloud);
   tier4_perception_msgs::msg::DetectedObjectsWithFeature output;
-  std::shared_ptr<euclidean_cluster::VoxelGridBasedEuclideanCluster> cluster_;
+  std::shared_ptr<autoware::euclidean_cluster::VoxelGridBasedEuclideanCluster> cluster_;
   float tolerance = 0.7;
   float voxel_leaf_size = 0.3;
   int min_points_number_per_voxel = 1;
   int min_cluster_size = 1;
   int max_cluster_size = 99;  // max_cluster_size is less than nb_generated_points
   bool use_height = false;
-  cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
+  cluster_ = std::make_shared<autoware::euclidean_cluster::VoxelGridBasedEuclideanCluster>(
     use_height, min_cluster_size, max_cluster_size, tolerance, voxel_leaf_size,
     min_points_number_per_voxel);
   if (cluster_->cluster(pointcloud_msg, output)) {
