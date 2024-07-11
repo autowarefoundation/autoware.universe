@@ -193,7 +193,7 @@ void MapUpdateModule::update_map(
       last_update_position_mtx_.lock();
       last_update_position_ = position;
       last_update_position_mtx_.unlock();
-      
+
       return;
     }
 
