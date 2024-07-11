@@ -596,6 +596,9 @@ double distance(
   const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & seg_start,
   const geometry_msgs::msg::Point & seg_end);
 
+double distance(
+  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly);
+
 std::optional<bool> coveredBy(
   const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly);
 

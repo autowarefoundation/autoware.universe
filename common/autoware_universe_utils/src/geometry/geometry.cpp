@@ -391,7 +391,8 @@ std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
     return std::nullopt;
   }
 
-  // check if all edges of poly1 do not intersect with those of poly2
+  // TODO(mitukou1109): Use plane sweep method to improve performance
+  // check if all edges of poly1 intersect with those of poly2
   std::vector<geometry_msgs::msg::Point> intersect_points;
   for (size_t i = 0; i < poly1.size(); ++i) {
     const auto & p1 = poly1.at(i);
@@ -499,6 +500,24 @@ double distance(
   } else {
     return std::abs(seg_vec_x * point_vec_y - seg_vec_y * point_vec_x) / seg_vec_norm;
   }
+}
+
+double distance(
+  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly)
+{
+  if (coveredBy(point, poly).value_or(false)) {
+    return 0.0;
+  }
+
+  // TODO(mitukou1109): Use plane sweep method to improve performance?
+  double min_distance = std::numeric_limits<double>::max();
+  for (size_t i = 0; i < poly.size(); ++i) {
+    const auto & p1 = poly.at(i);
+    const auto & p2 = poly.at((i + 1) % poly.size());
+    min_distance = std::min(min_distance, distance(point, p1, p2));
+  }
+
+  return min_distance;
 }
 
 std::optional<bool> coveredBy(
