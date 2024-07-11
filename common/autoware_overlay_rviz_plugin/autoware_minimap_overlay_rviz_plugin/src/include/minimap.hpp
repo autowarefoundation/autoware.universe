@@ -3,6 +3,7 @@
 
 #include "goal_pose.hpp"
 #include "overlay_utils.hpp"
+#include "path_overlay.hpp"
 #include "rviz_common/properties/color_property.hpp"
 #include "rviz_common/properties/float_property.hpp"
 #include "rviz_common/properties/int_property.hpp"
@@ -22,12 +23,12 @@
 #include <rviz_common/window_manager_interface.hpp>
 #include <rviz_rendering/render_window.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/route_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/vehicle_kinematics.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <tier4_planning_msgs/msg/route_state.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
@@ -72,8 +73,9 @@ private:
   void drawWidget(QImage & hud);
   void drawCircle(QPainter & painter, const QRectF & backgroundRect);
   void goalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
-  // void poseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void poseCallback(const autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr msg);
+  void routeStateCallback(const autoware_adapi_v1_msgs::msg::RouteState::SharedPtr msg);
+  void routePointsCallback(const autoware_planning_msgs::msg::Path::SharedPtr msg);
   std::pair<double, double> localXYZToLatLon(double local_x, double local_y);
 
   rviz_satellite::OverlayObject::SharedPtr overlay_;
@@ -117,10 +119,15 @@ private:
   autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr pose_msg_;
 
   // subscription ptr and msg ptr
-  // rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr pose_sub_;
-  // nav_msgs::msg::Odometry::SharedPtr pose_msg_;
+  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::RouteState>::SharedPtr route_state_sub_;
+  autoware_adapi_v1_msgs::msg::RouteState::SharedPtr route_state_msg_;
+
+  // subscription ptr and msg ptr
+  rclcpp::Subscription<autoware_planning_msgs::msg::Path>::SharedPtr route_points_sub_;
+  autoware_planning_msgs::msg::Path::SharedPtr route_points_msg_;
 
   GoalPose goal_pose_;
+  PathOverlay path_overlay_;
 
   void drawGoalPose(QPainter & painter, const QRectF & backgroundRect);
 };

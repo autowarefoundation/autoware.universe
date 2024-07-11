@@ -103,8 +103,16 @@ void VehicleMapDisplay::onInitialize()
   //   std::bind(&VehicleMapDisplay::poseCallback, this, std::placeholders::_1));
 
   pose_sub_ = node_->create_subscription<autoware_adapi_v1_msgs::msg::VehicleKinematics>(
-    "/api/vehicle/kinematics", 10,
+    "/api/vehicle/kinematics", rclcpp::QoS(10).best_effort(),
     std::bind(&VehicleMapDisplay::poseCallback, this, std::placeholders::_1));
+
+  route_state_sub_ = node_->create_subscription<autoware_adapi_v1_msgs::msg::RouteState>(
+    "/api/routing/state", 10,
+    std::bind(&VehicleMapDisplay::routeStateCallback, this, std::placeholders::_1));
+
+  route_points_sub_ = node_->create_subscription<autoware_planning_msgs::msg::Path>(
+    "/planning/scenario_planning/lane_driving/behavior_planning/path", 10,
+    std::bind(&VehicleMapDisplay::routePointsCallback, this, std::placeholders::_1));
 }
 
 void VehicleMapDisplay::reset()
@@ -235,8 +243,12 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
 
   painter.drawImage(positionInOverlay, pos_image);
 
-  // Draw the goal pose
-  goal_pose_.draw(painter, backgroundRect, zoom_);
+  // Draw the goal pose only if it is set
+
+  if (route_state_msg_ && route_state_msg_->state == autoware_adapi_v1_msgs::msg::RouteState::SET) {
+    goal_pose_.draw(painter, backgroundRect, zoom_);
+    path_overlay_.draw(painter, backgroundRect, zoom_);
+  }
 
   queueRender();
 }
@@ -249,7 +261,6 @@ void VehicleMapDisplay::onTilesUpdated()
 void VehicleMapDisplay::updateZoomLevel()
 {
   zoom_ = property_zoom_->getInt();  // Update the zoom level
-  tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
 
   // Update the map position based on the new zoom level
   if (pose_msg_) {
@@ -260,6 +271,11 @@ void VehicleMapDisplay::updateZoomLevel()
     goalPoseCallback(goal_pose_msg_);
   }
 
+  if (route_points_msg_) {
+    routePointsCallback(route_points_msg_);
+  }
+
+  tile_field_->fetchTiles(zoom_, center_x_tile_, center_y_tile_);
   queueRender();  // Request re-rendering
 }
 
@@ -307,6 +323,37 @@ void VehicleMapDisplay::updateGoalPose()
   }
   goalPoseCallback(goal_pose_msg_);
 
+  if (route_points_msg_) routePointsCallback(route_points_msg_);
+
+  queueRender();
+}
+
+void VehicleMapDisplay::routePointsCallback(const autoware_planning_msgs::msg::Path::SharedPtr msg)
+{
+  route_points_msg_ = msg;
+
+  // Convert the route points to local coordinates and set them in the RouteOverlay
+  std::vector<PathPoint> path_points;
+  for (const auto & pose : msg->points) {
+    PathPoint point;
+    point.x = pose.pose.position.x;
+    point.y = pose.pose.position.y;
+    path_points.push_back(point);
+  }
+
+  double origin_lat = property_origin_lat_->getFloat();
+  double origin_lon = property_origin_lon_->getFloat();
+  path_overlay_.setPathPoints(path_points, origin_lat, origin_lon);
+  path_overlay_.setVehiclePosition(latitude_, longitude_);
+
+  queueRender();
+}
+
+void VehicleMapDisplay::routeStateCallback(
+  const autoware_adapi_v1_msgs::msg::RouteState::SharedPtr msg)
+{
+  route_state_msg_ = msg;
+
   queueRender();
 }
 
@@ -316,21 +363,15 @@ void VehicleMapDisplay::poseCallback(
 {
   pose_msg_ = msg;
 
-  // std::pair<double, double> lat_lon =
-  // localXYZToLatLon(msg->pose.pose.position.x, msg->pose.pose.position.y);
-
-  // TODO: test if the conversion is correct
   latitude_ = msg->geographic_pose.position.latitude;
   longitude_ = msg->geographic_pose.position.longitude;
-
-  // latitude_ = lat_lon.first;
-  // longitude_ = lat_lon.second;
 
   property_longitude_->setFloat(longitude_);
   property_latitude_->setFloat(latitude_);
 
   // Set the vehicle position in the goal pose (in case it was not set yet)
   goal_pose_.setVehiclePosition(latitude_, longitude_);
+  path_overlay_.setVehiclePosition(latitude_, longitude_);
 
   updateMapPosition();  // Method to update map position based on new latitude and longitude
 }
@@ -345,6 +386,7 @@ void VehicleMapDisplay::goalPoseCallback(const geometry_msgs::msg::PoseStamped::
 
   // Set the vehicle position in the goal pose (in case it was not set yet)
   goal_pose_.setVehiclePosition(latitude_, longitude_);
+  path_overlay_.setVehiclePosition(latitude_, longitude_);
 
   property_goal_lat->setFloat(goal_pose_.getGoalLatitude());
   property_goal_lon->setFloat(goal_pose_.getGoalLongitude());
