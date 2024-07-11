@@ -1095,8 +1095,8 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstPointCloudObstacles(
 
     if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_stop_against_unknown) {
       auto stop_obstacle = *itr;
-      stop_obstacle.dist_to_collide_on_decimated_traj =
-        autoware::motion_utils::calcSignedArcLength(traj_points, 0, stop_obstacle.collision_point);
+      stop_obstacle.dist_to_collide_on_decimated_traj = autoware::motion_utils::calcSignedArcLength(
+        decimated_traj_points, 0, stop_obstacle.collision_point);
       past_stop_obstacles.push_back(stop_obstacle);
     }
 
