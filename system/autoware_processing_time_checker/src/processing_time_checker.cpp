@@ -23,6 +23,19 @@
 namespace autoware::processing_time_checker
 {
 
+namespace
+{
+std::string remove_last_name(const std::string & str)
+{
+  return str.substr(0, str.find_last_of("/"));
+}
+
+std::string get_last_name(const std::string & str)
+{
+  return str.substr(str.find_last_of("/") + 1);
+}
+}  // namespace
+
 ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_options)
 : Node("processing_time_checker", node_options)
 {
@@ -30,13 +43,28 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
   const auto processing_time_topic_name_list =
     declare_parameter<std::vector<std::string>>("processing_time_topic_name_list");
 
-  // extract module name from topic name
   for (const auto & processing_time_topic_name : processing_time_topic_name_list) {
-    auto module_name = processing_time_topic_name;
-    module_name = module_name.substr(0, module_name.find_last_of("/"));
-    module_name = module_name.substr(module_name.find_last_of("/") + 1);
-    std::cerr << module_name << std::endl;
-    module_name_map_.insert_or_assign(processing_time_topic_name, module_name);
+    std::optional<std::string> module_name{std::nullopt};
+
+    // extract module name from topic name
+    auto tmp_topic_name = processing_time_topic_name;
+    for (size_t i = 0; i < 4; ++i) {  // 4 is enouh for the search depth
+      tmp_topic_name = remove_last_name(tmp_topic_name);
+      const auto module_name_candidate = get_last_name(tmp_topic_name);
+      if (
+        module_name_candidate != "processing_time_ms" && module_name_candidate != "debug" &&
+        module_name_candidate != "total_time") {
+        module_name = module_name_candidate;
+        break;
+      }
+    }
+
+    // register module name
+    if (module_name) {
+      module_name_map_.insert_or_assign(processing_time_topic_name, *module_name);
+    } else {
+      throw std::invalid_argument("The format of the processing time topic name is not correct.");
+    }
   }
 
   // create subscribers
@@ -57,7 +85,7 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
     this, get_clock(), period_ns, std::bind(&ProcessingTimeChecker::onTimer, this));
 }
 
-void ProcessingTimeChecker::onTimer()
+void ProcessingTimeChecker::on_timer()
 {
   // create diagnostic status
   DiagnosticStatus status;

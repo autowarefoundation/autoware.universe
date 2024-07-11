@@ -37,7 +37,7 @@ public:
   explicit ProcessingTimeChecker(const rclcpp::NodeOptions & node_options);
 
 private:
-  void onTimer();
+  void on_timer();
 
   rclcpp::TimerBase::SharedPtr timer_;
 
