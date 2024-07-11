@@ -2226,3 +2226,53 @@ TEST(geometry, divideBySegment)
     EXPECT_NEAR(result.at(1).at(2).z, 0.0, epsilon);
   }
 }
+
+TEST(geometry, convexHull)
+{
+  using autoware::universe_utils::convexHull;
+  using autoware::universe_utils::createPoint;
+
+  {
+    std::vector<geometry_msgs::msg::Point> points;
+    points.push_back(createPoint(2.0, 1.3, 0.0));
+    points.push_back(createPoint(2.4, 1.7, 0.0));
+    points.push_back(createPoint(2.8, 1.8, 0.0));
+    points.push_back(createPoint(3.4, 1.2, 0.0));
+    points.push_back(createPoint(3.7, 1.6, 0.0));
+    points.push_back(createPoint(3.4, 2.0, 0.0));
+    points.push_back(createPoint(4.1, 3.0, 0.0));
+    points.push_back(createPoint(5.3, 2.6, 0.0));
+    points.push_back(createPoint(5.4, 1.2, 0.0));
+    points.push_back(createPoint(4.9, 0.8, 0.0));
+    points.push_back(createPoint(2.9, 0.7, 0.0));
+    points.push_back(createPoint(2.0, 1.3, 0.0));
+    const auto result = convexHull(points);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(result->size(), 8);
+    EXPECT_NEAR(result->at(0).x, 2.0, epsilon);
+    EXPECT_NEAR(result->at(0).y, 1.3, epsilon);
+    EXPECT_NEAR(result->at(0).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(1).x, 2.4, epsilon);
+    EXPECT_NEAR(result->at(1).y, 1.7, epsilon);
+    EXPECT_NEAR(result->at(1).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(2).x, 4.1, epsilon);
+    EXPECT_NEAR(result->at(2).y, 3.0, epsilon);
+    EXPECT_NEAR(result->at(2).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(3).x, 5.3, epsilon);
+    EXPECT_NEAR(result->at(3).y, 2.6, epsilon);
+    EXPECT_NEAR(result->at(3).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(4).x, 5.4, epsilon);
+    EXPECT_NEAR(result->at(4).y, 1.2, epsilon);
+    EXPECT_NEAR(result->at(4).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(5).x, 4.9, epsilon);
+    EXPECT_NEAR(result->at(5).y, 0.8, epsilon);
+    EXPECT_NEAR(result->at(5).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(6).x, 2.9, epsilon);
+    EXPECT_NEAR(result->at(6).y, 0.7, epsilon);
+    EXPECT_NEAR(result->at(6).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(7).x, 2.0, epsilon);
+    EXPECT_NEAR(result->at(7).y, 1.3, epsilon);
+    EXPECT_NEAR(result->at(7).z, 0.0, epsilon);
+  }
+}

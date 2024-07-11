@@ -568,4 +568,50 @@ std::array<std::vector<geometry_msgs::msg::Point>, 2> divideBySegment(
   return {above_points, below_points};
 }
 
+std::optional<std::vector<geometry_msgs::msg::Point>> convexHull(
+  const std::vector<geometry_msgs::msg::Point> & points)
+{
+  if (points.size() < 3) {
+    return std::nullopt;
+  }
+
+  // quick hull algorithm
+
+  const auto p_minmax_itr = std::minmax_element(
+    points.begin(), points.end(),
+    [](const auto & a, const auto & b) { return a.x < b.x || (a.x == b.x && a.y < b.y); });
+  const auto & p_min = *p_minmax_itr.first;
+  const auto & p_max = *p_minmax_itr.second;
+
+  std::vector<geometry_msgs::msg::Point> hull;
+
+  auto make_hull = [&hull](
+                     auto self, const geometry_msgs::msg::Point & p1,
+                     const geometry_msgs::msg::Point & p2,
+                     const std::vector<geometry_msgs::msg::Point> & points) {
+    if (points.empty()) {
+      return;
+    }
+
+    const auto farthest = *std::max_element(
+      points.begin(), points.end(),
+      [&](const auto & a, const auto & b) { return distance(p1, p2, a) < distance(p1, p2, b); });
+
+    const auto subsets_1 = divideBySegment(points, p1, farthest);
+    const auto subsets_2 = divideBySegment(points, farthest, p2);
+
+    self(self, p1, farthest, subsets_1.at(0));
+    hull.push_back(farthest);
+    self(self, farthest, p2, subsets_2.at(0));
+  };
+
+  const auto [above_points, below_points] = divideBySegment(points, p_min, p_max);
+  hull.push_back(p_min);
+  make_hull(make_hull, p_min, p_max, above_points);
+  hull.push_back(p_max);
+  make_hull(make_hull, p_max, p_min, below_points);
+
+  return hull;
+}
+
 }  // namespace autoware::universe_utils
