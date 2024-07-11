@@ -300,6 +300,8 @@ std::vector<geometry_msgs::msg::Point> convertToPoints(
   return points;
 }
 
+// NOTE: Giving PathPointWithLaneId to autoware_motion_utils functions
+//       cost a lot. Instead, using Pose is much faster (around x10).
 std::vector<geometry_msgs::msg::Pose> toGeometryPoints(
   const std::vector<PathPointWithLaneId> & path_points)
 {
@@ -310,6 +312,19 @@ std::vector<geometry_msgs::msg::Pose> toGeometryPoints(
   return geom_points;
 }
 
+size_t getNearestIndexFromSegmentIndex(
+  const std::vector<geometry_msgs::msg::Pose> & points, const size_t seg_idx,
+  const geometry_msgs::msg::Point & target_pos)
+{
+  const double first_dist =
+    autoware::universe_utils::calcDistance2d(points.at(seg_idx), target_pos);
+  const double second_dist =
+    autoware::universe_utils::calcDistance2d(points.at(seg_idx + 1), target_pos);
+  if (first_dist < second_dist) {
+    return seg_idx;
+  }
+  return seg_idx + 1;
+}
 }  // namespace
 
 DynamicObstacleAvoidanceModule::DynamicObstacleAvoidanceModule(
@@ -494,7 +509,7 @@ void DynamicObstacleAvoidanceModule::registerRegulatedObjects(
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto input_path = getPreviousModuleOutput().path;
-  const auto input_points = toGeometryPoints(input_path.points);
+  const auto input_points = toGeometryPoints(input_path.points);  // for efficient computation
   const auto & predicted_objects = planner_data_->dynamic_object->objects;
 
   for (const auto & predicted_object : predicted_objects) {
@@ -510,7 +525,8 @@ void DynamicObstacleAvoidanceModule::registerRegulatedObjects(
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
     const size_t obj_seg_idx =
       autoware::motion_utils::findNearestSegmentIndex(input_points, obj_pose.position);
-    const size_t obj_idx = obj_seg_idx;  // TODO(murooka)
+    const size_t obj_idx =
+      getNearestIndexFromSegmentIndex(input_points, obj_seg_idx, obj_pose.position);
 
     // 1.a. check label
     if (getObjectType(predicted_object.classification.front().label) != ObjectType::REGULATED) {
@@ -588,7 +604,7 @@ void DynamicObstacleAvoidanceModule::registerUnregulatedObjects(
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto input_path = getPreviousModuleOutput().path;
-  const auto input_points = toGeometryPoints(input_path.points);
+  const auto input_points = toGeometryPoints(input_path.points);  // for efficient computation
   const auto & predicted_objects = planner_data_->dynamic_object->objects;
 
   for (const auto & predicted_object : predicted_objects) {
@@ -603,8 +619,9 @@ void DynamicObstacleAvoidanceModule::registerUnregulatedObjects(
       predicted_object.kinematics.predicted_paths.end(),
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
     const size_t obj_seg_idx =
-      autoware::motion_utils::findNearestSegmentIndex(input_path.points, obj_pose.position);
-    const size_t obj_idx = obj_seg_idx;  // TODO(murooka)
+      autoware::motion_utils::findNearestSegmentIndex(input_points, obj_pose.position);
+    const size_t obj_idx =
+      getNearestIndexFromSegmentIndex(input_points, obj_seg_idx, obj_pose.position);
 
     // 1.a. Check if the obstacle is labeled as pedestrians, bicycle or similar.
     if (getObjectType(predicted_object.classification.front().label) != ObjectType::UNREGULATED) {
@@ -668,7 +685,7 @@ void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObje
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto & input_path = getPreviousModuleOutput().path;
-  const auto input_points = toGeometryPoints(input_path.points);
+  const auto input_points = toGeometryPoints(input_path.points);  // for efficient computation
 
   for (const auto & object : target_objects_manager_.getValidObjects()) {
     if (getObjectType(object.label) != ObjectType::REGULATED) {
@@ -681,8 +698,9 @@ void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObje
       object.predicted_paths.begin(), object.predicted_paths.end(),
       [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
     const size_t obj_seg_idx =
-      autoware::motion_utils::findNearestSegmentIndex(input_path.points, object.pose.position);
-    const size_t obj_idx = obj_seg_idx;  // TODO(murooka)
+      autoware::motion_utils::findNearestSegmentIndex(input_points, object.pose.position);
+    const size_t obj_idx =
+      getNearestIndexFromSegmentIndex(input_points, obj_seg_idx, object.pose.position);
 
     const auto & ref_points_for_obj_poly = input_points;
 
@@ -837,7 +855,7 @@ void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstUnregulatedOb
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto & input_path = getPreviousModuleOutput().path;
-  const auto input_points = toGeometryPoints(input_path.points);
+  const auto input_points = toGeometryPoints(input_path.points);  // for efficient computation
 
   const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(input_path.points);
   for (const auto & object : target_objects_manager_.getValidObjects()) {
@@ -1542,7 +1560,8 @@ DynamicObstacleAvoidanceModule::calcMinMaxLateralOffsetToAvoidUnregulatedObject(
   const size_t obj_seg_idx =
     autoware::motion_utils::findNearestSegmentIndex(ref_points_for_obj_poly, object.pose.position);
   time_keeper_->end_track("findNearestSegmentIndex of object position");
-  const size_t obj_point_idx = obj_seg_idx;  // TODO(murooka) correct the implementation
+  const size_t obj_point_idx =
+    getNearestIndexFromSegmentIndex(ref_points_for_obj_poly, obj_seg_idx, object.pose.position);
 
   const bool enable_lowpass_filter = [&]() {
     universe_utils::ScopedTimeTrack st("calc enable_lowpass_filter", *time_keeper_);
