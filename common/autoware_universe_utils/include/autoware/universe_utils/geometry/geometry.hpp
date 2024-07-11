@@ -572,6 +572,8 @@ inline double calcNorm(const geometry_msgs::msg::Vector3 & v)
 //
 bool isTwistCovarianceValid(const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance);
 
+void correct(std::vector<geometry_msgs::msg::Point> & poly);
+
 // NOTE: much faster than boost::geometry::intersects()
 std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,

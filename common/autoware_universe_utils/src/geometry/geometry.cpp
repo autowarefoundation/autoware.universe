@@ -359,6 +359,34 @@ bool isTwistCovarianceValid(const geometry_msgs::msg::TwistWithCovariance & twis
   return false;
 }
 
+void correct(std::vector<geometry_msgs::msg::Point> & poly)
+{
+  if (poly.size() < 3) {
+    return;
+  }
+
+  // sort points in clockwise order with respect to the first point
+
+  const auto min_y_point = *std::min_element(
+    poly.begin(), poly.end(), [](const auto & a, const auto & b) { return a.y < b.y; });
+
+  auto arg = [min_y_point](const auto & p) {
+    if (
+      std::abs(p.x - min_y_point.x) < std::numeric_limits<double>::epsilon() &&
+      std::abs(p.y - min_y_point.y) < std::numeric_limits<double>::epsilon()) {
+      return 0.0;
+    }
+    return std::atan2(p.y - min_y_point.y, p.x - min_y_point.x);
+  };
+  const auto ref_arg = std::atan2(poly.at(0).y - min_y_point.y, poly.at(0).x - min_y_point.x);
+
+  std::sort(poly.begin() + 1, poly.end(), [ref_arg, arg](const auto & a, const auto & b) {
+    const auto dt_a = ref_arg - arg(a);
+    const auto dt_b = ref_arg - arg(b);
+    return (dt_a > 0 ? dt_a : dt_a + 2 * M_PI) < (dt_b > 0 ? dt_b : dt_b + 2 * M_PI);
+  });
+}
+
 // NOTE: much faster than boost::geometry::intersects()
 std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,

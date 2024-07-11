@@ -1725,6 +1725,56 @@ TEST(geometry, isTwistCovarianceValid)
   EXPECT_EQ(autoware::universe_utils::isTwistCovarianceValid(twist_with_covariance), true);
 }
 
+TEST(geometry, correct)
+{
+  using autoware::universe_utils::correct;
+  using autoware::universe_utils::createPoint;
+
+  {  // Correctly oriented
+    std::vector<geometry_msgs::msg::Point> poly;
+    poly.push_back(createPoint(1.0, 1.0, 0.0));
+    poly.push_back(createPoint(1.0, -1.0, 0.0));
+    poly.push_back(createPoint(-1.0, -1.0, 0.0));
+    poly.push_back(createPoint(-1.0, 1.0, 0.0));
+    correct(poly);
+
+    EXPECT_NEAR(poly.at(0).x, 1.0, epsilon);
+    EXPECT_NEAR(poly.at(0).y, 1.0, epsilon);
+    EXPECT_NEAR(poly.at(0).z, 0.0, epsilon);
+    EXPECT_NEAR(poly.at(1).x, 1.0, epsilon);
+    EXPECT_NEAR(poly.at(1).y, -1.0, epsilon);
+    EXPECT_NEAR(poly.at(1).z, 0.0, epsilon);
+    EXPECT_NEAR(poly.at(2).x, -1.0, epsilon);
+    EXPECT_NEAR(poly.at(2).y, -1.0, epsilon);
+    EXPECT_NEAR(poly.at(2).z, 0.0, epsilon);
+    EXPECT_NEAR(poly.at(3).x, -1.0, epsilon);
+    EXPECT_NEAR(poly.at(3).y, 1.0, epsilon);
+    EXPECT_NEAR(poly.at(3).z, 0.0, epsilon);
+  }
+
+  {  // Wrongly oriented
+    std::vector<geometry_msgs::msg::Point> poly;
+    poly.push_back(createPoint(1.0, 1.0, 0.0));
+    poly.push_back(createPoint(-1.0, 1.0, 0.0));
+    poly.push_back(createPoint(1.0, -1.0, 0.0));
+    poly.push_back(createPoint(-1.0, -1.0, 0.0));
+    correct(poly);
+
+    EXPECT_NEAR(poly.at(0).x, 1.0, epsilon);
+    EXPECT_NEAR(poly.at(0).y, 1.0, epsilon);
+    EXPECT_NEAR(poly.at(0).z, 0.0, epsilon);
+    EXPECT_NEAR(poly.at(1).x, 1.0, epsilon);
+    EXPECT_NEAR(poly.at(1).y, -1.0, epsilon);
+    EXPECT_NEAR(poly.at(1).z, 0.0, epsilon);
+    EXPECT_NEAR(poly.at(2).x, -1.0, epsilon);
+    EXPECT_NEAR(poly.at(2).y, -1.0, epsilon);
+    EXPECT_NEAR(poly.at(2).z, 0.0, epsilon);
+    EXPECT_NEAR(poly.at(3).x, -1.0, epsilon);
+    EXPECT_NEAR(poly.at(3).y, 1.0, epsilon);
+    EXPECT_NEAR(poly.at(3).z, 0.0, epsilon);
+  }
+}
+
 TEST(geometry, intersect)
 {
   using autoware::universe_utils::createPoint;
