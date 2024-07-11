@@ -44,8 +44,10 @@ private:
   rclcpp::Publisher<DiagnosticArray>::SharedPtr diag_pub_;
   std::vector<rclcpp::Subscription<Float64Stamped>::SharedPtr> processing_time_subscribers_;
 
+  // topic name - module name
+  std::unordered_map<std::string, std::string> module_name_map_{};
+  // module name - processing time
   std::unordered_map<std::string, double> processing_time_map_{};
-  std::vector<std::string> processing_time_topic_name_list_{};
 };
 }  // namespace autoware::processing_time_checker
 

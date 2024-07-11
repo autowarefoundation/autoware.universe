@@ -27,18 +27,30 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
 : Node("processing_time_checker", node_options)
 {
   const double update_rate = declare_parameter<double>("update_rate");
-  processing_time_topic_name_list_ =
+  const auto processing_time_topic_name_list =
     declare_parameter<std::vector<std::string>>("processing_time_topic_name_list");
 
-  for (const auto & processing_time_topic_name : processing_time_topic_name_list_) {
+  // extract module name from topic name
+  for (const auto & processing_time_topic_name : processing_time_topic_name_list) {
+    auto module_name = processing_time_topic_name;
+    module_name = module_name.substr(0, module_name.find_last_of("/"));
+    module_name = module_name.substr(module_name.find_last_of("/") + 1);
+    std::cerr << module_name << std::endl;
+    module_name_map_.insert_or_assign(processing_time_topic_name, module_name);
+  }
+
+  // create subscribers
+  for (const auto & processing_time_topic_name : processing_time_topic_name_list) {
+    const auto & module_name = module_name_map_.at(processing_time_topic_name);
+
     processing_time_subscribers_.push_back(create_subscription<Float64Stamped>(
       processing_time_topic_name, 1,
-      [this, &processing_time_topic_name]([[maybe_unused]] const Float64Stamped & msg) {
-        processing_time_map_.insert_or_assign(processing_time_topic_name, msg.data);
+      [this, &module_name]([[maybe_unused]] const Float64Stamped & msg) {
+        processing_time_map_.insert_or_assign(module_name, msg.data);
       }));
   }
 
-  diag_pub_ = create_publisher<DiagnosticArray>("~/diag", 1);
+  diag_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
 
   const auto period_ns = rclcpp::Rate(update_rate).period();
   timer_ = rclcpp::create_timer(
@@ -47,25 +59,25 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
 
 void ProcessingTimeChecker::onTimer()
 {
-  // create diag message
-  DiagnosticArray diag_msg;
-  diag_msg.header.stamp = now();
-
+  // create diagnostic status
+  DiagnosticStatus status;
+  status.level = status.OK;
+  status.name = "processing_time";
   for (const auto & processing_time_iterator : processing_time_map_) {
     const auto processing_time_topic_name = processing_time_iterator.first;
     const double processing_time = processing_time_iterator.second;
 
     // generate diagnostic status
-    DiagnosticStatus status;
-    status.level = status.OK;
-    status.name = processing_time_topic_name;
     diagnostic_msgs::msg::KeyValue key_value;
-    key_value.key = "processing_time";
+    key_value.key = processing_time_topic_name;
     key_value.value = std::to_string(processing_time);
     status.values.push_back(key_value);
-
-    diag_msg.status.push_back(status);
   }
+
+  // create diagnostic array
+  DiagnosticArray diag_msg;
+  diag_msg.header.stamp = now();
+  diag_msg.status.push_back(status);
 
   // publish
   diag_pub_->publish(diag_msg);
