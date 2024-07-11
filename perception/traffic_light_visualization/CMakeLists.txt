@@ -20,15 +20,14 @@ rclcpp_components_register_node(traffic_light_roi_visualizer
   EXECUTABLE traffic_light_visualization_node
 )
 
-ament_auto_add_executable(traffic_light_map_visualizer_node
+ament_auto_add_library(traffic_light_map_visualizer SHARED
   src/traffic_light_map_visualizer/node.cpp
-  src/traffic_light_map_visualizer/main.cpp
 )
 
-# rclcpp_components_register_node(traffic_light_map_visualizer
-#   PLUGIN "autoware::traffic_light::TrafficLightMapVisualizerNode"
-#   EXECUTABLE traffic_light_map_visualizer_node
-# )
+rclcpp_components_register_node(traffic_light_map_visualizer
+  PLUGIN "autoware::traffic_light::TrafficLightMapVisualizerNode"
+  EXECUTABLE traffic_light_map_visualizer_node
+)
 
 # Copy the assets directory to the installation directory
 install(

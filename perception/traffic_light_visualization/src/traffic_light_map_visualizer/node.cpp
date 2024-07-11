@@ -106,8 +106,8 @@ void lightAsMarker(
 namespace autoware::traffic_light
 {
 TrafficLightMapVisualizerNode::TrafficLightMapVisualizerNode(
-  const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options)
+  const rclcpp::NodeOptions & node_options)
+: rclcpp::Node("traffic_light_map_visualizer_node", node_options)
 {
   using std::placeholders::_1;
 
@@ -211,5 +211,5 @@ void TrafficLightMapVisualizerNode::binMapCallback(
 }
 }  // namespace autoware::traffic_light
 
-// #include <rclcpp_components/register_node_macro.hpp>
-// RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightMapVisualizerNode)
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightMapVisualizerNode)
