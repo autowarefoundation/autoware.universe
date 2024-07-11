@@ -45,6 +45,8 @@
 #include <string>
 #include <vector>
 
+// Delete this comment line before merging
+
 namespace autoware::behavior_velocity_planner
 {
 using autoware_behavior_velocity_planner::srv::LoadPlugin;

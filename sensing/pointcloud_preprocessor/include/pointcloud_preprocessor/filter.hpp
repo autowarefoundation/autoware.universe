@@ -49,6 +49,8 @@
  *
  */
 
+// Delete this comment line before merging
+
 #ifndef POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 #define POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 
