@@ -1875,6 +1875,20 @@ TEST(geometry, intersectPolygon)
     boost::geometry::correct(poly2);
     EXPECT_FALSE(autoware::universe_utils::intersects(poly1, poly2));
   }
+  {  // 2 triangles sharing a point and then with very small intersection
+    autoware::universe_utils::Polygon2d poly1, poly2;
+    poly1.outer().emplace_back(0, 0);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(4, 0);
+    poly2.outer().emplace_back(0, 4);
+    poly2.outer().emplace_back(2, 2);
+    poly2.outer().emplace_back(4, 4);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects(poly1, poly2));
+    poly1.outer()[1].y() += 1e-12;
+    EXPECT_TRUE(autoware::universe_utils::intersects(poly1, poly2));
+  }
   {  // 2 triangles with no intersection and no touching
     autoware::universe_utils::Polygon2d poly1, poly2;
     poly1.outer().emplace_back(0, 2);
