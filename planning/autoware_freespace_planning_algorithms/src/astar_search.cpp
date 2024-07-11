@@ -170,21 +170,14 @@ bool AstarSearch::setStartNode()
 {
   const auto index = pose2index(costmap_, start_pose_, planner_common_param_.theta_size);
 
-  if (detectCollision(index)) {
-    return false;
-  }
+  if (detectCollision(index)) return false;
 
   // Set start node
   AstarNode * start_node = &graph_[getKey(index)];
-  start_node->x = start_pose_.position.x;
-  start_node->y = start_pose_.position.y;
-  start_node->theta = 2.0 * M_PI / planner_common_param_.theta_size * index.theta;
-  start_node->gc = 0;
-  start_node->fc = estimateCost(start_pose_, index);
+  start_node->set(start_pose_, 0.0, estimateCost(start_pose_, index), 0, false);
+  start_node->dir_distance = 0.0;
   start_node->dist_to_goal = calcDistance2d(start_pose_, goal_pose_);
   start_node->dist_to_obs = getObstacleEDT(index);
-  start_node->steering_index = 0;
-  start_node->is_back = false;
   start_node->status = NodeStatus::Open;
   start_node->parent = nullptr;
 
@@ -197,12 +190,7 @@ bool AstarSearch::setStartNode()
 bool AstarSearch::setGoalNode()
 {
   const auto index = pose2index(costmap_, goal_pose_, planner_common_param_.theta_size);
-
-  if (detectCollision(index)) {
-    return false;
-  }
-
-  return true;
+  return !detectCollision(index);
 }
 
 double AstarSearch::estimateCost(const Pose & pose, const IndexXYT & index) const
@@ -257,7 +245,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
   for (; steering_index <= planner_common_param_.turning_steps; ++steering_index) {
     // skip expansion back to parent
     // skip expansion resulting in frequent direction change
-    if (is_back != current_node.is_back) {
+    if (current_node.parent != nullptr && is_back != current_node.is_back) {
       if (
         steering_index == current_node.steering_index ||
         current_node.dir_distance < min_dir_change_dist_)
