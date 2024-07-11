@@ -6,6 +6,9 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};/usr/share/cmake/geographiclib")
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(Qt5 COMPONENTS Network REQUIRED)
+find_package(OGRE REQUIRED)
+
 set(
     headers_to_moc
 )
@@ -17,6 +20,7 @@ set(
   src/include/tile.hpp
   src/include/tile_field.hpp
   src/include/overlay_utils.hpp
+  src/include/path_overlay.hpp
 )
 
 foreach(header "${headers_to_moc}")
@@ -30,9 +34,10 @@ set(
     src/tile.cpp
     src/tile_field.cpp
     src/goal_pose.cpp
+    src/path_overlay.cpp
 )
 
-add_library(
+ament_auto_add_library(
     ${PROJECT_NAME} SHARED
     ${display_moc_files}
     ${headers_to_not_moc}
