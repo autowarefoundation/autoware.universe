@@ -26,11 +26,11 @@ from launch_ros.descriptions import ComposableNode
 import yaml
 
 
-def load_parameter_dic(share_direc_path, yaml_path):
-    param_file = os.path.join(get_package_share_directory(share_direc_path), yaml_path)
+def load_parameter_dic(package_share_directory, yaml_file_path):
+    param_file = os.path.join(get_package_share_directory(package_share_directory), yaml_file_path)
 
-    with open(param_file, "r") as f:
-        param_dic = yaml.safe_load(f)["/**"]["ros__parameters"]
+    with open(param_file, "r") as file:
+        param_dic = yaml.safe_load(file)["/**"]["ros__parameters"]
 
     return param_dic
 
