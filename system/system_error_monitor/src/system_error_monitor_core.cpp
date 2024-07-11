@@ -288,10 +288,10 @@ void AutowareErrorMonitor::loadRequiredModules(const std::string & key)
     //                     or required_modules.key.module.parameter
     const auto split_names = split(param_name, '.');
     const auto & param_required_modules = split_names.at(0);
-    const auto & param_key = split_names.at(1);
+    const auto & split_param_key = split_names.at(1);
     const auto & param_module = split_names.at(2);
     const auto module_name_with_prefix =
-      fmt::format("{0}.{1}.{2}", param_required_modules, param_key, param_module);
+      fmt::format("{0}.{1}.{2}", param_required_modules, split_param_key, param_module);
 
     // Skip duplicate parameter
     if (module_names.count(module_name_with_prefix) != 0) {
