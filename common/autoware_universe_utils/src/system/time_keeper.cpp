@@ -14,7 +14,8 @@
 
 #include "autoware/universe_utils/system/time_keeper.hpp"
 
-#include <iostream>
+#include <fmt/format.h>
+
 #include <stdexcept>
 
 namespace autoware::universe_utils

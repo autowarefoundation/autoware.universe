@@ -17,13 +17,10 @@
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <rclcpp/publisher.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 #include <std_msgs/msg/string.hpp>
 #include <tier4_debug_msgs/msg/processing_time_node.hpp>
 #include <tier4_debug_msgs/msg/processing_time_tree.hpp>
-
-#include <fmt/format.h>
 
 #include <memory>
 #include <ostream>
