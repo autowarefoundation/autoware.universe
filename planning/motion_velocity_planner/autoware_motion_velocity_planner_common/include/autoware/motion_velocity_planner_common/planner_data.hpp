@@ -23,6 +23,7 @@
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
+#include <autoware_planning_msgs/msg/detail/lanelet_route__struct.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -88,7 +89,7 @@ struct PlannerData
    *@brief queries the traffic signal information of given Id. if keep_last_observation = true,
    *recent UNKNOWN observation is overwritten as the last non-UNKNOWN observation
    */
-  std::optional<TrafficSignalStamped> get_traffic_signal(
+  [[nodiscard]] std::optional<TrafficSignalStamped> get_traffic_signal(
     const lanelet::Id id, const bool keep_last_observation = false) const
   {
     const auto & traffic_light_id_map =
