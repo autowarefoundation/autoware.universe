@@ -85,7 +85,7 @@ AstarSearch::AstarSearch(
   search_method_ =
     astar_param.search_method == "backward" ? SearchMethod::Backward : SearchMethod::Forward;
 
-  min_expansion_dist_ = astar_param_.expansion_distance;
+  min_expansion_dist_ = std::max(astar_param_.expansion_distance, 1.5 * costmap_.info.resolution);
   max_expansion_dist_ = std::max(
     collision_vehicle_shape_.base_length * base_length_max_expansion_factor_, min_expansion_dist_);
 }
