@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_CLASSIFIER__CLASSIFIER_INTERFACE_HPP_
-#define TRAFFIC_LIGHT_CLASSIFIER__CLASSIFIER_INTERFACE_HPP_
+#ifndef CLASSIFIER__CLASSIFIER_INTERFACE_HPP_
+#define CLASSIFIER__CLASSIFIER_INTERFACE_HPP_
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -33,4 +33,4 @@ public:
 };
 }  // namespace autoware::traffic_light
 
-#endif  // TRAFFIC_LIGHT_CLASSIFIER__CLASSIFIER_INTERFACE_HPP_
+#endif  // CLASSIFIER__CLASSIFIER_INTERFACE_HPP_

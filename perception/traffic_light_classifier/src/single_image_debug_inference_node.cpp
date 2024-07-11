@@ -15,11 +15,11 @@
 #include <rclcpp/rclcpp.hpp>
 
 #if ENABLE_GPU
-#include <traffic_light_classifier/cnn_classifier.hpp>
+#include "classifier/cnn_classifier.hpp"
 #endif
 
-#include <traffic_light_classifier/color_classifier.hpp>
-#include <traffic_light_classifier/nodelet.hpp>
+#include "classifier/color_classifier.hpp"
+#include "traffic_light_classifier_node.hpp"
 
 #include <memory>
 #include <string>

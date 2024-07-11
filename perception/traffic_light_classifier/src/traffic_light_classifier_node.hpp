@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_CLASSIFIER__NODELET_HPP_
-#define TRAFFIC_LIGHT_CLASSIFIER__NODELET_HPP_
+#ifndef TRAFFIC_LIGHT_CLASSIFIER_NODE_HPP_
+#define TRAFFIC_LIGHT_CLASSIFIER_NODE_HPP_
 
-#include "traffic_light_classifier/classifier_interface.hpp"
+#include "classifier/classifier_interface.hpp"
 
 #include <image_transport/image_transport.hpp>
 #include <image_transport/subscriber_filter.hpp>
@@ -43,10 +43,10 @@
 #include <mutex>
 
 #if ENABLE_GPU
-#include "traffic_light_classifier/cnn_classifier.hpp"
+#include "classifier/cnn_classifier.hpp"
 #endif
 
-#include "traffic_light_classifier/color_classifier.hpp"
+#include "classifier/color_classifier.hpp"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -95,4 +95,4 @@ private:
 
 }  // namespace autoware::traffic_light
 
-#endif  // TRAFFIC_LIGHT_CLASSIFIER__NODELET_HPP_
+#endif  // TRAFFIC_LIGHT_CLASSIFIER_NODE_HPP_

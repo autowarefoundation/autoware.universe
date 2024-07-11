@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
-#define TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
+#ifndef CLASSIFIER__CNN_CLASSIFIER_HPP_
+#define CLASSIFIER__CNN_CLASSIFIER_HPP_
 
-#include "traffic_light_classifier/classifier_interface.hpp"
+#include "classifier_interface.hpp"
 
 #include <cuda_utils/cuda_unique_ptr.hpp>
 #include <cuda_utils/stream_unique_ptr.hpp>
@@ -120,4 +120,4 @@ private:
 
 }  // namespace autoware::traffic_light
 
-#endif  // TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
+#endif  // CLASSIFIER__CNN_CLASSIFIER_HPP_
