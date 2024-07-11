@@ -211,6 +211,8 @@ struct LongitudinalInfo
     safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
     terminal_safe_distance_margin =
       node.declare_parameter<double>("common.terminal_safe_distance_margin");
+    safe_distance_time_margin =
+      node.declare_parameter<double>("common.safe_distance_time_margin");
 
     hold_stop_velocity_threshold =
       node.declare_parameter<double>("common.hold_stop_velocity_threshold");
@@ -243,6 +245,8 @@ struct LongitudinalInfo
       parameters, "common.safe_distance_margin", safe_distance_margin);
     autoware::universe_utils::updateParam<double>(
       parameters, "common.terminal_safe_distance_margin", terminal_safe_distance_margin);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "common.safe_distance_time_margin", safe_distance_time_margin);
 
     autoware::universe_utils::updateParam<double>(
       parameters, "common.hold_stop_velocity_threshold", hold_stop_velocity_threshold);
@@ -270,6 +274,7 @@ struct LongitudinalInfo
   // distance margin
   double safe_distance_margin;
   double terminal_safe_distance_margin;
+  double safe_distance_time_margin;
 
   // hold stop
   double hold_stop_velocity_threshold;

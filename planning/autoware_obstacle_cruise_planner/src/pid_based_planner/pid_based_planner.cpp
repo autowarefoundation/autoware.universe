@@ -200,9 +200,9 @@ std::optional<PIDBasedPlanner::CruiseObstacleInfo> PIDBasedPlanner::calcObstacle
       calcDistanceToCollisionPoint(planner_data, obstacle.collision_points.front().point) +
       (obstacle.velocity - planner_data.ego_vel) * time_to_evaluate_rss_;
 
-    // calculate distance between ego and obstacle based on RSS
-    const double target_dist_to_obstacle = calcRSSDistance(
-      planner_data.ego_vel, obstacle.velocity, longitudinal_info_.safe_distance_margin);
+    // calculate distance between ego and obstacle based on time-based rule
+    const double target_dist_to_obstacle = calcTimeBasedSafeDistance(
+      planner_data.ego_vel, longitudinal_info_.safe_distance_time_margin);
 
     // calculate error distance and normalized one
     const double error_cruise_dist = dist_to_obstacle - target_dist_to_obstacle;

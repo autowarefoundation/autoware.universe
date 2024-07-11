@@ -174,6 +174,12 @@ protected:
     return rss_dist_with_margin;
   }
 
+  double calcTimeBasedSafeDistance(const double ego_vel, const double time)
+  {
+    double time_based_safe_distance = ego_vel * time;
+    return time_based_safe_distance;
+  }
+
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)
   {
     longitudinal_info_.onParam(parameters);
