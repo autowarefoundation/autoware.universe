@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Lidar parameters -->
+  <arg name="input/pointcloud"/>
+
+  <!-- Camera parameters -->
+  <arg name="input/camera0/image"/>
+  <arg name="input/camera0/info"/>
+  <arg name="input/camera1/image"/>
+  <arg name="input/camera1/info"/>
+  <arg name="input/camera2/image"/>
+  <arg name="input/camera2/info"/>
+  <arg name="input/camera3/image"/>
+  <arg name="input/camera3/info"/>
+  <arg name="input/camera4/image"/>
+  <arg name="input/camera4/info"/>
+  <arg name="input/camera5/image"/>
+  <arg name="input/camera5/info"/>
+  <arg name="input/camera6/image"/>
+  <arg name="input/camera6/info"/>
+  <arg name="input/camera7/image"/>
+  <arg name="input/camera7/info"/>
+  <arg name="number_of_cameras"/>
+  <arg name="bev_detection_model" default="bevdet" description="options: `bevdet`"/>
+
+<!-- BEVDet -->
+  <group if="$(eval &quot;'$(var bev_detection_model)'=='bevdet'&quot;)">
+    <push-ros-namespace namespace="bevdet"/>
+    <group>
+      <include file="$(find-pkg-share tensorrt_bevdet)/launch/tensorrt_bevdet.launch.xml">
+        <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
+        <arg name="input/img_fl" value="$(var input/camera0/image)"/>
+        <arg name="input/img_f" value="$(var input/camera1/image)"/>
+        <arg name="input/img_fr" value="$(var input/camera2/image)"/>
+        <arg name="input/img_bl" value="$(var input/camera3/image)"/>
+        <arg name="input/img_b" value="$(var input/camera4/image)"/>
+        <arg name="input/img_br" value="$(var input/camera5/image)"/>
+        <arg name="output/pointcloud" value="points_painting"/>
+        <arg name="output/pointcboxesloud" value="boxes"/>
+      </include>
+    </group>
+  </group>
+</launch>

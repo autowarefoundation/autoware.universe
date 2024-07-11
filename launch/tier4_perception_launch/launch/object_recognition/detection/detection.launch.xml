@@ -6,6 +6,7 @@
   <!-- Pipeline junctions -->
   <arg name="mode" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
   <arg name="lidar_detection_model" description="options: `transfusion`, `centerpoint`, `apollo`, `pointpainting`, `clustering`"/>
+  <arg name="bev_detection_model" default="bevdet" description="options: `bevdet`"/>
   <arg name="use_object_filter" description="use object filter"/>
   <arg name="objects_filter_method" description="options: `lanelet_filter` or `position_filter`"/>
   <arg name="use_pointcloud_map" description="use pointcloud map filter"/>
@@ -66,6 +67,7 @@
   <arg name="switch/detector/lidar_rule" default="false"/>
   <arg name="switch/detector/radar" default="false"/>
   <arg name="switch/detector/radar_only" default="false"/>
+  <arg name="switch/detector/camera_bev" default="false"/>
   <arg name="switch/detector/tracker_based" default="false"/>
   <let name="switch/detector/tracker_based" value="true" if="$(var use_detection_by_tracker)"/>
 
@@ -122,6 +124,9 @@
     <let name="switch/detector/radar" value="true" if="$(var use_multi_channel_tracker_merger)"/>
     <let name="switch/detector/radar_only" value="true" unless="$(var use_multi_channel_tracker_merger)"/>
     <let name="switch/detector/tracker_based" value="false"/>
+  </group>
+  <group scoped="false" if="$(eval '&quot;$(var mode)&quot;==&quot;camera&quot;')">
+    <let name="switch/detector/camera_bev" value="true"/>
   </group>
 
   <!-- Detector -->
@@ -209,6 +214,30 @@
       <arg name="object_velocity_splitter_param_path" value="$(var object_recognition_detection_object_velocity_splitter_radar_param_path)"/>
       <arg name="object_range_splitter_param_path" value="$(var object_recognition_detection_object_range_splitter_radar_param_path)"/>
       <arg name="radar_object_clustering_param_path" value="$(var radar_object_clustering_param_path)"/>
+    </include>
+  </group>
+  <group if="$(var switch/detector/camera_bev)">
+    <!-- Camera-based bev detectors-->
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/camera_bev_detector.launch.xml">
+      <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
+      <arg name="input/camera0/image" value="$(var input/camera0/image)"/>
+      <arg name="input/camera0/info" value="$(var input/camera0/info)"/>
+      <arg name="input/camera1/image" value="$(var input/camera1/image)"/>
+      <arg name="input/camera1/info" value="$(var input/camera1/info)"/>
+      <arg name="input/camera2/image" value="$(var input/camera2/image)"/>
+      <arg name="input/camera2/info" value="$(var input/camera2/info)"/>
+      <arg name="input/camera3/image" value="$(var input/camera3/image)"/>
+      <arg name="input/camera3/info" value="$(var input/camera3/info)"/>
+      <arg name="input/camera4/image" value="$(var input/camera4/image)"/>
+      <arg name="input/camera4/info" value="$(var input/camera4/info)"/>
+      <arg name="input/camera5/image" value="$(var input/camera5/image)"/>
+      <arg name="input/camera5/info" value="$(var input/camera5/info)"/>
+      <arg name="input/camera6/image" value="$(var input/camera6/image)"/>
+      <arg name="input/camera6/info" value="$(var input/camera6/info)"/>
+      <arg name="input/camera7/image" value="$(var input/camera7/image)"/>
+      <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
+      <arg name="number_of_cameras" value="$(var number_of_cameras)"/>
+      <arg name="bev_detection_model" value="$(var bev_detection_model)"/>
     </include>
   </group>
   <!-- DetectionByTracker -->
