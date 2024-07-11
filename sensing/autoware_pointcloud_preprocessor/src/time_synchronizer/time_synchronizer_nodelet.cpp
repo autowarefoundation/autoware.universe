@@ -651,4 +651,5 @@ void PointCloudDataSynchronizerComponent::checkSyncStatus(
 }  // namespace autoware::pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::pointcloud_preprocessor::PointCloudDataSynchronizerComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::pointcloud_preprocessor::PointCloudDataSynchronizerComponent)

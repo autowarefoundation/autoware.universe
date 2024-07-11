@@ -58,7 +58,8 @@ TEST_F(RemovePolygonCgalFromCloudTest, PointsInsidePolygonAreRemoved)
   sensor_msgs::msg::PointCloud2 cloud_in;
   CreatePointCloud2(cloud_in, 0.5, 0.5, 0.1);  // point inside the polygon
 
-  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(cloud_in, polygon, cloud_out);
+  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+    cloud_in, polygon, cloud_out);
 
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
   pcl::fromROSMsg(cloud_out, pcl_output);
@@ -72,7 +73,8 @@ TEST_F(RemovePolygonCgalFromCloudTest, PointsOutsidePolygonRemain)
   sensor_msgs::msg::PointCloud2 cloud_in;
   CreatePointCloud2(cloud_in, 1.5, 1.5, 0.1);  // point outside the polygon
 
-  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(cloud_in, polygon, cloud_out);
+  autoware::pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+    cloud_in, polygon, cloud_out);
 
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
   pcl::fromROSMsg(cloud_out, pcl_output);

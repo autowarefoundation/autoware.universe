@@ -56,7 +56,8 @@ public:
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
 };
 
-class VoxelBasedApproximateCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
+class VoxelBasedApproximateCompareMapFilterComponent
+: public autoware::pointcloud_preprocessor::Filter
 {
 protected:
   virtual void filter(

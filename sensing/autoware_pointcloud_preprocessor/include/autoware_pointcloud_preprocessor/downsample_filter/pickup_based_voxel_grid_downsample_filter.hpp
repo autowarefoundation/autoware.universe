@@ -36,7 +36,8 @@ namespace autoware::pointcloud_preprocessor
  * and picking a representative point for each voxel. It's useful for reducing computational
  * load when processing large point clouds.
  */
-class PickupBasedVoxelGridDownsampleFilterComponent : public autoware::pointcloud_preprocessor::Filter
+class PickupBasedVoxelGridDownsampleFilterComponent
+: public autoware::pointcloud_preprocessor::Filter
 {
 protected:
   void filter(

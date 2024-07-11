@@ -246,8 +246,10 @@ protected:
   }
 
   std::shared_ptr<rclcpp::Node> node_;
-  std::shared_ptr<autoware::pointcloud_preprocessor::DistortionCorrector2D> distortion_corrector_2d_;
-  std::shared_ptr<autoware::pointcloud_preprocessor::DistortionCorrector3D> distortion_corrector_3d_;
+  std::shared_ptr<autoware::pointcloud_preprocessor::DistortionCorrector2D>
+    distortion_corrector_2d_;
+  std::shared_ptr<autoware::pointcloud_preprocessor::DistortionCorrector3D>
+    distortion_corrector_3d_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
   static constexpr float standard_tolerance_{1e-4};

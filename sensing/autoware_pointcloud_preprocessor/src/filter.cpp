@@ -202,7 +202,8 @@ void autoware::pointcloud_preprocessor::Filter::computePublish(
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-rcl_interfaces::msg::SetParametersResult autoware::pointcloud_preprocessor::Filter::filterParamCallback(
+rcl_interfaces::msg::SetParametersResult
+autoware::pointcloud_preprocessor::Filter::filterParamCallback(
   const std::vector<rclcpp::Parameter> & p)
 {
   std::scoped_lock lock(mutex_);
@@ -362,7 +363,8 @@ bool autoware::pointcloud_preprocessor::Filter::calculate_transform_matrix(
 }
 
 // Returns false in error cases
-bool autoware::pointcloud_preprocessor::Filter::convert_output_costly(std::unique_ptr<PointCloud2> & output)
+bool autoware::pointcloud_preprocessor::Filter::convert_output_costly(
+  std::unique_ptr<PointCloud2> & output)
 {
   // In terms of performance, we should avoid using pcl_ros library function,
   // but this code path isn't reached in the main use case of Autoware, so it's left as is for now.

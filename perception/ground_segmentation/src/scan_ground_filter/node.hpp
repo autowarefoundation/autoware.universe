@@ -15,9 +15,9 @@
 #ifndef SCAN_GROUND_FILTER__NODE_HPP_
 #define SCAN_GROUND_FILTER__NODE_HPP_
 
-#include "autoware_vehicle_info_utils/vehicle_info.hpp"
 #include "autoware_pointcloud_preprocessor/filter.hpp"
 #include "autoware_pointcloud_preprocessor/transform_info.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info.hpp"
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
