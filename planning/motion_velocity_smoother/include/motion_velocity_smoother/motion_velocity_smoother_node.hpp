@@ -132,6 +132,12 @@ private:
     NORMAL = 3,
   };
 
+  enum class ForceSlowDrivingType {
+    DEACTIVATED = 0,
+    READY = 1,
+    ACTIVATED = 2,
+  };
+
   struct ForceAccelerationParam
   {
     double max_acceleration;
@@ -168,6 +174,7 @@ private:
     bool plan_from_ego_speed_on_manual_mode = true;
 
     ForceAccelerationParam force_acceleration_param;
+    double force_slow_driving_velocity;
   } node_param_{};
 
   struct ExternalVelocityLimit
@@ -257,11 +264,16 @@ private:
 
   // parameter handling
   void initCommonParam();
+
+  // Related to force acceleration
   void onForceAcceleration(
     const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
   bool force_acceleration_mode_;
+
+  // Related to force slow driving
   void onSlowDriving(
     const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response);
+  ForceSlowDrivingType force_slow_driving_mode_;
 
   // debug
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;

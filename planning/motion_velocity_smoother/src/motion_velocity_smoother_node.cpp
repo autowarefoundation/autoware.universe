@@ -79,6 +79,7 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   srv_slow_driving_ = create_service<SetBool>(
     "~/slow_driving", std::bind(&MotionVelocitySmootherNode::onSlowDriving, this, _1, _2));
   force_acceleration_mode_ = false;
+  force_slow_driving_mode_ = ForceSlowDrivingType::DEACTIVATED;
 
   // parameter update
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -205,6 +206,7 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     update_param("force_acceleration.engage_velocity", p.force_acceleration_param.engage_velocity);
     update_param(
       "force_acceleration.engage_acceleration", p.force_acceleration_param.engage_acceleration);
+    update_param("force_slow_driving.velocity", p.force_slow_driving_velocity);
   }
 
   {
@@ -334,6 +336,8 @@ void MotionVelocitySmootherNode::initCommonParam()
     declare_parameter<double>("force_acceleration.engage_velocity");
   p.force_acceleration_param.engage_acceleration =
     declare_parameter<double>("force_acceleration.engage_acceleration");
+
+  p.force_slow_driving_velocity = declare_parameter<double>("force_slow_driving.velocity");
 }
 
 void MotionVelocitySmootherNode::publishTrajectory(const TrajectoryPoints & trajectory) const
@@ -504,6 +508,14 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     flipVelocity(input_points);
   }
 
+  // Only activate slow driving when velocity is below threshold
+  double slow_driving_vel_threshold = get_parameter("force_slow_driving.velocity").as_double();
+  if (
+    force_slow_driving_mode_ == ForceSlowDrivingType::READY &&
+    current_odometry_ptr_->twist.twist.linear.x < slow_driving_vel_threshold) {
+    force_slow_driving_mode_ = ForceSlowDrivingType::ACTIVATED;
+  }
+
   const auto output = calcTrajectoryVelocity(input_points);
   if (output.empty()) {
     RCLCPP_WARN(get_logger(), "Output Point is empty");
@@ -588,6 +600,13 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
 
   // Apply velocity to approach stop point
   applyStopApproachingVelocity(traj_extracted);
+
+  // Apply force slow driving if activated
+  if (force_slow_driving_mode_ == ForceSlowDrivingType::ACTIVATED) {
+    for (auto & tp : traj_extracted) {
+      tp.longitudinal_velocity_mps = get_parameter("force_slow_driving.velocity").as_double();
+    }
+  }
 
   // Debug
   if (publish_debug_trajs_) {
@@ -1156,12 +1175,21 @@ void MotionVelocitySmootherNode::onForceAcceleration(
   }
 
   response->success = true;
+  response->message = message;
 }
 
 void MotionVelocitySmootherNode::onSlowDriving(
   const std::shared_ptr<SetBool::Request> request, std::shared_ptr<SetBool::Response> response)
 {
-  const std::string message = request->data ? "Slow driving" : "Default";
+  std::string message = "default";
+  if (request->data && force_slow_driving_mode_ == ForceSlowDrivingType::DEACTIVATED) {
+    force_slow_driving_mode_ = ForceSlowDrivingType::READY;
+
+    message = "Activated force slow drving";
+  } else if (!request->data) {
+    force_slow_driving_mode_ = ForceSlowDrivingType::DEACTIVATED;
+    message = "Deactivated force slow driving";
+  }
 
   response->success = true;
   response->message = message;
