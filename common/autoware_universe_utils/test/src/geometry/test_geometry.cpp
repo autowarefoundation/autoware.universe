@@ -2191,3 +2191,38 @@ TEST(geometry, isAbove)
     EXPECT_FALSE(result);
   }
 }
+
+TEST(geometry, divideBySegment)
+{
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::divideBySegment;
+
+  {
+    const auto p1 = createPoint(-1.0, 1.0, 0.0);
+    const auto p2 = createPoint(2.0, 2.0, 0.0);
+    const auto p3 = createPoint(0.0, 0.0, 0.0);
+    const auto p4 = createPoint(-2.0, -2.0, 0.0);
+    const auto p5 = createPoint(1.0, -1.0, 0.0);
+    const auto seg_start = createPoint(-2.0, 0.0, 0.0);
+    const auto seg_end = createPoint(2.0, 0.0, 0.0);
+    const auto result = divideBySegment({p1, p2, p3, p4, p5}, seg_start, seg_end);
+
+    EXPECT_EQ(result.at(0).size(), 2);
+    EXPECT_NEAR(result.at(0).at(0).x, -1.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).y, 1.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).z, 0.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).x, 2.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).y, 2.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).z, 0.0, epsilon);
+    EXPECT_EQ(result.at(1).size(), 3);
+    EXPECT_NEAR(result.at(1).at(0).x, 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).y, 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).z, 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).x, -2.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).y, -2.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).z, 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).x, 1.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).y, -1.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).z, 0.0, epsilon);
+  }
+}

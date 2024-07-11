@@ -550,4 +550,22 @@ bool isAbove(
          0;
 }
 
+std::array<std::vector<geometry_msgs::msg::Point>, 2> divideBySegment(
+  const std::vector<geometry_msgs::msg::Point> & points,
+  const geometry_msgs::msg::Point & seg_start, const geometry_msgs::msg::Point & seg_end)
+{
+  std::vector<geometry_msgs::msg::Point> above_points;
+  std::vector<geometry_msgs::msg::Point> below_points;
+
+  for (const auto & point : points) {
+    if (isAbove(point, seg_start, seg_end)) {
+      above_points.push_back(point);
+    } else {
+      below_points.push_back(point);
+    }
+  }
+
+  return {above_points, below_points};
+}
+
 }  // namespace autoware::universe_utils

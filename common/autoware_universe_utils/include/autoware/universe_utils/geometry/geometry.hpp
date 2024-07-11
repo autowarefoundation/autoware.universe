@@ -606,6 +606,10 @@ bool isAbove(
   const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & seg_start,
   const geometry_msgs::msg::Point & seg_end);
 
+std::array<std::vector<geometry_msgs::msg::Point>, 2> divideBySegment(
+  const std::vector<geometry_msgs::msg::Point> & points,
+  const geometry_msgs::msg::Point & seg_start, const geometry_msgs::msg::Point & seg_end);
+
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GEOMETRY_HPP_
