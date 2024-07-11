@@ -2158,3 +2158,36 @@ TEST(geometry, coveredBy)
     EXPECT_TRUE(*result);
   }
 }
+
+TEST(geometry, isAbove)
+{
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::isAbove;
+
+  {  // The point is above the line
+    const auto point = createPoint(0.0, 1.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = isAbove(point, p1, p2);
+
+    EXPECT_TRUE(result);
+  }
+
+  {  // The point is below the line
+    const auto point = createPoint(0.0, -1.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = isAbove(point, p1, p2);
+
+    EXPECT_FALSE(result);
+  }
+
+  {  // The point is on the line
+    const auto point = createPoint(0.0, 0.0, 0.0);
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const auto result = isAbove(point, p1, p2);
+
+    EXPECT_FALSE(result);
+  }
+}

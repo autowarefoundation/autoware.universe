@@ -541,4 +541,13 @@ std::optional<bool> coveredBy(
   return false;
 }
 
+bool isAbove(
+  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & seg_start,
+  const geometry_msgs::msg::Point & seg_end)
+{
+  return (seg_end.x - seg_start.x) * (point.y - seg_start.y) -
+           (seg_end.y - seg_start.y) * (point.x - seg_start.x) >
+         0;
+}
+
 }  // namespace autoware::universe_utils
