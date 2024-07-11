@@ -23,7 +23,7 @@
   <arg name="number_of_cameras"/>
   <arg name="bev_detection_model" default="bevdet" description="options: `bevdet`"/>
 
-<!-- BEVDet -->
+  <!-- BEVDet -->
   <group if="$(eval &quot;'$(var bev_detection_model)'=='bevdet'&quot;)">
     <push-ros-namespace namespace="bevdet"/>
     <group>

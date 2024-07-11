@@ -46,10 +46,10 @@ include_directories(
   ${autoware_perception_msgs_INCLUDE_DIRS}
 )
 
-cuda_add_executable(${PROJECT_NAME}_node 
-    src/bevdet_node.cpp 
+cuda_add_executable(${PROJECT_NAME}_node
+    src/bevdet_node.cpp
     src/bevdet.cpp
-    src/preprocess.cu 
+    src/preprocess.cu
     src/iou3d_nms.cu
     src/postprocess.cu
     src/data.cpp
@@ -72,8 +72,8 @@ ament_target_dependencies(${PROJECT_NAME}_node
   "tf2_geometry_msgs"
 )
 
-target_link_libraries(${PROJECT_NAME}_node 
-    yaml-cpp 
+target_link_libraries(${PROJECT_NAME}_node
+    yaml-cpp
     libnvinfer.so
     libnvonnxparser.so
     libz.so
@@ -93,7 +93,7 @@ install(TARGETS ${PROJECT_NAME}_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY 
+install(DIRECTORY
   launch
   config
   data

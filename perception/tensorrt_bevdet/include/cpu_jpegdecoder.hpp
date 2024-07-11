@@ -1,9 +1,11 @@
-#ifndef __CPU_JPEGDECODER__
-#define __CPU_JPEGDECODER__
+#ifndef CPU_JPEGDECODER_HPP_
+#define CPU_JPEGDECODER_HPP_
 
-#include <vector>
 #include "common.hpp"
 
-int decode_cpu(const std::vector<std::vector<char>> &files_data, uchar* out_imgs, size_t width, size_t height);
+#include <vector>
 
-#endif
+int decode_cpu(
+  const std::vector<std::vector<char>> & files_data, uchar * out_imgs, size_t width, size_t height);
+
+#endif  // CPU_JPEGDECODER_HPP_
