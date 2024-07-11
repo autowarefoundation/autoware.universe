@@ -3,7 +3,6 @@
 checkersReport
 constParameterReference
 constVariableReference
-// cspell: ignore cstyle
 funcArgNamesDifferent
 functionConst
 functionStatic
