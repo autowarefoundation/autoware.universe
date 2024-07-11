@@ -81,7 +81,7 @@ void SamplingPlannerModuleManager::updateModuleParams(
 
   auto & p = parameters_;
 
-  [[maybe_unused]] const std::string ns = name_ + ".";
+  [[maybe_unused]] const std::string tmp_ns = name_ + ".";
 
   {
     std::string ns{"constraints.hard"};
