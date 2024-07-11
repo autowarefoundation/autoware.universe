@@ -628,10 +628,10 @@ BehaviorModuleOutput StartPlannerModule::plan()
   if (!status_.found_pull_out_path) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
-    const auto output = generateStopOutput();
+    const auto stop_output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
-    return output;
+    return stop_output;
   }
 
   const auto path = std::invoke([&]() {
@@ -754,10 +754,10 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull out path, publish stop path");
     clearWaitingApproval();
-    const auto output = generateStopOutput();
+    const auto stop_output = generateStopOutput();
     setDebugData();  // use status updated in generateStopOutput()
     updateRTCStatus(0, 0);
-    return output;
+    return stop_output;
   }
 
   waitApproval();
