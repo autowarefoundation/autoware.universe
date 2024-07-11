@@ -52,13 +52,13 @@ typedef struct Detection
 
 namespace autoware::traffic_light
 {
-class TrafficLightFineDetectorNodelet : public rclcpp::Node
+class TrafficLightFineDetectorNode : public rclcpp::Node
 {
   using TrafficLightRoi = tier4_perception_msgs::msg::TrafficLightRoi;
   using TrafficLightRoiArray = tier4_perception_msgs::msg::TrafficLightRoiArray;
 
 public:
-  explicit TrafficLightFineDetectorNodelet(const rclcpp::NodeOptions & options);
+  explicit TrafficLightFineDetectorNode(const rclcpp::NodeOptions & options);
   void connectCb();
   /**
    * @brief main process function.
@@ -168,7 +168,7 @@ private:
 
   int batch_size_;
   std::unique_ptr<tensorrt_yolox::TrtYoloX> trt_yolox_;
-};  // TrafficLightFineDetectorNodelet
+};  // TrafficLightFineDetectorNode
 
 }  // namespace autoware::traffic_light
 

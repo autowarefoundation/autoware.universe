@@ -54,8 +54,7 @@ inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
   return std::vector<float>(double_vector.begin(), double_vector.end());
 }
 
-TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
-  const rclcpp::NodeOptions & options)
+TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOptions & options)
 : Node("traffic_light_fine_detector_node", options)
 {
   int num_class = 2;
@@ -96,7 +95,7 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
 
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
-    this, get_clock(), 100ms, std::bind(&TrafficLightFineDetectorNodelet::connectCb, this));
+    this, get_clock(), 100ms, std::bind(&TrafficLightFineDetectorNode::connectCb, this));
 
   std::lock_guard<std::mutex> lock(connect_mutex_);
   output_roi_pub_ = this->create_publisher<TrafficLightRoiArray>("~/output/rois", 1);
@@ -106,11 +105,10 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
     approximate_sync_.reset(
       new ApproximateSync(ApproximateSyncPolicy(10), image_sub_, rough_roi_sub_, expect_roi_sub_));
     approximate_sync_->registerCallback(
-      std::bind(&TrafficLightFineDetectorNodelet::callback, this, _1, _2, _3));
+      std::bind(&TrafficLightFineDetectorNode::callback, this, _1, _2, _3));
   } else {
     sync_.reset(new Sync(SyncPolicy(10), image_sub_, rough_roi_sub_, expect_roi_sub_));
-    sync_->registerCallback(
-      std::bind(&TrafficLightFineDetectorNodelet::callback, this, _1, _2, _3));
+    sync_->registerCallback(std::bind(&TrafficLightFineDetectorNode::callback, this, _1, _2, _3));
   }
 
   if (declare_parameter("build_only", false)) {
@@ -119,7 +117,7 @@ TrafficLightFineDetectorNodelet::TrafficLightFineDetectorNodelet(
   }
 }
 
-void TrafficLightFineDetectorNodelet::connectCb()
+void TrafficLightFineDetectorNode::connectCb()
 {
   std::lock_guard<std::mutex> lock(connect_mutex_);
   if (output_roi_pub_->get_subscription_count() == 0) {
@@ -133,7 +131,7 @@ void TrafficLightFineDetectorNodelet::connectCb()
   }
 }
 
-void TrafficLightFineDetectorNodelet::callback(
+void TrafficLightFineDetectorNode::callback(
   const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg,
   const TrafficLightRoiArray::ConstSharedPtr rough_roi_msg,
   const TrafficLightRoiArray::ConstSharedPtr expect_roi_msg)
@@ -214,7 +212,7 @@ void TrafficLightFineDetectorNodelet::callback(
   exe_time_pub_->publish(exe_time_msg);
 }
 
-float TrafficLightFineDetectorNodelet::evalMatchScore(
+float TrafficLightFineDetectorNode::evalMatchScore(
   std::map<int, TrafficLightRoi> & id2expectRoi,
   std::map<int, tensorrt_yolox::ObjectArray> & id2detections,
   std::map<int, tensorrt_yolox::Object> & id2bestDetection)
@@ -237,7 +235,7 @@ float TrafficLightFineDetectorNodelet::evalMatchScore(
   return score_sum;
 }
 
-void TrafficLightFineDetectorNodelet::detectionMatch(
+void TrafficLightFineDetectorNode::detectionMatch(
   std::map<int, TrafficLightRoi> & id2expectRoi,
   std::map<int, tensorrt_yolox::ObjectArray> & id2detections, TrafficLightRoiArray & out_rois)
 {
@@ -299,7 +297,7 @@ void TrafficLightFineDetectorNodelet::detectionMatch(
   }
 }
 
-bool TrafficLightFineDetectorNodelet::rosMsg2CvMat(
+bool TrafficLightFineDetectorNode::rosMsg2CvMat(
   const sensor_msgs::msg::Image::ConstSharedPtr image_msg, cv::Mat & image, std::string encode)
 {
   try {
@@ -314,8 +312,7 @@ bool TrafficLightFineDetectorNodelet::rosMsg2CvMat(
   return true;
 }
 
-bool TrafficLightFineDetectorNodelet::fitInFrame(
-  cv::Point & lt, cv::Point & rb, const cv::Size & size)
+bool TrafficLightFineDetectorNode::fitInFrame(cv::Point & lt, cv::Point & rb, const cv::Size & size)
 {
   const int width = static_cast<int>(size.width);
   const int height = static_cast<int>(size.height);
@@ -335,7 +332,7 @@ bool TrafficLightFineDetectorNodelet::fitInFrame(
   return true;
 }
 
-bool TrafficLightFineDetectorNodelet::readLabelFile(
+bool TrafficLightFineDetectorNode::readLabelFile(
   const std::string & filepath, std::vector<int> & tlr_label_id_, int & num_class)
 {
   std::ifstream labelsFile(filepath);
@@ -358,4 +355,4 @@ bool TrafficLightFineDetectorNodelet::readLabelFile(
 }  // namespace autoware::traffic_light
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightFineDetectorNodelet)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightFineDetectorNode)
