@@ -3,7 +3,7 @@
   <!-- Lidar parameters -->
   <arg name="lidar_detection_model" default="centerpoint" description="options: `transfusion`, `centerpoint`, `apollo`, `clustering`"/>
   <!-- Lidar detector centerpoint parameters -->
-  <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint`, `centerpoint_tiny` or `centerpoint_sigma`"/>
+  <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint`, `centerpoint_tiny` or `centerpoint_sigma` P.S. The _sigma model only has ml package version."/>
   <arg name="centerpoint_model_path" default="$(var data_path)/lidar_centerpoint"/>
   <!-- Lidar detector transfusion parameters -->
   <arg name="transfusion_model_name" default="transfusion" description="options: `transfusion`"/>
@@ -45,7 +45,7 @@
         <arg name="output/objects" value="$(var output/objects)"/>
         <arg name="model_name" value="$(var centerpoint_model_name)"/>
         <arg name="model_path" value="$(var centerpoint_model_path)"/>
-        <arg name="model_param_path" value="$(var lidar_model_param_path)/$(var centerpoint_model_name).param.yaml"/>
+        <arg name="model_param_path" value="$(var lidar_model_param_path)/$(var centerpoint_model_name)_base.param.yaml"/>
         <arg name="ml_package_param_path" value="$(var centerpoint_model_path)/$(var centerpoint_model_name)_ml_package.param.yaml"/>
         <arg name="class_remapper_param_path" value="$(var centerpoint_model_path)/detection_class_remapper.param.yaml"/>
 

@@ -42,12 +42,7 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ### The `build_only` option
 
-The `lidar_centerpoint` node has `build_only` option to build the TensorRT engine file from the ONNX file.
-Although it is preferred to move all the ROS parameters in `.param.yaml` file in Autoware Universe, the `build_only` option is not moved to the `.param.yaml` file for now, because it may be used as a flag to execute the build as a pre-task. You can execute with the following command:
-
-```bash
-ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml model_name:=centerpoint_tiny model_path:=/home/autoware/autoware_data/lidar_centerpoint model_param_path:=$(ros2 pkg prefix lidar_centerpoint --share)/config/centerpoint_tiny.param.yaml build_only:=true
-```
+The `lidar_centerpoint` node has `build_only` option to build the TensorRT engine file from the ONNX file, and the `build_only` option is inside the launch file of `lidar_centerpoint` node, and all the ROS parameters are moved in `.param.yaml` files.
 
 ## Assumptions / Known limits
 
@@ -227,35 +222,16 @@ You can find it in `mmdetection3d/projects/AutowareCenterPoint` file.
 python projects/AutowareCenterPoint/centerpoint_onnx_converter.py --cfg projects/AutowareCenterPoint/configs/centerpoint_custom.py --ckpt work_dirs/centerpoint_custom/YOUR_BEST_MODEL.pth --work-dir ./work_dirs/onnx_models
 ```
 
-#### Create the config file for the custom model
+#### Adjust the config file for the custom model
 
-Create a new config file named **centerpoint_custom.param.yaml** under the config file directory of the lidar_centerpoint node. Sets the parameters of the config file like
-point_cloud_range, point_feature_size, voxel_size, etc. according to the training config file.
-
-```yaml
-/**:
-  ros__parameters:
-    class_names: ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"]
-    point_feature_size: 4
-    max_voxel_size: 40000
-    point_cloud_range: [-51.2, -51.2, -3.0, 51.2, 51.2, 5.0]
-    voxel_size: [0.2, 0.2, 8.0]
-    downsample_factor: 1
-    encoder_in_feature_size: 9
-    # post-process params
-    circle_nms_dist_threshold: 0.5
-    iou_nms_target_class_names: ["CAR"]
-    iou_nms_search_distance_2d: 10.0
-    iou_nms_threshold: 0.1
-    yaw_norm_thresholds: [0.3, 0.3, 0.3, 0.3, 0.0]
-```
+All the ROS parameters have been moved into `.param.yaml` files, feel free to change the parameters inside them for better performance! **centerpoint_(your_selection_of_model).param.yaml** files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the **Parameters** section. 
 
 #### Launch the lidar_centerpoint node
 
 ```bash
 cd /YOUR/AUTOWARE/PATH/Autoware
 source install/setup.bash
-ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml  model_name:=centerpoint_custom  model_path:=/PATH/TO/ONNX/FILE/
+ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml  model_name:=centerpoint_(your_selection_of_model)  model_path:=/PATH/TO/ONNX/FILE/
 ```
 
 ### Changelog
