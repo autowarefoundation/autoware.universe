@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for Duplicated Node Checker",
+  "title": "Parameters for Processing Time Checker",
   "type": "object",
   "definitions": {
     "autoware_processing_time_checker": {
@@ -11,9 +11,16 @@
           "default": 10,
           "exclusiveMinimum": 2,
           "description": "The scanning and update frequency of the checker."
+        },
+        "processing_time_topic_name_list": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The topic name list of the processing time."
         }
       },
-      "required": ["update_rate"]
+      "required": ["update_rate", "processing_time_topic_name_list"]
     }
   },
   "properties": {
