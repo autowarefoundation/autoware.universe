@@ -224,7 +224,7 @@ python projects/AutowareCenterPoint/centerpoint_onnx_converter.py --cfg projects
 
 #### Adjust the config file for the custom model
 
-All the ROS parameters have been moved into `.param.yaml` files, feel free to change the parameters inside them for better performance! **centerpoint_(your_selection_of_model).param.yaml** files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the **Parameters** section. 
+All the ROS parameters have been moved into `.param.yaml` files, feel free to change the parameters inside them for better performance! **centerpoint\_(your_selection_of_model).param.yaml** files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the **Parameters** section.
 
 #### Launch the lidar_centerpoint node
 
