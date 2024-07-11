@@ -554,7 +554,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
       auto extension_frenet_paths = autoware::frenet_planner::generatePaths(
         reference_spline, frenet_reuse_state, extension_sampling_parameters);
       for (auto & extension_frenet_path : extension_frenet_paths) {
-        if (!extension_frenet_path.points.empty()) frenet_paths.push_back(reused_path.extend(extension_frenet_path));
+        if (!extension_frenet_path.points.empty())
+          frenet_paths.push_back(reused_path.extend(extension_frenet_path));
       }
     }
   } else {
