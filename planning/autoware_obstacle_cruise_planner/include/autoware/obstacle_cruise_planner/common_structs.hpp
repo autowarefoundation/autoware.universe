@@ -211,8 +211,7 @@ struct LongitudinalInfo
     safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
     terminal_safe_distance_margin =
       node.declare_parameter<double>("common.terminal_safe_distance_margin");
-    safe_distance_time_margin =
-      node.declare_parameter<double>("common.safe_distance_time_margin");
+    safe_distance_time_margin = node.declare_parameter<double>("common.safe_distance_time_margin");
 
     hold_stop_velocity_threshold =
       node.declare_parameter<double>("common.hold_stop_velocity_threshold");
