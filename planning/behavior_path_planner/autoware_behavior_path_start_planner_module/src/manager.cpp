@@ -185,9 +185,9 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   // stop condition
   {
     p.maximum_deceleration_for_stop =
-      node->declare_parameter<double>(ns + "stop_condition.maximum_deceleration_for_stop");
+      node->declare_parameter<double>(start_ns + "stop_condition.maximum_deceleration_for_stop");
     p.maximum_jerk_for_stop =
-      node->declare_parameter<double>(ns + "stop_condition.maximum_jerk_for_stop");
+      node->declare_parameter<double>(start_ns + "stop_condition.maximum_jerk_for_stop");
   }
 
   const std::string base_ns = "start_planner.path_safety_check.";
@@ -535,10 +535,10 @@ void StartPlannerModuleManager::updateModuleParams(
 
   {
     updateParam<double>(
-      parameters, ns + "stop_condition.maximum_deceleration_for_stop",
+      parameters, start_ns + "stop_condition.maximum_deceleration_for_stop",
       p->maximum_deceleration_for_stop);
     updateParam<double>(
-      parameters, ns + "stop_condition.maximum_jerk_for_stop", p->maximum_jerk_for_stop);
+      parameters, start_ns + "stop_condition.maximum_jerk_for_stop", p->maximum_jerk_for_stop);
   }
 
   const std::string base_ns = "start_planner.path_safety_check.";
