@@ -132,6 +132,8 @@ bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
     return false;
   }
 
+  setCollisionFreeDistanceMap();
+
   if (!search()) {
     throw std::logic_error("HA* failed to find path to goal");
     return false;
@@ -145,9 +147,51 @@ void AstarSearch::resetData()
   // point to deleted node.
   openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
   graph_.clear();
-  int total_astar_node_count =
-    costmap_.info.width * costmap_.info.height * planner_common_param_.theta_size;
+  int nb_of_grid_nodes = costmap_.info.width * costmap_.info.height;
+  int total_astar_node_count = nb_of_grid_nodes * planner_common_param_.theta_size;
   graph_.resize(total_astar_node_count);
+  col_free_distance_map_.clear();
+  col_free_distance_map_.resize(nb_of_grid_nodes, std::numeric_limits<double>::max());
+}
+
+void AstarSearch::setCollisionFreeDistanceMap()
+{
+  using Entry = std::pair<IndexXY, double>;
+  struct CompareEntry
+  {
+    bool operator()(const Entry & a, const Entry & b) { return a.second > b.second; }
+  };
+  std::priority_queue<Entry, std::vector<Entry>, CompareEntry> heap;
+  std::vector<bool> closed(col_free_distance_map_.size(), false);
+  auto goal_index = pose2index(costmap_, goal_pose_, planner_common_param_.theta_size);
+  col_free_distance_map_[indexToId(goal_index)] = 0.0;
+  heap.push({IndexXY{goal_index.x, goal_index.y}, 0.0});
+
+  Entry current;
+  std::array<int, 3> offsets = {1, 0, -1};
+  while (!heap.empty()) {
+    current = heap.top();
+    heap.pop();
+    int id = indexToId(current.first);
+    if (closed[id]) continue;
+    closed[id] = true;
+
+    const auto & index = current.first;
+    for (const auto & offset_x : offsets) {
+      int x = index.x + offset_x;
+      for (const auto & offset_y : offsets) {
+        int y = index.y + offset_y;
+        IndexXY n_index{x, y};
+        double offset = std::abs(offset_x) + std::abs(offset_y);
+        if (isOutOfRange(n_index) || isObs(n_index) || offset < 1) continue;
+        int n_id = indexToId(n_index);
+        double dist = current.second + (sqrt(offset) * costmap_.info.resolution);
+        if (closed[n_id] || col_free_distance_map_[n_id] < dist) continue;
+        col_free_distance_map_[n_id] = dist;
+        heap.push({n_index, dist});
+      }
+    }
+  }
 }
 
 bool AstarSearch::setStartNode()
@@ -164,7 +208,7 @@ bool AstarSearch::setStartNode()
   start_node->y = start_pose_.position.y;
   start_node->theta = 2.0 * M_PI / planner_common_param_.theta_size * index.theta;
   start_node->gc = 0;
-  start_node->fc = estimateCost(start_pose_);
+  start_node->fc = estimateCost(start_pose_, index);
   start_node->steering_index = 0;
   start_node->is_back = false;
   start_node->status = NodeStatus::Open;
@@ -187,18 +231,15 @@ bool AstarSearch::setGoalNode()
   return true;
 }
 
-double AstarSearch::estimateCost(const Pose & pose) const
+double AstarSearch::estimateCost(const Pose & pose, const IndexXYT & index) const
 {
-  double total_cost = 0.0;
+  double total_cost = col_free_distance_map_[indexToId(index)];
   // Temporarily, until reeds_shepp gets stable.
   if (use_reeds_shepp_) {
-    total_cost += calcReedsSheppDistance(pose, goal_pose_, avg_turning_radius_) *
-                  astar_param_.distance_heuristic_weight;
-  } else {
-    total_cost += autoware::universe_utils::calcDistance2d(pose, goal_pose_) *
-                  astar_param_.distance_heuristic_weight;
+    total_cost =
+      std::max(total_cost, calcReedsSheppDistance(pose, goal_pose_, avg_turning_radius_));
   }
-  return total_cost;
+  return astar_param_.distance_heuristic_weight * total_cost;
 }
 
 bool AstarSearch::search()
@@ -270,7 +311,7 @@ void AstarSearch::expandNodes(AstarNode & current_node)
     weights_sum *= transition.is_back ? planner_common_param_.reverse_weight : 1.0;
 
     double move_cost = current_node.gc + weights_sum * transition.distance;
-    double total_cost = move_cost + estimateCost(next_pose);
+    double total_cost = move_cost + estimateCost(next_pose, next_index);
     // Compare cost
     if (next_node->status == NodeStatus::None || next_node->fc > total_cost) {
       next_node->status = NodeStatus::Open;

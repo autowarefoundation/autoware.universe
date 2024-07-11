@@ -151,13 +151,14 @@ public:
 
 private:
   void setTransitionTable();
+  void setCollisionFreeDistanceMap();
   bool search();
   void expandNodes(AstarNode & current_node);
   void resetData();
   void setPath(const AstarNode & goal);
   bool setStartNode();
   bool setGoalNode();
-  double estimateCost(const Pose & pose) const;
+  double estimateCost(const Pose & pose, const IndexXYT & index) const;
   bool isGoal(const AstarNode & node) const;
   Pose node2pose(const AstarNode & node) const;
 
@@ -170,6 +171,7 @@ private:
   // hybrid astar variables
   TransitionTable transition_table_;
   std::vector<AstarNode> graph_;
+  std::vector<double> col_free_distance_map_;
 
   std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison> openlist_;
 
