@@ -1919,33 +1919,58 @@ TEST(geometry, intersectPolygon)
 TEST(geometry, intersectPolygonRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 100;
-  constexpr auto vertices = 4;
-  constexpr auto max_values = 100;
-  for (auto i = 0; i < polygons_nb; ++i) {
-    polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
-  }
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
 
   autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
-  double ground_truth_ns = 0.0;
-  double gjk_ns = 0.0;
-  for (auto i = 0UL; i < polygons.size(); ++i) {
-    for (auto j = 0UL; j < polygons.size(); ++j) {
-      sw.tic();
-      const auto ground_truth = boost::geometry::intersects(polygons[i], polygons[j]);
-      ground_truth_ns += sw.toc();
-      sw.tic();
-      const auto gjk = autoware::universe_utils::intersects(polygons[i], polygons[j]);
-      gjk_ns += sw.toc();
-      if (ground_truth != gjk) {
-        std::cout << "Failed for the 2 polygons: ";
-        std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
-                  << std::endl;
-      }
-      EXPECT_EQ(ground_truth, gjk);
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_intersect_ns = 0.0;
+    double ground_truth_no_intersect_ns = 0.0;
+    double gjk_intersect_ns = 0.0;
+    double gjk_no_intersect_ns = 0.0;
+    int intersect_count = 0;
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
     }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        sw.tic();
+        const auto ground_truth = boost::geometry::intersects(polygons[i], polygons[j]);
+        if (ground_truth) {
+          ++intersect_count;
+          ground_truth_intersect_ns += sw.toc();
+        } else {
+          ground_truth_no_intersect_ns += sw.toc();
+        }
+        sw.tic();
+        const auto gjk = autoware::universe_utils::intersects(polygons[i], polygons[j]);
+        if (gjk) {
+          gjk_intersect_ns += sw.toc();
+        } else {
+          gjk_no_intersect_ns += sw.toc();
+        }
+        if (ground_truth != gjk) {
+          std::cout << "Failed for the 2 polygons: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+        EXPECT_EQ(ground_truth, gjk);
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
+      intersect_count, polygons_nb * polygons_nb);
+    std::printf(
+      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
+      ground_truth_intersect_ns / 1e6, gjk_intersect_ns / 1e6);
+    std::printf(
+      "\tNo Intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
+      ground_truth_no_intersect_ns / 1e6, gjk_no_intersect_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
+      (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,
+      (gjk_no_intersect_ns + gjk_intersect_ns) / 1e6);
   }
-  std::printf(
-    "polygons_nb = %d, vertices = %d\nBoost::geometry = %2.2f ms\nGJK = %2.2f ms\n", polygons_nb,
-    vertices, ground_truth_ns / 1e6, gjk_ns / 1e6);
 }
