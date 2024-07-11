@@ -82,7 +82,7 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
 
   const auto period_ns = rclcpp::Rate(update_rate).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), period_ns, std::bind(&ProcessingTimeChecker::onTimer, this));
+    this, get_clock(), period_ns, std::bind(&ProcessingTimeChecker::on_timer, this));
 }
 
 void ProcessingTimeChecker::on_timer()
