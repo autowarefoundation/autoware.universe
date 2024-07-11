@@ -154,7 +154,8 @@ void AstarSearch::setCollisionFreeDistanceMap()
         int y = index.y + offset_y;
         IndexXY n_index{x, y};
         double offset = std::abs(offset_x) + std::abs(offset_y);
-        if (isOutOfRange(n_index) || isObs(n_index) || offset < 1) continue;
+        if (isOutOfRange(n_index) || offset < 1) continue;
+        if (getObstacleEDT(n_index) < 0.5 * collision_vehicle_shape_.width) continue;
         int n_id = indexToId(n_index);
         double dist = current.second + (sqrt(offset) * costmap_.info.resolution);
         if (closed[n_id] || col_free_distance_map_[n_id] < dist) continue;
