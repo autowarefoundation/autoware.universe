@@ -393,8 +393,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(
       if (fromEgoDist(occlusion_wo_tl_pass_judge_line_idx) < 0) {
         if (has_collision) {
           const std::string evasive_diag = generateEgoRiskEvasiveDiagnosis(
-            *path, closest_idx, time_distance_array, too_late_detect_objects,
-            misjudge_objects);
+            *path, closest_idx, time_distance_array, too_late_detect_objects, misjudge_objects);
           return OverPassJudge{
             "already passed maximum peeking line in the absence of traffic light.\n" +
               safety_report,
