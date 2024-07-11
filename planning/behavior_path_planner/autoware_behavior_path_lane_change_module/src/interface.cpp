@@ -18,11 +18,10 @@
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 
-#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -41,9 +40,11 @@ LaneChangeInterface::LaneChangeInterface(
 : SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{std::move(parameters)},
   module_type_{std::move(module_type)},
-  prev_approved_path_{std::make_unique<PathWithLaneId>()}
+  prev_approved_path_{std::make_unique<PathWithLaneId>()},
+  time_keeper_(std::make_shared<universe_utils::TimeKeeper>())
 {
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, name);
+  module_type_->setTimeKeeper(time_keeper_);
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
 }
 
@@ -94,6 +95,7 @@ void LaneChangeInterface::postProcess()
 
 BehaviorModuleOutput LaneChangeInterface::plan()
 {
+  universe_utils::ScopedTimeTrack time_track(__func__, *time_keeper_);
   resetPathCandidate();
   resetPathReference();
 
@@ -340,6 +342,7 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
 
 void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & output)
 {
+  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   const auto steering_factor_direction = std::invoke([&]() {
     if (module_type_->getDirection() == Direction::LEFT) {
       return SteeringFactor::LEFT;
