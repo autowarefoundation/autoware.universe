@@ -402,7 +402,7 @@ findNearestIndex<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
 template <class T>
 double calcLongitudinalOffsetToSegment(
   const T & points, const size_t seg_idx, const geometry_msgs::msg::Point & p_target,
-  const bool throw_exception = false)
+  const bool throw_exception = false, const bool check_overlap = true)
 {
   if (seg_idx >= points.size() - 1) {
     const std::string error_message(
@@ -420,7 +420,8 @@ double calcLongitudinalOffsetToSegment(
     return std::nan("");
   }
 
-  const auto overlap_removed_points = removeOverlapPoints(points, seg_idx);
+  const auto & overlap_removed_points =
+    check_overlap ? removeOverlapPoints(points, seg_idx) : points;
 
   if (throw_exception) {
     validateNonEmpty(overlap_removed_points);
@@ -460,15 +461,18 @@ double calcLongitudinalOffsetToSegment(
 extern template double
 calcLongitudinalOffsetToSegment<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & points, const size_t seg_idx,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false,
+  const bool check_overlap = true);
 extern template double
 calcLongitudinalOffsetToSegment<std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>>(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points, const size_t seg_idx,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false,
+  const bool check_overlap = true);
 extern template double
 calcLongitudinalOffsetToSegment<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points, const size_t seg_idx,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false,
+  const bool check_overlap = true);
 
 /**
  * @brief find nearest segment index to point.
@@ -577,9 +581,9 @@ findNearestSegmentIndex<std::vector<autoware_planning_msgs::msg::TrajectoryPoint
 template <class T>
 double calcLateralOffset(
   const T & points, const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
-  const bool throw_exception = false)
+  const bool throw_exception = false, const bool check_overlap = true)
 {
-  const auto overlap_removed_points = removeOverlapPoints(points, 0);
+  const auto & overlap_removed_points = check_overlap ? removeOverlapPoints(points) : points;
 
   if (throw_exception) {
     validateNonEmpty(overlap_removed_points);
@@ -627,16 +631,16 @@ double calcLateralOffset(
 extern template double calcLateralOffset<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & points,
   const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
-  const bool throw_exception = false);
+  const bool throw_exception = false, const bool check_overlap = true);
 extern template double
 calcLateralOffset<std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>>(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
   const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
-  const bool throw_exception = false);
+  const bool throw_exception = false, const bool check_overlap = true);
 extern template double calcLateralOffset<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
   const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
-  const bool throw_exception = false);
+  const bool throw_exception = false, const bool check_overlap = true);
 
 /**
  * @brief calculate lateral offset from p_target (length from p_target to trajectory).
@@ -650,9 +654,10 @@ extern template double calcLateralOffset<std::vector<autoware_planning_msgs::msg
  */
 template <class T>
 double calcLateralOffset(
-  const T & points, const geometry_msgs::msg::Point & p_target, const bool throw_exception = false)
+  const T & points, const geometry_msgs::msg::Point & p_target, const bool throw_exception = false,
+  const bool check_overlap = true)
 {
-  const auto overlap_removed_points = removeOverlapPoints(points, 0);
+  const auto & overlap_removed_points = check_overlap ? removeOverlapPoints(points) : points;
 
   if (throw_exception) {
     validateNonEmpty(overlap_removed_points);
@@ -684,19 +689,22 @@ double calcLateralOffset(
   }
 
   const size_t seg_idx = findNearestSegmentIndex(overlap_removed_points, p_target);
-  return calcLateralOffset(points, p_target, seg_idx, throw_exception);
+  return calcLateralOffset(overlap_removed_points, p_target, seg_idx, throw_exception, false);
 }
 
 extern template double calcLateralOffset<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & points,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false,
+  const bool check_overlap = true);
 extern template double
 calcLateralOffset<std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>>(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false,
+  const bool check_overlap = true);
 extern template double calcLateralOffset<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception = false,
+  const bool check_overlap = true);
 
 /**
  * @brief calculate length of 2D distance between two points, specified by start and end points

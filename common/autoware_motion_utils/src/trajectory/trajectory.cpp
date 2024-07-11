@@ -104,15 +104,18 @@ findNearestIndex<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
 template double
 calcLongitudinalOffsetToSegment<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & points, const size_t seg_idx,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception,
+  const bool check_overlap = true);
 template double
 calcLongitudinalOffsetToSegment<std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>>(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points, const size_t seg_idx,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception,
+  const bool check_overlap = true);
 template double
 calcLongitudinalOffsetToSegment<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points, const size_t seg_idx,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception,
+  const bool check_overlap = true);
 
 //
 template size_t findNearestSegmentIndex<std::vector<autoware_planning_msgs::msg::PathPoint>>(
@@ -142,24 +145,30 @@ findNearestSegmentIndex<std::vector<autoware_planning_msgs::msg::TrajectoryPoint
 //
 template double calcLateralOffset<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & points,
-  const geometry_msgs::msg::Point & p_target, const size_t seg_idx, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const size_t seg_idx, const bool throw_exception,
+  const bool check_overlap = true);
 template double calcLateralOffset<std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>>(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
-  const geometry_msgs::msg::Point & p_target, const size_t seg_idx, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const size_t seg_idx, const bool throw_exception,
+  const bool check_overlap = true);
 template double calcLateralOffset<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  const geometry_msgs::msg::Point & p_target, const size_t seg_idx, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const size_t seg_idx, const bool throw_exception,
+  const bool check_overlap = true);
 
 //
 template double calcLateralOffset<std::vector<autoware_planning_msgs::msg::PathPoint>>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> & points,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception,
+  const bool check_overlap = true);
 template double calcLateralOffset<std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>>(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception,
+  const bool check_overlap = true);
 template double calcLateralOffset<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>>(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & points,
-  const geometry_msgs::msg::Point & p_target, const bool throw_exception);
+  const geometry_msgs::msg::Point & p_target, const bool throw_exception,
+  const bool check_overlap = true);
 
 //
 template double calcSignedArcLength<std::vector<autoware_planning_msgs::msg::PathPoint>>(
