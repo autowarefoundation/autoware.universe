@@ -45,4 +45,6 @@ public:
 };
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_UINT16_NODELET_HPP_
+// clang-format off
+#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_UINT16_NODELET_HPP_  // NOLINT
+// clang-format on

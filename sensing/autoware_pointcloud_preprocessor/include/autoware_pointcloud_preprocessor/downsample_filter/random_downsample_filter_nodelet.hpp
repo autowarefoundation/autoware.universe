@@ -80,4 +80,6 @@ public:
 };
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODELET_HPP_
+// clang-format off
+#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__RANDOM_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
+// clang-format on
