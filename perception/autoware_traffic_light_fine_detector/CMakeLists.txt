@@ -95,7 +95,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   rclcpp_components_register_node(traffic_light_fine_detector_nodelet
-    PLUGIN "traffic_light::TrafficLightFineDetectorNodelet"
+    PLUGIN "autoware::traffic_light::TrafficLightFineDetectorNodelet"
     EXECUTABLE traffic_light_fine_detector_node
   )
 

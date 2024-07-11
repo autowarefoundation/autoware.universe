@@ -45,13 +45,14 @@
 #include <string>
 #include <vector>
 
+namespace autoware::traffic_light
+{
+
 typedef struct Detection
 {
   float x, y, w, h, prob;
 } Detection;
 
-namespace traffic_light
-{
 class TrafficLightFineDetectorNodelet : public rclcpp::Node
 {
   using TrafficLightRoi = tier4_perception_msgs::msg::TrafficLightRoi;
@@ -170,6 +171,6 @@ private:
   std::unique_ptr<tensorrt_yolox::TrtYoloX> trt_yolox_;
 };  // TrafficLightFineDetectorNodelet
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #endif  // TRAFFIC_LIGHT_FINE_DETECTOR__NODELET_HPP_

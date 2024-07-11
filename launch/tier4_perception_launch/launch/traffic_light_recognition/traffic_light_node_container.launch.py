@@ -136,8 +136,8 @@ def launch_setup(context, *args, **kwargs):
     fine_detector_loader = LoadComposableNodes(
         composable_node_descriptions=[
             ComposableNode(
-                package="traffic_light_fine_detector",
-                plugin="traffic_light::TrafficLightFineDetectorNodelet",
+                package="autoware_traffic_light_fine_detector",
+                plugin="autoware::traffic_light::TrafficLightFineDetectorNodelet",
                 name="traffic_light_fine_detector",
                 namespace="detection",
                 parameters=[fine_detector_model_param],
