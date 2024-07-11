@@ -171,6 +171,15 @@ bool MotionVelocityPlannerNode::update_planner_data()
   is_ready &= check_with_log(
     planner_data_.velocity_smoother_, "Waiting for the initialization of the velocity smoother");
 
+  const auto route_ptr = route_subscriber_.takeNewData();
+  if (check_with_log(route_ptr, "Waiting for route")) {
+    if (route_ptr->segments.empty()) {
+      RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
+    } else {
+      planner_data_.route_handler->setRoute(*route_ptr);
+    }
+  }
+
   // optional data
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
   if (traffic_signals_ptr) process_traffic_signals(traffic_signals_ptr);
