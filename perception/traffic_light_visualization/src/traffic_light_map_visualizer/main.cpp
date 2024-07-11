@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traffic_light_visualization/traffic_light_map_visualizer/node.hpp"
+#include "node.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -22,7 +22,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::NodeOptions node_options;
-  auto node = std::make_shared<traffic_light::TrafficLightMapVisualizerNode>(
+  auto node = std::make_shared<autoware::traffic_light::TrafficLightMapVisualizerNode>(
     "traffic_light_map_visualizer_node", node_options);
   rclcpp::spin(node);
   return 0;
