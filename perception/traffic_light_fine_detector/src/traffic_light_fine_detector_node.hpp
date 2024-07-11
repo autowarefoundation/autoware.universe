@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_FINE_DETECTOR__NODELET_HPP_
-#define TRAFFIC_LIGHT_FINE_DETECTOR__NODELET_HPP_
+#ifndef TRAFFIC_LIGHT_FINE_DETECTOR_NODE_HPP_
+#define TRAFFIC_LIGHT_FINE_DETECTOR_NODE_HPP_
 
 #include <image_transport/image_transport.hpp>
 #include <image_transport/subscriber_filter.hpp>
@@ -50,7 +50,7 @@ typedef struct Detection
   float x, y, w, h, prob;
 } Detection;
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 class TrafficLightFineDetectorNodelet : public rclcpp::Node
 {
@@ -170,6 +170,6 @@ private:
   std::unique_ptr<tensorrt_yolox::TrtYoloX> trt_yolox_;
 };  // TrafficLightFineDetectorNodelet
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
-#endif  // TRAFFIC_LIGHT_FINE_DETECTOR__NODELET_HPP_
+#endif  // TRAFFIC_LIGHT_FINE_DETECTOR_NODE_HPP_

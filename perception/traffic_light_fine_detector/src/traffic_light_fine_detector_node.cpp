@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traffic_light_fine_detector/nodelet.hpp"
+#include "traffic_light_fine_detector_node.hpp"
 
 #if (defined(_MSC_VER) or (defined(__GNUC__) and (7 <= __GNUC_MAJOR__)))
 #include <filesystem>
@@ -22,6 +22,7 @@ namespace fs = ::std::filesystem;
 namespace fs = ::std::experimental::filesystem;
 #endif
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -46,7 +47,7 @@ float calWeightedIou(
 
 }  // namespace
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 inline std::vector<float> toFloatVector(const std::vector<double> double_vector)
 {
@@ -354,7 +355,7 @@ bool TrafficLightFineDetectorNodelet::readLabelFile(
   return tlr_label_id_.size() != 0;
 }
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(traffic_light::TrafficLightFineDetectorNodelet)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightFineDetectorNodelet)
