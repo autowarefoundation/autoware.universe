@@ -59,7 +59,7 @@
 #endif
 
 #include "gencolors.hpp"
-#include "pointcloud_preprocessor/filter.hpp"
+#include "autoware_pointcloud_preprocessor/filter.hpp"
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -81,7 +81,7 @@ using Polygon = bg::model::polygon<Point>;
 
 namespace autoware::ground_segmentation
 {
-class RayGroundFilterComponent : public pointcloud_preprocessor::Filter
+class RayGroundFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
   typedef pcl::PointXYZ PointType_;
 

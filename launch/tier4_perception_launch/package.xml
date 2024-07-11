@@ -35,7 +35,7 @@
   <exec_depend>multi_object_tracker</exec_depend>
   <exec_depend>object_merger</exec_depend>
   <exec_depend>occupancy_grid_map_outlier_filter</exec_depend>
-  <exec_depend>pointcloud_preprocessor</exec_depend>
+  <exec_depend>autoware_pointcloud_preprocessor</exec_depend>
   <exec_depend>pointcloud_to_laserscan</exec_depend>
   <exec_depend>probabilistic_occupancy_grid_map</exec_depend>
   <exec_depend>raindrop_cluster_filter</exec_depend>

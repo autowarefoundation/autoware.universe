@@ -16,7 +16,7 @@
 #define OCCUPANCY_GRID_MAP_OUTLIER_FILTER_NODE_HPP_
 
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
-#include "pointcloud_preprocessor/filter.hpp"
+#include "autoware_pointcloud_preprocessor/filter.hpp"
 
 #include <pcl/common/impl/common.hpp>
 #include <rclcpp/rclcpp.hpp>
