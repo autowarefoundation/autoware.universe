@@ -177,8 +177,11 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const auto calculate_trajectory_footprints_us = stopwatch.toc("calculate_trajectory_footprints");
   // Calculate lanelets to ignore and consider
   stopwatch.tic("calculate_lanelets");
+  constexpr auto use_route_to_get_ego_lanelets = true;
   const auto trajectory_lanelets =
-    out_of_lane::calculate_trajectory_lanelets(ego_data, planner_data->route_handler);
+    use_route_to_get_ego_lanelets
+      ? planner_data->route_handler->getRouteLanelets()
+      : out_of_lane::calculate_trajectory_lanelets(ego_data, planner_data->route_handler);
   const auto ignored_lanelets = out_of_lane::calculate_ignored_lanelets(
     ego_data, trajectory_lanelets, planner_data->route_handler, params_);
   const auto other_lanelets = out_of_lane::calculate_other_lanelets(
