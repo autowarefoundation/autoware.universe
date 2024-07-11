@@ -123,13 +123,14 @@ public:
   }
 
 private:
+  void setCollisionFreeDistanceMap();
   bool search();
   void expandNodes(AstarNode & current_node, const bool is_back = false);
   void resetData();
   void setPath(const AstarNode & goal);
   bool setStartNode();
   bool setGoalNode();
-  double estimateCost(const Pose & pose) const;
+  double estimateCost(const Pose & pose, const IndexXYT & index) const;
   bool isGoal(const AstarNode & node) const;
   Pose node2pose(const AstarNode & node) const;
 
@@ -142,6 +143,8 @@ private:
 
   // hybrid astar variables
   std::vector<AstarNode> graph_;
+  std::vector<double> col_free_distance_map_;
+
   std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison> openlist_;
 
   // goal node, which may helpful in testing and debugging
