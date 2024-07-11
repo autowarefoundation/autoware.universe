@@ -51,12 +51,15 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
     for (size_t i = 0; i < 4; ++i) {  // 4 is enouh for the search depth
       tmp_topic_name = remove_last_name(tmp_topic_name);
       const auto module_name_candidate = get_last_name(tmp_topic_name);
+      // clang-format off
       if (
         module_name_candidate != "processing_time_ms" && module_name_candidate != "debug" &&
-        module_name_candidate != "total_time") {
+        module_name_candidate != "total_time")
+      {
         module_name = module_name_candidate;
         break;
       }
+      // clang-format on
     }
 
     // register module name
@@ -71,11 +74,14 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
   for (const auto & processing_time_topic_name : processing_time_topic_name_list) {
     const auto & module_name = module_name_map_.at(processing_time_topic_name);
 
-    processing_time_subscribers_.push_back(create_subscription<Float64Stamped>(
-      processing_time_topic_name, 1,
-      [this, &module_name]([[maybe_unused]] const Float64Stamped & msg) {
-        processing_time_map_.insert_or_assign(module_name, msg.data);
-      }));
+    // clang-format off
+    processing_time_subscribers_.push_back(
+      create_subscription<Float64Stamped>(
+        processing_time_topic_name, 1,
+        [this, &module_name]([[maybe_unused]] const Float64Stamped & msg) {
+          processing_time_map_.insert_or_assign(module_name, msg.data);
+        }));
+    // clang-format on
   }
 
   diag_pub_ = create_publisher<DiagnosticArray>("~/metrics", 1);
