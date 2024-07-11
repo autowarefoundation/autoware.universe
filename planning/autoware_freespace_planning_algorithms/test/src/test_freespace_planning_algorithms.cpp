@@ -218,10 +218,15 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi)
   const double distance_heuristic_weight = 1.0;
   const double steering_change_weight = 1.0;
   const double obstacle_distance_weight = 1.0;
-  const auto astar_param = fpa::AstarParam{search_method, only_behind_solutions, use_back,
-                                           adapt_expansion_distance,  expansion_distance,
-                                           distance_heuristic_weight, steering_change_weight,
-                                           obstacle_distance_weight};
+  const auto astar_param = fpa::AstarParam{
+    search_method,
+    only_behind_solutions,
+    use_back,
+    adapt_expansion_distance,
+    expansion_distance,
+    distance_heuristic_weight,
+    steering_change_weight,
+    obstacle_distance_weight};
 
   auto algo = std::make_unique<fpa::AstarSearch>(planner_common_param, vehicle_shape, astar_param);
   return algo;
