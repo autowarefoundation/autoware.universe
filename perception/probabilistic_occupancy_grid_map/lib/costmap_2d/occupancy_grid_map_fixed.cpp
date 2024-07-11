@@ -203,8 +203,8 @@ void OccupancyGridMapFixedBlindSpot::updateWithPointCloud(
   // Third step: Overwrite occupied cell
   for (auto & obstacle_pointcloud_angle_bin : obstacle_pointcloud_angle_bins) {
     for (size_t dist_index = 0; dist_index < obstacle_pointcloud_angle_bin.size(); ++dist_index) {
-      const auto & outer_source = obstacle_pointcloud_angle_bin.at(dist_index);
-      setCellValue(outer_source.wx, outer_source.wy, cost_value::LETHAL_OBSTACLE);
+      const auto & obstacle_point = obstacle_pointcloud_angle_bin.at(dist_index);
+      setCellValue(obstacle_point.wx, obstacle_point.wy, cost_value::LETHAL_OBSTACLE);
 
       if (dist_index + 1 == obstacle_pointcloud_angle_bin.size()) {
         continue;
