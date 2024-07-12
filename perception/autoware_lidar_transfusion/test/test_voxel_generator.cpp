@@ -14,9 +14,9 @@
 
 #include "test_voxel_generator.hpp"
 
-#include "gtest/gtest.h"
 #include "autoware/lidar_transfusion/transfusion_config.hpp"
 #include "autoware/lidar_transfusion/utils.hpp"
+#include "gtest/gtest.h"
 
 #include <autoware_point_types/types.hpp>
 

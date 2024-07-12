@@ -256,7 +256,7 @@ TEST_F(PreprocessKernelTest, VoxelOverflowTest)
   EXPECT_EQ(config_ptr_->max_voxels_, params_input);
 }
 
-}  // autoware::namespace lidar_transfusion
+}  // namespace autoware::lidar_transfusion
 
 int main(int argc, char ** argv)
 {
