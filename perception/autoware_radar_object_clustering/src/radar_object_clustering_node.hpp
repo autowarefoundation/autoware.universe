@@ -52,7 +52,7 @@ private:
   rclcpp::Subscription<DetectedObjects>::SharedPtr sub_objects_{};
 
   // Callback
-  void onObjects(const DetectedObjects::ConstSharedPtr msg);
+  void onObjects(const DetectedObjects::ConstSharedPtr objects_data_);
 
   // Data Buffer
   DetectedObjects::ConstSharedPtr objects_data_{};
