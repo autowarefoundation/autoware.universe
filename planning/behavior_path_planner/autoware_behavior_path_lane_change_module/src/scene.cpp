@@ -1191,7 +1191,7 @@ void NormalLaneChange::filterObjectsByLanelets(
         return isPolygonOverlapLanelet(object, target_backward_polygon);
       };
       return std::any_of(
-        lanes_polygon.preceeding_target.begin(), lanes_polygon.preceeding_target.end(),
+        lanes_polygon.preceding_target.begin(), lanes_polygon.preceding_target.end(),
         check_backward_polygon);
     });
 

@@ -1229,13 +1229,13 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
   lanes_polygon.target_neighbor =
     getTargetNeighborLanesPolygon(route_handler, lanes->current, common_data_ptr->lc_type);
 
-  lanes_polygon.preceeding_target.reserve(lanes->preceding_target.size());
-  for (const auto & preceeding_lane : lanes->preceding_target) {
+  lanes_polygon.preceding_target.reserve(lanes->preceding_target.size());
+  for (const auto & preceding_lane : lanes->preceding_target) {
     auto lane_polygon =
-      utils::lane_change::createPolygon(preceeding_lane, 0.0, std::numeric_limits<double>::max());
+      utils::lane_change::createPolygon(preceding_lane, 0.0, std::numeric_limits<double>::max());
 
     if (lane_polygon) {
-      lanes_polygon.preceeding_target.push_back(*lane_polygon);
+      lanes_polygon.preceding_target.push_back(*lane_polygon);
     }
   }
   return lanes_polygon;
