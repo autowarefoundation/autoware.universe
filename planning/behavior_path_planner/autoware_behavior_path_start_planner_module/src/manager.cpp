@@ -299,15 +299,15 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
   }
   // surround moving obstacle check
   {
-    const std::string surround_moving_obstacle_check_ns = "start_planner.surround_moving_obstacle_check.";
+    const std::string surround_moving_obstacle_check_ns =
+      "start_planner.surround_moving_obstacle_check.";
     p.search_radius =
       node->declare_parameter<double>(surround_moving_obstacle_check_ns + "search_radius");
     p.th_moving_obstacle_velocity = node->declare_parameter<double>(
       surround_moving_obstacle_check_ns + "th_moving_obstacle_velocity");
     // ObjectTypesToCheck
     {
-      const std::string obj_types_ns =
-        surround_moving_obstacle_check_ns + "object_types_to_check.";
+      const std::string obj_types_ns = surround_moving_obstacle_check_ns + "object_types_to_check.";
       p.surround_moving_obstacles_type_to_check.check_car =
         node->declare_parameter<bool>(obj_types_ns + "check_car");
       p.surround_moving_obstacles_type_to_check.check_truck =
@@ -448,10 +448,10 @@ void StartPlannerModuleManager::updateModuleParams(
     updateParam<double>(
       parameters, ns + "ignore_distance_from_lane_end", p->ignore_distance_from_lane_end);
     updateParam<double>(
-        parameters, ns + "stop_condition.maximum_deceleration_for_stop",
-        p->maximum_deceleration_for_stop);
-      updateParam<double>(
-        parameters, ns + "stop_condition.maximum_jerk_for_stop", p->maximum_jerk_for_stop);
+      parameters, ns + "stop_condition.maximum_deceleration_for_stop",
+      p->maximum_deceleration_for_stop);
+    updateParam<double>(
+      parameters, ns + "stop_condition.maximum_jerk_for_stop", p->maximum_jerk_for_stop);
   }
   {
     const std::string ns = "start_planner.freespace_planner.";
@@ -678,7 +678,8 @@ void StartPlannerModuleManager::updateModuleParams(
       p->safety_check_params.rss_params.extended_polygon_policy);
   }
   {
-    const std::string surround_moving_obstacle_check_ns = "start_planner.surround_moving_obstacle_check.";
+    const std::string surround_moving_obstacle_check_ns =
+      "start_planner.surround_moving_obstacle_check.";
     updateParam<double>(
       parameters, surround_moving_obstacle_check_ns + "search_radius", p->search_radius);
     updateParam<double>(
