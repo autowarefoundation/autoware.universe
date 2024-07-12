@@ -18,6 +18,8 @@
 #include <lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
 #include <tvm_utility/pipeline.hpp>
 
+#include <sensor_msgs/point_cloud2_iterator.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -168,7 +170,29 @@ std::shared_ptr<const DetectedObjectsWithFeature> ApolloLidarSegmentation::detec
   sensor_msgs::msg::PointCloud2 transformed_cloud;
   ApolloLidarSegmentation::transformCloud(input, transformed_cloud, z_offset_);
   // convert from ros to pcl
-  pcl::fromROSMsg(transformed_cloud, *pcl_pointcloud_ptr_);
+  // pcl::fromROSMsg(
+  //  transformed_cloud, *pcl_pointcloud_ptr_);  // Manual conversion is needed since intensity
+  //  comes as an uint8_t
+
+  auto pcl_pointcloud = *pcl_pointcloud_ptr_;
+  pcl_pointcloud.width = input.width;
+  pcl_pointcloud.height = input.height;
+  pcl_pointcloud.is_dense = input.is_dense == 1;
+  pcl_pointcloud.resize(input.width * input.height);
+
+  sensor_msgs::PointCloud2ConstIterator<float> it_x(input, "x");
+  sensor_msgs::PointCloud2ConstIterator<float> it_y(input, "y");
+  sensor_msgs::PointCloud2ConstIterator<float> it_z(input, "z");
+  sensor_msgs::PointCloud2ConstIterator<uint8_t> it_intensity(input, "intensity");
+
+  for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z, ++it_intensity) {
+    pcl::PointXYZI point;
+    point.x = *it_x;
+    point.y = *it_y;
+    point.z = *it_z;
+    point.intensity = static_cast<float>(*it_intensity);
+    pcl_pointcloud.emplace_back(std::move(point));
+  }
 
   // inference pipeline
   auto output = pipeline->schedule(pcl_pointcloud_ptr_);
@@ -178,10 +202,10 @@ std::shared_ptr<const DetectedObjectsWithFeature> ApolloLidarSegmentation::detec
   output->header = input.header;
 
   // move down pointcloud z_offset in z axis
-  for (std::size_t i = 0; i < output->feature_objects.size(); i++) {
-    sensor_msgs::msg::PointCloud2 transformed_cloud;
-    transformCloud(output->feature_objects.at(i).feature.cluster, transformed_cloud, -z_offset_);
-    output->feature_objects.at(i).feature.cluster = transformed_cloud;
+  for (auto & feature_object : output->feature_objects) {
+    sensor_msgs::msg::PointCloud2 updated_cloud;
+    transformCloud(feature_object.feature.cluster, updated_cloud, -z_offset_);
+    feature_object.feature.cluster = updated_cloud;
   }
 
   return output;
