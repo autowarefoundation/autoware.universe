@@ -89,7 +89,8 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
     p.enable_back = node->declare_parameter<bool>(ns + "enable_back");
     p.backward_velocity = node->declare_parameter<double>(ns + "backward_velocity");
     p.max_back_distance = node->declare_parameter<double>(ns + "max_back_distance");
-    p.backward_search_resolution = node->declare_parameter<double>(ns + "backward_search_resolution");
+    p.backward_search_resolution =
+      node->declare_parameter<double>(ns + "backward_search_resolution");
     p.backward_path_update_duration =
       node->declare_parameter<double>(ns + "backward_path_update_duration");
     p.ignore_distance_from_lane_end =
@@ -108,7 +109,8 @@ void StartPlannerModuleManager::init(rclcpp::Node * node)
         surround_moving_obstacle_check_ns + "th_moving_obstacle_velocity");
       // ObjectTypesToCheck
       {
-        const std::string obj_types_ns = surround_moving_obstacle_check_ns + "object_types_to_check.";
+        const std::string obj_types_ns =
+          surround_moving_obstacle_check_ns + "object_types_to_check.";
         p.surround_moving_obstacles_type_to_check.check_car =
           node->declare_parameter<bool>(obj_types_ns + "check_car");
         p.surround_moving_obstacles_type_to_check.check_truck =
@@ -448,11 +450,11 @@ void StartPlannerModuleManager::updateModuleParams(
       parameters, ns + "ignore_distance_from_lane_end", p->ignore_distance_from_lane_end);
 
     {
-    updateParam<double>(
-      parameters, ns + "stop_condition.maximum_deceleration_for_stop",
-      p->maximum_deceleration_for_stop);
-    updateParam<double>(
-      parameters, ns + "stop_condition.maximum_jerk_for_stop", p->maximum_jerk_for_stop);
+      updateParam<double>(
+        parameters, ns + "stop_condition.maximum_deceleration_for_stop",
+        p->maximum_deceleration_for_stop);
+      updateParam<double>(
+        parameters, ns + "stop_condition.maximum_jerk_for_stop", p->maximum_jerk_for_stop);
     }
 
     std::string surround_moving_obstacle_check_ns = ns + "surround_moving_obstacle_check.";
@@ -700,7 +702,7 @@ void StartPlannerModuleManager::updateModuleParams(
       parameters, safety_check_ns + "collision_check_yaw_diff_threshold",
       p->safety_check_params.collision_check_yaw_diff_threshold);
   }
-  
+
   {
     const std::string rss_ns = safety_check_ns + "rss_params.";
     updateParam<double>(
