@@ -130,12 +130,12 @@ std::vector<tensorrt_yolox::Colormap> get_seg_colormap(const std::string & filen
       cmap.name = name;
       colormapString.erase(0, npos + 1);
       while (!colormapString.empty()) {
-        size_t npos = colormapString.find_first_of(',');
-        if (npos != std::string::npos) {
-          substr = colormapString.substr(0, npos);
+        size_t inner_npos = colormapString.find_first_of(',');
+        if (inner_npos != std::string::npos) {
+          substr = colormapString.substr(0, inner_npos);
           unsigned char c = (unsigned char)std::stoi(trim(substr));
           cmap.color.push_back(c);
-          colormapString.erase(0, npos + 1);
+          colormapString.erase(0, inner_npos + 1);
         } else {
           unsigned char c = (unsigned char)std::stoi(trim(colormapString));
           cmap.color.push_back(c);
@@ -1205,8 +1205,8 @@ cv::Mat TrtYoloX::getMaskImageGpu(float * d_prob, nvinfer1::Dims dims, int out_w
   cv::Mat mask = cv::Mat::zeros(out_h, out_w, CV_8UC1);
   int index = b * out_w * out_h;
   argmax_gpu(
-    (unsigned char *)argmax_buf_d_.get() + index, d_prob, out_w, out_h, width, height, classes, 1,
-    *stream_);
+    reinterpret_cast<unsigned char *>(argmax_buf_d_.get()) + index, d_prob, out_w, out_h, width,
+    height, classes, 1, *stream_);
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     argmax_buf_h_.get(), argmax_buf_d_.get(), sizeof(unsigned char) * 1 * out_w * out_h,
     cudaMemcpyDeviceToHost, *stream_));
