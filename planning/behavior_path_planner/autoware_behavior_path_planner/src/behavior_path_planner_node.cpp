@@ -28,8 +28,6 @@
 #include <string>
 #include <vector>
 
-// Delete this comment line before merging
-
 namespace autoware::behavior_path_planner
 {
 using autoware::vehicle_info_utils::VehicleInfoUtils;
