@@ -106,7 +106,7 @@ void NormalLaneChange::updateLaneChangeStatus()
 
 std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) const
 {
-  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & current_lanes = get_current_lanes();
   const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
 
   if (current_lanes.empty() || target_lanes.empty()) {
@@ -158,7 +158,7 @@ bool NormalLaneChange::isLaneChangeRequired()
 bool NormalLaneChange::isStoppedAtRedTrafficLight() const
 {
   return utils::traffic_light::isStoppedAtRedTrafficLightWithinDistance(
-    common_data_ptr_->lanes_ptr->current, status_.lane_change_path.path, planner_data_,
+    get_current_lanes(), status_.lane_change_path.path, planner_data_,
     status_.lane_change_path.info.length.sum());
 }
 
@@ -166,7 +166,7 @@ TurnSignalInfo NormalLaneChange::get_current_turn_signal_info()
 {
   const auto original_turn_signal_info = prev_module_output_.turn_signal_info;
 
-  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & current_lanes = get_current_lanes();
   const auto is_valid = getLaneChangeStatus().is_valid_path;
   const auto & lane_change_path = getLaneChangeStatus().lane_change_path;
   const auto & lane_change_param = getLaneChangeParam();
@@ -259,7 +259,7 @@ BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
     return output;
   }
 
-  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & current_lanes = get_current_lanes();
   if (current_lanes.empty()) {
     RCLCPP_DEBUG(logger_, "Current lanes not found. Returning previous module's path as output.");
     return prev_module_output_;
@@ -296,7 +296,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
   auto output = prev_module_output_;
   if (isAbortState() && abort_path_) {
     output.path = abort_path_->path;
-    insertStopPoint(common_data_ptr_->lanes_ptr->current, output.path);
+    insertStopPoint(get_current_lanes(), output.path);
   } else {
     output.path = getLaneChangePath().path;
 
@@ -336,7 +336,7 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output) c
   const auto & dp = planner_data_->drivable_area_expansion_parameters;
 
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
-    *getRouteHandler(), common_data_ptr_->lanes_ptr->current, common_data_ptr_->lanes_ptr->target);
+    *getRouteHandler(), get_current_lanes(), common_data_ptr_->lanes_ptr->target);
   const auto shorten_lanes = utils::cutOverlappedLanes(output.path, drivable_lanes);
   const auto expanded_lanes = utils::expandLanelets(
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
@@ -382,7 +382,7 @@ void NormalLaneChange::insertStopPoint(
 
   const double stop_point_buffer = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
   const auto target_objects =
-    filterObjects(common_data_ptr_->lanes_ptr->current, common_data_ptr_->lanes_ptr->target);
+    filterObjects(get_current_lanes(), common_data_ptr_->lanes_ptr->target);
   double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
 
   const auto is_valid_start_point = std::invoke([&]() -> bool {
@@ -586,7 +586,7 @@ void NormalLaneChange::resetParameters()
 TurnSignalInfo NormalLaneChange::updateOutputTurnSignal() const
 {
   const auto & pose = getEgoPose();
-  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & current_lanes = get_current_lanes();
   const auto & shift_line = status_.lane_change_path.info.shift_line;
   const auto & shift_path = status_.lane_change_path.shifted_path;
   const auto current_shift_length = lanelet::utils::getArcCoordinates(current_lanes, pose).distance;
@@ -714,7 +714,7 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
   }
 
   if (!utils::isEgoWithinOriginalLane(
-        common_data_ptr_->lanes_ptr->current, getEgoPose(), planner_data_->parameters,
+        get_current_lanes(), getEgoPose(), planner_data_->parameters,
         lane_change_parameters_->cancel.overhang_tolerance)) {
     lane_change_debug_.is_able_to_return_to_current_lane = false;
     return false;
@@ -735,7 +735,7 @@ bool NormalLaneChange::isAbleToReturnCurrentLane() const
     if (dist > estimated_travel_dist) {
       const auto & estimated_pose = status_.lane_change_path.path.points.at(idx + 1).point.pose;
       auto is_ego_within_original_lane = utils::isEgoWithinOriginalLane(
-        common_data_ptr_->lanes_ptr->current, estimated_pose, planner_data_->parameters,
+        get_current_lanes(), estimated_pose, planner_data_->parameters,
         lane_change_parameters_->cancel.overhang_tolerance);
       lane_change_debug_.is_able_to_return_to_current_lane = is_ego_within_original_lane;
       return is_ego_within_original_lane;
@@ -774,7 +774,7 @@ bool NormalLaneChange::isAbleToStopSafely() const
     if (dist > stop_dist) {
       const auto & estimated_pose = status_.lane_change_path.path.points.at(idx + 1).point.pose;
       return utils::isEgoWithinOriginalLane(
-        common_data_ptr_->lanes_ptr->current, estimated_pose, planner_data_->parameters);
+        get_current_lanes(), estimated_pose, planner_data_->parameters);
     }
   }
   return true;
@@ -1602,7 +1602,7 @@ bool NormalLaneChange::getLaneChangePaths(
         }
 
         if (utils::traffic_light::isStoppedAtRedTrafficLightWithinDistance(
-              common_data_ptr_->lanes_ptr->current, candidate_path.value().path, planner_data_,
+              get_current_lanes(), candidate_path.value().path, planner_data_,
               lane_change_info.length.sum())) {
           debug_print_lat("Ego is stopping near traffic light. Do not allow lane change");
           continue;
@@ -1786,7 +1786,7 @@ std::optional<LaneChangePath> NormalLaneChange::calcTerminalLaneChangePath(
 PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 {
   const auto & path = status_.lane_change_path;
-  const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
+  const auto & current_lanes = get_current_lanes();
   const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
 
   if (current_lanes.empty() || target_lanes.empty()) {
@@ -1847,7 +1847,7 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 
   // check lane departure
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
-    *route_handler, utils::extendLanes(route_handler, common_data_ptr_->lanes_ptr->current),
+    *route_handler, utils::extendLanes(route_handler, get_current_lanes()),
     utils::extendLanes(route_handler, common_data_ptr_->lanes_ptr->target));
   const auto expanded_lanes = utils::expandLanelets(
     drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
@@ -1881,8 +1881,7 @@ bool NormalLaneChange::isRequiredStop(const bool is_object_coming_from_rear)
 {
   const auto threshold = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
   if (
-    isNearEndOfCurrentLanes(
-      common_data_ptr_->lanes_ptr->current, common_data_ptr_->lanes_ptr->target, threshold) &&
+    isNearEndOfCurrentLanes(get_current_lanes(), common_data_ptr_->lanes_ptr->target, threshold) &&
     isAbleToStopSafely() && is_object_coming_from_rear) {
     current_lane_change_state_ = LaneChangeStates::Stop;
     return true;
@@ -1905,11 +1904,10 @@ bool NormalLaneChange::calcAbortPath()
 
   const auto direction = getDirection();
   const auto minimum_lane_change_length = utils::lane_change::calcMinimumLaneChangeLength(
-    route_handler, common_data_ptr_->lanes_ptr->current.back(), *lane_change_parameters_,
-    direction);
+    route_handler, get_current_lanes().back(), *lane_change_parameters_, direction);
 
   const auto & lane_changing_path = selected_path.path;
-  const auto & reference_lanelets = common_data_ptr_->lanes_ptr->current;
+  const auto & reference_lanelets = get_current_lanes();
   const auto lane_changing_end_pose_idx = std::invoke([&]() {
     constexpr double s_start = 0.0;
     const double s_end = std::max(
