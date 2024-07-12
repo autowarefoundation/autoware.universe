@@ -26,7 +26,7 @@ import launch_ros.parameter_descriptions
 
 def generate_launch_description():
     param_file = os.path.join(
-        get_package_share_directory("lidar_apollo_segmentation_tvm_nodes"),
+        get_package_share_directory("autoware_lidar_apollo_segmentation_tvm_nodes"),
         "config/lidar_apollo_segmentation_tvm_nodes.param.yaml",
     )
 
@@ -44,8 +44,8 @@ def generate_launch_description():
 
     # lidar segmentation node execution definition.
     lidar_apollo_segmentation_tvm_node_runner = Node(
-        package="lidar_apollo_segmentation_tvm_nodes",
-        executable="lidar_apollo_segmentation_tvm_nodes_exe",
+        package="autoware_lidar_apollo_segmentation_tvm_nodes",
+        executable="autoware_lidar_apollo_segmentation_tvm_nodes_exe",
         remappings=[
             ("points_in", LaunchConfiguration("input/pointcloud")),
             ("objects_out", LaunchConfiguration("output/objects")),

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
-#include <lidar_apollo_segmentation_tvm_nodes/lidar_apollo_segmentation_tvm_node.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm_nodes/lidar_apollo_segmentation_tvm_node.hpp>
 #include <rclcpp/logging.hpp>
 #include <rclcpp_components/register_node_macro.hpp>
 

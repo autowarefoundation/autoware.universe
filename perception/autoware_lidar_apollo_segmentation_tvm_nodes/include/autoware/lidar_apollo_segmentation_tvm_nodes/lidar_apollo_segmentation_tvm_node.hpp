@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_APOLLO_SEGMENTATION_TVM_NODES__LIDAR_APOLLO_SEGMENTATION_TVM_NODE_HPP_
-#define LIDAR_APOLLO_SEGMENTATION_TVM_NODES__LIDAR_APOLLO_SEGMENTATION_TVM_NODE_HPP_
+#ifndef AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM_NODES__LIDAR_APOLLO_SEGMENTATION_TVM_NODE_HPP_
+#define AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM_NODES__LIDAR_APOLLO_SEGMENTATION_TVM_NODE_HPP_
 
-#include <lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
-#include <lidar_apollo_segmentation_tvm_nodes/visibility_control.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm_nodes/visibility_control.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/publisher.hpp>
 #include <rclcpp/subscription.hpp>
@@ -51,4 +51,4 @@ public:
 }  // namespace lidar_apollo_segmentation_tvm_nodes
 }  // namespace perception
 }  // namespace autoware
-#endif  // LIDAR_APOLLO_SEGMENTATION_TVM_NODES__LIDAR_APOLLO_SEGMENTATION_TVM_NODE_HPP_
+#endif  // AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM_NODES__LIDAR_APOLLO_SEGMENTATION_TVM_NODE_HPP_

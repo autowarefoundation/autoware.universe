@@ -25,14 +25,14 @@ import pytest
 @pytest.mark.launch_test
 def generate_test_description():
     lidar_apollo_segmentation_tvm = Node(
-        package="lidar_apollo_segmentation_tvm_nodes",
-        executable="lidar_apollo_segmentation_tvm_nodes_exe",
+        package="autoware_lidar_apollo_segmentation_tvm_nodes",
+        executable="autoware_lidar_apollo_segmentation_tvm_nodes_exe",
         name="lidar_apollo_segmentation_tvm_nodes",
         namespace="benchmark",
         output="screen",
         parameters=[
             os.path.join(
-                get_package_share_directory("lidar_apollo_segmentation_tvm_nodes"),
+                get_package_share_directory("autoware_lidar_apollo_segmentation_tvm_nodes"),
                 "param/test.param.yaml",
             )
         ],
