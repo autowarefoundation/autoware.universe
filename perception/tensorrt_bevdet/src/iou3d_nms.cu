@@ -451,7 +451,8 @@ __global__ void RotatedNmsWithIndicesKernel(
     int start = 0;
     if (row_start == col_start) {
       start = threadIdx.x + 1;  // Isn't it right now to compare with [0~threadIdx. x)? FIXME
-    }  // I think this is correct, and there is no need to compare it with numbers smaller than my own. If col is smaller than row, there is also no need to compare it
+    }  // I think this is correct, and there is no need to compare it with numbers smaller than my
+       // own. If col is smaller than row, there is also no need to compare it
     for (i = start; i < col_size; i++) {
       if (iou_bev(cur_box, block_boxes + i * kBoxBlockSize) > nms_overlap_thresh) {
         t |= 1ULL << i;
@@ -599,9 +600,12 @@ int Iou3dNmsCuda::DoIou3dNms(
   for (int i = 0; i < box_num_pre; i++) {
     int nblock = i / THREADS_PER_BLOCK_NMS;
     int inblock = i % THREADS_PER_BLOCK_NMS;
-    if (!(host_remv[nblock] & (1ULL << inblock))) {  // Meeting this requirement indicates that it does not conflict with any of the boxes selected earlier
+    if (!(host_remv[nblock] &
+          (1ULL << inblock))) {  // Meeting this requirement indicates that it does not conflict
+                                 // with any of the boxes selected earlier
       host_keep_data[num_to_keep++] = i;  // Add the satisfied box
-      for (int j = nblock; j < col_blocks; j++) {  // Consider boxes with index i that overlap beyond the threshold
+      for (int j = nblock; j < col_blocks;
+           j++) {  // Consider boxes with index i that overlap beyond the threshold
         host_remv[j] |= host_mask[i * col_blocks + j];
       }
     }

@@ -20,7 +20,8 @@ __global__ void BEVDecodeObjectKernel(
   const int cls_range, const float * reg, const float * hei, const float * dim, const float * rot,
   const float * vel, const float * cls, float * res_box, float * res_conf, int * res_cls,
   int * res_box_num, float * rescale_factor)
-{  // According to the confidence level, the initial screening showed that there were res-box_num boxes after screening, not exceeding nms_pre_max_size 4096
+{  // According to the confidence level, the initial screening showed that there were res-box_num
+   // boxes after screening, not exceeding nms_pre_max_size 4096
   int idx = threadIdx.x + blockDim.x * blockIdx.x;
   if (idx >= map_size) return;
 
@@ -153,8 +154,8 @@ void PostprocessGPU::DoPostprocess(void ** const bev_buffer, std::vector<Box> & 
     thrust::sort_by_key(
       thrust::device, score_dev, score_dev + box_num_pre, sorted_indices_dev,
       thrust::greater<float>());
-    // score_dev is sorted in descending order, while sorted_indices_dev indexes the original order,，
-    // sorted_indices_dev[i] = j; i:current，j:pre-index;  j:[0, map_size]
+    // score_dev is sorted in descending order, while sorted_indices_dev indexes the original
+    // order,， sorted_indices_dev[i] = j; i:current，j:pre-index;  j:[0, map_size]
 
     box_num_pre = std::min(box_num_pre, nms_pre_maxnum);
 
