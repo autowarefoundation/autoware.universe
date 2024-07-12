@@ -14,7 +14,7 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include "image_projection_based_fusion/fusion_node.hpp"
+#include "autoware/image_projection_based_fusion/fusion_node.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>

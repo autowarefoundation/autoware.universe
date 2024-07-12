@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "image_projection_based_fusion/pointpainting_fusion/pointcloud_densification.hpp"
+#include "autoware/image_projection_based_fusion/pointpainting_fusion/pointcloud_densification.hpp"
 
 #include <pcl_ros/transforms.hpp>
 

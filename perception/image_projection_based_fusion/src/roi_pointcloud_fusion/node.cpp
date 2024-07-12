@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "image_projection_based_fusion/roi_pointcloud_fusion/node.hpp"
+#include "autoware/image_projection_based_fusion/roi_pointcloud_fusion/node.hpp"
 
-#include "image_projection_based_fusion/utils/geometry.hpp"
-#include "image_projection_based_fusion/utils/utils.hpp"
+#include "autoware/image_projection_based_fusion/utils/geometry.hpp"
+#include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>

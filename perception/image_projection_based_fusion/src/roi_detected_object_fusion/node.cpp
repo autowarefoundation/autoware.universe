@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "image_projection_based_fusion/roi_detected_object_fusion/node.hpp"
+#include "autoware/image_projection_based_fusion/roi_detected_object_fusion/node.hpp"
 
 #include "object_recognition_utils/object_recognition_utils.hpp"
 
-#include <image_projection_based_fusion/utils/geometry.hpp>
-#include <image_projection_based_fusion/utils/utils.hpp>
+#include <autoware/image_projection_based_fusion/utils/geometry.hpp>
+#include <autoware/image_projection_based_fusion/utils/utils.hpp>
 
 namespace autoware::image_projection_based_fusion
 {

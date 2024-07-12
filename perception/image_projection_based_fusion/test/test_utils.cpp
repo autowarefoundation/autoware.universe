@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <autoware_point_types/types.hpp>
-#include <image_projection_based_fusion/utils/utils.hpp>
 
 #include <gtest/gtest.h>
 

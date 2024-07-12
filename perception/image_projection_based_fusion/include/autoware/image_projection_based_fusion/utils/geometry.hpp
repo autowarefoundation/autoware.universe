@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_
-#define IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_
+#ifndef AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_
+#define AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_
 
 #define EIGEN_MPL2_ONLY
 
@@ -68,4 +68,4 @@ void sanitizeROI(sensor_msgs::msg::RegionOfInterest & roi, const int width, cons
 
 }  // namespace autoware::image_projection_based_fusion
 
-#endif  // IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_
+#endif  // AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__UTILS__GEOMETRY_HPP_

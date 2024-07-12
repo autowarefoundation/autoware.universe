@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef IMAGE_PROJECTION_BASED_FUSION__UTILS__UTILS_HPP_
-#define IMAGE_PROJECTION_BASED_FUSION__UTILS__UTILS_HPP_
+#ifndef AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__UTILS__UTILS_HPP_
+#define AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__UTILS__UTILS_HPP_
 
 #define EIGEN_MPL2_ONLY
 
@@ -32,7 +32,7 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
-#include "image_projection_based_fusion/fusion_node.hpp"
+#include "autoware/image_projection_based_fusion/fusion_node.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <opencv2/core/core.hpp>
@@ -94,4 +94,4 @@ void addShapeAndKinematic(
 
 }  // namespace autoware::image_projection_based_fusion
 
-#endif  // IMAGE_PROJECTION_BASED_FUSION__UTILS__UTILS_HPP_
+#endif  // AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__UTILS__UTILS_HPP_
