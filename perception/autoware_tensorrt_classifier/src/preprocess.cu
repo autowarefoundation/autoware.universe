@@ -13,7 +13,7 @@
 // limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
-#include <tensorrt_classifier/preprocess.h>
+#include <autoware/tensorrt_classifier/preprocess.h>
 
 #include <algorithm>
 

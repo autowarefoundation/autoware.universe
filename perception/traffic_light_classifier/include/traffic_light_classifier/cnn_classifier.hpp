@@ -24,7 +24,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tensorrt_classifier/tensorrt_classifier.hpp>
+#include <autoware/tensorrt_classifier/tensorrt_classifier.hpp>
 #include <tensorrt_common/tensorrt_common.hpp>
 
 #include <tier4_perception_msgs/msg/traffic_light_element.hpp>
@@ -111,7 +111,7 @@ private:
 
   rclcpp::Node * node_ptr_;
   int batch_size_;
-  std::unique_ptr<tensorrt_classifier::TrtClassifier> classifier_;
+  std::unique_ptr<autoware::tensorrt_classifier::TrtClassifier> classifier_;
   image_transport::Publisher image_pub_;
   std::vector<std::string> labels_;
   std::vector<float> mean_;

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <tensorrt_classifier/calibrator.hpp>
-#include <tensorrt_classifier/tensorrt_classifier.hpp>
+#include <autoware/tensorrt_classifier/calibrator.hpp>
+#include <autoware/tensorrt_classifier/tensorrt_classifier.hpp>
 
 #include <omp.h>
-#include <tensorrt_classifier/preprocess.h>
+#include <autoware/tensorrt_classifier/preprocess.h>
 
 #include <algorithm>
 #include <functional>
@@ -95,7 +95,7 @@ std::vector<std::string> loadImageList(const std::string & filename, const std::
   return fileList;
 }
 
-namespace tensorrt_classifier
+namespace autoware::tensorrt_classifier
 {
 TrtClassifier::TrtClassifier(
   const std::string & model_path, const std::string & precision,
@@ -384,4 +384,4 @@ bool TrtClassifier::feedforwardAndDecode(
   }
   return true;
 }
-}  // namespace tensorrt_classifier
+}  // namespace autoware::tensorrt_classifier
