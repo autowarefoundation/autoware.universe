@@ -108,7 +108,7 @@ private:
     // Start constructing ProcessingTimeTree (because func_a is the root function)
     autoware::universe_utils::ScopedTimeTrack st("func_a", *time_keeper_);
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    st.comment("This is a comment for func_a");
+    time_keeper_->comment("This is a comment for func_a");
     func_b();
     // End constructing ProcessingTimeTree. After this, the tree will be reported (publishing
     // message and outputting to std::cerr)
@@ -118,7 +118,7 @@ private:
   {
     autoware::universe_utils::ScopedTimeTrack st("func_b", *time_keeper_);
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    st.comment("This is a comment for func_b");
+    time_keeper_->comment("This is a comment for func_b");
     func_c();
   }
 
@@ -126,7 +126,7 @@ private:
   {
     autoware::universe_utils::ScopedTimeTrack st("func_c", *time_keeper_);
     std::this_thread::sleep_for(std::chrono::milliseconds(3));
-    st.comment("This is a comment for func_c");
+    time_keeper_->comment("This is a comment for func_c");
   }
 };
 
@@ -185,12 +185,6 @@ ScopedTimeTrack(const std::string & func_name, TimeKeeper & time_keeper);
 
 - `func_name`: Name of the function to be tracked.
 - `time_keeper`: Reference to the `TimeKeeper` object.
-
-##### Methods
-
-- `void comment(const std::string & comment);`
-  - Adds a comment to the current function being tracked.
-  - `comment`: Comment to be added.
 
 ##### Destructor
 
