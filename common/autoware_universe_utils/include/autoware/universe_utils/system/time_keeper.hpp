@@ -87,6 +87,13 @@ public:
   void set_time(const double processing_time);
 
   /**
+   * @brief Set the comment for the node
+   *
+   * @param comment Comment to be set
+   */
+  void set_comment(const std::string & comment);
+
+  /**
    * @brief Get the name of the node
    *
    * @return std::string Name of the node
@@ -96,6 +103,7 @@ public:
 private:
   const std::string name_;                                    //!< Name of the node
   double processing_time_{0.0};                               //!< Processing time of the node
+  std::string comment_;                                       //!< Comment for the node
   std::shared_ptr<ProcessingTimeNode> parent_node_{nullptr};  //!< Shared pointer to the parent node
   std::vector<std::shared_ptr<ProcessingTimeNode>>
     child_nodes_;  //!< Vector of shared pointers to the child nodes
@@ -145,6 +153,13 @@ public:
    */
   void end_track(const std::string & func_name);
 
+  /**
+   * @brief Comment the current time node
+   *
+   * @param comment Comment to be added to the current time node
+   */
+  void comment(const std::string & comment);
+
 private:
   /**
    * @brief Report the processing times to all registered reporters
@@ -180,6 +195,13 @@ public:
   ScopedTimeTrack & operator=(const ScopedTimeTrack &) = delete;
   ScopedTimeTrack(ScopedTimeTrack &&) = delete;
   ScopedTimeTrack & operator=(ScopedTimeTrack &&) = delete;
+
+  /**
+   * @brief Add a comment to the tracked function
+   *
+   * @param comment Comment to be added
+   */
+  void comment(const std::string & comment);
 
   /**
    * @brief Destroy the ScopedTimeTrack object, ending the tracking of the function
