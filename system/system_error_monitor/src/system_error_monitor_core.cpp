@@ -270,13 +270,11 @@ AutowareErrorMonitor::AutowareErrorMonitor(const rclcpp::NodeOptions & options)
 
 void AutowareErrorMonitor::loadRequiredModules(const std::string & key)
 {
-  const auto param_key = std::string("required_modules.") + key;
-
   const uint64_t depth = 3;
-  const auto param_names = this->list_parameters({param_key}, depth).names;
+  const auto param_names = this->list_parameters({std::string(required_modules.) + "key"}, depth).names;
 
   if (param_names.empty()) {
-    throw std::runtime_error(fmt::format("no parameter found: {}", param_key));
+    throw std::runtime_error(fmt::format("no parameter found: required_modules.{}", key));
   }
 
   // Load module names from parameter key
@@ -288,10 +286,10 @@ void AutowareErrorMonitor::loadRequiredModules(const std::string & key)
     //                     or required_modules.key.module.parameter
     const auto split_names = split(param_name, '.');
     const auto & param_required_modules = split_names.at(0);
-    const auto & split_param_key = split_names.at(1);
+    const auto & param_key = split_names.at(1);
     const auto & param_module = split_names.at(2);
     const auto module_name_with_prefix =
-      fmt::format("{0}.{1}.{2}", param_required_modules, split_param_key, param_module);
+      fmt::format("{0}.{1}.{2}", param_required_modules, param_key, param_module);
 
     // Skip duplicate parameter
     if (module_names.count(module_name_with_prefix) != 0) {
