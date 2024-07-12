@@ -17,6 +17,7 @@
 
 #include "traffic_light_classifier/classifier_interface.hpp"
 
+#include <autoware/tensorrt_classifier/tensorrt_classifier.hpp>
 #include <cuda_utils/cuda_unique_ptr.hpp>
 #include <cuda_utils/stream_unique_ptr.hpp>
 #include <image_transport/image_transport.hpp>
@@ -24,7 +25,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <autoware/tensorrt_classifier/tensorrt_classifier.hpp>
 #include <tensorrt_common/tensorrt_common.hpp>
 
 #include <tier4_perception_msgs/msg/traffic_light_element.hpp>

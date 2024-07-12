@@ -15,8 +15,8 @@
 #include <autoware/tensorrt_classifier/calibrator.hpp>
 #include <autoware/tensorrt_classifier/tensorrt_classifier.hpp>
 
-#include <omp.h>
 #include <autoware/tensorrt_classifier/preprocess.h>
+#include <omp.h>
 
 #include <algorithm>
 #include <functional>
