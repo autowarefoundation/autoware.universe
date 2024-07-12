@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 PointPaintingTRT::PointPaintingTRT(
   const centerpoint::NetworkParam & encoder_param, const centerpoint::NetworkParam & head_param,
@@ -81,4 +81,4 @@ bool PointPaintingTRT::preprocess(
   return true;
 }
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion

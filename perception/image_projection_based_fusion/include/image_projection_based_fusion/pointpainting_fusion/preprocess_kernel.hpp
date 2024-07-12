@@ -18,7 +18,7 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 cudaError_t generateVoxels_random_launch(
   const float * points, size_t points_size, float min_x_range, float max_x_range, float min_y_range,
@@ -38,6 +38,6 @@ cudaError_t generateFeatures_launch(
   const float range_min_y, const float range_min_z, float * features,
   const std::size_t encoder_in_feature_size, cudaStream_t stream);
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__PREPROCESS_KERNEL_HPP_

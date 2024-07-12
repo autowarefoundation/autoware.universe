@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 class PointPaintingTRT : public centerpoint::CenterPointTRT
 {
@@ -40,6 +40,6 @@ protected:
 
   std::unique_ptr<image_projection_based_fusion::VoxelGenerator> vg_ptr_pp_{nullptr};
 };
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__POINTPAINTING_TRT_HPP_

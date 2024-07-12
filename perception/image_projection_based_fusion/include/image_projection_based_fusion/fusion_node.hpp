@@ -44,7 +44,7 @@
 #include <utility>
 #include <vector>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 using autoware_perception_msgs::msg::DetectedObject;
 using autoware_perception_msgs::msg::DetectedObjects;
@@ -142,6 +142,6 @@ protected:
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
 };
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_

@@ -20,7 +20,7 @@
 #include <map>
 #include <memory>
 #include <string>
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 const std::map<std::string, uint8_t> IOU_MODE_MAP{{"iou", 0}, {"iou_x", 1}, {"iou_y", 2}};
 
@@ -61,6 +61,6 @@ protected:
   // bool CheckUnknown(const DetectedObjectsWithFeature & obj);
 };
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__ROI_CLUSTER_FUSION__NODE_HPP_

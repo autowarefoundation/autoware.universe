@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
@@ -78,5 +78,5 @@ protected:
 
   bool out_of_scope(const DetectedObjects & obj);
 };
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 #endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__NODE_HPP_

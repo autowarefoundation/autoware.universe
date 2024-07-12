@@ -29,7 +29,7 @@
 #include <string>
 #include <utility>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 struct PointCloudWithTransform
 {
@@ -67,6 +67,6 @@ private:
   std::list<PointCloudWithTransform> pointcloud_cache_;
 };
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__POINTCLOUD_DENSIFICATION_HPP_

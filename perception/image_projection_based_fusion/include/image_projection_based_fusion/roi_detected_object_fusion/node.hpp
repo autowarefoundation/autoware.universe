@@ -26,7 +26,7 @@
 #include <memory>
 #include <vector>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 using sensor_msgs::msg::RegionOfInterest;
@@ -74,6 +74,6 @@ private:
     ignored_object_flags_map_;
 };
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__ROI_DETECTED_OBJECT_FUSION__NODE_HPP_

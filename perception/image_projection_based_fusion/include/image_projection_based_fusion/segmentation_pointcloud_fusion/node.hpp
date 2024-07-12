@@ -29,7 +29,7 @@
 #include <cv_bridge/cv_bridge.h>
 #endif
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 class SegmentPointCloudFusionNode : public FusionNode<PointCloud2, PointCloud2, Image>
 {
@@ -66,5 +66,5 @@ protected:
   }
 };
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 #endif  // IMAGE_PROJECTION_BASED_FUSION__SEGMENTATION_POINTCLOUD_FUSION__NODE_HPP_

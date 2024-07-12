@@ -28,7 +28,7 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
@@ -290,7 +290,7 @@ double RoiClusterFusionNode::cal_iou_by_mode(
   }
 }
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::RoiClusterFusionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::image_projection_based_fusion::RoiClusterFusionNode)

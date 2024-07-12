@@ -16,7 +16,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 double calcIoU(
@@ -204,4 +204,4 @@ void sanitizeROI(sensor_msgs::msg::RegionOfInterest & roi, const int width_, con
   }
 }
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion

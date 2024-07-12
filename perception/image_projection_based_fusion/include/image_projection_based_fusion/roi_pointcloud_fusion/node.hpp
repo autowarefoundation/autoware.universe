@@ -21,7 +21,7 @@
 
 #include <string>
 #include <vector>
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 class RoiPointCloudFusionNode
 : public FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>
@@ -52,5 +52,5 @@ protected:
   bool out_of_scope(const DetectedObjectWithFeature & obj);
 };
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 #endif  // IMAGE_PROJECTION_BASED_FUSION__ROI_POINTCLOUD_FUSION__NODE_HPP_

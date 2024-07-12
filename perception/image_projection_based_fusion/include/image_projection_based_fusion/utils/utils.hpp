@@ -51,7 +51,7 @@
 #include <string>
 #include <vector>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
@@ -92,6 +92,6 @@ void addShapeAndKinematic(
   const pcl::PointCloud<pcl::PointXYZ> & cluster,
   tier4_perception_msgs::msg::DetectedObjectWithFeature & feature_obj);
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #endif  // IMAGE_PROJECTION_BASED_FUSION__UTILS__UTILS_HPP_

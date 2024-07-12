@@ -16,7 +16,7 @@
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 VoxelGenerator::VoxelGenerator(
@@ -83,4 +83,4 @@ size_t VoxelGenerator::generateSweepPoints(std::vector<float> & points)
   return point_counter;
 }
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion

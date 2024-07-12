@@ -19,7 +19,7 @@
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options)
@@ -324,7 +324,8 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
   ignored_object_flags_map_.erase(timestamp_nsec);
 }
 
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::RoiDetectedObjectFusionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::image_projection_based_fusion::RoiDetectedObjectFusionNode)

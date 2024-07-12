@@ -42,7 +42,7 @@ Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
 
 }  // namespace
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 inline bool isVehicle(int label2d)
@@ -418,7 +418,7 @@ bool PointPaintingFusionNode::out_of_scope(__attribute__((unused)) const Detecte
 {
   return false;
 }
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::PointPaintingFusionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::image_projection_based_fusion::PointPaintingFusionNode)
