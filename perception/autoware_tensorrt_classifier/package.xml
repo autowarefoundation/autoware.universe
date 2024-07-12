@@ -5,7 +5,6 @@
   <description>tensorrt classifier wrapper</description>
 
   <author email="dan.umeda@tier4.jp">Dan Umeda</author>
-  <author email="mingyu.li@tier4.jp">Mingyu Li</author>
   <maintainer email="kotaro.uetake@tier4.jp">Kotaro Uetake</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
 
