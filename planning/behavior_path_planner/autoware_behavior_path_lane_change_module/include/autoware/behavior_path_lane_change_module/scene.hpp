@@ -51,6 +51,8 @@ public:
   NormalLaneChange & operator=(NormalLaneChange &&) = delete;
   ~NormalLaneChange() override = default;
 
+  void update_lanes(const bool is_approved) final;
+
   void updateLaneChangeStatus() override;
 
   std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
@@ -105,8 +107,6 @@ public:
   TurnSignalInfo get_current_turn_signal_info() override;
 
 protected:
-  lanelet::ConstLanelets getCurrentLanes() const override;
-
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes, Direction direction) const override;
 
