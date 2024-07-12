@@ -22,10 +22,10 @@
 #include <memory>
 #include <thread>
 
-class TimeKeeperExample : public rclcpp::Node
+class ExampleNode : public rclcpp::Node
 {
 public:
-  TimeKeeperExample() : Node("time_keeper_example")
+  ExampleNode() : Node("time_keeper_example")
   {
     publisher_ =
       create_publisher<autoware::universe_utils::ProcessingTimeDetail>("processing_time", 1);
@@ -35,8 +35,7 @@ public:
     // time_keeper_->add_reporter(publisher_);
     // time_keeper_->add_reporter(&std::cerr);
 
-    timer_ =
-      create_wall_timer(std::chrono::seconds(1), std::bind(&TimeKeeperExample::func_a, this));
+    timer_ = create_wall_timer(std::chrono::seconds(1), std::bind(&ExampleNode::func_a, this));
   }
 
 private:
@@ -69,14 +68,13 @@ private:
     autoware::universe_utils::ScopedTimeTrack st("func_c", *time_keeper_);
     std::this_thread::sleep_for(std::chrono::milliseconds(3));
     time_keeper_->comment("This is a comment for func_c");
-    st.comment("This is a comment for func_c");
   }
 };
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<TimeKeeperExample>();
+  auto node = std::make_shared<ExampleNode>();
   rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
