@@ -246,7 +246,7 @@ public:
     previous_module_output_ = previous_module_output;
   }
 
-  std::shared_ptr<universe_utils::TimeKeeper> getTimeKeeper() { return time_keeper_; }
+  std::shared_ptr<universe_utils::TimeKeeper> getTimeKeeper() const { return time_keeper_; }
 
   /**
    * @brief set planner data

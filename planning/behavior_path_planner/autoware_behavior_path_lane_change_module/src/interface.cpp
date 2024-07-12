@@ -169,6 +169,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 
 CandidateOutput LaneChangeInterface::planCandidate() const
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   const auto selected_path = module_type_->getLaneChangePath();
 
   if (selected_path.path.points.empty()) {
@@ -344,6 +345,7 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
 
 void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & output)
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   const auto steering_factor_direction = std::invoke([&]() {
     if (module_type_->getDirection() == Direction::LEFT) {
       return SteeringFactor::LEFT;
