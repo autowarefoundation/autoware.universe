@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_APOLLO_SEGMENTATION_TVM__DISJOINT_SET_HPP_
-#define LIDAR_APOLLO_SEGMENTATION_TVM__DISJOINT_SET_HPP_
+#ifndef AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__DISJOINT_SET_HPP_
+#define AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__DISJOINT_SET_HPP_
 
 namespace autoware
 {
@@ -81,4 +81,4 @@ void DisjointSetUnion(T * x, T * y)
 }  // namespace lidar_apollo_segmentation_tvm
 }  // namespace perception
 }  // namespace autoware
-#endif  // LIDAR_APOLLO_SEGMENTATION_TVM__DISJOINT_SET_HPP_
+#endif  // AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__DISJOINT_SET_HPP_

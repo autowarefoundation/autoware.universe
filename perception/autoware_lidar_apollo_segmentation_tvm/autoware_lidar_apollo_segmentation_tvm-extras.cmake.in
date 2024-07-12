@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(lidar_apollo_segmentation_tvm_BUILT @lidar_apollo_segmentation_tvm_BUILT@)
+set(autoware_lidar_apollo_segmentation_tvm_BUILT @autoware_lidar_apollo_segmentation_tvm_BUILT@)

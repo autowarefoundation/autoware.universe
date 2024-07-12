@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_APOLLO_SEGMENTATION_TVM__FEATURE_MAP_HPP_
-#define LIDAR_APOLLO_SEGMENTATION_TVM__FEATURE_MAP_HPP_
+#ifndef AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__FEATURE_MAP_HPP_
+#define AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__FEATURE_MAP_HPP_
 
 #include <cstdint>
 #include <vector>
@@ -82,4 +82,4 @@ struct FeatureMapWithConstantAndIntensity : public FeatureMapInterface
 }  // namespace lidar_apollo_segmentation_tvm
 }  // namespace perception
 }  // namespace autoware
-#endif  // LIDAR_APOLLO_SEGMENTATION_TVM__FEATURE_MAP_HPP_
+#endif  // AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__FEATURE_MAP_HPP_

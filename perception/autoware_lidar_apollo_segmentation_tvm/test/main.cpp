@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp>
 #include <tvm_utility/pipeline.hpp>
 
 #include <gtest/gtest.h>

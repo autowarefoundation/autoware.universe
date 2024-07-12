@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <lidar_apollo_segmentation_tvm/feature_map.hpp>
-#include <lidar_apollo_segmentation_tvm/util.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm/feature_map.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm/util.hpp>
 
 #include <cmath>
 #include <vector>

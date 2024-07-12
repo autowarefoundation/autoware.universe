@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE xml>
 <package format="3">
-  <name>lidar_apollo_segmentation_tvm</name>
+  <name>autoware_lidar_apollo_segmentation_tvm</name>
   <version>0.1.0</version>
   <description>lidar_apollo_segmentation_tvm</description>
   <maintainer email="ambroise.vincent@arm.com">Ambroise Vincent</maintainer>

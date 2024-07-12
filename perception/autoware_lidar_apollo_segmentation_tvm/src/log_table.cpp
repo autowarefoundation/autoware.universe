@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_APOLLO_SEGMENTATION_TVM__LOG_TABLE_HPP_
-#define LIDAR_APOLLO_SEGMENTATION_TVM__LOG_TABLE_HPP_
+#include <autoware/lidar_apollo_segmentation_tvm/log_table.hpp>
+
+#include <cmath>
+#include <string>
+#include <vector>
 
 namespace autoware
 {
@@ -21,12 +24,30 @@ namespace perception
 {
 namespace lidar_apollo_segmentation_tvm
 {
+struct LogTable
+{
+  std::vector<float> data;
+  LogTable()
+  {
+    data.resize(256 * 10);
+    for (size_t i = 0; i < data.size(); ++i) {
+      data[i] = std::log1p(static_cast<float>(i) / 10);
+    }
+  }
+};
 
-/// \brief Use a lookup table to compute the natural logarithm of 1+num.
-/// \param[in] num
-/// \return ln(1+num)
-float calcApproximateLog(float num);
+static LogTable log_table;
+
+float calcApproximateLog(float num)
+{
+  if (num >= 0) {
+    size_t integer_num = static_cast<size_t>(num * 10.0f);
+    if (integer_num < log_table.data.size()) {
+      return log_table.data[integer_num];
+    }
+  }
+  return std::log1p(num);
+}
 }  // namespace lidar_apollo_segmentation_tvm
 }  // namespace perception
 }  // namespace autoware
-#endif  // LIDAR_APOLLO_SEGMENTATION_TVM__LOG_TABLE_HPP_

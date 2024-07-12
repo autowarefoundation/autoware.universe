@@ -1,4 +1,4 @@
-# lidar_apollo_segmentation_tvm
+# autoware_lidar_apollo_segmentation_tvm
 
 ## Design
 
@@ -27,7 +27,7 @@ Note: the parameters described in the original design have been modified and are
 
 ### Inputs / Outputs / API
 
-The package exports a boolean `lidar_apollo_segmentation_tvm_BUILT` cmake variable.
+The package exports a boolean `autoware_lidar_apollo_segmentation_tvm_BUILT` cmake variable.
 
 ## Reference
 

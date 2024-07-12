@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_APOLLO_SEGMENTATION_TVM__UTIL_HPP_
-#define LIDAR_APOLLO_SEGMENTATION_TVM__UTIL_HPP_
+#ifndef AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__UTIL_HPP_
+#define AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__UTIL_HPP_
 
 #include <cmath>
 #include <string>
@@ -60,4 +60,4 @@ inline float Pixel2Pc(int32_t in_pixel, float in_size, float out_range)
 }  // namespace perception
 }  // namespace autoware
 
-#endif  // LIDAR_APOLLO_SEGMENTATION_TVM__UTIL_HPP_
+#endif  // AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__UTIL_HPP_

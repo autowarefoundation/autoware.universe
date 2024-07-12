@@ -13,7 +13,7 @@
 # limitations under the License.
 
 cmake_minimum_required(VERSION 3.14)
-project(lidar_apollo_segmentation_tvm)
+project(autoware_lidar_apollo_segmentation_tvm)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -36,13 +36,13 @@ if(NOT NN_DEPENDENCY STREQUAL "")
   # Library
   ament_auto_add_library(${PROJECT_NAME} SHARED
     data/models/${MODEL_NAME}/inference_engine_tvm_config.hpp
-    include/lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp
-    include/lidar_apollo_segmentation_tvm/cluster2d.hpp
-    include/lidar_apollo_segmentation_tvm/disjoint_set.hpp
-    include/lidar_apollo_segmentation_tvm/feature_generator.hpp
-    include/lidar_apollo_segmentation_tvm/feature_map.hpp
-    include/lidar_apollo_segmentation_tvm/log_table.hpp
-    include/lidar_apollo_segmentation_tvm/util.hpp
+    include/autoware/lidar_apollo_segmentation_tvm/lidar_apollo_segmentation_tvm.hpp
+    include/autoware/lidar_apollo_segmentation_tvm/cluster2d.hpp
+    include/autoware/lidar_apollo_segmentation_tvm/disjoint_set.hpp
+    include/autoware/lidar_apollo_segmentation_tvm/feature_generator.hpp
+    include/autoware/lidar_apollo_segmentation_tvm/feature_map.hpp
+    include/autoware/lidar_apollo_segmentation_tvm/log_table.hpp
+    include/autoware/lidar_apollo_segmentation_tvm/util.hpp
     src/lidar_apollo_segmentation_tvm.cpp
     src/cluster2d.cpp
     src/feature_generator.cpp

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_APOLLO_SEGMENTATION_TVM__CLUSTER2D_HPP_
-#define LIDAR_APOLLO_SEGMENTATION_TVM__CLUSTER2D_HPP_
+#ifndef AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__CLUSTER2D_HPP_
+#define AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__CLUSTER2D_HPP_
 
-#include <lidar_apollo_segmentation_tvm/disjoint_set.hpp>
-#include <lidar_apollo_segmentation_tvm/util.hpp>
-#include <lidar_apollo_segmentation_tvm/visibility_control.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm/disjoint_set.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm/util.hpp>
+#include <autoware/lidar_apollo_segmentation_tvm/visibility_control.hpp>
 
 #include <tier4_perception_msgs/msg/detected_object_with_feature.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
@@ -173,4 +173,4 @@ private:
 }  // namespace lidar_apollo_segmentation_tvm
 }  // namespace perception
 }  // namespace autoware
-#endif  // LIDAR_APOLLO_SEGMENTATION_TVM__CLUSTER2D_HPP_
+#endif  // AUTOWARE__LIDAR_APOLLO_SEGMENTATION_TVM__CLUSTER2D_HPP_
