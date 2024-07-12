@@ -275,10 +275,12 @@ void LaneChangeModuleManager::initParams(rclcpp::Node * node)
 
 std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneModuleInstance()
 {
-  return std::make_unique<LaneChangeInterface>(
+  auto module = std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
     objects_of_interest_marker_interface_ptr_map_,
     std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
+  module->setTimeKeeper(time_keeper_);
+  return module;
 }
 
 void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Parameter> & parameters)

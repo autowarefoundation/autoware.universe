@@ -19,6 +19,7 @@
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/universe_utils/ros/parameter.hpp"
 
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <rclcpp/node.hpp>
 #include <rclcpp/parameter.hpp>
 #include <rclcpp/publisher.hpp>
@@ -51,7 +52,10 @@ public:
   SceneModuleManagerInterface(SceneModuleManagerInterface &&) = delete;
   SceneModuleManagerInterface & operator=(const SceneModuleManagerInterface &) = delete;
   SceneModuleManagerInterface & operator=(SceneModuleManagerInterface &&) = delete;
-  explicit SceneModuleManagerInterface(std::string name) : name_{std::move(name)} {}
+  explicit SceneModuleManagerInterface(std::string name)
+  : name_{std::move(name)}, time_keeper_(std::make_shared<universe_utils::TimeKeeper>())
+  {
+  }
 
   virtual ~SceneModuleManagerInterface() = default;
 
@@ -320,6 +324,9 @@ protected:
       pub_drivable_lanes_ = node->create_publisher<MarkerArray>("~/drivable_lanes/" + name_, 20);
     }
 
+    time_keeper_->add_reporter(node->create_publisher<universe_utils::ProcessingTimeDetail>(
+      "~/processing_time_detail/" + name_, 20));
+
     // misc
     {
       node_ = node;
@@ -352,6 +359,8 @@ protected:
     objects_of_interest_marker_interface_ptr_map_;
 
   ModuleConfigParameters config_;
+
+  std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 };
 
 }  // namespace autoware::behavior_path_planner

@@ -51,8 +51,7 @@ bool isTargetObjectFront(
   const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 bool isTargetObjectFront(
-  const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon);
+  const PathWithLaneId & path, const double ego_arc_length, const ExtendedPredictedObject & obj);
 
 Polygon2d createExtendedPolygon(
   const Pose & base_link_pose, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,

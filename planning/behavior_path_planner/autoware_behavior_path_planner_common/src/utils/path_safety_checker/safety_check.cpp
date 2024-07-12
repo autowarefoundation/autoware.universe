@@ -73,23 +73,12 @@ bool isTargetObjectFront(
 }
 
 bool isTargetObjectFront(
-  const PathWithLaneId & path, const geometry_msgs::msg::Pose & ego_pose,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const Polygon2d & obj_polygon)
+  const PathWithLaneId & path, const double ego_arc_length, const ExtendedPredictedObject & obj)
 {
-  const double base_to_front = vehicle_info.max_longitudinal_offset_m;
-  const auto ego_point =
-    autoware::universe_utils::calcOffsetPose(ego_pose, base_to_front, 0.0, 0.0).position;
-
-  // check all edges in the polygon
-  const auto obj_polygon_outer = obj_polygon.outer();
-  for (const auto & obj_edge : obj_polygon_outer) {
-    const auto obj_point = autoware::universe_utils::createPoint(obj_edge.x(), obj_edge.y(), 0.0);
-    if (autoware::motion_utils::isTargetPointFront(path.points, ego_point, obj_point)) {
-      return true;
-    }
-  }
-
-  return false;
+  const auto obj_arc_length =
+    motion_utils::calcSignedArcLength(path.points, 0, obj.initial_pose.pose.position) +
+    obj.shape.dimensions.x / 2.0;
+  return obj_arc_length > ego_arc_length;
 }
 
 Polygon2d createExtendedPolygon(
