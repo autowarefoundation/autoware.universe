@@ -41,7 +41,7 @@ Please note that the processing time difference between the two distortion metho
 ## Launch
 
 ```bash
-ros2 launch pointcloud_preprocessor distortion_corrector.launch.xml
+ros2 launch autoware_pointcloud_preprocessor distortion_corrector.launch.xml
 ```
 
 ## Assumptions / Known limits
