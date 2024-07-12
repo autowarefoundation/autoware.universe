@@ -141,6 +141,7 @@ private:
   double getExpansionDistance(const AstarNode & current_node) const;
   double getSteeringCost(const int steering_index) const;
   double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
+  double getDirectionChangeCost(const double dir_distance) const;
 
   // Algorithm specific param
   AstarParam astar_param_;
@@ -164,9 +165,6 @@ private:
   double max_expansion_dist_;
 
   SearchMethod search_method_;
-
-  // threshold for minimum distance between direction switches
-  static constexpr double min_dir_change_dist_ = 1.5;
 
   // expansion distance factors
   static constexpr double base_length_max_expansion_factor_ = 0.5;
