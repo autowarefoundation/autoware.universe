@@ -203,6 +203,11 @@ protected:
 
   double getStopTime() const { return stop_time_; }
 
+  const lanelet::ConstLanelets & get_target_lanes() const
+  {
+    return common_data_ptr_->lanes_ptr->target;
+  }
+
   double stop_time_{0.0};
 };
 }  // namespace autoware::behavior_path_planner

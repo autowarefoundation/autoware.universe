@@ -83,8 +83,8 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   common_data_ptr_->lanes_ptr->target = target_lanes;
 
   common_data_ptr_->lanes_ptr->preceding_target = utils::getPrecedingLanelets(
-    *common_data_ptr_->route_handler_ptr, common_data_ptr_->lanes_ptr->target,
-    common_data_ptr_->get_ego_pose(), common_data_ptr_->lc_param_ptr->backward_lane_length);
+    *common_data_ptr_->route_handler_ptr, get_target_lanes(), common_data_ptr_->get_ego_pose(),
+    common_data_ptr_->lc_param_ptr->backward_lane_length);
 
   *common_data_ptr_->lanes_polygon_ptr = create_lanes_polygon(common_data_ptr_);
 }
@@ -98,8 +98,7 @@ void NormalLaneChange::updateLaneChangeStatus()
   status_.is_valid_path = found_valid_path;
   status_.is_safe = found_safe_path;
 
-  const auto arclength_start =
-    lanelet::utils::getArcCoordinates(common_data_ptr_->lanes_ptr->target, getEgoPose());
+  const auto arclength_start = lanelet::utils::getArcCoordinates(get_target_lanes(), getEgoPose());
   status_.start_distance = arclength_start.length;
   status_.lane_change_path.path.header = getRouteHeader();
 }
@@ -107,7 +106,7 @@ void NormalLaneChange::updateLaneChangeStatus()
 std::pair<bool, bool> NormalLaneChange::getSafePath(LaneChangePath & safe_path) const
 {
   const auto & current_lanes = get_current_lanes();
-  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
+  const auto & target_lanes = get_target_lanes();
 
   if (current_lanes.empty() || target_lanes.empty()) {
     return {false, false};
@@ -316,7 +315,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
       const auto stop_point = utils::insertStopPoint(stop_dist + current_dist, output.path);
       setStopPose(stop_point.point.pose);
     } else {
-      insertStopPoint(common_data_ptr_->lanes_ptr->target, output.path);
+      insertStopPoint(get_target_lanes(), output.path);
     }
   }
 
@@ -336,7 +335,7 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output) c
   const auto & dp = planner_data_->drivable_area_expansion_parameters;
 
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
-    *getRouteHandler(), get_current_lanes(), common_data_ptr_->lanes_ptr->target);
+    *getRouteHandler(), get_current_lanes(), get_target_lanes());
   const auto shorten_lanes = utils::cutOverlappedLanes(output.path, drivable_lanes);
   const auto expanded_lanes = utils::expandLanelets(
     shorten_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
@@ -381,8 +380,7 @@ void NormalLaneChange::insertStopPoint(
   }
 
   const double stop_point_buffer = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-  const auto target_objects =
-    filterObjects(get_current_lanes(), common_data_ptr_->lanes_ptr->target);
+  const auto target_objects = filterObjects(get_current_lanes(), get_target_lanes());
   double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
 
   const auto is_valid_start_point = std::invoke([&]() -> bool {
@@ -469,7 +467,7 @@ void NormalLaneChange::insertStopPoint(
         // target_objects includes objects out of target lanes, so filter them out
         if (!boost::geometry::intersects(
               autoware::universe_utils::toPolygon2d(o.initial_pose.pose, o.shape).outer(),
-              lanelet::utils::combineLaneletsShape(common_data_ptr_->lanes_ptr->target)
+              lanelet::utils::combineLaneletsShape(get_target_lanes())
                 .polygon2d()
                 .basicPolygon())) {
           return false;
@@ -495,7 +493,7 @@ PathWithLaneId NormalLaneChange::getReferencePath() const
 {
   lanelet::ConstLanelet closest_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
-        common_data_ptr_->lanes_ptr->target, getEgoPose(), &closest_lanelet)) {
+        get_target_lanes(), getEgoPose(), &closest_lanelet)) {
     return prev_module_output_.reference_path;
   }
   const auto reference_path = utils::getCenterLinePathFromLanelet(closest_lanelet, planner_data_);
@@ -677,9 +675,9 @@ bool NormalLaneChange::hasFinishedLaneChange() const
 {
   const auto & current_pose = getEgoPose();
   const auto & lane_change_end = status_.lane_change_path.info.shift_line.end;
-  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
+  const auto & target_lanes = get_target_lanes();
   const double dist_to_lane_change_end =
-    utils::getSignedDistance(current_pose, lane_change_end, common_data_ptr_->lanes_ptr->target);
+    utils::getSignedDistance(current_pose, lane_change_end, get_target_lanes());
   double finish_judge_buffer = lane_change_parameters_->lane_change_finish_judge_buffer;
 
   // If ego velocity is low, relax finish judge buffer
@@ -1787,7 +1785,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
 {
   const auto & path = status_.lane_change_path;
   const auto & current_lanes = get_current_lanes();
-  const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
+  const auto & target_lanes = get_target_lanes();
 
   if (current_lanes.empty() || target_lanes.empty()) {
     return {true, true};
@@ -1848,7 +1846,7 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
   // check lane departure
   const auto drivable_lanes = utils::lane_change::generateDrivableLanes(
     *route_handler, utils::extendLanes(route_handler, get_current_lanes()),
-    utils::extendLanes(route_handler, common_data_ptr_->lanes_ptr->target));
+    utils::extendLanes(route_handler, get_target_lanes()));
   const auto expanded_lanes = utils::expandLanelets(
     drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
     dp.drivable_area_types_to_skip);
@@ -1881,7 +1879,7 @@ bool NormalLaneChange::isRequiredStop(const bool is_object_coming_from_rear)
 {
   const auto threshold = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
   if (
-    isNearEndOfCurrentLanes(get_current_lanes(), common_data_ptr_->lanes_ptr->target, threshold) &&
+    isNearEndOfCurrentLanes(get_current_lanes(), get_target_lanes(), threshold) &&
     isAbleToStopSafely() && is_object_coming_from_rear) {
     current_lane_change_state_ = LaneChangeStates::Stop;
     return true;
@@ -1996,7 +1994,7 @@ bool NormalLaneChange::calcAbortPath()
   auto reference_lane_segment = prev_module_output_.path;
   {
     // const auto terminal_path =
-    //   calcTerminalLaneChangePath(reference_lanelets, common_data_ptr_->lanes_ptr->target);
+    //   calcTerminalLaneChangePath(reference_lanelets, get_target_lanes());
     // if (terminal_path) {
     //   reference_lane_segment = terminal_path->path;
     // }
