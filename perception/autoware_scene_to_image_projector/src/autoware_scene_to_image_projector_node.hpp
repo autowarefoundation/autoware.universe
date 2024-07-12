@@ -37,6 +37,9 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <memory>
+#include <vector>
+
 namespace autoware::scene_to_image_projector
 {
 class SceneToImageProjectorNode : public rclcpp::Node
