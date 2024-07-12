@@ -135,8 +135,7 @@ public:
    */
   void update_safety(
     const std::optional<CollisionInterval> & unsafe_interval,
-    const std::optional<CollisionInterval> & safe_interval,
-    const bool safe_under_traffic_control);
+    const std::optional<CollisionInterval> & safe_interval, const bool safe_under_traffic_control);
 
   /**
    * @brief find the estimated position of the object in the past
@@ -234,7 +233,8 @@ public:
 
   void registerExistingObject(
     const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
-    const bool belong_intersection_area, const bool is_parked_vehicle, std::shared_ptr<ObjectInfo> object);
+    const bool belong_intersection_area, const bool is_parked_vehicle,
+    std::shared_ptr<ObjectInfo> object);
 
   void clearObjects();
 
