@@ -15,19 +15,31 @@
 
 #include <QPainter>
 #include <QPainterPath>
+#include <QTransform>
 #include <QVBoxLayout>
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <pluginlib/class_list_macros.hpp>
 #include <rviz_rendering/render_system.hpp>
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 #include <qimage.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/utils.h>
 
 #include <cmath>
 
 namespace autoware_minimap_overlay_rviz_plugin
 {
 
-VehicleMapDisplay::VehicleMapDisplay() : rviz_common::Display(), overlay_(nullptr)
+VehicleMapDisplay::VehicleMapDisplay()
+: rviz_common::Display(),
+  overlay_(nullptr),
+  prev_latitude_(0.0),
+  prev_longitude_(0.0),
+  target_latitude_(0.0),
+  target_longitude_(0.0)
 {
   property_width_ = new rviz_common::properties::IntProperty(
     "Width", 256, "Width of the overlay max:500", this, SLOT(updateOverlaySize()));
@@ -123,9 +135,13 @@ void VehicleMapDisplay::onInitialize()
     "/api/routing/state", 10,
     std::bind(&VehicleMapDisplay::routeStateCallback, this, std::placeholders::_1));
 
-  route_points_sub_ = node_->create_subscription<autoware_planning_msgs::msg::Path>(
-    "/planning/scenario_planning/lane_driving/behavior_planning/path", 10,
+  route_points_sub_ = node_->create_subscription<autoware_planning_msgs::msg::Trajectory>(
+    "/planning/scenario_planning/trajectory", 10,
     std::bind(&VehicleMapDisplay::routePointsCallback, this, std::placeholders::_1));
+
+  // Timer for smooth update
+  node_->create_wall_timer(
+    std::chrono::milliseconds(16), std::bind(&VehicleMapDisplay::smoothUpdate, this));
 }
 
 void VehicleMapDisplay::reset()
@@ -220,7 +236,7 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
 
   // Define the circular clipping path
   QPainterPath path;
-  path.addEllipse(visibleRect);
+  path.addEllipse(backgroundRect);
   painter.setClipPath(path);
 
   // Draw the background
@@ -249,21 +265,53 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
     ament_index_cpp::get_package_share_directory("autoware_minimap_overlay_rviz_plugin");
   std::string image_path = package_path + "/icons/pos.png";
   QImage pos_image = QImage(image_path.c_str());
-  pos_image = pos_image.scaled(20, 20, Qt::KeepAspectRatio);
+  pos_image = pos_image.scaled(25, 25, Qt::KeepAspectRatio);
 
   QPointF positionInOverlay =
-    backgroundRect.center() - QPointF(pos_image.width() / 2, pos_image.height() - 10);
-
-  painter.drawImage(positionInOverlay, pos_image);
-
-  // Draw the goal pose only if it is set
+    backgroundRect.center() - QPointF(pos_image.width() / 2, pos_image.height() / 2);
 
   if (route_state_msg_ && route_state_msg_->state == autoware_adapi_v1_msgs::msg::RouteState::SET) {
     goal_pose_.draw(painter, backgroundRect, zoom_);
     path_overlay_.draw(painter, backgroundRect, zoom_);
   }
+  if (pose_msg_) {  // Assuming pose_msg_ is your pose message
+    tf2::Quaternion q(
+      pose_msg_->pose.pose.pose.orientation.x, pose_msg_->pose.pose.pose.orientation.y,
+      pose_msg_->pose.pose.pose.orientation.z, pose_msg_->pose.pose.pose.orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+
+    yaw = -yaw + M_PI / 2;  // Adjust the yaw to match the image orientation
+
+    // Create a transformation matrix
+    QTransform transform;
+    transform.translate(
+      positionInOverlay.x() + pos_image.width() / 2,
+      positionInOverlay.y() + pos_image.height() / 2);
+    transform.rotateRadians(yaw);
+    transform.translate(-pos_image.width() / 2, -pos_image.height() / 2);
+
+    // Apply the transformation and draw the position icon
+    QImage transformed_image = pos_image.transformed(transform);
+    painter.drawImage(positionInOverlay, transformed_image);
+  } else
+    painter.drawImage(positionInOverlay, pos_image);
 
   queueRender();
+}
+
+void VehicleMapDisplay::smoothUpdate()
+{
+  const double smoothing_factor = 0.08;
+
+  latitude_ = prev_latitude_ + smoothing_factor * (target_latitude_ - prev_latitude_);
+  longitude_ = prev_longitude_ + smoothing_factor * (target_longitude_ - prev_longitude_);
+
+  prev_latitude_ = latitude_;
+  prev_longitude_ = longitude_;
+
+  updateMapPosition();
 }
 
 void VehicleMapDisplay::onTilesUpdated()
@@ -295,6 +343,7 @@ void VehicleMapDisplay::updateZoomLevel()
 void VehicleMapDisplay::updateLatitude()
 {
   latitude_ = property_latitude_->getFloat();
+  target_latitude_ = latitude_;
   int new_center_x_tile = tile_field_->long_to_tile_x(longitude_, zoom_);
   int new_center_y_tile = tile_field_->lat_to_tile_y(latitude_, zoom_);
   center_x_tile_ = new_center_x_tile;
@@ -306,6 +355,7 @@ void VehicleMapDisplay::updateLatitude()
 void VehicleMapDisplay::updateLongitude()
 {
   longitude_ = property_longitude_->getFloat();
+  target_longitude_ = longitude_;
   int new_center_x_tile = tile_field_->long_to_tile_x(longitude_, zoom_);
   int new_center_y_tile = tile_field_->lat_to_tile_y(latitude_, zoom_);
   center_x_tile_ = new_center_x_tile;
@@ -341,7 +391,8 @@ void VehicleMapDisplay::updateGoalPose()
   queueRender();
 }
 
-void VehicleMapDisplay::routePointsCallback(const autoware_planning_msgs::msg::Path::SharedPtr msg)
+void VehicleMapDisplay::routePointsCallback(
+  const autoware_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
   route_points_msg_ = msg;
 
@@ -378,13 +429,14 @@ void VehicleMapDisplay::poseCallback(
 
   latitude_ = msg->geographic_pose.position.latitude;
   longitude_ = msg->geographic_pose.position.longitude;
+  target_latitude_ = latitude_;
+  target_longitude_ = longitude_;
 
-  property_longitude_->setFloat(longitude_);
-  property_latitude_->setFloat(latitude_);
+  property_longitude_->setFloat(target_longitude_);
+  property_latitude_->setFloat(target_latitude_);
 
-  // Set the vehicle position in the goal pose (in case it was not set yet)
-  goal_pose_.setVehiclePosition(latitude_, longitude_);
-  path_overlay_.setVehiclePosition(latitude_, longitude_);
+  goal_pose_.setVehiclePosition(target_latitude_, target_longitude_);
+  path_overlay_.setVehiclePosition(target_latitude_, target_longitude_);
 
   updateMapPosition();  // Method to update map position based on new latitude and longitude
 }
@@ -398,8 +450,8 @@ void VehicleMapDisplay::goalPoseCallback(const geometry_msgs::msg::PoseStamped::
   goal_pose_.setGoalPosition(msg->pose.position.x, msg->pose.position.y, origin_lat, origin_lon);
 
   // Set the vehicle position in the goal pose (in case it was not set yet)
-  goal_pose_.setVehiclePosition(latitude_, longitude_);
-  path_overlay_.setVehiclePosition(latitude_, longitude_);
+  goal_pose_.setVehiclePosition(target_latitude_, target_longitude_);
+  path_overlay_.setVehiclePosition(target_latitude_, target_longitude_);
 
   property_goal_lat->setFloat(goal_pose_.getGoalLatitude());
   property_goal_lon->setFloat(goal_pose_.getGoalLongitude());

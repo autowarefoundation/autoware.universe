@@ -38,9 +38,10 @@
 
 #include <autoware_adapi_v1_msgs/msg/route_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/vehicle_kinematics.hpp>
-#include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
 #include <OgreColourValue.h>
@@ -48,6 +49,7 @@
 #include <OgreTexture.h>
 #include <OgreTextureManager.h>
 
+#include <cmath>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -88,8 +90,9 @@ private:
   void goalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
   void poseCallback(const autoware_adapi_v1_msgs::msg::VehicleKinematics::SharedPtr msg);
   void routeStateCallback(const autoware_adapi_v1_msgs::msg::RouteState::SharedPtr msg);
-  void routePointsCallback(const autoware_planning_msgs::msg::Path::SharedPtr msg);
+  void routePointsCallback(const autoware_planning_msgs::msg::Trajectory::SharedPtr msg);
   std::pair<double, double> localXYZToLatLon(double local_x, double local_y);
+  void smoothUpdate();
 
   rviz_satellite::OverlayObject::SharedPtr overlay_;
 
@@ -136,11 +139,17 @@ private:
   autoware_adapi_v1_msgs::msg::RouteState::SharedPtr route_state_msg_;
 
   // subscription ptr and msg ptr
-  rclcpp::Subscription<autoware_planning_msgs::msg::Path>::SharedPtr route_points_sub_;
-  autoware_planning_msgs::msg::Path::SharedPtr route_points_msg_;
+  rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr route_points_sub_;
+  autoware_planning_msgs::msg::Trajectory::SharedPtr route_points_msg_;
 
   GoalPose goal_pose_;
   PathOverlay path_overlay_;
+
+  // Previous and target positions
+  double prev_latitude_;
+  double prev_longitude_;
+  double target_latitude_;
+  double target_longitude_;
 
   void drawGoalPose(QPainter & painter, const QRectF & backgroundRect);
 };
