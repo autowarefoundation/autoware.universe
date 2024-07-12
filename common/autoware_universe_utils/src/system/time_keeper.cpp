@@ -178,11 +178,6 @@ ScopedTimeTrack::ScopedTimeTrack(const std::string & func_name, TimeKeeper & tim
   time_keeper_.start_track(func_name_);
 }
 
-void ScopedTimeTrack::comment(const std::string & comment)
-{
-  time_keeper_.comment(comment);
-}
-
 ScopedTimeTrack::~ScopedTimeTrack()
 {
   time_keeper_.end_track(func_name_);

@@ -197,13 +197,6 @@ public:
   ScopedTimeTrack & operator=(ScopedTimeTrack &&) = delete;
 
   /**
-   * @brief Add a comment to the tracked function
-   *
-   * @param comment Comment to be added
-   */
-  void comment(const std::string & comment);
-
-  /**
    * @brief Destroy the ScopedTimeTrack object, ending the tracking of the function
    */
   ~ScopedTimeTrack();
