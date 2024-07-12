@@ -271,7 +271,8 @@ AutowareErrorMonitor::AutowareErrorMonitor(const rclcpp::NodeOptions & options)
 void AutowareErrorMonitor::loadRequiredModules(const std::string & key)
 {
   const uint64_t depth = 3;
-  const auto param_names = this->list_parameters({std::string("required_modules.") + key}, depth).names;
+  const auto param_names =
+    this->list_parameters({std::string("required_modules.") + key}, depth).names;
 
   if (param_names.empty()) {
     throw std::runtime_error(fmt::format("no parameter found: required_modules.{}", key));
