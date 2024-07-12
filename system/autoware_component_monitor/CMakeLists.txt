@@ -18,14 +18,14 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_node
 )
 
-ament_auto_package(
-  INSTALL_TO_SHARE
-  config
-  launch
-)
-
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_unit_conversions test/test_unit_conversions.cpp)
   target_link_libraries(test_unit_conversions ${PROJECT_NAME})
   target_include_directories(test_unit_conversions PRIVATE src)
 endif()
+
+ament_auto_package(
+  INSTALL_TO_SHARE
+  config
+  launch
+)
