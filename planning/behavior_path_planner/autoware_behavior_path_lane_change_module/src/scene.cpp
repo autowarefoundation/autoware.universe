@@ -2105,11 +2105,13 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
       path_safety_status.is_safe = false;
       utils::path_safety_checker::updateCollisionCheckDebugMap(
         debug_data, current_debug_data, is_safe);
-      const auto & obj_pose = obj.initial_pose.pose;
-      const auto obj_polygon = autoware::universe_utils::toPolygon2d(obj_pose, obj.shape);
+      const auto ego_point =
+        autoware::universe_utils::calcOffsetPose(
+          current_pose, common_parameters.vehicle_info.max_longitudinal_offset_m, 0.0, 0.0)
+          .position;
+      const auto ego_arc_length = motion_utils::calcSignedArcLength(path.points, 0, ego_point);
       path_safety_status.is_object_coming_from_rear |=
-        !utils::path_safety_checker::isTargetObjectFront(
-          path, current_pose, common_parameters.vehicle_info, obj_polygon);
+        !utils::path_safety_checker::isTargetObjectFront(path, ego_arc_length, obj);
     }
     utils::path_safety_checker::updateCollisionCheckDebugMap(
       debug_data, current_debug_data, is_safe);
