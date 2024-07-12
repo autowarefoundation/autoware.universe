@@ -1,9 +1,8 @@
-#ifndef __PREPROCESS_HPP__
-#define __PREPROCESS_HPP__
+#ifndef PREPROCESS_HPP_
+#define PREPROCESS_HPP_
 
 #include "common.hpp"
 
-void convert_RGBHWC_to_BGRCHW(uchar *input, uchar *output, 
-                                                        int channels, int height, int width);
+void convert_RGBHWC_to_BGRCHW(uchar * input, uchar * output, int channels, int height, int width);
 
-#endif
+#endif  // PREPROCESS_HPP_
