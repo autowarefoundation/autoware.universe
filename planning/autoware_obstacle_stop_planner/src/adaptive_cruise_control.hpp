@@ -46,7 +46,7 @@ public:
     const geometry_msgs::msg::Pose self_pose, const pcl::PointXYZ & nearest_collision_point,
     const rclcpp::Time nearest_collision_point_time,
     const autoware_perception_msgs::msg::PredictedObjects::ConstSharedPtr object_ptr,
-    const nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr, bool * need_to_stop,
+    const nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_ptr, bool * need_to_stop,
     TrajectoryPoints * output_trajectory, const std_msgs::msg::Header trajectory_header);
 
   void insertAdaptiveCruiseVelocity(
