@@ -23,7 +23,7 @@ import yaml
 
 def generate_launch_description():
     ns = "pointcloud_preprocessor"
-    pkg = "pointcloud_preprocessor"
+    pkg = "autoware_pointcloud_preprocessor"
 
     param_file = os.path.join(
         get_package_share_directory("autoware_vehicle_info_utils"), "config/polygon_remover.yaml"
