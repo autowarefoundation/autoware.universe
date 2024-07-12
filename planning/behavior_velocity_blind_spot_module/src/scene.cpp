@@ -550,6 +550,13 @@ std::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
       if (adj_lane) {
         return *adj_lane;
       }
+      const auto assoc_shoulder =
+        (turn_direction_ == TurnDirection::LEFT)
+          ? planner_data_->route_handler_->getLeftLanelet(lane, true /* get_shoulder_lane */)
+          : planner_data_->route_handler_->getRightLanelet(lane, true);
+      if (assoc_shoulder) {
+        return assoc_shoulder.value();
+      }
 
       return std::nullopt;
     });
