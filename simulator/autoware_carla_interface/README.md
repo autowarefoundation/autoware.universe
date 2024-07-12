@@ -129,6 +129,23 @@ The `carla_ros.py` sets up the CARLA world:
    CarlaDataProvider.request_new_actor(self.vehicle_type, spawn_point, self.agent_role_name)
    ```
 
+## Traffic Light Recognition
+
+The maps provided by the Carla Simulator ([Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/)) currently lack proper traffic light components for Autoware and have different latitude and longitude coordinates compared to the pointcloud map. To enable traffic light recognition, follow the steps below to modify the maps.
+
+- Options to Modify the Map
+
+  - A. Create a New Map from Scratch
+  - Use the [Tier4 Vector Map Builder](https://tools.tier4.jp/feature/vector_map_builder_ll2/) to create a new map.
+
+  - B. Modify the Existing Carla Lanelet2 Maps
+  - Adjust the longitude and latitude of the [Carla Lanelet2 Maps](https://bitbucket.org/carla-simulator/autoware-contents/src/master/maps/) to align with the PCD (origin).
+    - Use this [tool](https://github.com/mraditya01/offset_lanelet2/tree/main) to modify the coordinates.
+    - Snap Lanelet with PCD and add the traffic lights using the [Tier4 Vector Map Builder](https://tools.tier4.jp/feature/vector_map_builder_ll2/).
+
+- When using the Tier4 Vector Map Builder, you must convert the PCD format from `binary_compressed` to `ascii`. You can use `pcl_tools` for this conversion.
+- For reference, an example of Town01 with added traffic lights at one intersection can be downloaded [here](https://drive.google.com/drive/folders/1QFU0p3C8NW71sT5wwdnCKXoZFQJzXfTG?usp=sharing).
+
 ## Tips
 
 - Misalignment might occurs during initialization, pressing `init by gnss` button should fix it.
