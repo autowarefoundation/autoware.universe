@@ -231,7 +231,7 @@ struct LanesPolygon
   std::optional<lanelet::BasicPolygon2d> target;
   std::optional<lanelet::BasicPolygon2d> expanded_target;
   lanelet::BasicPolygon2d target_neighbor;
-  std::vector<lanelet::BasicPolygon2d> preceeding_target;
+  std::vector<lanelet::BasicPolygon2d> preceding_target;
 };
 
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;
