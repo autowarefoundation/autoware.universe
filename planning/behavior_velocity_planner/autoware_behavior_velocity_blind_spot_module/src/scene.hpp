@@ -231,7 +231,8 @@ private:
    */
   autoware_perception_msgs::msg::PredictedObject cutPredictPathWithDuration(
     const std_msgs::msg::Header & header,
-    const autoware_perception_msgs::msg::PredictedObject & object_original, const double time_thr) const;
+    const autoware_perception_msgs::msg::PredictedObject & object_original,
+    const double time_thr) const;
 
   StateMachine state_machine_;  //! for state
 
