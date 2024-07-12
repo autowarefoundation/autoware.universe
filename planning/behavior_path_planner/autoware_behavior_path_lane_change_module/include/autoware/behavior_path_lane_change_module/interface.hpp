@@ -23,6 +23,7 @@
 #include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -89,6 +90,12 @@ public:
 
   void setData(const std::shared_ptr<const PlannerData> & data) override;
 
+  void setTimeKeeper(const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper)
+  {
+    time_keeper_ = time_keeper;
+    module_type_->setTimeKeeper(time_keeper_);
+  }
+
   MarkerArray getModuleVirtualWall() override;
 
 protected:
@@ -104,10 +111,13 @@ protected:
 
   ModuleStatus setInitState() const override { return ModuleStatus::WAITING_APPROVAL; };
 
+  using SceneModuleInterface::updateRTCStatus;
+
   void updateRTCStatus(
     const double start_distance, const double finish_distance, const bool safe,
     const uint8_t & state)
   {
+    universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
       if (ptr) {
         ptr->updateCooperateStatus(
@@ -132,6 +142,8 @@ protected:
   bool is_abort_path_approved_{false};
 
   bool is_abort_approval_requested_{false};
+
+  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 };
 }  // namespace autoware::behavior_path_planner
 
