@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_
-#define AUTOWARE_SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_
+#ifndef AUTOWARE_SCENE_TO_IMAGE_PROJECTOR_NODE_HPP_
+#define AUTOWARE_SCENE_TO_IMAGE_PROJECTOR_NODE_HPP_
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -25,8 +25,8 @@
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_perception_msgs/msg/tracked_object.hpp>
 #include <autoware_perception_msgs/msg/tracked_objects.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
@@ -44,23 +44,19 @@ class SceneToImageProjectorNode : public rclcpp::Node
 public:
   explicit SceneToImageProjectorNode(const rclcpp::NodeOptions & options);
 
-  void image_callback(
-    const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg);
-  
+  void image_callback(const sensor_msgs::msg::Image::ConstSharedPtr & input_image_msg);
+
   void detected_objects_callback(
     const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr & msg);
 
-  void camera_info_callback(
-    const sensor_msgs::msg::CameraInfo::ConstSharedPtr & msg);
+  void camera_info_callback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr & msg);
 
   void tracked_objects_callback(
     const autoware_perception_msgs::msg::TrackedObjects::ConstSharedPtr & msg);
-  
-  void trajectory_callback(
-    const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr & msg);
 
-  void path_callback(
-    const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg);
+  void trajectory_callback(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr & msg);
+
+  void path_callback(const autoware_planning_msgs::msg::Path::ConstSharedPtr & msg);
 
 private:
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
@@ -71,7 +67,7 @@ private:
     tracked_objects_sub_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr trajectory_sub_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Path>::SharedPtr path_sub_;
-  
+
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_{};
 
   std::shared_ptr<autoware_perception_msgs::msg::DetectedObjects> latest_detected_objects_;
@@ -117,10 +113,11 @@ private:
   bool project_point(
     const Eigen::Vector3d & point, const Eigen::Matrix4d & projection_matrix,
     cv::Point2f & projected_point_out);
-  
-  bool projectable(const geometry_msgs::msg::Point & point, const Eigen::Matrix4d & projection_matrix);
+
+  bool projectable(
+    const geometry_msgs::msg::Point & point, const Eigen::Matrix4d & projection_matrix);
 };
 
 }  // namespace autoware::scene_to_image_projector
 
-#endif  // AUTOWARE::SCENE_TO_IMAGE_PROJECTOR__NODE_HPP_
+#endif  // AUTOWARE_SCENE_TO_IMAGE_PROJECTOR_NODE_HPP_

@@ -1,6 +1,6 @@
 <launch>
-  <arg name="param_path" default="$(find-pkg-share autoware_scene_to_image_projector)/config/scene_to_image_projector.param.yaml" />
-  
+  <arg name="param_path" default="$(find-pkg-share autoware_scene_to_image_projector)/config/scene_to_image_projector.param.yaml"/>
+
   <arg name="topic_image" default="/camera/image" description="Image topic"/>
   <arg name="topic_camera_info" default="/sensing/camera/camera2/camera_info" description="Camera info topic"/>
   <arg name="topic_objects" default="/perception/object_recognition/tracking/objects" description="Objects topic"/>
@@ -8,7 +8,7 @@
   <arg name="topic_path" default="/planning/scenario_planning/lane_driving/behavior_planning/path" description="Road boundaries topic"/>
 
   <node pkg="autoware_scene_to_image_projector" exec="autoware_scene_to_image_projector" name="autoware_scene_to_image_projector">
-    <remap from="~/input/image" to="$(var topic_image)"/>                      
+    <remap from="~/input/image" to="$(var topic_image)"/>
     <remap from="~/input/camera_info" to="$(var topic_camera_info)"/>
     <remap from="~/input/objects" to="$(var topic_objects)"/>
     <remap from="~/input/trajectory" to="$(var topic_trajectory)"/>

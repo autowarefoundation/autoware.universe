@@ -106,7 +106,7 @@ bool transformObjects(
 template <class T>
 bool transformTrajectory(
   const T & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
-  T & output_msg) 
+  T & output_msg)
 {
   output_msg = input_msg;
 
@@ -159,7 +159,7 @@ bool transformPath(
     q.y = 0.0;
     q.z = 0.0;
     q.w = 1.0;
-    
+
     for (auto & pathPoint : output_msg.points) {
       geometry_msgs::msg::Pose pose_ = pathPoint.pose;
 
@@ -183,7 +183,7 @@ bool transformPath(
       geometry_msgs::msg::Pose pose;
       pose.position = right_bound;
       pose.orientation = q;
-      
+
       tf2::fromMsg(pose, tf_path_world2path);
       tf_target2path = tf_target2path_world * tf_path_world2path;
       tf2::toMsg(tf_target2path, pose);
