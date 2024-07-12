@@ -101,6 +101,8 @@ bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
     goal_pose_ = global2local(costmap_, goal_pose);
   }
 
+  setCollisionFreeDistanceMap();
+
   if (!setStartNode()) {
     throw std::logic_error("Invalid start pose");
     return false;
@@ -110,8 +112,6 @@ bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
     throw std::logic_error("Invalid goal pose");
     return false;
   }
-
-  setCollisionFreeDistanceMap();
 
   if (!search()) {
     throw std::logic_error("HA* failed to find path to goal");
@@ -131,6 +131,10 @@ bool AstarSearch::makePlan(
   resetData();
   search_method_ = SearchMethod::Backward;
 
+  goal_pose_ = global2local(costmap_, start_pose);
+
+  setCollisionFreeDistanceMap();
+
   if (std::none_of(
         goal_candidates.begin(), goal_candidates.end(),
         [this](const geometry_msgs::msg::Pose & pose) {
@@ -141,7 +145,6 @@ bool AstarSearch::makePlan(
     return false;
   }
 
-  goal_pose_ = global2local(costmap_, start_pose);
   if (!setGoalNode()) {
     throw std::logic_error("Invalid goal pose");
     return false;
