@@ -96,7 +96,6 @@ install(TARGETS ${PROJECT_NAME}_node
 install(DIRECTORY 
   launch
   config
-  data
   DESTINATION share/${PROJECT_NAME}/
 )
 

@@ -39,9 +39,6 @@
 #include <message_filters/sync_policies/approximate_time.h>
 
 
-using std::chrono::duration;
-using std::chrono::high_resolution_clock;
-
 typedef pcl::PointXYZI PointT;
 
 uint8_t getSemanticType(const std::string & class_name);
