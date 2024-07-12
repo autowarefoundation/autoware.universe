@@ -24,7 +24,7 @@ from launch_ros.descriptions import ComposableNode
 
 def launch_setup(context, *args, **kwargs):
     ns = "pointcloud_preprocessor"
-    pkg = "pointcloud_preprocessor"
+    pkg = "autoware_pointcloud_preprocessor"
 
     separate_concatenate_node_and_time_sync_node = LaunchConfiguration(
         "separate_concatenate_node_and_time_sync_node"
