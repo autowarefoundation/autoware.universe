@@ -126,16 +126,16 @@ public:
    * @brief update predicted_object_, attention_lanelet, stopline, dist_to_stopline
    */
   void initialize(
-    const autoware_perception_msgs::msg::PredictedObject & predicted_object,
-    std::optional<lanelet::ConstLanelet> attention_lanelet_opt,
-    std::optional<lanelet::ConstLineString3d> stopline_opt);
+    const autoware_perception_msgs::msg::PredictedObject & object,
+    std::optional<lanelet::ConstLanelet> attention_lanelet_opt_,
+    std::optional<lanelet::ConstLineString3d> stopline_opt_);
 
   /**
    * @brief update unsafe_knowledge
    */
   void update_safety(
-    const std::optional<CollisionInterval> & unsafe_interval_opt,
-    const std::optional<CollisionInterval> & safe_interval_opt,
+    const std::optional<CollisionInterval> & unsafe_interval,
+    const std::optional<CollisionInterval> & safe_interval,
     const bool safe_under_traffic_control);
 
   /**
@@ -230,11 +230,11 @@ class ObjectInfoManager
 public:
   std::shared_ptr<ObjectInfo> registerObject(
     const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
-    const bool belong_intersection_area, const bool is_parked);
+    const bool belong_intersection_area, const bool is_parked_vehicle);
 
   void registerExistingObject(
     const unique_identifier_msgs::msg::UUID & uuid, const bool belong_attention_area,
-    const bool belong_intersection_area, const bool is_parked, std::shared_ptr<ObjectInfo> object);
+    const bool belong_intersection_area, const bool is_parked_vehicle, std::shared_ptr<ObjectInfo> object);
 
   void clearObjects();
 
