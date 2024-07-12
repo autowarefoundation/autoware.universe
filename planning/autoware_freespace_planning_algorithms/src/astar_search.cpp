@@ -244,12 +244,10 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
   int steering_index = -1 * planner_common_param_.turning_steps;
   for (; steering_index <= planner_common_param_.turning_steps; ++steering_index) {
     // skip expansion back to parent
-    // skip expansion resulting in frequent direction change
-    if (current_node.parent != nullptr && is_back != current_node.is_back) {
-      if (
-        steering_index == current_node.steering_index ||
-        current_node.dir_distance < min_dir_change_dist_)
-        continue;
+    if (
+      current_node.parent != nullptr && is_back != current_node.is_back &&
+      steering_index == current_node.steering_index) {
+      continue;
     }
 
     const double steering = static_cast<double>(steering_index) * steering_resolution_;
@@ -257,25 +255,24 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
       current_pose, collision_vehicle_shape_.base_length, steering, distance);
     const auto next_index = pose2index(costmap_, next_pose, planner_common_param_.theta_size);
 
-    if (isOutOfRange(next_index)) continue;
-    if (isObs(next_index)) continue;
+    if (isOutOfRange(next_index) || isObs(next_index)) continue;
 
     AstarNode * next_node = &graph_[getKey(next_index)];
-    if (next_node->status == NodeStatus::Closed) continue;
-    if (detectCollision(next_index)) continue;
+    if (next_node->status == NodeStatus::Closed || detectCollision(next_index)) continue;
 
     double distance_to_obs = getObstacleEDT(next_index);
     const bool is_direction_switch =
       (current_node.parent != nullptr) && (is_back != current_node.is_back);
-    double weights_sum = 1.0;
-    weights_sum += is_direction_switch ? planner_common_param_.direction_change_weight : 0.0;
-    weights_sum += getSteeringCost(steering_index);
-    weights_sum += getSteeringChangeCost(steering_index, current_node.steering_index);
-    weights_sum += astar_param_.obstacle_distance_weight / (1.0 + distance_to_obs);
 
-    weights_sum *= is_back ? planner_common_param_.reverse_weight : 1.0;
+    double total_weight = 1.0;
+    total_weight += getSteeringCost(steering_index);
+    if (is_back) total_weight *= (1.0 + planner_common_param_.reverse_weight);
 
-    double move_cost = current_node.gc + weights_sum * std::abs(distance);
+    double move_cost = current_node.gc + (total_weight * std::abs(distance));
+    move_cost += getSteeringChangeCost(steering_index, current_node.steering_index);
+    move_cost += astar_param_.obstacle_distance_weight / (1.0 + distance_to_obs);
+    if (is_direction_switch) move_cost += getDirectionChangeCost(current_node.dir_distance);
+
     double total_cost = move_cost + estimateCost(next_pose, next_index);
     // Compare cost
     if (next_node->status == NodeStatus::None || next_node->fc > total_cost) {
@@ -313,6 +310,11 @@ double AstarSearch::getSteeringChangeCost(
   double steering_index_diff = abs(steering_index - prev_steering_index);
   return astar_param_.steering_change_weight * steering_index_diff /
          (2.0 * planner_common_param_.turning_steps);
+}
+
+double AstarSearch::getDirectionChangeCost(const double dir_distance) const
+{
+  return planner_common_param_.direction_change_weight * (1.0 + (1.0 / (1.0 + dir_distance)));
 }
 
 void AstarSearch::setPath(const AstarNode & goal_node)
