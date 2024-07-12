@@ -95,6 +95,11 @@ void PathOverlay::draw(QPainter & painter, const QRectF & backgroundRect, int zo
 
   painter.setPen(QPen(QColor("#00E678"), line_width));  // Set pen color and width for drawing
 
+  // Create a larger clipping path to allow drawing out of bounds
+  QPainterPath clipPath;
+  clipPath.addEllipse(backgroundRect);
+  painter.setClipPath(clipPath);
+
   for (size_t i = 2; i < path_points_geo_.size() - 2; ++i) {
     const auto & point_geo = path_points_geo_[i];
 

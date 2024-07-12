@@ -17,6 +17,7 @@
 #include "GeographicLib/UTMUPS.hpp"
 
 #include <QPainter>
+#include <QPainterPath>
 #include <QRectF>
 
 #include <tuple>
