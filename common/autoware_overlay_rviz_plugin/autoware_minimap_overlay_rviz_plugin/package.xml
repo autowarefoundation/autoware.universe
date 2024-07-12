@@ -20,8 +20,8 @@
   <depend>rviz_common</depend>
   <depend>rviz_default_plugins</depend>
   <depend>sensor_msgs</depend>
-  <depend>tf2_ros</depend>
   <depend>tf2</depend>
+  <depend>tf2_ros</depend>
 
   <build_depend>qtbase5-dev</build_depend>
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
