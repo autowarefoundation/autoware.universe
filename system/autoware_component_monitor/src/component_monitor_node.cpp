@@ -47,6 +47,7 @@ ComponentMonitor::ComponentMonitor(const rclcpp::NodeOptions & node_options)
     rclcpp::shutdown();
   }
 
+  // Get the PID of the current process
   int pid = getpid();
 
   environment_ = boost::this_process::environment();
