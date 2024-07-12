@@ -313,7 +313,7 @@ void AstarSearch::setPath(const AstarNode & goal_node)
 
     // PlannerWaypoint
     PlannerWaypoint pw;
-    pw.pose = node_pose;
+    pw.pose = pose;
     pw.is_back = node->is_back;
     waypoints_.waypoints.push_back(pw);
 
