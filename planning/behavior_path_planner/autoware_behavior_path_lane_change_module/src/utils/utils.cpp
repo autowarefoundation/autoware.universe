@@ -1245,11 +1245,12 @@ bool is_same_lane_with_prev_iteration(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes)
 {
+  if (current_lanes.empty() || target_lanes.empty()) {
+    return false;
+  }
   const auto & prev_current_lanes = common_data_ptr->lanes_ptr->current;
   const auto & prev_target_lanes = common_data_ptr->lanes_ptr->target;
-  if (
-    prev_current_lanes.empty() || prev_target_lanes.empty() || current_lanes.empty() ||
-    target_lanes.empty()) {
+  if (prev_current_lanes.empty() || prev_target_lanes.empty()) {
     return false;
   }
 

@@ -380,7 +380,7 @@ void NormalLaneChange::insertStopPoint(
   }
 
   const double stop_point_buffer = lane_change_parameters_->backward_length_buffer_for_end_of_lane;
-  const auto target_objects = filterObjects(get_current_lanes(), get_target_lanes());
+  const auto target_objects = filterObjects();
   double stopping_distance = distance_to_terminal - lane_change_buffer - stop_point_buffer;
 
   const auto is_valid_start_point = std::invoke([&]() -> bool {
@@ -972,8 +972,7 @@ ExtendedPredictedObjects NormalLaneChange::getTargetObjects(
   return target_objects;
 }
 
-LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes) const
+LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
 {
   const auto & current_pose = getEgoPose();
   const auto & route_handler = getRouteHandler();
@@ -992,6 +991,12 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
     return {};
   }
 
+  const auto & current_lanes = get_current_lanes();
+
+  if (current_lanes.empty()) {
+    return {};
+  }
+
   filterAheadTerminalObjects(objects, current_lanes);
 
   if (objects.objects.empty()) {
@@ -1001,6 +1006,12 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects(
   std::vector<PredictedObject> target_lane_objects;
   std::vector<PredictedObject> current_lane_objects;
   std::vector<PredictedObject> other_lane_objects;
+
+  const auto & target_lanes = get_target_lanes();
+
+  if (target_lanes.empty()) {
+    return {};
+  }
 
   filterObjectsByLanelets(
     objects, current_lanes, target_lanes, current_lane_objects, target_lane_objects,
@@ -1386,7 +1397,7 @@ bool NormalLaneChange::getLaneChangePaths(
     return false;
   }
 
-  const auto filtered_objects = filterObjects(current_lanes, target_lanes);
+  const auto filtered_objects = filterObjects();
   const auto target_objects = getTargetObjects(filtered_objects, current_lanes);
 
   const auto prepare_durations = calcPrepareDuration(current_lanes, target_lanes);
@@ -1791,7 +1802,7 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     return {true, true};
   }
 
-  const auto filtered_objects = filterObjects(current_lanes, target_lanes);
+  const auto filtered_objects = filterObjects();
   const auto target_objects = getTargetObjects(filtered_objects, current_lanes);
 
   CollisionCheckDebugMap debug_data;

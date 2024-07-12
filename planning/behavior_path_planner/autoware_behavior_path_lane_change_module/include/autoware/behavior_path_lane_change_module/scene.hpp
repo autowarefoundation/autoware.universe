@@ -124,9 +124,7 @@ protected:
     const LaneChangeLanesFilteredObjects & predicted_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
-  LaneChangeLanesFilteredObjects filterObjects(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  LaneChangeLanesFilteredObjects filterObjects() const;
 
   void filterOncomingObjects(PredictedObjects & objects) const;
 
