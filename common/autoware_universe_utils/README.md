@@ -136,38 +136,28 @@ int main(int argc, char ** argv)
 
   ```text
   ==========================
-  funcC (6000.7ms)
-      └── funcB (3000.44ms)
-          └── funcA (1000.19ms)
+  func_a (6.382ms)
+      └── func_b (5.243ms)
+          └── func_c (3.146ms)
   ```
 
 - Output (`ros2 topic echo /processing_time`)
 
   ```text
+  ---
   nodes:
   - id: 1
-    name: funcC
-    processing_time: 6000.659
+    name: func_a
+    processing_time: 6.397
     parent_id: 0
   - id: 2
-    name: funcB
-    processing_time: 3000.415
+    name: func_b
+    processing_time: 5.263
     parent_id: 1
   - id: 3
-    name: funcA
-    processing_time: 1000.181
+    name: func_c
+    processing_time: 3.129
     parent_id: 2
-  ---
-  ```
-
-- Output (`ros2 topic echo /processing_time_str --field data`)
-
-  ```text
-  funcC (6000.67ms)
-    └── funcB (3000.42ms)
-        └── funcA (1000.19ms)
-
-  ---
   ```
 
 #### `autoware::universe_utils::ScopedTimeTrack`
