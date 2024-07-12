@@ -736,7 +736,9 @@ bool isObviousAvoidanceTarget(
 {
   if (isWithinFreespace(object, planner_data->route_handler)) {
     if (!object.is_on_ego_lane) {
-      return true;
+      if (object.stop_time > parameters->freespace_condition_th_stopped_time) {
+        return true;
+      }
     }
   }
 
