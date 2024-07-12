@@ -215,7 +215,7 @@ private:
   std::optional<lanelet::CompoundPolygon3d> generateBlindSpotPolygons(
     const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
     const lanelet::ConstLanelets & blind_spot_lanelets,
-    const geometry_msgs::msg::Pose & pose) const;
+    const geometry_msgs::msg::Pose & stop_line_pose) const;
 
   /**
    * @brief Check if object is belong to targeted classes
