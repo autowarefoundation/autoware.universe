@@ -250,26 +250,6 @@ bool OSQPInterface::setDualVariables(const std::vector<double> & dual_variables)
   return true;
 }
 
-void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const
-{
-  if (latest_work_info_.status_val == 1) {
-    // No need to log since optimization was solved.
-    return;
-  }
-
-  // create message
-  std::string output_message = "";
-  if (prefix_message != "") {
-    output_message = prefix_message + " ";
-  }
-
-  const auto status_message = getStatusMessage();
-  output_message += "Optimization failed due to " + status_message;
-
-  // log with warning
-  RCLCPP_WARN(rclcpp::get_logger("osqp_interface"), output_message.c_str());
-}
-
 void OSQPInterface::updateP(const Eigen::MatrixXd & P_new)
 {
   /*
@@ -392,6 +372,16 @@ std::vector<double> OSQPInterface::optimize(
 {
   initializeCSCProblemImpl(P, A, q, l, u);
   const auto result = optimizeImpl();
+
+  // show polish status if not successful
+  const int status_polish = static_cast<int>(latest_work_info_.status_polish);
+  if (status_polish != 1) {
+    const auto msg = status_polish == 0    ? "unperformed"
+                     : status_polish == -1 ? "unsuccessful"
+                                           : "unknown";
+    std::cerr << "osqp polish process failed : " << msg << ". The result may be inaccurate"
+              << std::endl;
+  }
 
   return result;
 }

@@ -111,8 +111,6 @@ public:
   /// \brief Returns flag asserting interface condition (Healthy condition: 0).
   inline int64_t getExitFlag() const { return exitflag_; }
 
-  void logUnsolvedStatus(const std::string & prefix_message = "") const;
-
   // Setter functions for warm start
   bool setWarmStart(
     const std::vector<double> & primal_variables, const std::vector<double> & dual_variables);

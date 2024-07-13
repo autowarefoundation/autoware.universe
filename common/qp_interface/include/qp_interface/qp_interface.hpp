@@ -20,6 +20,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+
 namespace autoware::common
 {
 class QPInterface
@@ -40,7 +41,7 @@ public:
   virtual void updateVerbose([[maybe_unused]] const bool verbose) {}
 
 protected:
-  bool enable_warm_start_;
+  bool enable_warm_start_{false};
 
   void initializeProblem(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
@@ -52,8 +53,8 @@ protected:
 
   virtual std::vector<double> optimizeImpl() = 0;
 
-  std::optional<size_t> variables_num_;
-  std::optional<size_t> constraints_num_;
+  std::optional<size_t> variables_num_{std::nullopt};
+  std::optional<size_t> constraints_num_{std::nullopt};
 };
 }  // namespace autoware::common
 

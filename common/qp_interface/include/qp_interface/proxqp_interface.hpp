@@ -43,8 +43,8 @@ public:
   void updateVerbose(const bool verbose) override;
 
 private:
-  proxsuite::proxqp::Settings<double> settings_;
-  std::shared_ptr<proxsuite::proxqp::sparse::QP<double, int>> qp_ptr_;
+  proxsuite::proxqp::Settings<double> settings_{};
+  std::shared_ptr<proxsuite::proxqp::sparse::QP<double, int>> qp_ptr_{nullptr};
 
   void initializeProblemImpl(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
