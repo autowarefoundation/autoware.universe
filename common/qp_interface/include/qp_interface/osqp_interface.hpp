@@ -34,7 +34,9 @@ public:
   /// \brief Constructor without problem formulation
   OSQPInterface(
     const bool enable_warm_start = false,
-    const c_float eps_abs = std::numeric_limits<c_float>::epsilon(), const bool polish = true);
+    const c_float eps_abs = std::numeric_limits<c_float>::epsilon(),
+    const c_float eps_rel = std::numeric_limits<c_float>::epsilon(), const bool polish = true,
+    const bool verbose = false);
   /// \brief Constructor with problem setup
   /// \param P: (n,n) matrix defining relations between parameters.
   /// \param A: (m,n) matrix defining parameter constraints relative to the lower and upper bound.

@@ -20,7 +20,9 @@
 
 namespace autoware::common
 {
-OSQPInterface::OSQPInterface(const bool enable_warm_start, const c_float eps_abs, const bool polish)
+OSQPInterface::OSQPInterface(
+  const bool enable_warm_start, const c_float eps_abs, const c_float eps_rel, const bool polish,
+  const bool verbose)
 : QPInterface(enable_warm_start), work_{nullptr, OSQPWorkspaceDeleter}
 {
   settings_ = std::make_unique<OSQPSettings>();
@@ -29,13 +31,13 @@ OSQPInterface::OSQPInterface(const bool enable_warm_start, const c_float eps_abs
   if (settings_) {
     osqp_set_default_settings(settings_.get());
     settings_->alpha = 1.6;  // Change alpha parameter
-    settings_->eps_rel = 1.0E-4;
+    settings_->eps_rel = eps_rel;
     settings_->eps_abs = eps_abs;
     settings_->eps_prim_inf = 1.0E-4;
     settings_->eps_dual_inf = 1.0E-4;
     settings_->warm_start = true;
     settings_->max_iter = 4000;
-    settings_->verbose = false;
+    settings_->verbose = verbose;
     settings_->polish = polish;
   }
   exitflag_ = 0;
