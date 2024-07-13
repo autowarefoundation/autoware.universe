@@ -98,18 +98,18 @@ public:
   void updateCheckTermination(const int check_termination);
 
   /// \brief Get the number of iteration taken to solve the problem
-  inline int64_t getTakenIter() const { return static_cast<int64_t>(m_latest_work_info.iter); }
+  inline int64_t getTakenIter() const { return static_cast<int64_t>(latest_work_info_.iter); }
   /// \brief Get the status message for the latest problem solved
   inline std::string getStatusMessage() const
   {
-    return static_cast<std::string>(m_latest_work_info.status);
+    return static_cast<std::string>(latest_work_info_.status);
   }
   /// \brief Get the runtime of the latest problem solved
-  inline double getRunTime() const { return m_latest_work_info.run_time; }
+  inline double getRunTime() const { return latest_work_info_.run_time; }
   /// \brief Get the objective value the latest problem solved
-  inline double getObjVal() const { return m_latest_work_info.obj_val; }
+  inline double getObjVal() const { return latest_work_info_.obj_val; }
   /// \brief Returns flag asserting interface condition (Healthy condition: 0).
-  inline int64_t getExitFlag() const { return m_exitflag; }
+  inline int64_t getExitFlag() const { return exitflag_; }
 
   void logUnsolvedStatus(const std::string & prefix_message = "") const;
 
@@ -120,17 +120,17 @@ public:
   bool setDualVariables(const std::vector<double> & dual_variables);
 
 private:
-  std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> m_work;
-  std::unique_ptr<OSQPSettings> m_settings;
-  std::unique_ptr<OSQPData> m_data;
+  std::unique_ptr<OSQPWorkspace, std::function<void(OSQPWorkspace *)>> work_;
+  std::unique_ptr<OSQPSettings> settings_;
+  std::unique_ptr<OSQPData> data_;
   // store last work info since work is cleaned up at every execution to prevent memory leak.
-  OSQPInfo m_latest_work_info;
+  OSQPInfo latest_work_info_;
   // Number of parameters to optimize
-  int64_t m_param_n;
+  int64_t param_n_;
   // Flag to check if the current work exists
-  bool m_work_initialized = false;
+  bool work__initialized = false;
   // Exitflag
-  int64_t m_exitflag;
+  int64_t exitflag_;
 
   void initializeProblemImpl(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,

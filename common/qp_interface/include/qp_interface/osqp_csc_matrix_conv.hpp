@@ -27,11 +27,11 @@ namespace autoware::common
 struct CSC_Matrix
 {
   /// Vector of non-zero values. Ex: [4,1,1,2]
-  std::vector<c_float> m_vals;
+  std::vector<c_float> vals_;
   /// Vector of row index corresponding to values. Ex: [0, 1, 0, 1] (Eigen: 'inner')
-  std::vector<c_int> m_row_idxs;
+  std::vector<c_int> row_idxs_;
   /// Vector of 'val' indices where each column starts. Ex: [0, 2, 4] (Eigen: 'outer')
-  std::vector<c_int> m_col_idxs;
+  std::vector<c_int> col_idxs_;
 };
 
 /// \brief Calculate CSC matrix from Eigen matrix

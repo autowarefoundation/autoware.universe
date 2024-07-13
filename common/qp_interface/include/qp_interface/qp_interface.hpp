@@ -25,7 +25,7 @@ namespace autoware::common
 class QPInterface
 {
 public:
-  explicit QPInterface(const bool enable_warm_start) : m_enable_warm_start(enable_warm_start) {}
+  explicit QPInterface(const bool enable_warm_start) : enable_warm_start_(enable_warm_start) {}
 
   std::vector<double> optimize(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
@@ -40,7 +40,7 @@ public:
   virtual void updateVerbose([[maybe_unused]] const bool verbose) {}
 
 protected:
-  bool m_enable_warm_start;
+  bool enable_warm_start_;
 
   void initializeProblem(
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
@@ -52,8 +52,8 @@ protected:
 
   virtual std::vector<double> optimizeImpl() = 0;
 
-  std::optional<size_t> m_variables_num;
-  std::optional<size_t> m_constraints_num;
+  std::optional<size_t> variables_num_;
+  std::optional<size_t> constraints_num_;
 };
 }  // namespace autoware::common
 
