@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace qp
+namespace autoware::common
 {
 /// \brief Compressed-Column-Sparse Matrix
 struct CSC_Matrix
@@ -41,6 +41,6 @@ CSC_Matrix calCSCMatrixTrapezoidal(const Eigen::MatrixXd & mat);
 /// \brief Print the given CSC matrix to the standard output
 void printCSCMatrix(const CSC_Matrix & csc_mat);
 
-}  // namespace qp
+}  // namespace autoware::common
 
 #endif  // QP_INTERFACE__OSQP_CSC_MATRIX_CONV_HPP_

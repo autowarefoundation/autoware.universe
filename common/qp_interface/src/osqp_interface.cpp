@@ -18,7 +18,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-namespace qp
+namespace autoware::common
 {
 OSQPInterface::OSQPInterface(const bool enable_warm_start, const c_float eps_abs, const bool polish)
 : QPInterface(enable_warm_start), m_work{nullptr, OSQPWorkspaceDeleter}
@@ -252,8 +252,7 @@ bool OSQPInterface::setDualVariables(const std::vector<double> & dual_variables)
 
 void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const
 {
-  const int status = getStatus();
-  if (status == 1) {
+  if (m_latest_work_info.status_val == 1) {
     // No need to log since optimization was solved.
     return;
   }
@@ -345,14 +344,19 @@ void OSQPInterface::updateBounds(
   osqp_update_bounds(m_work.get(), l_dyn, u_dyn);
 }
 
-int OSQPInterface::getIteration() const
+int OSQPInterface::getIterationNumber() const
 {
   return m_work->info->iter;
 }
 
-int OSQPInterface::getStatus() const
+std::string OSQPInterface::getStatus() const
 {
-  return static_cast<int>(m_latest_work_info.status_val);
+  return "OSQP_SOLVED";
+}
+
+bool OSQPInterface::isSolved() const
+{
+  return m_latest_work_info.status_val == 1;
 }
 
 int OSQPInterface::getPolishStatus() const
@@ -396,4 +400,4 @@ std::vector<double> OSQPInterface::optimize(
   return result;
 }
 
-}  // namespace qp
+}  // namespace autoware::common

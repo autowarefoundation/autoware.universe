@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace qp
+namespace autoware::common
 {
 void QPInterface::initializeProblem(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
@@ -67,4 +67,4 @@ std::vector<double> QPInterface::optimize(
 
   return result;
 }
-}  // namespace qp
+}  // namespace autoware::common

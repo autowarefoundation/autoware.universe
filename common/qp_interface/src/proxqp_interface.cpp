@@ -14,12 +14,17 @@
 
 #include "qp_interface/proxqp_interface.hpp"
 
-namespace qp
+namespace autoware::common
 {
-ProxQPInterface::ProxQPInterface(const bool enable_warm_start, const double eps_abs)
+using proxsuite::proxqp::QPSolverOutput;
+
+ProxQPInterface::ProxQPInterface(
+  const bool enable_warm_start, const double eps_abs, const double eps_rel, const bool verbose)
 : QPInterface(enable_warm_start)
 {
   m_settings.eps_abs = eps_abs;
+  m_settings.eps_rel = eps_rel;
+  m_settings.verbose = verbose;
 }
 
 void ProxQPInterface::initializeProblemImpl(
@@ -92,7 +97,15 @@ void ProxQPInterface::updateVerbose(const bool is_verbose)
   m_settings.verbose = is_verbose;
 }
 
-int ProxQPInterface::getIteration() const
+bool ProxQPInterface::isSolved() const
+{
+  if (m_qp_ptr) {
+    return m_qp_ptr->results.info.status == QPSolverOutput::PROXQP_SOLVED;
+  }
+  return false;
+}
+
+int ProxQPInterface::getIterationNumber() const
 {
   if (m_qp_ptr) {
     return m_qp_ptr->results.info.iter;
@@ -100,12 +113,29 @@ int ProxQPInterface::getIteration() const
   return 0;
 }
 
-int ProxQPInterface::getStatus() const
+std::string ProxQPInterface::getStatus() const
 {
   if (m_qp_ptr) {
-    return static_cast<int>(m_qp_ptr->results.info.status);
+    if (m_qp_ptr->results.info.status == QPSolverOutput::PROXQP_SOLVED) {
+      return "PROXQP_SOLVED";
+    }
+    if (m_qp_ptr->results.info.status == QPSolverOutput::PROXQP_MAX_ITER_REACHED) {
+      return "PROXQP_MAX_ITER_REACHED";
+    }
+    if (m_qp_ptr->results.info.status == QPSolverOutput::PROXQP_PRIMAL_INFEASIBLE) {
+      return "PROXQP_PRIMAL_INFEASIBLE";
+    }
+    // if (m_qp_ptr->results.info.status == QPSolverOutput::PROXQP_SOLVED_CLOSEST_PRIMAL_FEASIBLE) {
+    //   return "PROXQP_SOLVED_CLOSEST_PRIMAL_FEASIBLE";
+    // }
+    if (m_qp_ptr->results.info.status == QPSolverOutput::PROXQP_DUAL_INFEASIBLE) {
+      return "PROXQP_DUAL_INFEASIBLE";
+    }
+    if (m_qp_ptr->results.info.status == QPSolverOutput::PROXQP_NOT_RUN) {
+      return "PROXQP_NOT_RUN";
+    }
   }
-  return 0;
+  return "None";
 }
 
 std::vector<double> ProxQPInterface::optimizeImpl()
@@ -118,4 +148,4 @@ std::vector<double> ProxQPInterface::optimizeImpl()
   }
   return result;
 }
-}  // namespace qp
+}  // namespace autoware::common

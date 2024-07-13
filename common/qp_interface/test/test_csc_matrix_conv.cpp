@@ -23,8 +23,8 @@
 
 TEST(TestCscMatrixConv, Nominal)
 {
-  using qp::calCSCMatrix;
-  using qp::CSC_Matrix;
+  using autoware::common::calCSCMatrix;
+  using autoware::common::CSC_Matrix;
 
   Eigen::MatrixXd rect1(1, 2);
   rect1 << 0.0, 1.0;
@@ -117,8 +117,8 @@ TEST(TestCscMatrixConv, Nominal)
 }
 TEST(TestCscMatrixConv, Trapezoidal)
 {
-  using qp::calCSCMatrixTrapezoidal;
-  using qp::CSC_Matrix;
+  using autoware::common::calCSCMatrixTrapezoidal;
+  using autoware::common::CSC_Matrix;
 
   Eigen::MatrixXd square1(2, 2);
   Eigen::MatrixXd square2(3, 3);
@@ -166,10 +166,10 @@ TEST(TestCscMatrixConv, Trapezoidal)
 }
 TEST(TestCscMatrixConv, Print)
 {
-  using qp::calCSCMatrix;
-  using qp::calCSCMatrixTrapezoidal;
-  using qp::CSC_Matrix;
-  using qp::printCSCMatrix;
+  using autoware::common::calCSCMatrix;
+  using autoware::common::calCSCMatrixTrapezoidal;
+  using autoware::common::CSC_Matrix;
+  using autoware::common::printCSCMatrix;
   Eigen::MatrixXd square1(2, 2);
   Eigen::MatrixXd rect1(1, 2);
   square1 << 1.0, 2.0, 2.0, 4.0;

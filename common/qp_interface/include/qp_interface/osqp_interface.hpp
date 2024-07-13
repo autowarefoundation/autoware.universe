@@ -24,9 +24,9 @@
 #include <string>
 #include <vector>
 
-namespace qp
+namespace autoware::common
 {
-constexpr c_float INF = 1e30;
+constexpr c_float OSQP_INF = 1e30;
 
 class OSQPInterface : public QPInterface
 {
@@ -60,8 +60,10 @@ public:
     CSC_Matrix P, CSC_Matrix A, const std::vector<double> & q, const std::vector<double> & l,
     const std::vector<double> & u);
 
-  int getIteration() const override;
-  int getStatus() const override;
+  int getIterationNumber() const override;
+  bool isSolved() const override;
+  std::string getStatus() const override;
+
   int getPolishStatus() const;
   std::vector<double> getDualSolution() const;
 
@@ -140,6 +142,6 @@ private:
 
   std::vector<double> optimizeImpl() override;
 };
-}  // namespace qp
+}  // namespace autoware::common
 
 #endif  // QP_INTERFACE__OSQP_INTERFACE_HPP_

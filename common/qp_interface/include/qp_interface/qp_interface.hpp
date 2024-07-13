@@ -18,9 +18,9 @@
 #include <Eigen/Core>
 
 #include <optional>
+#include <string>
 #include <vector>
-
-namespace qp
+namespace autoware::common
 {
 class QPInterface
 {
@@ -31,8 +31,9 @@ public:
     const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<double> & q,
     const std::vector<double> & l, const std::vector<double> & u);
 
-  virtual int getIteration() const = 0;
-  virtual int getStatus() const = 0;
+  virtual bool isSolved() const = 0;
+  virtual int getIterationNumber() const = 0;
+  virtual std::string getStatus() const = 0;
 
   virtual void updateEpsAbs([[maybe_unused]] const double eps_abs) = 0;
   virtual void updateEpsRel([[maybe_unused]] const double eps_rel) = 0;
@@ -54,6 +55,6 @@ protected:
   std::optional<size_t> m_variables_num;
   std::optional<size_t> m_constraints_num;
 };
-}  // namespace qp
+}  // namespace autoware::common
 
 #endif  // QP_INTERFACE__QP_INTERFACE_HPP_

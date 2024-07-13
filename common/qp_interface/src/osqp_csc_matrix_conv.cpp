@@ -21,7 +21,7 @@
 #include <iostream>
 #include <vector>
 
-namespace qp
+namespace autoware::common
 {
 CSC_Matrix calCSCMatrix(const Eigen::MatrixXd & mat)
 {
@@ -131,4 +131,4 @@ void printCSCMatrix(const CSC_Matrix & csc_mat)
   }
   std::cout << "]\n";
 }
-}  // namespace qp
+}  // namespace autoware::common
