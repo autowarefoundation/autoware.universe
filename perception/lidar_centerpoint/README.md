@@ -42,7 +42,7 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ### The `build_only` option
 
-The `lidar_centerpoint` node has `build_only` option to build the TensorRT engine file from the ONNX file, and the `build_only` option is inside the launch file of `lidar_centerpoint` node, and all the ROS parameters are moved in `.param.yaml` files.
+The `lidar_centerpoint` node has a `build_only` option to build the required TensorRT engine file from an ONNX file. This parameter is set in the launch file of this package, whereas all other parameters are set via `.param.yaml` files.
 
 ## Assumptions / Known limits
 
@@ -224,7 +224,7 @@ python projects/AutowareCenterPoint/centerpoint_onnx_converter.py --cfg projects
 
 #### Adjust the config file for the custom model
 
-All the ROS parameters have been moved into `.param.yaml` files, feel free to change the parameters inside them for better performance! **centerpoint_(your_selection_of_model).param.yaml** files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the **Parameters** section. 
+All the ROS parameters have been moved into `.param.yaml` files, please set the parameters of the config file like point_cloud_range, point_feature_size, voxel_size, etc. in the config files. **centerpoint_(your_selection_of_model).param.yaml** files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the [Parameters](#parameters) section. 
 
 #### Launch the lidar_centerpoint node
 

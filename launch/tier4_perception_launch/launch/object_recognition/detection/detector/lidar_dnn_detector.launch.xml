@@ -3,7 +3,7 @@
   <!-- Lidar parameters -->
   <arg name="lidar_detection_model" default="centerpoint" description="options: `transfusion`, `centerpoint`, `apollo`, `clustering`"/>
   <!-- Lidar detector centerpoint parameters -->
-  <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint`, `centerpoint_tiny` or `centerpoint_sigma` P.S. The _sigma model only has ml package version."/>
+  <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint`, `centerpoint_tiny` or `centerpoint_sigma`"/>
   <arg name="centerpoint_model_path" default="$(var data_path)/lidar_centerpoint"/>
   <!-- Lidar detector transfusion parameters -->
   <arg name="transfusion_model_name" default="transfusion" description="options: `transfusion`"/>
