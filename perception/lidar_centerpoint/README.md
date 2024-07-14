@@ -224,7 +224,7 @@ python projects/AutowareCenterPoint/centerpoint_onnx_converter.py --cfg projects
 
 #### Adjust the config file for the custom model
 
-All the ROS parameters have been moved into `.param.yaml` files, please set the parameters of the config file like point_cloud_range, point_feature_size, voxel_size, etc. in the config files. **centerpoint_(your_selection_of_model).param.yaml** files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the [Parameters](#parameters) section. 
+All the ROS parameters have been moved into `.param.yaml` files, please set the parameters of the config file like point*cloud_range, point_feature_size, voxel_size, etc. in the config files. \*\*centerpoint*(your_selection_of_model).param.yaml\*\* files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the [Parameters](#parameters) section.
 
 #### Launch the lidar_centerpoint node
 
