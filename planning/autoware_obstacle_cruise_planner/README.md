@@ -198,11 +198,11 @@ If the acceleration is less than `common.min_strong_accel`, the stop planning wi
 
 ### Cruise planning
 
-| Parameter                     | Type   | Description                                    |
-| ----------------------------- | ------ | ---------------------------------------------- |
-| `common.safe_distance_method` | string | safe distance method selection from time_based and RSS |
-| `common.safe_distance_margin` | double | minimum distance with obstacles for cruise [m] |
-| `common.safe_distance_time_margin` | double | time values used in time-based safe distance rule, e.g. 2-seconds rule, 3-seconds rule [s]|
+| Parameter                          | Type   | Description                                                                                |
+| ---------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| `common.safe_distance_method`      | string | safe distance method selection from time_based and RSS                                     |
+| `common.safe_distance_margin`      | double | minimum distance with obstacles for cruise [m]                                             |
+| `common.safe_distance_time_margin` | double | time values used in time-based safe distance rule, e.g. 2-seconds rule, 3-seconds rule [s] |
 
 The role of the cruise planning is keeping a safe distance with dynamic vehicle objects with smoothed velocity transition.
 This includes not only cruising a front vehicle, but also reacting a cut-in and cut-out vehicle.
@@ -249,15 +249,17 @@ $$
 | `pid(val)`        | apply pid to `val`                      |
 
 #### Time-based
+
 In time-based method, the safe distance is calculated dynamically based on the following equation.
 
 $$
 d_{time,based} = v_{ego} * t_{safe,distance}
 $$
 
-assuming that 
-- $d_{time,based}$ is the calculated safe distance, 
-- $v_{ego}$ is the ego's current velocity, and 
+assuming that
+
+- $d_{time,based}$ is the calculated safe distance,
+- $v_{ego}$ is the ego's current velocity, and
 - $t_{safe,distance}$ is the selected time value time-based safe distance rule, e.g. 2-seconds rule, 3-seconds rule. Parameter: `common.safe_distance_time_margin`
 
 ### Slow down planning
