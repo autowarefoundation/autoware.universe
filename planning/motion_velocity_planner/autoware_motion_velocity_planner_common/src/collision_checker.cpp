@@ -20,6 +20,7 @@ CollisionChecker::CollisionChecker(autoware::universe_utils::MultiPolygon2d traj
 : trajectory_footprints_(std::move(trajectory_footprints))
 {
   std::vector<RtreeNode> nodes;
+  nodes.reserve(trajectory_footprints_.size());
   for (auto i = 0UL; i < trajectory_footprints_.size(); ++i) {
     nodes.emplace_back(
       boost::geometry::return_envelope<autoware::universe_utils::Box2d>(trajectory_footprints_[i]),

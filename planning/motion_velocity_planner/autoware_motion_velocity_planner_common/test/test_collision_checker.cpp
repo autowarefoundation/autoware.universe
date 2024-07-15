@@ -28,7 +28,6 @@
 #include <boost/geometry/io/svg/svg_mapper.hpp>
 #include <boost/geometry/io/svg/write.hpp>
 
-using autoware::motion_velocity_planner::Collision;
 using autoware::motion_velocity_planner::CollisionChecker;
 using autoware::universe_utils::Line2d;
 using autoware::universe_utils::MultiLineString2d;

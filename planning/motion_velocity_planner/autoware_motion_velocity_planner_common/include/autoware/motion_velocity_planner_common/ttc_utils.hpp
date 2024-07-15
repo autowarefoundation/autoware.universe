@@ -49,7 +49,7 @@ struct CollisionTimeRange
     }
   }
 
-  double time_to_collision(const CollisionTimeRange & other) const
+  [[nodiscard]] double time_to_collision(const CollisionTimeRange & other) const
   {
     // before the other range
     if (to_s < other.from_s) {
@@ -73,7 +73,17 @@ struct CollisionTimeRange
     }
   }
 
-  std::string to_string() const { return std::to_string(from_s) + "-" + std::to_string(to_s); }
+  [[nodiscard]] std::string to_string() const
+  {
+    return std::to_string(from_s) + "-" + std::to_string(to_s);
+  }
+};
+
+/// @brief represent collision points at different times
+struct TimeCollisions
+{
+  std::vector<universe_utils::MultiPoint2d> collision_points_per_time;
+  std::vector<double> times;
 };
 
 using CollisionTimeRanges = std::vector<std::optional<CollisionTimeRange>>;
@@ -81,56 +91,32 @@ using CollisionTimeRanges = std::vector<std::optional<CollisionTimeRange>>;
 /// @brief calculate the time distance of a predicted object at each ego trajectory point
 /// @param ego_collision_checker
 /// @param predicted_object
-/// @return
-inline CollisionTimeRanges calculate_object_to_trajectory_time_ranges(
+/// @return for each ego trajectory point, the time ranges when the object will collide with ego
+CollisionTimeRanges calculate_object_to_trajectory_time_ranges(
   const CollisionChecker & ego_collision_checker,
-  const autoware_perception_msgs::msg::PredictedObject & predicted_object)
-{
-  std::vector<std::optional<CollisionTimeRange>> time_ranges(
-    ego_collision_checker.trajectory_size());
-  for (const auto & object_path : predicted_object.kinematics.predicted_paths) {
-    const auto time_step = rclcpp::Duration(object_path.time_step).seconds();
-    auto t = 0.0;
-    for (const auto & path_pose : object_path.path) {
-      const auto object_footprint =
-        autoware::universe_utils::toPolygon2d(path_pose, predicted_object.shape);
-      const auto collisions = ego_collision_checker.get_collisions(object_footprint);
-      for (const auto & collision : collisions) {
-        if (!time_ranges[collision.trajectory_index].has_value()) {
-          time_ranges[collision.trajectory_index].emplace(t);
-        } else {
-          time_ranges[collision.trajectory_index]->extend(t);
-        }
-      }
-      // TODO(Maxime): calculate time more accurately with interpolation
-      t += time_step;
-    }
-  }
-  return time_ranges;
-}
+  const autoware_perception_msgs::msg::PredictedObject & predicted_object);
 
 /// @brief calculate time to collisions for each ego trajectory point
 /// @param ego_collision_checker collision checker for the ego trajectory
 /// @param ego_trajectory ego trajectory with accurate time_from_start values
 /// @param predicted_objects predicted object to check for collisions
-inline std::vector<std::optional<CollisionTimeRange>>
-calculate_collision_time_ranges_along_trajectory(
+/// @return for each ego trajectory point, the ttc ranges when the object will collide with ego
+std::vector<std::optional<CollisionTimeRange>> calculate_collision_time_ranges_along_trajectory(
   const CollisionChecker & ego_collision_checker,
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory,
-  const autoware_perception_msgs::msg::PredictedObject & predicted_object)
-{
-  std::vector<std::optional<CollisionTimeRange>> time_range_along_trajectory(ego_trajectory.size());
-  const auto object_to_trajectory_time_ranges =
-    calculate_object_to_trajectory_time_ranges(ego_collision_checker, predicted_object);
-  for (auto i = 0UL; i < object_to_trajectory_time_ranges.size(); ++i) {
-    const auto & time_range = object_to_trajectory_time_ranges[i];
-    if (time_range.has_value()) {
-      const auto ego_t = rclcpp::Duration(ego_trajectory[i].time_from_start).seconds();
-      time_range_along_trajectory[i].emplace(time_range->from_s - ego_t, time_range->to_s - ego_t);
-    }
-  }
-  return time_range_along_trajectory;
-}
+  const autoware_perception_msgs::msg::PredictedObject & predicted_object);
+
+/// @brief calculate, for each ego trajectory point, when and where would collision occur
+/// @param ego_collision_checker collision checker for the ego trajectory
+/// @param ego_trajectory ego trajectory with accurate time_from_start values
+/// @param predicted_objects predicted object to check for collisions
+/// @return for each ego trajectory point, the collision points for each time step with collision
+std::vector<TimeCollisions> calculate_time_collisions_along_trajectory(
+  const CollisionChecker & ego_collision_checker,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory,
+  const autoware_perception_msgs::msg::PredictedObject & predicted_object);
+
+/// @brief calcualte
 
 }  // namespace autoware::motion_velocity_planner
 #endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__TTC_UTILS_HPP_

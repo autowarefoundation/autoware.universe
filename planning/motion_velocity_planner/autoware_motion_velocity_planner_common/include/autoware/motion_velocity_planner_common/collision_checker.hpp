@@ -35,7 +35,7 @@ using Rtree = bgi::rtree<RtreeNode, bgi::rstar<16>>;
 struct Collision
 {
   size_t trajectory_index{};
-  autoware::universe_utils::MultiPoint2d collision_points{};
+  autoware::universe_utils::MultiPoint2d collision_points;
 };
 
 /// @brief collision checker for a trajectory as a sequence of 2D footprints
