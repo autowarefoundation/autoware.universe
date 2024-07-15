@@ -24,12 +24,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
-#include <algorithm>
-#include <limits>
-#include <memory>
-#include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane
@@ -80,156 +75,51 @@ struct PlannerParam
   double extra_left_offset;   // [m] extra left distance
 };
 
-struct EnterExitTimes
-{
-  double enter_time{};
-  double exit_time{};
-};
-struct RangeTimes
-{
-  EnterExitTimes ego{};
-  EnterExitTimes object{};
-};
-
 /// @brief action taken by the "out of lane" module
 struct Slowdown
 {
-  size_t target_trajectory_idx{};         // we want to slowdown before this trajectory index
-  double velocity{};                      // desired slow down velocity
-  lanelet::ConstLanelet lane_to_avoid{};  // we want to slowdown before entering this lane
+  size_t target_trajectory_idx{};       // we want to slowdown before this trajectory index
+  double velocity{};                    // desired slow down velocity
+  lanelet::ConstLanelet lane_to_avoid;  // we want to slowdown before entering this lane
 };
-/// @brief slowdown to insert in a trajectory
-struct SlowdownToInsert
-{
-  Slowdown slowdown{};
-  autoware_planning_msgs::msg::TrajectoryPoint point{};
-};
-
-/// @brief bound of an overlap range (either the first, or last bound)
-struct RangeBound
-{
-  size_t index{};
-  lanelet::BasicPoint2d point{};
-  double arc_length{};
-  double inside_distance{};
-};
-
-/// @brief representation of an overlap between the ego footprint and some other lane
-struct Overlap
-{
-  double inside_distance = 0.0;  ///!< distance inside the overlap
-  double min_arc_length = std::numeric_limits<double>::infinity();
-  double max_arc_length = 0.0;
-  lanelet::BasicPoint2d min_overlap_point{};  ///!< point with min arc length
-  lanelet::BasicPoint2d max_overlap_point{};  ///!< point with max arc length
-};
-
-/// @brief range along the trajectory where ego overlaps another lane
-struct OverlapRange
-{
-  lanelet::ConstLanelet lane{};
-  size_t entering_trajectory_idx{};
-  size_t exiting_trajectory_idx{};
-  lanelet::BasicPoint2d entering_point{};  // pose of the overlapping point closest along the lane
-  lanelet::BasicPoint2d exiting_point{};   // pose of the overlapping point furthest along the lane
-  double inside_distance{};                // [m] how much ego footprint enters the lane
-  mutable struct
-  {
-    std::vector<Overlap> overlaps{};
-    std::optional<Slowdown> decision{};
-    RangeTimes times{};
-    std::optional<autoware_perception_msgs::msg::PredictedObject> object{};
-  } debug;
-};
-using OverlapRanges = std::vector<OverlapRange>;
-/// @brief representation of a lane and its current overlap range
-struct OtherLane
-{
-  bool range_is_open = false;
-  RangeBound first_range_bound{};
-  RangeBound last_range_bound{};
-  lanelet::ConstLanelet lanelet{};
-  lanelet::BasicPolygon2d polygon{};
-
-  explicit OtherLane(lanelet::ConstLanelet ll) : lanelet(std::move(ll))
-  {
-    polygon = lanelet.polygon2d().basicPolygon();
-  }
-
-  [[nodiscard]] OverlapRange close_range()
-  {
-    OverlapRange range;
-    range.lane = lanelet;
-    range.entering_trajectory_idx = first_range_bound.index;
-    range.entering_point = first_range_bound.point;
-    range.exiting_trajectory_idx = last_range_bound.index;
-    range.exiting_point = last_range_bound.point;
-    range.inside_distance =
-      std::max(first_range_bound.inside_distance, last_range_bound.inside_distance);
-    range_is_open = false;
-    last_range_bound = {};
-    return range;
-  }
-};
+using OutsidePolygons = std::vector<lanelet::BasicPolygon2d>;
+using OutsidePolygonsPerTrajectoryPoint = std::vector<OutsidePolygons>;
 
 /// @brief data related to the ego vehicle
 struct EgoData
 {
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points{};
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points;
   size_t first_trajectory_idx{};
   double velocity{};   // [m/s]
   double max_decel{};  // [m/s²]
-  geometry_msgs::msg::Pose pose{};
-};
-
-/// @brief data needed to make decisions
-struct DecisionInputs
-{
-  OverlapRanges ranges{};
-  EgoData ego_data{};
-  autoware_perception_msgs::msg::PredictedObjects objects{};
-  std::shared_ptr<const route_handler::RouteHandler> route_handler{};
-  lanelet::ConstLanelets lanelets{};
+  geometry_msgs::msg::Pose pose;
 };
 
 /// @brief debug data
 struct DebugData
 {
   std::vector<lanelet::BasicPolygon2d> footprints;
-  std::vector<SlowdownToInsert> slowdowns;
   geometry_msgs::msg::Pose ego_pose;
-  OverlapRanges ranges;
   lanelet::BasicPolygon2d current_footprint;
-  lanelet::ConstLanelets current_overlapped_lanelets;
-  lanelet::ConstLanelets trajectory_lanelets;
-  lanelet::ConstLanelets ignored_lanelets;
-  lanelet::ConstLanelets other_lanelets;
+  lanelet::BasicPolygons2d ego_lane_polygons;
+  lanelet::BasicPolygons2d out_of_lane_areas;
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points;
   size_t first_trajectory_idx;
+  std::vector<std::optional<double>> ttcs;
 
   size_t prev_footprints = 0;
   size_t prev_slowdowns = 0;
   size_t prev_ranges = 0;
-  size_t prev_current_overlapped_lanelets = 0;
-  size_t prev_ignored_lanelets = 0;
-  size_t prev_trajectory_lanelets = 0;
-  size_t prev_other_lanelets = 0;
+  size_t prev_ego_lane_polygons = 0;
+  size_t prev_out_of_lane_areas = 0;
   void reset_data()
   {
     prev_footprints = footprints.size();
     footprints.clear();
-    prev_slowdowns = slowdowns.size();
-    slowdowns.clear();
-    prev_ranges = ranges.size();
-    ranges.clear();
-    prev_current_overlapped_lanelets = current_overlapped_lanelets.size();
-    current_overlapped_lanelets.clear();
-    prev_ignored_lanelets = ignored_lanelets.size();
-    ignored_lanelets.clear();
-    prev_trajectory_lanelets = trajectory_lanelets.size();
-    trajectory_lanelets.clear();
-    prev_other_lanelets = other_lanelets.size();
-    other_lanelets.clear();
+    prev_ego_lane_polygons = ego_lane_polygons.size();
+    ego_lane_polygons.clear();
+    prev_out_of_lane_areas = out_of_lane_areas.size();
+    out_of_lane_areas.clear();
   }
 };
 

@@ -19,6 +19,8 @@
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
+#include <geometry_msgs/msg/detail/point__struct.hpp>
+
 #include <boost/geometry/algorithms/overlaps.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
@@ -40,7 +42,7 @@ bool can_decelerate(
 std::optional<TrajectoryPoint> calculate_last_in_lane_pose(
   const EgoData & ego_data, const Slowdown & decision,
   const autoware::universe_utils::Polygon2d & footprint,
-  const std::optional<SlowdownToInsert> & prev_slowdown_point, const PlannerParam & params)
+  const std::optional<geometry_msgs::msg::Point> & prev_slowdown_point, const PlannerParam & params)
 {
   const auto from_arc_length = autoware::motion_utils::calcSignedArcLength(
     ego_data.trajectory_points, 0, ego_data.first_trajectory_idx);
@@ -57,20 +59,20 @@ std::optional<TrajectoryPoint> calculate_last_in_lane_pose(
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_point.pose);
     const auto is_overlap_lane = boost::geometry::overlaps(
       interpolated_footprint, decision.lane_to_avoid.polygon2d().basicPolygon());
-    const auto is_overlap_extra_lane =
-      prev_slowdown_point &&
-      boost::geometry::overlaps(
-        interpolated_footprint,
-        prev_slowdown_point->slowdown.lane_to_avoid.polygon2d().basicPolygon());
+    const auto is_overlap_extra_lane = false;
+    // prev_slowdown_point &&
+    // boost::geometry::overlaps(
+    //   interpolated_footprint,
+    //   prev_slowdown_point->slowdown.lane_to_avoid.polygon2d().basicPolygon());
     if (respect_decel_limit && !is_overlap_lane && !is_overlap_extra_lane)
       return interpolated_point;
   }
   return std::nullopt;
 }
 
-std::optional<SlowdownToInsert> calculate_slowdown_point(
+std::optional<geometry_msgs::msg::Point> calculate_slowdown_point(
   const EgoData & ego_data, const std::vector<Slowdown> & decisions,
-  const std::optional<SlowdownToInsert> & prev_slowdown_point, PlannerParam params)
+  const std::optional<geometry_msgs::msg::Point> & prev_slowdown_point, PlannerParam params)
 {
   params.extra_front_offset += params.lon_dist_buffer;
   params.extra_right_offset += params.lat_dist_buffer;
@@ -81,7 +83,7 @@ std::optional<SlowdownToInsert> calculate_slowdown_point(
   for (const auto & decision : decisions) {
     const auto last_in_lane_pose =
       calculate_last_in_lane_pose(ego_data, decision, base_footprint, prev_slowdown_point, params);
-    if (last_in_lane_pose) return SlowdownToInsert{decision, *last_in_lane_pose};
+    if (last_in_lane_pose) return last_in_lane_pose->pose.position;
   }
   return std::nullopt;
 }

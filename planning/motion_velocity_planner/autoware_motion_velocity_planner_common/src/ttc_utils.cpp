@@ -83,10 +83,9 @@ std::vector<TimeCollisions> calculate_time_collisions_along_trajectory(
       const auto collisions = ego_collision_checker.get_collisions(object_footprint);
       for (const auto & collision : collisions) {
         auto & time_collision = time_collisions_along_trajectory[collision.trajectory_index];
-        time_collision.times.push_back(t);
-        time_collision.collision_points_per_time.insert(
-          time_collision.collision_points_per_time.end(), collision.collision_points.begin(),
-          collision.collision_points.end());
+        auto & points = time_collision[t];
+        points.insert(
+          points.end(), collision.collision_points.begin(), collision.collision_points.end());
       }
       t += time_step;
     }

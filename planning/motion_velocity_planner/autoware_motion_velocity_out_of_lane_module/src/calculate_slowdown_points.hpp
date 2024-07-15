@@ -19,6 +19,8 @@
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
+#include <geometry_msgs/msg/detail/point__struct.hpp>
+
 #include <optional>
 #include <vector>
 
@@ -43,7 +45,8 @@ bool can_decelerate(
 std::optional<TrajectoryPoint> calculate_last_in_lane_pose(
   const EgoData & ego_data, const Slowdown & decision,
   const autoware::universe_utils::Polygon2d & footprint,
-  const std::optional<SlowdownToInsert> & prev_slowdown_point, const PlannerParam & params);
+  const std::optional<geometry_msgs::msg::Point> & prev_slowdown_point,
+  const PlannerParam & params);
 
 /// @brief calculate the slowdown point to insert in the trajectory
 /// @param ego_data ego data (trajectory, velocity, etc)
@@ -51,8 +54,8 @@ std::optional<TrajectoryPoint> calculate_last_in_lane_pose(
 /// @param prev_slowdown_point previously calculated slowdown point
 /// @param params parameters
 /// @return optional slowdown point to insert in the trajectory
-std::optional<SlowdownToInsert> calculate_slowdown_point(
+std::optional<geometry_msgs::msg::Point> calculate_slowdown_point(
   const EgoData & ego_data, const std::vector<Slowdown> & decisions,
-  const std::optional<SlowdownToInsert> & prev_slowdown_point, PlannerParam params);
+  const std::optional<geometry_msgs::msg::Point> & prev_slowdown_point, PlannerParam params);
 }  // namespace autoware::motion_velocity_planner::out_of_lane
 #endif  // CALCULATE_SLOWDOWN_POINTS_HPP_

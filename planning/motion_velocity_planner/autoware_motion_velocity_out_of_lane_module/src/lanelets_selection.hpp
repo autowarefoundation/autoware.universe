@@ -54,15 +54,12 @@ lanelet::ConstLanelets get_missing_lane_change_lanelets(
   const lanelet::ConstLanelets & trajectory_lanelets,
   const std::shared_ptr<const route_handler::RouteHandler> route_handler);
 /// @brief calculate lanelets that should be ignored
-/// @param [in] ego_data data about the ego vehicle
-/// @param [in] trajectory_lanelets lanelets driven by the ego vehicle
+/// @param [in] trajectory_lanelets lanelets followed by the ego vehicle
 /// @param [in] route_handler route handler
-/// @param [in] params parameters
 /// @return lanelets to ignore
 lanelet::ConstLanelets calculate_ignored_lanelets(
-  const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
-  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
-  const PlannerParam & params);
+  const lanelet::ConstLanelets & trajectory_lanelets,
+  const std::shared_ptr<const route_handler::RouteHandler> & route_handler);
 /// @brief calculate lanelets that should be checked by the module
 /// @param [in] ego_data data about the ego vehicle
 /// @param [in] trajectory_lanelets lanelets driven by the ego vehicle

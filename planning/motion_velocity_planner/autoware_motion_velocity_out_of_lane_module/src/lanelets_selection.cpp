@@ -84,20 +84,16 @@ lanelet::ConstLanelets calculate_trajectory_lanelets(
 }
 
 lanelet::ConstLanelets calculate_ignored_lanelets(
-  const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
-  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
-  const PlannerParam & params)
+  const lanelet::ConstLanelets & trajectory_lanelets,
+  const std::shared_ptr<const route_handler::RouteHandler> & route_handler)
 {
   lanelet::ConstLanelets ignored_lanelets;
-  // ignore lanelets directly behind ego
-  const auto behind =
-    autoware::universe_utils::calcOffsetPose(ego_data.pose, params.rear_offset, 0.0, 0.0);
-  const lanelet::BasicPoint2d behind_point(behind.position.x, behind.position.y);
-  const auto behind_lanelets = lanelet::geometry::findWithin2d(
-    route_handler->getLaneletMapPtr()->laneletLayer, behind_point, 0.0);
-  for (const auto & l : behind_lanelets) {
-    const auto is_trajectory_lanelet = contains_lanelet(trajectory_lanelets, l.second.id());
-    if (!is_trajectory_lanelet) ignored_lanelets.push_back(l.second);
+  // ignore lanelets directly preceding a trajectory lanelet
+  for (const auto & trajectory_lanelet : trajectory_lanelets) {
+    for (const auto & ll : route_handler->getPreviousLanelets(trajectory_lanelet)) {
+      const auto is_trajectory_lanelet = contains_lanelet(trajectory_lanelets, ll.id());
+      if (!is_trajectory_lanelet) ignored_lanelets.push_back(ll);
+    }
   }
   return ignored_lanelets;
 }

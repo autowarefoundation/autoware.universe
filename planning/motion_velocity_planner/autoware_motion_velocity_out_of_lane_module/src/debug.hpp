@@ -25,7 +25,7 @@ namespace autoware::motion_velocity_planner::out_of_lane::debug
 {
 visualization_msgs::msg::MarkerArray create_debug_marker_array(const DebugData & debug_data);
 autoware::motion_utils::VirtualWalls create_virtual_walls(
-  const DebugData & debug_data, const PlannerParam & params);
+  const geometry_msgs::msg::Pose & pose, const bool stop, const PlannerParam & params);
 }  // namespace autoware::motion_velocity_planner::out_of_lane::debug
 
 #endif  // DEBUG_HPP_

@@ -24,6 +24,7 @@
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
+#include <map>
 #include <optional>
 #include <string>
 #include <vector>
@@ -79,12 +80,7 @@ struct CollisionTimeRange
   }
 };
 
-/// @brief represent collision points at different times
-struct TimeCollisions
-{
-  std::vector<universe_utils::MultiPoint2d> collision_points_per_time;
-  std::vector<double> times;
-};
+using TimeCollisions = std::map<double, universe_utils::MultiPoint2d>;
 
 using CollisionTimeRanges = std::vector<std::optional<CollisionTimeRange>>;
 
@@ -106,17 +102,14 @@ std::vector<std::optional<CollisionTimeRange>> calculate_collision_time_ranges_a
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory,
   const autoware_perception_msgs::msg::PredictedObject & predicted_object);
 
-/// @brief calculate, for each ego trajectory point, when and where would collision occur
+/// @brief calculate, for each ego trajectory point, when and where the object intersect with the
+/// ego footprint at the point
 /// @param ego_collision_checker collision checker for the ego trajectory
-/// @param ego_trajectory ego trajectory with accurate time_from_start values
 /// @param predicted_objects predicted object to check for collisions
 /// @return for each ego trajectory point, the collision points for each time step with collision
 std::vector<TimeCollisions> calculate_time_collisions_along_trajectory(
   const CollisionChecker & ego_collision_checker,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory,
   const autoware_perception_msgs::msg::PredictedObject & predicted_object);
-
-/// @brief calcualte
 
 }  // namespace autoware::motion_velocity_planner
 #endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__TTC_UTILS_HPP_
