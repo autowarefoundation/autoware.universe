@@ -444,7 +444,9 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
   const PlannerData & planner_data, const StopObstacle & stop_obstacle) const
 {
   if (!enable_approaching_on_curve_ || use_pointcloud_) {
-    return longitudinal_info_.safe_distance_margin;
+    double margin_from_obstacle =
+      calcTimeBasedSafeDistance(planner_data.ego_vel, longitudinal_info_.safe_distance_time_margin);
+    return margin_from_obstacle;
   }
 
   const double abs_ego_offset = planner_data.is_driving_forward
