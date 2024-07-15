@@ -277,7 +277,8 @@ lanelet::ConstLanelets getTargetNeighborLanes(
     if (route_handler.getNumLaneToPreferredLane(current_lane) != 0) {
       if (
         type == LaneChangeModuleType::NORMAL ||
-        type == LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE) {
+        type == LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE ||
+        type == LaneChangeModuleType::EXTERNAL_REQUEST) {
         neighbor_lanes.push_back(current_lane);
       }
     } else {
