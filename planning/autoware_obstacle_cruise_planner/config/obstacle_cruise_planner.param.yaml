@@ -9,6 +9,7 @@
       enable_slow_down_planning: true
 
       # longitudinal info
+      safe_distance_method: "time_based" # currently supported safe distance calculation methods are "rss" and "time-based"
       idling_time: 2.0 # idling time to detect front vehicle starting deceleration [s]
       min_ego_accel_for_rss: -1.0 # ego's acceleration to calculate RSS distance [m/ss]
       min_object_accel_for_rss: -1.0 # front obstacle's acceleration to calculate RSS distance [m/ss]

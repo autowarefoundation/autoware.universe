@@ -208,6 +208,7 @@ struct LongitudinalInfo
     min_ego_accel_for_rss = node.declare_parameter<double>("common.min_ego_accel_for_rss");
     min_object_accel_for_rss = node.declare_parameter<double>("common.min_object_accel_for_rss");
 
+    safe_distance_method = node.declare_parameter<std::string>("common.safe_distance_method");
     safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
     terminal_safe_distance_margin =
       node.declare_parameter<double>("common.terminal_safe_distance_margin");
@@ -240,6 +241,8 @@ struct LongitudinalInfo
     autoware::universe_utils::updateParam<double>(
       parameters, "common.min_object_accel_for_rss", min_object_accel_for_rss);
 
+    autoware::universe_utils::updateParam<std::string>(
+      parameters, "common.safe_distance_method", safe_distance_method);
     autoware::universe_utils::updateParam<double>(
       parameters, "common.safe_distance_margin", safe_distance_margin);
     autoware::universe_utils::updateParam<double>(
@@ -271,6 +274,7 @@ struct LongitudinalInfo
   double min_object_accel_for_rss;
 
   // distance margin
+  std::string safe_distance_method;
   double safe_distance_margin;
   double terminal_safe_distance_margin;
   double safe_distance_time_margin;
