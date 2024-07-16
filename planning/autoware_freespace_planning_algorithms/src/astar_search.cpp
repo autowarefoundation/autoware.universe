@@ -93,25 +93,19 @@ bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
 {
   resetData();
 
-  if (is_backward_search_) {
-    start_pose_ = global2local(costmap_, goal_pose);
-    goal_pose_ = global2local(costmap_, start_pose);
-  } else {
-    start_pose_ = global2local(costmap_, start_pose);
-    goal_pose_ = global2local(costmap_, goal_pose);
+  start_pose_ = global2local(costmap_, start_pose);
+  goal_pose_ = global2local(costmap_, goal_pose);
+
+  if (detectCollision(start_pose_) || detectCollision(goal_pose_)) {
+    throw std::logic_error("Invalid start or goal pose");
+    return false;
   }
+
+  if (is_backward_search_) std::swap(start_pose_, goal_pose_);
 
   setCollisionFreeDistanceMap();
 
-  if (!setStartNode()) {
-    throw std::logic_error("Invalid start pose");
-    return false;
-  }
-
-  if (detectCollision(goal_pose_)) {
-    throw std::logic_error("Invalid goal pose");
-    return false;
-  }
+  setStartNode();
 
   if (!search()) {
     throw std::logic_error("HA* failed to find path to goal");
@@ -174,12 +168,9 @@ void AstarSearch::setCollisionFreeDistanceMap()
   }
 }
 
-bool AstarSearch::setStartNode()
+void AstarSearch::setStartNode()
 {
-  if (detectCollision(start_pose_)) return false;
-
   const auto index = pose2index(costmap_, start_pose_, planner_common_param_.theta_size);
-
   // Set start node
   AstarNode * start_node = &graph_[getKey(index)];
   start_node->set(start_pose_, 0.0, estimateCost(start_pose_, index), 0, false);
