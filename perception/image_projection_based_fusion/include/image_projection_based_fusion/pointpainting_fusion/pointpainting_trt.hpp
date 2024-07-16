@@ -30,7 +30,7 @@ public:
   using autoware::centerpoint::CenterPointTRT::CenterPointTRT;
 
   explicit PointPaintingTRT(
-    const autoware::centerpoint::NetworkParam & encoder_param, const centerpoint::NetworkParam & head_param,
+    const autoware::centerpoint::NetworkParam & encoder_param, const autoware::centerpoint::NetworkParam & head_param,
     const autoware::centerpoint::DensificationParam & densification_param,
     const autoware::centerpoint::CenterPointConfig & config);
 
