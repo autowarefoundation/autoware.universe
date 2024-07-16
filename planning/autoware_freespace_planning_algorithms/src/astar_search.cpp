@@ -182,8 +182,6 @@ void AstarSearch::setStartNode()
 
   // Push start node to openlist
   openlist_.push(start_node);
-
-  return true;
 }
 
 double AstarSearch::estimateCost(const Pose & pose, const IndexXYT & index) const
