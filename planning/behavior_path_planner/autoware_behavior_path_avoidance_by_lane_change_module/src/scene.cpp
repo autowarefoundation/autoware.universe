@@ -113,10 +113,8 @@ void AvoidanceByLaneChange::updateSpecialData()
                    : Direction::RIGHT;
   }
 
-  utils::static_obstacle_avoidance::updateRegisteredObject(
-    registered_objects_, avoidance_data_.target_objects, p);
-  utils::static_obstacle_avoidance::compensateDetectionLost(
-    registered_objects_, avoidance_data_.target_objects, avoidance_data_.other_objects);
+  utils::static_obstacle_avoidance::compensateLostTargetObjects(
+    registered_objects_, avoidance_data_, clock_.now(), planner_data_, p);
 
   std::sort(
     avoidance_data_.target_objects.begin(), avoidance_data_.target_objects.end(),
@@ -136,7 +134,7 @@ AvoidancePlanningData AvoidanceByLaneChange::calcAvoidancePlanningData(
   const auto resample_interval = avoidance_parameters_->resample_interval_for_planning;
   data.reference_path = utils::resamplePathWithSpline(data.reference_path_rough, resample_interval);
 
-  data.current_lanelets = getCurrentLanes();
+  data.current_lanelets = get_current_lanes();
 
   fillAvoidanceTargetObjects(data, debug);
 
@@ -276,7 +274,7 @@ double AvoidanceByLaneChange::calcMinAvoidanceLength(const ObjectData & nearest_
 
 double AvoidanceByLaneChange::calcMinimumLaneChangeLength() const
 {
-  const auto current_lanes = getCurrentLanes();
+  const auto current_lanes = get_current_lanes();
   if (current_lanes.empty()) {
     RCLCPP_DEBUG(logger_, "no empty lanes");
     return std::numeric_limits<double>::infinity();
