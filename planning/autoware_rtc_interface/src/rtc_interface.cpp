@@ -269,7 +269,8 @@ void RTCInterface::removeStoredCommand(const UUID & uuid)
 {
   // Find stored command which has same uuid and erase it
   const auto itr = std::find_if(
-    stored_commands_.begin(), stored_commands_.end(), [uuid](const auto & s) { return s.uuid == uuid; });
+    stored_commands_.begin(), stored_commands_.end(),
+    [uuid](const auto & s) { return s.uuid == uuid; });
 
   if (itr != stored_commands_.end()) {
     stored_commands_.erase(itr);
