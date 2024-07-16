@@ -204,7 +204,6 @@ void SceneToImageProjectorNode::image_callback(
       std::vector<std::vector<cv::Point2f>> previous_polygons;
 
       for (const auto & object : objects) {
-        
         if (should_skip_object(object.classification.front().label)) {
           continue;
         }
@@ -258,7 +257,6 @@ void SceneToImageProjectorNode::image_callback(
       std::vector<std::vector<cv::Point2f>> previous_polygons{};
 
       for (const auto & object : objects) {
-        
         if (should_skip_object(object.classification.front().label)) {
           continue;
         }
@@ -527,15 +525,20 @@ void SceneToImageProjectorNode::draw_bounding_box(
   }
 }
 
-bool SceneToImageProjectorNode::should_skip_object(const int label) {
-  return 
-    (label == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN && !this->show_pedestrian) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE && !this->show_bicycle) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE && !this->show_motorcycle) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::TRAILER && !this->show_trailer) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::BUS && !this->show_bus) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::TRUCK && !this->show_truck) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::CAR && !this->show_car);
+bool SceneToImageProjectorNode::should_skip_object(const int label)
+{
+  return (label == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN &&
+          !this->show_pedestrian) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE &&
+          !this->show_bicycle) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE &&
+          !this->show_motorcycle) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::TRAILER &&
+          !this->show_trailer) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::BUS && !this->show_bus) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::TRUCK &&
+          !this->show_truck) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::CAR && !this->show_car);
 }
 
 }  // namespace autoware::scene_to_image_projector

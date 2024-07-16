@@ -119,7 +119,7 @@ private:
 
   bool projectable(
     const geometry_msgs::msg::Point & point, const Eigen::Matrix4d & projection_matrix);
-  
+
   bool should_skip_object(const int label);
 };
 
