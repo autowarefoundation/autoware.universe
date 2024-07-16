@@ -382,7 +382,6 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   // Check if ego moves forward enough to ignore yield.
   const auto & p = planner_param_;
   if (!path_intersects.empty()) {
-    const double inner_base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
     const double dist_ego2crosswalk =
       calcSignedArcLength(ego_path.points, ego_pos, path_intersects.front());
     const auto braking_distance_opt =
@@ -391,7 +390,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
         p.min_jerk_for_no_stop_decision);
     const double braking_distance = braking_distance_opt ? *braking_distance_opt : 0.0;
     if (
-      dist_ego2crosswalk - inner_base_link2front - braking_distance <
+      dist_ego2crosswalk - base_link2front - braking_distance <
       p.max_offset_to_crosswalk_for_yield) {
       return {};
     }
