@@ -22,7 +22,7 @@ group apply slow down
   :applySlowDownByOcclusion;
 end group
 group calculate stop pose
-  :getStaticStopPose;
+  :getDefaultStopPose;
   :resamplePath;
   :checkStopForCrosswalkUsers;
   :checkStopForStuckVehicles;
