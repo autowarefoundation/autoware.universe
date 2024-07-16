@@ -1,0 +1,362 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Parameters for goal planner",
+    "type": "object",
+    "definitions": {
+      "goal_planner": {
+        "type": "object",
+        "properties": {
+          "th_arrived_distance": {
+            "type": "number",
+            "default": 1.0,
+            "description": "The distance threshold to consider the goal as arrived."
+          },
+          "th_stopped_velocity": {
+            "type": "number",
+            "default": 0.01,
+            "description": "The velocity threshold to consider the vehicle as stopped."
+          },
+          "th_stopped_time": {
+            "type": "number",
+            "default": 2.0,
+            "description": "The time threshold to consider the vehicle as stopped."
+          },
+          "center_line_path_interval": {
+            "type": "number",
+            "default": 1.0,
+            "description": "The interval for the center line path."
+          },
+          "goal_search": {
+            "type": "object",
+            "properties": {
+              "goal_priority": {
+                "type": "string",
+                "enum": ["minimum_weighted_distance", "minimum_longitudinal_distance"],
+                "default": "minimum_weighted_distance",
+                "description": "The priority method for goal search."
+              },
+              "minimum_weighted_distance": {
+                "type": "object",
+                "properties": {
+                  "lateral_weight": {
+                    "type": "number",
+                    "default": 40.0,
+                    "description": "The lateral weight for minimum weighted distance."
+                  }
+                },
+                "required": ["lateral_weight"],
+                "additionalProperties": false
+              },
+              "prioritize_goals_before_objects": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to prioritize goals before objects."
+              },
+              "parking_policy": {
+                "type": "string",
+                "enum": ["left_side", "right_side"],
+                "default": "left_side",
+                "description": "The parking policy for the goal planner."
+              },
+              "forward_goal_search_length": {
+                "type": "number",
+                "default": 20.0,
+                "description": "The forward goal search length."
+              },
+              "backward_goal_search_length": {
+                "type": "number",
+                "default": 20.0,
+                "description": "The backward goal search length."
+              },
+              "goal_search_interval": {
+                "type": "number",
+                "default": 2.0,
+                "description": "The interval for goal search."
+              },
+              "longitudinal_margin": {
+                "type": "number",
+                "default": 3.0,
+                "description": "The longitudinal margin for goal search."
+              },
+              "max_lateral_offset": {
+                "type": "number",
+                "default": 0.5,
+                "description": "The maximum lateral offset for goal search."
+              },
+              "lateral_offset_interval": {
+                "type": "number",
+                "default": 0.25,
+                "description": "The interval for lateral offset in goal search."
+              },
+              "ignore_distance_from_lane_start": {
+                "type": "number",
+                "default": 0.0,
+                "description": "The distance from lane start to ignore."
+              },
+              "margin_from_boundary": {
+                "type": "number",
+                "default": 0.5,
+                "description": "The margin from boundary in goal search."
+              },
+              "high_curvature_threshold": {
+                "type": "number",
+                "default": 0.1,
+                "description": "The threshold for high curvature in goal search."
+              }
+            },
+            "required": [
+              "goal_priority",
+              "minimum_weighted_distance",
+              "prioritize_goals_before_objects",
+              "parking_policy",
+              "forward_goal_search_length",
+              "backward_goal_search_length",
+              "goal_search_interval",
+              "longitudinal_margin",
+              "max_lateral_offset",
+              "lateral_offset_interval",
+              "ignore_distance_from_lane_start",
+              "margin_from_boundary",
+              "high_curvature_threshold"
+            ],
+            "additionalProperties": false
+          },
+          "occupancy_grid": {
+            "type": "object",
+            "properties": {
+              "use_occupancy_grid_for_goal_search": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to use occupancy grid for goal search."
+              },
+              "use_occupancy_grid_for_goal_longitudinal_margin": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to use occupancy grid for goal longitudinal margin."
+              },
+              "use_occupancy_grid_for_path_collision_check": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to use occupancy grid for path collision check."
+              },
+              "occupancy_grid_collision_check_margin": {
+                "type": "number",
+                "default": 0.0,
+                "description": "The margin for occupancy grid collision check."
+              },
+              "theta_size": {
+                "type": "integer",
+                "default": 360,
+                "description": "The theta size for occupancy grid."
+              },
+              "obstacle_threshold": {
+                "type": "integer",
+                "default": 60,
+                "description": "The threshold for obstacles in occupancy grid."
+              }
+            },
+            "required": [
+              "use_occupancy_grid_for_goal_search",
+              "use_occupancy_grid_for_goal_longitudinal_margin",
+              "use_occupancy_grid_for_path_collision_check",
+              "occupancy_grid_collision_check_margin",
+              "theta_size",
+              "obstacle_threshold"
+            ],
+            "additionalProperties": false
+          },
+          "object_recognition": {
+            "type": "object",
+            "properties": {
+              "use_object_recognition": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to use object recognition."
+              },
+              "collision_check_soft_margins": {
+                "type": "array",
+                "items": { "type": "number" },
+                "default": [2.0, 1.5, 1.0],
+                "description": "The soft margins for collision check."
+              },
+              "collision_check_hard_margins": {
+                "type": "array",
+                "items": { "type": "number" },
+                "default": [0.6],
+                "description": "The hard margins for collision check."
+              },
+              "object_recognition_collision_check_max_extra_stopping_margin": {
+                "type": "number",
+                "default": 1.0,
+                "description": "The maximum extra stopping margin for object recognition collision check."
+              },
+              "th_moving_object_velocity": {
+                "type": "number",
+                "default": 1.0,
+                "description": "The threshold velocity for moving objects."
+              },
+              "detection_bound_offset": {
+                "type": "number",
+                "default": 15.0,
+                "description": "The detection bound offset."
+              },
+              "outer_road_detection_offset": {
+                "type": "number",
+                "default": 1.0,
+                "description": "The detection offset for outer road."
+              },
+              "inner_road_detection_offset": {
+                "type": "number",
+                "default": 0.0,
+                "description": "The detection offset for inner road."
+              }
+            },
+            "required": [
+              "use_object_recognition",
+              "collision_check_soft_margins",
+              "collision_check_hard_margins",
+              "object_recognition_collision_check_max_extra_stopping_margin",
+              "th_moving_object_velocity",
+              "detection_bound_offset",
+              "outer_road_detection_offset",
+              "inner_road_detection_offset"
+            ],
+            "additionalProperties": false
+          },
+          "pull_over": {
+            "type": "object",
+            "properties": {
+              "minimum_request_length": {
+                "type": "number",
+                "default": 100.0,
+                "description": "The minimum request length for pull over."
+              },
+              "pull_over_velocity": {
+                "type": "number",
+                "default": 3.0,
+                "description": "The velocity for pull over."
+              },
+              "pull_over_minimum_velocity": {
+                "type": "number",
+                "default": 1.38,
+                "description": "The minimum velocity for pull over."
+              },
+              "decide_path_distance": {
+                "type": "number",
+                "default": 10.0,
+                "description": "The distance to decide the path for pull over."
+              },
+              "maximum_deceleration": {
+                "type": "number",
+                "default": 1.0,
+                "description": "The maximum deceleration for pull over."
+              },
+              "maximum_jerk": {
+                "type": "number",
+                "default": 1.0,
+                "description": "The maximum jerk for pull over."
+              },
+              "path_priority": {
+                "type": "string",
+                "enum": ["efficient_path", "close_goal"],
+                "default": "efficient_path",
+                "description": "The path priority for pull over."
+              },
+              "efficient_path_order": {
+                "type": "array",
+                "items": { "type": "string" },
+                "default": ["SHIFT", "STRATEGY"],
+                "description": "The order of efficient path for pull over."
+              }
+            },
+            "required": [
+              "minimum_request_length",
+              "pull_over_velocity",
+              "pull_over_minimum_velocity",
+              "decide_path_distance",
+              "maximum_deceleration",
+              "maximum_jerk",
+              "path_priority",
+              "efficient_path_order"
+            ],
+            "additionalProperties": false
+          },
+          "pull_out": {
+            "type": "object",
+            "properties": {
+              "pull_out_velocity": {
+                "type": "number",
+                "default": 2.0,
+                "description": "The velocity for pull out."
+              },
+              "pull_out_minimum_velocity": {
+                "type": "number",
+                "default": 1.38,
+                "description": "The minimum velocity for pull out."
+              },
+              "pull_out_velocity_in_parking": {
+                "type": "number",
+                "default": 3.0,
+                "description": "The velocity for pull out in parking."
+              },
+              "pull_out_minimum_velocity_in_parking": {
+                "type": "number",
+                "default": 1.38,
+                "description": "The minimum velocity for pull out in parking."
+              },
+              "decide_path_distance": {
+                "type": "number",
+                "default": 10.0,
+                "description": "The distance to decide the path for pull out."
+              },
+              "maximum_deceleration": {
+                "type": "number",
+                "default": 1.0,
+                "description": "The maximum deceleration for pull out."
+              },
+              "maximum_jerk": {
+                "type": "number",
+                "default": 1.0,
+                "description": "The maximum jerk for pull out."
+              }
+            },
+            "required": [
+              "pull_out_velocity",
+              "pull_out_minimum_velocity",
+              "pull_out_velocity_in_parking",
+              "pull_out_minimum_velocity_in_parking",
+              "decide_path_distance",
+              "maximum_deceleration",
+              "maximum_jerk"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "th_arrived_distance",
+          "th_stopped_velocity",
+          "th_stopped_time",
+          "center_line_path_interval",
+          "goal_search",
+          "occupancy_grid",
+          "object_recognition",
+          "pull_over",
+          "pull_out"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "$ref": "#/definitions/goal_planner"
+          }
+        },
+        "required": ["ros__parameters"]
+      }
+    },
+    "required": ["/**"]
+  }
+  

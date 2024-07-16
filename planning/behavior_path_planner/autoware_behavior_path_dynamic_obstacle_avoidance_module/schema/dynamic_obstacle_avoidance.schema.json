@@ -1,0 +1,372 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Parameters for dynamic obstacle avoidance",
+    "type": "object",
+    "definitions": {
+      "dynamic_avoidance": {
+        "type": "object",
+        "properties": {
+          "common": {
+            "type": "object",
+            "properties": {
+              "enable_debug_info": {
+                "type": "boolean",
+                "default": false,
+                "description": "Enable or disable debug information."
+              },
+              "use_hatched_road_markings": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to use hatched road markings."
+              }
+            },
+            "required": ["enable_debug_info", "use_hatched_road_markings"],
+            "additionalProperties": false
+          },
+          "target_object": {
+            "type": "object",
+            "properties": {
+              "car": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to avoid cars."
+              },
+              "truck": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to avoid trucks."
+              },
+              "bus": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to avoid buses."
+              },
+              "trailer": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to avoid trailers."
+              },
+              "unknown": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to avoid unknown objects."
+              },
+              "bicycle": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to avoid bicycles."
+              },
+              "motorcycle": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to avoid motorcycles."
+              },
+              "pedestrian": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether to avoid pedestrians."
+              },
+              "max_obstacle_vel": {
+                "type": "number",
+                "default": 100.0,
+                "description": "Maximum obstacle velocity to consider for avoidance."
+              },
+              "min_obstacle_vel": {
+                "type": "number",
+                "default": 0.0,
+                "description": "Minimum obstacle velocity to consider for avoidance."
+              },
+              "successive_num_to_entry_dynamic_avoidance_condition": {
+                "type": "integer",
+                "default": 5,
+                "description": "Number of successive conditions to enter dynamic avoidance."
+              },
+              "successive_num_to_exit_dynamic_avoidance_condition": {
+                "type": "integer",
+                "default": 1,
+                "description": "Number of successive conditions to exit dynamic avoidance."
+              },
+              "min_obj_lat_offset_to_ego_path": {
+                "type": "number",
+                "default": 0.0,
+                "description": "Minimum lateral offset of object to ego path."
+              },
+              "max_obj_lat_offset_to_ego_path": {
+                "type": "number",
+                "default": 1.0,
+                "description": "Maximum lateral offset of object to ego path."
+              },
+              "cut_in_object": {
+                "type": "object",
+                "properties": {
+                  "min_time_to_start_cut_in": {
+                    "type": "number",
+                    "default": 1.0,
+                    "description": "Minimum time to start cut-in."
+                  },
+                  "min_lon_offset_ego_to_object": {
+                    "type": "number",
+                    "default": 0.0,
+                    "description": "Minimum longitudinal offset of ego to object."
+                  },
+                  "min_object_vel": {
+                    "type": "number",
+                    "default": 0.5,
+                    "description": "Minimum object velocity for cut-in."
+                  }
+                },
+                "required": ["min_time_to_start_cut_in", "min_lon_offset_ego_to_object", "min_object_vel"],
+                "additionalProperties": false
+              },
+              "cut_out_object": {
+                "type": "object",
+                "properties": {
+                  "max_time_from_outside_ego_path": {
+                    "type": "number",
+                    "default": 2.0,
+                    "description": "Maximum time from outside ego path for cut-out."
+                  },
+                  "min_object_lat_vel": {
+                    "type": "number",
+                    "default": 0.3,
+                    "description": "Minimum lateral velocity of object for cut-out."
+                  },
+                  "min_object_vel": {
+                    "type": "number",
+                    "default": 0.5,
+                    "description": "Minimum object velocity for cut-out."
+                  }
+                },
+                "required": ["max_time_from_outside_ego_path", "min_object_lat_vel", "min_object_vel"],
+                "additionalProperties": false
+              },
+              "crossing_object": {
+                "type": "object",
+                "properties": {
+                  "min_overtaking_object_vel": {
+                    "type": "number",
+                    "default": 1.0,
+                    "description": "Minimum overtaking object velocity."
+                  },
+                  "max_overtaking_object_angle": {
+                    "type": "number",
+                    "default": 1.05,
+                    "description": "Maximum overtaking object angle."
+                  },
+                  "min_oncoming_object_vel": {
+                    "type": "number",
+                    "default": 1.0,
+                    "description": "Minimum oncoming object velocity."
+                  },
+                  "max_oncoming_object_angle": {
+                    "type": "number",
+                    "default": 0.523,
+                    "description": "Maximum oncoming object angle."
+                  },
+                  "max_pedestrian_crossing_vel": {
+                    "type": "number",
+                    "default": 0.8,
+                    "description": "Maximum pedestrian crossing velocity."
+                  }
+                },
+                "required": ["min_overtaking_object_vel", "max_overtaking_object_angle", "min_oncoming_object_vel", "max_oncoming_object_angle", "max_pedestrian_crossing_vel"],
+                "additionalProperties": false
+              },
+              "front_object": {
+                "type": "object",
+                "properties": {
+                  "max_object_angle": {
+                    "type": "number",
+                    "default": 0.785,
+                    "description": "Maximum object angle for front objects."
+                  },
+                  "min_object_vel": {
+                    "type": "number",
+                    "default": -0.5,
+                    "description": "Minimum object velocity for front objects."
+                  },
+                  "max_ego_path_lat_cover_ratio": {
+                    "type": "number",
+                    "default": 0.3,
+                    "description": "Maximum ratio of object covering ego path."
+                  }
+                },
+                "required": ["max_object_angle", "min_object_vel", "max_ego_path_lat_cover_ratio"],
+                "additionalProperties": false
+              },
+              "stopped_object": {
+                "type": "object",
+                "properties": {
+                  "max_object_vel": {
+                    "type": "number",
+                    "default": 0.5,
+                    "description": "Maximum velocity for stopped objects."
+                  }
+                },
+                "required": ["max_object_vel"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["car", "truck", "bus", "trailer", "unknown", "bicycle", "motorcycle", "pedestrian", "max_obstacle_vel", "min_obstacle_vel", "successive_num_to_entry_dynamic_avoidance_condition", "successive_num_to_exit_dynamic_avoidance_condition", "min_obj_lat_offset_to_ego_path", "max_obj_lat_offset_to_ego_path", "cut_in_object", "cut_out_object", "crossing_object", "front_object", "stopped_object"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["common", "target_object"],
+        "additionalProperties": false
+      },
+      "drivable_area_generation": {
+        "type": "object",
+        "properties": {
+          "polygon_generation_method": {
+            "type": "string",
+            "enum": ["ego_path_base", "object_path_base"],
+            "default": "ego_path_base",
+            "description": "Method for polygon generation in drivable area."
+          },
+          "object_path_base": {
+            "type": "object",
+            "properties": {
+              "min_longitudinal_polygon_margin": {
+                "type": "number",
+                "default": 3.0,
+                "description": "Minimum longitudinal margin for polygon generation."
+              }
+            },
+            "required": ["min_longitudinal_polygon_margin"],
+            "additionalProperties": false
+          },
+          "lat_offset_from_obstacle": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Lateral offset from obstacle."
+          },
+          "margin_distance_around_pedestrian": {
+            "type": "number",
+            "default": 2.0,
+            "description": "Margin distance around pedestrian."
+          },
+          "predicted_path": {
+            "type": "object",
+            "properties": {
+              "end_time_to_consider": {
+                "type": "number",
+                "default": 3.0,
+                "description": "End time to consider for predicted path."
+              },
+              "threshold_confidence": {
+                "type": "number",
+                "default": 0.0,
+                "description": "Threshold confidence for predicted path."
+              }
+            },
+            "required": ["end_time_to_consider", "threshold_confidence"],
+            "additionalProperties": false
+          },
+          "max_lat_offset_to_avoid": {
+            "type": "number",
+            "default": 0.5,
+            "description": "Maximum lateral offset to avoid."
+          },
+          "max_time_for_object_lat_shift": {
+            "type": "number",
+            "default": 0.0,
+            "description": "Maximum time for object lateral shift."
+          },
+          "lpf_gain_for_lat_avoid_to_offset": {
+            "type": "number",
+            "default": 0.9,
+            "description": "LPF gain for lateral avoid to offset."
+          },
+          "max_ego_lat_acc": {
+            "type": "number",
+            "default": 0.3,
+            "description": "Maximum ego lateral acceleration."
+          },
+          "max_ego_lat_jerk": {
+            "type": "number",
+            "default": 0.3,
+            "description": "Maximum ego lateral jerk."
+          },
+          "delay_time_ego_shift": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Delay time for ego shift."
+          },
+          "overtaking_object": {
+            "type": "object",
+            "properties": {
+              "max_time_to_collision": {
+                "type": "number",
+                "default": 40.0,
+                "description": "Maximum time to collision for overtaking object."
+              },
+              "start_duration_to_avoid": {
+                "type": "number",
+                "default": 1.0,
+                "description": "Start duration to avoid for overtaking object."
+              },
+              "end_duration_to_avoid": {
+                "type": "number",
+                "default": 1.0,
+                "description": "End duration to avoid for overtaking object."
+              },
+              "duration_to_hold_avoidance": {
+                "type": "number",
+                "default": 3.0,
+                "description": "Duration to hold avoidance for overtaking object."
+              }
+            },
+            "required": ["max_time_to_collision", "start_duration_to_avoid", "end_duration_to_avoid", "duration_to_hold_avoidance"],
+            "additionalProperties": false
+          },
+          "oncoming_object": {
+            "type": "object",
+            "properties": {
+              "max_time_to_collision": {
+                "type": "number",
+                "default": 40.0,
+                "description": "Maximum time to collision for oncoming object."
+              },
+              "start_duration_to_avoid": {
+                "type": "number",
+                "default": 1.0,
+                "description": "Start duration to avoid for oncoming object."
+              },
+              "end_duration_to_avoid": {
+                "type": "number",
+                "default": 0.0,
+                "description": "End duration to avoid for oncoming object."
+              }
+            },
+            "required": ["max_time_to_collision", "start_duration_to_avoid", "end_duration_to_avoid"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["polygon_generation_method", "object_path_base", "lat_offset_from_obstacle", "margin_distance_around_pedestrian", "predicted_path", "max_lat_offset_to_avoid", "max_time_for_object_lat_shift", "lpf_gain_for_lat_avoid_to_offset", "max_ego_lat_acc", "max_ego_lat_jerk", "delay_time_ego_shift", "overtaking_object", "oncoming_object"],
+        "additionalProperties": false
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "type": "object",
+            "properties": {
+              "dynamic_avoidance": {
+                "$ref": "#/definitions/dynamic_avoidance"
+              },
+              "drivable_area_generation": {
+                "$ref": "#/definitions/drivable_area_generation"
+              }
+            },
+            "required": ["dynamic_avoidance", "drivable_area_generation"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["ros__parameters"]
+      }
+    },
+    "required": ["/**"]
+  }
+  

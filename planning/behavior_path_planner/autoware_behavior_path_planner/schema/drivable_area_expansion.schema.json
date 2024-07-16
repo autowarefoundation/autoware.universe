@@ -1,0 +1,220 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for drivable_area_expansion",
+  "type": "object",
+  "definitions": {
+    "drivable_area_expansion": {
+      "type": "object",
+      "properties": {
+        "drivable_area_right_bound_offset": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Right bound offset for drivable area expansion."
+        },
+        "drivable_area_left_bound_offset": {
+          "type": "number",
+          "default": 0.0,
+          "description": "Left bound offset for drivable area expansion."
+        },
+        "drivable_area_types_to_skip": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": ["road_border"],
+          "description": "Types of drivable areas to skip during expansion."
+        },
+        "dynamic_expansion": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true,
+              "description": "Enable dynamic expansion using path curvature."
+            },
+            "print_runtime": {
+              "type": "boolean",
+              "default": false,
+              "description": "Print runtime information for dynamic expansion."
+            },
+            "max_expansion_distance": {
+              "type": "number",
+              "default": 0.0,
+              "description": "Maximum distance for dynamic expansion (0.0 means no limit)."
+            },
+            "smoothing": {
+              "type": "object",
+              "properties": {
+                "curvature_average_window": {
+                  "type": "number",
+                  "default": 3,
+                  "description": "Window size for smoothing curvatures using a moving window average."
+                },
+                "max_bound_rate": {
+                  "type": "number",
+                  "default": 1.0,
+                  "description": "Maximum rate of change of the bound lateral distance over its arc length [m/m]."
+                },
+                "arc_length_range": {
+                  "type": "number",
+                  "default": 2.0,
+                  "description": "Arc length range where an expansion distance is initially applied [m]."
+                }
+              },
+              "required": [
+                "curvature_average_window",
+                "max_bound_rate",
+                "arc_length_range"
+              ]
+            },
+            "ego": {
+              "type": "object",
+              "properties": {
+                "extra_wheelbase": {
+                  "type": "number",
+                  "default": 0.0,
+                  "description": "Extra length to add to the wheelbase [m]."
+                },
+                "extra_front_overhang": {
+                  "type": "number",
+                  "default": 0.5,
+                  "description": "Extra length to add to the front overhang [m]."
+                },
+                "extra_width": {
+                  "type": "number",
+                  "default": 1.0,
+                  "description": "Extra width to add to the vehicle [m]."
+                }
+              },
+              "required": [
+                "extra_wheelbase",
+                "extra_front_overhang",
+                "extra_width"
+              ]
+            },
+            "dynamic_objects": {
+              "type": "object",
+              "properties": {
+                "avoid": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Avoid expanding the drivable area in the predicted path of dynamic objects."
+                },
+                "extra_footprint_offset": {
+                  "type": "object",
+                  "properties": {
+                    "front": {
+                      "type": "number",
+                      "default": 0.5,
+                      "description": "Extra length to add to the front of the dynamic object footprint [m]."
+                    },
+                    "rear": {
+                      "type": "number",
+                      "default": 0.5,
+                      "description": "Extra length to add to the rear of the dynamic object footprint [m]."
+                    },
+                    "left": {
+                      "type": "number",
+                      "default": 0.5,
+                      "description": "Extra length to add to the left of the dynamic object footprint [m]."
+                    },
+                    "right": {
+                      "type": "number",
+                      "default": 0.5,
+                      "description": "Extra length to add to the right of the dynamic object footprint [m]."
+                    }
+                  },
+                  "required": [
+                    "front",
+                    "rear",
+                    "left",
+                    "right"
+                  ]
+                }
+              },
+              "required": [
+                "avoid",
+                "extra_footprint_offset"
+              ]
+            },
+            "path_preprocessing": {
+              "type": "object",
+              "properties": {
+                "max_arc_length": {
+                  "type": "number",
+                  "default": 50.0,
+                  "description": "Maximum arc length along the path where the ego footprint is projected [m]."
+                },
+                "resample_interval": {
+                  "type": "number",
+                  "default": 2.0,
+                  "description": "Fixed interval between resampled path points [m]."
+                },
+                "reuse_max_deviation": {
+                  "type": "number",
+                  "default": 0.5,
+                  "description": "Maximum deviation value to trigger recalculation of curvatures [m]."
+                }
+              },
+              "required": [
+                "max_arc_length",
+                "resample_interval",
+                "reuse_max_deviation"
+              ]
+            },
+            "avoid_linestring": {
+              "type": "object",
+              "properties": {
+                "types": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": ["road_border"],
+                  "description": "Linestring types in the lanelet maps to avoid crossing."
+                },
+                "distance": {
+                  "type": "number",
+                  "default": 0.0,
+                  "description": "Distance to keep between the drivable area and the linestrings to avoid [m]."
+                }
+              },
+              "required": [
+                "types",
+                "distance"
+              ]
+            }
+          },
+          "required": [
+            "enabled",
+            "print_runtime",
+            "max_expansion_distance",
+            "smoothing",
+            "ego",
+            "dynamic_objects",
+            "path_preprocessing",
+            "avoid_linestring"
+          ]
+        }
+      },
+      "required": [
+        "drivable_area_right_bound_offset",
+        "drivable_area_left_bound_offset",
+        "drivable_area_types_to_skip",
+        "dynamic_expansion"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/drivable_area_expansion"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}

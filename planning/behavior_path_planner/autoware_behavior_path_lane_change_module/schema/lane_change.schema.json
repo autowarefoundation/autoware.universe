@@ -1,0 +1,420 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Parameters for lane change module",
+    "type": "object",
+    "definitions": {
+      "lane_change_module": {
+        "type": "object",
+        "properties": {
+          "backward_lane_length": {
+            "type": "number",
+            "default": 200.0,
+            "description": "Length to check backward for lane change [m]."
+          },
+          "prepare_duration": {
+            "type": "number",
+            "default": 4.0,
+            "description": "Duration to prepare for lane change [s]."
+          },
+          "backward_length_buffer_for_end_of_lane": {
+            "type": "number",
+            "default": 3.0,
+            "description": "Buffer length for end of lane during backward checking [m]."
+          },
+          "backward_length_buffer_for_blocking_object": {
+            "type": "number",
+            "default": 3.0,
+            "description": "Buffer length for blocking object during backward checking [m]."
+          },
+          "lane_change_finish_judge_buffer": {
+            "type": "number",
+            "default": 2.0,
+            "description": "Buffer length to judge lane change finish [m]."
+          },
+          "lane_changing_lateral_jerk": {
+            "type": "number",
+            "default": 0.5,
+            "description": "Lateral jerk allowed during lane changing [m/s3]."
+          },
+          "minimum_lane_changing_velocity": {
+            "type": "number",
+            "default": 2.78,
+            "description": "Minimum velocity required for lane changing [m/s]."
+          },
+          "prediction_time_resolution": {
+            "type": "number",
+            "default": 0.5,
+            "description": "Time resolution for predictions during lane change [s]."
+          },
+          "longitudinal_acceleration_sampling_num": {
+            "type": "integer",
+            "default": 5,
+            "description": "Number of longitudinal acceleration samples."
+          },
+          "lateral_acceleration_sampling_num": {
+            "type": "integer",
+            "default": 3,
+            "description": "Number of lateral acceleration samples."
+          },
+          "object_check_min_road_shoulder_width": {
+            "type": "number",
+            "default": 0.5,
+            "description": "Minimum road shoulder width for object checking [m]."
+          },
+          "object_shiftable_ratio_threshold": {
+            "type": "number",
+            "default": 0.6,
+            "description": "Threshold ratio for shiftable objects."
+          },
+          "min_length_for_turn_signal_activation": {
+            "type": "number",
+            "default": 10.0,
+            "description": "Minimum length for turn signal activation [m]."
+          },
+          "length_ratio_for_turn_signal_deactivation": {
+            "type": "number",
+            "default": 0.8,
+            "description": "Ratio for deactivating turn signal based on desired end position."
+          },
+          "min_longitudinal_acc": {
+            "type": "number",
+            "default": -1.0,
+            "description": "Minimum longitudinal acceleration allowed [m/ss]."
+          },
+          "max_longitudinal_acc": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Maximum longitudinal acceleration allowed [m/ss]."
+          },
+          "safety_check": {
+            "type": "object",
+            "properties": {
+              "allow_loose_check_for_cancel": {
+                "type": "boolean",
+                "default": true,
+                "description": "Allow loose check conditions for canceling lane change."
+              },
+              "collision_check_yaw_diff_threshold": {
+                "type": "number",
+                "default": 3.1416,
+                "description": "Yaw difference threshold for collision checks [rad]."
+              },
+              "execution": {
+                "type": "object",
+                "properties": {
+                  "expected_front_deceleration": {
+                    "type": "number",
+                    "default": -1.0,
+                    "description": "Expected front deceleration for safety checks [m/s2]."
+                  },
+                  "expected_rear_deceleration": {
+                    "type": "number",
+                    "default": -1.0,
+                    "description": "Expected rear deceleration for safety checks [m/s2]."
+                  },
+                  "rear_vehicle_reaction_time": {
+                    "type": "number",
+                    "default": 2.0,
+                    "description": "Reaction time of rear vehicle for safety checks [s]."
+                  },
+                  "rear_vehicle_safety_time_margin": {
+                    "type": "number",
+                    "default": 1.0,
+                    "description": "Safety time margin for rear vehicle safety checks [s]."
+                  },
+                  "lateral_distance_max_threshold": {
+                    "type": "number",
+                    "default": 2.0,
+                    "description": "Maximum lateral distance threshold for safety checks [m]."
+                  },
+                  "longitudinal_distance_min_threshold": {
+                    "type": "number",
+                    "default": 3.0,
+                    "description": "Minimum longitudinal distance threshold for safety checks [m]."
+                  },
+                  "longitudinal_velocity_delta_time": {
+                    "type": "number",
+                    "default": 0.8,
+                    "description": "Time delta for longitudinal velocity in safety checks [s]."
+                  }
+                }
+              },
+              "cancel": {
+                "type": "object",
+                "properties": {
+                  "expected_front_deceleration": {
+                    "type": "number",
+                    "default": -1.0,
+                    "description": "Expected front deceleration for canceling lane change [m/s2]."
+                  },
+                  "expected_rear_deceleration": {
+                    "type": "number",
+                    "default": -2.0,
+                    "description": "Expected rear deceleration for canceling lane change [m/s2]."
+                  },
+                  "rear_vehicle_reaction_time": {
+                    "type": "number",
+                    "default": 1.5,
+                    "description": "Reaction time of rear vehicle for canceling lane change [s]."
+                  },
+                  "rear_vehicle_safety_time_margin": {
+                    "type": "number",
+                    "default": 0.8,
+                    "description": "Safety time margin for rear vehicle canceling lane change [s]."
+                  },
+                  "lateral_distance_max_threshold": {
+                    "type": "number",
+                    "default": 1.0,
+                    "description": "Maximum lateral distance threshold for canceling lane change [m]."
+                  },
+                  "longitudinal_distance_min_threshold": {
+                    "type": "number",
+                    "default": 2.5,
+                    "description": "Minimum longitudinal distance threshold for canceling lane change [m]."
+                  },
+                  "longitudinal_velocity_delta_time": {
+                    "type": "number",
+                    "default": 0.6,
+                    "description": "Time delta for longitudinal velocity in canceling lane change [s]."
+                  }
+                }
+              },
+              "stuck": {
+                "type": "object",
+                "properties": {
+                  "expected_front_deceleration": {
+                    "type": "number",
+                    "default": -1.0,
+                    "description": "Expected front deceleration for stuck vehicle checks [m/s2]."
+                  },
+                  "expected_rear_deceleration": {
+                    "type": "number",
+                    "default": -1.0,
+                    "description": "Expected rear deceleration for stuck vehicle checks [m/s2]."
+                  },
+                  "rear_vehicle_reaction_time": {
+                    "type": "number",
+                    "default": 2.0,
+                    "description": "Reaction time of rear vehicle for stuck vehicle checks [s]."
+                  },
+                  "rear_vehicle_safety_time_margin": {
+                    "type": "number",
+                    "default": 1.0,
+                    "description": "Safety time margin for rear vehicle stuck vehicle checks [s]."
+                  },
+                  "lateral_distance_max_threshold": {
+                    "type": "number",
+                    "default": 2.0,
+                    "description": "Maximum lateral distance threshold for stuck vehicle checks [m]."
+                  },
+                  "longitudinal_distance_min_threshold": {
+                    "type": "number",
+                    "default": 3.0,
+                    "description": "Minimum longitudinal distance threshold for stuck vehicle checks [m]."
+                  },
+                  "longitudinal_velocity_delta_time": {
+                    "type": "number",
+                    "default": 0.8,
+                    "description": "Time delta for longitudinal velocity in stuck vehicle checks [s]."
+                  }
+                }
+              },
+              "lane_expansion": {
+                "type": "object",
+                "properties": {
+                  "left_offset": {
+                    "type": "number",
+                    "default": 0.0,
+                    "description": "Left offset for lane expansion for object filtering [m]."
+                  },
+                  "right_offset": {
+                    "type": "number",
+                    "default": 0.0,
+                    "description": "Right offset for lane expansion for object filtering [m]."
+                  }
+                }
+              }
+            }
+          },
+          "lateral_acceleration": {
+            "type": "object",
+            "properties": {
+              "velocity": {
+                "type": "array",
+                "items": { "type": "number" },
+                "default": [0.0, 4.0, 10.0],
+                "description": "Velocity values for different lateral acceleration [m/s]."
+            },
+            "min_values": {
+              "type": "array",
+              "items": { "type": "number" },
+              "default": [0.15, 0.15, 0.15],
+              "description": "Minimum lateral acceleration values for different velocities [m/s2]."
+            },
+            "max_values": {
+              "type": "array",
+              "items": { "type": "number" },
+              "default": [0.5, 0.5, 0.5],
+              "description": "Maximum lateral acceleration values for different velocities [m/s2]."
+            }
+          }
+        },
+        "target_object": {
+          "type": "object",
+          "properties": {
+            "car": { "type": "boolean", "default": true },
+            "truck": { "type": "boolean", "default": true },
+            "bus": { "type": "boolean", "default": true },
+            "trailer": { "type": "boolean", "default": true },
+            "unknown": { "type": "boolean", "default": true },
+            "bicycle": { "type": "boolean", "default": true },
+            "motorcycle": { "type": "boolean", "default": true },
+            "pedestrian": { "type": "boolean", "default": true }
+          },
+          "description": "Target object types for lane change."
+        },
+        "regulation": {
+          "type": "object",
+          "properties": {
+            "crosswalk": { "type": "boolean", "default": false },
+            "intersection": { "type": "boolean", "default": false },
+            "traffic_light": { "type": "boolean", "default": true }
+          },
+          "description": "Regulations for lane change at specific scenarios."
+        },
+        "stuck_detection": {
+          "type": "object",
+          "properties": {
+            "velocity": {
+              "type": "number",
+              "default": 0.1,
+              "description": "Velocity threshold for detecting stuck ego vehicle [m/s]."
+            },
+            "stop_time": {
+              "type": "number",
+              "default": 3.0,
+              "description": "Time threshold for considering ego vehicle as stopped [s]."
+            }
+          },
+          "description": "Parameters for detecting stuck ego vehicle during lane change."
+        },
+        "enable_collision_check_for_prepare_phase": {
+          "type": "object",
+          "properties": {
+            "general_lanes": { "type": "boolean", "default": false },
+            "intersection": { "type": "boolean", "default": true },
+            "turns": { "type": "boolean", "default": true }
+          },
+          "description": "Enable collision check for different phases during lane change."
+        },
+        "prepare_segment_ignore_object_velocity_thresh": {
+          "type": "number",
+          "default": 0.1,
+          "description": "Velocity threshold for ignoring objects in prepare segment [m/s]."
+        },
+        "check_objects_on_current_lanes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to check objects on current lanes during lane change."
+        },
+        "check_objects_on_other_lanes": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to check objects on other lanes during lane change."
+        },
+        "use_all_predicted_path": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to use all predicted paths during lane change."
+        },
+        "cancel": {
+          "type": "object",
+          "properties": {
+            "enable_on_prepare_phase": { "type": "boolean", "default": true },
+            "enable_on_lane_changing_phase": { "type": "boolean", "default": true },
+            "delta_time": {
+              "type": "number",
+              "default": 1.0,
+              "description": "Time duration for cancelling lane change [s]."
+            },
+            "duration": {
+              "type": "number",
+              "default": 5.0,
+              "description": "Duration for cancelling lane change [s]."
+            },
+            "max_lateral_jerk": {
+              "type": "number",
+              "default": 1000.0,
+              "description": "Maximum lateral jerk allowed for cancelling lane change [m/s3]."
+            },
+            "overhang_tolerance": {
+              "type": "number",
+              "default": 0.0,
+              "description": "Tolerance for overhang during lane change cancellation [m]."
+            },
+            "unsafe_hysteresis_threshold": {
+              "type": "number",
+              "default": 10,
+              "description": "Threshold for unsafe hysteresis during lane change cancellation."
+            }
+          },
+          "description": "Parameters for cancelling lane change."
+        },
+        "finish_judge_lateral_threshold": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Lateral threshold for judging lane change finish [m]."
+        },
+        "publish_debug_marker": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to publish debug markers during lane change."
+        }
+      },
+      "required": [
+        "backward_lane_length",
+        "prepare_duration",
+        "backward_length_buffer_for_end_of_lane",
+        "backward_length_buffer_for_blocking_object",
+        "lane_change_finish_judge_buffer",
+        "lane_changing_lateral_jerk",
+        "minimum_lane_changing_velocity",
+        "prediction_time_resolution",
+        "longitudinal_acceleration_sampling_num",
+        "lateral_acceleration_sampling_num",
+        "object_check_min_road_shoulder_width",
+        "object_shiftable_ratio_threshold",
+        "min_length_for_turn_signal_activation",
+        "length_ratio_for_turn_signal_deactivation",
+        "min_longitudinal_acc",
+        "max_longitudinal_acc",
+        "safety_check",
+        "lateral_acceleration",
+        "target_object",
+        "regulation",
+        "stuck_detection",
+        "enable_collision_check_for_prepare_phase",
+        "prepare_segment_ignore_object_velocity_thresh",
+        "check_objects_on_current_lanes",
+        "check_objects_on_other_lanes",
+        "use_all_predicted_path",
+        "cancel",
+        "finish_judge_lateral_threshold",
+        "publish_debug_marker"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/lane_change_module"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
+  

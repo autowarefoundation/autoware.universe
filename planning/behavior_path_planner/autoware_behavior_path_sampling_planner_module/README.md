@@ -76,3 +76,7 @@ Some possible improvements for this module include:
 ## Other possibilities
 
 The module is currently aimed at creating paths for static obstacle avoidance. However, the nature of sampling planner allows this module to be expanded or repurposed to other tasks such as lane changes, dynamic avoidance and general reaching of a goal. It is possible, with a good dynamic/scenario dependant weight tuning to use the sampling planning approach as a replacement for the other behavior path modules, assuming good candidate pruning and good soft constraints weight tuning.
+
+## Parameters
+
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_sampling_planner_module/schema/sampling_planner.schema.json") }}

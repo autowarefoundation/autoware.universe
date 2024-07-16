@@ -33,8 +33,4 @@ Although setting the parameter to `false` would increase the scene of avoidance 
 
 ## Parameters
 
-| Name                                               | Unit | Type   | Description                                                                                                                              | Default value |
-| :------------------------------------------------- | ---- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| execute_object_num                                 | [-]  | int    | Number of avoidance target objects on ego driving lane is greater than this value, this module will be launched.                         | 1             |
-| execute_object_longitudinal_margin                 | [m]  | double | [maybe unused] Only when distance between the ego and avoidance target object is longer than this value, this module will be launched.   | 0.0           |
-| execute_only_when_lane_change_finish_before_object | [-]  | bool   | If this flag set `true`, this module will be launched only when the lane change end point is **NOT** behind the avoidance target object. | true          |
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_avoidance_by_lane_change_module/schema/avoidance_by_lane_change.schema.json") }}
