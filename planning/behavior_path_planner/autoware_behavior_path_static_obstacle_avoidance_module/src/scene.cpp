@@ -1402,6 +1402,7 @@ void StaticObstacleAvoidanceModule::updateRTCData()
 
 void StaticObstacleAvoidanceModule::updateInfoMarker(const AvoidancePlanningData & data) const
 {
+  using utils::static_obstacle_avoidance::createAmbiguousObjectsMarkerArray;
   using utils::static_obstacle_avoidance::createStopTargetObjectMarkerArray;
   using utils::static_obstacle_avoidance::createTargetObjectsMarkerArray;
 
@@ -1409,6 +1410,10 @@ void StaticObstacleAvoidanceModule::updateInfoMarker(const AvoidancePlanningData
   appendMarkerArray(
     createTargetObjectsMarkerArray(data.target_objects, "target_objects"), &info_marker_);
   appendMarkerArray(createStopTargetObjectMarkerArray(data), &info_marker_);
+  appendMarkerArray(
+    createAmbiguousObjectsMarkerArray(
+      data.target_objects, getEgoPose(), parameters_->policy_ambiguous_vehicle),
+    &info_marker_);
 }
 
 void StaticObstacleAvoidanceModule::updateDebugMarker(
