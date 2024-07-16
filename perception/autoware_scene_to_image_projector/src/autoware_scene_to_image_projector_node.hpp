@@ -88,8 +88,8 @@ private:
   std::shared_ptr<autoware_planning_msgs::msg::Path> latest_path_;
   bool latest_path_received_ = false;
 
-  tf2_ros::Buffer tf_buffer_{this->get_clock()};
-  tf2_ros::TransformListener tf_listener_{tf_buffer_};
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
 
   bool show_pedestrian = true;
   bool show_bicycle = true;
@@ -119,6 +119,8 @@ private:
 
   bool projectable(
     const geometry_msgs::msg::Point & point, const Eigen::Matrix4d & projection_matrix);
+  
+  bool should_skip_object(const int label);
 };
 
 }  // namespace autoware::scene_to_image_projector
