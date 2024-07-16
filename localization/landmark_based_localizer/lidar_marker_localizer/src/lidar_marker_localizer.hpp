@@ -15,12 +15,12 @@
 #ifndef LIDAR_MARKER_LOCALIZER_HPP_
 #define LIDAR_MARKER_LOCALIZER_HPP_
 
-#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include "diagnostics/diagnostics_module.hpp"
 #include "localization_util/smart_pose_buffer.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
