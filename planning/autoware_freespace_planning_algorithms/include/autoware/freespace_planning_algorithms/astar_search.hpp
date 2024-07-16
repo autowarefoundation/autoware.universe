@@ -125,7 +125,6 @@ private:
   void resetData();
   void setPath(const AstarNode & goal);
   bool setStartNode();
-  bool setGoalNode();
   double estimateCost(const Pose & pose, const IndexXYT & index) const;
   bool isGoal(const AstarNode & node) const;
   Pose node2pose(const AstarNode & node) const;
