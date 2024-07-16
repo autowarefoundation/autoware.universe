@@ -287,4 +287,3 @@ preset
 {{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_planner/schema/behavior_path_planner.schema.json") }}
 {{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_planner/schema/drivable_area_expansion.schema.json") }}
 {{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_planner/schema/scene_module_manager.schema.json") }}
-
