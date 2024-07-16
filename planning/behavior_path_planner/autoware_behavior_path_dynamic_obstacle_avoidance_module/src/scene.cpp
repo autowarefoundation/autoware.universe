@@ -17,7 +17,6 @@
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "autoware/universe_utils/system/time_keeper.hpp"
 #include "object_recognition_utils/predicted_path_utils.hpp"
 #include "signal_processing/lowpass_filter_1d.hpp"
 
@@ -332,14 +331,12 @@ DynamicObstacleAvoidanceModule::DynamicObstacleAvoidanceModule(
   std::shared_ptr<DynamicAvoidanceParameters> parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map,
-  std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
+    objects_of_interest_marker_interface_ptr_map)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{std::move(parameters)},
   target_objects_manager_{TargetObjectsManager(
     parameters_->successive_num_to_entry_dynamic_avoidance_condition,
-    parameters_->successive_num_to_exit_dynamic_avoidance_condition)},
-  time_keeper_(time_keeper)
+    parameters_->successive_num_to_exit_dynamic_avoidance_condition)}
 {
 }
 

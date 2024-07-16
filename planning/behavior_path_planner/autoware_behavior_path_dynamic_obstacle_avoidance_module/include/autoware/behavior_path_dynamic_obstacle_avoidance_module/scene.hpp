@@ -16,7 +16,6 @@
 #define AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware/universe_utils/system/time_keeper.hpp"
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -344,8 +343,7 @@ public:
     std::shared_ptr<DynamicAvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map,
-    std::shared_ptr<universe_utils::TimeKeeper> time_keeper);
+      objects_of_interest_marker_interface_ptr_map);
 
   void updateModuleParams(const std::any & parameters) override
   {
@@ -456,8 +454,6 @@ private:
   std::shared_ptr<DynamicAvoidanceParameters> parameters_;
 
   TargetObjectsManager target_objects_manager_;
-
-  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 };
 }  // namespace autoware::behavior_path_planner
 
