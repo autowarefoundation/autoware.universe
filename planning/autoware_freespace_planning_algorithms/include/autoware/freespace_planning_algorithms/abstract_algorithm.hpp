@@ -204,7 +204,6 @@ protected:
   template <typename IndexType>
   inline double getObstacleEDT(const IndexType & index) const
   {
-    if (edt_map_.empty()) return std::numeric_limits<double>::max();
     return edt_map_[indexToId(index)];
   }
 
