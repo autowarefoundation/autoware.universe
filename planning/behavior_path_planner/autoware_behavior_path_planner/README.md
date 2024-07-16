@@ -281,3 +281,10 @@ preset
 
 1. Goal Planner module cannot be simultaneously executed together with other modules.
 2. Module is not designed as plugin. Integrating custom module is not straightforward and user have to modify some part of the behavior path planner main code.
+
+## Appendix: All Parameters
+
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_planner/schema/behavior_path_planner.schema.json") }}
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_planner/schema/drivable_area_expansion.schema.json") }}
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_planner/schema/scene_module_manager.schema.json") }}
+

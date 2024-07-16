@@ -868,3 +868,7 @@ Available information
 3. Object is safe or not, shown by the color of the polygon (Green = Safe, Red = unsafe)
 4. Valid candidate paths.
 5. Position when lane changing start and end.
+
+## Appendix: All Parameters
+
+{{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_lane_change_module/schema/lane_change.schema.json") }}
