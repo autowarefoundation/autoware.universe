@@ -322,12 +322,19 @@ dc   | dc dc dc  dc ||zc|
     int stride = p_step * i;
     unsigned char * data = &painted_pointcloud_msg.data[0];
     unsigned char * output = &painted_pointcloud_msg.data[0];
+<<<<<<< HEAD
     // cppcheck-suppress invalidPointerCast
     float p_x = *reinterpret_cast<const float *>(&data[stride + x_offset]);
     // cppcheck-suppress invalidPointerCast
     float p_y = *reinterpret_cast<const float *>(&data[stride + y_offset]);
     // cppcheck-suppress invalidPointerCast
+=======
+    //cppcheck-suppress-begin invalidPointerCast
+    float p_x = *reinterpret_cast<const float *>(&data[stride + x_offset]);
+    float p_y = *reinterpret_cast<const float *>(&data[stride + y_offset]);
+>>>>>>> cae564e6f (fix invalidPointerCast)
     float p_z = *reinterpret_cast<const float *>(&data[stride + z_offset]);
+    //cppcheck-suppress-end invalidPointerCast
     point_lidar << p_x, p_y, p_z;
     point_camera = lidar2cam_affine * point_lidar;
     p_x = point_camera.x();
