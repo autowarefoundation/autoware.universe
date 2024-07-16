@@ -274,7 +274,8 @@ std::map<std::string, Lanelet2FileMetaData> Lanelet2MapLoaderNode::get_lanelet2_
 {
   std::map<std::string, Lanelet2FileMetaData> lanelet2_metadata_dict;
   if (std::filesystem::exists(lanelet2_metadata_path)) {
-    lanelet2_metadata_dict = loadLanelet2Metadata(lanelet2_metadata_path, x_resolution, y_resolution);
+    lanelet2_metadata_dict =
+      loadLanelet2Metadata(lanelet2_metadata_path, x_resolution, y_resolution);
     lanelet2_metadata_dict = replaceWithAbsolutePath(lanelet2_metadata_dict, lanelet2_paths);
     RCLCPP_INFO_STREAM(get_logger(), "Loaded Lanelet2 metadata: " << lanelet2_metadata_path);
 
@@ -284,7 +285,8 @@ std::map<std::string, Lanelet2FileMetaData> Lanelet2MapLoaderNode::get_lanelet2_
   if (lanelet2_paths.size() == 1) {
     // TODO: create a dummy metadata file for single osm file.
     throw std::runtime_error(
-        "Differential lanelet2 loading enabled but single lanelet2 file provided: " + lanelet2_metadata_path);
+      "Differential lanelet2 loading enabled but single lanelet2 file provided: " +
+      lanelet2_metadata_path);
   }
   throw std::runtime_error("Lanelet2 metadata file not found: " + lanelet2_metadata_path);
 }
