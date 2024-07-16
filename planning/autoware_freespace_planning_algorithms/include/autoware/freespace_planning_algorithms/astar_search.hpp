@@ -130,8 +130,7 @@ private:
   void expandNodes(AstarNode & current_node, const bool is_back = false);
   void resetData();
   void setPath(const AstarNode & goal);
-  bool setStartNode();
-  bool setGoalNode();
+  void setStartNode();
   double estimateCost(const Pose & pose, const IndexXYT & index) const;
   bool isGoal(const AstarNode & node) const;
   Pose node2pose(const AstarNode & node) const;
