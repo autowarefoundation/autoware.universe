@@ -2,13 +2,7 @@
 
 checkersReport
 constParameterReference
-constVariable
 constVariableReference
-containerOutOfBounds
-// cspell: ignore cstyle
-cstyleCast
-duplicateBranch
-duplicateBreak
 funcArgNamesDifferent
 functionConst
 functionStatic
@@ -17,14 +11,9 @@ knownConditionTrueFalse
 missingInclude
 missingIncludeSystem
 noConstructor
-noExplicitConstructor
-noValidConfiguration
 passedByValue
-preprocessorErrorDirective
 redundantInitialization
-shadowFunction
 shadowVariable
-syntaxError
 // cspell: ignore uninit
 uninitMemberVar
 unknownMacro
@@ -32,9 +21,7 @@ unmatchedSuppression
 unreadVariable
 unusedFunction
 unusedStructMember
-unusedVariable
 useInitializationList
 useStlAlgorithm
-uselessOverride
 variableScope
 virtualCallInConstructor

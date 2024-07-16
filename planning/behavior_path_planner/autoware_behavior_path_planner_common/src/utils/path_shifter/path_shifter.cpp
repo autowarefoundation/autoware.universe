@@ -17,8 +17,8 @@
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <interpolation/spline_interpolation.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <string>
 #include <utility>
@@ -194,7 +194,7 @@ void PathShifter::applyLinearShifter(ShiftedPath * shifted_path) const
       double ith_shift_length = 0.0;
       if (i < shift_line.start_idx) {
         ith_shift_length = 0.0;
-      } else if (shift_line.start_idx <= i && i <= shift_line.end_idx) {
+      } else if (i <= shift_line.end_idx) {
         auto dist_from_start = arclength_arr.at(i) - arclength_arr.at(shift_line.start_idx);
         ith_shift_length = (dist_from_start / shifting_arclength) * delta_shift;
       } else {

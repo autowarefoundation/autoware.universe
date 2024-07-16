@@ -15,9 +15,9 @@
 #include "traffic_light_occlusion_predictor/nodelet.hpp"
 
 #include <autoware/universe_utils/system/stop_watch.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/Exceptions.h>
@@ -129,10 +129,10 @@ void TrafficLightOcclusionPredictorNodelet::syncCallback(
   const uint8_t traffic_light_type)
 {
   std::vector<int> occlusion_ratios;
-  size_t not_detected_roi = 0;
   if (in_cloud_msg == nullptr || in_cam_info_msg == nullptr || in_roi_msg == nullptr) {
     occlusion_ratios.resize(in_signal_msg->signals.size(), 0);
   } else {
+    size_t not_detected_roi = 0;
     tier4_perception_msgs::msg::TrafficLightRoiArray selected_roi_msg;
     selected_roi_msg.rois.reserve(in_roi_msg->rois.size());
     for (size_t i = 0; i < in_roi_msg->rois.size(); ++i) {

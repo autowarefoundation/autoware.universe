@@ -17,7 +17,7 @@
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
 
 #include <string>
@@ -64,7 +64,7 @@ MarkerArray createObjectsCubeMarkerArray(
     }
 
     marker.id = uuidToInt32(object.object.object_id);
-    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+    marker.pose = object.getPose();
     msg.markers.push_back(marker);
   }
 
@@ -80,10 +80,8 @@ MarkerArray createObjectPolygonMarkerArray(const ObjectDataArray & objects, std:
       "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::LINE_STRIP,
       createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
 
-    const auto pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
-
     for (const auto & p : object.envelope_poly.outer()) {
-      marker.points.push_back(createPoint(p.x(), p.y(), pos.z));
+      marker.points.push_back(createPoint(p.x(), p.y(), object.getPosition().z));
     }
 
     marker.points.push_back(marker.points.front());
@@ -142,7 +140,7 @@ MarkerArray createObjectInfoMarkerArray(
   for (const auto & object : objects) {
     if (verbose) {
       marker.id = uuidToInt32(object.object.object_id);
-      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      marker.pose = object.getPose();
       std::ostringstream string_stream;
       string_stream << std::fixed << std::setprecision(2) << std::boolalpha;
       string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
@@ -162,7 +160,7 @@ MarkerArray createObjectInfoMarkerArray(
 
     {
       marker.id = uuidToInt32(object.object.object_id);
-      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      marker.pose = object.getPose();
       marker.pose.position.z += 2.0;
       std::ostringstream string_stream;
       string_stream << magic_enum::enum_name(object.info) << (object.is_parked ? "(PARKED)" : "");
@@ -458,12 +456,100 @@ MarkerArray createOtherObjectsMarkerArray(
   appendMarkerArray(
     createObjectsCubeMarkerArray(
       filtered_objects, "others_" + ns + "_cube", createMarkerScale(3.0, 1.5, 1.5),
-      createMarkerColor(0.0, 1.0, 0.0, 0.8)),
+      createMarkerColor(0.5, 0.5, 0.5, 0.8)),
     &msg);
   appendMarkerArray(
     createObjectInfoMarkerArray(filtered_objects, "others_" + ns + "_info", verbose), &msg);
   appendMarkerArray(
     createOverhangLaneletMarkerArray(filtered_objects, "others_" + ns + "_overhang_lanelet"), &msg);
+
+  return msg;
+}
+
+MarkerArray createAmbiguousObjectsMarkerArray(
+  const ObjectDataArray & objects, const Pose & ego_pose, const std::string & policy)
+{
+  MarkerArray msg;
+
+  if (policy != "manual") {
+    return msg;
+  }
+
+  for (const auto & object : objects) {
+    if (!object.is_ambiguous || !object.is_avoidable) {
+      continue;
+    }
+
+    {
+      auto marker = createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "ambiguous_target", 0L, Marker::ARROW,
+        createMarkerScale(0.5, 1.0, 1.0), createMarkerColor(1.0, 1.0, 0.0, 0.999));
+
+      Point src, dst;
+      src = object.getPosition();
+      src.z += 4.0;
+      dst = object.getPosition();
+      dst.z += 2.0;
+
+      marker.points.push_back(src);
+      marker.points.push_back(dst);
+      marker.id = uuidToInt32(object.object.object_id);
+
+      msg.markers.push_back(marker);
+    }
+
+    {
+      auto marker = createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "ambiguous_target_text", 0L,
+        Marker::TEXT_VIEW_FACING, createMarkerScale(0.5, 0.5, 0.5),
+        createMarkerColor(1.0, 1.0, 0.0, 1.0));
+
+      marker.id = uuidToInt32(object.object.object_id);
+      marker.pose = object.getPose();
+      marker.pose.position.z += 4.5;
+      std::ostringstream string_stream;
+      string_stream << "SHOULD AVOID?";
+      marker.text = string_stream.str();
+      marker.color = createMarkerColor(1.0, 1.0, 0.0, 0.999);
+      marker.scale = createMarkerScale(0.8, 0.8, 0.8);
+      msg.markers.push_back(marker);
+    }
+
+    {
+      auto marker = createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "request_text", 0L, Marker::TEXT_VIEW_FACING,
+        createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 0.0, 1.0));
+
+      marker.id = uuidToInt32(object.object.object_id);
+      marker.pose = ego_pose;
+      marker.pose.position.z += 2.0;
+      std::ostringstream string_stream;
+      string_stream << "SYSTEM REQUESTS OPERATOR SUPPORT.";
+      marker.text = string_stream.str();
+      marker.color = createMarkerColor(1.0, 1.0, 0.0, 0.999);
+      marker.scale = createMarkerScale(0.8, 0.8, 0.8);
+      msg.markers.push_back(marker);
+    }
+
+    return msg;
+  }
+
+  return msg;
+}
+
+MarkerArray createStopTargetObjectMarkerArray(const AvoidancePlanningData & data)
+{
+  MarkerArray msg;
+
+  if (!data.stop_target_object.has_value()) {
+    return msg;
+  }
+
+  appendMarkerArray(
+    createObjectsCubeMarkerArray(
+      {data.stop_target_object.value()}, "stop_target", createMarkerScale(3.4, 1.9, 1.9),
+      createMarkerColor(1.0, 0.0, 0.42, 0.5)),
+    &msg);
 
   return msg;
 }

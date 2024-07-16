@@ -130,12 +130,12 @@ std::vector<tensorrt_yolox::Colormap> get_seg_colormap(const std::string & filen
       cmap.name = name;
       colormapString.erase(0, npos + 1);
       while (!colormapString.empty()) {
-        size_t npos = colormapString.find_first_of(',');
-        if (npos != std::string::npos) {
-          substr = colormapString.substr(0, npos);
+        size_t inner_npos = colormapString.find_first_of(',');
+        if (inner_npos != std::string::npos) {
+          substr = colormapString.substr(0, inner_npos);
           unsigned char c = (unsigned char)std::stoi(trim(substr));
           cmap.color.push_back(c);
-          colormapString.erase(0, npos + 1);
+          colormapString.erase(0, inner_npos + 1);
         } else {
           unsigned char c = (unsigned char)std::stoi(trim(colormapString));
           cmap.color.push_back(c);
@@ -508,29 +508,16 @@ void TrtYoloX::preprocess(const std::vector<cv::Mat> & images)
   const float input_width = static_cast<float>(input_dims.d[3]);
   std::vector<cv::Mat> dst_images;
   scales_.clear();
-  bool letterbox = true;
-  if (letterbox) {
-    for (const auto & image : images) {
-      cv::Mat dst_image;
-      const float scale = std::min(input_width / image.cols, input_height / image.rows);
-      scales_.emplace_back(scale);
-      const auto scale_size = cv::Size(image.cols * scale, image.rows * scale);
-      cv::resize(image, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
-      const auto bottom = input_height - dst_image.rows;
-      const auto right = input_width - dst_image.cols;
-      copyMakeBorder(
-        dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
-      dst_images.emplace_back(dst_image);
-    }
-  } else {
-    for (const auto & image : images) {
-      cv::Mat dst_image;
-      const float scale = -1.0;
-      scales_.emplace_back(scale);
-      const auto scale_size = cv::Size(input_width, input_height);
-      cv::resize(image, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
-      dst_images.emplace_back(dst_image);
-    }
+  for (const auto & image : images) {
+    cv::Mat dst_image;
+    const float scale = std::min(input_width / image.cols, input_height / image.rows);
+    scales_.emplace_back(scale);
+    const auto scale_size = cv::Size(image.cols * scale, image.rows * scale);
+    cv::resize(image, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
+    const auto bottom = input_height - dst_image.rows;
+    const auto right = input_width - dst_image.cols;
+    copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
+    dst_images.emplace_back(dst_image);
   }
   const auto chw_images = cv::dnn::blobFromImages(
     dst_images, norm_factor_, cv::Size(), cv::Scalar(), false, false, CV_32F);
@@ -650,34 +637,21 @@ void TrtYoloX::preprocessWithRoi(
   const float input_width = static_cast<float>(input_dims.d[3]);
   std::vector<cv::Mat> dst_images;
   scales_.clear();
-  bool letterbox = true;
   int b = 0;
-  if (letterbox) {
-    for (const auto & image : images) {
-      cv::Mat dst_image;
-      cv::Mat cropped = image(rois[b]);
-      const float scale = std::min(
-        input_width / static_cast<float>(rois[b].width),
-        input_height / static_cast<float>(rois[b].height));
-      scales_.emplace_back(scale);
-      const auto scale_size = cv::Size(rois[b].width * scale, rois[b].height * scale);
-      cv::resize(cropped, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
-      const auto bottom = input_height - dst_image.rows;
-      const auto right = input_width - dst_image.cols;
-      copyMakeBorder(
-        dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
-      dst_images.emplace_back(dst_image);
-      b++;
-    }
-  } else {
-    for (const auto & image : images) {
-      cv::Mat dst_image;
-      const float scale = -1.0;
-      scales_.emplace_back(scale);
-      const auto scale_size = cv::Size(input_width, input_height);
-      cv::resize(image, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
-      dst_images.emplace_back(dst_image);
-    }
+  for (const auto & image : images) {
+    cv::Mat dst_image;
+    cv::Mat cropped = image(rois[b]);
+    const float scale = std::min(
+      input_width / static_cast<float>(rois[b].width),
+      input_height / static_cast<float>(rois[b].height));
+    scales_.emplace_back(scale);
+    const auto scale_size = cv::Size(rois[b].width * scale, rois[b].height * scale);
+    cv::resize(cropped, dst_image, scale_size, 0, 0, cv::INTER_CUBIC);
+    const auto bottom = input_height - dst_image.rows;
+    const auto right = input_width - dst_image.cols;
+    copyMakeBorder(dst_image, dst_image, 0, bottom, 0, right, cv::BORDER_CONSTANT, {114, 114, 114});
+    dst_images.emplace_back(dst_image);
+    b++;
   }
   const auto chw_images = cv::dnn::blobFromImages(
     dst_images, norm_factor_, cv::Size(), cv::Scalar(), false, false, CV_32F);
@@ -1231,8 +1205,8 @@ cv::Mat TrtYoloX::getMaskImageGpu(float * d_prob, nvinfer1::Dims dims, int out_w
   cv::Mat mask = cv::Mat::zeros(out_h, out_w, CV_8UC1);
   int index = b * out_w * out_h;
   argmax_gpu(
-    (unsigned char *)argmax_buf_d_.get() + index, d_prob, out_w, out_h, width, height, classes, 1,
-    *stream_);
+    reinterpret_cast<unsigned char *>(argmax_buf_d_.get()) + index, d_prob, out_w, out_h, width,
+    height, classes, 1, *stream_);
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     argmax_buf_h_.get(), argmax_buf_d_.get(), sizeof(unsigned char) * 1 * out_w * out_h,
     cudaMemcpyDeviceToHost, *stream_));
@@ -1279,7 +1253,6 @@ void TrtYoloX::getColorizedMask(
   int height = mask.rows;
   if ((cmask.cols != mask.cols) || (cmask.rows != mask.rows)) {
     throw std::runtime_error("input and output image have difference size.");
-    return;
   }
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {

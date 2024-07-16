@@ -24,8 +24,8 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/debug.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -286,15 +286,21 @@ void StaticObstacleAvoidanceModule::fillFundamentalData(
   data.to_start_point = utils::static_obstacle_avoidance::calcDistanceToAvoidStartLine(
     data.current_lanelets, data.reference_path_rough, planner_data_, parameters_);
 
-  // target objects for avoidance
+  // filter only for the latest detected objects.
   fillAvoidanceTargetObjects(data, debug);
 
-  // lost object compensation
-  utils::static_obstacle_avoidance::updateRegisteredObject(
-    registered_objects_, data.target_objects, parameters_);
-  utils::static_obstacle_avoidance::compensateDetectionLost(
-    registered_objects_, data.target_objects, data.other_objects);
+  // compensate lost object which was avoidance target. if the time hasn't passed more than
+  // threshold since perception module lost the target yet, this module keeps it as avoidance
+  // target.
+  utils::static_obstacle_avoidance::compensateLostTargetObjects(
+    registered_objects_, data, clock_->now(), planner_data_, parameters_);
+
+  // once an object filtered for boundary clipping, this module keeps the information until the end
+  // of execution.
   utils::static_obstacle_avoidance::updateClipObject(clip_objects_, data);
+
+  // calculate various data for each target objects.
+  fillAvoidanceTargetData(data.target_objects);
 
   // sort object order by longitudinal distance
   std::sort(data.target_objects.begin(), data.target_objects.end(), [](auto a, auto b) {
@@ -308,8 +314,6 @@ void StaticObstacleAvoidanceModule::fillFundamentalData(
 void StaticObstacleAvoidanceModule::fillAvoidanceTargetObjects(
   AvoidancePlanningData & data, DebugData & debug) const
 {
-  using utils::static_obstacle_avoidance::fillAvoidanceNecessity;
-  using utils::static_obstacle_avoidance::fillObjectStoppableJudge;
   using utils::static_obstacle_avoidance::filterTargetObjects;
   using utils::static_obstacle_avoidance::separateObjectsByPath;
   using utils::static_obstacle_avoidance::updateRoadShoulderDistance;
@@ -345,15 +349,6 @@ void StaticObstacleAvoidanceModule::fillAvoidanceTargetObjects(
   filterTargetObjects(objects, data, forward_detection_range, planner_data_, parameters_);
   updateRoadShoulderDistance(data, planner_data_, parameters_);
 
-  // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
-  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto feasible_stop_distance = helper_->getFeasibleDecelDistance(0.0, false);
-  std::for_each(data.target_objects.begin(), data.target_objects.end(), [&, this](auto & o) {
-    fillAvoidanceNecessity(o, registered_objects_, vehicle_width, parameters_);
-    o.to_stop_line = calcDistanceToStopLine(o);
-    fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
-  });
-
   // debug
   {
     std::vector<AvoidanceDebugMsg> debug_info_array;
@@ -369,6 +364,21 @@ void StaticObstacleAvoidanceModule::fillAvoidanceTargetObjects(
 
     updateAvoidanceDebugData(debug_info_array);
   }
+}
+
+void StaticObstacleAvoidanceModule::fillAvoidanceTargetData(ObjectDataArray & objects) const
+{
+  using utils::static_obstacle_avoidance::fillAvoidanceNecessity;
+  using utils::static_obstacle_avoidance::fillObjectStoppableJudge;
+
+  // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
+  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
+  const auto feasible_stop_distance = helper_->getFeasibleDecelDistance(0.0, false);
+  std::for_each(objects.begin(), objects.end(), [&, this](auto & o) {
+    fillAvoidanceNecessity(o, registered_objects_, vehicle_width, parameters_);
+    o.to_stop_line = calcDistanceToStopLine(o);
+    fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
+  });
 }
 
 ObjectData StaticObstacleAvoidanceModule::createObjectData(
@@ -781,7 +791,8 @@ bool StaticObstacleAvoidanceModule::isSafePath(
     for (const auto & obj_path : obj_predicted_paths) {
       if (!utils::path_safety_checker::checkCollision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
-            hysteresis_factor, current_debug_data.second)) {
+            hysteresis_factor, parameters_->collision_check_yaw_diff_threshold,
+            current_debug_data.second)) {
         utils::path_safety_checker::updateCollisionCheckDebugMap(
           debug.collision_check, current_debug_data, false);
 
@@ -1375,11 +1386,18 @@ void StaticObstacleAvoidanceModule::updateRTCData()
 
 void StaticObstacleAvoidanceModule::updateInfoMarker(const AvoidancePlanningData & data) const
 {
+  using utils::static_obstacle_avoidance::createAmbiguousObjectsMarkerArray;
+  using utils::static_obstacle_avoidance::createStopTargetObjectMarkerArray;
   using utils::static_obstacle_avoidance::createTargetObjectsMarkerArray;
 
   info_marker_.markers.clear();
   appendMarkerArray(
     createTargetObjectsMarkerArray(data.target_objects, "target_objects"), &info_marker_);
+  appendMarkerArray(createStopTargetObjectMarkerArray(data), &info_marker_);
+  appendMarkerArray(
+    createAmbiguousObjectsMarkerArray(
+      data.target_objects, getEgoPose(), parameters_->policy_ambiguous_vehicle),
+    &info_marker_);
 }
 
 void StaticObstacleAvoidanceModule::updateDebugMarker(
