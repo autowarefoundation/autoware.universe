@@ -259,7 +259,8 @@ void RayGroundFilterComponent::ClassifyPointCloud(
 // }
 
 void RayGroundFilterComponent::initializePointCloud2(
-  const PointCloud2::ConstSharedPtr & in_cloud_ptr, const PointCloud2::SharedPtr & out_cloud_msg_ptr)
+  const PointCloud2::ConstSharedPtr & in_cloud_ptr,
+  const PointCloud2::SharedPtr & out_cloud_msg_ptr)
 {
   out_cloud_msg_ptr->header = in_cloud_ptr->header;
   out_cloud_msg_ptr->height = in_cloud_ptr->height;
