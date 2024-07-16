@@ -1385,6 +1385,7 @@ void AvoidanceModule::updateRTCData()
 
 void AvoidanceModule::updateInfoMarker(const AvoidancePlanningData & data) const
 {
+  using utils::avoidance::createAmbiguousObjectsMarkerArray;
   using utils::avoidance::createStopTargetObjectMarkerArray;
   using utils::avoidance::createTargetObjectsMarkerArray;
 
@@ -1392,6 +1393,10 @@ void AvoidanceModule::updateInfoMarker(const AvoidancePlanningData & data) const
   appendMarkerArray(
     createTargetObjectsMarkerArray(data.target_objects, "target_objects"), &info_marker_);
   appendMarkerArray(createStopTargetObjectMarkerArray(data), &info_marker_);
+  appendMarkerArray(
+    createAmbiguousObjectsMarkerArray(
+      data.target_objects, getEgoPose(), parameters_->policy_ambiguous_vehicle),
+    &info_marker_);
 }
 
 void AvoidanceModule::updateDebugMarker(
