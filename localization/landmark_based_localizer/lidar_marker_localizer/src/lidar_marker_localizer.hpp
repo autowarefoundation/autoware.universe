@@ -15,6 +15,7 @@
 #ifndef LIDAR_MARKER_LOCALIZER_HPP_
 #define LIDAR_MARKER_LOCALIZER_HPP_
 
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include "diagnostics/diagnostics_module.hpp"
 #include "localization_util/smart_pose_buffer.hpp"
 
@@ -42,7 +43,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
-#include <landmark_manager/landmark_manager.hpp>
+#include <autoware/landmark_manager/landmark_manager.hpp>
 
 #include <geometry_msgs/msg/pose_array.hpp>
 
@@ -52,7 +53,7 @@
 
 class LidarMarkerLocalizer : public rclcpp::Node
 {
-  using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
+  using HADMapBin = autoware_map_msgs::msg::LaneletMapBin;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
   using Pose = geometry_msgs::msg::Pose;
   using PoseStamped = geometry_msgs::msg::PoseStamped;

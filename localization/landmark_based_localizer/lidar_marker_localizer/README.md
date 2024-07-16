@@ -10,7 +10,7 @@
 
 | Name                   | Type                                            | Description      |
 | :--------------------- | :---------------------------------------------- | :--------------- |
-| `~/input/lanelet2_map` | `autoware_auto_mapping_msgs::msg::HADMapBin`    | Data of lanelet2 |
+| `~/input/lanelet2_map` | `autoware_map_msgs::msg::HADMapBin`    | Data of lanelet2 |
 | `~/input/pointcloud`   | `sensor_msgs::msg::PointCloud2`                 | PointCloud       |
 | `~/input/ekf_pose`     | `geometry_msgs::msg::PoseWithCovarianceStamped` | EKF Pose         |
 

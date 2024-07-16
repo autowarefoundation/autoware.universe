@@ -16,8 +16,8 @@
 
 #include <autoware_point_types/types.hpp>
 #include <rclcpp/qos.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/transform/transforms.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/transform/transforms.hpp>
 
 #include <geometry_msgs/msg/vector3.hpp>
 
@@ -209,7 +209,7 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
   // (4) check distance to the nearest marker
   const landmark_manager::Landmark nearest_marker = get_nearest_landmark(self_pose, map_landmarks);
   const Pose nearest_marker_pose_on_base_link =
-    tier4_autoware_utils::inverseTransformPose(nearest_marker.pose, self_pose);
+    autoware::universe_utils::inverseTransformPose(nearest_marker.pose, self_pose);
 
   const double distance_from_self_pose_to_nearest_marker =
     std::abs(nearest_marker_pose_on_base_link.position.x);
@@ -245,7 +245,7 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
     pose_array_msg.header.frame_id = "map";
     for (const landmark_manager::Landmark & landmark : detected_landmarks) {
       const Pose detected_marker_on_map =
-        tier4_autoware_utils::transformPose(landmark.pose, self_pose);
+        autoware::universe_utils::transformPose(landmark.pose, self_pose);
       pose_array_msg.poses.push_back(detected_marker_on_map);
     }
     pub_marker_detected_->publish(pose_array_msg);
@@ -429,7 +429,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
       marker_pose_on_base_link.position.y = min_y[i];
       marker_pose_on_base_link.position.z = param_.marker_height_from_ground;
       marker_pose_on_base_link.orientation =
-        tier4_autoware_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO(YamatoAndo)
+        autoware::universe_utils::createQuaternionFromRPY(M_PI_2, 0.0, 0.0);  // TODO(YamatoAndo)
       detected_landmarks.push_back(landmark_manager::Landmark{"0", marker_pose_on_base_link});
     }
   }
@@ -446,7 +446,7 @@ landmark_manager::Landmark LidarMarkerLocalizer::get_nearest_landmark(
 
   for (const auto & landmark : landmarks) {
     const double curr_distance =
-      tier4_autoware_utils::calcDistance3d(landmark.pose.position, self_pose.position);
+      autoware::universe_utils::calcDistance3d(landmark.pose.position, self_pose.position);
 
     if (curr_distance > min_distance) {
       continue;
@@ -596,9 +596,9 @@ void LidarMarkerLocalizer::transform_sensor_measurement(
   }
 
   const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
-    tier4_autoware_utils::transform2pose(transform);
+    autoware::universe_utils::transform2pose(transform);
   const Eigen::Matrix4f base_to_sensor_matrix =
     pose_to_matrix4f(target_to_source_pose_stamped.pose);
-  tier4_autoware_utils::transformPointCloud(
+  autoware::universe_utils::transformPointCloud(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
