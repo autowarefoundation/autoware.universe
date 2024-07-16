@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__LIDAR_CENTERPOINT__POSTPROCESS__POSTPROCESS_KERNEL_HPP_
 #define AUTOWARE__LIDAR_CENTERPOINT__POSTPROCESS__POSTPROCESS_KERNEL_HPP_
 
-#include "cuda.h"
-#include "cuda_runtime_api.h"
 #include "autoware/lidar_centerpoint/centerpoint_config.hpp"
 #include "autoware/lidar_centerpoint/utils.hpp"
+#include "cuda.h"
+#include "cuda_runtime_api.h"
 #include "thrust/device_vector.h"
 
 #include <vector>

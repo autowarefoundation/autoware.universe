@@ -80,12 +80,14 @@ TEST(TestSuite, box3DToDetectedObject)
 TEST(TestSuite, getSemanticType)
 {
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("CAR"), autoware_perception_msgs::msg::ObjectClassification::CAR);
+    autoware::centerpoint::getSemanticType("CAR"),
+    autoware_perception_msgs::msg::ObjectClassification::CAR);
   EXPECT_EQ(
     autoware::centerpoint::getSemanticType("TRUCK"),
     autoware_perception_msgs::msg::ObjectClassification::TRUCK);
   EXPECT_EQ(
-    autoware::centerpoint::getSemanticType("BUS"), autoware_perception_msgs::msg::ObjectClassification::BUS);
+    autoware::centerpoint::getSemanticType("BUS"),
+    autoware_perception_msgs::msg::ObjectClassification::BUS);
   EXPECT_EQ(
     autoware::centerpoint::getSemanticType("TRAILER"),
     autoware_perception_msgs::msg::ObjectClassification::TRAILER);
@@ -111,7 +113,8 @@ TEST(TestSuite, convertPoseCovarianceMatrix)
   box3d.z_variance = 0.3;
   box3d.yaw_variance = 0.4;
 
-  std::array<double, 36> pose_covariance = autoware::centerpoint::convertPoseCovarianceMatrix(box3d);
+  std::array<double, 36> pose_covariance =
+    autoware::centerpoint::convertPoseCovarianceMatrix(box3d);
 
   EXPECT_FLOAT_EQ(pose_covariance[0], 0.1);
   EXPECT_FLOAT_EQ(pose_covariance[7], 0.2);
@@ -125,7 +128,8 @@ TEST(TestSuite, convertTwistCovarianceMatrix)
   box3d.vel_x_variance = 0.1;
   box3d.vel_y_variance = 0.2;
 
-  std::array<double, 36> twist_covariance = autoware::centerpoint::convertTwistCovarianceMatrix(box3d);
+  std::array<double, 36> twist_covariance =
+    autoware::centerpoint::convertTwistCovarianceMatrix(box3d);
 
   EXPECT_FLOAT_EQ(twist_covariance[0], 0.1);
   EXPECT_FLOAT_EQ(twist_covariance[7], 0.2);

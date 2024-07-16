@@ -26,6 +26,6 @@ std::size_t circleNMS(
   thrust::device_vector<Box3D> & boxes3d, const float distance_threshold,
   thrust::device_vector<bool> & keep_mask, cudaStream_t stream);
 
-}  // autoware::namespace centerpoint
+}  // namespace autoware::centerpoint
 
 #endif  // AUTOWARE__LIDAR_CENTERPOINT__POSTPROCESS__CIRCLE_NMS_KERNEL_HPP_

@@ -16,14 +16,14 @@
 
 #include "autoware_point_types/types.hpp"
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/math/constants.hpp>
-#include <image_projection_based_fusion/utils/geometry.hpp>
-#include <image_projection_based_fusion/utils/utils.hpp>
 #include <autoware/lidar_centerpoint/centerpoint_config.hpp>
 #include <autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <autoware/lidar_centerpoint/ros_utils.hpp>
 #include <autoware/lidar_centerpoint/utils.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/constants.hpp>
+#include <image_projection_based_fusion/utils/geometry.hpp>
+#include <image_projection_based_fusion/utils/utils.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <omp.h>
@@ -176,7 +176,8 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     iou_bev_nms_.setParameters(p);
   }
 
-  autoware::centerpoint::NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
+  autoware::centerpoint::NetworkParam encoder_param(
+    encoder_onnx_path, encoder_engine_path, trt_precision);
   autoware::centerpoint::NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
   autoware::centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
