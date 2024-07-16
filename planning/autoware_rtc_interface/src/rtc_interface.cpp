@@ -151,7 +151,7 @@ std::vector<CooperateResponse> RTCInterface::validateCooperateCommands(
 
     const auto itr = std::find_if(
       registered_status_.statuses.begin(), registered_status_.statuses.end(),
-      [command](auto & s) { return s.uuid == command.uuid; });
+      [command](const auto & s) { return s.uuid == command.uuid; });
     if (itr != registered_status_.statuses.end()) {
       if (itr->state.type == State::WAITING_FOR_EXECUTION || itr->state.type == State::RUNNING) {
         response.success = true;
@@ -180,7 +180,7 @@ void RTCInterface::updateCooperateCommandStatus(const std::vector<CooperateComma
   for (const auto & command : commands) {
     const auto itr = std::find_if(
       registered_status_.statuses.begin(), registered_status_.statuses.end(),
-      [command](auto & s) { return s.uuid == command.uuid; });
+      [command](const auto & s) { return s.uuid == command.uuid; });
 
     // Update command if the command has been already received
     if (itr != registered_status_.statuses.end()) {
@@ -220,7 +220,7 @@ void RTCInterface::updateCooperateStatus(
   // Find registered status which has same uuid
   auto itr = std::find_if(
     registered_status_.statuses.begin(), registered_status_.statuses.end(),
-    [uuid](auto & s) { return s.uuid == uuid; });
+    [uuid](const auto & s) { return s.uuid == uuid; });
 
   // If there is no registered status, add it
   if (itr == registered_status_.statuses.end()) {
@@ -253,7 +253,7 @@ void RTCInterface::removeCooperateStatus(const UUID & uuid)
   // Find registered status which has same uuid and erase it
   const auto itr = std::find_if(
     registered_status_.statuses.begin(), registered_status_.statuses.end(),
-    [uuid](auto & s) { return s.uuid == uuid; });
+    [uuid](const auto & s) { return s.uuid == uuid; });
 
   if (itr != registered_status_.statuses.end()) {
     registered_status_.statuses.erase(itr);
@@ -269,7 +269,7 @@ void RTCInterface::removeStoredCommand(const UUID & uuid)
 {
   // Find stored command which has same uuid and erase it
   const auto itr = std::find_if(
-    stored_commands_.begin(), stored_commands_.end(), [uuid](auto & s) { return s.uuid == uuid; });
+    stored_commands_.begin(), stored_commands_.end(), [uuid](const auto & s) { return s.uuid == uuid; });
 
   if (itr != stored_commands_.end()) {
     stored_commands_.erase(itr);
@@ -299,7 +299,7 @@ bool RTCInterface::isActivated(const UUID & uuid) const
   std::lock_guard<std::mutex> lock(mutex_);
   const auto itr = std::find_if(
     registered_status_.statuses.begin(), registered_status_.statuses.end(),
-    [uuid](auto & s) { return s.uuid == uuid; });
+    [uuid](const auto & s) { return s.uuid == uuid; });
 
   if (itr != registered_status_.statuses.end()) {
     if (itr->state.type == State::FAILED || itr->state.type == State::SUCCEEDED) {
@@ -322,7 +322,7 @@ bool RTCInterface::isRegistered(const UUID & uuid) const
   std::lock_guard<std::mutex> lock(mutex_);
   const auto itr = std::find_if(
     registered_status_.statuses.begin(), registered_status_.statuses.end(),
-    [uuid](auto & s) { return s.uuid == uuid; });
+    [uuid](const auto & s) { return s.uuid == uuid; });
   return itr != registered_status_.statuses.end();
 }
 
@@ -331,7 +331,7 @@ bool RTCInterface::isRTCEnabled(const UUID & uuid) const
   std::lock_guard<std::mutex> lock(mutex_);
   const auto itr = std::find_if(
     registered_status_.statuses.begin(), registered_status_.statuses.end(),
-    [uuid](auto & s) { return s.uuid == uuid; });
+    [uuid](const auto & s) { return s.uuid == uuid; });
 
   if (itr != registered_status_.statuses.end()) {
     return !itr->auto_mode;
