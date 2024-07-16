@@ -22,354 +22,410 @@
             "car": {
               "type": "object",
               "properties": {
-                "execute_num": { 
-                  "type": "number", 
-                  "default": 2 
+                "execute_num": {
+                  "type": "number",
+                  "default": 2
                 },
-                "th_moving_speed": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_speed": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "th_moving_time": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_time": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "max_expand_ratio": { 
-                  "type": "number", 
-                  "default": 0.0 
+                "max_expand_ratio": {
+                  "type": "number",
+                  "default": 0.0
                 },
-                "envelope_buffer_margin": { 
-                  "type": "number", 
-                  "default": 0.3 
+                "envelope_buffer_margin": {
+                  "type": "number",
+                  "default": 0.3
                 },
                 "lateral_margin": {
                   "type": "object",
                   "properties": {
-                    "soft_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "soft_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin_for_parked_vehicle": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin_for_parked_vehicle": {
+                      "type": "number",
+                      "default": 0.0
                     }
                   },
                   "required": ["soft_margin", "hard_margin", "hard_margin_for_parked_vehicle"]
                 }
               },
-              "required": ["execute_num", "th_moving_speed", "th_moving_time", "max_expand_ratio", "envelope_buffer_margin", "lateral_margin"]
+              "required": [
+                "execute_num",
+                "th_moving_speed",
+                "th_moving_time",
+                "max_expand_ratio",
+                "envelope_buffer_margin",
+                "lateral_margin"
+              ]
             },
             "truck": {
               "type": "object",
               "properties": {
-                "execute_num": { 
-                  "type": "number", 
-                  "default": 2 
+                "execute_num": {
+                  "type": "number",
+                  "default": 2
                 },
-                "th_moving_speed": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_speed": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "th_moving_time": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_time": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "max_expand_ratio": { 
-                  "type": "number", 
-                  "default": 0.0 
+                "max_expand_ratio": {
+                  "type": "number",
+                  "default": 0.0
                 },
-                "envelope_buffer_margin": { 
-                  "type": "number", 
-                  "default": 0.3 
+                "envelope_buffer_margin": {
+                  "type": "number",
+                  "default": 0.3
                 },
                 "lateral_margin": {
                   "type": "object",
                   "properties": {
-                    "soft_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "soft_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin_for_parked_vehicle": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin_for_parked_vehicle": {
+                      "type": "number",
+                      "default": 0.0
                     }
                   },
                   "required": ["soft_margin", "hard_margin", "hard_margin_for_parked_vehicle"]
                 }
               },
-              "required": ["execute_num", "th_moving_speed", "th_moving_time", "max_expand_ratio", "envelope_buffer_margin", "lateral_margin"]
+              "required": [
+                "execute_num",
+                "th_moving_speed",
+                "th_moving_time",
+                "max_expand_ratio",
+                "envelope_buffer_margin",
+                "lateral_margin"
+              ]
             },
             "bus": {
               "type": "object",
               "properties": {
-                "execute_num": { 
-                  "type": "number", 
-                  "default": 2 
+                "execute_num": {
+                  "type": "number",
+                  "default": 2
                 },
-                "th_moving_speed": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_speed": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "th_moving_time": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_time": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "max_expand_ratio": { 
-                  "type": "number", 
-                  "default": 0.0 
+                "max_expand_ratio": {
+                  "type": "number",
+                  "default": 0.0
                 },
-                "envelope_buffer_margin": { 
-                  "type": "number", 
-                  "default": 0.3 
+                "envelope_buffer_margin": {
+                  "type": "number",
+                  "default": 0.3
                 },
                 "lateral_margin": {
                   "type": "object",
                   "properties": {
-                    "soft_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "soft_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin_for_parked_vehicle": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin_for_parked_vehicle": {
+                      "type": "number",
+                      "default": 0.0
                     }
                   },
                   "required": ["soft_margin", "hard_margin", "hard_margin_for_parked_vehicle"]
                 }
               },
-              "required": ["execute_num", "th_moving_speed", "th_moving_time", "max_expand_ratio", "envelope_buffer_margin", "lateral_margin"]
+              "required": [
+                "execute_num",
+                "th_moving_speed",
+                "th_moving_time",
+                "max_expand_ratio",
+                "envelope_buffer_margin",
+                "lateral_margin"
+              ]
             },
             "trailer": {
               "type": "object",
               "properties": {
-                "execute_num": { 
-                  "type": "number", 
-                  "default": 2 
+                "execute_num": {
+                  "type": "number",
+                  "default": 2
                 },
-                "th_moving_speed": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_speed": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "th_moving_time": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_time": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "max_expand_ratio": { 
-                  "type": "number", 
-                  "default": 0.0 
+                "max_expand_ratio": {
+                  "type": "number",
+                  "default": 0.0
                 },
-                "envelope_buffer_margin": { 
-                  "type": "number", 
-                  "default": 0.3 
+                "envelope_buffer_margin": {
+                  "type": "number",
+                  "default": 0.3
                 },
                 "lateral_margin": {
                   "type": "object",
                   "properties": {
-                    "soft_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "soft_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin_for_parked_vehicle": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin_for_parked_vehicle": {
+                      "type": "number",
+                      "default": 0.0
                     }
                   },
                   "required": ["soft_margin", "hard_margin", "hard_margin_for_parked_vehicle"]
                 }
               },
-              "required": ["execute_num", "th_moving_speed", "th_moving_time", "max_expand_ratio", "envelope_buffer_margin", "lateral_margin"]
+              "required": [
+                "execute_num",
+                "th_moving_speed",
+                "th_moving_time",
+                "max_expand_ratio",
+                "envelope_buffer_margin",
+                "lateral_margin"
+              ]
             },
             "unknown": {
               "type": "object",
               "properties": {
-                "execute_num": { 
-                  "type": "number", 
-                  "default": 1 
+                "execute_num": {
+                  "type": "number",
+                  "default": 1
                 },
-                "th_moving_speed": { 
-                  "type": "number", 
-                  "default": 0.28 
+                "th_moving_speed": {
+                  "type": "number",
+                  "default": 0.28
                 },
-                "th_moving_time": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_time": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "max_expand_ratio": { 
-                  "type": "number", 
-                  "default": 0.0 
+                "max_expand_ratio": {
+                  "type": "number",
+                  "default": 0.0
                 },
-                "envelope_buffer_margin": { 
-                  "type": "number", 
-                  "default": 0.3 
+                "envelope_buffer_margin": {
+                  "type": "number",
+                  "default": 0.3
                 },
                 "lateral_margin": {
                   "type": "object",
                   "properties": {
-                    "soft_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "soft_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin_for_parked_vehicle": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "hard_margin_for_parked_vehicle": {
+                      "type": "number",
+                      "default": 0.0
                     }
                   },
                   "required": ["soft_margin", "hard_margin", "hard_margin_for_parked_vehicle"]
                 }
               },
-              "required": ["execute_num", "th_moving_speed", "th_moving_time", "max_expand_ratio", "envelope_buffer_margin", "lateral_margin"]
+              "required": [
+                "execute_num",
+                "th_moving_speed",
+                "th_moving_time",
+                "max_expand_ratio",
+                "envelope_buffer_margin",
+                "lateral_margin"
+              ]
             },
             "bicycle": {
               "type": "object",
               "properties": {
-                "execute_num": { 
-                  "type": "number", 
-                  "default": 2 
+                "execute_num": {
+                  "type": "number",
+                  "default": 2
                 },
-                "th_moving_speed": { 
-                  "type": "number", 
-                  "default": 0.28 
+                "th_moving_speed": {
+                  "type": "number",
+                  "default": 0.28
                 },
-                "th_moving_time": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_time": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "max_expand_ratio": { 
-                  "type": "number", 
-                  "default": 0.0 
+                "max_expand_ratio": {
+                  "type": "number",
+                  "default": 0.0
                 },
-                "envelope_buffer_margin": { 
-                  "type": "number", 
-                  "default": 0.8 
+                "envelope_buffer_margin": {
+                  "type": "number",
+                  "default": 0.8
                 },
                 "lateral_margin": {
                   "type": "object",
                   "properties": {
-                    "soft_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "soft_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin": { 
-                      "type": "number", 
-                      "default": 1.0 
+                    "hard_margin": {
+                      "type": "number",
+                      "default": 1.0
                     },
-                    "hard_margin_for_parked_vehicle": { 
-                      "type": "number", 
-                      "default": 1.0 
+                    "hard_margin_for_parked_vehicle": {
+                      "type": "number",
+                      "default": 1.0
                     }
                   },
                   "required": ["soft_margin", "hard_margin", "hard_margin_for_parked_vehicle"]
                 }
               },
-              "required": ["execute_num", "th_moving_speed", "th_moving_time", "max_expand_ratio", "envelope_buffer_margin", "lateral_margin"]
+              "required": [
+                "execute_num",
+                "th_moving_speed",
+                "th_moving_time",
+                "max_expand_ratio",
+                "envelope_buffer_margin",
+                "lateral_margin"
+              ]
             },
             "motorcycle": {
               "type": "object",
               "properties": {
-                "execute_num": { 
-                  "type": "number", 
-                  "default": 2 
+                "execute_num": {
+                  "type": "number",
+                  "default": 2
                 },
-                "th_moving_speed": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_speed": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "th_moving_time": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_time": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "max_expand_ratio": { 
-                  "type": "number", 
-                  "default": 0.0 
+                "max_expand_ratio": {
+                  "type": "number",
+                  "default": 0.0
                 },
-                "envelope_buffer_margin": { 
-                  "type": "number", 
-                  "default": 0.8 
+                "envelope_buffer_margin": {
+                  "type": "number",
+                  "default": 0.8
                 },
                 "lateral_margin": {
                   "type": "object",
                   "properties": {
-                    "soft_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "soft_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin": { 
-                      "type": "number", 
-                      "default": 1.0 
+                    "hard_margin": {
+                      "type": "number",
+                      "default": 1.0
                     },
-                    "hard_margin_for_parked_vehicle": { 
-                      "type": "number", 
-                      "default": 1.0 
+                    "hard_margin_for_parked_vehicle": {
+                      "type": "number",
+                      "default": 1.0
                     }
                   },
                   "required": ["soft_margin", "hard_margin", "hard_margin_for_parked_vehicle"]
                 }
               },
-              "required": ["execute_num", "th_moving_speed", "th_moving_time", "max_expand_ratio", "envelope_buffer_margin", "lateral_margin"]
+              "required": [
+                "execute_num",
+                "th_moving_speed",
+                "th_moving_time",
+                "max_expand_ratio",
+                "envelope_buffer_margin",
+                "lateral_margin"
+              ]
             },
             "pedestrian": {
               "type": "object",
               "properties": {
-                "execute_num": { 
-                  "type": "number", 
-                  "default": 2 
+                "execute_num": {
+                  "type": "number",
+                  "default": 2
                 },
-                "th_moving_speed": { 
-                  "type": "number", 
-                  "default": 0.28 
+                "th_moving_speed": {
+                  "type": "number",
+                  "default": 0.28
                 },
-                "th_moving_time": { 
-                  "type": "number", 
-                  "default": 1.0 
+                "th_moving_time": {
+                  "type": "number",
+                  "default": 1.0
                 },
-                "max_expand_ratio": { 
-                  "type": "number", 
-                  "default": 0.0 
+                "max_expand_ratio": {
+                  "type": "number",
+                  "default": 0.0
                 },
-                "envelope_buffer_margin": { 
-                  "type": "number", 
-                  "default": 0.8 
+                "envelope_buffer_margin": {
+                  "type": "number",
+                  "default": 0.8
                 },
                 "lateral_margin": {
                   "type": "object",
                   "properties": {
-                    "soft_margin": { 
-                      "type": "number", 
-                      "default": 0.0 
+                    "soft_margin": {
+                      "type": "number",
+                      "default": 0.0
                     },
-                    "hard_margin": { 
-                      "type": "number", 
-                      "default": 1.0 
+                    "hard_margin": {
+                      "type": "number",
+                      "default": 1.0
                     },
-                    "hard_margin_for_parked_vehicle": { 
-                      "type": "number", 
-                      "default": 1.0 
+                    "hard_margin_for_parked_vehicle": {
+                      "type": "number",
+                      "default": 1.0
                     }
                   },
                   "required": ["soft_margin", "hard_margin", "hard_margin_for_parked_vehicle"]
                 }
               },
-              "required": ["execute_num", "th_moving_speed", "th_moving_time", "max_expand_ratio", "envelope_buffer_margin", "lateral_margin"]
+              "required": [
+                "execute_num",
+                "th_moving_speed",
+                "th_moving_time",
+                "max_expand_ratio",
+                "envelope_buffer_margin",
+                "lateral_margin"
+              ]
             },
             "lower_distance_for_polygon_expansion": {
               "type": "number",
@@ -401,46 +457,60 @@
             "target_type": {
               "type": "object",
               "properties": {
-                "car": { 
-                  "type": "boolean", 
-                  "default": true 
+                "car": {
+                  "type": "boolean",
+                  "default": true
                 },
-                "truck": { 
-                  "type": "boolean", 
-                  "default": true 
+                "truck": {
+                  "type": "boolean",
+                  "default": true
                 },
-                "bus": { 
-                  "type": "boolean", 
-                  "default": true 
+                "bus": {
+                  "type": "boolean",
+                  "default": true
                 },
-                "trailer": { 
-                  "type": "boolean", 
-                  "default": true 
+                "trailer": {
+                  "type": "boolean",
+                  "default": true
                 },
-                "unknown": { 
-                  "type": "boolean", 
-                  "default": true 
+                "unknown": {
+                  "type": "boolean",
+                  "default": true
                 },
-                "bicycle": { 
-                  "type": "boolean", 
-                  "default": false 
+                "bicycle": {
+                  "type": "boolean",
+                  "default": false
                 },
-                "motorcycle": { 
-                  "type": "boolean", 
-                  "default": false 
+                "motorcycle": {
+                  "type": "boolean",
+                  "default": false
                 },
-                "pedestrian": { 
-                  "type": "boolean", 
-                  "default": false 
+                "pedestrian": {
+                  "type": "boolean",
+                  "default": false
                 }
               },
-              "required": ["car", "truck", "bus", "trailer", "unknown", "bicycle", "motorcycle", "pedestrian"]
+              "required": [
+                "car",
+                "truck",
+                "bus",
+                "trailer",
+                "unknown",
+                "bicycle",
+                "motorcycle",
+                "pedestrian"
+              ]
             }
           },
           "required": ["target_type"]
         }
       },
-      "required": ["execute_object_longitudinal_margin", "execute_only_when_lane_change_finish_before_object", "target_object", "target_filtering"]
+      "required": [
+        "execute_object_longitudinal_margin",
+        "execute_only_when_lane_change_finish_before_object",
+        "target_object",
+        "target_filtering"
+      ]
     }
   },
   "properties": {

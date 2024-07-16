@@ -113,6 +113,7 @@ partition updateState {
 
 @enduml
 ```
+
 ## Parameters
 
 {{ json_to_markdown("planning/behavior_path_planner/autoware_behavior_path_side_shift_module/schema/side_shift.schema.json") }}

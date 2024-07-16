@@ -61,11 +61,7 @@
                   "description": "Arc length range where an expansion distance is initially applied [m]."
                 }
               },
-              "required": [
-                "curvature_average_window",
-                "max_bound_rate",
-                "arc_length_range"
-              ]
+              "required": ["curvature_average_window", "max_bound_rate", "arc_length_range"]
             },
             "ego": {
               "type": "object",
@@ -86,11 +82,7 @@
                   "description": "Extra width to add to the vehicle [m]."
                 }
               },
-              "required": [
-                "extra_wheelbase",
-                "extra_front_overhang",
-                "extra_width"
-              ]
+              "required": ["extra_wheelbase", "extra_front_overhang", "extra_width"]
             },
             "dynamic_objects": {
               "type": "object",
@@ -124,18 +116,10 @@
                       "description": "Extra length to add to the right of the dynamic object footprint [m]."
                     }
                   },
-                  "required": [
-                    "front",
-                    "rear",
-                    "left",
-                    "right"
-                  ]
+                  "required": ["front", "rear", "left", "right"]
                 }
               },
-              "required": [
-                "avoid",
-                "extra_footprint_offset"
-              ]
+              "required": ["avoid", "extra_footprint_offset"]
             },
             "path_preprocessing": {
               "type": "object",
@@ -156,11 +140,7 @@
                   "description": "Maximum deviation value to trigger recalculation of curvatures [m]."
                 }
               },
-              "required": [
-                "max_arc_length",
-                "resample_interval",
-                "reuse_max_deviation"
-              ]
+              "required": ["max_arc_length", "resample_interval", "reuse_max_deviation"]
             },
             "avoid_linestring": {
               "type": "object",
@@ -179,10 +159,7 @@
                   "description": "Distance to keep between the drivable area and the linestrings to avoid [m]."
                 }
               },
-              "required": [
-                "types",
-                "distance"
-              ]
+              "required": ["types", "distance"]
             }
           },
           "required": [
