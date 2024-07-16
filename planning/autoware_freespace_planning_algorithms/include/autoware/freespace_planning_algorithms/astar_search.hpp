@@ -38,8 +38,6 @@ using geometry_msgs::msg::Pose;
 
 enum class NodeStatus : uint8_t { None, Open, Closed };
 
-enum class SearchMethod : uint8_t { Forward, Backward };
-
 struct AstarParam
 {
   // base configs
@@ -163,8 +161,7 @@ private:
   double avg_turning_radius_;
   double min_expansion_dist_;
   double max_expansion_dist_;
-
-  SearchMethod search_method_;
+  bool is_backward_search_;
 
   // expansion distance factors
   static constexpr double base_length_max_expansion_factor_ = 0.5;
