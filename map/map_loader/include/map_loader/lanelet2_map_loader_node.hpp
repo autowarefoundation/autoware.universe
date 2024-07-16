@@ -47,9 +47,6 @@ public:
   static autoware_map_msgs::msg::LaneletMapBin create_map_bin_msg(
     const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename,
     const rclcpp::Time & now);
-  static LaneletMapBin create_lanelet_map_bin_msg(
-    const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename,
-    const rclcpp::Time & now);
 
 private:
   using MapProjectorInfo = map_interface::MapProjectorInfo;
@@ -61,9 +58,9 @@ private:
   component_interface_utils::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_info_;
   rclcpp::Publisher<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr pub_map_bin_;
 
-  std::vector<std::string> getLanelet2Paths(
+  std::vector<std::string> get_lanelet2_paths(
     const std::vector<std::string> & lanelet2_paths_or_directory) const;
-  std::map<std::string, Lanelet2FileMetaData> getLanelet2Metadata(
+  std::map<std::string, Lanelet2FileMetaData> get_lanelet2_metadata(
     const std::string & lanelet2_metadata_path, const std::vector<std::string> & lanelet2_paths,
     double & x_resolution, double & y_resolution) const;
 };

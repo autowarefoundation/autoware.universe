@@ -45,6 +45,7 @@
         <param from="$(var lanelet2_map_loader_param_path)"/>
         <param name="lanelet2_map_path" value="$(var lanelet2_map_path)"/>
         <param name="lanelet2_map_metadata_path" value="$(var lanelet2_map_metadata_path)"/>
+        <param name="enable_differential_map_loading" value="$(var enable_differential_map_loading)"/>
         <remap from="output/lanelet2_map" to="vector_map"/>
         <remap from="service/get_differential_lanelet_map" to="/map/get_differential_lanelet_map"/>
         <extra_arg name="use_intra_process_comms" value="$(var use_intra_process)"/>

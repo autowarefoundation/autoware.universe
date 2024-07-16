@@ -160,7 +160,7 @@ bool Lanelet2DifferentialLoaderModule::differentialLanelet2Load(
 
     lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution_, false);
 
-    const auto map_bin_msg = Lanelet2MapLoaderNode::create_lanelet_map_bin_msg(
+    const auto map_bin_msg = Lanelet2MapLoaderNode::create_map_bin_msg(
       map, lanelet2_paths[0], rclcpp::Clock().now());
 
     response->lanelet2_cells = map_bin_msg;
@@ -178,7 +178,7 @@ bool Lanelet2DifferentialLoaderModule::differentialLanelet2Load(
 
     lanelet::utils::overwriteLaneletsCenterline(map, center_line_resolution_, false);
 
-    const auto map_bin_msg = Lanelet2MapLoaderNode::create_lanelet_map_bin_msg(
+    const auto map_bin_msg = Lanelet2MapLoaderNode::create_map_bin_msg(
       map, lanelet2_paths[0], rclcpp::Clock().now());
 
     response->lanelet2_cells = map_bin_msg;

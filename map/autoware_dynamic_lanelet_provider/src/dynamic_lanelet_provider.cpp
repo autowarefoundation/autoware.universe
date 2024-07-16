@@ -56,7 +56,6 @@ double norm_xy(const T & p1, const U & p2)
 DynamicLaneletProviderNode::DynamicLaneletProviderNode(const rclcpp::NodeOptions & options)
 : Node("dynamic_lanelet_provider", options),
   map_frame_("map"),
-  dynamic_map_loading_grid_size_(declare_parameter<double>("dynamic_map_loading_grid_size")),
   dynamic_map_loading_update_distance_(
     declare_parameter<double>("dynamic_map_loading_update_distance")),
   dynamic_map_loading_map_radius_(declare_parameter<double>("dynamic_map_loading_map_radius"))

@@ -6,11 +6,6 @@
     "autoware_dynamic_lanelet_provider": {
       "type": "object",
       "properties": {
-        "dynamic_map_loading_grid_size": {
-          "type": "number",
-          "description": "The grid size for divided lanelet2 map [m]",
-          "default": "50.0"
-        },
         "dynamic_map_loading_update_distance": {
           "type": "number",
           "description": "The distance to update the map [m]",
@@ -23,7 +18,6 @@
         }
       },
       "required": [
-        "dynamic_map_loading_grid_size",
         "dynamic_map_loading_update_distance",
         "dynamic_map_loading_map_radius"
       ],

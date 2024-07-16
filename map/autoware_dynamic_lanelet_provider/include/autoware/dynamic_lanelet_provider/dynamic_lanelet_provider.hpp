@@ -74,7 +74,6 @@ private:
   std::optional<geometry_msgs::msg::Point> last_update_position_ = std::nullopt;
   std::optional<geometry_msgs::msg::Point> current_position_ = std::nullopt;
 
-  const double dynamic_map_loading_grid_size_;
   const double dynamic_map_loading_update_distance_;
   const double dynamic_map_loading_map_radius_;
 
