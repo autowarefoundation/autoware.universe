@@ -18,12 +18,12 @@
 
 #include <boost/optional.hpp>
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
-#include <string>
-#include <algorithm>
 
 namespace
 {
@@ -66,15 +66,17 @@ bool is_polygon_contained(
   return false;
 }
 
-bool should_skip_object(int label) {
-  return 
-    (label == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN && !show_pedestrian) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE && !show_bicycle) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE && !show_motorcycle) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::TRAILER && !show_trailer) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::BUS && !show_bus) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::TRUCK && !show_truck) ||
-    (label == autoware_perception_msgs::msg::ObjectClassification::CAR && !show_car);
+bool should_skip_object(int label)
+{
+  return (label == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN &&
+          !show_pedestrian) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE && !show_bicycle) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE &&
+          !show_motorcycle) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::TRAILER && !show_trailer) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::BUS && !show_bus) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::TRUCK && !show_truck) ||
+         (label == autoware_perception_msgs::msg::ObjectClassification::CAR && !show_car);
 }
 
 }  // namespace
@@ -315,10 +317,11 @@ void SceneToImageProjectorNode::image_callback(
       for (const auto & object : objects) {
         if (should_skip_object(object.classification.front().label)) continue;
 
-        if (!projectable(object.kinematics.pose_with_covariance.pose.position, projection)) continue;
+        if (!projectable(object.kinematics.pose_with_covariance.pose.position, projection))
+          continue;
 
         auto bbox_corners = detected_object_corners(object);
-        
+
         if (!bbox_corners) continue;
 
         draw_bounding_box(*bbox_corners, cv_ptr->image, projection, previous_polygons);
