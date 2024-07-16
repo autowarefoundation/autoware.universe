@@ -109,7 +109,7 @@ bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
     return false;
   }
 
-  if (!setGoalNode()) {
+  if (detectCollision(goal_pose_)) {
     throw std::logic_error("Invalid goal pose");
     return false;
   }
@@ -177,9 +177,9 @@ void AstarSearch::setCollisionFreeDistanceMap()
 
 bool AstarSearch::setStartNode()
 {
-  const auto index = pose2index(costmap_, start_pose_, planner_common_param_.theta_size);
+  if (detectCollision(start_pose_)) return false;
 
-  if (detectCollision(index)) return false;
+  const auto index = pose2index(costmap_, start_pose_, planner_common_param_.theta_size);
 
   // Set start node
   AstarNode * start_node = &graph_[getKey(index)];
@@ -194,12 +194,6 @@ bool AstarSearch::setStartNode()
   openlist_.push(start_node);
 
   return true;
-}
-
-bool AstarSearch::setGoalNode()
-{
-  const auto index = pose2index(costmap_, goal_pose_, planner_common_param_.theta_size);
-  return !detectCollision(index);
 }
 
 double AstarSearch::estimateCost(const Pose & pose, const IndexXYT & index) const
@@ -269,7 +263,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
     if (isOutOfRange(next_index) || isObs(next_index)) continue;
 
     AstarNode * next_node = &graph_[getKey(next_index)];
-    if (next_node->status == NodeStatus::Closed || detectCollision(next_index)) continue;
+    if (next_node->status == NodeStatus::Closed || detectCollision(next_pose)) continue;
 
     double distance_to_obs = getObstacleEDT(next_index);
     const bool is_direction_switch =
