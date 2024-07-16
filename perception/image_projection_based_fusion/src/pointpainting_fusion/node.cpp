@@ -322,11 +322,11 @@ dc   | dc dc dc  dc ||zc|
     int stride = p_step * i;
     unsigned char * data = &painted_pointcloud_msg.data[0];
     unsigned char * output = &painted_pointcloud_msg.data[0];
-    //cppcheck-suppress invalidPointerCast
+    // cppcheck-suppress invalidPointerCast
     float p_x = *reinterpret_cast<const float *>(&data[stride + x_offset]);
-    //cppcheck-suppress invalidPointerCast
+    // cppcheck-suppress invalidPointerCast
     float p_y = *reinterpret_cast<const float *>(&data[stride + y_offset]);
-    //cppcheck-suppress invalidPointerCast
+    // cppcheck-suppress invalidPointerCast
     float p_z = *reinterpret_cast<const float *>(&data[stride + z_offset]);
     point_lidar << p_x, p_y, p_z;
     point_camera = lidar2cam_affine * point_lidar;
@@ -348,7 +348,7 @@ dc   | dc dc dc  dc ||zc|
       int label2d = feature_object.object.classification.front().label;
       if (!isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, p_z)) {
         data = &painted_pointcloud_msg.data[0];
-        //cppcheck-suppress invalidPointerCast
+        // cppcheck-suppress invalidPointerCast
         auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
         for (const auto & cls : isClassTable_) {
           // add up the class values if the point belongs to multiple classes
