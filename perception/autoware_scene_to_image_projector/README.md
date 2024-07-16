@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `scene_to_image_projector` package is designed to visualize 3D data of bounding boxes of detected objects, the trajectory of the ego vehicle, and road boundaries onto the 2D camera image plane. This allows for easy visualization of these elements through a single image topic.
+The `autoware_scene_to_image_projector` package is designed to visualize 3D data of bounding boxes of detected objects, the trajectory of the ego vehicle, and road boundaries onto the 2D camera image plane. This allows for easy visualization of these elements through a single image topic.
 
 ## Inner-working / Algorithms
 

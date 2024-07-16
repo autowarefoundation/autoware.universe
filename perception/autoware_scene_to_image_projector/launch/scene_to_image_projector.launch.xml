@@ -1,7 +1,7 @@
 <launch>
   <arg name="param_path" default="$(find-pkg-share autoware_scene_to_image_projector)/config/scene_to_image_projector.param.yaml"/>
 
-  <arg name="topic_image" default="/camera/image" description="Image topic"/>
+  <arg name="topic_image" default="/sensing/camera/camera2/image" description="Image topic"/>
   <arg name="topic_camera_info" default="/sensing/camera/camera2/camera_info" description="Camera info topic"/>
   <arg name="topic_objects" default="/perception/object_recognition/tracking/objects" description="Objects topic"/>
   <arg name="topic_trajectory" default="/planning/scenario_planning/lane_driving/trajectory" description="Trajectory topic"/>

@@ -88,16 +88,16 @@ private:
   std::shared_ptr<autoware_planning_msgs::msg::Path> latest_path_;
   bool latest_path_received_ = false;
 
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  tf2_ros::Buffer tf_buffer_{this->get_clock()};
+  tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
-  bool show_pedestrian;
-  bool show_bicycle;
-  bool show_motorcycle;
-  bool show_trailer;
-  bool show_bus;
-  bool show_truck;
-  bool show_car;
+  bool show_pedestrian = true;
+  bool show_bicycle = true;
+  bool show_motorcycle = true;
+  bool show_trailer = true;
+  bool show_bus = true;
+  bool show_truck = true;
+  bool show_car = true;
 
   template <typename T>
   std::optional<std::vector<Eigen::Vector3d>> detected_object_corners(const T & detected_object);

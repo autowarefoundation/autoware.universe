@@ -29,6 +29,8 @@ rclcpp_components_register_node(${PROJECT_NAME}_node
         EXECUTABLE ${PROJECT_NAME}
         )
 
+ament_export_dependencies(autoware_perception_msgs autoware_planning_msgs cv_bridge tf2 tf2_ros)
+
 ament_auto_package(INSTALL_TO_SHARE
         launch
         config

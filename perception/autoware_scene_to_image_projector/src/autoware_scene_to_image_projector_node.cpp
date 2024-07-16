@@ -66,12 +66,23 @@ bool is_polygon_contained(
   return false;
 }
 
+bool should_skip_object(int label) {
+  return 
+    (label == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN && !show_pedestrian) ||
+    (label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE && !show_bicycle) ||
+    (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE && !show_motorcycle) ||
+    (label == autoware_perception_msgs::msg::ObjectClassification::TRAILER && !show_trailer) ||
+    (label == autoware_perception_msgs::msg::ObjectClassification::BUS && !show_bus) ||
+    (label == autoware_perception_msgs::msg::ObjectClassification::TRUCK && !show_truck) ||
+    (label == autoware_perception_msgs::msg::ObjectClassification::CAR && !show_car);
+}
+
 }  // namespace
 
 namespace autoware::scene_to_image_projector
 {
 SceneToImageProjectorNode::SceneToImageProjectorNode(const rclcpp::NodeOptions & options)
-: Node("scene_to_image_projector", options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+: Node("scene_to_image_projector", options)
 {
   RCLCPP_INFO(this->get_logger(), "SceneToImageProjectorNode::SceneToImageProjectorNode");
 
@@ -299,64 +310,16 @@ void SceneToImageProjectorNode::image_callback(
               obj2.kinematics.pose_with_covariance.pose.position.z);
       });
 
-      std::vector<std::vector<cv::Point2f>> previous_polygons = {};
+      std::vector<std::vector<cv::Point2f>> previous_polygons{};
 
       for (const auto & object : objects) {
-        if (
-          object.classification.front().label ==
-          autoware_perception_msgs::msg::ObjectClassification::UNKNOWN) {
-          continue;
-        }
-        if (
-          (object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN) &&
-          !show_pedestrian) {
-          continue;
-        }
-        if (
-          (object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::BICYCLE) &&
-          !show_bicycle) {
-          continue;
-        }
-        if (
-          (object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE) &&
-          !show_motorcycle) {
-          continue;
-        }
-        if (
-          (object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::TRAILER) &&
-          !show_trailer) {
-          continue;
-        }
-        if (
-          (object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::BUS) &&
-          !show_bus) {
-          continue;
-        }
-        if (
-          (object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::TRUCK) &&
-          !show_truck) {
-          continue;
-        }
-        if (
-          (object.classification.front().label ==
-           autoware_perception_msgs::msg::ObjectClassification::CAR) &&
-          !show_car) {
-          continue;
-        }
+        if (should_skip_object(object.classification.front().label)) continue;
 
-        if (!projectable(object.kinematics.pose_with_covariance.pose.position, projection))
-          continue;
+        if (!projectable(object.kinematics.pose_with_covariance.pose.position, projection)) continue;
 
         auto bbox_corners = detected_object_corners(object);
-        if (!bbox_corners) {
-          continue;
-        }
+        
+        if (!bbox_corners) continue;
 
         draw_bounding_box(*bbox_corners, cv_ptr->image, projection, previous_polygons);
       }
@@ -380,7 +343,7 @@ void SceneToImageProjectorNode::image_callback(
         return;
       }
 
-      auto last_point = cv::Point2f(0, 0);  // this is out of image
+      auto last_point = cv::Point2f(-1, -1);  // this is out of image
 
       for (size_t i = 1; i < transformed_trajectory.points.size(); i++) {
         Eigen::Vector3d position(
@@ -427,8 +390,8 @@ void SceneToImageProjectorNode::image_callback(
         return;
       }
 
-      auto last_point_left = cv::Point2f(0, 0);   // this is out of image
-      auto last_point_right = cv::Point2f(0, 0);  // this is out of image
+      auto last_point_left = cv::Point2f(-1, -1);   // this is out of image
+      auto last_point_right = cv::Point2f(-1, -1);  // this is out of image
 
       for (size_t i = 1; i < transformed_path.left_bound.size(); i++) {
         Eigen::Vector3d left_position(
