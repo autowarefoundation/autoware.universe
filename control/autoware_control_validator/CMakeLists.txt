@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(autoware_control_validator)
 
+set(GENERATE_FIGURES_IN_TESTING OFF) # flag to generate figures in testing
+
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
@@ -36,8 +38,13 @@ else()
   target_link_libraries(autoware_control_validator_component "${cpp_typesupport_target}")
 endif()
 
-# if(BUILD_TESTING)
-# endif()
+if(BUILD_TESTING)
+  # glob test/*.cpp
+  file(GLOB_RECURSE TEST_SOURCES test/*.cpp)
+  ament_add_gtest(test_autoware_control_validator
+    ${TEST_SOURCES}
+  )
+endif()
 
 ament_auto_package(
   INSTALL_TO_SHARE

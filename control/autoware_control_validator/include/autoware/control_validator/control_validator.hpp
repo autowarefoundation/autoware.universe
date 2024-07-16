@@ -18,9 +18,9 @@
 #include "autoware/control_validator/debug_marker.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
+#include "diagnostic_updater/diagnostic_updater.hpp"
 
 #include <autoware_control_validator/msg/control_validator_status.hpp>
-#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -50,30 +50,31 @@ class ControlValidator : public rclcpp::Node
 public:
   explicit ControlValidator(const rclcpp::NodeOptions & options);
 
-  void onPredictedTrajectory(const Trajectory::ConstSharedPtr msg);
+  void on_predicted_trajectory(const Trajectory::ConstSharedPtr msg);
 
-  bool checkValidMaxDistanceDeviation(const Trajectory & predicted_trajectory);
+  bool check_valid_max_distance_deviation(
+    const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory);
 
 private:
-  void setupDiag();
+  void setup_diag();
 
-  void setupParameters();
+  void setup_parameters();
 
-  bool isDataReady();
+  bool is_data_ready();
 
   void validate(const Trajectory & trajectory);
 
-  void publishPredictedTrajectory();
-  void publishDebugInfo();
-  void displayStatus();
+  void publish_debug_info();
 
-  void setStatus(DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg) const;
+  void display_status();
 
+  void set_status(
+    DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg) const;
+
+  // Subscribers and publishers
   rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;
-  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_kinematics_{
-    this, "~/input/kinematics"};
-  autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> sub_reference_traj_{
-    this, "~/input/reference_trajectory"};
+  universe_utils::InterProcessPollingSubscriber<Odometry>::SharedPtr sub_kinematics_;
+  universe_utils::InterProcessPollingSubscriber<Trajectory>::SharedPtr sub_reference_traj_;
   rclcpp::Publisher<ControlValidatorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
@@ -86,9 +87,9 @@ private:
   ControlValidatorStatus validation_status_;
   ValidationParams validation_params_;  // for thresholds
 
-  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
+  vehicle_info_utils::VehicleInfo vehicle_info_;
 
-  static bool isAllValid(const ControlValidatorStatus & status);
+  static bool is_all_valid(const ControlValidatorStatus & status);
 
   Trajectory::ConstSharedPtr current_reference_trajectory_;
   Trajectory::ConstSharedPtr current_predicted_trajectory_;
