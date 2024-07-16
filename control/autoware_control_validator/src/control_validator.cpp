@@ -15,17 +15,18 @@
 #include "autoware/control_validator/control_validator.hpp"
 
 #include "autoware/control_validator/utils.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
-#include <utility>
 
 namespace autoware::control_validator
 {
 using diagnostic_msgs::msg::DiagnosticStatus;
 
 ControlValidator::ControlValidator(const rclcpp::NodeOptions & options)
-: Node("control_validator", options)
+: Node("control_validator", options), validation_params_(), vehicle_info_()
 {
   using std::placeholders::_1;
   sub_predicted_traj_ = create_subscription<Trajectory>(
@@ -44,7 +45,7 @@ ControlValidator::ControlValidator(const rclcpp::NodeOptions & options)
 
 void ControlValidator::setupParameters()
 {
-  diag_error_count_threshold_ = declare_parameter<int>("diag_error_count_threshold");
+  diag_error_count_threshold_ = declare_parameter<int64_t>("diag_error_count_threshold");
   display_on_terminal_ = declare_parameter<bool>("display_on_terminal");
 
   {
@@ -63,7 +64,7 @@ void ControlValidator::setupParameters()
 }
 
 void ControlValidator::setStatus(
-  DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg)
+  DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg) const
 {
   if (is_ok) {
     stat.summary(DiagnosticStatus::OK, "validated.");
@@ -162,12 +163,8 @@ bool ControlValidator::checkValidMaxDistanceDeviation(const Trajectory & predict
 {
   validation_status_.max_distance_deviation =
     calcMaxLateralDistance(*current_reference_trajectory_, predicted_trajectory);
-  if (
-    validation_status_.max_distance_deviation >
-    validation_params_.max_distance_deviation_threshold) {
-    return false;
-  }
-  return true;
+  return validation_status_.max_distance_deviation <=
+         validation_params_.max_distance_deviation_threshold;
 }
 
 bool ControlValidator::isAllValid(const ControlValidatorStatus & s)

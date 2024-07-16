@@ -17,9 +17,7 @@
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 
-#include <memory>
 #include <string>
-#include <vector>
 
 using visualization_msgs::msg::Marker;
 

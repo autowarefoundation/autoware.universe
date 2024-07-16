@@ -18,9 +18,6 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
-#include <memory>
-#include <string>
-#include <utility>
 #include <vector>
 
 namespace autoware::control_validator

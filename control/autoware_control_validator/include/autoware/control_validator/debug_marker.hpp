@@ -22,9 +22,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <map>
-#include <memory>
 #include <string>
-#include <vector>
 
 class ControlValidatorDebugMarkerPublisher
 {

@@ -15,13 +15,12 @@
 #ifndef AUTOWARE__CONTROL_VALIDATOR__UTILS_HPP_
 #define AUTOWARE__CONTROL_VALIDATOR__UTILS_HPP_
 
-#include <autoware/motion_utils/trajectory/conversion.hpp>
+#include "autoware/motion_utils/trajectory/conversion.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 
-#include <string>
-#include <utility>
 #include <vector>
 
 namespace autoware::control_validator

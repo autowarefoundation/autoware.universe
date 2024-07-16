@@ -17,9 +17,9 @@
 
 #include "autoware/control_validator/debug_marker.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
-#include "autoware_control_validator/msg/control_validator_status.hpp"
-#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
+#include "autoware_vehicle_info_utils/vehicle_info.hpp"
 
+#include <autoware_control_validator/msg/control_validator_status.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -27,6 +27,7 @@
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -66,7 +67,7 @@ private:
   void publishDebugInfo();
   void displayStatus();
 
-  void setStatus(DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg);
+  void setStatus(DiagnosticStatusWrapper & stat, const bool & is_ok, const std::string & msg) const;
 
   rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_traj_;
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_kinematics_{
@@ -77,7 +78,7 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
 
   // system parameters
-  int diag_error_count_threshold_ = 0;
+  int64_t diag_error_count_threshold_ = 0;
   bool display_on_terminal_ = true;
 
   Updater diag_updater_{this};
@@ -87,7 +88,7 @@ private:
 
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
-  bool isAllValid(const ControlValidatorStatus & status);
+  static bool isAllValid(const ControlValidatorStatus & status);
 
   Trajectory::ConstSharedPtr current_reference_trajectory_;
   Trajectory::ConstSharedPtr current_predicted_trajectory_;
