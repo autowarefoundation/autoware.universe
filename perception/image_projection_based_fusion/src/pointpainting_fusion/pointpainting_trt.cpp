@@ -16,8 +16,8 @@
 
 #include <autoware/universe_utils/math/constants.hpp>
 #include <image_projection_based_fusion/pointpainting_fusion/preprocess_kernel.hpp>
-#include <lidar_centerpoint/centerpoint_config.hpp>
-#include <lidar_centerpoint/network/scatter_kernel.hpp>
+#include <autoware/lidar_centerpoint/centerpoint_config.hpp>
+#include <autoware/lidar_centerpoint/network/scatter_kernel.hpp>
 
 #include <iostream>
 #include <memory>
@@ -27,10 +27,10 @@
 namespace image_projection_based_fusion
 {
 PointPaintingTRT::PointPaintingTRT(
-  const centerpoint::NetworkParam & encoder_param, const centerpoint::NetworkParam & head_param,
-  const centerpoint::DensificationParam & densification_param,
-  const centerpoint::CenterPointConfig & config)
-: centerpoint::CenterPointTRT(encoder_param, head_param, densification_param, config)
+  const autoware::centerpoint::NetworkParam & encoder_param, const autoware::centerpoint::NetworkParam & head_param,
+  const autoware::centerpoint::DensificationParam & densification_param,
+  const autoware::centerpoint::CenterPointConfig & config)
+: autoware::centerpoint::CenterPointTRT(encoder_param, head_param, densification_param, config)
 {
   vg_ptr_pp_ =
     std::make_unique<image_projection_based_fusion::VoxelGenerator>(densification_param, config_);

@@ -20,10 +20,10 @@
 #include <autoware/universe_utils/math/constants.hpp>
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
-#include <lidar_centerpoint/centerpoint_config.hpp>
-#include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
-#include <lidar_centerpoint/ros_utils.hpp>
-#include <lidar_centerpoint/utils.hpp>
+#include <autoware/lidar_centerpoint/centerpoint_config.hpp>
+#include <autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp>
+#include <autoware/lidar_centerpoint/ros_utils.hpp>
+#include <autoware/lidar_centerpoint/utils.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <omp.h>
@@ -166,8 +166,8 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 
   {
-    centerpoint::NMSParams p;
-    p.nms_type_ = centerpoint::NMS_TYPE::IoU_BEV;
+    autoware::centerpoint::NMSParams p;
+    p.nms_type_ = autoware::centerpoint::NMS_TYPE::IoU_BEV;
     p.target_class_names_ = this->declare_parameter<std::vector<std::string>>(
       "post_process_params.iou_nms_target_class_names");
     p.search_distance_2d_ =
@@ -176,11 +176,11 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     iou_bev_nms_.setParameters(p);
   }
 
-  centerpoint::NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
-  centerpoint::NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
-  centerpoint::DensificationParam densification_param(
+  autoware::centerpoint::NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
+  autoware::centerpoint::NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
+  autoware::centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
-  centerpoint::CenterPointConfig config(
+  autoware::centerpoint::CenterPointConfig config(
     class_names_.size(), point_feature_size, max_voxel_size, pointcloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
     yaw_norm_thresholds, has_variance_);
@@ -385,7 +385,7 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
     return;
   }
 
-  std::vector<centerpoint::Box3D> det_boxes3d;
+  std::vector<autoware::centerpoint::Box3D> det_boxes3d;
   bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
   if (!is_success) {
     return;
