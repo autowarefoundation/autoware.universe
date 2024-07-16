@@ -161,7 +161,7 @@ protected:
     int theta_index, std::vector<IndexXY> & indexes,
     std::vector<IndexXY> & vertex_indexes_2d) const;
   bool detectBoundaryExit(const IndexXYT & base_index) const;
-  bool detectCollision(const IndexXYT & base_index) const;
+  bool detectCollision(const geometry_msgs::msg::Pose & base_pose) const;
   void computeEDTMap();
 
   template <typename IndexType>
