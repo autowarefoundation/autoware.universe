@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef PREDICTED_PATH_CHECKER__DEBUG_MARKER_HPP_
-#define PREDICTED_PATH_CHECKER__DEBUG_MARKER_HPP_
+#ifndef DEBUG_MARKER_HPP_
+#define DEBUG_MARKER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -89,4 +89,4 @@ private:
 
 }  // namespace autoware::predicted_path_checker
 
-#endif  // PREDICTED_PATH_CHECKER__DEBUG_MARKER_HPP_
+#endif  // DEBUG_MARKER_HPP_

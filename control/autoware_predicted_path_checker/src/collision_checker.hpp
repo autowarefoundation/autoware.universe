@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
-#define PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
+#ifndef COLLISION_CHECKER_HPP_
+#define COLLISION_CHECKER_HPP_
 
 #include <autoware/motion_utils/trajectory/conversion.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
@@ -125,4 +125,4 @@ private:
 };
 }  // namespace autoware::predicted_path_checker
 
-#endif  // PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
+#endif  // COLLISION_CHECKER_HPP_
