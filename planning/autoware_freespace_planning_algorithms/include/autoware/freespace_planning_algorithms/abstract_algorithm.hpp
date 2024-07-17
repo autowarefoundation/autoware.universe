@@ -90,7 +90,7 @@ struct VehicleShape
     setHalfDiagonal();
   }
 
-  void setHalfDiagonal() { half_diagonal = 0.5 * sqrt(length * length + width * width); }
+  void setHalfDiagonal() { half_diagonal = 0.5 * std::hypot(length, width); }
 };
 
 struct PlannerCommonParam
@@ -151,6 +151,9 @@ public:
   virtual void setMap(const nav_msgs::msg::OccupancyGrid & costmap);
   virtual bool makePlan(
     const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose) = 0;
+  virtual bool makePlan(
+    const geometry_msgs::msg::Pose & start_pose,
+    const std::vector<geometry_msgs::msg::Pose> & goal_candidates) = 0;
   virtual bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const;
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
 

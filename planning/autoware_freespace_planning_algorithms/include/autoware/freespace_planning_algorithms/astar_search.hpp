@@ -113,9 +113,7 @@ public:
 
   bool makePlan(const Pose & start_pose, const Pose & goal_pose) override;
 
-  bool makePlan(
-    const geometry_msgs::msg::Pose & start_pose,
-    const std::vector<geometry_msgs::msg::Pose> & goal_candidates);
+  bool makePlan(const Pose & start_pose, const std::vector<Pose> & goal_candidates) override;
 
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
 
@@ -130,7 +128,7 @@ private:
   void expandNodes(AstarNode & current_node, const bool is_back = false);
   void resetData();
   void setPath(const AstarNode & goal);
-  void setStartNode();
+  void setStartNode(const double cost_offset = 0.0);
   double estimateCost(const Pose & pose, const IndexXYT & index) const;
   bool isGoal(const AstarNode & node) const;
   Pose node2pose(const AstarNode & node) const;
@@ -152,6 +150,9 @@ private:
   // goal node, which may helpful in testing and debugging
   AstarNode * goal_node_;
 
+  // alternate goals for when multiple goal candidates are given
+  std::vector<Pose> alternate_goals_;
+
   // distance metric option (removed when the reeds_shepp gets stable)
   bool use_reeds_shepp_;
 
@@ -166,6 +167,7 @@ private:
   static constexpr double base_length_max_expansion_factor_ = 0.5;
   static constexpr double dist_to_goal_expansion_factor_ = 0.15;
   static constexpr double dist_to_obs_expansion_factor_ = 0.3;
+  static constexpr double multi_goal_backward_cost_offset = 5.0;
 };
 }  // namespace autoware::freespace_planning_algorithms
 

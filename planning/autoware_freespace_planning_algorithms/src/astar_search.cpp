@@ -85,12 +85,26 @@ AstarSearch::AstarSearch(
   min_expansion_dist_ = std::max(astar_param_.expansion_distance, 1.5 * costmap_.info.resolution);
   max_expansion_dist_ = std::max(
     collision_vehicle_shape_.base_length * base_length_max_expansion_factor_, min_expansion_dist_);
+
+  is_backward_search_ = astar_param_.search_method == "backward";
+}
+
+void AstarSearch::resetData()
+{
+  // clearing openlist is necessary because otherwise remaining elements of openlist
+  // point to deleted node.
+  openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
+  graph_.clear();
+  int nb_of_grid_nodes = costmap_.info.width * costmap_.info.height;
+  int total_astar_node_count = nb_of_grid_nodes * planner_common_param_.theta_size;
+  graph_.resize(total_astar_node_count);
+  col_free_distance_map_.clear();
+  col_free_distance_map_.resize(nb_of_grid_nodes, std::numeric_limits<double>::max());
 }
 
 bool AstarSearch::makePlan(const Pose & start_pose, const Pose & goal_pose)
 {
   resetData();
-  is_backward_search_ = astar_param_.search_method == "backward";
 
   start_pose_ = global2local(costmap_, start_pose);
   goal_pose_ = global2local(costmap_, goal_pose);
@@ -117,30 +131,42 @@ bool AstarSearch::makePlan(
   const geometry_msgs::msg::Pose & start_pose,
   const std::vector<geometry_msgs::msg::Pose> & goal_candidates)
 {
+  if (goal_candidates.empty()) return false;
+
   if (goal_candidates.size() == 1) {
     return makePlan(start_pose, goal_candidates.front());
   }
 
   resetData();
-  is_backward_search_ = true;
 
-  goal_pose_ = global2local(costmap_, start_pose);
+  start_pose_ = global2local(costmap_, start_pose);
 
-  setCollisionFreeDistanceMap();
+  std::vector<Pose> goals_local;
+  for (const auto & goal : goal_candidates) {
+    const auto goal_local = global2local(costmap_, goal);
+    if (detectCollision(goal_local)) continue;
+    goals_local.push_back(goal_local);
+  }
 
-  if (std::none_of(
-        goal_candidates.begin(), goal_candidates.end(),
-        [this](const geometry_msgs::msg::Pose & pose) {
-          start_pose_ = global2local(costmap_, pose);
-          return setStartNode();
-        })) {
-    throw std::logic_error("Invalid start pose");
+  if (detectCollision(start_pose_) || goals_local.empty()) {
+    throw std::logic_error("Invalid start or goal pose");
     return false;
   }
 
-  if (!setGoalNode()) {
-    throw std::logic_error("Invalid goal pose");
-    return false;
+  goal_pose_ = is_backward_search_ ? start_pose_ : goals_local.front();
+
+  setCollisionFreeDistanceMap();
+
+  if (is_backward_search_) {
+    double cost_offset = 0.0;
+    for (const auto & pose : goals_local) {
+      start_pose_ = pose;
+      setStartNode(cost_offset);
+      cost_offset += multi_goal_backward_cost_offset;
+    }
+  } else {
+    setStartNode();
+    alternate_goals_ = goals_local;
   }
 
   if (!search()) {
@@ -148,19 +174,6 @@ bool AstarSearch::makePlan(
     return false;
   }
   return true;
-}
-
-void AstarSearch::resetData()
-{
-  // clearing openlist is necessary because otherwise remaining elements of openlist
-  // point to deleted node.
-  openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
-  graph_.clear();
-  int nb_of_grid_nodes = costmap_.info.width * costmap_.info.height;
-  int total_astar_node_count = nb_of_grid_nodes * planner_common_param_.theta_size;
-  graph_.resize(total_astar_node_count);
-  col_free_distance_map_.clear();
-  col_free_distance_map_.resize(nb_of_grid_nodes, std::numeric_limits<double>::max());
 }
 
 void AstarSearch::setCollisionFreeDistanceMap()
@@ -204,12 +217,13 @@ void AstarSearch::setCollisionFreeDistanceMap()
   }
 }
 
-void AstarSearch::setStartNode()
+void AstarSearch::setStartNode(const double cost_offset)
 {
   const auto index = pose2index(costmap_, start_pose_, planner_common_param_.theta_size);
   // Set start node
   AstarNode * start_node = &graph_[getKey(index)];
-  start_node->set(start_pose_, 0.0, estimateCost(start_pose_, index), 0, false);
+  double initial_cost = estimateCost(start_pose_, index) + cost_offset;
+  start_node->set(start_pose_, 0.0, initial_cost, 0, false);
   start_node->dir_distance = 0.0;
   start_node->dist_to_goal = calcDistance2d(start_pose_, goal_pose_);
   start_node->dist_to_obs = getObstacleEDT(index);
@@ -414,26 +428,36 @@ bool AstarSearch::isGoal(const AstarNode & node) const
   const double goal_angle =
     autoware::universe_utils::deg2rad(planner_common_param_.angle_goal_range / 2.0);
 
-  const auto relative_pose = calcRelativePose(goal_pose_, node2pose(node));
+  const auto node_pose = node2pose(node);
 
-  // Check conditions
-  if (astar_param_.only_behind_solutions && relative_pose.position.x > 0) {
-    return false;
-  }
+  auto checkGoal = [this, &node_pose, &lateral_goal_range, &longitudinal_goal_range,
+                    &goal_angle](const Pose & pose) {
+    const auto relative_pose = calcRelativePose(pose, node_pose);
 
-  if (
-    std::fabs(relative_pose.position.x) > longitudinal_goal_range ||
-    std::fabs(relative_pose.position.y) > lateral_goal_range) {
-    return false;
-  }
+    if (astar_param_.only_behind_solutions && relative_pose.position.x > 0) {
+      return false;
+    }
 
-  const auto angle_diff =
-    autoware::universe_utils::normalizeRadian(tf2::getYaw(relative_pose.orientation));
-  if (std::abs(angle_diff) > goal_angle) {
-    return false;
-  }
+    if (
+      std::fabs(relative_pose.position.x) > longitudinal_goal_range ||
+      std::fabs(relative_pose.position.y) > lateral_goal_range) {
+      return false;
+    }
 
-  return true;
+    const auto angle_diff =
+      autoware::universe_utils::normalizeRadian(tf2::getYaw(relative_pose.orientation));
+    if (std::abs(angle_diff) > goal_angle) {
+      return false;
+    }
+
+    return true;
+  };
+
+  if (checkGoal(goal_pose_)) return true;
+
+  return std::any_of(
+    alternate_goals_.begin(), alternate_goals_.end(),
+    [&checkGoal](const Pose & pose) { return checkGoal(pose); });
 }
 
 Pose AstarSearch::node2pose(const AstarNode & node) const
