@@ -140,7 +140,7 @@ rclcpp::NodeOptions override_options(rclcpp::NodeOptions options)
 }
 
 DummyDiagPublisher::DummyDiagPublisher(const rclcpp::NodeOptions & options)
-: Node("dummy_diag_publisher", override_options(options)), updater_(this)
+: Node("dummy_diag_publisher", override_options(options))
 
 {
   // Parameter
