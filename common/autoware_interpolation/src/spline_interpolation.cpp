@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
 
 #include <vector>
 
-namespace
+namespace autoware::interpolation
 {
 // solve Ax = d
 // where A is tridiagonal matrix
@@ -77,10 +77,7 @@ inline std::vector<double> solveTridiagonalMatrixAlgorithm(const TDMACoef & tdma
 
   return x;
 }
-}  // namespace
 
-namespace interpolation
-{
 std::vector<double> spline(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys)
@@ -164,13 +161,12 @@ std::vector<double> splineByAkima(
   }
   return res;
 }
-}  // namespace interpolation
 
 void SplineInterpolation::calcSplineCoefficients(
   const std::vector<double> & base_keys, const std::vector<double> & base_values)
 {
   // throw exceptions for invalid arguments
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+  validateKeysAndValues(base_keys, base_values);
 
   const size_t num_base = base_keys.size();  // N+1
 
@@ -204,7 +200,7 @@ void SplineInterpolation::calcSplineCoefficients(
   v.push_back(0.0);
 
   // calculate a, b, c, d of spline coefficients
-  multi_spline_coef_ = interpolation::MultiSplineCoef{num_base - 1};  // N
+  multi_spline_coef_ = MultiSplineCoef{num_base - 1};  // N
   for (size_t i = 0; i < num_base - 1; ++i) {
     multi_spline_coef_.a[i] = (v[i + 1] - v[i]) / 6.0 / diff_keys[i];
     multi_spline_coef_.b[i] = v[i] / 2.0;
@@ -220,7 +216,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = validateKeys(base_keys_, query_keys);
 
   const auto & a = multi_spline_coef_.a;
   const auto & b = multi_spline_coef_.b;
@@ -245,7 +241,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = validateKeys(base_keys_, query_keys);
 
   const auto & a = multi_spline_coef_.a;
   const auto & b = multi_spline_coef_.b;
@@ -269,7 +265,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedQuadDiffValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = validateKeys(base_keys_, query_keys);
 
   const auto & a = multi_spline_coef_.a;
   const auto & b = multi_spline_coef_.b;
@@ -287,3 +283,4 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedQuadDiffValues(
 
   return res;
 }
+}  // namespace autoware::interpolation

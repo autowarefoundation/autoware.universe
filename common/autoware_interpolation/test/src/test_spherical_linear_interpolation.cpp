@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/spherical_linear_interpolation.hpp"
+#include "autoware/interpolation/spherical_linear_interpolation.hpp"
 
 #include <gtest/gtest.h>
 
@@ -34,7 +34,7 @@ inline geometry_msgs::msg::Quaternion createQuaternionFromRPY(
 
 TEST(slerp, spline_scalar)
 {
-  using interpolation::slerp;
+  using autoware::interpolation::slerp;
 
   // Same value
   {
@@ -79,7 +79,7 @@ TEST(slerp, spline_scalar)
 
 TEST(slerp, spline_vector)
 {
-  using interpolation::slerp;
+  using autoware::interpolation::slerp;
 
   // query keys are same as base keys
   {

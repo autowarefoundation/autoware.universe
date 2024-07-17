@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERPOLATION__SPLINE_INTERPOLATION_HPP_
-#define INTERPOLATION__SPLINE_INTERPOLATION_HPP_
+#ifndef AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_HPP_
+#define AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_HPP_
 
+#include "autoware/interpolation/interpolation_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/interpolation_utils.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -24,7 +24,7 @@
 #include <numeric>
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 // NOTE: X(s) = a_i (s - s_i)^3 + b_i (s - s_i)^2 + c_i (s - s_i) + d_i : (i = 0, 1, ... N-1)
 struct MultiSplineCoef
@@ -52,7 +52,6 @@ std::vector<double> spline(
 std::vector<double> splineByAkima(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
   const std::vector<double> & query_keys);
-}  // namespace interpolation
 
 // non-static 1-dimensional spline interpolation
 //
@@ -99,10 +98,11 @@ public:
 
 private:
   std::vector<double> base_keys_;
-  interpolation::MultiSplineCoef multi_spline_coef_;
+  MultiSplineCoef multi_spline_coef_;
 
   void calcSplineCoefficients(
     const std::vector<double> & base_keys, const std::vector<double> & base_values);
 };
+}  // namespace autoware::interpolation
 
-#endif  // INTERPOLATION__SPLINE_INTERPOLATION_HPP_
+#endif  // AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_HPP_

@@ -40,6 +40,7 @@
   <depend>autoware_behavior_path_planner_common</depend>
   <depend>autoware_freespace_planning_algorithms</depend>
   <depend>autoware_frenet_planner</depend>
+  <depend>autoware_interpolation</depend>
   <depend>autoware_lane_departure_checker</depend>
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_motion_utils</depend>
@@ -53,7 +54,6 @@
   <depend>autoware_vehicle_msgs</depend>
   <depend>behaviortree_cpp_v3</depend>
   <depend>geometry_msgs</depend>
-  <depend>interpolation</depend>
   <depend>libboost-dev</depend>
   <depend>libopencv-dev</depend>
   <depend>magic_enum</depend>

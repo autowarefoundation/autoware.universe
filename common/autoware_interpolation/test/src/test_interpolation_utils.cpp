@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/interpolation_utils.hpp"
+#include "autoware/interpolation/interpolation_utils.hpp"
 
 #include <gtest/gtest.h>
 
@@ -24,43 +24,43 @@ TEST(interpolation_utils, isIncreasing)
 {
   // empty
   const std::vector<double> empty_vec;
-  EXPECT_THROW(interpolation_utils::isIncreasing(empty_vec), std::invalid_argument);
+  EXPECT_THROW(autoware::interpolation::isIncreasing(empty_vec), std::invalid_argument);
 
   // increase
   const std::vector<double> increasing_vec{0.0, 1.5, 3.0, 4.5, 6.0};
-  EXPECT_EQ(interpolation_utils::isIncreasing(increasing_vec), true);
+  EXPECT_EQ(autoware::interpolation::isIncreasing(increasing_vec), true);
 
   // not decrease
   const std::vector<double> not_increasing_vec{0.0, 1.5, 1.5, 4.5, 6.0};
-  EXPECT_EQ(interpolation_utils::isIncreasing(not_increasing_vec), false);
+  EXPECT_EQ(autoware::interpolation::isIncreasing(not_increasing_vec), false);
 
   // decrease
   const std::vector<double> decreasing_vec{0.0, 1.5, 1.2, 4.5, 6.0};
-  EXPECT_EQ(interpolation_utils::isIncreasing(decreasing_vec), false);
+  EXPECT_EQ(autoware::interpolation::isIncreasing(decreasing_vec), false);
 }
 
 TEST(interpolation_utils, isNotDecreasing)
 {
   // empty
   const std::vector<double> empty_vec;
-  EXPECT_THROW(interpolation_utils::isNotDecreasing(empty_vec), std::invalid_argument);
+  EXPECT_THROW(autoware::interpolation::isNotDecreasing(empty_vec), std::invalid_argument);
 
   // increase
   const std::vector<double> increasing_vec{0.0, 1.5, 3.0, 4.5, 6.0};
-  EXPECT_EQ(interpolation_utils::isNotDecreasing(increasing_vec), true);
+  EXPECT_EQ(autoware::interpolation::isNotDecreasing(increasing_vec), true);
 
   // not decrease
   const std::vector<double> not_increasing_vec{0.0, 1.5, 1.5, 4.5, 6.0};
-  EXPECT_EQ(interpolation_utils::isNotDecreasing(not_increasing_vec), true);
+  EXPECT_EQ(autoware::interpolation::isNotDecreasing(not_increasing_vec), true);
 
   // decrease
   const std::vector<double> decreasing_vec{0.0, 1.5, 1.2, 4.5, 6.0};
-  EXPECT_EQ(interpolation_utils::isNotDecreasing(decreasing_vec), false);
+  EXPECT_EQ(autoware::interpolation::isNotDecreasing(decreasing_vec), false);
 }
 
 TEST(interpolation_utils, validateKeys)
 {
-  using interpolation_utils::validateKeys;
+  using autoware::interpolation::validateKeys;
 
   const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0};
   const std::vector<double> query_keys{0.0, 1.0, 2.0, 3.0};
@@ -116,7 +116,7 @@ TEST(interpolation_utils, validateKeys)
 
 TEST(interpolation_utils, validateKeysAndValues)
 {
-  using interpolation_utils::validateKeysAndValues;
+  using autoware::interpolation::validateKeysAndValues;
 
   const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0};
   const std::vector<double> base_values{0.0, 1.0, 2.0, 3.0};

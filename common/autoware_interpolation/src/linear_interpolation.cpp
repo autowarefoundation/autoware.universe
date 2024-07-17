@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 double lerp(const double src_val, const double dst_val, const double ratio)
 {
@@ -28,8 +28,8 @@ std::vector<double> lerp(
   const std::vector<double> & query_keys)
 {
   // throw exception for invalid arguments
-  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys, query_keys);
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+  const auto validated_query_keys = validateKeys(base_keys, query_keys);
+  validateKeysAndValues(base_keys, base_values);
 
   // calculate linear interpolation
   std::vector<double> query_values;
@@ -56,4 +56,4 @@ double lerp(
 {
   return lerp(base_keys, base_values, std::vector<double>{query_key}).front();
 }
-}  // namespace interpolation
+}  // namespace autoware::interpolation

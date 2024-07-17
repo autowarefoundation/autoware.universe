@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERPOLATION__INTERPOLATION_UTILS_HPP_
-#define INTERPOLATION__INTERPOLATION_UTILS_HPP_
+#ifndef AUTOWARE__INTERPOLATION__INTERPOLATION_UTILS_HPP_
+#define AUTOWARE__INTERPOLATION__INTERPOLATION_UTILS_HPP_
 
 #include <algorithm>
 #include <array>
 #include <stdexcept>
 #include <vector>
 
-namespace interpolation_utils
+namespace autoware::interpolation
 {
 inline bool isIncreasing(const std::vector<double> & x)
 {
@@ -109,6 +109,6 @@ void validateKeysAndValues(
     throw std::invalid_argument("The size of base_keys and base_values are not the same.");
   }
 }
-}  // namespace interpolation_utils
+}  // namespace autoware::interpolation
 
-#endif  // INTERPOLATION__INTERPOLATION_UTILS_HPP_
+#endif  // AUTOWARE__INTERPOLATION__INTERPOLATION_UTILS_HPP_
