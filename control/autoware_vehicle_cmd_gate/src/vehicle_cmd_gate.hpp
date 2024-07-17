@@ -90,7 +90,15 @@ struct Commands
   GearCommand gear;
   explicit Commands(const uint8_t & default_gear = GearCommand::PARK)
   {
+    control.stamp.sec = 0;
+    control.stamp.nanosec = 0;
+
+    turn_indicator.stamp.sec = 0;
+    turn_indicator.stamp.nanosec = 0;
+
     gear.command = default_gear;
+    gear.stamp.sec = 0;
+    gear.stamp.nanosec = 0;
   }
 };
 
@@ -182,6 +190,9 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<GearCommand> emergency_gear_cmd_sub_{
     this, "input/emergency/gear_cmd"};
   void onEmergencyCtrlCmd(Control::ConstSharedPtr msg);
+  
+  // Previuos Command
+  Commands prev_commands_;
 
   // Parameter
   bool use_emergency_handling_;

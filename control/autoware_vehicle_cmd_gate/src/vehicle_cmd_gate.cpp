@@ -457,10 +457,21 @@ void VehicleCmdGate::onTimer()
     }
   }
 
+  const auto CheckTopicContinuity = []<class T>(const T & prev_topic, const T & current_topic) {
+    return (rclcpp::Time(current_topic.stamp) - rclcpp::Time(prev_topic.stamp)).seconds() > 0.0
+             ? current_topic
+             : prev_topic;
+  };
+
+  prev_commands_.turn_indicator =
+    CheckTopicContinuity(prev_commands_.turn_indicator, turn_indicator);
+  prev_commands_.hazard_light = CheckTopicContinuity(prev_commands_.hazard_light, hazard_light);
+  prev_commands_.gear = CheckTopicContinuity(prev_commands_.gear, gear);
+
   // Publish topics
-  turn_indicator_cmd_pub_->publish(turn_indicator);
-  hazard_light_cmd_pub_->publish(hazard_light);
-  gear_cmd_pub_->publish(gear);
+  turn_indicator_cmd_pub_->publish(prev_commands_.turn_indicator);
+  hazard_light_cmd_pub_->publish(prev_commands_.hazard_light);
+  gear_cmd_pub_->publish(prev_commands_.gear);
 }
 
 void VehicleCmdGate::publishControlCommands(const Commands & commands)
