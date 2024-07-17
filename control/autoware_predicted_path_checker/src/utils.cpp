@@ -18,7 +18,7 @@
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
-namespace utils
+namespace autoware::predicted_path_checker
 {
 
 using autoware::motion_utils::findFirstNearestIndexWithSoftConstraints;
@@ -428,4 +428,4 @@ void getCurrentObjectPose(
       0.0, 0.0, autoware::universe_utils::normalizeRadian(yaw + delta_yaw));
 }
 
-}  // namespace utils
+}  // namespace autoware::predicted_path_checker
