@@ -190,7 +190,7 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<GearCommand> emergency_gear_cmd_sub_{
     this, "input/emergency/gear_cmd"};
   void onEmergencyCtrlCmd(Control::ConstSharedPtr msg);
-  
+
   // Previuos Command
   Commands prev_commands_;
 
