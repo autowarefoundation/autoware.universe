@@ -135,15 +135,12 @@ void MrmHandler::publishGearCmd()
 
   if (isEmergency()) {
     // gear command is created within mrm_handler
-    msg.command = (param_.use_parking_after_stopped && isStopped())
-                  ? GearCommand::PARK
-                  : last_gear_command_;
+    msg.command =
+      (param_.use_parking_after_stopped && isStopped()) ? GearCommand::PARK : last_gear_command_;
   } else {
     // use the same gear as the input gear
     auto gear = sub_gear_cmd_.takeData();
-    msg.command = (gear == nullptr)
-                  ? last_gear_command_
-                  : gear->command;
+    msg.command = (gear == nullptr) ? last_gear_command_ : gear->command;
     last_gear_command_ = msg->command;
   }
 
