@@ -457,7 +457,7 @@ int run(void *dora_context)
             size_t id_len;
             read_dora_input_id(event, &id, &id_len);
             cout<<"\033[1;32m" << "id: "  << id << " id_len:"<<id_len << "\033[0m"<<endl;
-            if (strcmp(id, "pointcloud") == 0)
+            if (strncmp(id, "pointcloud",10) == 0)
             {
                 char *data;
                 size_t data_len;
@@ -490,10 +490,12 @@ int run(void *dora_context)
                 std::cout.precision(20);
                 cout<< "Euclidean Cluster Node Input PointCloud: " 
                     << " seq:"<<pointcloud.header.seq
-                    <<"  local_cnt: " <<local_cnt
                     << " stamp:"<<pointcloud.header.stamp/1e9
                     << " point.size:"<<pointcloud.points.size()<<endl;
-                
+                struct timeval tv;
+                gettimeofday(&tv, NULL);
+                cout << "The local" <<"  local_cnt: " <<local_cnt<<" recived data time: " << tv.tv_sec <<","<< tv.tv_usec/1000.0f<<" ms " 
+                        << endl;
                 local_cnt++;
 
                 int ret_v = Callback(pointcloud,dora_context);

@@ -68,7 +68,7 @@ int run(void *dora_context)
             char *id;
             size_t id_len;
             read_dora_input_id(event, &id, &id_len);
-            if (strcmp(id, "pointcloud") == 0)
+            if (strncmp(id, "pointcloud",10) == 0)
             {
                
                 char *data;
@@ -100,9 +100,12 @@ int run(void *dora_context)
                 }
                 std::cout.precision(20);
                 cout<<"\033[1;32m" << "Input PointCloud: seq " << pointcloud.header.seq 
-                    <<"  local_cnt: " <<local_cnt
                     << "  stamp:" << pointcloud.header.stamp/1e9
                      << "\033[0m"<<endl;
+                struct timeval tv;
+                gettimeofday(&tv, NULL);
+                cout << "The local" <<"  local_cnt: " <<local_cnt<<" recived data time: " << tv.tv_sec <<","<< tv.tv_usec/1000.0f<<" ms " 
+                        << endl;
                 local_cnt++;
 
                 pointcloud_ptr = pointcloud.makeShared();

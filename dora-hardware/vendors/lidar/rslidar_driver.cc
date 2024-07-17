@@ -153,22 +153,42 @@ int run(void *dora_context)
                     RS_MSG << "sizeof(PointT) <= 16 " << RS_REND;
                     size_t cloudSize = (((msg->points.size()) + 1) * 16);  // 4byte for message seq, 4bytes empty, 8byte for timestamp,
                                                                         // others for points
-                    u_int8_t* bytePointCloud = (u_int8_t*)(new PointT[cloudSize / sizeof(PointT)]);
+                    //u_int8_t* bytePointCloud = (u_int8_t*)(new PointT[cloudSize / sizeof(PointT)]);
+                     
+                    size_t all_size =cloudSize;
+                    result.ptr = new uint8_t[all_size];
                     
-                    u_int32_t* seq = (u_int32_t*)bytePointCloud;
-                    *seq = msg->seq;
-                    double* timestamp = (double*)(bytePointCloud + 8);
-                    *timestamp = msg->timestamp;
+                    uint32_t* seq_ptr = (uint32_t*)result.ptr;
+                    *seq_ptr = msg->seq;
+
+                    double* timestamp_ptr = (double*)(result.ptr + 8);
+                    *timestamp_ptr = msg->timestamp;
+ 
+                    for(int i=0;i<msg->points.size();i++)
+                        {
+                            float* data_float = (float*)(result.ptr + 16+16*i);
+                            *data_float = msg->points[i].x;
+                            data_float = (float*)(result.ptr + 16+4+16*i);
+                            *data_float = msg->points[i].y;
+                            data_float = (float*)(result.ptr + 16+8+16*i);
+                            *data_float = msg->points[i].z;
+                            data_float = (float*)(result.ptr + 16+12+16*i);
+                            *data_float =msg->points[i].intensity;
+
+                        }
                     // PointT* point = (PointT*)(bytePointCloud + 16);
                     // std::vector<PointT>::iterator pointPtr = msg->points.begin();
                     // for (int i = 0; i < msg->points.size(); ++i){
                     //   *point++ = pointPtr[i];
                     // }
-                    memcpy(bytePointCloud+16,&(msg->points[0]),cloudSize-16);
+                   // memcpy(bytePointCloud+16,&(msg->points[0]),cloudSize-16);
+                    
+
+
 
                     free_cloud_queue.push(msg);
                     
-                    result.ptr = bytePointCloud;
+                    //result.ptr =point_data .ptr;
                     result.len = cloudSize;
                     result.cap = cloudSize;
                     //return result;

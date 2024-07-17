@@ -47,8 +47,8 @@ include_directories(
   ${EIGEN3_INCLUDE_DIRS}
   ${YAMLCPP_INCLUDE_DIRS}
   ${GeographicLib_INCLUDE_DIRS}
-  $ENV{HOME}/dora_project/dora/apis/c/node/ #dora的头文件路径 node_api.h
-  $ENV{HOME}/dora_project/dora/apis/c/operator/
+  $ENV{HOME}/dora/apis/c/node/ #dora的头文件路径 node_api.h
+  $ENV{HOME}/dora/apis/c/operator/
   # $ENV{HOME}/dora/examples/c++-ros2-dataflow/build/ #C++ros的头文件路径
   ../geo_pos_conv/include
   ./include
@@ -77,7 +77,7 @@ target_link_libraries(gnss_poser_core
   ${EIGEN_LIBRARIES}
   ${YAMLCPP_LIBRARIES}
   #$ENV{HOME}/dora/target/debug/libdora_node_api_cxx.a
-  $ENV{HOME}/dora_project/dora/target/release/libdora_node_api_c.a
+  $ENV{HOME}/dora/target/release/libdora_node_api_c.a
   # ../geo_pos_conv/build/libgeo_pos_conv.a
   #$ENV{HOME}/autoware.universe/sensing/geo_pos_conv/build/libgeo_pos_conv.a
   ${CMAKE_SOURCE_DIR}/../geo_pos_conv/build/libgeo_pos_conv.a

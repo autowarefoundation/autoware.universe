@@ -241,7 +241,7 @@ int run(void *dora_context)
             char *id;
             size_t id_len;
             read_dora_input_id(event, &id, &id_len);
-            if (strcmp(id, "DoraNavSatFix") == 0)
+            if (strncmp(id, "DoraNavSatFix",13) == 0)
             {
               
               char *data;
@@ -278,7 +278,7 @@ int run(void *dora_context)
                 gettimeofday(&tv, NULL);
                 
                 //printf("\nNavSatFix event,   cnt_run: %d  time: %ld,%f ms \n",cnt_run,tv.tv_sec , tv.tv_usec/1000.0f);
-                cout << "NavSatFix event count: "<<cnt_run<<" data_seq "<< j["seq"]<<" time is: "  
+                cout << "NavSatFix event count: "<<cnt_run<<" data_seq "<< j["seq"]<<" local time is: "  
                   << tv.tv_sec <<","<< tv.tv_usec/1000.0f<<" ms " <<std::endl;
               
                 //"seq: "<<navSatFix.header.seq<<endl;
