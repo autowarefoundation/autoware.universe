@@ -6,16 +6,16 @@ The `control_validator` is a module that checks the validity of the output of th
 
 ## Supported features
 
-The following features are supported for the validation and can have thresholds set by parameters:
+The following features are supported for the validation and can have thresholds set by parameters.
+The listed features below does not always correspond to the latest implementation.
+| Description | Arguments | Diagnostic equation | Implemented function name |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | :--------------------------------: | ------------------------------- |
+| Inverse velocity: Measured velocity has a different sign from the target velocity. | measured velocity $v$, target velocity $\hat{v}$, and threshold velocity parameter $k$ | $v\hat{v}<0,~\|v\|>k $       | `checkValidVelocityDeviation()` |
+| Overspeed: Measured speed exceeds target speed significantly.                      | measured velocity $v$, target velocity $\hat{v}$, and threshold ratio parameter $r$ | $\| v \| > (1 + r) \| \hat{v} \| $ | `checkValidVelocityDeviation()` |
 
 - **Deviation check between reference trajectory and predicted trajectory** : invalid when the largest deviation between the predicted trajectory and reference trajectory is greater than the given threshold.
 
 ![trajectory_deviation](./image/trajectory_deviation.drawio.svg)
-
-| Description                                                                        | Arguments                                                                              |        Diagnostic equation         | Implemented function name       |
-| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | :--------------------------------: | ------------------------------- |
-| Inverse velocity: Measured velocity has a different sign from the target velocity. | measured velocity $v$, target velocity $\hat{v}$, and threshold velocity parameter $k$ |       $v\hat{v}<0,~\|v\|>k $       | `checkValidVelocityDeviation()` |
-| Overspeed: Measured speed exceeds target speed significantly.                      | measured velocity $v$, target velocity $\hat{v}$, and threshold ratio parameter $r$    | $\| v \| > (1 + r) \| \hat{v} \| $ | `checkValidVelocityDeviation()` |
 
 ## Inputs/Outputs
 
