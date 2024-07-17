@@ -352,7 +352,7 @@ class GroundSegmentationPipeline:
         components = []
         components.append(
             ComposableNode(
-                package="elevation_map_loader",
+                package="autoware_elevation_map_loader",
                 plugin="autoware::elevation_map_loader::ElevationMapLoaderNode",
                 name="elevation_map_loader",
                 namespace="elevation_map",
@@ -379,7 +379,11 @@ class GroundSegmentationPipeline:
                             ]
                         ),
                         "elevation_map_directory": PathJoinSubstitution(
-                            [FindPackageShare("elevation_map_loader"), "data", "elevation_maps"]
+                            [
+                                FindPackageShare("autoware_elevation_map_loader"),
+                                "data",
+                                "elevation_maps",
+                            ]
                         ),
                         "use_elevation_map_cloud_publisher": False,
                     }
