@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for Centerpoint Tiny ML model",
+  "title": "Parameters for Centerpoint Sigma ML model",
   "type": "object",
   "definitions": {
-    "centerpoint_tiny_ml_package": {
+    "centerpoint_sigma_ml_package": {
       "type": "object",
       "properties": {
         "model_params": {
@@ -14,6 +14,9 @@
               "type": "array",
               "description": "An array of class names will be predicted.",
               "default": ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"],
+              "items": {
+                "type": "string"
+              },
               "uniqueItems": true
             },
             "point_feature_size": {
@@ -29,17 +32,23 @@
             "point_cloud_range": {
               "type": "array",
               "description": "An array of distance ranges of each class, this must have same length with `class_names`.",
-              "default": [-76.8, -76.8, -4.0, 76.8, 76.8, 6.0]
+              "default": [-76.8, -76.8, -4.0, 76.8, 76.8, 6.0],
+              "items": {
+                "type": "number"
+              }
             },
             "voxel_size": {
               "type": "array",
               "description": "An array of voxel grid sizes for PointPainting, this must have same length with `paint_class_names`.",
-              "default": [0.32, 0.32, 10.0]
+              "default": [0.32, 0.32, 10.0],
+              "items": {
+                "type": "number"
+              }
             },
-            "down_sample_factor": {
+            "downsample_factor": {
               "type": "integer",
-              "description": "A scale factor of downsampling points",
-              "default": 2,
+              "description": "A scale factor of downsampling points.",
+              "default": 1,
               "minimum": 1
             },
             "encoder_in_feature_size": {
@@ -57,7 +66,18 @@
               "description": "Flag indicating if the model includes twist estimation.",
               "default": false
             }
-          }
+          },
+          "required": [
+            "class_names",
+            "point_feature_size",
+            "max_voxel_size",
+            "point_cloud_range",
+            "voxel_size",
+            "downsample_factor",
+            "encoder_in_feature_size",
+            "has_variance",
+            "has_twist"
+          ]
         }
       },
       "required": ["model_params"]
@@ -68,7 +88,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/centerpoint_tiny_ml_package"
+          "$ref": "#/definitions/centerpoint_sigma_ml_package"
         }
       },
       "required": ["ros__parameters"]

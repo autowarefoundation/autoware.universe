@@ -28,33 +28,21 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ## Parameters
 
-### Core Parameters
+### Core Parameters for base methods
 
-| Name                                             | Type         | Default Value             | Description                                                   |
-| ------------------------------------------------ | ------------ | ------------------------- | ------------------------------------------------------------- |
-| `encoder_onnx_path`                              | string       | `""`                      | path to VoxelFeatureEncoder ONNX file                         |
-| `encoder_engine_path`                            | string       | `""`                      | path to VoxelFeatureEncoder TensorRT Engine file              |
-| `head_onnx_path`                                 | string       | `""`                      | path to DetectionHead ONNX file                               |
-| `head_engine_path`                               | string       | `""`                      | path to DetectionHead TensorRT Engine file                    |
-| `build_only`                                     | bool         | `false`                   | shutdown the node after TensorRT engine file is built         |
-| `trt_precision`                                  | string       | `fp16`                    | TensorRT inference precision: `fp32` or `fp16`                |
-| `post_process_params.score_threshold`            | double       | `0.4`                     | detected objects with score less than threshold are ignored   |
-| `post_process_params.yaw_norm_thresholds`        | list[double] | [0.3, 0.3, 0.3, 0.3, 0.0] | An array of distance threshold values of norm of yaw [rad].   |
-| `post_process_params.iou_nms_target_class_names` | list[string] | -                         | target classes for IoU-based Non Maximum Suppression          |
-| `post_process_params.iou_nms_search_distance_2d` | double       | -                         | If two objects are farther than the value, NMS isn't applied. |
-| `post_process_params.iou_nms_threshold`          | double       | -                         | IoU threshold for the IoU-based Non Maximum Suppression       |
-| `post_process_params.has_twist`                  | boolean      | false                     | Indicates whether the model outputs twist value.              |
-| `densification_params.world_frame_id`            | string       | `map`                     | the world frame id to fuse multi-frame pointcloud             |
-| `densification_params.num_past_frames`           | int          | `1`                       | the number of past frames to fuse with the current frame      |
+{{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_base.schema.json") }}
+
+### Core Parameters for ML methods
+
+{{ json_to_markdown("perception/lidar_centerpoint/schema/centerpoint_ml_package.schema.json") }}
+
+### Remapper
+
+{{ json_to_markdown("perception/lidar_centerpoint/schema/detection_class_remapper.schema.json") }}
 
 ### The `build_only` option
 
-The `lidar_centerpoint` node has `build_only` option to build the TensorRT engine file from the ONNX file.
-Although it is preferred to move all the ROS parameters in `.param.yaml` file in Autoware Universe, the `build_only` option is not moved to the `.param.yaml` file for now, because it may be used as a flag to execute the build as a pre-task. You can execute with the following command:
-
-```bash
-ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml model_name:=centerpoint_tiny model_path:=/home/autoware/autoware_data/lidar_centerpoint model_param_path:=$(ros2 pkg prefix lidar_centerpoint --share)/config/centerpoint_tiny.param.yaml build_only:=true
-```
+The `lidar_centerpoint` node has a `build_only` option to build the required TensorRT engine file from an ONNX file. This parameter is set in the launch file of this package, whereas all other parameters are set via `.param.yaml` files.
 
 ## Assumptions / Known limits
 
@@ -234,35 +222,16 @@ You can find it in `mmdetection3d/projects/AutowareCenterPoint` file.
 python projects/AutowareCenterPoint/centerpoint_onnx_converter.py --cfg projects/AutowareCenterPoint/configs/centerpoint_custom.py --ckpt work_dirs/centerpoint_custom/YOUR_BEST_MODEL.pth --work-dir ./work_dirs/onnx_models
 ```
 
-#### Create the config file for the custom model
+#### Adjust the config file for the custom model
 
-Create a new config file named **centerpoint_custom.param.yaml** under the config file directory of the lidar_centerpoint node. Sets the parameters of the config file like
-point_cloud_range, point_feature_size, voxel_size, etc. according to the training config file.
-
-```yaml
-/**:
-  ros__parameters:
-    class_names: ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"]
-    point_feature_size: 4
-    max_voxel_size: 40000
-    point_cloud_range: [-51.2, -51.2, -3.0, 51.2, 51.2, 5.0]
-    voxel_size: [0.2, 0.2, 8.0]
-    downsample_factor: 1
-    encoder_in_feature_size: 9
-    # post-process params
-    circle_nms_dist_threshold: 0.5
-    iou_nms_target_class_names: ["CAR"]
-    iou_nms_search_distance_2d: 10.0
-    iou_nms_threshold: 0.1
-    yaw_norm_thresholds: [0.3, 0.3, 0.3, 0.3, 0.0]
-```
+All the ROS parameters have been moved into `.param.yaml` files, please set the parameters of the config file like point*cloud_range, point_feature_size, voxel_size, etc. in the config files. \*\*centerpoint*(your_selection_of_model).param.yaml\*\* files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the [Parameters](#parameters) section.
 
 #### Launch the lidar_centerpoint node
 
 ```bash
 cd /YOUR/AUTOWARE/PATH/Autoware
 source install/setup.bash
-ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml  model_name:=centerpoint_custom  model_path:=/PATH/TO/ONNX/FILE/
+ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml  model_name:=centerpoint_(your_selection_of_model)  model_path:=/PATH/TO/ONNX/FILE/
 ```
 
 ### Changelog

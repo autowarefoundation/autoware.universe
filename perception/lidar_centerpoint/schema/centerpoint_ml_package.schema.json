@@ -36,7 +36,7 @@
               "description": "An array of voxel grid sizes for PointPainting, this must have same length with `paint_class_names`.",
               "default": [0.32, 0.32, 10.0]
             },
-            "down_sample_factor": {
+            "downsample_factor": {
               "type": "integer",
               "description": "A scale factor of downsampling points",
               "default": 1,
@@ -46,6 +46,16 @@
               "type": "integer",
               "description": "A size of encoder input feature channels.",
               "default": 9
+            },
+            "has_variance": {
+              "type": "boolean",
+              "description": "Flag indicating if the model includes variance estimation.",
+              "default": false
+            },
+            "has_twist": {
+              "type": "boolean",
+              "description": "Flag indicating if the model includes twist estimation.",
+              "default": false
             }
           }
         }
