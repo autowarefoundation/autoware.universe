@@ -447,6 +447,8 @@ void VehicleCmdGate::onTimer()
       if (!is_engaged_) {
         turn_indicator.command = TurnIndicatorsCommand::NO_COMMAND;
         hazard_light.command = HazardLightsCommand::NO_COMMAND;
+        turn_indicator.stamp = this->now();
+        hazard_light.stamp = this->now();
       }
     } else if (current_gate_mode_.data == GateMode::EXTERNAL) {
       turn_indicator = remote_commands_.turn_indicator;
