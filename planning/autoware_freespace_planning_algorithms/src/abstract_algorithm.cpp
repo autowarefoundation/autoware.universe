@@ -132,8 +132,8 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
   }
 
   const double base2front = collision_vehicle_shape_.length - collision_vehicle_shape_.base2back;
-  nb_of_margin_cells_ =
-    std::ceil(std::hypot(collision_vehicle_shape_.width, base2front) / costmap_.info.resolution);
+  nb_of_margin_cells_ = std::ceil(
+    std::hypot(0.5 * collision_vehicle_shape_.width, base2front) / costmap_.info.resolution);
 }
 
 void AbstractPlanningAlgorithm::computeCollisionIndexes(
