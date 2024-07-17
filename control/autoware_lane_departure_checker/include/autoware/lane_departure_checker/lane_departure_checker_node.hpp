@@ -70,7 +70,7 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odom_{
     this, "~/input/odometry"};
   autoware::universe_utils::InterProcessPollingSubscriber<
-    LaneletMapBin, autoware::universe_utils::PollingPolicy::NEWEST>
+    LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
     sub_lanelet_map_bin_{this, "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local()};
   autoware::universe_utils::InterProcessPollingSubscriber<LaneletRoute> sub_route_{
     this, "~/input/route"};

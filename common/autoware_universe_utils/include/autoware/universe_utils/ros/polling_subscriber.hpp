@@ -50,7 +50,7 @@ template <typename MessageT>
 class Latest
 {
 private:
-  typename MessageT::ConstSharedPtr data_;  ///< Data pointer to store the latest data
+  typename MessageT::ConstSharedPtr data_{nullptr};  ///< Data pointer to store the latest data
 
 protected:
   /**
@@ -61,7 +61,7 @@ protected:
    */
   void checkQoS(const rclcpp::QoS & qos)
   {
-    if (qos.get_rmw_qos_profile().depth != 1) {
+    if (qos.get_rmw_qos_profile().depth > 1) {
       throw std::invalid_argument(
         "InterProcessPollingSubscriber will be used with depth > 1, which may cause inefficient "
         "serialization while updateLatestData()");
@@ -70,7 +70,7 @@ protected:
 
 public:
   /**
-   * @brief Retrieve the latest data.
+   * @brief Retrieve the latest data. If no new data has been received, the previously received data
    *
    * @return typename MessageT::ConstSharedPtr The latest data.
    */
@@ -94,7 +94,7 @@ protected:
    */
   void checkQoS(const rclcpp::QoS & qos)
   {
-    if (qos.get_rmw_qos_profile().depth != 1) {
+    if (qos.get_rmw_qos_profile().depth > 1) {
       throw std::invalid_argument(
         "InterProcessPollingSubscriber will be used with depth > 1, which may cause inefficient "
         "serialization while updateLatestData()");
@@ -103,7 +103,7 @@ protected:
 
 public:
   /**
-   * @brief Retrieve the newest data.
+   * @brief Retrieve the newest data. If no new data has been received, nullptr is returned.
    *
    * @return typename MessageT::ConstSharedPtr The newest data.
    */
@@ -193,6 +193,7 @@ public:
       node, topic_name, qos);
   }
 
+  typename rclcpp::Subscription<MessageT>::SharedPtr subscriber() { return subscriber_; }
 };
 
 namespace polling_policy
