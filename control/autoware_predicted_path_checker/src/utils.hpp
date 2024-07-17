@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-namespace utils
+namespace autoware::predicted_path_checker
 {
 
 using autoware::universe_utils::Point2d;
@@ -99,6 +99,6 @@ void getCurrentObjectPose(
   const rclcpp::Time & current_time);
 
 bool isFrontObstacle(const Pose & ego_pose, const geometry_msgs::msg::Point & obstacle_pos);
-}  // namespace utils
+}  // namespace autoware::predicted_path_checker
 
 #endif  // PREDICTED_PATH_CHECKER__UTILS_HPP_

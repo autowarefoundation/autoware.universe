@@ -35,7 +35,7 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 
 enum class PolygonType : int8_t { Vehicle = 0, Collision };
@@ -87,6 +87,6 @@ private:
   std::vector<std::vector<Eigen::Vector3d>> collision_polyhedrons_;
 };
 
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker
 
 #endif  // PREDICTED_PATH_CHECKER__DEBUG_MARKER_HPP_

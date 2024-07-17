@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 
 PredictedPathCheckerNode::PredictedPathCheckerNode(const rclcpp::NodeOptions & node_options)
@@ -584,8 +584,8 @@ void PredictedPathCheckerNode::filterObstacles(
   }
 }
 
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode)
+  autoware::predicted_path_checker::PredictedPathCheckerNode)
