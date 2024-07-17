@@ -70,7 +70,7 @@ double PIDController::calculate(
   double ret_before_integration = ret_p + ret_i + ret_d;
 
   static double ret {0.0};
-  ret += ret_before_integration;
+  ret += ret_before_integration * dt;
   ret = std::min(std::max(ret, p.min_ret), p.max_ret);
 
   return ret;
