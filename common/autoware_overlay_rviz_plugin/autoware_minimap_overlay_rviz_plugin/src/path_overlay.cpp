@@ -110,6 +110,14 @@ void PathOverlay::draw(QPainter & painter, const QRectF & backgroundRect, int zo
     int adjusted_x = point_x_pixel - vehicle_x_pixel + backgroundRect.width() / 2 + 5;
     int adjusted_y = point_y_pixel - vehicle_y_pixel + backgroundRect.height() / 2 + 5;
 
+    // Skip points that are too far out of bounds
+    if (
+      adjusted_x < backgroundRect.width() * 0.25 || adjusted_x > backgroundRect.width() * 0.75 ||
+      adjusted_y < backgroundRect.height() * 0.25 || adjusted_y > backgroundRect.height() * 0.75) {
+      first_point = true;
+      continue;
+    }
+
     QPointF current_point(adjusted_x, adjusted_y);
 
     if (!first_point) {
