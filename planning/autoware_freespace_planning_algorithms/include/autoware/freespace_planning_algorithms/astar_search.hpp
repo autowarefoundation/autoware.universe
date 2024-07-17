@@ -111,6 +111,7 @@ public:
   {
   }
 
+  void setMap(const nav_msgs::msg::OccupancyGrid & costmap) override;
   bool makePlan(const Pose & start_pose, const Pose & goal_pose) override;
 
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
