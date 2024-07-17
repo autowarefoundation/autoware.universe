@@ -95,7 +95,8 @@ void MrmHandler::onOperationModeAvailability(
     return;
   }
 
-  // If no time stamp is available, create one.
+  // If no timestamp is available, the ego autonomous mode just became unavailable and the current
+  // time is recorded.
   stamp_autonomous_become_unavailable_ = (!stamp_autonomous_become_unavailable_.has_value())
                                            ? this->now()
                                            : stamp_autonomous_become_unavailable_;
