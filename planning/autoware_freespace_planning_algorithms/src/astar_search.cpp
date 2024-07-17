@@ -81,6 +81,15 @@ AstarSearch::AstarSearch(
   avg_turning_radius_ =
     kinematic_bicycle_model::getTurningRadius(collision_vehicle_shape_.base_length, avg_steering);
 
+  min_expansion_dist_ = astar_param_.expansion_distance;
+  max_expansion_dist_ = collision_vehicle_shape_.base_length * base_length_max_expansion_factor_;
+}
+
+void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
+{
+  AbstractPlanningAlgorithm::setMap(costmap);
+
+  // ensure minimum expansion distance is larger then grid cell diagonal length
   min_expansion_dist_ = std::max(astar_param_.expansion_distance, 1.5 * costmap_.info.resolution);
   max_expansion_dist_ = std::max(
     collision_vehicle_shape_.base_length * base_length_max_expansion_factor_, min_expansion_dist_);
@@ -285,7 +294,9 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
 
 double AstarSearch::getExpansionDistance(const AstarNode & current_node) const
 {
-  if (!astar_param_.adapt_expansion_distance) return min_expansion_dist_;
+  if (!astar_param_.adapt_expansion_distance || max_expansion_dist_ <= min_expansion_dist_) {
+    return min_expansion_dist_;
+  }
   double exp_dist = std::min(
     current_node.dist_to_goal * dist_to_goal_expansion_factor_,
     current_node.dist_to_obs * dist_to_obs_expansion_factor_);
