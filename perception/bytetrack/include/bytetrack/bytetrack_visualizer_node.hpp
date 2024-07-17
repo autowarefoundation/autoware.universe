@@ -31,7 +31,6 @@
 
 #include <algorithm>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -54,10 +53,7 @@ public:
 
   cv::Scalar operator()(size_t idx)
   {
-    if (kColorNum <= idx) {
-      throw std::runtime_error("idx should be between [0, 255]");
-    }
-    return color_table_.at<cv::Vec3b>(0, idx);
+    return color_table_.at<cv::Vec3b>(0, idx % kColorNum);
   }
 
 protected:
