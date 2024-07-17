@@ -26,7 +26,7 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "autoware_carla_interface = autoware_carla_interface.autoware_carla_interface:main"
+            "autoware_carla_interface = autoware_carla_interface.carla_autoware:main"
         ],
     },
     package_dir={"": "src"},
