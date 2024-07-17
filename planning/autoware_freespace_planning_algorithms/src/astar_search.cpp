@@ -79,9 +79,6 @@ AstarSearch::AstarSearch(
   avg_turning_radius_ =
     kinematic_bicycle_model::getTurningRadius(collision_vehicle_shape_.base_length, avg_steering);
 
-  astar_param_.expansion_distance =
-    std::max(astar_param_.expansion_distance, 1.5 * costmap_.info.resolution);
-
   setTransitionTable();
 }
 
