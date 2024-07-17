@@ -141,7 +141,7 @@ void MrmHandler::publishGearCmd()
     // use the same gear as the input gear
     auto gear = sub_gear_cmd_.takeData();
     msg.command = (gear == nullptr) ? last_gear_command_ : gear->command;
-    last_gear_command_ = msg->command;
+    last_gear_command_ = msg.command;
   }
 
   pub_gear_cmd_->publish(msg);
