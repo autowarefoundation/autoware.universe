@@ -14,8 +14,8 @@
 
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "interpolation/linear_interpolation.hpp"
 
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;

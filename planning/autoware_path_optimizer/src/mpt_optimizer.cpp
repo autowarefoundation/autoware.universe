@@ -14,13 +14,13 @@
 
 #include "autoware/path_optimizer/mpt_optimizer.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/path_optimizer/utils/geometry_utils.hpp"
 #include "autoware/path_optimizer/utils/trajectory_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "tf2/utils.h"
 
 #include <algorithm>

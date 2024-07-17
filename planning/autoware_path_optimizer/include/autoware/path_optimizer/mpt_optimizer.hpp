@@ -15,6 +15,8 @@
 #ifndef AUTOWARE__PATH_OPTIMIZER__MPT_OPTIMIZER_HPP_
 #define AUTOWARE__PATH_OPTIMIZER__MPT_OPTIMIZER_HPP_
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/path_optimizer/common_structs.hpp"
 #include "autoware/path_optimizer/state_equation_generator.hpp"
 #include "autoware/path_optimizer/type_alias.hpp"
@@ -22,8 +24,6 @@
 #include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "gtest/gtest.h"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 
 #include <Eigen/Core>

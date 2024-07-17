@@ -18,9 +18,10 @@
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <autoware/behavior_path_planner_common/parameters.hpp>
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <interpolation/linear_interpolation.hpp>
+#include <autoware/interpolation/linear_interpolation.hpp>
 
 #include <nav_msgs/msg/odometry.hpp>
 

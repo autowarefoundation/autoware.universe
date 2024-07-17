@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 double lerp(const double src_val, const double dst_val, const double ratio)
 {
@@ -56,4 +56,4 @@ double lerp(
 {
   return lerp(base_keys, base_values, std::vector<double>{query_key}).front();
 }
-}  // namespace interpolation
+}  // namespace autoware::interpolation

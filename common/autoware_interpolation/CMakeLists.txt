@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
-project(interpolation)
+project(autoware_interpolation)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_library(interpolation SHARED
+ament_auto_add_library(autoware_interpolation SHARED
   src/linear_interpolation.cpp
   src/spline_interpolation.cpp
   src/spline_interpolation_points_2d.cpp
@@ -17,7 +17,7 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_interpolation ${test_files})
 
   target_link_libraries(test_interpolation
-    interpolation
+    autoware_interpolation
   )
 endif()
 

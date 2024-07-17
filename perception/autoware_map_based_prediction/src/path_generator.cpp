@@ -14,9 +14,9 @@
 
 #include "map_based_prediction/path_generator.hpp"
 
+#include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-#include <interpolation/spline_interpolation.hpp>
 
 #include <algorithm>
 

@@ -14,7 +14,7 @@
 
 #include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
 
-#include "interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <string>

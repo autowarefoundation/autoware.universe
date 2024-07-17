@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
 
 #include <vector>
 
-namespace
+namespace autoware::interpolation
 {
 // solve Ax = d
 // where A is tridiagonal matrix
@@ -77,7 +77,6 @@ inline std::vector<double> solveTridiagonalMatrixAlgorithm(const TDMACoef & tdma
 
   return x;
 }
-}  // namespace
 
 namespace interpolation
 {
@@ -287,3 +286,4 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedQuadDiffValues(
 
   return res;
 }
+}  // namespace autoware::interpolation

@@ -17,7 +17,7 @@
 
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/types.hpp"
 
-#include <interpolation/linear_interpolation.hpp>
+#include <autoware/interpolation/linear_interpolation.hpp>
 
 #include <boost/geometry/algorithms/distance.hpp>
 

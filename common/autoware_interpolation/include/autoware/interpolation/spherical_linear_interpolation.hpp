@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INTERPOLATION__SPHERICAL_LINEAR_INTERPOLATION_HPP_
-#define INTERPOLATION__SPHERICAL_LINEAR_INTERPOLATION_HPP_
+#ifndef AUTOWARE__INTERPOLATION__SPHERICAL_LINEAR_INTERPOLATION_HPP_
+#define AUTOWARE__INTERPOLATION__SPHERICAL_LINEAR_INTERPOLATION_HPP_
 
-#include "interpolation/interpolation_utils.hpp"
+#include "autoware/interpolation/interpolation_utils.hpp"
 
 #include <geometry_msgs/msg/quaternion.hpp>
 
@@ -29,7 +29,7 @@
 
 #include <vector>
 
-namespace interpolation
+namespace autoware::interpolation
 {
 geometry_msgs::msg::Quaternion slerp(
   const geometry_msgs::msg::Quaternion & src_quat, const geometry_msgs::msg::Quaternion & dst_quat,
@@ -43,6 +43,6 @@ std::vector<geometry_msgs::msg::Quaternion> slerp(
 geometry_msgs::msg::Quaternion lerpOrientation(
   const geometry_msgs::msg::Quaternion & o_from, const geometry_msgs::msg::Quaternion & o_to,
   const double ratio);
-}  // namespace interpolation
+}  // namespace autoware::interpolation
 
-#endif  // INTERPOLATION__SPHERICAL_LINEAR_INTERPOLATION_HPP_
+#endif  // AUTOWARE__INTERPOLATION__SPHERICAL_LINEAR_INTERPOLATION_HPP_
