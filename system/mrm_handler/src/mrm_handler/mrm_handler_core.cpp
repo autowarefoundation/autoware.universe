@@ -95,10 +95,12 @@ void MrmHandler::onOperationModeAvailability(
     return;
   }
 
+  // If no time stamp is available, create one.
   stamp_autonomous_become_unavailable_ = (!stamp_autonomous_become_unavailable_.has_value())
                                            ? this->now()
                                            : stamp_autonomous_become_unavailable_;
 
+  // Check if autonomous mode unavailable time is larger than timeout threshold.
   const auto emergency_duration =
     (this->now() - stamp_autonomous_become_unavailable_.value()).seconds();
   is_emergency_holding_ = (emergency_duration > param_.timeout_emergency_recovery);
