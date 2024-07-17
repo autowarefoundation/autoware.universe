@@ -95,7 +95,7 @@ struct Commands
 
     turn_indicator.stamp.sec = 0;
     turn_indicator.stamp.nanosec = 0;
-  
+
     hazard_light.stamp.sec = 0;
     hazard_light.stamp.nanosec = 0;
 
