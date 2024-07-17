@@ -222,9 +222,22 @@ You can find it in `mmdetection3d/projects/AutowareCenterPoint` file.
 python projects/AutowareCenterPoint/centerpoint_onnx_converter.py --cfg projects/AutowareCenterPoint/configs/centerpoint_custom.py --ckpt work_dirs/centerpoint_custom/YOUR_BEST_MODEL.pth --work-dir ./work_dirs/onnx_models
 ```
 
-#### Adjust the config file for the custom model
+#### Create the config file for the custom model
 
-All the ROS parameters have been moved into `.param.yaml` files, please set the parameters of the config file like point*cloud_range, point_feature_size, voxel_size, etc. in the config files. \*\*centerpoint*(your_selection_of_model).param.yaml\*\* files are under the config file directory of the lidar_centerpoint node. The information for these parameters are shown in the [Parameters](#parameters) section.
+Create a new config file named centerpoint_custom.param.yaml under the config file directory of the lidar_centerpoint node. Sets the parameters of the ml model's config file according to the default ml config file [centerpoint_ml_package.param.yaml](/perception/lidar_centerpoint/config/centerpoint_ml_package.param.yaml). For detailed explanations and additional parameters, refer to the [Core Parameters for ML methods](#core-parameters-for-ml-methods) section.
+
+Start by creating a new file named centerpoint_custom.param.yaml. This naming convention helps in distinguishing between different model configurations. Open your newly created .param.yaml file and set the necessary parameters based on your model's requirements. 
+Common parameters to configure include:
+```
+point_cloud_range: Define the range of the point cloud data. Example: [-76.8, -76.8, -4.0, 76.8, 76.8, 6.0]
+point_feature_size: Specify the number of features each point in the point cloud should have. Example: 4
+voxel_size: Set the size of each voxel in the point cloud. Example: [0.32, 0.32, 10.0]
+max_voxel_size: Set the maximum size of voxel grid. Example: 40000
+downsample_factor: Set the scale factor of downsampling points. Example: 1
+encoder_in_feature_size: A size of encoder input feature channels. Example: 9
+has_variance: Flag indicating if the model includes variance estimation. Example: false
+has_twist: Flag indicating if the model includes twist estimation. Example: false
+```
 
 #### Launch the lidar_centerpoint node
 
