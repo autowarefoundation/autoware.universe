@@ -15,6 +15,7 @@
 
 #include <QPainter>
 #include <QPainterPath>
+#include <QPixmap>
 #include <QTransform>
 #include <QVBoxLayout>
 #include <ament_index_cpp/get_package_share_directory.hpp>
@@ -264,11 +265,11 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
   std::string package_path =
     ament_index_cpp::get_package_share_directory("autoware_minimap_overlay_rviz_plugin");
   std::string image_path = package_path + "/icons/pos.png";
-  QImage pos_image = QImage(image_path.c_str());
-  pos_image = pos_image.scaled(25, 25, Qt::KeepAspectRatio);
+  QPixmap pos_pixmap(image_path.c_str());
+  pos_pixmap = pos_pixmap.scaled(25, 25, Qt::KeepAspectRatio);
 
   QPointF positionInOverlay =
-    backgroundRect.center() - QPointF(pos_image.width() / 2, pos_image.height() / 2);
+    backgroundRect.center() - QPointF(pos_pixmap.width() / 2, pos_pixmap.height() / 2);
 
   if (route_state_msg_ && route_state_msg_->state == autoware_adapi_v1_msgs::msg::RouteState::SET) {
     goal_pose_.draw(painter, backgroundRect, zoom_);
@@ -284,19 +285,29 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
 
     yaw = -yaw + M_PI / 2;  // Adjust the yaw to match the image orientation
 
-    // Create a transformation matrix
-    QTransform transform;
-    transform.translate(
-      positionInOverlay.x() + pos_image.width() / 2,
-      positionInOverlay.y() + pos_image.height() / 2);
-    transform.rotateRadians(yaw);
-    transform.translate(-pos_image.width() / 2, -pos_image.height() / 2);
+    // Save the painter state
+    painter.save();
 
-    // Apply the transformation and draw the position icon
-    QImage transformed_image = pos_image.transformed(transform);
-    painter.drawImage(positionInOverlay, transformed_image);
-  } else
-    painter.drawImage(positionInOverlay, pos_image);
+    // Translate the painter to the center of the position icon
+    painter.translate(
+      positionInOverlay.x() + pos_pixmap.width() / 2,
+      positionInOverlay.y() + pos_pixmap.height() / 2);
+
+    // Rotate the painter around the center of the position icon
+    painter.rotate(yaw * 180.0 / M_PI);  // Convert radians to degrees
+
+    // Translate the painter back
+    painter.translate(-pos_pixmap.width() / 2, -pos_pixmap.height() / 2);
+
+    // Draw the pixmap
+    painter.drawPixmap(0, 0, pos_pixmap);
+
+    // Restore the painter state
+    painter.restore();
+
+  } else {
+    painter.drawPixmap(positionInOverlay, pos_pixmap);
+  }
 
   queueRender();
 }
