@@ -28,18 +28,18 @@ PolarGridBase::PolarGridBase(const float &polar_angle, const float &polar_range_
 bool PolarGridBase::polarGridCluster(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr in_cloud_ptr,
                                      std::vector<pcl::PointCloud<pcl::PointXYZI> > &clusters)
 {
-    std::cout << "flage1.0" << std::endl;
+   
     if (!genPolarGrowthGrid(in_cloud_ptr))
     {
         std::cout << "genPolarGrowthGrid!" << std::endl;
         return false;
     }
-     std::cout << "flage1.1" << std::endl;
+ 
     cv::Mat ground_label_mat;
     polarGroundCluster(ground_label_mat);
-     std::cout << "flage1.2" << std::endl;
+  
     polarUpGrowthCluster(ground_label_mat, clusters);
-     std::cout << "flage1.3" << std::endl;
+ 
     return true;
 }
 
@@ -55,7 +55,7 @@ bool PolarGridBase::genPolarGrowthGrid(const pcl::PointCloud<pcl::PointXYZI>::Co
         std::cout << "the input cloud is empty!!" << std::endl;
         return false;
     }
-    std::cout << "flage A" << std::endl;
+ 
     for (int j = 0; j < NBins_; ++j)
     {
         for (int i = 0; i < MSegs_; ++i)
@@ -63,7 +63,7 @@ bool PolarGridBase::genPolarGrowthGrid(const pcl::PointCloud<pcl::PointXYZI>::Co
             polar_save_grid_pts_[j][i].clear();
         }
     }
-    std::cout << "flage B" << std::endl;
+    
     polar_leave_cloud_ptr_->clear();
     air_cloud_ptr_->clear();
     pcl::PointXYZI tmp_pt;

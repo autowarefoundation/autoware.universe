@@ -341,8 +341,16 @@ int Callback(const pcl::PointCloud<PointType> &points_msg,void *dora_context)
  
     // step1:  这里需要发布LidarRawObjects 
     // pub_LidarRawObject.publish(LidarRawObjects);
-    dora_pub_tracker(LidarRawObjects,dora_context);
-    std::cout<<"pub_LidarRawObject:  "<<LidarRawObjects.objs.size()<<std::endl;
+    if(clusters.size()!=0)
+    {
+        dora_pub_tracker(LidarRawObjects,dora_context);
+        std::cout<<"pub_LidarRawObject:  "<<LidarRawObjects.objs.size()<<std::endl;
+    }
+    else
+    {
+        std::cout<<"pub_LidarRawObject faild:  clusters.size()== 0"<<std::endl;
+    }
+   
     // for (int i = 0; i < trackers.size(); ++i)
     // {
     //     cout<<"ID: "<<i<<" center: "<<trackers[i].center[0]<<" "<<trackers[i].center[1]
