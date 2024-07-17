@@ -12,7 +12,10 @@ The following features are supported for the validation and can have thresholds 
 
 ![trajectory_deviation](./image/trajectory_deviation.drawio.svg)
 
-Other features are to be implemented.
+| Description                                                                        | Arguments                                                                              |        Diagnostic equation         | Implemented function name       |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | :--------------------------------: | ------------------------------- |
+| Inverse velocity: Measured velocity has a different sign from the target velocity. | measured velocity $v$, target velocity $\hat{v}$, and threshold velocity parameter $k$ |       $v\hat{v}<0,~\|v\|>k $       | `checkValidVelocityDeviation()` |
+| Overspeed: Measured speed exceeds target speed significantly.                      | measured velocity $v$, target velocity $\hat{v}$, and threshold ratio parameter $r$    | $\| v \| > (1 + r) \| \hat{v} \| $ | `checkValidVelocityDeviation()` |
 
 ## Inputs/Outputs
 
@@ -53,6 +56,8 @@ The following parameters can be set for the `control_validator`:
 
 The input trajectory is detected as invalid if the index exceeds the following thresholds.
 
-| Name                                | Type   | Description                                                                                                 | Default value |
-| :---------------------------------- | :----- | :---------------------------------------------------------------------------------------------------------- | :------------ |
-| `thresholds.max_distance_deviation` | double | invalid threshold of the max distance deviation between the predicted path and the reference trajectory [m] | 1.0           |
+| Name                                 | Type   | Description                                                                                                 | Default value |
+| :----------------------------------- | :----- | :---------------------------------------------------------------------------------------------------------- | :------------ |
+| `thresholds.max_distance_deviation`  | double | invalid threshold of the max distance deviation between the predicted path and the reference trajectory [m] | 1.0           |
+| `thresholds.max_reverse_velocity`    | double | threshold velocity to valid the vehicle velocity [m/s]                                                      | WIP           |
+| `thresholds.max_over_velocity_ratio` | double | threshold ratio to valid the vehicle velocity [*]                                                           | WIP           |
