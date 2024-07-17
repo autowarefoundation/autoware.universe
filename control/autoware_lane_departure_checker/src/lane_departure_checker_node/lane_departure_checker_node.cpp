@@ -265,7 +265,7 @@ void LaneDepartureCheckerNode::onTimer()
   if (lanelet_map_bin_msg) {
     lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
     lanelet::utils::conversion::fromBinMsg(
-      **lanelet_map_bin_msg, lanelet_map_, &traffic_rules_, &routing_graph_);
+      *lanelet_map_bin_msg, lanelet_map_, &traffic_rules_, &routing_graph_);
 
     // get all shoulder lanes
     lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_);
