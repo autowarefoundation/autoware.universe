@@ -229,11 +229,20 @@ typename MessageT::ConstSharedPtr Newest<MessageT>::takeData()
 }
 
 template <typename MessageT>
-inline std::vector<typename MessageT::ConstSharedPtr> All<MessageT>::takeData()
+std::vector<typename MessageT::ConstSharedPtr> All<MessageT>::takeData()
 {
   auto & subscriber =
     static_cast<InterProcessPollingSubscriber<MessageT, All> *>(this)->subscriber_;
   std::vector<typename MessageT::ConstSharedPtr> data;
+  rclcpp::MessageInfo message_info;
+  for (;;) {
+    auto datum = std::make_shared<MessageT>();
+    if (subscriber->take(*datum, message_info)) {
+      data.push_back(datum);
+    } else {
+      break;
+    }
+  }
   return data;
 }
 
