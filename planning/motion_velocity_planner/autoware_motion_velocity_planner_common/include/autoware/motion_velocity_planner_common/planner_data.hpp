@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
 #define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
 
+#include <autoware/motion_utils/distance/distance.hpp>
 #include <autoware/motion_velocity_planner_common/collision_checker.hpp>
 #include <autoware/motion_velocity_planner_common/ttc_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
@@ -61,14 +62,14 @@ struct PlannerData
   }
 
   // msgs from callbacks that are used for data-ready
-  nav_msgs::msg::Odometry current_odometry{};
-  geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration{};
-  autoware_perception_msgs::msg::PredictedObjects predicted_objects{};
-  std::vector<CollisionTimeRanges> collision_time_ranges_per_object{};
-  pcl::PointCloud<pcl::PointXYZ> no_ground_pointcloud{};
-  nav_msgs::msg::OccupancyGrid occupancy_grid{};
-  std::shared_ptr<route_handler::RouteHandler> route_handler{};
-  std::shared_ptr<CollisionChecker> ego_trajectory_collision_checker{};
+  nav_msgs::msg::Odometry current_odometry;
+  geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
+  autoware_perception_msgs::msg::PredictedObjects predicted_objects;
+  std::vector<CollisionTimeRanges> collision_time_ranges_per_object;
+  pcl::PointCloud<pcl::PointXYZ> no_ground_pointcloud;
+  nav_msgs::msg::OccupancyGrid occupancy_grid;
+  std::shared_ptr<route_handler::RouteHandler> route_handler;
+  std::shared_ptr<CollisionChecker> ego_trajectory_collision_checker;
 
   // nearest search
   double ego_nearest_dist_threshold{};
@@ -83,7 +84,7 @@ struct PlannerData
   tier4_v2x_msgs::msg::VirtualTrafficLightStateArray virtual_traffic_light_states;
 
   // velocity smoother
-  std::shared_ptr<autoware::velocity_smoother::SmootherBase> velocity_smoother_{};
+  std::shared_ptr<autoware::velocity_smoother::SmootherBase> velocity_smoother_;
   // parameters
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
@@ -114,6 +115,15 @@ struct PlannerData
         vehicle_info_.vehicle_width_m));
     }
     ego_trajectory_collision_checker = std::make_shared<CollisionChecker>(footprints);
+  }
+
+  [[nodiscard]] std::optional<double> calculate_min_deceleration_distance(
+    const double target_velocity) const
+  {
+    return motion_utils::calcDecelDistWithJerkAndAccConstraints(
+      current_odometry.twist.twist.linear.x, target_velocity,
+      current_acceleration.accel.accel.linear.x, velocity_smoother_->getMinDecel(),
+      velocity_smoother_->getMinJerk(), velocity_smoother_->getMaxJerk());
   }
 };
 }  // namespace autoware::motion_velocity_planner

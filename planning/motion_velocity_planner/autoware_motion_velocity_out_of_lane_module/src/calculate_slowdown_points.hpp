@@ -19,43 +19,28 @@
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
-#include <geometry_msgs/msg/detail/point__struct.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 #include <optional>
-#include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
-
-/// @brief estimate whether ego can decelerate without breaking the deceleration limit
-/// @details assume ego wants to reach the target point at the target velocity
-/// @param [in] ego_data ego data
-/// @param [in] point target point
-/// @param [in] target_vel target_velocity
-bool can_decelerate(
-  const EgoData & ego_data, const TrajectoryPoint & point, const double target_vel);
-
 /// @brief calculate the last pose along the trajectory where ego does not overlap the lane to avoid
 /// @param [in] ego_data ego data
 /// @param [in] decision the input decision (i.e., which lane to avoid and at what speed)
 /// @param [in] footprint the ego footprint
-/// @param [in] prev_slowdown_point previous slowdown point. If set, ignore deceleration limits
 /// @param [in] params parameters
 /// @return the last pose that is not out of lane (if found)
-std::optional<TrajectoryPoint> calculate_last_in_lane_pose(
-  const EgoData & ego_data, const Slowdown & decision,
-  const autoware::universe_utils::Polygon2d & footprint,
-  const std::optional<geometry_msgs::msg::Point> & prev_slowdown_point,
-  const PlannerParam & params);
+std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
+  const EgoData & ego_data, const OutOfLanePoint & out_of_lane_point,
+  const autoware::universe_utils::Polygon2d & footprint, const PlannerParam & params);
 
 /// @brief calculate the slowdown point to insert in the trajectory
 /// @param ego_data ego data (trajectory, velocity, etc)
 /// @param decisions decision (before which point to stop, what lane to avoid entering, etc)
-/// @param prev_slowdown_point previously calculated slowdown point
 /// @param params parameters
 /// @return optional slowdown point to insert in the trajectory
-std::optional<geometry_msgs::msg::Point> calculate_slowdown_point(
-  const EgoData & ego_data, const std::vector<Slowdown> & decisions,
-  const std::optional<geometry_msgs::msg::Point> & prev_slowdown_point, PlannerParam params);
+std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
+  const EgoData & ego_data, const OutOfLaneData & out_of_lane_data, PlannerParam params);
 }  // namespace autoware::motion_velocity_planner::out_of_lane
 #endif  // CALCULATE_SLOWDOWN_POINTS_HPP_

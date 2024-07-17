@@ -15,6 +15,7 @@
 #ifndef TYPES_HPP_
 #define TYPES_HPP_
 
+#include <autoware/motion_velocity_planner_common/ttc_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -22,8 +23,13 @@
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
+#include <boost/geometry/geometries/multi_polygon.hpp>
 
+#include <lanelet2_core/Forward.h>
+#include <lanelet2_core/LaneletMap.h>
+#include <lanelet2_core/geometry/Polygon.h>
+
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -60,7 +66,6 @@ struct PlannerParam
   double lon_dist_buffer;       // [m] safety distance buffer to keep in front of the ego vehicle
   double lat_dist_buffer;       // [m] safety distance buffer to keep on the side of the ego vehicle
   double slow_velocity;
-  double slow_dist_threshold;
   double stop_dist_threshold;
   double precision;              // [m] precision when inserting a stop pose in the trajectory
   double min_decision_duration;  // [s] minimum duration needed a decision can be canceled
@@ -75,24 +80,33 @@ struct PlannerParam
   double extra_left_offset;   // [m] extra left distance
 };
 
-/// @brief action taken by the "out of lane" module
-struct Slowdown
-{
-  size_t target_trajectory_idx{};       // we want to slowdown before this trajectory index
-  double velocity{};                    // desired slow down velocity
-  lanelet::ConstLanelet lane_to_avoid;  // we want to slowdown before entering this lane
-};
-using OutsidePolygons = std::vector<lanelet::BasicPolygon2d>;
-using OutsidePolygonsPerTrajectoryPoint = std::vector<OutsidePolygons>;
+using Polygons = boost::geometry::model::multi_polygon<lanelet::BasicPolygonWithHoles2d>;
 
 /// @brief data related to the ego vehicle
 struct EgoData
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points;
   size_t first_trajectory_idx{};
-  double velocity{};   // [m/s]
-  double max_decel{};  // [m/s²]
+  double longitudinal_offset_to_first_trajectory_index{};
   geometry_msgs::msg::Pose pose;
+  Polygons drivable_lane_polygons;
+  double min_stop_distance{};
+  double min_slowdown_distance{};
+};
+
+struct OutOfLanePoint
+{
+  size_t trajectory_index;
+  lanelet::BasicPolygons2d outside_rings;
+  TimeCollisions time_collisions;
+  std::optional<double> min_object_arrival_time;
+  std::optional<double> max_object_arrival_time;
+  double ttc{};
+};
+struct OutOfLaneData
+{
+  std::vector<OutOfLanePoint> outside_points;
+  lanelet::ConstLanelets out_of_lane_lanelets;
 };
 
 /// @brief debug data
@@ -103,23 +117,36 @@ struct DebugData
   lanelet::BasicPolygon2d current_footprint;
   lanelet::BasicPolygons2d ego_lane_polygons;
   lanelet::BasicPolygons2d out_of_lane_areas;
+  lanelet::ConstLanelets route_lanelets;
+  lanelet::ConstLanelets ignored_lanelets;
+  lanelet::ConstLanelets out_of_lane_lanelets;
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points;
   size_t first_trajectory_idx;
   std::vector<std::optional<double>> ttcs;
 
   size_t prev_footprints = 0;
-  size_t prev_slowdowns = 0;
-  size_t prev_ranges = 0;
+  size_t prev_route_lanelets = 0;
+  size_t prev_ignored_lanelets = 0;
+  size_t prev_out_of_lane_lanelets = 0;
   size_t prev_ego_lane_polygons = 0;
   size_t prev_out_of_lane_areas = 0;
+  size_t prev_ttcs = 0;
   void reset_data()
   {
     prev_footprints = footprints.size();
     footprints.clear();
+    prev_route_lanelets = route_lanelets.size();
+    route_lanelets.clear();
+    prev_ignored_lanelets = ignored_lanelets.size();
+    ignored_lanelets.clear();
+    prev_out_of_lane_lanelets = out_of_lane_lanelets.size();
+    out_of_lane_lanelets.clear();
     prev_ego_lane_polygons = ego_lane_polygons.size();
     ego_lane_polygons.clear();
     prev_out_of_lane_areas = out_of_lane_areas.size();
     out_of_lane_areas.clear();
+    prev_ttcs = ttcs.size();
+    ttcs.clear();
   }
 };
 

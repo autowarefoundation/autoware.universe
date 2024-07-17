@@ -23,7 +23,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
-#include <geometry_msgs/msg/detail/point__struct.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -51,9 +51,9 @@ private:
 
   inline static const std::string ns_ = "out_of_lane";
   std::string module_name_;
-  std::optional<geometry_msgs::msg::Point> prev_inserted_point_{};
-  rclcpp::Clock::SharedPtr clock_{};
-  rclcpp::Time prev_inserted_point_time_{};
+  std::optional<geometry_msgs::msg::Pose> prev_slowdown_pose_;
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Time prev_inserted_pose_time_;
 
 protected:
   // Debug

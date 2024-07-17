@@ -24,6 +24,7 @@
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <string>
+#include <vector>
 
 namespace autoware::motion_velocity_planner::out_of_lane::debug
 {
@@ -80,6 +81,30 @@ void add_current_overlap_marker(
   debug_marker.id++;
 }
 
+void add_ttc_markers(
+  visualization_msgs::msg::MarkerArray & debug_marker_array,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const std::vector<std::optional<double>> & ttcs, const size_t prev_nb)
+{
+  auto debug_marker = get_base_marker();
+  debug_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+  debug_marker.color = autoware::universe_utils::createMarkerColor(1.0, 1.0, 1.0, 0.9);
+  debug_marker.scale.z = 0.5;
+  debug_marker.ns = "ttcs";
+  for (auto i = 0UL; i < trajectory.size(); ++i) {
+    if (ttcs[i]) {
+      debug_marker.pose = trajectory[i].pose;
+      debug_marker.text = std::to_string(*ttcs[i]);
+      debug_marker_array.markers.push_back(debug_marker);
+      debug_marker.id++;
+    }
+  }
+  debug_marker.action = visualization_msgs::msg::Marker::DELETE;
+  for (; debug_marker.id < static_cast<int>(prev_nb); ++debug_marker.id) {
+    debug_marker_array.markers.push_back(debug_marker);
+  }
+}
+
 void add_lanelet_markers(
   visualization_msgs::msg::MarkerArray & debug_marker_array,
   const lanelet::ConstLanelets & lanelets, const std::string & ns,
@@ -110,15 +135,26 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(const DebugData &
   constexpr auto z = 0.0;
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
-  debug::add_polygons_markers(
+  add_polygons_markers(
     debug_marker_array, debug_data.footprints, z, debug_data.prev_footprints, "footprints");
-  debug::add_polygons_markers(
+  add_lanelet_markers(
+    debug_marker_array, debug_data.route_lanelets, "route_lanelets",
+    universe_utils::createMarkerColor(0.1, 0.1, 1.0, 0.5), debug_data.prev_route_lanelets);
+  add_lanelet_markers(
+    debug_marker_array, debug_data.ignored_lanelets, "ignored_lanelets",
+    universe_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5), debug_data.prev_ignored_lanelets);
+  add_lanelet_markers(
+    debug_marker_array, debug_data.out_of_lane_lanelets, "out_of_lane_lanelets",
+    universe_utils::createMarkerColor(0.4, 0.4, 0.7, 0.5), debug_data.prev_out_of_lane_lanelets);
+  add_polygons_markers(
     debug_marker_array, debug_data.ego_lane_polygons, z, debug_data.prev_ego_lane_polygons,
     "ego_lane");
-  debug::add_polygons_markers(
+  add_polygons_markers(
     debug_marker_array, debug_data.out_of_lane_areas, z, debug_data.prev_out_of_lane_areas,
     "out_of_lane_areas");
-  debug::add_current_overlap_marker(debug_marker_array, debug_data.current_footprint, z);
+  add_current_overlap_marker(debug_marker_array, debug_data.current_footprint, z);
+  add_ttc_markers(
+    debug_marker_array, debug_data.trajectory_points, debug_data.ttcs, debug_data.prev_ttcs);
   return debug_marker_array;
 }
 

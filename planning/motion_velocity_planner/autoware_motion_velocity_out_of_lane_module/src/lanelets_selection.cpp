@@ -26,7 +26,7 @@ namespace autoware::motion_velocity_planner::out_of_lane
 {
 
 lanelet::ConstLanelets consecutive_lanelets(
-  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
+  const std::shared_ptr<const route_handler::RouteHandler> & route_handler,
   const lanelet::ConstLanelet & lanelet)
 {
   lanelet::ConstLanelets consecutives = route_handler->getRoutingGraphPtr()->following(lanelet);
@@ -37,7 +37,7 @@ lanelet::ConstLanelets consecutive_lanelets(
 
 lanelet::ConstLanelets get_missing_lane_change_lanelets(
   const lanelet::ConstLanelets & trajectory_lanelets,
-  const std::shared_ptr<const route_handler::RouteHandler> route_handler)
+  const std::shared_ptr<const route_handler::RouteHandler> & route_handler)
 {
   lanelet::ConstLanelets missing_lane_change_lanelets;
   const auto & routing_graph = *route_handler->getRoutingGraphPtr();
@@ -64,7 +64,8 @@ lanelet::ConstLanelets get_missing_lane_change_lanelets(
 }
 
 lanelet::ConstLanelets calculate_trajectory_lanelets(
-  const EgoData & ego_data, const std::shared_ptr<const route_handler::RouteHandler> route_handler)
+  const EgoData & ego_data,
+  const std::shared_ptr<const route_handler::RouteHandler> & route_handler)
 {
   const auto lanelet_map_ptr = route_handler->getLaneletMapPtr();
   lanelet::ConstLanelets trajectory_lanelets;
@@ -98,18 +99,17 @@ lanelet::ConstLanelets calculate_ignored_lanelets(
   return ignored_lanelets;
 }
 
-lanelet::ConstLanelets calculate_other_lanelets(
+lanelet::ConstLanelets calculate_out_of_lane_lanelets(
   const EgoData & ego_data, const lanelet::ConstLanelets & trajectory_lanelets,
   const lanelet::ConstLanelets & ignored_lanelets,
-  const std::shared_ptr<const route_handler::RouteHandler> route_handler,
+  const std::shared_ptr<const route_handler::RouteHandler> & route_handler,
   const PlannerParam & params)
 {
   lanelet::ConstLanelets other_lanelets;
   const lanelet::BasicPoint2d ego_point(ego_data.pose.position.x, ego_data.pose.position.y);
   const auto lanelets_within_range = lanelet::geometry::findWithin2d(
     route_handler->getLaneletMapPtr()->laneletLayer, ego_point,
-    std::max(params.slow_dist_threshold, params.stop_dist_threshold) + params.front_offset +
-      params.extra_front_offset);
+    2 * params.stop_dist_threshold + params.front_offset + params.extra_front_offset);
   for (const auto & ll : lanelets_within_range) {
     if (std::string(ll.second.attributeOr(lanelet::AttributeName::Subtype, "none")) != "road")
       continue;
