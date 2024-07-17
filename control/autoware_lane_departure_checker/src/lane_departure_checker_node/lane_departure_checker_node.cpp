@@ -261,11 +261,11 @@ void LaneDepartureCheckerNode::onTimer()
   reference_trajectory_ = sub_reference_trajectory_.takeData();
   predicted_trajectory_ = sub_predicted_trajectory_.takeData();
 
-  const auto lanelet_map_bin_msg = sub_lanelet_map_bin_.takeNewData();
+  const auto lanelet_map_bin_msg = sub_lanelet_map_bin_.takeData();
   if (lanelet_map_bin_msg) {
     lanelet_map_ = std::make_shared<lanelet::LaneletMap>();
     lanelet::utils::conversion::fromBinMsg(
-      *lanelet_map_bin_msg, lanelet_map_, &traffic_rules_, &routing_graph_);
+      **lanelet_map_bin_msg, lanelet_map_, &traffic_rules_, &routing_graph_);
 
     // get all shoulder lanes
     lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_);
