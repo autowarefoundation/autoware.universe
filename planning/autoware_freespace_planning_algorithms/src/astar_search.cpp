@@ -177,9 +177,11 @@ void AstarSearch::setCollisionFreeDistanceMap()
 
 bool AstarSearch::setStartNode()
 {
-  if (detectCollision(start_pose_)) return false;
-
   const auto index = pose2index(costmap_, start_pose_, planner_common_param_.theta_size);
+
+  if (detectCollision(index)) {
+    return false;
+  }
 
   // Set start node
   AstarNode * start_node = &graph_[getKey(index)];
@@ -261,7 +263,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
     if (isOutOfRange(next_index) || isObs(next_index)) continue;
 
     AstarNode * next_node = &graph_[getKey(next_index)];
-    if (next_node->status == NodeStatus::Closed || detectCollision(next_pose)) continue;
+    if (next_node->status == NodeStatus::Closed || detectCollision(next_index)) continue;
 
     double distance_to_obs = getObstacleEDT(next_index);
     const bool is_direction_switch =
