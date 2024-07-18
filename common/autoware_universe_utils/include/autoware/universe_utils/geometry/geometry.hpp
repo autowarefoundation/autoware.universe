@@ -615,6 +615,8 @@ std::array<std::vector<geometry_msgs::msg::Point>, 2> divideBySegment(
 std::optional<std::vector<geometry_msgs::msg::Point>> convexHull(
   const std::vector<geometry_msgs::msg::Point> & points);
 
+std::optional<double> area(const std::vector<geometry_msgs::msg::Point> & poly);
+
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GEOMETRY_HPP_

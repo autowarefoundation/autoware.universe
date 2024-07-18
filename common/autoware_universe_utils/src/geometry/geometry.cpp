@@ -642,4 +642,20 @@ std::optional<std::vector<geometry_msgs::msg::Point>> convexHull(
   return hull;
 }
 
+std::optional<double> area(const std::vector<geometry_msgs::msg::Point> & poly)
+{
+  if (poly.size() < 3) {
+    return std::nullopt;
+  }
+
+  double area = 0.;
+  for (size_t i = 0; i < poly.size(); ++i) {
+    const auto & p1 = poly.at(i);
+    const auto & p2 = poly.at((i + 1) % poly.size());
+    area += std::abs(p1.x * p2.y - p2.x * p1.y) / 2;
+  }
+
+  return area;
+}
+
 }  // namespace autoware::universe_utils

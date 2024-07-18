@@ -2326,3 +2326,20 @@ TEST(geometry, convexHull)
     EXPECT_NEAR(result->at(7).z, 0.0, epsilon);
   }
 }
+
+TEST(geometry, area)
+{
+  using autoware::universe_utils::area;
+  using autoware::universe_utils::createPoint;
+
+  {
+    const auto p1 = createPoint(0.0, 0.0, 0.0);
+    const auto p2 = createPoint(0.0, 7.0, 0.0);
+    const auto p3 = createPoint(4.0, 2.0, 0.0);
+    const auto p4 = createPoint(2.0, 0.0, 0.0);
+    const auto result = area({p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_NEAR(*result, 16.0, epsilon);
+  }
+}
