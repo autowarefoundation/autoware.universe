@@ -70,6 +70,14 @@ jobs:
           restore-keys: |
             ccache-main-${{ runner.arch }}-${{ matrix.rosdistro }}-
 
+      # Limit ccache size only for CUDA builds to avoid running out of disk space
+      - name: Limit ccache size
+        if: ${{ matrix.container-suffix == '-cuda' }}
+        run: |
+          rm -f "${CCACHE_DIR}/ccache.conf"
+          echo -e "# Set maximum cache size\nmax_size = 1MB" >> "${CCACHE_DIR}/ccache.conf"
+        shell: bash
+
       - name: Show ccache stats before build
         run: du -sh ${CCACHE_DIR} && ccache -s
         shell: bash
@@ -114,6 +122,7 @@ jobs:
           fail_ci_if_error: false
           verbose: true
           flags: differential
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show disk space after the tasks
         run: df -h
@@ -155,7 +164,7 @@ jobs:
           rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           target-files: ${{ steps.get-changed-files.outputs.changed-files }}
-          clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy
+          clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy-ci
           build-depends-repos: build_depends.repos
           cache-key-element: cuda
 

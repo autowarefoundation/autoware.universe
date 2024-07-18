@@ -18,11 +18,12 @@ jobs:
         run: |
           sudo snap install cppcheck
 
+      # cspell: ignore suppr
       - name: Run Cppcheck on all files
         continue-on-error: true
         id: cppcheck
         run: |
-          cppcheck --enable=all --inconclusive --check-level=exhaustive --suppress=*:*/test/* --error-exitcode=1 --xml . 2> cppcheck-report.xml
+          cppcheck --enable=all --inconclusive --check-level=exhaustive --suppress=*:*/test/* --error-exitcode=1 --xml --inline-suppr . 2> cppcheck-report.xml
         shell: bash
 
       - name: Count errors by error ID and severity
