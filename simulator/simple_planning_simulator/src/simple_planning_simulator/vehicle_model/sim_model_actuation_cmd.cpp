@@ -18,7 +18,7 @@
 
 #include <algorithm>
 
-bool AccelMap::readAccelMapFromCSV(const std::string & csv_path, const bool validation)
+bool ActuationMap::readActuationMapFromCSV(const std::string & csv_path, const bool validation)
 {
   CSVLoader csv(csv_path);
   std::vector<std::vector<std::string>> table;
@@ -28,101 +28,26 @@ bool AccelMap::readAccelMapFromCSV(const std::string & csv_path, const bool vali
   }
 
   vel_index_ = CSVLoader::getRowIndex(table);
-  throttle_index_ = CSVLoader::getColumnIndex(table);
-  accel_map_ = CSVLoader::getMap(table);
-  if (validation && !CSVLoader::validateMap(accel_map_, true)) {
+  actuation_index_ = CSVLoader::getColumnIndex(table);
+  actuation_map_ = CSVLoader::getMap(table);
+  if (validation && !CSVLoader::validateMap(actuation_map_, true)) {
     return false;
   }
   return true;
 }
 
-double AccelMap::getAcceleration(const double throttle, const double vel) const
+double ActuationMap::getControlCommand(const double actuation, const double vel) const
 {
-  std::vector<double> interpolated_acc_vec;
+  std::vector<double> interpolated_control_vec{};
   const double clamped_vel = CSVLoader::clampValue(vel, vel_index_);
 
-  // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
-  for (std::vector<double> accelerations : accel_map_) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, accelerations, clamped_vel));
+  for (std::vector<double> control_command_values : actuation_map_) {
+    interpolated_control_vec.push_back(
+      interpolation::lerp(vel_index_, control_command_values, clamped_vel));
   }
 
-  // calculate throttle
-  // When the desired acceleration is smaller than the throttle area, return min acc
-  // When the desired acceleration is greater than the throttle area, return max acc
-  const double clamped_throttle = CSVLoader::clampValue(throttle, throttle_index_);
-  return interpolation::lerp(throttle_index_, interpolated_acc_vec, clamped_throttle);
-}
-
-/**
- * @class BrakeMap
- * @brief class to handle brake map
- */
-bool BrakeMap::readBrakeMapFromCSV(const std::string & csv_path, const bool validation)
-{
-  CSVLoader csv(csv_path);
-  std::vector<std::vector<std::string>> table;
-
-  if (!csv.readCSV(table)) {
-    return false;
-  }
-
-  vel_index_ = CSVLoader::getRowIndex(table);
-  brake_index_ = CSVLoader::getColumnIndex(table);
-  brake_map_ = CSVLoader::getMap(table);
-  brake_index_rev_ = brake_index_;
-  if (validation && !CSVLoader::validateMap(brake_map_, false)) {
-    return false;
-  }
-  std::reverse(std::begin(brake_index_rev_), std::end(brake_index_rev_));
-
-  return true;
-}
-
-double BrakeMap::getAcceleration(const double brake, const double vel) const
-{
-  std::vector<double> interpolated_acc_vec;
-  const double clamped_vel = CSVLoader::clampValue(vel, vel_index_);
-
-  // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
-  for (std::vector<double> accelerations : brake_map_) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, accelerations, clamped_vel));
-  }
-
-  // calculate brake
-  // When the desired acceleration is smaller than the brake area, return min acc
-  // When the desired acceleration is greater than the brake area, return min acc
-  const double clamped_brake = CSVLoader::clampValue(brake, brake_index_);
-  return interpolation::lerp(brake_index_, interpolated_acc_vec, clamped_brake);
-}
-
-bool SteerMap::readSteerMapFromCSV(const std::string & csv_path, const bool validation)
-{
-  CSVLoader csv(csv_path);
-  std::vector<std::vector<std::string>> table;
-
-  if (!csv.readCSV(table)) {
-    return false;
-  }
-
-  steer_index_ = CSVLoader::getRowIndex(table);
-  steer_cmd_index_ = CSVLoader::getColumnIndex(table);
-  steer_map_ = CSVLoader::getMap(table);
-  if (validation && !CSVLoader::validateMap(steer_map_, true)) {
-    return false;
-  }
-  return true;
-}
-
-double SteerMap::getSteerRate(const double steer_cmd, const double steer) const
-{
-  const double clamped_steer = CSVLoader::clampValue(steer, steer_index_);
-  std::vector<double> steer_rate_interp = {};
-  for (const auto & steer_rate_vec : steer_map_) {
-    steer_rate_interp.push_back(interpolation::lerp(steer_index_, steer_rate_vec, clamped_steer));
-  }
-
-  const double clamped_steer_cmd = CSVLoader::clampValue(steer_cmd, steer_cmd_index_);
-  return interpolation::lerp(steer_cmd_index_, steer_rate_interp, clamped_steer_cmd);
+  const double clamped_actuation = CSVLoader::clampValue(actuation, actuation_index_);
+  return interpolation::lerp(actuation_index_, interpolated_control_vec, clamped_actuation);
 }
 
 SimModelActuationCmd::SimModelActuationCmd(
@@ -147,9 +72,9 @@ SimModelActuationCmd::SimModelActuationCmd(
   steer_bias_(steer_bias)
 {
   initializeInputQueue(dt);
-  convert_accel_cmd_ = convert_accel_cmd && accel_map_.readAccelMapFromCSV(accel_map_path);
-  convert_brake_cmd_ = convert_brake_cmd && brake_map_.readBrakeMapFromCSV(brake_map_path);
-  convert_steer_cmd_ = convert_steer_cmd && steer_map_.readSteerMapFromCSV(steer_map_path);
+  convert_accel_cmd_ = convert_accel_cmd && accel_map_.readActuationMapFromCSV(accel_map_path);
+  convert_brake_cmd_ = convert_brake_cmd && brake_map_.readActuationMapFromCSV(brake_map_path);
+  convert_steer_cmd_ = convert_steer_cmd && steer_map_.readActuationMapFromCSV(steer_map_path);
 }
 
 double SimModelActuationCmd::getX()
@@ -247,9 +172,11 @@ Eigen::VectorXd SimModelActuationCmd::calcModel(
     std::invoke([&]() -> double {
       // Select the non-zero value between accel and brake and calculate the acceleration
       if (convert_accel_cmd_ && accel > 0.0) {
-        return accel_map_.getAcceleration(accel, vel);
+        // convert accel command to acceleration
+        return accel_map_.getControlCommand(accel, vel);
       } else if (convert_brake_cmd_ && brake > 0.0) {
-        return brake_map_.getAcceleration(brake, vel);
+        // convert brake command to acceleration
+        return brake_map_.getControlCommand(brake, vel);
       } else {
         // if conversion is disabled, accel command is directly used as acceleration
         return accel;
@@ -273,7 +200,8 @@ Eigen::VectorXd SimModelActuationCmd::calcModel(
     std::invoke([&]() -> double {
       // if conversion is enabled, calculate steering rate from steer command
       if (convert_steer_cmd_) {
-        return steer_map_.getSteerRate(input(IDX_U::STEER_DES), steer) / steer_time_constant_;
+        // convert steer command to steer rate
+        return steer_map_.getControlCommand(input(IDX_U::STEER_DES), steer) / steer_time_constant_;
       }
       // otherwise, steer command is desired steering angle, so calculate steering rate from the
       // difference between the desired steering angle and the current steering angle.

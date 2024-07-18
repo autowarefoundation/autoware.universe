@@ -28,55 +28,19 @@
 #include <vector>
 
 /**
- * @class AccelMap
- * @brief class to handle acceleration map.
- * this class is copied from raw_vehicle_cmd_converter.
+ * @class ActuationMap
+ * @brief class to convert actuation command
  */
-class AccelMap
+class ActuationMap
 {
 public:
-  bool readAccelMapFromCSV(const std::string & csv_path, const bool validation = false);
-  double getAcceleration(const double throttle, const double vel) const;
+  bool readActuationMapFromCSV(const std::string & csv_path, const bool validation = false);
+  double getControlCommand(const double actuation, const double vel) const;
 
 private:
   std::vector<double> vel_index_;
-  std::vector<double> throttle_index_;
-  std::vector<std::vector<double>> accel_map_;
-};
-
-/**
- * @class BrakeMap
- * @brief class to handle brake map
- * this class is copied from raw_vehicle_cmd_converter.
- */
-class BrakeMap
-{
-public:
-  bool readBrakeMapFromCSV(const std::string & csv_path, const bool validation = false);
-  double getAcceleration(const double brake, const double vel) const;
-
-private:
-  std::vector<double> vel_index_;
-  std::vector<double> brake_index_;
-  std::vector<double> brake_index_rev_;
-  std::vector<std::vector<double>> brake_map_;
-};
-
-/**
- * @class SteerMap
- * @brief class to handle steer map
- * this class is copied from raw_vehicle_cmd_converter.
- */
-class SteerMap
-{
-public:
-  bool readSteerMapFromCSV(const std::string & csv_path, const bool validation = false);
-  double getSteerRate(const double steer_cmd, const double steer) const;
-
-private:
-  std::vector<double> steer_index_;
-  std::vector<double> steer_cmd_index_;
-  std::vector<std::vector<double>> steer_map_;
+  std::vector<double> actuation_index_;
+  std::vector<std::vector<double>> actuation_map_;
 };
 
 /**
@@ -120,9 +84,9 @@ public:
    */
   ~SimModelActuationCmd() = default;
 
-  AccelMap accel_map_;
-  BrakeMap brake_map_;
-  SteerMap steer_map_;
+  ActuationMap accel_map_;
+  ActuationMap brake_map_;
+  ActuationMap steer_map_;
 
   bool convert_accel_cmd_;
   bool convert_brake_cmd_;
