@@ -80,6 +80,7 @@
       pointcloud_min_cluster_size: 1
       pointcloud_max_cluster_size: 100000
 
+      max_lateral_time_margin: 3.0 # maximum time margin to filtering obstacles for collision checking
       decimate_trajectory_step_length : 2.0 # longitudinal step length to calculate trajectory polygon for collision checking
 
       prediction_resampling_time_interval: 0.1
