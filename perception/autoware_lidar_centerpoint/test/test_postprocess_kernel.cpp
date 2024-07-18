@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware::test_postprocess_kernel.hpp"
+#include "test_postprocess_kernel.hpp"
 
 #include <gtest/gtest.h>
 
