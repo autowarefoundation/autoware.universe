@@ -42,4 +42,4 @@ if(BUILD_TESTING)
   )
 endif()
 
-ament_auto_package(INSTALL_TO_SHARE param data launch)
+ament_auto_package(INSTALL_TO_SHARE param data launch test)

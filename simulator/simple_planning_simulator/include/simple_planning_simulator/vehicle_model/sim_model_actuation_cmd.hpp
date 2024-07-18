@@ -34,11 +34,17 @@
 class ActuationMap
 {
 public:
+  /**
+   * @brief read actuation map from csv file
+   * @param [in] csv_path path to csv file
+   * @param [in] validation flag to validate data
+   * @return true if success to read
+   */
   bool readActuationMapFromCSV(const std::string & csv_path, const bool validation = false);
-  double getControlCommand(const double actuation, const double vel) const;
+  double getControlCommand(const double actuation, const double state) const;
 
 private:
-  std::vector<double> vel_index_;
+  std::vector<double> state_index_;  // e.g. velocity, steering
   std::vector<double> actuation_index_;
   std::vector<std::vector<double>> actuation_map_;
 };

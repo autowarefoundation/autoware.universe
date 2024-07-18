@@ -27,7 +27,7 @@ bool ActuationMap::readActuationMapFromCSV(const std::string & csv_path, const b
     return false;
   }
 
-  vel_index_ = CSVLoader::getRowIndex(table);
+  state_index_ = CSVLoader::getRowIndex(table);
   actuation_index_ = CSVLoader::getColumnIndex(table);
   actuation_map_ = CSVLoader::getMap(table);
   if (validation && !CSVLoader::validateMap(actuation_map_, true)) {
@@ -36,14 +36,14 @@ bool ActuationMap::readActuationMapFromCSV(const std::string & csv_path, const b
   return true;
 }
 
-double ActuationMap::getControlCommand(const double actuation, const double vel) const
+double ActuationMap::getControlCommand(const double actuation, const double state) const
 {
   std::vector<double> interpolated_control_vec{};
-  const double clamped_vel = CSVLoader::clampValue(vel, vel_index_);
+  const double clamped_state = CSVLoader::clampValue(state, state_index_);
 
   for (std::vector<double> control_command_values : actuation_map_) {
     interpolated_control_vec.push_back(
-      interpolation::lerp(vel_index_, control_command_values, clamped_vel));
+      interpolation::lerp(state_index_, control_command_values, clamped_state));
   }
 
   const double clamped_actuation = CSVLoader::clampValue(actuation, actuation_index_);
