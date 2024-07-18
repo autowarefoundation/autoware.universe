@@ -269,7 +269,7 @@ void VehicleMapDisplay::drawCircle(QPainter & painter, const QRectF & background
   pos_pixmap = pos_pixmap.scaled(25, 25, Qt::KeepAspectRatio);
 
   QPointF positionInOverlay =
-    backgroundRect.center() - QPointF(pos_pixmap.width() / 2, pos_pixmap.height() / 2);
+    backgroundRect.center() - QPointF(pos_pixmap.width() / 4, pos_pixmap.height() / 4);
 
   if (route_state_msg_ && route_state_msg_->state == autoware_adapi_v1_msgs::msg::RouteState::SET) {
     goal_pose_.draw(painter, backgroundRect, zoom_);
