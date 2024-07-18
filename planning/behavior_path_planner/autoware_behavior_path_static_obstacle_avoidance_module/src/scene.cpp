@@ -602,8 +602,8 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     return;
   }
 
-  if (left_shift_array_.empty()){
-    if(isActivated() && candidate_uuid_ == uuid_map_.at("left")) {
+  if (left_shift_array_.empty()) {
+    if (isActivated() && candidate_uuid_ == uuid_map_.at("left")) {
       if (rtc_interface_ptr_map_.at("left")->isForceActivated(candidate_uuid_)) {
         data.yield_required = false;
         data.safe_shift_line = data.new_shift_line;
@@ -620,8 +620,8 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     }
   }
 
-  if (right_shift_array_.empty()){
-    if(isActivated() && candidate_uuid_ == uuid_map_.at("right")) {
+  if (right_shift_array_.empty()) {
+    if (isActivated() && candidate_uuid_ == uuid_map_.at("right")) {
       if (rtc_interface_ptr_map_.at("right")->isForceActivated(candidate_uuid_)) {
         data.yield_required = false;
         data.safe_shift_line = data.new_shift_line;
