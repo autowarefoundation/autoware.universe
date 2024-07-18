@@ -125,7 +125,7 @@ default,  0.00,  1.39,  2.78,  4.17,  5.56,  6.94,  8.33,  9.72, 11.11, 12.50, 1
 
 ##### ACTUATION_CMD model
 
-The simple_planning_simulator usually operates by receiving Control commands, but when the `ACTUATION_CMD` model is selected, it receives Actuation commands instead of Control commands. This model can simulate the motion using the vehicle command that is actually sent to the real vehicle.
+The simple_planning_simulator usually operates by receiving Control commands, but when the `ACTUATION_CMD` model is selected, it receives Actuation commands instead of Control commands. This model can simulate the motion using the vehicle command that is actually sent to the real vehicle. Therefore, when this model is selected, the `raw_vehicle_cmd_converter` is also launched.
 
 The parameters used in the ACTUATION_CMD are as follows.
 
