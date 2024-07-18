@@ -359,7 +359,23 @@ bool isTwistCovarianceValid(const geometry_msgs::msg::TwistWithCovariance & twis
   return false;
 }
 
-void correct(std::vector<geometry_msgs::msg::Point> & poly)
+Point fromGeom(const geometry_msgs::msg::Point & point)
+{
+  Point _point;
+  tf2::fromMsg(point, _point);
+  return _point;
+}
+
+Polygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon)
+{
+  Polygon _polygon;
+  for (const auto & point : polygon) {
+    _polygon.push_back(fromGeom(point));
+  }
+  return _polygon;
+}
+
+void correct(Polygon & poly)
 {
   if (poly.size() < 3) {
     return;
@@ -368,17 +384,17 @@ void correct(std::vector<geometry_msgs::msg::Point> & poly)
   // sort points in clockwise order with respect to the first point
 
   const auto min_y_point = *std::min_element(
-    poly.begin(), poly.end(), [](const auto & a, const auto & b) { return a.y < b.y; });
+    poly.begin(), poly.end(), [](const auto & a, const auto & b) { return a.y() < b.y(); });
 
   auto arg = [min_y_point](const auto & p) {
-    if (
-      std::abs(p.x - min_y_point.x) < std::numeric_limits<double>::epsilon() &&
-      std::abs(p.y - min_y_point.y) < std::numeric_limits<double>::epsilon()) {
+    const auto p_vec = p - min_y_point;
+    if (p_vec.length() < std::numeric_limits<double>::epsilon()) {
       return 0.0;
     }
-    return std::atan2(p.y - min_y_point.y, p.x - min_y_point.x);
+    return std::atan2(p_vec.y(), p_vec.x());
   };
-  const auto ref_arg = std::atan2(poly.at(0).y - min_y_point.y, poly.at(0).x - min_y_point.x);
+  const auto ref_arg =
+    std::atan2(poly.at(0).y() - min_y_point.y(), poly.at(0).x() - min_y_point.x());
 
   std::sort(poly.begin() + 1, poly.end(), [ref_arg, arg](const auto & a, const auto & b) {
     const auto dt_a = ref_arg - arg(a);
@@ -388,32 +404,30 @@ void correct(std::vector<geometry_msgs::msg::Point> & poly)
 }
 
 // NOTE: much faster than boost::geometry::intersects()
-std::optional<geometry_msgs::msg::Point> intersect(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
+std::optional<Point> intersect(
+  const Point & seg1_start, const Point & seg1_end, const Point & seg2_start,
+  const Point & seg2_end)
 {
+  const auto v1 = seg1_end - seg1_start;
+  const auto v2 = seg2_end - seg2_start;
+
   // calculate intersection point
-  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
-  if (det == 0.0) {
+  const auto det = v1.cross(v2).z();
+  if (std::abs(det) < std::numeric_limits<double>::epsilon()) {
     return std::nullopt;
   }
 
-  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
-  const double s = ((p2.y - p1.y) * (p4.x - p2.x) + (p1.x - p2.x) * (p4.y - p2.y)) / det;
+  const auto v12 = seg2_end - seg1_end;
+  const double t = v2.cross(v12).z() / det;
+  const double s = v1.cross(v12).z() / det;
   if (t < 0 || 1 < t || s < 0 || 1 < s) {
     return std::nullopt;
   }
 
-  geometry_msgs::msg::Point intersect_point;
-  intersect_point.x = t * p1.x + (1.0 - t) * p2.x;
-  intersect_point.y = t * p1.y + (1.0 - t) * p2.y;
-  intersect_point.z = t * p1.z + (1.0 - t) * p2.z;
-  return intersect_point;
+  return t * seg1_start + (1.0 - t) * seg1_end;
 }
 
-std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
-  const std::vector<geometry_msgs::msg::Point> & poly1,
-  const std::vector<geometry_msgs::msg::Point> & poly2)
+std::optional<PointList> intersect(const Polygon & poly1, const Polygon & poly2)
 {
   if (poly1.size() < 3 || poly2.size() < 3) {
     return std::nullopt;
@@ -421,14 +435,12 @@ std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
 
   // TODO(mitukou1109): Use plane sweep method to improve performance
   // check if all edges of poly1 intersect with those of poly2
-  std::vector<geometry_msgs::msg::Point> intersect_points;
+  PointList intersect_points;
   for (size_t i = 0; i < poly1.size(); ++i) {
-    const auto & p1 = poly1.at(i);
-    const auto & p2 = poly1.at((i + 1) % poly1.size());
     for (size_t j = 0; j < poly2.size(); ++j) {
-      const auto & q1 = poly2.at(j);
-      const auto & q2 = poly2.at((j + 1) % poly2.size());
-      const auto intersect_point = intersect(p1, p2, q1, q2);
+      const auto intersect_point = intersect(
+        poly1.at(i), poly1.at((i + 1) % poly1.size()), poly2.at(j),
+        poly2.at((j + 1) % poly2.size()));
       if (intersect_point) {
         intersect_points.push_back(*intersect_point);
       }
@@ -440,17 +452,15 @@ std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
   }
 
   const auto unique_points_itr = std::unique(
-    intersect_points.begin(), intersect_points.end(),
-    [](const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & b) {
-      return std::hypot(a.x - b.x, a.y - b.y) < 1e-6;
+    intersect_points.begin(), intersect_points.end(), [](const auto & a, const auto & b) {
+      return (a - b).length() < std::numeric_limits<double>::epsilon();
     });
   intersect_points.erase(unique_points_itr, intersect_points.end());
 
   return intersect_points;
 }
 
-std::optional<bool> within(
-  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly)
+std::optional<bool> within(const Point & point, const Polygon & poly)
 {
   // check if the polygon is valid
   if (poly.size() < 3) {
@@ -463,15 +473,13 @@ std::optional<bool> within(
     const auto & p2 = poly.at((i + 1) % poly.size());
 
     // check if the point is to the left of the edge
-    auto x_dist_to_edge = [&]() {
-      return p1.x + (p2.x - p1.x) / (p2.y - p1.y) * (point.y - p1.y) - point.x;
-    };
+    auto x_dist_to_edge = [&]() { return (p2 - p1).cross(point - p1).z() / (p2 - p1).y(); };
 
-    if (p1.y <= point.y && p2.y > point.y) {  // upward edge
+    if (p1.y() <= point.y() && p2.y() > point.y()) {  // upward edge
       if (x_dist_to_edge() >= 0) {
         winding_number++;
       }
-    } else if (p1.y > point.y && p2.y <= point.y) {  // downward edge
+    } else if (p1.y() > point.y() && p2.y() <= point.y()) {  // downward edge
       if (x_dist_to_edge() >= 0) {
         winding_number--;
       }
@@ -481,9 +489,7 @@ std::optional<bool> within(
   return winding_number != 0;
 }
 
-std::optional<bool> within(
-  const std::vector<geometry_msgs::msg::Point> & poly_contained,
-  const std::vector<geometry_msgs::msg::Point> & poly_containing)
+std::optional<bool> within(const Polygon & poly_contained, const Polygon & poly_containing)
 {
   // check if all points of poly_contained are within poly_containing
   for (const auto & point : poly_contained) {
@@ -498,9 +504,7 @@ std::optional<bool> within(
   return true;
 }
 
-std::optional<bool> disjoint(
-  const std::vector<geometry_msgs::msg::Point> & poly1,
-  const std::vector<geometry_msgs::msg::Point> & poly2)
+std::optional<bool> disjoint(const Polygon & poly1, const Polygon & poly2)
 {
   if (poly1.size() < 3 || poly2.size() < 3) {
     return std::nullopt;
@@ -509,29 +513,24 @@ std::optional<bool> disjoint(
   return !intersect(poly1, poly2).has_value();
 }
 
-double distance(
-  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & seg_start,
-  const geometry_msgs::msg::Point & seg_end)
+double distance(const Point & point, const Point & seg_start, const Point & seg_end)
 {
-  const double seg_vec_x = seg_end.x - seg_start.x;
-  const double seg_vec_y = seg_end.y - seg_start.y;
-  const double point_vec_x = point.x - seg_start.x;
-  const double point_vec_y = point.y - seg_start.y;
+  const auto seg_vec = seg_end - seg_start;
+  const auto point_vec = point - seg_start;
 
-  const double seg_vec_norm = std::hypot(seg_vec_x, seg_vec_y);
-  const double seg_point_dot = seg_vec_x * point_vec_x + seg_vec_y * point_vec_y;
+  const double seg_vec_norm = seg_vec.length();
+  const double seg_point_dot = seg_vec.dot(point_vec);
 
   if (seg_vec_norm < std::numeric_limits<double>::epsilon() || seg_point_dot < 0) {
-    return calcDistance2d(point, seg_start);
+    return point_vec.length();
   } else if (seg_point_dot > std::pow(seg_vec_norm, 2)) {
-    return calcDistance2d(point, seg_end);
+    return (point - seg_end).length();
   } else {
-    return std::abs(seg_vec_x * point_vec_y - seg_vec_y * point_vec_x) / seg_vec_norm;
+    return std::abs(seg_vec.cross(point_vec).z()) / seg_vec_norm;
   }
 }
 
-double distance(
-  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly)
+double distance(const Point & point, const Polygon & poly)
 {
   if (coveredBy(point, poly).value_or(false)) {
     return 0.0;
@@ -540,16 +539,14 @@ double distance(
   // TODO(mitukou1109): Use plane sweep method to improve performance?
   double min_distance = std::numeric_limits<double>::max();
   for (size_t i = 0; i < poly.size(); ++i) {
-    const auto & p1 = poly.at(i);
-    const auto & p2 = poly.at((i + 1) % poly.size());
-    min_distance = std::min(min_distance, distance(point, p1, p2));
+    min_distance =
+      std::min(min_distance, distance(point, poly.at(i), poly.at((i + 1) % poly.size())));
   }
 
   return min_distance;
 }
 
-std::optional<bool> coveredBy(
-  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly)
+std::optional<bool> coveredBy(const Point & point, const Polygon & poly)
 {
   const auto is_point_within = within(point, poly);
   if (!is_point_within) {
@@ -559,9 +556,9 @@ std::optional<bool> coveredBy(
   }
 
   for (size_t i = 0; i < poly.size(); ++i) {
-    const auto & p1 = poly.at(i);
-    const auto & p2 = poly.at((i + 1) % poly.size());
-    if (distance(point, p1, p2) < std::numeric_limits<double>::epsilon()) {
+    if (
+      distance(point, poly.at(i), poly.at((i + 1) % poly.size())) <
+      std::numeric_limits<double>::epsilon()) {
       return true;
     }
   }
@@ -569,21 +566,15 @@ std::optional<bool> coveredBy(
   return false;
 }
 
-bool isAbove(
-  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & seg_start,
-  const geometry_msgs::msg::Point & seg_end)
+bool isAbove(const Point & point, const Point & seg_start, const Point & seg_end)
 {
-  return (seg_end.x - seg_start.x) * (point.y - seg_start.y) -
-           (seg_end.y - seg_start.y) * (point.x - seg_start.x) >
-         0;
+  return (seg_end - seg_start).cross(point - seg_start).z() > 0;
 }
 
-std::array<std::vector<geometry_msgs::msg::Point>, 2> divideBySegment(
-  const std::vector<geometry_msgs::msg::Point> & points,
-  const geometry_msgs::msg::Point & seg_start, const geometry_msgs::msg::Point & seg_end)
+std::array<PointList, 2> divideBySegment(
+  const PointList & points, const Point & seg_start, const Point & seg_end)
 {
-  std::vector<geometry_msgs::msg::Point> above_points;
-  std::vector<geometry_msgs::msg::Point> below_points;
+  PointList above_points, below_points;
 
   for (const auto & point : points) {
     if (isAbove(point, seg_start, seg_end)) {
@@ -596,8 +587,7 @@ std::array<std::vector<geometry_msgs::msg::Point>, 2> divideBySegment(
   return {above_points, below_points};
 }
 
-std::optional<std::vector<geometry_msgs::msg::Point>> convexHull(
-  const std::vector<geometry_msgs::msg::Point> & points)
+std::optional<Polygon> convexHull(const PointList & points)
 {
   if (points.size() < 3) {
     return std::nullopt;
@@ -605,18 +595,17 @@ std::optional<std::vector<geometry_msgs::msg::Point>> convexHull(
 
   // quick hull algorithm
 
-  const auto p_minmax_itr = std::minmax_element(
-    points.begin(), points.end(),
-    [](const auto & a, const auto & b) { return a.x < b.x || (a.x == b.x && a.y < b.y); });
+  const auto p_minmax_itr =
+    std::minmax_element(points.begin(), points.end(), [](const auto & a, const auto & b) {
+      return a.x() < b.x() || (a.x() == b.x() && a.y() < b.y());
+    });
   const auto & p_min = *p_minmax_itr.first;
   const auto & p_max = *p_minmax_itr.second;
 
-  std::vector<geometry_msgs::msg::Point> hull;
+  Polygon hull;
 
   auto make_hull = [&hull](
-                     auto self, const geometry_msgs::msg::Point & p1,
-                     const geometry_msgs::msg::Point & p2,
-                     const std::vector<geometry_msgs::msg::Point> & points) {
+                     auto self, const Point & p1, const Point & p2, const PointList & points) {
     if (points.empty()) {
       return;
     }
@@ -642,7 +631,7 @@ std::optional<std::vector<geometry_msgs::msg::Point>> convexHull(
   return hull;
 }
 
-std::optional<double> area(const std::vector<geometry_msgs::msg::Point> & poly)
+std::optional<double> area(const Polygon & poly)
 {
   if (poly.size() < 3) {
     return std::nullopt;
@@ -650,12 +639,10 @@ std::optional<double> area(const std::vector<geometry_msgs::msg::Point> & poly)
 
   double area = 0.;
   for (size_t i = 0; i < poly.size(); ++i) {
-    const auto & p1 = poly.at(i);
-    const auto & p2 = poly.at((i + 1) % poly.size());
-    area += std::abs(p1.x * p2.y - p2.x * p1.y) / 2;
+    area += poly.at(i).cross(poly.at((i + 1) % poly.size())).z() / 2;
   }
 
-  return area;
+  return std::abs(area);
 }
 
 }  // namespace autoware::universe_utils

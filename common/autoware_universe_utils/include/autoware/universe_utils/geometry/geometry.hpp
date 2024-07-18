@@ -572,50 +572,45 @@ inline double calcNorm(const geometry_msgs::msg::Vector3 & v)
 //
 bool isTwistCovarianceValid(const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance);
 
-void correct(std::vector<geometry_msgs::msg::Point> & poly);
+// Alternatives for Boost.Geometry ----------------------------------------------------------------
+
+using Point = tf2::Vector3;
+using Polygon = std::vector<tf2::Vector3>;
+using PointList = std::vector<tf2::Vector3>;
+
+Point fromGeom(const geometry_msgs::msg::Point & point);
+
+Polygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon);
+
+void correct(Polygon & poly);
 
 // NOTE: much faster than boost::geometry::intersects()
-std::optional<geometry_msgs::msg::Point> intersect(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4);
+std::optional<Point> intersect(
+  const Point & seg1_start, const Point & seg1_end, const Point & seg2_start,
+  const Point & seg2_end);
 
-std::optional<std::vector<geometry_msgs::msg::Point>> intersect(
-  const std::vector<geometry_msgs::msg::Point> & poly1,
-  const std::vector<geometry_msgs::msg::Point> & poly2);
+std::optional<PointList> intersect(const Polygon & poly1, const Polygon & poly2);
 
-std::optional<bool> within(
-  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly);
+std::optional<bool> within(const Point & point, const Polygon & poly);
 
-std::optional<bool> within(
-  const std::vector<geometry_msgs::msg::Point> & poly_contained,
-  const std::vector<geometry_msgs::msg::Point> & poly_containing);
+std::optional<bool> within(const Polygon & poly_contained, const Polygon & poly_containing);
 
-std::optional<bool> disjoint(
-  const std::vector<geometry_msgs::msg::Point> & poly1,
-  const std::vector<geometry_msgs::msg::Point> & poly2);
+std::optional<bool> disjoint(const Polygon & poly1, const Polygon & poly2);
 
-double distance(
-  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & seg_start,
-  const geometry_msgs::msg::Point & seg_end);
+double distance(const Point & point, const Point & seg_start, const Point & seg_end);
 
-double distance(
-  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly);
+double distance(const Point & point, const Polygon & poly);
 
-std::optional<bool> coveredBy(
-  const geometry_msgs::msg::Point & point, const std::vector<geometry_msgs::msg::Point> & poly);
+std::optional<bool> coveredBy(const Point & point, const Polygon & poly);
 
-bool isAbove(
-  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Point & seg_start,
-  const geometry_msgs::msg::Point & seg_end);
+bool isAbove(const Point & point, const Point & seg_start, const Point & seg_end);
 
-std::array<std::vector<geometry_msgs::msg::Point>, 2> divideBySegment(
-  const std::vector<geometry_msgs::msg::Point> & points,
-  const geometry_msgs::msg::Point & seg_start, const geometry_msgs::msg::Point & seg_end);
+std::array<PointList, 2> divideBySegment(
+  const PointList & points, const Point & seg_start, const Point & seg_end);
 
-std::optional<std::vector<geometry_msgs::msg::Point>> convexHull(
-  const std::vector<geometry_msgs::msg::Point> & points);
+std::optional<Polygon> convexHull(const PointList & points);
 
-std::optional<double> area(const std::vector<geometry_msgs::msg::Point> & poly);
+std::optional<double> area(const Polygon & poly);
 
 }  // namespace autoware::universe_utils
 

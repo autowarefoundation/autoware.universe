@@ -1728,222 +1728,222 @@ TEST(geometry, isTwistCovarianceValid)
 TEST(geometry, correct)
 {
   using autoware::universe_utils::correct;
-  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::Polygon;
 
   {  // Correctly oriented
-    std::vector<geometry_msgs::msg::Point> poly;
-    poly.push_back(createPoint(1.0, 1.0, 0.0));
-    poly.push_back(createPoint(1.0, -1.0, 0.0));
-    poly.push_back(createPoint(-1.0, -1.0, 0.0));
-    poly.push_back(createPoint(-1.0, 1.0, 0.0));
+    Polygon poly;
+    poly.push_back({1.0, 1.0, 0.0});
+    poly.push_back({1.0, -1.0, 0.0});
+    poly.push_back({-1.0, -1.0, 0.0});
+    poly.push_back({-1.0, 1.0, 0.0});
     correct(poly);
 
-    EXPECT_NEAR(poly.at(0).x, 1.0, epsilon);
-    EXPECT_NEAR(poly.at(0).y, 1.0, epsilon);
-    EXPECT_NEAR(poly.at(0).z, 0.0, epsilon);
-    EXPECT_NEAR(poly.at(1).x, 1.0, epsilon);
-    EXPECT_NEAR(poly.at(1).y, -1.0, epsilon);
-    EXPECT_NEAR(poly.at(1).z, 0.0, epsilon);
-    EXPECT_NEAR(poly.at(2).x, -1.0, epsilon);
-    EXPECT_NEAR(poly.at(2).y, -1.0, epsilon);
-    EXPECT_NEAR(poly.at(2).z, 0.0, epsilon);
-    EXPECT_NEAR(poly.at(3).x, -1.0, epsilon);
-    EXPECT_NEAR(poly.at(3).y, 1.0, epsilon);
-    EXPECT_NEAR(poly.at(3).z, 0.0, epsilon);
+    EXPECT_NEAR(poly.at(0).x(), 1.0, epsilon);
+    EXPECT_NEAR(poly.at(0).y(), 1.0, epsilon);
+    EXPECT_NEAR(poly.at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(poly.at(1).x(), 1.0, epsilon);
+    EXPECT_NEAR(poly.at(1).y(), -1.0, epsilon);
+    EXPECT_NEAR(poly.at(1).z(), 0.0, epsilon);
+    EXPECT_NEAR(poly.at(2).x(), -1.0, epsilon);
+    EXPECT_NEAR(poly.at(2).y(), -1.0, epsilon);
+    EXPECT_NEAR(poly.at(2).z(), 0.0, epsilon);
+    EXPECT_NEAR(poly.at(3).x(), -1.0, epsilon);
+    EXPECT_NEAR(poly.at(3).y(), 1.0, epsilon);
+    EXPECT_NEAR(poly.at(3).z(), 0.0, epsilon);
   }
 
   {  // Wrongly oriented
-    std::vector<geometry_msgs::msg::Point> poly;
-    poly.push_back(createPoint(1.0, 1.0, 0.0));
-    poly.push_back(createPoint(-1.0, 1.0, 0.0));
-    poly.push_back(createPoint(1.0, -1.0, 0.0));
-    poly.push_back(createPoint(-1.0, -1.0, 0.0));
+    Polygon poly;
+    poly.push_back({1.0, 1.0, 0.0});
+    poly.push_back({-1.0, 1.0, 0.0});
+    poly.push_back({1.0, -1.0, 0.0});
+    poly.push_back({-1.0, -1.0, 0.0});
     correct(poly);
 
-    EXPECT_NEAR(poly.at(0).x, 1.0, epsilon);
-    EXPECT_NEAR(poly.at(0).y, 1.0, epsilon);
-    EXPECT_NEAR(poly.at(0).z, 0.0, epsilon);
-    EXPECT_NEAR(poly.at(1).x, 1.0, epsilon);
-    EXPECT_NEAR(poly.at(1).y, -1.0, epsilon);
-    EXPECT_NEAR(poly.at(1).z, 0.0, epsilon);
-    EXPECT_NEAR(poly.at(2).x, -1.0, epsilon);
-    EXPECT_NEAR(poly.at(2).y, -1.0, epsilon);
-    EXPECT_NEAR(poly.at(2).z, 0.0, epsilon);
-    EXPECT_NEAR(poly.at(3).x, -1.0, epsilon);
-    EXPECT_NEAR(poly.at(3).y, 1.0, epsilon);
-    EXPECT_NEAR(poly.at(3).z, 0.0, epsilon);
+    EXPECT_NEAR(poly.at(0).x(), 1.0, epsilon);
+    EXPECT_NEAR(poly.at(0).y(), 1.0, epsilon);
+    EXPECT_NEAR(poly.at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(poly.at(1).x(), 1.0, epsilon);
+    EXPECT_NEAR(poly.at(1).y(), -1.0, epsilon);
+    EXPECT_NEAR(poly.at(1).z(), 0.0, epsilon);
+    EXPECT_NEAR(poly.at(2).x(), -1.0, epsilon);
+    EXPECT_NEAR(poly.at(2).y(), -1.0, epsilon);
+    EXPECT_NEAR(poly.at(2).z(), 0.0, epsilon);
+    EXPECT_NEAR(poly.at(3).x(), -1.0, epsilon);
+    EXPECT_NEAR(poly.at(3).y(), 1.0, epsilon);
+    EXPECT_NEAR(poly.at(3).z(), 0.0, epsilon);
   }
 }
 
 TEST(geometry, intersect)
 {
-  using autoware::universe_utils::createPoint;
   using autoware::universe_utils::intersect;
+  using autoware::universe_utils::Point;
 
   {  // Normally crossing
-    const auto p1 = createPoint(0.0, -1.0, 0.0);
-    const auto p2 = createPoint(0.0, 1.0, 0.0);
-    const auto p3 = createPoint(-1.0, 0.0, 0.0);
-    const auto p4 = createPoint(1.0, 0.0, 0.0);
+    const Point p1 = {0.0, -1.0, 0.0};
+    const Point p2 = {0.0, 1.0, 0.0};
+    const Point p3 = {-1.0, 0.0, 0.0};
+    const Point p4 = {1.0, 0.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_TRUE(result);
-    EXPECT_NEAR(result->x, 0.0, epsilon);
-    EXPECT_NEAR(result->y, 0.0, epsilon);
-    EXPECT_NEAR(result->z, 0.0, epsilon);
+    EXPECT_NEAR(result->x(), 0.0, epsilon);
+    EXPECT_NEAR(result->y(), 0.0, epsilon);
+    EXPECT_NEAR(result->z(), 0.0, epsilon);
   }
 
   {  // No crossing
-    const auto p1 = createPoint(0.0, -1.0, 0.0);
-    const auto p2 = createPoint(0.0, 1.0, 0.0);
-    const auto p3 = createPoint(1.0, 0.0, 0.0);
-    const auto p4 = createPoint(3.0, 0.0, 0.0);
+    const Point p1 = {0.0, -1.0, 0.0};
+    const Point p2 = {0.0, 1.0, 0.0};
+    const Point p3 = {1.0, 0.0, 0.0};
+    const Point p4 = {3.0, 0.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
 
   {  // One segment is the point on the other's segment
-    const auto p1 = createPoint(0.0, -1.0, 0.0);
-    const auto p2 = createPoint(0.0, 1.0, 0.0);
-    const auto p3 = createPoint(0.0, 0.0, 0.0);
-    const auto p4 = createPoint(0.0, 0.0, 0.0);
+    const Point p1 = {0.0, -1.0, 0.0};
+    const Point p2 = {0.0, 1.0, 0.0};
+    const Point p3 = {0.0, 0.0, 0.0};
+    const Point p4 = {0.0, 0.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
 
   {  // One segment is the point not on the other's segment
-    const auto p1 = createPoint(0.0, -1.0, 0.0);
-    const auto p2 = createPoint(0.0, 1.0, 0.0);
-    const auto p3 = createPoint(1.0, 0.0, 0.0);
-    const auto p4 = createPoint(1.0, 0.0, 0.0);
+    const Point p1 = {0.0, -1.0, 0.0};
+    const Point p2 = {0.0, 1.0, 0.0};
+    const Point p3 = {1.0, 0.0, 0.0};
+    const Point p4 = {1.0, 0.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
 
   {  // Both segments are the points which are the same position
-    const auto p1 = createPoint(0.0, 0.0, 0.0);
-    const auto p2 = createPoint(0.0, 0.0, 0.0);
-    const auto p3 = createPoint(0.0, 0.0, 0.0);
-    const auto p4 = createPoint(0.0, 0.0, 0.0);
+    const Point p1 = {0.0, 0.0, 0.0};
+    const Point p2 = {0.0, 0.0, 0.0};
+    const Point p3 = {0.0, 0.0, 0.0};
+    const Point p4 = {0.0, 0.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
 
   {  // Both segments are the points which are different position
-    const auto p1 = createPoint(0.0, 1.0, 0.0);
-    const auto p2 = createPoint(0.0, 1.0, 0.0);
-    const auto p3 = createPoint(1.0, 0.0, 0.0);
-    const auto p4 = createPoint(1.0, 0.0, 0.0);
+    const Point p1 = {0.0, 1.0, 0.0};
+    const Point p2 = {0.0, 1.0, 0.0};
+    const Point p3 = {1.0, 0.0, 0.0};
+    const Point p4 = {1.0, 0.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
 
   {  // Segments are the same
-    const auto p1 = createPoint(0.0, -1.0, 0.0);
-    const auto p2 = createPoint(0.0, 1.0, 0.0);
-    const auto p3 = createPoint(0.0, -1.0, 0.0);
-    const auto p4 = createPoint(0.0, 1.0, 0.0);
+    const Point p1 = {0.0, -1.0, 0.0};
+    const Point p2 = {0.0, 1.0, 0.0};
+    const Point p3 = {0.0, -1.0, 0.0};
+    const Point p4 = {0.0, 1.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_FALSE(result);
   }
 
   {  // One's edge is on the other's segment
-    const auto p1 = createPoint(0.0, -1.0, 0.0);
-    const auto p2 = createPoint(0.0, 1.0, 0.0);
-    const auto p3 = createPoint(0.0, 0.0, 0.0);
-    const auto p4 = createPoint(1.0, 0.0, 0.0);
+    const Point p1 = {0.0, -1.0, 0.0};
+    const Point p2 = {0.0, 1.0, 0.0};
+    const Point p3 = {0.0, 0.0, 0.0};
+    const Point p4 = {1.0, 0.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_TRUE(result);
-    EXPECT_NEAR(result->x, 0.0, epsilon);
-    EXPECT_NEAR(result->y, 0.0, epsilon);
-    EXPECT_NEAR(result->z, 0.0, epsilon);
+    EXPECT_NEAR(result->x(), 0.0, epsilon);
+    EXPECT_NEAR(result->y(), 0.0, epsilon);
+    EXPECT_NEAR(result->z(), 0.0, epsilon);
   }
 
   {  // One's edge is the same as the other's edge.
-    const auto p1 = createPoint(0.0, -1.0, 0.0);
-    const auto p2 = createPoint(0.0, 1.0, 0.0);
-    const auto p3 = createPoint(0.0, -1.0, 0.0);
-    const auto p4 = createPoint(2.0, -1.0, 0.0);
+    const Point p1 = {0.0, -1.0, 0.0};
+    const Point p2 = {0.0, 1.0, 0.0};
+    const Point p3 = {0.0, -1.0, 0.0};
+    const Point p4 = {2.0, -1.0, 0.0};
     const auto result = intersect(p1, p2, p3, p4);
 
     EXPECT_TRUE(result);
-    EXPECT_NEAR(result->x, 0.0, epsilon);
-    EXPECT_NEAR(result->y, -1.0, epsilon);
-    EXPECT_NEAR(result->z, 0.0, epsilon);
+    EXPECT_NEAR(result->x(), 0.0, epsilon);
+    EXPECT_NEAR(result->y(), -1.0, epsilon);
+    EXPECT_NEAR(result->z(), 0.0, epsilon);
   }
 
   {  // One polygon intersects the other
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(2.0, 2.0, 0.0);
-    const auto p6 = createPoint(2.0, 0.0, 0.0);
-    const auto p7 = createPoint(0.0, 0.0, 0.0);
-    const auto p8 = createPoint(0.0, 2.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {2.0, 2.0, 0.0};
+    const Point p6 = {2.0, 0.0, 0.0};
+    const Point p7 = {0.0, 0.0, 0.0};
+    const Point p8 = {0.0, 2.0, 0.0};
     const auto result = intersect({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
     EXPECT_EQ(result->size(), 2);
-    EXPECT_NEAR(result->at(0).x, 1.0, epsilon);
-    EXPECT_NEAR(result->at(0).y, 0.0, epsilon);
-    EXPECT_NEAR(result->at(0).z, 0.0, epsilon);
-    EXPECT_NEAR(result->at(1).x, 0.0, epsilon);
-    EXPECT_NEAR(result->at(1).y, 1.0, epsilon);
-    EXPECT_NEAR(result->at(1).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(0).x(), 1.0, epsilon);
+    EXPECT_NEAR(result->at(0).y(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(1).x(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(1).y(), 1.0, epsilon);
+    EXPECT_NEAR(result->at(1).z(), 0.0, epsilon);
   }
 
   {  // Two polygons do not intersect each other
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(3.0, 3.0, 0.0);
-    const auto p6 = createPoint(3.0, 2.0, 0.0);
-    const auto p7 = createPoint(2.0, 2.0, 0.0);
-    const auto p8 = createPoint(2.0, 3.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {3.0, 3.0, 0.0};
+    const Point p6 = {3.0, 2.0, 0.0};
+    const Point p7 = {2.0, 2.0, 0.0};
+    const Point p8 = {2.0, 3.0, 0.0};
     const auto result = intersect({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_FALSE(result);
   }
 
   {  // Two polygons share a vertex
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(2.0, 2.0, 0.0);
-    const auto p6 = createPoint(2.0, 1.0, 0.0);
-    const auto p7 = createPoint(1.0, 1.0, 0.0);
-    const auto p8 = createPoint(1.0, 2.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {2.0, 2.0, 0.0};
+    const Point p6 = {2.0, 1.0, 0.0};
+    const Point p7 = {1.0, 1.0, 0.0};
+    const Point p8 = {1.0, 2.0, 0.0};
     const auto result = intersect({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
     EXPECT_EQ(result->size(), 1);
-    EXPECT_NEAR(result->at(0).x, 1.0, epsilon);
-    EXPECT_NEAR(result->at(0).y, 1.0, epsilon);
-    EXPECT_NEAR(result->at(0).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(0).x(), 1.0, epsilon);
+    EXPECT_NEAR(result->at(0).y(), 1.0, epsilon);
+    EXPECT_NEAR(result->at(0).z(), 0.0, epsilon);
   }
 }
 
 TEST(geometry, within)
 {
-  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::Point;
   using autoware::universe_utils::within;
 
   {  // The point is within the polygon
-    const auto point = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
     const auto result = within(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
@@ -1951,11 +1951,11 @@ TEST(geometry, within)
   }
 
   {  // The point is outside the polygon
-    const auto point = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(2.0, 2.0, 0.0);
-    const auto p2 = createPoint(2.0, 1.0, 0.0);
-    const auto p3 = createPoint(1.0, 1.0, 0.0);
-    const auto p4 = createPoint(1.0, 2.0, 0.0);
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {2.0, 2.0, 0.0};
+    const Point p2 = {2.0, 1.0, 0.0};
+    const Point p3 = {1.0, 1.0, 0.0};
+    const Point p4 = {1.0, 2.0, 0.0};
     const auto result = within(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
@@ -1963,11 +1963,11 @@ TEST(geometry, within)
   }
 
   {  // The point is on the edge of the polygon
-    const auto point = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(2.0, 1.0, 0.0);
-    const auto p2 = createPoint(2.0, -1.0, 0.0);
-    const auto p3 = createPoint(0.0, -1.0, 0.0);
-    const auto p4 = createPoint(0.0, 1.0, 0.0);
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {2.0, 1.0, 0.0};
+    const Point p2 = {2.0, -1.0, 0.0};
+    const Point p3 = {0.0, -1.0, 0.0};
+    const Point p4 = {0.0, 1.0, 0.0};
     const auto result = within(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
@@ -1975,14 +1975,14 @@ TEST(geometry, within)
   }
 
   {  // One polygon is within the other
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(2.0, 2.0, 0.0);
-    const auto p6 = createPoint(2.0, -2.0, 0.0);
-    const auto p7 = createPoint(-2.0, -2.0, 0.0);
-    const auto p8 = createPoint(-2.0, 2.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {2.0, 2.0, 0.0};
+    const Point p6 = {2.0, -2.0, 0.0};
+    const Point p7 = {-2.0, -2.0, 0.0};
+    const Point p8 = {-2.0, 2.0, 0.0};
     const auto result = within({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
@@ -1990,14 +1990,14 @@ TEST(geometry, within)
   }
 
   {  // One polygon is outside the other
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(3.0, 3.0, 0.0);
-    const auto p6 = createPoint(3.0, 2.0, 0.0);
-    const auto p7 = createPoint(2.0, 2.0, 0.0);
-    const auto p8 = createPoint(2.0, 3.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {3.0, 3.0, 0.0};
+    const Point p6 = {3.0, 2.0, 0.0};
+    const Point p7 = {2.0, 2.0, 0.0};
+    const Point p8 = {2.0, 3.0, 0.0};
     const auto result = within({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
@@ -2005,14 +2005,14 @@ TEST(geometry, within)
   }
 
   {  // Both polygons are the same
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(1.0, 1.0, 0.0);
-    const auto p6 = createPoint(1.0, -1.0, 0.0);
-    const auto p7 = createPoint(-1.0, -1.0, 0.0);
-    const auto p8 = createPoint(-1.0, 1.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {1.0, 1.0, 0.0};
+    const Point p6 = {1.0, -1.0, 0.0};
+    const Point p7 = {-1.0, -1.0, 0.0};
+    const Point p8 = {-1.0, 1.0, 0.0};
     const auto result = within({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
@@ -2022,18 +2022,18 @@ TEST(geometry, within)
 
 TEST(geometry, disjoint)
 {
-  using autoware::universe_utils::createPoint;
   using autoware::universe_utils::disjoint;
+  using autoware::universe_utils::Point;
 
   {  // Two polygons are disjoint
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(3.0, 3.0, 0.0);
-    const auto p6 = createPoint(3.0, 2.0, 0.0);
-    const auto p7 = createPoint(2.0, 2.0, 0.0);
-    const auto p8 = createPoint(2.0, 3.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {3.0, 3.0, 0.0};
+    const Point p6 = {3.0, 2.0, 0.0};
+    const Point p7 = {2.0, 2.0, 0.0};
+    const Point p8 = {2.0, 3.0, 0.0};
     const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
@@ -2041,14 +2041,14 @@ TEST(geometry, disjoint)
   }
 
   {  // Two polygons are not disjoint
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(2.0, 2.0, 0.0);
-    const auto p6 = createPoint(2.0, 0.0, 0.0);
-    const auto p7 = createPoint(0.0, 0.0, 0.0);
-    const auto p8 = createPoint(0.0, 2.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {2.0, 2.0, 0.0};
+    const Point p6 = {2.0, 0.0, 0.0};
+    const Point p7 = {0.0, 0.0, 0.0};
+    const Point p8 = {0.0, 2.0, 0.0};
     const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
@@ -2056,14 +2056,14 @@ TEST(geometry, disjoint)
   }
 
   {  // Two polygons share a vertex
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
-    const auto p5 = createPoint(2.0, 2.0, 0.0);
-    const auto p6 = createPoint(2.0, 1.0, 0.0);
-    const auto p7 = createPoint(1.0, 1.0, 0.0);
-    const auto p8 = createPoint(1.0, 2.0, 0.0);
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {2.0, 2.0, 0.0};
+    const Point p6 = {2.0, 1.0, 0.0};
+    const Point p7 = {1.0, 1.0, 0.0};
+    const Point p8 = {1.0, 2.0, 0.0};
     const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
@@ -2073,13 +2073,13 @@ TEST(geometry, disjoint)
 
 TEST(geometry, distance)
 {
-  using autoware::universe_utils::createPoint;
   using autoware::universe_utils::distance;
+  using autoware::universe_utils::Point;
 
   {  // Normal setting
-    const auto p = createPoint(0.0, 1.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point p = {0.0, 1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = distance(p, p1, p2);
 
     EXPECT_NEAR(result, 1.0, epsilon);
@@ -2087,9 +2087,9 @@ TEST(geometry, distance)
 
   {
     // The point is out of range of the segment to the start point side
-    const auto p = createPoint(-2.0, 1.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point p = {-2.0, 1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = distance(p, p1, p2);
 
     EXPECT_NEAR(result, std::sqrt(2), epsilon);
@@ -2097,9 +2097,9 @@ TEST(geometry, distance)
 
   {
     // The point is out of range of the segment to the end point side
-    const auto p = createPoint(2.0, 1.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point p = {2.0, 1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = distance(p, p1, p2);
 
     EXPECT_NEAR(result, std::sqrt(2), epsilon);
@@ -2107,9 +2107,9 @@ TEST(geometry, distance)
 
   {
     // The point is on the segment
-    const auto p = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point p = {0.0, 0.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = distance(p, p1, p2);
 
     EXPECT_NEAR(result, 0.0, epsilon);
@@ -2117,9 +2117,9 @@ TEST(geometry, distance)
 
   {
     // The point is the start point of the segment
-    const auto p = createPoint(-1.0, 0.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point p = {-1.0, 0.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = distance(p, p1, p2);
 
     EXPECT_NEAR(result, 0.0, epsilon);
@@ -2127,40 +2127,40 @@ TEST(geometry, distance)
 
   {
     // The point is the end point of the segment
-    const auto p = createPoint(1.0, 0.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point p = {1.0, 0.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = distance(p, p1, p2);
 
     EXPECT_NEAR(result, 0.0, epsilon);
   }
 
   {  // The segment is a point
-    const auto p = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point p = {0.0, 0.0, 0.0};
+    const Point p1 = {1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = distance(p, p1, p2);
 
     EXPECT_NEAR(result, 1.0, epsilon);
   }
 
   {  // The point is outside the polygon
-    const auto p = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(3.0, 1.0, 0.0);
-    const auto p2 = createPoint(3.0, -1.0, 0.0);
-    const auto p3 = createPoint(1.0, -1.0, 0.0);
-    const auto p4 = createPoint(1.0, 1.0, 0.0);
+    const Point p = {0.0, 0.0, 0.0};
+    const Point p1 = {3.0, 1.0, 0.0};
+    const Point p2 = {3.0, -1.0, 0.0};
+    const Point p3 = {1.0, -1.0, 0.0};
+    const Point p4 = {1.0, 1.0, 0.0};
     const auto result = distance(p, {p1, p2, p3, p4});
 
     EXPECT_NEAR(result, 1.0, epsilon);
   }
 
   {  // The point is within the polygon
-    const auto p = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(2.0, 1.0, 0.0);
-    const auto p2 = createPoint(2.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
+    const Point p = {0.0, 0.0, 0.0};
+    const Point p1 = {2.0, 1.0, 0.0};
+    const Point p2 = {2.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
     const auto result = distance(p, {p1, p2, p3, p4});
 
     EXPECT_NEAR(result, 0.0, epsilon);
@@ -2170,14 +2170,14 @@ TEST(geometry, distance)
 TEST(geometry, coveredBy)
 {
   using autoware::universe_utils::coveredBy;
-  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::Point;
 
   {  // The point is within the polygon
-    const auto point = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(1.0, 1.0, 0.0);
-    const auto p2 = createPoint(1.0, -1.0, 0.0);
-    const auto p3 = createPoint(-1.0, -1.0, 0.0);
-    const auto p4 = createPoint(-1.0, 1.0, 0.0);
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
     const auto result = coveredBy(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
@@ -2185,11 +2185,11 @@ TEST(geometry, coveredBy)
   }
 
   {  // The point is outside the polygon
-    const auto point = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(2.0, 2.0, 0.0);
-    const auto p2 = createPoint(2.0, 1.0, 0.0);
-    const auto p3 = createPoint(1.0, 1.0, 0.0);
-    const auto p4 = createPoint(1.0, 2.0, 0.0);
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {2.0, 2.0, 0.0};
+    const Point p2 = {2.0, 1.0, 0.0};
+    const Point p3 = {1.0, 1.0, 0.0};
+    const Point p4 = {1.0, 2.0, 0.0};
     const auto result = coveredBy(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
@@ -2197,11 +2197,11 @@ TEST(geometry, coveredBy)
   }
 
   {  // The point is on the edge of the polygon
-    const auto point = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(2.0, 1.0, 0.0);
-    const auto p2 = createPoint(2.0, -1.0, 0.0);
-    const auto p3 = createPoint(0.0, -1.0, 0.0);
-    const auto p4 = createPoint(0.0, 1.0, 0.0);
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {2.0, 1.0, 0.0};
+    const Point p2 = {2.0, -1.0, 0.0};
+    const Point p3 = {0.0, -1.0, 0.0};
+    const Point p4 = {0.0, 1.0, 0.0};
     const auto result = coveredBy(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
@@ -2211,31 +2211,31 @@ TEST(geometry, coveredBy)
 
 TEST(geometry, isAbove)
 {
-  using autoware::universe_utils::createPoint;
   using autoware::universe_utils::isAbove;
+  using autoware::universe_utils::Point;
 
   {  // The point is above the line
-    const auto point = createPoint(0.0, 1.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point point = {0.0, 1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = isAbove(point, p1, p2);
 
     EXPECT_TRUE(result);
   }
 
   {  // The point is below the line
-    const auto point = createPoint(0.0, -1.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point point = {0.0, -1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = isAbove(point, p1, p2);
 
     EXPECT_FALSE(result);
   }
 
   {  // The point is on the line
-    const auto point = createPoint(0.0, 0.0, 0.0);
-    const auto p1 = createPoint(-1.0, 0.0, 0.0);
-    const auto p2 = createPoint(1.0, 0.0, 0.0);
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
     const auto result = isAbove(point, p1, p2);
 
     EXPECT_FALSE(result);
@@ -2244,99 +2244,99 @@ TEST(geometry, isAbove)
 
 TEST(geometry, divideBySegment)
 {
-  using autoware::universe_utils::createPoint;
   using autoware::universe_utils::divideBySegment;
+  using autoware::universe_utils::Point;
 
   {
-    const auto p1 = createPoint(-1.0, 1.0, 0.0);
-    const auto p2 = createPoint(2.0, 2.0, 0.0);
-    const auto p3 = createPoint(0.0, 0.0, 0.0);
-    const auto p4 = createPoint(-2.0, -2.0, 0.0);
-    const auto p5 = createPoint(1.0, -1.0, 0.0);
-    const auto seg_start = createPoint(-2.0, 0.0, 0.0);
-    const auto seg_end = createPoint(2.0, 0.0, 0.0);
+    const Point p1 = {-1.0, 1.0, 0.0};
+    const Point p2 = {2.0, 2.0, 0.0};
+    const Point p3 = {0.0, 0.0, 0.0};
+    const Point p4 = {-2.0, -2.0, 0.0};
+    const Point p5 = {1.0, -1.0, 0.0};
+    const Point seg_start = {-2.0, 0.0, 0.0};
+    const Point seg_end = {2.0, 0.0, 0.0};
     const auto result = divideBySegment({p1, p2, p3, p4, p5}, seg_start, seg_end);
 
     EXPECT_EQ(result.at(0).size(), 2);
-    EXPECT_NEAR(result.at(0).at(0).x, -1.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(0).y, 1.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(0).z, 0.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(1).x, 2.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(1).y, 2.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(1).z, 0.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).x(), -1.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).y(), 1.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).x(), 2.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).y(), 2.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).z(), 0.0, epsilon);
     EXPECT_EQ(result.at(1).size(), 3);
-    EXPECT_NEAR(result.at(1).at(0).x, 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(0).y, 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(0).z, 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(1).x, -2.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(1).y, -2.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(1).z, 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(2).x, 1.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(2).y, -1.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(2).z, 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).x(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).y(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).x(), -2.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).y(), -2.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).z(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).x(), 1.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).y(), -1.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).z(), 0.0, epsilon);
   }
 }
 
 TEST(geometry, convexHull)
 {
   using autoware::universe_utils::convexHull;
-  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::Polygon;
 
   {
-    std::vector<geometry_msgs::msg::Point> points;
-    points.push_back(createPoint(2.0, 1.3, 0.0));
-    points.push_back(createPoint(2.4, 1.7, 0.0));
-    points.push_back(createPoint(2.8, 1.8, 0.0));
-    points.push_back(createPoint(3.4, 1.2, 0.0));
-    points.push_back(createPoint(3.7, 1.6, 0.0));
-    points.push_back(createPoint(3.4, 2.0, 0.0));
-    points.push_back(createPoint(4.1, 3.0, 0.0));
-    points.push_back(createPoint(5.3, 2.6, 0.0));
-    points.push_back(createPoint(5.4, 1.2, 0.0));
-    points.push_back(createPoint(4.9, 0.8, 0.0));
-    points.push_back(createPoint(2.9, 0.7, 0.0));
-    points.push_back(createPoint(2.0, 1.3, 0.0));
+    Polygon points;
+    points.push_back({2.0, 1.3, 0.0});
+    points.push_back({2.4, 1.7, 0.0});
+    points.push_back({2.8, 1.8, 0.0});
+    points.push_back({3.4, 1.2, 0.0});
+    points.push_back({3.7, 1.6, 0.0});
+    points.push_back({3.4, 2.0, 0.0});
+    points.push_back({4.1, 3.0, 0.0});
+    points.push_back({5.3, 2.6, 0.0});
+    points.push_back({5.4, 1.2, 0.0});
+    points.push_back({4.9, 0.8, 0.0});
+    points.push_back({2.9, 0.7, 0.0});
+    points.push_back({2.0, 1.3, 0.0});
     const auto result = convexHull(points);
 
     EXPECT_TRUE(result);
     EXPECT_EQ(result->size(), 8);
-    EXPECT_NEAR(result->at(0).x, 2.0, epsilon);
-    EXPECT_NEAR(result->at(0).y, 1.3, epsilon);
-    EXPECT_NEAR(result->at(0).z, 0.0, epsilon);
-    EXPECT_NEAR(result->at(1).x, 2.4, epsilon);
-    EXPECT_NEAR(result->at(1).y, 1.7, epsilon);
-    EXPECT_NEAR(result->at(1).z, 0.0, epsilon);
-    EXPECT_NEAR(result->at(2).x, 4.1, epsilon);
-    EXPECT_NEAR(result->at(2).y, 3.0, epsilon);
-    EXPECT_NEAR(result->at(2).z, 0.0, epsilon);
-    EXPECT_NEAR(result->at(3).x, 5.3, epsilon);
-    EXPECT_NEAR(result->at(3).y, 2.6, epsilon);
-    EXPECT_NEAR(result->at(3).z, 0.0, epsilon);
-    EXPECT_NEAR(result->at(4).x, 5.4, epsilon);
-    EXPECT_NEAR(result->at(4).y, 1.2, epsilon);
-    EXPECT_NEAR(result->at(4).z, 0.0, epsilon);
-    EXPECT_NEAR(result->at(5).x, 4.9, epsilon);
-    EXPECT_NEAR(result->at(5).y, 0.8, epsilon);
-    EXPECT_NEAR(result->at(5).z, 0.0, epsilon);
-    EXPECT_NEAR(result->at(6).x, 2.9, epsilon);
-    EXPECT_NEAR(result->at(6).y, 0.7, epsilon);
-    EXPECT_NEAR(result->at(6).z, 0.0, epsilon);
-    EXPECT_NEAR(result->at(7).x, 2.0, epsilon);
-    EXPECT_NEAR(result->at(7).y, 1.3, epsilon);
-    EXPECT_NEAR(result->at(7).z, 0.0, epsilon);
+    EXPECT_NEAR(result->at(0).x(), 2.0, epsilon);
+    EXPECT_NEAR(result->at(0).y(), 1.3, epsilon);
+    EXPECT_NEAR(result->at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(1).x(), 2.4, epsilon);
+    EXPECT_NEAR(result->at(1).y(), 1.7, epsilon);
+    EXPECT_NEAR(result->at(1).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(2).x(), 4.1, epsilon);
+    EXPECT_NEAR(result->at(2).y(), 3.0, epsilon);
+    EXPECT_NEAR(result->at(2).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(3).x(), 5.3, epsilon);
+    EXPECT_NEAR(result->at(3).y(), 2.6, epsilon);
+    EXPECT_NEAR(result->at(3).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(4).x(), 5.4, epsilon);
+    EXPECT_NEAR(result->at(4).y(), 1.2, epsilon);
+    EXPECT_NEAR(result->at(4).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(5).x(), 4.9, epsilon);
+    EXPECT_NEAR(result->at(5).y(), 0.8, epsilon);
+    EXPECT_NEAR(result->at(5).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(6).x(), 2.9, epsilon);
+    EXPECT_NEAR(result->at(6).y(), 0.7, epsilon);
+    EXPECT_NEAR(result->at(6).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(7).x(), 2.0, epsilon);
+    EXPECT_NEAR(result->at(7).y(), 1.3, epsilon);
+    EXPECT_NEAR(result->at(7).z(), 0.0, epsilon);
   }
 }
 
 TEST(geometry, area)
 {
   using autoware::universe_utils::area;
-  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::Point;
 
   {
-    const auto p1 = createPoint(0.0, 0.0, 0.0);
-    const auto p2 = createPoint(0.0, 7.0, 0.0);
-    const auto p3 = createPoint(4.0, 2.0, 0.0);
-    const auto p4 = createPoint(2.0, 0.0, 0.0);
+    const Point p1 = {0.0, 0.0, 0.0};
+    const Point p2 = {0.0, 7.0, 0.0};
+    const Point p3 = {4.0, 2.0, 0.0};
+    const Point p4 = {2.0, 0.0, 0.0};
     const auto result = area({p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
