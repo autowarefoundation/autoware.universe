@@ -22,6 +22,8 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 
 namespace rviz_rendering
 {

@@ -133,29 +133,38 @@ void PoseWithCovarianceHistory::updateShapes()
   for (size_t i = 0; i < history_.size(); ++i) {
     const auto& message = history_[i];
    
-    Ogre::Vector3 position;
+    Ogre::Vector3 position;//ok
     position.x = message->pose.pose.position.x;
     position.y = message->pose.pose.position.y;
     position.z = message->pose.pose.position.z;
     
+    Eigen::Matrix2d covariance_2d_map;
+    covariance_2d_map(0, 0) = message->pose.covariance[0];
+    covariance_2d_map(1, 1) = message->pose.covariance[1 + 6 * 1];
+    covariance_2d_map(1, 0) = message->pose.covariance[1 + 6 * 0];
+    covariance_2d_map(0, 1) = message->pose.covariance[0 + 6 * 1];
+
+    Eigen::Matrix2d covariance_2d_base_link;
+    Eigen::Translation3f translation(message->pose.pose.position.x, message->pose.pose.position.y, message->pose.pose.position.z);
+    Eigen::Quaternionf rotation(message->pose.pose.orientation.w, message->pose.pose.orientation.x, message->pose.pose.orientation.y, message->pose.pose.orientation.z);
+    Eigen::Matrix4f pose_matrix4f = (translation * rotation).matrix();
+    const Eigen::Matrix2d rot = pose_matrix4f.topLeftCorner<2, 2>().cast<double>();
+    covariance_2d_base_link = rot.transpose() * covariance_2d_map * rot;
+
     Ogre::Quaternion orientation;
-    // orientation.w = message->pose.pose.orientation.w;
-    // orientation.x = message->pose.pose.orientation.x;
-    // orientation.y = message->pose.pose.orientation.y;
-    // orientation.z = message->pose.pose.orientation.z;
-    orientation.w = 1.0;
-    orientation.x = 0.0;
-    orientation.y = 0.0;
-    orientation.z = 0.0;
+    orientation.w = message->pose.pose.orientation.w;
+    orientation.x = message->pose.pose.orientation.x;
+    orientation.y = message->pose.pose.orientation.y;
+    orientation.z = message->pose.pose.orientation.z;
 
-
+    //covariance をbase_link座標系にしてx,y,zを取り出す
     auto& sphere = shapes_[i];
     sphere->setPosition(position);
     sphere->setOrientation(orientation);
     sphere->setColor(color.r, color.g, color.b, color.a);
     sphere->setScale(Ogre::Vector3(
-      property_shape_scale_->getFloat() * 2 * std::sqrt(message->pose.covariance[0]),
-      property_shape_scale_->getFloat() * 2 * std::sqrt(message->pose.covariance[7]),
+      property_shape_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(0, 0)),
+      property_shape_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(1, 1)),
       property_shape_scale_->getFloat() * 2 * std::sqrt(message->pose.covariance[14])));
   }
 }
