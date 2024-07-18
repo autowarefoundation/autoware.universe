@@ -103,7 +103,9 @@ def launch_setup(context, *args, **kwargs):
             ]
         ),
         launch_arguments={
-            "config_file": LaunchConfiguration("raw_vehicle_cmd_converter_param_path").perform(context),
+            "config_file": LaunchConfiguration("raw_vehicle_cmd_converter_param_path").perform(
+                context
+            ),
         }.items(),
     )
     return [simple_planning_simulator_node, raw_vehicle_converter_node]
