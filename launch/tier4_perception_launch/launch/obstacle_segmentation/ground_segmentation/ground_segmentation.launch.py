@@ -332,7 +332,7 @@ class GroundSegmentationPipeline:
         components.append(
             ComposableNode(
                 package="occupancy_grid_map_outlier_filter",
-                plugin="occupancy_grid_map_outlier_filter::OccupancyGridMapOutlierFilterComponent",
+                plugin="autoware::occupancy_grid_map_outlier_filter::OccupancyGridMapOutlierFilterComponent",
                 name="occupancy_grid_based_outlier_filter",
                 remappings=[
                     ("~/input/occupancy_grid_map", "/perception/occupancy_grid_map/map"),
@@ -391,7 +391,7 @@ class GroundSegmentationPipeline:
         components.append(
             ComposableNode(
                 package="compare_map_segmentation",
-                plugin="compare_map_segmentation::CompareElevationMapFilterComponent",
+                plugin="autoware::compare_map_segmentation::CompareElevationMapFilterComponent",
                 name="compare_elevation_map_filter",
                 namespace="elevation_map",
                 remappings=[
