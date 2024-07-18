@@ -119,6 +119,7 @@ private:
         path.points, ego_idx, left_shift.start_pose.position);
       const double finish_distance = start_distance + left_shift.relative_longitudinal;
 
+      // If force activated keep safety to false
       if (rtc_interface_ptr_map_.at("left")->isForceActivated(left_shift.uuid)) {
         rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
           left_shift.uuid, false, State::RUNNING, start_distance, finish_distance, clock_->now());
