@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-"""
-Periodically publish gps positions in a circle around a given origin as NavSatFix messages.
-"""
 from argparse import ArgumentParser
 import math
 
@@ -13,7 +10,6 @@ from sensor_msgs.msg import NavSatStatus
 
 
 class CircularTranslate:
-    """Translate fix periodically in a circle"""
 
     def update(self, t, fix):
         r = 0.001
@@ -25,7 +21,6 @@ class CircularTranslate:
 
 
 class ApplyNoise:
-    """Translate fix position using gaussian noise"""
 
     def __init__(self, stddev):
         self.stddev = stddev
@@ -37,7 +32,6 @@ class ApplyNoise:
 
 
 class LooseFix:
-    """Set NavSatFix status to NO_FIX periodically"""
 
     def __init__(self, phase, period):
         self.phase = phase
