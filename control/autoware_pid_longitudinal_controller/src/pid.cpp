@@ -40,7 +40,10 @@ double PIDController::calculate(
 
   const auto & p = m_params;
 
-  double ret_p = p.kp * error;
+  static double virtual_displacement_error {0.0};
+  virtual_displacement_error += error * dt ;
+
+  double ret_p = p.kp * virtual_displacement_error;
   ret_p = std::min(std::max(ret_p, p.min_ret_p), p.max_ret_p);
 
   if (enable_integration) {
