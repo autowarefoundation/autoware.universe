@@ -20,6 +20,7 @@
 #include <QObject>
 
 #include <future>
+#include <string>
 
 class Tile : public QObject
 {

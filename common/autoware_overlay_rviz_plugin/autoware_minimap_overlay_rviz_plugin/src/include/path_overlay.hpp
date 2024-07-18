@@ -21,6 +21,7 @@
 #include <QRectF>
 
 #include <tuple>
+#include <utility>
 #include <vector>
 
 struct PathPoint

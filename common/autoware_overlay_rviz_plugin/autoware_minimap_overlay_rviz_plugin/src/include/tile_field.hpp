@@ -24,13 +24,14 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <utility>
 
 class TileField : public QObject
 {
   Q_OBJECT
 
 public:
-  TileField(QObject * parent = nullptr);
+  explicit TileField(QObject * parent = nullptr);
   ~TileField();
 
   void initializeTiles(int center_x_tile, int center_y_tile);
