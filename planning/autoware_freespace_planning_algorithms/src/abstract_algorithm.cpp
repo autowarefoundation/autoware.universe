@@ -90,17 +90,6 @@ geometry_msgs::msg::Pose local2global(
   return transformPose(pose_local, transform);
 }
 
-geometry_msgs::msg::Pose base2center(
-  const geometry_msgs::msg::Pose & base_pose, const VehicleShape & vehicle_shape)
-{
-  double yaw = tf2::getYaw(base_pose.orientation);
-  double offset = vehicle_shape.length / 2.0 - vehicle_shape.base2back;
-  auto center_pose = base_pose;
-  center_pose.position.x += offset * std::cos(yaw);
-  center_pose.position.y += offset * std::sin(yaw);
-  return center_pose;
-}
-
 double PlannerWaypoints::compute_length() const
 {
   if (waypoints.empty()) {
@@ -300,23 +289,25 @@ bool AbstractPlanningAlgorithm::detectBoundaryExit(const IndexXYT & base_index) 
 
 bool AbstractPlanningAlgorithm::detectCollision(const geometry_msgs::msg::Pose & base_pose) const
 {
+  const auto base_index = pose2index(costmap_, base_pose, planner_common_param_.theta_size);
+  return detectCollision(base_index);
+}
+
+bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) const
+{
   if (coll_indexes_table_.empty()) {
     std::cerr << "[abstract_algorithm] setMap has not yet been done." << std::endl;
     return false;
   }
 
-  const auto base_index = pose2index(costmap_, base_pose, planner_common_param_.theta_size);
-
   if (detectBoundaryExit(base_index)) return true;
 
-  const auto center_pose = base2center(base_pose, collision_vehicle_shape_);
-  const auto center_index = pose2index(costmap_, center_pose, planner_common_param_.theta_size);
-  double obstacle_edt = getObstacleEDT(center_index);
+  double obstacle_edt = getObstacleEDT(base_index);
 
-  // if distance to nearest obstacle is more than half diagonal, no collision is guaranteed
-  // if distance to nearest obstacle is less then half width, collision is guaranteed
-  if (obstacle_edt > collision_vehicle_shape_.half_diagonal) return false;
-  if (obstacle_edt < 0.5 * collision_vehicle_shape_.width) return true;
+  // if nearest obstacle is further than largest dimension, no collision is guaranteed
+  // if nearest obstacle is closer than smallest dimension, collision is guaranteed
+  if (obstacle_edt > collision_vehicle_shape_.max_dimension) return false;
+  if (obstacle_edt < collision_vehicle_shape_.min_dimension) return true;
 
   const auto & coll_indexes_2d = coll_indexes_table_[base_index.theta];
   for (const auto & coll_index_2d : coll_indexes_2d) {
