@@ -14,10 +14,10 @@
 
 #include "autoware/image_projection_based_fusion/pointpainting_fusion/pointpainting_trt.hpp"
 
+#include <autoware/image_projection_based_fusion/pointpainting_fusion/preprocess_kernel.hpp>
 #include <autoware/lidar_centerpoint/centerpoint_config.hpp>
 #include <autoware/lidar_centerpoint/network/scatter_kernel.hpp>
 #include <autoware/universe_utils/math/constants.hpp>
-#include <autoware/image_projection_based_fusion/pointpainting_fusion/preprocess_kernel.hpp>
 
 #include <iostream>
 #include <memory>

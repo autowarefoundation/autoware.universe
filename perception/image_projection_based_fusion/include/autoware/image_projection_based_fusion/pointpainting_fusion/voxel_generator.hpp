@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__VOXEL_GENERATOR_HPP_
 #define AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__VOXEL_GENERATOR_HPP_
 
+#include <autoware/image_projection_based_fusion/pointpainting_fusion/pointcloud_densification.hpp>
 #include <autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <autoware/lidar_centerpoint/preprocess/voxel_generator.hpp>
-#include <autoware/image_projection_based_fusion/pointpainting_fusion/pointcloud_densification.hpp>
 
 #include <bitset>
 #include <memory>

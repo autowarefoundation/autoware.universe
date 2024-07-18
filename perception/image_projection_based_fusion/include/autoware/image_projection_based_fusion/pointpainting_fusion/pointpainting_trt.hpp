@@ -15,8 +15,8 @@
 #ifndef AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__POINTPAINTING_TRT_HPP_
 #define AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__POINTPAINTING_TRT_HPP_
 
-#include <autoware/lidar_centerpoint/centerpoint_trt.hpp>
 #include <autoware/image_projection_based_fusion/pointpainting_fusion/voxel_generator.hpp>
+#include <autoware/lidar_centerpoint/centerpoint_trt.hpp>
 
 #include <memory>
 #include <string>

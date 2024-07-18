@@ -16,14 +16,14 @@
 
 #include "autoware_point_types/types.hpp"
 
+#include <autoware/image_projection_based_fusion/utils/geometry.hpp>
+#include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <autoware/lidar_centerpoint/centerpoint_config.hpp>
 #include <autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <autoware/lidar_centerpoint/ros_utils.hpp>
 #include <autoware/lidar_centerpoint/utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/constants.hpp>
-#include <autoware/image_projection_based_fusion/utils/geometry.hpp>
-#include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <omp.h>

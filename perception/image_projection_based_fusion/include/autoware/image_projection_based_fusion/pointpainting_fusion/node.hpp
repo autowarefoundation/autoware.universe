@@ -15,14 +15,14 @@
 #ifndef AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__NODE_HPP_
 #define AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__NODE_HPP_
 
-#include "autoware/lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
 #include "autoware/image_projection_based_fusion/fusion_node.hpp"
 #include "autoware/image_projection_based_fusion/pointpainting_fusion/pointpainting_trt.hpp"
+#include "autoware/lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
 
-#include <autoware/lidar_centerpoint/centerpoint_trt.hpp>
-#include <autoware/lidar_centerpoint/detection_class_remapper.hpp>
 #include <autoware/image_projection_based_fusion/utils/geometry.hpp>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
+#include <autoware/lidar_centerpoint/centerpoint_trt.hpp>
+#include <autoware/lidar_centerpoint/detection_class_remapper.hpp>
 
 #include <map>
 #include <memory>
