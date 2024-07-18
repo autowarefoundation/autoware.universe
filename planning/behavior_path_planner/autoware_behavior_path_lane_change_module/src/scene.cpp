@@ -83,8 +83,11 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   common_data_ptr_->lanes_ptr->current = current_lanes;
   common_data_ptr_->lanes_ptr->target = target_lanes;
 
+  const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
+  common_data_ptr_->lanes_ptr->current_lane_in_goal_section =
+    route_handler_ptr->isInGoalRouteSection(current_lanes.back());
   common_data_ptr_->lanes_ptr->preceding_target = utils::getPrecedingLanelets(
-    *common_data_ptr_->route_handler_ptr, get_target_lanes(), common_data_ptr_->get_ego_pose(),
+    *route_handler_ptr, get_target_lanes(), common_data_ptr_->get_ego_pose(),
     common_data_ptr_->lc_param_ptr->backward_lane_length);
 
   *common_data_ptr_->lanes_polygon_ptr = create_lanes_polygon(common_data_ptr_);
@@ -983,7 +986,6 @@ ExtendedPredictedObjects NormalLaneChange::getTargetObjects(
 
 LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
 {
-  const auto & current_pose = getEgoPose();
   const auto & route_handler = getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
   auto objects = *planner_data_->dynamic_object;
@@ -1003,12 +1005,6 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
   const auto & current_lanes = get_current_lanes();
 
   if (current_lanes.empty()) {
-    return {};
-  }
-
-  filterAheadTerminalObjects(objects, current_lanes);
-
-  if (objects.objects.empty()) {
     return {};
   }
 
@@ -1032,38 +1028,36 @@ LaneChangeLanesFilteredObjects NormalLaneChange::filterObjects() const
     return utils::path_safety_checker::filter::velocity_filter(object, min_vel_th, max_vel_th);
   };
 
-  const auto path =
-    route_handler->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
-
-  if (path.points.empty()) {
-    return {};
-  }
-
-  const auto is_ahead_of_ego = [&path, &current_pose](const auto & object) {
-    const auto obj_polygon = autoware::universe_utils::toPolygon2d(object).outer();
-
-    double max_dist_ego_to_obj = std::numeric_limits<double>::lowest();
-    for (const auto & polygon_p : obj_polygon) {
-      const auto obj_p = autoware::universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
-      const auto dist_ego_to_obj = calcSignedArcLength(path.points, current_pose.position, obj_p);
-      max_dist_ego_to_obj = std::max(dist_ego_to_obj, max_dist_ego_to_obj);
-    }
-    return max_dist_ego_to_obj >= 0.0;
-  };
+  const auto dist_ego_to_end =
+    utils::lane_change::calc_ego_dist_to_lane_change_end(common_data_ptr_);
 
   utils::path_safety_checker::filterObjects(
     target_lane_objects, [&](const PredictedObject & object) {
-      return (is_within_vel_th(object) || is_ahead_of_ego(object));
+      const auto dist_obj_to_end =
+        utils::lane_change::calc_obj_dist_to_lane_change_end(common_data_ptr_, object);
+      const auto is_ahead_of_ego = (dist_ego_to_end - dist_obj_to_end) > 0.0;
+      const auto is_ahead_terminal = dist_obj_to_end < 0.0;
+      return !is_ahead_terminal && (is_within_vel_th(object) || is_ahead_of_ego);
     });
 
-  utils::path_safety_checker::filterObjects(
-    other_lane_objects, [&](const PredictedObject & object) {
-      return is_within_vel_th(object) && is_ahead_of_ego(object);
-    });
+  if (lane_change_parameters_->check_objects_on_other_lanes) {
+    utils::path_safety_checker::filterObjects(
+      other_lane_objects, [&](const PredictedObject & object) {
+        const auto dist_obj_to_end =
+          utils::lane_change::calc_obj_dist_to_lane_change_end(common_data_ptr_, object);
+        const auto is_ahead_of_ego = (dist_ego_to_end - dist_obj_to_end) > 0.0;
+        const auto is_ahead_terminal = dist_obj_to_end < 0.0;
+        return !is_ahead_terminal && is_within_vel_th(object) && is_ahead_of_ego;
+      });
+  }
 
   utils::path_safety_checker::filterObjects(
     current_lane_objects, [&](const PredictedObject & object) {
-      return is_within_vel_th(object) && is_ahead_of_ego(object);
+      const auto dist_obj_to_end =
+        utils::lane_change::calc_obj_dist_to_lane_change_end(common_data_ptr_, object);
+      const auto is_ahead_of_ego = (dist_ego_to_end - dist_obj_to_end) > 0.0;
+      const auto is_ahead_terminal = dist_obj_to_end < 0.0;
+      return !is_ahead_terminal && is_within_vel_th(object) && is_ahead_of_ego;
     });
 
   LaneChangeLanesFilteredObjects lane_change_target_objects;
@@ -1116,35 +1110,6 @@ void NormalLaneChange::filterOncomingObjects(PredictedObjects & objects) const
     }
 
     return is_stopped_object(object);
-  });
-}
-
-void NormalLaneChange::filterAheadTerminalObjects(
-  PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes) const
-{
-  const auto & current_pose = getEgoPose();
-  const auto & route_handler = getRouteHandler();
-  const auto minimum_lane_change_length = utils::lane_change::calcMinimumLaneChangeLength(
-    route_handler, current_lanes.back(), *lane_change_parameters_, direction_);
-
-  const auto dist_ego_to_current_lanes_center =
-    lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
-
-  // ignore object that are ahead of terminal lane change start
-  utils::path_safety_checker::filterObjects(objects, [&](const PredictedObject & object) {
-    const auto obj_polygon = autoware::universe_utils::toPolygon2d(object).outer();
-    // ignore object that are ahead of terminal lane change start
-    auto distance_to_terminal_from_object = std::numeric_limits<double>::max();
-    for (const auto & polygon_p : obj_polygon) {
-      const auto obj_p = autoware::universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
-      Pose polygon_pose;
-      polygon_pose.position = obj_p;
-      polygon_pose.orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
-      const auto dist = utils::getDistanceToEndOfLane(polygon_pose, current_lanes);
-      distance_to_terminal_from_object = std::min(dist_ego_to_current_lanes_center, dist);
-    }
-
-    return (minimum_lane_change_length > distance_to_terminal_from_object);
   });
 }
 

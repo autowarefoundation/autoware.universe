@@ -1216,13 +1216,16 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
 
   lanes_polygon.current =
     utils::lane_change::createPolygon(lanes->current, 0.0, std::numeric_limits<double>::max());
-  lanes_polygon.target =
-    utils::lane_change::createPolygon(lanes->target, 0.0, std::numeric_limits<double>::max());
+
+  const auto target_lanes_up_to_terminal = get_target_lanes_up_to_terminal(common_data_ptr);
+
+  lanes_polygon.target = utils::lane_change::createPolygon(
+    target_lanes_up_to_terminal, 0.0, std::numeric_limits<double>::max());
 
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
   const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
-    lanes->target, common_data_ptr->direction, lc_param_ptr->lane_expansion_left_offset,
-    lc_param_ptr->lane_expansion_right_offset);
+    target_lanes_up_to_terminal, common_data_ptr->direction,
+    lc_param_ptr->lane_expansion_left_offset, lc_param_ptr->lane_expansion_right_offset);
   lanes_polygon.expanded_target = utils::lane_change::createPolygon(
     expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
 
@@ -1240,6 +1243,42 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
     }
   }
   return lanes_polygon;
+}
+
+lanelet::ConstLanelets get_target_lanes_up_to_terminal(const CommonDataPtr & common_data_ptr)
+{
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  if (current_lanes.empty()) {
+    return target_lanes;
+  }
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  const auto in_goal_section = route_handler_ptr->isInGoalRouteSection(current_lanes.back());
+
+  if (in_goal_section) {
+    return target_lanes;
+  }
+
+  const auto lane_changeable_neigbours =
+    route_handler_ptr->getLaneChangeableNeighbors(current_lanes.back());
+
+  auto find_target_back = std::find_if(
+    target_lanes.begin(), target_lanes.end(), [&](const lanelet::ConstLanelet & target_lane) {
+      return std::any_of(
+        lane_changeable_neigbours.begin(), lane_changeable_neigbours.end(),
+        [&](const lanelet::ConstLanelet & neighbour_lane) {
+          return neighbour_lane.id() == target_lane.id();
+        });
+    });
+
+  if (find_target_back == target_lanes.end()) {
+    return target_lanes;
+  }
+
+  lanelet::ConstLanelets target_lanes_up_to_terminal;
+  target_lanes_up_to_terminal.insert(
+    target_lanes_up_to_terminal.end(), target_lanes.begin(), std::next(find_target_back));
+  return target_lanes_up_to_terminal;
 }
 
 bool is_same_lane_with_prev_iteration(
@@ -1262,6 +1301,55 @@ bool is_same_lane_with_prev_iteration(
   }
   return (prev_target_lanes.front().id() == target_lanes.front().id()) &&
          (prev_target_lanes.back().id() == prev_target_lanes.back().id());
+}
+
+Pose to_pose(
+  const autoware::universe_utils::Point2d & point,
+  const geometry_msgs::msg::Quaternion & orientation)
+{
+  Pose pose;
+  pose.position = autoware::universe_utils::createPoint(point.x(), point.y(), 0.0);
+  pose.orientation = orientation;
+  return pose;
+}
+
+double calc_ego_dist_to_lane_change_end(const CommonDataPtr & common_data_ptr)
+{
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  if (current_lanes.empty()) {
+    return 0.0;
+  }
+  const auto dist_ego_to_end =
+    utils::getDistanceToEndOfLane(common_data_ptr->get_ego_pose(), current_lanes);
+
+  if (common_data_ptr->lanes_ptr->current_lane_in_goal_section) {
+    const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+    return dist_ego_to_end -
+           utils::getDistanceToEndOfLane(route_handler_ptr->getGoalPose(), current_lanes);
+  }
+
+  return dist_ego_to_end;
+}
+
+double calc_obj_dist_to_lane_change_end(
+  const CommonDataPtr & common_data_ptr, const PredictedObject & object)
+{
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  const auto obj_polygon = autoware::universe_utils::toPolygon2d(object).outer();
+
+  double current_max_dist = std::numeric_limits<double>::lowest();
+  for (const auto & polygon_p : obj_polygon) {
+    const auto polygon_pose = utils::lane_change::to_pose(
+      polygon_p, object.kinematics.initial_pose_with_covariance.pose.orientation);
+    const auto dist_obj_edge_to_end = utils::getDistanceToEndOfLane(polygon_pose, current_lanes);
+    current_max_dist = std::max(dist_obj_edge_to_end, current_max_dist);
+  }
+  if (common_data_ptr->lanes_ptr->current_lane_in_goal_section) {
+    const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+    return current_max_dist -
+           utils::getDistanceToEndOfLane(route_handler_ptr->getGoalPose(), current_lanes);
+  }
+  return current_max_dist;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
