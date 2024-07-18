@@ -83,6 +83,8 @@ class PathGenerator
 public:
   PathGenerator(const double sampling_time_interval, const double min_crosswalk_user_velocity);
 
+  PredictedPath shiftPath(const PredictedPath & path, const double shift_distance);
+
   void setTimeKeeper(std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_ptr);
 
   PredictedPath generatePathForNonVehicleObject(
