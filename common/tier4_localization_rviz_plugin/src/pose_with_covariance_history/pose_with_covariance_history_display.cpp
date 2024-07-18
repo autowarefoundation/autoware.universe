@@ -20,14 +20,25 @@
 #include <rviz_common/properties/int_property.hpp>
 #include <rviz_common/properties/parse_color.hpp>
 #include <rviz_common/validate_floats.hpp>
+#include <rviz_rendering/objects/billboard_line.hpp>
 #include <rviz_rendering/objects/shape.hpp>
 
 namespace rviz_plugins
 {
 PoseWithCovarianceHistory::PoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
 {
-  property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 50, "", this);
-  property_shape_view_ = new rviz_common::properties::BoolProperty("Shape", true, "", this);
+  property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 100, "", this);
+  property_line_view_ = new rviz_common::properties::BoolProperty("Line", true, "", this);
+  property_line_width_ =
+    new rviz_common::properties::FloatProperty("Width", 0.1, "", property_line_view_);
+  property_line_alpha_ =
+    new rviz_common::properties::FloatProperty("Alpha", 1.0, "", property_line_view_);
+  property_line_alpha_->setMin(0.0);
+  property_line_alpha_->setMax(1.0);
+  property_line_color_ =
+    new rviz_common::properties::ColorProperty("Color", Qt::white, "", property_line_view_);
+  
+  property_shape_view_ = new rviz_common::properties::BoolProperty("Covariance", true, "", this);
   property_shape_scale_ =
     new rviz_common::properties::FloatProperty("Scale", 1.0, "", property_shape_view_);
   property_shape_alpha_ =
@@ -39,6 +50,7 @@ PoseWithCovarianceHistory::PoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_R
   
   property_buffer_size_->setMin(0);
   property_buffer_size_->setMax(10000);
+  property_line_width_->setMin(0.0);
   property_shape_scale_->setMin(0.0);
   property_shape_scale_->setMax(1000);
 }
@@ -48,6 +60,7 @@ PoseWithCovarianceHistory::~PoseWithCovarianceHistory() = default;  // Propertie
 void PoseWithCovarianceHistory::onInitialize()
 {
   MFDClass::onInitialize();
+  lines_ = std::make_unique<rviz_rendering::BillboardLine>(scene_manager_, scene_node_);
 }
 
 void PoseWithCovarianceHistory::onEnable()
@@ -66,6 +79,7 @@ void PoseWithCovarianceHistory::update(float wall_dt, float ros_dt)
   (void)ros_dt;
 
   if (!history_.empty()) {
+    lines_->clear();
     shapes_.clear();
     if (property_shape_view_->getBool()) {
       updateShapes();
@@ -83,6 +97,7 @@ void PoseWithCovarianceHistory::unsubscribe()
   MFDClass::unsubscribe();
 
   history_.clear();
+  lines_->clear();
   shapes_.clear();
 }
 
@@ -114,8 +129,26 @@ void PoseWithCovarianceHistory::updateHistory()
 
 void PoseWithCovarianceHistory::updateShapes()
 {
-  Ogre::ColourValue color = rviz_common::properties::qtToOgre(property_shape_color_->getColor());
-  color.a = property_shape_alpha_->getFloat();
+  Ogre::ColourValue color_shape = rviz_common::properties::qtToOgre(property_shape_color_->getColor());
+  color_shape.a = property_shape_alpha_->getFloat();
+  Ogre::ColourValue color_line = rviz_common::properties::qtToOgre(property_line_color_->getColor());
+  color_line.a = property_line_alpha_->getFloat();
+
+  Ogre::Vector3 line_position;
+  Ogre::Quaternion line_orientation;
+
+  auto frame_manager = context_->getFrameManager();
+  if (!frame_manager->getTransform(target_frame_, last_stamp_, line_position, line_orientation)) {
+    setMissingTransformToFixedFrame(target_frame_);
+    return;
+  }
+
+  setTransformOk();
+  lines_->setMaxPointsPerLine(history_.size());
+  lines_->setLineWidth(property_line_width_->getFloat());
+  lines_->setPosition(line_position);
+  lines_->setOrientation(line_orientation);
+  lines_->setColor(color_line.r, color_line.g, color_line.b, color_line.a);
 
   while (shapes_.size() < history_.size()) {
     shapes_.emplace_back(std::make_unique<rviz_rendering::Shape>(rviz_rendering::Shape::Sphere, scene_manager_, scene_node_));
@@ -128,6 +161,7 @@ void PoseWithCovarianceHistory::updateShapes()
     position.x = message->pose.pose.position.x;
     position.y = message->pose.pose.position.y;
     position.z = message->pose.pose.position.z;
+    lines_->addPoint(position);
 
     Ogre::Quaternion orientation;
     orientation.w = message->pose.pose.orientation.w;
@@ -151,7 +185,7 @@ void PoseWithCovarianceHistory::updateShapes()
     auto& sphere = shapes_[i];
     sphere->setPosition(position);
     sphere->setOrientation(orientation);
-    sphere->setColor(color.r, color.g, color.b, color.a);
+    sphere->setColor(color_shape.r, color_shape.g, color_shape.b, color_shape.a);
     sphere->setScale(Ogre::Vector3(
       property_shape_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(0, 0)),
       property_shape_scale_->getFloat() * 2 * std::sqrt(covariance_2d_base_link(1, 1)),

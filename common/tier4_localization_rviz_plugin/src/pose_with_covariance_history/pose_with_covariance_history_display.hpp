@@ -27,6 +27,7 @@
 
 namespace rviz_rendering
 {
+class BillboardLine;
 class Shape;
 }  // namespace rviz_rendering
 namespace rviz_common::properties
@@ -66,9 +67,14 @@ private:
 
   std::string target_frame_;
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> history_;
+  std::unique_ptr<rviz_rendering::BillboardLine> lines_;
   std::vector<std::unique_ptr<rviz_rendering::Shape>> shapes_;
   rclcpp::Time last_stamp_;
 
+  rviz_common::properties::BoolProperty * property_line_view_;
+  rviz_common::properties::FloatProperty * property_line_width_;
+  rviz_common::properties::FloatProperty * property_line_alpha_;
+  rviz_common::properties::ColorProperty * property_line_color_;
   rviz_common::properties::IntProperty * property_buffer_size_;
   rviz_common::properties::BoolProperty * property_shape_view_;
   rviz_common::properties::FloatProperty * property_shape_width_;
