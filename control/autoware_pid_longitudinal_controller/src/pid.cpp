@@ -47,7 +47,7 @@ double PIDController::calculate(
   ret_p = std::min(std::max(ret_p, p.min_ret_p), p.max_ret_p);
 
   if (enable_integration) {
-    m_error_integral += error * dt;
+    m_error_integral += virtual_displacement_error * dt;
     m_error_integral = std::min(std::max(m_error_integral, p.min_ret_i / p.ki), p.max_ret_i / p.ki);
   }
   const double ret_i = p.ki * m_error_integral;
