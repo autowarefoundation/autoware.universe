@@ -581,7 +581,7 @@ std::optional<geometry_msgs::msg::Point> intersect(
  * @brief Check if 2 convex polygons intersect using the GJK algorithm
  * @details much faster than boost::geometry::intersects()
  */
-bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
 
 }  // namespace autoware::universe_utils
 

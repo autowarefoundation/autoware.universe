@@ -385,7 +385,7 @@ std::optional<geometry_msgs::msg::Point> intersect(
   return intersect_point;
 }
 
-bool intersects(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
 {
   return gjk::intersects(convex_polygon1, convex_polygon2);
 }
