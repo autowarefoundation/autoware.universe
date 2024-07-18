@@ -183,9 +183,9 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   autoware::centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   autoware::centerpoint::CenterPointConfig config(
-    class_names_.size(), point_feature_size, max_voxel_size, pointcloud_range, voxel_size,
-    downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
-    yaw_norm_thresholds, has_variance_);
+    class_names_.size(), point_feature_size, cloud_capacity, max_voxel_size, pointcloud_range,
+    voxel_size, downsample_factor, encoder_in_feature_size, score_threshold,
+    circle_nms_dist_threshold, yaw_norm_thresholds, has_variance_);
 
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
