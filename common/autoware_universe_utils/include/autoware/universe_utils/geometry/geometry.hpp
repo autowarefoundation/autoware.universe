@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020-2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -613,6 +613,12 @@ std::array<PointList, 2> divideBySegment(
 std::optional<Polygon> convexHull(const PointList & points);
 
 std::optional<double> area(const Polygon & poly);
+
+/**
+ * @brief Check if 2 convex polygons intersect using the GJK algorithm
+ * @details much faster than boost::geometry::intersects()
+ */
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
 
 }  // namespace autoware::universe_utils
 
