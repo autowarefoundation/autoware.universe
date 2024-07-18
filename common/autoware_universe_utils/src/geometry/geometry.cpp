@@ -375,31 +375,25 @@ Polygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon)
   return _polygon;
 }
 
+std::optional<bool> isClockwise(const Polygon & poly)
+{
+  if (const auto s = area(poly)) {
+    return *s > 0;
+  } else {
+    return std::nullopt;
+  }
+}
+
 void correct(Polygon & poly)
 {
-  if (poly.size() < 3) {
+  if (poly.size() < 3 || isClockwise(poly).value_or(true)) {
     return;
   }
 
   // sort points in clockwise order with respect to the first point
 
-  const auto min_y_point = *std::min_element(
-    poly.begin(), poly.end(), [](const auto & a, const auto & b) { return a.y() < b.y(); });
-
-  auto arg = [min_y_point](const auto & p) {
-    const auto p_vec = p - min_y_point;
-    if (p_vec.length() < std::numeric_limits<double>::epsilon()) {
-      return 0.0;
-    }
-    return std::atan2(p_vec.y(), p_vec.x());
-  };
-  const auto ref_arg =
-    std::atan2(poly.at(0).y() - min_y_point.y(), poly.at(0).x() - min_y_point.x());
-
-  std::sort(poly.begin() + 1, poly.end(), [ref_arg, arg](const auto & a, const auto & b) {
-    const auto dt_a = ref_arg - arg(a);
-    const auto dt_b = ref_arg - arg(b);
-    return (dt_a > 0 ? dt_a : dt_a + 2 * M_PI) < (dt_b > 0 ? dt_b : dt_b + 2 * M_PI);
+  std::sort(poly.begin() + 1, poly.end(), [&](const auto & a, const auto & b) {
+    return (a - poly.front()).cross(b - poly.front()).z() < 0;
   });
 }
 
@@ -639,10 +633,10 @@ std::optional<double> area(const Polygon & poly)
 
   double area = 0.;
   for (size_t i = 0; i < poly.size(); ++i) {
-    area += poly.at(i).cross(poly.at((i + 1) % poly.size())).z() / 2;
+    area += poly.at((i + 1) % poly.size()).cross(poly.at(i)).z() / 2;
   }
 
-  return std::abs(area);
+  return area;
 }
 
 }  // namespace autoware::universe_utils

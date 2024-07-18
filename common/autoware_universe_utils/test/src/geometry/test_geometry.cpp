@@ -1725,6 +1725,34 @@ TEST(geometry, isTwistCovarianceValid)
   EXPECT_EQ(autoware::universe_utils::isTwistCovarianceValid(twist_with_covariance), true);
 }
 
+TEST(geometry, isClockwise)
+{
+  using autoware::universe_utils::isClockwise;
+  using autoware::universe_utils::Point;
+
+  {  // Clockwise
+    const Point p1 = {0.0, 0.0, 0.0};
+    const Point p2 = {0.0, 7.0, 0.0};
+    const Point p3 = {4.0, 2.0, 0.0};
+    const Point p4 = {2.0, 0.0, 0.0};
+    const auto result = isClockwise({p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(*result);
+  }
+
+  {  // Counter-clockwise
+    const Point p1 = {0.0, 0.0, 0.0};
+    const Point p2 = {2.0, 0.0, 0.0};
+    const Point p3 = {4.0, 2.0, 0.0};
+    const Point p4 = {0.0, 7.0, 0.0};
+    const auto result = isClockwise({p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_FALSE(*result);
+  }
+}
+
 TEST(geometry, correct)
 {
   using autoware::universe_utils::correct;
@@ -2332,7 +2360,7 @@ TEST(geometry, area)
   using autoware::universe_utils::area;
   using autoware::universe_utils::Point;
 
-  {
+  {  // Clockwise
     const Point p1 = {0.0, 0.0, 0.0};
     const Point p2 = {0.0, 7.0, 0.0};
     const Point p3 = {4.0, 2.0, 0.0};
@@ -2341,5 +2369,16 @@ TEST(geometry, area)
 
     EXPECT_TRUE(result);
     EXPECT_NEAR(*result, 16.0, epsilon);
+  }
+
+  {  // Counter-clockwise
+    const Point p1 = {0.0, 0.0, 0.0};
+    const Point p2 = {2.0, 0.0, 0.0};
+    const Point p3 = {4.0, 2.0, 0.0};
+    const Point p4 = {0.0, 7.0, 0.0};
+    const auto result = area({p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_NEAR(*result, -16.0, epsilon);
   }
 }

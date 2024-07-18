@@ -582,6 +582,8 @@ Point fromGeom(const geometry_msgs::msg::Point & point);
 
 Polygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon);
 
+std::optional<bool> isClockwise(const Polygon & poly);
+
 void correct(Polygon & poly);
 
 // NOTE: much faster than boost::geometry::intersects()
