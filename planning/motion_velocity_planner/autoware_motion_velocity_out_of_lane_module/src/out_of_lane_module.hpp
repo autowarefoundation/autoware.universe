@@ -51,9 +51,9 @@ private:
 
   inline static const std::string ns_ = "out_of_lane";
   std::string module_name_;
-  std::optional<geometry_msgs::msg::Pose> prev_slowdown_pose_;
   rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Time prev_inserted_pose_time_;
+  std::optional<geometry_msgs::msg::Pose> previous_slowdown_pose_;
+  rclcpp::Time previous_slowdown_time_;
 
 protected:
   // Debug

@@ -177,12 +177,11 @@ bool MotionVelocityPlannerNode::update_planner_data()
   }
 
   // optional data
-  const auto route_ptr = route_subscriber_.takeNewData();
-  if (
-    route_ptr &&
-    check_with_log(
-      planner_data_.route_handler, "Trying to set a route but map is not received yet")) {
-    planner_data_.route_handler->setRoute(*route_ptr);
+  if (planner_data_.route_handler) {
+    const auto route_ptr = route_subscriber_.takeNewData();
+    if (route_ptr) {
+      planner_data_.route_handler->setRoute(*route_ptr);
+    }
   }
 
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();

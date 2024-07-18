@@ -35,9 +35,9 @@
 
 namespace autoware::motion_velocity_planner::out_of_lane
 {
-using autoware_planning_msgs::msg::TrajectoryPoint;
+using Polygons = boost::geometry::model::multi_polygon<lanelet::BasicPolygonWithHoles2d>;
 
-/// @brief parameters for the "out of lane" module
+/// @brief parameters for the out_of_lane module
 struct PlannerParam
 {
   std::string mode;                  // mode used to consider a conflict with an object
@@ -80,8 +80,6 @@ struct PlannerParam
   double extra_left_offset;   // [m] extra left distance
 };
 
-using Polygons = boost::geometry::model::multi_polygon<lanelet::BasicPolygonWithHoles2d>;
-
 /// @brief data related to the ego vehicle
 struct EgoData
 {
@@ -92,6 +90,8 @@ struct EgoData
   Polygons drivable_lane_polygons;
   double min_stop_distance{};
   double min_slowdown_distance{};
+  lanelet::BasicPolygon2d current_footprint;
+  std::vector<lanelet::BasicPolygon2d> trajectory_footprints;
 };
 
 struct OutOfLanePoint
@@ -101,7 +101,8 @@ struct OutOfLanePoint
   TimeCollisions time_collisions;
   std::optional<double> min_object_arrival_time;
   std::optional<double> max_object_arrival_time;
-  double ttc{};
+  std::optional<double> ttc;
+  bool to_avoid = false;
 };
 struct OutOfLaneData
 {
@@ -112,41 +113,27 @@ struct OutOfLaneData
 /// @brief debug data
 struct DebugData
 {
-  std::vector<lanelet::BasicPolygon2d> footprints;
-  geometry_msgs::msg::Pose ego_pose;
-  lanelet::BasicPolygon2d current_footprint;
-  lanelet::BasicPolygons2d ego_lane_polygons;
-  lanelet::BasicPolygons2d out_of_lane_areas;
   lanelet::ConstLanelets route_lanelets;
   lanelet::ConstLanelets ignored_lanelets;
   lanelet::ConstLanelets out_of_lane_lanelets;
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points;
-  size_t first_trajectory_idx;
-  std::vector<std::optional<double>> ttcs;
 
   size_t prev_footprints = 0;
   size_t prev_route_lanelets = 0;
   size_t prev_ignored_lanelets = 0;
   size_t prev_out_of_lane_lanelets = 0;
-  size_t prev_ego_lane_polygons = 0;
+  size_t prev_drivable_lane_polygons = 0;
   size_t prev_out_of_lane_areas = 0;
   size_t prev_ttcs = 0;
   void reset_data()
   {
-    prev_footprints = footprints.size();
-    footprints.clear();
     prev_route_lanelets = route_lanelets.size();
     route_lanelets.clear();
+
     prev_ignored_lanelets = ignored_lanelets.size();
     ignored_lanelets.clear();
+
     prev_out_of_lane_lanelets = out_of_lane_lanelets.size();
     out_of_lane_lanelets.clear();
-    prev_ego_lane_polygons = ego_lane_polygons.size();
-    ego_lane_polygons.clear();
-    prev_out_of_lane_areas = out_of_lane_areas.size();
-    out_of_lane_areas.clear();
-    prev_ttcs = ttcs.size();
-    ttcs.clear();
   }
 };
 

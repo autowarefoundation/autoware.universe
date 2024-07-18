@@ -42,7 +42,7 @@ std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
       autoware::motion_utils::calcInterpolatedPose(ego_data.trajectory_points, l);
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_pose);
     const auto is_inside_ego_lane =
-      boost::geometry::disjoint(interpolated_footprint, ego_data.drivable_lane_polygons);
+      boost::geometry::within(interpolated_footprint, ego_data.drivable_lane_polygons);
     if (is_inside_ego_lane) return interpolated_pose;
   }
   return std::nullopt;
@@ -58,9 +58,13 @@ std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
 
   // search for the first slowdown decision for which a stop point can be inserted
   for (const auto & out_of_lane_point : out_of_lane_data.outside_points) {
-    const auto last_in_lane_pose =
-      calculate_last_in_lane_pose(ego_data, out_of_lane_point, base_footprint, params);
-    if (last_in_lane_pose) return last_in_lane_pose;
+    if (out_of_lane_point.to_avoid) {
+      const auto last_in_lane_pose =
+        calculate_last_in_lane_pose(ego_data, out_of_lane_point, base_footprint, params);
+      if (last_in_lane_pose) {
+        return last_in_lane_pose;
+      }
+    }
   }
   return std::nullopt;
 }
