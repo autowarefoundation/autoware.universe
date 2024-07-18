@@ -83,7 +83,6 @@ private:
   Params m_params;
 
   // state variables
-  double m_error_integral;
   double m_prev_error;
   bool m_is_gains_set;
   bool m_is_limits_set;
