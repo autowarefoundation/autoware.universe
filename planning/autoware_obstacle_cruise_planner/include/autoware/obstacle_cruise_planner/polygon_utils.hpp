@@ -43,6 +43,11 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const Obstacle & obstacle, const bool is_driving_forward,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
+std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
+  const std::vector<TrajectoryPoint> & traj_points, const size_t collision_idx,
+  const std::vector<PointWithStamp> & collision_points, const bool is_driving_forward,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
+
 std::vector<PointWithStamp> getCollisionPoints(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const rclcpp::Time & obstacle_stamp, const PredictedPath & predicted_path, const Shape & shape,
