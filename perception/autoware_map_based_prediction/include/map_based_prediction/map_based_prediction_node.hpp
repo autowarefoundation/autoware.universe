@@ -121,6 +121,7 @@ struct LaneletData
 {
   lanelet::Lanelet lanelet;
   float probability;
+  bool is_bidirectional = false;
 };
 
 struct PredictedRefPath
