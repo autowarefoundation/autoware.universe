@@ -26,21 +26,21 @@ namespace rviz_plugins
 {
 PoseWithCovarianceHistory::PoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
 {
-  property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 100, "", this);
+  property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 50, "", this);
   property_shape_view_ = new rviz_common::properties::BoolProperty("Shape", true, "", this);
+  property_shape_scale_ =
+    new rviz_common::properties::FloatProperty("Scale", 1.0, "", property_shape_view_);
   property_shape_alpha_ =
     new rviz_common::properties::FloatProperty("Alpha", 1.0, "", property_shape_view_);
   property_shape_alpha_->setMin(0.0);
   property_shape_alpha_->setMax(1.0);
   property_shape_color_ =
     new rviz_common::properties::ColorProperty("Color", Qt::white, "", property_shape_view_);
-  property_shape_scale_ =
-    new rviz_common::properties::FloatProperty("Scale", 1.0, "", property_shape_view_);
+  
+  property_buffer_size_->setMin(0);
+  property_buffer_size_->setMax(10000);
   property_shape_scale_->setMin(0.0);
   property_shape_scale_->setMax(1000);
-
-  property_buffer_size_->setMin(0);
-  property_buffer_size_->setMax(16000);  
 }
 
 PoseWithCovarianceHistory::~PoseWithCovarianceHistory() = default;  // Properties are deleted by Qt
@@ -116,27 +116,24 @@ void PoseWithCovarianceHistory::updateShapes()
 {
   Ogre::ColourValue color = rviz_common::properties::qtToOgre(property_shape_color_->getColor());
   color.a = property_shape_alpha_->getFloat();
-  // Ogre::Vector3 position;
-  // Ogre::Quaternion orientation;
 
-  // auto frame_manager = context_->getFrameManager();
-  // if (!frame_manager->getTransform(target_frame_, last_stamp_, position, orientation)) {
-  //   setMissingTransformToFixedFrame(target_frame_);
-  //   return;
-  // }
-
-  // setTransformOk();
-   while (shapes_.size() < history_.size()) {
+  while (shapes_.size() < history_.size()) {
     shapes_.emplace_back(std::make_unique<rviz_rendering::Shape>(rviz_rendering::Shape::Sphere, scene_manager_, scene_node_));
   }
 
   for (size_t i = 0; i < history_.size(); ++i) {
     const auto& message = history_[i];
    
-    Ogre::Vector3 position;//ok
+    Ogre::Vector3 position;
     position.x = message->pose.pose.position.x;
     position.y = message->pose.pose.position.y;
     position.z = message->pose.pose.position.z;
+
+    Ogre::Quaternion orientation;
+    orientation.w = message->pose.pose.orientation.w;
+    orientation.x = message->pose.pose.orientation.x;
+    orientation.y = message->pose.pose.orientation.y;
+    orientation.z = message->pose.pose.orientation.z;
     
     Eigen::Matrix2d covariance_2d_map;
     covariance_2d_map(0, 0) = message->pose.covariance[0];
@@ -149,15 +146,8 @@ void PoseWithCovarianceHistory::updateShapes()
     Eigen::Quaternionf rotation(message->pose.pose.orientation.w, message->pose.pose.orientation.x, message->pose.pose.orientation.y, message->pose.pose.orientation.z);
     Eigen::Matrix4f pose_matrix4f = (translation * rotation).matrix();
     const Eigen::Matrix2d rot = pose_matrix4f.topLeftCorner<2, 2>().cast<double>();
-    covariance_2d_base_link = rot.transpose() * covariance_2d_map * rot;
+    covariance_2d_base_link = rot.transpose() * covariance_2d_map * rot;    
 
-    Ogre::Quaternion orientation;
-    orientation.w = message->pose.pose.orientation.w;
-    orientation.x = message->pose.pose.orientation.x;
-    orientation.y = message->pose.pose.orientation.y;
-    orientation.z = message->pose.pose.orientation.z;
-
-    //covariance をbase_link座標系にしてx,y,zを取り出す
     auto& sphere = shapes_[i];
     sphere->setPosition(position);
     sphere->setOrientation(orientation);
