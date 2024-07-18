@@ -58,10 +58,13 @@ struct Obstacle
   Obstacle(
     const rclcpp::Time & arg_stamp, const PredictedObject & object,
     const geometry_msgs::msg::Pose & arg_pose, const double ego_to_obstacle_distance,
-    const double lat_dist_from_obstacle_to_traj)
+    const double lat_dist_from_obstacle_to_traj, const double tangent_velocity,
+    const double normal_velocity)
   : stamp(arg_stamp),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
     lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
+    tangent_velocity(tangent_velocity),
+    normal_velocity(normal_velocity),
     pose(arg_pose),
     orientation_reliable(true),
     twist(object.kinematics.initial_twist_with_covariance.twist),
@@ -94,6 +97,8 @@ struct Obstacle
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
   double ego_to_obstacle_distance;
   double lat_dist_from_obstacle_to_traj;
+  double tangent_velocity;
+  double normal_velocity;
 
   // for PredictedObject
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
