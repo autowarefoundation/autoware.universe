@@ -90,17 +90,6 @@ geometry_msgs::msg::Pose local2global(
   return transformPose(pose_local, transform);
 }
 
-geometry_msgs::msg::Pose base2center(
-  const geometry_msgs::msg::Pose & base_pose, const VehicleShape & vehicle_shape)
-{
-  double yaw = tf2::getYaw(base_pose.orientation);
-  double offset = vehicle_shape.length / 2.0 - vehicle_shape.base2back;
-  auto center_pose = base_pose;
-  center_pose.position.x += offset * std::cos(yaw);
-  center_pose.position.y += offset * std::sin(yaw);
-  return center_pose;
-}
-
 double PlannerWaypoints::compute_length() const
 {
   if (waypoints.empty()) {
