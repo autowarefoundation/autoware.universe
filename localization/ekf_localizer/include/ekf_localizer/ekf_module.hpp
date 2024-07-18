@@ -77,7 +77,7 @@ public:
   bool measurement_update_twist(
     const TwistWithCovariance & twist, const rclcpp::Time & t_curr,
     EKFDiagnosticInfo & twist_diag_info);
-  geometry_msgs::msg::PoseWithCovarianceStamped compensate_pose_with_z_delay(
+  geometry_msgs::msg::PoseWithCovarianceStamped compensate_pose_with_delay(
     const PoseWithCovariance & pose, const double delay_time);
 
 private:
@@ -86,6 +86,8 @@ private:
   std::shared_ptr<Warning> warning_;
   const int dim_x_;
   std::vector<double> accumulated_delay_times_;
+  double roll_rate_;
+  double pitch_rate_;
   const HyperParameters params_;
 };
 

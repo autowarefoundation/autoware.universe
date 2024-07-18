@@ -37,6 +37,8 @@ EKFModule::EKFModule(std::shared_ptr<Warning> warning, const HyperParameters & p
 : warning_(std::move(warning)),
   dim_x_(6),  // x, y, yaw, yaw_bias, vx, wz
   accumulated_delay_times_(params.extend_state_step, 1.0E15),
+  roll_rate_(0.0),
+  pitch_rate_(0.0),
   params_(params)
 {
   Eigen::MatrixXd x = Eigen::MatrixXd::Zero(dim_x_, 1);
@@ -282,15 +284,25 @@ bool EKFModule::measurement_update_pose(
   return true;
 }
 
-geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_pose_with_z_delay(
+geometry_msgs::msg::PoseWithCovarianceStamped EKFModule::compensate_pose_with_delay(
   const PoseWithCovariance & pose, const double delay_time)
 {
   const auto rpy = autoware::universe_utils::getRPY(pose.pose.pose.orientation);
   const double dz_delay = kalman_filter_.getXelement(IDX::VX) * delay_time * std::sin(-rpy.y);
-  PoseWithCovariance pose_with_z_delay;
-  pose_with_z_delay = pose;
-  pose_with_z_delay.pose.pose.position.z += dz_delay;
-  return pose_with_z_delay;
+  PoseWithCovariance pose_with_delay;
+  pose_with_delay = pose;
+  pose_with_delay.pose.pose.position.z += dz_delay;
+
+  const double roll_delay = roll_rate_ * delay_time;
+  const double pitch_delay = pitch_rate_ * delay_time;
+  const double new_roll = rpy.x + roll_delay;
+  const double new_pitch = rpy.y + pitch_delay;
+  tf2::Quaternion quat;
+  quat.setRPY(new_roll, new_pitch, rpy.z);
+  quat.normalize();
+  pose_with_delay.pose.pose.orientation = tf2::toMsg(quat);
+
+  return pose_with_delay;
 }
 
 bool EKFModule::measurement_update_twist(
@@ -329,6 +341,8 @@ bool EKFModule::measurement_update_twist(
   /* Set measurement matrix */
   Eigen::MatrixXd y(dim_y, 1);
   y << twist.twist.twist.linear.x, twist.twist.twist.angular.z;
+  roll_rate_ = twist.twist.twist.angular.x;
+  pitch_rate_ = twist.twist.twist.angular.y;
 
   if (has_nan(y) || has_inf(y)) {
     warning_->warn(
