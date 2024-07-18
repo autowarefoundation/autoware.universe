@@ -310,7 +310,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
     if (isOutOfRange(next_index) || isObs(next_index)) continue;
 
     AstarNode * next_node = &graph_[getKey(next_index)];
-    if (next_node->status == NodeStatus::Closed || detectCollision(next_pose)) continue;
+    if (next_node->status == NodeStatus::Closed || detectCollision(next_index)) continue;
 
     double distance_to_obs = getObstacleEDT(next_index);
     const bool is_direction_switch =

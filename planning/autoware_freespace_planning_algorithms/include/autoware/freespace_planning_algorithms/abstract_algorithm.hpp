@@ -64,7 +64,8 @@ struct VehicleShape
   double base_length;
   double max_steering;
   double base2back;  // base_link to rear [m]
-  double half_diagonal;
+  double min_dimension;
+  double max_dimension;
 
   VehicleShape() = default;
 
@@ -76,7 +77,7 @@ struct VehicleShape
     max_steering(max_steering),
     base2back(base2back)
   {
-    setHalfDiagonal();
+    setMinMaxDimension();
   }
 
   explicit VehicleShape(
@@ -87,10 +88,14 @@ struct VehicleShape
     max_steering(vehicle_info.max_steer_angle_rad),
     base2back(vehicle_info.rear_overhang_m + margin / 2.0)
   {
-    setHalfDiagonal();
+    setMinMaxDimension();
   }
 
-  void setHalfDiagonal() { half_diagonal = 0.5 * std::hypot(length, width); }
+  void setMinMaxDimension()
+  {
+    min_dimension = std::min(0.5 * width, base2back);
+    max_dimension = std::hypot(length - base2back, 0.5 * width);
+  }
 };
 
 struct PlannerCommonParam
@@ -164,6 +169,7 @@ protected:
     int theta_index, std::vector<IndexXY> & indexes,
     std::vector<IndexXY> & vertex_indexes_2d) const;
   bool detectBoundaryExit(const IndexXYT & base_index) const;
+  bool detectCollision(const IndexXYT & base_index) const;
   bool detectCollision(const geometry_msgs::msg::Pose & base_pose) const;
   void computeEDTMap();
 

@@ -57,11 +57,10 @@ bool RRTStar::makePlan(
   goal_pose_ = global2local(costmap_, goal_pose);
 
   const auto is_obstacle_free = [&](const rrtstar_core::Pose & pose) {
-    geometry_msgs::msg::Pose pose_msg;
-    pose_msg.position.x = pose.x;
-    pose_msg.position.y = pose.y;
-    pose_msg.orientation = autoware::universe_utils::createQuaternionFromYaw(pose.yaw);
-    return !detectCollision(pose_msg);
+    const int index_x = pose.x / costmap_.info.resolution;
+    const int index_y = pose.y / costmap_.info.resolution;
+    const int index_theta = discretizeAngle(pose.yaw, planner_common_param_.theta_size);
+    return !detectCollision(IndexXYT{index_x, index_y, index_theta});
   };
 
   const rrtstar_core::Pose lo{0, 0, 0};
