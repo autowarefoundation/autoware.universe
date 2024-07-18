@@ -36,27 +36,6 @@ bool AccelMap::readAccelMapFromCSV(const std::string & csv_path, const bool vali
   return true;
 }
 
-bool AccelMap::getThrottle(const double acc, double vel, double & throttle) const
-{
-  std::vector<double> interpolated_acc_vec;
-  const double clamped_vel = CSVLoader::clampValue(vel, vel_index_);
-  // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
-  for (std::vector<double> accelerations : accel_map_) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, accelerations, clamped_vel));
-  }
-  // calculate throttle
-  // When the desired acceleration is smaller than the throttle area, return false => brake sequence
-  // When the desired acceleration is greater than the throttle area, return max throttle
-  if (acc < interpolated_acc_vec.front()) {
-    return false;
-  } else if (interpolated_acc_vec.back() < acc) {
-    throttle = throttle_index_.back();
-    return true;
-  }
-  throttle = interpolation::lerp(interpolated_acc_vec, throttle_index_, acc);
-  return true;
-}
-
 double AccelMap::getAcceleration(const double throttle, const double vel) const
 {
   std::vector<double> interpolated_acc_vec;
@@ -99,29 +78,6 @@ bool BrakeMap::readBrakeMapFromCSV(const std::string & csv_path, const bool vali
   return true;
 }
 
-double BrakeMap::getBrake(const double acc, const double vel)
-{
-  std::vector<double> interpolated_acc_vec;
-  const double clamped_vel = CSVLoader::clampValue(vel, vel_index_);
-
-  // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
-  for (std::vector<double> accelerations : brake_map_) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, accelerations, clamped_vel));
-  }
-
-  // calculate brake
-  // When the desired acceleration is smaller than the brake area, return max brake on the map
-  // When the desired acceleration is greater than the brake area, return min brake on the map
-  if (acc < interpolated_acc_vec.back()) {
-    return brake_index_.back();
-  } else if (interpolated_acc_vec.front() < acc) {
-    return brake_index_.front();
-  }
-
-  std::reverse(std::begin(interpolated_acc_vec), std::end(interpolated_acc_vec));
-  return interpolation::lerp(interpolated_acc_vec, brake_index_rev_, acc);
-}
-
 double BrakeMap::getAcceleration(const double brake, const double vel) const
 {
   std::vector<double> interpolated_acc_vec;
@@ -155,18 +111,6 @@ bool SteerMap::readSteerMapFromCSV(const std::string & csv_path, const bool vali
     return false;
   }
   return true;
-}
-
-double SteerMap::getSteerCmd(const double steer_rate, const double steer) const
-{
-  const double clamped_steer = CSVLoader::clampValue(steer, steer_index_);
-  std::vector<double> steer_rate_interp = {};
-  for (const auto & steer_rate_vec : steer_map_) {
-    steer_rate_interp.push_back(interpolation::lerp(steer_index_, steer_rate_vec, clamped_steer));
-  }
-
-  const double clamped_steer_rate = CSVLoader::clampValue(steer_rate, steer_rate_interp);
-  return interpolation::lerp(steer_rate_interp, steer_cmd_index_, clamped_steer_rate);
 }
 
 double SteerMap::getSteerRate(const double steer_cmd, const double steer) const

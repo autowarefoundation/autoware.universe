@@ -36,11 +36,7 @@ class AccelMap
 {
 public:
   bool readAccelMapFromCSV(const std::string & csv_path, const bool validation = false);
-  bool getThrottle(const double acc, const double vel, double & throttle) const;
   double getAcceleration(const double throttle, const double vel) const;
-  std::vector<double> getVelIdx() const { return vel_index_; }
-  std::vector<double> getThrottleIdx() const { return throttle_index_; }
-  std::vector<std::vector<double>> getAccelMap() const { return accel_map_; }
 
 private:
   std::vector<double> vel_index_;
@@ -57,11 +53,7 @@ class BrakeMap
 {
 public:
   bool readBrakeMapFromCSV(const std::string & csv_path, const bool validation = false);
-  double getBrake(const double acc, const double vel);
   double getAcceleration(const double brake, const double vel) const;
-  std::vector<double> getVelIdx() const { return vel_index_; }
-  std::vector<double> getBrakeIdx() const { return brake_index_; }
-  std::vector<std::vector<double>> getBrakeMap() const { return brake_map_; }
 
 private:
   std::vector<double> vel_index_;
@@ -79,7 +71,6 @@ class SteerMap
 {
 public:
   bool readSteerMapFromCSV(const std::string & csv_path, const bool validation = false);
-  double getSteerCmd(const double steer_rate, const double steer) const;
   double getSteerRate(const double steer_cmd, const double steer) const;
 
 private:
