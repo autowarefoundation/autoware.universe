@@ -1,8 +1,8 @@
-# lidar_centerpoint
+# autoware_lidar_centerpoint
 
 ## Purpose
 
-lidar_centerpoint is a package for detecting dynamic 3D objects.
+autoware_lidar_centerpoint is a package for detecting dynamic 3D objects.
 
 ## Inner-workings / Algorithms
 
@@ -49,11 +49,11 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ### The `build_only` option
 
-The `lidar_centerpoint` node has `build_only` option to build the TensorRT engine file from the ONNX file.
+The `autoware_lidar_centerpoint` node has `build_only` option to build the TensorRT engine file from the ONNX file.
 Although it is preferred to move all the ROS parameters in `.param.yaml` file in Autoware Universe, the `build_only` option is not moved to the `.param.yaml` file for now, because it may be used as a flag to execute the build as a pre-task. You can execute with the following command:
 
 ```bash
-ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml model_name:=centerpoint_tiny model_path:=/home/autoware/autoware_data/lidar_centerpoint model_param_path:=$(ros2 pkg prefix lidar_centerpoint --share)/config/centerpoint_tiny.param.yaml build_only:=true
+ros2 launch autoware_lidar_centerpoint lidar_centerpoint.launch.xml model_name:=centerpoint_tiny model_path:=/home/autoware/autoware_data/lidar_centerpoint model_param_path:=$(ros2 pkg prefix autoware_lidar_centerpoint --share)/config/centerpoint_tiny.param.yaml build_only:=true
 ```
 
 ## Assumptions / Known limits
@@ -225,7 +225,7 @@ the base link location of the vehicle.
 
 #### Convert CenterPoint PyTorch model to ONNX Format
 
-The lidar_centerpoint implementation requires two ONNX models as input the voxel encoder and the backbone-neck-head of the CenterPoint model, other aspects of the network,
+The autoware_lidar_centerpoint implementation requires two ONNX models as input the voxel encoder and the backbone-neck-head of the CenterPoint model, other aspects of the network,
 such as preprocessing operations, are implemented externally. Under the fork of the mmdetection3d repository,
 we have included a script that converts the CenterPoint model to Autoware compatible ONNX format.
 You can find it in `mmdetection3d/projects/AutowareCenterPoint` file.
@@ -236,7 +236,7 @@ python projects/AutowareCenterPoint/centerpoint_onnx_converter.py --cfg projects
 
 #### Create the config file for the custom model
 
-Create a new config file named **centerpoint_custom.param.yaml** under the config file directory of the lidar_centerpoint node. Sets the parameters of the config file like
+Create a new config file named **centerpoint_custom.param.yaml** under the config file directory of the autoware_lidar_centerpoint node. Sets the parameters of the config file like
 point_cloud_range, point_feature_size, voxel_size, etc. according to the training config file.
 
 ```yaml
@@ -262,7 +262,7 @@ point_cloud_range, point_feature_size, voxel_size, etc. according to the trainin
 ```bash
 cd /YOUR/AUTOWARE/PATH/Autoware
 source install/setup.bash
-ros2 launch lidar_centerpoint lidar_centerpoint.launch.xml  model_name:=centerpoint_custom  model_path:=/PATH/TO/ONNX/FILE/
+ros2 launch autoware_lidar_centerpoint lidar_centerpoint.launch.xml  model_name:=centerpoint_custom  model_path:=/PATH/TO/ONNX/FILE/
 ```
 
 ### Changelog
