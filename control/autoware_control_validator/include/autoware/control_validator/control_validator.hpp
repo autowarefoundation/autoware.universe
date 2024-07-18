@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 
 namespace autoware::control_validator
 {
@@ -45,15 +46,30 @@ struct ValidationParams
   double max_distance_deviation_threshold;
 };
 
+/**
+ * @class ControlValidator
+ */
 class ControlValidator : public rclcpp::Node
 {
 public:
+  /**
+   * @brief Constructor
+   */
   explicit ControlValidator(const rclcpp::NodeOptions & options);
 
+  /**
+   * @brief Callback function for predicted trajectory
+   */
   void on_predicted_trajectory(const Trajectory::ConstSharedPtr msg);
 
-  bool check_valid_max_distance_deviation(
-    const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory);
+  /**
+   * @brief Calculate the maximum lateral distance between the reference trajectory and predicted
+   trajectory
+    * @param reference_trajectory reference trajectory
+    * @param predicted_trajectory predicted trajectory
+   */
+  std::pair<double, bool> calc_deviation_and_condition(
+    const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory) const;
 
 private:
   void setup_diag();
@@ -62,7 +78,7 @@ private:
 
   bool is_data_ready();
 
-  void validate(const Trajectory & trajectory);
+  void validate(const Trajectory & predicted_trajectory);
 
   void publish_debug_info();
 

@@ -39,11 +39,11 @@ else()
 endif()
 
 if(BUILD_TESTING)
-  # glob test/*.cpp
   file(GLOB_RECURSE TEST_SOURCES test/*.cpp)
   ament_add_gtest(test_autoware_control_validator
     ${TEST_SOURCES}
   )
+  target_link_libraries(test_autoware_control_validator autoware_control_validator_component)
 endif()
 
 ament_auto_package(

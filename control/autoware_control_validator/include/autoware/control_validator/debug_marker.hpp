@@ -24,17 +24,38 @@
 #include <map>
 #include <string>
 
+/**
+ * @brief Class for publishing debug markers
+ */
 class ControlValidatorDebugMarkerPublisher
 {
 public:
+  /**
+   * @brief Constructor
+   */
   explicit ControlValidatorDebugMarkerPublisher(rclcpp::Node * node);
 
+  /**
+   * @brief Push a virtual wall
+   * @param pose pose of the virtual wall
+   */
   void push_virtual_wall(const geometry_msgs::msg::Pose & pose);
 
+  /**
+   * @brief Push a warning message
+   * @param pose pose of the warning message
+   * @param msg warning message
+   */
   void push_warning_msg(const geometry_msgs::msg::Pose & pose, const std::string & msg);
 
+  /**
+   * @brief Publish markers
+   */
   void publish();
 
+  /**
+   * @brief Clear markers
+   */
   void clear_markers();
 
 private:

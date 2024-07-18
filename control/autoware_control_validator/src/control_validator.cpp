@@ -73,8 +73,8 @@ void ControlValidator::setup_parameters()
     vehicle_info_.wheel_base_m = 4.0;
     RCLCPP_ERROR(
       get_logger(),
-      "failed to get vehicle info. use default value. vehicle_info_.front_overhang_m: %f, "
-      "vehicle_info_.wheel_base_m: %f",
+      "failed to get vehicle info. use default value. vehicle_info_.front_overhang_m: %.2f, "
+      "vehicle_info_.wheel_base_m: %.2f",
       vehicle_info_.front_overhang_m, vehicle_info_.wheel_base_m);
   }
 }
@@ -109,20 +109,20 @@ void ControlValidator::setup_diag()
 
 bool ControlValidator::is_data_ready()
 {
-  const auto waiting = [this](const auto s) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", s);
+  const auto waiting = [this](const auto topic_name) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", topic_name);
     return false;
   };
 
-  // TODO(hisaki): change message
+  // TODO(hisaki): get topic name from object
   if (!current_kinematics_) {
-    return waiting("current_kinematics_");
+    return waiting("~/input/kinematics");
   }
   if (!current_reference_trajectory_) {
-    return waiting("current_reference_trajectory_");
+    return waiting("~/input/reference_trajectory");
   }
   if (!current_predicted_trajectory_) {
-    return waiting("current_predicted_trajectory_");
+    return waiting(sub_predicted_traj_->get_topic_name());
   }
   return true;
 }
@@ -148,7 +148,6 @@ void ControlValidator::on_predicted_trajectory(const Trajectory::ConstSharedPtr 
 
 void ControlValidator::publish_debug_info()
 {
-  validation_status_.stamp = get_clock()->now();
   pub_status_->publish(validation_status_);
 
   if (!is_all_valid(validation_status_)) {
@@ -168,22 +167,24 @@ void ControlValidator::validate(const Trajectory & predicted_trajectory)
       "predicted_trajectory size is less than 2. Cannot validate.");
     return;
   }
+  auto [deviation, is_valid] =
+    calc_deviation_and_condition(predicted_trajectory, *current_reference_trajectory_);
 
-  auto & s = validation_status_;
-
-  s.is_valid_max_distance_deviation =
-    check_valid_max_distance_deviation(predicted_trajectory, *current_reference_trajectory_);
-
-  s.invalid_count = is_all_valid(s) ? 0 : s.invalid_count + 1;
+  validation_status_.stamp = get_clock()->now();
+  validation_status_.max_distance_deviation = deviation;
+  validation_status_.is_valid_max_distance_deviation = is_valid;
+  validation_status_.invalid_count =
+    is_all_valid(validation_status_) ? 0 : validation_status_.invalid_count + 1;
 }
 
-bool ControlValidator::check_valid_max_distance_deviation(
-  const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory)
+std::pair<double, bool> ControlValidator::calc_deviation_and_condition(
+  const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory) const
 {
-  validation_status_.max_distance_deviation =
+  auto max_distance_deviation =
     calc_max_lateral_distance(reference_trajectory, predicted_trajectory);
-  return validation_status_.max_distance_deviation <=
-         validation_params_.max_distance_deviation_threshold;
+  return {
+    max_distance_deviation,
+    max_distance_deviation <= validation_params_.max_distance_deviation_threshold};
 }
 
 bool ControlValidator::is_all_valid(const ControlValidatorStatus & s)

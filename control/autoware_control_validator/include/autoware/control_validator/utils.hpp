@@ -26,8 +26,14 @@ namespace autoware::control_validator
  */
 void shift_pose(geometry_msgs::msg::Pose & pose, double longitudinal);
 
+/**
+ * @brief Calculate the maximum lateral distance between the reference trajectory and the predicted
+ * trajectory
+ * @param reference_trajectory reference trajectory
+ * @param predicted_trajectory predicted trajectory
+ */
 double calc_max_lateral_distance(
-  const autoware_planning_msgs::msg::Trajectory & trajectory,
+  const autoware_planning_msgs::msg::Trajectory & reference_trajectory,
   const autoware_planning_msgs::msg::Trajectory & predicted_trajectory);
 }  // namespace autoware::control_validator
 
