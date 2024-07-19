@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(autoware_control_validator)
 
-
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
