@@ -2529,3 +2529,210 @@ TEST(geometry, intersectPolygonRand)
       (gjk_no_intersect_ns + gjk_intersect_ns) / 1e6);
   }
 }
+
+TEST(geometry, withinPolygonRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_within_ns = 0.0;
+    double ground_truth_not_within_ns = 0.0;
+    double alt_within_ns = 0.0;
+    double alt_not_within_ns = 0.0;
+    int within_count = 0;
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        sw.tic();
+        const auto ground_truth = boost::geometry::within(polygons[i], polygons[j]);
+        if (ground_truth) {
+          ++within_count;
+          ground_truth_within_ns += sw.toc();
+        } else {
+          ground_truth_not_within_ns += sw.toc();
+        }
+        sw.tic();
+        const auto alt = autoware::universe_utils::within(
+          autoware::universe_utils::alt::fromBoost(polygons[i]),
+          autoware::universe_utils::alt::fromBoost(polygons[j]));
+        if (alt.value_or(false)) {
+          alt_within_ns += sw.toc();
+        } else {
+          alt_not_within_ns += sw.toc();
+        }
+        if (!alt || ground_truth != *alt) {
+          std::cout << "Alt failed for the 2 polygons: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+        EXPECT_TRUE(alt);
+        EXPECT_EQ(ground_truth, *alt);
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
+      within_count, polygons_nb * polygons_nb);
+    std::printf(
+      "\tWithin:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_within_ns / 1e6, alt_within_ns / 1e6);
+    std::printf(
+      "\tNot within:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_within_ns / 1e6, alt_not_within_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_within_ns + ground_truth_within_ns) / 1e6,
+      (alt_not_within_ns + alt_within_ns) / 1e6);
+  }
+}
+
+TEST(geometry, coveredByRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_covered_ns = 0.0;
+    double ground_truth_not_covered_ns = 0.0;
+    double alt_covered_ns = 0.0;
+    double alt_not_covered_ns = 0.0;
+    int covered_count = 0;
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (const auto & point : polygons[i].outer()) {
+        for (auto j = 0UL; j < polygons.size(); ++j) {
+          sw.tic();
+          const auto ground_truth = boost::geometry::covered_by(point, polygons[j]);
+          if (ground_truth) {
+            ++covered_count;
+            ground_truth_covered_ns += sw.toc();
+          } else {
+            ground_truth_not_covered_ns += sw.toc();
+          }
+          sw.tic();
+          const auto alt = autoware::universe_utils::coveredBy(
+            autoware::universe_utils::alt::fromBoost(point),
+            autoware::universe_utils::alt::fromBoost(polygons[j]));
+          if (alt.value_or(false)) {
+            alt_covered_ns += sw.toc();
+          } else {
+            alt_not_covered_ns += sw.toc();
+          }
+          if (!alt || ground_truth != *alt) {
+            std::cout << "Alt failed for the 2 polygons: ";
+            std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                      << std::endl;
+          }
+          EXPECT_TRUE(alt);
+          EXPECT_EQ(ground_truth, *alt);
+        }
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %ld covered pairs\n", polygons_nb, vertices,
+      covered_count, polygons_nb * vertices * polygons_nb);
+    std::printf(
+      "\tCovered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_covered_ns / 1e6, alt_covered_ns / 1e6);
+    std::printf(
+      "\tNot covered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_covered_ns / 1e6, alt_not_covered_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_covered_ns + ground_truth_covered_ns) / 1e6,
+      (alt_not_covered_ns + alt_covered_ns) / 1e6);
+  }
+}
+
+TEST(geometry, convexHullRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_hull_ns = 0.0;
+    double alt_hull_ns = 0.0;
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      autoware::universe_utils::MultiPoint2d outer;
+      for (const auto & point : polygons[i].outer()) {
+        outer.push_back(point);
+      }
+      autoware::universe_utils::Polygon2d ground_truth;
+      sw.tic();
+      boost::geometry::convex_hull(outer, ground_truth);
+      ground_truth_hull_ns += sw.toc();
+      sw.tic();
+      const auto alt =
+        autoware::universe_utils::convexHull(autoware::universe_utils::alt::fromBoost(polygons[i]));
+      alt_hull_ns += sw.toc();
+      if (!alt || ground_truth.outer().size() - 1 != alt->size()) {
+        std::cout << "Alt failed for the polygon: ";
+        std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
+      }
+      EXPECT_TRUE(alt);
+      EXPECT_EQ(ground_truth.outer().size() - 1, alt->size());
+      for (size_t i = 0; i < alt->size(); i++) {
+        EXPECT_NEAR(ground_truth.outer().at(i).x(), alt->at(i).x(), epsilon);
+        EXPECT_NEAR(ground_truth.outer().at(i).y(), alt->at(i).y(), epsilon);
+      }
+    }
+    std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);
+    std::printf(
+      "\tConvex Hull:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_hull_ns / 1e6, alt_hull_ns / 1e6);
+  }
+}
+
+TEST(geometry, areaRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_area_ns = 0.0;
+    double alt_area_ns = 0.0;
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      sw.tic();
+      const auto ground_truth = boost::geometry::area(polygons[i]);
+      ground_truth_area_ns += sw.toc();
+      sw.tic();
+      const auto alt =
+        autoware::universe_utils::area(autoware::universe_utils::alt::fromBoost(polygons[i]));
+      alt_area_ns += sw.toc();
+      if (!alt || std::abs(*alt - ground_truth) > epsilon) {
+        std::cout << "Alt failed for the polygon: ";
+        std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
+      }
+      EXPECT_TRUE(alt);
+      EXPECT_NEAR(ground_truth, *alt, epsilon);
+    }
+    std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);
+    std::printf(
+      "\tArea:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n", ground_truth_area_ns / 1e6,
+      alt_area_ns / 1e6);
+  }
+}
