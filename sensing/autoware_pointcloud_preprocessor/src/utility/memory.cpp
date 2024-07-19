@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_pointcloud_preprocessor/utility/memory.hpp"
+#include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include <autoware_point_types/types.hpp>
 

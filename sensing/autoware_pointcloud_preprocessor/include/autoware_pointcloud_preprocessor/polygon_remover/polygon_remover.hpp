@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_
-#define AUTOWARE_POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_
 
-#include "autoware_pointcloud_preprocessor/filter.hpp"
-#include "autoware_pointcloud_preprocessor/utility/geometry.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/utility/geometry.hpp"
 
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -62,4 +62,4 @@ public:
 };
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__POLYGON_REMOVER__POLYGON_REMOVER_HPP_

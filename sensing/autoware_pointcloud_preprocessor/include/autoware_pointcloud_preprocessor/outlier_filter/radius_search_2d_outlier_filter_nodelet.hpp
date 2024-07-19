@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_  // NOLINT
-#define AUTOWARE_POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_  // NOLINT
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_  // NOLINT
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_  // NOLINT
 
-#include "autoware_pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
 
 #include <pcl/common/impl/common.hpp>
 
@@ -55,5 +55,5 @@ public:
 }  // namespace autoware::pointcloud_preprocessor
 
 // clang-format off
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_  // NOLINT
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RADIUS_SEARCH_2D_OUTLIER_FILTER_NODELET_HPP_  // NOLINT
 // clang-format on

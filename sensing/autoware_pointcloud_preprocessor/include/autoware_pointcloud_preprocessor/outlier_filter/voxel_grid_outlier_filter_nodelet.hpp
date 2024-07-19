@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__VOXEL_GRID_OUTLIER_FILTER_NODELET_HPP_
-#define AUTOWARE_POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__VOXEL_GRID_OUTLIER_FILTER_NODELET_HPP_
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__VOXEL_GRID_OUTLIER_FILTER_NODELET_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__VOXEL_GRID_OUTLIER_FILTER_NODELET_HPP_
 
-#include "autoware_pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
@@ -50,4 +50,4 @@ public:
 };
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__VOXEL_GRID_OUTLIER_FILTER_NODELET_HPP_
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__VOXEL_GRID_OUTLIER_FILTER_NODELET_HPP_

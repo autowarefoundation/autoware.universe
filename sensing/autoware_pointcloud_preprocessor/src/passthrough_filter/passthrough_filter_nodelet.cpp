@@ -48,7 +48,7 @@
  *
  */
 
-#include "autoware_pointcloud_preprocessor/passthrough_filter/passthrough_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/passthrough_filter/passthrough_filter_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>

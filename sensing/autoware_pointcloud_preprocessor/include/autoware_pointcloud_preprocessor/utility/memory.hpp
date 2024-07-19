@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_POINTCLOUD_PREPROCESSOR__UTILITY__MEMORY_HPP_
-#define AUTOWARE_POINTCLOUD_PREPROCESSOR__UTILITY__MEMORY_HPP_
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__MEMORY_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__MEMORY_HPP_
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -37,4 +37,4 @@ bool is_data_layout_compatible_with_point_xyzircaedt(const sensor_msgs::msg::Poi
 
 }  // namespace autoware::pointcloud_preprocessor::utils
 
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__UTILITY__MEMORY_HPP_
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__MEMORY_HPP_

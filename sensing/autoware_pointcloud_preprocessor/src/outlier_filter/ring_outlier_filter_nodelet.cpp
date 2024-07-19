@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/outlier_filter/ring_outlier_filter_nodelet.hpp"
 
 #include "autoware_point_types/types.hpp"
 

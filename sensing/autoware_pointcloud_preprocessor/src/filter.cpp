@@ -49,9 +49,9 @@
  *
  */
 
-#include "autoware_pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
 
-#include "autoware_pointcloud_preprocessor/utility/memory.hpp"
+#include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include <pcl_ros/transforms.hpp>
 

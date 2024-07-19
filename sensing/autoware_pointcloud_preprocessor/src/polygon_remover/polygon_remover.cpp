@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_pointcloud_preprocessor/polygon_remover/polygon_remover.hpp"
+#include "autoware/pointcloud_preprocessor/polygon_remover/polygon_remover.hpp"
 
 namespace autoware::pointcloud_preprocessor
 {

@@ -48,9 +48,9 @@
  *
  */
 
-#include "autoware_pointcloud_preprocessor/downsample_filter/voxel_grid_downsample_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/voxel_grid_downsample_filter_nodelet.hpp"
 
-#include "autoware_pointcloud_preprocessor/downsample_filter/faster_voxel_grid_downsample_filter.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/faster_voxel_grid_downsample_filter.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>

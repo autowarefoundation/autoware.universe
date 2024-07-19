@@ -58,7 +58,7 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 #endif
 
-#include "autoware_pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "gencolors.hpp"
 
 #include <opencv2/core.hpp>

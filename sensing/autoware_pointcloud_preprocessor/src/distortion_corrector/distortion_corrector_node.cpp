@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_pointcloud_preprocessor/distortion_corrector/distortion_corrector_node.hpp"
+#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector_node.hpp"
 
-#include "autoware_pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
 namespace autoware::pointcloud_preprocessor
 {

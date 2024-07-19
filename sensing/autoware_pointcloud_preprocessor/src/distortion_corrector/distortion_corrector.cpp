@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
+#include "autoware/pointcloud_preprocessor/distortion_corrector/distortion_corrector.hpp"
 
-#include "autoware_pointcloud_preprocessor/utility/memory.hpp"
+#include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include <autoware/universe_utils/math/trigonometry.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>

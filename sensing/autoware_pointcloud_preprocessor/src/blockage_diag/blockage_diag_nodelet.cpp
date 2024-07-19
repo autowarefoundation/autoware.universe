@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_pointcloud_preprocessor/blockage_diag/blockage_diag_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/blockage_diag/blockage_diag_nodelet.hpp"
 
 #include "autoware_point_types/types.hpp"
 

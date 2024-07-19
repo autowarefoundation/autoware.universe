@@ -49,7 +49,7 @@
  *
  */
 
-#include "autoware_pointcloud_preprocessor/downsample_filter/approximate_downsample_filter_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/downsample_filter/approximate_downsample_filter_nodelet.hpp"
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>

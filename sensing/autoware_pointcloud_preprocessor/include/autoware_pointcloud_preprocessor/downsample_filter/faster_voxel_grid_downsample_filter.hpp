@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "autoware_pointcloud_preprocessor/transform_info.hpp"
+#include "autoware/pointcloud_preprocessor/transform_info.hpp"
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>

@@ -21,7 +21,7 @@
  * @author Yoshi Ri
  */
 
-#include "autoware_pointcloud_preprocessor/time_synchronizer/time_synchronizer_nodelet.hpp"
+#include "autoware/pointcloud_preprocessor/time_synchronizer/time_synchronizer_nodelet.hpp"
 
 #include <pcl_ros/transforms.hpp>
 

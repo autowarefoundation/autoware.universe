@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_pointcloud_preprocessor/vector_map_filter/vector_map_inside_area_filter.hpp"
+#include "autoware/pointcloud_preprocessor/vector_map_filter/vector_map_inside_area_filter.hpp"
 
 namespace
 {

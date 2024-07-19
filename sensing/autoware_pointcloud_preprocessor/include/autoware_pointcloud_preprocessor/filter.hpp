@@ -49,10 +49,10 @@
  *
  */
 
-#ifndef AUTOWARE_POINTCLOUD_PREPROCESSOR__FILTER_HPP_
-#define AUTOWARE_POINTCLOUD_PREPROCESSOR__FILTER_HPP_
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__FILTER_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__FILTER_HPP_
 
-#include "autoware_pointcloud_preprocessor/transform_info.hpp"
+#include "autoware/pointcloud_preprocessor/transform_info.hpp"
 
 #include <memory>
 #include <string>
@@ -304,4 +304,4 @@ private:
 };
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__FILTER_HPP_
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__FILTER_HPP_

@@ -48,11 +48,11 @@
  *
  */
 
-#ifndef AUTOWARE_POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
-#define AUTOWARE_POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
 
-#include "autoware_pointcloud_preprocessor/filter.hpp"
-#include "autoware_pointcloud_preprocessor/transform_info.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/transform_info.hpp"
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/search/pcl_search.h>
@@ -91,5 +91,5 @@ public:
 }  // namespace autoware::pointcloud_preprocessor
 
 // clang-format off
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__VOXEL_GRID_DOWNSAMPLE_FILTER_NODELET_HPP_  // NOLINT
 // clang-format on

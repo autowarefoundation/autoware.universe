@@ -15,7 +15,7 @@
 #ifndef RANSAC_GROUND_FILTER__NODE_HPP_
 #define RANSAC_GROUND_FILTER__NODE_HPP_
 
-#include "autoware_pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
 
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
-#define AUTOWARE_POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
 
 #include <geometry_msgs/msg/polygon.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -83,4 +83,4 @@ bool point_within_cgal_polys(
 
 }  // namespace autoware::pointcloud_preprocessor::utils
 
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__UTILITY__GEOMETRY_HPP_

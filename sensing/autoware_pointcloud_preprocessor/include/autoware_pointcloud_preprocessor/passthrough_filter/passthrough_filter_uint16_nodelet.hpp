@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_UINT16_NODELET_HPP_
-#define AUTOWARE_POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_UINT16_NODELET_HPP_
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_UINT16_NODELET_HPP_  // NOLINT
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_UINT16_NODELET_HPP_  // NOLINT
 
-#include "autoware_pointcloud_preprocessor/filter.hpp"
-#include "autoware_pointcloud_preprocessor/passthrough_filter/passthrough_uint16.hpp"
+#include "autoware/pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/passthrough_filter/passthrough_uint16.hpp"
 
 #include <pcl/search/pcl_search.h>
 
@@ -46,5 +46,5 @@ public:
 }  // namespace autoware::pointcloud_preprocessor
 
 // clang-format off
-#endif  // AUTOWARE_POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_UINT16_NODELET_HPP_  // NOLINT
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__PASSTHROUGH_FILTER__PASSTHROUGH_FILTER_UINT16_NODELET_HPP_  // NOLINT
 // clang-format on
