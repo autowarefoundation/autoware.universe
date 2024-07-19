@@ -3,7 +3,6 @@
 
 #include <vector>
 #include "iou3d_nms.hpp"
-#include "common.hpp"
 
 class PostprocessGPU
 {
