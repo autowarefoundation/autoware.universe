@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(autoware_control_validator)
 
-set(GENERATE_FIGURES_IN_TESTING OFF) # flag to generate figures in testing
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
