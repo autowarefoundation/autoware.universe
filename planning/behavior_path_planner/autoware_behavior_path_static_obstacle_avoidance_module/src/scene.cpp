@@ -606,7 +606,6 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     return;
   }
 
-
   /**
    * Check if any registered shift line is force activated
    */
