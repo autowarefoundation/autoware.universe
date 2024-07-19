@@ -19,7 +19,7 @@
 
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 
-#include <nav_msgs/msg/detail/odometry__struct.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <cstdint>
 #include <memory>

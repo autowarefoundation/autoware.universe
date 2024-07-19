@@ -17,8 +17,7 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/node_options.hpp>
 
-#include <autoware_planning_msgs/msg/detail/trajectory__struct.hpp>
-#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
+#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <gtest/gtest-param-test.h>
@@ -119,61 +118,60 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Values(
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, 1.0),
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0.99), 10, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0.99), 11, 1.0),
       0.99, true),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, 1.0),
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 1.0), 10, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 1.0), 11, 1.0),
       1.0, true),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, 1.0),
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 1.01), 10, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 1.01), 11, 1.0),
       1.01, false),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, -1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, -1.0),
       make_linear_trajectory(
-        make_trajectory_point(0, 0), make_trajectory_point(10, 0.99), 10, -1.0),
+        make_trajectory_point(0, 0), make_trajectory_point(10, 0.99), 11, -1.0),
       0.99, true),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, -1.0),
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 1.0), 10, -1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, -1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 1.0), 11, -1.0),
       1.0, true),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, -1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, -1.0),
       make_linear_trajectory(
-        make_trajectory_point(0, 0), make_trajectory_point(10, 1.01), 10, -1.0),
+        make_trajectory_point(0, 0), make_trajectory_point(10, 1.01), 11, -1.0),
       1.01, false),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, 1.0),
-      make_linear_trajectory(make_trajectory_point(11, 0), make_trajectory_point(20, 0.0), 10, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_linear_trajectory(make_trajectory_point(11, 0), make_trajectory_point(20, 0.0), 11, 1.0),
       0.0, true),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(11, 0), make_trajectory_point(20, 0.0), 10, 1.0),
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, 1.0),
+      make_linear_trajectory(make_trajectory_point(11, 0), make_trajectory_point(20, 0.0), 11, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
       0.0, true),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, 1.0),
-      make_linear_trajectory(make_trajectory_point(1, 0), make_trajectory_point(10, 1.0), 10, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_linear_trajectory(make_trajectory_point(1, 0), make_trajectory_point(10, 1.0), 11, 1.0),
       1.0, true),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 10, 1.0),
-      make_linear_trajectory(make_trajectory_point(-1, 0), make_trajectory_point(10, 1.0), 10, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_linear_trajectory(make_trajectory_point(-1, 0), make_trajectory_point(10, 1.0), 11, 1.0),
       1.0, true),
 
     std::make_tuple(
-      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 1000, 1.0),
-      make_linear_trajectory(
-        make_trajectory_point(0, 0), make_trajectory_point(20, 2.0), 1000, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(10, 0), 11, 1.0),
+      make_linear_trajectory(make_trajectory_point(0, 0), make_trajectory_point(20, 2.0), 21, 1.0),
       1.0, true))
 
 );
