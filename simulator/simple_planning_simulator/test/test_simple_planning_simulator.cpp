@@ -116,9 +116,9 @@ Control ackermannCmdGen(const builtin_interfaces::msg::Time & t, const Ackermann
 /**
  * @brief Generate an ActuationCommandStamped message
  * @param [in] t timestamp
- * @param [in] accel_cmd accel actuaction command
- * @param [in] brake_cmd brake actuaction command
- * @param [in] steer_cmd steer actuaction command
+ * @param [in] accel_cmd accel actuation command
+ * @param [in] brake_cmd brake actuation command
+ * @param [in] steer_cmd steer actuation command
  */
 ActuationCommandStamped actuationCmdGen(
   const builtin_interfaces::msg::Time & t, const Actuation & actuation_cmd)
