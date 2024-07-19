@@ -79,21 +79,14 @@ protected:
   {
     rclcpp::init(0, nullptr);
     rclcpp::NodeOptions options;
-    auto shared_directory =
-      ament_index_cpp::get_package_share_directory("autoware_control_validator");
     options.arguments(
-      {"--ros-args", "--params-file", shared_directory + "/config/control_validator.param.yaml"});
-    options.parameter_overrides(
-      {{"wheel_radius", 0.383},
-       {"wheel_width", 0.235},
-       {"wheel_base", 2.79},
-       {"wheel_tread", 1.64},
-       {"front_overhang", 1.0},
-       {"rear_overhang", 1.1},
-       {"left_overhang", 0.128},
-       {"right_overhang", 0.128},
-       {"vehicle_height", 2.5},
-       {"max_steer_angle", 0.70}});
+      {"--ros-args", "--params-file",
+       ament_index_cpp::get_package_share_directory("autoware_control_validator") +
+         "/config/control_validator.param.yaml",
+       "--params-file",
+       ament_index_cpp::get_package_share_directory("autoware_test_utils") +
+         "/config/test_vehicle_info.param.yaml"});
+
     node = std::make_shared<autoware::control_validator::ControlValidator>(options);
   }
 
