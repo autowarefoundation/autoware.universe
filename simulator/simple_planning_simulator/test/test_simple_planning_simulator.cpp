@@ -33,8 +33,8 @@ using geometry_msgs::msg::PoseWithCovarianceStamped;
 using nav_msgs::msg::Odometry;
 using tier4_vehicle_msgs::msg::ActuationCommandStamped;
 
-using simulation::simple_planning_simulator::SimplePlanningSimulator;
 using simulation::simple_planning_simulator::InputCommand;
+using simulation::simple_planning_simulator::SimplePlanningSimulator;
 
 std::string toStrInfo(const Odometry & o)
 {
