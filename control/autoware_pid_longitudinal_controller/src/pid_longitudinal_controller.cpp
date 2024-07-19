@@ -594,11 +594,9 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
 
   const bool stopping_condition = stop_dist < p.stopping_state_stop_dist;
 
-  const bool is_stopped =
-    std::abs(current_vel) < p.stopped_state_entry_vel && current_acc < p.stopped_state_entry_acc;
-  RCLCPP_DEBUG_STREAM(
-    logger_, "is_stopped: " << is_stopped << ", current_vel: " << current_vel
-                            << ", current_acc: " << current_acc);
+  const bool is_stopped = std::abs(current_vel) < p.stopped_state_entry_vel &&
+                          std::abs(current_acc) < p.stopped_state_entry_acc;
+
   // Case where the ego slips in the opposite direction of the gear due to e.g. a slope is also
   // considered as a stop
   const bool is_not_running = [&]() {
@@ -788,6 +786,10 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     m_prev_raw_ctrl_cmd.vel = ctrl_cmd_as_pedal_pos.vel;
     m_prev_raw_ctrl_cmd.acc = 0.0;  // store acceleration value
 
+    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, ctrl_cmd_as_pedal_pos.acc);
+    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, ctrl_cmd_as_pedal_pos.acc);
+    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_SLOPE_APPLIED, ctrl_cmd_as_pedal_pos.acc);
+
     RCLCPP_DEBUG(
       logger_, "[Stopped]. vel: %3.3f, acc: %3.3f", ctrl_cmd_as_pedal_pos.vel,
       ctrl_cmd_as_pedal_pos.acc);
@@ -822,24 +824,24 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     }
 
     raw_ctrl_cmd.acc = std::clamp(raw_ctrl_cmd.acc, m_min_acc, m_max_acc);
+    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, raw_ctrl_cmd.acc);
     raw_ctrl_cmd.acc = longitudinal_utils::applyDiffLimitFilter(
       raw_ctrl_cmd.acc, m_prev_raw_ctrl_cmd.acc, control_data.dt, m_max_jerk, m_min_jerk);
+    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, raw_ctrl_cmd.acc);
 
     // store acceleration without slope compensation
     m_prev_raw_ctrl_cmd = raw_ctrl_cmd;
 
     ctrl_cmd_as_pedal_pos.acc =
       applySlopeCompensation(raw_ctrl_cmd.acc, control_data.slope_angle, control_data.shift);
+    m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_SLOPE_APPLIED, ctrl_cmd_as_pedal_pos.acc);
     ctrl_cmd_as_pedal_pos.vel = raw_ctrl_cmd.vel;
   }
 
-  m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, m_prev_raw_ctrl_cmd.acc);
   storeAccelCmd(m_prev_raw_ctrl_cmd.acc);
 
-  m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_SLOPE_APPLIED, ctrl_cmd_as_pedal_pos.acc);
   ctrl_cmd_as_pedal_pos.acc = longitudinal_utils::applyDiffLimitFilter(
     ctrl_cmd_as_pedal_pos.acc, m_prev_ctrl_cmd.acc, control_data.dt, m_max_pedal_pos_diff_rate);
-  m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, ctrl_cmd_as_pedal_pos.acc);
 
   // update debug visualization
   updateDebugVelAcc(control_data);
