@@ -64,7 +64,7 @@ protected:
   pcl::PointCloud<pcl::PointXYZ>::Ptr cropped_pointcloud_;
 
 public:
-  explicit Validator(PointsNumThresholdParam & points_num_threshold_param);
+  explicit Validator(const PointsNumThresholdParam & points_num_threshold_param);
   inline pcl::PointCloud<pcl::PointXYZ>::Ptr getDebugPointCloudWithinObject()
   {
     return cropped_pointcloud_;
@@ -107,7 +107,7 @@ public:
     const autoware_perception_msgs::msg::DetectedObject & object) override;
   std::optional<size_t> getPointCloudWithinObject(
     const autoware_perception_msgs::msg::DetectedObject & object,
-    const pcl::PointCloud<pcl::PointXY>::Ptr neighbor_pointcloud);
+    const pcl::PointCloud<pcl::PointXY>::Ptr pointcloud);
 };
 class Validator3D : public Validator
 {

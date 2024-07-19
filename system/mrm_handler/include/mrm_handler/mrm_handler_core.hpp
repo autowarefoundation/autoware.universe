@@ -87,6 +87,8 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<
     autoware_adapi_v1_msgs::msg::OperationModeState>
     sub_operation_mode_state_{this, "~/input/api/operation_mode/state"};
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::GearCommand>
+    sub_gear_cmd_{this, "~/input/gear"};
 
   tier4_system_msgs::msg::OperationModeAvailability::ConstSharedPtr operation_mode_availability_;
 
@@ -153,7 +155,6 @@ private:
   void handleFailedRequest();
   autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
-  bool isDrivingBackwards();
   bool isEmergency() const;
   bool isControlModeAutonomous();
   bool isOperationModeAutonomous();
