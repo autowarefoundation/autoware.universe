@@ -430,6 +430,7 @@ void AstarSearch::setPath(const AstarNode & goal_node)
       waypoints_.waypoints.push_back({it->pose, next_it->is_back});
     }
   }
+  waypoints_.waypoints.push_back(waypoints.back());
 }
 
 bool AstarSearch::isGoal(const AstarNode & node) const
