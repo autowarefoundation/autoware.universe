@@ -48,9 +48,8 @@ double PIDController::calculate(
 
   static double virtual_displacement_error_integral {0.0};
   virtual_displacement_error_integral += virtual_displacement_error * dt;
-  virtual_displacement_error_integral = std::min(std::max(virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i);
   
-  const double ret_i = enable_integration ? p.ki * virtual_displacement_error_integral : 0.0;
+  const double ret_i = enable_integration ? std::min(std::max(p.ki *virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i) : 0.0;
   std::cerr << "ret_i: " << ret_i << ", max: " << p.max_ret_i << ", min: " << p.min_ret_i << std::endl;
 
   double ret_d = p.kd * error;
