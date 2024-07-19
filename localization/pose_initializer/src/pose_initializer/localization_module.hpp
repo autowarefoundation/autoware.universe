@@ -20,6 +20,8 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
+#include <string>
+
 class LocalizationModule
 {
 private:
