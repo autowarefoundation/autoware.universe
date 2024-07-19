@@ -31,6 +31,7 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -97,7 +98,8 @@ public:
     objects_of_interest_marker_interface_ptr_map_(
       std::move(objects_of_interest_marker_interface_ptr_map)),
     steering_factor_interface_ptr_(
-      std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name)))
+      std::make_unique<SteeringFactorInterface>(&node, utils::convertToSnakeCase(name))),
+    time_keeper_(std::make_shared<universe_utils::TimeKeeper>())
   {
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
       uuid_map_.emplace(module_name, generateUUID());
@@ -244,6 +246,8 @@ public:
     previous_module_output_ = previous_module_output;
   }
 
+  std::shared_ptr<universe_utils::TimeKeeper> getTimeKeeper() const { return time_keeper_; }
+
   /**
    * @brief set planner data
    */
@@ -331,8 +335,15 @@ private:
   {
     return std::any_of(
       rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(), [&](const auto & rtc) {
-        return rtc.second->isRegistered(uuid_map_.at(rtc.first)) &&
-               rtc.second->isActivated(uuid_map_.at(rtc.first));
+        if (!rtc.second->isRegistered(uuid_map_.at(rtc.first))) {
+          return false;
+        }
+
+        if (rtc.second->isTerminated(uuid_map_.at(rtc.first))) {
+          return true;
+        }
+
+        return rtc.second->isActivated(uuid_map_.at(rtc.first));
       });
   }
 
@@ -341,7 +352,8 @@ private:
     return std::any_of(
       rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(), [&](const auto & rtc) {
         return rtc.second->isRegistered(uuid_map_.at(rtc.first)) &&
-               !rtc.second->isActivated(uuid_map_.at(rtc.first));
+               !rtc.second->isActivated(uuid_map_.at(rtc.first)) &&
+               !rtc.second->isTerminated(uuid_map_.at(rtc.first));
       });
   }
 
@@ -641,6 +653,8 @@ protected:
   mutable MarkerArray debug_marker_;
 
   mutable MarkerArray drivable_lanes_marker_;
+
+  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 };
 
 }  // namespace autoware::behavior_path_planner

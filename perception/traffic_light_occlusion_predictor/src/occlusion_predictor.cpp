@@ -13,14 +13,15 @@
 // limitations under the License.
 //
 
-#include "traffic_light_occlusion_predictor/occlusion_predictor.hpp"
+#include "occlusion_predictor.hpp"
 
+#include <algorithm>
 namespace
 {
 
-traffic_light::Ray point2ray(const pcl::PointXYZ & pt)
+autoware::traffic_light::Ray point2ray(const pcl::PointXYZ & pt)
 {
-  traffic_light::Ray ray;
+  autoware::traffic_light::Ray ray;
   ray.dist = std::sqrt(pt.x * pt.x + pt.y * pt.y + pt.z * pt.z);
   ray.elevation = RAD2DEG(std::atan2(pt.y, std::hypot(pt.x, pt.z)));
   ray.azimuth = RAD2DEG(std::atan2(pt.x, pt.z));
@@ -29,7 +30,7 @@ traffic_light::Ray point2ray(const pcl::PointXYZ & pt)
 
 }  // namespace
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 
 CloudOcclusionPredictor::CloudOcclusionPredictor(
@@ -211,7 +212,9 @@ uint32_t CloudOcclusionPredictor::predict(
 {
   const uint32_t horizontal_sample_num = 20;
   const uint32_t vertical_sample_num = 20;
-  static_assert(horizontal_sample_num > 1 && vertical_sample_num > 1);
+  static_assert(horizontal_sample_num > 1);
+  static_assert(vertical_sample_num > 1);
+
   const float min_dist_from_occlusion_to_tl = 5.0f;
 
   pcl::PointCloud<pcl::PointXYZ> tl_sample_cloud;
@@ -251,4 +254,4 @@ uint32_t CloudOcclusionPredictor::predict(
   return 100 * occluded_num / tl_sample_cloud.size();
 }
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light

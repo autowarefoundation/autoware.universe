@@ -165,9 +165,9 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // the avoidance path is already approved
-    const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
-    const auto is_approved = (helper_->getShift(object_pos) > 0.0 && is_object_on_right) ||
-                             (helper_->getShift(object_pos) < 0.0 && !is_object_on_right);
+    const auto is_approved =
+      (helper_->getShift(object.getPosition()) > 0.0 && is_object_on_right) ||
+      (helper_->getShift(object.getPosition()) < 0.0 && !is_object_on_right);
     if (is_approved) {
       return std::make_pair(desire_shift_length, avoidance_distance);
     }
@@ -239,10 +239,18 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
   const auto is_forward_object = [](const auto & object) { return object.longitudinal > 0.0; };
 
+  const auto is_on_path = [this](const auto & object) {
+    const auto [overhang, point] = object.overhang_points.front();
+    return std::abs(overhang) < 0.5 * data_->parameters.vehicle_width;
+  };
+
   const auto is_valid_shift_line = [](const auto & s) {
     return s.start_longitudinal > 0.0 && s.start_longitudinal < s.end_longitudinal;
   };
 
+  ObjectDataArray unavoidable_objects;
+
+  // target objects are sorted by longitudinal distance.
   AvoidOutlines outlines;
   for (auto & o : data.target_objects) {
     if (!o.avoid_margin.has_value()) {
@@ -253,22 +261,22 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       } else {
         o.info = ObjectInfo::INSUFFICIENT_DRIVABLE_SPACE;
       }
-      if (o.avoid_required && is_forward_object(o)) {
+      if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
+        unavoidable_objects.push_back(o);
         continue;
       }
     }
 
-    const auto is_object_on_right = utils::static_obstacle_avoidance::isOnRight(o);
     const auto desire_shift_length =
-      helper_->getShiftLength(o, is_object_on_right, o.avoid_margin.value());
-    if (utils::static_obstacle_avoidance::isSameDirectionShift(
-          is_object_on_right, desire_shift_length)) {
+      helper_->getShiftLength(o, isOnRight(o), o.avoid_margin.value());
+    if (utils::static_obstacle_avoidance::isSameDirectionShift(isOnRight(o), desire_shift_length)) {
       o.info = ObjectInfo::SAME_DIRECTION_SHIFT;
-      if (o.avoid_required && is_forward_object(o)) {
+      if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
+        unavoidable_objects.push_back(o);
         continue;
       }
     }
@@ -276,10 +284,22 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     // calculate feasible shift length based on behavior policy
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
     if (!feasible_shift_profile.has_value()) {
-      if (o.avoid_required && is_forward_object(o)) {
+      if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
+        unavoidable_objects.push_back(o);
         continue;
+      }
+    }
+
+    // If there is an object that cannot be avoided, this module only avoids object on the same side
+    // as unavoidable object.
+    if (!unavoidable_objects.empty()) {
+      if (isOnRight(unavoidable_objects.front()) && !isOnRight(o)) {
+        break;
+      }
+      if (!isOnRight(unavoidable_objects.front()) && isOnRight(o)) {
+        break;
       }
     }
 
@@ -363,9 +383,8 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       if (is_return_shift_to_goal) {
         return true;
       }
-      const auto & object_pos = o.object.kinematics.initial_pose_with_covariance.pose.position;
       const bool has_object_near_goal =
-        autoware::universe_utils::calcDistance2d(goal_pose.position, object_pos) <
+        autoware::universe_utils::calcDistance2d(goal_pose.position, o.getPosition()) <
         parameters_->object_check_goal_distance;
       return has_object_near_goal;
     }();
@@ -1027,8 +1046,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
     const auto has_object_near_goal =
       std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
         return autoware::universe_utils::calcDistance2d(
-                 data_->route_handler->getGoalPose().position,
-                 o.object.kinematics.initial_pose_with_covariance.pose.position) <
+                 data_->route_handler->getGoalPose().position, o.getPosition()) <
                parameters_->object_check_goal_distance;
       });
     if (has_object_near_goal) {
@@ -1097,9 +1115,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   if (utils::isAllowedGoalModification(data_->route_handler)) {
     const bool has_last_shift_near_goal =
       std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
-        return autoware::universe_utils::calcDistance2d(
-                 last_sl.end.position,
-                 o.object.kinematics.initial_pose_with_covariance.pose.position) <
+        return autoware::universe_utils::calcDistance2d(last_sl.end.position, o.getPosition()) <
                parameters_->object_check_goal_distance;
       });
     if (has_last_shift_near_goal) {

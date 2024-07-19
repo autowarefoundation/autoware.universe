@@ -23,6 +23,7 @@
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware/universe_utils/ros/self_pose_listener.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware/velocity_smoother/resample.hpp"
 #include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
@@ -92,7 +93,8 @@ private:
     this, "/localization/kinematic_state"};
   autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped>
     sub_current_acceleration_{this, "~/input/acceleration"};
-  autoware::universe_utils::InterProcessPollingSubscriber<VelocityLimit>
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    VelocityLimit, universe_utils::polling_policy::Newest>
     sub_external_velocity_limit_{this, "~/input/external_velocity_limit_mps"};
   autoware::universe_utils::InterProcessPollingSubscriber<OperationModeState> sub_operation_mode_{
     this, "~/input/operation_mode_state"};
@@ -260,6 +262,8 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_jerk_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_max_velocity_;
+  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
+    debug_processing_time_detail_;
 
   // For Jerk Filtered Algorithm Debug
   rclcpp::Publisher<Trajectory>::SharedPtr pub_forward_filtered_trajectory_;
@@ -275,6 +279,8 @@ private:
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
   std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
+
+  mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
 };
 }  // namespace autoware::velocity_smoother
 
