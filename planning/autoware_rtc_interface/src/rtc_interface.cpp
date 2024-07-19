@@ -322,10 +322,10 @@ bool RTCInterface::isForceActivated(const UUID & uuid) const
   std::lock_guard<std::mutex> lock(mutex_);
   const auto itr = std::find_if(
     registered_status_.statuses.begin(), registered_status_.statuses.end(),
-    [uuid](auto & s) { return s.uuid == uuid; });
+    [uuid](const auto & s) { return s.uuid == uuid; });
 
   if (itr != registered_status_.statuses.end()) {
-    if (itr->state.type > State::RUNNING) {
+    if (itr->state.type != State::WAITING_FOR_EXECUTION && itr->state.type != State::RUNNING) {
       return false;
     }
     if (itr->command_status.type == Command::ACTIVATE && !itr->safe) {
