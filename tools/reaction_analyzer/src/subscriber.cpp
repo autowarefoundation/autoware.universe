@@ -272,7 +272,8 @@ void SubscriberBase::on_trajectory(
   if (zero_vel_idx) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     // set header time
-    auto buffer = std::get<MessageBuffer>(variant);
+    // cppcheck-suppress constVariableReference
+    auto & buffer = std::get<MessageBuffer>(variant);
     buffer->header.stamp = msg_ptr->header.stamp;
     buffer->published_stamp = msg_ptr->header.stamp;
     mutex_.lock();
@@ -363,7 +364,8 @@ void SubscriberBase::on_pointcloud(
   if (search_pointcloud_near_pose(pcl_pointcloud, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     // set header time
-    auto buffer = std::get<MessageBuffer>(variant);
+    // cppcheck-suppress constVariableReference
+    auto & buffer = std::get<MessageBuffer>(variant);
     buffer->header.stamp = msg_ptr->header.stamp;
     buffer->published_stamp = msg_ptr->header.stamp;
     mutex_.lock();
@@ -440,7 +442,8 @@ void SubscriberBase::on_predicted_objects(
   if (search_predicted_objects_near_pose(*msg_ptr, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     // set header time
-    auto buffer = std::get<MessageBuffer>(variant);
+    // cppcheck-suppress constVariableReference
+    auto & buffer = std::get<MessageBuffer>(variant);
     buffer->header.stamp = msg_ptr->header.stamp;
     buffer->published_stamp = msg_ptr->header.stamp;
     mutex_.lock();
@@ -520,7 +523,8 @@ void SubscriberBase::on_detected_objects(
   if (search_detected_objects_near_pose(output_objs, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     // set header time
-    auto buffer = std::get<MessageBuffer>(variant);
+    // cppcheck-suppress constVariableReference
+    auto & buffer = std::get<MessageBuffer>(variant);
     buffer->header.stamp = msg_ptr->header.stamp;
     buffer->published_stamp = msg_ptr->header.stamp;
     mutex_.lock();
