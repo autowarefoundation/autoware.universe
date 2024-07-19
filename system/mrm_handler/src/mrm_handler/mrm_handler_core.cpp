@@ -12,6 +12,7 @@
 // governing permissions and limitations under the License.
 
 #include "mrm_handler/mrm_handler_core.hpp"
+#include <tier4_api_utils/tier4_api_utils.hpp>
 
 #include <chrono>
 #include <memory>
@@ -35,6 +36,7 @@ MrmHandler::MrmHandler(const rclcpp::NodeOptions & options) : Node("mrm_handler"
   param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency", true);
 
   using std::placeholders::_1;
+  using std::placeholders::_2;
 
   // Subscribers with callback
   sub_operation_mode_availability_ =
@@ -65,6 +67,11 @@ MrmHandler::MrmHandler(const rclcpp::NodeOptions & options) : Node("mrm_handler"
   client_mrm_emergency_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
     "~/output/mrm/emergency_stop/operate", rmw_qos_profile_services_default,
     client_mrm_emergency_stop_group_);
+
+  // Service
+  srv_clear_emergency_ = this->create_service<tier4_external_api_msgs::srv::SetEmergency>(
+    "~/service/clear_emergency_holding",
+    std::bind(&MrmHandler::onClearEmergencyService, this, _1, _2));
 
   // Initialize
   mrm_state_.stamp = this->now();
@@ -105,6 +112,24 @@ void MrmHandler::onOperationModeAvailability(
   const auto emergency_duration =
     (this->now() - stamp_autonomous_become_unavailable_.value()).seconds();
   is_emergency_holding_ = (emergency_duration > param_.timeout_emergency_recovery);
+}
+
+void MrmHandler::onClearEmergencyService(
+  tier4_external_api_msgs::srv::SetEmergency::Request::SharedPtr request,
+  tier4_external_api_msgs::srv::SetEmergency::Response::SharedPtr response)
+{
+  if (!param_.use_emergency_holding) {
+    response->status = tier4_api_utils::response_success("Emergency Holding is not used.");
+    return;
+  }
+
+  if (!request->emergency) {
+    is_emergency_holding_ = false;
+    stamp_autonomous_become_unavailable_.reset();
+    response->status = tier4_api_utils::response_success("Emergency Holding state was cleared.");
+  } else {
+    response->status = tier4_api_utils::response_warn("Emergency Holding state was already cleared.");
+  }
 }
 
 void MrmHandler::publishHazardCmd()
