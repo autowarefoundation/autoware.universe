@@ -47,6 +47,23 @@ std::string toStrInfo(const Odometry & o)
   return ss.str();
 }
 
+enum class CommandType { Ackermann, Actuation };
+
+struct Ackermann
+{
+  double steer = 0.0;
+  double steer_rate = 0.0;
+  double vel = 0.0;
+  double acc = 0.0;
+  double jerk = 0.0;
+};
+struct Actuation
+{
+  double steer = 0.0;
+  double accel = 0.0;
+  double brake = 0.0;
+};
+
 class PubSubNode : public rclcpp::Node
 {
 public:
@@ -82,19 +99,17 @@ public:
  * @param [in] acc [m/s²] acceleration
  * @param [in] jerk [m/s3] jerk
  */
-Control cmdGen(
-  const builtin_interfaces::msg::Time & t, double steer, double steer_rate, double vel, double acc,
-  double jerk)
+Control ackermannCmdGen(const builtin_interfaces::msg::Time & t, const Ackermann & ackermann_cmd)
 {
   Control cmd;
   cmd.stamp = t;
   cmd.lateral.stamp = t;
-  cmd.lateral.steering_tire_angle = steer;
-  cmd.lateral.steering_tire_rotation_rate = steer_rate;
+  cmd.lateral.steering_tire_angle = ackermann_cmd.steer;
+  cmd.lateral.steering_tire_rotation_rate = ackermann_cmd.steer_rate;
   cmd.longitudinal.stamp = t;
-  cmd.longitudinal.velocity = vel;
-  cmd.longitudinal.acceleration = acc;
-  cmd.longitudinal.jerk = jerk;
+  cmd.longitudinal.velocity = ackermann_cmd.vel;
+  cmd.longitudinal.acceleration = ackermann_cmd.acc;
+  cmd.longitudinal.jerk = ackermann_cmd.jerk;
   return cmd;
 }
 
@@ -106,13 +121,13 @@ Control cmdGen(
  * @param [in] steer_cmd steer actuaction command
  */
 ActuationCommandStamped actuationCmdGen(
-  const builtin_interfaces::msg::Time & t, double accel_cmd, double brake_cmd, double steer_cmd)
+  const builtin_interfaces::msg::Time & t, const Actuation & actuation_cmd)
 {
   ActuationCommandStamped cmd;
   cmd.header.stamp = t;
-  cmd.actuation.accel_cmd = accel_cmd;
-  cmd.actuation.brake_cmd = brake_cmd;
-  cmd.actuation.steer_cmd = steer_cmd;
+  cmd.actuation.accel_cmd = actuation_cmd.accel;
+  cmd.actuation.brake_cmd = actuation_cmd.brake;
+  cmd.actuation.steer_cmd = actuation_cmd.steer;
   return cmd;
 }
 
@@ -146,30 +161,50 @@ void sendGear(
 
 /**
  * @brief publish the given command message
- * @param [in] cmd command to publish (Control or ActuationCommandStamped)
+ * @param [in] cmd_orig command to publish
  * @param [in] sim_node pointer to the simulation node
  * @param [in] pub_sub_node pointer to the node used for communication
  */
-void sendCommand(
-  InputCommand cmd, rclcpp::Node::SharedPtr sim_node, std::shared_ptr<PubSubNode> pub_sub_node)
+void sendAckermannCommand(
+  const Control & cmd_orig, rclcpp::Node::SharedPtr sim_node,
+  std::shared_ptr<PubSubNode> pub_sub_node)
 {
-  std::visit(
-    [&](auto && cmd) {
-      for (int i = 0; i < 300; ++i) {
-        using T = std::decay_t<decltype(cmd)>;
-        if constexpr (std::is_same_v<T, Control>) {
-          cmd.stamp = sim_node->now();
-          pub_sub_node->pub_ackermann_command_->publish(cmd);
-        } else if constexpr (std::is_same_v<T, ActuationCommandStamped>) {
-          cmd.header.stamp = sim_node->now();
-          pub_sub_node->pub_actuation_command_->publish(cmd);
-        }
-        rclcpp::spin_some(sim_node);
-        rclcpp::spin_some(pub_sub_node);
-        std::this_thread::sleep_for(std::chrono::milliseconds{10LL});
-      }
-    },
-    cmd);
+  auto cmd = cmd_orig;
+  for (int i = 0; i < 150; ++i) {
+    cmd.stamp = sim_node->now();
+    pub_sub_node->pub_ackermann_command_->publish(cmd);
+    rclcpp::spin_some(sim_node);
+    rclcpp::spin_some(pub_sub_node);
+    std::this_thread::sleep_for(std::chrono::milliseconds{10LL});
+  }
+}
+
+void sendActuationCommand(
+  const ActuationCommandStamped & cmd_orig, rclcpp::Node::SharedPtr sim_node,
+  std::shared_ptr<PubSubNode> pub_sub_node)
+{
+  auto cmd = cmd_orig;
+  for (int i = 0; i < 150; ++i) {
+    cmd.header.stamp = sim_node->now();
+    pub_sub_node->pub_actuation_command_->publish(cmd);
+    rclcpp::spin_some(sim_node);
+    rclcpp::spin_some(pub_sub_node);
+    std::this_thread::sleep_for(std::chrono::milliseconds{10LL});
+  }
+}
+
+void sendCommand(
+  const CommandType & cmd_type, rclcpp::Node::SharedPtr sim_node,
+  std::shared_ptr<PubSubNode> pub_sub_node, const builtin_interfaces::msg::Time & t,
+  const Ackermann & ackermann_cmd, const Actuation & actuation_cmd)
+{
+  if (cmd_type == CommandType::Ackermann) {
+    sendAckermannCommand(ackermannCmdGen(t, ackermann_cmd), sim_node, pub_sub_node);
+  } else if (cmd_type == CommandType::Actuation) {
+    sendActuationCommand(actuationCmdGen(t, actuation_cmd), sim_node, pub_sub_node);
+  } else {
+    throw std::invalid_argument("command type is unexpected.");
+  }
 }
 
 // Check which direction the vehicle is heading on the baselink coordinates.
@@ -232,7 +267,8 @@ void declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
 
 // Send a control command and run the simulation.
 // Then check if the vehicle is moving in the desired direction.
-class TestSimplePlanningSimulator : public ::testing::TestWithParam<std::string>
+class TestSimplePlanningSimulator
+: public ::testing::TestWithParam<std::tuple<CommandType, std::string>>
 {
 };
 
@@ -240,7 +276,9 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
 {
   rclcpp::init(0, nullptr);
 
-  const auto vehicle_model_type = GetParam();
+  const auto params = GetParam();
+  const auto command_type = std::get<0>(params);
+  const auto vehicle_model_type = std::get<1>(params);
 
   std::cout << "\n\n vehicle model = " << vehicle_model_type << std::endl << std::endl;
   rclcpp::NodeOptions node_options;
@@ -248,23 +286,20 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   node_options.append_parameter_override("vehicle_model_type", vehicle_model_type);
   node_options.append_parameter_override("initial_engage_state", true);
   node_options.append_parameter_override("add_measurement_noise", false);
-  if (vehicle_model_type == "ACTUATION_CMD") {
-    node_options.append_parameter_override("accel_time_delay", 1.0);
-    node_options.append_parameter_override("accel_time_constant", 1.0);
-    node_options.append_parameter_override("brake_time_delay", 1.0);
-    node_options.append_parameter_override("brake_time_constant", 1.0);
-    node_options.append_parameter_override("convert_accel_cmd", true);
-    node_options.append_parameter_override("convert_brake_cmd", true);
-    node_options.append_parameter_override("convert_steer_cmd", true);
-    const auto share_dir =
-      ament_index_cpp::get_package_share_directory("simple_planning_simulator");
-    const auto accel_map_path = share_dir + "/test/actuation_cmd_map/accel_map.csv";
-    const auto brake_map_path = share_dir + "/test/actuation_cmd_map/brake_map.csv";
-    const auto steer_map_path = share_dir + "/test/actuation_cmd_map/steer_map.csv";
-    node_options.append_parameter_override("accel_map_path", accel_map_path);
-    node_options.append_parameter_override("brake_map_path", brake_map_path);
-    node_options.append_parameter_override("steer_map_path", steer_map_path);
-  }
+  node_options.append_parameter_override("accel_time_delay", 0.2);
+  node_options.append_parameter_override("accel_time_constant", 0.2);
+  node_options.append_parameter_override("brake_time_delay", 0.2);
+  node_options.append_parameter_override("brake_time_constant", 0.2);
+  node_options.append_parameter_override("convert_accel_cmd", true);
+  node_options.append_parameter_override("convert_brake_cmd", true);
+  node_options.append_parameter_override("convert_steer_cmd", true);
+  const auto share_dir = ament_index_cpp::get_package_share_directory("simple_planning_simulator");
+  const auto accel_map_path = share_dir + "/test/actuation_cmd_map/accel_map.csv";
+  const auto brake_map_path = share_dir + "/test/actuation_cmd_map/brake_map.csv";
+  const auto steer_map_path = share_dir + "/test/actuation_cmd_map/steer_map.csv";
+  node_options.append_parameter_override("accel_map_path", accel_map_path);
+  node_options.append_parameter_override("brake_map_path", brake_map_path);
+  node_options.append_parameter_override("steer_map_path", steer_map_path);
 
   declareVehicleInfoParams(node_options);
   const auto sim_node = std::make_shared<SimplePlanningSimulator>(node_options);
@@ -275,43 +310,31 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   const double target_acc = 5.0f;
   const double target_steer = 0.2f;
 
+  // NOTE: As the value of the actuation map is known, roughly determine whether it is
+  // acceleration or braking, and whether it turns left or right, and generate an actuation
+  // command. So do not change the map. If it is necessary, you need to change this parameters as
+  // well.
+  const double target_steer_actuation = 10.0f;
+  const double target_accel_actuation = 0.5f;
+  // const double target_brake_actuation = 0.5f;  // unused for now.
+
   auto _resetInitialpose = [&]() { resetInitialpose(sim_node, pub_sub_node); };
   auto _sendFwdGear = [&]() { sendGear(GearCommand::DRIVE, sim_node, pub_sub_node); };
   auto _sendBwdGear = [&]() { sendGear(GearCommand::REVERSE, sim_node, pub_sub_node); };
-  auto _sendCommand =
-    [&](const auto & t, double steer, double steer_rate, double vel, double acc, double jerk) {
-      if (vehicle_model_type == "ACTUATION_CMD") {
-        // NOTE: As the value of the actuation map is known, roughly determine whether it is
-        // acceleration or braking, and whether it turns left or right, and generate an actuation
-        // command. The test result depends on the map, so if the map is updated, it is necessary to
-        // modify the test so that it passes.
-        const double accel_cmd = acc > 0.0 ? 0.5 : 0;
-        const double brake_cmd = acc < 0.0 ? 0.5 : 0;
-        const double steer_cmd = std::invoke([&]() -> double {
-          if (std::abs(steer) < 1e-3) {
-            return 0.0;
-          } else if (steer > 0.0) {
-            return 10.0;
-          } else {
-            return -10.0;
-          }
-        });
-        auto cmd = actuationCmdGen(t, accel_cmd, brake_cmd, steer_cmd);
-        sendCommand(cmd, sim_node, pub_sub_node);
-      } else {
-        auto cmd = cmdGen(t, steer, steer_rate, vel, acc, jerk);
-        sendCommand(cmd, sim_node, pub_sub_node);
-      }
-    };
+  auto _sendCommand = [&](auto ackermann_cmd, auto actuation_cmd) {
+    const auto t = sim_node->now();
+    sendCommand(command_type, sim_node, pub_sub_node, t, ackermann_cmd, actuation_cmd);
+  };
 
   // check pub-sub connections
   {
     size_t expected = 1;
-    if (vehicle_model_type == "ACTUATION_CMD") {
-      EXPECT_EQ(pub_sub_node->pub_actuation_command_->get_subscription_count(), expected);
-    } else {
-      EXPECT_EQ(pub_sub_node->pub_ackermann_command_->get_subscription_count(), expected);
-    }
+    // actuation or ackermann must be subscribed
+    const auto sub_command_count =
+      (command_type == CommandType::Actuation)
+        ? pub_sub_node->pub_actuation_command_->get_subscription_count()
+        : pub_sub_node->pub_ackermann_command_->get_subscription_count();
+    EXPECT_EQ(sub_command_count, expected);
     EXPECT_EQ(pub_sub_node->pub_gear_cmd_->get_subscription_count(), expected);
     EXPECT_EQ(pub_sub_node->pub_initialpose_->get_subscription_count(), expected);
     EXPECT_EQ(pub_sub_node->current_odom_sub_->get_publisher_count(), expected);
@@ -324,39 +347,50 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   // go forward
   _resetInitialpose();
   _sendFwdGear();
-  _sendCommand(sim_node->now(), 0.0f, 0.0f, target_vel, target_acc, 0.0f);
+  _sendCommand(
+    Ackermann{0.0f, 0.0f, target_vel, target_acc, 0.0f},
+    Actuation{0.0f, target_accel_actuation, 0.0f});
   isOnForward(*(pub_sub_node->current_odom_), init_state);
 
   // go backward
   // NOTE: positive acceleration with reverse gear drives the vehicle backward.
   _resetInitialpose();
   _sendBwdGear();
-  _sendCommand(sim_node->now(), 0.0f, 0.0f, -target_vel, target_acc, 0.0f);
+  _sendCommand(
+    Ackermann{0.0f, 0.0f, -target_vel, target_acc, 0.0f},
+    Actuation{0.0f, target_accel_actuation, 0.0f});
   isOnBackward(*(pub_sub_node->current_odom_), init_state);
 
   // go forward left
   _resetInitialpose();
   _sendFwdGear();
-  _sendCommand(sim_node->now(), target_steer, 0.0f, target_vel, target_acc, 0.0f);
+  _sendCommand(
+    Ackermann{target_steer, 0.0f, target_vel, target_acc, 0.0f},
+    Actuation{target_steer_actuation, target_accel_actuation, 0.0f});
   isOnForwardLeft(*(pub_sub_node->current_odom_), init_state);
 
   // go backward right
   // NOTE: positive acceleration with reverse gear drives the vehicle backward.
   _resetInitialpose();
   _sendBwdGear();
-  _sendCommand(sim_node->now(), -target_steer, 0.0f, -target_vel, target_acc, 0.0f);
+  _sendCommand(
+    Ackermann{-target_steer, 0.0f, -target_vel, target_acc, 0.0f},
+    Actuation{-target_steer_actuation, target_accel_actuation, 0.0f});
   isOnBackwardRight(*(pub_sub_node->current_odom_), init_state);
 
   rclcpp::shutdown();
 }
 
-// clang-format off
-const std::string VEHICLE_MODEL_LIST[] = {   // NOLINT
-  "IDEAL_STEER_VEL", "IDEAL_STEER_ACC", "IDEAL_STEER_ACC_GEARED",
-  "DELAY_STEER_VEL", "DELAY_STEER_ACC", "DELAY_STEER_ACC_GEARED",
-  "DELAY_STEER_ACC_GEARED_WO_FALL_GUARD", "ACTUATION_CMD"
-};
-// clang-format on
-
 INSTANTIATE_TEST_SUITE_P(
-  TestForEachVehicleModel, TestSimplePlanningSimulator, ::testing::ValuesIn(VEHICLE_MODEL_LIST));
+  TestForEachVehicleModelTrue, TestSimplePlanningSimulator,
+  ::testing::Values(
+    /* Ackermann type */
+    std::make_tuple(CommandType::Ackermann, "IDEAL_STEER_VEL"),
+    std::make_tuple(CommandType::Ackermann, "IDEAL_STEER_ACC"),
+    std::make_tuple(CommandType::Ackermann, "IDEAL_STEER_ACC_GEARED"),
+    std::make_tuple(CommandType::Ackermann, "DELAY_STEER_VEL"),
+    std::make_tuple(CommandType::Ackermann, "DELAY_STEER_ACC"),
+    std::make_tuple(CommandType::Ackermann, "DELAY_STEER_ACC_GEARED"),
+    std::make_tuple(CommandType::Ackermann, "DELAY_STEER_ACC_GEARED_WO_FALL_GUARD"),
+    /* Actuation type */
+    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD")));
