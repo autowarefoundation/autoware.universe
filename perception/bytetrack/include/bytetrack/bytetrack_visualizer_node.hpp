@@ -51,10 +51,7 @@ public:
     cv::applyColorMap(src, color_table_, cv::COLORMAP_HSV);
   }
 
-  cv::Scalar operator()(size_t idx)
-  {
-    return color_table_.at<cv::Vec3b>(0, idx % kColorNum);
-  }
+  cv::Scalar operator()(size_t idx) { return color_table_.at<cv::Vec3b>(0, idx % kColorNum); }
 
 protected:
   cv::Mat color_table_;
