@@ -1735,7 +1735,7 @@ TEST(geometry, isTwistCovarianceValid)
 TEST(geometry, isClockwise)
 {
   using autoware::universe_utils::isClockwise;
-  using autoware::universe_utils::Point;
+  using autoware::universe_utils::alt::Point;
 
   {  // Clockwise
     const Point p1 = {0.0, 0.0, 0.0};
@@ -1763,7 +1763,7 @@ TEST(geometry, isClockwise)
 TEST(geometry, correct)
 {
   using autoware::universe_utils::correct;
-  using autoware::universe_utils::Polygon;
+  using autoware::universe_utils::alt::Polygon;
 
   {  // Correctly oriented
     Polygon poly;
@@ -1813,7 +1813,7 @@ TEST(geometry, correct)
 TEST(geometry, intersect)
 {
   using autoware::universe_utils::intersect;
-  using autoware::universe_utils::Point;
+  using autoware::universe_utils::alt::Point;
 
   {  // Normally crossing
     const Point p1 = {0.0, -1.0, 0.0};
@@ -1970,8 +1970,8 @@ TEST(geometry, intersect)
 
 TEST(geometry, within)
 {
-  using autoware::universe_utils::Point;
   using autoware::universe_utils::within;
+  using autoware::universe_utils::alt::Point;
 
   {  // The point is within the polygon
     const Point point = {0.0, 0.0, 0.0};
@@ -2058,7 +2058,7 @@ TEST(geometry, within)
 TEST(geometry, disjoint)
 {
   using autoware::universe_utils::disjoint;
-  using autoware::universe_utils::Point;
+  using autoware::universe_utils::alt::Point;
 
   {  // Two polygons are disjoint
     const Point p1 = {1.0, 1.0, 0.0};
@@ -2109,7 +2109,7 @@ TEST(geometry, disjoint)
 TEST(geometry, distance)
 {
   using autoware::universe_utils::distance;
-  using autoware::universe_utils::Point;
+  using autoware::universe_utils::alt::Point;
 
   {  // Normal setting
     const Point p = {0.0, 1.0, 0.0};
@@ -2205,7 +2205,7 @@ TEST(geometry, distance)
 TEST(geometry, coveredBy)
 {
   using autoware::universe_utils::coveredBy;
-  using autoware::universe_utils::Point;
+  using autoware::universe_utils::alt::Point;
 
   {  // The point is within the polygon
     const Point point = {0.0, 0.0, 0.0};
@@ -2247,7 +2247,7 @@ TEST(geometry, coveredBy)
 TEST(geometry, isAbove)
 {
   using autoware::universe_utils::isAbove;
-  using autoware::universe_utils::Point;
+  using autoware::universe_utils::alt::Point;
 
   {  // The point is above the line
     const Point point = {0.0, 1.0, 0.0};
@@ -2280,7 +2280,7 @@ TEST(geometry, isAbove)
 TEST(geometry, divideBySegment)
 {
   using autoware::universe_utils::divideBySegment;
-  using autoware::universe_utils::Point;
+  using autoware::universe_utils::alt::Point;
 
   {
     const Point p1 = {-1.0, 1.0, 0.0};
@@ -2315,7 +2315,7 @@ TEST(geometry, divideBySegment)
 TEST(geometry, convexHull)
 {
   using autoware::universe_utils::convexHull;
-  using autoware::universe_utils::Polygon;
+  using autoware::universe_utils::alt::Polygon;
 
   {
     Polygon points;
@@ -2365,7 +2365,7 @@ TEST(geometry, convexHull)
 TEST(geometry, area)
 {
   using autoware::universe_utils::area;
-  using autoware::universe_utils::Point;
+  using autoware::universe_utils::alt::Point;
 
   {  // Clockwise
     const Point p1 = {0.0, 0.0, 0.0};

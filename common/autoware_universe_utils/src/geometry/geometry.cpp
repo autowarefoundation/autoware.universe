@@ -361,6 +361,8 @@ bool isTwistCovarianceValid(const geometry_msgs::msg::TwistWithCovariance & twis
   return false;
 }
 
+namespace alt
+{
 Point fromGeom(const geometry_msgs::msg::Point & point)
 {
   Point _point;
@@ -377,7 +379,37 @@ Polygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon)
   return _polygon;
 }
 
-std::optional<bool> isClockwise(const Polygon & poly)
+Point fromBoost(const Point2d & point)
+{
+  return Point(point.x(), point.y(), 0.0);
+}
+
+Polygon fromBoost(const Polygon2d & polygon)
+{
+  Polygon _polygon;
+  for (const auto & point : polygon.outer()) {
+    _polygon.push_back(fromBoost(point));
+  }
+  correct(_polygon);
+  return _polygon;
+}
+
+Point2d toBoost(const Point & point)
+{
+  return Point2d(point.x(), point.y());
+}
+
+Polygon2d toBoost(const Polygon & polygon)
+{
+  Polygon2d _polygon;
+  for (const auto & point : polygon) {
+    _polygon.outer().push_back(toBoost(point));
+  }
+  return _polygon;
+}
+}  // namespace alt
+
+std::optional<bool> isClockwise(const alt::Polygon & poly)
 {
   if (const auto s = area(poly)) {
     return *s > 0;
@@ -386,7 +418,7 @@ std::optional<bool> isClockwise(const Polygon & poly)
   }
 }
 
-void correct(Polygon & poly)
+void correct(alt::Polygon & poly)
 {
   if (poly.size() < 3 || isClockwise(poly).value_or(true)) {
     return;
@@ -400,9 +432,9 @@ void correct(Polygon & poly)
 }
 
 // NOTE: much faster than boost::geometry::intersects()
-std::optional<Point> intersect(
-  const Point & seg1_start, const Point & seg1_end, const Point & seg2_start,
-  const Point & seg2_end)
+std::optional<alt::Point> intersect(
+  const alt::Point & seg1_start, const alt::Point & seg1_end, const alt::Point & seg2_start,
+  const alt::Point & seg2_end)
 {
   const auto v1 = seg1_end - seg1_start;
   const auto v2 = seg2_end - seg2_start;
@@ -423,7 +455,7 @@ std::optional<Point> intersect(
   return t * seg1_start + (1.0 - t) * seg1_end;
 }
 
-std::optional<PointList> intersect(const Polygon & poly1, const Polygon & poly2)
+std::optional<alt::PointList> intersect(const alt::Polygon & poly1, const alt::Polygon & poly2)
 {
   if (poly1.size() < 3 || poly2.size() < 3) {
     return std::nullopt;
@@ -431,7 +463,7 @@ std::optional<PointList> intersect(const Polygon & poly1, const Polygon & poly2)
 
   // TODO(mitukou1109): Use plane sweep method to improve performance
   // check if all edges of poly1 intersect with those of poly2
-  PointList intersect_points;
+  alt::PointList intersect_points;
   for (size_t i = 0; i < poly1.size(); ++i) {
     for (size_t j = 0; j < poly2.size(); ++j) {
       const auto intersect_point = intersect(
@@ -449,14 +481,16 @@ std::optional<PointList> intersect(const Polygon & poly1, const Polygon & poly2)
 
   const auto unique_points_itr = std::unique(
     intersect_points.begin(), intersect_points.end(), [](const auto & a, const auto & b) {
-      return (a - b).length() < std::numeric_limits<double>::epsilon();
+      return std::abs(a.x() - b.x()) < std::numeric_limits<double>::epsilon() &&
+             std::abs(a.y() - b.y()) < std::numeric_limits<double>::epsilon() &&
+             std::abs(a.z() - b.z()) < std::numeric_limits<double>::epsilon();
     });
   intersect_points.erase(unique_points_itr, intersect_points.end());
 
   return intersect_points;
 }
 
-std::optional<bool> within(const Point & point, const Polygon & poly)
+std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly)
 {
   // check if the polygon is valid
   if (poly.size() < 3) {
@@ -485,8 +519,13 @@ std::optional<bool> within(const Point & point, const Polygon & poly)
   return winding_number != 0;
 }
 
-std::optional<bool> within(const Polygon & poly_contained, const Polygon & poly_containing)
+std::optional<bool> within(
+  const alt::Polygon & poly_contained, const alt::Polygon & poly_containing)
 {
+  if (equals(poly_contained, poly_containing).value_or(false)) {
+    return true;
+  }
+
   // check if all points of poly_contained are within poly_containing
   for (const auto & point : poly_contained) {
     const auto is_point_within = within(point, poly_containing);
@@ -500,7 +539,7 @@ std::optional<bool> within(const Polygon & poly_contained, const Polygon & poly_
   return true;
 }
 
-std::optional<bool> disjoint(const Polygon & poly1, const Polygon & poly2)
+std::optional<bool> disjoint(const alt::Polygon & poly1, const alt::Polygon & poly2)
 {
   if (poly1.size() < 3 || poly2.size() < 3) {
     return std::nullopt;
@@ -509,7 +548,7 @@ std::optional<bool> disjoint(const Polygon & poly1, const Polygon & poly2)
   return !intersect(poly1, poly2).has_value();
 }
 
-double distance(const Point & point, const Point & seg_start, const Point & seg_end)
+double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
 {
   const auto seg_vec = seg_end - seg_start;
   const auto point_vec = point - seg_start;
@@ -526,7 +565,7 @@ double distance(const Point & point, const Point & seg_start, const Point & seg_
   }
 }
 
-double distance(const Point & point, const Polygon & poly)
+double distance(const alt::Point & point, const alt::Polygon & poly)
 {
   if (coveredBy(point, poly).value_or(false)) {
     return 0.0;
@@ -542,7 +581,7 @@ double distance(const Point & point, const Polygon & poly)
   return min_distance;
 }
 
-std::optional<bool> coveredBy(const Point & point, const Polygon & poly)
+std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & poly)
 {
   const auto is_point_within = within(point, poly);
   if (!is_point_within) {
@@ -562,15 +601,15 @@ std::optional<bool> coveredBy(const Point & point, const Polygon & poly)
   return false;
 }
 
-bool isAbove(const Point & point, const Point & seg_start, const Point & seg_end)
+bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
 {
   return (seg_end - seg_start).cross(point - seg_start).z() > 0;
 }
 
-std::array<PointList, 2> divideBySegment(
-  const PointList & points, const Point & seg_start, const Point & seg_end)
+std::array<alt::PointList, 2> divideBySegment(
+  const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end)
 {
-  PointList above_points, below_points;
+  alt::PointList above_points, below_points;
 
   for (const auto & point : points) {
     if (isAbove(point, seg_start, seg_end)) {
@@ -583,7 +622,7 @@ std::array<PointList, 2> divideBySegment(
   return {above_points, below_points};
 }
 
-std::optional<Polygon> convexHull(const PointList & points)
+std::optional<alt::Polygon> convexHull(const alt::PointList & points)
 {
   if (points.size() < 3) {
     return std::nullopt;
@@ -598,10 +637,11 @@ std::optional<Polygon> convexHull(const PointList & points)
   const auto & p_min = *p_minmax_itr.first;
   const auto & p_max = *p_minmax_itr.second;
 
-  Polygon hull;
+  alt::Polygon hull;
 
   auto make_hull = [&hull](
-                     auto self, const Point & p1, const Point & p2, const PointList & points) {
+                     auto self, const alt::Point & p1, const alt::Point & p2,
+                     const alt::PointList & points) {
     if (points.empty()) {
       return;
     }
@@ -627,7 +667,7 @@ std::optional<Polygon> convexHull(const PointList & points)
   return hull;
 }
 
-std::optional<double> area(const Polygon & poly)
+std::optional<double> area(const alt::Polygon & poly)
 {
   if (poly.size() < 3) {
     return std::nullopt;
