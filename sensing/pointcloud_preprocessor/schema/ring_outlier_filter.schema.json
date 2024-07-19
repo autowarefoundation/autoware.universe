@@ -22,17 +22,17 @@
           "default": "4"
         },
         "max_rings_num": {
-          "type": "integer",  
-          "minimum": 1,  
-          "description": "max_rings_num",  
-          "default": "128"  
+          "type": "integer",
+          "minimum": 1,
+          "description": "max_rings_num",
+          "default": "128"
         },
-        "max_points_num_per_ring": {  
-          "type": "integer",  
-          "minimum": 0,  
-          "description": "Set this value large enough such that HFoV / resolution < max_points_num_per_ring",  
-          "default": "4000"  
-        },  
+        "max_points_num_per_ring": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Set this value large enough such that HFoV / resolution < max_points_num_per_ring",
+          "default": "4000"
+        },
         "publish_outlier_pointcloud": {
           "type": "boolean",
           "description": "Flag to publish outlier pointcloud and visibility score. Due to performance concerns, please set to false during experiments.",

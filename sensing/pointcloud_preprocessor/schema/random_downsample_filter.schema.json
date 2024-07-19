@@ -6,12 +6,12 @@
     "random_downsample_filter": {
       "type": "object",
       "properties": {
-        "sample_num": {  
-          "type": "integer",  
-          "minimum": 0,  
-          "description": "number of indices to be sampled",  
-          "default": "1500"  
-        }  
+        "sample_num": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "number of indices to be sampled",
+          "default": "1500"
+        }
       },
       "required": ["sample_num"],
       "additionalProperties": false

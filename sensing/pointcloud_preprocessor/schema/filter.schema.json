@@ -16,11 +16,11 @@
           "description": "output frame id",
           "default": ""
         },
-        "max_queue_size": {  
-          "type": "integer",  
-          "minimum": 0,  
-          "description": "max queue size of input/output topics",  
-          "default": 5  
+        "max_queue_size": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "max queue size of input/output topics",
+          "default": 5
         },
         "use_indices": {
           "type": "boolean",
