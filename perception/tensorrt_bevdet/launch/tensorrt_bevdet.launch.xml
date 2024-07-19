@@ -11,11 +11,11 @@
   <arg name="output/pointcloud" default="points_painting"/>
   <arg name="output/boxes" default="boxes"/>
 
-  <arg name="onnx_file" default="$(find-pkg-share trt_bevdet)/data/bevdet_one_lt_d.onnx"/>
-  <arg name="engine_file" default="$(find-pkg-share trt_bevdet)/data/bevdet_one_lt_d.engine"/>
-  <arg name="cam_config" default="$(find-pkg-share trt_bevdet)/config/cams_param.yaml"/>
-  <arg name="model_config" default="$(find-pkg-share trt_bevdet)/config/bevdet_r50_4dlongterm_depth.yaml"/>
-  <arg name="param_file" default="$(find-pkg-share trt_bevdet)/config/bevdet.param.yaml"/>
+  <arg name="onnx_file" default="$(find-pkg-share tensorrt_bevdet)/data/bevdet_one_lt_d.onnx"/>
+  <arg name="engine_file" default="$(find-pkg-share tensorrt_bevdet)/data/bevdet_one_lt_d.engine"/>
+  <arg name="cam_config" default="$(find-pkg-share tensorrt_bevdet)/config/cams_param.yaml"/>
+  <arg name="model_config" default="$(find-pkg-share tensorrt_bevdet)/config/bevdet_r50_4dlongterm_depth.yaml"/>
+  <arg name="param_file" default="$(find-pkg-share tensorrt_bevdet)/config/bevdet.param.yaml"/>
 
   <!-- bevdet node -->
   <node pkg="tensorrt_bevdet" exec="tensorrt_bevdet_node" name="tensorrt_bevdet_node" output="screen">
