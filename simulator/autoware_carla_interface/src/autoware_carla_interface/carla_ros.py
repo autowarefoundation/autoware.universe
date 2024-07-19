@@ -191,7 +191,7 @@ class carla_ros2_interface(object):
         return header
 
     def lidar(self, carla_lidar_measurement, id_):
-        """Transform the a received lidar measurement into a ROS point cloud message."""
+        """Transform the received lidar measurement into a ROS point cloud message."""
         if self.checkFrequency(id_):
             return
         self.publish_prev_times[id_] = datetime.datetime.now()
@@ -201,24 +201,51 @@ class carla_ros2_interface(object):
             PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
             PointField(name="y", offset=4, datatype=PointField.FLOAT32, count=1),
             PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
-            PointField(name="intensity", offset=12, datatype=PointField.FLOAT32, count=1),
-            PointField(name="ring", offset=16, datatype=PointField.UINT16, count=1),
+            PointField(name="intensity", offset=12, datatype=PointField.UINT8, count=1),
+            PointField(name="return_type", offset=13, datatype=PointField.UINT8, count=1),
+            PointField(name="channel", offset=14, datatype=PointField.UINT16, count=1),
         ]
 
-        lidar_data = numpy.fromstring(bytes(carla_lidar_measurement.raw_data), dtype=numpy.float32)
-        lidar_data = numpy.reshape(lidar_data, (int(lidar_data.shape[0] / 4), 4))
+        lidar_data = numpy.frombuffer(
+            carla_lidar_measurement.raw_data, dtype=numpy.float32
+        ).reshape(-1, 4)
+        intensity = lidar_data[:, 3]
+        intensity = (
+            numpy.clip(intensity, 0, 1) * 255
+        )  # CARLA lidar intensity values are between 0 and 1
+        intensity = intensity.astype(numpy.uint8).reshape(-1, 1)
 
-        ring = numpy.empty((0, 1), object)
+        return_type = numpy.zeros((lidar_data.shape[0], 1), dtype=numpy.uint8)
+        channel = numpy.empty((0, 1), dtype=numpy.uint16)
         self.channels = self.sensors["sensors"]
 
         for i in range(self.channels[1]["channels"]):
             current_ring_points_count = carla_lidar_measurement.get_point_count(i)
-            ring = numpy.vstack((ring, numpy.full((current_ring_points_count, 1), i)))
+            channel = numpy.vstack(
+                (channel, numpy.full((current_ring_points_count, 1), i, dtype=numpy.uint16))
+            )
 
-        lidar_data = numpy.hstack((lidar_data, ring))
-
+        lidar_data = numpy.hstack((lidar_data[:, :3], intensity, return_type, channel))
         lidar_data[:, 1] *= -1
-        point_cloud_msg = create_cloud(header, fields, lidar_data)
+
+        dtype = [
+            ("x", "f4"),
+            ("y", "f4"),
+            ("z", "f4"),
+            ("intensity", "u1"),
+            ("return_type", "u1"),
+            ("channel", "u2"),
+        ]
+
+        structured_lidar_data = numpy.zeros(lidar_data.shape[0], dtype=dtype)
+        structured_lidar_data["x"] = lidar_data[:, 0]
+        structured_lidar_data["y"] = lidar_data[:, 1]
+        structured_lidar_data["z"] = lidar_data[:, 2]
+        structured_lidar_data["intensity"] = lidar_data[:, 3].astype(numpy.uint8)
+        structured_lidar_data["return_type"] = lidar_data[:, 4].astype(numpy.uint8)
+        structured_lidar_data["channel"] = lidar_data[:, 5].astype(numpy.uint16)
+
+        point_cloud_msg = create_cloud(header, fields, structured_lidar_data)
         self.pub_lidar[id_].publish(point_cloud_msg)
 
     def initialpose_callback(self, data):
