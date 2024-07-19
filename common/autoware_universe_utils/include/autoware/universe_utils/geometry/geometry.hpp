@@ -594,9 +594,20 @@ Point2d toBoost(const alt::Point & point);
 Polygon2d toBoost(const alt::Polygon & polygon);
 }  // namespace alt
 
-std::optional<bool> isClockwise(const alt::Polygon & poly);
+std::optional<double> area(const alt::Polygon & poly);
+
+std::optional<alt::Polygon> convexHull(const alt::PointList & points);
 
 void correct(alt::Polygon & poly);
+
+std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & poly);
+
+double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
+
+double distance(const alt::Point & point, const alt::Polygon & poly);
+
+std::array<alt::PointList, 2> divideBySegment(
+  const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end);
 
 std::optional<bool> equals(const alt::Polygon & poly1, const alt::Polygon & poly2);
 
@@ -605,35 +616,20 @@ std::optional<alt::Point> intersect(
   const alt::Point & seg1_start, const alt::Point & seg1_end, const alt::Point & seg2_start,
   const alt::Point & seg2_end);
 
-std::optional<alt::PointList> intersect(const alt::Polygon & poly1, const alt::Polygon & poly2);
-
-std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly);
-
-std::optional<bool> within(
-  const alt::Polygon & poly_contained, const alt::Polygon & poly_containing);
-
-std::optional<bool> disjoint(const alt::Polygon & poly1, const alt::Polygon & poly2);
-
-double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
-
-double distance(const alt::Point & point, const alt::Polygon & poly);
-
-std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & poly);
-
-bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
-
-std::array<alt::PointList, 2> divideBySegment(
-  const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end);
-
-std::optional<alt::Polygon> convexHull(const alt::PointList & points);
-
-std::optional<double> area(const alt::Polygon & poly);
-
 /**
  * @brief Check if 2 convex polygons intersect using the GJK algorithm
  * @details much faster than boost::geometry::intersects()
  */
 bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
+
+bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
+
+std::optional<bool> isClockwise(const alt::Polygon & poly);
+
+std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly);
+
+std::optional<bool> within(
+  const alt::Polygon & poly_contained, const alt::Polygon & poly_containing);
 
 }  // namespace autoware::universe_utils
 

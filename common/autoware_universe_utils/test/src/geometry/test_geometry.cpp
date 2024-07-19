@@ -1734,9 +1734,9 @@ TEST(geometry, isTwistCovarianceValid)
   EXPECT_EQ(autoware::universe_utils::isTwistCovarianceValid(twist_with_covariance), true);
 }
 
-TEST(geometry, isClockwise)
+TEST(geometry, area)
 {
-  using autoware::universe_utils::isClockwise;
+  using autoware::universe_utils::area;
   using autoware::universe_utils::alt::Point;
 
   {  // Clockwise
@@ -1744,10 +1744,10 @@ TEST(geometry, isClockwise)
     const Point p2 = {0.0, 7.0, 0.0};
     const Point p3 = {4.0, 2.0, 0.0};
     const Point p4 = {2.0, 0.0, 0.0};
-    const auto result = isClockwise({p1, p2, p3, p4});
+    const auto result = area({p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
-    EXPECT_TRUE(*result);
+    EXPECT_NEAR(*result, 16.0, epsilon);
   }
 
   {  // Counter-clockwise
@@ -1755,10 +1755,56 @@ TEST(geometry, isClockwise)
     const Point p2 = {2.0, 0.0, 0.0};
     const Point p3 = {4.0, 2.0, 0.0};
     const Point p4 = {0.0, 7.0, 0.0};
-    const auto result = isClockwise({p1, p2, p3, p4});
+    const auto result = area({p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
-    EXPECT_FALSE(*result);
+    EXPECT_NEAR(*result, -16.0, epsilon);
+  }
+}
+
+TEST(geometry, convexHull)
+{
+  using autoware::universe_utils::convexHull;
+  using autoware::universe_utils::alt::Polygon;
+
+  {
+    Polygon points;
+    points.push_back({2.0, 1.3, 0.0});
+    points.push_back({2.4, 1.7, 0.0});
+    points.push_back({2.8, 1.8, 0.0});
+    points.push_back({3.4, 1.2, 0.0});
+    points.push_back({3.7, 1.6, 0.0});
+    points.push_back({3.4, 2.0, 0.0});
+    points.push_back({4.1, 3.0, 0.0});
+    points.push_back({5.3, 2.6, 0.0});
+    points.push_back({5.4, 1.2, 0.0});
+    points.push_back({4.9, 0.8, 0.0});
+    points.push_back({2.9, 0.7, 0.0});
+    const auto result = convexHull(points);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(result->size(), 7);
+    EXPECT_NEAR(result->at(0).x(), 2.0, epsilon);
+    EXPECT_NEAR(result->at(0).y(), 1.3, epsilon);
+    EXPECT_NEAR(result->at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(1).x(), 2.4, epsilon);
+    EXPECT_NEAR(result->at(1).y(), 1.7, epsilon);
+    EXPECT_NEAR(result->at(1).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(2).x(), 4.1, epsilon);
+    EXPECT_NEAR(result->at(2).y(), 3.0, epsilon);
+    EXPECT_NEAR(result->at(2).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(3).x(), 5.3, epsilon);
+    EXPECT_NEAR(result->at(3).y(), 2.6, epsilon);
+    EXPECT_NEAR(result->at(3).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(4).x(), 5.4, epsilon);
+    EXPECT_NEAR(result->at(4).y(), 1.2, epsilon);
+    EXPECT_NEAR(result->at(4).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(5).x(), 4.9, epsilon);
+    EXPECT_NEAR(result->at(5).y(), 0.8, epsilon);
+    EXPECT_NEAR(result->at(5).z(), 0.0, epsilon);
+    EXPECT_NEAR(result->at(6).x(), 2.9, epsilon);
+    EXPECT_NEAR(result->at(6).y(), 0.7, epsilon);
+    EXPECT_NEAR(result->at(6).z(), 0.0, epsilon);
   }
 }
 
@@ -1809,6 +1855,179 @@ TEST(geometry, correct)
     EXPECT_NEAR(poly.at(3).x(), -1.0, epsilon);
     EXPECT_NEAR(poly.at(3).y(), 1.0, epsilon);
     EXPECT_NEAR(poly.at(3).z(), 0.0, epsilon);
+  }
+}
+
+TEST(geometry, coveredBy)
+{
+  using autoware::universe_utils::coveredBy;
+  using autoware::universe_utils::alt::Point;
+
+  {  // The point is within the polygon
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const auto result = coveredBy(point, {p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(*result);
+  }
+
+  {  // The point is outside the polygon
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {2.0, 2.0, 0.0};
+    const Point p2 = {2.0, 1.0, 0.0};
+    const Point p3 = {1.0, 1.0, 0.0};
+    const Point p4 = {1.0, 2.0, 0.0};
+    const auto result = coveredBy(point, {p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_FALSE(*result);
+  }
+
+  {  // The point is on the edge of the polygon
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {2.0, 1.0, 0.0};
+    const Point p2 = {2.0, -1.0, 0.0};
+    const Point p3 = {0.0, -1.0, 0.0};
+    const Point p4 = {0.0, 1.0, 0.0};
+    const auto result = coveredBy(point, {p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(*result);
+  }
+}
+
+TEST(geometry, distance)
+{
+  using autoware::universe_utils::distance;
+  using autoware::universe_utils::alt::Point;
+
+  {  // Normal setting
+    const Point p = {0.0, 1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 1.0, epsilon);
+  }
+
+  {
+    // The point is out of range of the segment to the start point side
+    const Point p = {-2.0, 1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, std::sqrt(2), epsilon);
+  }
+
+  {
+    // The point is out of range of the segment to the end point side
+    const Point p = {2.0, 1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, std::sqrt(2), epsilon);
+  }
+
+  {
+    // The point is on the segment
+    const Point p = {0.0, 0.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+
+  {
+    // The point is the start point of the segment
+    const Point p = {-1.0, 0.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+
+  {
+    // The point is the end point of the segment
+    const Point p = {1.0, 0.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+
+  {  // The segment is a point
+    const Point p = {0.0, 0.0, 0.0};
+    const Point p1 = {1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = distance(p, p1, p2);
+
+    EXPECT_NEAR(result, 1.0, epsilon);
+  }
+
+  {  // The point is outside the polygon
+    const Point p = {0.0, 0.0, 0.0};
+    const Point p1 = {3.0, 1.0, 0.0};
+    const Point p2 = {3.0, -1.0, 0.0};
+    const Point p3 = {1.0, -1.0, 0.0};
+    const Point p4 = {1.0, 1.0, 0.0};
+    const auto result = distance(p, {p1, p2, p3, p4});
+
+    EXPECT_NEAR(result, 1.0, epsilon);
+  }
+
+  {  // The point is within the polygon
+    const Point p = {0.0, 0.0, 0.0};
+    const Point p1 = {2.0, 1.0, 0.0};
+    const Point p2 = {2.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const auto result = distance(p, {p1, p2, p3, p4});
+
+    EXPECT_NEAR(result, 0.0, epsilon);
+  }
+}
+
+TEST(geometry, divideBySegment)
+{
+  using autoware::universe_utils::divideBySegment;
+  using autoware::universe_utils::alt::Point;
+
+  {
+    const Point p1 = {-1.0, 1.0, 0.0};
+    const Point p2 = {2.0, 2.0, 0.0};
+    const Point p3 = {0.0, 0.0, 0.0};
+    const Point p4 = {-2.0, -2.0, 0.0};
+    const Point p5 = {1.0, -1.0, 0.0};
+    const Point seg_start = {-2.0, 0.0, 0.0};
+    const Point seg_end = {2.0, 0.0, 0.0};
+    const auto result = divideBySegment({p1, p2, p3, p4, p5}, seg_start, seg_end);
+
+    EXPECT_EQ(result.at(0).size(), 2);
+    EXPECT_NEAR(result.at(0).at(0).x(), -1.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).y(), 1.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).x(), 2.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).y(), 2.0, epsilon);
+    EXPECT_NEAR(result.at(0).at(1).z(), 0.0, epsilon);
+    EXPECT_EQ(result.at(1).size(), 3);
+    EXPECT_NEAR(result.at(1).at(0).x(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).y(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(0).z(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).x(), -2.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).y(), -2.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(1).z(), 0.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).x(), 1.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).y(), -1.0, epsilon);
+    EXPECT_NEAR(result.at(1).at(2).z(), 0.0, epsilon);
   }
 }
 
@@ -1915,58 +2134,151 @@ TEST(geometry, intersect)
     EXPECT_NEAR(result->y(), -1.0, epsilon);
     EXPECT_NEAR(result->z(), 0.0, epsilon);
   }
+}
 
-  {  // One polygon intersects the other
-    const Point p1 = {1.0, 1.0, 0.0};
-    const Point p2 = {1.0, -1.0, 0.0};
-    const Point p3 = {-1.0, -1.0, 0.0};
-    const Point p4 = {-1.0, 1.0, 0.0};
-    const Point p5 = {2.0, 2.0, 0.0};
-    const Point p6 = {2.0, 0.0, 0.0};
-    const Point p7 = {0.0, 0.0, 0.0};
-    const Point p8 = {0.0, 2.0, 0.0};
-    const auto result = intersect({p1, p2, p3, p4}, {p5, p6, p7, p8});
+TEST(geometry, intersectPolygon)
+{
+  {  // 2 triangles with intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(2, 0);
+    poly2.outer().emplace_back(1, 1);
+    poly2.outer().emplace_back(1, 0);
+    poly2.outer().emplace_back(0, 1);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection (but they share an edge)
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(2, 0);
+    poly2.outer().emplace_back(2, 2);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection (but they share a point)
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(4, 4);
+    poly2.outer().emplace_back(4, 2);
+    poly2.outer().emplace_back(2, 2);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // 2 triangles sharing a point and then with very small intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 0);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(4, 0);
+    poly2.outer().emplace_back(0, 4);
+    poly2.outer().emplace_back(2, 2);
+    poly2.outer().emplace_back(4, 4);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    poly1.outer()[1].y() += 1e-12;
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection and no touching
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(4, 4);
+    poly2.outer().emplace_back(5, 5);
+    poly2.outer().emplace_back(3, 5);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // triangle and quadrilateral with intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(4, 11);
+    poly1.outer().emplace_back(4, 5);
+    poly1.outer().emplace_back(9, 9);
+    poly2.outer().emplace_back(5, 7);
+    poly2.outer().emplace_back(7, 3);
+    poly2.outer().emplace_back(10, 2);
+    poly2.outer().emplace_back(12, 7);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+}
+
+TEST(geometry, isAbove)
+{
+  using autoware::universe_utils::isAbove;
+  using autoware::universe_utils::alt::Point;
+
+  {  // The point is above the line
+    const Point point = {0.0, 1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = isAbove(point, p1, p2);
 
     EXPECT_TRUE(result);
-    EXPECT_EQ(result->size(), 2);
-    EXPECT_NEAR(result->at(0).x(), 1.0, epsilon);
-    EXPECT_NEAR(result->at(0).y(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(0).z(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(1).x(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(1).y(), 1.0, epsilon);
-    EXPECT_NEAR(result->at(1).z(), 0.0, epsilon);
   }
 
-  {  // Two polygons do not intersect each other
-    const Point p1 = {1.0, 1.0, 0.0};
-    const Point p2 = {1.0, -1.0, 0.0};
-    const Point p3 = {-1.0, -1.0, 0.0};
-    const Point p4 = {-1.0, 1.0, 0.0};
-    const Point p5 = {3.0, 3.0, 0.0};
-    const Point p6 = {3.0, 2.0, 0.0};
-    const Point p7 = {2.0, 2.0, 0.0};
-    const Point p8 = {2.0, 3.0, 0.0};
-    const auto result = intersect({p1, p2, p3, p4}, {p5, p6, p7, p8});
+  {  // The point is below the line
+    const Point point = {0.0, -1.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = isAbove(point, p1, p2);
 
     EXPECT_FALSE(result);
   }
 
-  {  // Two polygons share a vertex
-    const Point p1 = {1.0, 1.0, 0.0};
-    const Point p2 = {1.0, -1.0, 0.0};
-    const Point p3 = {-1.0, -1.0, 0.0};
-    const Point p4 = {-1.0, 1.0, 0.0};
-    const Point p5 = {2.0, 2.0, 0.0};
-    const Point p6 = {2.0, 1.0, 0.0};
-    const Point p7 = {1.0, 1.0, 0.0};
-    const Point p8 = {1.0, 2.0, 0.0};
-    const auto result = intersect({p1, p2, p3, p4}, {p5, p6, p7, p8});
+  {  // The point is on the line
+    const Point point = {0.0, 0.0, 0.0};
+    const Point p1 = {-1.0, 0.0, 0.0};
+    const Point p2 = {1.0, 0.0, 0.0};
+    const auto result = isAbove(point, p1, p2);
+
+    EXPECT_FALSE(result);
+  }
+}
+
+TEST(geometry, isClockwise)
+{
+  using autoware::universe_utils::isClockwise;
+  using autoware::universe_utils::alt::Point;
+
+  {  // Clockwise
+    const Point p1 = {0.0, 0.0, 0.0};
+    const Point p2 = {0.0, 7.0, 0.0};
+    const Point p3 = {4.0, 2.0, 0.0};
+    const Point p4 = {2.0, 0.0, 0.0};
+    const auto result = isClockwise({p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
-    EXPECT_EQ(result->size(), 1);
-    EXPECT_NEAR(result->at(0).x(), 1.0, epsilon);
-    EXPECT_NEAR(result->at(0).y(), 1.0, epsilon);
-    EXPECT_NEAR(result->at(0).z(), 0.0, epsilon);
+    EXPECT_TRUE(*result);
+  }
+
+  {  // Counter-clockwise
+    const Point p1 = {0.0, 0.0, 0.0};
+    const Point p2 = {2.0, 0.0, 0.0};
+    const Point p3 = {4.0, 2.0, 0.0};
+    const Point p4 = {0.0, 7.0, 0.0};
+    const auto result = isClockwise({p1, p2, p3, p4});
+
+    EXPECT_TRUE(result);
+    EXPECT_FALSE(*result);
   }
 }
 
@@ -2057,419 +2369,148 @@ TEST(geometry, within)
   }
 }
 
-TEST(geometry, disjoint)
+TEST(geometry, areaRand)
 {
-  using autoware::universe_utils::disjoint;
-  using autoware::universe_utils::alt::Point;
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
 
-  {  // Two polygons are disjoint
-    const Point p1 = {1.0, 1.0, 0.0};
-    const Point p2 = {1.0, -1.0, 0.0};
-    const Point p3 = {-1.0, -1.0, 0.0};
-    const Point p4 = {-1.0, 1.0, 0.0};
-    const Point p5 = {3.0, 3.0, 0.0};
-    const Point p6 = {3.0, 2.0, 0.0};
-    const Point p7 = {2.0, 2.0, 0.0};
-    const Point p8 = {2.0, 3.0, 0.0};
-    const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
-
-    EXPECT_TRUE(result);
-    EXPECT_TRUE(*result);
-  }
-
-  {  // Two polygons are not disjoint
-    const Point p1 = {1.0, 1.0, 0.0};
-    const Point p2 = {1.0, -1.0, 0.0};
-    const Point p3 = {-1.0, -1.0, 0.0};
-    const Point p4 = {-1.0, 1.0, 0.0};
-    const Point p5 = {2.0, 2.0, 0.0};
-    const Point p6 = {2.0, 0.0, 0.0};
-    const Point p7 = {0.0, 0.0, 0.0};
-    const Point p8 = {0.0, 2.0, 0.0};
-    const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
-
-    EXPECT_TRUE(result);
-    EXPECT_FALSE(*result);
-  }
-
-  {  // Two polygons share a vertex
-    const Point p1 = {1.0, 1.0, 0.0};
-    const Point p2 = {1.0, -1.0, 0.0};
-    const Point p3 = {-1.0, -1.0, 0.0};
-    const Point p4 = {-1.0, 1.0, 0.0};
-    const Point p5 = {2.0, 2.0, 0.0};
-    const Point p6 = {2.0, 1.0, 0.0};
-    const Point p7 = {1.0, 1.0, 0.0};
-    const Point p8 = {1.0, 2.0, 0.0};
-    const auto result = disjoint({p1, p2, p3, p4}, {p5, p6, p7, p8});
-
-    EXPECT_TRUE(result);
-    EXPECT_FALSE(*result);
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_area_ns = 0.0;
+    double alt_area_ns = 0.0;
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      sw.tic();
+      const auto ground_truth = boost::geometry::area(polygons[i]);
+      ground_truth_area_ns += sw.toc();
+      sw.tic();
+      const auto alt =
+        autoware::universe_utils::area(autoware::universe_utils::alt::fromBoost(polygons[i]));
+      alt_area_ns += sw.toc();
+      if (!alt || std::abs(*alt - ground_truth) > epsilon) {
+        std::cout << "Alt failed for the polygon: ";
+        std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
+      }
+      EXPECT_TRUE(alt);
+      EXPECT_NEAR(ground_truth, *alt, epsilon);
+    }
+    std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);
+    std::printf(
+      "\tArea:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n", ground_truth_area_ns / 1e6,
+      alt_area_ns / 1e6);
   }
 }
 
-TEST(geometry, distance)
+TEST(geometry, convexHullRand)
 {
-  using autoware::universe_utils::distance;
-  using autoware::universe_utils::alt::Point;
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
 
-  {  // Normal setting
-    const Point p = {0.0, 1.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = distance(p, p1, p2);
-
-    EXPECT_NEAR(result, 1.0, epsilon);
-  }
-
-  {
-    // The point is out of range of the segment to the start point side
-    const Point p = {-2.0, 1.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = distance(p, p1, p2);
-
-    EXPECT_NEAR(result, std::sqrt(2), epsilon);
-  }
-
-  {
-    // The point is out of range of the segment to the end point side
-    const Point p = {2.0, 1.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = distance(p, p1, p2);
-
-    EXPECT_NEAR(result, std::sqrt(2), epsilon);
-  }
-
-  {
-    // The point is on the segment
-    const Point p = {0.0, 0.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = distance(p, p1, p2);
-
-    EXPECT_NEAR(result, 0.0, epsilon);
-  }
-
-  {
-    // The point is the start point of the segment
-    const Point p = {-1.0, 0.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = distance(p, p1, p2);
-
-    EXPECT_NEAR(result, 0.0, epsilon);
-  }
-
-  {
-    // The point is the end point of the segment
-    const Point p = {1.0, 0.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = distance(p, p1, p2);
-
-    EXPECT_NEAR(result, 0.0, epsilon);
-  }
-
-  {  // The segment is a point
-    const Point p = {0.0, 0.0, 0.0};
-    const Point p1 = {1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = distance(p, p1, p2);
-
-    EXPECT_NEAR(result, 1.0, epsilon);
-  }
-
-  {  // The point is outside the polygon
-    const Point p = {0.0, 0.0, 0.0};
-    const Point p1 = {3.0, 1.0, 0.0};
-    const Point p2 = {3.0, -1.0, 0.0};
-    const Point p3 = {1.0, -1.0, 0.0};
-    const Point p4 = {1.0, 1.0, 0.0};
-    const auto result = distance(p, {p1, p2, p3, p4});
-
-    EXPECT_NEAR(result, 1.0, epsilon);
-  }
-
-  {  // The point is within the polygon
-    const Point p = {0.0, 0.0, 0.0};
-    const Point p1 = {2.0, 1.0, 0.0};
-    const Point p2 = {2.0, -1.0, 0.0};
-    const Point p3 = {-1.0, -1.0, 0.0};
-    const Point p4 = {-1.0, 1.0, 0.0};
-    const auto result = distance(p, {p1, p2, p3, p4});
-
-    EXPECT_NEAR(result, 0.0, epsilon);
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_hull_ns = 0.0;
+    double alt_hull_ns = 0.0;
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      autoware::universe_utils::MultiPoint2d outer;
+      for (const auto & point : polygons[i].outer()) {
+        outer.push_back(point);
+      }
+      autoware::universe_utils::Polygon2d ground_truth;
+      sw.tic();
+      boost::geometry::convex_hull(outer, ground_truth);
+      ground_truth_hull_ns += sw.toc();
+      sw.tic();
+      const auto alt =
+        autoware::universe_utils::convexHull(autoware::universe_utils::alt::fromBoost(polygons[i]));
+      alt_hull_ns += sw.toc();
+      if (!alt || ground_truth.outer().size() - 1 != alt->size()) {
+        std::cout << "Alt failed for the polygon: ";
+        std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
+      }
+      EXPECT_TRUE(alt);
+      EXPECT_EQ(ground_truth.outer().size() - 1, alt->size());
+      for (size_t i = 0; i < alt->size(); i++) {
+        EXPECT_NEAR(ground_truth.outer().at(i).x(), alt->at(i).x(), epsilon);
+        EXPECT_NEAR(ground_truth.outer().at(i).y(), alt->at(i).y(), epsilon);
+      }
+    }
+    std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);
+    std::printf(
+      "\tConvex Hull:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_hull_ns / 1e6, alt_hull_ns / 1e6);
   }
 }
 
-TEST(geometry, coveredBy)
+TEST(geometry, coveredByRand)
 {
-  using autoware::universe_utils::coveredBy;
-  using autoware::universe_utils::alt::Point;
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
 
-  {  // The point is within the polygon
-    const Point point = {0.0, 0.0, 0.0};
-    const Point p1 = {1.0, 1.0, 0.0};
-    const Point p2 = {1.0, -1.0, 0.0};
-    const Point p3 = {-1.0, -1.0, 0.0};
-    const Point p4 = {-1.0, 1.0, 0.0};
-    const auto result = coveredBy(point, {p1, p2, p3, p4});
-
-    EXPECT_TRUE(result);
-    EXPECT_TRUE(*result);
-  }
-
-  {  // The point is outside the polygon
-    const Point point = {0.0, 0.0, 0.0};
-    const Point p1 = {2.0, 2.0, 0.0};
-    const Point p2 = {2.0, 1.0, 0.0};
-    const Point p3 = {1.0, 1.0, 0.0};
-    const Point p4 = {1.0, 2.0, 0.0};
-    const auto result = coveredBy(point, {p1, p2, p3, p4});
-
-    EXPECT_TRUE(result);
-    EXPECT_FALSE(*result);
-  }
-
-  {  // The point is on the edge of the polygon
-    const Point point = {0.0, 0.0, 0.0};
-    const Point p1 = {2.0, 1.0, 0.0};
-    const Point p2 = {2.0, -1.0, 0.0};
-    const Point p3 = {0.0, -1.0, 0.0};
-    const Point p4 = {0.0, 1.0, 0.0};
-    const auto result = coveredBy(point, {p1, p2, p3, p4});
-
-    EXPECT_TRUE(result);
-    EXPECT_TRUE(*result);
-  }
-}
-
-TEST(geometry, isAbove)
-{
-  using autoware::universe_utils::isAbove;
-  using autoware::universe_utils::alt::Point;
-
-  {  // The point is above the line
-    const Point point = {0.0, 1.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = isAbove(point, p1, p2);
-
-    EXPECT_TRUE(result);
-  }
-
-  {  // The point is below the line
-    const Point point = {0.0, -1.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = isAbove(point, p1, p2);
-
-    EXPECT_FALSE(result);
-  }
-
-  {  // The point is on the line
-    const Point point = {0.0, 0.0, 0.0};
-    const Point p1 = {-1.0, 0.0, 0.0};
-    const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = isAbove(point, p1, p2);
-
-    EXPECT_FALSE(result);
-  }
-}
-
-TEST(geometry, divideBySegment)
-{
-  using autoware::universe_utils::divideBySegment;
-  using autoware::universe_utils::alt::Point;
-
-  {
-    const Point p1 = {-1.0, 1.0, 0.0};
-    const Point p2 = {2.0, 2.0, 0.0};
-    const Point p3 = {0.0, 0.0, 0.0};
-    const Point p4 = {-2.0, -2.0, 0.0};
-    const Point p5 = {1.0, -1.0, 0.0};
-    const Point seg_start = {-2.0, 0.0, 0.0};
-    const Point seg_end = {2.0, 0.0, 0.0};
-    const auto result = divideBySegment({p1, p2, p3, p4, p5}, seg_start, seg_end);
-
-    EXPECT_EQ(result.at(0).size(), 2);
-    EXPECT_NEAR(result.at(0).at(0).x(), -1.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(0).y(), 1.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(0).z(), 0.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(1).x(), 2.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(1).y(), 2.0, epsilon);
-    EXPECT_NEAR(result.at(0).at(1).z(), 0.0, epsilon);
-    EXPECT_EQ(result.at(1).size(), 3);
-    EXPECT_NEAR(result.at(1).at(0).x(), 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(0).y(), 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(0).z(), 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(1).x(), -2.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(1).y(), -2.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(1).z(), 0.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(2).x(), 1.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(2).y(), -1.0, epsilon);
-    EXPECT_NEAR(result.at(1).at(2).z(), 0.0, epsilon);
-  }
-}
-
-TEST(geometry, convexHull)
-{
-  using autoware::universe_utils::convexHull;
-  using autoware::universe_utils::alt::Polygon;
-
-  {
-    Polygon points;
-    points.push_back({2.0, 1.3, 0.0});
-    points.push_back({2.4, 1.7, 0.0});
-    points.push_back({2.8, 1.8, 0.0});
-    points.push_back({3.4, 1.2, 0.0});
-    points.push_back({3.7, 1.6, 0.0});
-    points.push_back({3.4, 2.0, 0.0});
-    points.push_back({4.1, 3.0, 0.0});
-    points.push_back({5.3, 2.6, 0.0});
-    points.push_back({5.4, 1.2, 0.0});
-    points.push_back({4.9, 0.8, 0.0});
-    points.push_back({2.9, 0.7, 0.0});
-    const auto result = convexHull(points);
-
-    EXPECT_TRUE(result);
-    EXPECT_EQ(result->size(), 7);
-    EXPECT_NEAR(result->at(0).x(), 2.0, epsilon);
-    EXPECT_NEAR(result->at(0).y(), 1.3, epsilon);
-    EXPECT_NEAR(result->at(0).z(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(1).x(), 2.4, epsilon);
-    EXPECT_NEAR(result->at(1).y(), 1.7, epsilon);
-    EXPECT_NEAR(result->at(1).z(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(2).x(), 4.1, epsilon);
-    EXPECT_NEAR(result->at(2).y(), 3.0, epsilon);
-    EXPECT_NEAR(result->at(2).z(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(3).x(), 5.3, epsilon);
-    EXPECT_NEAR(result->at(3).y(), 2.6, epsilon);
-    EXPECT_NEAR(result->at(3).z(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(4).x(), 5.4, epsilon);
-    EXPECT_NEAR(result->at(4).y(), 1.2, epsilon);
-    EXPECT_NEAR(result->at(4).z(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(5).x(), 4.9, epsilon);
-    EXPECT_NEAR(result->at(5).y(), 0.8, epsilon);
-    EXPECT_NEAR(result->at(5).z(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(6).x(), 2.9, epsilon);
-    EXPECT_NEAR(result->at(6).y(), 0.7, epsilon);
-    EXPECT_NEAR(result->at(6).z(), 0.0, epsilon);
-  }
-}
-
-TEST(geometry, area)
-{
-  using autoware::universe_utils::area;
-  using autoware::universe_utils::alt::Point;
-
-  {  // Clockwise
-    const Point p1 = {0.0, 0.0, 0.0};
-    const Point p2 = {0.0, 7.0, 0.0};
-    const Point p3 = {4.0, 2.0, 0.0};
-    const Point p4 = {2.0, 0.0, 0.0};
-    const auto result = area({p1, p2, p3, p4});
-
-    EXPECT_TRUE(result);
-    EXPECT_NEAR(*result, 16.0, epsilon);
-  }
-
-  {  // Counter-clockwise
-    const Point p1 = {0.0, 0.0, 0.0};
-    const Point p2 = {2.0, 0.0, 0.0};
-    const Point p3 = {4.0, 2.0, 0.0};
-    const Point p4 = {0.0, 7.0, 0.0};
-    const auto result = area({p1, p2, p3, p4});
-
-    EXPECT_TRUE(result);
-    EXPECT_NEAR(*result, -16.0, epsilon);
-  }
-}
-
-TEST(geometry, intersectPolygon)
-{
-  {  // 2 triangles with intersection
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 2);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(2, 0);
-    poly2.outer().emplace_back(1, 1);
-    poly2.outer().emplace_back(1, 0);
-    poly2.outer().emplace_back(0, 1);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
-  }
-  {  // 2 triangles with no intersection (but they share an edge)
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 2);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(0, 0);
-    poly2.outer().emplace_back(0, 0);
-    poly2.outer().emplace_back(2, 0);
-    poly2.outer().emplace_back(2, 2);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
-  }
-  {  // 2 triangles with no intersection (but they share a point)
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 2);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(0, 0);
-    poly2.outer().emplace_back(4, 4);
-    poly2.outer().emplace_back(4, 2);
-    poly2.outer().emplace_back(2, 2);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
-  }
-  {  // 2 triangles sharing a point and then with very small intersection
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 0);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(4, 0);
-    poly2.outer().emplace_back(0, 4);
-    poly2.outer().emplace_back(2, 2);
-    poly2.outer().emplace_back(4, 4);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
-    poly1.outer()[1].y() += 1e-12;
-    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
-  }
-  {  // 2 triangles with no intersection and no touching
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 2);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(0, 0);
-    poly2.outer().emplace_back(4, 4);
-    poly2.outer().emplace_back(5, 5);
-    poly2.outer().emplace_back(3, 5);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
-  }
-  {  // triangle and quadrilateral with intersection
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(4, 11);
-    poly1.outer().emplace_back(4, 5);
-    poly1.outer().emplace_back(9, 9);
-    poly2.outer().emplace_back(5, 7);
-    poly2.outer().emplace_back(7, 3);
-    poly2.outer().emplace_back(10, 2);
-    poly2.outer().emplace_back(12, 7);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_covered_ns = 0.0;
+    double ground_truth_not_covered_ns = 0.0;
+    double alt_covered_ns = 0.0;
+    double alt_not_covered_ns = 0.0;
+    int covered_count = 0;
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (const auto & point : polygons[i].outer()) {
+        for (auto j = 0UL; j < polygons.size(); ++j) {
+          sw.tic();
+          const auto ground_truth = boost::geometry::covered_by(point, polygons[j]);
+          if (ground_truth) {
+            ++covered_count;
+            ground_truth_covered_ns += sw.toc();
+          } else {
+            ground_truth_not_covered_ns += sw.toc();
+          }
+          sw.tic();
+          const auto alt = autoware::universe_utils::coveredBy(
+            autoware::universe_utils::alt::fromBoost(point),
+            autoware::universe_utils::alt::fromBoost(polygons[j]));
+          if (alt.value_or(false)) {
+            alt_covered_ns += sw.toc();
+          } else {
+            alt_not_covered_ns += sw.toc();
+          }
+          if (!alt || ground_truth != *alt) {
+            std::cout << "Alt failed for the 2 polygons: ";
+            std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                      << std::endl;
+          }
+          EXPECT_TRUE(alt);
+          EXPECT_EQ(ground_truth, *alt);
+        }
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %ld covered pairs\n", polygons_nb, vertices,
+      covered_count, polygons_nb * vertices * polygons_nb);
+    std::printf(
+      "\tCovered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_covered_ns / 1e6, alt_covered_ns / 1e6);
+    std::printf(
+      "\tNot covered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_not_covered_ns / 1e6, alt_not_covered_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      (ground_truth_not_covered_ns + ground_truth_covered_ns) / 1e6,
+      (alt_not_covered_ns + alt_covered_ns) / 1e6);
   }
 }
 
@@ -2579,8 +2620,8 @@ TEST(geometry, withinPolygonRand)
       }
     }
     std::printf(
-      "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
-      within_count, polygons_nb * polygons_nb);
+      "polygons_nb = %d, vertices = %ld, %d / %d pairs either of which is within the other\n",
+      polygons_nb, vertices, within_count, polygons_nb * polygons_nb);
     std::printf(
       "\tWithin:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
       ground_truth_within_ns / 1e6, alt_within_ns / 1e6);
@@ -2591,150 +2632,5 @@ TEST(geometry, withinPolygonRand)
       "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
       (ground_truth_not_within_ns + ground_truth_within_ns) / 1e6,
       (alt_not_within_ns + alt_within_ns) / 1e6);
-  }
-}
-
-TEST(geometry, coveredByRand)
-{
-  std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
-  constexpr auto max_vertices = 10;
-  constexpr auto max_values = 1000;
-
-  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
-  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
-    double ground_truth_covered_ns = 0.0;
-    double ground_truth_not_covered_ns = 0.0;
-    double alt_covered_ns = 0.0;
-    double alt_not_covered_ns = 0.0;
-    int covered_count = 0;
-    polygons.clear();
-    for (auto i = 0; i < polygons_nb; ++i) {
-      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
-    }
-    for (auto i = 0UL; i < polygons.size(); ++i) {
-      for (const auto & point : polygons[i].outer()) {
-        for (auto j = 0UL; j < polygons.size(); ++j) {
-          sw.tic();
-          const auto ground_truth = boost::geometry::covered_by(point, polygons[j]);
-          if (ground_truth) {
-            ++covered_count;
-            ground_truth_covered_ns += sw.toc();
-          } else {
-            ground_truth_not_covered_ns += sw.toc();
-          }
-          sw.tic();
-          const auto alt = autoware::universe_utils::coveredBy(
-            autoware::universe_utils::alt::fromBoost(point),
-            autoware::universe_utils::alt::fromBoost(polygons[j]));
-          if (alt.value_or(false)) {
-            alt_covered_ns += sw.toc();
-          } else {
-            alt_not_covered_ns += sw.toc();
-          }
-          if (!alt || ground_truth != *alt) {
-            std::cout << "Alt failed for the 2 polygons: ";
-            std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
-                      << std::endl;
-          }
-          EXPECT_TRUE(alt);
-          EXPECT_EQ(ground_truth, *alt);
-        }
-      }
-    }
-    std::printf(
-      "polygons_nb = %d, vertices = %ld, %d / %ld covered pairs\n", polygons_nb, vertices,
-      covered_count, polygons_nb * vertices * polygons_nb);
-    std::printf(
-      "\tCovered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
-      ground_truth_covered_ns / 1e6, alt_covered_ns / 1e6);
-    std::printf(
-      "\tNot covered:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
-      ground_truth_not_covered_ns / 1e6, alt_not_covered_ns / 1e6);
-    std::printf(
-      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
-      (ground_truth_not_covered_ns + ground_truth_covered_ns) / 1e6,
-      (alt_not_covered_ns + alt_covered_ns) / 1e6);
-  }
-}
-
-TEST(geometry, convexHullRand)
-{
-  std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
-  constexpr auto max_vertices = 10;
-  constexpr auto max_values = 1000;
-
-  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
-  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
-    double ground_truth_hull_ns = 0.0;
-    double alt_hull_ns = 0.0;
-    for (auto i = 0; i < polygons_nb; ++i) {
-      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
-    }
-    for (auto i = 0UL; i < polygons.size(); ++i) {
-      autoware::universe_utils::MultiPoint2d outer;
-      for (const auto & point : polygons[i].outer()) {
-        outer.push_back(point);
-      }
-      autoware::universe_utils::Polygon2d ground_truth;
-      sw.tic();
-      boost::geometry::convex_hull(outer, ground_truth);
-      ground_truth_hull_ns += sw.toc();
-      sw.tic();
-      const auto alt =
-        autoware::universe_utils::convexHull(autoware::universe_utils::alt::fromBoost(polygons[i]));
-      alt_hull_ns += sw.toc();
-      if (!alt || ground_truth.outer().size() - 1 != alt->size()) {
-        std::cout << "Alt failed for the polygon: ";
-        std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
-      }
-      EXPECT_TRUE(alt);
-      EXPECT_EQ(ground_truth.outer().size() - 1, alt->size());
-      for (size_t i = 0; i < alt->size(); i++) {
-        EXPECT_NEAR(ground_truth.outer().at(i).x(), alt->at(i).x(), epsilon);
-        EXPECT_NEAR(ground_truth.outer().at(i).y(), alt->at(i).y(), epsilon);
-      }
-    }
-    std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);
-    std::printf(
-      "\tConvex Hull:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
-      ground_truth_hull_ns / 1e6, alt_hull_ns / 1e6);
-  }
-}
-
-TEST(geometry, areaRand)
-{
-  std::vector<autoware::universe_utils::Polygon2d> polygons;
-  constexpr auto polygons_nb = 500;
-  constexpr auto max_vertices = 10;
-  constexpr auto max_values = 1000;
-
-  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
-  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
-    double ground_truth_area_ns = 0.0;
-    double alt_area_ns = 0.0;
-    for (auto i = 0; i < polygons_nb; ++i) {
-      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
-    }
-    for (auto i = 0UL; i < polygons.size(); ++i) {
-      sw.tic();
-      const auto ground_truth = boost::geometry::area(polygons[i]);
-      ground_truth_area_ns += sw.toc();
-      sw.tic();
-      const auto alt =
-        autoware::universe_utils::area(autoware::universe_utils::alt::fromBoost(polygons[i]));
-      alt_area_ns += sw.toc();
-      if (!alt || std::abs(*alt - ground_truth) > epsilon) {
-        std::cout << "Alt failed for the polygon: ";
-        std::cout << boost::geometry::wkt(polygons[i]) << std::endl;
-      }
-      EXPECT_TRUE(alt);
-      EXPECT_NEAR(ground_truth, *alt, epsilon);
-    }
-    std::printf("polygons_nb = %d, vertices = %ld\n", polygons_nb, vertices);
-    std::printf(
-      "\tArea:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n", ground_truth_area_ns / 1e6,
-      alt_area_ns / 1e6);
   }
 }

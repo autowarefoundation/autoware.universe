@@ -409,13 +409,64 @@ Polygon2d toBoost(const Polygon & polygon)
 }
 }  // namespace alt
 
-std::optional<bool> isClockwise(const alt::Polygon & poly)
+std::optional<double> area(const alt::Polygon & poly)
 {
-  if (const auto s = area(poly)) {
-    return *s > 0;
-  } else {
+  if (poly.size() < 3) {
     return std::nullopt;
   }
+
+  double area = 0.;
+  for (size_t i = 0; i < poly.size(); ++i) {
+    area += poly.at((i + 1) % poly.size()).cross(poly.at(i)).z() / 2;
+  }
+
+  return area;
+}
+
+std::optional<alt::Polygon> convexHull(const alt::PointList & points)
+{
+  if (points.size() < 3) {
+    return std::nullopt;
+  }
+
+  // quick hull algorithm
+
+  const auto p_minmax_itr =
+    std::minmax_element(points.begin(), points.end(), [](const auto & a, const auto & b) {
+      return a.x() < b.x() || (a.x() == b.x() && a.y() < b.y());
+    });
+  const auto & p_min = *p_minmax_itr.first;
+  const auto & p_max = *p_minmax_itr.second;
+
+  alt::Polygon hull;
+
+  auto make_hull = [&hull](
+                     auto self, const alt::Point & p1, const alt::Point & p2,
+                     const alt::PointList & points) {
+    if (points.empty()) {
+      return;
+    }
+
+    const auto farthest = *std::max_element(
+      points.begin(), points.end(),
+      [&](const auto & a, const auto & b) { return distance(p1, p2, a) < distance(p1, p2, b); });
+
+    const auto subsets_1 = divideBySegment(points, p1, farthest);
+    const auto subsets_2 = divideBySegment(points, farthest, p2);
+
+    self(self, p1, farthest, subsets_1.at(0));
+    hull.push_back(farthest);
+    self(self, farthest, p2, subsets_2.at(0));
+  };
+
+  const auto [above_points, below_points] = divideBySegment(points, p_min, p_max);
+  hull.push_back(p_min);
+  make_hull(make_hull, p_min, p_max, above_points);
+  hull.push_back(p_max);
+  make_hull(make_hull, p_max, p_min, below_points);
+  correct(hull);
+
+  return hull;
 }
 
 void correct(alt::Polygon & poly)
@@ -425,7 +476,6 @@ void correct(alt::Polygon & poly)
   }
 
   // sort points in clockwise order with respect to the first point
-
   std::sort(poly.begin() + 1, poly.end(), [&](const auto & a, const auto & b) {
     return (a - poly.front()).cross(b - poly.front()).z() < 0;
   });
@@ -435,6 +485,75 @@ void correct(alt::Polygon & poly)
     std::abs(poly.front().y() - poly.back().y()) <= std::numeric_limits<double>::epsilon()) {
     poly.pop_back();
   }
+}
+
+std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & poly)
+{
+  const auto is_point_within = within(point, poly);
+  if (!is_point_within) {
+    return std::nullopt;
+  } else if (*is_point_within) {
+    return true;
+  }
+
+  for (size_t i = 0; i < poly.size(); ++i) {
+    if (
+      distance(point, poly.at(i), poly.at((i + 1) % poly.size())) <
+      std::numeric_limits<double>::epsilon()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
+{
+  const auto seg_vec = seg_end - seg_start;
+  const auto point_vec = point - seg_start;
+
+  const double seg_vec_norm = seg_vec.length();
+  const double seg_point_dot = seg_vec.dot(point_vec);
+
+  if (seg_vec_norm < std::numeric_limits<double>::epsilon() || seg_point_dot < 0) {
+    return point_vec.length();
+  } else if (seg_point_dot > std::pow(seg_vec_norm, 2)) {
+    return (point - seg_end).length();
+  } else {
+    return std::abs(seg_vec.cross(point_vec).z()) / seg_vec_norm;
+  }
+}
+
+double distance(const alt::Point & point, const alt::Polygon & poly)
+{
+  if (coveredBy(point, poly).value_or(false)) {
+    return 0.0;
+  }
+
+  // TODO(mitukou1109): Use plane sweep method to improve performance?
+  double min_distance = std::numeric_limits<double>::max();
+  for (size_t i = 0; i < poly.size(); ++i) {
+    min_distance =
+      std::min(min_distance, distance(point, poly.at(i), poly.at((i + 1) % poly.size())));
+  }
+
+  return min_distance;
+}
+
+std::array<alt::PointList, 2> divideBySegment(
+  const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end)
+{
+  alt::PointList above_points, below_points;
+
+  for (const auto & point : points) {
+    if (isAbove(point, seg_start, seg_end)) {
+      above_points.push_back(point);
+    } else {
+      below_points.push_back(point);
+    }
+  }
+
+  return {above_points, below_points};
 }
 
 std::optional<bool> equals(const alt::Polygon & poly1, const alt::Polygon & poly2)
@@ -461,7 +580,7 @@ std::optional<alt::Point> intersect(
 
   // calculate intersection point
   const auto det = v1.cross(v2).z();
-  if (std::abs(det) < std::numeric_limits<double>::epsilon()) {
+  if (std::abs(det) <= std::numeric_limits<double>::epsilon()) {
     return std::nullopt;
   }
 
@@ -475,39 +594,23 @@ std::optional<alt::Point> intersect(
   return t * seg1_start + (1.0 - t) * seg1_end;
 }
 
-std::optional<alt::PointList> intersect(const alt::Polygon & poly1, const alt::Polygon & poly2)
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
 {
-  if (poly1.size() < 3 || poly2.size() < 3) {
+  return gjk::intersects(convex_polygon1, convex_polygon2);
+}
+
+bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
+{
+  return (seg_end - seg_start).cross(point - seg_start).z() > 0;
+}
+
+std::optional<bool> isClockwise(const alt::Polygon & poly)
+{
+  if (const auto s = area(poly)) {
+    return *s > 0;
+  } else {
     return std::nullopt;
   }
-
-  // TODO(mitukou1109): Use plane sweep method to improve performance
-  // check if all edges of poly1 intersect with those of poly2
-  alt::PointList intersect_points;
-  for (size_t i = 0; i < poly1.size(); ++i) {
-    for (size_t j = 0; j < poly2.size(); ++j) {
-      const auto intersect_point = intersect(
-        poly1.at(i), poly1.at((i + 1) % poly1.size()), poly2.at(j),
-        poly2.at((j + 1) % poly2.size()));
-      if (intersect_point) {
-        intersect_points.push_back(*intersect_point);
-      }
-    }
-  }
-
-  if (intersect_points.empty()) {
-    return std::nullopt;
-  }
-
-  const auto unique_points_itr = std::unique(
-    intersect_points.begin(), intersect_points.end(), [](const auto & a, const auto & b) {
-      return std::abs(a.x() - b.x()) < std::numeric_limits<double>::epsilon() &&
-             std::abs(a.y() - b.y()) < std::numeric_limits<double>::epsilon() &&
-             std::abs(a.z() - b.z()) < std::numeric_limits<double>::epsilon();
-    });
-  intersect_points.erase(unique_points_itr, intersect_points.end());
-
-  return intersect_points;
 }
 
 std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly)
@@ -557,154 +660,6 @@ std::optional<bool> within(
   }
 
   return true;
-}
-
-std::optional<bool> disjoint(const alt::Polygon & poly1, const alt::Polygon & poly2)
-{
-  if (poly1.size() < 3 || poly2.size() < 3) {
-    return std::nullopt;
-  }
-
-  return !intersect(poly1, poly2).has_value();
-}
-
-double distance(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
-{
-  const auto seg_vec = seg_end - seg_start;
-  const auto point_vec = point - seg_start;
-
-  const double seg_vec_norm = seg_vec.length();
-  const double seg_point_dot = seg_vec.dot(point_vec);
-
-  if (seg_vec_norm < std::numeric_limits<double>::epsilon() || seg_point_dot < 0) {
-    return point_vec.length();
-  } else if (seg_point_dot > std::pow(seg_vec_norm, 2)) {
-    return (point - seg_end).length();
-  } else {
-    return std::abs(seg_vec.cross(point_vec).z()) / seg_vec_norm;
-  }
-}
-
-double distance(const alt::Point & point, const alt::Polygon & poly)
-{
-  if (coveredBy(point, poly).value_or(false)) {
-    return 0.0;
-  }
-
-  // TODO(mitukou1109): Use plane sweep method to improve performance?
-  double min_distance = std::numeric_limits<double>::max();
-  for (size_t i = 0; i < poly.size(); ++i) {
-    min_distance =
-      std::min(min_distance, distance(point, poly.at(i), poly.at((i + 1) % poly.size())));
-  }
-
-  return min_distance;
-}
-
-std::optional<bool> coveredBy(const alt::Point & point, const alt::Polygon & poly)
-{
-  const auto is_point_within = within(point, poly);
-  if (!is_point_within) {
-    return std::nullopt;
-  } else if (*is_point_within) {
-    return true;
-  }
-
-  for (size_t i = 0; i < poly.size(); ++i) {
-    if (
-      distance(point, poly.at(i), poly.at((i + 1) % poly.size())) <
-      std::numeric_limits<double>::epsilon()) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
-{
-  return (seg_end - seg_start).cross(point - seg_start).z() > 0;
-}
-
-std::array<alt::PointList, 2> divideBySegment(
-  const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end)
-{
-  alt::PointList above_points, below_points;
-
-  for (const auto & point : points) {
-    if (isAbove(point, seg_start, seg_end)) {
-      above_points.push_back(point);
-    } else {
-      below_points.push_back(point);
-    }
-  }
-
-  return {above_points, below_points};
-}
-
-std::optional<alt::Polygon> convexHull(const alt::PointList & points)
-{
-  if (points.size() < 3) {
-    return std::nullopt;
-  }
-
-  // quick hull algorithm
-
-  const auto p_minmax_itr =
-    std::minmax_element(points.begin(), points.end(), [](const auto & a, const auto & b) {
-      return a.x() < b.x() || (a.x() == b.x() && a.y() < b.y());
-    });
-  const auto & p_min = *p_minmax_itr.first;
-  const auto & p_max = *p_minmax_itr.second;
-
-  alt::Polygon hull;
-
-  auto make_hull = [&hull](
-                     auto self, const alt::Point & p1, const alt::Point & p2,
-                     const alt::PointList & points) {
-    if (points.empty()) {
-      return;
-    }
-
-    const auto farthest = *std::max_element(
-      points.begin(), points.end(),
-      [&](const auto & a, const auto & b) { return distance(p1, p2, a) < distance(p1, p2, b); });
-
-    const auto subsets_1 = divideBySegment(points, p1, farthest);
-    const auto subsets_2 = divideBySegment(points, farthest, p2);
-
-    self(self, p1, farthest, subsets_1.at(0));
-    hull.push_back(farthest);
-    self(self, farthest, p2, subsets_2.at(0));
-  };
-
-  const auto [above_points, below_points] = divideBySegment(points, p_min, p_max);
-  hull.push_back(p_min);
-  make_hull(make_hull, p_min, p_max, above_points);
-  hull.push_back(p_max);
-  make_hull(make_hull, p_max, p_min, below_points);
-  correct(hull);
-
-  return hull;
-}
-
-std::optional<double> area(const alt::Polygon & poly)
-{
-  if (poly.size() < 3) {
-    return std::nullopt;
-  }
-
-  double area = 0.;
-  for (size_t i = 0; i < poly.size(); ++i) {
-    area += poly.at((i + 1) % poly.size()).cross(poly.at(i)).z() / 2;
-  }
-
-  return area;
-}
-
-bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
-{
-  return gjk::intersects(convex_polygon1, convex_polygon2);
 }
 
 }  // namespace autoware::universe_utils
