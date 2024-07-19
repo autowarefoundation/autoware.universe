@@ -29,10 +29,10 @@
 #include <autoware_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/msg/operation_mode_availability.hpp>
 #include <tier4_system_msgs/srv/operate_mrm.hpp>
-#include <tier4_external_api_msgs/srv/set_emergency.hpp>
 
 // ROS 2 core
 #include <rclcpp/create_timer.hpp>

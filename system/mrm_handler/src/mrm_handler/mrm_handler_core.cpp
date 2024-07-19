@@ -12,6 +12,7 @@
 // governing permissions and limitations under the License.
 
 #include "mrm_handler/mrm_handler_core.hpp"
+
 #include <tier4_api_utils/tier4_api_utils.hpp>
 
 #include <chrono>
@@ -128,7 +129,8 @@ void MrmHandler::onClearEmergencyService(
     stamp_autonomous_become_unavailable_.reset();
     response->status = tier4_api_utils::response_success("Emergency Holding state was cleared.");
   } else {
-    response->status = tier4_api_utils::response_warn("Emergency Holding state was already cleared.");
+    response->status =
+      tier4_api_utils::response_warn("Emergency Holding state was already cleared.");
   }
 }
 
