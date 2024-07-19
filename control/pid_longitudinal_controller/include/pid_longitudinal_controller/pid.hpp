@@ -36,7 +36,7 @@ public:
    * @throw std::runtime_error if gains or limits have not been set
    */
   double calculate(
-    const double error, const double dt, const bool is_integrated,
+    const double error, const double dt,
     std::vector<double> & pid_contributions);
   /**
    * @brief set the coefficients for the P (proportional) I (integral) D (derivative) terms
