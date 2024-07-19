@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "image_projection_based_fusion/pointpainting_fusion/node.hpp"
+#include "autoware/image_projection_based_fusion/pointpainting_fusion/node.hpp"
 
 #include "autoware_point_types/types.hpp"
 
+#include <autoware/image_projection_based_fusion/utils/geometry.hpp>
+#include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/constants.hpp>
-#include <image_projection_based_fusion/utils/geometry.hpp>
-#include <image_projection_based_fusion/utils/utils.hpp>
 #include <lidar_centerpoint/centerpoint_config.hpp>
 #include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <lidar_centerpoint/ros_utils.hpp>
@@ -42,7 +42,7 @@ Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
 
 }  // namespace
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 
 inline bool isVehicle(int label2d)
@@ -103,6 +103,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     this->declare_parameter<int>("densification_params.num_past_frames");
   // network param
   const std::string trt_precision = this->declare_parameter<std::string>("trt_precision");
+  const std::size_t cloud_capacity = this->declare_parameter<std::int64_t>("cloud_capacity");
   const std::string encoder_onnx_path = this->declare_parameter<std::string>("encoder_onnx_path");
   const std::string encoder_engine_path =
     this->declare_parameter<std::string>("encoder_engine_path");
@@ -181,9 +182,9 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   centerpoint::CenterPointConfig config(
-    class_names_.size(), point_feature_size, max_voxel_size, pointcloud_range, voxel_size,
-    downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
-    yaw_norm_thresholds, has_variance_);
+    class_names_.size(), point_feature_size, cloud_capacity, max_voxel_size, pointcloud_range,
+    voxel_size, downsample_factor, encoder_in_feature_size, score_threshold,
+    circle_nms_dist_threshold, yaw_norm_thresholds, has_variance_);
 
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
@@ -322,9 +323,11 @@ dc   | dc dc dc  dc ||zc|
     int stride = p_step * i;
     unsigned char * data = &painted_pointcloud_msg.data[0];
     unsigned char * output = &painted_pointcloud_msg.data[0];
+    // cppcheck-suppress-begin invalidPointerCast
     float p_x = *reinterpret_cast<const float *>(&data[stride + x_offset]);
     float p_y = *reinterpret_cast<const float *>(&data[stride + y_offset]);
     float p_z = *reinterpret_cast<const float *>(&data[stride + z_offset]);
+    // cppcheck-suppress-end invalidPointerCast
     point_lidar << p_x, p_y, p_z;
     point_camera = lidar2cam_affine * point_lidar;
     p_x = point_camera.x();
@@ -345,6 +348,7 @@ dc   | dc dc dc  dc ||zc|
       int label2d = feature_object.object.classification.front().label;
       if (!isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, p_z)) {
         data = &painted_pointcloud_msg.data[0];
+        // cppcheck-suppress invalidPointerCast
         auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
         for (const auto & cls : isClassTable_) {
           // add up the class values if the point belongs to multiple classes
@@ -414,7 +418,7 @@ bool PointPaintingFusionNode::out_of_scope(__attribute__((unused)) const Detecte
 {
   return false;
 }
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::PointPaintingFusionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::image_projection_based_fusion::PointPaintingFusionNode)
