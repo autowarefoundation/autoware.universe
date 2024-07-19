@@ -22,7 +22,7 @@
           "default": "0.1"
         },
         "voxel_points_threshold": {
-          "type": "number",
+          "type": "integer",
           "description": "the minimum number of points in each voxel",
           "default": "2"
         }

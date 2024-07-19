@@ -8,17 +8,17 @@
       "properties": {
         "voxel_size_x": {
           "type": "number",
-          "description": "voxel size x [m]",
+          "description": "the voxel size along x-axis [m]",
           "default": "0.3"
         },
         "voxel_size_y": {
           "type": "number",
-          "description": "voxel size y [m]",
+          "description": "the voxel size along y-axis [m]",
           "default": "0.3"
         },
         "voxel_size_z": {
           "type": "number",
-          "description": "voxel size z [m]",
+          "description": "the voxel size along z-axis [m]",
           "default": "0.1"
         }
       },

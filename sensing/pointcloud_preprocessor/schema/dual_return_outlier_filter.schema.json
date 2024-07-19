@@ -8,72 +8,72 @@
       "properties": {
         "x_max": {
           "type": "number",
-          "description": "max distance on x",
+          "description": "Maximum of x for `Fixed_xyz_ROI` mode",
           "default": "18.0"
         },
         "x_min": {
           "type": "number",
-          "description": "min distance on x",
+          "description": "Minimum of x for `Fixed_xyz_ROI` mode",
           "default": "-12.0"
         },
         "y_max": {
           "type": "number",
-          "description": "max distance on y",
+          "description": "Maximum of y for `Fixed_xyz_ROI` mode",
           "default": "2.0"
         },
         "y_min": {
           "type": "number",
-          "description": "min distance on y",
+          "description": "Minimum of y for `Fixed_xyz_ROI` mode",
           "default": "-2.0"
         },
         "z_max": {
           "type": "number",
-          "description": "max distance on z",
+          "description": "Maximum of z for `Fixed_xyz_ROI` mode",
           "default": "10.0"
         },
         "z_min": {
           "type": "number",
-          "description": "min distance on z",
+          "description": "Minimum of z for `Fixed_xyz_ROI` mode",
           "default": "0.0"
         },
         "min_azimuth_deg": {
           "type": "number",
-          "description": "minium azimuth degree",
+          "description": "The left limit of azimuth for `Fixed_azimuth_ROI` mode",
           "default": "135.0"
         },
         "max_azimuth_deg": {
           "type": "number",
-          "description": "maximum azimuth degree",
+          "description": "The right limit of azimuth for `Fixed_azimuth_ROI` mode",
           "default": "225.0"
         },
         "max_distance": {
           "type": "number",
-          "description": "maximum distance",
+          "description": "The limit distance for for `Fixed_azimuth_ROI` mode",
           "default": "12.0"
         },
         "vertical_bins": {
-          "type": "number",
-          "description": "vertical bins",
+          "type": "integer",
+          "description": "The number of vertical bin for visibility histogram",
           "default": "128"
         },
         "max_azimuth_diff": {
           "type": "number",
-          "description": "max azimuth diff",
+          "description": "Threshold for ring_outlier_filter",
           "default": "50"
         },
         "weak_first_distance_ratio": {
           "type": "number",
-          "description": "weak first distance ratio",
+          "description": "Threshold for ring_outlier_filter",
           "default": "1.004"
         },
         "general_distance_ratio": {
           "type": "number",
-          "description": "general distance ratio",
+          "description": "Threshold for ring_outlier_filter",
           "default": "1.03"
         },
         "weak_first_local_noise_threshold": {
-          "type": "number",
-          "description": "weak first local noise threshold",
+          "type": "integer",
+          "description": "The parameter for determining whether it is noise",
           "default": "2"
         },
         "roi_mode": {
@@ -83,12 +83,12 @@
         },
         "visibility_error_threshold": {
           "type": "number",
-          "description": "visibility error threshold",
+          "description": "When the percentage of white pixels in the binary histogram falls below this parameter the diagnostic status becomes ERR",
           "default": "0.5"
         },
         "visibility_warn_threshold": {
           "type": "number",
-          "description": "visibility warn threshold",
+          "description": "When the percentage of white pixels in the binary histogram falls below this parameter the diagnostic status becomes WARN",
           "default": "0.7"
         }
       },

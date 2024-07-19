@@ -23,6 +23,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Core Parameters
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/voxel_grid_outlier_filter.schema.json") }}
+
 | Name                     | Type   | Default Value | Description                                |
 | ------------------------ | ------ | ------------- | ------------------------------------------ |
 | `voxel_size_x`           | double | 0.3           | the voxel size along x-axis [m]            |

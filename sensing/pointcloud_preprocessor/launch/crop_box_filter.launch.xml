@@ -1,16 +1,15 @@
-<launch>
   <arg name="input_topic_name" default="/velodyne_points_ex"/>
-  <arg name="output_topic_name" default="/pointcloud_filtered"/>
+  <arg name="output_topic_name" default="/crop_box_filted"/>
   <arg name="input_frame" default="velodyne"/>
   <arg name="output_frame" default="velodyne"/>
   <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter.param.yaml"/>
-  <arg name="ring_outlier_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/ring_outlier_filter.param.yaml"/>
-  <node pkg="pointcloud_preprocessor" exec="ring_outlier_filter_node" name="ring_outlier_filter">
+  <arg name="crop_box_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/crop_box_filter.param.yaml"/>
+  <node pkg="pointcloud_preprocessor" exec="crop_box_filter_node" name="crop_box_filter">
     <remap from="input" to="$(var input_topic_name)"/>
     <remap from="output" to="$(var output_topic_name)"/>
     <param name="input_frame" value="$(var input_frame)"/>
     <param name="output_frame" value="$(var output_frame)"/>
-    <param from="$(var ring_outlier_filter_param_file)"/>
+    <param from="$(var crop_box_filter_param_file)"/>
     <param from="$(var filter_param_file)"/>
   </node>
 </launch>

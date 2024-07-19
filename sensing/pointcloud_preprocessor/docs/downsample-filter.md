@@ -36,6 +36,8 @@ These implementations inherit `pointcloud_preprocessor::Filter` class, please re
 
 #### Approximate Downsample Filter
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/approximate_downsample_filter.schema.json") }}
+
 | Name           | Type   | Default Value | Description      |
 | -------------- | ------ | ------------- | ---------------- |
 | `voxel_size_x` | double | 0.3           | voxel size x [m] |
@@ -44,11 +46,15 @@ These implementations inherit `pointcloud_preprocessor::Filter` class, please re
 
 ### Random Downsample Filter
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/random_downsample_filter.schema.json") }}
+
 | Name         | Type | Default Value | Description                     |
 | ------------ | ---- | ------------- | ------------------------------- |
 | `sample_num` | int  | 1500          | number of indices to be sampled |
 
 ### Voxel Grid Downsample Filter
+
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/voxel_grid_downsample_filter.schema.json") }}
 
 | Name           | Type   | Default Value | Description      |
 | -------------- | ------ | ------------- | ---------------- |
@@ -57,6 +63,8 @@ These implementations inherit `pointcloud_preprocessor::Filter` class, please re
 | `voxel_size_z` | double | 0.1           | voxel size z [m] |
 
 ### Pickup Based Voxel Grid Downsample Filter
+
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/pickup_based_voxel_grid_downsample_filter.schema.json") }}
 
 | Name           | Type   | Default Value | Description      |
 | -------------- | ------ | ------------- | ---------------- |

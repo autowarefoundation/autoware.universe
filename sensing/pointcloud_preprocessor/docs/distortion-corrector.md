@@ -39,6 +39,8 @@ $ ExactPointTime = TimeStamp + TimeOffset $
 
 ### Core Parameters
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/distortion_corrector.schema.json") }}
+
 | Name                   | Type   | Default Value | Description                                                 |
 | ---------------------- | ------ | ------------- | ----------------------------------------------------------- |
 | `timestamp_field_name` | string | "time_stamp"  | time stamp field name                                       |

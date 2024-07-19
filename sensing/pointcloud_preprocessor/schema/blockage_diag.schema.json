@@ -17,12 +17,12 @@
           "default": "50"
         },
         "blockage_buffering_frames": {
-          "type": "number",
+          "type": "integer",
           "description": "The number of buffering about blockage detection [range:1-200]",
           "default": "2"
         },
         "blockage_buffering_interval": {
-          "type": "number",
+          "type": "integer",
           "description": "The interval of buffering about blockage detection",
           "default": "1"
         },
@@ -42,22 +42,22 @@
           "default": "0.2"
         },
         "dust_count_threshold": {
-          "type": "number",
+          "type": "integer",
           "description": "The threshold of number continuous frames include dusty area",
           "default": "10"
         },
         "dust_kernel_size": {
-          "type": "number",
+          "type": "integer",
           "description": "The kernel size of morphology processing in dusty area detection",
           "default": "2"
         },
         "dust_buffering_frames": {
-          "type": "number",
+          "type": "integer",
           "description": "The number of buffering about dusty area detection [range:1-200]",
           "default": "10"
         },
         "dust_buffering_interval": {
-          "type": "number",
+          "type": "integer",
           "description": "The interval of buffering about dusty area detection",
           "default": "1"
         },
@@ -72,9 +72,35 @@
           "default": "0.4"
         },
         "blockage_kernel": {
-          "type": "number",
+          "type": "integer",
           "description": "The kernel size of morphology processing the detected blockage area",
           "default": "10"
+        },
+        "angle_range": {
+          "type": "array",
+          "description": "The effective range of LiDAR",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 360.0
+          }
+        },
+        "vertical_bins": {
+          "type": "integer",
+          "description": "The LiDAR channel",
+          "default": "40"
+        },
+        "is_channel_order_top2down": {
+          "type": "boolean",
+          "description": "If the lidar channels are indexed from top to down",
+          "default": "true"
+        },
+        "horizontal_ring_id": {
+          "type": "integer",
+          "description": "The id of horizontal ring of the LiDAR",
+          "default": "18"
         }
       },
       "required": [
@@ -91,7 +117,11 @@
         "dust_buffering_interval",
         "max_distance_range",
         "horizontal_resolution",
-        "blockage_kernel"
+        "blockage_kernel",
+        "angle_range",
+        "vertical_bins",
+        "is_channel_order_top2down",
+        "horizontal_ring_id"
       ],
       "additionalProperties": false
     }

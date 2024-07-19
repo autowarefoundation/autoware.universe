@@ -41,27 +41,9 @@ Detail description of each filter's algorithm is in the following links.
 | ----------------- | ------------------------------- | --------------- |
 | `~/output/points` | `sensor_msgs::msg::PointCloud2` | filtered points |
 
-## Parameters
-
-### Node Parameters
+## Core Parameters
 
 {{ json_to_markdown("sensing/pointcloud_preprocessor/schema/filter.schema.json") }}
-
-### blockage_diag
-
-{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/blockage_diag.schema.json") }}
-
-### dual_return_outlier_filter
-
-{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/dual_return_outlier_filter.schema.json") }}
-
-### random_downsample_filter
-
-{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/random_downsample_filter.schema.json") }}
-
-### ring_passthrough_filter
-
-{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/ring_passthrough_filter.schema.json") }}
 
 ## Assumptions / Known limits
 

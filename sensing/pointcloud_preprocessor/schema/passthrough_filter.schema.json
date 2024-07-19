@@ -7,12 +7,12 @@
       "type": "object",
       "properties": {
         "filter_limit_min": {
-          "type": "number",
+          "type": "integer",
           "description": "minimum allowed field value",
           "default": "0"
         },
         "filter_limit_max": {
-          "type": "number",
+          "type": "integer",
           "description": "maximum allowed field value",
           "default": "127"
         },

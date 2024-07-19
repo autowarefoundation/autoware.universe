@@ -33,6 +33,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, so please 
 
 ### Core Parameters
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/vector_map_inside_area_filter.schema.json") }}
+
 | Name           | Type   | Description                 |
 | -------------- | ------ | --------------------------- |
 | `polygon_type` | string | polygon type to be filtered |

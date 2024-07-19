@@ -56,6 +56,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Core Parameters
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/ring_outlier_filter.schema.json") }}
+
 | Name                         | Type    | Default Value | Description                                                                                                                   |
 | ---------------------------- | ------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `distance_ratio`             | double  | 1.03          |                                                                                                                               |

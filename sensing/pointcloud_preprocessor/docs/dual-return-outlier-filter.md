@@ -46,6 +46,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Node Parameters
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/dual_return_outlier_filter.schema.json") }}
+
 This implementation inherits `pointcloud_preprocessor::Filter` class, please refer [README](../README.md).
 
 ### Core Parameters

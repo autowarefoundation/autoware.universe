@@ -20,6 +20,8 @@ This implementation inherit `pointcloud_preprocessor::Filter` class, please refe
 
 ### Core Parameters
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/crop_box_filter.schema.json") }}
+
 | Name    | Type   | Default Value | Description                               |
 | ------- | ------ | ------------- | ----------------------------------------- |
 | `min_x` | double | -1.0          | x-coordinate minimum value for crop range |

@@ -3,8 +3,8 @@
   <arg name="output_topic_name" default="/sensing/lidar/top/voxel_grid_downsample_filter/pointcloud"/>
   <arg name="input_frame" default=""/>
   <arg name="output_frame" default="base_link"/>
-  <arg name="voxel_grid_downsample_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/voxel_grid_downsample_filter_param_file.param.yaml"/>
-  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter_param_file.param.yaml"/>
+  <arg name="voxel_grid_downsample_filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/voxel_grid_downsample_filter.param.yaml"/>
+  <arg name="filter_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/filter.param.yaml"/>
   <node pkg="pointcloud_preprocessor" exec="voxel_grid_downsample_filter_node" name="voxel_grid_downsample_filter">
     <remap from="input" to="$(var input_topic_name)"/>
     <remap from="output" to="$(var output_topic_name)"/>

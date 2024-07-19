@@ -51,6 +51,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ## Parameters
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/blockage_diag.schema.json") }}
+
 | Name                          | Type   | Description                                                                                                                   |
 | ----------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | `blockage_ratio_threshold`    | float  | The threshold of blockage area ratio.If the blockage value exceeds this threshold, the diagnostic state will be set to ERROR. |

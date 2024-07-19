@@ -1,6 +1,0 @@
-<launch>
-  <arg name="distortion_corrector_param_file" default="$(find-pkg-share pointcloud_preprocessor)/config/distortion_corrector_param_file.param.yaml"/>
-  <node pkg="pointcloud_preprocessor" exec="distortion_corrector_node" name="distortion_corrector">
-    <param from="$(var distortion_corrector_param_file)"/>
-  </node>
-</launch>

@@ -24,6 +24,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 ### Core Parameters
 
+{{ json_to_markdown("sensing/pointcloud_preprocessor/schema/radius_search_2d_outlier_filter.schema.json") }}
+
 | Name            | Type   | Description                                                                                                              |
 | --------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
 | `min_neighbors` | int    | If points in the circle centered on reference point is less than `min_neighbors`, a reference point is judged as outlier |
