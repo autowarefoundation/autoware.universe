@@ -18,6 +18,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
+
 #include <gtest/gtest.h>
 
 namespace autoware::motion::control::autonomous_emergency_braking::test
@@ -107,6 +109,31 @@ TEST_F(TestAEB, checkParamUpdate)
 TEST_F(TestAEB, checkEmptyFetchData)
 {
   ASSERT_FALSE(aeb_node_->fetchLatestData());
+}
+
+TEST_F(TestAEB, checkConvertObjectToPolygon)
+{
+  using autoware_perception_msgs::msg::Shape;
+  PredictedObject obj_cylinder;
+  obj_cylinder.shape.type = Shape::CYLINDER;
+  obj_cylinder.shape.dimensions.x = 1.0;
+  Pose obj_cylinder_pose;
+  obj_cylinder_pose.position.x = 1.0;
+  obj_cylinder_pose.position.y = 1.0;
+  obj_cylinder.kinematics.initial_pose_with_covariance.pose = obj_cylinder_pose;
+  const auto cylinder_polygon = utils::convertObjToPolygon(obj_cylinder);
+  ASSERT_FALSE(cylinder_polygon.outer().empty());
+
+  PredictedObject obj_box;
+  obj_box.shape.type = Shape::BOUNDING_BOX;
+  obj_box.shape.dimensions.x = 1.0;
+  obj_box.shape.dimensions.y = 2.0;
+  Pose obj_box_pose;
+  obj_box_pose.position.x = 1.0;
+  obj_box_pose.position.y = 1.0;
+  obj_box.kinematics.initial_pose_with_covariance.pose = obj_box_pose;
+  const auto box_polygon = utils::convertObjToPolygon(obj_box);
+  ASSERT_FALSE(box_polygon.outer().empty());
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking::test
