@@ -88,7 +88,7 @@ private:
 
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
 
-  // update Route Handleru
+  // update Route Handler
   void getRouteData();
 
   // Calculator
