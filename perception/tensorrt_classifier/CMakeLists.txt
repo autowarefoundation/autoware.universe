@@ -13,6 +13,7 @@ find_package(OpenCV REQUIRED)
 
 if(NOT (${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND}))
   message(WARNING "cuda, cudnn, tensorrt libraries are not found")
+  ament_auto_package()
   return()
 endif()
 
