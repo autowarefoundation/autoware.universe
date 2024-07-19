@@ -33,7 +33,7 @@ if(BUILD_TESTING)
 ament_lint_auto_find_test_dependencies()
 find_package(ament_lint_auto REQUIRED)
   ament_add_ros_isolated_gtest(test_aeb
-    test/test.cpp)
+  test/test.cpp)
 
 target_link_libraries(test_aeb
     ${AEB_NODE}

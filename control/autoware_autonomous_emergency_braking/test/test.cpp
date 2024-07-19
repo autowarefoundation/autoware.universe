@@ -86,6 +86,27 @@ TEST_F(TestAEB, checkIncompleteImuPathGeneration)
 
   const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
   ASSERT_FALSE(footprint.empty());
+  ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
+}
+
+TEST_F(TestAEB, checkEmptyPathAtZeroSpeed)
+{
+  const double velocity = 0.0;
+  constexpr double yaw_rate = 0.0;
+  const auto imu_path = aeb_node_->generateEgoPath(velocity, yaw_rate);
+  ASSERT_EQ(imu_path.size(), 1);
+}
+
+TEST_F(TestAEB, checkParamUpdate)
+{
+  std::vector<rclcpp::Parameter> parameters{rclcpp::Parameter("param")};
+  const auto result = aeb_node_->onParameter(parameters);
+  ASSERT_TRUE(result.successful);
+}
+
+TEST_F(TestAEB, checkEmptyFetchData)
+{
+  ASSERT_FALSE(aeb_node_->fetchLatestData());
 }
 
 }  // namespace autoware::motion::control::autonomous_emergency_braking::test
