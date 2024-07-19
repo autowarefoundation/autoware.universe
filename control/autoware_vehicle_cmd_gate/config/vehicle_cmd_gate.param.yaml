@@ -20,7 +20,7 @@
       steer_lim: [1.0, 1.0, 1.0, 0.8]
       steer_rate_lim: [1.0, 1.0, 1.0, 0.8]
       lon_acc_lim: [5.0, 5.0, 5.0, 4.0]
-      lon_jerk_lim: [80.0, 5.0, 5.0, 4.0] # The first element is required for quick pedal changes when stopping and starting on a slope.
+      lon_jerk_lim: [80.0, 5.0, 5.0, 4.0] # The first element is required for quick pedal changes when stopping and starting.
       lat_acc_lim: [5.0, 5.0, 5.0, 4.0]
       lat_jerk_lim: [7.0, 7.0, 7.0, 6.0]
       actual_steer_diff_lim: [1.0, 1.0, 1.0, 0.8]
