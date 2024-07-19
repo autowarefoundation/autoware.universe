@@ -579,29 +579,6 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     return;
   }
 
-  /**
-   * If the yield maneuver is disabled, use unapproved_new_sl for avoidance path generation even if
-   * the shift line is unsafe.
-   */
-  if (!parameters_->enable_yield_maneuver) {
-    data.yield_required = false;
-    data.safe_shift_line = data.new_shift_line;
-    return;
-  }
-
-  /**
-   * TODO(Satoshi OTA) Think yield maneuver in the middle of avoidance.
-   * Even if it is determined that a yield is necessary, the yield maneuver is not executed
-   * if the avoidance has already been initiated.
-   */
-  if (!can_yield_maneuver) {
-    data.safe = true;  // overwrite safety judge.
-    data.yield_required = false;
-    data.safe_shift_line = data.new_shift_line;
-    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "unsafe. but could not transit yield status.");
-    return;
-  }
-
   auto candidate_sl_force_activated = [&](const std::string & direction) {
     // If statement to avoid unnecessary warning occurring from isForceActivated function
     if (candidate_uuid_ == uuid_map_.at(direction)) {
@@ -623,13 +600,12 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
   /**
    * Check if the candidate avoidance path is force activated
    */
-  if (isActivated()) {
-    if (candidate_sl_force_activated("left") || candidate_sl_force_activated("right")) {
-      data.yield_required = false;
-      data.safe_shift_line = data.new_shift_line;
-      return;
-    }
+  if (candidate_sl_force_activated("left") || candidate_sl_force_activated("right")) {
+    data.yield_required = false;
+    data.safe_shift_line = data.new_shift_line;
+    return;
   }
+
 
   /**
    * Check if any registered shift line is force activated
@@ -639,6 +615,30 @@ void StaticObstacleAvoidanceModule::fillEgoStatus(
     registered_sl_force_activated("right", right_shift_array_)) {
     data.yield_required = false;
     data.safe_shift_line = data.new_shift_line;
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "unsafe but force executed");
+    return;
+  }
+
+  /**
+   * If the yield maneuver is disabled, use unapproved_new_sl for avoidance path generation even if
+   * the shift line is unsafe.
+   */
+  if (!parameters_->enable_yield_maneuver) {
+    data.yield_required = false;
+    data.safe_shift_line = data.new_shift_line;
+    return;
+  }
+
+  /**
+   * TODO(Satoshi OTA) Think yield maneuver in the middle of avoidance.
+   * Even if it is determined that a yield is necessary, the yield maneuver is not executed
+   * if the avoidance has already been initiated.
+   */
+  if (!can_yield_maneuver) {
+    data.safe = true;  // overwrite safety judge.
+    data.yield_required = false;
+    data.safe_shift_line = data.new_shift_line;
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 500, "unsafe. but could not transit yield status.");
     return;
   }
 
