@@ -147,9 +147,7 @@ void AbstractPlanningAlgorithm::computeEDTMap()
   std::vector<double> edt_map;
   edt_map.reserve(costmap_.data.size());
 
-  std::vector<double> temporary_storage;
-  temporary_storage.resize(width, diagonal_m);
-
+  std::vector<double> temporary_storage(width);
   // scan rows
   for (int i = 0; i < height; ++i) {
     double distance = resolution_m;
@@ -163,6 +161,8 @@ void AbstractPlanningAlgorithm::computeEDTMap()
       } else if (found_obstacle) {
         temporary_storage[j] = distance;
         distance += resolution_m;
+      } else {
+        temporary_storage[j] = diagonal_m;
       }
     }
 
