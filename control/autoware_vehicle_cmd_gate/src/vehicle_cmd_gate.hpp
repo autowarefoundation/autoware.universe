@@ -194,7 +194,7 @@ private:
     this, "input/emergency/gear_cmd"};
   void onEmergencyCtrlCmd(Control::ConstSharedPtr msg);
 
-  // Previuos Command
+  // Previous Commands
   Commands prev_commands_;
 
   // Parameter
