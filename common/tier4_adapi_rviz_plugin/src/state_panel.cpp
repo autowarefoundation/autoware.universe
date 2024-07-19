@@ -279,6 +279,9 @@ void StatePanel::onInitialize()
   client_emergency_stop_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
     "/api/autoware/set/emergency");
 
+  client_clear_emergency_holding_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
+    "/api/autoware/set/clear_emergency_holding");
+
   pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
 }
@@ -615,7 +618,8 @@ void StatePanel::onClickEmergencyButton()
   using tier4_external_api_msgs::srv::SetEmergency;
 
   auto request = std::make_shared<SetEmergency::Request>();
-  request->emergency = !current_emergency_;
+  auto emergency_state = !current_emergency_;
+  request->emergency = emergency_state;
 
   RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
 
@@ -629,6 +633,22 @@ void StatePanel::onClickEmergencyButton()
           raw_node_->get_logger(), "service failed: %s", response->status.message.c_str());
       }
     });
+
+  auto request_clear = std::make_shared<SetEmergency::Request>();
+  request_clear->emergency = emergency_state;
+
+  if (!emergency_state) {
+    client_clear_emergency_holding_->async_send_request(
+      request_clear, [this](rclcpp::Client<SetEmergency>::SharedFuture result) {
+        const auto & response = result.get();
+        if (response->status.code == ResponseStatus::SUCCESS) {
+          RCLCPP_INFO(raw_node_->get_logger(), "Clear Emergency Holding service succeeded");
+        } else {
+          RCLCPP_WARN(
+            raw_node_->get_logger(), "Clear Emergency Holding service failed: %s", response->status.message.c_str());
+        }
+      });
+  }
 }
 
 }  // namespace tier4_adapi_rviz_plugins

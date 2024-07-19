@@ -92,6 +92,7 @@ protected:
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::Subscription<autoware_vehicle_msgs::msg::GearReport>::SharedPtr sub_gear_;
   rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr client_emergency_stop_;
+  rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr client_clear_emergency_holding_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::Emergency>::SharedPtr sub_emergency_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
 
