@@ -53,7 +53,7 @@ public:
   double getAcceleration(const double acc_des, const double vel) const
   {
     std::vector<double> interpolated_acc_vec;
-    const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "acc: vel");
+    const double clamped_vel = CSVLoader::clampValue(vel, vel_index_);
 
     // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
     for (const auto & acc_vec : acceleration_map_) {
@@ -62,7 +62,7 @@ public:
     // calculate throttle
     // When the desired acceleration is smaller than the throttle area, return min acc
     // When the desired acceleration is greater than the throttle area, return max acc
-    const double clamped_acc = CSVLoader::clampValue(acc_des, acc_index_, "acceleration: acc");
+    const double clamped_acc = CSVLoader::clampValue(acc_des, acc_index_);
     const double acc = interpolation::lerp(acc_index_, interpolated_acc_vec, clamped_acc);
 
     return acc;
