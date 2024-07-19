@@ -9,6 +9,7 @@ set(CGAL_DATA_DIR ".")
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(Sophus REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
@@ -19,16 +20,19 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${Sophus_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
 )
 
 add_library(pointcloud_preprocessor_filter_base SHARED
   src/filter.cpp
+  src/utility/memory.cpp
 )
 
 target_include_directories(pointcloud_preprocessor_filter_base PUBLIC
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
   "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+  ${autoware_point_types_INCLUDE_DIRS}
 )
 
 ament_target_dependencies(pointcloud_preprocessor_filter_base
@@ -39,6 +43,7 @@ ament_target_dependencies(pointcloud_preprocessor_filter_base
   tf2_ros
   autoware_universe_utils
   pcl_ros
+  autoware_point_types
 )
 
 add_library(faster_voxel_grid_downsample_filter SHARED
@@ -57,7 +62,6 @@ ament_target_dependencies(faster_voxel_grid_downsample_filter
 )
 
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED
-  src/utility/utilities.cpp
   src/concatenate_data/concatenate_and_time_sync_nodelet.cpp
   src/concatenate_data/concatenate_pointclouds.cpp
   src/time_synchronizer/time_synchronizer_nodelet.cpp
@@ -76,9 +80,11 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/pointcloud_accumulator/pointcloud_accumulator_nodelet.cpp
   src/vector_map_filter/lanelet2_map_filter_nodelet.cpp
   src/distortion_corrector/distortion_corrector.cpp
+  src/distortion_corrector/distortion_corrector_node.cpp
   src/blockage_diag/blockage_diag_nodelet.cpp
   src/polygon_remover/polygon_remover.cpp
   src/vector_map_filter/vector_map_inside_area_filter.cpp
+  src/utility/geometry.cpp
 )
 
 target_link_libraries(pointcloud_preprocessor_filter
@@ -86,6 +92,7 @@ target_link_libraries(pointcloud_preprocessor_filter
   faster_voxel_grid_downsample_filter
   ${Boost_LIBRARIES}
   ${OpenCV_LIBRARIES}
+  ${Sophus_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
@@ -223,18 +230,19 @@ ament_auto_package(INSTALL_TO_SHARE
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   find_package(ament_cmake_gtest)
+
   ament_lint_auto_find_test_dependencies()
+
   ament_add_gtest(test_utilities
     test/test_utilities.cpp
   )
-  target_link_libraries(test_utilities pointcloud_preprocessor_filter)
 
-  add_ros_test(
-    test/test_distortion_corrector.py
-    TIMEOUT "30"
+  ament_add_gtest(test_distortion_corrector_node
+    test/test_distortion_corrector_node.cpp
   )
-  add_ros_test(
-    test/test_distortion_corrector_use_imu_false.py
-    TIMEOUT "30"
-  )
+
+  target_link_libraries(test_utilities pointcloud_preprocessor_filter)
+  target_link_libraries(test_distortion_corrector_node pointcloud_preprocessor_filter)
+
+
 endif()
