@@ -14,6 +14,7 @@
 
 #include "node.hpp"
 
+#include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/wait_for_param.hpp>
@@ -21,7 +22,7 @@
 #include <autoware/universe_utils/transform/transforms.hpp>
 #include <autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <autoware/velocity_smoother/trajectory_utils.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
@@ -82,8 +83,8 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   velocity_factor_publisher_ =
     this->create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
       "~/output/velocity_factors", 1);
-  processing_time_publisher_ = this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>(
-    "~/debug/total_time/processing_time_ms", 1);
+  processing_time_publisher_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 
   // Parameters
   smooth_velocity_before_planning_ = declare_parameter<bool>("smooth_velocity_before_planning");
@@ -324,7 +325,7 @@ void MotionVelocityPlannerNode::insert_slowdown(
     autoware::motion_utils::insertTargetPoint(to_seg_idx, slowdown_interval.to, trajectory.points);
   if (from_insert_idx && to_insert_idx) {
     for (auto idx = *from_insert_idx; idx <= *to_insert_idx; ++idx)
-      trajectory.points[idx].longitudinal_velocity_mps = 0.0;
+      trajectory.points[idx].longitudinal_velocity_mps = slowdown_interval.velocity;
   } else {
     RCLCPP_WARN(get_logger(), "Failed to insert slowdown point");
   }
@@ -380,9 +381,11 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   output_trajectory_msg.points = {input_trajectory_points.begin(), input_trajectory_points.end()};
   if (smooth_velocity_before_planning_)
     input_trajectory_points = smooth_trajectory(input_trajectory_points, planner_data_);
+  const auto resampled_trajectory =
+    autoware::motion_utils::resampleTrajectory(output_trajectory_msg, 0.5);
 
   const auto planning_results = planner_manager_.plan_velocities(
-    input_trajectory_points, std::make_shared<const PlannerData>(planner_data_));
+    resampled_trajectory.points, std::make_shared<const PlannerData>(planner_data_));
 
   autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factors;
   velocity_factors.header.frame_id = "map";

@@ -22,10 +22,10 @@
 #include "autoware/behavior_path_start_planner_module/util.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -1217,8 +1217,9 @@ PredictedObjects StartPlannerModule::filterStopObjectsInPullOutLanes(
   // filter for objects located in pull out lanes and moving at a speed below the threshold
   auto [stop_objects_in_pull_out_lanes, others] =
     utils::path_safety_checker::separateObjectsByLanelets(
-      stop_objects, pull_out_lanes, [](const auto & obj, const auto & lane) {
-        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane);
+      stop_objects, pull_out_lanes,
+      [](const auto & obj, const auto & lane, const auto yaw_threshold) {
+        return utils::path_safety_checker::isPolygonOverlapLanelet(obj, lane, yaw_threshold);
       });
 
   const auto path = planner_data_->route_handler->getCenterLinePath(

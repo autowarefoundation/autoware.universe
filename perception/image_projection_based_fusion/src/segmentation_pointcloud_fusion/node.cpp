@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "image_projection_based_fusion/segmentation_pointcloud_fusion/node.hpp"
+#include "autoware/image_projection_based_fusion/segmentation_pointcloud_fusion/node.hpp"
 
-#include "image_projection_based_fusion/utils/geometry.hpp"
-#include "image_projection_based_fusion/utils/utils.hpp"
+#include "autoware/image_projection_based_fusion/utils/geometry.hpp"
+#include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -25,14 +25,19 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
-namespace image_projection_based_fusion
+namespace autoware::image_projection_based_fusion
 {
 SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<PointCloud2, PointCloud2, Image>("segmentation_pointcloud_fusion", options)
 {
   filter_distance_threshold_ = declare_parameter<float>("filter_distance_threshold");
-  filter_semantic_label_target_ =
-    declare_parameter<std::vector<bool>>("filter_semantic_label_target");
+  for (auto & item : filter_semantic_label_target_list_) {
+    item.second = declare_parameter<bool>("filter_semantic_label_target." + item.first);
+  }
+  for (const auto & item : filter_semantic_label_target_list_) {
+    RCLCPP_INFO(
+      this->get_logger(), "filter_semantic_label_target: %s %d", item.first.c_str(), item.second);
+  }
 }
 
 void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
@@ -65,6 +70,10 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   if (mask.cols == 0 || mask.rows == 0) {
     return;
   }
+  const int orig_width = camera_info.width;
+  const int orig_height = camera_info.height;
+  // resize mask to the same size as the camera image
+  cv::resize(mask, mask, cv::Size(orig_width, orig_height), 0, 0, cv::INTER_NEAREST);
   image_geometry::PinholeCameraModel pinhole_camera_model;
   pinhole_camera_model.fromCameraInfo(camera_info);
 
@@ -125,12 +134,12 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     // skip filtering pointcloud where semantic id out of the defined list
     uint8_t semantic_id = mask.at<uint8_t>(
       static_cast<uint16_t>(projected_point.y()), static_cast<uint16_t>(projected_point.x()));
-    if (static_cast<size_t>(semantic_id) >= filter_semantic_label_target_.size()) {
+    if (static_cast<size_t>(semantic_id) >= filter_semantic_label_target_list_.size()) {
       copyPointCloud(
         input_pointcloud_msg, point_step, global_offset, output_cloud, output_pointcloud_size);
       continue;
     }
-    if (!filter_semantic_label_target_.at(semantic_id)) {
+    if (!filter_semantic_label_target_list_.at(semantic_id).second) {
       copyPointCloud(
         input_pointcloud_msg, point_step, global_offset, output_cloud, output_pointcloud_size);
     }
@@ -146,7 +155,8 @@ bool SegmentPointCloudFusionNode::out_of_scope(__attribute__((unused))
 {
   return false;
 }
-}  // namespace image_projection_based_fusion
+}  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::SegmentPointCloudFusionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::image_projection_based_fusion::SegmentPointCloudFusionNode)

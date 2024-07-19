@@ -401,6 +401,15 @@ else (\n no)
 #00FFB1 :IGNORE;
 stop
 endif
+if(Is UNKNOWN objects?) then (yes)
+if(isSatisfiedWithUnknownTypeObjectCodition) then (yes)
+#FF006C :AVOID;
+stop
+else (\n no)
+#00FFB1 :IGNORE;
+stop
+endif
+else (\n no)
 if(Is vehicle type?) then (yes)
 if(isSatisfiedWithVehicleCodition()) then (yes)
 else (\n no)
@@ -618,6 +627,18 @@ title Filter vehicle which is obviously an avoidance target
 start
 
 partition isObviousAvoidanceTarget() {
+if(Is object within freespace?) then (yes)
+if(Is object on ego lane?) then (no)
+if(Is object stopping longer than threshold?) then (yes)
+#FF006C :return true;
+stop
+else (\n no)
+endif
+else (\n yes)
+endif
+else (\n no)
+endif
+
 if(Is object within intersection?) then (yes)
 else (\n no)
 if(Is object parallel to ego lane? AND Is object a parked vehicle?) then (yes)
@@ -659,6 +680,27 @@ if(isWithinCrosswalk()) then (yes)
 stop
 else (\n no)
 endif
+
+if(is object within intersection?) then (yes)
+#00FFB1 :return false;
+stop
+else (\n no)
+endif
+
+if(is object on right side of the ego path?) then (yes)
+if(are there adjacent lanes on right side of ego lane?) then (yes)
+#00FFB1 :return false;
+stop
+else (\n no)
+endif
+else (\n no)
+if(are there adjacent lanes on left side of ego lane?) then (yes)
+#00FFB1 :return false;
+stop
+else (\n no)
+endif
+endif
+
 #FF006C :return true;
 stop
 }
@@ -988,13 +1030,13 @@ use_hatched_road_markings: true
 use_freespace_areas: true
 ```
 
-|                                        |                                                            |                                                                                                                                                                                                                     |
-| -------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| use_lane_type: same_direction_lane     | ![fig](./images/advanced/avoidance_same_direction.png)     |                                                                                                                                                                                                                     |
-| use_lane_type: opposite_direction_lane | ![fig](./images/advanced/avoidance_opposite_direction.png) |                                                                                                                                                                                                                     |
-| intersection area                      | ![fig](./images/advanced/avoidance_intersection.png)       | The intersection area is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md)                               |
-| hatched road markings                  | ![fig](./images/advanced/avoidance_zebra.png)              | The hatched road marking is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_common/blob/main/tmp/lanelet2_extension/docs/lanelet2_format_extension.md#hatched-road-markings-area) |
-| freespace area                         | ![fig](./images/advanced/avoidance_freespace.png)          | The freespace area is defined on Lanelet map. (unstable)                                                                                                                                                            |
+|                                        |                                                            |                                                                                                                                                                                                                                      |
+| -------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| use_lane_type: same_direction_lane     | ![fig](./images/advanced/avoidance_same_direction.png)     |                                                                                                                                                                                                                                      |
+| use_lane_type: opposite_direction_lane | ![fig](./images/advanced/avoidance_opposite_direction.png) |                                                                                                                                                                                                                                      |
+| intersection area                      | ![fig](./images/advanced/avoidance_intersection.png)       | The intersection area is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md)                               |
+| hatched road markings                  | ![fig](./images/advanced/avoidance_zebra.png)              | The hatched road marking is defined on Lanelet map. See [here](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/lanelet2_format_extension.md#hatched-road-markings-area) |
+| freespace area                         | ![fig](./images/advanced/avoidance_freespace.png)          | The freespace area is defined on Lanelet map. (unstable)                                                                                                                                                                             |
 
 ## Future extensions / Unimplemented parts
 

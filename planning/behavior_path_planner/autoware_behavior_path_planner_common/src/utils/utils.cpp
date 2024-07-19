@@ -21,9 +21,9 @@
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/is_valid.hpp>
 
@@ -1268,8 +1268,8 @@ lanelet::ConstLanelets getCurrentLanesFromPath(
   const auto & p = planner_data->parameters;
 
   std::set<lanelet::Id> lane_ids;
-  for (const auto & p : path.points) {
-    for (const auto & id : p.lane_ids) {
+  for (const auto & point : path.points) {
+    for (const auto & id : point.lane_ids) {
       lane_ids.insert(id);
     }
   }

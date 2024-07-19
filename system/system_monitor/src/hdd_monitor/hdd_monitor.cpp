@@ -615,6 +615,7 @@ void HddMonitor::updateHddInfoList()
   addr.sin_family = AF_INET;
   addr.sin_port = htons(hdd_reader_port_);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  // cppcheck-suppress cstyleCast
   ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
   if (ret < 0) {
     connect_diag_.summary(DiagStatus::ERROR, "connect error");
@@ -683,8 +684,8 @@ void HddMonitor::updateHddInfoList()
   // Restore HDD information list
   try {
     std::istringstream iss(buf);
-    boost::archive::text_iarchive oa(iss);
-    oa >> hdd_info_list_;
+    boost::archive::text_iarchive ia(iss);
+    ia >> hdd_info_list_;
   } catch (const std::exception & e) {
     connect_diag_.summary(DiagStatus::ERROR, "recv error");
     connect_diag_.add("recv", e.what());
@@ -854,6 +855,7 @@ int HddMonitor::unmountDevice(std::string & device)
   addr.sin_family = AF_INET;
   addr.sin_port = htons(hdd_reader_port_);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  // cppcheck-suppress cstyleCast
   ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
   if (ret < 0) {
     RCLCPP_ERROR(get_logger(), "socket connect error. %s", strerror(errno));

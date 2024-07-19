@@ -108,7 +108,7 @@ struct AvoidanceParameters
   bool enable_cancel_maneuver{false};
 
   // enable avoidance for all parking vehicle
-  bool enable_avoidance_for_ambiguous_vehicle{false};
+  std::string policy_ambiguous_vehicle{"ignore"};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
@@ -191,8 +191,12 @@ struct AvoidanceParameters
   // minimum road shoulder width. maybe 0.5 [m]
   double object_check_min_road_shoulder_width{0.0};
 
+  // time threshold for vehicle in freespace.
+  double freespace_condition_th_stopped_time{0.0};
+
   // force avoidance
-  double closest_distance_to_wait_and_see_for_ambiguous_vehicle{0.0};
+  std::vector<std::string> wait_and_see_target_behaviors{"NONE", "MERGING", "DEVIATING"};
+  double wait_and_see_th_closest_distance{0.0};
   double time_threshold_for_ambiguous_vehicle{0.0};
   double distance_threshold_for_ambiguous_vehicle{0.0};
 
@@ -351,6 +355,10 @@ struct ObjectData  // avoidance target
   : object(std::move(obj)), to_centerline(lat), longitudinal(lon), length(len)
   {
   }
+
+  Pose getPose() const { return object.kinematics.initial_pose_with_covariance.pose; }
+
+  Point getPosition() const { return object.kinematics.initial_pose_with_covariance.pose.position; }
 
   PredictedObject object;
 

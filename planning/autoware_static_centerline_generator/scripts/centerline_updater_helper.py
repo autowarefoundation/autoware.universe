@@ -65,6 +65,7 @@ class CenterlineUpdaterWidget(QMainWindow):
         centerline_group.setLayout(centerline_vertical_box)
         self.grid_layout.addWidget(centerline_group)
 
+        """
         # 2. Road Boundary
         road_boundary_group = QGroupBox("Road Boundary")
         road_boundary_vertical_box = QVBoxLayout(self)
@@ -79,8 +80,8 @@ class CenterlineUpdaterWidget(QMainWindow):
         self.road_boundary_lateral_margin_slider.setMaximum(
             5 * self.road_boundary_lateral_margin_ratio
         )
-
         road_boundary_vertical_box.addWidget(QPushButton("reset"))
+        """
 
         # 3. General
         general_group = QGroupBox("General")
@@ -123,9 +124,11 @@ class CenterlineUpdaterHelper(Node):
         self.widget.validate_button.clicked.connect(self.onValidateButtonPushed)
         self.widget.traj_start_index_slider.valueChanged.connect(self.onStartIndexChanged)
         self.widget.traj_end_index_slider.valueChanged.connect(self.onEndIndexChanged)
+        """
         self.widget.road_boundary_lateral_margin_slider.valueChanged.connect(
             self.onRoadBoundaryLateralMargin
         )
+        """
 
         # ROS
         self.pub_save_map = self.create_publisher(Empty, "/static_centerline_generator/save_map", 1)
@@ -158,6 +161,13 @@ class CenterlineUpdaterHelper(Node):
     def onSaveMapButtonPushed(self, event):
         msg = Empty()
         self.pub_save_map.publish(msg)
+
+        # NOTE: After saving the map, the generated centerline is written
+        # in original_map_ptr_ in static_centerline_generator_node.
+        # When saving the map again, another centerline is written without
+        # removing the previous centerline.
+        # Therefore, saving the map can be called only once.
+        self.widget.save_map_button.setEnabled(False)
 
     def onValidateButtonPushed(self, event):
         msg = Empty()

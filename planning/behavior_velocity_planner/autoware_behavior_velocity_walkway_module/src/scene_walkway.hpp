@@ -19,7 +19,7 @@
 #include "scene_walkway.hpp"
 
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -54,9 +54,9 @@ public:
 private:
   const int64_t module_id_;
 
-  [[nodiscard]] std::optional<std::pair<double, geometry_msgs::msg::Point>> getStopLine(
+  [[nodiscard]] std::pair<double, geometry_msgs::msg::Point> getStopLine(
     const PathWithLaneId & ego_path, bool & exist_stopline_in_map,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
+    const geometry_msgs::msg::Point & first_path_point_on_walkway) const;
 
   enum class State { APPROACH, STOP, SURPASSED };
 

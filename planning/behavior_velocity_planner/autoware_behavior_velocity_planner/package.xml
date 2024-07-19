@@ -35,6 +35,7 @@
   <build_depend>rosidl_default_generators</build_depend>
 
   <depend>autoware_behavior_velocity_planner_common</depend>
+  <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_map_msgs</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_perception_msgs</depend>
