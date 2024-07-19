@@ -5,6 +5,8 @@ All Rights Reserved 2019-2022.
 */
 #pragma once
 
+#include "common.hpp"
+
 #include <stdio.h>
 #include <thrust/count.h>
 #include <thrust/device_vector.h>
@@ -16,7 +18,6 @@ All Rights Reserved 2019-2022.
 
 #include <iostream>
 #include <vector>
-#include "common.hpp"
 
 const int THREADS_PER_BLOCK = 16;
 const int THREADS_PER_BLOCK_NMS = sizeof(unsigned long long) * 8;
