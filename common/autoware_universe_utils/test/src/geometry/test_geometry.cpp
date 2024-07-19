@@ -2051,7 +2051,7 @@ TEST(geometry, within)
     const auto result = within({p1, p2, p3, p4}, {p5, p6, p7, p8});
 
     EXPECT_TRUE(result);
-    EXPECT_FALSE(*result);
+    EXPECT_TRUE(*result);
   }
 }
 
@@ -2330,11 +2330,10 @@ TEST(geometry, convexHull)
     points.push_back({5.4, 1.2, 0.0});
     points.push_back({4.9, 0.8, 0.0});
     points.push_back({2.9, 0.7, 0.0});
-    points.push_back({2.0, 1.3, 0.0});
     const auto result = convexHull(points);
 
     EXPECT_TRUE(result);
-    EXPECT_EQ(result->size(), 8);
+    EXPECT_EQ(result->size(), 7);
     EXPECT_NEAR(result->at(0).x(), 2.0, epsilon);
     EXPECT_NEAR(result->at(0).y(), 1.3, epsilon);
     EXPECT_NEAR(result->at(0).z(), 0.0, epsilon);
@@ -2356,9 +2355,6 @@ TEST(geometry, convexHull)
     EXPECT_NEAR(result->at(6).x(), 2.9, epsilon);
     EXPECT_NEAR(result->at(6).y(), 0.7, epsilon);
     EXPECT_NEAR(result->at(6).z(), 0.0, epsilon);
-    EXPECT_NEAR(result->at(7).x(), 2.0, epsilon);
-    EXPECT_NEAR(result->at(7).y(), 1.3, epsilon);
-    EXPECT_NEAR(result->at(7).z(), 0.0, epsilon);
   }
 }
 

@@ -420,7 +420,7 @@ std::optional<bool> isClockwise(const alt::Polygon & poly)
 
 void correct(alt::Polygon & poly)
 {
-  if (poly.size() < 3 || isClockwise(poly).value_or(true)) {
+  if (poly.size() < 3) {
     return;
   }
 
@@ -428,6 +428,26 @@ void correct(alt::Polygon & poly)
 
   std::sort(poly.begin() + 1, poly.end(), [&](const auto & a, const auto & b) {
     return (a - poly.front()).cross(b - poly.front()).z() < 0;
+  });
+
+  if (
+    std::abs(poly.front().x() - poly.back().x()) <= std::numeric_limits<double>::epsilon() &&
+    std::abs(poly.front().y() - poly.back().y()) <= std::numeric_limits<double>::epsilon()) {
+    poly.pop_back();
+  }
+}
+
+std::optional<bool> equals(const alt::Polygon & poly1, const alt::Polygon & poly2)
+{
+  if (poly1.size() < 3 || poly2.size() < 3) {
+    return std::nullopt;
+  }
+
+  return std::all_of(poly1.begin(), poly1.end(), [&](const auto & a) {
+    return std::any_of(poly2.begin(), poly2.end(), [&](const auto & b) {
+      return std::abs(a.x() - b.x()) <= std::numeric_limits<double>::epsilon() &&
+             std::abs(a.y() - b.y()) <= std::numeric_limits<double>::epsilon();
+    });
   });
 }
 
@@ -663,6 +683,7 @@ std::optional<alt::Polygon> convexHull(const alt::PointList & points)
   make_hull(make_hull, p_min, p_max, above_points);
   hull.push_back(p_max);
   make_hull(make_hull, p_max, p_min, below_points);
+  correct(hull);
 
   return hull;
 }

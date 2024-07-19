@@ -598,6 +598,7 @@ std::optional<bool> isClockwise(const alt::Polygon & poly);
 
 void correct(alt::Polygon & poly);
 
+std::optional<bool> equals(const alt::Polygon & poly1, const alt::Polygon & poly2);
 
 // NOTE: much faster than boost::geometry::intersects()
 std::optional<alt::Point> intersect(
