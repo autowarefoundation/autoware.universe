@@ -310,6 +310,8 @@ void StaticObstacleAvoidanceModule::fillFundamentalData(
 void StaticObstacleAvoidanceModule::fillAvoidanceTargetObjects(
   AvoidancePlanningData & data, DebugData & debug) const
 {
+  using utils::static_obstacle_avoidance::fillAvoidanceNecessity;
+  using utils::static_obstacle_avoidance::fillObjectStoppableJudge;
   using utils::static_obstacle_avoidance::filterTargetObjects;
   using utils::static_obstacle_avoidance::separateObjectsByPath;
   using utils::static_obstacle_avoidance::updateRoadShoulderDistance;
@@ -369,21 +371,6 @@ void StaticObstacleAvoidanceModule::fillAvoidanceTargetObjects(
 
     updateAvoidanceDebugData(debug_info_array);
   }
-}
-
-void StaticObstacleAvoidanceModule::fillAvoidanceTargetData(ObjectDataArray & objects) const
-{
-  using utils::static_obstacle_avoidance::fillAvoidanceNecessity;
-  using utils::static_obstacle_avoidance::fillObjectStoppableJudge;
-
-  // Calculate the distance needed to safely decelerate the ego vehicle to a stop line.
-  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto feasible_stop_distance = helper_->getFeasibleDecelDistance(0.0, false);
-  std::for_each(objects.begin(), objects.end(), [&, this](auto & o) {
-    fillAvoidanceNecessity(o, registered_objects_, vehicle_width, parameters_);
-    o.to_stop_line = calcDistanceToStopLine(o);
-    fillObjectStoppableJudge(o, registered_objects_, feasible_stop_distance, parameters_);
-  });
 }
 
 ObjectData StaticObstacleAvoidanceModule::createObjectData(
@@ -1405,8 +1392,6 @@ void StaticObstacleAvoidanceModule::updateRTCData()
 
 void StaticObstacleAvoidanceModule::updateInfoMarker(const AvoidancePlanningData & data) const
 {
-  using utils::static_obstacle_avoidance::createAmbiguousObjectsMarkerArray;
-  using utils::static_obstacle_avoidance::createStopTargetObjectMarkerArray;
   using utils::static_obstacle_avoidance::createTargetObjectsMarkerArray;
 
   info_marker_.markers.clear();

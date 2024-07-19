@@ -155,17 +155,11 @@ public:
 
   bool isValidPath() const { return status_.is_valid_path; }
 
-  void setData(const std::shared_ptr<const PlannerData> & data)
+  void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
+
+  void setTimeKeeper(const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper)
   {
-    planner_data_ = data;
-    if (!common_data_ptr_->bpp_param_ptr) {
-      common_data_ptr_->bpp_param_ptr =
-        std::make_shared<BehaviorPathPlannerParameters>(data->parameters);
-    }
-    common_data_ptr_->self_odometry_ptr = data->self_odometry;
-    common_data_ptr_->route_handler_ptr = data->route_handler;
-    common_data_ptr_->lc_param_ptr = lane_change_parameters_;
-    common_data_ptr_->direction = direction_;
+    time_keeper_ = time_keeper;
   }
 
   void toNormalState() { current_lane_change_state_ = LaneChangeStates::Normal; }
