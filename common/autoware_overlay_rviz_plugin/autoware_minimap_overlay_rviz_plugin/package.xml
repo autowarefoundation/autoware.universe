@@ -8,7 +8,6 @@
   <license>TODO: License declaration</license>
 
   <depend>GeographicLib</depend>
-  <depend>OGRE</depend>
   <depend>angles</depend>
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_cmake</depend>
