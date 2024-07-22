@@ -1955,10 +1955,10 @@ TEST(geometry, convexHull)
 TEST(geometry, correct)
 {
   using autoware::universe_utils::correct;
-  using autoware::universe_utils::alt::CvxPolygon;
+  using autoware::universe_utils::alt::ConvexPolygon;
 
   {  // Correctly oriented
-    CvxPolygon poly;
+    ConvexPolygon poly;
     poly.push_back({1.0, 1.0, 0.0});
     poly.push_back({1.0, -1.0, 0.0});
     poly.push_back({-1.0, -1.0, 0.0});
@@ -1980,7 +1980,7 @@ TEST(geometry, correct)
   }
 
   {  // Wrongly oriented
-    CvxPolygon poly;
+    ConvexPolygon poly;
     poly.push_back({1.0, 1.0, 0.0});
     poly.push_back({-1.0, 1.0, 0.0});
     poly.push_back({1.0, -1.0, 0.0});
