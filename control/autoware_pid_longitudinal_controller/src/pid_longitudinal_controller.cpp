@@ -591,7 +591,6 @@ PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCm
 void PidLongitudinalController::updateControlState(const ControlData & control_data)
 {
   const double current_vel = control_data.current_motion.vel;
-  const double current_acc = control_data.current_motion.acc;
   const double stop_dist = control_data.stop_dist;
 
   // flags for state transition
