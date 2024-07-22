@@ -666,6 +666,24 @@ std::optional<bool> isClockwise(const alt::Polygon & poly)
   }
 }
 
+std::optional<bool> touches(const alt::Point & point, const alt::Polygon & poly)
+{
+  if (poly.size() < 3) {
+    return std::nullopt;
+  }
+
+  for (size_t i = 0; i < poly.size(); ++i) {
+    // check if the point is on each edge of the polygon
+    if (
+      distance(point, poly.at(i), poly.at((i + 1) % poly.size())) <=
+      std::numeric_limits<double>::epsilon()) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly)
 {
   // check if the polygon is valid

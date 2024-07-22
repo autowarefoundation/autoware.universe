@@ -627,6 +627,8 @@ bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::
 
 std::optional<bool> isClockwise(const alt::Polygon & poly);
 
+std::optional<bool> touches(const alt::Point & point, const alt::Polygon & poly);
+
 std::optional<bool> within(const alt::Point & point, const alt::Polygon & poly);
 
 std::optional<bool> within(
