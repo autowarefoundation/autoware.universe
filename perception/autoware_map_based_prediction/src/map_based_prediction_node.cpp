@@ -1095,16 +1095,20 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
                 const auto & obj_pos = object.kinematics.pose_with_covariance.pose.position;
                 const lanelet::BasicPoint2d obj_point(obj_pos.x, obj_pos.y);
                 prev_left_bound_dist = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(surrounding_lanelets[t].second.leftBound().basicLineString()),
+                  lanelet::utils::to2D(
+                    surrounding_lanelets[t].second.leftBound().basicLineString()),
                   obj_point);
                 prev_right_bound_dist = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(surrounding_lanelets[t].second.rightBound().basicLineString()),
+                  lanelet::utils::to2D(
+                    surrounding_lanelets[t].second.rightBound().basicLineString()),
                   obj_point);
                 next_left_bound_dist = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(surrounding_lanelets[j].second.leftBound().basicLineString()),
+                  lanelet::utils::to2D(
+                    surrounding_lanelets[j].second.leftBound().basicLineString()),
                   obj_point);
                 next_right_bound_dist = lanelet::geometry::distance2d(
-                  lanelet::utils::to2D(surrounding_lanelets[j].second.rightBound().basicLineString()),
+                  lanelet::utils::to2D(
+                    surrounding_lanelets[j].second.rightBound().basicLineString()),
                   obj_point);
                 bound_to_centerline = lanelet::geometry::distance2d(
                   lanelet::utils::to2D(current_lanelet.lanelet.leftBound().basicLineString()),
@@ -1195,8 +1199,12 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
           predicted_path.path = ref_path.path;
           predicted_path.confidence = ref_path.probability;
 
-          if (prev_left_bound_dist != 0 && prev_right_bound_dist != 0 && next_left_bound_dist != 0 && next_right_bound_dist != 0) {
-            if ((prev_right_bound_dist < prev_left_bound_dist) && (next_left_bound_dist < next_right_bound_dist)) {
+          if (
+            prev_left_bound_dist != 0 && prev_right_bound_dist != 0 && next_left_bound_dist != 0 &&
+            next_right_bound_dist != 0) {
+            if (
+              (prev_right_bound_dist < prev_left_bound_dist) &&
+              (next_left_bound_dist < next_right_bound_dist)) {
               predicted_path = path_generator_->shiftPath(predicted_path, -bound_to_centerline / 2);
               shifted_predicted_path = path_generator_->generatePathForOnLaneVehicle(
                 yaw_fixed_transformed_object, predicted_path.path, prediction_time_horizon_.vehicle,
@@ -1207,7 +1215,9 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
               predicted_object_vehicle.kinematics.predicted_paths.push_back(shifted_predicted_path);
               output.objects.push_back(predicted_object_vehicle);
 
-            } else if ((prev_right_bound_dist > prev_left_bound_dist) && (next_left_bound_dist > next_right_bound_dist)){
+            } else if (
+              (prev_right_bound_dist > prev_left_bound_dist) &&
+              (next_left_bound_dist > next_right_bound_dist)) {
               predicted_path = path_generator_->shiftPath(predicted_path, bound_to_centerline / 2);
               shifted_predicted_path = path_generator_->generatePathForOnLaneVehicle(
                 yaw_fixed_transformed_object, predicted_path.path, prediction_time_horizon_.vehicle,
@@ -1732,17 +1742,25 @@ LaneletsData MapBasedPredictionNode::getCurrentLanelets(const TrackedObject & ob
         for (size_t j = t + 1; j < surrounding_lanelets.size(); j++) {
           // Check the lanes have same left and right bounds
           if (
-            surrounding_lanelets[t].second.leftBound().id() == surrounding_lanelets[j].second.rightBound().id() &&
-            surrounding_lanelets[t].second.rightBound().id() == surrounding_lanelets[j].second.leftBound().id()) {
-            const auto prev_bidirectional_lane = LaneletData{surrounding_lanelets[t].second, calculateLocalLikelihood(surrounding_lanelets[t].second, object), true};
-            const auto next_bidirectional_lane = LaneletData{surrounding_lanelets[j].second, calculateLocalLikelihood(surrounding_lanelets[j].second, object), true};
-            const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+            surrounding_lanelets[t].second.leftBound().id() ==
+              surrounding_lanelets[j].second.rightBound().id() &&
+            surrounding_lanelets[t].second.rightBound().id() ==
+              surrounding_lanelets[j].second.leftBound().id()) {
+            const auto prev_bidirectional_lane = LaneletData{
+              surrounding_lanelets[t].second,
+              calculateLocalLikelihood(surrounding_lanelets[t].second, object), true};
+            const auto next_bidirectional_lane = LaneletData{
+              surrounding_lanelets[j].second,
+              calculateLocalLikelihood(surrounding_lanelets[j].second, object), true};
+            const double object_yaw =
+              tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
             const double lane_yaw = lanelet::utils::getLaneletAngle(
               surrounding_lanelets[t].second, object.kinematics.pose_with_covariance.pose.position);
             const double delta_yaw = object_yaw - lane_yaw;
-            const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
+            const double normalized_delta_yaw =
+              autoware::universe_utils::normalizeRadian(delta_yaw);
             const double abs_norm_delta = std::fabs(normalized_delta_yaw);
-            //check the angle difference between the object and lane
+            // check the angle difference between the object and lane
             if (abs_norm_delta < delta_yaw_threshold_for_searching_lanelet_) {
               object_lanelets.push_back(prev_bidirectional_lane);
             } else {
