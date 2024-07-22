@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pid_longitudinal_controller/pid.hpp"
+#include "autoware/pid_longitudinal_controller/pid.hpp"
 
 #include <algorithm>
 #include <memory>
@@ -44,17 +44,14 @@ double PIDController::calculate(
 
   double ret_p = p.kp * virtual_displacement_error;
   ret_p = std::min(std::max(ret_p, p.min_ret_p), p.max_ret_p);
-  std::cerr << "ret_p: " << ret_p << ", max: " << p.max_ret_p << ", min: " << p.min_ret_p << std::endl;
 
   static double virtual_displacement_error_integral {0.0};
   virtual_displacement_error_integral += virtual_displacement_error * dt;
   
   const double ret_i = std::min(std::max(p.ki *virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i);
-  std::cerr << "ret_i: " << ret_i << ", max: " << p.max_ret_i << ", min: " << p.min_ret_i << std::endl;
 
   double ret_d = p.kd * error;
   ret_d = std::min(std::max(ret_d, p.min_ret_d), p.max_ret_d);
-  std::cerr << "ret_d: " << ret_d << ", max: " << p.max_ret_d << ", min: " << p.min_ret_d << std::endl;
 
   m_prev_error = error;
 

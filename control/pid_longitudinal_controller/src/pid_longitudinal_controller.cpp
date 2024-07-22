@@ -1103,9 +1103,6 @@ double PidLongitudinalController::applyVelocityFeedback(const ControlData & cont
     control_data.interpolated_traj.points.at(control_data.target_idx).acceleration_mps2 * ff_scale;
 
   const double feedback_acc = ff_acc + pid_acc;
-  std::cerr << "feedback_acc: " << feedback_acc << std::endl;
-  std::cerr << "ff_acc: " << ff_acc << std::endl;
-  std::cerr << "pid_acc: " << pid_acc << std::endl;
 
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_PID_APPLIED, feedback_acc);
   m_debug_values.setValues(DebugValues::TYPE::ERROR_VEL_FILTERED, error_vel_filtered);
