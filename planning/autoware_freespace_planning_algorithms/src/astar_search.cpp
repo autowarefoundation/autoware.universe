@@ -272,7 +272,7 @@ void AstarSearch::expandNodes(AstarNode & current_node, const bool is_back)
 
     double move_cost = current_node.gc + (total_weight * std::abs(distance));
     move_cost += getSteeringChangeCost(steering_index, current_node.steering_index);
-    move_cost += astar_param_.obstacle_distance_weight / (1.0 + distance_to_obs);
+    move_cost += getObsDistanceCost(distance_to_obs);
     if (is_direction_switch) move_cost += getDirectionChangeCost(current_node.dir_distance);
 
     double total_cost = move_cost + estimateCost(next_pose, next_index);
@@ -319,6 +319,12 @@ double AstarSearch::getSteeringChangeCost(
 double AstarSearch::getDirectionChangeCost(const double dir_distance) const
 {
   return planner_common_param_.direction_change_weight * (1.0 + (1.0 / (1.0 + dir_distance)));
+}
+
+double AstarSearch::getObsDistanceCost(const double obs_distance) const
+{
+  return astar_param_.obstacle_distance_weight *
+         std::max(1.0 - (obs_distance / cost_free_obs_dist), 0.0);
 }
 
 void AstarSearch::setPath(const AstarNode & goal_node)

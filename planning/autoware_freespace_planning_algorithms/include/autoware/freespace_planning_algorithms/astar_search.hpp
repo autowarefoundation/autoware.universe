@@ -136,6 +136,7 @@ private:
   double getSteeringCost(const int steering_index) const;
   double getSteeringChangeCost(const int steering_index, const int prev_steering_index) const;
   double getDirectionChangeCost(const double dir_distance) const;
+  double getObsDistanceCost(const double obs_distance) const;
 
   // Algorithm specific param
   AstarParam astar_param_;
@@ -163,6 +164,9 @@ private:
   static constexpr double base_length_max_expansion_factor_ = 0.5;
   static constexpr double dist_to_goal_expansion_factor_ = 0.15;
   static constexpr double dist_to_obs_expansion_factor_ = 0.3;
+
+  // cost free obstacle distance
+  static constexpr double cost_free_obs_dist = 5.0;
 };
 }  // namespace autoware::freespace_planning_algorithms
 
