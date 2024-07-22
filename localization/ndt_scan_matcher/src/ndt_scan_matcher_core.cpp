@@ -37,6 +37,9 @@
 #include <iomanip>
 #include <thread>
 
+namespace autoware::ndt_scan_matcher
+{
+
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
 {
@@ -1128,5 +1131,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_pose(
   return result_pose_with_cov_msg;
 }
 
+}  // namespace autoware::ndt_scan_matcher
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(NDTScanMatcher)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ndt_scan_matcher::NDTScanMatcher)

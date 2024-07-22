@@ -68,6 +68,9 @@
 #include <thread>
 #include <vector>
 
+namespace autoware::ndt_scan_matcher
+{
+
 class NDTScanMatcher : public rclcpp::Node
 {
   using PointSource = pcl::PointXYZ;
@@ -207,5 +210,7 @@ private:
 
   HyperParameters param_;
 };
+
+}  // namespace autoware::ndt_scan_matcher
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
