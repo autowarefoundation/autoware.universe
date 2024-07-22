@@ -315,7 +315,7 @@ double AstarSearch::getSteeringChangeCost(
   const int steering_index, const int prev_steering_index) const
 {
   double steering_index_diff = abs(steering_index - prev_steering_index);
-  return astar_param_.steering_change_weight * steering_index_diff /
+  return astar_param_.smoothness_weight * steering_index_diff /
          (2.0 * planner_common_param_.turning_steps);
 }
 

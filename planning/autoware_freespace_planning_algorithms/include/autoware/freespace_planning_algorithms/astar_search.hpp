@@ -48,7 +48,7 @@ struct AstarParam
 
   // search configs
   double distance_heuristic_weight;  // obstacle threshold on grid [0,255]
-  double steering_change_weight;
+  double smoothness_weight;
   double obstacle_distance_weight;
 };
 
@@ -104,7 +104,7 @@ public:
         node.declare_parameter<bool>("astar.adapt_expansion_distance"),
         node.declare_parameter<double>("astar.expansion_distance"),
         node.declare_parameter<double>("astar.distance_heuristic_weight"),
-        node.declare_parameter<double>("astar.steering_change_weight"),
+        node.declare_parameter<double>("astar.smoothness_weight"),
         node.declare_parameter<double>("astar.obstacle_distance_weight")})
   {
   }
