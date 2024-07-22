@@ -23,15 +23,29 @@
 #include "overlapping_range.hpp"
 #include "types.hpp"
 
+#include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/route_handler/route_handler.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
+#include <traffic_light_utils/traffic_light_utils.hpp>
 
+#include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
+#include <boost/geometry/algorithms/detail/envelope/interface.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 
+#include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/geometry/LaneletMap.h>
+#include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/BasicRegulatoryElements.h>
+#include <lanelet2_core/primitives/CompoundPolygon.h>
+#include <lanelet2_core/primitives/Lanelet.h>
+#include <lanelet2_core/primitives/Polygon.h>
 
 #include <map>
 #include <memory>
@@ -155,6 +169,42 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".ego.extra_right_offset", pp.extra_right_offset);
 }
 
+void prepare_stop_lines_rtree(
+  out_of_lane::EgoData & ego_data, const PlannerData & planner_data, const double search_distance)
+{
+  std::vector<out_of_lane::StopLineNode> rtree_nodes;
+  const auto bbox = lanelet::BoundingBox2d(
+    lanelet::BasicPoint2d{
+      ego_data.pose.position.x - search_distance, ego_data.pose.position.y - search_distance},
+    lanelet::BasicPoint2d{
+      ego_data.pose.position.x + search_distance, ego_data.pose.position.y + search_distance});
+  out_of_lane::StopLineNode stop_line_node;
+  for (const auto & ll :
+       planner_data.route_handler->getLaneletMapPtr()->laneletLayer.search(bbox)) {
+    for (const auto & element : ll.regulatoryElementsAs<lanelet::TrafficLight>()) {
+      const auto traffic_signal_stamped = planner_data.get_traffic_signal(element->id());
+      if (
+        traffic_signal_stamped.has_value() && element->stopLine().has_value() &&
+        traffic_light_utils::isTrafficSignalStop(ll, traffic_signal_stamped.value().signal)) {
+        stop_line_node.second.stop_line.clear();
+        for (const auto & p : element->stopLine()->basicLineString()) {
+          stop_line_node.second.stop_line.emplace_back(p.x(), p.y());
+        }
+        // use a longer stop line to also cut predicted paths that slightly go around the stop line
+        const auto diff =
+          stop_line_node.second.stop_line.back() - stop_line_node.second.stop_line.front();
+        stop_line_node.second.stop_line.front() -= diff * 0.5;
+        stop_line_node.second.stop_line.back() += diff * 0.5;
+        stop_line_node.second.lanelets = planner_data.route_handler->getPreviousLanelets(ll);
+        stop_line_node.first =
+          boost::geometry::return_envelope<universe_utils::Box2d>(stop_line_node.second.stop_line);
+        rtree_nodes.push_back(stop_line_node);
+      }
+    }
+  }
+  ego_data.stop_lines_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
+}
+
 VelocityPlanningResult OutOfLaneModule::plan(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
@@ -169,6 +219,8 @@ VelocityPlanningResult OutOfLaneModule::plan(
     autoware::motion_utils::findNearestSegmentIndex(ego_trajectory_points, ego_data.pose.position);
   ego_data.velocity = planner_data->current_odometry.twist.twist.linear.x;
   ego_data.max_decel = planner_data->velocity_smoother_->getMinDecel();
+  prepare_stop_lines_rtree(ego_data, *planner_data, 100.0);
+
   stopwatch.tic("calculate_trajectory_footprints");
   const auto current_ego_footprint =
     out_of_lane::calculate_current_ego_footprint(ego_data, params_, true);
