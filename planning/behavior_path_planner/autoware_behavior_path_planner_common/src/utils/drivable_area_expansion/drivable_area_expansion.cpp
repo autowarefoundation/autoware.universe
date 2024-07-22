@@ -23,6 +23,8 @@
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <interpolation/linear_interpolation.hpp>
 
@@ -360,6 +362,45 @@ void calculate_expansion_distances(
   }
 }
 
+void add_bound_point(std::vector<Point> & bound, const Pose & pose)
+{
+  const auto p = convert_point(pose.position);
+  PointDistance nearest_projection;
+  nearest_projection.distance = std::numeric_limits<double>::infinity();
+  size_t nearest_idx = 0UL;
+  for (auto i = 0UL; i + 1 < bound.size(); ++i) {
+    const auto prev_p = convert_point(bound[i]);
+    const auto next_p = convert_point(bound[i + 1]);
+    const auto projection = point_to_segment_projection(p, prev_p, next_p);
+    if (projection.distance < nearest_projection.distance) {
+      nearest_projection = projection;
+      nearest_idx = i;
+    }
+  }
+  Point new_point;
+  new_point.x = nearest_projection.point.x();
+  new_point.y = nearest_projection.point.y();
+  new_point.z = bound[nearest_idx].z;
+  if (
+    universe_utils::calcDistance2d(new_point, bound[nearest_idx]) > 1.0 &&
+    universe_utils::calcDistance2d(new_point, bound[nearest_idx + 1]) > 1.0) {
+    bound.insert(bound.begin() + nearest_idx + 1, new_point);
+  }
+}
+
+void add_bound_points_if_non_zero_curvature(
+  std::vector<Point> & left_bound, std::vector<Point> & right_bound,
+  const std::vector<Pose> & path_poses, const std::vector<double> & curvatures)
+{
+  for (auto i = 0UL; i < path_poses.size(); ++i) {
+    const auto k = curvatures[i];
+    if (k > 1e-2) {
+      add_bound_point(left_bound, path_poses[i]);
+      add_bound_point(right_bound, path_poses[i]);
+    }
+  }
+}
+
 void expand_drivable_area(
   PathWithLaneId & path,
   const std::shared_ptr<const autoware::behavior_path_planner::PlannerData> planner_data)
@@ -398,6 +439,7 @@ void expand_drivable_area(
     std::cerr << "[drivable_area_expansion] could not calculate path curvatures\n";
     curvatures.resize(path_poses.size(), 0.0);
   }
+  add_bound_points_if_non_zero_curvature(path.left_bound, path.right_bound, path_poses, curvatures);
   auto expansion =
     calculate_expansion(path_poses, path.left_bound, path.right_bound, curvatures, params);
   const auto curvature_expansion_ms = stop_watch.toc("curvatures_expansion");
