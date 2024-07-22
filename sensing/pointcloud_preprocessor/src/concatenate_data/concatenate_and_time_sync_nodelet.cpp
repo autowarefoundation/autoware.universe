@@ -104,7 +104,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     }
 
     // Optional parameters
-    maximum_queue_size_ = declare_parameter<int>("max_queue_size");
+    maximum_queue_size_ = declare_parameter<int64_t>("max_queue_size");
     timeout_sec_ = declare_parameter<double>("timeout_sec");
 
     input_offset_ = declare_parameter<std::vector<double>>("input_offset");
