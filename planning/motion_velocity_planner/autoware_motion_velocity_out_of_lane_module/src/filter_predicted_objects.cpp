@@ -59,18 +59,18 @@ void cut_predicted_path_beyond_line(
 }
 
 std::optional<const lanelet::BasicLineString2d> find_next_stop_line(
-  const autoware_perception_msgs::msg::PredictedPath & path,
-  const std::shared_ptr<const PlannerData> planner_data)
+  const autoware_perception_msgs::msg::PredictedPath & path, const PlannerData & planner_data)
 {
+  // TODO(Maxime): prepare a Rtree with the stop lines ONCE
   lanelet::ConstLanelets lanelets;
   lanelet::BasicLineString2d query_line;
   for (const auto & p : path.path) query_line.emplace_back(p.position.x, p.position.y);
   const auto query_results = lanelet::geometry::findWithin2d(
-    planner_data->route_handler->getLaneletMapPtr()->laneletLayer, query_line);
+    planner_data.route_handler->getLaneletMapPtr()->laneletLayer, query_line);
   for (const auto & r : query_results) lanelets.push_back(r.second);
   for (const auto & ll : lanelets) {
     for (const auto & element : ll.regulatoryElementsAs<lanelet::TrafficLight>()) {
-      const auto traffic_signal_stamped = planner_data->get_traffic_signal(element->id());
+      const auto traffic_signal_stamped = planner_data.get_traffic_signal(element->id());
       if (
         traffic_signal_stamped.has_value() && element->stopLine().has_value() &&
         traffic_light_utils::isTrafficSignalStop(ll, traffic_signal_stamped.value().signal)) {
@@ -84,8 +84,8 @@ std::optional<const lanelet::BasicLineString2d> find_next_stop_line(
 }
 
 void cut_predicted_path_beyond_red_lights(
-  autoware_perception_msgs::msg::PredictedPath & predicted_path,
-  const std::shared_ptr<const PlannerData> planner_data, const double object_front_overhang)
+  autoware_perception_msgs::msg::PredictedPath & predicted_path, const PlannerData & planner_data,
+  const double object_front_overhang)
 {
   const auto stop_line = find_next_stop_line(predicted_path, planner_data);
   if (stop_line) {
@@ -99,12 +99,11 @@ void cut_predicted_path_beyond_red_lights(
 }
 
 autoware_perception_msgs::msg::PredictedObjects filter_predicted_objects(
-  const std::shared_ptr<const PlannerData> planner_data, const EgoData & ego_data,
-  const PlannerParam & params)
+  const PlannerData & planner_data, const EgoData & ego_data, const PlannerParam & params)
 {
   autoware_perception_msgs::msg::PredictedObjects filtered_objects;
-  filtered_objects.header = planner_data->predicted_objects.header;
-  for (const auto & object : planner_data->predicted_objects.objects) {
+  filtered_objects.header = planner_data.predicted_objects.header;
+  for (const auto & object : planner_data.predicted_objects.objects) {
     const auto is_pedestrian =
       std::find_if(object.classification.begin(), object.classification.end(), [](const auto & c) {
         return c.label == autoware_perception_msgs::msg::ObjectClassification::PEDESTRIAN;

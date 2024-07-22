@@ -137,7 +137,7 @@ bool MotionVelocityPlannerNode::update_planner_data()
   const auto check_with_log = [&](const auto ptr, const auto & log) {
     constexpr auto throttle_duration = 3000;  // [ms]
     if (!ptr) {
-      RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, log);
+      RCLCPP_INFO_THROTTLE(get_logger(), clock, throttle_duration, "%s", log);
       is_ready = false;
       return false;
     }
@@ -422,23 +422,23 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   marker.ns = "time_ranges";
   marker.id = 0;
   stop_watch.tic("collision_time_ranges");
-  planner_data_.collision_time_ranges_per_object.clear();
-  planner_data_.collision_time_ranges_per_object.reserve(
-    planner_data_.predicted_objects.objects.size());
-  for (const auto & object : planner_data_.predicted_objects.objects) {
-    const auto collision_time_ranges = calculate_collision_time_ranges_along_trajectory(
-      *planner_data_.ego_trajectory_collision_checker, resampled_trajectory.points, object);
-    for (auto i = 0UL; i < collision_time_ranges.size(); ++i) {
-      const auto & collision_time_range = collision_time_ranges[i];
-      if (collision_time_range) {
-        marker.pose = resampled_trajectory.points[i].pose;
-        marker.text = collision_time_range->to_string();
-        markers.markers.push_back(marker);
-        marker.id++;
-      }
-    }
-    planner_data_.collision_time_ranges_per_object.push_back(collision_time_ranges);
-  }
+  // planner_data_.collision_time_ranges_per_object.clear();
+  // planner_data_.collision_time_ranges_per_object.reserve(
+  //   planner_data_.predicted_objects.objects.size());
+  // for (const auto & object : planner_data_.predicted_objects.objects) {
+  //   const auto collision_time_ranges = calculate_collision_time_ranges_along_trajectory(
+  //     *planner_data_.ego_trajectory_collision_checker, resampled_trajectory.points, object);
+  //   for (auto i = 0UL; i < collision_time_ranges.size(); ++i) {
+  //     const auto & collision_time_range = collision_time_ranges[i];
+  //     if (collision_time_range) {
+  //       marker.pose = resampled_trajectory.points[i].pose;
+  //       marker.text = collision_time_range->to_string();
+  //       markers.markers.push_back(marker);
+  //       marker.id++;
+  //     }
+  //   }
+  //   planner_data_.collision_time_ranges_per_object.push_back(collision_time_ranges);
+  // }
   RCLCPP_WARN(
     get_logger(), "collision_time_ranges: %2.2f us\n", stop_watch.toc("collision_time_ranges"));
   debug_viz_pub_->publish(markers);

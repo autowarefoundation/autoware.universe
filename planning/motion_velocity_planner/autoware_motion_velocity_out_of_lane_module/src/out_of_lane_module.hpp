@@ -47,6 +47,17 @@ public:
 
 private:
   void init_parameters(rclcpp::Node & node);
+  /// @brief resize the trajectory to start from the segment closest to ego and to have at most the
+  /// given length
+  static void limit_trajectory_size(
+    out_of_lane::EgoData & ego_data,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+    const double max_arc_length);
+  /// @brief calculate the minimum stop and slowdown distances of ego
+  static void calculate_min_stop_and_slowdown_distances(
+    out_of_lane::EgoData ego_data, const PlannerData & planner_data,
+    std::optional<geometry_msgs::msg::Pose> & previous_slowdown_pose_, const double slow_velocity);
+
   out_of_lane::PlannerParam params_;
 
   inline static const std::string ns_ = "out_of_lane";

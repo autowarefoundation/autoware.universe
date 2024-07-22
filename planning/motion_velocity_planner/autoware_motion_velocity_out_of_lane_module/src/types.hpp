@@ -78,20 +78,30 @@ struct PlannerParam
   double extra_rear_offset;   // [m] extra rear distance
   double extra_right_offset;  // [m] extra right distance
   double extra_left_offset;   // [m] extra left distance
+
+  bool use_route_to_get_route_lanelets = true;  // TODO(Maxime): param
+  double max_arc_length = 100.0;                // TODO(Maxime): param
 };
 
 /// @brief data related to the ego vehicle
 struct EgoData
 {
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points;
+  geometry_msgs::msg::Pose pose;
   size_t first_trajectory_idx{};
   double longitudinal_offset_to_first_trajectory_index{};
-  geometry_msgs::msg::Pose pose;
-  Polygons drivable_lane_polygons;
   double min_stop_distance{};
   double min_slowdown_distance{};
+
+  Polygons drivable_lane_polygons;
+
   lanelet::BasicPolygon2d current_footprint;
   std::vector<lanelet::BasicPolygon2d> trajectory_footprints;
+
+  lanelet::ConstLanelet ego_lanelet;
+  lanelet::ConstLanelets route_lanelets;
+  lanelet::ConstLanelets ignored_lanelets;
+  lanelet::ConstLanelets out_of_lane_lanelets;
 };
 
 struct OutOfLanePoint
@@ -113,10 +123,6 @@ struct OutOfLaneData
 /// @brief debug data
 struct DebugData
 {
-  lanelet::ConstLanelets route_lanelets;
-  lanelet::ConstLanelets ignored_lanelets;
-  lanelet::ConstLanelets out_of_lane_lanelets;
-
   size_t prev_footprints = 0;
   size_t prev_route_lanelets = 0;
   size_t prev_ignored_lanelets = 0;
@@ -124,17 +130,6 @@ struct DebugData
   size_t prev_drivable_lane_polygons = 0;
   size_t prev_out_of_lane_areas = 0;
   size_t prev_ttcs = 0;
-  void reset_data()
-  {
-    prev_route_lanelets = route_lanelets.size();
-    route_lanelets.clear();
-
-    prev_ignored_lanelets = ignored_lanelets.size();
-    ignored_lanelets.clear();
-
-    prev_out_of_lane_lanelets = out_of_lane_lanelets.size();
-    out_of_lane_lanelets.clear();
-  }
 };
 
 }  // namespace autoware::motion_velocity_planner::out_of_lane

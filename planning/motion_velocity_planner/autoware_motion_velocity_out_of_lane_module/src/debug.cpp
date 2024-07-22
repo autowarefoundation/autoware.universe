@@ -121,10 +121,16 @@ void add_ttc_markers(
 {
   auto debug_marker = get_base_marker();
   debug_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-  debug_marker.color = universe_utils::createMarkerColor(1.0, 1.0, 1.0, 0.9);
   debug_marker.scale.z = 0.5;
   debug_marker.ns = "ttcs";
   for (const auto & p : out_of_lane_data.outside_points) {
+    if (p.to_avoid) {
+      debug_marker.color.r = 1.0;
+      debug_marker.color.g = 0.0;
+    } else {
+      debug_marker.color.r = 0.0;
+      debug_marker.color.g = 1.0;
+    }
     if (p.ttc) {
       debug_marker.pose = ego_data.trajectory_points[p.trajectory_index].pose;
       debug_marker.text = std::to_string(*p.ttc);
@@ -175,12 +181,14 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   debug_data.prev_footprints = ego_data.trajectory_footprints.size();
 
   add_lanelet_markers(
-    debug_marker_array, debug_data.route_lanelets, "route_lanelets",
+    debug_marker_array, ego_data.route_lanelets, "route_lanelets",
     universe_utils::createMarkerColor(0.1, 0.1, 1.0, 0.5), debug_data.prev_route_lanelets);
+  debug_data.prev_route_lanelets = ego_data.route_lanelets.size();
 
   add_lanelet_markers(
-    debug_marker_array, debug_data.ignored_lanelets, "ignored_lanelets",
+    debug_marker_array, ego_data.ignored_lanelets, "ignored_lanelets",
     universe_utils::createMarkerColor(0.7, 0.7, 0.2, 0.5), debug_data.prev_ignored_lanelets);
+  debug_data.prev_ignored_lanelets = ego_data.ignored_lanelets.size();
 
   add_lanelet_markers(
     debug_marker_array, out_of_lane_data.out_of_lane_lanelets, "out_of_lane_lanelets",
