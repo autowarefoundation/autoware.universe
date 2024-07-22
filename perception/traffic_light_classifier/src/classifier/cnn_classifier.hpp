@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
-#define TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
+#ifndef CLASSIFIER__CNN_CLASSIFIER_HPP_
+#define CLASSIFIER__CNN_CLASSIFIER_HPP_
 
-#include "traffic_light_classifier/classifier_interface.hpp"
+#include "classifier_interface.hpp"
 
+#include <autoware/tensorrt_classifier/tensorrt_classifier.hpp>
 #include <cuda_utils/cuda_unique_ptr.hpp>
 #include <cuda_utils/stream_unique_ptr.hpp>
 #include <image_transport/image_transport.hpp>
@@ -24,7 +25,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/opencv.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tensorrt_classifier/tensorrt_classifier.hpp>
 #include <tensorrt_common/tensorrt_common.hpp>
 
 #include <tier4_perception_msgs/msg/traffic_light_element.hpp>
@@ -41,7 +41,7 @@
 #include <string>
 #include <vector>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 
 using cuda_utils::CudaUniquePtr;
@@ -111,13 +111,13 @@ private:
 
   rclcpp::Node * node_ptr_;
   int batch_size_;
-  std::unique_ptr<tensorrt_classifier::TrtClassifier> classifier_;
+  std::unique_ptr<autoware::tensorrt_classifier::TrtClassifier> classifier_;
   image_transport::Publisher image_pub_;
   std::vector<std::string> labels_;
   std::vector<float> mean_;
   std::vector<float> std_;
 };
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
 
-#endif  // TRAFFIC_LIGHT_CLASSIFIER__CNN_CLASSIFIER_HPP_
+#endif  // CLASSIFIER__CNN_CLASSIFIER_HPP_

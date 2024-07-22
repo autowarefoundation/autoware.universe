@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traffic_light_classifier/cnn_classifier.hpp"
+#include "cnn_classifier.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace traffic_light
+namespace autoware::traffic_light
 {
 CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
 {
@@ -55,7 +56,7 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   batch_size_ = input_dim.d[0];
 
   tensorrt_common::BatchConfig batch_config{batch_size_, batch_size_, batch_size_};
-  classifier_ = std::make_unique<tensorrt_classifier::TrtClassifier>(
+  classifier_ = std::make_unique<autoware::tensorrt_classifier::TrtClassifier>(
     model_file_path, precision, batch_config, mean_, std_);
   if (node_ptr_->declare_parameter("build_only", false)) {
     RCLCPP_INFO(node_ptr_->get_logger(), "TensorRT engine is built and shutdown node.");
@@ -207,4 +208,4 @@ bool CNNClassifier::isColorLabel(const std::string label)
   return false;
 }
 
-}  // namespace traffic_light
+}  // namespace autoware::traffic_light
