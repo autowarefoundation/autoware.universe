@@ -47,7 +47,7 @@ double PIDController::calculate(
 
   static double virtual_displacement_error_integral {0.0};
   virtual_displacement_error_integral += virtual_displacement_error * dt;
-  
+
   const double ret_i = std::min(std::max(p.ki *virtual_displacement_error_integral, p.min_ret_i), p.max_ret_i);
 
   double ret_d = p.kd * error;
