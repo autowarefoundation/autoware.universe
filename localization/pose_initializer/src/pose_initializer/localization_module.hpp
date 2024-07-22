@@ -29,7 +29,7 @@ private:
   using RequestPoseAlignment = tier4_localization_msgs::srv::PoseWithCovarianceStamped;
 
 public:
-  LocalizationModule(rclcpp::Node * node, const std::string service_name);
+  LocalizationModule(rclcpp::Node * node, const std::string & service_name);
   PoseWithCovarianceStamped align_pose(const PoseWithCovarianceStamped & pose);
 
 private:
