@@ -394,47 +394,47 @@ bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & conv
 
 namespace alt
 {
-Point fromGeom(const geometry_msgs::msg::Point & point)
+Point from_geom(const geometry_msgs::msg::Point & point)
 {
   Point _point;
   tf2::fromMsg(point, _point);
   return _point;
 }
 
-ConvexPolygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon)
+ConvexPolygon from_geom(const std::vector<geometry_msgs::msg::Point> & polygon)
 {
   ConvexPolygon _polygon;
   for (const auto & point : polygon) {
-    _polygon.push_back(fromGeom(point));
+    _polygon.push_back(from_geom(point));
   }
   return _polygon;
 }
 
-Point fromBoost(const Point2d & point)
+Point from_boost(const Point2d & point)
 {
   return Point(point.x(), point.y(), 0.0);
 }
 
-ConvexPolygon fromBoost(const Polygon2d & polygon)
+ConvexPolygon from_boost(const Polygon2d & polygon)
 {
   ConvexPolygon _polygon;
   for (const auto & point : polygon.outer()) {
-    _polygon.push_back(fromBoost(point));
+    _polygon.push_back(from_boost(point));
   }
   correct(_polygon);
   return _polygon;
 }
 
-Point2d toBoost(const Point & point)
+Point2d to_boost(const Point & point)
 {
   return Point2d(point.x(), point.y());
 }
 
-Polygon2d toBoost(const ConvexPolygon & polygon)
+Polygon2d to_boost(const ConvexPolygon & polygon)
 {
   Polygon2d _polygon;
   for (const auto & point : polygon) {
-    _polygon.outer().push_back(toBoost(point));
+    _polygon.outer().push_back(to_boost(point));
   }
   return _polygon;
 }
@@ -454,7 +454,7 @@ std::optional<double> area(const alt::ConvexPolygon & poly)
   return area;
 }
 
-std::optional<alt::ConvexPolygon> convexHull(const alt::PointList & points)
+std::optional<alt::ConvexPolygon> convex_hull(const alt::PointList & points)
 {
   if (points.size() < 3) {
     return std::nullopt;
@@ -482,15 +482,15 @@ std::optional<alt::ConvexPolygon> convexHull(const alt::PointList & points)
       points.begin(), points.end(),
       [&](const auto & a, const auto & b) { return distance(p1, p2, a) < distance(p1, p2, b); });
 
-    const auto subsets_1 = divideBySegment(points, p1, farthest);
-    const auto subsets_2 = divideBySegment(points, farthest, p2);
+    const auto subsets_1 = divide_by_segment(points, p1, farthest);
+    const auto subsets_2 = divide_by_segment(points, farthest, p2);
 
     self(self, p1, farthest, subsets_1.at(0));
     hull.push_back(farthest);
     self(self, farthest, p2, subsets_2.at(0));
   };
 
-  const auto [above_points, below_points] = divideBySegment(points, p_min, p_max);
+  const auto [above_points, below_points] = divide_by_segment(points, p_min, p_max);
   hull.push_back(p_min);
   make_hull(make_hull, p_min, p_max, above_points);
   hull.push_back(p_max);
@@ -518,7 +518,7 @@ void correct(alt::ConvexPolygon & poly)
   }
 }
 
-std::optional<bool> coveredBy(const alt::Point & point, const alt::ConvexPolygon & poly)
+std::optional<bool> covered_by(const alt::Point & point, const alt::ConvexPolygon & poly)
 {
   const auto is_point_within = within(point, poly);
   if (!is_point_within) {
@@ -575,7 +575,7 @@ double distance(const alt::Point & point, const alt::Point & seg_start, const al
 
 double distance(const alt::Point & point, const alt::ConvexPolygon & poly)
 {
-  if (coveredBy(point, poly).value_or(false)) {
+  if (covered_by(point, poly).value_or(false)) {
     return 0.0;
   }
 
@@ -589,13 +589,13 @@ double distance(const alt::Point & point, const alt::ConvexPolygon & poly)
   return min_distance;
 }
 
-std::array<alt::PointList, 2> divideBySegment(
+std::array<alt::PointList, 2> divide_by_segment(
   const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end)
 {
   alt::PointList above_points, below_points;
 
   for (const auto & point : points) {
-    if (isAbove(point, seg_start, seg_end)) {
+    if (is_above(point, seg_start, seg_end)) {
       above_points.push_back(point);
     } else {
       below_points.push_back(point);
@@ -696,12 +696,12 @@ std::optional<bool> intersects(const alt::ConvexPolygon & poly1, const alt::Conv
   return true;
 }
 
-bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
+bool is_above(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
 {
   return (seg_end - seg_start).cross(point - seg_start).z() > 0;
 }
 
-std::optional<bool> isClockwise(const alt::ConvexPolygon & poly)
+std::optional<bool> is_clockwise(const alt::ConvexPolygon & poly)
 {
   if (const auto s = area(poly)) {
     return *s > 0;

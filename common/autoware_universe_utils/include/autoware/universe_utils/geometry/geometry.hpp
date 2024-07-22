@@ -592,26 +592,26 @@ using Point = tf2::Vector3;
 using ConvexPolygon = std::vector<tf2::Vector3>;
 using PointList = std::vector<tf2::Vector3>;
 
-alt::Point fromGeom(const geometry_msgs::msg::Point & point);
+alt::Point from_geom(const geometry_msgs::msg::Point & point);
 
-alt::ConvexPolygon fromGeom(const std::vector<geometry_msgs::msg::Point> & polygon);
+alt::ConvexPolygon from_geom(const std::vector<geometry_msgs::msg::Point> & polygon);
 
-alt::Point fromBoost(const Point2d & point);
+alt::Point from_boost(const Point2d & point);
 
-alt::ConvexPolygon fromBoost(const Polygon2d & polygon);
+alt::ConvexPolygon from_boost(const Polygon2d & polygon);
 
-Point2d toBoost(const alt::Point & point);
+Point2d to_boost(const alt::Point & point);
 
-Polygon2d toBoost(const alt::ConvexPolygon & polygon);
+Polygon2d to_boost(const alt::ConvexPolygon & polygon);
 }  // namespace alt
 
 std::optional<double> area(const alt::ConvexPolygon & poly);
 
-std::optional<alt::ConvexPolygon> convexHull(const alt::PointList & points);
+std::optional<alt::ConvexPolygon> convex_hull(const alt::PointList & points);
 
 void correct(alt::ConvexPolygon & poly);
 
-std::optional<bool> coveredBy(const alt::Point & point, const alt::ConvexPolygon & poly);
+std::optional<bool> covered_by(const alt::Point & point, const alt::ConvexPolygon & poly);
 
 std::optional<bool> disjoint(const alt::ConvexPolygon & poly1, const alt::ConvexPolygon & poly2);
 
@@ -619,7 +619,7 @@ double distance(const alt::Point & point, const alt::Point & seg_start, const al
 
 double distance(const alt::Point & point, const alt::ConvexPolygon & poly);
 
-std::array<alt::PointList, 2> divideBySegment(
+std::array<alt::PointList, 2> divide_by_segment(
   const alt::PointList & points, const alt::Point & seg_start, const alt::Point & seg_end);
 
 std::optional<bool> equals(const alt::ConvexPolygon & poly1, const alt::ConvexPolygon & poly2);
@@ -630,9 +630,9 @@ bool intersects(
 
 std::optional<bool> intersects(const alt::ConvexPolygon & poly1, const alt::ConvexPolygon & poly2);
 
-bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
+bool is_above(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
 
-std::optional<bool> isClockwise(const alt::ConvexPolygon & poly);
+std::optional<bool> is_clockwise(const alt::ConvexPolygon & poly);
 
 std::optional<bool> touches(const alt::Point & point, const alt::ConvexPolygon & poly);
 

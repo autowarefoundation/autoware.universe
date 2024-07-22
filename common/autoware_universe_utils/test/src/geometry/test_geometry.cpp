@@ -2013,7 +2013,7 @@ TEST(geometry, area)
 
 TEST(geometry, convexHull)
 {
-  using autoware::universe_utils::convexHull;
+  using autoware::universe_utils::convex_hull;
   using autoware::universe_utils::alt::PointList;
 
   {
@@ -2029,7 +2029,7 @@ TEST(geometry, convexHull)
     points.push_back({5.4, 1.2, 0.0});
     points.push_back({4.9, 0.8, 0.0});
     points.push_back({2.9, 0.7, 0.0});
-    const auto result = convexHull(points);
+    const auto result = convex_hull(points);
 
     EXPECT_TRUE(result);
     EXPECT_EQ(result->size(), 7);
@@ -2109,7 +2109,7 @@ TEST(geometry, correct)
 
 TEST(geometry, coveredBy)
 {
-  using autoware::universe_utils::coveredBy;
+  using autoware::universe_utils::covered_by;
   using autoware::universe_utils::alt::Point;
 
   {  // The point is within the polygon
@@ -2118,7 +2118,7 @@ TEST(geometry, coveredBy)
     const Point p2 = {1.0, -1.0, 0.0};
     const Point p3 = {-1.0, -1.0, 0.0};
     const Point p4 = {-1.0, 1.0, 0.0};
-    const auto result = coveredBy(point, {p1, p2, p3, p4});
+    const auto result = covered_by(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
     EXPECT_TRUE(*result);
@@ -2130,7 +2130,7 @@ TEST(geometry, coveredBy)
     const Point p2 = {2.0, 1.0, 0.0};
     const Point p3 = {1.0, 1.0, 0.0};
     const Point p4 = {1.0, 2.0, 0.0};
-    const auto result = coveredBy(point, {p1, p2, p3, p4});
+    const auto result = covered_by(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
     EXPECT_FALSE(*result);
@@ -2142,7 +2142,7 @@ TEST(geometry, coveredBy)
     const Point p2 = {2.0, -1.0, 0.0};
     const Point p3 = {0.0, -1.0, 0.0};
     const Point p4 = {0.0, 1.0, 0.0};
-    const auto result = coveredBy(point, {p1, p2, p3, p4});
+    const auto result = covered_by(point, {p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
     EXPECT_TRUE(*result);
@@ -2283,7 +2283,7 @@ TEST(geometry, distance)
 
 TEST(geometry, divideBySegment)
 {
-  using autoware::universe_utils::divideBySegment;
+  using autoware::universe_utils::divide_by_segment;
   using autoware::universe_utils::alt::Point;
 
   {
@@ -2294,7 +2294,7 @@ TEST(geometry, divideBySegment)
     const Point p5 = {1.0, -1.0, 0.0};
     const Point seg_start = {-2.0, 0.0, 0.0};
     const Point seg_end = {2.0, 0.0, 0.0};
-    const auto result = divideBySegment({p1, p2, p3, p4, p5}, seg_start, seg_end);
+    const auto result = divide_by_segment({p1, p2, p3, p4, p5}, seg_start, seg_end);
 
     EXPECT_EQ(result.at(0).size(), 2);
     EXPECT_NEAR(result.at(0).at(0).x(), -1.0, epsilon);
@@ -2459,14 +2459,14 @@ TEST(geometry, intersects)
 
 TEST(geometry, isAbove)
 {
-  using autoware::universe_utils::isAbove;
+  using autoware::universe_utils::is_above;
   using autoware::universe_utils::alt::Point;
 
   {  // The point is above the line
     const Point point = {0.0, 1.0, 0.0};
     const Point p1 = {-1.0, 0.0, 0.0};
     const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = isAbove(point, p1, p2);
+    const auto result = is_above(point, p1, p2);
 
     EXPECT_TRUE(result);
   }
@@ -2475,7 +2475,7 @@ TEST(geometry, isAbove)
     const Point point = {0.0, -1.0, 0.0};
     const Point p1 = {-1.0, 0.0, 0.0};
     const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = isAbove(point, p1, p2);
+    const auto result = is_above(point, p1, p2);
 
     EXPECT_FALSE(result);
   }
@@ -2484,7 +2484,7 @@ TEST(geometry, isAbove)
     const Point point = {0.0, 0.0, 0.0};
     const Point p1 = {-1.0, 0.0, 0.0};
     const Point p2 = {1.0, 0.0, 0.0};
-    const auto result = isAbove(point, p1, p2);
+    const auto result = is_above(point, p1, p2);
 
     EXPECT_FALSE(result);
   }
@@ -2492,7 +2492,7 @@ TEST(geometry, isAbove)
 
 TEST(geometry, isClockwise)
 {
-  using autoware::universe_utils::isClockwise;
+  using autoware::universe_utils::is_clockwise;
   using autoware::universe_utils::alt::Point;
 
   {  // Clockwise
@@ -2500,7 +2500,7 @@ TEST(geometry, isClockwise)
     const Point p2 = {0.0, 7.0, 0.0};
     const Point p3 = {4.0, 2.0, 0.0};
     const Point p4 = {2.0, 0.0, 0.0};
-    const auto result = isClockwise({p1, p2, p3, p4});
+    const auto result = is_clockwise({p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
     EXPECT_TRUE(*result);
@@ -2511,7 +2511,7 @@ TEST(geometry, isClockwise)
     const Point p2 = {2.0, 0.0, 0.0};
     const Point p3 = {4.0, 2.0, 0.0};
     const Point p4 = {0.0, 7.0, 0.0};
-    const auto result = isClockwise({p1, p2, p3, p4});
+    const auto result = is_clockwise({p1, p2, p3, p4});
 
     EXPECT_TRUE(result);
     EXPECT_FALSE(*result);
@@ -2625,7 +2625,7 @@ TEST(geometry, areaRand)
       ground_truth_area_ns += sw.toc();
       sw.tic();
       const auto alt =
-        autoware::universe_utils::area(autoware::universe_utils::alt::fromBoost(polygons[i]));
+        autoware::universe_utils::area(autoware::universe_utils::alt::from_boost(polygons[i]));
       alt_area_ns += sw.toc();
       if (!alt || std::abs(*alt - ground_truth) > epsilon) {
         std::cout << "Alt failed for the polygon: ";
@@ -2665,8 +2665,8 @@ TEST(geometry, convexHullRand)
       boost::geometry::convex_hull(outer, ground_truth);
       ground_truth_hull_ns += sw.toc();
       sw.tic();
-      const auto alt =
-        autoware::universe_utils::convexHull(autoware::universe_utils::alt::fromBoost(polygons[i]));
+      const auto alt = autoware::universe_utils::convex_hull(
+        autoware::universe_utils::alt::from_boost(polygons[i]));
       alt_hull_ns += sw.toc();
       if (!alt || ground_truth.outer().size() - 1 != alt->size()) {
         std::cout << "Alt failed for the polygon: ";
@@ -2716,9 +2716,9 @@ TEST(geometry, coveredByRand)
             ground_truth_not_covered_ns += sw.toc();
           }
           sw.tic();
-          const auto alt = autoware::universe_utils::coveredBy(
-            autoware::universe_utils::alt::fromBoost(point),
-            autoware::universe_utils::alt::fromBoost(polygons[j]));
+          const auto alt = autoware::universe_utils::covered_by(
+            autoware::universe_utils::alt::from_boost(point),
+            autoware::universe_utils::alt::from_boost(polygons[j]));
           if (alt.value_or(false)) {
             alt_covered_ns += sw.toc();
           } else {
@@ -2780,8 +2780,8 @@ TEST(geometry, disjointRand)
         }
         sw.tic();
         const auto alt = autoware::universe_utils::disjoint(
-          autoware::universe_utils::alt::fromBoost(polygons[i]),
-          autoware::universe_utils::alt::fromBoost(polygons[j]));
+          autoware::universe_utils::alt::from_boost(polygons[i]),
+          autoware::universe_utils::alt::from_boost(polygons[j]));
         if (alt.value_or(false)) {
           alt_disjoint_ns += sw.toc();
         } else {
@@ -2842,8 +2842,8 @@ TEST(geometry, intersectsRand)
         }
         sw.tic();
         const auto alt = autoware::universe_utils::intersects(
-          autoware::universe_utils::alt::fromBoost(polygons[i]),
-          autoware::universe_utils::alt::fromBoost(polygons[j]));
+          autoware::universe_utils::alt::from_boost(polygons[i]),
+          autoware::universe_utils::alt::from_boost(polygons[j]));
         if (alt.value_or(false)) {
           alt_intersect_ns += sw.toc();
         } else {
@@ -2904,8 +2904,8 @@ TEST(geometry, withinPolygonRand)
         }
         sw.tic();
         const auto alt = autoware::universe_utils::within(
-          autoware::universe_utils::alt::fromBoost(polygons[i]),
-          autoware::universe_utils::alt::fromBoost(polygons[j]));
+          autoware::universe_utils::alt::from_boost(polygons[i]),
+          autoware::universe_utils::alt::from_boost(polygons[j]));
         if (alt.value_or(false)) {
           alt_within_ns += sw.toc();
         } else {
