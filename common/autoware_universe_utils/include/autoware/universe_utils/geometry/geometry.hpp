@@ -572,6 +572,12 @@ inline double calcNorm(const geometry_msgs::msg::Vector3 & v)
 //
 bool isTwistCovarianceValid(const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance);
 
+/**
+ * @brief Check if 2 convex polygons intersect using the GJK algorithm
+ * @details much faster than boost::geometry::intersects()
+ */
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
+
 // Alternatives for Boost.Geometry ----------------------------------------------------------------
 
 // TODO(mitukou1109): remove namespace when migrating to alternatives
@@ -611,16 +617,11 @@ std::array<alt::PointList, 2> divideBySegment(
 
 std::optional<bool> equals(const alt::Polygon & poly1, const alt::Polygon & poly2);
 
-// NOTE: much faster than boost::geometry::intersects()
 std::optional<alt::Point> intersect(
   const alt::Point & seg1_start, const alt::Point & seg1_end, const alt::Point & seg2_start,
   const alt::Point & seg2_end);
 
-/**
- * @brief Check if 2 convex polygons intersect using the GJK algorithm
- * @details much faster than boost::geometry::intersects()
- */
-bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
+std::optional<bool> intersects(const alt::Polygon & poly1, const alt::Polygon & poly2);
 
 bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end);
 

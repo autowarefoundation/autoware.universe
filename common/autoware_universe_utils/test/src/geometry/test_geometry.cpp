@@ -1734,6 +1734,150 @@ TEST(geometry, isTwistCovarianceValid)
   EXPECT_EQ(autoware::universe_utils::isTwistCovarianceValid(twist_with_covariance), true);
 }
 
+TEST(geometry, intersectPolygon)
+{
+  {  // 2 triangles with intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(2, 0);
+    poly2.outer().emplace_back(1, 1);
+    poly2.outer().emplace_back(1, 0);
+    poly2.outer().emplace_back(0, 1);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection (but they share an edge)
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(2, 0);
+    poly2.outer().emplace_back(2, 2);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection (but they share a point)
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(4, 4);
+    poly2.outer().emplace_back(4, 2);
+    poly2.outer().emplace_back(2, 2);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // 2 triangles sharing a point and then with very small intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 0);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(4, 0);
+    poly2.outer().emplace_back(0, 4);
+    poly2.outer().emplace_back(2, 2);
+    poly2.outer().emplace_back(4, 4);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    poly1.outer()[1].y() += 1e-12;
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection and no touching
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(4, 4);
+    poly2.outer().emplace_back(5, 5);
+    poly2.outer().emplace_back(3, 5);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+  {  // triangle and quadrilateral with intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(4, 11);
+    poly1.outer().emplace_back(4, 5);
+    poly1.outer().emplace_back(9, 9);
+    poly2.outer().emplace_back(5, 7);
+    poly2.outer().emplace_back(7, 3);
+    poly2.outer().emplace_back(10, 2);
+    poly2.outer().emplace_back(12, 7);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  }
+}
+
+TEST(geometry, intersectPolygonRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 500;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_intersect_ns = 0.0;
+    double ground_truth_no_intersect_ns = 0.0;
+    double gjk_intersect_ns = 0.0;
+    double gjk_no_intersect_ns = 0.0;
+    int intersect_count = 0;
+    polygons.clear();
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        sw.tic();
+        const auto ground_truth = boost::geometry::intersects(polygons[i], polygons[j]);
+        if (ground_truth) {
+          ++intersect_count;
+          ground_truth_intersect_ns += sw.toc();
+        } else {
+          ground_truth_no_intersect_ns += sw.toc();
+        }
+        sw.tic();
+        const auto gjk = autoware::universe_utils::intersects_convex(polygons[i], polygons[j]);
+        if (gjk) {
+          gjk_intersect_ns += sw.toc();
+        } else {
+          gjk_no_intersect_ns += sw.toc();
+        }
+        if (ground_truth != gjk) {
+          std::cout << "Failed for the 2 polygons: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+        EXPECT_EQ(ground_truth, gjk);
+      }
+    }
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
+      intersect_count, polygons_nb * polygons_nb);
+    std::printf(
+      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
+      ground_truth_intersect_ns / 1e6, gjk_intersect_ns / 1e6);
+    std::printf(
+      "\tNo Intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
+      ground_truth_no_intersect_ns / 1e6, gjk_no_intersect_ns / 1e6);
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
+      (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,
+      (gjk_no_intersect_ns + gjk_intersect_ns) / 1e6);
+  }
+}
+
 TEST(geometry, area)
 {
   using autoware::universe_utils::area;
@@ -2136,88 +2280,54 @@ TEST(geometry, intersect)
   }
 }
 
-TEST(geometry, intersectPolygon)
+TEST(geometry, intersects)
 {
-  {  // 2 triangles with intersection
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 2);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(2, 0);
-    poly2.outer().emplace_back(1, 1);
-    poly2.outer().emplace_back(1, 0);
-    poly2.outer().emplace_back(0, 1);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+  using autoware::universe_utils::intersects;
+  using autoware::universe_utils::alt::Point;
+
+  {  // One polygon intersects the other
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {2.0, 2.0, 0.0};
+    const Point p6 = {2.0, 0.0, 0.0};
+    const Point p7 = {0.0, 0.0, 0.0};
+    const Point p8 = {0.0, 2.0, 0.0};
+    const auto result = intersects({p1, p2, p3, p4}, {p5, p6, p7, p8});
+
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(*result);
   }
-  {  // 2 triangles with no intersection (but they share an edge)
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 2);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(0, 0);
-    poly2.outer().emplace_back(0, 0);
-    poly2.outer().emplace_back(2, 0);
-    poly2.outer().emplace_back(2, 2);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+
+  {  // Two polygons do not intersect each other
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {3.0, 3.0, 0.0};
+    const Point p6 = {3.0, 2.0, 0.0};
+    const Point p7 = {2.0, 2.0, 0.0};
+    const Point p8 = {2.0, 3.0, 0.0};
+    const auto result = intersects({p1, p2, p3, p4}, {p5, p6, p7, p8});
+
+    EXPECT_TRUE(result);
+    EXPECT_FALSE(*result);
   }
-  {  // 2 triangles with no intersection (but they share a point)
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 2);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(0, 0);
-    poly2.outer().emplace_back(4, 4);
-    poly2.outer().emplace_back(4, 2);
-    poly2.outer().emplace_back(2, 2);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
-  }
-  {  // 2 triangles sharing a point and then with very small intersection
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 0);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(4, 0);
-    poly2.outer().emplace_back(0, 4);
-    poly2.outer().emplace_back(2, 2);
-    poly2.outer().emplace_back(4, 4);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
-    poly1.outer()[1].y() += 1e-12;
-    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
-  }
-  {  // 2 triangles with no intersection and no touching
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(0, 2);
-    poly1.outer().emplace_back(2, 2);
-    poly1.outer().emplace_back(0, 0);
-    poly2.outer().emplace_back(4, 4);
-    poly2.outer().emplace_back(5, 5);
-    poly2.outer().emplace_back(3, 5);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
-  }
-  {  // triangle and quadrilateral with intersection
-    autoware::universe_utils::Polygon2d poly1;
-    autoware::universe_utils::Polygon2d poly2;
-    poly1.outer().emplace_back(4, 11);
-    poly1.outer().emplace_back(4, 5);
-    poly1.outer().emplace_back(9, 9);
-    poly2.outer().emplace_back(5, 7);
-    poly2.outer().emplace_back(7, 3);
-    poly2.outer().emplace_back(10, 2);
-    poly2.outer().emplace_back(12, 7);
-    boost::geometry::correct(poly1);
-    boost::geometry::correct(poly2);
-    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+
+  {  // Two polygons share a vertex
+    const Point p1 = {1.0, 1.0, 0.0};
+    const Point p2 = {1.0, -1.0, 0.0};
+    const Point p3 = {-1.0, -1.0, 0.0};
+    const Point p4 = {-1.0, 1.0, 0.0};
+    const Point p5 = {2.0, 2.0, 0.0};
+    const Point p6 = {2.0, 1.0, 0.0};
+    const Point p7 = {1.0, 1.0, 0.0};
+    const Point p8 = {1.0, 2.0, 0.0};
+    const auto result = intersects({p1, p2, p3, p4}, {p5, p6, p7, p8});
+
+    EXPECT_TRUE(result);
+    EXPECT_FALSE(*result);
   }
 }
 
@@ -2514,7 +2624,7 @@ TEST(geometry, coveredByRand)
   }
 }
 
-TEST(geometry, intersectPolygonRand)
+TEST(geometry, intersectsRand)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
   constexpr auto polygons_nb = 500;
@@ -2525,8 +2635,8 @@ TEST(geometry, intersectPolygonRand)
   for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
     double ground_truth_intersect_ns = 0.0;
     double ground_truth_no_intersect_ns = 0.0;
-    double gjk_intersect_ns = 0.0;
-    double gjk_no_intersect_ns = 0.0;
+    double alt_intersect_ns = 0.0;
+    double alt_no_intersect_ns = 0.0;
     int intersect_count = 0;
     polygons.clear();
     for (auto i = 0; i < polygons_nb; ++i) {
@@ -2543,33 +2653,36 @@ TEST(geometry, intersectPolygonRand)
           ground_truth_no_intersect_ns += sw.toc();
         }
         sw.tic();
-        const auto gjk = autoware::universe_utils::intersects_convex(polygons[i], polygons[j]);
-        if (gjk) {
-          gjk_intersect_ns += sw.toc();
+        const auto alt = autoware::universe_utils::intersects(
+          autoware::universe_utils::alt::fromBoost(polygons[i]),
+          autoware::universe_utils::alt::fromBoost(polygons[j]));
+        if (alt.value_or(false)) {
+          alt_intersect_ns += sw.toc();
         } else {
-          gjk_no_intersect_ns += sw.toc();
+          alt_no_intersect_ns += sw.toc();
         }
-        if (ground_truth != gjk) {
+        if (!alt || ground_truth != *alt) {
           std::cout << "Failed for the 2 polygons: ";
           std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
                     << std::endl;
         }
-        EXPECT_EQ(ground_truth, gjk);
+        EXPECT_TRUE(alt);
+        EXPECT_EQ(ground_truth, *alt);
       }
     }
     std::printf(
       "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
       intersect_count, polygons_nb * polygons_nb);
     std::printf(
-      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
-      ground_truth_intersect_ns / 1e6, gjk_intersect_ns / 1e6);
+      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_intersect_ns / 1e6, alt_intersect_ns / 1e6);
     std::printf(
-      "\tNo Intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
-      ground_truth_no_intersect_ns / 1e6, gjk_no_intersect_ns / 1e6);
+      "\tNo intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
+      ground_truth_no_intersect_ns / 1e6, alt_no_intersect_ns / 1e6);
     std::printf(
-      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n",
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tAlt = %2.2f ms\n",
       (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,
-      (gjk_no_intersect_ns + gjk_intersect_ns) / 1e6);
+      (alt_no_intersect_ns + alt_intersect_ns) / 1e6);
   }
 }
 

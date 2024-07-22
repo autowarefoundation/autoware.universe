@@ -361,6 +361,13 @@ bool isTwistCovarianceValid(const geometry_msgs::msg::TwistWithCovariance & twis
   return false;
 }
 
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
+{
+  return gjk::intersects(convex_polygon1, convex_polygon2);
+}
+
+// Alternatives for Boost.Geometry ----------------------------------------------------------------
+
 namespace alt
 {
 Point fromGeom(const geometry_msgs::msg::Point & point)
@@ -570,7 +577,6 @@ std::optional<bool> equals(const alt::Polygon & poly1, const alt::Polygon & poly
   });
 }
 
-// NOTE: much faster than boost::geometry::intersects()
 std::optional<alt::Point> intersect(
   const alt::Point & seg1_start, const alt::Point & seg1_end, const alt::Point & seg2_start,
   const alt::Point & seg2_end)
@@ -578,7 +584,6 @@ std::optional<alt::Point> intersect(
   const auto v1 = seg1_end - seg1_start;
   const auto v2 = seg2_end - seg2_start;
 
-  // calculate intersection point
   const auto det = v1.cross(v2).z();
   if (std::abs(det) <= std::numeric_limits<double>::epsilon()) {
     return std::nullopt;
@@ -594,9 +599,57 @@ std::optional<alt::Point> intersect(
   return t * seg1_start + (1.0 - t) * seg1_end;
 }
 
-bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
+std::optional<bool> intersects(const alt::Polygon & poly1, const alt::Polygon & poly2)
 {
-  return gjk::intersects(convex_polygon1, convex_polygon2);
+  // if the polygons are equal, return true
+  const auto is_equal = equals(poly1, poly2);
+  if (!is_equal || *is_equal) {
+    return is_equal;
+  }
+
+  // GJK algorithm
+
+  auto find_support_vertex =
+    [](const alt::Polygon & poly1, const alt::Polygon & poly2, const tf2::Vector3 & direction) {
+      auto find_farthest_vertex = [](const alt::Polygon & poly, const tf2::Vector3 & direction) {
+        return std::max_element(poly.begin(), poly.end(), [&](const auto & a, const auto & b) {
+          return direction.dot(a) <= direction.dot(b);
+        });
+      };
+      return *find_farthest_vertex(poly1, direction) - *find_farthest_vertex(poly2, -direction);
+    };
+
+  tf2::Vector3 direction = {1.0, 0.0, 0.0};
+  auto a = find_support_vertex(poly1, poly2, direction);
+  direction = -a;
+  auto b = find_support_vertex(poly1, poly2, direction);
+  if (b.dot(direction) <= 0.0) {
+    return false;
+  }
+
+  direction = (b - a).cross(-a).cross(b - a);
+  while (true) {
+    auto c = find_support_vertex(poly1, poly2, direction);
+    if (c.dot(direction) <= 0.0) {
+      return false;
+    }
+
+    auto n_ca = (b - c).cross(a - c).cross(a - c);
+    if (n_ca.dot(-c) > 0.0) {
+      b = c;
+      direction = n_ca;
+    } else {
+      auto n_cb = (a - c).cross(b - c).cross(b - c);
+      if (n_cb.dot(-c) > 0.0) {
+        a = c;
+        direction = n_cb;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return true;
 }
 
 bool isAbove(const alt::Point & point, const alt::Point & seg_start, const alt::Point & seg_end)
