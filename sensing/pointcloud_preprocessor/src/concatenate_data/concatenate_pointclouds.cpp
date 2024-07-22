@@ -66,7 +66,7 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
     }
 
     // Optional parameters
-    maximum_queue_size_ = declare_parameter<int>("max_queue_size");
+    maximum_queue_size_ = declare_parameter<int64_t>("max_queue_size");
     /** input pointclouds should be */
     timeout_sec_ = declare_parameter<double>("timeout_sec");
 
