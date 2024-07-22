@@ -339,6 +339,32 @@ bool isWithinIntersection(
     lanelet::utils::to2D(polygon.basicPolygon()));
 }
 
+bool isWithinFreespace(
+  const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
+{
+  auto polygons = lanelet::utils::query::getAllParkingLots(route_handler->getLaneletMapPtr());
+  if (polygons.empty()) {
+    return false;
+  }
+
+  std::sort(polygons.begin(), polygons.end(), [&object](const auto & a, const auto & b) {
+    const double a_distance = boost::geometry::distance(
+      lanelet::utils::to2D(a).basicPolygon(),
+      lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+        .basicPoint());
+    const double b_distance = boost::geometry::distance(
+      lanelet::utils::to2D(b).basicPolygon(),
+      lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+        .basicPoint());
+    return a_distance < b_distance;
+  });
+
+  return boost::geometry::within(
+    lanelet::utils::to2D(lanelet::utils::conversion::toLaneletPoint(object.getPosition()))
+      .basicPoint(),
+    lanelet::utils::to2D(polygons.front().basicPolygon()));
+}
+
 bool isOnEgoLane(const ObjectData & object, const std::shared_ptr<RouteHandler> & route_handler)
 {
   if (boost::geometry::within(
@@ -708,6 +734,14 @@ bool isObviousAvoidanceTarget(
   [[maybe_unused]] const std::shared_ptr<const PlannerData> & planner_data,
   [[maybe_unused]] const std::shared_ptr<AvoidanceParameters> & parameters)
 {
+  if (isWithinFreespace(object, planner_data->route_handler)) {
+    if (!object.is_on_ego_lane) {
+      if (object.stop_time > parameters->freespace_condition_th_stopped_time) {
+        return true;
+      }
+    }
+  }
+
   if (!object.is_within_intersection) {
     if (object.is_parked && object.behavior == ObjectData::Behavior::NONE) {
       RCLCPP_DEBUG(rclcpp::get_logger(logger_namespace), "object is obvious parked vehicle.");
@@ -852,7 +886,7 @@ bool isSatisfiedWithNonVehicleCondition(
 }
 
 ObjectData::Behavior getObjectBehavior(
-  ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
+  const ObjectData & object, const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   if (isParallelToEgoLane(object, parameters->object_check_yaw_deviation)) {
     return ObjectData::Behavior::NONE;
@@ -880,7 +914,7 @@ bool isSatisfiedWithVehicleCondition(
 
   // from here, filtering for ambiguous vehicle.
 
-  if (!parameters->enable_avoidance_for_ambiguous_vehicle) {
+  if (parameters->policy_ambiguous_vehicle == "ignore") {
     object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
     return false;
   }
@@ -889,6 +923,7 @@ bool isSatisfiedWithVehicleCondition(
     object.stop_time > parameters->time_threshold_for_ambiguous_vehicle;
   if (!stop_time_longer_than_threshold) {
     object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
+    object.is_ambiguous = false;
     return false;
   }
 
@@ -897,6 +932,7 @@ bool isSatisfiedWithVehicleCondition(
     parameters->distance_threshold_for_ambiguous_vehicle;
   if (is_moving_distance_longer_than_threshold) {
     object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
+    object.is_ambiguous = false;
     return false;
   }
 
@@ -907,22 +943,9 @@ bool isSatisfiedWithVehicleCondition(
       return true;
     }
   } else {
-    if (object.behavior == ObjectData::Behavior::MERGING) {
-      object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
-      object.is_ambiguous = true;
-      return true;
-    }
-
-    if (object.behavior == ObjectData::Behavior::DEVIATING) {
-      object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
-      object.is_ambiguous = true;
-      return true;
-    }
-
-    if (object.behavior == ObjectData::Behavior::NONE) {
-      object.is_ambiguous = false;
-      return true;
-    }
+    object.info = ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE;
+    object.is_ambiguous = true;
+    return true;
   }
 
   object.info = ObjectInfo::IS_NOT_PARKING_OBJECT;
@@ -1078,7 +1101,7 @@ double calcShiftLength(
 }
 
 bool isWithinLanes(
-  const lanelet::ConstLanelets & lanelets, std::shared_ptr<const PlannerData> & planner_data)
+  const lanelet::ConstLanelets & lanelets, const std::shared_ptr<const PlannerData> & planner_data)
 {
   const auto & rh = planner_data->route_handler;
   const auto & ego_pose = planner_data->self_odometry->pose.pose;
@@ -1853,17 +1876,19 @@ void filterTargetObjects(
       utils::static_obstacle_avoidance::calcEnvelopeOverhangDistance(o, data.reference_path);
     o.to_road_shoulder_distance = filtering_utils::getRoadShoulderDistance(o, data, planner_data);
 
-    // TODO(Satoshi Ota) parametrize stop time threshold if need.
-    constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
     if (filtering_utils::isUnknownTypeObject(o)) {
+      // TARGET: UNKNOWN
+
+      // TODO(Satoshi Ota) parametrize stop time threshold if need.
+      constexpr double STOP_TIME_THRESHOLD = 3.0;  // [s]
       if (o.stop_time < STOP_TIME_THRESHOLD) {
         o.info = ObjectInfo::UNSTABLE_OBJECT;
         data.other_objects.push_back(o);
         continue;
       }
-    }
+    } else if (filtering_utils::isVehicleTypeObject(o)) {
+      // TARGET: CAR, TRUCK, BUS, TRAILER, MOTORCYCLE
 
-    if (filtering_utils::isVehicleTypeObject(o)) {
       o.is_within_intersection =
         filtering_utils::isWithinIntersection(o, planner_data->route_handler);
       o.is_parked =
@@ -1880,6 +1905,8 @@ void filterTargetObjects(
         continue;
       }
     } else {
+      // TARGET: PEDESTRIAN, BICYCLE
+
       o.is_within_intersection =
         filtering_utils::isWithinIntersection(o, planner_data->route_handler);
       o.is_parked = false;
