@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>radar_static_pointcloud_filter</name>
+  <name>autoware_radar_static_pointcloud_filter</name>
   <version>0.1.0</version>
-  <description>radar_static_pointcloud_filter</description>
+  <description>autoware_radar_static_pointcloud_filter</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
