@@ -45,7 +45,7 @@ This plugin provides a visual representation of the vehicle's position, the goal
 
 - The Map Origin Latitude and Map Origin Longitude parameters should be updated according to the specific map being used. These values define the reference point for converting local coordinates to geographic coordinates and vice versa, the default values are for the `sample-map-planning` from the Autoware planning tutorial.
 - The Zoom parameter should be set according to the map tiles available for the specified zoom levels between 15-18.
-- The Latitude and Logitude parameters should automatically update based on the vehicle's position and the goal pose topics, and are there for debug purposes.
+- The Latitude and Longitude parameters should automatically update based on the vehicle's position and the goal pose topics, and are there for debug purposes.
 - The Width and Height parameters should be set according to the desired size of the overlay, the maximum value is 500 px.
 - The Left and Top parameters should be set according to the desired position of the overlay, considering it is relative to the bottom-left corner of the RViz2 window.
 
